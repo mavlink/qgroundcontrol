@@ -51,6 +51,15 @@
     "min":              0,
     "units":            "m",
     "default":     30
+},
+{
+    "name":             "ObstacleBuffer",
+    "shortDesc": "Distance to keep from obstacles - no-fly margin around obstacles (m).",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "default":     1.5
 }
 ]
 }

@@ -85,10 +85,22 @@ set(CUSTOM_SOURCES
     CACHE INTERNAL "" FORCE
 )
 
-set(CUSTOM_LIBRARIES
-    CustomModule # Explicitly link QML module, needed by Qt 6.6.3, TODO: Remove when support for this version is dropped
-    CACHE INTERNAL "" FORCE
+# Clipper2: polygon clipping/offset (for Spray obstacles)
+set(CLIPPER2_UTILS OFF CACHE BOOL "" FORCE)
+set(CLIPPER2_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(CLIPPER2_TESTS OFF CACHE BOOL "" FORCE)
+CPMAddPackage(
+    NAME Clipper2
+    GITHUB_REPOSITORY AngusJohnson/Clipper2
+    GIT_TAG Clipper2_2.0.1
+    SOURCE_SUBDIR CPP
 )
+set(_custom_libs CustomModule)
+if(Clipper2_ADDED)
+    list(APPEND _custom_libs Clipper2)
+    message(STATUS "QGC Custom: Clipper2 linked for Spray pattern")
+endif()
+set(CUSTOM_LIBRARIES ${_custom_libs} CACHE INTERNAL "" FORCE)
 
 set(CUSTOM_INCLUDE_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src

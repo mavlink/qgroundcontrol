@@ -12,6 +12,7 @@
 #include "ComplexMissionItem.h"
 #include "SettingsFact.h"
 #include "QGCMapPolygon.h"
+#include "QmlObjectListModel.h"
 
 #include <QtCore/QLoggingCategory>
 
@@ -34,17 +35,31 @@ public:
     Q_PROPERTY(Fact*            sprayWidth             READ sprayWidth             CONSTANT)
     Q_PROPERTY(Fact*            gridAngle              READ gridAngle              CONSTANT)
     Q_PROPERTY(Fact*            turnAroundDistance     READ turnAroundDistance     CONSTANT)
+    Q_PROPERTY(Fact*            obstacleBuffer         READ obstacleBuffer         CONSTANT)
+    Q_PROPERTY(int              gridEntryLocation      READ gridEntryLocation      WRITE setGridEntryLocation NOTIFY gridEntryLocationChanged)
 
     Q_PROPERTY(QList<QGeoCoordinate>     visualTransectPoints READ visualTransectPoints NOTIFY visualTransectPointsChanged)
+    Q_PROPERTY(QmlObjectListModel*      obstaclePolygons     READ obstaclePolygons     CONSTANT)
+    Q_PROPERTY(QVariantList             obstacleBufferPolygons READ obstacleBufferPolygons NOTIFY obstacleBufferPolygonsChanged)
+
+    Q_INVOKABLE void addObstaclePolygon(void);
+    Q_INVOKABLE void addObstaclePolygonFromCoordinates(const QVariantList& coordinates);
+    Q_INVOKABLE void removeObstaclePolygon(int index);
+    Q_INVOKABLE void rotateEntryPoint(void);
 
     Fact* speed                 (void) { return &_speedFact; }
     Fact* altitude              (void) { return &_altitudeFact; }
     Fact* sprayWidth            (void) { return &_sprayWidthFact; }
     Fact* gridAngle             (void) { return &_gridAngleFact; }
     Fact* turnAroundDistance    (void) { return &_turnAroundDistanceFact; }
+    Fact* obstacleBuffer        (void) { return &_obstacleBufferFact; }
+    int   gridEntryLocation     (void) const { return _entryPoint; }
+    void  setGridEntryLocation  (int loc);
 
     QGCMapPolygon* sprayAreaPolygon (void) { return &_sprayAreaPolygon; }
+    QmlObjectListModel* obstaclePolygons (void) { return _obstaclePolygonsModel; }
     QList<QGeoCoordinate> visualTransectPoints(void) { return _visualTransectPoints; }
+    QVariantList obstacleBufferPolygons(void) const;
      
 
 
@@ -109,9 +124,20 @@ public:
     static constexpr const char* sprayWidthName =             "SprayWidth";
     static constexpr const char* gridAngleName =              "GridAngle";
     static constexpr const char* turnAroundDistanceName =     "TurnAroundDistance";
+    static constexpr const char* obstacleBufferName =         "ObstacleBuffer";
+    static constexpr const char* gridEntryLocationName =      "GridEntryLocation";
+
+    enum EntryLocation {
+        EntryLocationTopLeft = 0,
+        EntryLocationTopRight,
+        EntryLocationBottomLeft,
+        EntryLocationBottomRight
+    };
 
 signals:
-    void visualTransectPointsChanged                    (void); //emitted by _rebuildTransects, must call: complexDistanceChanged, greatestDistanceToChanged, coordinateChanged, exitCoordinateChanged
+    void visualTransectPointsChanged                    (void);
+    void obstacleBufferPolygonsChanged                  (void);
+    void gridEntryLocationChanged                       (void); //emitted by _rebuildTransects, must call: complexDistanceChanged, greatestDistanceToChanged, coordinateChanged, exitCoordinateChanged
     void _updateFlightPathSegmentsSignal                (void);
 
 private slots: 
@@ -130,16 +156,31 @@ private:
     bool _hasTurnaround(void) const;
     double _turnAroundDistance(void) const;
 
+    /// Clip line by allowed region (outer polygon and holes); returns segments inside outer and outside all holes
+    QList<QLineF> _clipLineByAllowedArea(const QLineF& line, const QPolygonF& outer, const QList<QPolygonF>& holes) const;
+    /// Boundary path from p1 to p2 along polygon; chooses the arc that goes toward targetHint (avoids looping back)
+    QList<QPointF> _boundaryPathBetweenPoints(const QPointF& p1, const QPointF& p2, const QPolygonF& polygon, const QPointF& targetHint) const;
+    /// Find which obstacle (index) the line through p1–p2 crosses; returns two intersection points (ordered along line from p1 to p2)
+    bool _findObstacleCrossing(const QPointF& p1, const QPointF& p2, const QList<QPolygonF>& obstaclesNed, int& obstacleIndex, QPointF& cross1, QPointF& cross2) const;
+    void _adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect);
+    void _reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect);
+    void _reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect);
+
     QMap<QString, FactMetaData*> _metaDataMap;
 
-    QList<QGeoCoordinate>   _visualTransectPoints;              ///< Used to draw the flight path visuals on the screen (2 or 4 points per transect when turnaround)
+    QList<QGeoCoordinate>   _visualTransectPoints;
+    QList<int>              _spraySegmentStartIndices;          ///< Indices into _visualTransectPoints where each spray segment starts (segment = point[i], point[i+1])
 
     SettingsFact    _speedFact;
     SettingsFact    _altitudeFact;
     SettingsFact    _sprayWidthFact;
     SettingsFact    _gridAngleFact;
     SettingsFact    _turnAroundDistanceFact;
+    SettingsFact    _obstacleBufferFact;
     QGCMapPolygon   _sprayAreaPolygon;
+    int             _entryPoint = EntryLocationTopLeft;
+    QmlObjectListModel* _obstaclePolygonsModel;
+    QList<QList<QGeoCoordinate>> _obstacleBufferPolygons;  ///< Expanded (buffered) obstacle polygons for map display
 
     int             _sequenceNumber = 0;
     bool            _ignoreRecalc = false;
@@ -149,4 +190,7 @@ private:
     static constexpr const char* _jsonSprayWidthKey =         "sprayWidth";
     static constexpr const char* _jsonGridAngleKey =          "gridAngle";
     static constexpr const char* _jsonTurnAroundDistanceKey = "turnAroundDistance";
+    static constexpr const char* _jsonObstacleBufferKey =    "obstacleBuffer";
+    static constexpr const char* _jsonGridEntryLocationKey = "gridEntryLocation";
+    static constexpr const char* _jsonObstaclesKey =        "obstacles";
 };

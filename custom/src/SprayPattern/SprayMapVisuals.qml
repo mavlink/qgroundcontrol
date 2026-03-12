@@ -48,7 +48,7 @@ Item {
         id: objMgr
     }
 
-    // Area polygon
+    // Area polygon (field)
     QGCMapPolygonVisuals {
         id:                 mapPolygonVisuals
         mapControl:         map
@@ -59,6 +59,32 @@ Item {
         interiorColor:      QGroundControl.globalPalette.surveyPolygonInterior
         altColor:           QGroundControl.globalPalette.surveyPolygonTerrainCollision
         interiorOpacity:    0.5 * _root.opacity
+    }
+
+    // Obstacle buffer zones (expanded no-fly margin) – drawn under obstacles
+    Repeater {
+        model: _missionItem.obstacleBufferPolygons || []
+        delegate: MapPolygon {
+            path:           modelData
+            border.width:   1
+            border.color:   "orangered"
+            color:          "#44ff8800"
+            opacity:        0.6 * _root.opacity
+        }
+    }
+
+    // Obstacle (no-fly) polygons
+    Repeater {
+        model: _missionItem.obstaclePolygons ? _missionItem.obstaclePolygons.count : 0
+        delegate: QGCMapPolygonVisuals {
+            mapControl:     map
+            mapPolygon:     _missionItem.obstaclePolygons.get(index)
+            interactive:    polygonInteractive && _missionItem.isCurrentItem && _root.interactive
+            borderWidth:    1
+            borderColor:    "darkred"
+            interiorColor:  "#88cc0000"
+            interiorOpacity: 0.7 * _root.opacity
+        }
     }
 
     // Full set of transects lines. Shown when item is selected.

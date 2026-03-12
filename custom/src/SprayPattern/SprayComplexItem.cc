@@ -21,12 +21,75 @@
 
 #include <QtGui/QPolygonF>
 #include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
 #include <QtCore/QLineF>
 #include <QtCore/QtMath>
+#include <QtCore/QSet>
+#include <QtCore/QVariant>
+
+#include <clipper2/clipper.h>
+
+#include <algorithm>
 
 QGC_LOGGING_CATEGORY(SprayComplexItemLog, "SprayComplexItemLog")
 
 const QString SprayComplexItem::name(SprayComplexItem::tr("Spray"));
+
+// --- Clipper2 helpers (NED coordinates: x = East, y = North) ---
+namespace {
+    Clipper2Lib::PathD polygonToPathD(const QPolygonF& poly)
+    {
+        Clipper2Lib::PathD path;
+        const int n = poly.count();
+        for (int i = 0; i < n; i++) {
+            if (i == n - 1 && qAbs(poly[i].x() - poly[0].x()) < 1e-9 && qAbs(poly[i].y() - poly[0].y()) < 1e-9)
+                continue; // skip duplicate closing point
+            path.push_back(Clipper2Lib::PointD(poly[i].x(), poly[i].y()));
+        }
+        return path;
+    }
+
+    QPolygonF pathDToPolygon(const Clipper2Lib::PathD& path)
+    {
+        QPolygonF poly;
+        for (const auto& pt : path)
+            poly << QPointF(pt.x, pt.y);
+        if (poly.count() > 1 && (poly.last() - poly.first()).manhattanLength() > 1e-9)
+            poly << poly.first();
+        return poly;
+    }
+
+    void allowedPathsToOuterAndHoles(const Clipper2Lib::PathsD& paths, QPolygonF& outer, QList<QPolygonF>& holes)
+    {
+        outer = QPolygonF();
+        holes.clear();
+        if (paths.empty()) return;
+        // Outer = path with largest absolute area (field boundary). Rest = holes (obstacle boundaries).
+        // Clipper2 / NED axis can flip sign of area, so we use absolute area to find the outer.
+        int outerIdx = 0;
+        double maxAbsArea = 0;
+        for (size_t i = 0; i < paths.size(); i++) {
+            double a = qAbs(Clipper2Lib::Area(paths[i]));
+            if (a > maxAbsArea) {
+                maxAbsArea = a;
+                outerIdx = static_cast<int>(i);
+            }
+        }
+        outer = pathDToPolygon(paths[static_cast<size_t>(outerIdx)]);
+        for (size_t i = 0; i < paths.size(); i++) {
+            if (static_cast<int>(i) == outerIdx) continue;
+            holes.append(pathDToPolygon(paths[i]));
+        }
+    }
+
+    void ensurePositiveArea(Clipper2Lib::PathD& path)
+    {
+        if (path.size() < 3) return;
+        if (Clipper2Lib::Area(path) < 0)
+            std::reverse(path.begin(), path.end());
+    }
+}
+
 
 SprayComplexItem::SprayComplexItem(PlanMasterController* masterController, bool flyView)
     : ComplexMissionItem(masterController, flyView)
@@ -36,6 +99,8 @@ SprayComplexItem::SprayComplexItem(PlanMasterController* masterController, bool 
     , _sprayWidthFact(settingsGroup, _metaDataMap[sprayWidthName])
     , _gridAngleFact(settingsGroup, _metaDataMap[gridAngleName])
     , _turnAroundDistanceFact(settingsGroup, _metaDataMap[turnAroundDistanceName])
+    , _obstacleBufferFact(settingsGroup, _metaDataMap[obstacleBufferName])
+    , _obstaclePolygonsModel(new QmlObjectListModel(this))
 {
      // The follow is used to compress multiple recalc calls in a row to into a single call.
     connect(this, &SprayComplexItem::_updateFlightPathSegmentsSignal, this, &SprayComplexItem::_updateFlightPathSegmentsDontCallDirectly,   Qt::QueuedConnection);
@@ -46,12 +111,14 @@ SprayComplexItem::SprayComplexItem(PlanMasterController* masterController, bool 
     connect(&_sprayWidthFact,           &Fact::valueChanged, this, &SprayComplexItem::_rebuildTransects);
     connect(&_gridAngleFact,            &Fact::valueChanged, this, &SprayComplexItem::_rebuildTransects);
     connect(&_turnAroundDistanceFact,   &Fact::valueChanged, this, &SprayComplexItem::_rebuildTransects);
-    connect(&_sprayAreaPolygon,         &QGCMapPolygon::pathChanged, this, &SprayComplexItem::_rebuildTransects);
+    connect(&_obstacleBufferFact,      &Fact::valueChanged, this, &SprayComplexItem::_rebuildTransects);
+    connect(&_sprayAreaPolygon,        &QGCMapPolygon::pathChanged, this, &SprayComplexItem::_rebuildTransects);
 
     connect(&_altitudeFact,             &Fact::valueChanged, this, &SprayComplexItem::_setDirty);
     connect(&_sprayWidthFact,           &Fact::valueChanged, this, &SprayComplexItem::_setDirty);
     connect(&_gridAngleFact,            &Fact::valueChanged, this, &SprayComplexItem::_setDirty);
     connect(&_turnAroundDistanceFact,   &Fact::valueChanged, this, &SprayComplexItem::_setDirty);
+    connect(&_obstacleBufferFact,       &Fact::valueChanged, this, &SprayComplexItem::_setDirty);
     connect(&_speedFact,                &Fact::valueChanged, this, &SprayComplexItem::_setDirty);
     connect(&_sprayAreaPolygon,         &QGCMapPolygon::dirtyChanged, this, &SprayComplexItem::_setIfDirty);
 
@@ -62,6 +129,7 @@ SprayComplexItem::SprayComplexItem(PlanMasterController* masterController, bool 
 
     connect(&_sprayAreaPolygon,     &QGCMapPolygon::isValidChanged,         this,   &SprayComplexItem::readyForSaveStateChanged);
     connect(this,                   &SprayComplexItem::wizardModeChanged,   this,   &SprayComplexItem::readyForSaveStateChanged);
+    connect(_obstaclePolygonsModel,  &QmlObjectListModel::countChanged,     this,   &SprayComplexItem::_rebuildTransects);
 
     connect(this, &SprayComplexItem::visualTransectPointsChanged, this, &SprayComplexItem::minAMSLAltitudeChanged);
     connect(this, &SprayComplexItem::visualTransectPointsChanged, this, &SprayComplexItem::maxAMSLAltitudeChanged);
@@ -98,6 +166,127 @@ void SprayComplexItem::_updateWizardMode(void)
     }
 }
 
+void SprayComplexItem::addObstaclePolygon(void)
+{
+    if (!_sprayAreaPolygon.isValid() || _sprayAreaPolygon.count() < 3) {
+        return;
+    }
+    QGCMapPolygon* obst = new QGCMapPolygon(this);
+    const qreal halfSideMeters = 10.0;  // 20x20 m square
+    const qreal halfDiag = halfSideMeters * qSqrt(2.0);
+    QGeoCoordinate cen = _sprayAreaPolygon.center();
+    QList<QGeoCoordinate> coords;
+    coords << cen.atDistanceAndAzimuth(halfDiag, 135)   // NW
+           << cen.atDistanceAndAzimuth(halfDiag, 45)     // NE
+           << cen.atDistanceAndAzimuth(halfDiag, 315)    // SE
+           << cen.atDistanceAndAzimuth(halfDiag, 225);   // SW
+    obst->appendVertices(coords);
+    connect(obst, &QGCMapPolygon::pathChanged, this, &SprayComplexItem::_rebuildTransects);
+    connect(obst, &QGCMapPolygon::dirtyChanged, this, &SprayComplexItem::_setIfDirty);
+    _obstaclePolygonsModel->append(obst);
+    setDirty(true);
+}
+
+void SprayComplexItem::addObstaclePolygonFromCoordinates(const QVariantList& coordinates)
+{
+    QGCMapPolygon* obst = new QGCMapPolygon(this);
+    for (const QVariant& v : coordinates) {
+        if (v.canConvert<QGeoCoordinate>()) {
+            obst->appendVertex(v.value<QGeoCoordinate>());
+        }
+    }
+    if (obst->count() >= 3) {
+        connect(obst, &QGCMapPolygon::pathChanged, this, &SprayComplexItem::_rebuildTransects);
+        connect(obst, &QGCMapPolygon::dirtyChanged, this, &SprayComplexItem::_setIfDirty);
+        _obstaclePolygonsModel->append(obst);
+        setDirty(true);
+    } else {
+        obst->deleteLater();
+    }
+}
+
+void SprayComplexItem::removeObstaclePolygon(int index)
+{
+    if (index >= 0 && index < _obstaclePolygonsModel->count()) {
+        QObject* obj = _obstaclePolygonsModel->removeAt(index);
+        if (obj) {
+            obj->deleteLater();
+        }
+        setDirty(true);
+    }
+}
+
+QVariantList SprayComplexItem::obstacleBufferPolygons(void) const
+{
+    QVariantList result;
+    for (const QList<QGeoCoordinate>& poly : _obstacleBufferPolygons) {
+        QVariantList path;
+        for (const QGeoCoordinate& c : poly) {
+            path.append(QVariant::fromValue(c));
+        }
+        result.append(QVariant::fromValue(path));
+    }
+    return result;
+}
+
+void SprayComplexItem::setGridEntryLocation(int loc)
+{
+    int v = qBound(0, loc, 3);
+    if (_entryPoint != v) {
+        _entryPoint = v;
+        emit gridEntryLocationChanged();
+        _rebuildTransects();
+        setDirty(true);
+    }
+}
+
+void SprayComplexItem::rotateEntryPoint(void)
+{
+    _entryPoint = (_entryPoint + 1) % 4;
+    emit gridEntryLocationChanged();
+    _rebuildTransects();
+    setDirty(true);
+}
+
+void SprayComplexItem::_reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect)
+{
+    if (transects.isEmpty()) return;
+    for (int i = 0, j = transects.count() - 1; i < j; i++, j--) {
+        transects.swapItemsAt(i, j);
+        segmentStartsPerTransect.swapItemsAt(i, j);
+    }
+}
+
+void SprayComplexItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect)
+{
+    for (int i = 0; i < transects.count(); i++) {
+        QList<QGeoCoordinate>& t = transects[i];
+        QList<int>& seg = segmentStartsPerTransect[i];
+        int n = t.count();
+        for (int a = 0, b = n - 1; a < b; a++, b--) {
+            t.swapItemsAt(a, b);
+        }
+        QList<int> newSeg;
+        for (int k = seg.count() - 1; k >= 0; k--) {
+            newSeg << (n - 1 - seg[k]);
+        }
+        seg = newSeg;
+    }
+}
+
+void SprayComplexItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect)
+{
+    if (transects.isEmpty()) return;
+    bool reversePoints = (_entryPoint == EntryLocationBottomLeft || _entryPoint == EntryLocationBottomRight);
+    bool reverseTransects = (_entryPoint == EntryLocationTopRight || _entryPoint == EntryLocationBottomRight);
+    if (reversePoints) {
+        _reverseInternalTransectPoints(transects, segmentStartsPerTransect);
+    }
+    if (reverseTransects) {
+        _reverseTransectOrder(transects, segmentStartsPerTransect);
+    }
+}
+
 
 void SprayComplexItem::applyNewAltitude(double newAltitude)
 {
@@ -122,8 +311,21 @@ void SprayComplexItem::save(QJsonArray&  missionItems)
     saveObject[sprayWidthName] =          _sprayWidthFact.rawValue().toDouble();
     saveObject[gridAngleName] =           _gridAngleFact.rawValue().toDouble();
     saveObject[turnAroundDistanceName] =  _turnAroundDistanceFact.rawValue().toDouble();
+    saveObject[obstacleBufferName] =      _obstacleBufferFact.rawValue().toDouble();
+    saveObject[gridEntryLocationName] =   _entryPoint;
 
     _sprayAreaPolygon.saveToJson(saveObject);
+
+    QJsonArray obstaclesArray;
+    for (int i = 0; i < _obstaclePolygonsModel->count(); i++) {
+        QGCMapPolygon* obst = _obstaclePolygonsModel->value<QGCMapPolygon*>(i);
+        if (obst && obst->count() >= 3) {
+            QJsonObject obstObj;
+            obst->saveToJson(obstObj);
+            obstaclesArray.append(obstObj);
+        }
+    }
+    saveObject[_jsonObstaclesKey] = obstaclesArray;
 
     missionItems.append(saveObject);
 }
@@ -166,6 +368,25 @@ bool SprayComplexItem::load(const QJsonObject& complexObject, int sequenceNumber
     _sprayWidthFact.setRawValue             (complexObject[sprayWidthName].toDouble());
     _gridAngleFact.setRawValue              (complexObject.contains(gridAngleName) ? complexObject[gridAngleName].toDouble() : 0.0);
     _turnAroundDistanceFact.setRawValue     (complexObject.contains(turnAroundDistanceName) ? complexObject[turnAroundDistanceName].toDouble() : 30.0);
+    _obstacleBufferFact.setRawValue         (complexObject.contains(obstacleBufferName) ? complexObject[obstacleBufferName].toDouble() : 1.5);
+    _entryPoint = complexObject.contains(gridEntryLocationName) ? qBound(0, complexObject[gridEntryLocationName].toInt(), 3) : EntryLocationTopLeft;
+
+    _obstaclePolygonsModel->clearAndDeleteContents();
+    if (complexObject.contains(_jsonObstaclesKey) && complexObject[_jsonObstaclesKey].isArray()) {
+        QJsonArray arr = complexObject[_jsonObstaclesKey].toArray();
+        for (const QJsonValueRef& val : arr) {
+            if (val.isObject()) {
+                QGCMapPolygon* obst = new QGCMapPolygon(this);
+                QString err;
+                if (obst->loadFromJson(val.toObject(), false, err)) {
+                    connect(obst, &QGCMapPolygon::pathChanged, this, &SprayComplexItem::_rebuildTransects);
+                    _obstaclePolygonsModel->append(obst);
+                } else {
+                    obst->deleteLater();
+                }
+            }
+        }
+    }
 
     if (!_sprayAreaPolygon.loadFromJson(complexObject, true /* required */, errorString)) {
         _sprayAreaPolygon.clear();
@@ -188,11 +409,9 @@ int SprayComplexItem::lastSequenceNumber(void) const
     if (_visualTransectPoints.isEmpty()) {
         return _sequenceNumber + 2;  // takeoff + RTL
     }
-    bool hasTurn = _hasTurnaround();
-    int pointsPerTransect = hasTurn ? 4 : 2;
-    int transectCount = _visualTransectPoints.count() / pointsPerTransect;
-    int itemsPerTransect = hasTurn ? 6 : 4;  // waypoints + DO_SPRAYER on/off
-    return _sequenceNumber + 2 + transectCount * itemsPerTransect;  // 2 = takeoff + RTL
+    int nWaypoints = _visualTransectPoints.count();
+    int nSpraySegments = _spraySegmentStartIndices.count();
+    return _sequenceNumber + 2 + nWaypoints + nSpraySegments * 2;  // 2 = takeoff + RTL; each segment adds spray on + spray off
 }
 
 double SprayComplexItem::minAMSLAltitude(void) const
@@ -353,60 +572,160 @@ void SprayComplexItem::_rebuildTransects(void)
     QList<QLineF> resultLines;
     _adjustLineDirection(intersectLines, resultLines);
 
-    // Convert from NED to Geo
-    QList<QList<QGeoCoordinate>> transects;
-    for (const QLineF& line : resultLines) {
-        QGeoCoordinate          coord;
-        QList<QGeoCoordinate>   transect;
-
-        QGCGeo::convertNedToGeo(line.p1().y(), line.p1().x(), 0, tangentOrigin, coord);
-        transect.append(coord);
-        QGCGeo::convertNedToGeo(line.p2().y(), line.p2().x(), 0, tangentOrigin, coord);
-        transect.append(coord);
-
-        transects.append(transect);
+    // Build obstacle polygons in NED (original, for boundary paths)
+    QList<QPolygonF> obstaclesNed;
+    for (int o = 0; o < _obstaclePolygonsModel->count(); o++) {
+        QGCMapPolygon* obst = _obstaclePolygonsModel->value<QGCMapPolygon*>(o);
+        if (!obst || obst->count() < 3) continue;
+        QPolygonF obstPoly;
+        for (int i = 0; i < obst->count(); i++) {
+            double y, x, down;
+            QGeoCoordinate c = obst->pathModel().value<QGCQGeoCoordinate*>(i)->coordinate();
+            QGCGeo::convertGeoToNed(c, tangentOrigin, y, x, down);
+            obstPoly << QPointF(x, y);
+        }
+        obstPoly << obstPoly.first();
+        obstaclesNed.append(obstPoly);
     }
 
-     // Adjust to lawnmower pattern
+    // Allowed area for clipping: field minus (union of obstacles inflated by buffer), via Clipper2
+    QPolygonF allowedOuter;
+    QList<QPolygonF> allowedHoles;
+    _obstacleBufferPolygons.clear();
+    if (!obstaclesNed.isEmpty()) {
+        qreal margin = qMax(0.0, _obstacleBufferFact.rawValue().toDouble());
+        const int decimalPrec = 2;
+        Clipper2Lib::PathD fieldPath = polygonToPathD(polygon);
+        ensurePositiveArea(fieldPath);
+        Clipper2Lib::PathsD expandedObstacles;
+        for (const QPolygonF& obst : obstaclesNed) {
+            Clipper2Lib::PathD p = polygonToPathD(obst);
+            if (p.size() < 3) continue;
+            Clipper2Lib::PathsD inflated = Clipper2Lib::InflatePaths(Clipper2Lib::PathsD{p}, margin,
+                Clipper2Lib::JoinType::Round, Clipper2Lib::EndType::Polygon, 2.0, decimalPrec);
+            for (auto path : inflated) {
+                ensurePositiveArea(path);
+                expandedObstacles.push_back(path);
+            }
+        }
+        // Convert expanded (buffered) obstacles to geo for map display
+        for (const Clipper2Lib::PathD& path : expandedObstacles) {
+            if (path.size() < 3) continue;
+            QList<QGeoCoordinate> poly;
+            for (size_t i = 0; i < path.size(); i++) {
+                QGeoCoordinate coord;
+                QGCGeo::convertNedToGeo(path[i].y, path[i].x, 0, tangentOrigin, coord);
+                poly.append(coord);
+            }
+            _obstacleBufferPolygons.append(poly);
+        }
+        Clipper2Lib::PathsD unionObstacles;
+        if (!expandedObstacles.empty()) {
+            unionObstacles.push_back(expandedObstacles[0]);
+            for (size_t i = 1; i < expandedObstacles.size(); i++) {
+                Clipper2Lib::PathsD other(1, expandedObstacles[i]);
+                unionObstacles = Clipper2Lib::Union(unionObstacles, other, Clipper2Lib::FillRule::NonZero, decimalPrec);
+            }
+        }
+        Clipper2Lib::PathsD fieldPaths(1, fieldPath);
+        Clipper2Lib::PathsD allowedPaths = Clipper2Lib::Difference(fieldPaths, unionObstacles, Clipper2Lib::FillRule::NonZero, decimalPrec);
+        allowedPathsToOuterAndHoles(allowedPaths, allowedOuter, allowedHoles);
+    }
+    emit obstacleBufferPolygonsChanged();
+
+    // Convert from NED to Geo; if obstacles exist, clip each line with Clipper2-built allowed area and add boundary paths
+    QList<QList<QGeoCoordinate>> transects;
+    QList<QList<int>> segmentStartsPerTransect;
+    for (const QLineF& line : resultLines) {
+        QList<QGeoCoordinate> transect;
+        QList<int> segStarts;
+        if (obstaclesNed.isEmpty()) {
+            QGeoCoordinate coord;
+            QGCGeo::convertNedToGeo(line.p1().y(), line.p1().x(), 0, tangentOrigin, coord);
+            transect.append(coord);
+            QGCGeo::convertNedToGeo(line.p2().y(), line.p2().x(), 0, tangentOrigin, coord);
+            transect.append(coord);
+            segStarts << 0;
+        } else {
+            QList<QLineF> segments = _clipLineByAllowedArea(line, allowedOuter, allowedHoles);
+            if (segments.isEmpty()) continue;
+            int pointIndex = 0;
+            for (int s = 0; s < segments.size(); s++) {
+                segStarts << pointIndex;
+                QGeoCoordinate c1, c2;
+                QGCGeo::convertNedToGeo(segments[s].p1().y(), segments[s].p1().x(), 0, tangentOrigin, c1);
+                QGCGeo::convertNedToGeo(segments[s].p2().y(), segments[s].p2().x(), 0, tangentOrigin, c2);
+                transect.append(c1);
+                transect.append(c2);
+                pointIndex += 2;
+                if (s + 1 < segments.size()) {
+                    int obstIdx;
+                    QPointF cross1, cross2;
+                    if (_findObstacleCrossing(segments[s].p2(), segments[s + 1].p1(), obstaclesNed, obstIdx, cross1, cross2)) {
+                        QList<QPointF> boundary = _boundaryPathBetweenPoints(cross1, cross2, obstaclesNed[obstIdx], segments[s + 1].p1());
+                        for (const QPointF& pt : boundary) {
+                            QGeoCoordinate gc;
+                            QGCGeo::convertNedToGeo(pt.y(), pt.x(), 0, tangentOrigin, gc);
+                            transect.append(gc);
+                            pointIndex++;
+                        }
+                    }
+                }
+            }
+        }
+        transects.append(transect);
+        segmentStartsPerTransect.append(segStarts);
+    }
+
+     // Adjust to lawnmower pattern (reverse every other transect and remap segment starts)
     bool reverseVertices = false;
-    for (int i=0; i<transects.count(); i++) {
-        // We must reverse the vertices for every other transect in order to make a lawnmower pattern
-        QList<QGeoCoordinate> transectVertices = transects[i];
+    for (int i = 0; i < transects.count(); i++) {
+        QList<QGeoCoordinate>& transectVertices = transects[i];
+        QList<int>& segStarts = segmentStartsPerTransect[i];
         if (reverseVertices) {
             reverseVertices = false;
             QList<QGeoCoordinate> reversedVertices;
-            for (int j=transectVertices.count()-1; j>=0; j--) {
+            for (int j = transectVertices.count() - 1; j >= 0; j--) {
                 reversedVertices.append(transectVertices[j]);
             }
             transectVertices = reversedVertices;
+            QList<int> newStarts;
+            for (int k = segStarts.count() - 1; k >= 0; k--) {
+                newStarts << (transectVertices.count() - 1 - segStarts[k]);
+            }
+            segStarts = newStarts;
         } else {
             reverseVertices = true;
         }
-        transects[i] = transectVertices;
     }
+
+    // Apply entry point (transect direction) like Survey
+    _adjustTransectsToEntryPointLocation(transects, segmentStartsPerTransect);
 
     // Optionally add turnaround points at each transect end (for large agro drones)
     double turnDist = _turnAroundDistance();
     double sprayAlt = _altitudeFact.rawValue().toDouble();
     if (turnDist > 0) {
         QList<QList<QGeoCoordinate>> transectsWithTurnaround;
-        for (const QList<QGeoCoordinate>& transect : transects) {
+        for (int i = 0; i < transects.count(); i++) {
+            const QList<QGeoCoordinate>& transect = transects[i];
             QList<QGeoCoordinate> extended;
             double azimuth = transect[0].azimuthTo(transect[1]);
             QGeoCoordinate turnStart = transect[0].atDistanceAndAzimuth(-turnDist, azimuth);
             turnStart.setAltitude(sprayAlt);
             extended.append(turnStart);
-            QGeoCoordinate entry = transect[0];
-            entry.setAltitude(sprayAlt);
-            extended.append(entry);
-            QGeoCoordinate exit = transect[1];
-            exit.setAltitude(sprayAlt);
-            extended.append(exit);
-            double azimuthBack = transect[1].azimuthTo(transect[0]);
-            QGeoCoordinate turnEnd = transect[1].atDistanceAndAzimuth(-turnDist, azimuthBack);
+            for (const QGeoCoordinate& c : transect) {
+                QGeoCoordinate copy = c;
+                copy.setAltitude(sprayAlt);
+                extended.append(copy);
+            }
+            double azimuthBack = transect.last().azimuthTo(transect[transect.count() - 2]);
+            QGeoCoordinate turnEnd = transect.last().atDistanceAndAzimuth(-turnDist, azimuthBack);
             turnEnd.setAltitude(sprayAlt);
             extended.append(turnEnd);
             transectsWithTurnaround.append(extended);
+            for (int& idx : segmentStartsPerTransect[i])
+                idx += 1;
         }
         transects = transectsWithTurnaround;
     } else {
@@ -417,27 +736,28 @@ void SprayComplexItem::_rebuildTransects(void)
         }
     }
 
-    // Calc bounding cube
-    double north = 0.0;
-    double south = 180.0;
-    double east  = 0.0;
-    double west  = 360.0;
-    double bottom = 100000.;
-    double top = 0.;
-    // Generate the visuals transect representation
+    // Flatten to _visualTransectPoints and _spraySegmentStartIndices
     _visualTransectPoints.clear();
-    for (const QList<QGeoCoordinate>& transect : transects) {
-        for (const QGeoCoordinate& coord : transect) {
+    _spraySegmentStartIndices.clear();
+    double north = 0.0, south = 180.0, east = 0.0, west = 360.0, bottom = 100000., top = 0.;
+    for (int i = 0; i < transects.count(); i++) {
+        const QList<QGeoCoordinate>& transect = transects[i];
+        const QList<int>& segStarts = segmentStartsPerTransect[i];
+        for (int j = 0; j < transect.count(); j++) {
+            QGeoCoordinate coord = transect[j];
+            if (qIsNaN(coord.altitude()))
+                coord.setAltitude(sprayAlt);
+            if (segStarts.contains(j))
+                _spraySegmentStartIndices.append(_visualTransectPoints.count());
             _visualTransectPoints.append(coord);
-            double lat = coord.latitude()  + 90.0;
-            double lon = coord.longitude() + 180.0;
-            north   = fmax(north, lat);
-            south   = fmin(south, lat);
-            east    = fmax(east,  lon);
-            west    = fmin(west,  lon);
+            double lat = coord.latitude() + 90.0, lon = coord.longitude() + 180.0;
+            north = qMax(north, lat);
+            south = qMin(south, lat);
+            east = qMax(east, lon);
+            west = qMin(west, lon);
             if (!qIsNaN(coord.altitude())) {
-                bottom  = fmin(bottom, coord.altitude());
-                top     = fmax(top, coord.altitude());
+                bottom = qMin(bottom, coord.altitude());
+                top = qMax(top, coord.altitude());
             }
         }
     }
@@ -523,6 +843,149 @@ double SprayComplexItem::_turnAroundDistance(void) const
     return _turnAroundDistanceFact.rawValue().toDouble();
 }
 
+QList<QLineF> SprayComplexItem::_clipLineByAllowedArea(const QLineF& line, const QPolygonF& outer, const QList<QPolygonF>& holes) const
+{
+    QList<QLineF> result;
+    if (outer.isEmpty()) return result;
+    const qreal len = line.length();
+    if (len < 1e-9) return result;
+
+    QList<qreal> tValues;
+    tValues << 0.0 << 1.0;
+
+    auto addIntersections = [&line, len, &tValues](const QPolygonF& poly) {
+        for (int i = 0; i < poly.count() - 1; i++) {
+            QPointF isect;
+            QLineF edge(poly[i], poly[i + 1]);
+            if (line.intersects(edge, &isect) == QLineF::BoundedIntersection) {
+                qreal t = QLineF(line.p1(), isect).length() / len;
+                if (t >= -1e-9 && t <= 1.0 + 1e-9) {
+                    t = qBound(0.0, t, 1.0);
+                    bool found = false;
+                    for (qreal tv : tValues) { if (qAbs(tv - t) < 1e-6) { found = true; break; } }
+                    if (!found) tValues.append(t);
+                }
+            }
+        }
+    };
+
+    addIntersections(outer);
+    for (const QPolygonF& hole : holes)
+        addIntersections(hole);
+
+    std::sort(tValues.begin(), tValues.end());
+    const qreal eps = 1e-6;
+    for (int i = 0; i < tValues.size() - 1; i++) {
+        if (tValues[i + 1] - tValues[i] < eps)
+            continue;
+        qreal tMid = (tValues[i] + tValues[i + 1]) * 0.5;
+        QPointF mid = line.pointAt(qBound(0.0, tMid, 1.0));
+        if (!outer.containsPoint(mid, Qt::OddEvenFill))
+            continue;
+        bool insideHole = false;
+        for (const QPolygonF& hole : holes) {
+            if (hole.count() >= 3 && hole.containsPoint(mid, Qt::OddEvenFill)) {
+                insideHole = true;
+                break;
+            }
+        }
+        if (!insideHole)
+            result.append(QLineF(line.pointAt(tValues[i]), line.pointAt(tValues[i + 1])));
+    }
+    return result;
+}
+
+bool SprayComplexItem::_findObstacleCrossing(const QPointF& p1, const QPointF& p2, const QList<QPolygonF>& obstaclesNed, int& obstacleIndex, QPointF& cross1, QPointF& cross2) const
+{
+    qreal segLen = QLineF(p1, p2).length();
+    qreal extend = (segLen < 1e-6) ? 2000.0 : 2000.0;
+    QPointF dir = (segLen > 1e-6) ? (p2 - p1) / segLen : QPointF(1, 0);
+    QPointF a = p1 - dir * extend;
+    QPointF b = p2 + dir * extend;
+    QLineF longLine(a, b);
+    for (int oi = 0; oi < obstaclesNed.size(); oi++) {
+        const QPolygonF& poly = obstaclesNed[oi];
+        QList<QPointF> hits;
+        for (int i = 0; i < poly.count() - 1; i++) {
+            QPointF isect;
+            if (longLine.intersects(QLineF(poly[i], poly[i + 1]), &isect) == QLineF::BoundedIntersection) {
+                bool dup = false;
+                for (const QPointF& h : hits) {
+                    if (QLineF(h, isect).length() < 1e-4) { dup = true; break; }
+                }
+                if (!dup) hits.append(isect);
+            }
+        }
+        if (hits.size() >= 2) {
+            std::sort(hits.begin(), hits.end(), [&p1](const QPointF& u, const QPointF& v) {
+                return QLineF(p1, u).length() < QLineF(p1, v).length();
+            });
+            obstacleIndex = oi;
+            cross1 = hits.first();
+            cross2 = hits.last();
+            return true;
+        }
+    }
+    return false;
+}
+
+QList<QPointF> SprayComplexItem::_boundaryPathBetweenPoints(const QPointF& p1, const QPointF& p2, const QPolygonF& polygon, const QPointF& targetHint) const
+{
+    QList<QPointF> path;
+    const int n = polygon.count() - 1;
+    if (n < 2) return path;
+    auto distToPoint = [](const QPointF& a, const QPointF& b) { return QLineF(a, b).length(); };
+    // Find the edge that contains p1 (cross1) and the edge that contains p2 (cross2).
+    // p1/p2 lie on the obstacle boundary (line-polygon intersection), so they lie on some edge.
+    int e1 = -1, e2 = -1;
+    const qreal eps = 1e-4;
+    for (int i = 0; i < n; i++) {
+        QLineF edge(polygon[i], polygon[i + 1]);
+        qreal len = edge.length();
+        if (len < 1e-9) continue;
+        // Point on segment if dist(a,p)+dist(p,b) <= dist(a,b)+tolerance
+        if (QLineF(polygon[i], p1).length() + QLineF(p1, polygon[i + 1]).length() <= len + eps)
+            e1 = i;
+        if (QLineF(polygon[i], p2).length() + QLineF(p2, polygon[i + 1]).length() <= len + eps)
+            e2 = i;
+    }
+    if (e1 < 0 || e2 < 0) return path;
+    // Path must be p1 -> [vertices along arc] -> p2 so we don't jump to obstacle vertices.
+    path.append(p1);
+    if (e1 == e2) {
+        // Both crossings on the same edge: no vertices between.
+        path.append(p2);
+        return path;
+    }
+    // Two arcs: forward from e1 (via e1+1, e1+2, ... to e2) or backward (via e1, e1-1, ... to e2+1).
+    // Choose the one whose first step goes toward targetHint.
+    const int nextForward = (e1 + 1) % n;
+    const int nextBackward = e1;
+    qreal distForward = distToPoint(polygon[nextForward], targetHint);
+    qreal distBackward = distToPoint(polygon[nextBackward], targetHint);
+    if (distForward <= distBackward) {
+        // Forward: add vertices (e1+1)..e2.
+        int idx = (e1 + 1) % n;
+        const int endIdx = e2;
+        while (true) {
+            path.append(polygon[idx]);
+            if (idx == endIdx) break;
+            idx = (idx + 1) % n;
+        }
+    } else {
+        // Backward: add vertices e1, e1-1, ..., e2+1.
+        int idx = e1;
+        const int endIdx = (e2 + 1) % n;
+        while (true) {
+            path.append(polygon[idx]);
+            if (idx == endIdx) break;
+            idx = (idx - 1 + n) % n;
+        }
+    }
+    path.append(p2);
+    return path;
+}
+
 /// Adjust the line segments such that they are all going the same direction with respect to going from P1->P2
 void SprayComplexItem::_adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines)
 {
@@ -578,74 +1041,41 @@ void SprayComplexItem::_updateFlightPathSegmentsDontCallDirectly(void)
 
 void SprayComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
-    int                         seqNum      = _sequenceNumber;
-    MAV_FRAME                   mavFrame    = MAV_FRAME_GLOBAL_TERRAIN_ALT;
-    double                      alt         = _altitudeFact.rawValue().toDouble();
-    bool                        hasTurn     = _hasTurnaround();
-    int                         pointsPerTransect = hasTurn ? 4 : 2;
+    int         seqNum   = _sequenceNumber;
+    MAV_FRAME   mavFrame = MAV_FRAME_GLOBAL_TERRAIN_ALT;
+    double      alt      = _altitudeFact.rawValue().toDouble();
+    QSet<int> segmentStarts;
+    for (int s : _spraySegmentStartIndices)
+        segmentStarts.insert(s);
 
     MissionItem* item = nullptr;
-
     QGeoCoordinate firstCoord = _visualTransectPoints.isEmpty() ? QGeoCoordinate() : _visualTransectPoints.first();
-    item = new MissionItem(seqNum++,
-                           MAV_CMD_NAV_TAKEOFF,
-                           mavFrame,
-                           0,0,0,0,
-                           firstCoord.latitude(),
-                           firstCoord.longitude(),
-                           alt,
-                           true,
-                           false,
-                           missionItemParent);
+    item = new MissionItem(seqNum++, MAV_CMD_NAV_TAKEOFF, mavFrame,
+                           0, 0, 0, 0, firstCoord.latitude(), firstCoord.longitude(), alt,
+                           true, false, missionItemParent);
     items.append(item);
 
-    for (int coordIndex = 0; coordIndex + 1 < _visualTransectPoints.count(); coordIndex += pointsPerTransect) {
-        if (hasTurn) {
-            // Points: turnaroundStart, entry, exit, turnaroundEnd
-            for (int j = 0; j < 4; j++) {
-                const QGeoCoordinate& coord = _visualTransectPoints[coordIndex + j];
-                item = new MissionItem(seqNum++, MAV_CMD_NAV_WAYPOINT, mavFrame,
-                                      0, 0, 0, std::numeric_limits<double>::quiet_NaN(),
-                                      coord.latitude(), coord.longitude(), alt,
-                                      true, false, missionItemParent);
-                items.append(item);
-                if (j == 1) {
-                    item = new MissionItem(seqNum++, MAV_CMD_DO_SPRAYER, mavFrame,
-                                          1, 0, 0, 0, 0, 0, 0, true, false, missionItemParent);
-                    items.append(item);
-                } else if (j == 2) {
-                    item = new MissionItem(seqNum++, MAV_CMD_DO_SPRAYER, mavFrame,
-                                          0, 0, 0, 0, 0, 0, 0, true, false, missionItemParent);
-                    items.append(item);
-                }
-            }
-        } else {
-            QGeoCoordinate sprayEntryCoord = _visualTransectPoints[coordIndex];
-            QGeoCoordinate sprayExitCoord = _visualTransectPoints[coordIndex + 1];
-            item = new MissionItem(seqNum++, MAV_CMD_NAV_WAYPOINT, mavFrame,
-                                  0, 0, 0, std::numeric_limits<double>::quiet_NaN(),
-                                  sprayEntryCoord.latitude(), sprayEntryCoord.longitude(), alt,
-                                  true, false, missionItemParent);
-            items.append(item);
+    for (int i = 0; i < _visualTransectPoints.count(); i++) {
+        const QGeoCoordinate& coord = _visualTransectPoints[i];
+        item = new MissionItem(seqNum++, MAV_CMD_NAV_WAYPOINT, mavFrame,
+                               0, 0, 0, std::numeric_limits<double>::quiet_NaN(),
+                               coord.latitude(), coord.longitude(), alt,
+                               true, false, missionItemParent);
+        items.append(item);
+        if (segmentStarts.contains(i)) {
             item = new MissionItem(seqNum++, MAV_CMD_DO_SPRAYER, mavFrame,
-                                  1, 0, 0, 0, 0, 0, 0, true, false, missionItemParent);
+                                   1, 0, 0, 0, 0, 0, 0, true, false, missionItemParent);
             items.append(item);
-            item = new MissionItem(seqNum++, MAV_CMD_NAV_WAYPOINT, mavFrame,
-                                  0, 0, 0, std::numeric_limits<double>::quiet_NaN(),
-                                  sprayExitCoord.latitude(), sprayExitCoord.longitude(), alt,
-                                  true, false, missionItemParent);
-            items.append(item);
+        }
+        if (i > 0 && segmentStarts.contains(i - 1)) {
             item = new MissionItem(seqNum++, MAV_CMD_DO_SPRAYER, mavFrame,
-                                  0, 0, 0, 0, 0, 0, 0, true, false, missionItemParent);
+                                   0, 0, 0, 0, 0, 0, 0, true, false, missionItemParent);
             items.append(item);
         }
     }
 
-    item = new MissionItem(seqNum++,
-                           MAV_CMD_NAV_RETURN_TO_LAUNCH,
-                           mavFrame,
-                           0, 0, 0, 0, 0, 0, 0,
-                           true, false, missionItemParent);
+    item = new MissionItem(seqNum++, MAV_CMD_NAV_RETURN_TO_LAUNCH, mavFrame,
+                           0, 0, 0, 0, 0, 0, 0, true, false, missionItemParent);
     items.append(item);
 }
 

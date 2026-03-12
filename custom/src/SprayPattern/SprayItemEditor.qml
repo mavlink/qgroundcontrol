@@ -29,6 +29,9 @@ Rectangle {
 
     property var    _missionItem:               missionItem
     property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
+    readonly property string _entryPointLabel:   missionItem.gridEntryLocation === 0 ? qsTr("Top Left") :
+                                                missionItem.gridEntryLocation === 1 ? qsTr("Top Right") :
+                                                missionItem.gridEntryLocation === 2 ? qsTr("Bottom Left") : qsTr("Bottom Right")
     property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 10.5
     property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     property string _doneAdjusting:             qsTr("Done")
@@ -129,6 +132,54 @@ Rectangle {
                 FactTextField {
                     fact:               missionItem.turnAroundDistance
                     Layout.fillWidth:   true
+                }
+
+                QGCLabel {
+                    text:       qsTr("Obstacle buffer")
+                }
+                FactTextField {
+                    fact:               missionItem.obstacleBuffer
+                    Layout.fillWidth:   true
+                }
+
+                QGCLabel {
+                    text:       qsTr("Transect start")
+                }
+                QGCButton {
+                    Layout.fillWidth: true
+                    text:       _entryPointLabel
+                    onClicked:  missionItem.rotateEntryPoint()
+                }
+            }
+
+            SectionHeader {
+                Layout.fillWidth:   true
+                text:               qsTr("Obstacles (no-fly zones)")
+            }
+
+            QGCLabel {
+                Layout.fillWidth:   true
+                wrapMode:           Text.WordWrap
+                text:               qsTr("Add polygons inside the field to avoid (trees, buildings). The drone will fly around them.")
+            }
+
+            QGCButton {
+                text:               qsTr("Add obstacle")
+                onClicked:          missionItem.addObstaclePolygon()
+            }
+
+            Repeater {
+                model: missionItem.obstaclePolygons ? missionItem.obstaclePolygons.count : 0
+                delegate: RowLayout {
+                    Layout.fillWidth: true
+                    QGCLabel {
+                        text: qsTr("Obstacle %1").arg(index + 1)
+                    }
+                    Item { Layout.fillWidth: true }
+                    QGCButton {
+                        text: qsTr("Remove")
+                        onClicked: missionItem.removeObstaclePolygon(index)
+                    }
                 }
             }
         }
