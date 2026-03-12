@@ -1,0 +1,35 @@
+module QGroundControl.AutoPilotPlugins.APM
+typeinfo AutoPilotPluginsAPMModule.qmltypes
+prefer :/qml/QGroundControl/AutoPilotPlugins/APM/
+APMAirframeComponent 1.0 APMAirframeComponent.qml
+APMAirframeComponentSummary 1.0 APMAirframeComponentSummary.qml
+APMFlightModesComponent 1.0 APMFlightModesComponent.qml
+APMFlightModesComponentSummary 1.0 APMFlightModesComponentSummary.qml
+APMFollowComponent 1.0 APMFollowComponent.qml
+APMFollowComponentSummary 1.0 APMFollowComponentSummary.qml
+APMGimbalComponent 1.0 APMGimbalComponent.qml
+APMGimbalInstance 1.0 APMGimbalInstance.qml
+APMGimbalParams 1.0 APMGimbalParams.qml
+APMHeliComponent 1.0 APMHeliComponent.qml
+APMLightsComponent 1.0 APMLightsComponent.qml
+APMLightsComponentSummary 1.0 APMLightsComponentSummary.qml
+APMMotorComponent 1.0 APMMotorComponent.qml
+APMNotSupported 1.0 APMNotSupported.qml
+APMPowerComponent 1.0 APMPowerComponent.qml
+APMPowerComponentSummary 1.0 APMPowerComponentSummary.qml
+APMRadioComponentSummary 1.0 APMRadioComponentSummary.qml
+APMRemoteSupportComponent 1.0 APMRemoteSupportComponent.qml
+APMSafetyComponent 1.0 APMSafetyComponent.qml
+APMSafetyComponentSub 1.0 APMSafetyComponentSub.qml
+APMSafetyComponentSummary 1.0 APMSafetyComponentSummary.qml
+APMSafetyComponentSummarySub 1.0 APMSafetyComponentSummarySub.qml
+APMSensorsComponent 1.0 APMSensorsComponent.qml
+APMSensorsComponentSummary 1.0 APMSensorsComponentSummary.qml
+APMSensorIdDecoder 1.0 APMSensorIdDecoder.qml
+APMSensorParams 1.0 APMSensorParams.qml
+APMSubFrameComponent 1.0 APMSubFrameComponent.qml
+APMSubFrameComponentSummary 1.0 APMSubFrameComponentSummary.qml
+APMSubMotorComponent 1.0 APMSubMotorComponent.qml
+APMTuningComponentCopter 1.0 APMTuningComponentCopter.qml
+APMTuningComponentSub 1.0 APMTuningComponentSub.qml
+

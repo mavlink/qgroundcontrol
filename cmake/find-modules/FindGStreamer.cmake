@@ -505,13 +505,13 @@ if(GStreamer_USE_STATIC_LIBS)
     list(APPEND PKG_CONFIG_ARGN "--static")
 endif()
 
-find_package(PkgConfig REQUIRED QUIET)
+find_package(PkgConfig QUIET)
 
 list(PREPEND CMAKE_PREFIX_PATH ${GStreamer_ROOT_DIR})
 if(LINUX)
     pkg_check_modules(PC_GSTREAMER REQUIRED gstreamer-1.0>=${GStreamer_FIND_VERSION})
 else()
-    pkg_check_modules(PC_GSTREAMER REQUIRED gstreamer-1.0=${GStreamer_FIND_VERSION})
+    pkg_check_modules(PC_GSTREAMER  gstreamer-1.0=${GStreamer_FIND_VERSION})
 endif()
 set(GStreamer_VERSION "${PC_GSTREAMER_VERSION}")
 

@@ -1,0 +1,7 @@
+@echo off
+
+set PATH=C:\gstreamer\1.0\msvc_x86_64\bin;C:\Qt\6.10.2\msvc2022_64\bin;%PATH%
+set GST_PLUGIN_PATH=C:\gstreamer\1.0\msvc_x86_64\lib\gstreamer-1.0
+
+
+start "" "C:\Users\Henok\qgroundcontrol\build\Release\QGroundControl.exe"

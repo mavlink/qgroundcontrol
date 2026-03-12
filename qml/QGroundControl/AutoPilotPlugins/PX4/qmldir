@@ -1,0 +1,42 @@
+module QGroundControl.AutoPilotPlugins.PX4
+typeinfo AutoPilotPluginsPX4Module.qmltypes
+prefer :/qml/QGroundControl/AutoPilotPlugins/PX4/
+ActuatorComponent 1.0 ActuatorComponent.qml
+ActuatorFact 1.0 ActuatorFact.qml
+ActuatorSlider 1.0 ActuatorSlider.qml
+AirframeComponent 1.0 AirframeComponent.qml
+AirframeComponentSummary 1.0 AirframeComponentSummary.qml
+BatteryParams 1.0 BatteryParams.qml
+FlightModesComponentSummary 1.0 FlightModesComponentSummary.qml
+PowerComponent 1.0 PowerComponent.qml
+PowerComponentSummary 1.0 PowerComponentSummary.qml
+PX4FlightBehaviorCopter 1.0 PX4FlightBehaviorCopter.qml
+PX4FlightModes 1.0 PX4FlightModes.qml
+PX4RadioComponentSummary 1.0 PX4RadioComponentSummary.qml
+PX4SimpleFlightModes 1.0 PX4SimpleFlightModes.qml
+PX4TuningComponent 1.0 PX4TuningComponent.qml
+PX4TuningComponentCopter 1.0 PX4TuningComponentCopter.qml
+PX4TuningComponentCopterAll 1.0 PX4TuningComponentCopterAll.qml
+PX4TuningComponentCopterAttitude 1.0 PX4TuningComponentCopterAttitude.qml
+PX4TuningComponentCopterPosition 1.0 PX4TuningComponentCopterPosition.qml
+PX4TuningComponentCopterRate 1.0 PX4TuningComponentCopterRate.qml
+PX4TuningComponentCopterVelocity 1.0 PX4TuningComponentCopterVelocity.qml
+PX4TuningComponentPlane 1.0 PX4TuningComponentPlane.qml
+PX4TuningComponentPlaneAll 1.0 PX4TuningComponentPlaneAll.qml
+PX4TuningComponentPlaneAttitude 1.0 PX4TuningComponentPlaneAttitude.qml
+PX4TuningComponentPlaneRate 1.0 PX4TuningComponentPlaneRate.qml
+PX4TuningComponentPlaneTECS 1.0 PX4TuningComponentPlaneTECS.qml
+PX4TuningComponentSpacecraft 1.0 PX4TuningComponentSpacecraft.qml
+PX4TuningComponentSpacecraftAll 1.0 PX4TuningComponentSpacecraftAll.qml
+PX4TuningComponentSpacecraftAttitude 1.0 PX4TuningComponentSpacecraftAttitude.qml
+PX4TuningComponentSpacecraftPosition 1.0 PX4TuningComponentSpacecraftPosition.qml
+PX4TuningComponentSpacecraftRate 1.0 PX4TuningComponentSpacecraftRate.qml
+PX4TuningComponentSpacecraftVelocity 1.0 PX4TuningComponentSpacecraftVelocity.qml
+PX4TuningComponentVTOL 1.0 PX4TuningComponentVTOL.qml
+SafetyComponent 1.0 SafetyComponent.qml
+SafetyComponentSummary 1.0 SafetyComponentSummary.qml
+SensorsComponent 1.0 SensorsComponent.qml
+SensorsComponentSummary 1.0 SensorsComponentSummary.qml
+SensorsComponentSummaryFixedWing 1.0 SensorsComponentSummaryFixedWing.qml
+SensorsSetup 1.0 SensorsSetup.qml
+

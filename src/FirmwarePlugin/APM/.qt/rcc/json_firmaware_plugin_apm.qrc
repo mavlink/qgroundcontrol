@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="/json">
+    <file alias="APM-MavCmdInfoCommon.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APM-MavCmdInfoCommon.json</file>
+    <file alias="APM-MavCmdInfoFixedWing.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APM-MavCmdInfoFixedWing.json</file>
+    <file alias="APM-MavCmdInfoMultiRotor.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APM-MavCmdInfoMultiRotor.json</file>
+    <file alias="APM-MavCmdInfoRover.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APM-MavCmdInfoRover.json</file>
+    <file alias="APM-MavCmdInfoSub.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APM-MavCmdInfoSub.json</file>
+    <file alias="APM-MavCmdInfoVTOL.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APM-MavCmdInfoVTOL.json</file>
+    <file alias="meta_types/qt6apmfirmwaremodule_metatypes.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/meta_types/qt6apmfirmwaremodule_metatypes.json</file>
+  </qresource>
+</RCC>
+

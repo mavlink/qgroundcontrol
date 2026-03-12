@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/AnalyzeView/">
+    <file alias="AnalyzeView.qml">C:/Users/Henok/qgroundcontrol/src/AnalyzeView/AnalyzeView.qml</file>
+    <file alias="LogDownloadPage.qml">C:/Users/Henok/qgroundcontrol/src/AnalyzeView/LogDownloadPage.qml</file>
+    <file alias="MAVLinkConsolePage.qml">C:/Users/Henok/qgroundcontrol/src/AnalyzeView/MAVLinkConsolePage.qml</file>
+    <file alias="MAVLinkInspectorPage.qml">C:/Users/Henok/qgroundcontrol/src/AnalyzeView/MAVLinkInspectorPage.qml</file>
+    <file alias="VibrationPage.qml">C:/Users/Henok/qgroundcontrol/src/AnalyzeView/VibrationPage.qml</file>
+  </qresource>
+</RCC>
+

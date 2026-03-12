@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/FlightMap/">
+    <file alias="MapItems/qmldir">C:/Users/Henok/qgroundcontrol/qml/QGroundControl/FlightMap/MapItems/qmldir</file>
+    <file alias="Widgets/qmldir">C:/Users/Henok/qgroundcontrol/qml/QGroundControl/FlightMap/Widgets/qmldir</file>
+  </qresource>
+</RCC>
+

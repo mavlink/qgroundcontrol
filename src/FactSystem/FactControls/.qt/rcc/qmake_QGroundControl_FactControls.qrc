@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/FactControls">
+    <file alias="qmldir">C:/Users/Henok/qgroundcontrol/qml/QGroundControl/FactControls/qmldir</file>
+  </qresource>
+</RCC>
+

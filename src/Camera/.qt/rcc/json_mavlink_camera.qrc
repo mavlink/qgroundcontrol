@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/json">
+    <file alias="CameraMetaData.json">C:/Users/Henok/qgroundcontrol/src/Camera/CameraMetaData.json</file>
+  </qresource>
+</RCC>
+

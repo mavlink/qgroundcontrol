@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/json">
+    <file alias="APMFollowComponent.FactMetaData.json">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMFollowComponent.FactMetaData.json</file>
+  </qresource>
+</RCC>
+

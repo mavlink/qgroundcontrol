@@ -1,0 +1,11 @@
+module QGroundControl.AutoPilotPlugins.Common
+typeinfo AutoPilotPluginsCommonModule.qmltypes
+prefer :/qml/QGroundControl/AutoPilotPlugins/Common/
+ESP8266Component 1.0 ESP8266Component.qml
+ESP8266ComponentSummary 1.0 ESP8266ComponentSummary.qml
+ScriptingComponent 1.0 ScriptingComponent.qml
+JoystickComponentSummary 1.0 JoystickComponentSummary.qml
+MotorComponent 1.0 MotorComponent.qml
+RadioComponent 1.0 RadioComponent.qml
+SyslinkComponent 1.0 SyslinkComponent.qml
+

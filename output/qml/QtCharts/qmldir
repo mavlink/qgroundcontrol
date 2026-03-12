@@ -1,0 +1,10 @@
+module QtCharts
+linktarget Qt6::qtchartsqml2
+optional plugin qtchartsqml2plugin
+classname QtChartsQml2Plugin
+designersupported
+typeinfo plugins.qmltypes
+depends QtQuick
+prefer :/qt-project.org/imports/QtCharts/
+depends QtQuick
+

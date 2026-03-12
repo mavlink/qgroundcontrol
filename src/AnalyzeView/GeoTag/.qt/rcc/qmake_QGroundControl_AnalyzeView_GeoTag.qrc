@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/AnalyzeView/GeoTag">
+    <file alias="qmldir">C:/Users/Henok/qgroundcontrol/qml/QGroundControl/AnalyzeView/GeoTag/qmldir</file>
+  </qresource>
+</RCC>
+

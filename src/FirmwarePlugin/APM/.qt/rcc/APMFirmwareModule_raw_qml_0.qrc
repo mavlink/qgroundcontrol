@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/FirmwarePlugin/APM/">
+    <file alias="APMBatteryIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APMBatteryIndicator.qml</file>
+    <file alias="APMFlightModeIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APMFlightModeIndicator.qml</file>
+    <file alias="APMMainStatusIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APMMainStatusIndicator.qml</file>
+    <file alias="APMSupportForwardingIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/APMSupportForwardingIndicator.qml</file>
+  </qresource>
+</RCC>
+

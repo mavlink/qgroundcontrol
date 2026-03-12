@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/FirmwarePlugin/APM">
+    <file alias="qmldir">C:/Users/Henok/qgroundcontrol/qml/QGroundControl/FirmwarePlugin/APM/qmldir</file>
+  </qresource>
+</RCC>
+

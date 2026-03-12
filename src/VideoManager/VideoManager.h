@@ -132,7 +132,36 @@ private:
 };
 
 /*===========================================================================*/
+void VideoManager::startRecording(const QString &videoFile)
+{
+    if (_videoReceivers.isEmpty()) {
+        qCDebug(VideoManagerLog) << "Cannot record: No video receivers active.";
+        return;
+    }
 
+    // Tell every active receiver to start recording
+    // The VideoReceiver class handles the GStreamer 'tee' and 'filesink'
+    for (VideoReceiver* receiver : _videoReceivers) {
+        if (receiver) {
+            receiver->startRecording(videoFile);
+        }
+    }
+
+    _recording = true;
+    emit recordingChanged(_recording);
+}
+
+void VideoManager::stopRecording()
+{
+    for (VideoReceiver* receiver : _videoReceivers) {
+        if (receiver) {
+            receiver->stopRecording();
+        }
+    }
+
+    _recording = false;
+    emit recordingChanged(_recording);
+}
 class FinishVideoInitialization : public QRunnable
 {
 public:

@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/json/Vehicle">
+    <file alias="GimbalFact.json">C:/Users/Henok/qgroundcontrol/src/Gimbal/GimbalFact.json</file>
+  </qresource>
+</RCC>
+

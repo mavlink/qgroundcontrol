@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="/qml/QGroundControl/AutoPilotPlugins/PX4">C:/Users/Henok/qgroundcontrol/qml/QGroundControl/AutoPilotPlugins/PX4</file>
+
+  </qresource>
+</RCC>

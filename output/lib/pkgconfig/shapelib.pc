@@ -1,0 +1,12 @@
+prefix=C:/Users/Henok/qgroundcontrol/build/staging
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+datarootdir=${prefix}/share
+datadir=${datarootdir}
+includedir=${prefix}/include
+
+Name: shapelib
+Description: C API for processing ESRI Shapefiles
+Version: 1.6.2
+Libs: -L${libdir} -lshp
+Cflags: -I${includedir}

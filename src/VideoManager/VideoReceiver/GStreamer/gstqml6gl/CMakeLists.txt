@@ -29,7 +29,24 @@ if(MACOS)
         message(FATAL_ERROR "GStreamer.framework version (${GST_INSTALLED_FRAMEWORK_VERSION}) does not match required framework version (${GST_REQUIRED_FRAMEWORK_VERSION}). Please install the correct version using tools/setup/install_dependencies.py --platform macos")
     endif()
 else()
-    target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
+# Add these right before the target_link_libraries line
+target_include_directories(gstqml6gl PRIVATE
+    "C:/gstreamer/1.0/msvc_x86_64/include/gstreamer-1.0"
+    "C:/gstreamer/1.0/msvc_x86_64/lib/gstreamer-1.0/include"
+    "C:/gstreamer/1.0/msvc_x86_64/include/glib-2.0"
+    "C:/gstreamer/1.0/msvc_x86_64/lib/glib-2.0/include"
+    "C:/gstreamer/1.0/msvc_x86_64/include"
+    "C:/Qt/6.10.2/msvc2022_64/include/QtOpenGL"
+)
+target_link_libraries(gstqml6gl 
+    PRIVATE 
+    "opengl32.lib"
+    "C:/gstreamer/1.0/msvc_x86_64/lib/gstreamer-1.0.lib"
+    "C:/gstreamer/1.0/msvc_x86_64/lib/gstvideo-1.0.lib"
+    "C:/gstreamer/1.0/msvc_x86_64/lib/gstgl-1.0.lib"
+    "C:/gstreamer/1.0/msvc_x86_64/lib/glib-2.0.lib"
+    "C:/gstreamer/1.0/msvc_x86_64/lib/gobject-2.0.lib"
+)
 endif()
 
 # TODO: Skip custom build if system gstreamer1.0-qt6 plugin is found

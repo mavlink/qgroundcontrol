@@ -1,0 +1,7 @@
+module QGroundControl.FirmwarePlugin.PX4
+typeinfo PX4FirmwareModule.qmltypes
+prefer :/qml/QGroundControl/FirmwarePlugin/PX4/
+PX4BatteryIndicator 1.0 PX4BatteryIndicator.qml
+PX4FlightModeIndicator 1.0 PX4FlightModeIndicator.qml
+PX4MainStatusIndicator 1.0 PX4MainStatusIndicator.qml
+

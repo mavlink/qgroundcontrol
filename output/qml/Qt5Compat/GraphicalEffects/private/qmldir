@@ -1,0 +1,22 @@
+module Qt5Compat.GraphicalEffects.private
+linktarget Qt6::qtgraphicaleffectsprivate
+optional plugin qtgraphicaleffectsprivateplugin
+classname QtGraphicalEffectsPrivatePlugin
+typeinfo plugins.qmltypes
+prefer :/qt-project.org/imports/Qt5Compat/GraphicalEffects/private/
+DropShadowBase 6.0 DropShadowBase.qml
+DropShadowBase 1.0 DropShadowBase.qml
+FastGlow 6.0 FastGlow.qml
+FastGlow 1.0 FastGlow.qml
+FastInnerShadow 6.0 FastInnerShadow.qml
+FastInnerShadow 1.0 FastInnerShadow.qml
+GaussianDirectionalBlur 6.0 GaussianDirectionalBlur.qml
+GaussianDirectionalBlur 1.0 GaussianDirectionalBlur.qml
+GaussianGlow 6.0 GaussianGlow.qml
+GaussianGlow 1.0 GaussianGlow.qml
+GaussianInnerShadow 6.0 GaussianInnerShadow.qml
+GaussianInnerShadow 1.0 GaussianInnerShadow.qml
+GaussianMaskedBlur 6.0 GaussianMaskedBlur.qml
+GaussianMaskedBlur 1.0 GaussianMaskedBlur.qml
+depends QtQuick
+

@@ -1,0 +1,5 @@
+module QGroundControl.AnalyzeView.GeoTag
+typeinfo GeoTagModule.qmltypes
+prefer :/qml/QGroundControl/AnalyzeView/GeoTag/
+GeoTagPage 1.0 GeoTagPage.qml
+

@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="/json">
+    <file alias="PX4-MavCmdInfoCommon.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/PX4/PX4-MavCmdInfoCommon.json</file>
+    <file alias="PX4-MavCmdInfoFixedWing.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/PX4/PX4-MavCmdInfoFixedWing.json</file>
+    <file alias="PX4-MavCmdInfoMultiRotor.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/PX4/PX4-MavCmdInfoMultiRotor.json</file>
+    <file alias="PX4-MavCmdInfoRover.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/PX4/PX4-MavCmdInfoRover.json</file>
+    <file alias="PX4-MavCmdInfoSub.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/PX4/PX4-MavCmdInfoSub.json</file>
+    <file alias="PX4-MavCmdInfoVTOL.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/PX4/PX4-MavCmdInfoVTOL.json</file>
+    <file alias="meta_types/qt6px4firmwaremodule_metatypes.json">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/PX4/meta_types/qt6px4firmwaremodule_metatypes.json</file>
+  </qresource>
+</RCC>
+

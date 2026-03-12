@@ -1,0 +1,11 @@
+module QtLocation
+linktarget Qt6::declarative_location
+plugin declarative_locationplugin
+classname QtLocationDeclarativeModule
+typeinfo plugins.qmltypes
+depends QtQuick auto
+depends QtPositioning auto
+prefer :/qt-project.org/imports/QtLocation/
+MapView 6.0 MapView.qml
+depends QtQuick
+

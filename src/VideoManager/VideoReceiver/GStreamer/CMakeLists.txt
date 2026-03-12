@@ -15,7 +15,7 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
         # NOTE: Using FindGStreamer.cmake is currently bypassed on macOS
         # Using hardwired framework path as a workaround until FindGStreamer works on macOS
         find_package(GStreamer
-            REQUIRED
+            
             COMPONENTS Core Base Video Gl GlPrototypes Rtsp
             OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
         )

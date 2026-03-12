@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="/FirmwarePlugin/PX4">
+    <file alias="PX4ParameterFactMetaData.xml">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml</file>
+    <file alias="PX4.OfflineEditing.params">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/PX4/V1.4.OfflineEditing.params</file>
+  </qresource>
+</RCC>
+

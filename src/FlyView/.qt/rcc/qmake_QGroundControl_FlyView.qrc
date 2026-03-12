@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/FlyView">
+    <file alias="qmldir">C:/Users/Henok/qgroundcontrol/qml/QGroundControl/FlyView/qmldir</file>
+  </qresource>
+</RCC>
+

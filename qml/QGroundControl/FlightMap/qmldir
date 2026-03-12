@@ -1,0 +1,33 @@
+module QGroundControl.FlightMap
+typeinfo FlightMapModule.qmltypes
+prefer :/qml/QGroundControl/FlightMap/
+CameraTriggerIndicator 1.0 MapItems/CameraTriggerIndicator.qml
+CustomMapItems 1.0 MapItems/CustomMapItems.qml
+MapLineArrow 1.0 MapItems/MapLineArrow.qml
+MissionItemIndicator 1.0 MapItems/MissionItemIndicator.qml
+MissionItemIndicatorDrag 1.0 MapItems/MissionItemIndicatorDrag.qml
+MissionLineView 1.0 MapItems/MissionLineView.qml
+PlanMapItems 1.0 MapItems/PlanMapItems.qml
+ProximityRadarMapView 1.0 MapItems/ProximityRadarMapView.qml
+QGCMapCircleVisuals 1.0 MapItems/QGCMapCircleVisuals.qml
+QGCMapPolygonVisuals 1.0 MapItems/QGCMapPolygonVisuals.qml
+QGCMapPolylineVisuals 1.0 MapItems/QGCMapPolylineVisuals.qml
+SplitIndicator 1.0 MapItems/SplitIndicator.qml
+VehicleMapItem 1.0 MapItems/VehicleMapItem.qml
+CenterMapDropButton 1.0 Widgets/CenterMapDropButton.qml
+CenterMapDropPanel 1.0 Widgets/CenterMapDropPanel.qml
+CompassDial 1.0 Widgets/CompassDial.qml
+CompassHeadingIndicator 1.0 Widgets/CompassHeadingIndicator.qml
+HorizontalCompassAttitude 1.0 Widgets/HorizontalCompassAttitude.qml
+IntegratedAttitudeIndicator 1.0 Widgets/IntegratedAttitudeIndicator.qml
+IntegratedCompassAttitude 1.0 Widgets/IntegratedCompassAttitude.qml
+MapFitFunctions 1.0 Widgets/MapFitFunctions.qml
+PhotoVideoControl 1.0 Widgets/PhotoVideoControl.qml
+QGCArtificialHorizon 1.0 Widgets/QGCArtificialHorizon.qml
+QGCAttitudeWidget 1.0 Widgets/QGCAttitudeWidget.qml
+QGCCompassWidget 1.0 Widgets/QGCCompassWidget.qml
+QGCPitchIndicator 1.0 Widgets/QGCPitchIndicator.qml
+VerticalCompassAttitude 1.0 Widgets/VerticalCompassAttitude.qml
+FlightMap 1.0 FlightMap.qml
+MapScale 1.0 MapScale.qml
+

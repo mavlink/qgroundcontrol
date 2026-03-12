@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl">
+    <file alias="qmldir">C:/Users/Henok/qgroundcontrol/qml/QGroundControl/qmldir</file>
+  </qresource>
+</RCC>
+

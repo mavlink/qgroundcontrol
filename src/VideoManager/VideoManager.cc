@@ -609,10 +609,25 @@ void VideoManager::_communicationLostChanged(bool connectionLost)
     }
 }
 
-void VideoManager::_restartAllVideos()
-{
-    for (VideoReceiver *videoReceiver : std::as_const(_videoReceivers)) {
-        _restartVideo(videoReceiver);
+void VideoManager::_restartAllVideos() {
+    // 1. Clean up old receivers if they exist
+    while (!_videoReceivers.isEmpty()) {
+        _stopReceiver(_videoReceivers.takeFirst());
+    }
+
+    // 2. Determine how many streams we need (e.g., from settings or vehicle metadata)
+    int streamCount = _videoSettings->streamCount()->rawValue().toInt();
+
+    for (int i = 0; i < streamCount; i++) {
+        VideoReceiver* receiver = new VideoReceiver(this);
+        
+        // IMPORTANT: Assign unique URIs or Ports to each receiver
+        QString uri = _videoSettings->streamAddress(i); 
+        _updateVideoUri(receiver, uri);
+        
+        _initVideoReceiver(receiver, _mainWindow);
+        _videoReceivers.append(receiver);
+        _startReceiver(receiver);
     }
 }
 

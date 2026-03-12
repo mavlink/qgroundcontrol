@@ -1,0 +1,49 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Dialogs
+
+import QGroundControl
+import QGroundControl.Controls
+
+QGCTextField {
+    id:                 control
+    text:               fact ? fact.valueString : ""
+    unitsLabel:         fact ? fact.units : ""
+    showUnits:          true
+    showHelp:           false
+    numericValuesOnly:  fact && !fact.typeIsString
+
+    signal updated()
+
+    property Fact fact: null
+
+    onEditingFinished: _onEditingFinished()
+
+    function _onEditingFinished() {
+        var errorString = fact.validate(text, false /* convertOnly */)
+        if (errorString === "") {
+            clearValidationError()
+            fact.value = text
+            control.updated()
+        } else {
+            showValidationError(errorString, fact.valueString)
+        }
+    }
+
+    onHelpClicked: helpDialogFactory.open()
+
+    QGCPopupDialogFactory {
+        id: helpDialogFactory
+
+        dialogComponent: helpDialogComponent
+    }
+
+    Component {
+        id: helpDialogComponent
+
+        ParameterEditorDialog {
+            title:          qsTr("Value Details")
+            fact:           control.fact
+        }
+    }
+}

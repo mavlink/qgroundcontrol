@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/AutoPilotPlugins/PX4">
+    <file alias="AirframeFactMetaData.xml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
+  </qresource>
+</RCC>
+

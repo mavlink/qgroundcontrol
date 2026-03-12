@@ -1,0 +1,67 @@
+module QtQuick.Controls.Windows
+linktarget Qt6::qtquickcontrols2windowsstyleplugin
+plugin qtquickcontrols2windowsstyleplugin
+classname QtQuickControls2WindowsStylePlugin
+typeinfo plugins.qmltypes
+import QtQuick.Controls.Fusion auto
+prefer :/qt-project.org/imports/QtQuick/Controls/Windows/
+ApplicationWindow 6.0 ApplicationWindow.qml
+ApplicationWindow 2.0 ApplicationWindow.qml
+Button 6.0 Button.qml
+Button 2.0 Button.qml
+CheckBox 6.0 CheckBox.qml
+CheckBox 2.0 CheckBox.qml
+CheckDelegate 6.0 CheckDelegate.qml
+CheckDelegate 2.0 CheckDelegate.qml
+ComboBox 6.0 ComboBox.qml
+ComboBox 2.0 ComboBox.qml
+DelayButton 6.0 DelayButton.qml
+DelayButton 2.0 DelayButton.qml
+Frame 6.0 Frame.qml
+Frame 2.0 Frame.qml
+GroupBox 6.0 GroupBox.qml
+GroupBox 2.0 GroupBox.qml
+ItemDelegate 6.0 ItemDelegate.qml
+ItemDelegate 2.0 ItemDelegate.qml
+Menu 6.0 Menu.qml
+Menu 2.0 Menu.qml
+MenuBar 6.0 MenuBar.qml
+MenuBar 2.0 MenuBar.qml
+MenuBarItem 6.0 MenuBarItem.qml
+MenuBarItem 2.0 MenuBarItem.qml
+MenuItem 6.0 MenuItem.qml
+MenuItem 2.0 MenuItem.qml
+MenuSeparator 6.0 MenuSeparator.qml
+MenuSeparator 2.0 MenuSeparator.qml
+ProgressBar 6.0 ProgressBar.qml
+ProgressBar 2.0 ProgressBar.qml
+RadioButton 6.0 RadioButton.qml
+RadioButton 2.0 RadioButton.qml
+RadioDelegate 6.0 RadioDelegate.qml
+RadioDelegate 2.0 RadioDelegate.qml
+RangeSlider 6.0 RangeSlider.qml
+RangeSlider 2.0 RangeSlider.qml
+ScrollIndicator 6.0 ScrollIndicator.qml
+ScrollIndicator 2.0 ScrollIndicator.qml
+SearchField 6.0 SearchField.qml
+SearchField 2.0 SearchField.qml
+SelectionRectangle 6.0 SelectionRectangle.qml
+SelectionRectangle 2.0 SelectionRectangle.qml
+Slider 6.0 Slider.qml
+Slider 2.0 Slider.qml
+SpinBox 6.0 SpinBox.qml
+SpinBox 2.0 SpinBox.qml
+Switch 6.0 Switch.qml
+Switch 2.0 Switch.qml
+SwitchDelegate 6.0 SwitchDelegate.qml
+SwitchDelegate 2.0 SwitchDelegate.qml
+TextArea 6.0 TextArea.qml
+TextArea 2.0 TextArea.qml
+TextField 6.0 TextField.qml
+TextField 2.0 TextField.qml
+ScrollBar 6.0 ScrollBar.qml
+ScrollBar 2.0 ScrollBar.qml
+ScrollView 6.0 ScrollView.qml
+ScrollView 2.0 ScrollView.qml
+depends QtQuick
+

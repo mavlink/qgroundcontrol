@@ -1,0 +1,8 @@
+module QGroundControl.FirmwarePlugin.APM
+typeinfo APMFirmwareModule.qmltypes
+prefer :/qml/QGroundControl/FirmwarePlugin/APM/
+APMBatteryIndicator 1.0 APMBatteryIndicator.qml
+APMFlightModeIndicator 1.0 APMFlightModeIndicator.qml
+APMMainStatusIndicator 1.0 APMMainStatusIndicator.qml
+APMSupportForwardingIndicator 1.0 APMSupportForwardingIndicator.qml
+

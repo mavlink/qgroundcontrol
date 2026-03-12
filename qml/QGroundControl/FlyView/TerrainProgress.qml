@@ -1,0 +1,82 @@
+import QtQuick
+import QtQuick.Layouts
+
+import QGroundControl
+import QGroundControl.Controls
+
+Rectangle {
+    implicitWidth:  mainLayout.width + (_margins * 2)
+    implicitHeight: mainLayout.height + (_margins * 2)
+    color:          qgcPal.window
+    radius:         ScreenTools.defaultBorderRadius
+    visible:        false
+
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
+    property real   _totalBlocks:   _activeVehicle ? _activeVehicle.terrain.blocksPending.rawValue + _activeVehicle.terrain.blocksLoaded.rawValue : 0
+    property real   _blocksLoaded:  _activeVehicle ? _activeVehicle.terrain.blocksLoaded.rawValue : 0
+    property real   _blocksPending: _activeVehicle ? _activeVehicle.terrain.blocksPending.rawValue : 0
+    property real   _pctComplete:   _activeVehicle && _totalBlocks ? _blocksLoaded / _totalBlocks : 0
+
+    on_BlocksPendingChanged: {
+        if (_blocksPending == 0) {
+            // UI doesn't go away immediately
+            visibilityTimer.restart()
+        } else {
+            visible = true
+            visibilityTimer.stop()
+        }
+    }
+
+    on_BlocksLoadedChanged: {
+        if (_blocksLoaded != 0) {
+            // This causes the progress indicator to display even if it starts out as complete
+            visible = true
+            if (_blocksPending == 0) {
+                visibilityTimer.restart()
+            }
+        }
+    }
+
+    Timer {
+        id:             visibilityTimer
+        interval:       15 * 1000
+        onTriggered:    parent.visible = false
+    }
+
+    QGCPalette { id: qgcPal }
+
+    ColumnLayout {
+        id:                 mainLayout
+        anchors.margins:    _margins
+        anchors.top:        parent.top
+        anchors.left:       parent.left
+        spacing:            _margins
+
+        QGCLabel {
+            Layout.alignment:   Qt.AlignHCenter
+            text:               qsTr("Terrain Load Progress")
+            font.pointSize:     ScreenTools.smallFontPointSize
+        }
+
+        Rectangle {
+            Layout.fillWidth:   true
+            height:             ScreenTools.defaultFontPixelHeight
+            color:              "transparent"
+            border.color:       "green"
+
+            Rectangle {
+                anchors.top:    parent.top
+                anchors.bottom: parent.bottom
+                color:          "green"
+                width:         parent.width * _pctComplete
+
+                QGCLabel {
+                    anchors.centerIn:   parent
+                    text:               qsTr("Done")
+                    visible:            _blocksPending == 0
+                }
+            }
+        }
+    }
+}

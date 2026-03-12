@@ -1,0 +1,36 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/AutoPilotPlugins/APM/">
+    <file alias="APMAirframeComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMAirframeComponent.qml</file>
+    <file alias="APMAirframeComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMAirframeComponentSummary.qml</file>
+    <file alias="APMFlightModesComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMFlightModesComponent.qml</file>
+    <file alias="APMFlightModesComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml</file>
+    <file alias="APMFollowComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMFollowComponent.qml</file>
+    <file alias="APMFollowComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMFollowComponentSummary.qml</file>
+    <file alias="APMGimbalComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMGimbalComponent.qml</file>
+    <file alias="APMGimbalInstance.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMGimbalInstance.qml</file>
+    <file alias="APMGimbalParams.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMGimbalParams.qml</file>
+    <file alias="APMHeliComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMHeliComponent.qml</file>
+    <file alias="APMLightsComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMLightsComponent.qml</file>
+    <file alias="APMLightsComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMLightsComponentSummary.qml</file>
+    <file alias="APMMotorComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMMotorComponent.qml</file>
+    <file alias="APMNotSupported.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMNotSupported.qml</file>
+    <file alias="APMPowerComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMPowerComponent.qml</file>
+    <file alias="APMPowerComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml</file>
+    <file alias="APMRadioComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml</file>
+    <file alias="APMRemoteSupportComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMRemoteSupportComponent.qml</file>
+    <file alias="APMSafetyComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSafetyComponent.qml</file>
+    <file alias="APMSafetyComponentSub.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml</file>
+    <file alias="APMSafetyComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml</file>
+    <file alias="APMSafetyComponentSummarySub.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml</file>
+    <file alias="APMSensorsComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSensorsComponent.qml</file>
+    <file alias="APMSensorsComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSensorsComponentSummary.qml</file>
+    <file alias="APMSensorIdDecoder.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSensorIdDecoder.qml</file>
+    <file alias="APMSensorParams.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSensorParams.qml</file>
+    <file alias="APMSubFrameComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSubFrameComponent.qml</file>
+    <file alias="APMSubFrameComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSubFrameComponentSummary.qml</file>
+    <file alias="APMSubMotorComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMSubMotorComponent.qml</file>
+    <file alias="APMTuningComponentCopter.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMTuningComponentCopter.qml</file>
+    <file alias="APMTuningComponentSub.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/APM/APMTuningComponentSub.qml</file>
+  </qresource>
+</RCC>
+

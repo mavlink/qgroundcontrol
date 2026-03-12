@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/AutoPilotPlugins/Common/">
+    <file alias="ESP8266Component.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/Common/ESP8266Component.qml</file>
+    <file alias="ESP8266ComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/Common/ESP8266ComponentSummary.qml</file>
+    <file alias="ScriptingComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/Common/ScriptingComponent.qml</file>
+    <file alias="JoystickComponentSummary.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/Common/JoystickComponentSummary.qml</file>
+    <file alias="MotorComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/Common/MotorComponent.qml</file>
+    <file alias="RadioComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/Common/RadioComponent.qml</file>
+    <file alias="SyslinkComponent.qml">C:/Users/Henok/qgroundcontrol/src/AutoPilotPlugins/Common/SyslinkComponent.qml</file>
+  </qresource>
+</RCC>
+

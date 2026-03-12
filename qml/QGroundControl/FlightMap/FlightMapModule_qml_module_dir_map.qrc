@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="/qml/QGroundControl/FlightMap">C:/Users/Henok/qgroundcontrol/qml/QGroundControl/FlightMap</file>
+
+  </qresource>
+</RCC>

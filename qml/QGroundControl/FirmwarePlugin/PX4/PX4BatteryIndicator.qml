@@ -1,0 +1,40 @@
+import QtQuick
+import QtQuick.Layouts
+
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.FactControls
+
+SettingsGroupLayout {
+    Layout.fillWidth:   true
+    heading:            qsTr("Low Battery Failsafe")
+
+    FactPanelController { id: controller }
+
+    LabelledFactComboBox {
+        label:              qsTr("Vehicle Action")
+        fact:               controller.getParameterFact(-1, "COM_LOW_BAT_ACT")
+        indexModel:         false
+    }
+
+    FactSlider {
+        Layout.fillWidth:       true
+        label:                  qsTr("Warning Level")
+        fact:                   controller.getParameterFact(-1, "BAT_LOW_THR")
+        majorTickStepSize:      5
+    }
+
+    FactSlider {
+        Layout.fillWidth:   true
+        label:              qsTr("Critical Level")
+        fact:               controller.getParameterFact(-1, "BAT_CRIT_THR")
+        majorTickStepSize:  5
+    }
+
+    FactSlider {
+        Layout.fillWidth:   true
+        label:              qsTr("Emergency Level")
+        fact:               controller.getParameterFact(-1, "BAT_EMERGEN_THR")
+        majorTickStepSize:  5
+    }
+}

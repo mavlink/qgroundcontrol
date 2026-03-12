@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/AnalyzeView/GeoTag/">
+    <file alias="GeoTagIcon.svg">C:/Users/Henok/qgroundcontrol/src/AnalyzeView/GeoTag/GeoTagIcon.svg</file>
+  </qresource>
+</RCC>
+

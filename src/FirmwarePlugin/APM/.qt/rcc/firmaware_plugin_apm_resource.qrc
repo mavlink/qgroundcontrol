@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="/FirmwarePlugin/APM">
+    <file alias="Copter.OfflineEditing.params">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/Copter.OfflineEditing.params</file>
+    <file alias="Plane.OfflineEditing.params">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/Plane.OfflineEditing.params</file>
+    <file alias="Rover.OfflineEditing.params">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/Rover.OfflineEditing.params</file>
+    <file alias="Sub.OfflineEditing.params">C:/Users/Henok/qgroundcontrol/src/FirmwarePlugin/APM/Sub.OfflineEditing.params</file>
+  </qresource>
+</RCC>
+

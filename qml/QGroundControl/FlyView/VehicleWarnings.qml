@@ -1,0 +1,49 @@
+import QtQuick
+
+import QGroundControl
+import QGroundControl.Controls
+
+Rectangle {
+    anchors.margins:    -ScreenTools.defaultFontPixelHeight
+    height:             warningsCol.height
+    width:              warningsCol.width
+    color:              Qt.rgba(1, 1, 1, 0.5)
+    radius:             ScreenTools.defaultFontPixelWidth / 2
+    visible:            _noGPSLockVisible || _prearmErrorVisible
+
+    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+    property bool _noGPSLockVisible:    _activeVehicle && _activeVehicle.requiresGpsFix && !_activeVehicle.coordinate.isValid
+    property bool _prearmErrorVisible:  _activeVehicle && !_activeVehicle.armed && _activeVehicle.prearmError && !_activeVehicle.healthAndArmingCheckReport.supported
+
+    Column {
+        id:         warningsCol
+        spacing:    ScreenTools.defaultFontPixelHeight
+
+        QGCLabel {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            visible:                    _noGPSLockVisible
+            color:                      "black"
+            font.pointSize:             ScreenTools.largeFontPointSize
+            text:                       qsTr("No GPS Lock for Vehicle")
+        }
+
+        QGCLabel {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            visible:                    _prearmErrorVisible
+            color:                      "black"
+            font.pointSize:             ScreenTools.largeFontPointSize
+            text:                       _activeVehicle ? _activeVehicle.prearmError : ""
+        }
+
+        QGCLabel {
+            anchors.horizontalCenter:   parent.horizontalCenter
+            visible:                    _prearmErrorVisible
+            width:                      ScreenTools.defaultFontPixelWidth * 50
+            horizontalAlignment:        Text.AlignHCenter
+            wrapMode:                   Text.WordWrap
+            color:                      "black"
+            font.pointSize:             ScreenTools.largeFontPointSize
+            text:                       qsTr("The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure.")
+        }
+    }
+}

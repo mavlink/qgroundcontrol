@@ -1,0 +1,34 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/FlightMap/">
+    <file alias="MapItems/CameraTriggerIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/CameraTriggerIndicator.qml</file>
+    <file alias="MapItems/CustomMapItems.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/CustomMapItems.qml</file>
+    <file alias="MapItems/MapLineArrow.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/MapLineArrow.qml</file>
+    <file alias="MapItems/MissionItemIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/MissionItemIndicator.qml</file>
+    <file alias="MapItems/MissionItemIndicatorDrag.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/MissionItemIndicatorDrag.qml</file>
+    <file alias="MapItems/MissionLineView.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/MissionLineView.qml</file>
+    <file alias="MapItems/PlanMapItems.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/PlanMapItems.qml</file>
+    <file alias="MapItems/ProximityRadarMapView.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/ProximityRadarMapView.qml</file>
+    <file alias="MapItems/QGCMapCircleVisuals.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/QGCMapCircleVisuals.qml</file>
+    <file alias="MapItems/QGCMapPolygonVisuals.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/QGCMapPolygonVisuals.qml</file>
+    <file alias="MapItems/QGCMapPolylineVisuals.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/QGCMapPolylineVisuals.qml</file>
+    <file alias="MapItems/SplitIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/SplitIndicator.qml</file>
+    <file alias="MapItems/VehicleMapItem.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapItems/VehicleMapItem.qml</file>
+    <file alias="Widgets/CenterMapDropButton.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/CenterMapDropButton.qml</file>
+    <file alias="Widgets/CenterMapDropPanel.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/CenterMapDropPanel.qml</file>
+    <file alias="Widgets/CompassDial.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/CompassDial.qml</file>
+    <file alias="Widgets/CompassHeadingIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/CompassHeadingIndicator.qml</file>
+    <file alias="Widgets/HorizontalCompassAttitude.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/HorizontalCompassAttitude.qml</file>
+    <file alias="Widgets/IntegratedAttitudeIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/IntegratedAttitudeIndicator.qml</file>
+    <file alias="Widgets/IntegratedCompassAttitude.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/IntegratedCompassAttitude.qml</file>
+    <file alias="Widgets/MapFitFunctions.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/MapFitFunctions.qml</file>
+    <file alias="Widgets/PhotoVideoControl.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/PhotoVideoControl.qml</file>
+    <file alias="Widgets/QGCArtificialHorizon.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/QGCArtificialHorizon.qml</file>
+    <file alias="Widgets/QGCAttitudeWidget.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/QGCAttitudeWidget.qml</file>
+    <file alias="Widgets/QGCCompassWidget.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/QGCCompassWidget.qml</file>
+    <file alias="Widgets/QGCPitchIndicator.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/QGCPitchIndicator.qml</file>
+    <file alias="Widgets/VerticalCompassAttitude.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/Widgets/VerticalCompassAttitude.qml</file>
+    <file alias="FlightMap.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/FlightMap.qml</file>
+    <file alias="MapScale.qml">C:/Users/Henok/qgroundcontrol/src/FlightMap/MapScale.qml</file>
+  </qresource>
+</RCC>
+

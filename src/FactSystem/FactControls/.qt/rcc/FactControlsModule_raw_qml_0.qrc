@@ -1,0 +1,19 @@
+<RCC>
+  <qresource prefix="/qml/QGroundControl/FactControls/">
+    <file alias="AltitudeFactTextField.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/AltitudeFactTextField.qml</file>
+    <file alias="FactBitmask.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactBitmask.qml</file>
+    <file alias="FactCheckBox.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactCheckBox.qml</file>
+    <file alias="FactCheckBoxSlider.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactCheckBoxSlider.qml</file>
+    <file alias="FactComboBox.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactComboBox.qml</file>
+    <file alias="FactLabel.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactLabel.qml</file>
+    <file alias="FactTextField.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactTextField.qml</file>
+    <file alias="FactTextFieldGrid.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactTextFieldGrid.qml</file>
+    <file alias="FactTextFieldSlider.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactTextFieldSlider.qml</file>
+    <file alias="FactTextFieldSlider2.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactTextFieldSlider2.qml</file>
+    <file alias="FactValueSlider.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/FactValueSlider.qml</file>
+    <file alias="LabelledFactComboBox.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/LabelledFactComboBox.qml</file>
+    <file alias="LabelledFactLabel.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/LabelledFactLabel.qml</file>
+    <file alias="LabelledFactTextField.qml">C:/Users/Henok/qgroundcontrol/src/FactSystem/FactControls/LabelledFactTextField.qml</file>
+  </qresource>
+</RCC>
+
