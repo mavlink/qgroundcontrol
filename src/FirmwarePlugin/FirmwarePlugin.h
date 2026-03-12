@@ -12,7 +12,7 @@
 class VehicleComponent;
 class AutoPilotPlugin;
 class Vehicle;
-class MavlinkCameraControl;
+class MavlinkCameraControlInterface;
 class QGCCameraManager;
 class Autotune;
 class LinkInterface;
@@ -342,7 +342,7 @@ public:
     virtual QGCCameraManager *createCameraManager(Vehicle *vehicle) const;
 
     /// Camera control.
-    virtual MavlinkCameraControl *createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent = nullptr) const;
+    virtual MavlinkCameraControlInterface *createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent = nullptr) const;
 
     /// Returns a pointer to a dictionary of firmware-specific FactGroups
     virtual QMap<QString, FactGroup*> *factGroups() { return nullptr; }

@@ -19,7 +19,7 @@ Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
 Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 
 /// Abstract base class for all camera controls: real and simulated
-class MavlinkCameraControl : public FactGroup
+class MavlinkCameraControlInterface : public FactGroup
 {
     Q_OBJECT
     QML_ELEMENT
@@ -93,8 +93,8 @@ class MavlinkCameraControl : public FactGroup
     friend class QGCCameraParamIO;
 
 public:
-    explicit MavlinkCameraControl(Vehicle *vehicle, QObject *parent = nullptr);
-    virtual ~MavlinkCameraControl();
+    explicit MavlinkCameraControlInterface(Vehicle *vehicle, QObject *parent = nullptr);
+    virtual ~MavlinkCameraControlInterface();
 
     enum CameraMode {
         CAM_MODE_UNDEFINED = -1,

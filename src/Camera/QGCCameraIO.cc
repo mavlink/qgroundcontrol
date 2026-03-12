@@ -1,5 +1,5 @@
 #include "QGCCameraIO.h"
-#include "MavlinkCameraControl.h"
+#include "MavlinkCameraControlInterface.h"
 #include "LinkInterface.h"
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
@@ -12,7 +12,7 @@ namespace {
     constexpr int kMaxRetries = 3;
 }
 
-QGCCameraParamIO::QGCCameraParamIO(MavlinkCameraControl *control, Fact *fact, Vehicle *vehicle)
+QGCCameraParamIO::QGCCameraParamIO(MavlinkCameraControlInterface *control, Fact *fact, Vehicle *vehicle)
     : QObject(control)
     , _control(control)
     , _fact(fact)

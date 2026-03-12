@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MavlinkCameraControl.h"
+#include "MavlinkCameraControlInterface.h"
 #include "QmlObjectListModel.h"
 
 class QGCVideoStreamInfo;
@@ -35,7 +35,7 @@ public:
 };
 
 /// MAVLink Camera API controller - connected to a real mavlink v2 camera
-class VehicleCameraControl : public MavlinkCameraControl
+class VehicleCameraControl : public MavlinkCameraControlInterface
 {
 public:
     VehicleCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);

@@ -1,6 +1,6 @@
 #include "VideoManager.h"
 #include "AppSettings.h"
-#include "MavlinkCameraControl.h"
+#include "MavlinkCameraControlInterface.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
@@ -703,7 +703,7 @@ void VideoManager::_setActiveVehicle(Vehicle *vehicle)
         (void) disconnect(_activeVehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this, &VideoManager::_communicationLostChanged);
         auto cameraManager = _activeVehicle->cameraManager();
         if (cameraManager) {
-            MavlinkCameraControl *pCamera = cameraManager->currentCameraInstance();
+            MavlinkCameraControlInterface *pCamera = cameraManager->currentCameraInstance();
             if (pCamera) {
                 pCamera->stopStream();
             }
@@ -721,7 +721,7 @@ void VideoManager::_setActiveVehicle(Vehicle *vehicle)
         (void) connect(_activeVehicle->vehicleLinkManager(), &VehicleLinkManager::communicationLostChanged, this, &VideoManager::_communicationLostChanged);
         if (_activeVehicle->cameraManager()) {
             (void) connect(_activeVehicle->cameraManager(), &QGCCameraManager::streamChanged, this, &VideoManager::_videoSourceChanged);
-            MavlinkCameraControl *pCamera = _activeVehicle->cameraManager()->currentCameraInstance();
+            MavlinkCameraControlInterface *pCamera = _activeVehicle->cameraManager()->currentCameraInstance();
             if (pCamera) {
                 pCamera->resumeStream();
             }

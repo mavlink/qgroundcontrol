@@ -291,7 +291,7 @@ QGCCameraManager *FirmwarePlugin::createCameraManager(Vehicle *vehicle) const
     return new QGCCameraManager(vehicle);
 }
 
-MavlinkCameraControl *FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent) const
+MavlinkCameraControlInterface *FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent) const
 {
     return new VehicleCameraControl(info, vehicle, compID, parent);
 }

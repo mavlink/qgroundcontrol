@@ -184,12 +184,12 @@ Item {
         Item {
             id:                 thermalItem
             width:              height * QGroundControl.videoManager.thermalAspectRatio
-            height:             _camera ? (_camera.thermalMode === MavlinkCameraControl.THERMAL_FULL ? parent.height : (_camera.thermalMode === MavlinkCameraControl.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
+            height:             _camera ? (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_FULL ? parent.height : (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
             anchors.centerIn:   parent
-            visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode !== MavlinkCameraControl.THERMAL_OFF
+            visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
             function pipOrNot() {
                 if(_camera) {
-                    if(_camera.thermalMode === MavlinkCameraControl.THERMAL_PIP) {
+                    if(_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP) {
                         anchors.centerIn    = undefined
                         anchors.top         = parent.top
                         anchors.topMargin   = mainWindow.header.height + (ScreenTools.defaultFontPixelHeight * 0.5)
@@ -215,7 +215,7 @@ Item {
                 id:             thermalVideo
                 objectName:     "thermalVideo"
                 anchors.fill:   parent
-                opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
+                opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
             }
         }
         //-- Zoom
