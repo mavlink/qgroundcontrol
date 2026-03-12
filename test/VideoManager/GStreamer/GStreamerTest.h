@@ -17,4 +17,8 @@ private slots:
     void _testRedirectGLibLogging();
     void _testVerifyRequiredPlugins();
     void _testEnvironmentSetup();
+    void _testCompleteInit();
+    void _testCreateVideoReceiver();
+    void _testPipelineSmokeTest();
+    void _testRuntimeVersionCheck();
 };

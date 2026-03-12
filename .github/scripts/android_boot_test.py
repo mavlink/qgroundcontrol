@@ -76,6 +76,33 @@ def print_log_group(content: str, pattern: re.Pattern[str], max_lines: int = 80)
     print("::endgroup::")
 
 
+_GSTREAMER_LOG_PATTERN = re.compile(
+    r"gst|GStreamer|gstreamer|gst_init|gst_plugin|GST_PLUGIN|libgst|"
+    r"GstVideoReceiver|videostreaming|qml6glsink|qgcvideosinkbin",
+    re.IGNORECASE,
+)
+
+_GSTREAMER_FAILURE_PATTERN = re.compile(
+    r"GStreamer library not found|"
+    r"Failed to initialize GStreamer|"
+    r"nativeInit failed; skipping GStreamer initialization|"
+    r"GStreamer Java-side init result:\s*failed|"
+    r"GStreamer initialization failed",
+    re.IGNORECASE,
+)
+
+
+def print_gstreamer_log_group(content: str, max_lines: int = 120) -> None:
+    matches = [line for line in content.splitlines() if _GSTREAMER_LOG_PATTERN.search(line)]
+    if not matches:
+        print("::notice::No GStreamer-related logcat lines found")
+        return
+    print(f"::group::GStreamer logcat ({len(matches)} lines)")
+    for line in matches[-max_lines:]:
+        print(line)
+    print("::endgroup::")
+
+
 _LOGCAT_TIME_PATTERN = re.compile(r"^(?P<timestamp>\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})")
 
 
@@ -164,6 +191,7 @@ def emit_failure(
     logcat_content = read_logcat()
     write_log(log_output, logcat_content)
     print_log_group(logcat_content, log_pattern)
+    print_gstreamer_log_group(logcat_content)
     return 1
 
 
@@ -301,6 +329,19 @@ def run_boot_attempt(
                 crash_log_pattern,
             )
 
+        gstreamer_failure = next(
+            (line for line in logcat_delta.splitlines() if _GSTREAMER_FAILURE_PATTERN.search(line)),
+            None,
+        )
+        if gstreamer_failure:
+            return (
+                False,
+                "GStreamer initialization failed during boot test",
+                gstreamer_failure,
+                logcat_content,
+                app_log_pattern,
+            )
+
         if app_launched:
             if app_seen_running_once and not is_running:
                 consecutive_not_running += 1
@@ -360,7 +401,7 @@ def main() -> int:
         re.IGNORECASE,
     )
     app_log_pattern = re.compile(
-        rf"{package_escaped}|QGroundControl|qtMainLoopThread|org\.qtproject|qt\.qml|SDL",
+        rf"{package_escaped}|QGroundControl|qtMainLoopThread|org\.qtproject|qt\.qml|SDL|GStreamer|GstVideoReceiver",
         re.IGNORECASE,
     )
     crash_log_pattern = re.compile(
@@ -407,6 +448,7 @@ def main() -> int:
         if passed:
             write_log(args.log_output, logcat_content)
             print_log_group(logcat_content, app_log_pattern)
+            print_gstreamer_log_group(logcat_content)
             print(f"Emulator boot test passed for {args.package}")
             return 0
 
@@ -431,6 +473,7 @@ def main() -> int:
     if final_notice:
         print(f"::notice::{final_notice}")
     print_log_group(final_logcat, final_log_pattern)
+    print_gstreamer_log_group(final_logcat)
     return 1
 
 

@@ -13,6 +13,10 @@
 
 #include <atomic>
 
+#ifdef Q_OS_ANDROID
+#include <android/log.h>
+#endif
+
 QGC_LOGGING_CATEGORY(QGCLoggingLog, "Utilities.QGCLogging")
 
 Q_GLOBAL_STATIC(QGCLogging, _qgcLogging)
@@ -34,6 +38,23 @@ static void msgHandler(QtMsgType type, const QMessageLogContext &context, const 
     if (defaultHandler) {
         defaultHandler(type, context, msg);
     }
+
+#ifdef Q_OS_ANDROID
+    // Qt 6.10+ may not route messages to logcat via the default handler.
+    // Write directly to ensure visibility in adb logcat.
+    {
+        int prio;
+        switch (type) {
+        case QtDebugMsg:    prio = ANDROID_LOG_DEBUG; break;
+        case QtInfoMsg:     prio = ANDROID_LOG_INFO;  break;
+        case QtWarningMsg:  prio = ANDROID_LOG_WARN;  break;
+        case QtCriticalMsg: prio = ANDROID_LOG_ERROR;  break;
+        case QtFatalMsg:    prio = ANDROID_LOG_FATAL;  break;
+        }
+        __android_log_print(prio, context.category ? context.category : "QGC",
+                            "%s", qPrintable(msg));
+    }
+#endif
 
     // Format the message using Qt's pattern
     const QString message = qFormatLogMessage(type, context, msg);

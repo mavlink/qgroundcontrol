@@ -2,9 +2,13 @@
 
 #include <QtCore/QFuture>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QPromise>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include <functional>
+#include <memory>
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
@@ -22,6 +26,7 @@ class VideoManager : public QObject
     Q_MOC_INCLUDE("Vehicle.h")
 
     Q_PROPERTY(bool     gstreamerEnabled        READ gstreamerEnabled                           CONSTANT)
+    Q_PROPERTY(bool     gstreamerD3D11Sink      READ gstreamerD3D11Sink                         CONSTANT)
     Q_PROPERTY(bool     qtmultimediaEnabled     READ qtmultimediaEnabled                        CONSTANT)
     Q_PROPERTY(bool     uvcEnabled              READ uvcEnabled                                 CONSTANT)
     Q_PROPERTY(bool     autoStreamConfigured    READ autoStreamConfigured                       NOTIFY autoStreamConfiguredChanged)
@@ -40,6 +45,8 @@ class VideoManager : public QObject
     Q_PROPERTY(QSize    videoSize               READ videoSize                                  NOTIFY videoSizeChanged)
     Q_PROPERTY(QString  imageFile               READ imageFile                                  NOTIFY imageFileChanged)
     Q_PROPERTY(QString  uvcVideoSourceID        READ uvcVideoSourceID                           NOTIFY uvcVideoSourceIDChanged)
+
+    friend class VideoManagerInitTest;
 
 public:
     explicit VideoManager(QObject *parent = nullptr);
@@ -75,6 +82,7 @@ public:
     QString uvcVideoSourceID() const { return _uvcVideoSourceID; }
     void setfullScreen(bool on);
     static bool gstreamerEnabled();
+    static bool gstreamerD3D11Sink();
     static bool qtmultimediaEnabled();
     static bool uvcEnabled();
 
@@ -132,6 +140,8 @@ private:
 
     InitState _initState = InitState::NotStarted;
     QFuture<bool> _gstInitFuture;
+#if defined(QGC_GST_STREAMING) && defined(Q_OS_ANDROID)
+#endif
     bool _initialized = false;
     bool _gstreamerDisabledForUnitTests = false;
     bool _fullScreen = false;
@@ -142,4 +152,8 @@ private:
     QSize _videoSize;
     QString _imageFile;
     QString _uvcVideoSourceID;
+
+#ifdef QGC_UNITTEST_BUILD
+    std::function<void()> _createVideoReceiversForTest;
+#endif
 };

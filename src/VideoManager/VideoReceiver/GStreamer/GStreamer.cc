@@ -4,12 +4,12 @@
 #include "AppSettings.h"
 #include "GstVideoReceiver.h"
 
-#include <QtConcurrent/QtConcurrent>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMutex>
 #include <QtCore/QSettings>
+#include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
 #include <QtQuick/QQuickItem>
 
@@ -20,6 +20,13 @@
 #endif
 
 #include <gst/gst.h>
+
+#ifdef Q_OS_IOS
+extern "C" {
+void gst_ios_pre_init(void);
+void gst_ios_post_init(void);
+}
+#endif
 
 G_BEGIN_DECLS
 #ifdef QGC_GST_STATIC_BUILD
@@ -38,7 +45,12 @@ GST_PLUGIN_STATIC_DECLARE(sdpelem);
 GST_PLUGIN_STATIC_DECLARE(tcp);
 GST_PLUGIN_STATIC_DECLARE(typefindfunctions);
 GST_PLUGIN_STATIC_DECLARE(udp);
+#if defined(QGC_GST_BUILD_VERSION_MAJOR) && (QGC_GST_BUILD_VERSION_MAJOR > 1 || QGC_GST_BUILD_VERSION_MINOR >= 22)
 GST_PLUGIN_STATIC_DECLARE(videoconvertscale);
+#else
+GST_PLUGIN_STATIC_DECLARE(videoconvert);
+GST_PLUGIN_STATIC_DECLARE(videoscale);
+#endif
 GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
 GST_PLUGIN_STATIC_DECLARE(vpx);
 
@@ -78,11 +90,16 @@ GST_PLUGIN_STATIC_DECLARE(vulkan);
 #endif
 
 GST_PLUGIN_STATIC_DECLARE(qml6);
+#ifdef QGC_GST_D3D11_SINK
+GST_PLUGIN_STATIC_DECLARE(qt6d3d11);
+#endif
 GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
 
 namespace GStreamer
 {
+
+namespace {
 
 static std::atomic<bool> s_envPathsValid{true};
 static QMutex s_envPathsMutex;
@@ -106,7 +123,12 @@ void _registerPlugins()
     GST_PLUGIN_STATIC_REGISTER(tcp);
     GST_PLUGIN_STATIC_REGISTER(typefindfunctions);
     GST_PLUGIN_STATIC_REGISTER(udp);
+#if defined(QGC_GST_BUILD_VERSION_MAJOR) && (QGC_GST_BUILD_VERSION_MAJOR > 1 || QGC_GST_BUILD_VERSION_MINOR >= 22)
     GST_PLUGIN_STATIC_REGISTER(videoconvertscale);
+#else
+    GST_PLUGIN_STATIC_REGISTER(videoconvert);
+    GST_PLUGIN_STATIC_REGISTER(videoscale);
+#endif
     GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
     GST_PLUGIN_STATIC_REGISTER(vpx);
 
@@ -146,6 +168,9 @@ void _registerPlugins()
 #endif
 
     GST_PLUGIN_STATIC_REGISTER(qml6);
+#ifdef QGC_GST_D3D11_SINK
+    GST_PLUGIN_STATIC_REGISTER(qt6d3d11);
+#endif
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
 
@@ -154,14 +179,6 @@ void _resetEnvValidation()
     const QMutexLocker locker(&s_envPathsMutex);
     s_envPathsError.clear();
     s_envPathsValid.store(true, std::memory_order_release);
-}
-
-void _setEnvValidationError(const QString &error)
-{
-    const QMutexLocker locker(&s_envPathsMutex);
-    s_envPathsError = error;
-    s_envPathsValid.store(false, std::memory_order_release);
-    qCCritical(GStreamerLog) << error;
 }
 
 QString _cleanJoin(const QString &base, const QString &relative)
@@ -173,6 +190,16 @@ void _setGstEnv(const char *name, const QString &value)
 {
     qputenv(name, value.toUtf8());
     qCDebug(GStreamerLog) << "  " << name << "=" << value;
+}
+
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+
+void _setEnvValidationError(const QString &error)
+{
+    const QMutexLocker locker(&s_envPathsMutex);
+    s_envPathsError = error;
+    s_envPathsValid.store(false, std::memory_order_release);
+    qCCritical(GStreamerLog) << error;
 }
 
 void _unsetEnv(const char *name)
@@ -207,6 +234,7 @@ QString _firstExistingPath(const QStringList &paths)
     return {};
 }
 
+#if defined(Q_OS_MACOS)
 QString _joinExistingPaths(const QStringList &paths)
 {
     QStringList existing;
@@ -220,6 +248,7 @@ QString _joinExistingPaths(const QStringList &paths)
 
     return existing.join(QDir::listSeparator());
 }
+#endif
 
 void _clearManagedGstEnvVars()
 {
@@ -251,6 +280,7 @@ void _setGstEnvIfExecutable(const char *name, const QString &path)
     }
 }
 
+
 void _sanitizePythonEnvForScanner()
 {
     static constexpr const char *varsToUnset[] = {
@@ -263,11 +293,10 @@ void _sanitizePythonEnvForScanner()
     };
 
     for (const char *name : varsToUnset) {
-        if (qEnvironmentVariableIsSet(name)) {
-            qunsetenv(name);
-            qCDebug(GStreamerLog) << "  unset" << name;
-        }
+        _unsetEnv(name);
     }
+
+    _setGstEnv("PYTHONNOUSERSITE", QStringLiteral("1"));
 }
 
 void _applyGstEnvVars(const QString &pluginDir, const QString &gioModDir,
@@ -275,9 +304,10 @@ void _applyGstEnvVars(const QString &pluginDir, const QString &gioModDir,
 {
     qCDebug(GStreamerLog) << "Applying GStreamer environment:";
 
-    _clearManagedGstEnvVars();
     _sanitizePythonEnvForScanner();
+    _clearManagedGstEnvVars();
     _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
+    _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
     _setGstEnvIfExists("GIO_EXTRA_MODULES", gioModDir);
     _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
     _setGstEnvIfExecutable("GST_PTP_HELPER", ptpPath);
@@ -292,12 +322,14 @@ void _applyGstEnvVars(const QString &pluginDir, const QString &gioModDir,
 #if defined(Q_OS_LINUX)
 bool _systemGioIsNew()
 {
-    // Probe the system GIO library on disk (not the in-process symbols) for
-    // g_task_set_static_name, which was added in GIO 2.76. This mirrors
-    // AppRun's `nm -D "$SYSTEM_GIO" | grep g_task_set_static_name` check.
+    // Try the bare soname first — dlopen resolves it via ldconfig/LD_LIBRARY_PATH,
+    // which works on NixOS, Guix, and other non-FHS distros.
+    // Fall back to hardcoded paths for environments where the bare name fails.
     static constexpr const char *kGioSoPaths[] = {
+        "libgio-2.0.so.0",
         "/usr/lib/x86_64-linux-gnu/libgio-2.0.so.0",
         "/usr/lib/aarch64-linux-gnu/libgio-2.0.so.0",
+        "/usr/lib/arm-linux-gnueabihf/libgio-2.0.so.0",
         "/usr/lib64/libgio-2.0.so.0",
         "/usr/lib/libgio-2.0.so.0",
     };
@@ -345,6 +377,7 @@ void _warnIfScannerMissing(const QString &platformLabel, const QString &scannerP
     }
 }
 
+#if defined(Q_OS_MACOS)
 bool _validateMacBundlePaths(const QString &bundleFrameworkRoot,
                              const QString &pluginDirs,
                              const QString &scannerPath)
@@ -359,6 +392,7 @@ bool _validateMacBundlePaths(const QString &bundleFrameworkRoot,
     _warnIfScannerMissing(QStringLiteral("macOS framework"), scannerPath);
     return true;
 }
+#endif
 
 bool _validateBundledDesktopPaths(const QString &platformLabel,
                                   const QString &pluginDirs,
@@ -375,6 +409,8 @@ bool _validateBundledDesktopPaths(const QString &platformLabel,
     return true;
 }
 
+#endif // !Q_OS_ANDROID && !Q_OS_IOS
+
 void _setGstEnvVars()
 {
     _resetEnvValidation();
@@ -384,11 +420,14 @@ void _setGstEnvVars()
 
 #if defined(Q_OS_MACOS)
     const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
-    const QString rootDir = _firstExistingPath({
+    QString rootDir = _firstExistingPath({
         _cleanJoin(frameworkDir, "Versions/1.0"),
         _cleanJoin(frameworkDir, "Versions/Current"),
         frameworkDir,
     });
+    if (rootDir.isEmpty()) {
+        rootDir = _cleanJoin(frameworkDir, "Versions/1.0");
+    }
 
 #if defined(QGC_GST_MACOS_FRAMEWORK)
     // Framework builds prefer framework paths over app-relative paths
@@ -422,9 +461,13 @@ void _setGstEnvVars()
     });
     const bool hasBundledFramework = QFileInfo::exists(frameworkDir);
 
-    const bool validBundlePaths = hasBundledFramework
-        ? _validateMacBundlePaths(rootDir, pluginDirs, scanner)
-        : !pluginDirs.isEmpty();
+    bool validBundlePaths = true;
+    if (!pluginDirs.isEmpty()) {
+        validBundlePaths = _validateBundledDesktopPaths(QStringLiteral("macOS"), pluginDirs, scanner);
+    }
+    if (hasBundledFramework) {
+        validBundlePaths = validBundlePaths && _validateMacBundlePaths(rootDir, pluginDirs, scanner);
+    }
 
     if (!pluginDirs.isEmpty() && validBundlePaths) {
         _applyGstEnvVars(pluginDirs, gioMod, scanner, ptp);
@@ -447,6 +490,45 @@ void _setGstEnvVars()
     if (QFileInfo::exists(pluginDir)
         && _validateBundledDesktopPaths(QStringLiteral("Windows"), pluginDir, scanner)) {
         _applyGstEnvVars(pluginDir, gioMod, scanner, ptp);
+
+        // Ensure the app's bin directory is on PATH so that child processes
+        // (gst-plugin-scanner.exe) can locate GStreamer DLLs installed
+        // alongside the main executable.
+        const QByteArray curPath = qgetenv("PATH");
+        const QByteArray binDir = QDir::toNativeSeparators(appDir).toUtf8();
+        if (!curPath.split(';').contains(binDir)) {
+            qputenv("PATH", binDir + ";" + curPath);
+        }
+    }
+
+#elif defined(Q_OS_ANDROID)
+    // Android uses static plugins — no GST_PLUGIN_PATH needed. But fontconfig
+    // and TLS need env vars pointing to the app's files/cache dirs where
+    // GStreamer.java copied fonts and certificates.
+    {
+        const QString filesDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+
+        if (!filesDir.isEmpty()) {
+            _setGstEnv("HOME", filesDir);
+            _setGstEnv("FONTCONFIG_PATH", _cleanJoin(filesDir, "fontconfig"));
+            _setGstEnv("CA_CERTIFICATES", _cleanJoin(filesDir, "ssl/certs/ca-certificates.crt"));
+            _setGstEnv("XDG_DATA_DIRS", filesDir);
+            _setGstEnv("XDG_CONFIG_DIRS", filesDir);
+            _setGstEnv("XDG_CONFIG_HOME", filesDir);
+            _setGstEnv("XDG_DATA_HOME", filesDir);
+        }
+
+        if (!cacheDir.isEmpty()) {
+            _setGstEnv("TMP", cacheDir);
+            _setGstEnv("TEMP", cacheDir);
+            _setGstEnv("TMPDIR", cacheDir);
+            _setGstEnv("XDG_CACHE_HOME", cacheDir);
+            _setGstEnv("XDG_RUNTIME_DIR", cacheDir);
+            _setGstEnv("GST_REGISTRY", _cleanJoin(cacheDir, "registry.bin"));
+        }
+
+        _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
     }
 
 #elif defined(Q_OS_LINUX)
@@ -618,10 +700,14 @@ void _configureDebugLogging()
     }
 }
 
+} // anonymous namespace
+
 void prepareEnvironment()
 {
     _setGstEnvVars();
 }
+
+namespace {
 
 bool _initGstRuntime()
 {
@@ -631,8 +717,12 @@ bool _initGstRuntime()
         return false;
     }
 
+    // Cache arguments on the stack — QCoreApplication::arguments() is not thread-safe,
+    // but this runs early during init before concurrent access is possible.
+    const QStringList args = QCoreApplication::arguments();
     QByteArrayList argStorage;
-    for (const QString &arg : QCoreApplication::arguments()) {
+    argStorage.reserve(args.size());
+    for (const QString &arg : args) {
         argStorage.append(arg.toUtf8());
     }
 
@@ -645,6 +735,10 @@ bool _initGstRuntime()
     char **argvPtr = argv.data();
     GError *error = nullptr;
 
+#ifdef Q_OS_IOS
+    gst_ios_pre_init();
+#endif
+
     if (!gst_init_check(&argc, &argvPtr, &error)) {
         qCCritical(GStreamerLog) << "Failed to initialize GStreamer:"
                                   << (error ? error->message : "unknown error");
@@ -652,8 +746,14 @@ bool _initGstRuntime()
         return false;
     }
 
+#ifdef Q_OS_IOS
+    gst_ios_post_init();
+#endif
+
     return true;
 }
+
+} // anonymous namespace
 
 bool completeInit()
 {
@@ -664,9 +764,17 @@ bool completeInit()
 
     _configureDebugLogging();
 
-    gchar *version = gst_version_string();
-    qCDebug(GStreamerLog) << "GStreamer initialized:" << version;
-    g_free(version);
+    guint major, minor, micro, nano;
+    gst_version(&major, &minor, &micro, &nano);
+    qCDebug(GStreamerLog) << "GStreamer initialized:" << major << "." << minor << "." << micro;
+
+#ifdef QGC_GST_BUILD_VERSION_MAJOR
+    if (major != QGC_GST_BUILD_VERSION_MAJOR || minor != QGC_GST_BUILD_VERSION_MINOR) {
+        qCWarning(GStreamerLog) << "GStreamer version mismatch: built against"
+            << QGC_GST_BUILD_VERSION_MAJOR << "." << QGC_GST_BUILD_VERSION_MINOR
+            << "but runtime is" << major << "." << minor << "." << micro;
+    }
+#endif
 
     _registerPlugins();
 
@@ -677,12 +785,26 @@ bool completeInit()
 
     _logDecoderRanks();
 
-    GstElementFactory *sinkFactory = gst_element_factory_find("qml6glsink");
-    if (!sinkFactory) {
-        qCCritical(GStreamerLog) << "qml6glsink factory not found";
+    bool haveSink = false;
+#ifdef QGC_GST_D3D11_SINK
+    GstElementFactory *d3d11SinkFactory = gst_element_factory_find("qml6d3d11sink");
+    if (d3d11SinkFactory) {
+        qCDebug(GStreamerLog) << "qml6d3d11sink factory available (D3D11 rendering)";
+        gst_object_unref(d3d11SinkFactory);
+        haveSink = true;
+    }
+#endif
+    if (!haveSink) {
+        GstElementFactory *glSinkFactory = gst_element_factory_find("qml6glsink");
+        if (glSinkFactory) {
+            gst_object_unref(glSinkFactory);
+            haveSink = true;
+        }
+    }
+    if (!haveSink) {
+        qCCritical(GStreamerLog) << "No QML video sink factory found (tried qml6d3d11sink, qml6glsink)";
         return false;
     }
-    gst_object_unref(sinkFactory);
 
     GstElementFactory *playbinFactory = gst_element_factory_find("playbin");
     if (!playbinFactory) {
@@ -705,17 +827,15 @@ bool initialize()
     GStreamer::resetExternalPluginLoaderFailure();
     GStreamer::redirectGLibLogging();
 
+    // Suppress GStreamer's default stderr debug handler before gst_init_check()
+    // to prevent raw ANSI escape codes from corrupting the terminal on macOS.
+    gst_debug_remove_log_function(gst_debug_log_default);
+
     if (!_initGstRuntime()) {
         return false;
     }
 
     return completeInit();
-}
-
-QFuture<bool> initializeAsync()
-{
-    prepareEnvironment();
-    return QtConcurrent::run(&initialize);
 }
 
 // Ownership protocol for the video sink element:

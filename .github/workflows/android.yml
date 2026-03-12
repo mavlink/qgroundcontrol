@@ -112,6 +112,10 @@ jobs:
       - name: Initial Setup
         uses: ./.github/actions/common
 
+      - name: Install host build dependencies
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/install-dependencies
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
         with:
@@ -336,6 +340,14 @@ jobs:
               timeout 30s adb -e logcat -d > "${OUT_DIR}/adb-logcat-full.txt" 2>/dev/null || true
               timeout 30s adb -e shell dumpsys activity > "${OUT_DIR}/dumpsys-activity.txt" 2>/dev/null || true
               timeout 30s adb -e shell getprop > "${OUT_DIR}/getprop.txt" 2>/dev/null || true
+
+              # Extract GStreamer-specific lines for quick diagnosis
+              if [ -f "${OUT_DIR}/adb-logcat-full.txt" ]; then
+                grep -iE 'gst|gstreamer|libgst|GST_PLUGIN|GstVideoReceiver|qml6glsink|qgcvideosinkbin' \
+                  "${OUT_DIR}/adb-logcat-full.txt" > "${OUT_DIR}/gstreamer-logcat.txt" 2>/dev/null || true
+                grep -iE 'dlopen.*gst|UnsatisfiedLinkError.*gst|cannot.*load.*gst' \
+                  "${OUT_DIR}/adb-logcat-full.txt" > "${OUT_DIR}/gstreamer-load-errors.txt" 2>/dev/null || true
+              fi
             else
               echo "No online emulator device found; skipping adb diagnostics." > "${OUT_DIR}/adb-skipped.txt"
             fi

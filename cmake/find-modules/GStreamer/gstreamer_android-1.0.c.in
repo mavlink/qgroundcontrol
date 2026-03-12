@@ -1,0 +1,123 @@
+#include <gst/gst.h>
+#include <gio/gio.h>
+#include <jni.h>
+
+#define GST_G_IO_MODULE_DECLARE(name) \
+extern void G_PASTE(g_io_, G_PASTE(name, _load)) (gpointer module)
+
+#define GST_G_IO_MODULE_LOAD(name) \
+G_PASTE(g_io_, G_PASTE(name, _load)) (NULL)
+
+/* Declaration of static plugins */
+@PLUGINS_DECLARATION@
+
+/* Declaration of static gio modules */
+@G_IO_MODULES_DECLARE@
+
+static void
+gst_android_load_gio_modules (void)
+{
+  @G_IO_MODULES_LOAD@
+}
+
+static void
+gst_android_load_certificates (void)
+{
+  const gchar *ca_certs = g_getenv ("CA_CERTIFICATES");
+  if (!ca_certs)
+    return;
+
+  GTlsBackend *backend = g_tls_backend_get_default ();
+  if (!backend)
+    return;
+
+  GError *error = NULL;
+  GTlsDatabase *db = g_tls_file_database_new (ca_certs, &error);
+  if (db) {
+    g_tls_backend_set_default_database (backend, db);
+    g_object_unref (db);
+  } else {
+    g_warning ("Failed to create a database from file: %s",
+        error ? error->message : "Unknown");
+    g_clear_error (&error);
+  }
+}
+
+/* This is called by gst_init() */
+void
+gst_init_static_plugins (void)
+{
+  @PLUGINS_REGISTRATION@
+}
+
+static gchar *
+gst_android_get_dir (JNIEnv * env, jobject context, const char * method_name)
+{
+  jclass context_cls = (*env)->GetObjectClass (env, context);
+  jmethodID get_dir =
+      (*env)->GetMethodID (env, context_cls, method_name, "()Ljava/io/File;");
+  (*env)->DeleteLocalRef (env, context_cls);
+  if (!get_dir)
+    return NULL;
+
+  jobject dir = (*env)->CallObjectMethod (env, context, get_dir);
+  if (!dir)
+    return NULL;
+
+  jclass file_cls = (*env)->GetObjectClass (env, dir);
+  jmethodID get_abs_path =
+      (*env)->GetMethodID (env, file_cls, "getAbsolutePath",
+      "()Ljava/lang/String;");
+  (*env)->DeleteLocalRef (env, file_cls);
+  if (!get_abs_path) {
+    (*env)->DeleteLocalRef (env, dir);
+    return NULL;
+  }
+
+  jstring path_jstr =
+      (jstring) (*env)->CallObjectMethod (env, dir, get_abs_path);
+  (*env)->DeleteLocalRef (env, dir);
+  if (!path_jstr)
+    return NULL;
+
+  const char *utf = (*env)->GetStringUTFChars (env, path_jstr, NULL);
+  gchar *result = utf ? g_strdup (utf) : NULL;
+  if (utf)
+    (*env)->ReleaseStringUTFChars (env, path_jstr, utf);
+  (*env)->DeleteLocalRef (env, path_jstr);
+  return result;
+}
+
+void
+Java_org_freedesktop_gstreamer_GStreamer_nativeInit (JNIEnv * env,
+    jobject thiz, jobject context)
+{
+  (void) thiz;
+
+  gchar *files_dir = gst_android_get_dir (env, context, "getFilesDir");
+  gchar *cache_dir = gst_android_get_dir (env, context, "getCacheDir");
+
+  if (files_dir) {
+    gchar *fontconfig = g_build_filename (files_dir, "fontconfig", NULL);
+    gchar *certs = g_build_filename (files_dir, "ssl", "certs",
+        "ca-certificates.crt", NULL);
+
+    g_setenv ("HOME", files_dir, TRUE);
+    g_setenv ("FONTCONFIG_PATH", fontconfig, TRUE);
+    g_setenv ("CA_CERTIFICATES", certs, TRUE);
+
+    g_free (fontconfig);
+    g_free (certs);
+  }
+
+  if (cache_dir) {
+    g_setenv ("XDG_CACHE_HOME", cache_dir, TRUE);
+  }
+
+  g_free (files_dir);
+  g_free (cache_dir);
+
+  gst_android_load_gio_modules ();
+  gst_android_load_certificates ();
+  gst_init (NULL, NULL);
+}

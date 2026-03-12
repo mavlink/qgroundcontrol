@@ -36,6 +36,11 @@ void glib_log_handler(const gchar *log_domain, GLogLevelFlags log_level,
         g_externalPluginLoaderFailed.store(true);
     }
 
+    if (msg.contains(QStringLiteral("pygobject initialization failed"), Qt::CaseInsensitive)) {
+        qCDebug(GStreamerLog) << domain << msg;
+        return;
+    }
+
     switch (log_level & G_LOG_LEVEL_MASK) {
     case G_LOG_LEVEL_ERROR:
     case G_LOG_LEVEL_CRITICAL:

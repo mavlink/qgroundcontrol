@@ -104,22 +104,37 @@ Item {
             return root.height
         }
         Component {
-            id: videoBackgroundComponent
+            id: videoBackgroundGLComponent
             QGCVideoBackground {
-                id:             videoContent
                 objectName:     "videoContent"
 
                 Connections {
                     target: QGroundControl.videoManager
                     function onImageFileChanged(filename) {
-                        videoContent.grabToImage(function(result) {
+                        grabToImage(function(result) {
                             if (!result.saveToFile(filename)) {
                                 console.error('Error capturing video frame');
                             }
                         });
                     }
                 }
+            }
+        }
+        Component {
+            id: videoBackgroundD3D11Component
+            QGCVideoBackgroundD3D11 {
+                objectName:     "videoContent"
 
+                Connections {
+                    target: QGroundControl.videoManager
+                    function onImageFileChanged(filename) {
+                        grabToImage(function(result) {
+                            if (!result.saveToFile(filename)) {
+                                console.error('Error capturing video frame');
+                            }
+                        });
+                    }
+                }
             }
         }
         Loader {
@@ -129,7 +144,9 @@ Item {
             id:                 videoStreamLoader
             anchors.fill:       videoContentArea
             visible:            _showStreamLoader
-            sourceComponent:    videoBackgroundComponent
+            sourceComponent:    QGroundControl.videoManager.gstreamerD3D11Sink
+                                    ? videoBackgroundD3D11Component
+                                    : videoBackgroundGLComponent
 
             property bool videoDisabled: QGroundControl.settingsManager.videoSettings.videoSource.rawValue === QGroundControl.settingsManager.videoSettings.disabledVideoSource
         }
@@ -211,11 +228,22 @@ Item {
             onVisibleChanged: {
                 thermalItem.pipOrNot()
             }
-            QGCVideoBackground {
+            Loader {
                 id:             thermalVideo
-                objectName:     "thermalVideo"
                 anchors.fill:   parent
                 opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
+                sourceComponent: QGroundControl.videoManager.gstreamerD3D11Sink
+                    ? thermalBackgroundD3D11 : thermalBackgroundGL
+                onLoaded: { if (item) item.objectName = "thermalVideo" }
+
+                Component {
+                    id: thermalBackgroundGL
+                    QGCVideoBackground {}
+                }
+                Component {
+                    id: thermalBackgroundD3D11
+                    QGCVideoBackgroundD3D11 {}
+                }
             }
         }
         //-- Zoom

@@ -580,6 +580,7 @@ void GstVideoReceiver::_handleEOS()
     }*/
 }
 
+#if !defined(QGC_GST_BUILD_VERSION_MAJOR) || (QGC_GST_BUILD_VERSION_MAJOR == 1 && QGC_GST_BUILD_VERSION_MINOR < 28)
 gboolean GstVideoReceiver::_filterParserCaps(GstElement *bin, GstPad *pad, GstElement *element, GstQuery *query, gpointer data)
 {
     Q_UNUSED(bin); Q_UNUSED(pad); Q_UNUSED(element); Q_UNUSED(data)
@@ -619,6 +620,7 @@ gboolean GstVideoReceiver::_filterParserCaps(GstElement *bin, GstPad *pad, GstEl
 
     return FALSE;
 }
+#endif
 
 GstElement *GstVideoReceiver::_makeSource(const QString &input)
 {
@@ -726,7 +728,13 @@ GstElement *GstVideoReceiver::_makeSource(const QString &input)
             break;
         }
 
+        // GStreamer < 1.28: decodebin3 didn't negotiate stream-format caps properly
+        // between parser and decoder, so we forced hvc1/avc. GStreamer 1.28+ fixes
+        // this natively, and the forced caps break hardware decoders that need
+        // byte-stream format (e.g. Qualcomm AMC on Android, D3D12 on Windows).
+#if !defined(QGC_GST_BUILD_VERSION_MAJOR) || (QGC_GST_BUILD_VERSION_MAJOR == 1 && QGC_GST_BUILD_VERSION_MINOR < 28)
         (void) g_signal_connect(parser, "autoplug-query", G_CALLBACK(_filterParserCaps), nullptr);
+#endif
 
         gst_bin_add_many(GST_BIN(bin), source, parser, nullptr);
 
@@ -987,8 +995,8 @@ bool GstVideoReceiver::_addDecoder(GstElement *src)
 
     if (!gst_element_link(src, _decoder)) {
         qCCritical(GstVideoReceiverLog) << "Unable to link decoder";
+        gst_element_set_state(_decoder, GST_STATE_NULL);
         (void) gst_bin_remove(GST_BIN(_pipeline), _decoder);
-        (void) gst_element_set_state(_decoder, GST_STATE_NULL);
         gst_clear_object(&_decoder);
         return false;
     }

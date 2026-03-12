@@ -91,6 +91,7 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libxkbcommon-x11-dev",
         "libxrender-dev",
         "libunwind-dev",
+        "libegl-dev",
     ],
     "gstreamer": [
         "libgstreamer1.0-dev",
