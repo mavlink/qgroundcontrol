@@ -15,12 +15,14 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
+
 import org.qtproject.qt.android.bindings.QtActivity;
+
+import org.freedesktop.gstreamer.GStreamer;
 
 public class QGCActivity extends QtActivity {
     private static final String TAG = QGCActivity.class.getSimpleName();
     private static final String MULTICAST_LOCK_TAG = "QGroundControl";
-
     private static volatile QGCActivity m_instance = null;
 
     private static final int IMPORT_FILE_REQUEST_CODE = 42;

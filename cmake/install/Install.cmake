@@ -32,9 +32,12 @@ if(MACOS OR WIN32)
     endif()
 endif()
 
-if(LINUX)
-    # Qt 6.10+ renamed wayland platform plugin to libqwayland.so
-    set(deploy_include_plugins INCLUDE_PLUGINS qwayland)
+if(NOT ANDROID AND NOT IOS)
+    set(deploy_include_plugins INCLUDE_PLUGINS qoffscreen)
+    if(LINUX)
+        # Qt 6.10+ renamed wayland platform plugin to libqwayland.so
+        list(APPEND deploy_include_plugins qwayland)
+    endif()
 endif()
 
 qt_generate_deploy_qml_app_script(
@@ -49,6 +52,24 @@ qt_generate_deploy_qml_app_script(
 
 install(SCRIPT ${deploy_script})
 message(STATUS "QGC: Qt deployment script: ${deploy_script}")
+
+# GStreamer framework rpath fixup: component dylibs (libgstrtsp, libgstvideo, etc.)
+# are inside the framework's lib/ directory, but the binary's @rpath resolves to
+# Contents/Frameworks/ (flat). Add the framework lib path so dyld finds them.
+# Runs after Qt deploy to survive any rpath rewriting by macdeployqt.
+if(MACOS AND GSTREAMER_FRAMEWORK)
+    install(CODE "
+        set(_binary \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/MacOS/${CMAKE_PROJECT_NAME}\")
+        if(EXISTS \"\${_binary}\")
+            execute_process(
+                COMMAND install_name_tool -add_rpath
+                    @executable_path/../Frameworks/GStreamer.framework/Versions/1.0/lib
+                    \"\${_binary}\"
+                ERROR_QUIET
+            )
+        endif()
+    ")
+endif()
 
 # ============================================================================
 # Platform-Specific Installation
@@ -133,6 +154,13 @@ elseif(WIN32)
 # macOS Installation, Code Signing & DMG Creation
 # ----------------------------------------------------------------------------
 elseif(MACOS)
+    # macdeployqt ignores INCLUDE_PLUGINS — manually deploy offscreen plugin
+    if(TARGET Qt6::QOffscreenIntegrationPlugin)
+        install(FILES "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
+            DESTINATION "${CMAKE_PROJECT_NAME}.app/Contents/PlugIns/platforms"
+        )
+    endif()
+
     # Set bundle path for subsequent operations
     install(CODE "set(QGC_STAGING_BUNDLE_PATH \"${CMAKE_BINARY_DIR}/staging/${CMAKE_PROJECT_NAME}.app\")")
 

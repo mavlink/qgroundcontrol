@@ -29,9 +29,8 @@ CPMAddPackage(
         "EARCUT_BUILD_TESTS OFF"
         "EARCUT_BUILD_BENCH OFF"
         "EARCUT_BUILD_VIZ OFF"
+    SYSTEM YES
 )
-
-qgc_disable_dependency_warnings(earcut_hpp)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE earcut_hpp::earcut_hpp)
 

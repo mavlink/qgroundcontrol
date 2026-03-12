@@ -1,7 +1,12 @@
 #!/bin/bash
 
 if [ -z "$APPDIR" ]; then
-    APPDIR="$(dirname "$(readlink -f "$0")")"
+    # Use readlink -f where available; fall back to POSIX realpath resolution
+    if command -v readlink >/dev/null 2>&1 && readlink -f / >/dev/null 2>&1; then
+        APPDIR="$(dirname "$(readlink -f "$0")")"
+    else
+        APPDIR="$(cd "$(dirname "$0")" && pwd -P)"
+    fi
 fi
 
 ARCH=$(uname -m)
@@ -11,36 +16,79 @@ case "$ARCH" in
     *)       MULTIARCH="" ;;
 esac
 
-SYSTEM_GLIB=""
-SYSTEM_GIO=""
-for LIB_PATH in \
-    "/usr/lib/${MULTIARCH}" \
-    "/usr/lib64" \
-    "/usr/lib"; do
-    if [ -f "${LIB_PATH}/libglib-2.0.so.0" ]; then
-        SYSTEM_GLIB="${LIB_PATH}/libglib-2.0.so.0"
-        SYSTEM_GIO="${LIB_PATH}/libgio-2.0.so.0"
-        break
-    fi
-done
+unset GIO_EXTRA_MODULES
+unset GIO_MODULE_DIR
+unset GIO_USE_VFS
 
-# Preload system GLib 2.76+ for TTS compatibility (libspeechd.so.2 dependency)
-# Must also preload system GIO to avoid ABI mismatch with bundled GStreamer GIO plugin
-if [ -n "$SYSTEM_GLIB" ]; then
-    if nm -D "$SYSTEM_GLIB" 2>/dev/null | grep -qm1 g_string_free_and_steal; then
-        GLIB_PRELOAD="${SYSTEM_GLIB}"
-        if [ -f "$SYSTEM_GIO" ]; then
-            GLIB_PRELOAD="${GLIB_PRELOAD}:${SYSTEM_GIO}"
+# Preload system GLib 2.76+ for TTS compatibility.
+# Set QGC_NO_SYSTEM_GLIB=1 to disable.
+_resolve_system_lib() {
+    # Try hardcoded paths first (fast), then ldconfig fallback (NixOS, Guix, etc.)
+    local _lib="$1"
+    for _lp in \
+        "/usr/lib/${MULTIARCH}" \
+        "/usr/lib64" \
+        "/usr/lib"; do
+        if [ -f "${_lp}/${_lib}" ]; then
+            echo "${_lp}/${_lib}"
+            return 0
         fi
-        export LD_PRELOAD="${GLIB_PRELOAD}${LD_PRELOAD:+:$LD_PRELOAD}"
+    done
+    if command -v ldconfig >/dev/null 2>&1; then
+        local _path
+        _path=$(ldconfig -p 2>/dev/null | grep -m1 "${_lib}\b" | sed 's/.* => //')
+        if [ -f "$_path" ]; then
+            echo "$_path"
+            return 0
+        fi
     fi
+    return 1
+}
+
+if [ -z "$QGC_NO_SYSTEM_GLIB" ]; then
+    SYSTEM_GLIB=""
+    SYSTEM_GIO=""
+    SYSTEM_LIBDIR=""
+    SYSTEM_GLIB=$(_resolve_system_lib "libglib-2.0.so.0") || true
+    if [ -n "$SYSTEM_GLIB" ]; then
+        SYSTEM_LIBDIR="$(dirname "$SYSTEM_GLIB")"
+        SYSTEM_GIO="${SYSTEM_LIBDIR}/libgio-2.0.so.0"
+        if [ ! -f "$SYSTEM_GIO" ]; then
+            SYSTEM_GIO=$(_resolve_system_lib "libgio-2.0.so.0") || true
+        fi
+    fi
+
+    if [ -n "$SYSTEM_GLIB" ]; then
+        if nm -D "$SYSTEM_GLIB" 2>/dev/null | grep -qm1 g_string_free_and_steal; then
+            GLIB_PRELOAD="${SYSTEM_GLIB}"
+            if [ -f "$SYSTEM_GIO" ]; then
+                GLIB_PRELOAD="${GLIB_PRELOAD}:${SYSTEM_GIO}"
+                SYSTEM_LIBMOUNT="${SYSTEM_LIBDIR}/libmount.so.1"
+                if [ -f "$SYSTEM_LIBMOUNT" ]; then
+                    GLIB_PRELOAD="${GLIB_PRELOAD}:${SYSTEM_LIBMOUNT}"
+                fi
+            fi
+            export LD_PRELOAD="${GLIB_PRELOAD}${LD_PRELOAD:+:$LD_PRELOAD}"
+        fi
+    fi
+
+    if [ -n "$SYSTEM_GIO" ] && nm -D "$SYSTEM_GIO" 2>/dev/null | grep -qm1 g_task_set_static_name; then
+        export GIO_MODULE_DIR="${APPDIR}/usr/lib/gio/modules"
+        export GIO_USE_VFS="local"
+    else
+        export GIO_EXTRA_MODULES="${APPDIR}/usr/lib/gio/modules"
+    fi
+else
+    export GIO_EXTRA_MODULES="${APPDIR}/usr/lib/gio/modules"
 fi
 
-# Use system OpenGL libraries to avoid conflicts with bundled libGLESv2
-# Bundled GLES can conflict with system desktop OpenGL causing "Unrecognized OpenGL version"
-SYSTEM_LIBDIR="${LIB_PATH:-/usr/lib/${MULTIARCH}}"
-if [ -f "${SYSTEM_LIBDIR}/libEGL.so.1" ]; then
-    export LD_PRELOAD="${SYSTEM_LIBDIR}/libEGL.so.1:${SYSTEM_LIBDIR}/libGLESv2.so.2${LD_PRELOAD:+:$LD_PRELOAD}"
+# Use system OpenGL to avoid conflicts with bundled libGLESv2
+SYSTEM_EGL=$(_resolve_system_lib "libEGL.so.1") || true
+SYSTEM_GLES=$(_resolve_system_lib "libGLESv2.so.2") || true
+if [ -n "$SYSTEM_EGL" ] && [ -n "$SYSTEM_GLES" ]; then
+    export LD_PRELOAD="${SYSTEM_EGL}:${SYSTEM_GLES}${LD_PRELOAD:+:$LD_PRELOAD}"
+elif [ -n "$SYSTEM_EGL" ]; then
+    export LD_PRELOAD="${SYSTEM_EGL}${LD_PRELOAD:+:$LD_PRELOAD}"
 fi
 
 if [ -n "$MULTIARCH" ]; then
@@ -52,7 +100,6 @@ fi
 
 unset QT_PLUGIN_PATH
 unset QML2_IMPORT_PATH
-# gst-plugin-scanner may use host Python; isolate it from virtualenv/conda paths that omit distro gi bindings needed by gst-python.
 unset PYTHONHOME
 unset PYTHONPATH
 unset VIRTUAL_ENV
@@ -63,16 +110,13 @@ export PYTHONNOUSERSITE=1
 
 export XDG_DATA_DIRS="${APPDIR}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
-# Find the main executable (prefer known names, fall back to first executable)
 QGC_BINARY=""
-# Try known binary names first for security (prevents malicious binary injection)
 for expected_name in QGroundControl Custom-QGroundControl; do
     if [ -x "${APPDIR}/usr/bin/${expected_name}" ] && [ -f "${APPDIR}/usr/bin/${expected_name}" ]; then
         QGC_BINARY="${APPDIR}/usr/bin/${expected_name}"
         break
     fi
 done
-# Fallback to first executable (for custom builds with different names)
 if [ -z "$QGC_BINARY" ]; then
     for bin in "${APPDIR}/usr/bin/"*; do
         if [ -x "$bin" ] && [ -f "$bin" ]; then
@@ -96,17 +140,6 @@ if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
 fi
 
 export GST_REGISTRY_REUSE_PLUGIN_SCANNER="no"
-
-# GIO 2.76+ system modules require symbols missing from bundled GIO - use bundled modules only
-unset GIO_EXTRA_MODULES
-unset GIO_MODULE_DIR
-unset GIO_USE_VFS
-if [ -n "$SYSTEM_GIO" ] && nm -D "$SYSTEM_GIO" 2>/dev/null | grep -qm1 g_task_set_static_name; then
-    export GIO_MODULE_DIR="${APPDIR}/usr/lib/gio/modules"
-    export GIO_USE_VFS="local"
-else
-    export GIO_EXTRA_MODULES="${APPDIR}/usr/lib/gio/modules"
-fi
 
 GST_PLUGIN_DIR="${APPDIR}/usr/lib/gstreamer-1.0"
 GST_SCANNER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"

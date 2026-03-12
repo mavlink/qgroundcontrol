@@ -92,10 +92,19 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
 
+      # TODO: Enable GStreamer integration tests once a Debug build is added to the matrix.
+      # Release builds strip test infrastructure; these tests require a Debug or RelWithDebInfo build.
+      # - name: Run GStreamer Integration Tests
+      #   uses: ./.github/actions/run-unit-tests
+      #   with:
+      #     build-dir: ${{ runner.temp }}/build
+      #     include-labels: 'Integration'
+
       - name: Verify dev build executable
         uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.app/Contents/MacOS/QGroundControl
+          build-dir: ${{ runner.temp }}/build
 
       - name: Import Code Signing Certificate
         if: github.event_name != 'pull_request'
@@ -120,7 +129,6 @@ jobs:
         run: cmake --install . --config ${{ matrix.build_type }}
 
       - name: Mount DMG
-        if: github.event_name != 'pull_request'
         working-directory: ${{ runner.temp }}/build
         run: |
           if ! hdiutil attach QGroundControl.dmg; then
@@ -130,7 +138,6 @@ jobs:
           fi
 
       - name: Verify DMG executable
-        if: github.event_name != 'pull_request'
         uses: ./.github/actions/verify-executable
         with:
           binary-path: /Volumes/QGroundControl/QGroundControl.app/Contents/MacOS/QGroundControl

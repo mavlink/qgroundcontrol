@@ -12,17 +12,24 @@
 #include "VideoReceiver.h"
 #include "VideoSettings.h"
 #include "VideoItemStub.h"
+#ifdef QGC_GST_STREAMING
+#include "gstqml6glregister.h"
+#ifdef QGC_GST_D3D11_SINK
+#include "gstqml6d3d11register.h"
+#endif
+#endif
 #include "QtMultimediaReceiver.h"
 #include "UVCReceiver.h"
 #ifdef QGC_GST_STREAMING
-#include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #endif
 
+#include <QtConcurrent/QtConcurrent>
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QDir>
 #include <QtCore/QEventLoop>
 #include <QtCore/QFutureWatcher>
+#include <QtCore/QPointer>
 #include <QtCore/QRunnable>
 #include <QtCore/QTimer>
 #include <QtQml/QQmlEngine>
@@ -63,6 +70,22 @@ VideoManager::VideoManager(QObject *parent)
 #endif
     if (needsStub) {
         (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+        (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6D3D11VideoItem", 1, 0, "GstD3D11Qt6VideoItem");
+    } else {
+        // Register QML types eagerly so the QML engine can resolve imports before
+        // GStreamer finishes async init. On Android/iOS the Qt6GLVideoItem constructor
+        // calls GStreamer GL functions that crash before gst_init completes, so use
+        // a stub here — the real type is registered in _onGstInitComplete().
+#if defined(QGC_GST_STREAMING) && !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
+        gstQml6GLRegisterQmlTypes();
+#else
+        (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
+#endif
+#ifdef QGC_GST_D3D11_SINK
+        gstQml6D3D11RegisterQmlTypes();
+#else
+        (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6D3D11VideoItem", 1, 0, "GstD3D11Qt6VideoItem");
+#endif
     }
 }
 
@@ -91,7 +114,10 @@ void VideoManager::startGStreamerInit()
     }
 
     _initState = InitState::Pending;
-    _gstInitFuture = GStreamer::initializeAsync();
+
+    GStreamer::prepareEnvironment();
+    _gstInitFuture = QtConcurrent::run(&GStreamer::initialize);
+
     _gstInitFuture.then(this, [this](bool success) {
         _onGstInitComplete(success);
     }).onCanceled(this, [this] {
@@ -233,9 +259,18 @@ void VideoManager::_onGstInitComplete(bool success)
     }
 
 #ifdef QGC_GST_STREAMING
-    const auto decoderOption = static_cast<GStreamer::VideoDecoderOptions>(
-        _videoSettings->forceVideoDecoder()->rawValue().toInt());
-    GStreamer::setCodecPriorities(decoderOption);
+    // On Android/iOS the real Qt6GLVideoItem can't be registered before gst_init
+    // (its constructor calls GStreamer GL functions). Now that init is done,
+    // replace the stub with the real type.
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    gstQml6GLRegisterQmlTypes();
+#endif
+
+    if (_videoSettings) {
+        const auto decoderOption = static_cast<GStreamer::VideoDecoderOptions>(
+            _videoSettings->forceVideoDecoder()->rawValue().toInt());
+        GStreamer::setCodecPriorities(decoderOption);
+    }
 #endif
 
     switch (_initState) {
@@ -256,6 +291,12 @@ void VideoManager::_onGstInitComplete(bool success)
 
 void VideoManager::_createVideoReceivers()
 {
+#ifdef QGC_UNITTEST_BUILD
+    if (_createVideoReceiversForTest) {
+        _createVideoReceiversForTest();
+        return;
+    }
+#endif
     static const QStringList videoStreamList = {
         "videoContent",
         "thermalVideo"
@@ -445,6 +486,15 @@ bool VideoManager::isUvc() const
 bool VideoManager::gstreamerEnabled()
 {
 #ifdef QGC_GST_STREAMING
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool VideoManager::gstreamerD3D11Sink()
+{
+#ifdef QGC_GST_D3D11_SINK
     return true;
 #else
     return false;
@@ -839,10 +889,6 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
     receiver->setSink(sink);
 
     (void) connect(receiver, &VideoReceiver::onStartComplete, this, [this, receiver](VideoReceiver::STATUS status) {
-        if (!receiver) {
-            return;
-        }
-
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "Start complete, status:" << status;
         switch (status) {
         case VideoReceiver::STATUS_OK:

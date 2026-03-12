@@ -99,12 +99,6 @@ jobs:
           qt-version: ${{ matrix.qt_version || '' }}
           build-type: ${{ matrix.build_type }}
 
-      - name: Install GStreamer
-        if: matrix.arch == 'win64_msvc2022_64'
-        uses: ./.github/actions/install-dependencies
-        with:
-          gstreamer-version: ${{ steps.build-setup.outputs.gstreamer_windows_version }}
-
       - name: Set up MSVC environment
         uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
@@ -141,8 +135,21 @@ jobs:
           build-type: ${{ matrix.build_type }}
           stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
           extra-args: >-
-            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch == 'win64_msvc2022_64' && 'ON' || 'OFF' }}
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && 'ON' || 'OFF' }}
             ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.qt-host.outputs.qt_root_dir) || '' }}
+
+      - name: Add GStreamer to PATH
+        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: pwsh
+        run: |
+          $cacheFile = "${{ runner.temp }}\build\CMakeCache.txt"
+          $match = Select-String -Path $cacheFile -Pattern '^GStreamer_ROOT_DIR:.*=(.+)$'
+          if (-not $match) {
+            Write-Error "GStreamer_ROOT_DIR not found in CMakeCache.txt"
+            exit 1
+          }
+          $rootDir = $match.Matches[0].Groups[1].Value
+          "$rootDir\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
 
       - name: Build
         uses: ./.github/actions/cmake-build
@@ -150,16 +157,81 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
 
+      # TODO: Enable GStreamer integration tests once a Debug build is added to the matrix.
+      # Release builds strip test infrastructure; these tests require a Debug or RelWithDebInfo build.
+      # - name: Run GStreamer Integration Tests
+      #   if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+      #   uses: ./.github/actions/run-unit-tests
+      #   with:
+      #     build-dir: ${{ runner.temp }}/build
+      #     include-labels: 'Integration'
+
       - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
         uses: ./.github/actions/verify-executable
         with:
           binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.exe
           type: exe
+          build-dir: ${{ runner.temp }}/build
 
       - name: Create Installer
         working-directory: ${{ runner.temp }}\build
         run: cmake --install . --config ${{ matrix.build_type }}
+
+      - name: Install and verify installer
+        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: pwsh
+        run: |
+          $buildDir = "${{ runner.temp }}\build"
+          $installerExe = Get-ChildItem -Path $buildDir -Filter "*installer*.exe" | Select-Object -First 1
+          if (-not $installerExe) {
+            Write-Error "Installer .exe not found in $buildDir"
+            exit 1
+          }
+          $installDir = "${{ runner.temp }}\qgc-install-test"
+          Write-Host "Installing $($installerExe.Name) to $installDir"
+          Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$installDir" -Wait -NoNewWindow
+          $binary = Join-Path $installDir "bin\QGroundControl.exe"
+          if (-not (Test-Path $binary)) {
+            Write-Error "QGroundControl.exe not found at $binary after install"
+            Get-ChildItem -Path $installDir -Recurse | Select-Object FullName
+            exit 1
+          }
+          $pluginDir = Join-Path $installDir "lib\gstreamer-1.0"
+          if (Test-Path $pluginDir) {
+            $pluginCount = (Get-ChildItem -Path $pluginDir -Filter "*.dll" | Measure-Object).Count
+            Write-Host "GStreamer plugins found: $pluginCount"
+            if ($pluginCount -eq 0) {
+              Write-Error "No GStreamer plugin DLLs found in $pluginDir"
+              exit 1
+            }
+          } else {
+            Write-Error "GStreamer plugin directory not found: $pluginDir"
+            exit 1
+          }
+
+      - name: Remove build SDK from PATH for installed verification
+        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: pwsh
+        run: |
+          $cacheFile = "${{ runner.temp }}\build\CMakeCache.txt"
+          $match = Select-String -Path $cacheFile -Pattern '^GStreamer_ROOT_DIR:.*=(.+)$'
+          if (-not $match) {
+            Write-Error "GStreamer_ROOT_DIR not found in CMakeCache.txt"
+            exit 1
+          }
+          $sdkBin = Join-Path $match.Matches[0].Groups[1].Value "bin"
+          $sanitizedPath = (($env:PATH -split ';') | Where-Object { $_ -and ($_ -ne $sdkBin) }) -join ';'
+          "QGC_VERIFY_INSTALLED_PATH=$sanitizedPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Verify installed executable
+        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        uses: ./.github/actions/verify-executable
+        env:
+          PATH: ${{ env.QGC_VERIFY_INSTALLED_PATH }}
+        with:
+          binary-path: ${{ runner.temp }}\qgc-install-test\bin\QGroundControl.exe
+          type: exe
 
       - name: Attest and Upload
         if: matrix.build_type == 'Release'

@@ -12,6 +12,8 @@ struct _GstQgcVideoSinkBin
     GstBin parent;
     GstElement *glsinkbin;
     GstElement *qmlglsink;
+    GstElement *d3d11sink;
+    gboolean using_d3d11;
 };
 
 G_END_DECLS

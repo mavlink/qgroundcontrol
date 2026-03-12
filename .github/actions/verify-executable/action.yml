@@ -13,6 +13,10 @@ inputs:
     description: "Working directory (defaults to binary parent directory)"
     required: false
     default: ""
+  build-dir:
+    description: "CMake build directory (used to locate auto-downloaded GStreamer SDK for dev builds)"
+    required: false
+    default: ""
   timeout:
     description: "Timeout in seconds"
     required: false
@@ -28,4 +32,5 @@ runs:
           --binary-path "${{ inputs.binary-path }}" \
           --type "${{ inputs.type }}" \
           --working-dir "${{ inputs.working-dir }}" \
+          --build-dir "${{ inputs.build-dir }}" \
           --timeout "${{ inputs.timeout }}"

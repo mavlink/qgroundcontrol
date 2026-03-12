@@ -5,12 +5,12 @@
   "android_min_sdk": "28",
   "android_platform": "35",
   "cmake_minimum_version": "3.25",
-  "gstreamer_android_version": "1.22.12",
-  "gstreamer_ios_version": "1.24.13",
-  "gstreamer_macos_version": "1.24.13",
-  "gstreamer_minimum_version": "1.20",
-  "gstreamer_default_version": "1.24.13",
-  "gstreamer_windows_version": "1.22.12",
+  "gstreamer_android_version": "1.28.1",
+  "gstreamer_ios_version": "1.28.1",
+  "gstreamer_macos_version": "1.28.1",
+  "gstreamer_minimum_version": "1.20.0",
+  "gstreamer_default_version": "1.28.1",
+  "gstreamer_windows_version": "1.28.1",
   "ios_deployment_target": "14.0",
   "java_version": "17",
   "macos_deployment_target": "13.0",
@@ -20,6 +20,22 @@
   "qt_minimum_version": "6.10.0",
   "qt_modules": "qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver",
   "qt_version": "6.10.2",
+  "vulkan_sdk_version": "1.4.304.1",
   "xcode_ios_version": "latest-stable",
-  "xcode_version": "16.x"
+  "xcode_version": "16.x",
+  "gstreamer_checksums": {
+    "1.28.1": {
+      "android": "7b3f7cfd289aa1ac237899220b3d8fbfa722337c23175c047e06ec881c505481",
+      "windows_msvc_x64": "2ec50356d2d0937a9ead0f99d322f81d8413b9514c9d58ed41ca58fbcf25bfde",
+      "windows_msvc_arm64": "0a1938b7a8568ee5695c4c1755743cacc4a1643538cacdfc5be3c82426c0e193",
+      "macos": "02803f73435daabe8fb12b79c38c6775d0efb83af001474558ba25c4f874d305",
+      "macos_devel": "df167b41559afbcd743276c6b068cba2ada8f5b69eb68095415a7a5a7515e52c",
+      "ios": "3255cd01f8c4d92322be0c5825a192b998fef05989a161dcae3cef22c517ae71",
+      "good_plugins": "738e26aee41b7a62050e40b81adc017a110a7f32d1ec49fa6a0300846c44368d"
+    },
+    "1.22.12": {
+      "android": "be92cf477d140c270b480bd8ba0e26b1e01c8db042c46b9e234d87352112e485",
+      "windows_msvc_x64": "e5cbc6fb9f40fc2850806163df4b9d92012f967c842dc000a2b254cbcd7901d6"
+    }
+  }
 }

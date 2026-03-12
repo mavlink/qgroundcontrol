@@ -15,6 +15,7 @@ qt_add_qml_module(FlyViewModule
         FixedWingChecklist.qml
         FlightDisplayViewDummy.qml
         FlightDisplayViewGStreamer.qml
+        FlightDisplayViewGStreamerD3D11.qml
         FlightDisplayViewQtMultimedia.qml
         FlightDisplayViewUVC.qml
         FlightDisplayViewVideo.qml
@@ -64,6 +65,7 @@ qt_add_qml_module(FlyViewModule
         ProximityRadarValues.qml
         ProximityRadarVideoView.qml
         QGCVideoBackground.qml
+        QGCVideoBackgroundD3D11.qml
         RoverChecklist.qml
         SubChecklist.qml
         TelemetryValuesBar.qml

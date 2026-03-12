@@ -112,7 +112,7 @@ void changeFeatureRank(GstRegistry *registry, const char *featureName, uint16_t 
     gst_clear_object(&feature);
 }
 
-void lowerSoftwareDecoderRanks(GstRegistry *registry)
+void lowerDecoderRanksByClass(GstRegistry *registry, bool lowerHardware)
 {
     static constexpr uint16_t NewRank = GST_RANK_NONE;
     if (!registry) {
@@ -130,7 +130,7 @@ void lowerSoftwareDecoderRanks(GstRegistry *registry)
             continue;
         }
 
-        if (GStreamer::isHardwareDecoderFactory(factory)) {
+        if (GStreamer::isHardwareDecoderFactory(factory) != lowerHardware) {
             continue;
         }
 
@@ -139,7 +139,7 @@ void lowerSoftwareDecoderRanks(GstRegistry *registry)
             continue;
         }
 
-        qCDebug(GStreamerLog) << "Setting software decoder rank low:" << name << " rank:" << NewRank;
+        qCDebug(GStreamerLog) << "Lowering" << (lowerHardware ? "hardware" : "software") << "decoder rank:" << name;
         gst_plugin_feature_set_rank(GST_PLUGIN_FEATURE(factory), NewRank);
     }
 
@@ -190,10 +190,8 @@ void prioritizeByHardwareClass(GstRegistry *registry, uint16_t prioritizedRank, 
                                << "video decoder factories found to reprioritize.";
     }
 
-    if (requireHardware) {
-        qCDebug(GStreamerLog) << "Lowering software decoder ranks for hardware priority.";
-        lowerSoftwareDecoderRanks(registry);
-    }
+    qCDebug(GStreamerLog) << "Lowering" << (requireHardware ? "software" : "hardware") << "decoder ranks.";
+    lowerDecoderRanksByClass(registry, !requireHardware);
 
     gst_plugin_feature_list_free(decoderFactories);
 }

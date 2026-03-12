@@ -8,6 +8,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QIcon>
+#include <QtGui/QOpenGLContext>
 #include "QGCNetworkHelper.h"
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
@@ -90,6 +91,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
 #endif
     }
     setApplicationName(applicationName);
+    setDesktopFileName(QGC_PACKAGE_NAME);
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
     setApplicationVersion(QString(QGC_APP_VERSION_STR));
@@ -237,8 +239,44 @@ void QGCApplication::init()
 bool QGCApplication::_initVideo()
 {
 #ifdef QGC_GST_STREAMING
-    // Gstreamer video playback requires OpenGL
-    QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    // GStreamer video playback requires OpenGL. On platforms where OpenGL
+    // is unavailable (e.g. recent macOS with only Metal), fall back to the
+    // default graphics API — video streaming won't work but the rest of
+    // QGC remains functional.
+    //
+    // The offscreen platform (used in CI boot tests) never provides a real
+    // GL context, so skip the probe there — just set OpenGL API to exercise
+    // the full GStreamer init path.
+    const bool isOffscreen = (qApp->platformName() == QLatin1String("offscreen"));
+
+#if defined(QGC_GST_D3D11_SINK)
+    // D3D11 sink renders via Qt's native D3D11 RHI — no OpenGL needed.
+    if (isOffscreen) {
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    }
+    qCDebug(QGCApplicationLog) << "D3D11 video sink available, using default graphics API";
+#else
+    const bool skipGLProbe = isOffscreen
+#if defined(Q_OS_MACOS)
+        // macOS still provides OpenGL (deprecated but functional). The
+        // QOpenGLContext::create() probe is unreliable without a native
+        // surface, so skip it and force OpenGL for qml6glsink.
+        || true
+#endif
+        ;
+
+    if (skipGLProbe) {
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    } else {
+        QOpenGLContext testCtx;
+        if (testCtx.create()) {
+            QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+        } else {
+            qCWarning(QGCApplicationLog) << "OpenGL not available; GStreamer video will be disabled."
+                                         << "Using default graphics API (Metal/Vulkan).";
+        }
+    }
+#endif  // QGC_GST_D3D11_SINK
 #endif
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
@@ -646,6 +684,9 @@ QT_WARNING_POP
 bool QGCApplication::event(QEvent *e)
 {
     if (e->type() == QEvent::Quit) {
+        if (!_mainRootWindow) {
+            return QApplication::event(e);
+        }
         // On OSX if the user selects Quit from the menu (or Command-Q) the ApplicationWindow does not signal closing. Instead you get a Quit event here only.
         // This in turn causes the standard QGC shutdown sequence to not run. So in this case we close the window ourselves such that the
         // signal is sent and the normal shutdown sequence runs.
