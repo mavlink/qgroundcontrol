@@ -190,7 +190,7 @@ private:
     QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
     QStringList _commPortList;
     QStringList _commPortDisplayList;
-    QString _autoConnectRTKPort;
+    QStringList _autoConnectRTKPorts;
     QString _nmeaDeviceName;
     uint32_t _nmeaBaud = 0;
     QSerialPort *_nmeaPort = nullptr;

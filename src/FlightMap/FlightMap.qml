@@ -8,6 +8,7 @@ import Qt.labs.animation
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.GPS.RTK
 
 Map {
     id: _map
@@ -223,6 +224,11 @@ Map {
                 mapRightClicked(Qt.point(mouseEvent.x, mouseEvent.y))
             }
         }
+    }
+
+    RTKBaseStationMapItem {
+        activeVehicle: _activeVehicle
+        planView:      _map.planView
     }
 
     /// Ground Station location

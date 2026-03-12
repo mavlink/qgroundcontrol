@@ -29,9 +29,16 @@ void VehicleGPS2FactGroup::_handleGps2Raw(const mavlink_message_t &message)
     lat()->setRawValue(gps2Raw.lat * 1e-7);
     lon()->setRawValue(gps2Raw.lon * 1e-7);
     mgrs()->setRawValue(QGCGeo::convertGeoToMGRS(QGeoCoordinate(gps2Raw.lat * 1e-7, gps2Raw.lon * 1e-7)));
+    altitudeMSL()->setRawValue(gps2Raw.alt / 1000.0);
+    altitudeEllipsoid()->setRawValue(gps2Raw.alt_ellipsoid / 1000.0);
     count()->setRawValue((gps2Raw.satellites_visible == 255) ? 0 : gps2Raw.satellites_visible);
     hdop()->setRawValue((gps2Raw.eph == UINT16_MAX) ? qQNaN() : (gps2Raw.eph / 100.0));
     vdop()->setRawValue((gps2Raw.epv == UINT16_MAX) ? qQNaN() : (gps2Raw.epv / 100.0));
+    hAcc()->setRawValue((gps2Raw.h_acc == 0) ? qQNaN() : (gps2Raw.h_acc / 1000.0));
+    vAcc()->setRawValue((gps2Raw.v_acc == 0) ? qQNaN() : (gps2Raw.v_acc / 1000.0));
+    groundSpeed()->setRawValue((gps2Raw.vel == UINT16_MAX) ? qQNaN() : (gps2Raw.vel / 100.0));
+    velAcc()->setRawValue((gps2Raw.vel_acc == 0) ? qQNaN() : (gps2Raw.vel_acc / 1000.0));
+    hdgAcc()->setRawValue((gps2Raw.hdg_acc == 0) ? qQNaN() : (gps2Raw.hdg_acc / 1e5));
     courseOverGround()->setRawValue((gps2Raw.cog == UINT16_MAX) ? qQNaN() : (gps2Raw.cog / 100.0));
     yaw()->setRawValue((gps2Raw.yaw == UINT16_MAX) ? qQNaN() : (gps2Raw.yaw / 100.0));
     lock()->setRawValue(gps2Raw.fix_type);

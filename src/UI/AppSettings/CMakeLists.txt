@@ -10,11 +10,11 @@ qt_add_qml_module(AppSettingsModule
         DebugWindow.qml
         FlyViewSettings.qml
         GeneralSettings.qml
+        GPSSettings.qml
         HelpSettings.qml
         LinkSettings.qml
         LogReplaySettings.qml
         MapSettings.qml
-        NTRIPSettings.qml
         MockLink.qml
         MockLinkSettings.qml
         PlanViewSettings.qml

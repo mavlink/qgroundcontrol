@@ -13,7 +13,7 @@
 #include <QtMath>
 
 VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject *parent)
-    : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
+    : FactGroup(1000, ":/json/Vehicle/GPSAggregateFact.json", parent)
 {
     _addFact(&_spoofingStateFact);
     _addFact(&_jammingStateFact);

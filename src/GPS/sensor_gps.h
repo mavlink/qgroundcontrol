@@ -1,4 +1,4 @@
-/* https://github.com/PX4/Firmware/blob/master/msg/SensorGps.msg */
+/* https://github.com/PX4/PX4-Autopilot/blob/main/msg/SensorGps.msg */
 
 #pragma once
 
@@ -41,16 +41,23 @@ struct sensor_gps_s
 
 	static constexpr uint8_t JAMMING_STATE_UNKNOWN = 0;
 	static constexpr uint8_t JAMMING_STATE_OK = 1;
-	static constexpr uint8_t JAMMING_STATE_WARNING = 2;
-	static constexpr uint8_t JAMMING_STATE_CRITICAL = 3;
+	static constexpr uint8_t JAMMING_STATE_MITIGATED = 2;
+	static constexpr uint8_t JAMMING_STATE_DETECTED = 3;
 	uint8_t jamming_state;
 	int32_t jamming_indicator;
 
 	static constexpr uint8_t SPOOFING_STATE_UNKNOWN = 0;
-	static constexpr uint8_t SPOOFING_STATE_NONE = 1;
-	static constexpr uint8_t SPOOFING_STATE_INDICATED = 2;
-	static constexpr uint8_t SPOOFING_STATE_MULTIPLE = 3;
+	static constexpr uint8_t SPOOFING_STATE_OK = 1;
+	static constexpr uint8_t SPOOFING_STATE_MITIGATED = 2;
+	static constexpr uint8_t SPOOFING_STATE_DETECTED = 3;
 	uint8_t spoofing_state;
+
+	static constexpr uint8_t AUTHENTICATION_STATE_UNKNOWN = 0;
+	static constexpr uint8_t AUTHENTICATION_STATE_INITIALIZING = 1;
+	static constexpr uint8_t AUTHENTICATION_STATE_ERROR = 2;
+	static constexpr uint8_t AUTHENTICATION_STATE_OK = 3;
+	static constexpr uint8_t AUTHENTICATION_STATE_DISABLED = 4;
+	uint8_t authentication_state;
 
 	float vel_m_s;
 	float vel_n_m_s;
@@ -63,6 +70,16 @@ struct sensor_gps_s
 	uint64_t time_utc_usec;
 
 	uint8_t satellites_used;
+
+	static constexpr uint32_t SYSTEM_ERROR_OK = 0;
+	static constexpr uint32_t SYSTEM_ERROR_INCOMING_CORRECTIONS = 1;
+	static constexpr uint32_t SYSTEM_ERROR_CONFIGURATION = 2;
+	static constexpr uint32_t SYSTEM_ERROR_SOFTWARE = 4;
+	static constexpr uint32_t SYSTEM_ERROR_ANTENNA = 8;
+	static constexpr uint32_t SYSTEM_ERROR_EVENT_CONGESTION = 16;
+	static constexpr uint32_t SYSTEM_ERROR_CPU_OVERLOAD = 32;
+	static constexpr uint32_t SYSTEM_ERROR_OUTPUT_CONGESTION = 64;
+	uint32_t system_error;
 
 	float heading;
 	float heading_offset;

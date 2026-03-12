@@ -1,37 +1,42 @@
 # ============================================================================
 # GPS Module
-# GPS/GNSS positioning and RTK support
+# GPS/GNSS positioning, RTK support, and NTRIP corrections
 # ============================================================================
-
-# GPS requires serial link support
-if(QGC_NO_SERIAL_LINK)
-    return()
-endif()
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        GPSEvent.h
+        GPSEventModel.cc
+        GPSEventModel.h
         GPSManager.cc
         GPSManager.h
+        GPSPositionSource.cc
+        GPSPositionSource.h
         GPSProvider.cc
         GPSProvider.h
-        GPSRtk.cc
-        GPSRtk.h
-        GPSRTKFactGroup.cc
-        GPSRTKFactGroup.h
-        RTCMMavlink.cc
-        RTCMMavlink.h
+        GPSTransport.h
+        GPSTypes.h
         satellite_info.h
         sensor_gnss_relative.h
         sensor_gps.h
 )
+
+if(NOT QGC_NO_SERIAL_LINK)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            SerialGPSTransport.cc
+            SerialGPSTransport.h
+    )
+endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
-# NTRIP Subsystem
+# Subsystems
 # ----------------------------------------------------------------------------
+add_subdirectory(RTK)
 add_subdirectory(NTRIP)
 
 # ============================================================================
@@ -41,7 +46,7 @@ add_subdirectory(NTRIP)
 CPMAddPackage(
     NAME px4-gpsdrivers
     GITHUB_REPOSITORY PX4/PX4-GPSDrivers
-    GIT_TAG caf5158061bd10e79c9f042abb62c86bc6f3e7a7
+    GIT_TAG 5ed844c374646bfa2b41461c909a3b4df1a17233
     SOURCE_SUBDIR src
 )
 
@@ -64,14 +69,6 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         definitions.h
         $<TARGET_OBJECTS:px4-gpsdrivers>
-)
-
-# ----------------------------------------------------------------------------
-# GPS/RTK Configuration Resources
-# ----------------------------------------------------------------------------
-qt_add_resources(${CMAKE_PROJECT_NAME} json_gps_drivers
-    PREFIX "/json/Vehicle"
-    FILES GPSRTKFact.json
 )
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE GPS_DEFINITIONS_HEADER=<${CMAKE_CURRENT_SOURCE_DIR}/definitions.h>)

@@ -20,18 +20,10 @@ Q_DECLARE_LOGGING_CATEGORY(GPSDriversLog)
 #define M_DEG_TO_RAD_F 0.0174532925f
 #define M_RAD_TO_DEG_F 57.2957795f
 
-#define M_PI_2_F 0.63661977f
+#define M_2_PI_F 0.63661977f
 
-#ifdef _WIN32
-#if (_MSC_VER < 1900)
-struct timespec
-{
-    time_t tv_sec;
-    long tv_nsec;
-};
-#else
+#ifdef Q_OS_WIN
 #include <time.h>
-#endif
 #endif
 
 static inline void gps_usleep(unsigned long usecs)

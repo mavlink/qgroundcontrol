@@ -19,7 +19,6 @@
 #include "GPSManager.h"
 #include "PositionManager.h"
 #include "UdpIODevice.h"
-#include "GPSRtk.h"
 #endif
 
 #ifdef QT_DEBUG
@@ -889,7 +888,7 @@ void LinkManager::_addSerialAutoConnectLink()
                 qCDebug(LinkManagerLog) << "Waiting for bootloader to finish" << portInfo.systemLocation();
                 continue;
             }
-            if (_portAlreadyConnected(portInfo.systemLocation()) || (_autoConnectRTKPort == portInfo.systemLocation())) {
+            if (_portAlreadyConnected(portInfo.systemLocation()) || _autoConnectRTKPorts.contains(portInfo.systemLocation())) {
                 qCDebug(LinkManagerVerboseLog) << "Skipping existing autoconnect" << portInfo.systemLocation();
             } else if (!_autoconnectPortWaitList.contains(portInfo.systemLocation())) {
                 // We don't connect to the port the first time we see it. The ability to correctly detect whether we
@@ -913,8 +912,8 @@ void LinkManager::_addSerialAutoConnectLink()
                     break;
                 case QGCSerialPortInfo::BoardTypeRTKGPS:
                     qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
-                    _autoConnectRTKPort = portInfo.systemLocation();
-                    GPSManager::instance()->gpsRtk()->connectGPS(portInfo.systemLocation(), boardName);
+                    _autoConnectRTKPorts.append(portInfo.systemLocation());
+                    GPSManager::instance()->connectGPS(portInfo.systemLocation(), boardName);
                     break;
                 default:
                     qCWarning(LinkManagerLog) << "Internal error: Unknown board type" << boardType;
@@ -935,11 +934,14 @@ void LinkManager::_addSerialAutoConnectLink()
         }
     }
 
-    // Check for RTK GPS connection gone
-    if (!_autoConnectRTKPort.isEmpty() && !currentPorts.contains(_autoConnectRTKPort)) {
-        qCDebug(LinkManagerLog) << "RTK GPS disconnected" << _autoConnectRTKPort;
-        GPSManager::instance()->gpsRtk()->disconnectGPS();
-        _autoConnectRTKPort.clear();
+    // Check for RTK GPS connections gone
+    for (int i = _autoConnectRTKPorts.size() - 1; i >= 0; --i) {
+        const QString &port = _autoConnectRTKPorts.at(i);
+        if (!currentPorts.contains(port)) {
+            qCDebug(LinkManagerLog) << "RTK GPS disconnected" << port;
+            GPSManager::instance()->disconnectGPS(port);
+            _autoConnectRTKPorts.removeAt(i);
+        }
     }
 }
 
@@ -962,7 +964,7 @@ bool LinkManager::_allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardT
         }
         break;
     case QGCSerialPortInfo::BoardTypeRTKGPS:
-        if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !GPSManager::instance()->gpsRtk()->connected()) {
+        if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !GPSManager::instance()->connected()) {
             return true;
         }
         break;

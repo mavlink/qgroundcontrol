@@ -7,8 +7,8 @@
     "name":                 "baseReceiverManufacturers",
     "shortDesc":            "GPS manufacturers for settings",
     "type":                 "uint8",
-    "enumStrings":          "All,Trimble,Septentrio,Femtomes,UBlox",
-    "enumValues":           "0,1,2,3,4",
+    "enumStrings":          "All,Trimble,Septentrio,Femtomes,UBlox,NMEA",
+    "enumValues":           "0,1,2,3,4,5",
     "default":              1
 },
 {
@@ -87,6 +87,114 @@
     "default":         0,
     "units":                "m",
     "decimalPlaces":        2,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "gpsOutputMode",
+    "shortDesc":            "Output mode",
+    "longDesc":             "Controls what data the GPS receiver outputs. GPS: position only. GPS+RTCM: position and RTK corrections. RTCM: corrections only (for dedicated base stations). Ignored for NMEA receivers which always use GPS mode.",
+    "type":                 "uint8",
+    "enumStrings":          "GPS,GPS+RTCM,RTCM",
+    "enumValues":           "0,1,2",
+    "default":              1,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ubxMode",
+    "shortDesc":            "U-blox mode",
+    "longDesc":             "Operating mode for u-blox receivers. Normal: standard operation. RoverWithMovingBase: receives RTCM from a moving base on UART2 for heading. MovingBase: outputs RTCM on UART2 to a rover. GroundControlStation: NMEA output on UART2 for GCS.",
+    "type":                 "uint8",
+    "enumStrings":          "Normal,Rover (Moving Base UART2),Moving Base UART2,Rover (Moving Base UART1),Moving Base UART1,Rover (Static Base UART2),Ground Control Station",
+    "enumValues":           "0,1,2,3,4,5,6",
+    "default":              0,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ubxDynamicModel",
+    "shortDesc":            "Dynamic model",
+    "longDesc":             "Dynamic platform model for the u-blox receiver. Affects position filtering. Portable (0) is general-purpose. Stationary (2) for fixed installations. Airborne models (6-8) for UAVs with different g-force limits.",
+    "type":                 "uint8",
+    "enumStrings":          "Portable,Stationary,Pedestrian,Automotive,Sea,Airborne <1g,Airborne <2g,Airborne <4g",
+    "enumValues":           "0,2,3,4,5,6,7,8",
+    "default":              7,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ubxUart2Baudrate",
+    "shortDesc":            "UART2 baudrate",
+    "longDesc":             "Baudrate for the u-blox receiver's UART2 port. Used for RTCM output in moving base mode or NMEA output in GCS mode.",
+    "type":                 "int32",
+    "enumStrings":          "9600,19200,38400,57600,115200,230400,460800",
+    "enumValues":           "9600,19200,38400,57600,115200,230400,460800",
+    "default":              57600,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ubxPpkOutput",
+    "shortDesc":            "PPK output",
+    "longDesc":             "Enable Post-Processing Kinematic (PPK) raw measurement output. When enabled, the receiver outputs raw observation data for offline post-processing.",
+    "type":                 "bool",
+    "default":              false,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ubxDgnssTimeout",
+    "shortDesc":            "DGNSS timeout",
+    "longDesc":             "DGNSS (differential GNSS) timeout in seconds. The receiver reverts to standalone mode if no corrections are received within this period. Set to 0 to disable.",
+    "type":                 "uint16",
+    "default":              0,
+    "min":                  0,
+    "max":                  600,
+    "increment":            1,
+    "units":                "secs",
+    "decimalPlaces":        0,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ubxMinCno",
+    "shortDesc":            "Min C/N0",
+    "longDesc":             "Minimum carrier-to-noise ratio (C/N0) for a satellite to be used in navigation. Higher values reject weaker signals but may reduce satellite count.",
+    "type":                 "uint8",
+    "default":              0,
+    "min":                  0,
+    "max":                  40,
+    "increment":            1,
+    "units":                "dBHz",
+    "decimalPlaces":        0,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ubxMinElevation",
+    "shortDesc":            "Min elevation",
+    "longDesc":             "Minimum satellite elevation angle for navigation. Satellites below this angle are excluded. Higher values reduce multipath but limit satellite count.",
+    "type":                 "uint8",
+    "default":              0,
+    "min":                  0,
+    "max":                  90,
+    "increment":            1,
+    "units":                "deg",
+    "decimalPlaces":        0,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ubxOutputRate",
+    "shortDesc":            "Output rate",
+    "longDesc":             "Navigation solution output rate in milliseconds. Lower values give faster updates but increase processing load. Set to 0 to use the receiver default.",
+    "type":                 "uint16",
+    "default":              0,
+    "min":                  0,
+    "max":                  10000,
+    "increment":            100,
+    "units":                "ms",
+    "decimalPlaces":        0,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "ubxJamDetSensitivityHi",
+    "shortDesc":            "Jam detect high sensitivity",
+    "longDesc":             "Enable high-sensitivity jamming/interference detection. When enabled, the receiver is more aggressive in detecting RF interference.",
+    "type":                 "bool",
+    "default":              false,
     "qgcRebootRequired":    true
 }
 ]

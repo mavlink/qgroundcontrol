@@ -40,6 +40,7 @@ public:
     int updateInterval() const { return _updateInterval; }
 
     void setNmeaSourceDevice(QIODevice *device);
+    void setExternalGPSSource(QGeoPositionInfoSource *source);
 
 signals:
     void gcsPositionChanged(QGeoCoordinate gcsPosition);
@@ -84,9 +85,11 @@ private:
     QGeoPositionInfoSource *_defaultSource = nullptr;
     QNmeaPositionInfoSource *_nmeaSource = nullptr;
     QGeoPositionInfoSource *_simulatedSource = nullptr;
+    QGeoPositionInfoSource *_externalSource = nullptr;
 
     QGCCompass *_compass = nullptr;
 
+    static constexpr int kMinUpdateIntervalMs = 1000;
     static constexpr qreal kMinHorizonalAccuracyMeters = 100.;
     static constexpr qreal kMinVerticalAccuracyMeters = 10.;
     static constexpr qreal kMinDirectionAccuracyDegrees = 30.;
