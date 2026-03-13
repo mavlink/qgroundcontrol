@@ -208,7 +208,8 @@ public:
     virtual void startMission(Vehicle *vehicle) const;
 
     /// Command vehicle to move to specified location (altitude is included and relative)
-    virtual void guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius = 0.0) const;
+    /// @return true: goto command accepted, false: goto failed (vehicle not moved)
+    virtual bool guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius = 0.0) const;
 
     /// Command vehicle to change altitude
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified

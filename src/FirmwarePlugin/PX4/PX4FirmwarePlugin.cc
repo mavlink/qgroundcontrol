@@ -387,7 +387,7 @@ bool PX4FirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle* vehicle) const
             vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "FW_AIRSPD_MAX");
 }
 
-void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius) const
+bool PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius) const
 {
     // PX4 doesn't support setting the forward flight loiter radius of
     // MAV_CMD_DO_REPOSITION
@@ -395,7 +395,7 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
 
     if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
         qgcApp()->showAppMessage(tr("Unable to go to location, vehicle position not known."));
-        return;
+        return false;
     }
 
     if (vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
@@ -422,6 +422,8 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
                                 static_cast<float>(gotoCoord.longitude()),
                                 vehicle->altitudeAMSL()->rawValue().toFloat());
     }
+
+    return true;
 }
 
 typedef struct {
