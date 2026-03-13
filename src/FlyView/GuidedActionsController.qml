@@ -549,6 +549,7 @@ Item {
     }
 
     // Executes the specified action
+    // Returns false if the action failed and any associated map indicator should be restored
     function executeAction(actionCode, actionData, sliderOutputValue, optionChecked) {
         var i;
         var selectedVehicles;
@@ -614,19 +615,23 @@ Item {
             _activeVehicle.guidedModeChangeAltitude(altitudeChangeInMeters, false /* pauseVehicle */)
             break
         case actionChangeLoiterRadius:
-            _activeVehicle.guidedModeGotoLocation(
+            if (!_activeVehicle.guidedModeGotoLocation(
                 fwdFlightGotoMapCircle.coordinate,
                 (fwdFlightGotoMapCircle.clockwiseRotation ? 1 : -1) *
                         Math.abs(fwdFlightGotoMapCircle.radius.rawValue)
-            )
+            )) {
+                return false
+            }
             break
         case actionGoto:
-            _activeVehicle.guidedModeGotoLocation(
+            if (!_activeVehicle.guidedModeGotoLocation(
                 actionData,
                 _vehicleInFwdFlight /* forwardFlightLoiterRadius */
                     ? _flyViewSettings.forwardFlightGoToLocationLoiterRad.value
                     : 0
-            )
+            )) {
+                return false
+            }
             break
         case actionSetWaypoint:
             _activeVehicle.setCurrentMissionSequence(actionData)
@@ -678,9 +683,10 @@ Item {
         default:
             if (!customController.customExecuteAction(actionCode, actionData, sliderOutputValue, optionChecked)) {
                 console.warn(qsTr("Internal error: unknown actionCode"), actionCode)
-                return
+                return false
             }
             break
         }
+        return true
     }
 }

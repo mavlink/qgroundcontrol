@@ -90,9 +90,13 @@ Item {
                     guidedValueSlider.visible = false
                 }
                 hideTrigger = false
-                guidedController.executeAction(control.action, control.actionData, sliderOutputValue, control.optionChecked)
+                let success = guidedController.executeAction(control.action, control.actionData, sliderOutputValue, control.optionChecked)
                 if (mapIndicator) {
-                    mapIndicator.actionConfirmed()
+                    if (success) {
+                        mapIndicator.actionConfirmed()
+                    } else {
+                        mapIndicator.actionCancelled()
+                    }
                     mapIndicator = undefined
                 }
             }
