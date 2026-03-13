@@ -40,6 +40,8 @@ private:
         SaveFalseOnSuccessfulLoad,
         ClearSaveDirtyPreservesUploadTrue,
         ClearSaveDirtyPreservesUploadFalse,
+        DownloadWithItemsDirtyForSave,
+        DownloadEmptyNotDirtyForSave,
     };
 
     enum DirtyState {
