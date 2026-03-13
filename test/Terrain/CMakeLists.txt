@@ -5,6 +5,8 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        ElevationProviderTest.cc
+        ElevationProviderTest.h
         TerrainQueryTest.cc
         TerrainQueryTest.h
         TerrainTileTest.cc
@@ -12,3 +14,10 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+qt_add_resources(${CMAKE_PROJECT_NAME} "TerrainTest"
+    PREFIX "/"
+    FILES
+        # N00E006.hgt
+        N00E006.hgt.zip
+)

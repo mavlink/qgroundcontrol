@@ -32,7 +32,7 @@ TerrainTile::TerrainTile(const QByteArray &byteArray)
     }
 
     const int cTileDataBytes = static_cast<int>(sizeof(int16_t)) * _tileInfo.gridSizeLat * _tileInfo.gridSizeLon;
-    if (cTileBytesAvailable < cTileHeaderBytes + cTileDataBytes) {
+    if (cTileBytesAvailable < (cTileHeaderBytes + cTileDataBytes)) {
         qCWarning(TerrainTileLog) << "Terrain tile binary data too small for tile data";
         return;
     }

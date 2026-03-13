@@ -20,6 +20,13 @@ private slots:
     void _testDataTooSmallForElevation();
     void _testElevationOutsideBounds();
     void _testInvalidTileElevation();
+    void _testArduPilotParseFileName();
+    void _testArduPilotDetectDimension();
+    void _testArduPilotParseCoordinateData();
+    void _testArduPilotSerializeSRTM1();
+    void _testArduPilotSerializeSRTM3();
+    void _testArduPilotSerializeInvalidSize();
+    void _testArduPilotSerializeInvalidFilename();
 
 private:
     static QByteArray _createValidTileData(double swLat, double swLon, double neLat, double neLon, int16_t minElev,

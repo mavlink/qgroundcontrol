@@ -205,6 +205,7 @@ add_qgc_test(QmlObjectTreeModelTest LABELS Unit)
 # Terrain
 # ----------------------------------------------------------------------------
 add_subdirectory(Terrain)
+add_qgc_test(ElevationProviderTest LABELS Unit)
 add_qgc_test(TerrainQueryTest LABELS Integration Network)
 add_qgc_test(TerrainTileTest LABELS Unit)
 
