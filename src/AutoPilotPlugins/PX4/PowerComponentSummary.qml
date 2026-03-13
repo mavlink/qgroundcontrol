@@ -1,12 +1,15 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.FactControls
 import QGroundControl.Controls
 
 Item {
-    anchors.fill:   parent
+    implicitWidth: mainLayout.implicitWidth
+    implicitHeight: mainLayout.implicitHeight
+    width: parent.width  // grows when Loader is wider than implicitWidth
 
     property string _naString: qsTr("N/A")
 
@@ -18,8 +21,9 @@ Item {
         batteryIndex:   1
     }
 
-    Column {
-        anchors.fill:       parent
+    ColumnLayout {
+        id: mainLayout
+        spacing: 0
 
         VehicleSummaryRow {
             labelText: qsTr("Battery Source")
