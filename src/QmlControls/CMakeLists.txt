@@ -179,20 +179,11 @@ qt_add_qml_module(QGroundControlControlsModule
         VehicleRotationCal.qml
         VehicleSummaryRow.qml
 
-# NOTE: The QML files below belong to other modules but are declared here because
-# CMake's set_source_files_properties() has directory scope. Properties like
-# QT_QML_SINGLETON_TYPE must be visible in the same CMakeLists.txt that calls
-# qt_add_qml_module(). On Windows this cross-directory property propagation fails,
-# so these files are kept in this module until a better solution is available.
-
-        # src/FirstRunPromptDialogs/
-        FirstRunPrompt.qml
-
-        # src/UI/preferences/
-        OfflineMapInfo.qml
-
-        # src/QtLocationPlugin/QMLControl/
-        OfflineMapEditor.qml
+# NOTE: ScreenTools.qml is declared here because CMake's
+# set_source_files_properties() has directory scope. The QT_QML_SINGLETON_TYPE
+# property must be visible in the same CMakeLists.txt that calls
+# qt_add_qml_module(). On Windows this cross-directory property propagation
+# fails, so this file is kept in this module until a better solution is available.
 
         ScreenTools.qml
     NO_PLUGIN
