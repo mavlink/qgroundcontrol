@@ -343,26 +343,81 @@ void QGCMapPolygon::_polygonModelCountChanged(int count)
 
 void QGCMapPolygon::_updateCenter(void)
 {
-    if (!_ignoreCenterUpdates) {
-        QGeoCoordinate center;
+    if (_ignoreCenterUpdates) {
+        return;
+    }
 
-        if (_polygonPath.count() > 2) {
-            QPointF centroid(0, 0);
-            QPolygonF polygonF = _toPolygonF();
-            for (int i=0; i<polygonF.count(); i++) {
-                centroid += polygonF[i];
-            }
-            center = _coordFromPointF(QPointF(centroid.x() / polygonF.count(), centroid.y() / polygonF.count()));
+    int count = _polygonPath.count();
+    if (count == 0) {
+        QGeoCoordinate newCenter;
+        if (_center != newCenter) {
+            _center = newCenter;
+            emit centerChanged(_center);
         }
-        if (_center != center) {
-            _center = center;
-            emit centerChanged(center);
+        return;
+    }
+
+    if (count == 1) {
+        QGeoCoordinate newCenter = _polygonPath[0].value<QGeoCoordinate>();
+        if (_center != newCenter) {
+            _center = newCenter;
+            emit centerChanged(_center);
+        }
+        return;
+    }
+
+
+    if (count == 2) {
+        QGeoCoordinate p1 = _polygonPath[0].value<QGeoCoordinate>();
+        QGeoCoordinate p2 = _polygonPath[1].value<QGeoCoordinate>();
+        double distance = p1.distanceTo(p2);
+        double azimuth = p1.azimuthTo(p2);
+        QGeoCoordinate newCenter = p1.atDistanceAndAzimuth(distance / 2.0, azimuth);
+        if (_center != newCenter) {
+            _center = newCenter;
+            emit centerChanged(_center);
+        }
+        return;
+    }
+
+    QPolygonF polygonF = _toPolygonF();
+    int n = polygonF.count();
+
+    double area = 0.0;
+    QPointF centroid(0, 0);
+
+    for (int i = 0; i < n; i++) {
+        int j = (i + 1) % n;
+        double crossProduct = (polygonF[i].x() * polygonF[j].y()) - (polygonF[j].x() * polygonF[i].y());
+        area += crossProduct;
+        centroid.rx() += (polygonF[i].x() + polygonF[j].x()) * crossProduct;
+        centroid.ry() += (polygonF[i].y() + polygonF[j].y()) * crossProduct;
+    }
+
+    area *= 0.5;
+
+    if (qAbs(area) > 0.000001) {
+        centroid /= (6.0 * area);
+        QGeoCoordinate newCenter = _coordFromPointF(centroid);
+
+        if (_center != newCenter) {
+            _center = newCenter;
+            emit centerChanged(_center);
+        }
+    } else {
+        QPointF meanPoint(0, 0);
+        for (const QPointF& p : polygonF) {
+            meanPoint += p;
+        }
+        QGeoCoordinate newCenter = _coordFromPointF(meanPoint / n);
+        if (_center != newCenter) {
+            _center = newCenter;
+            emit centerChanged(_center);
         }
     }
 }
 
-void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
-{
+void QGCMapPolygon::setCenter(QGeoCoordinate newCenter) {
     if (newCenter != _center) {
         _ignoreCenterUpdates = true;
 
@@ -389,13 +444,12 @@ void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
         }
 
         _ignoreCenterUpdates = false;
-
         _center = newCenter;
+
         if (!_deferredPathChanged) {
-            // Only update the center once per event loop, to prevent lag-spikes
             _deferredPathChanged = true;
-            QTimer::singleShot(0, this, [this, newCenter]() {
-                emit centerChanged(newCenter);
+            QTimer::singleShot(0, this, [this]() {
+                emit centerChanged(_center);
                 _deferredPathChanged = false;
             });
         }
