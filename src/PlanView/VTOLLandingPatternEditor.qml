@@ -15,11 +15,10 @@ Rectangle {
     color:      qgcPal.windowShadeDark
     radius:     _radius
 
-    // The following properties must be available up the hierarchy chain
-    //property real   availableWidth    ///< Width for control
-    //property var    missionItem       ///< Mission Item for editor
+    required property var missionItem
+    required property real availableWidth
 
-    property var    _masterControler:           masterController
+    property var    _masterControler:           missionItem.masterController
     property var    _missionController:         _masterControler.missionController
     property var    _missionVehicle:            _masterControler.controllerVehicle
     property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2

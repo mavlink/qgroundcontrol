@@ -14,7 +14,10 @@ Rectangle {
     color: qgcPal.windowShadeDark
     radius: ScreenTools.defaultBorderRadius
 
-    property var _masterController: masterController
+    required property var missionItem
+    required property real availableWidth
+
+    property var _masterController: missionItem.masterController
     property var _controllerVehicle: _masterController.controllerVehicle
     property bool _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
     property bool _showCameraSection: _waypointsOnlyMode || QGroundControl.corePlugin.showAdvancedUI
@@ -41,6 +44,7 @@ Rectangle {
                 id: cameraSection
                 anchors.left: parent.left
                 anchors.right: parent.right
+                missionItem: root.missionItem
                 visible: _showCameraSection
                 showSectionHeader: false
 

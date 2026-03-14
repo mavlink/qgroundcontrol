@@ -10,6 +10,13 @@ import QGroundControl.FactControls
 
 /// Mission item edit control
 Rectangle {
+    required property var    missionItem         ///< MissionItem associated with this editor
+    required property var    map                 ///< Map control
+
+    signal clicked
+    signal remove
+    signal selectNextNotReadyItem
+
     id:             _root
     height:         _currentItem ? (editorLoader.y + editorLoader.height + _innerMargin) : (topRowLayout.y + topRowLayout.height + _margin)
     color:          _currentItem ? qgcPal.buttonHighlight : qgcPal.windowShade
@@ -18,16 +25,7 @@ Rectangle {
     border.width:   _readyForSave ? 0 : 2
     border.color:   qgcPal.warningText
 
-    property var    map                 ///< Map control
-    property var    masterController
-    property var    missionItem         ///< MissionItem associated with this editor
-    property bool   readOnly            ///< true: read only view, false: full editing view
-
-    signal clicked
-    signal remove
-    signal selectNextNotReadyItem
-
-    property var    _masterController:          masterController
+    property var    _masterController:          missionItem.masterController
     property var    _missionController:         _masterController.missionController
     property bool   _currentItem:               missionItem.isCurrentItem
     property color  _outerTextColor:            _currentItem ? qgcPal.buttonHighlightText : qgcPal.text
@@ -43,6 +41,23 @@ Rectangle {
     readonly property real  _hamburgerSize:     commandPicker.height * 0.75
     readonly property real  _trashSize:         commandPicker.height * 0.75
     readonly property bool  _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
+
+    // setSource() injects missionItem before internal bindings activate
+    function _loadEditor() {
+        if (missionItem.isCurrentItem) {
+            editorLoader.setSource(missionItem.editorQml, {
+                missionItem:    _root.missionItem,
+                availableWidth: _root.width - (editorLoader.anchors.margins * 2)
+            })
+        } else {
+            editorLoader.setSource("")
+        }
+    }
+
+    Connections {
+        target: missionItem
+        function onIsCurrentItemChanged() { _root._loadEditor() }
+    }
 
     QGCPalette {
         id: qgcPal
@@ -168,7 +183,7 @@ Rectangle {
                 id: commandDialog
 
                 MissionCommandDialog {
-                    vehicle:                    masterController.controllerVehicle
+                    vehicle:                    _masterController.controllerVehicle
                     missionItem:                _root.missionItem
                     map:                        _root.map
                     // FIXME: Disabling fly through commands doesn't work since you may need to change from an RTL to something else
@@ -321,11 +336,8 @@ Rectangle {
         anchors.margins:    _innerMargin
         anchors.left:       parent.left
         anchors.top:        topRowLayout.bottom
-        source:             _currentItem ? missionItem.editorQml : ""
         asynchronous:       true
 
-        property var    masterController:   _masterController
-        property real   availableWidth:     _root.width - (anchors.margins * 2) ///< How wide the editor should be
-        property var    editorRoot:         _root
+        Component.onCompleted: _root._loadEditor()
     }
 }
