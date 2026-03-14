@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <QtCore/QVector>
+
 static constexpr uint8_t RTCM3_PREAMBLE = 0xD3;
 
 class RTCMParser
@@ -10,6 +12,8 @@ class RTCMParser
 public:
     RTCMParser();
     void reset();
+    void setWhitelist(const QVector<int>& ids) { _whitelist = ids; }
+    bool isWhitelisted(uint16_t id) const { return _whitelist.isEmpty() || _whitelist.contains(id); }
     bool addByte(uint8_t byte);
     uint8_t* message() { return _buffer; }
     uint16_t messageLength() const { return _messageLength; }
@@ -31,6 +35,7 @@ private:
     static constexpr uint16_t kMaxPayloadLength = 1023;
     static constexpr int kHeaderSize = 3;
 
+    QVector<int> _whitelist;
     State _state;
     uint8_t _buffer[kHeaderSize + kMaxPayloadLength];
     uint16_t _messageLength;

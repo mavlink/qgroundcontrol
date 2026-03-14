@@ -72,13 +72,10 @@ ListModel {
     }
 
     ListElement {
-        name: qsTr("NTRIP/RTK")
-        url: "qrc:/qml/QGroundControl/AppSettings/NTRIPSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/globe.svg"
-        pageVisible: function() {
-            return QGroundControl.settingsManager &&
-                   QGroundControl.settingsManager.ntripSettings !== undefined
-        }
+        name: qsTr("GPS / RTK")
+        url: "qrc:/qml/QGroundControl/AppSettings/GPSSettings.qml"
+        iconUrl: "qrc:/InstrumentValueIcons/location-current.svg"
+        pageVisible: function() { return true }
     }
 
     ListElement {

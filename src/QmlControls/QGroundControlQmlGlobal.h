@@ -25,10 +25,16 @@ class QGCPositionManager;
 class SettingsManager;
 class VideoManager;
 class QmlObjectListModel;
+class GPSEventModel;
+class GPSManager;
+class RTKSatelliteModel;
 
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
+Q_MOC_INCLUDE("GPSEventModel.h")
+Q_MOC_INCLUDE("GPSManager.h")
 Q_MOC_INCLUDE("NTRIPManager.h")
 Q_MOC_INCLUDE("FactGroup.h")
+Q_MOC_INCLUDE("RTKSatelliteModel.h")
 Q_MOC_INCLUDE("LinkManager.h")
 Q_MOC_INCLUDE("MissionCommandTree.h")
 Q_MOC_INCLUDE("MultiVehicleManager.h")
@@ -72,9 +78,10 @@ public:
     Q_PROPERTY(NTRIPManager*        ntripManager            READ    ntripManager            CONSTANT)
     Q_PROPERTY(QGCCorePlugin*       corePlugin              READ    corePlugin              CONSTANT)
     Q_PROPERTY(MissionCommandTree*  missionCommandTree      READ    missionCommandTree      CONSTANT)
-#ifndef QGC_NO_SERIAL_LINK
+    Q_PROPERTY(GPSManager*          gpsManager              READ    gpsManager              CONSTANT)
     Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         CONSTANT)
-#endif
+    Q_PROPERTY(RTKSatelliteModel*   rtkSatelliteModel       READ    rtkSatelliteModel       CONSTANT)
+    Q_PROPERTY(GPSEventModel*       gpsEventModel           READ    gpsEventModel           CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
     Q_PROPERTY(bool                 singleFirmwareSupport   READ    singleFirmwareSupport   CONSTANT)
@@ -171,9 +178,10 @@ public:
     VideoManager*           videoManager        ()  { return _videoManager; }
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
-#ifndef QGC_NO_SERIAL_LINK
+    GPSManager*             gpsManager          ()  { return _gpsManager; }
     FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
-#endif
+    RTKSatelliteModel*      rtkSatelliteModel   ()  { return _rtkSatelliteModel; }
+    GPSEventModel*          gpsEventModel       ()  { return _gpsEventModel; }
     ADSBVehicleManager*     adsbVehicleManager  ()  { return _adsbVehicleManager; }
     NTRIPManager*           ntripManager        ()  { return _ntripManager; }
     QmlUnitsConversion*     unitsConversion     ()  { return &_unitsConversion; }
@@ -235,9 +243,10 @@ private:
     SettingsManager*        _settingsManager        = nullptr;
     QGCCorePlugin*          _corePlugin             = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
-#ifndef QGC_NO_SERIAL_LINK
+    GPSManager*             _gpsManager             = nullptr;
     FactGroup*              _gpsRtkFactGroup        = nullptr;
-#endif
+    RTKSatelliteModel*      _rtkSatelliteModel      = nullptr;
+    GPSEventModel*          _gpsEventModel          = nullptr;
 
     double                  _flightMapInitialZoom   = 17.0;
     QmlUnitsConversion      _unitsConversion;

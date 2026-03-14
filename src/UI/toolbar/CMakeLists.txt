@@ -17,7 +17,6 @@ qt_add_qml_module(ToolbarModule
         GimbalIndicator.qml
         GPSIndicator.qml
         GPSIndicatorPage.qml
-        GPSResilienceIndicator.qml
         JoystickIndicator.qml
         MainStatusIndicator.qml
         MainStatusIndicatorOfflinePage.qml

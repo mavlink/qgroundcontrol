@@ -1,0 +1,37 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "spoofingState",
+    "shortDesc": "Signal Spoofing State",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,Not spoofed,Mitigated,Ongoing",
+    "enumValues":       "0,1,2,3",
+    "decimalPlaces":    0
+},
+{
+    "name":             "jammingState",
+    "shortDesc": "Signal Jamming State",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,Not jammed,Mitigated,Ongoing",
+    "enumValues":       "0,1,2,3",
+    "decimalPlaces":    0
+},
+{
+    "name":             "authenticationState",
+    "shortDesc": "Signal Authentication State",
+    "type":             "uint8",
+    "enumStrings":      "Unknown,Initializing,Error,Ok,Disabled",
+    "enumValues":       "0,1,2,3,4",
+    "decimalPlaces":    0
+},
+{
+    "name":             "isStale",
+    "shortDesc": "GNSS Integrity Data Stale",
+    "type":             "bool",
+    "default":          true
+}
+]
+}

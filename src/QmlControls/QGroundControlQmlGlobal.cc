@@ -16,10 +16,8 @@
 #include "VideoManager.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
-#ifndef QGC_NO_SERIAL_LINK
+#include "GPSEventModel.h"
 #include "GPSManager.h"
-#include "GPSRtk.h"
-#endif
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -45,9 +43,10 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _settingsManager(SettingsManager::instance())
     , _corePlugin(QGCCorePlugin::instance())
     , _globalPalette(new QGCPalette(this))
-#ifndef QGC_NO_SERIAL_LINK
-    , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
-#endif
+    , _gpsManager(GPSManager::instance())
+    , _gpsRtkFactGroup(GPSManager::instance()->gpsRtkFactGroup())
+    , _rtkSatelliteModel(GPSManager::instance()->rtkSatelliteModel())
+    , _gpsEventModel(GPSManager::instance()->eventModel())
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);

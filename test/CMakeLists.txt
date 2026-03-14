@@ -130,6 +130,8 @@ add_qgc_test(FollowMeTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 # GPS
 # ----------------------------------------------------------------------------
 add_subdirectory(GPS)
+add_qgc_test(GPSProviderTest LABELS Unit)
+add_qgc_test(GPSRTKFactGroupTest LABELS Unit)
 add_qgc_test(RTCMParserTest LABELS Unit)
 add_qgc_test(NTRIPManagerTest LABELS Unit)
 add_qgc_test(NTRIPHttpTransportTest LABELS Unit)

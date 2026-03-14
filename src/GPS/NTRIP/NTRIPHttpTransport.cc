@@ -1,4 +1,7 @@
 #include "NTRIPHttpTransport.h"
+#include "NTRIPError.h"
+#include "NTRIPTransportConfig.h"
+#include "NTRIPSettings.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QDateTime>
@@ -8,22 +11,32 @@
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
 
-NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent)
-    : QObject(parent)
-    , _hostAddress(config.host)
-    , _port(config.port)
-    , _username(config.username)
-    , _password(config.password)
-    , _mountpoint(config.mountpoint)
-    , _useTls(config.useTls)
+NTRIPTransportConfig NTRIPTransportConfig::fromSettings(NTRIPSettings &settings)
 {
-    for (const auto& msg : config.whitelist.split(',')) {
+    NTRIPTransportConfig config;
+    if (settings.ntripServerHostAddress()) config.host       = settings.ntripServerHostAddress()->rawValue().toString();
+    if (settings.ntripServerPort())        config.port       = settings.ntripServerPort()->rawValue().toInt();
+    if (settings.ntripUsername())           config.username   = settings.ntripUsername()->rawValue().toString();
+    if (settings.ntripPassword())          config.password   = settings.ntripPassword()->rawValue().toString();
+    if (settings.ntripMountpoint())        config.mountpoint = settings.ntripMountpoint()->rawValue().toString();
+    if (settings.ntripWhitelist())         config.whitelist  = settings.ntripWhitelist()->rawValue().toString();
+    if (settings.ntripUseTls())            config.useTls     = settings.ntripUseTls()->rawValue().toBool();
+    return config;
+}
+
+NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObject* parent)
+    : NTRIPTransport(parent)
+    , _config(config)
+{
+    QVector<int> whitelist;
+    for (const auto& msg : _config.whitelist.split(',')) {
         int msg_int = msg.toInt();
         if (msg_int)
-            _whitelist.append(msg_int);
+            whitelist.append(msg_int);
     }
-    qCDebug(NTRIPHttpTransportLog) << "RTCM message filter:" << _whitelist;
-    if (_whitelist.empty()) {
+    _rtcmParser.setWhitelist(whitelist);
+    qCDebug(NTRIPHttpTransportLog) << "RTCM message filter:" << whitelist;
+    if (whitelist.empty()) {
         qCDebug(NTRIPHttpTransportLog) << "Message filter empty; all RTCM message IDs will be forwarded.";
     }
 
@@ -31,7 +44,7 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObje
     _connectTimeoutTimer->setSingleShot(true);
     connect(_connectTimeoutTimer, &QTimer::timeout, this, [this]() {
         qCWarning(NTRIPHttpTransportLog) << "Connection timeout";
-        emit error(QStringLiteral("Connection timeout"));
+        emit error(NTRIPError::ConnectionTimeout, QStringLiteral("Connection timeout"));
     });
 
     _dataWatchdogTimer = new QTimer(this);
@@ -39,7 +52,7 @@ NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPTransportConfig& config, QObje
     _dataWatchdogTimer->setInterval(kDataWatchdogMs);
     connect(_dataWatchdogTimer, &QTimer::timeout, this, [this]() {
         qCWarning(NTRIPHttpTransportLog) << "No data received for" << kDataWatchdogMs / 1000 << "seconds";
-        emit error(tr("No data received for %1 seconds").arg(kDataWatchdogMs / 1000));
+        emit error(NTRIPError::DataWatchdog, tr("No data received for %1 seconds").arg(kDataWatchdogMs / 1000));
     });
 }
 
@@ -77,23 +90,23 @@ void NTRIPHttpTransport::_sendHttpRequest()
         return;
     }
 
-    if (!_mountpoint.isEmpty()) {
+    if (!_config.mountpoint.isEmpty()) {
         static const QRegularExpression controlChars(QStringLiteral("[\\r\\n\\x00-\\x1f]"));
-        if (_mountpoint.contains(controlChars)) {
+        if (_config.mountpoint.contains(controlChars)) {
             qCWarning(NTRIPHttpTransportLog) << "Mountpoint contains control characters, rejecting";
-            emit error(tr("Invalid mountpoint name (contains control characters)"));
+            emit error(NTRIPError::InvalidMountpoint, tr("Invalid mountpoint name (contains control characters)"));
             return;
         }
 
         qCDebug(NTRIPHttpTransportLog) << "Sending HTTP request";
         QByteArray req;
-        req += "GET /" + _mountpoint.toUtf8() + " HTTP/1.0\r\n";
-        req += "Host: " + _hostAddress.toUtf8() + "\r\n";
+        req += "GET /" + _config.mountpoint.toUtf8() + " HTTP/1.0\r\n";
+        req += "Host: " + _config.host.toUtf8() + "\r\n";
         req += "Ntrip-Version: Ntrip/2.0\r\n";
         req += "User-Agent: NTRIP QGroundControl/1.0\r\n";
 
-        if (!_username.isEmpty() || !_password.isEmpty()) {
-            const QByteArray authB64 = (_username + ":" + _password).toUtf8().toBase64();
+        if (!_config.username.isEmpty() || !_config.password.isEmpty()) {
+            const QByteArray authB64 = (_config.username + ":" + _config.password).toUtf8().toBase64();
             req += "Authorization: Basic " + authB64 + "\r\n";
         }
 
@@ -101,7 +114,7 @@ void NTRIPHttpTransport::_sendHttpRequest()
         _socket->write(req);
         _socket->flush();
 
-        qCDebug(NTRIPHttpTransportLog) << "HTTP request sent for mount:" << _mountpoint;
+        qCDebug(NTRIPHttpTransportLog) << "HTTP request sent for mount:" << _config.mountpoint;
     } else {
         _httpHandshakeDone = true;
         emit connected();
@@ -124,19 +137,28 @@ void NTRIPHttpTransport::_connect()
         return;
     }
 
-    qCDebug(NTRIPHttpTransportLog) << "connectToHost" << _hostAddress << ":" << _port << " mount=" << _mountpoint;
+    qCDebug(NTRIPHttpTransportLog) << "connectToHost" << _config.host << ":" << _config.port << " mount=" << _config.mountpoint;
 
     _httpHandshakeDone = false;
     _httpResponseBuf.clear();
     _rtcmParser.reset();
 
-    if (_useTls) {
+    if (_config.useTls) {
         QSslSocket* sslSocket = new QSslSocket(this);
         _socket = sslSocket;
         connect(sslSocket, QOverload<const QList<QSslError>&>::of(&QSslSocket::sslErrors),
-                this, [](const QList<QSslError>& errors) {
+                this, [this](const QList<QSslError>& errors) {
+            bool hasFatal = false;
+            QStringList msgs;
             for (const QSslError& e : errors) {
                 qCWarning(NTRIPHttpTransportLog) << "TLS error:" << e.errorString();
+                msgs.append(e.errorString());
+                if (e.error() != QSslError::NoError) {
+                    hasFatal = true;
+                }
+            }
+            if (hasFatal) {
+                emit error(NTRIPError::SslError, msgs.join(QStringLiteral("; ")));
             }
         });
     } else {
@@ -154,13 +176,13 @@ void NTRIPHttpTransport::_connect()
 
         QString msg = _socket->errorString();
         if (code == QAbstractSocket::RemoteHostClosedError && !_httpHandshakeDone) {
-            if (!_mountpoint.isEmpty()) {
+            if (!_config.mountpoint.isEmpty()) {
                 msg += " (peer closed before HTTP response; check mountpoint and credentials)";
             }
         }
 
         qCWarning(NTRIPHttpTransportLog) << "Socket error code:" << int(code) << " msg:" << msg;
-        emit error(msg);
+        emit error(NTRIPError::SocketError, msg);
     });
 
     connect(_socket, &QTcpSocket::disconnected, this, [this]() {
@@ -180,24 +202,24 @@ void NTRIPHttpTransport::_connect()
         qCWarning(NTRIPHttpTransportLog) << "Disconnected:"
                              << "reason=" << reason
                              << "ms_since_200=" << (_postOkTimestampMs > 0 ? QDateTime::currentMSecsSinceEpoch() - _postOkTimestampMs : -1);
-        emit error(reason);
+        emit error(NTRIPError::ServerDisconnected, reason);
     });
 
     connect(_socket, &QTcpSocket::readyRead, this, &NTRIPHttpTransport::_readBytes);
 
-    if (_useTls) {
+    if (_config.useTls) {
         QSslSocket* sslSocket = qobject_cast<QSslSocket*>(_socket);
         connect(sslSocket, &QSslSocket::encrypted, this, [this]() {
             _connectTimeoutTimer->stop();
             _sendHttpRequest();
         });
-        sslSocket->connectToHostEncrypted(_hostAddress, static_cast<quint16>(_port));
+        sslSocket->connectToHostEncrypted(_config.host, static_cast<quint16>(_config.port));
     } else {
         connect(_socket, &QTcpSocket::connected, this, [this]() {
             _connectTimeoutTimer->stop();
             _sendHttpRequest();
         });
-        _socket->connectToHost(_hostAddress, static_cast<quint16>(_port));
+        _socket->connectToHost(_config.host, static_cast<quint16>(_config.port));
     }
     _connectTimeoutTimer->start(kConnectTimeoutMs);
 }
@@ -231,7 +253,7 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer)
 
         const uint16_t id = _rtcmParser.messageId();
 
-        if (_whitelist.empty() || _whitelist.contains(id)) {
+        if (_rtcmParser.isWhitelisted(id)) {
             qCDebug(NTRIPHttpTransportLog) << "RTCM packet id" << id << "len" << message.length();
             emit RTCMDataUpdate(message);
         } else {
@@ -259,7 +281,7 @@ void NTRIPHttpTransport::_readBytes()
             if (_httpResponseBuf.size() > kMaxHttpHeaderSize) {
                 qCWarning(NTRIPHttpTransportLog) << "HTTP response header too large, dropping";
                 _httpResponseBuf.clear();
-                emit error(tr("HTTP response header too large"));
+                emit error(NTRIPError::HeaderTooLarge, tr("HTTP response header too large"));
             }
             return;
         }
@@ -299,7 +321,7 @@ void NTRIPHttpTransport::_readBytes()
 
             if (status.code == 401) {
                 qCWarning(NTRIPHttpTransportLog) << "Authentication failed:" << status.reason;
-                emit error(tr("Authentication failed (401): check username and password"));
+                emit error(NTRIPError::AuthFailed, tr("Authentication failed (401): check username and password"));
                 return;
             }
 
@@ -317,14 +339,14 @@ void NTRIPHttpTransport::_readBytes()
                     msg += QStringLiteral(" — ") + cleanBody;
                 }
             }
-            emit error(msg);
+            emit error(NTRIPError::HttpError, msg);
             return;
         }
 
         qCWarning(NTRIPHttpTransportLog) << "No HTTP status line found in response. First line:"
                                        << (lines.isEmpty() ? QStringLiteral("(empty)") : lines.first().left(120));
         _httpResponseBuf.clear();
-        emit error(tr("Invalid HTTP response from caster"));
+        emit error(NTRIPError::InvalidHttpResponse, tr("Invalid HTTP response from caster"));
         return;
     }
 

@@ -21,6 +21,20 @@
     "type":             "string"
 },
 {
+    "name":             "altitudeMSL",
+    "shortDesc": "Altitude MSL",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "altitudeEllipsoid",
+    "shortDesc": "Altitude WGS84",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
     "name":             "hdop",
     "shortDesc": "HDOP",
     "type":             "double",
@@ -31,6 +45,41 @@
     "shortDesc": "VDOP",
     "type":             "double",
     "decimalPlaces":    1
+},
+{
+    "name":             "hAcc",
+    "shortDesc": "Horizontal Accuracy",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "m"
+},
+{
+    "name":             "vAcc",
+    "shortDesc": "Vertical Accuracy",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "m"
+},
+{
+    "name":             "groundSpeed",
+    "shortDesc": "Ground Speed",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m/s"
+},
+{
+    "name":             "velAcc",
+    "shortDesc": "Speed Accuracy",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "m/s"
+},
+{
+    "name":             "hdgAcc",
+    "shortDesc": "Heading Accuracy",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "deg"
 },
 {
     "name":             "courseOverGround",
