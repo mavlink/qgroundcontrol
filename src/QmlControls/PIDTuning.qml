@@ -333,13 +333,16 @@ RowLayout {
                 model: axis
 
                 Repeater {
+                    id: paramRepeater
                     model: axis[index].params
+
+                    property int axisIndex: index
 
                     SettingsGroupLayout {
                         id:                     tuningGroup
                         heading:                title
                         headingDescription:     description
-                        visible:                _currentAxis === index
+                        visible:                _currentAxis === paramRepeater.axisIndex
                         Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 40
 
                         FactSlider {
