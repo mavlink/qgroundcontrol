@@ -318,16 +318,20 @@ QObject* QmlObjectTreeModel::removeItem(const QModelIndex& index)
     // Count the subtree nodes being removed (the node itself + all descendants)
     const int removedCount = 1 + _subtreeCount(node);
 
-    beginRemoveRows(parentIdx, row, row);
+    if (_resetModelNestingCount == 0) {
+        beginRemoveRows(parentIdx, row, row);
+    }
     parentNode->children.removeAt(row);
-    endRemoveRows();
+    if (_resetModelNestingCount == 0) {
+        endRemoveRows();
+    }
 
     // Free the subtree's TreeNode objects but NOT the QObjects
     _deleteSubtree(node, false);
     delete node;
 
     _totalCount -= removedCount;
-    if (!parentNode->children.isEmpty()) {
+    if (_resetModelNestingCount == 0 && !parentNode->children.isEmpty()) {
         _emitSeparatorChanged(parentIdx, parentNode->children.count() - 1);
     }
     _signalCountChangedIfNotNested();
@@ -399,18 +403,25 @@ void QmlObjectTreeModel::removeChildren(const QModelIndex& parentIndex)
         beginRemoveRows(parentIndex, 0, childCount - 1);
     }
 
+    // Disconnect signals but don't free nodes yet — views may still access them
     for (TreeNode* child : parentNode->children) {
         _disconnectSubtree(child);
-        _deleteSubtree(child, false);
-        delete child;
     }
-    parentNode->children.clear();
 
+    // Detach from parent
+    QList<TreeNode*> orphans = parentNode->children;
+    parentNode->children.clear();
     _totalCount -= removedCount;
 
     if (_resetModelNestingCount == 0) {
         endRemoveRows();
         _signalCountChangedIfNotNested();
+    }
+
+    // Now safe to free the TreeNode structs
+    for (TreeNode* child : orphans) {
+        _deleteSubtree(child, false);
+        delete child;
     }
 }
 
