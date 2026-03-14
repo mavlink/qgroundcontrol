@@ -110,8 +110,10 @@ bool QmlObjectListModel::insertRows(int position, int rows, const QModelIndex& p
         qCWarning(QmlObjectListModelLog) << "Invalid position - position:count" << position << _objectList.count() << this;
     }
 
-    beginInsertRows(QModelIndex(), position, position + rows - 1);
-    endInsertRows();
+    if (_resetModelNestingCount == 0) {
+        beginInsertRows(QModelIndex(), position, position + rows - 1);
+        endInsertRows();
+    }
 
     _signalCountChangedIfNotNested();
 
@@ -128,11 +130,15 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
         qCWarning(QmlObjectListModelLog) << "Invalid rows - position:rows:count" << position << rows << _objectList.count() << this;
     }
 
-    beginRemoveRows(QModelIndex(), position, position + rows - 1);
+    if (_resetModelNestingCount == 0) {
+        beginRemoveRows(QModelIndex(), position, position + rows - 1);
+    }
     for (int row=0; row<rows; row++) {
         _objectList.removeAt(position);
     }
-    endRemoveRows();
+    if (_resetModelNestingCount == 0) {
+        endRemoveRows();
+    }
 
     _signalCountChangedIfNotNested();
 
