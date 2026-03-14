@@ -15,10 +15,6 @@ TransectStyleComplexItemEditor {
     transectValuesComponent:        _transectValuesComponent
     presetsTransectValuesComponent: _transectValuesComponent
 
-    // The following properties must be available up the hierarchy chain
-    //  property real   availableWidth    ///< Width for control
-    //  property var    missionItem       ///< Mission Item for editor
-
     property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
     property var    _missionItem:   missionItem
 

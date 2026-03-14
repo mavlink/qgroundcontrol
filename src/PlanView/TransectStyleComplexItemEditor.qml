@@ -15,6 +15,9 @@ Rectangle {
     color:      qgcPal.windowShadeDark
     radius:     _radius
 
+    required property var missionItem
+    required property real availableWidth
+
     property bool   transectAreaDefinitionComplete: true
     property string transectAreaDefinitionHelp:     _internalError
     property string transectValuesHeaderName:       _internalError

@@ -8,11 +8,15 @@ import QGroundControl.FactControls
 
 // Editor for Simple mission items
 Rectangle {
+    required property var missionItem
+    required property real availableWidth
+
     id: root
     width: availableWidth
     height: editorColumn.height + (_margin * 2)
     color: qgcPal.windowShadeDark
     radius: _radius
+
 
     property bool _specifiesAltitude: missionItem.specifiesAltitude
     property real _margin: ScreenTools.defaultFontPixelHeight / 2
@@ -243,6 +247,7 @@ Rectangle {
             CameraSection {
                 Layout.fillWidth: true
                 showSectionHeader: false
+                missionItem: root.missionItem
                 visible: tabBar.currentIndex === 1
 
                 Component.onCompleted: checked = missionItem.cameraSection.settingsSpecified
