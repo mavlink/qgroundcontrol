@@ -20,9 +20,11 @@ public:
 
     Q_PROPERTY(int                  count       READ count                                  NOTIFY countChanged)
     Q_PROPERTY(QVariantList         path        READ path                                   NOTIFY pathChanged)
+    Q_PROPERTY(QVariantList         dragPath    READ path                                   NOTIFY dragPathChanged)
     Q_PROPERTY(QmlObjectListModel*  pathModel   READ qmlPathModel                           CONSTANT)
     Q_PROPERTY(bool                 dirty       READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
     Q_PROPERTY(bool                 interactive READ interactive    WRITE setInteractive    NOTIFY interactiveChanged)
+    Q_PROPERTY(bool                 vertexDrag  READ vertexDrag     WRITE setVertexDrag     NOTIFY vertexDragChanged)
     Q_PROPERTY(bool                 isValid     READ isValid                                NOTIFY isValidChanged)
     Q_PROPERTY(bool                 empty       READ empty                                  NOTIFY isEmptyChanged)
     Q_PROPERTY(bool                 traceMode   READ traceMode      WRITE setTraceMode      NOTIFY traceModeChanged)
@@ -80,6 +82,7 @@ public:
     bool            dirty       (void) const { return _dirty; }
     void            setDirty    (bool dirty);
     bool            interactive (void) const { return _interactive; }
+    bool            vertexDrag  (void) const { return _vertexDrag; }
     QVariantList    path        (void) const { return _polylinePath; }
     bool            isValid     (void) const { return _polylineModel.count() >= 2; }
     bool            empty       (void) const { return _polylineModel.count() == 0; }
@@ -92,6 +95,7 @@ public:
     void setPath        (const QList<QGeoCoordinate>& path);
     void setPath        (const QVariantList& path);
     void setInteractive (bool interactive);
+    void setVertexDrag  (bool vertexDrag);
     void setTraceMode   (bool traceMode);
     void selectVertex   (int index);
 
@@ -100,9 +104,11 @@ public:
 signals:
     void countChanged       (int count);
     void pathChanged        (void);
+    void dragPathChanged    (void);
     void dirtyChanged       (bool dirty);
     void cleared            (void);
     void interactiveChanged (bool interactive);
+    void vertexDragChanged  (bool vertexDrag);
     void isValidChanged     (void);
     void isEmptyChanged     (void);
     void traceModeChanged   (bool traceMode);
@@ -122,6 +128,7 @@ private:
     bool                _deferredPathChanged = false;
     bool                _dirty;
     bool                _interactive;
+    bool                _vertexDrag = false;
     bool                _traceMode = false;
     int                 _selectedVertexIndex = -1;
 };

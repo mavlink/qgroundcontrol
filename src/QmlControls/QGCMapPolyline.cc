@@ -79,10 +79,18 @@ void QGCMapPolyline::adjustVertex(int vertexIndex, const QGeoCoordinate coordina
     _polylineModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
     if (!_deferredPathChanged) {
         _deferredPathChanged = true;
-        QTimer::singleShot(0, this, [this]() {
-            emit pathChanged();
-            _deferredPathChanged = false;
-        });
+        if (_vertexDrag) {
+            // During vertex drag only emit the lightweight visual signal
+            QTimer::singleShot(0, this, [this]() {
+                emit dragPathChanged();
+                _deferredPathChanged = false;
+            });
+        } else {
+            QTimer::singleShot(0, this, [this]() {
+                emit pathChanged();
+                _deferredPathChanged = false;
+            });
+        }
     }
     setDirty(true);
 }
@@ -259,6 +267,18 @@ void QGCMapPolyline::setInteractive(bool interactive)
     if (_interactive != interactive) {
         _interactive = interactive;
         emit interactiveChanged(interactive);
+    }
+}
+
+void QGCMapPolyline::setVertexDrag(bool vertexDrag)
+{
+    if (_vertexDrag != vertexDrag) {
+        _vertexDrag = vertexDrag;
+        if (!vertexDrag) {
+            // Drag ended - signal path changed so downstream can recalculate
+            emit pathChanged();
+        }
+        emit vertexDragChanged(vertexDrag);
     }
 }
 
