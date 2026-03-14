@@ -23,6 +23,9 @@ private slots:
     void _testKMLLoad();
     void _testSelectVertex();
     void _testSegmentSplit();
+    void _testCenterRectangle();
+    void _testCenterExtraVertex();
+    void _testCenterDegenerate();
 
 private:
     MultiSignalSpy* _multiSpyPolygon = nullptr;
