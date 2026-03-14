@@ -365,12 +365,35 @@ void QGCMapPolygon::_updateCenter(void)
         QGeoCoordinate center;
 
         if (_polygonPath.count() > 2) {
-            QPointF centroid(0, 0);
             QPolygonF polygonF = _toPolygonF();
-            for (int i=0; i<polygonF.count(); i++) {
-                centroid += polygonF[i];
+            const int n = polygonF.count();
+
+            // Surveyor's (shoelace) formula for polygon centroid
+            double signedArea = 0;
+            double cx = 0;
+            double cy = 0;
+
+            for (int i = 0; i < n; i++) {
+                const int j = (i + 1) % n;
+                const double cross = polygonF[i].x() * polygonF[j].y() - polygonF[j].x() * polygonF[i].y();
+                signedArea += cross;
+                cx += (polygonF[i].x() + polygonF[j].x()) * cross;
+                cy += (polygonF[i].y() + polygonF[j].y()) * cross;
             }
-            center = _coordFromPointF(QPointF(centroid.x() / polygonF.count(), centroid.y() / polygonF.count()));
+
+            if (qAbs(signedArea) < 1e-6) {
+                // Degenerate or near-degenerate polygon (area < 0.5e-6 m²) — fall back to vertex average
+                QPointF avg(0, 0);
+                for (int i = 0; i < n; i++) {
+                    avg += polygonF[i];
+                }
+                center = _coordFromPointF(QPointF(avg.x() / n, avg.y() / n));
+            } else {
+                signedArea *= 0.5;
+                cx /= (6.0 * signedArea);
+                cy /= (6.0 * signedArea);
+                center = _coordFromPointF(QPointF(cx, cy));
+            }
         }
         if (_center != center) {
             _center = center;
