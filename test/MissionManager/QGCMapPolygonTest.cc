@@ -252,6 +252,65 @@ void QGCMapPolygonTest::_testSegmentSplit()
     QVERIFY(_mapPolygon->selectedVertex() == _mapPolygon->count() - 2);
 }
 
+void QGCMapPolygonTest::_testCenterRectangle()
+{
+    // Simple rectangle — centroid should be the geometric center
+    const QGeoCoordinate topLeft(47.636, -122.093);
+    const QGeoCoordinate topRight(47.636, -122.085);
+    const QGeoCoordinate bottomRight(47.630, -122.085);
+    const QGeoCoordinate bottomLeft(47.630, -122.093);
+
+    _mapPolygon->appendVertices({topLeft, topRight, bottomRight, bottomLeft});
+    QCoreApplication::processEvents();
+
+    const QGeoCoordinate expectedCenter(47.633, -122.089);
+    const QGeoCoordinate center = _mapPolygon->center();
+
+    QVERIFY(center.isValid());
+    QCOMPARE_COORDS(center, expectedCenter);
+}
+
+void QGCMapPolygonTest::_testCenterExtraVertex()
+{
+    // Rectangle with an extra vertex at the midpoint of one side.
+    // The shape is identical to the rectangle so the area centroid should be the same,
+    // but a naive vertex average would shift toward the side with the extra vertex.
+    const QGeoCoordinate topLeft(47.636, -122.093);
+    const QGeoCoordinate topMid(47.636, -122.089);   // midpoint of top edge
+    const QGeoCoordinate topRight(47.636, -122.085);
+    const QGeoCoordinate bottomRight(47.630, -122.085);
+    const QGeoCoordinate bottomLeft(47.630, -122.093);
+
+    _mapPolygon->appendVertices({topLeft, topMid, topRight, bottomRight, bottomLeft});
+    QCoreApplication::processEvents();
+
+    const QGeoCoordinate expectedCenter(47.633, -122.089);
+    const QGeoCoordinate center = _mapPolygon->center();
+
+    QVERIFY(center.isValid());
+    QCOMPARE_COORDS(center, expectedCenter);
+}
+
+void QGCMapPolygonTest::_testCenterDegenerate()
+{
+    // Three collinear points — zero area polygon.
+    // The surveyor's formula produces zero area, so the fallback vertex average should be used.
+    const QGeoCoordinate left(47.633, -122.093);
+    const QGeoCoordinate middle(47.633, -122.089);
+    const QGeoCoordinate right(47.633, -122.085);
+
+    _mapPolygon->appendVertices({left, middle, right});
+    QCoreApplication::processEvents();
+
+    const QGeoCoordinate center = _mapPolygon->center();
+
+    const QGeoCoordinate expectedCenter(47.633, -122.089);
+
+    QVERIFY(center.isValid());
+    // Vertex average: latitude stays 47.633, longitude = mean of the three
+    QCOMPARE_COORDS(center, expectedCenter);
+}
+
 #include "UnitTest.h"
 
 UT_REGISTER_TEST(QGCMapPolygonTest, TestLabel::Unit, TestLabel::MissionManager)
