@@ -10,6 +10,7 @@ import QGroundControl.FlightMap
 /// Corridor Scan Complex Mission Item visuals
 TransectStyleMapVisuals {
     polygonInteractive: false
+    hideMapPolygon:     mapPolylineVisuals.dragging
 
     property bool _currentItem: object.isCurrentItem
 

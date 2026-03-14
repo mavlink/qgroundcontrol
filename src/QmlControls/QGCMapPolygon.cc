@@ -77,7 +77,11 @@ void QGCMapPolygon::clear(void)
     while (_polygonPath.count() > 1) {
         _polygonPath.takeLast();
     }
-    emit pathChanged();
+    if (_vertexDrag) {
+        emit dragPathChanged();
+    } else {
+        emit pathChanged();
+    }
 
     // Although this code should remove the polygon from the map it doesn't. There appears
     // to be a bug in QGCMapPolygon which causes it to not be redrawn if the list is empty. So
@@ -97,14 +101,20 @@ void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinat
     _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
     _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
     if (!_centerDrag) {
-        // When dragging center we don't signal path changed until all vertices are updated
         if (!_deferredPathChanged) {
-            // Only update the path once per event loop, to prevent lag-spikes
             _deferredPathChanged = true;
-            QTimer::singleShot(0, this, [this]() {
-                emit pathChanged();
-                _deferredPathChanged = false;
-            });
+            if (_vertexDrag) {
+                // During vertex drag only emit the lightweight visual signal
+                QTimer::singleShot(0, this, [this]() {
+                    emit dragPathChanged();
+                    _deferredPathChanged = false;
+                });
+            } else {
+                QTimer::singleShot(0, this, [this]() {
+                    emit pathChanged();
+                    _deferredPathChanged = false;
+                });
+            }
         }
     }
     setDirty(true);
@@ -275,7 +285,11 @@ void QGCMapPolygon::appendVertex(const QGeoCoordinate& coordinate)
         // Only update the path once per event loop, to prevent lag-spikes
         _deferredPathChanged = true;
         QTimer::singleShot(0, this, [this]() {
-            emit pathChanged();
+            if (_vertexDrag) {
+                emit dragPathChanged();
+            } else {
+                emit pathChanged();
+            }
             _deferredPathChanged = false;
         });
     }
@@ -293,7 +307,11 @@ void QGCMapPolygon::appendVertices(const QList<QGeoCoordinate>& coordinates)
     _polygonModel.append(objects);
     endReset();
 
-    emit pathChanged();
+    if (_vertexDrag) {
+        emit dragPathChanged();
+    } else {
+        emit pathChanged();
+    }
 }
 
 void QGCMapPolygon::appendVertices(const QVariantList& varCoords)
@@ -376,28 +394,28 @@ void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
             adjustVertex(i, newVertex);
         }
 
+        _ignoreCenterUpdates = false;
+        _center = newCenter;
+
         if (_centerDrag) {
-            // When center dragging, signals from adjustVertext are not sent. So we need to signal here when all adjusting is complete.
+            // During center drag emit lightweight visual signals only
             if (!_deferredPathChanged) {
-                // Only update the path once per event loop, to prevent lag-spikes
                 _deferredPathChanged = true;
                 QTimer::singleShot(0, this, [this]() {
-                    emit pathChanged();
+                    emit dragPathChanged();
+                    emit dragCenterChanged(_center);
                     _deferredPathChanged = false;
                 });
             }
-        }
-
-        _ignoreCenterUpdates = false;
-
-        _center = newCenter;
-        if (!_deferredPathChanged) {
-            // Only update the center once per event loop, to prevent lag-spikes
-            _deferredPathChanged = true;
-            QTimer::singleShot(0, this, [this, newCenter]() {
-                emit centerChanged(newCenter);
-                _deferredPathChanged = false;
-            });
+        } else {
+            if (!_deferredPathChanged) {
+                _deferredPathChanged = true;
+                QTimer::singleShot(0, this, [this]() {
+                    emit pathChanged();
+                    emit centerChanged(_center);
+                    _deferredPathChanged = false;
+                });
+            }
         }
     }
 }
@@ -406,7 +424,27 @@ void QGCMapPolygon::setCenterDrag(bool centerDrag)
 {
     if (centerDrag != _centerDrag) {
         _centerDrag = centerDrag;
+        if (!centerDrag) {
+            // Drag ended. Center edits do not use vertexDrag, so emit pathChanged here.
+            // For interactive center drag, setVertexDrag(false) emits pathChanged.
+            if (!_vertexDrag) {
+                emit pathChanged();
+            }
+            emit centerChanged(_center);
+        }
         emit centerDragChanged(centerDrag);
+    }
+}
+
+void QGCMapPolygon::setVertexDrag(bool vertexDrag)
+{
+    if (_vertexDrag != vertexDrag) {
+        _vertexDrag = vertexDrag;
+        if (!vertexDrag) {
+            // Drag ended - signal path changed so downstream can recalculate
+            emit pathChanged();
+        }
+        emit vertexDragChanged(vertexDrag);
     }
 }
 

@@ -27,7 +27,6 @@ Item {
     property real   _circleRadius
     property bool   _circleRadiusDrag:          false
     property var    _circleRadiusDragCoord:     QtPositioning.coordinate()
-    property bool   _editCircleRadius:          false
     property string _instructionText:           _polygonToolsText
     property var    _savedVertices:             [ ]
     property bool   _savedCircleMode
@@ -252,7 +251,7 @@ Item {
         QGCMenuItem {
             text:           qsTr("Set radius..." )
             visible:        _circleMode
-            onTriggered:    _editCircleRadius = true
+            onTriggered:    editCircleRadiusDialogFactory.open()
         }
 
         QGCMenuItem {
@@ -274,9 +273,10 @@ Item {
         MapPolygon {
             color:          mapPolygon.showAltColor ? altColor : interiorColor
             opacity:        interiorOpacity
-            border.color:   borderColor
-            border.width:   borderWidth
-            path:           mapPolygon.path
+            visible:        _root.visible
+            border.color:   mapPolygon.vertexDrag ? "orange" : borderColor
+            border.width:   mapPolygon.vertexDrag ? 3 : borderWidth
+            path:           mapPolygon.vertexDrag ? mapPolygon.dragPath : mapPolygon.path
         }
     }
 
@@ -310,17 +310,22 @@ Item {
 
             delegate: Item {
                 property var _edgeLengthHandle
-                property var _vertices:     mapPolygon.path
 
                 function _setHandlePosition() {
+                    var vertices = mapPolygon.vertexDrag ? mapPolygon.dragPath : mapPolygon.path
                     var nextIndex = index + 1
-                    if (nextIndex > _vertices.length - 1) {
+                    if (nextIndex > vertices.length - 1) {
                         nextIndex = 0
                     }
-                    var distance = _vertices[index].distanceTo(_vertices[nextIndex])
-                    var azimuth = _vertices[index].azimuthTo(_vertices[nextIndex])
-                    _edgeLengthHandle.coordinate =_vertices[index].atDistanceAndAzimuth(distance / 3, azimuth)
+                    var distance = vertices[index].distanceTo(vertices[nextIndex])
+                    var azimuth = vertices[index].azimuthTo(vertices[nextIndex])
+                    _edgeLengthHandle.coordinate = vertices[index].atDistanceAndAzimuth(distance / 2, azimuth)
                     _edgeLengthHandle.distance = distance
+                }
+
+                Connections {
+                    target: mapPolygon
+                    function onDragPathChanged() { _setHandlePosition() }
                 }
 
                 Component.onCompleted: {
@@ -346,7 +351,7 @@ Item {
             id:             mapQuickItem
             anchorPoint.x:  sourceItem.width / 2
             anchorPoint.y:  sourceItem.height / 2
-            visible:        !_circleMode
+            visible:        !_circleMode && !_isVertexBeingDragged && !mapPolygon.centerDrag
 
             property int vertexIndex
 
@@ -402,8 +407,8 @@ Item {
             mapControl:     _root.mapControl
             z:              _zorderDragHandle
             visible:        !_circleMode
-            onDragStart:    _isVertexBeingDragged = true
-            onDragStop:     { _isVertexBeingDragged = false; mapPolygon.verifyClockwiseWinding() }
+            onDragStart:    { _isVertexBeingDragged = true; mapPolygon.vertexDrag = true }
+            onDragStop:     { _isVertexBeingDragged = false; mapPolygon.vertexDrag = false; mapPolygon.verifyClockwiseWinding() }
 
             property int polygonVertex
 
@@ -429,6 +434,7 @@ Item {
             anchorPoint.x:  dragHandle.width  * 0.5
             anchorPoint.y:  dragHandle.height * 0.5
             z:              _zorderDragHandle
+            visible:        !_isVertexBeingDragged
             sourceItem: Rectangle {
                 id:             dragHandle
                 width:          ScreenTools.defaultFontPixelHeight * 1.5
@@ -459,7 +465,7 @@ Item {
             anchorPoint.x:  dragHandle.width  / 2
             anchorPoint.y:  dragHandle.height / 2
             z:              _zorderDragHandle
-            visible:        !_circleMode
+            visible:        !_circleMode && !mapPolygon.centerDrag
 
             property int polygonVertex
 
@@ -501,6 +507,56 @@ Item {
                         _visuals[i].destroy()
                     }
                     _visuals = [ ]
+                }
+            }
+        }
+    }
+
+    QGCPopupDialogFactory {
+        id: editCircleRadiusDialogFactory
+
+        dialogComponent: editCircleRadiusDialog
+    }
+
+    Component {
+        id: editCircleRadiusDialog
+
+        QGCPopupDialog {
+            id:         popupDialog
+            title:      qsTr("Set Radius")
+            buttons:    Dialog.Save | Dialog.Cancel
+
+            onAccepted: {
+                const appRadius = Number(radiusField.text)
+                if (!isNaN(appRadius) && appRadius > 0) {
+                    const radiusMeters = QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsToMeters(appRadius)
+                    _createCircularPolygon(mapPolygon.center, radiusMeters)
+                } else {
+                    preventClose = true
+                }
+            }
+
+            ColumnLayout {
+                width:      ScreenTools.defaultFontPixelWidth * 30
+                spacing:    ScreenTools.defaultFontPixelHeight
+
+                QGCLabel {
+                    Layout.fillWidth:   true
+                    text:               qsTr("Enter circle radius.")
+                    wrapMode:           Text.WordWrap
+                }
+
+                QGCTextField {
+                    id:                 radiusField
+                    Layout.fillWidth:   true
+                    text:               QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_circleRadius).toFixed(1)
+                    validator:          DoubleValidator { bottom: 0.1; notation: DoubleValidator.StandardNotation }
+                    inputMethodHints:   Qt.ImhFormattedNumbersOnly
+                }
+
+                QGCLabel {
+                    Layout.fillWidth:   true
+                    text:               QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
                 }
             }
         }
@@ -554,8 +610,9 @@ Item {
             mapControl:                 _root.mapControl
             z:                          _zorderCenterHandle
             onItemCoordinateChanged:    mapPolygon.center = itemCoordinate
-            onDragStart:                mapPolygon.centerDrag = true
-            onDragStop:                 mapPolygon.centerDrag = false
+            onDragStart:                { mapPolygon.centerDrag = true; mapPolygon.vertexDrag = true }
+            onDragStop:                 { mapPolygon.centerDrag = false; mapPolygon.vertexDrag = false }
+            onClicked:                  if(_root.interactive) menu.popupCenter()
         }
     }
 
@@ -568,7 +625,7 @@ Item {
 
             Component.onCompleted: {
                 dragHandle = centerDragHandle.createObject(mapControl)
-                dragHandle.coordinate = Qt.binding(function() { return mapPolygon.center })
+                dragHandle.coordinate = Qt.binding(function() { return mapPolygon.centerDrag ? mapPolygon.dragCenter : mapPolygon.center })
                 mapControl.addMapItem(dragHandle)
                 dragArea = centerDragAreaComponent.createObject(mapControl, { "itemIndicator": dragHandle, "itemCoordinate": mapPolygon.center })
             }
@@ -655,6 +712,7 @@ Item {
             anchorPoint.x:  dragHandle.width / 2
             anchorPoint.y:  dragHandle.height / 2
             z:              QGroundControl.zOrderMapItems + 2
+            visible:        !mapPolygon.centerDrag
 
             sourceItem: Rectangle {
                 id:         dragHandle
@@ -690,8 +748,19 @@ Item {
 
         MissionItemIndicatorDrag {
             mapControl: _root.mapControl
+            onDragStart: {
+                _circleRadiusDrag = true
+                mapPolygon.vertexDrag = true
+            }
+            onDragStop: {
+                _circleRadiusDrag = false
+                mapPolygon.vertexDrag = false
+            }
 
             onItemCoordinateChanged: {
+                // Keep the handle visually attached to the cursor while radius updates are de-bounced.
+                _circleRadiusDragCoord = itemCoordinate
+
                 var radius = mapPolygon.center.distanceTo(itemCoordinate)
 
                 if (Math.abs(radius - _circleRadius) > 0.1) {
