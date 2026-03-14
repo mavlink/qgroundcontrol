@@ -52,7 +52,7 @@ Item {
                 source:                  "/res/CameraGimbal.png"
                 fillMode:                Image.PreserveAspectFit
                 sourceSize.height:       height
-                color:                   qgcPal.windowTransparentText
+                color:                   qgcPal.text
 
             }
 
@@ -61,7 +61,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 font.pointSize:         ScreenTools.smallFontPointSize
                 text:                   activeGimbal ? activeGimbal.deviceId.rawValue : ""
-                color:                  qgcPal.windowTransparentText
+                color:                  qgcPal.text
                 visible:                multiGimbalSetup
             }
         }
@@ -80,7 +80,7 @@ Item {
                 text:                   activeGimbal && activeGimbal.retracted ?
                                             qsTr("Retracted") :
                                             (activeGimbal && activeGimbal.yawLock ? qsTr("Yaw locked") : qsTr("Yaw follow"))
-                color:                  qgcPal.windowTransparentText
+                color:                  qgcPal.text
                 Layout.columnSpan:      2
                 Layout.alignment:       Qt.AlignHCenter
             }
@@ -88,7 +88,7 @@ Item {
                 id:             pitchLabel
                 font.pointSize: ScreenTools.smallFontPointSize
                 text:           activeGimbal ? qsTr("P: ") + activeGimbal.absolutePitch.valueString : ""
-                color:          qgcPal.windowTransparentText
+                color:          qgcPal.text
             }
             QGCLabel {
                 id:             panLabel
@@ -98,7 +98,7 @@ Item {
                                         (qsTr("Az: ") + activeGimbal.absoluteYaw.valueString) :
                                         (qsTr("Y: ") + activeGimbal.bodyYaw.valueString)) :
                                     ""
-                color:          qgcPal.windowTransparentText
+                color:          qgcPal.text
             }
         }
     }

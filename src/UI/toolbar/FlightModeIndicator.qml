@@ -35,14 +35,14 @@ Item {
             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight
             fillMode:               Image.PreserveAspectFit
             mipmap:                 true
-            color:                  qgcPal.windowTransparentText
+            color:                  qgcPal.text
             source:                 "/qmlimages/FlightModesComponentIcon.png"
         }
 
         QGCLabel {
             id:                 flightModeLabel
             text:               activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
-            color:              qgcPal.windowTransparentText
+            color:              qgcPal.text
             font.pointSize:     fontPointSize
 
         }
