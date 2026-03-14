@@ -391,12 +391,13 @@ private slots:
     void _managerVehicleChanged                 (Vehicle* managerVehicle);
     void _forceRecalcOfAllowedBits              (void);
     // Incremental tree model sync slots
-    void _onMissionItemsInserted                (const QModelIndex& parent, int first, int last);
-    void _onMissionItemsAboutToBeRemoved         (const QModelIndex& parent, int first, int last);
-    void _onMissionItemsReset                   (void);
-    void _onRallyPointsInserted                 (const QModelIndex& parent, int first, int last);
-    void _onRallyPointsAboutToBeRemoved          (const QModelIndex& parent, int first, int last);
-    void _onRallyPointsReset                    (void);
+    void _syncTreeMissionItemsInserted                (const QModelIndex& parent, int first, int last);
+    void _syncTreeMissionItemsAboutToBeRemoved         (const QModelIndex& parent, int first, int last);
+    void _syncTreeMissionItemsReset                   (void);
+    void _syncTreeRallyPointsInserted                 (const QModelIndex& parent, int first, int last);
+    void _syncTreeRallyPointsAboutToBeRemoved          (const QModelIndex& parent, int first, int last);
+    void _syncTreeRallyPointsRemoved                   (const QModelIndex& parent, int first, int last);
+    void _syncTreeRallyPointsReset                    (void);
 private:
     void                    _init                               (void);
     void                    _setupTreeModel                     (void);
