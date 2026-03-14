@@ -1818,64 +1818,73 @@ void MissionController::_recalcChildItems(void)
 
 void MissionController::_setupTreeModel(void)
 {
-    // Tree starts empty — no need for beginReset/endReset.
-    // We use incremental inserts so QPersistentModelIndex stays valid.
+    _visualItemsTree.beginResetModel();
+
     _visualItemsTree.clear();
 
     // ── Plan File group ──
     _planFileGroupNode.setObjectName(tr("Plan Info"));
-    _planFileGroupIndex = QPersistentModelIndex(
-        _visualItemsTree.appendItem(&_planFileGroupNode, QModelIndex(), QStringLiteral("planFileGroup")));
+    _visualItemsTree.appendItem(&_planFileGroupNode, QModelIndex(), QStringLiteral("planFileGroup"));
 
     _planFileInfoMarker.setObjectName(QStringLiteral("planFileInfo"));
-    _visualItemsTree.appendItem(&_planFileInfoMarker, _planFileGroupIndex, QStringLiteral("planFileInfo"));
+    _visualItemsTree.appendItem(&_planFileInfoMarker,
+        _visualItemsTree.indexForObject(&_planFileGroupNode), QStringLiteral("planFileInfo"));
 
     // ── Defaults group ──
     _defaultsGroupNode.setObjectName(tr("Defaults"));
-    _defaultsGroupIndex = QPersistentModelIndex(
-        _visualItemsTree.appendItem(&_defaultsGroupNode, QModelIndex(), QStringLiteral("defaultsGroup")));
+    _visualItemsTree.appendItem(&_defaultsGroupNode, QModelIndex(), QStringLiteral("defaultsGroup"));
 
     _defaultsInfoMarker.setObjectName(QStringLiteral("defaultsInfo"));
-    _visualItemsTree.appendItem(&_defaultsInfoMarker, _defaultsGroupIndex, QStringLiteral("defaultsInfo"));
+    _visualItemsTree.appendItem(&_defaultsInfoMarker,
+        _visualItemsTree.indexForObject(&_defaultsGroupNode), QStringLiteral("defaultsInfo"));
 
     // ── Mission Items group ──
     _missionItemsGroupNode.setObjectName(tr("Mission Items"));
-    _missionGroupIndex = QPersistentModelIndex(
-        _visualItemsTree.appendItem(&_missionItemsGroupNode, QModelIndex(), QStringLiteral("missionGroup")));
+    _visualItemsTree.appendItem(&_missionItemsGroupNode, QModelIndex(), QStringLiteral("missionGroup"));
 
     // ── GeoFence group ──
     _fenceGroupNode.setObjectName(tr("GeoFence"));
-    _fenceGroupIndex = QPersistentModelIndex(
-        _visualItemsTree.appendItem(&_fenceGroupNode, QModelIndex(), QStringLiteral("fenceGroup")));
+    _visualItemsTree.appendItem(&_fenceGroupNode, QModelIndex(), QStringLiteral("fenceGroup"));
 
     // Single marker child — delegate loads the full GeoFenceEditor
     _fenceEditorMarker.setObjectName(QStringLiteral("fenceEditor"));
-    _visualItemsTree.appendItem(&_fenceEditorMarker, _fenceGroupIndex, QStringLiteral("fenceEditor"));
+    _visualItemsTree.appendItem(&_fenceEditorMarker,
+        _visualItemsTree.indexForObject(&_fenceGroupNode), QStringLiteral("fenceEditor"));
 
     // ── Rally Points group ──
     _rallyGroupNode.setObjectName(tr("Rally Points"));
-    _rallyGroupIndex = QPersistentModelIndex(
-        _visualItemsTree.appendItem(&_rallyGroupNode, QModelIndex(), QStringLiteral("rallyGroup")));
+    _visualItemsTree.appendItem(&_rallyGroupNode, QModelIndex(), QStringLiteral("rallyGroup"));
 
     // Marker child for the rally header / instructions
     _rallyHeaderMarker.setObjectName(QStringLiteral("rallyHeader"));
-    _visualItemsTree.appendItem(&_rallyHeaderMarker, _rallyGroupIndex, QStringLiteral("rallyHeader"));
+    _visualItemsTree.appendItem(&_rallyHeaderMarker,
+        _visualItemsTree.indexForObject(&_rallyGroupNode), QStringLiteral("rallyHeader"));
 
     // ── Transform group ──
     _transformGroupNode.setObjectName(tr("Transform"));
-    _transformGroupIndex = QPersistentModelIndex(
-        _visualItemsTree.appendItem(&_transformGroupNode, QModelIndex(), QStringLiteral("transformGroup")));
+    _visualItemsTree.appendItem(&_transformGroupNode, QModelIndex(), QStringLiteral("transformGroup"));
 
     // Single marker child — delegate loads the inline TransformEditor
     _transformEditorMarker.setObjectName(QStringLiteral("transformEditor"));
-    _visualItemsTree.appendItem(&_transformEditorMarker, _transformGroupIndex, QStringLiteral("transformEditor"));
+    _visualItemsTree.appendItem(&_transformEditorMarker,
+        _visualItemsTree.indexForObject(&_transformGroupNode), QStringLiteral("transformEditor"));
+
+    _visualItemsTree.endResetModel();
+
+    // Capture persistent indexes after the reset so they aren't invalidated
+    _planFileGroupIndex  = QPersistentModelIndex(_visualItemsTree.indexForObject(&_planFileGroupNode));
+    _defaultsGroupIndex  = QPersistentModelIndex(_visualItemsTree.indexForObject(&_defaultsGroupNode));
+    _missionGroupIndex   = QPersistentModelIndex(_visualItemsTree.indexForObject(&_missionItemsGroupNode));
+    _fenceGroupIndex     = QPersistentModelIndex(_visualItemsTree.indexForObject(&_fenceGroupNode));
+    _rallyGroupIndex     = QPersistentModelIndex(_visualItemsTree.indexForObject(&_rallyGroupNode));
+    _transformGroupIndex = QPersistentModelIndex(_visualItemsTree.indexForObject(&_transformGroupNode));
 }
 
 //-----------------------------------------------------------------------------
 // Incremental tree model sync — Mission Items
 //-----------------------------------------------------------------------------
 
-void MissionController::_onMissionItemsInserted(const QModelIndex& parent, int first, int last)
+void MissionController::_syncTreeMissionItemsInserted(const QModelIndex& parent, int first, int last)
 {
     Q_UNUSED(parent);
     for (int i = first; i <= last; i++) {
@@ -1886,7 +1895,7 @@ void MissionController::_onMissionItemsInserted(const QModelIndex& parent, int f
     }
 }
 
-void MissionController::_onMissionItemsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
+void MissionController::_syncTreeMissionItemsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
 {
     Q_UNUSED(parent);
     // Remove in reverse order so indexes stay valid
@@ -1895,9 +1904,10 @@ void MissionController::_onMissionItemsAboutToBeRemoved(const QModelIndex& paren
     }
 }
 
-void MissionController::_onMissionItemsReset(void)
+void MissionController::_syncTreeMissionItemsReset(void)
 {
-    // Clear mission group children and repopulate from _visualItems
+    // removeChildren + appendItem each fire their own row-level signals scoped
+    // to _missionGroupIndex, so persistent indexes for other groups survive.
     _visualItemsTree.removeChildren(_missionGroupIndex);
 
     if (_visualItems) {
@@ -1914,7 +1924,7 @@ void MissionController::_onMissionItemsReset(void)
 // Incremental tree model sync — Rally Points
 //-----------------------------------------------------------------------------
 
-void MissionController::_onRallyPointsInserted(const QModelIndex& parent, int first, int last)
+void MissionController::_syncTreeRallyPointsInserted(const QModelIndex& parent, int first, int last)
 {
     Q_UNUSED(parent);
     auto* rallyController = _masterController->rallyPointController();
@@ -1934,24 +1944,32 @@ void MissionController::_onRallyPointsInserted(const QModelIndex& parent, int fi
     }
 }
 
-void MissionController::_onRallyPointsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
+void MissionController::_syncTreeRallyPointsAboutToBeRemoved(const QModelIndex& parent, int first, int last)
 {
     Q_UNUSED(parent);
     for (int i = last; i >= first; i--) {
         _visualItemsTree.removeAt(_rallyGroupIndex, i);
     }
+}
 
-    // If all rally points are being removed, re-add the header marker
+void MissionController::_syncTreeRallyPointsRemoved(const QModelIndex& parent, int first, int last)
+{
+    Q_UNUSED(parent);
+    Q_UNUSED(first);
+    Q_UNUSED(last);
+
+    // Re-add the header marker once the source model has finished removing rows
     auto* rallyController = _masterController->rallyPointController();
-    if (rallyController && (rallyController->points()->count() - (last - first + 1)) == 0) {
+    if (rallyController && rallyController->points()->count() == 0) {
         _rallyHeaderMarker.setObjectName(QStringLiteral("rallyHeader"));
         _visualItemsTree.appendItem(&_rallyHeaderMarker, _rallyGroupIndex, QStringLiteral("rallyHeader"));
     }
 }
 
-void MissionController::_onRallyPointsReset(void)
+void MissionController::_syncTreeRallyPointsReset(void)
 {
-    // Remove all rally children
+    // removeChildren + appendItem each fire their own row-level signals scoped
+    // to _rallyGroupIndex, so persistent indexes for other groups survive.
     _visualItemsTree.removeChildren(_rallyGroupIndex);
 
     // Repopulate — either rally items or the header marker
@@ -2048,23 +2066,24 @@ void MissionController::_initAllVisualItems(void)
     connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
 
     // Connect for incremental tree model sync
-    connect(_visualItems, &QAbstractItemModel::rowsInserted, this, &MissionController::_onMissionItemsInserted);
-    connect(_visualItems, &QAbstractItemModel::rowsAboutToBeRemoved, this, &MissionController::_onMissionItemsAboutToBeRemoved);
-    connect(_visualItems, &QAbstractItemModel::modelReset, this, &MissionController::_onMissionItemsReset);
+    connect(_visualItems, &QAbstractItemModel::rowsInserted, this, &MissionController::_syncTreeMissionItemsInserted);
+    connect(_visualItems, &QAbstractItemModel::rowsAboutToBeRemoved, this, &MissionController::_syncTreeMissionItemsAboutToBeRemoved);
+    connect(_visualItems, &QAbstractItemModel::modelReset, this, &MissionController::_syncTreeMissionItemsReset);
 
     // Populate tree's mission group from current _visualItems
-    _onMissionItemsReset();
+    _syncTreeMissionItemsReset();
 
     // Connect rally controller for incremental tree model sync
     auto* rallyController = _masterController->rallyPointController();
     if (rallyController) {
         auto* pts = rallyController->points();
-        connect(pts, &QAbstractItemModel::rowsInserted, this, &MissionController::_onRallyPointsInserted);
-        connect(pts, &QAbstractItemModel::rowsAboutToBeRemoved, this, &MissionController::_onRallyPointsAboutToBeRemoved);
-        connect(pts, &QAbstractItemModel::modelReset, this, &MissionController::_onRallyPointsReset);
+        connect(pts, &QAbstractItemModel::rowsInserted, this, &MissionController::_syncTreeRallyPointsInserted);
+        connect(pts, &QAbstractItemModel::rowsAboutToBeRemoved, this, &MissionController::_syncTreeRallyPointsAboutToBeRemoved);
+        connect(pts, &QAbstractItemModel::rowsRemoved, this, &MissionController::_syncTreeRallyPointsRemoved);
+        connect(pts, &QAbstractItemModel::modelReset, this, &MissionController::_syncTreeRallyPointsReset);
 
         // Populate any existing rally points
-        _onRallyPointsReset();
+        _syncTreeRallyPointsReset();
     }
 
     emit visualItemsChanged();
@@ -2080,6 +2099,12 @@ void MissionController::_initAllVisualItems(void)
 
 void MissionController::_deinitAllVisualItems(void)
 {
+    // Remove mission items from the tree model before their C++ objects are
+    // scheduled for deletion via deleteLater below. Without this, the TreeView
+    // delegates still hold references when the objects are destroyed, causing
+    // null-reference warnings in QML (e.g. "Cannot read property 'masterController' of null").
+    _visualItemsTree.removeChildren(_missionGroupIndex);
+
     disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::_recalcAll);
     disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::plannedHomePositionChanged);
 
@@ -2091,17 +2116,18 @@ void MissionController::_deinitAllVisualItems(void)
     disconnect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
 
     // Disconnect incremental tree model sync
-    disconnect(_visualItems, &QAbstractItemModel::rowsInserted, this, &MissionController::_onMissionItemsInserted);
-    disconnect(_visualItems, &QAbstractItemModel::rowsAboutToBeRemoved, this, &MissionController::_onMissionItemsAboutToBeRemoved);
-    disconnect(_visualItems, &QAbstractItemModel::modelReset, this, &MissionController::_onMissionItemsReset);
+    disconnect(_visualItems, &QAbstractItemModel::rowsInserted, this, &MissionController::_syncTreeMissionItemsInserted);
+    disconnect(_visualItems, &QAbstractItemModel::rowsAboutToBeRemoved, this, &MissionController::_syncTreeMissionItemsAboutToBeRemoved);
+    disconnect(_visualItems, &QAbstractItemModel::modelReset, this, &MissionController::_syncTreeMissionItemsReset);
 
     // Disconnect rally controller tree model sync
     auto* rallyController = _masterController->rallyPointController();
     if (rallyController) {
         auto* pts = rallyController->points();
-        disconnect(pts, &QAbstractItemModel::rowsInserted, this, &MissionController::_onRallyPointsInserted);
-        disconnect(pts, &QAbstractItemModel::rowsAboutToBeRemoved, this, &MissionController::_onRallyPointsAboutToBeRemoved);
-        disconnect(pts, &QAbstractItemModel::modelReset, this, &MissionController::_onRallyPointsReset);
+        disconnect(pts, &QAbstractItemModel::rowsInserted, this, &MissionController::_syncTreeRallyPointsInserted);
+        disconnect(pts, &QAbstractItemModel::rowsAboutToBeRemoved, this, &MissionController::_syncTreeRallyPointsAboutToBeRemoved);
+        disconnect(pts, &QAbstractItemModel::rowsRemoved, this, &MissionController::_syncTreeRallyPointsRemoved);
+        disconnect(pts, &QAbstractItemModel::modelReset, this, &MissionController::_syncTreeRallyPointsReset);
     }
 }
 
