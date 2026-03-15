@@ -74,8 +74,14 @@ Rectangle {
         id: editPositionDialog
 
         EditPositionDialog {
-            coordinate:             missionItem.isSurveyItem ?  missionItem.centerCoordinate : missionItem.coordinate
-            onCoordinateChanged:    missionItem.isSurveyItem ?  missionItem.centerCoordinate = coordinate : missionItem.coordinate = coordinate
+            property bool _editCenterCoordinate: false
+
+            onCoordinateChanged: {
+                if (_editCenterCoordinate)
+                    missionItem.centerCoordinate = coordinate
+                else
+                    missionItem.coordinate = coordinate
+            }
         }
     }
 
@@ -228,7 +234,13 @@ Rectangle {
                         text:               qsTr("Edit position...")
                         enabled:            missionItem.specifiesCoordinate
                         onClicked: {
-                            editPositionDialogFactory.open()
+                            const editCenterCoordinate = missionItem.isSurveyItem
+                            editPositionDialogFactory.open({
+                                _editCenterCoordinate:   editCenterCoordinate,
+                                coordinate:              editCenterCoordinate ? missionItem.centerCoordinate : missionItem.coordinate,
+                                altitudeFact:            !editCenterCoordinate && missionItem.specifiesAltitude ? missionItem.altitude : null,
+                                altitudeFrame:           !editCenterCoordinate && missionItem.specifiesAltitude ? missionItem.altitudeFrame : QGroundControl.AltitudeFrameNone,
+                            })
                             hamburgerMenuDropPanel.close()
                         }
                     }

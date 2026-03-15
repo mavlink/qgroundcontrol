@@ -651,7 +651,7 @@ FlightMap {
                         Layout.fillWidth:   true
                         text:               qsTr("Edit Position")
                         onClicked: {
-                            roiEditPositionDialogFactory.open({ showSetPositionFromVehicle: false })
+                            roiEditPositionDialogFactory.open()
                             roiEditDropPanel.close()
                         }
                     }
