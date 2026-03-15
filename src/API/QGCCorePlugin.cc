@@ -63,9 +63,9 @@ const QVariantList &QGCCorePlugin::analyzePages()
 {
     static const QVariantList analyzeList = {
         QVariant::fromValue(new QmlComponentInfo(
-            tr("MAVLink Log"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkLogs/MAVLinkLogPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkLogIcon.svg")))),
+            tr("Onboard Logs"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/OnboardLogs/OnboardLogPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/OnboardLogIcon.svg")))),
         QVariant::fromValue(new QmlComponentInfo(
             tr("GeoTag Images"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagPage.qml")),

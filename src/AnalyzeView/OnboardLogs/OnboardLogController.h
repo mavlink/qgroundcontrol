@@ -4,17 +4,17 @@
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkLogControllerLog)
+Q_DECLARE_LOGGING_CATEGORY(OnboardLogControllerLog)
 
-struct MAVLinkLogDownloadData;
-class QGCMAVLinkLogEntry;
+struct OnboardLogDownloadData;
+class QGCOnboardLogEntry;
 class QmlObjectListModel;
 class QTimer;
 class QThread;
 class Vehicle;
-class MAVLinkLogDownloadTest;
+class OnboardLogDownloadTest;
 
-class MAVLinkLogController : public QObject
+class OnboardLogController : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
@@ -28,11 +28,11 @@ class MAVLinkLogController : public QObject
     Q_PROPERTY(bool               compressing     READ compressing          NOTIFY compressingChanged)
     Q_PROPERTY(float              compressionProgress READ compressionProgress NOTIFY compressionProgressChanged)
 
-    friend class MAVLinkLogDownloadTest;
+    friend class OnboardLogDownloadTest;
 
 public:
-    explicit MAVLinkLogController(QObject *parent = nullptr);
-    ~MAVLinkLogController();
+    explicit OnboardLogController(QObject *parent = nullptr);
+    ~OnboardLogController();
 
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void download(const QString &path = QString());
@@ -89,7 +89,7 @@ private:
     void _setListing(bool active);
     void _updateDataRate();
 
-    QGCMAVLinkLogEntry *_getNextSelected() const;
+    QGCOnboardLogEntry *_getNextSelected() const;
 
     QTimer *_timer = nullptr;
     QmlObjectListModel *_logEntriesModel = nullptr;
@@ -98,7 +98,7 @@ private:
     bool _requestingLogEntries = false;
     int _apmOffset = 0;
     int _retries = 0;
-    std::unique_ptr<MAVLinkLogDownloadData> _downloadData;
+    std::unique_ptr<OnboardLogDownloadData> _downloadData;
     QString _downloadPath;
     Vehicle *_vehicle = nullptr;
     bool _compressLogs = false;

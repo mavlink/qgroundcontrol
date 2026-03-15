@@ -1,18 +1,18 @@
-#include "MAVLinkLogDownloadTest.h"
+#include "OnboardLogDownloadTest.h"
 
 #include <QtCore/QDir>
 
-#include "MAVLinkLogController.h"
-#include "MAVLinkLogEntry.h"
+#include "OnboardLogController.h"
+#include "OnboardLogEntry.h"
 #include "MAVLinkProtocol.h"
 #include "MultiSignalSpy.h"
 #include "MultiVehicleManager.h"
 #include "QmlObjectListModel.h"
 
-void MAVLinkLogDownloadTest::_downloadTest()
+void OnboardLogDownloadTest::_downloadTest()
 {
     // VehicleTest::init() already connects the mock link
-    MAVLinkLogController* const controller = new MAVLinkLogController(this);
+    OnboardLogController* const controller = new OnboardLogController(this);
     MultiSignalSpy* multiSpyLogDownloadController = new MultiSignalSpy(this);
     QVERIFY(multiSpyLogDownloadController->init(controller));
     controller->refresh();
@@ -25,7 +25,7 @@ void MAVLinkLogDownloadTest::_downloadTest()
     multiSpyLogDownloadController->clearAllSignals();
     QmlObjectListModel* const model = controller->_getModel();
     QVERIFY(model);
-    model->value<QGCMAVLinkLogEntry*>(0)->setSelected(true);
+    model->value<QGCOnboardLogEntry*>(0)->setSelected(true);
     const QString downloadTo = QDir::currentPath();
     controller->download(downloadTo);
     QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", TestTimeout::longMs()));
@@ -40,4 +40,4 @@ void MAVLinkLogDownloadTest::_downloadTest()
     (void)QFile::remove(downloadFile);
 }
 
-UT_REGISTER_TEST(MAVLinkLogDownloadTest, TestLabel::Integration, TestLabel::AnalyzeView, TestLabel::Vehicle)
+UT_REGISTER_TEST(OnboardLogDownloadTest, TestLabel::Integration, TestLabel::AnalyzeView, TestLabel::Vehicle)

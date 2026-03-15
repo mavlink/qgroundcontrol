@@ -13,8 +13,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MAVLinkConsoleControllerTest.h
         MAVLinkInspectorControllerTest.cc
         MAVLinkInspectorControllerTest.h
-        MAVLinkLogDownloadTest.cc
-        MAVLinkLogDownloadTest.h
+        OnboardLogDownloadTest.cc
+        OnboardLogDownloadTest.h
         MAVLinkMessageFieldTest.cc
         MAVLinkMessageFieldTest.h
         MAVLinkMessageTest.cc

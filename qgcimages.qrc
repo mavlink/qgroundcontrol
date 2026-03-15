@@ -115,7 +115,7 @@
         <file alias="LandMode.svg">src/AutoPilotPlugins/PX4/Images/LandMode.svg</file>
         <file alias="LandModeCopter.svg">src/AutoPilotPlugins/PX4/Images/LandModeCopter.svg</file>
         <file alias="LightsComponentIcon.png">src/AutoPilotPlugins/APM/Images/LightsComponentIcon.png</file>
-        <file alias="MAVLinkLogIcon.svg">src/AnalyzeView/MAVLinkLogs/MAVLinkLogIcon.svg</file>
+        <file alias="OnboardLogIcon.svg">src/AnalyzeView/OnboardLogs/OnboardLogIcon.svg</file>
         <file alias="LowBattery.svg">src/AutoPilotPlugins/PX4/Images/LowBattery.svg</file>
         <file alias="LowBatteryLight.svg">src/AutoPilotPlugins/PX4/Images/LowBatteryLight.svg</file>
         <file alias="MapAddMission.svg">src/FlightMap/Images/MapAddMission.svg</file>
