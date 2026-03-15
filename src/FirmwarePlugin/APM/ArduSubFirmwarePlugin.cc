@@ -125,6 +125,67 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(QObject *parent)
     updateAvailableFlightModes(availableFlightModes);
 
     if (!_remapParamNameIntialized) {
+        // ArduPilot 4.7: parameter renames and SI unit conversion
+        FirmwarePlugin::remapParamNameMap_t &remapV4_7 = _remapParamName[4][7];
+
+        // Position controller: PSC_VELXY_* -> PSC_NE_VEL_*
+        remapV4_7["PSC_NE_VEL_P"]    = QStringLiteral("PSC_VELXY_P");
+        remapV4_7["PSC_NE_VEL_I"]    = QStringLiteral("PSC_VELXY_I");
+        remapV4_7["PSC_NE_VEL_D"]    = QStringLiteral("PSC_VELXY_D");
+        remapV4_7["PSC_NE_VEL_IMAX"] = QStringLiteral("PSC_VELXY_IMAX");
+        remapV4_7["PSC_NE_VEL_FLTE"] = QStringLiteral("PSC_VELXY_FLTE");
+        remapV4_7["PSC_NE_VEL_FLTD"] = QStringLiteral("PSC_VELXY_FLTD");
+        remapV4_7["PSC_NE_VEL_FF"]   = QStringLiteral("PSC_VELXY_FF");
+
+        // Position controller: PSC_VELZ_* -> PSC_D_VEL_*
+        remapV4_7["PSC_D_VEL_P"]     = QStringLiteral("PSC_VELZ_P");
+        remapV4_7["PSC_D_VEL_I"]     = QStringLiteral("PSC_VELZ_I");
+        remapV4_7["PSC_D_VEL_D"]     = QStringLiteral("PSC_VELZ_D");
+        remapV4_7["PSC_D_VEL_IMAX"]  = QStringLiteral("PSC_VELZ_IMAX");
+        remapV4_7["PSC_D_VEL_FLTE"]  = QStringLiteral("PSC_VELZ_FLTE");
+        remapV4_7["PSC_D_VEL_FF"]    = QStringLiteral("PSC_VELZ_FF");
+
+        // Position controller: PSC_ACCZ_* -> PSC_D_ACC_*
+        remapV4_7["PSC_D_ACC_P"]     = QStringLiteral("PSC_ACCZ_P");
+        remapV4_7["PSC_D_ACC_I"]     = QStringLiteral("PSC_ACCZ_I");
+        remapV4_7["PSC_D_ACC_D"]     = QStringLiteral("PSC_ACCZ_D");
+        remapV4_7["PSC_D_ACC_IMAX"]  = QStringLiteral("PSC_ACCZ_IMAX");
+        remapV4_7["PSC_D_ACC_FLTD"]  = QStringLiteral("PSC_ACCZ_FLTD");
+        remapV4_7["PSC_D_ACC_FLTE"]  = QStringLiteral("PSC_ACCZ_FLTE");
+        remapV4_7["PSC_D_ACC_FLTT"]  = QStringLiteral("PSC_ACCZ_FLTT");
+        remapV4_7["PSC_D_ACC_FF"]    = QStringLiteral("PSC_ACCZ_FF");
+        remapV4_7["PSC_D_ACC_SMAX"]  = QStringLiteral("PSC_ACCZ_SMAX");
+
+        // Position controller: PSC_POSXY_P -> PSC_NE_POS_P
+        remapV4_7["PSC_NE_POS_P"]    = QStringLiteral("PSC_POSXY_P");
+
+        // Position controller: PSC_POSZ_P -> PSC_D_POS_P
+        remapV4_7["PSC_D_POS_P"]     = QStringLiteral("PSC_POSZ_P");
+
+        // Waypoint navigation: WPNAV_* -> WP_*
+        remapV4_7["WP_ACC"]          = QStringLiteral("WPNAV_ACCEL");
+        remapV4_7["WP_ACC_CNR"]      = QStringLiteral("WPNAV_ACCEL_C");
+        remapV4_7["WP_ACC_Z"]        = QStringLiteral("WPNAV_ACCEL_Z");
+        remapV4_7["WP_RADIUS_M"]     = QStringLiteral("WPNAV_RADIUS");
+        remapV4_7["WP_SPD"]          = QStringLiteral("WPNAV_SPEED");
+        remapV4_7["WP_SPD_DN"]       = QStringLiteral("WPNAV_SPEED_DN");
+        remapV4_7["WP_SPD_UP"]       = QStringLiteral("WPNAV_SPEED_UP");
+
+        // Attitude controller
+        remapV4_7["ATC_ACC_R_MAX"]   = QStringLiteral("ATC_ACCEL_R_MAX");
+        remapV4_7["ATC_ACC_P_MAX"]   = QStringLiteral("ATC_ACCEL_P_MAX");
+        remapV4_7["ATC_ACC_Y_MAX"]   = QStringLiteral("ATC_ACCEL_Y_MAX");
+        remapV4_7["ATC_RATE_WPY_MAX"]= QStringLiteral("ATC_SLEW_YAW");
+
+        // Circle
+        remapV4_7["CIRCLE_RADIUS_M"] = QStringLiteral("CIRCLE_RADIUS");
+
+        // EKF
+        remapV4_7["EK3_FLOW_MAX"]    = QStringLiteral("EK3_MAX_FLOW");
+
+        // Common
+        remapV4_7["ARMING_SKIPCHK"]  = QStringLiteral("ARMING_CHECK");
+
         _remapParamNameIntialized = true;
     }
 
@@ -142,10 +203,9 @@ ArduSubFirmwarePlugin::~ArduSubFirmwarePlugin()
 
 }
 
-int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const
+int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping not supported
-    return Vehicle::versionNotSetValue;
+    return ((majorVersionNumber == 4) ? 7 : Vehicle::versionNotSetValue);
 }
 
 void ArduSubFirmwarePlugin::initializeStreamRates(Vehicle *vehicle)

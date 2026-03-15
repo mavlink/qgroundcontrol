@@ -12,7 +12,9 @@ SettingsGroupLayout {
     visible:                activeVehicle.multiRotor
 
     property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property Fact rtlAltFact: controller.getParameterFact(-1, "RTL_ALT")
+    property Fact rtlAltFact: controller.getParameterFact(-1, "RTL_ALT_M")
+    // RTL_ALT_M (4.7+) is in meters, RTL_ALT (pre-4.7) is in centimeters
+    property bool _rtlAltIsMeters: controller.parameterExists(-1, "noremap.RTL_ALT_M")
 
     FactPanelController { id: controller }
 
@@ -45,7 +47,8 @@ SettingsGroupLayout {
                 if (index === 0) {
                     rtlAltFact.rawValue = 0
                 } else {
-                    rtlAltFact.rawValue = 1500
+                    // RTL_ALT_M (4.7+) is in meters, RTL_ALT (pre-4.7) is in centimeters
+                    rtlAltFact.rawValue = _rtlAltIsMeters ? 15 : 1500
                 }
             }
 

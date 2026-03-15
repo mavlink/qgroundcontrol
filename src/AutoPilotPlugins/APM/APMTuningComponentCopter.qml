@@ -24,17 +24,17 @@ SetupPage {
             property Fact _rateRollI:           controller.getParameterFact(-1, "ATC_RAT_RLL_I")
             property Fact _ratePitchP:          controller.getParameterFact(-1, "ATC_RAT_PIT_P")
             property Fact _ratePitchI:          controller.getParameterFact(-1, "ATC_RAT_PIT_I")
-            property Fact _rateClimbP:          controller.getParameterFact(-1, "PSC_ACCZ_P")
-            property Fact _rateClimbI:          controller.getParameterFact(-1, "PSC_ACCZ_I")
+            property Fact _rateClimbP:          controller.getParameterFact(-1, "PSC_D_ACC_P")
+            property Fact _rateClimbI:          controller.getParameterFact(-1, "PSC_D_ACC_I")
             property Fact _motSpinArm:          controller.getParameterFact(-1, "MOT_SPIN_ARM")
             property Fact _motSpinMin:          controller.getParameterFact(-1, "MOT_SPIN_MIN")
 
-            property Fact _ch7Opt:  controller.getParameterFact(-1, "r.RC7_OPTION")
-            property Fact _ch8Opt:  controller.getParameterFact(-1, "r.RC8_OPTION")
-            property Fact _ch9Opt:  controller.getParameterFact(-1, "r.RC9_OPTION")
-            property Fact _ch10Opt: controller.getParameterFact(-1, "r.RC10_OPTION")
-            property Fact _ch11Opt: controller.getParameterFact(-1, "r.RC11_OPTION")
-            property Fact _ch12Opt: controller.getParameterFact(-1, "r.RC12_OPTION")
+            property Fact _ch7Opt:  controller.getParameterFact(-1, "RC7_OPTION")
+            property Fact _ch8Opt:  controller.getParameterFact(-1, "RC8_OPTION")
+            property Fact _ch9Opt:  controller.getParameterFact(-1, "RC9_OPTION")
+            property Fact _ch10Opt: controller.getParameterFact(-1, "RC10_OPTION")
+            property Fact _ch11Opt: controller.getParameterFact(-1, "RC11_OPTION")
+            property Fact _ch12Opt: controller.getParameterFact(-1, "RC12_OPTION")
 
             readonly property int   _firstOptionChannel:    7
             readonly property int   _lastOptionChannel:     12
@@ -59,7 +59,7 @@ SetupPage {
             function calcAutoTuneChannel() {
                 _autoTuneSwitchChannelIndex = 0
                 for (var channel=_firstOptionChannel; channel<=_lastOptionChannel; channel++) {
-                    var optionFact = controller.getParameterFact(-1, "r.RC" + channel + "_OPTION")
+                    var optionFact = controller.getParameterFact(-1, "RC" + channel + "_OPTION")
                     if (optionFact.value == _autoTuneOption) {
                         _autoTuneSwitchChannelIndex = channel - _firstOptionChannel + 1
                         break
@@ -71,7 +71,7 @@ SetupPage {
             function setChannelAutoTuneOption(channel) {
                 // First clear any previous settings for AutTune
                 for (var optionChannel=_firstOptionChannel; optionChannel<=_lastOptionChannel; optionChannel++) {
-                    var optionFact = controller.getParameterFact(-1, "r.RC" + optionChannel + "_OPTION")
+                    var optionFact = controller.getParameterFact(-1, "RC" + optionChannel + "_OPTION")
                     if (optionFact.value == _autoTuneOption) {
                         optionFact.value = 0
                     }
@@ -79,7 +79,7 @@ SetupPage {
 
                 // Now set the function into the new channel
                 if (channel != 0) {
-                    var optionFact = controller.getParameterFact(-1, "r.RC" + channel + "_OPTION")
+                    var optionFact = controller.getParameterFact(-1, "RC" + channel + "_OPTION")
                     optionFact.value = _autoTuneOption
                 }
             }
@@ -239,14 +239,14 @@ SetupPage {
                                     id:                     tuneMinField
                                     textField.validator:    DoubleValidator {bottom: 0; top: 32767;}
                                     label:                  qsTr("Min:")
-                                    fact:                   controller.getParameterFact(-1, "r.TUNE_MIN")
+                                    fact:                   controller.getParameterFact(-1, "TUNE_MIN")
                                 }
 
                                 LabelledFactTextField {
                                     id:                     tuneMaxField
                                     textField.validator:    DoubleValidator {bottom: 0; top: 32767;}
                                     label:                  qsTr("Max:")
-                                    fact:                   controller.getParameterFact(-1, "r.TUNE_MAX")
+                                    fact:                   controller.getParameterFact(-1, "TUNE_MAX")
                                 }
                             }
                         }

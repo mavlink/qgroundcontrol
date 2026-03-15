@@ -912,18 +912,28 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle *vehicle, double altitu
 
 bool APMFirmwarePlugin::mulirotorSpeedLimitsAvailable(Vehicle *vehicle) const
 {
-    return vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "WPNAV_SPEED");
+    // Use noremap. to bypass remap and check for specific parameter names directly,
+    // since the old and new parameters have different units.
+    return vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("noremap.WP_SPD"))
+        || vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("noremap.WPNAV_SPEED"));
 }
 
-double APMFirmwarePlugin::maximumHorizontalSpeedMultirotor(Vehicle *vehicle) const
+double APMFirmwarePlugin::maximumHorizontalSpeedMultirotorMetersSecond(Vehicle *vehicle) const
 {
-    const QString speedParam("WPNAV_SPEED");
+    // Use noremap. to bypass remap and check for specific parameter names directly,
+    // since the old and new parameters have different units.
 
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, speedParam)) {
-        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, speedParam)->rawValue().toDouble() * 0.01;  // note cm/s -> m/s
+    // 4.7+: WP_SPD is in m/s
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("noremap.WP_SPD"))) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("noremap.WP_SPD"))->rawValue().toDouble();
     }
 
-    return FirmwarePlugin::maximumHorizontalSpeedMultirotor(vehicle);
+    // pre-4.7: WPNAV_SPEED is in cm/s
+    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("noremap.WPNAV_SPEED"))) {
+        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("noremap.WPNAV_SPEED"))->rawValue().toDouble() * 0.01;
+    }
+
+    return FirmwarePlugin::maximumHorizontalSpeedMultirotorMetersSecond(vehicle);
 }
 
 void APMFirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle *vehicle, double groundspeed) const
@@ -985,11 +995,28 @@ void APMFirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoor
 double APMFirmwarePlugin::minimumTakeoffAltitudeMeters(Vehicle* vehicle) const
 {
     double minTakeoffAlt = 0;
-    const QString takeoffAltParam(vehicle->vtol() ? QStringLiteral("Q_RTL_ALT") : QStringLiteral("PILOT_TKOFF_ALT"));
-    const float paramDivisor = vehicle->vtol() ? 1.0 : 100.0; // PILOT_TAKEOFF_ALT is in centimeters
 
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, takeoffAltParam)) {
-        minTakeoffAlt = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, takeoffAltParam)->rawValue().toDouble() / static_cast<double>(paramDivisor);
+    // Use noremap. to bypass remap and check for specific parameter names directly,
+    // since the old and new parameters have different units.
+
+    if (vehicle->vtol()) {
+        // 4.7+: Q_PILOT_TKO_ALT_M (meters)
+        if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("noremap.Q_PILOT_TKO_ALT_M"))) {
+            minTakeoffAlt = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("noremap.Q_PILOT_TKO_ALT_M"))->rawValue().toDouble();
+        } else if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("noremap.Q_PILOT_TKOFF_ALT"))) {
+            // pre-4.7: Q_PILOT_TKOFF_ALT (centimeters)
+            minTakeoffAlt = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("noremap.Q_PILOT_TKOFF_ALT"))->rawValue().toDouble() / 100.0;
+        } else if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("Q_RTL_ALT"))) {
+            minTakeoffAlt = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("Q_RTL_ALT"))->rawValue().toDouble();
+        }
+    } else {
+        // 4.7+: PILOT_TKO_ALT_M (meters)
+        if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("noremap.PILOT_TKO_ALT_M"))) {
+            minTakeoffAlt = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("noremap.PILOT_TKO_ALT_M"))->rawValue().toDouble();
+        } else if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("noremap.PILOT_TKOFF_ALT"))) {
+            // pre-4.7: PILOT_TKOFF_ALT (centimeters)
+            minTakeoffAlt = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, QStringLiteral("noremap.PILOT_TKOFF_ALT"))->rawValue().toDouble() / 100.0;
+        }
     }
 
     if (minTakeoffAlt == 0) {
@@ -1232,7 +1259,7 @@ QMutex &APMFirmwarePlugin::_reencodeMavlinkChannelMutex()
 
 double APMFirmwarePlugin::maximumEquivalentAirspeed(Vehicle *vehicle) const
 {
-    const QString airspeedMax("r.AIRSPEED_MAX");
+    const QString airspeedMax("AIRSPEED_MAX");
 
     if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMax)) {
         return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMax)->rawValue().toDouble();
@@ -1243,7 +1270,7 @@ double APMFirmwarePlugin::maximumEquivalentAirspeed(Vehicle *vehicle) const
 
 double APMFirmwarePlugin::minimumEquivalentAirspeed(Vehicle *vehicle) const
 {
-    const QString airspeedMin("r.AIRSPEED_MIN");
+    const QString airspeedMin("AIRSPEED_MIN");
 
     if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMin)) {
         return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMin)->rawValue().toDouble();
@@ -1254,8 +1281,8 @@ double APMFirmwarePlugin::minimumEquivalentAirspeed(Vehicle *vehicle) const
 
 bool APMFirmwarePlugin::fixedWingAirSpeedLimitsAvailable(Vehicle *vehicle) const
 {
-    return vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "r.AIRSPEED_MIN") &&
-           vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "r.AIRSPEED_MAX");
+    return vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "AIRSPEED_MIN") &&
+           vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "AIRSPEED_MAX");
 }
 
 void APMFirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle *vehicle, double airspeed_equiv) const
