@@ -71,7 +71,7 @@ void SurveyComplexItem::addSquare(double sideMeters)
         return;
     }
     if (sideMeters <= 0) {
-        sideMeters = 20.0;
+        sideMeters = 5.0;
     }
     QGCMapPolygon* obst = new QGCMapPolygon(this);
     const qreal halfSideMeters = sideMeters * 0.5;
@@ -97,7 +97,7 @@ void SurveyComplexItem::addCircle(double radiusMeters)
         return;
     }
     if (radiusMeters <= 0) {
-        radiusMeters = 10.0;
+        radiusMeters = 2.5;
     }
     QGCMapPolygon* obst = new QGCMapPolygon(this);
     const int numPoints = 16;

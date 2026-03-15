@@ -124,7 +124,7 @@ TransectStyleComplexItemEditor {
                         }
                         FactTextField {
                             id:             squareSideField
-                            text:           "20"
+                            text:           "5"
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
                             validator:       DoubleValidator { bottom: 1; top: 500; decimals: 1 }
                         }
@@ -141,7 +141,7 @@ TransectStyleComplexItemEditor {
                         }
                         FactTextField {
                             id:             circleRadiusField
-                            text:           "10"
+                            text:           "2.5"
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
                             validator:       DoubleValidator { bottom: 1; top: 500; decimals: 1 }
                         }

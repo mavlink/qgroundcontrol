@@ -32,8 +32,8 @@ public:
     QmlObjectListModel* obstaclePolygons (void) { return _obstaclePolygonsModel; }
 
     Q_INVOKABLE void rotateEntryPoint(void);
-    Q_INVOKABLE void addSquare(double sideMeters = 20.0);
-    Q_INVOKABLE void addCircle(double radiusMeters = 10.0);
+    Q_INVOKABLE void addSquare(double sideMeters = 5);
+    Q_INVOKABLE void addCircle(double radiusMeters = 2.5);
     Q_INVOKABLE void removeObstaclePolygon(int index);
 
     // Overrides from ComplexMissionItem
