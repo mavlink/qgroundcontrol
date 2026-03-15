@@ -11,6 +11,7 @@
 #include "KMLPlanDomDocument.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 
 #include <QtCore/QJsonArray>
 
@@ -1216,7 +1217,10 @@ TransectStyleComplexItem::BuildMissionItemsState_t TransectStyleComplexItem::_bu
     state.imagesInTurnaround        = _cameraTriggerInTurnAroundFact.rawValue().toBool();
     state.hasTurnarounds            = _turnAroundDistance() != 0;
     state.addTriggerAtFirstAndLastPoint  = !hoverAndCaptureEnabled() && state.imagesInTurnaround && triggerCamera();
-    state.useConditionGate          = _controllerVehicle->firmwarePlugin()->supportedMissionCommands(QGCMAVLink::VehicleClassGeneric).contains(MAV_CMD_CONDITION_GATE) &&
+    const bool firmwareSupportsConditionGate =
+            _controllerVehicle->firmwarePlugin()->supportedMissionCommands(QGCMAVLink::VehicleClassGeneric).contains(MAV_CMD_CONDITION_GATE);
+    state.useConditionGate          = SettingsManager::instance()->planViewSettings()->useConditionGate()->rawValue().toBool() &&
+            (qgcApp()->runningUnitTests() || firmwareSupportsConditionGate) &&
             triggerCamera() &&
             !hoverAndCaptureEnabled();
 
