@@ -1,6 +1,6 @@
-#include "MAVLinkLogController.h"
+#include "OnboardLogController.h"
 #include "AppSettings.h"
-#include "MAVLinkLogEntry.h"
+#include "OnboardLogEntry.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
@@ -13,35 +13,35 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
-QGC_LOGGING_CATEGORY(MAVLinkLogControllerLog, "AnalyzeView.MAVLinkLogController")
+QGC_LOGGING_CATEGORY(OnboardLogControllerLog, "AnalyzeView.OnboardLogController")
 
-MAVLinkLogController::MAVLinkLogController(QObject *parent)
+OnboardLogController::OnboardLogController(QObject *parent)
     : QObject(parent)
     , _timer(new QTimer(this))
     , _logEntriesModel(new QmlObjectListModel(this))
 {
-    qCDebug(MAVLinkLogControllerLog) << this;
+    qCDebug(OnboardLogControllerLog) << this;
 
-    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &MAVLinkLogController::_setActiveVehicle);
-    (void) connect(_timer, &QTimer::timeout, this, &MAVLinkLogController::_processDownload);
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &OnboardLogController::_setActiveVehicle);
+    (void) connect(_timer, &QTimer::timeout, this, &OnboardLogController::_processDownload);
 
     _timer->setSingleShot(false);
 
     _setActiveVehicle(MultiVehicleManager::instance()->activeVehicle());
 }
 
-MAVLinkLogController::~MAVLinkLogController()
+OnboardLogController::~OnboardLogController()
 {
-    qCDebug(MAVLinkLogControllerLog) << this;
+    qCDebug(OnboardLogControllerLog) << this;
 }
 
-void MAVLinkLogController::download(const QString &path)
+void OnboardLogController::download(const QString &path)
 {
     const QString dir = path.isEmpty() ? SettingsManager::instance()->appSettings()->logSavePath() : path;
     _downloadToDirectory(dir);
 }
 
-void MAVLinkLogController::_downloadToDirectory(const QString &dir)
+void OnboardLogController::_downloadToDirectory(const QString &dir)
 {
     _receivedAllEntries();
 
@@ -56,7 +56,7 @@ void MAVLinkLogController::_downloadToDirectory(const QString &dir)
         _downloadPath += QDir::separator();
     }
 
-    QGCMAVLinkLogEntry *const log = _getNextSelected();
+    QGCOnboardLogEntry *const log = _getNextSelected();
     if (log) {
         log->setStatus(tr("Waiting"));
     }
@@ -65,7 +65,7 @@ void MAVLinkLogController::_downloadToDirectory(const QString &dir)
     _receivedAllData();
 }
 
-void MAVLinkLogController::_processDownload()
+void OnboardLogController::_processDownload()
 {
     if (_requestingLogEntries) {
         _findMissingEntries();
@@ -74,13 +74,13 @@ void MAVLinkLogController::_processDownload()
     }
 }
 
-void MAVLinkLogController::_findMissingEntries()
+void OnboardLogController::_findMissingEntries()
 {
     const int num_logs = _logEntriesModel->count();
     int start = -1;
     int end = -1;
     for (int i = 0; i < num_logs; i++) {
-        const QGCMAVLinkLogEntry *const entry = _logEntriesModel->value<const QGCMAVLinkLogEntry*>(i);
+        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -103,14 +103,14 @@ void MAVLinkLogController::_findMissingEntries()
 
     if (_retries++ > 2) {
         for (int i = 0; i < num_logs; i++) {
-            QGCMAVLinkLogEntry *const entry = _logEntriesModel->value<QGCMAVLinkLogEntry*>(i);
+            QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
             if (entry && !entry->received()) {
                 entry->setStatus(tr("Error"));
             }
         }
 
         _receivedAllEntries();
-        qCWarning(MAVLinkLogControllerLog) << "Too many errors retreiving log list. Giving up.";
+        qCWarning(OnboardLogControllerLog) << "Too many errors retreiving log list. Giving up.";
         return;
     }
 
@@ -124,7 +124,7 @@ void MAVLinkLogController::_findMissingEntries()
     _requestLogList(static_cast<uint32_t>(start), static_cast<uint32_t>(end));
 }
 
-void MAVLinkLogController::_setActiveVehicle(Vehicle *vehicle)
+void OnboardLogController::_setActiveVehicle(Vehicle *vehicle)
 {
     if (vehicle == _vehicle) {
         return;
@@ -132,19 +132,19 @@ void MAVLinkLogController::_setActiveVehicle(Vehicle *vehicle)
 
     if (_vehicle) {
         _logEntriesModel->clearAndDeleteContents();
-        (void) disconnect(_vehicle, &Vehicle::logEntry, this, &MAVLinkLogController::_logEntry);
-        (void) disconnect(_vehicle, &Vehicle::logData,  this, &MAVLinkLogController::_logData);
+        (void) disconnect(_vehicle, &Vehicle::logEntry, this, &OnboardLogController::_logEntry);
+        (void) disconnect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
     }
 
     _vehicle = vehicle;
 
     if (_vehicle) {
-        (void) connect(_vehicle, &Vehicle::logEntry, this, &MAVLinkLogController::_logEntry);
-        (void) connect(_vehicle, &Vehicle::logData,  this, &MAVLinkLogController::_logData);
+        (void) connect(_vehicle, &Vehicle::logEntry, this, &OnboardLogController::_logEntry);
+        (void) connect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
     }
 }
 
-void MAVLinkLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num)
+void OnboardLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num)
 {
     Q_UNUSED(last_log_num);
 
@@ -159,7 +159,7 @@ void MAVLinkLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t 
         }
 
         for (int i = 0; i < num_logs; i++) {
-            QGCMAVLinkLogEntry *const entry = new QGCMAVLinkLogEntry(i);
+            QGCOnboardLogEntry *const entry = new QGCOnboardLogEntry(i);
             _logEntriesModel->append(entry);
         }
     }
@@ -168,13 +168,13 @@ void MAVLinkLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t 
         if ((size > 0) || (_vehicle->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA)) {
             id -= _apmOffset;
             if (id < _logEntriesModel->count()) {
-                QGCMAVLinkLogEntry *const entry = _logEntriesModel->value<QGCMAVLinkLogEntry*>(id);
+                QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(id);
                 entry->setSize(size);
                 entry->setTime(QDateTime::fromSecsSinceEpoch(time_utc));
                 entry->setReceived(true);
                 entry->setStatus(tr("Available"));
             } else {
-                qCWarning(MAVLinkLogControllerLog) << "Received MAVLink log entry for out-of-bound index:" << id;
+                qCWarning(OnboardLogControllerLog) << "Received onboard log entry for out-of-bound index:" << id;
             }
         }
     } else {
@@ -190,17 +190,17 @@ void MAVLinkLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t 
     }
 }
 
-void MAVLinkLogController::_receivedAllEntries()
+void OnboardLogController::_receivedAllEntries()
 {
     _timer->stop();
     _setListing(false);
 }
 
-bool MAVLinkLogController::_entriesComplete() const
+bool OnboardLogController::_entriesComplete() const
 {
     const int num_logs = _logEntriesModel->count();
     for (int i = 0; i < num_logs; i++) {
-        const QGCMAVLinkLogEntry *const entry = _logEntriesModel->value<const QGCMAVLinkLogEntry*>(i);
+        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -213,7 +213,7 @@ bool MAVLinkLogController::_entriesComplete() const
     return true;
 }
 
-void MAVLinkLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data)
+void OnboardLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data)
 {
     if (!_downloadingLogs || !_downloadData) {
         return;
@@ -221,34 +221,34 @@ void MAVLinkLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, co
 
     id -= _apmOffset;
     if (_downloadData->ID != id) {
-        qCWarning(MAVLinkLogControllerLog) << "Received log data for wrong log";
+        qCWarning(OnboardLogControllerLog) << "Received log data for wrong log";
         return;
     }
 
     if ((ofs % MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN) != 0) {
-        qCWarning(MAVLinkLogControllerLog) << "Ignored misaligned incoming packet @" << ofs;
+        qCWarning(OnboardLogControllerLog) << "Ignored misaligned incoming packet @" << ofs;
         return;
     }
 
     bool result = false;
     if (ofs <= _downloadData->entry->size()) {
-        const uint32_t chunk = ofs / MAVLinkLogDownloadData::kChunkSize;
-        // qCDebug(MAVLinkLogControllerLog) << "Received data - Offset:" << ofs << "Chunk:" << chunk;
+        const uint32_t chunk = ofs / OnboardLogDownloadData::kChunkSize;
+        // qCDebug(OnboardLogControllerLog) << "Received data - Offset:" << ofs << "Chunk:" << chunk;
         if (chunk != _downloadData->current_chunk) {
-            qCWarning(MAVLinkLogControllerLog) << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
+            qCWarning(OnboardLogControllerLog) << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
             return;
         }
 
-        const uint16_t bin = (ofs - (chunk * MAVLinkLogDownloadData::kChunkSize)) / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
+        const uint16_t bin = (ofs - (chunk * OnboardLogDownloadData::kChunkSize)) / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
         if (bin >= _downloadData->chunk_table.size()) {
-            qCWarning(MAVLinkLogControllerLog) << "Out of range bin received";
+            qCWarning(OnboardLogControllerLog) << "Out of range bin received";
         } else {
             _downloadData->chunk_table.setBit(bin);
         }
 
         if (_downloadData->file.pos() != ofs) {
             if (!_downloadData->file.seek(ofs)) {
-                qCWarning(MAVLinkLogControllerLog) << "Error while seeking log file offset";
+                qCWarning(OnboardLogControllerLog) << "Error while seeking log file offset";
                 return;
             }
         }
@@ -268,17 +268,17 @@ void MAVLinkLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, co
             } else if (_chunkComplete()) {
                 _downloadData->advanceChunk();
                 _requestLogData(_downloadData->ID,
-                                _downloadData->current_chunk * MAVLinkLogDownloadData::kChunkSize,
+                                _downloadData->current_chunk * OnboardLogDownloadData::kChunkSize,
                                 _downloadData->chunk_table.size() * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
             } else if ((bin < (_downloadData->chunk_table.size() - 1)) && _downloadData->chunk_table.at(bin + 1)) {
                 // Likely to be grabbing fragments and got to the end of a gap
                 _findMissingData();
             }
         } else {
-            qCWarning(MAVLinkLogControllerLog) << "Error while writing log file chunk";
+            qCWarning(OnboardLogControllerLog) << "Error while writing log file chunk";
         }
     } else {
-        qCWarning(MAVLinkLogControllerLog) << "Received log offset greater than expected";
+        qCWarning(OnboardLogControllerLog) << "Received log offset greater than expected";
     }
 
     if (!result) {
@@ -286,7 +286,7 @@ void MAVLinkLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, co
     }
 }
 
-void MAVLinkLogController::_findMissingData()
+void OnboardLogController::_findMissingData()
 {
     if (_logComplete()) {
         _receivedAllData();
@@ -315,12 +315,12 @@ void MAVLinkLogController::_findMissingData()
         }
     }
 
-    const uint32_t pos = (_downloadData->current_chunk * MAVLinkLogDownloadData::kChunkSize) + (start * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
+    const uint32_t pos = (_downloadData->current_chunk * OnboardLogDownloadData::kChunkSize) + (start * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
     const uint32_t len = (end - start) * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
     _requestLogData(_downloadData->ID, pos, len, _retries);
 }
 
-void MAVLinkLogController::_updateDataRate()
+void OnboardLogController::_updateDataRate()
 {
     constexpr uint kSizeUpdateThreshold = 102400; // 0.1 MB
     const bool timeThresholdMet = _downloadData->elapsed.elapsed() >= kGUIRateMs;
@@ -350,17 +350,17 @@ void MAVLinkLogController::_updateDataRate()
     _downloadData->last_status_written = _downloadData->written;
 }
 
-bool MAVLinkLogController::_chunkComplete() const
+bool OnboardLogController::_chunkComplete() const
 {
     return _downloadData->chunkEquals(true);
 }
 
-bool MAVLinkLogController::_logComplete() const
+bool OnboardLogController::_logComplete() const
 {
     return (_chunkComplete() && ((_downloadData->current_chunk + 1) == _downloadData->numChunks()));
 }
 
-void MAVLinkLogController::_receivedAllData()
+void OnboardLogController::_receivedAllData()
 {
     _timer->stop();
     if (_prepareLogDownload()) {
@@ -372,11 +372,11 @@ void MAVLinkLogController::_receivedAllData()
     }
 }
 
-bool MAVLinkLogController::_prepareLogDownload()
+bool OnboardLogController::_prepareLogDownload()
 {
     _downloadData.reset();
 
-    QGCMAVLinkLogEntry *const entry = _getNextSelected();
+    QGCOnboardLogEntry *const entry = _getNextSelected();
     if (!entry) {
         return false;
     }
@@ -386,7 +386,7 @@ bool MAVLinkLogController::_prepareLogDownload()
 
     const QString ftime = (entry->time().date().year() >= 2010) ? entry->time().toString(QStringLiteral("yyyy-M-d-hh-mm-ss")) : QStringLiteral("UnknownDate");
 
-    _downloadData = std::make_unique<MAVLinkLogDownloadData>(entry);
+    _downloadData = std::make_unique<OnboardLogDownloadData>(entry);
     _downloadData->filename = QStringLiteral("log_") + QString::number(entry->id()) + "_" + ftime;
 
     if (_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
@@ -415,9 +415,9 @@ bool MAVLinkLogController::_prepareLogDownload()
 
     bool result = false;
     if (!_downloadData->file.open(QIODevice::WriteOnly)) {
-        qCWarning(MAVLinkLogControllerLog) << "Failed to create log file:" <<  _downloadData->filename;
+        qCWarning(OnboardLogControllerLog) << "Failed to create log file:" <<  _downloadData->filename;
     } else if (!_downloadData->file.resize(entry->size())) {
-        qCWarning(MAVLinkLogControllerLog) << "Failed to allocate space for log file:" <<  _downloadData->filename;
+        qCWarning(OnboardLogControllerLog) << "Failed to allocate space for log file:" <<  _downloadData->filename;
     } else {
         _downloadData->current_chunk = 0;
         _downloadData->chunk_table = QBitArray(_downloadData->chunkBins(), false);
@@ -437,17 +437,17 @@ bool MAVLinkLogController::_prepareLogDownload()
     return result;
 }
 
-void MAVLinkLogController::refresh()
+void OnboardLogController::refresh()
 {
     _logEntriesModel->clearAndDeleteContents();
     _requestLogList(0, 0xffff);
 }
 
-QGCMAVLinkLogEntry *MAVLinkLogController::_getNextSelected() const
+QGCOnboardLogEntry *OnboardLogController::_getNextSelected() const
 {
     const int numLogs = _logEntriesModel->count();
     for (int i = 0; i < numLogs; i++) {
-        QGCMAVLinkLogEntry *const entry = _logEntriesModel->value<QGCMAVLinkLogEntry*>(i);
+        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -460,7 +460,7 @@ QGCMAVLinkLogEntry *MAVLinkLogController::_getNextSelected() const
     return nullptr;
 }
 
-void MAVLinkLogController::cancel()
+void OnboardLogController::cancel()
 {
     _requestLogEnd();
     _receivedAllEntries();
@@ -478,11 +478,11 @@ void MAVLinkLogController::cancel()
     _setDownloading(false);
 }
 
-void MAVLinkLogController::_resetSelection(bool canceled)
+void OnboardLogController::_resetSelection(bool canceled)
 {
     const int num_logs = _logEntriesModel->count();
     for (int i = 0; i < num_logs; i++) {
-        QGCMAVLinkLogEntry *const entry = _logEntriesModel->value<QGCMAVLinkLogEntry*>(i);
+        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -498,16 +498,16 @@ void MAVLinkLogController::_resetSelection(bool canceled)
     emit selectionChanged();
 }
 
-void MAVLinkLogController::eraseAll()
+void OnboardLogController::eraseAll()
 {
     if (!_vehicle) {
-        qCWarning(MAVLinkLogControllerLog) << "Vehicle Unavailable";
+        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
         return;
     }
 
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qCWarning(MAVLinkLogControllerLog) << "Link Unavailable";
+        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
         return;
     }
 
@@ -522,23 +522,23 @@ void MAVLinkLogController::eraseAll()
     );
 
     if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(MAVLinkLogControllerLog) << "Failed to send";
+        qCWarning(OnboardLogControllerLog) << "Failed to send";
         return;
     }
 
     refresh();
 }
 
-void MAVLinkLogController::_requestLogList(uint32_t start, uint32_t end)
+void OnboardLogController::_requestLogList(uint32_t start, uint32_t end)
 {
     if (!_vehicle) {
-        qCWarning(MAVLinkLogControllerLog) << "Vehicle Unavailable";
+        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
         return;
     }
 
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qCWarning(MAVLinkLogControllerLog) << "Link Unavailable";
+        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
         return;
     }
 
@@ -555,30 +555,30 @@ void MAVLinkLogController::_requestLogList(uint32_t start, uint32_t end)
     );
 
     if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(MAVLinkLogControllerLog) << "Failed to send";
+        qCWarning(OnboardLogControllerLog) << "Failed to send";
         return;
     }
 
-    qCDebug(MAVLinkLogControllerLog) << "Request MAVLink log entry list (" << start << "through" << end << ")";
+    qCDebug(OnboardLogControllerLog) << "Request onboard log entry list (" << start << "through" << end << ")";
     _setListing(true);
     _timer->start(kRequestLogListTimeoutMs);
 }
 
-void MAVLinkLogController::_requestLogData(uint16_t id, uint32_t offset, uint32_t count, int retryCount)
+void OnboardLogController::_requestLogData(uint16_t id, uint32_t offset, uint32_t count, int retryCount)
 {
     if (!_vehicle) {
-        qCWarning(MAVLinkLogControllerLog) << "Vehicle Unavailable";
+        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
         return;
     }
 
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qCWarning(MAVLinkLogControllerLog) << "Link Unavailable";
+        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
         return;
     }
 
     id += _apmOffset;
-    qCDebug(MAVLinkLogControllerLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << "retryCount" << retryCount << ")";
+    qCDebug(OnboardLogControllerLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << "retryCount" << retryCount << ")";
 
     mavlink_message_t msg{};
     (void) mavlink_msg_log_request_data_pack_chan(
@@ -594,20 +594,20 @@ void MAVLinkLogController::_requestLogData(uint16_t id, uint32_t offset, uint32_
     );
 
     if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(MAVLinkLogControllerLog) << "Failed to send";
+        qCWarning(OnboardLogControllerLog) << "Failed to send";
     }
 }
 
-void MAVLinkLogController::_requestLogEnd()
+void OnboardLogController::_requestLogEnd()
 {
     if (!_vehicle) {
-        qCWarning(MAVLinkLogControllerLog) << "Vehicle Unavailable";
+        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
         return;
     }
 
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
-        qCWarning(MAVLinkLogControllerLog) << "Link Unavailable";
+        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
         return;
     }
 
@@ -622,11 +622,11 @@ void MAVLinkLogController::_requestLogEnd()
     );
 
     if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(MAVLinkLogControllerLog) << "Failed to send";
+        qCWarning(OnboardLogControllerLog) << "Failed to send";
     }
 }
 
-void MAVLinkLogController::_setDownloading(bool active)
+void OnboardLogController::_setDownloading(bool active)
 {
     if (_downloadingLogs != active) {
         _downloadingLogs = active;
@@ -635,7 +635,7 @@ void MAVLinkLogController::_setDownloading(bool active)
     }
 }
 
-void MAVLinkLogController::_setListing(bool active)
+void OnboardLogController::_setListing(bool active)
 {
     if (_requestingLogEntries != active) {
         _requestingLogEntries = active;
@@ -644,7 +644,7 @@ void MAVLinkLogController::_setListing(bool active)
     }
 }
 
-void MAVLinkLogController::setCompressLogs(bool compress)
+void OnboardLogController::setCompressLogs(bool compress)
 {
     if (_compressLogs != compress) {
         _compressLogs = compress;
@@ -652,25 +652,25 @@ void MAVLinkLogController::setCompressLogs(bool compress)
     }
 }
 
-bool MAVLinkLogController::compressLogFile(const QString &logPath)
+bool OnboardLogController::compressLogFile(const QString &logPath)
 {
     Q_UNUSED(logPath)
-    qCWarning(MAVLinkLogControllerLog) << "Log compression not yet implemented (decompression-only API)";
+    qCWarning(OnboardLogControllerLog) << "Log compression not yet implemented (decompression-only API)";
     return false;
 }
 
-void MAVLinkLogController::cancelCompression()
+void OnboardLogController::cancelCompression()
 {
     // Not implemented - compression API is decompression-only
 }
 
-void MAVLinkLogController::_handleCompressionProgress(qreal progress)
+void OnboardLogController::_handleCompressionProgress(qreal progress)
 {
     Q_UNUSED(progress)
     // Not implemented - compression API is decompression-only
 }
 
-void MAVLinkLogController::_handleCompressionFinished(bool success)
+void OnboardLogController::_handleCompressionFinished(bool success)
 {
     Q_UNUSED(success)
     // Not implemented - compression API is decompression-only

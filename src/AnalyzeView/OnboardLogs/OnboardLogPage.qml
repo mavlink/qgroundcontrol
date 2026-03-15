@@ -7,9 +7,9 @@ import QGroundControl
 import QGroundControl.Controls
 
 AnalyzePage {
-    id: mavlinkLogPage
+    id: onboardLogPage
     pageComponent: pageComponent
-    pageDescription: qsTr("MAVLink Log allows you to download binary log files from your vehicle. Click Refresh to get list of available logs.")
+    pageDescription: qsTr("Onboard Logs allows you to download binary log files from your vehicle. Click Refresh to get list of available logs.")
 
     Component {
         id: pageComponent
@@ -18,7 +18,7 @@ AnalyzePage {
             width: availableWidth
             height: availableHeight
 
-            Component.onCompleted: MAVLinkLogController.refresh()
+            Component.onCompleted: OnboardLogController.refresh()
 
             QGCFlickable {
                 Layout.fillWidth: true
@@ -28,7 +28,7 @@ AnalyzePage {
 
                 GridLayout {
                     id: gridLayout
-                    rows: MAVLinkLogController.model.count + 1
+                    rows: OnboardLogController.model.count + 1
                     columns: 5
                     flow: GridLayout.TopToBottom
                     columnSpacing: ScreenTools.defaultFontPixelWidth
@@ -40,7 +40,7 @@ AnalyzePage {
                     }
 
                     Repeater {
-                        model: MAVLinkLogController.model
+                        model: OnboardLogController.model
 
                         QGCCheckBox {
                             Binding on checkState {
@@ -54,7 +54,7 @@ AnalyzePage {
                     QGCLabel { text: qsTr("Id") }
 
                     Repeater {
-                        model: MAVLinkLogController.model
+                        model: OnboardLogController.model
 
                         QGCLabel { text: object.id }
                     }
@@ -62,7 +62,7 @@ AnalyzePage {
                     QGCLabel { text: qsTr("Date") }
 
                     Repeater {
-                        model: MAVLinkLogController.model
+                        model: OnboardLogController.model
 
                         QGCLabel {
                             text: {
@@ -82,7 +82,7 @@ AnalyzePage {
                     QGCLabel { text: qsTr("Size") }
 
                     Repeater {
-                        model: MAVLinkLogController.model
+                        model: OnboardLogController.model
 
                         QGCLabel { text: object.sizeStr }
                     }
@@ -90,7 +90,7 @@ AnalyzePage {
                     QGCLabel { text: qsTr("Status") }
 
                     Repeater {
-                        model: MAVLinkLogController.model
+                        model: OnboardLogController.model
 
                         QGCLabel { text: object.status }
                     }
@@ -104,40 +104,40 @@ AnalyzePage {
 
                 QGCButton {
                     Layout.fillWidth: true
-                    enabled: !MAVLinkLogController.requestingList && !MAVLinkLogController.downloadingLogs
+                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs
                     text: qsTr("Refresh")
 
                     onClicked: {
                         if (!QGroundControl.multiVehicleManager.activeVehicle || QGroundControl.multiVehicleManager.activeVehicle.isOfflineEditingVehicle) {
-                            QGroundControl.showMessageDialog(mavlinkLogPage, qsTr("MAVLink Log Refresh"), qsTr("You must be connected to a vehicle in order to download MAVLink logs."))
+                            QGroundControl.showMessageDialog(onboardLogPage, qsTr("Onboard Log Refresh"), qsTr("You must be connected to a vehicle in order to download onboard logs."))
                             return
                         }
 
-                        MAVLinkLogController.refresh()
+                        OnboardLogController.refresh()
                     }
                 }
 
                 QGCButton {
                     Layout.fillWidth: true
-                    enabled: !MAVLinkLogController.requestingList && !MAVLinkLogController.downloadingLogs
+                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs
                     text: qsTr("Download")
 
                     onClicked: {
                         var logsSelected = false
-                        for (var i = 0; i < MAVLinkLogController.model.count; i++) {
-                            if (MAVLinkLogController.model.get(i).selected) {
+                        for (var i = 0; i < OnboardLogController.model.count; i++) {
+                            if (OnboardLogController.model.get(i).selected) {
                                 logsSelected = true
                                 break
                             }
                         }
 
                         if (!logsSelected) {
-                            QGroundControl.showMessageDialog(mavlinkLogPage, qsTr("MAVLink Log"), qsTr("You must select at least one MAVLink log file to download."))
+                            QGroundControl.showMessageDialog(onboardLogPage, qsTr("Onboard Log"), qsTr("You must select at least one onboard log file to download."))
                             return
                         }
 
                         if (ScreenTools.isMobile) {
-                            MAVLinkLogController.download()
+                            OnboardLogController.download()
                             return
                         }
 
@@ -150,7 +150,7 @@ AnalyzePage {
                     QGCFileDialog {
                         id: fileDialog
                         onAcceptedForLoad: (file) => {
-                            MAVLinkLogController.download(file)
+                            OnboardLogController.download(file)
                             close()
                         }
                     }
@@ -158,22 +158,22 @@ AnalyzePage {
 
                 QGCButton {
                     Layout.fillWidth: true
-                    enabled: !MAVLinkLogController.requestingList && !MAVLinkLogController.downloadingLogs && (MAVLinkLogController.model.count > 0)
+                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 0)
                     text: qsTr("Erase All")
                     onClicked: QGroundControl.showMessageDialog(
-                        mavlinkLogPage,
-                        qsTr("Delete All MAVLink Log Files"),
-                        qsTr("All MAVLink log files will be erased permanently. Is this really what you want?"),
+                        onboardLogPage,
+                        qsTr("Delete All Onboard Log Files"),
+                        qsTr("All onboard log files will be erased permanently. Is this really what you want?"),
                         Dialog.Yes | Dialog.No,
-                        function() { MAVLinkLogController.eraseAll() }
+                        function() { OnboardLogController.eraseAll() }
                     )
                 }
 
                 QGCButton {
                     Layout.fillWidth: true
                     text: qsTr("Cancel")
-                    enabled: MAVLinkLogController.requestingList || MAVLinkLogController.downloadingLogs
-                    onClicked: MAVLinkLogController.cancel()
+                    enabled: OnboardLogController.requestingList || OnboardLogController.downloadingLogs
+                    onClicked: OnboardLogController.cancel()
                 }
             }
         }
