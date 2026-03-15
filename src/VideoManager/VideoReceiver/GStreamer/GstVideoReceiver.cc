@@ -987,8 +987,8 @@ bool GstVideoReceiver::_addDecoder(GstElement *src)
 
     if (!gst_element_link(src, _decoder)) {
         qCCritical(GstVideoReceiverLog) << "Unable to link decoder";
+        gst_element_set_state(_decoder, GST_STATE_NULL);
         (void) gst_bin_remove(GST_BIN(_pipeline), _decoder);
-        (void) gst_element_set_state(_decoder, GST_STATE_NULL);
         gst_clear_object(&_decoder);
         return false;
     }

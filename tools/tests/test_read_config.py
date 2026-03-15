@@ -32,7 +32,7 @@ def _write_config(path: Path) -> None:
         "qt_version": "6.10.2",
         "qt_minimum_version": "6.8.0",
         "qt_modules": "qtpositioning qtserialport qtscxml",
-        "gstreamer_default_version": "1.28.0",
+        "gstreamer_default_version": "1.28.1",
         "gstreamer_windows_version": "1.26.6",
         "android_platform": "35",
     }
@@ -61,12 +61,12 @@ def test_missing_key_returns_error(tmp_path: Path) -> None:
 
 def test_legacy_gstreamer_version_alias_returns_default_version(tmp_path: Path) -> None:
     config = tmp_path / "build-config.json"
-    config.write_text(json.dumps({"gstreamer_default_version": "1.28.0"}), encoding="utf-8")
+    config.write_text(json.dumps({"gstreamer_default_version": "1.28.1"}), encoding="utf-8")
 
     result = _run_read_config("--get", "gstreamer_version", env={"CONFIG_FILE": str(config)})
 
     assert result.returncode == 0
-    assert result.stdout.strip() == "1.28.0"
+    assert result.stdout.strip() == "1.28.1"
 
 
 def test_export_bash_format(tmp_path: Path) -> None:
@@ -78,7 +78,7 @@ def test_export_bash_format(tmp_path: Path) -> None:
     assert result.returncode == 0
     assert 'export QT_VERSION="6.10.2"' in result.stdout
     assert 'export QT_MODULES="qtpositioning qtserialport qtscxml"' in result.stdout
-    assert 'export GSTREAMER_VERSION="1.28.0"' in result.stdout
+    assert 'export GSTREAMER_VERSION="1.28.1"' in result.stdout
 
 
 def test_export_bash_preserves_bang_character(tmp_path: Path) -> None:
@@ -113,7 +113,7 @@ def test_github_output_includes_ios_modules(tmp_path: Path) -> None:
     output_text = github_output.read_text(encoding="utf-8")
     assert "qt_version=6.10.2" in output_text
     assert "qt_minimum_version=6.8.0" in output_text
-    assert "gstreamer_version=1.28.0" in output_text
+    assert "gstreamer_version=1.28.1" in output_text
     assert "gstreamer_windows_version=1.26.6" in output_text
     # Derived value excludes qtserialport and qtscxml and normalizes spacing.
     assert "qt_modules_ios=qtpositioning" in output_text

@@ -5,7 +5,11 @@
 
 qt_add_library(gstqml6gl STATIC)
 
-target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
+if((ANDROID OR IOS) AND TARGET GStreamer::mobile)
+    target_link_libraries(gstqml6gl PUBLIC GStreamer::mobile)
+else()
+    target_link_libraries(gstqml6gl PUBLIC GStreamer::GStreamer)
+endif()
 
 # TODO: Skip custom build if system gstreamer1.0-qt6 plugin is found
 # if(GST_PLUGIN_qml6_FOUND)
@@ -35,21 +39,14 @@ if(GStreamer_VERSION VERSION_GREATER_EQUAL "1.22")
     # Download gst-plugins-good sources for ext/qt6.
     # Primary: standalone tarball from freedesktop.org (~4MB)
     # Fallback: path-filtered GitLab archive of just ext/qt6 (~few KB)
-    gstreamer_get_package_url(good_plugins ${GST_PLUGINS_VERSION} _gst_good_url)
-    gstreamer_get_package_url(good_plugins_qt6 ${GST_PLUGINS_VERSION} _gst_qt6_url)
-    gstreamer_fetch_checksum(good_plugins ${GST_PLUGINS_VERSION} _gst_good_hash)
     set(_gst_qt6_cache "${CMAKE_BINARY_DIR}/_deps/gstreamer-good-plugins")
-    gstreamer_resilient_download(
-        URLS "${_gst_good_url}"
-        FILENAME "gst-plugins-good-${GST_PLUGINS_VERSION}.tar.xz"
-        DESTINATION_DIR "${_gst_qt6_cache}"
-        RESULT_VAR _gst_good_archive
-        EXPECTED_HASH "${_gst_good_hash}"
-        ALLOW_FAILURE
-    )
+    gstreamer_download_sdk(good_plugins ${GST_PLUGINS_VERSION}
+        "gst-plugins-good-${GST_PLUGINS_VERSION}.tar.xz" "${_gst_qt6_cache}" _gst_good_archive
+        ALLOW_FAILURE)
 
     if(NOT _gst_good_archive)
         message(STATUS "gstqml6gl: Primary source tarball unavailable, trying GitLab qt6 fallback archive")
+        gstreamer_get_package_url(good_plugins_qt6 ${GST_PLUGINS_VERSION} _gst_qt6_url)
         gstreamer_resilient_download(
             URLS "${_gst_qt6_url}"
             FILENAME "gstreamer-${GST_PLUGINS_VERSION}-qt6.tar.gz"

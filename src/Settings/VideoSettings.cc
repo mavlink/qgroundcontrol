@@ -5,6 +5,9 @@
 
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
+static constexpr bool kGstEnabled = true;
+#else
+static constexpr bool kGstEnabled = false;
 #endif
 #ifndef QGC_DISABLE_UVC
 #include "UVCReceiver.h"
@@ -99,13 +102,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
     if (!_forceVideoDecoderFact) {
         _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
 
-        _forceVideoDecoderFact->setVisible(
-#ifdef QGC_GST_STREAMING
-            true
-#else
-            false
-#endif
-        );
+        _forceVideoDecoderFact->setVisible(kGstEnabled);
 
         connect(_forceVideoDecoderFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
@@ -117,13 +114,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, lowLatencyMode)
     if (!_lowLatencyModeFact) {
         _lowLatencyModeFact = _createSettingsFact(lowLatencyModeName);
 
-        _lowLatencyModeFact->setVisible(
-#ifdef QGC_GST_STREAMING
-            true
-#else
-            false
-#endif
-        );
+        _lowLatencyModeFact->setVisible(kGstEnabled);
 
         connect(_lowLatencyModeFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
@@ -135,13 +126,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspTimeout)
     if (!_rtspTimeoutFact) {
         _rtspTimeoutFact = _createSettingsFact(rtspTimeoutName);
 
-        _rtspTimeoutFact->setVisible(
-#ifdef QGC_GST_STREAMING
-            true
-#else
-            false
-#endif
-        );
+        _rtspTimeoutFact->setVisible(kGstEnabled);
 
         connect(_rtspTimeoutFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }

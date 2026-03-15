@@ -345,7 +345,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
 # Qt Plugin Configuration
 # ----------------------------------------------------------------------------
 qt_import_plugins(${CMAKE_PROJECT_NAME}
-    INCLUDE Qt6::QSvgPlugin
+    INCLUDE Qt6::QSvgPlugin Qt6::QOffscreenIntegrationPlugin
     EXCLUDE_BY_TYPE geoservices  # Use built-in location plugins
     INCLUDE_BY_TYPE sqldrivers Qt6::QSQLiteDriverPlugin
 )

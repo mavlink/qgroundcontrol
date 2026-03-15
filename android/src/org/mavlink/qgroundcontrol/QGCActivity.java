@@ -6,14 +6,21 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+
 import org.qtproject.qt.android.bindings.QtActivity;
+
+import org.freedesktop.gstreamer.GStreamer;
 
 public class QGCActivity extends QtActivity {
     private static final String TAG = QGCActivity.class.getSimpleName();
     private static final String MULTICAST_LOCK_TAG = "QGroundControl";
+    private static final String GSTREAMER_INIT_FAILURE_MARKER = "QGC_GSTREAMER_INIT_FAILED";
 
     private static volatile QGCActivity m_instance = null;
 
+    private final ExecutorService m_gstInitExecutor = Executors.newSingleThreadExecutor();
     private WifiManager.MulticastLock m_wifiMulticastLock;
     private volatile QGCStoragePermissionController m_storagePermissionController;
 
@@ -22,12 +29,39 @@ public class QGCActivity extends QtActivity {
         super.onCreate(savedInstanceState);
         m_instance = this;
 
-        nativeInit();
+        final boolean nativeInitSucceeded = nativeInit();
+        initializeGStreamerAsync(nativeInitSucceeded);
         setupMulticastLock();
 
         QGCUsbSerialManager.initialize(this);
         QGCSDLManager.initialize(this);
         m_storagePermissionController = new QGCStoragePermissionController(this);
+    }
+
+    private void initializeGStreamerAsync(boolean nativeInitSucceeded) {
+        if (!nativeInitSucceeded) {
+            nativeGstInitResult(false);
+            QGCLogger.e(TAG, GSTREAMER_INIT_FAILURE_MARKER + ": nativeInit failed; skipping GStreamer initialization");
+            return;
+        }
+
+        final Context appContext = getApplicationContext();
+        m_gstInitExecutor.execute(() -> {
+            boolean success = false;
+            try {
+                System.loadLibrary("gstreamer_android");
+                GStreamer.init(appContext);
+                success = true;
+            } catch (UnsatisfiedLinkError e) {
+                QGCLogger.e(TAG, GSTREAMER_INIT_FAILURE_MARKER + ": GStreamer library not found: " + e.getMessage());
+            } catch (Exception e) {
+                QGCLogger.e(TAG, GSTREAMER_INIT_FAILURE_MARKER + ": Failed to initialize GStreamer: " + e.getMessage());
+            }
+            nativeGstInitResult(success);
+            if (success) {
+                QGCLogger.i(TAG, "GStreamer initialized successfully");
+            }
+        });
     }
 
     @Override
@@ -45,6 +79,7 @@ public class QGCActivity extends QtActivity {
     @Override
     protected void onDestroy() {
         try {
+            m_gstInitExecutor.shutdownNow();
             QGCSDLManager.cleanup();
             releaseMulticastLock();
             QGCUsbSerialManager.cleanup(this);
@@ -150,6 +185,7 @@ public class QGCActivity extends QtActivity {
 
     // Native C++ functions
     public native boolean nativeInit();
+    public native void nativeGstInitResult(boolean success);
     public native void qgcLogDebug(final String message);
     public native void qgcLogWarning(final String message);
     public native void nativeStoragePermissionsResult(boolean granted);

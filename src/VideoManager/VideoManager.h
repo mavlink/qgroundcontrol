@@ -2,9 +2,13 @@
 
 #include <QtCore/QFuture>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QPromise>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+#include <functional>
+#include <memory>
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
@@ -13,6 +17,7 @@ class SubtitleWriter;
 class Vehicle;
 class VideoReceiver;
 class VideoSettings;
+struct AndroidGstInitContext;
 
 class VideoManager : public QObject
 {
@@ -40,6 +45,8 @@ class VideoManager : public QObject
     Q_PROPERTY(QSize    videoSize               READ videoSize                                  NOTIFY videoSizeChanged)
     Q_PROPERTY(QString  imageFile               READ imageFile                                  NOTIFY imageFileChanged)
     Q_PROPERTY(QString  uvcVideoSourceID        READ uvcVideoSourceID                           NOTIFY uvcVideoSourceIDChanged)
+
+    friend class VideoManagerInitTest;
 
 public:
     explicit VideoManager(QObject *parent = nullptr);
@@ -132,6 +139,10 @@ private:
 
     InitState _initState = InitState::NotStarted;
     QFuture<bool> _gstInitFuture;
+#if defined(QGC_GST_STREAMING) && defined(Q_OS_ANDROID)
+    QPromise<bool> _gstInitPromise;
+    std::unique_ptr<AndroidGstInitContext> _androidGstInitContext;
+#endif
     bool _initialized = false;
     bool _gstreamerDisabledForUnitTests = false;
     bool _fullScreen = false;
@@ -142,4 +153,8 @@ private:
     QSize _videoSize;
     QString _imageFile;
     QString _uvcVideoSourceID;
+
+#ifdef QGC_UNITTEST_BUILD
+    std::function<void()> _createVideoReceiversForTest;
+#endif
 };

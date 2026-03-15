@@ -4,7 +4,6 @@
 #include "AppSettings.h"
 #include "GstVideoReceiver.h"
 
-#include <QtConcurrent/QtConcurrent>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
@@ -42,9 +41,6 @@ GST_PLUGIN_STATIC_DECLARE(videoconvertscale);
 GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
 GST_PLUGIN_STATIC_DECLARE(vpx);
 
-#ifdef GST_PLUGIN_androidmedia_FOUND
-GST_PLUGIN_STATIC_DECLARE(androidmedia);
-#endif
 #ifdef GST_PLUGIN_applemedia_FOUND
 GST_PLUGIN_STATIC_DECLARE(applemedia);
 #endif
@@ -84,6 +80,8 @@ G_END_DECLS
 namespace GStreamer
 {
 
+namespace {
+
 static std::atomic<bool> s_envPathsValid{true};
 static QMutex s_envPathsMutex;
 static QString s_envPathsError;
@@ -110,9 +108,6 @@ void _registerPlugins()
     GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
     GST_PLUGIN_STATIC_REGISTER(vpx);
 
-#ifdef GST_PLUGIN_androidmedia_FOUND
-    GST_PLUGIN_STATIC_REGISTER(androidmedia);
-#endif
 #ifdef GST_PLUGIN_applemedia_FOUND
     GST_PLUGIN_STATIC_REGISTER(applemedia);
 #endif
@@ -207,6 +202,7 @@ QString _firstExistingPath(const QStringList &paths)
     return {};
 }
 
+#if defined(Q_OS_MACOS)
 QString _joinExistingPaths(const QStringList &paths)
 {
     QStringList existing;
@@ -220,6 +216,7 @@ QString _joinExistingPaths(const QStringList &paths)
 
     return existing.join(QDir::listSeparator());
 }
+#endif
 
 void _clearManagedGstEnvVars()
 {
@@ -263,11 +260,10 @@ void _sanitizePythonEnvForScanner()
     };
 
     for (const char *name : varsToUnset) {
-        if (qEnvironmentVariableIsSet(name)) {
-            qunsetenv(name);
-            qCDebug(GStreamerLog) << "  unset" << name;
-        }
+        _unsetEnv(name);
     }
+
+    _setGstEnv("PYTHONNOUSERSITE", QStringLiteral("1"));
 }
 
 void _applyGstEnvVars(const QString &pluginDir, const QString &gioModDir,
@@ -276,7 +272,6 @@ void _applyGstEnvVars(const QString &pluginDir, const QString &gioModDir,
     qCDebug(GStreamerLog) << "Applying GStreamer environment:";
 
     _clearManagedGstEnvVars();
-    _sanitizePythonEnvForScanner();
     _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
     _setGstEnvIfExists("GIO_EXTRA_MODULES", gioModDir);
     _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
@@ -292,12 +287,10 @@ void _applyGstEnvVars(const QString &pluginDir, const QString &gioModDir,
 #if defined(Q_OS_LINUX)
 bool _systemGioIsNew()
 {
-    // Probe the system GIO library on disk (not the in-process symbols) for
-    // g_task_set_static_name, which was added in GIO 2.76. This mirrors
-    // AppRun's `nm -D "$SYSTEM_GIO" | grep g_task_set_static_name` check.
     static constexpr const char *kGioSoPaths[] = {
         "/usr/lib/x86_64-linux-gnu/libgio-2.0.so.0",
         "/usr/lib/aarch64-linux-gnu/libgio-2.0.so.0",
+        "/usr/lib/arm-linux-gnueabihf/libgio-2.0.so.0",
         "/usr/lib64/libgio-2.0.so.0",
         "/usr/lib/libgio-2.0.so.0",
     };
@@ -345,6 +338,7 @@ void _warnIfScannerMissing(const QString &platformLabel, const QString &scannerP
     }
 }
 
+#if defined(Q_OS_MACOS)
 bool _validateMacBundlePaths(const QString &bundleFrameworkRoot,
                              const QString &pluginDirs,
                              const QString &scannerPath)
@@ -359,6 +353,7 @@ bool _validateMacBundlePaths(const QString &bundleFrameworkRoot,
     _warnIfScannerMissing(QStringLiteral("macOS framework"), scannerPath);
     return true;
 }
+#endif
 
 bool _validateBundledDesktopPaths(const QString &platformLabel,
                                   const QString &pluginDirs,
@@ -378,17 +373,21 @@ bool _validateBundledDesktopPaths(const QString &platformLabel,
 void _setGstEnvVars()
 {
     _resetEnvValidation();
+    _sanitizePythonEnvForScanner();
 
     const QString appDir = QCoreApplication::applicationDirPath();
     qCDebug(GStreamerLog) << "App directory:" << appDir;
 
 #if defined(Q_OS_MACOS)
     const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
-    const QString rootDir = _firstExistingPath({
+    QString rootDir = _firstExistingPath({
         _cleanJoin(frameworkDir, "Versions/1.0"),
         _cleanJoin(frameworkDir, "Versions/Current"),
         frameworkDir,
     });
+    if (rootDir.isEmpty()) {
+        rootDir = _cleanJoin(frameworkDir, "Versions/1.0");
+    }
 
 #if defined(QGC_GST_MACOS_FRAMEWORK)
     // Framework builds prefer framework paths over app-relative paths
@@ -422,9 +421,13 @@ void _setGstEnvVars()
     });
     const bool hasBundledFramework = QFileInfo::exists(frameworkDir);
 
-    const bool validBundlePaths = hasBundledFramework
-        ? _validateMacBundlePaths(rootDir, pluginDirs, scanner)
-        : !pluginDirs.isEmpty();
+    bool validBundlePaths = true;
+    if (!pluginDirs.isEmpty()) {
+        validBundlePaths = _validateBundledDesktopPaths(QStringLiteral("macOS"), pluginDirs, scanner);
+    }
+    if (hasBundledFramework) {
+        validBundlePaths = validBundlePaths && _validateMacBundlePaths(rootDir, pluginDirs, scanner);
+    }
 
     if (!pluginDirs.isEmpty() && validBundlePaths) {
         _applyGstEnvVars(pluginDirs, gioMod, scanner, ptp);
@@ -447,6 +450,15 @@ void _setGstEnvVars()
     if (QFileInfo::exists(pluginDir)
         && _validateBundledDesktopPaths(QStringLiteral("Windows"), pluginDir, scanner)) {
         _applyGstEnvVars(pluginDir, gioMod, scanner, ptp);
+
+        // Ensure the app's bin directory is on PATH so that child processes
+        // (gst-plugin-scanner.exe) can locate GStreamer DLLs installed
+        // alongside the main executable.
+        const QByteArray curPath = qgetenv("PATH");
+        const QByteArray binDir = QDir::toNativeSeparators(appDir).toUtf8();
+        if (!curPath.split(';').contains(binDir)) {
+            qputenv("PATH", binDir + ";" + curPath);
+        }
     }
 
 #elif defined(Q_OS_LINUX)
@@ -618,10 +630,14 @@ void _configureDebugLogging()
     }
 }
 
+} // anonymous namespace
+
 void prepareEnvironment()
 {
     _setGstEnvVars();
 }
+
+namespace {
 
 bool _initGstRuntime()
 {
@@ -654,6 +670,8 @@ bool _initGstRuntime()
 
     return true;
 }
+
+} // anonymous namespace
 
 bool completeInit()
 {
@@ -710,12 +728,6 @@ bool initialize()
     }
 
     return completeInit();
-}
-
-QFuture<bool> initializeAsync()
-{
-    prepareEnvironment();
-    return QtConcurrent::run(&initialize);
 }
 
 // Ownership protocol for the video sink element:
