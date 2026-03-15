@@ -1283,9 +1283,9 @@ void ParameterManager::_paramRequestListTimeout()
 
 QString ParameterManager::_remapParamNameToVersion(const QString &paramName) const
 {
-    if (!paramName.startsWith(QStringLiteral("r."))) {
-        // No version mapping wanted
-        return paramName;
+    static const QString noRemapPrefix = QStringLiteral("noremap.");
+    if (paramName.startsWith(noRemapPrefix)) {
+        return paramName.mid(noRemapPrefix.length());
     }
 
     const int majorVersion = _vehicle->firmwareMajorVersion();
@@ -1293,21 +1293,21 @@ QString ParameterManager::_remapParamNameToVersion(const QString &paramName) con
 
     qCDebug(ParameterManagerLog) << "_remapParamNameToVersion" << paramName << majorVersion << minorVersion;
 
-    QString mappedParamName = paramName.right(paramName.length() - 2);
     if (majorVersion == Vehicle::versionNotSetValue) {
         // Vehicle version unknown
-        return mappedParamName;
+        return paramName;
     }
 
     const FirmwarePlugin::remapParamNameMajorVersionMap_t &majorVersionRemap = _vehicle->firmwarePlugin()->paramNameRemapMajorVersionMap();
     if (!majorVersionRemap.contains(majorVersion)) {
         // No mapping for this major version
         qCDebug(ParameterManagerLog) << "_remapParamNameToVersion: no major version mapping";
-        return mappedParamName;
+        return paramName;
     }
 
     const FirmwarePlugin::remapParamNameMinorVersionRemapMap_t &remapMinorVersion = majorVersionRemap[majorVersion];
     // We must map backwards from the highest known minor version to one above the vehicle's minor version
+    QString mappedParamName = paramName;
     for (int currentMinorVersion = _vehicle->firmwarePlugin()->remapParamNameHigestMinorVersionNumber(majorVersion); currentMinorVersion>minorVersion; currentMinorVersion--) {
         if (remapMinorVersion.contains(currentMinorVersion)) {
             const FirmwarePlugin::remapParamNameMap_t &remap = remapMinorVersion[currentMinorVersion];

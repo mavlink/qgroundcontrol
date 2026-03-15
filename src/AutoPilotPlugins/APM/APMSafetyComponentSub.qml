@@ -24,7 +24,7 @@ SetupPage {
             property bool _firmware34:       globals.activeVehicle.versionCompare(3, 5, 0) < 0
 
             // Enable/Action parameters
-            property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT", false)
+            property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "BATT_FS_LOW_ACT", false)
             property Fact _failsafeEKFEnable:         controller.getParameterFact(-1, "FS_EKF_ACTION")
             property Fact _failsafeGCSEnable:         controller.getParameterFact(-1, "FS_GCS_ENABLE")
             property Fact _failsafeLeakEnable:        controller.getParameterFact(-1, "FS_LEAK_ENABLE")
@@ -39,9 +39,9 @@ SetupPage {
             property Fact _failsafeLeakPin:              controller.getParameterFact(-1, "LEAK1_PIN")
             property Fact _failsafeLeakLogic:            controller.getParameterFact(-1, "LEAK1_LOGIC")
             property Fact _failsafeEKFThreshold:         controller.getParameterFact(-1, "FS_EKF_THRESH")
-            property Fact _failsafeBatteryVoltage:       controller.getParameterFact(-1, "r.BATT_LOW_VOLT", false)
-            property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "r.BATT_LOW_MAH", false)
-            property bool _batteryDetected:              controller.parameterExists(-1, "r.BATT_LOW_MAH")
+            property Fact _failsafeBatteryVoltage:       controller.getParameterFact(-1, "BATT_LOW_VOLT", false)
+            property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "BATT_LOW_MAH", false)
+            property bool _batteryDetected:              controller.parameterExists(-1, "BATT_LOW_MAH")
 
             // Older firmwares use ARMING_CHECK. Newer firmwares use ARMING_SKIPCHK.
             property Fact _armingCheck:     controller.getParameterFact(-1, "ARMING_CHECK", false /* reportMissing */)
