@@ -47,6 +47,15 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(QObject *parent)
     updateAvailableFlightModes(availableFlightModes);
 
     if (!_remapParamNameIntialized) {
+        // ArduPilot 4.7: parameter renames and SI unit conversion
+        FirmwarePlugin::remapParamNameMap_t &remapV4_7 = _remapParamName[4][7];
+
+        // EKF
+        remapV4_7["EK3_FLOW_MAX"]    = QStringLiteral("EK3_MAX_FLOW");
+
+        // Common
+        remapV4_7["ARMING_SKIPCHK"]  = QStringLiteral("ARMING_CHECK");
+
         _remapParamNameIntialized = true;
     }
 }
@@ -56,10 +65,9 @@ ArduRoverFirmwarePlugin::~ArduRoverFirmwarePlugin()
 
 }
 
-int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const
+int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping not supported
-    return Vehicle::versionNotSetValue;
+    return ((majorVersionNumber == 4) ? 7 : Vehicle::versionNotSetValue);
 }
 
 void ArduRoverFirmwarePlugin::guidedModeChangeAltitude(Vehicle* /*vehicle*/, double /*altitudeChange*/, bool /*pauseVehicle*/)

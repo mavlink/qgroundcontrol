@@ -23,7 +23,7 @@ Item {
     property bool _batt1MonitorEnabled:     _batt1Monitor.rawValue !== 0
     property bool _batt2MonitorEnabled:     _batt2MonitorAvailable && _batt2Monitor.rawValue !== 0
 
-    property Fact _batt1FSLowAct:           controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT", false /* reportMissing */)
+    property Fact _batt1FSLowAct:           controller.getParameterFact(-1, "BATT_FS_LOW_ACT", false /* reportMissing */)
     property Fact _batt1FSCritAct:          controller.getParameterFact(-1, "BATT_FS_CRT_ACT", false /* reportMissing */)
     property Fact _batt2FSLowAct:           controller.getParameterFact(-1, "BATT2_FS_LOW_ACT", false /* reportMissing */)
     property Fact _batt2FSCritAct:          controller.getParameterFact(-1, "BATT2_FS_CRT_ACT", false /* reportMissing */)
@@ -150,7 +150,7 @@ Item {
             valueText:  fact ? (fact.value == 0 ? qsTr("current") : fact.valueString + " " + fact.units) : ""
             visible:    controller.vehicle.multiRotor
 
-            property Fact fact: controller.getParameterFact(-1, "RTL_ALT", false /* reportMissing */)
+            property Fact fact: controller.getParameterFact(-1, "RTL_ALT_M", false /* reportMissing */)
         }
 
         VehicleSummaryRow {
@@ -158,7 +158,7 @@ Item {
             valueText:  fact ? (fact.value < 0 ? qsTr("current") : fact.valueString + " " + fact.units) : ""
             visible:    controller.vehicle.fixedWing
 
-            property Fact fact: controller.getParameterFact(-1, "r.RTL_ALTITUDE", false /* reportMissing */)
+            property Fact fact: controller.getParameterFact(-1, "RTL_ALTITUDE", false /* reportMissing */)
         }
     }
 }

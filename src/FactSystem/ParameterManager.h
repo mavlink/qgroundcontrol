@@ -133,7 +133,14 @@ private:
     void _tryCacheHashLoad(int vehicleId, int componentId, const QVariant &hashValue);
     void _loadMetaData();
     void _clearMetaData();
-    /// Remap a parameter from one firmware version to another
+    /// Remap a parameter name from the newest firmware version to the version running on the vehicle.
+    /// All parameter names are walked backwards through the FirmwarePlugin remap tables from the
+    /// highest known minor version down to the vehicle's actual version. Names not found in any
+    /// remap table pass through unchanged.
+    ///
+    /// Names prefixed with "noremap." bypass remapping entirely — the prefix is stripped and the
+    /// bare name is used as-is. This is needed when code must distinguish old vs new parameter
+    /// names for unit conversion (e.g. checking whether WPNAV_SPEED exists vs WP_SPD).
     QString _remapParamNameToVersion(const QString &paramName) const;
     bool _fillMavlinkParamUnion(FactMetaData::ValueType_t valueType, const QVariant &rawValue, mavlink_param_union_t &paramUnion) const;
     bool _mavlinkParamUnionToVariant(const mavlink_param_union_t &paramUnion, QVariant &outValue) const;
