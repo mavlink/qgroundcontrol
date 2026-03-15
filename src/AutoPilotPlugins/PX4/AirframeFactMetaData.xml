@@ -175,7 +175,7 @@
       <class>Copter</class>
       <maintainer>Beat Kueng &lt;beat-kueng@gmx.net&gt;</maintainer>
       <type>Quadrotor x</type>
-      <url>https://docs.px4.io/main/en/frames_multicopter/holybro_qav250_pixhawk4_mini.html</url>
+      <url>https://docs.px4.io/main/en/frames_multicopter/holybro_qav250_pixhawk4_mini</url>
     </airframe>
     <airframe name="Holybro Kopis 2" id="4053" maintainer="Beat Kueng &lt;beat@px4.io&gt;">
       <class>Copter</class>
@@ -270,6 +270,10 @@
     </airframe>
   </airframe_group>
   <airframe_group name="Rover" image="Rover">
+    <airframe name="SIH Rover Ackermann" id="1104" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+    </airframe>
     <airframe name="Generic Rover Differential" id="50000" maintainer="John Doe &lt;john@example.com&gt;">
       <class>Rover</class>
       <type>Rover</type>
@@ -277,7 +281,7 @@
     <airframe name="Aion Robotics R1 UGV" id="50001" maintainer="John Doe &lt;john@example.com&gt;">
       <class>Rover</class>
       <type>Rover</type>
-      <url>https://www.aionrobotics.com/r1</url>
+      <url>https://docs.px4.io/main/en/complete_vehicles_rover/aion_r1</url>
     </airframe>
     <airframe name="Generic Rover Ackermann" id="51000" maintainer="John Doe &lt;john@example.com&gt;">
       <class>Rover</class>
@@ -288,23 +292,29 @@
       <type>Rover</type>
       <url>https://www.axialadventure.com/product/1-10-scx10-ii-trail-honcho-4wd-rock-crawler-brushed-rtr/AXID9059.html</url>
     </airframe>
+    <airframe name="NXP B3RB Rover Ackermann" id="51002" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>Rover</class>
+      <type>Rover</type>
+    </airframe>
     <airframe name="Generic Rover Mecanum" id="52000" maintainer="John Doe &lt;john@example.com&gt;">
       <class>Rover</class>
       <type>Rover</type>
     </airframe>
-    <airframe name="Generic Ground Vehicle (Deprecated)" id="59000" maintainer="">
-      <class>Rover</class>
-      <maintainer />
-      <type>Rover</type>
-      <output name="Motor1">throttle</output>
-      <output name="Servo1">steering</output>
-    </airframe>
-    <airframe name="NXP Cup car: DF Robot GPX (Deprecated)" id="59001" maintainer="Katrin Moritz">
-      <class>Rover</class>
-      <maintainer>Katrin Moritz</maintainer>
-      <type>Rover</type>
-      <output name="Motor1">Speed of left wheels</output>
-      <output name="Servo1">Steering servo</output>
+  </airframe_group>
+  <airframe_group name="Free-Flyer" image="FreeFlyer">
+    <airframe name="KTH-ATMOS" id="70000" maintainer="DISCOWER">
+      <class>Spacecraft</class>
+      <maintainer>DISCOWER</maintainer>
+      <type>Free-Flyer</type>
+      <url>https://atmos.discower.io</url>
+      <output name="Motor1">back left thruster, +x thrust</output>
+      <output name="Motor2">front left thruster, -x thrust</output>
+      <output name="Motor3">back right thruster, +x thrust</output>
+      <output name="Motor4">front right thruster, -x thrust</output>
+      <output name="Motor5">front left thruster, +y thrust</output>
+      <output name="Motor6">front right thruster, -y thrust</output>
+      <output name="Motor7">back left thruster, +y thrust</output>
+      <output name="Motor8">back right thruster, -y thrust</output>
     </airframe>
   </airframe_group>
   <airframe_group name="Underwater Robot" image="AirframeUnknown">
@@ -343,12 +353,32 @@
       <output name="Servo1">elevon right</output>
       <output name="Servo2">elevon left</output>
     </airframe>
+    <airframe name="SIH Standard VTOL QuadPlane" id="1103" maintainer="John Doe &lt;john@example.com&gt;">
+      <class>VTOL</class>
+      <type>Simulation</type>
+      <output name="Motor1">MC motor front right</output>
+      <output name="Motor2">MC motor back left</output>
+      <output name="Motor3">MC motor front left</output>
+      <output name="Motor4">MC motor back right</output>
+      <output name="Motor5">Forward thrust motor</output>
+      <output name="Servo1">Ailerons (single channel)</output>
+      <output name="Servo2">Elevator</output>
+      <output name="Servo3">Rudder</output>
+    </airframe>
   </airframe_group>
   <airframe_group name="Standard VTOL" image="VTOLPlane">
     <airframe name="HIL Standard VTOL QuadPlane" id="1002" maintainer="Roman Bapst &lt;roman@auterion.com&gt;">
       <class>VTOL</class>
       <maintainer>Roman Bapst &lt;roman@auterion.com&gt;</maintainer>
       <type>Standard VTOL</type>
+      <output name="Motor1">MC motor front right</output>
+      <output name="Motor2">MC motor back left</output>
+      <output name="Motor3">MC motor front left</output>
+      <output name="Motor4">MC motor back right</output>
+      <output name="Motor5">Forward thrust motor</output>
+      <output name="Servo1">Aileron</output>
+      <output name="Servo2">Elevator</output>
+      <output name="Servo3">Rudder</output>
     </airframe>
     <airframe name="Generic Standard VTOL" id="13000" maintainer="John Doe &lt;john@example.com&gt;">
       <class>VTOL</class>
@@ -370,12 +400,6 @@
     <airframe name="Generic Tiltrotor VTOL" id="13100" maintainer="John Doe &lt;john@example.com&gt;">
       <class>VTOL</class>
       <type>VTOL Tiltrotor</type>
-    </airframe>
-  </airframe_group>
-  <airframe_group name="Spacecraft" image="FreeFlyer">
-    <airframe name="KTH ATMOS Free-flyer" id="70000" maintainer="DISCOWER">
-      <class>Spacecraft</class>
-      <type>Free-Flyer</type>
     </airframe>
   </airframe_group>
 </airframes>
