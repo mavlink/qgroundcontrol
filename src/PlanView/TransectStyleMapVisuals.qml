@@ -19,6 +19,7 @@ Item {
 
     property var    _missionItem:               object
     property var    _mapPolygon:                object.surveyAreaPolygon
+    property var    _obstaclePolygons:          (object && object.obstaclePolygons) ? object.obstaclePolygons : null
     property bool   _currentItem:               object.isCurrentItem
     property bool   _vertexDrag:                _mapPolygon.vertexDrag || hideMapPolygon
     property var    _transectPoints:            _missionItem.visualTransectPoints
@@ -70,6 +71,20 @@ Item {
         altColor:           QGroundControl.globalPalette.surveyPolygonTerrainCollision
         interiorOpacity:    0.5 * _root.opacity
         visible:            !hideMapPolygon
+    }
+
+    // Obstacle (no-fly) polygons – squares and circles
+    Repeater {
+        model: _obstaclePolygons ? _obstaclePolygons.count : 0
+        delegate: QGCMapPolygonVisuals {
+            mapControl:     map
+            mapPolygon:     _obstaclePolygons.get(index)
+            interactive:    polygonInteractive && _missionItem.isCurrentItem && _root.interactive
+            borderWidth:    1
+            borderColor:    "darkred"
+            interiorColor:  "#88cc0000"
+            interiorOpacity: 0.7 * _root.opacity
+        }
     }
 
     // Full set of transects lines. Shown when item is selected.

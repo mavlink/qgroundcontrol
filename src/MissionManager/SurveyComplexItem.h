@@ -2,6 +2,7 @@
 
 #include "TransectStyleComplexItem.h"
 #include "SettingsFact.h"
+#include "QmlObjectListModel.h"
 
 #include <QtCore/QLoggingCategory>
 
@@ -23,12 +24,17 @@ public:
     Q_PROPERTY(Fact*            flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
     Q_PROPERTY(Fact*            splitConcavePolygons   READ splitConcavePolygons   CONSTANT)
     Q_PROPERTY(QGeoCoordinate   centerCoordinate       READ centerCoordinate       WRITE setCenterCoordinate)
+    Q_PROPERTY(QmlObjectListModel* obstaclePolygons    READ obstaclePolygons       CONSTANT)
 
     Fact* gridAngle             (void) { return &_gridAngleFact; }
     Fact* flyAlternateTransects (void) { return &_flyAlternateTransectsFact; }
     Fact* splitConcavePolygons  (void) { return &_splitConcavePolygonsFact; }
+    QmlObjectListModel* obstaclePolygons (void) { return _obstaclePolygonsModel; }
 
     Q_INVOKABLE void rotateEntryPoint(void);
+    Q_INVOKABLE void addSquare(double sideMeters = 20.0);
+    Q_INVOKABLE void addCircle(double radiusMeters = 10.0);
+    Q_INVOKABLE void removeObstaclePolygon(int index);
 
     // Overrides from ComplexMissionItem
     QString         patternName         (void) const final { return name; }
@@ -96,15 +102,22 @@ private:
     void _intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines);
     void _intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines);
     void _adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines);
+    QList<QLineF> _clipLineByAllowedArea(const QLineF& line, const QPolygonF& outer, const QList<QPolygonF>& holes) const;
+    QList<QPointF> _boundaryPathBetweenPoints(const QPointF& p1, const QPointF& p2, const QPolygonF& polygon, const QPointF& targetHint) const;
+    bool _findObstacleCrossing(const QPointF& p1, const QPointF& p2, const QList<QPolygonF>& obstaclesNed, int& obstacleIndex, QPointF& cross1, QPointF& cross2) const;
     bool _nextTransectCoord(const QList<QGeoCoordinate>& transectPoints, int pointIndex, QGeoCoordinate& coord);
     bool _appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly);
     void _optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects);
+    void _optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect);
     qreal _ccw(QPointF pt1, QPointF pt2, QPointF pt3);
     qreal _dp(QPointF pt1, QPointF pt2);
     void _swapPoints(QList<QPointF>& points, int index1, int index2);
     void _reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects);
+    void _reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect);
     void _reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects);
+    void _reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect);
     void _adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects);
+    void _adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect);
     bool _gridAngleIsNorthSouthTransects();
     double _clampGridAngle90(double gridAngle);
     bool _imagesEverywhere(void) const;
@@ -139,6 +152,7 @@ private:
     SettingsFact    _flyAlternateTransectsFact;
     SettingsFact    _splitConcavePolygonsFact;
     int             _entryPoint;
+    QmlObjectListModel* _obstaclePolygonsModel;
 
     static constexpr const char* _jsonGridAngleKey =          "angle";
     static constexpr const char* _jsonEntryPointKey =         "entryLocation";
@@ -170,4 +184,5 @@ private:
     static constexpr const char* _jsonV3Refly90DegreesKey =               "refly90Degrees";
     static constexpr const char* _jsonFlyAlternateTransectsKey =          "flyAlternateTransects";
     static constexpr const char* _jsonSplitConcavePolygonsKey =           "splitConcavePolygons";
+    static constexpr const char* _jsonObstaclesKey =                      "obstacles";
 };

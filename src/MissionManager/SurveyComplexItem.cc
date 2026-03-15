@@ -12,7 +12,12 @@
 
 #include <QtGui/QPolygonF>
 #include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
 #include <QtCore/QLineF>
+#include <QtCore/QtMath>
+#include <QtCore/QVariant>
+
+#include <algorithm>
 
 QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "Plan.SurveyComplexItem")
 
@@ -25,6 +30,7 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
     , _flyAlternateTransectsFact(settingsGroup, _metaDataMap[flyAlternateTransectsName])
     , _splitConcavePolygonsFact (settingsGroup, _metaDataMap[splitConcavePolygonsName])
     , _entryPoint               (EntryLocationTopLeft)
+    , _obstaclePolygonsModel    (new QmlObjectListModel(this))
 {
     _editorQml = "qrc:/qml/QGroundControl/PlanView/SurveyItemEditor.qml";
 
@@ -50,12 +56,73 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
 
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::isValidChanged,             this, &SurveyComplexItem::_updateWizardMode);
     connect(&_surveyAreaPolygon,        &QGCMapPolygon::traceModeChanged,           this, &SurveyComplexItem::_updateWizardMode);
+    connect(_obstaclePolygonsModel,     &QmlObjectListModel::countChanged,          this, &SurveyComplexItem::_rebuildTransects);
 
     if (!kmlOrShpFile.isEmpty()) {
         _surveyAreaPolygon.loadKMLOrSHPFile(kmlOrShpFile);
         _surveyAreaPolygon.setDirty(false);
     }
     setDirty(false);
+}
+
+void SurveyComplexItem::addSquare(double sideMeters)
+{
+    if (!_surveyAreaPolygon.isValid() || _surveyAreaPolygon.count() < 3) {
+        return;
+    }
+    if (sideMeters <= 0) {
+        sideMeters = 20.0;
+    }
+    QGCMapPolygon* obst = new QGCMapPolygon(this);
+    const qreal halfSideMeters = sideMeters * 0.5;
+    const qreal halfDiag = halfSideMeters * qSqrt(2.0);
+    QGeoCoordinate cen = _surveyAreaPolygon.center();
+    double gridAngleDeg = _gridAngleFact.rawValue().toDouble();
+    double azimuthGon = gridAngleDeg;
+    QList<QGeoCoordinate> coords;
+    coords << cen.atDistanceAndAzimuth(halfDiag, azimuthGon + 135)
+           << cen.atDistanceAndAzimuth(halfDiag, azimuthGon + 45)
+           << cen.atDistanceAndAzimuth(halfDiag, azimuthGon + 315)
+           << cen.atDistanceAndAzimuth(halfDiag, azimuthGon + 225);
+    obst->appendVertices(coords);
+    connect(obst, &QGCMapPolygon::pathChanged, this, &SurveyComplexItem::_rebuildTransects);
+    connect(obst, &QGCMapPolygon::dirtyChanged, this, &SurveyComplexItem::_setIfDirty);
+    _obstaclePolygonsModel->append(obst);
+    setDirty(true);
+}
+
+void SurveyComplexItem::addCircle(double radiusMeters)
+{
+    if (!_surveyAreaPolygon.isValid() || _surveyAreaPolygon.count() < 3) {
+        return;
+    }
+    if (radiusMeters <= 0) {
+        radiusMeters = 10.0;
+    }
+    QGCMapPolygon* obst = new QGCMapPolygon(this);
+    const int numPoints = 16;
+    QGeoCoordinate cen = _surveyAreaPolygon.center();
+    QList<QGeoCoordinate> coords;
+    for (int i = 0; i < numPoints; i++) {
+        double azimuth = 360.0 * i / numPoints;
+        coords << cen.atDistanceAndAzimuth(radiusMeters, azimuth);
+    }
+    obst->appendVertices(coords);
+    connect(obst, &QGCMapPolygon::pathChanged, this, &SurveyComplexItem::_rebuildTransects);
+    connect(obst, &QGCMapPolygon::dirtyChanged, this, &SurveyComplexItem::_setIfDirty);
+    _obstaclePolygonsModel->append(obst);
+    setDirty(true);
+}
+
+void SurveyComplexItem::removeObstaclePolygon(int index)
+{
+    if (index >= 0 && index < _obstaclePolygonsModel->count()) {
+        QObject* obj = _obstaclePolygonsModel->removeAt(index);
+        if (obj) {
+            obj->deleteLater();
+        }
+        setDirty(true);
+    }
 }
 
 void SurveyComplexItem::save(QJsonArray&  planItems)
@@ -88,6 +155,17 @@ void SurveyComplexItem::_saveCommon(QJsonObject& saveObject)
 
     // Polygon shape
     _surveyAreaPolygon.saveToJson(saveObject);
+
+    QJsonArray obstaclesArray;
+    for (int i = 0; i < _obstaclePolygonsModel->count(); i++) {
+        QGCMapPolygon* obst = _obstaclePolygonsModel->value<QGCMapPolygon*>(i);
+        if (obst && obst->count() >= 3) {
+            QJsonObject obstObj;
+            obst->saveToJson(obstObj);
+            obstaclesArray.append(obstObj);
+        }
+    }
+    saveObject[_jsonObstaclesKey] = obstaclesArray;
 }
 
 void SurveyComplexItem::loadPreset(const QString& presetName)
@@ -198,6 +276,24 @@ bool SurveyComplexItem::_loadV4V5(const QJsonObject& complexObject, int sequence
     }
 
     _entryPoint = complexObject[_jsonEntryPointKey].toInt();
+
+    _obstaclePolygonsModel->clearAndDeleteContents();
+    if (complexObject.contains(_jsonObstaclesKey) && complexObject[_jsonObstaclesKey].isArray()) {
+        QJsonArray arr = complexObject[_jsonObstaclesKey].toArray();
+        for (const QJsonValueRef& val : arr) {
+            if (val.isObject()) {
+                QGCMapPolygon* obst = new QGCMapPolygon(this);
+                QString err;
+                if (obst->loadFromJson(val.toObject(), false, err)) {
+                    connect(obst, &QGCMapPolygon::pathChanged, this, &SurveyComplexItem::_rebuildTransects);
+                    connect(obst, &QGCMapPolygon::dirtyChanged, this, &SurveyComplexItem::_setIfDirty);
+                    _obstaclePolygonsModel->append(obst);
+                } else {
+                    obst->deleteLater();
+                }
+            }
+        }
+    }
 
     _ignoreRecalc = false;
 
@@ -347,6 +443,17 @@ void SurveyComplexItem::_reverseTransectOrder(QList<QList<QGeoCoordinate>>& tran
     transects = rgReversedTransects;
 }
 
+void SurveyComplexItem::_reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect)
+{
+    if (transects.count() != segmentStartsPerTransect.count()) {
+        return;
+    }
+    for (int i = 0, j = transects.count() - 1; i < j; i++, j--) {
+        transects.swapItemsAt(i, j);
+        segmentStartsPerTransect.swapItemsAt(i, j);
+    }
+}
+
 /// Reverse the order of all points within each transect, First point becomes last and so forth.
 void SurveyComplexItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects)
 {
@@ -357,6 +464,26 @@ void SurveyComplexItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinat
             rgReversedCoords.append(rgOriginalCoords[j]);
         }
         transects[i] = rgReversedCoords;
+    }
+}
+
+void SurveyComplexItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect)
+{
+    if (transects.count() != segmentStartsPerTransect.count()) {
+        return;
+    }
+    for (int i = 0; i < transects.count(); i++) {
+        QList<QGeoCoordinate>& t = transects[i];
+        QList<int>& seg = segmentStartsPerTransect[i];
+        int n = t.count();
+        for (int a = 0, b = n - 1; a < b; a++, b--) {
+            t.swapItemsAt(a, b);
+        }
+        QList<int> newSeg;
+        for (int k = seg.count() - 1; k >= 0; k--) {
+            newSeg << (n - 1 - seg[k]);
+        }
+        seg = newSeg;
     }
 }
 
@@ -382,12 +509,38 @@ void SurveyComplexItem::_optimizeTransectsForShortestDistance(const QGeoCoordina
     }
 
     if (shortestIndex > 1) {
-        // We need to reverse the order of segments
         _reverseTransectOrder(transects);
     }
     if (shortestIndex & 1) {
-        // We need to reverse the points within each segment
         _reverseInternalTransectPoints(transects);
+    }
+}
+
+void SurveyComplexItem::_optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect)
+{
+    if (transects.count() != segmentStartsPerTransect.count()) {
+        return;
+    }
+    double rgTransectDistance[4];
+    rgTransectDistance[0] = transects.first().first().distanceTo(distanceCoord);
+    rgTransectDistance[1] = transects.first().last().distanceTo(distanceCoord);
+    rgTransectDistance[2] = transects.last().first().distanceTo(distanceCoord);
+    rgTransectDistance[3] = transects.last().last().distanceTo(distanceCoord);
+
+    int shortestIndex = 0;
+    double shortestDistance = rgTransectDistance[0];
+    for (int i = 1; i < 4; i++) {
+        if (rgTransectDistance[i] < shortestDistance) {
+            shortestIndex = i;
+            shortestDistance = rgTransectDistance[i];
+        }
+    }
+
+    if (shortestIndex > 1) {
+        _reverseTransectOrder(transects, segmentStartsPerTransect);
+    }
+    if (shortestIndex & 1) {
+        _reverseInternalTransectPoints(transects, segmentStartsPerTransect);
     }
 }
 
@@ -442,6 +595,23 @@ void SurveyComplexItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoo
     }
 
     qCDebug(SurveyComplexItemLog) << "_adjustTransectsToEntryPointLocation Modified entry point:entryLocation" << transects.first().first() << _entryPoint;
+}
+
+void SurveyComplexItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects, QList<QList<int>>& segmentStartsPerTransect)
+{
+    if (transects.count() == 0 || transects.count() != segmentStartsPerTransect.count()) {
+        return;
+    }
+
+    bool reversePoints = (_entryPoint == EntryLocationBottomLeft || _entryPoint == EntryLocationBottomRight);
+    bool reverseTransects = (_entryPoint == EntryLocationTopRight || _entryPoint == EntryLocationBottomRight);
+
+    if (reversePoints) {
+        _reverseInternalTransectPoints(transects, segmentStartsPerTransect);
+    }
+    if (reverseTransects) {
+        _reverseTransectOrder(transects, segmentStartsPerTransect);
+    }
 }
 
 QPointF SurveyComplexItem::_rotatePoint(const QPointF& point, const QPointF& origin, double angle)
@@ -547,7 +717,7 @@ void SurveyComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList
             for (int intersectionIndex=0; intersectionIndex<intersections.count(); intersectionIndex++) {
                 for (int compareIndex=0; compareIndex<intersections.count(); compareIndex++) {
                     QLineF lineTest(intersections[intersectionIndex], intersections[compareIndex]);
-                    \
+
                     double newMaxDistance = lineTest.length();
                     if (newMaxDistance > currentMaxDistance) {
                         firstPoint = intersections[intersectionIndex];
@@ -583,6 +753,209 @@ void SurveyComplexItem::_adjustLineDirection(const QList<QLineF>& lineList, QLis
 
         resultLines += adjustedLine;
     }
+}
+
+QList<QLineF> SurveyComplexItem::_clipLineByAllowedArea(const QLineF& line, const QPolygonF& outer, const QList<QPolygonF>& holes) const
+{
+    QList<QLineF> result;
+    if (outer.isEmpty()) {
+        return result;
+    }
+    const qreal len = line.length();
+    if (len < 1e-9) {
+        return result;
+    }
+
+    QList<qreal> tValues;
+    tValues << 0.0 << 1.0;
+
+    auto addIntersections = [&line, len, &tValues](const QPolygonF& poly) {
+        for (int i = 0; i < poly.count() - 1; i++) {
+            QPointF isect;
+            QLineF edge(poly[i], poly[i + 1]);
+            if (line.intersects(edge, &isect) == QLineF::BoundedIntersection) {
+                qreal t = QLineF(line.p1(), isect).length() / len;
+                if (t >= -1e-9 && t <= 1.0 + 1e-9) {
+                    t = qBound(0.0, t, 1.0);
+                    bool found = false;
+                    for (qreal tv : tValues) {
+                        if (qAbs(tv - t) < 1e-6) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        tValues.append(t);
+                    }
+                }
+            }
+        }
+    };
+
+    addIntersections(outer);
+    for (const QPolygonF& hole : holes) {
+        addIntersections(hole);
+    }
+
+    std::sort(tValues.begin(), tValues.end());
+    const qreal eps = 1e-6;
+    for (int i = 0; i < tValues.size() - 1; i++) {
+        if (tValues[i + 1] - tValues[i] < eps) {
+            continue;
+        }
+        qreal tMid = (tValues[i] + tValues[i + 1]) * 0.5;
+        QPointF mid = line.pointAt(qBound(0.0, tMid, 1.0));
+        if (!outer.containsPoint(mid, Qt::OddEvenFill)) {
+            continue;
+        }
+        bool insideHole = false;
+        for (const QPolygonF& hole : holes) {
+            if (hole.count() >= 3 && hole.containsPoint(mid, Qt::OddEvenFill)) {
+                insideHole = true;
+                break;
+            }
+        }
+        if (!insideHole) {
+            result.append(QLineF(line.pointAt(tValues[i]), line.pointAt(tValues[i + 1])));
+        }
+    }
+    return result;
+}
+
+bool SurveyComplexItem::_findObstacleCrossing(const QPointF& p1, const QPointF& p2, const QList<QPolygonF>& obstaclesNed, int& obstacleIndex, QPointF& cross1, QPointF& cross2) const
+{
+    const qreal onEdgeEps = 1e-4;
+    auto pointOnSegment = [onEdgeEps](const QPointF& p, const QPointF& a, const QPointF& b) {
+        const qreal ab = QLineF(a, b).length();
+        if (ab < 1e-9) {
+            return QLineF(p, a).length() <= onEdgeEps;
+        }
+        return QLineF(a, p).length() + QLineF(p, b).length() <= ab + onEdgeEps;
+    };
+    for (int oi = 0; oi < obstaclesNed.size(); oi++) {
+        const QPolygonF& poly = obstaclesNed[oi];
+        bool p1OnObstacle = false;
+        bool p2OnObstacle = false;
+        for (int i = 0; i < poly.count() - 1; i++) {
+            const QPointF a = poly[i];
+            const QPointF b = poly[i + 1];
+            if (!p1OnObstacle && pointOnSegment(p1, a, b)) {
+                p1OnObstacle = true;
+            }
+            if (!p2OnObstacle && pointOnSegment(p2, a, b)) {
+                p2OnObstacle = true;
+            }
+            if (p1OnObstacle && p2OnObstacle) {
+                obstacleIndex = oi;
+                cross1 = p1;
+                cross2 = p2;
+                return true;
+            }
+        }
+    }
+
+    qreal segLen = QLineF(p1, p2).length();
+    qreal extend = (segLen < 1e-6) ? 2000.0 : 2000.0;
+    QPointF dir = (segLen > 1e-6) ? (p2 - p1) / segLen : QPointF(1, 0);
+    QPointF a = p1 - dir * extend;
+    QPointF b = p2 + dir * extend;
+    QLineF longLine(a, b);
+    const qreal eps = 1e-4;
+    for (int oi = 0; oi < obstaclesNed.size(); oi++) {
+        const QPolygonF& poly = obstaclesNed[oi];
+        QList<QPointF> hits;
+        for (int i = 0; i < poly.count() - 1; i++) {
+            QPointF isect;
+            if (longLine.intersects(QLineF(poly[i], poly[i + 1]), &isect) == QLineF::BoundedIntersection) {
+                bool dup = false;
+                for (const QPointF& h : hits) {
+                    if (QLineF(h, isect).length() < 1e-4) {
+                        dup = true;
+                        break;
+                    }
+                }
+                if (!dup) {
+                    hits.append(isect);
+                }
+            }
+        }
+        if (hits.size() >= 2) {
+            std::sort(hits.begin(), hits.end(), [&p1](const QPointF& u, const QPointF& v) {
+                return QLineF(p1, u).length() < QLineF(p1, v).length();
+            });
+            QPointF c1 = hits.first();
+            QPointF c2 = hits.last();
+            qreal t1 = (segLen > 1e-9) ? ((c1.x() - p1.x()) * dir.x() + (c1.y() - p1.y()) * dir.y()) / segLen : 0;
+            qreal t2 = (segLen > 1e-9) ? ((c2.x() - p1.x()) * dir.x() + (c2.y() - p1.y()) * dir.y()) / segLen : 0;
+            if (t1 >= -eps && t2 <= 1.0 + eps && t1 <= t2 + eps) {
+                obstacleIndex = oi;
+                cross1 = c1;
+                cross2 = c2;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+QList<QPointF> SurveyComplexItem::_boundaryPathBetweenPoints(const QPointF& p1, const QPointF& p2, const QPolygonF& polygon, const QPointF& targetHint) const
+{
+    QList<QPointF> path;
+    const int n = polygon.count() - 1;
+    if (n < 2) {
+        return path;
+    }
+    auto distToPoint = [](const QPointF& a, const QPointF& b) { return QLineF(a, b).length(); };
+    int e1 = -1, e2 = -1;
+    const qreal eps = 1e-4;
+    for (int i = 0; i < n; i++) {
+        QLineF edge(polygon[i], polygon[i + 1]);
+        qreal len = edge.length();
+        if (len < 1e-9) {
+            continue;
+        }
+        if (QLineF(polygon[i], p1).length() + QLineF(p1, polygon[i + 1]).length() <= len + eps) {
+            e1 = i;
+        }
+        if (QLineF(polygon[i], p2).length() + QLineF(p2, polygon[i + 1]).length() <= len + eps) {
+            e2 = i;
+        }
+    }
+    if (e1 < 0 || e2 < 0) {
+        return path;
+    }
+    path.append(p1);
+    if (e1 == e2) {
+        path.append(p2);
+        return path;
+    }
+    const int nextForward = (e1 + 1) % n;
+    const int nextBackward = e1;
+    qreal distForward = distToPoint(polygon[nextForward], targetHint);
+    qreal distBackward = distToPoint(polygon[nextBackward], targetHint);
+    if (distForward <= distBackward) {
+        int idx = (e1 + 1) % n;
+        const int endIdx = e2;
+        while (true) {
+            path.append(polygon[idx]);
+            if (idx == endIdx) {
+                break;
+            }
+            idx = (idx + 1) % n;
+        }
+    } else {
+        int idx = e1;
+        const int endIdx = (e2 + 1) % n;
+        while (true) {
+            path.append(polygon[idx]);
+            if (idx == endIdx) {
+                break;
+            }
+            idx = (idx - 1 + n) % n;
+        }
+    }
+    path.append(p2);
+    return path;
 }
 
 double SurveyComplexItem::_clampGridAngle90(double gridAngle)
@@ -739,46 +1112,104 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
     QList<QLineF> resultLines;
     _adjustLineDirection(intersectLines, resultLines);
 
-    // Convert from NED to Geo
-    QList<QList<QGeoCoordinate>> transects;
-    for (const QLineF& line : resultLines) {
-        QGeoCoordinate          coord;
-        QList<QGeoCoordinate>   transect;
-
-        QGCGeo::convertNedToGeo(line.p1().y(), line.p1().x(), 0, tangentOrigin, coord);
-        transect.append(coord);
-        QGCGeo::convertNedToGeo(line.p2().y(), line.p2().x(), 0, tangentOrigin, coord);
-        transect.append(coord);
-
-        transects.append(transect);
+    // Build obstacle polygons in NED
+    QList<QPolygonF> obstaclesNed;
+    for (int o = 0; o < _obstaclePolygonsModel->count(); o++) {
+        QGCMapPolygon* obst = _obstaclePolygonsModel->value<QGCMapPolygon*>(o);
+        if (!obst || obst->count() < 3) continue;
+        QPolygonF obstPoly;
+        for (int i = 0; i < obst->count(); i++) {
+            double y, x, down;
+            QGeoCoordinate c = obst->pathModel().value<QGCQGeoCoordinate*>(i)->coordinate();
+            QGCGeo::convertGeoToNed(c, tangentOrigin, y, x, down);
+            obstPoly << QPointF(x, y);
+        }
+        obstPoly << obstPoly.first();
+        obstaclesNed.append(obstPoly);
     }
 
-    _adjustTransectsToEntryPointLocation(transects);
+    QPolygonF allowedOuter = polygon;
+    QList<QPolygonF> allowedHoles = obstaclesNed;
+
+    // Convert from NED to Geo (with optional obstacle clipping)
+    QList<QList<QGeoCoordinate>> transects;
+    QList<QList<int>> segmentStartsPerTransect;
+
+    if (obstaclesNed.isEmpty()) {
+        for (const QLineF& line : resultLines) {
+            QGeoCoordinate coord;
+            QList<QGeoCoordinate> transect;
+            QGCGeo::convertNedToGeo(line.p1().y(), line.p1().x(), 0, tangentOrigin, coord);
+            transect.append(coord);
+            QGCGeo::convertNedToGeo(line.p2().y(), line.p2().x(), 0, tangentOrigin, coord);
+            transect.append(coord);
+            transects.append(transect);
+            segmentStartsPerTransect.append(QList<int>() << 0);
+        }
+    } else {
+        for (const QLineF& line : resultLines) {
+            QList<QLineF> segments = _clipLineByAllowedArea(line, allowedOuter, allowedHoles);
+            if (segments.isEmpty()) continue;
+            QList<QGeoCoordinate> transect;
+            QList<int> segStarts;
+            int pointIndex = 0;
+            for (int s = 0; s < segments.size(); s++) {
+                segStarts << pointIndex;
+                QGeoCoordinate c1, c2;
+                QGCGeo::convertNedToGeo(segments[s].p1().y(), segments[s].p1().x(), 0, tangentOrigin, c1);
+                QGCGeo::convertNedToGeo(segments[s].p2().y(), segments[s].p2().x(), 0, tangentOrigin, c2);
+                transect.append(c1);
+                transect.append(c2);
+                pointIndex += 2;
+                if (s + 1 < segments.size()) {
+                    int obstIdx;
+                    QPointF cross1, cross2;
+                    if (_findObstacleCrossing(segments[s].p2(), segments[s + 1].p1(), obstaclesNed, obstIdx, cross1, cross2)) {
+                        QList<QPointF> boundary = _boundaryPathBetweenPoints(cross1, cross2, obstaclesNed[obstIdx], segments[s + 1].p1());
+                        for (const QPointF& pt : boundary) {
+                            QGeoCoordinate gc;
+                            QGCGeo::convertNedToGeo(pt.y(), pt.x(), 0, tangentOrigin, gc);
+                            transect.append(gc);
+                            pointIndex++;
+                        }
+                    }
+                }
+            }
+            transects.append(transect);
+            segmentStartsPerTransect.append(segStarts);
+        }
+    }
+
+    _adjustTransectsToEntryPointLocation(transects, segmentStartsPerTransect);
 
     if (refly) {
-        _optimizeTransectsForShortestDistance(_transects.last().last().coord, transects);
+        _optimizeTransectsForShortestDistance(_transects.last().last().coord, transects, segmentStartsPerTransect);
     }
 
     if (_flyAlternateTransectsFact.rawValue().toBool()) {
         QList<QList<QGeoCoordinate>> alternatingTransects;
+        QList<QList<int>> alternatingSegmentStarts;
         for (int i=0; i<transects.count(); i++) {
             if (!(i & 1)) {
                 alternatingTransects.append(transects[i]);
+                alternatingSegmentStarts.append(segmentStartsPerTransect[i]);
             }
         }
         for (int i=transects.count()-1; i>0; i--) {
             if (i & 1) {
                 alternatingTransects.append(transects[i]);
+                alternatingSegmentStarts.append(segmentStartsPerTransect[i]);
             }
         }
         transects = alternatingTransects;
+        segmentStartsPerTransect = alternatingSegmentStarts;
     }
 
     // Adjust to lawnmower pattern
     bool reverseVertices = false;
     for (int i=0; i<transects.count(); i++) {
-        // We must reverse the vertices for every other transect in order to make a lawnmower pattern
-        QList<QGeoCoordinate> transectVertices = transects[i];
+        QList<QGeoCoordinate>& transectVertices = transects[i];
+        QList<int>& segStarts = segmentStartsPerTransect[i];
         if (reverseVertices) {
             reverseVertices = false;
             QList<QGeoCoordinate> reversedVertices;
@@ -786,25 +1217,50 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
                 reversedVertices.append(transectVertices[j]);
             }
             transectVertices = reversedVertices;
+            QList<int> newStarts;
+            for (int k=segStarts.count()-1; k>=0; k--) {
+                newStarts << (transectVertices.count() - 1 - segStarts[k]);
+            }
+            segStarts = newStarts;
         } else {
             reverseVertices = true;
         }
         transects[i] = transectVertices;
+        segmentStartsPerTransect[i] = segStarts;
     }
 
     // Convert to CoordInfo transects and append to _transects
-    for (const QList<QGeoCoordinate>& transect : transects) {
-        QGeoCoordinate                                  coord;
-        QList<TransectStyleComplexItem::CoordInfo_t>    coordInfoTransect;
-        TransectStyleComplexItem::CoordInfo_t           coordInfo;
+    double surveyAlt = _cameraCalc.distanceToSurface()->rawValue().toDouble();
+    for (int tIdx = 0; tIdx < transects.count(); tIdx++) {
+        const QList<QGeoCoordinate>& transect = transects[tIdx];
+        const QList<int>& segStarts = segmentStartsPerTransect[tIdx];
+        QList<TransectStyleComplexItem::CoordInfo_t> coordInfoTransect;
+        TransectStyleComplexItem::CoordInfo_t coordInfo;
 
-        coordInfo = { transect[0], CoordTypeSurveyEntry };
-        coordInfoTransect.append(coordInfo);
-        coordInfo = { transect[1], CoordTypeSurveyExit };
-        coordInfoTransect.append(coordInfo);
+        auto isSegmentEnd = [&transect, &segStarts](int j) {
+            if (j == transect.count() - 1) return true;
+            int nextStart = transect.count();
+            for (int s : segStarts) {
+                if (s > j) { nextStart = s; break; }
+            }
+            return j == nextStart - 1;
+        };
 
-        // For hover and capture we need points for each camera location within the transect
-        if (triggerCamera() && hoverAndCaptureEnabled()) {
+        for (int j = 0; j < transect.count(); j++) {
+            QGeoCoordinate c = transect[j];
+            c.setAltitude(surveyAlt);
+            if (segStarts.contains(j)) {
+                coordInfo = { c, CoordTypeSurveyEntry };
+            } else if (isSegmentEnd(j)) {
+                coordInfo = { c, CoordTypeSurveyExit };
+            } else {
+                coordInfo = { c, CoordTypeInterior };
+            }
+            coordInfoTransect.append(coordInfo);
+        }
+
+        // For hover and capture we need points for each camera location within the transect (single-segment only)
+        if (triggerCamera() && hoverAndCaptureEnabled() && transect.count() == 2) {
             double transectLength = transect[0].distanceTo(transect[1]);
             double transectAzimuth = transect[0].azimuthTo(transect[1]);
             if (triggerDistance() < transectLength) {
@@ -812,6 +1268,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
                 qCDebug(SurveyComplexItemLog) << "cInnerHoverPoints" << cInnerHoverPoints;
                 for (int i=0; i<cInnerHoverPoints; i++) {
                     QGeoCoordinate hoverCoord = transect[0].atDistanceAndAzimuth(triggerDistance() * (i + 1), transectAzimuth);
+                    hoverCoord.setAltitude(surveyAlt);
                     TransectStyleComplexItem::CoordInfo_t hoverCoordInfo = { hoverCoord, CoordTypeInteriorHoverTrigger };
                     coordInfoTransect.insert(1 + i, hoverCoordInfo);
                 }
@@ -822,18 +1279,19 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
         if (_hasTurnaround()) {
             QGeoCoordinate turnaroundCoord;
             double turnAroundDistance = _turnAroundDistanceFact.rawValue().toDouble();
-
-            double azimuth = transect[0].azimuthTo(transect[1]);
-            turnaroundCoord = transect[0].atDistanceAndAzimuth(-turnAroundDistance, azimuth);
+            QGeoCoordinate firstCoord = transect.first();
+            QGeoCoordinate secondCoord = transect.count() > 1 ? transect[1] : transect.first();
+            double azimuth = firstCoord.azimuthTo(secondCoord);
+            turnaroundCoord = firstCoord.atDistanceAndAzimuth(-turnAroundDistance, azimuth);
             turnaroundCoord.setAltitude(qQNaN());
-            TransectStyleComplexItem::CoordInfo_t turnaroundCoordInfo = { turnaroundCoord, CoordTypeTurnaround };
-            coordInfoTransect.prepend(turnaroundCoordInfo);
+            coordInfoTransect.prepend({ turnaroundCoord, CoordTypeTurnaround });
 
-            azimuth = transect.last().azimuthTo(transect[transect.count() - 2]);
-            turnaroundCoord = transect.last().atDistanceAndAzimuth(-turnAroundDistance, azimuth);
+            QGeoCoordinate lastCoord = transect.last();
+            QGeoCoordinate prevCoord = transect.count() > 1 ? transect[transect.count() - 2] : transect.last();
+            azimuth = lastCoord.azimuthTo(prevCoord);
+            turnaroundCoord = lastCoord.atDistanceAndAzimuth(-turnAroundDistance, azimuth);
             turnaroundCoord.setAltitude(qQNaN());
-            coordInfo = { turnaroundCoord, CoordTypeTurnaround };
-            coordInfoTransect.append(coordInfo);
+            coordInfoTransect.append({ turnaroundCoord, CoordTypeTurnaround });
         }
 
         _transects.append(coordInfoTransect);

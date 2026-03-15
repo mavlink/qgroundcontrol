@@ -89,6 +89,83 @@ TransectStyleComplexItemEditor {
                     }
                 ]
             }
+
+            SectionHeader {
+                Layout.columnSpan:   2
+                Layout.fillWidth:   true
+                text:               qsTr("Squares and circles (no-fly)")
+                visible:            !forPresets
+            }
+
+            QGCLabel {
+                Layout.columnSpan:  2
+                Layout.fillWidth:   true
+                wrapMode:           Text.WordWrap
+                text:               qsTr("Add squares or circles inside the survey area to avoid. The vehicle will fly around them.")
+                visible:            !forPresets
+            }
+
+            Item {
+                Layout.columnSpan:  2
+                Layout.fillWidth:   true
+                Layout.preferredHeight: squareCircleColumn.height
+                visible:            !forPresets
+
+                Column {
+                    id:                 squareCircleColumn
+                    width:             parent.width
+                    spacing:            _margin
+
+                    RowLayout {
+                        width: parent.width - 1
+                        QGCLabel {
+                            text:       qsTr("Side (m)")
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 8
+                        }
+                        FactTextField {
+                            id:             squareSideField
+                            text:           "20"
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
+                            validator:       DoubleValidator { bottom: 1; top: 500; decimals: 1 }
+                        }
+                        QGCButton {
+                            text:   qsTr("Add square")
+                            onClicked: missionItem.addSquare(parseFloat(squareSideField.text) || 20)
+                        }
+                    }
+                    RowLayout {
+                        width: parent.width - 1
+                        QGCLabel {
+                            text:       qsTr("Radius (m)")
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 8
+                        }
+                        FactTextField {
+                            id:             circleRadiusField
+                            text:           "10"
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 5
+                            validator:       DoubleValidator { bottom: 1; top: 500; decimals: 1 }
+                        }
+                        QGCButton {
+                            text:   qsTr("Add circle")
+                            onClicked: missionItem.addCircle(parseFloat(circleRadiusField.text) || 10)
+                        }
+                    }
+                    Repeater {
+                        model: missionItem.obstaclePolygons ? missionItem.obstaclePolygons.count : 0
+                        delegate: RowLayout {
+                            width: parent.width - 1
+                            QGCLabel {
+                                text: qsTr("Shape %1").arg(index + 1)
+                            }
+                            Item { Layout.fillWidth: true }
+                            QGCButton {
+                                text: qsTr("Remove")
+                                onClicked: missionItem.removeObstaclePolygon(index)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
