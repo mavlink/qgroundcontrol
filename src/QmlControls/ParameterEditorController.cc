@@ -147,6 +147,7 @@ ParameterEditorController::ParameterEditorController(QObject *parent)
     connect(this, &ParameterEditorController::currentGroupChanged,      this, &ParameterEditorController::_currentGroupChanged);
     connect(this, &ParameterEditorController::searchTextChanged,        this, &ParameterEditorController::_searchTextChanged);
     connect(this, &ParameterEditorController::showModifiedOnlyChanged,  this, &ParameterEditorController::_searchTextChanged);
+    connect(this, &ParameterEditorController::hideReadOnlyChanged,     this, &ParameterEditorController::_hideReadOnlyChanged);
     connect(&_searchTimer, &QTimer::timeout,                            this, &ParameterEditorController::_performSearch);
     connect(_parameterMgr, &ParameterManager::factAdded,                this, &ParameterEditorController::_factAdded);
 
@@ -163,6 +164,10 @@ void ParameterEditorController::_buildListsForComponent(int compId)
 {
     for (const QString& factName: _parameterMgr->parameterNames(compId)) {
         Fact* fact = _parameterMgr->getParameter(compId, factName);
+
+        if (_hideReadOnly && fact->readOnly()) {
+            continue;
+        }
 
         ParameterEditorCategory* category = nullptr;
         if (_mapCategoryName2Category.contains(fact->category())) {
@@ -241,6 +246,10 @@ void ParameterEditorController::_buildLists(void)
 
 void ParameterEditorController::_factAdded(int compId, Fact* fact)
 {
+    if (_hideReadOnly && fact->readOnly()) {
+        return;
+    }
+
     bool                        inserted = false;
     ParameterEditorCategory*    category = nullptr;
 
@@ -455,6 +464,10 @@ void ParameterEditorController::resetAllToVehicleConfiguration(void)
 
 bool ParameterEditorController::_shouldShow(Fact* fact) const
 {
+    if (_hideReadOnly && fact->readOnly()) {
+        return false;
+    }
+
     if (!_showModifiedOnly) {
         return true;
     }
@@ -465,6 +478,26 @@ bool ParameterEditorController::_shouldShow(Fact* fact) const
 void ParameterEditorController::_searchTextChanged(void)
 {
     _searchTimer.start();
+}
+
+void ParameterEditorController::_hideReadOnlyChanged(void)
+{
+    _currentCategory = nullptr;
+    _currentGroup = nullptr;
+    _parameters = nullptr;
+    _mapCategoryName2Category.clear();
+    _categories.clearAndDeleteContents();
+    emit parametersChanged();
+
+    _buildLists();
+
+    ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
+    setCurrentCategory(category);
+
+    // Re-trigger search if active
+    if (!_searchText.isEmpty() || _showModifiedOnly) {
+        _performSearch();
+    }
 }
 
 void ParameterEditorController::_performSearch(void)

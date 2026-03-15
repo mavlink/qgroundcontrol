@@ -1187,6 +1187,7 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
         { _categoryJsonKey,             QJsonValue::String, false },
         { _groupJsonKey,                QJsonValue::String, false },
         { _volatileJsonKey,             QJsonValue::Bool,   false },
+        { _readOnlyJsonKey,             QJsonValue::Bool,   false },
         { _enumBitmaskArrayJsonKey,     QJsonValue::Array,  false },
         { _enumValuesArrayJsonKey,      QJsonValue::Array,  false },
         { _enumValuesJsonKey,           QJsonValue::String, false },
@@ -1386,8 +1387,12 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
     if (json.contains(_volatileJsonKey)) {
         volatileValue = json[_volatileJsonKey].toBool();
     }
-    metaData->setVolatileValue(volatileValue);
 
+    if (json.contains(_readOnlyJsonKey)) {
+        metaData->setReadOnly(json[_readOnlyJsonKey].toBool());
+    }
+
+    metaData->setVolatileValue(volatileValue);
     if (json.contains(_groupJsonKey)) {
         metaData->setGroup(json[_groupJsonKey].toString());
     }
