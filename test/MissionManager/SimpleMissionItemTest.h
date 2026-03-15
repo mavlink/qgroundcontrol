@@ -28,6 +28,7 @@ private slots:
     void _testCameraSection();
     void _testSpeedSection();
     void _testAltitudePropogation();
+    void _testCalcAboveTerrainSaveLoad();
 
 private:
     void _testEditorFactsWorker(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode);

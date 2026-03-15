@@ -328,4 +328,48 @@ void SimpleMissionItemTest::_testAltitudePropogation()
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL);
 }
 
+void SimpleMissionItemTest::_testCalcAboveTerrainSaveLoad()
+{
+    // Regression test for https://github.com/mavlink/qgroundcontrol/issues/13513
+    // When saving/loading a mission with CalcAboveTerrain altitude mode, the AMSL altitude
+    // must be preserved correctly rather than being overwritten with the above-terrain value.
+
+    const double terrainAlt         = 500.0;    // Terrain elevation at the waypoint
+    const double aboveTerrainAlt    = 250.0;    // User-specified height above terrain
+    const double amslAlt            = terrainAlt + aboveTerrainAlt;
+
+    // Setup the item with CalcAboveTerrain mode and simulate terrain calculation having completed
+    _simpleItem->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain);
+    _simpleItem->altitude()->setRawValue(aboveTerrainAlt);
+    _simpleItem->amslAltAboveTerrain()->setRawValue(amslAlt);
+    // For CalcAboveTerrain, param7 should be the AMSL altitude
+    _simpleItem->missionItem().setParam7(amslAlt);
+
+    // Save
+    QJsonArray missionItems;
+    _simpleItem->save(missionItems);
+    QVERIFY(missionItems.count() > 0);
+    QJsonObject savedJson = missionItems[0].toObject();
+
+    // Verify saved JSON contains the correct altitude data
+    QVERIFY(savedJson.contains("AltitudeMode"));
+    QVERIFY(savedJson.contains("Altitude"));
+    QVERIFY(savedJson.contains("AMSLAltAboveTerrain"));
+    QCOMPARE(savedJson["AltitudeMode"].toInt(), static_cast<int>(QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain));
+    QCOMPARE(savedJson["Altitude"].toDouble(), aboveTerrainAlt);
+    QCOMPARE(savedJson["AMSLAltAboveTerrain"].toDouble(), amslAlt);
+
+    // Load into a new SimpleMissionItem (forLoad=true matches production MissionController behavior)
+    QString errorString;
+    SimpleMissionItem loadedItem(planController(), false /* flyView */, true /* forLoad */);
+    QVERIFY(loadedItem.load(savedJson, 1, errorString));
+
+    // Verify state immediately after load — before any terrain query
+    QCOMPARE(loadedItem.altitudeFrame(), QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain);
+    QCOMPARE(loadedItem.altitude()->rawValue().toDouble(), aboveTerrainAlt);
+    QCOMPARE(loadedItem.amslAltAboveTerrain()->rawValue().toDouble(), amslAlt);
+    QCOMPARE(loadedItem.missionItem().frame(), MAV_FRAME_GLOBAL);
+    QCOMPARE(loadedItem.missionItem().param7(), amslAlt);
+}
+
 UT_REGISTER_TEST(SimpleMissionItemTest, TestLabel::Unit, TestLabel::MissionManager)
