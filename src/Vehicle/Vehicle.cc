@@ -772,6 +772,10 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
 // TODO: VehicleFactGroup
 void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
 {
+    if (message.compid != _defaultComponentId) {
+        return;
+    }
+
     mavlink_gps_raw_int_t gpsRawInt;
     mavlink_msg_gps_raw_int_decode(&message, &gpsRawInt);
 
@@ -794,6 +798,10 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
 // TODO: VehicleFactGroup
 void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
 {
+    if (message.compid != _defaultComponentId) {
+        return;
+    }
+
     mavlink_global_position_int_t globalPositionInt;
     mavlink_msg_global_position_int_decode(&message, &globalPositionInt);
 
@@ -959,6 +967,10 @@ QString Vehicle::vehicleUIDStr()
 
 void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
 {
+    if (message.compid != _defaultComponentId) {
+        return;
+    }
+
     mavlink_extended_sys_state_t extendedState;
     mavlink_msg_extended_sys_state_decode(&message, &extendedState);
 
@@ -1124,6 +1136,10 @@ void Vehicle::_setHomePosition(QGeoCoordinate& homeCoord)
 
 void Vehicle::_handleHomePosition(mavlink_message_t& message)
 {
+    if (message.compid != _defaultComponentId) {
+        return;
+    }
+
     mavlink_home_position_t homePos;
 
     mavlink_msg_home_position_decode(&message, &homePos);
@@ -1378,6 +1394,10 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
 
 void Vehicle::_handleCurrentMode(mavlink_message_t& message)
 {
+    if (message.compid != _defaultComponentId) {
+        return;
+    }
+
     mavlink_current_mode_t currentMode;
     mavlink_msg_current_mode_decode(&message, &currentMode);
     if (currentMode.intended_custom_mode != 0) { // 0 == unknown/not supplied
