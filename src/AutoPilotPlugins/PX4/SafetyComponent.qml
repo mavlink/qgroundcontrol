@@ -213,7 +213,7 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    text:                   qsTr("RC Loss Failsafe Trigger")
+                    text:                   qsTr("RC/Joystick Loss Failsafe Trigger")
                 }
 
                 Rectangle {
@@ -253,7 +253,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:               qsTr("RC Loss Timeout:")
+                                text:               qsTr("RC/Joystick Loss Timeout:")
                                 Layout.fillWidth:   true
                             }
                             FactTextField {
