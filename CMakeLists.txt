@@ -211,6 +211,7 @@ qt_standard_project_setup(
     SUPPORTS_UP_TO ${QGC_QT_MAXIMUM_VERSION}
     I18N_SOURCE_LANGUAGE en
 )
+# find_package(OpenCV REQUIRED COMPONENTS core imgproc dnn)
 
 # ----------------------------------------------------------------------------
 # QML Linting Configuration
@@ -374,18 +375,20 @@ include(PrintSummary)
 # ============================================================================
 # GStreamer Global Includes for main QGC Target
 # ============================================================================
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    "C:/gstreamer/1.0/msvc_x86_64/include/gstreamer-1.0"
-    "C:/gstreamer/1.0/msvc_x86_64/lib/gstreamer-1.0/include"
-    "C:/gstreamer/1.0/msvc_x86_64/include/glib-2.0"
-    "C:/gstreamer/1.0/msvc_x86_64/lib/glib-2.0/include"
-    "C:/gstreamer/1.0/msvc_x86_64/include"
-)
+if(WIN32)
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+        "C:/gstreamer/1.0/msvc_x86_64/include/gstreamer-1.0"
+        "C:/gstreamer/1.0/msvc_x86_64/lib/gstreamer-1.0/include"
+        "C:/gstreamer/1.0/msvc_x86_64/include/glib-2.0"
+        "C:/gstreamer/1.0/msvc_x86_64/lib/glib-2.0/include"
+        "C:/gstreamer/1.0/msvc_x86_64/include"
+    )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
-    "C:/gstreamer/1.0/msvc_x86_64/lib/gstreamer-1.0.lib"
-    "C:/gstreamer/1.0/msvc_x86_64/lib/glib-2.0.lib"
-    "C:/gstreamer/1.0/msvc_x86_64/lib/gobject-2.0.lib"
-    "C:/gstreamer/1.0/msvc_x86_64/lib/gstrtsp-1.0.lib"  
-    "C:/gstreamer/1.0/msvc_x86_64/lib/gstbase-1.0.lib"
-)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
+        "C:/gstreamer/1.0/msvc_x86_64/lib/gstreamer-1.0.lib"
+        "C:/gstreamer/1.0/msvc_x86_64/lib/glib-2.0.lib"
+        "C:/gstreamer/1.0/msvc_x86_64/lib/gobject-2.0.lib"
+        "C:/gstreamer/1.0/msvc_x86_64/lib/gstrtsp-1.0.lib"
+        "C:/gstreamer/1.0/msvc_x86_64/lib/gstbase-1.0.lib"
+    )
+endif()

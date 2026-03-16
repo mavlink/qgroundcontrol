@@ -8,7 +8,7 @@ qt_add_library(gstqml6gl STATIC)
 # ----------------------------------------------------------------------------
 # Platform-Specific GStreamer Linking
 # ----------------------------------------------------------------------------
-if(MACOS)
+if(APPLE)
     # macOS uses framework path directly (FindGStreamer.cmake bypassed)
     find_library(GSTREAMER_FRAMEWORK GStreamer)
     set(GST_REQUIRED_FRAMEWORK_VERSION ${QGC_CONFIG_GSTREAMER_MACOS_VERSION})
@@ -28,7 +28,7 @@ if(MACOS)
     if(NOT GST_INSTALLED_FRAMEWORK_VERSION STREQUAL GST_REQUIRED_FRAMEWORK_VERSION)
         message(FATAL_ERROR "GStreamer.framework version (${GST_INSTALLED_FRAMEWORK_VERSION}) does not match required framework version (${GST_REQUIRED_FRAMEWORK_VERSION}). Please install the correct version using tools/setup/install_dependencies.py --platform macos")
     endif()
-else()
+elseif(WIN32)
 # Add these right before the target_link_libraries line
 target_include_directories(gstqml6gl PRIVATE
     "C:/gstreamer/1.0/msvc_x86_64/include/gstreamer-1.0"
