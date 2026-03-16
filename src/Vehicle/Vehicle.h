@@ -290,7 +290,7 @@ public:
     Q_INVOKABLE double minimumTakeoffAltitudeMeters();
 
     /// @return Maximum horizontal speed multirotor.
-    Q_INVOKABLE double maximumHorizontalSpeedMultirotor();
+    Q_INVOKABLE double maximumHorizontalSpeedMultirotorMetersSecond();
 
     /// @return Maximum equivalent airspeed.
     Q_INVOKABLE double maximumEquivalentAirspeed();

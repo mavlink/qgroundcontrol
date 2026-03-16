@@ -343,7 +343,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel
         static_cast<float>(takeoffAltAMSL));    // AMSL altitude
 }
 
-double PX4FirmwarePlugin::maximumHorizontalSpeedMultirotor(Vehicle* vehicle) const
+double PX4FirmwarePlugin::maximumHorizontalSpeedMultirotorMetersSecond(Vehicle* vehicle) const
 {
     QString speedParam("MPC_XY_VEL_MAX");
 
@@ -351,7 +351,7 @@ double PX4FirmwarePlugin::maximumHorizontalSpeedMultirotor(Vehicle* vehicle) con
         return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, speedParam)->rawValue().toDouble();
     }
 
-    return FirmwarePlugin::maximumHorizontalSpeedMultirotor(vehicle);
+    return FirmwarePlugin::maximumHorizontalSpeedMultirotorMetersSecond(vehicle);
 }
 
 double PX4FirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle) const

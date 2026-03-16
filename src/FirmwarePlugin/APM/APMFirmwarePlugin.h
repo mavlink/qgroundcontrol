@@ -73,7 +73,7 @@ public:
 
     // support for changing speed in Copter guide mode:
     bool mulirotorSpeedLimitsAvailable(Vehicle *vehicle) const override;
-    double maximumHorizontalSpeedMultirotor(Vehicle *vehicle) const override;
+    double maximumHorizontalSpeedMultirotorMetersSecond(Vehicle *vehicle) const override;
     void guidedModeChangeGroundSpeedMetersSecond(Vehicle *vehicle, double speed) const override;
 
     static QPair<QMetaObject::Connection,QMetaObject::Connection> startCompensatingBaro(Vehicle *vehicle);
