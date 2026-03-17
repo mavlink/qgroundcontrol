@@ -153,8 +153,8 @@ private:
     bool _cameraCanCaptureImageInVideoMode = true;
     bool _cameraCanCaptureVideoInImageMode = false;
     bool _cameraHasBasicZoom = true;
-    bool _cameraHasTrackingPoint = false;
-    bool _cameraHasTrackingRectangle = false;
+    bool _cameraHasTrackingPoint = true;
+    bool _cameraHasTrackingRectangle = true;
 
     // Gimbal capability flags (defaults - all enabled)
     bool _gimbalHasRollAxis = true;

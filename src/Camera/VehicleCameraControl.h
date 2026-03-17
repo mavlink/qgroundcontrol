@@ -56,8 +56,8 @@ public:
     Q_INVOKABLE virtual void stopZoom               ();
     Q_INVOKABLE virtual void stopStream             ();
     Q_INVOKABLE virtual void resumeStream           ();
-    Q_INVOKABLE virtual void startTracking          (QRectF rec);
-    Q_INVOKABLE virtual void startTracking          (QPointF point, double radius);
+    Q_INVOKABLE virtual void startTrackingRect      (QRectF rec);
+    Q_INVOKABLE virtual void startTrackingPoint     (QPointF point, double radius);
     Q_INVOKABLE virtual void stopTracking           ();
 
     virtual int         version             () const { return _version; }
@@ -72,7 +72,9 @@ public:
     virtual bool        hasModes            () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_MODES; }
     virtual bool        hasZoom             () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM; }
     virtual bool        hasFocus            () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS; }
-    virtual bool        hasTracking         () const { return _trackingStatus & TRACKING_SUPPORTED; }
+    virtual bool        hasTracking         () const { return _hasTrackingRectCapability || _hasTrackingPointCapability; }
+    virtual bool        supportsTrackingPoint() const { return _hasTrackingPointCapability; }
+    virtual bool        supportsTrackingRect () const { return _hasTrackingRectCapability; }
     virtual bool        hasVideoStream      () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM; }
     virtual bool        photosInVideoMode   () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE; }
     virtual bool        videoInPhotoMode    () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE; }
@@ -125,13 +127,14 @@ public:
     virtual void        handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation);
     virtual void        handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus);
 
-    virtual bool        trackingEnabled     () const { return _trackingStatus & TRACKING_ENABLED; }
+    virtual bool        trackingEnabled     () const { return _trackingEnabled; }
     virtual void        setTrackingEnabled  (bool set);
 
-    virtual TrackingStatus trackingStatus   () const { return _trackingStatus; }
-
-    virtual bool trackingImageStatus() const { return _trackingImageStatus.tracking_status == 1; }
+    virtual bool trackingImageIsActive() const { return _trackingImageIsActive; }
+    virtual bool trackingImageIsPoint() const { return _trackingImageIsPoint; }
     virtual QRectF trackingImageRect() const { return _trackingImageRect; }
+    virtual QPointF trackingImagePoint() const { return _trackingImagePoint; }
+    virtual qreal trackingImageRadius() const { return _trackingImageRadius; }
 
     virtual Fact*   exposureMode        ();
     virtual Fact*   ev                  ();
@@ -293,7 +296,13 @@ protected:
     QStringList                         _streamLabels;
     ThermalViewMode                     _thermalMode        = THERMAL_BLEND;
     double                              _thermalOpacity     = 85.0;
-    TrackingStatus                      _trackingStatus     = TRACKING_UNKNOWN;
-    mavlink_camera_tracking_image_status_t  _trackingImageStatus;
+    bool                                _hasTrackingRectCapability = false;
+    bool                                _hasTrackingPointCapability = false;
+    bool                                _trackingEnabled      = false;
+    bool                                    _trackingImageIsActive = false;
+    bool                                    _trackingImageIsPoint = false;
+    mavlink_camera_tracking_image_status_t  _trackingImageStatus{};
     QRectF                                  _trackingImageRect;
+    QPointF                                 _trackingImagePoint;
+    qreal                                   _trackingImageRadius = 0.0;
 };

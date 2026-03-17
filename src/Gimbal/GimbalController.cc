@@ -39,7 +39,7 @@ void GimbalController::_initialConnectCompleted()
 void GimbalController::setActiveGimbal(Gimbal *gimbal)
 {
     if (!gimbal) {
-        qCDebug(GimbalControllerLog) << "Set active gimbal: attempted to set a nullptr, returning";
+        qCCritical(GimbalControllerLog) << "Set active gimbal: attempted to set a nullptr, returning";
         return;
     }
 
@@ -344,7 +344,7 @@ void GimbalController::_checkComplete(Gimbal &gimbal, GimbalPairId pairId)
 bool GimbalController::_tryGetGimbalControl()
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalControllerLog) << "_tryGetGimbalControl: active gimbal is nullptr, returning";
+        qCCritical(GimbalControllerLog) << "_tryGetGimbalControl: active gimbal is nullptr, returning";
         return false;
     }
 
@@ -375,7 +375,7 @@ bool GimbalController::_yawInVehicleFrame(uint32_t flags)
 void GimbalController::gimbalPitchStart(int direction)
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalControllerLog) << "gimbalPitchStart: active gimbal is nullptr, returning";
+        qCCritical(GimbalControllerLog) << "gimbalPitchStart: active gimbal is nullptr, returning";
         return;
     }
 
@@ -388,7 +388,7 @@ void GimbalController::gimbalPitchStart(int direction)
 void GimbalController::gimbalYawStart(int direction)
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalControllerLog) << "gimbalYawStart: active gimbal is nullptr, returning";
+        qCCritical(GimbalControllerLog) << "gimbalYawStart: active gimbal is nullptr, returning";
         return;
     }
 
@@ -400,7 +400,7 @@ void GimbalController::gimbalYawStart(int direction)
 void GimbalController::gimbalPitchStop()
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalControllerLog) << "gimbalPitchStop: active gimbal is nullptr, returning";
+        qCCritical(GimbalControllerLog) << "gimbalPitchStop: active gimbal is nullptr, returning";
         return;
     }
 
@@ -411,7 +411,7 @@ void GimbalController::gimbalPitchStop()
 void GimbalController::gimbalYawStop()
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalControllerLog) << "gimbalYawStop: active gimbal is nullptr, returning";
+        qCCritical(GimbalControllerLog) << "gimbalYawStop: active gimbal is nullptr, returning";
         return;
     }
 
@@ -422,7 +422,7 @@ void GimbalController::gimbalYawStop()
 void GimbalController::centerGimbal()
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalControllerLog) << "gimbalYawStep: active gimbal is nullptr, returning";
+        qCCritical(GimbalControllerLog) << "gimbalYawStep: active gimbal is nullptr, returning";
         return;
     }
     sendPitchBodyYaw(0.0, 0.0, true);
@@ -433,13 +433,13 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
     // Pan and tilt comes as +-(0-1)
 
     if (!_activeGimbal) {
-        qCDebug(GimbalControllerLog) << "gimbalOnScreenControl: active gimbal is nullptr, returning";
+        qCCritical(GimbalControllerLog) << "gimbalOnScreenControl: active gimbal is nullptr, returning";
         return;
     }
 
     if (clickAndPoint) { // based on FOV
-        const float hFov = SettingsManager::instance()->gimbalControllerSettings()->CameraHFov()->rawValue().toFloat();
-        const float vFov = SettingsManager::instance()->gimbalControllerSettings()->CameraVFov()->rawValue().toFloat();
+        const float hFov = SettingsManager::instance()->gimbalControllerSettings()->cameraHFov()->rawValue().toFloat();
+        const float vFov = SettingsManager::instance()->gimbalControllerSettings()->cameraVFov()->rawValue().toFloat();
 
         const float panIncDesired = panPct * hFov * 0.5f;
         const float tiltIncDesired = tiltPct * vFov * 0.5f;
@@ -456,7 +456,7 @@ void GimbalController::gimbalOnScreenControl(float panPct, float tiltPct, bool c
         // Should send rate commands, but it seems for some reason it is not working on AP side.
         // Pitch works ok but yaw doesn't stop, it keeps like inertia, like if it was buffering the messages.
         // So we do a workaround with angle targets
-        const float maxSpeed = SettingsManager::instance()->gimbalControllerSettings()->CameraSlideSpeed()->rawValue().toFloat();
+        const float maxSpeed = SettingsManager::instance()->gimbalControllerSettings()->cameraSlideSpeed()->rawValue().toFloat();
 
         const float panIncDesired = panPct * maxSpeed * 0.1f;
         const float tiltIncDesired = tiltPct * maxSpeed * 0.1f;
@@ -686,7 +686,7 @@ void GimbalController::sendPitchYawFlags(uint32_t flags)
 void GimbalController::acquireGimbalControl()
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalControllerLog) << "acquireGimbalControl: active gimbal is nullptr, returning";
+        qCCritical(GimbalControllerLog) << "acquireGimbalControl: active gimbal is nullptr, returning";
         return;
     }
 
@@ -706,7 +706,7 @@ void GimbalController::acquireGimbalControl()
 void GimbalController::releaseGimbalControl()
 {
     if (!_activeGimbal) {
-        qCDebug(GimbalControllerLog) << "releaseGimbalControl: active gimbal is nullptr, returning";
+        qCCritical(GimbalControllerLog) << "releaseGimbalControl: active gimbal is nullptr, returning";
         return;
     }
 
