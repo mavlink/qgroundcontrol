@@ -13,6 +13,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         AirframeComponentAirframes.h
         AirframeComponentController.cc
         AirframeComponentController.h
+        AM32Component.cc
+        AM32Component.h
         FlightModesComponent.cc
         FlightModesComponent.h
         PowerComponent.cc
@@ -123,6 +125,12 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         ActuatorSlider.qml
         AirframeComponent.qml
         AirframeComponentSummary.qml
+        AM32Component.qml
+        AM32ComponentSummary.qml
+        AM32SettingCheckbox.qml
+        AM32SettingSlider.qml
+        AM32EscMatchDots.qml
+        AM32SettingsComponent.qml
         BatteryParams.qml
         CalcAmpsPerVoltDialog.qml
         CalcVoltageDividerDialog.qml

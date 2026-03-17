@@ -1,0 +1,41 @@
+{
+    "version":      1,
+    "fileType":     "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "escIndex",
+    "shortDesc":        "ESC Index",
+    "type":             "uint32",
+    "default":          0
+},
+{
+    "name":             "eepromVersion",
+    "shortDesc":        "EEPROM Version",
+    "type":             "uint8",
+    "default":          0,
+    "readOnly":         true
+},
+{
+    "name":             "bootloaderVersion",
+    "shortDesc":        "Bootloader Version",
+    "type":             "uint8",
+    "default":          0,
+    "readOnly":         true
+},
+{
+    "name":             "firmwareMajor",
+    "shortDesc":        "Firmware Major",
+    "type":             "uint8",
+    "default":          0,
+    "readOnly":         true
+},
+{
+    "name":             "firmwareMinor",
+    "shortDesc":        "Firmware Minor",
+    "type":             "uint8",
+    "default":          0,
+    "readOnly":         true
+}
+]
+}
