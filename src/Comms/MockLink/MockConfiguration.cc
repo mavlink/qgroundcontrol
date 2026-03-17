@@ -92,8 +92,8 @@ void MockConfiguration::loadSettings(QSettings &settings, const QString &root)
     setCameraCanCaptureImageInVideoMode(settings.value(_cameraCanCaptureImageInVideoModeKey, true).toBool());
     setCameraCanCaptureVideoInImageMode(settings.value(_cameraCanCaptureVideoInImageModeKey, false).toBool());
     setCameraHasBasicZoom(settings.value(_cameraHasBasicZoomKey, true).toBool());
-    setCameraHasTrackingPoint(settings.value(_cameraHasTrackingPointKey, false).toBool());
-    setCameraHasTrackingRectangle(settings.value(_cameraHasTrackingRectangleKey, false).toBool());
+    setCameraHasTrackingPoint(settings.value(_cameraHasTrackingPointKey, true).toBool());
+    setCameraHasTrackingRectangle(settings.value(_cameraHasTrackingRectangleKey, true).toBool());
     setGimbalHasRollAxis(settings.value(_gimbalHasRollAxisKey, true).toBool());
     setGimbalHasPitchAxis(settings.value(_gimbalHasPitchAxisKey, true).toBool());
     setGimbalHasYawAxis(settings.value(_gimbalHasYawAxisKey, true).toBool());

@@ -796,8 +796,8 @@ void QGCCameraManager::_handleCameraFovStatus(const mavlink_message_t& message)
     }
 
     auto* settings = SettingsManager::instance()->gimbalControllerSettings();
-    settings->CameraHFov()->setRawValue(fov.hfov);
-    settings->CameraVFov()->setRawValue(vfovDeg);
+    settings->cameraHFov()->setRawValue(fov.hfov);
+    settings->cameraVFov()->setRawValue(vfovDeg);
 }
 
 void QGCCameraManager::_setCurrentZoomLevel(int level)

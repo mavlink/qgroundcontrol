@@ -4,35 +4,33 @@
     "QGC.MetaData.Facts":
 [
 {
-    "name":              "EnableOnScreenControl",
+    "name":              "enableOnScreenControl",
     "shortDesc":         "Enable on Screen Camera Control",
     "type":              "bool",
     "default":           false
 },
 {
-    "name":              "ControlType",
-    "shortDesc":         "Type of on-screen control",
-    "type":              "uint32",
-    "enumStrings":       "Click to point, Click and drag",
-    "enumValues":        "0, 1",
-    "default":           0
+    "name":              "clickAndDrag",
+    "shortDesc":         "Use click and drag control instead of click to point",
+    "type":              "bool",
+    "default":           false
 },
 {
-    "name":              "CameraVFov",
+    "name":              "cameraVFov",
     "shortDesc":         "Vertical camera field of view",
     "type":              "uint32",
     "default":           80,
     "units":             "deg"
 },
 {
-    "name":              "CameraHFov",
+    "name":              "cameraHFov",
     "shortDesc":         "Horizontal camera field of view",
     "type":              "uint32",
     "default":           80,
     "units":             "deg"
 },
 {
-    "name":              "CameraSlideSpeed",
+    "name":              "cameraSlideSpeed",
     "shortDesc":         "Maximum gimbal speed on click and drag (deg/sec)",
     "type":              "uint32",
     "default":           30,

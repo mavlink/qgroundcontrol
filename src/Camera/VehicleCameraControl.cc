@@ -17,6 +17,8 @@
 
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtCore/QDir>
+
+#include <algorithm>
 #include <QtCore/QSettings>
 #include <QtXml/QDomDocument>
 #include <QtXml/QDomNodeList>
@@ -130,15 +132,9 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     _videoRecordTimeUpdateTimer.setInterval(333);
     connect(&_videoRecordTimeUpdateTimer, &QTimer::timeout, this, &VehicleCameraControl::_recTimerHandler);
 
-    //-- Tracking
-    if(_mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE) {
-        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_RECTANGLE);
-        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_SUPPORTED);
-    }
-    if(_mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_POINT) {
-        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_POINT);
-        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_SUPPORTED);
-    }
+    //-- Tracking capabilities
+    _hasTrackingRectCapability = _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE;
+    _hasTrackingPointCapability = _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_POINT;
 
     connect(this, &VehicleCameraControl::dataReady, this, &VehicleCameraControl::_dataReady);
 
@@ -1693,35 +1689,56 @@ void VehicleCameraControl::handleTrackingImageStatus(const mavlink_camera_tracki
 
     _trackingImageStatus = trackingImageStatus;
 
-    if (_trackingImageStatus.tracking_status == CAMERA_TRACKING_STATUS_FLAGS_IDLE || !trackingEnabled()) {
-        _trackingImageRect = {};
-        qCDebug(CameraControlLog) << "Tracking off";
-    } else {
-        if (_trackingImageStatus.tracking_mode == CAMERA_TRACKING_MODE_RECTANGLE) {
-            _trackingImageRect = QRectF(QPointF(_trackingImageStatus.rec_top_x, _trackingImageStatus.rec_top_y),
-                                        QPointF(_trackingImageStatus.rec_bottom_x, _trackingImageStatus.rec_bottom_y));
-        } else {
-            float r = _trackingImageStatus.radius;
-            if (qIsNaN(r) || r <= 0 ) {
-                r = 0.05f;
-            }
-            // Bottom is NAN so that we can draw perfect square using video aspect ratio
-            _trackingImageRect = QRectF(QPointF(_trackingImageStatus.point_x - r, _trackingImageStatus.point_y - r),
-                                        QPointF(_trackingImageStatus.point_x + r, NAN));
-        }
-        // get rectangle into [0..1] boundaries
-        _trackingImageRect.setLeft(std::min(std::max(_trackingImageRect.left(), 0.0), 1.0));
-        _trackingImageRect.setTop(std::min(std::max(_trackingImageRect.top(), 0.0), 1.0));
-        _trackingImageRect.setRight(std::min(std::max(_trackingImageRect.right(), 0.0), 1.0));
-        _trackingImageRect.setBottom(std::min(std::max(_trackingImageRect.bottom(), 0.0), 1.0));
+    const bool active = ((_trackingImageStatus.tracking_status & CAMERA_TRACKING_STATUS_FLAGS_ACTIVE) != 0) && trackingEnabled();
+    const bool isPoint = active && (_trackingImageStatus.tracking_mode == CAMERA_TRACKING_MODE_POINT);
 
-        qCDebug(CameraControlLog) << "Tracking Image Status [left:" << _trackingImageRect.left()
-                                  << "top:" << _trackingImageRect.top()
-                                  << "right:" << _trackingImageRect.right()
-                                  << "bottom:" << _trackingImageRect.bottom() << "]";
+    if (!active) {
+        qCDebug(CameraControlLog) << "Tracking off";
+        _trackingImageRect = {};
+        _trackingImagePoint = {};
+        _trackingImageRadius = 0.0;
+    } else if (isPoint) {
+        const QPointF point(std::clamp(static_cast<qreal>(_trackingImageStatus.point_x), 0.0, 1.0),
+                              std::clamp(static_cast<qreal>(_trackingImageStatus.point_y), 0.0, 1.0));
+        qreal radius = static_cast<qreal>(_trackingImageStatus.radius);
+        if (qIsNaN(radius) || radius <= 0) {
+            radius = 0.05;
+        } else {
+            radius = std::clamp(radius, 0.0, 1.0);
+        }
+        qCDebug(CameraControlLog) << "Tracking Point [" << point << "] radius:" << radius;
+        _trackingImageRect = {};
+        if (_trackingImagePoint != point) {
+            _trackingImagePoint = point;
+            emit trackingImagePointChanged();
+        }
+        if (!qFuzzyCompare(_trackingImageRadius, radius)) {
+            _trackingImageRadius = radius;
+            emit trackingImageRadiusChanged();
+        }
+    } else {
+        // Rectangle tracking
+        const QRectF rect = QRectF(QPointF(std::clamp(static_cast<qreal>(_trackingImageStatus.rec_top_x), 0.0, 1.0),
+                                        std::clamp(static_cast<qreal>(_trackingImageStatus.rec_top_y), 0.0, 1.0)),
+                                QPointF(std::clamp(static_cast<qreal>(_trackingImageStatus.rec_bottom_x), 0.0, 1.0),
+                                        std::clamp(static_cast<qreal>(_trackingImageStatus.rec_bottom_y), 0.0, 1.0))).normalized();
+        qCDebug(CameraControlLog) << "Tracking Rect [" << rect << "]";
+        _trackingImagePoint = {};
+        _trackingImageRadius = 0.0;
+        if (_trackingImageRect != rect) {
+            _trackingImageRect = rect;
+            emit trackingImageRectChanged();
+        }
     }
 
-    emit trackingImageStatusChanged();
+    if (_trackingImageIsActive != active) {
+        _trackingImageIsActive = active;
+        emit trackingImageIsActiveChanged();
+    }
+    if (_trackingImageIsPoint != isPoint) {
+        _trackingImageIsPoint = isPoint;
+        emit trackingImageIsPointChanged();
+    }
 }
 
 void VehicleCameraControl::setCurrentStream(int stream)
@@ -2323,16 +2340,23 @@ VehicleCameraControl::mode()
 
 void VehicleCameraControl::setTrackingEnabled(bool set)
 {
-    if(set) {
-        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus | TRACKING_ENABLED);
-    } else {
-        _trackingStatus = static_cast<TrackingStatus>(_trackingStatus & ~TRACKING_ENABLED);
+    if (_trackingEnabled == set) {
+        return;
+    }
+    _trackingEnabled = set;
+    if (!set) {
+        stopTracking();
     }
     emit trackingEnabledChanged();
 }
 
-void VehicleCameraControl::startTracking(QRectF rec)
+void VehicleCameraControl::startTrackingRect(QRectF rec)
 {
+    if (!_hasTrackingRectCapability) {
+        qCCritical(CameraControlLog) << "startTrackingRect called but camera does not have rectangle tracking capability";
+        return;
+    }
+
     qCDebug(CameraControlLog) << "Start Tracking (Rectangle: ["
                               << static_cast<float>(rec.x()) << ", "
                               << static_cast<float>(rec.y()) << "] - ["
@@ -2350,8 +2374,13 @@ void VehicleCameraControl::startTracking(QRectF rec)
     _requestTrackingStatus();
 }
 
-void VehicleCameraControl::startTracking(QPointF point, double radius)
+void VehicleCameraControl::startTrackingPoint(QPointF point, double radius)
 {
+    if (!_hasTrackingPointCapability) {
+        qCCritical(CameraControlLog) << "startTrackingPoint called but camera does not have point tracking capability";
+        return;
+    }
+
     qCDebug(CameraControlLog) << "Start Tracking (Point: ["
                               << static_cast<float>(point.x()) << ", "
                               << static_cast<float>(point.y()) << "], Radius:  "
@@ -2383,8 +2412,18 @@ void VehicleCameraControl::stopTracking()
                              MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS,
                              -1);
 
-    // reset tracking image rectangle
+    // reset tracking state
     _trackingImageRect = {};
+    _trackingImagePoint = {};
+    _trackingImageRadius = 0.0;
+    if (_trackingImageIsActive) {
+        _trackingImageIsActive = false;
+        emit trackingImageIsActiveChanged();
+    }
+    if (_trackingImageIsPoint) {
+        _trackingImageIsPoint = false;
+        emit trackingImageIsPointChanged();
+    }
 }
 
 void VehicleCameraControl::_requestTrackingStatus()

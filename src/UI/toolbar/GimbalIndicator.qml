@@ -235,31 +235,32 @@ Item {
                     id:                 enableOnScreenControlCheckbox
                     Layout.fillWidth:   true
                     text:               qsTr("Enabled")
-                    fact:               _gimbalControllerSettings.EnableOnScreenControl
+                    fact:               _gimbalControllerSettings.enableOnScreenControl
                 }
 
-                LabelledFactComboBox {
-                    label:      qsTr("Control type")
-                    fact:       _gimbalControllerSettings.ControlType
-                    visible:    enableOnScreenControlCheckbox.checked
+                FactCheckBoxSlider {
+                    Layout.fillWidth:   true
+                    text:               qsTr("Click and drag")
+                    fact:               _gimbalControllerSettings.clickAndDrag
+                    visible:            enableOnScreenControlCheckbox.checked
                 }
 
                 LabelledFactTextField {
                     label:      qsTr("Horizontal FOV")
-                    fact:       _gimbalControllerSettings.CameraHFov
-                    visible:    enableOnScreenControlCheckbox.checked && _gimbalControllerSettings.ControlType.rawValue === 0
+                    fact:       _gimbalControllerSettings.cameraHFov
+                    visible:    enableOnScreenControlCheckbox.checked && !_gimbalControllerSettings.clickAndDrag.rawValue
                 }
 
                 LabelledFactTextField {
                     label:      qsTr("Vertical FOV")
-                    fact:       _gimbalControllerSettings.CameraVFov
-                    visible:    enableOnScreenControlCheckbox.checked && _gimbalControllerSettings.ControlType.rawValue === 0
+                    fact:       _gimbalControllerSettings.cameraVFov
+                    visible:    enableOnScreenControlCheckbox.checked && !_gimbalControllerSettings.clickAndDrag.rawValue
                 }
 
                 LabelledFactTextField {
                     label:      qsTr("Max speed")
-                    fact:       _gimbalControllerSettings.CameraSlideSpeed
-                    visible:    enableOnScreenControlCheckbox.checked && _gimbalControllerSettings.ControlType.rawValue === 1
+                    fact:       _gimbalControllerSettings.cameraSlideSpeed
+                    visible:    enableOnScreenControlCheckbox.checked && _gimbalControllerSettings.clickAndDrag.rawValue
                 }
             }
 

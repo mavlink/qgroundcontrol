@@ -5,6 +5,9 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QtMath>
+
+#include <algorithm>
 
 QGC_LOGGING_CATEGORY(MockLinkCameraLog, "Comms.MockLink.MockLinkCamera")
 
@@ -104,6 +107,34 @@ void MockLinkCamera::run10HzTasks()
             qCDebug(MockLinkCameraLog) << "Camera" << cam->compId << "single-shot complete, total:" << cam->imagesCaptured;
             _sendCameraImageCaptured(cam->compId);
             _sendCameraCaptureStatus(cam->compId);
+        }
+
+        // Send periodic tracking image status (with simulated drift)
+        if (cam->trackingMode != CAMERA_TRACKING_MODE_NONE && cam->trackingStatusIntervalUs > 0) {
+            const qint64 intervalMs = (cam->trackingStatusIntervalUs + 999) / 1000;
+            if (cam->trackingStatusLastSentMs == 0 || (now - cam->trackingStatusLastSentMs) >= intervalMs) {
+                // Drift the tracked target in a figure-8 pattern around its anchor
+                const double elapsed = static_cast<double>(now - cam->trackingStartMs) / 1000.0;
+                const float driftX = 0.05f * static_cast<float>(qSin(elapsed * 0.7));
+                const float driftY = 0.05f * static_cast<float>(qSin(elapsed * 1.1));
+
+                if (cam->trackingMode == CAMERA_TRACKING_MODE_POINT) {
+                    cam->trackPointX = std::clamp(cam->trackAnchorX + driftX, 0.0f, 1.0f);
+                    cam->trackPointY = std::clamp(cam->trackAnchorY + driftY, 0.0f, 1.0f);
+                } else {
+                    const float halfW = (cam->trackRecBottomX - cam->trackRecTopX) / 2.0f;
+                    const float halfH = (cam->trackRecBottomY - cam->trackRecTopY) / 2.0f;
+                    const float cx = std::clamp(cam->trackAnchorX + driftX, halfW, 1.0f - halfW);
+                    const float cy = std::clamp(cam->trackAnchorY + driftY, halfH, 1.0f - halfH);
+                    cam->trackRecTopX    = cx - halfW;
+                    cam->trackRecTopY    = cy - halfH;
+                    cam->trackRecBottomX = cx + halfW;
+                    cam->trackRecBottomY = cy + halfH;
+                }
+
+                _sendCameraTrackingImageStatus(cam->compId);
+                cam->trackingStatusLastSentMs = now;
+            }
         }
     }
 }
@@ -344,11 +375,63 @@ bool MockLinkCamera::_handleCameraCommand(const mavlink_command_long_t &request,
         return true;
 
     case MAV_CMD_CAMERA_TRACK_POINT:
+        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_TRACKING_POINT) {
+            cam->trackingMode    = CAMERA_TRACKING_MODE_POINT;
+            cam->trackPointX     = request.param1;
+            cam->trackPointY     = request.param2;
+            cam->trackRadius     = request.param3;
+            cam->trackAnchorX    = request.param1;
+            cam->trackAnchorY    = request.param2;
+            cam->trackingStartMs = QDateTime::currentMSecsSinceEpoch();
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking point"
+                                       << cam->trackPointX << cam->trackPointY << "radius" << cam->trackRadius;
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+        } else {
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+        }
+        return true;
+
     case MAV_CMD_CAMERA_TRACK_RECTANGLE:
+        if (cam->capFlags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE) {
+            cam->trackingMode      = CAMERA_TRACKING_MODE_RECTANGLE;
+            cam->trackRecTopX      = request.param1;
+            cam->trackRecTopY      = request.param2;
+            cam->trackRecBottomX   = request.param3;
+            cam->trackRecBottomY   = request.param4;
+            cam->trackAnchorX      = (request.param1 + request.param3) / 2.0f;
+            cam->trackAnchorY      = (request.param2 + request.param4) / 2.0f;
+            cam->trackingStartMs   = QDateTime::currentMSecsSinceEpoch();
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking rectangle"
+                                       << cam->trackRecTopX << cam->trackRecTopY
+                                       << "->" << cam->trackRecBottomX << cam->trackRecBottomY;
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+        } else {
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_DENIED);
+        }
+        return true;
+
     case MAV_CMD_CAMERA_STOP_TRACKING:
-        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking command" << request.command;
+        cam->trackingMode = CAMERA_TRACKING_MODE_NONE;
+        cam->trackingStatusIntervalUs = -1;
+        cam->trackingStatusLastSentMs = 0;
+        qCDebug(MockLinkCameraLog) << "Camera" << targetCompId << "tracking stopped";
         _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
         return true;
+
+    case MAV_CMD_SET_MESSAGE_INTERVAL:
+    {
+        const int msgId = static_cast<int>(request.param1);
+        if (msgId == MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS) {
+            cam->trackingStatusIntervalUs = static_cast<qint64>(request.param2);
+            cam->trackingStatusLastSentMs = 0;
+            qCDebug(MockLinkCameraLog) << "Camera" << targetCompId
+                                       << "tracking status interval" << cam->trackingStatusIntervalUs << "us";
+            _sendCommandAck(targetCompId, request.command, MAV_RESULT_ACCEPTED);
+            return true;
+        }
+        _sendCommandAck(targetCompId, request.command, MAV_RESULT_UNSUPPORTED);
+        return true;
+    }
 
     default:
         break;
@@ -648,6 +731,33 @@ void MockLinkCamera::_sendVideoStreamStatus(uint8_t compId, uint8_t streamId)
     _mockLink->respondWithMavlinkMessage(msg);
 
     qCDebug(MockLinkCameraLog) << "Sent VIDEO_STREAM_STATUS for compId:" << compId << "stream:" << streamId;
+}
+
+void MockLinkCamera::_sendCameraTrackingImageStatus(uint8_t compId)
+{
+    const CameraState *cam = _findCamera(compId);
+    if (!cam || cam->trackingMode == CAMERA_TRACKING_MODE_NONE) {
+        return;
+    }
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_camera_tracking_image_status_pack_chan(
+        _mockLink->vehicleId(),
+        compId,
+        _mockLink->mavlinkChannel(),
+        &msg,
+        CAMERA_TRACKING_STATUS_FLAGS_ACTIVE,    // tracking_status
+        cam->trackingMode,                      // tracking_mode
+        CAMERA_TRACKING_TARGET_DATA_EMBEDDED,   // target_data
+        cam->trackPointX,                       // point_x
+        cam->trackPointY,                       // point_y
+        cam->trackRadius,                       // radius
+        cam->trackRecTopX,                      // rec_top_x
+        cam->trackRecTopY,                      // rec_top_y
+        cam->trackRecBottomX,                   // rec_bottom_x
+        cam->trackRecBottomY,                   // rec_bottom_y
+        0);                                     // camera_device_id
+    _mockLink->respondWithMavlinkMessage(msg);
 }
 
 void MockLinkCamera::_sendCommandAck(uint8_t compId, uint16_t command, uint8_t result, int requestedMsgId)

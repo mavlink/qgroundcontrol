@@ -35,8 +35,8 @@ public:
     void stopStream() override {}
     bool stopTakePhoto() override { return false;}
     void resumeStream() override {}
-    void startTracking(QRectF /*rec*/) override {}
-    void startTracking(QPointF /*point*/, double /*radius*/) override {}
+    void startTrackingRect(QRectF /*rec*/) override {}
+    void startTrackingPoint(QPointF /*point*/, double /*radius*/) override {}
     void stopTracking() override {}
 
     int version() const override { return 0; }
@@ -52,6 +52,8 @@ public:
     bool hasZoom() const override { return false; }
     bool hasFocus() const override { return false; }
     bool hasTracking() const override { return false; }
+    bool supportsTrackingPoint() const override { return false; }
+    bool supportsTrackingRect() const override { return false; }
     bool hasVideoStream() const override;
     bool photosInVideoMode() const override { return true; }
     bool videoInPhotoMode() const override { return false; }
@@ -105,10 +107,11 @@ public:
     bool trackingEnabled() const override { return false; }
     void setTrackingEnabled(bool /*set*/) override {}
 
-    TrackingStatus trackingStatus() const override { return TRACKING_UNKNOWN; }
-
-    bool trackingImageStatus() const override { return false; }
+    bool trackingImageIsActive() const override { return false; }
+    bool trackingImageIsPoint() const override { return false; }
     QRectF trackingImageRect() const override { return QRectF(); }
+    QPointF trackingImagePoint() const override { return QPointF(); }
+    qreal trackingImageRadius() const override { return 0.0; }
 
     void factChanged(Fact* /*pFact*/) override {};
     bool incomingParameter(Fact* /*pFact*/, QVariant& /*newValue*/) override { return false; }
