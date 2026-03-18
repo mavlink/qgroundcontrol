@@ -687,9 +687,9 @@ void PlanMasterController::sendPlanToVehicle(Vehicle* vehicle, const QString& fi
 
 void PlanMasterController::_showPlanFromManagerVehicle(void)
 {
-    if (!_managerVehicle->initialPlanRequestComplete() && !syncInProgress()) {
-        // Something went wrong with initial load. All controllers are idle, so just force it off
-        _managerVehicle->forceInitialPlanRequestComplete();
+    if (!_managerVehicle->initialPlanRequestComplete()) {
+        // We need to wait until initial load is complete before we show anything.
+        return;
     }
 
     // The crazy if structure is to handle the load propagating by itself through the system

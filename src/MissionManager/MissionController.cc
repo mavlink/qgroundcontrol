@@ -149,29 +149,17 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         //      - A load from vehicle was manually requested
         //      - The initial automatic load from a vehicle completed and the current editor is empty
 
-        _deinitAllVisualItems();
-        _visualItems->clearAndDeleteContents();
-        _visualItems->deleteLater();
-        _visualItems  = nullptr;
-        _settingsItem = nullptr;
-        _takeoffMissionItem = nullptr;
-        _updateContainsItems(); // This will clear containsItems which will be set again below. This will re-pop Start Mission confirmation.
+        _setupNewVisualItems();
 
-        QmlObjectListModel* newControllerMissionItems = new QmlObjectListModel(this);
         const QList<MissionItem*>& newMissionItems = _missionManager->missionItems();
         qCDebug(MissionControllerLog) << "loading from vehicle: count"<< newMissionItems.count();
-
-        _missionItemCount = newMissionItems.count();
-        emit missionItemCountChanged(_missionItemCount);
-
-        MissionSettingsItem* settingsItem = _addMissionSettings(newControllerMissionItems);
 
         int i=0;
         if (_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() && newMissionItems.count() != 0) {
             // First item is fake home position
             MissionItem* fakeHomeItem = newMissionItems[0];
             if (fakeHomeItem->coordinate().latitude() != 0 || fakeHomeItem->coordinate().longitude() != 0) {
-                settingsItem->setCoordinate(fakeHomeItem->coordinate());
+                _settingsItem->setCoordinate(fakeHomeItem->coordinate());
             }
             i = 1;
         }
@@ -183,16 +171,13 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             SimpleMissionItem* simpleItem = new SimpleMissionItem(_masterController, _flyView, *missionItem);
             if (TakeoffMissionItem::isTakeoffCommand(static_cast<MAV_CMD>(simpleItem->command()))) {
                 // This needs to be a TakeoffMissionItem
-                _takeoffMissionItem = new TakeoffMissionItem(*missionItem, _masterController, _flyView, settingsItem, false /* forLoad */);
+                _takeoffMissionItem = new TakeoffMissionItem(*missionItem, _masterController, _flyView, _settingsItem, false /* forLoad */);
                 _takeoffMissionItem->setWizardMode(false);
                 simpleItem->deleteLater();
                 simpleItem = _takeoffMissionItem;
             }
-            newControllerMissionItems->append(simpleItem);
+            _visualItems->append(simpleItem);
         }
-
-        _visualItems = newControllerMissionItems;
-        _settingsItem = settingsItem;
 
         // We set Altitude frame to mixed, otherwise if we need a non relative altitude frame we won't be able to change it
         setGlobalAltitudeFrame(weHaveItemsFromVehicle ? QGroundControlQmlGlobal::AltitudeFrameMixed : QGroundControlQmlGlobal::AltitudeFrameRelative);
@@ -200,8 +185,10 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         MissionController::_scanForAdditionalSettings(_visualItems, _masterController);
 
         _initAllVisualItems();
-        _updateContainsItems();
+
         emit newItemsFromVehicle();
+
+        emit containsItemsChanged();
     }
     _itemsRequested = false;
 }
@@ -606,21 +593,44 @@ void MissionController::removeVisualItem(int viIndex)
     }
 }
 
-void MissionController::removeAll(void)
+void MissionController::_setupNewVisualItems(QmlObjectListModel* newItems)
 {
-    if (_visualItems) {
+    QmlObjectListModel* oldItems = _visualItems;
+
+    if (oldItems) {
         _deinitAllVisualItems();
-        _visualItems->clearAndDeleteContents();
-        _visualItems->deleteLater();
-        _settingsItem = nullptr;
-        _takeoffMissionItem = nullptr;
+
+        // Destroy old items after a delay — TreeView delegates are torn down
+        // asynchronously during a polish cycle and may still hold bindings.
+        QTimer::singleShot(1000, oldItems, [oldItems] {
+            oldItems->clearAndDeleteContents();
+            oldItems->deleteLater();
+        });
+    }
+
+    _settingsItem = nullptr;
+    _takeoffMissionItem = nullptr;
+
+    if (newItems) {
+        _visualItems = newItems;
+        if (_visualItems->count() == 0) {
+            _addMissionSettings(_visualItems);
+        } else {
+            _settingsItem = _visualItems->value<MissionSettingsItem*>(0);
+        }
+    } else {
         _visualItems = new QmlObjectListModel(this);
         _addMissionSettings(_visualItems);
-        _initAllVisualItems();
-        setDirty(true);
-        _resetMissionFlightStatus();
-        _allItemsRemoved();
     }
+}
+
+void MissionController::removeAll(void)
+{
+    _setupNewVisualItems();
+    _initAllVisualItems();
+    setDirty(true);
+    _resetMissionFlightStatus();
+    _allItemsRemoved();
 }
 
 bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString)
@@ -993,20 +1003,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
 
 void MissionController::_initLoadedVisualItems(QmlObjectListModel* loadedVisualItems)
 {
-    if (_visualItems) {
-        _deinitAllVisualItems();
-        _visualItems->deleteLater();
-    }
-    _settingsItem = nullptr;
-    _takeoffMissionItem = nullptr;
-
-    _visualItems = loadedVisualItems;
-
-    if (_visualItems->count() == 0) {
-        _addMissionSettings(_visualItems);
-    } else {
-        _settingsItem = _visualItems->value<MissionSettingsItem*>(0);
-    }
+    _setupNewVisualItems(loadedVisualItems);
 
     MissionController::_scanForAdditionalSettings(_visualItems, _masterController);
 
@@ -2063,7 +2060,8 @@ void MissionController::_initAllVisualItems(void)
     _recalcAll();
 
     connect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_visualItemsDirtyChanged);
-    connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
+    connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::containsItemsChanged);
+    connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::missionItemCountChanged);
 
     // Connect for incremental tree model sync
     connect(_visualItems, &QAbstractItemModel::rowsInserted, this, &MissionController::_syncTreeMissionItemsInserted);
@@ -2089,6 +2087,7 @@ void MissionController::_initAllVisualItems(void)
     emit visualItemsChanged();
     emit containsItemsChanged();
     emit plannedHomePositionChanged(plannedHomePosition());
+    emit missionItemCountChanged();
 
     if (!_flyView) {
         setCurrentPlanViewSeqNum(0, true);
@@ -2099,13 +2098,7 @@ void MissionController::_initAllVisualItems(void)
 
 void MissionController::_deinitAllVisualItems(void)
 {
-    // Remove mission items from the tree model before their C++ objects are
-    // scheduled for deletion via deleteLater below. Without this, the TreeView
-    // delegates still hold references when the objects are destroyed, causing
-    // null-reference warnings in QML (e.g. "Cannot read property 'masterController' of null").
-    _visualItemsTree.removeChildren(_missionGroupIndex);
-
-    disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::_recalcAll);
+    disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
     disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::plannedHomePositionChanged);
 
     for (int i=0; i<_visualItems->count(); i++) {
@@ -2113,7 +2106,8 @@ void MissionController::_deinitAllVisualItems(void)
     }
 
     disconnect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_visualItemsDirtyChanged);
-    disconnect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::_updateContainsItems);
+    disconnect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::containsItemsChanged);
+    disconnect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::missionItemCountChanged);
 
     // Disconnect incremental tree model sync
     disconnect(_visualItems, &QAbstractItemModel::rowsInserted, this, &MissionController::_syncTreeMissionItemsInserted);
@@ -2378,11 +2372,6 @@ void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualIte
     }
 }
 
-void MissionController::_updateContainsItems(void)
-{
-    emit containsItemsChanged();
-}
-
 bool MissionController::containsItems(void) const
 {
     return _visualItems ? _visualItems->count() > 1 : false;
@@ -2472,7 +2461,7 @@ bool MissionController::showPlanFromManagerVehicle (void)
             qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle: syncInProgress wait for signal";
             return true;
         } else {
-            // Fake a _newMissionItemsAvailable with the current items
+            // Sync has already completed, fake a _newMissionItemsAvailable with the current items
             qCDebug(MissionControllerLog) << "showPlanFromManagerVehicle: sync complete simulate signal";
             _itemsRequested = true;
             _newMissionItemsAvailableFromVehicle(false /* removeAllRequested */);
