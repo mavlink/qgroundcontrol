@@ -25,14 +25,14 @@ Rectangle {
     border.width:   _readyForSave ? 0 : 2
     border.color:   qgcPal.warningText
 
-    property var    _masterController:          missionItem.masterController
-    property var    _missionController:         _masterController.missionController
-    property bool   _currentItem:               missionItem.isCurrentItem
+    property var    _masterController:          missionItem ? missionItem.masterController : null
+    property var    _missionController:         _masterController ? _masterController.missionController : null
+    property bool   _currentItem:               missionItem ? missionItem.isCurrentItem : false
     property color  _outerTextColor:            _currentItem ? qgcPal.buttonHighlightText : qgcPal.text
-    property bool   _noMissionItemsAdded:       _missionController.visualItems ? _missionController.visualItems.count <= 1 : true
+    property bool   _noMissionItemsAdded:       _missionController && _missionController.visualItems ? _missionController.visualItems.count <= 1 : true
     property real   _sectionSpacer:             ScreenTools.defaultFontPixelWidth / 2  // spacing between section headings
-    property bool   _singleComplexItem:         _missionController.complexMissionItemNames.length === 1
-    property bool   _readyForSave:              missionItem.readyForSaveState === VisualMissionItem.ReadyForSave
+    property bool   _singleComplexItem:         _missionController ? _missionController.complexMissionItemNames.length === 1 : false
+    property bool   _readyForSave:              missionItem ? missionItem.readyForSaveState === VisualMissionItem.ReadyForSave : true
 
     readonly property real  _editFieldWidth:    Math.min(width - _innerMargin * 2, ScreenTools.defaultFontPixelWidth * 12)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
@@ -138,7 +138,7 @@ Rectangle {
             mipmap:                 true
             smooth:                 true
             color:                  qgcPal.buttonHighlightText
-            visible:                _currentItem && missionItem.sequenceNumber !== 0
+            visible:                _currentItem && missionItem && missionItem.sequenceNumber !== 0
             source:                 "/res/TrashDelete.svg"
 
             QGCMouseArea {
@@ -161,7 +161,7 @@ Rectangle {
 
                 property real _padding: ScreenTools.comboBoxPadding
 
-                QGCLabel { text: missionItem.commandName }
+                QGCLabel { text: missionItem ? missionItem.commandName : "" }
 
                 QGCColoredImage {
                     height:             ScreenTools.defaultFontPixelWidth
@@ -203,9 +203,9 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width:                  commandPicker.width
             height:                 commandPicker.height
-            visible:                !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode || missionItem.isTakeoffItem
+            visible:                !missionItem || !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode || missionItem.isTakeoffItem
             verticalAlignment:      Text.AlignVCenter
-            text:                   missionItem.commandName
+            text:                   missionItem ? missionItem.commandName : ""
             color:                  _outerTextColor
         }
     }
@@ -308,7 +308,7 @@ Rectangle {
         height:                 _hamburgerSize
         sourceSize.height:      _hamburgerSize
         source:                 "qrc:/qmlimages/Hamburger.svg"
-        visible:                missionItem.isCurrentItem && missionItem.sequenceNumber !== 0
+        visible:                missionItem && missionItem.isCurrentItem && missionItem.sequenceNumber !== 0
         color:                  qgcPal.buttonHighlightText
 
         QGCMouseArea {

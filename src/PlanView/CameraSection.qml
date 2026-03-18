@@ -17,7 +17,7 @@ Column {
 
     spacing: _margin
 
-    property var    _camera:        missionItem.cameraSection
+    property var    _camera:        missionItem ? missionItem.cameraSection : null
     property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 16
     property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
 
@@ -38,38 +38,38 @@ Column {
             id:         cameraActionCombo
             width:      parent.width
             label:      qsTr("Action")
-            fact:       _camera.cameraAction
+            fact:       _camera ? _camera.cameraAction : null
             indexModel: false
         }
 
         LabelledFactTextField {
             width:      parent.width
             label:      qsTr("Time")
-            fact:       _camera.cameraPhotoIntervalTime
-            visible:    _camera.cameraAction.rawValue === 1
+            fact:       _camera ? _camera.cameraPhotoIntervalTime : null
+            visible:    _camera ? _camera.cameraAction.rawValue === 1 : false
         }
 
         LabelledFactTextField {
             width:      parent.width
             label:      qsTr("Distance")
-            fact:       _camera.cameraPhotoIntervalDistance
-            visible:    _camera.cameraAction.rawValue === 2
+            fact:       _camera ? _camera.cameraPhotoIntervalDistance : null
+            visible:    _camera ? _camera.cameraAction.rawValue === 2 : false
         }
 
         RowLayout {
             width:      parent.width
             spacing:    ScreenTools.defaultFontPixelWidth
-            visible:    _camera.cameraModeSupported
+            visible:    _camera ? _camera.cameraModeSupported : false
 
             QGCCheckBox {
                 id:                 modeCheckBox
                 text:               qsTr("Mode")
-                checked:            _camera.specifyCameraMode
-                onClicked:          _camera.specifyCameraMode = checked
+                checked:            _camera ? _camera.specifyCameraMode : false
+                onClicked:          { if (_camera) _camera.specifyCameraMode = checked }
             }
 
             FactComboBox {
-                fact:               _camera.cameraMode
+                fact:               _camera ? _camera.cameraMode : null
                 indexModel:         false
                 enabled:            modeCheckBox.checked
                 Layout.fillWidth:   true
@@ -79,21 +79,21 @@ Column {
         QGCCheckBox {
             id:                 gimbalCheckBox
             text:               qsTr("Gimbal")
-            checked:            _camera.specifyGimbal
-            onClicked:          _camera.specifyGimbal = checked
+            checked:            _camera ? _camera.specifyGimbal : false
+            onClicked:          { if (_camera) _camera.specifyGimbal = checked }
         }
 
         FactTextFieldSlider {
             width:          parent.width
             label:          qsTr("Pitch")
-            fact:           _camera.gimbalPitch
+            fact:           _camera ? _camera.gimbalPitch : null
             enabled:        gimbalCheckBox.checked
         }
 
         FactTextFieldSlider {
             width:          parent.width
             label:          qsTr("Yaw")
-            fact:           _camera.gimbalYaw
+            fact:           _camera ? _camera.gimbalYaw : null
             enabled:        gimbalCheckBox.checked
         }
     }

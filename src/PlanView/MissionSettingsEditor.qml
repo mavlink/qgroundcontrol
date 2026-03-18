@@ -17,8 +17,8 @@ Rectangle {
     required property var missionItem
     required property real availableWidth
 
-    property var _masterController: missionItem.masterController
-    property var _controllerVehicle: _masterController.controllerVehicle
+    property var _masterController: missionItem ? missionItem.masterController : null
+    property var _controllerVehicle: _masterController ? _masterController.controllerVehicle : null
     property bool _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
     property bool _showCameraSection: _waypointsOnlyMode || QGroundControl.corePlugin.showAdvancedUI
     property bool _simpleMissionStart: QGroundControl.corePlugin.options.showSimpleMissionStart
