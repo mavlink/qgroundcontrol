@@ -296,7 +296,7 @@ public:
     double              minAMSLAltitude             (void) const { return _minAMSLAltitude; }
     double              maxAMSLAltitude             (void) const { return _maxAMSLAltitude; }
 
-    int missionItemCount            (void) const { return _missionItemCount; }
+    int missionItemCount            (void) const { return _visualItems ? _visualItems->count() : 0; }
     int currentMissionIndex         (void) const;
     int resumeMissionIndex          (void) const;
     int currentPlanViewSeqNum       (void) const { return _currentPlanViewSeqNum; }
@@ -356,7 +356,7 @@ signals:
     void currentPlanViewItemChanged         (void);
     void takeoffMissionItemChanged          (void);
     void missionBoundingCubeChanged         (void);
-    void missionItemCountChanged            (int missionItemCount);
+    void missionItemCountChanged            (void);
     void onlyInsertTakeoffValidChanged      (void);
     void isInsertTakeoffValidChanged        (void);
     void isInsertLandValidChanged           (void);
@@ -380,7 +380,6 @@ private slots:
     void _currentMissionIndexChanged            (int sequenceNumber);
     void _recalcFlightPathSegments              (void);
     void _recalcMissionFlightStatus             (void);
-    void _updateContainsItems                   (void);
     void _progressPctChanged                    (double progressPct);
     void _visualItemsDirtyChanged               (bool dirty);
     void _managerSendComplete                   (bool error);
@@ -397,6 +396,7 @@ private slots:
     void _syncTreeRallyPointsInserted                 (const QModelIndex& parent, int first, int last);
     void _syncTreeRallyPointsAboutToBeRemoved          (const QModelIndex& parent, int first, int last);
     void _syncTreeRallyPointsRemoved                   (const QModelIndex& parent, int first, int last);
+
     void _syncTreeRallyPointsReset                    (void);
 private:
     void                    _init                               (void);
@@ -405,6 +405,7 @@ private:
     void                    _recalcChildItems                   (void);
     void                    _recalcAllWithCoordinate            (const QGeoCoordinate& coordinate);
     void                    _recalcROISpecialVisuals            (void);
+    void                    _setupNewVisualItems                (QmlObjectListModel* newItems = nullptr);
     void                    _initAllVisualItems                 (void);
     void                    _deinitAllVisualItems               (void);
     void                    _initVisualItem                     (VisualMissionItem* item);
@@ -445,7 +446,6 @@ private:
     Vehicle*                    _controllerVehicle =            nullptr;
     Vehicle*                    _managerVehicle =               nullptr;
     MissionManager*             _missionManager =               nullptr;
-    int                         _missionItemCount =             0;
     QmlObjectListModel*         _visualItems =                  nullptr;
     QPersistentModelIndex       _planFileGroupIndex;            ///< Persistent index for "Plan File" group in tree
     QPersistentModelIndex       _defaultsGroupIndex;            ///< Persistent index for "Defaults" group in tree
