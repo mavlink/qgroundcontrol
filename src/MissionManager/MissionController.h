@@ -63,15 +63,15 @@ public:
     Q_PROPERTY(QmlObjectListModel*  directionArrows                 READ directionArrows                CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames         READ complexMissionItemNames        NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition             READ plannedHomePosition            NOTIFY plannedHomePositionChanged)      ///< Includes AMSL altitude
-    Q_PROPERTY(QGeoCoordinate       previousCoordinate              MEMBER _previousCoordinate          NOTIFY previousCoordinateChanged)
+    Q_PROPERTY(QGeoCoordinate       previousCoordinate              MEMBER _previousCoordinate          NOTIFY planViewStateChanged)
     Q_PROPERTY(FlightPathSegment*   splitSegment                    MEMBER _splitSegment                NOTIFY splitSegmentChanged)             ///< Segment which show show + split ui element
     Q_PROPERTY(double               progressPct                     READ progressPct                    NOTIFY progressPctChanged)
     Q_PROPERTY(int                  missionItemCount                READ missionItemCount               NOTIFY missionItemCountChanged)         ///< True mission item command count (only valid in Fly View)
     Q_PROPERTY(int                  currentMissionIndex             READ currentMissionIndex            NOTIFY currentMissionIndexChanged)
     Q_PROPERTY(int                  resumeMissionIndex              READ resumeMissionIndex             NOTIFY resumeMissionIndexChanged)       ///< Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
-    Q_PROPERTY(int                  currentPlanViewSeqNum           READ currentPlanViewSeqNum          NOTIFY currentPlanViewSeqNumChanged)
-    Q_PROPERTY(int                  currentPlanViewVIIndex          READ currentPlanViewVIIndex         NOTIFY currentPlanViewVIIndexChanged)
-    Q_PROPERTY(VisualMissionItem*   currentPlanViewItem             READ currentPlanViewItem            NOTIFY currentPlanViewItemChanged)
+    Q_PROPERTY(int                  currentPlanViewSeqNum           READ currentPlanViewSeqNum          NOTIFY planViewStateChanged)
+    Q_PROPERTY(int                  currentPlanViewVIIndex          READ currentPlanViewVIIndex         NOTIFY planViewStateChanged)
+    Q_PROPERTY(VisualMissionItem*   currentPlanViewItem             READ currentPlanViewItem            NOTIFY planViewStateChanged)
     Q_PROPERTY(TakeoffMissionItem*  takeoffMissionItem              READ takeoffMissionItem             NOTIFY takeoffMissionItemChanged)
     Q_PROPERTY(double               missionTotalDistance            READ missionTotalDistance           NOTIFY missionTotalDistanceChanged)
     Q_PROPERTY(double               missionPlannedDistance          READ missionPlannedDistance         NOTIFY missionPlannedDistanceChanged)
@@ -87,14 +87,14 @@ public:
     Q_PROPERTY(QString              surveyComplexItemName           READ surveyComplexItemName          CONSTANT)
     Q_PROPERTY(QString              corridorScanComplexItemName     READ corridorScanComplexItemName    CONSTANT)
     Q_PROPERTY(QString              structureScanComplexItemName    READ structureScanComplexItemName   CONSTANT)
-    Q_PROPERTY(bool                 onlyInsertTakeoffValid          MEMBER _onlyInsertTakeoffValid      NOTIFY onlyInsertTakeoffValidChanged)
-    Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY isInsertTakeoffValidChanged)
-    Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY isInsertLandValidChanged)
+    Q_PROPERTY(bool                 onlyInsertTakeoffValid          MEMBER _onlyInsertTakeoffValid      NOTIFY planViewStateChanged)
+    Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY planViewStateChanged)
+    Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY planViewStateChanged)
     Q_PROPERTY(bool                 hasLandItem                     MEMBER _hasLandItem                 NOTIFY hasLandItemChanged)
     Q_PROPERTY(bool                 multipleLandPatternsAllowed     READ multipleLandPatternsAllowed    NOTIFY multipleLandPatternsAllowedChanged)
-    Q_PROPERTY(bool                 isROIActive                     MEMBER _isROIActive                 NOTIFY isROIActiveChanged)
-    Q_PROPERTY(bool                 isROIBeginCurrentItem           MEMBER _isROIBeginCurrentItem       NOTIFY isROIBeginCurrentItemChanged)
-    Q_PROPERTY(bool                 flyThroughCommandsAllowed       MEMBER _flyThroughCommandsAllowed   NOTIFY flyThroughCommandsAllowedChanged)
+    Q_PROPERTY(bool                 isROIActive                     MEMBER _isROIActive                 NOTIFY planViewStateChanged)
+    Q_PROPERTY(bool                 isROIBeginCurrentItem           MEMBER _isROIBeginCurrentItem       NOTIFY planViewStateChanged)
+    Q_PROPERTY(bool                 flyThroughCommandsAllowed       MEMBER _flyThroughCommandsAllowed   NOTIFY planViewStateChanged)
     Q_PROPERTY(double               minAMSLAltitude                 MEMBER _minAMSLAltitude             NOTIFY minAMSLAltitudeChanged)          ///< Minimum altitude associated with this mission. Used to calculate percentages for terrain status.
     Q_PROPERTY(double               maxAMSLAltitude                 MEMBER _maxAMSLAltitude             NOTIFY maxAMSLAltitudeChanged)          ///< Maximum altitude associated with this mission. Used to calculate percentages for terrain status.
 
@@ -329,21 +329,12 @@ signals:
     void plannedHomePositionChanged         (QGeoCoordinate plannedHomePosition);
     void progressPctChanged                 (double progressPct);
     void currentMissionIndexChanged         (int currentMissionIndex);
-    void currentPlanViewSeqNumChanged       (void);
-    void currentPlanViewVIIndexChanged      (void);
-    void currentPlanViewItemChanged         (void);
+    void planViewStateChanged               (void);  ///< All plan-view properties are recomputed together in setCurrentPlanViewSeqNum, so one signal covers them all
     void takeoffMissionItemChanged          (void);
     void missionBoundingCubeChanged         (void);
     void missionItemCountChanged            (void);
-    void onlyInsertTakeoffValidChanged      (void);
-    void isInsertTakeoffValidChanged        (void);
-    void isInsertLandValidChanged           (void);
     void hasLandItemChanged                 (void);
     void multipleLandPatternsAllowedChanged (void);
-    void isROIActiveChanged                 (void);
-    void isROIBeginCurrentItemChanged       (void);
-    void flyThroughCommandsAllowedChanged   (void);
-    void previousCoordinateChanged          (void);
     void minAMSLAltitudeChanged             (double minAMSLAltitude);
     void maxAMSLAltitudeChanged             (double maxAMSLAltitude);
     void recalcTerrainProfile               (void);

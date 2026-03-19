@@ -2142,17 +2142,12 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _isInsertLandValid =            _isInsertLandValid && !_onlyInsertTakeoffValid;
         _flyThroughCommandsAllowed =    _flyThroughCommandsAllowed && !_onlyInsertTakeoffValid;
 
-        emit currentPlanViewSeqNumChanged();
-        emit currentPlanViewVIIndexChanged();
-        emit currentPlanViewItemChanged();
+        // These 10 properties are all recomputed together above, so a single signal is sufficient.
+        // QML property bindings list planViewStateChanged as their NOTIFY signal which means
+        // one emit re-evaluates all dependent bindings in one pass instead of 10 separate updates.
+        // splitSegmentChanged is kept separate because PlanView.qml has an explicit onSplitSegmentChanged handler.
+        emit planViewStateChanged();
         emit splitSegmentChanged();
-        emit onlyInsertTakeoffValidChanged();
-        emit isInsertTakeoffValidChanged();
-        emit isInsertLandValidChanged();
-        emit isROIActiveChanged();
-        emit isROIBeginCurrentItemChanged();
-        emit flyThroughCommandsAllowedChanged();
-        emit previousCoordinateChanged();
     }
 }
 
