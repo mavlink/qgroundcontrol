@@ -596,24 +596,31 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         mavlink_servo_output_raw_t servoOutputRaw;
         mavlink_msg_servo_output_raw_decode(&message, &servoOutputRaw);
 
-        const int baseIndex = static_cast<int>(servoOutputRaw.port) * 4;
-        if (baseIndex >= 0 && baseIndex < _servoOutputRawValues.size()) {
-            const uint16_t rawValues[4] = {
-                servoOutputRaw.servo1_raw,
-                servoOutputRaw.servo2_raw,
-                servoOutputRaw.servo3_raw,
-                servoOutputRaw.servo4_raw
-            };
+        // ArduPilot commonly publishes servo1_raw..servo16_raw in a single packet (port may remain 0).
+        const uint16_t rawValues[16] = {
+            servoOutputRaw.servo1_raw,
+            servoOutputRaw.servo2_raw,
+            servoOutputRaw.servo3_raw,
+            servoOutputRaw.servo4_raw,
+            servoOutputRaw.servo5_raw,
+            servoOutputRaw.servo6_raw,
+            servoOutputRaw.servo7_raw,
+            servoOutputRaw.servo8_raw,
+            servoOutputRaw.servo9_raw,
+            servoOutputRaw.servo10_raw,
+            servoOutputRaw.servo11_raw,
+            servoOutputRaw.servo12_raw,
+            servoOutputRaw.servo13_raw,
+            servoOutputRaw.servo14_raw,
+            servoOutputRaw.servo15_raw,
+            servoOutputRaw.servo16_raw
+        };
 
-            for (int i = 0; i < 4; i++) {
-                const int servoIndex = baseIndex + i;
-                if (servoIndex >= 0 && servoIndex < _servoOutputRawValues.size() && rawValues[i] != UINT16_MAX) {
-                    _servoOutputRawValues[servoIndex] = static_cast<int>(rawValues[i]);
-                }
-            }
-
-            emit servoOutputsChanged(_servoOutputRawValues);
+        for (int servoIndex = 0; servoIndex < _servoOutputRawValues.size() && servoIndex < 16; servoIndex++) {
+            _servoOutputRawValues[servoIndex] = (rawValues[servoIndex] == UINT16_MAX) ? -1 : static_cast<int>(rawValues[servoIndex]);
         }
+
+        emit servoOutputsChanged(_servoOutputRawValues);
     }
         break;
     case MAVLINK_MSG_ID_BATTERY_STATUS:
