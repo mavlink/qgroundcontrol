@@ -13,6 +13,8 @@
 #include "QGCGeoBoundingCube.h"
 #include "QGroundControlQmlGlobal.h"
 #include "QGCMAVLink.h"
+#include "MissionFlightStatus.h"
+#include "MissionFlightStatusCalculator.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
@@ -46,32 +48,8 @@ public:
     MissionController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~MissionController();
 
-    typedef struct {
-        double                      maxTelemetryDistance;
-        double                      totalDistance;
-        double                      plannedDistance;
-        double                      totalTime;
-        double                      hoverDistance;
-        double                      hoverTime;
-        double                      cruiseDistance;
-        double                      cruiseTime;
-        int                         mAhBattery;             ///< 0 for not available
-        double                      hoverAmps;              ///< Amp consumption during hover
-        double                      cruiseAmps;             ///< Amp consumption during cruise
-        double                      ampMinutesAvailable;    ///< Amp minutes available from single battery
-        double                      hoverAmpsTotal;         ///< Total hover amps used
-        double                      cruiseAmpsTotal;        ///< Total cruise amps used
-        int                         batteryChangePoint;     ///< -1 for not supported, 0 for not needed
-        int                         batteriesRequired;      ///< -1 for not supported
-        double                      vehicleYaw;
-        double                      gimbalYaw;              ///< NaN signals yaw was never changed
-        double                      gimbalPitch;            ///< NaN signals pitch was never changed
-        // The following values are the state prior to executing this item
-        QGCMAVLink::VehicleClass_t  vtolMode;               ///< Either VehicleClassFixedWing, VehicleClassMultiRotor, VehicleClassGeneric (mode unknown)
-        double                      cruiseSpeed;
-        double                      hoverSpeed;
-        double                      vehicleSpeed;           ///< Either cruise or hover speed based on vehicle type and vtol state
-    } MissionFlightStatus_t;
+    // Legacy alias kept for source compatibility with external code
+    using MissionFlightStatus_t = ::MissionFlightStatus_t;
 
     Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectTreeModel*  visualItemsTree                 READ visualItemsTree                CONSTANT)                               ///< Tree-structured view of visualItems for TreeView
@@ -410,7 +388,6 @@ private:
     void                    _initVisualItem                     (VisualMissionItem* item);
     void                    _deinitVisualItem                   (VisualMissionItem* item);
     void                    _setupActiveVehicle                 (Vehicle* activeVehicle, bool forceLoadFromVehicle);
-    void                    _calcPrevWaypointValues             (VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     bool                    _findPreviousAltitude               (int newIndex, double* prevAltitude, QGroundControlQmlGlobal::AltitudeFrame* prevAltFrame);
     MissionSettingsItem*    _addMissionSettings                 (QmlObjectListModel* visualItems);
     bool                    _loadJsonMissionFileV2              (const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
@@ -419,12 +396,8 @@ private:
     void                    _scanForAdditionalSettings          (QmlObjectListModel* visualItems, PlanMasterController* masterController);
     void                    _setPlannedHomePositionFromFirstCoordinate(const QGeoCoordinate& clickCoordinate);
     void                    _resetMissionFlightStatus           (void);
-    void                    _addHoverTime                       (double hoverTime, double hoverDistance, int waypointIndex);
-    void                    _addCruiseTime                      (double cruiseTime, double cruiseDistance, int wayPointIndex);
-    void                    _updateBatteryInfo                  (int waypointIndex);
     void                    _initLoadedVisualItems              (QmlObjectListModel* loadedVisualItems);
     FlightPathSegment*      _addFlightPathSegment               (FlightPathSegmentHashTable& prevItemPairHashTable, VisualItemPair& pair, bool mavlinkTerrainFrame);
-    void                    _addTimeDistance                    (bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
     VisualMissionItem*      _insertSimpleMissionItemWorker      (QGeoCoordinate coordinate, MAV_CMD command, int visualItemIndex, bool makeCurrentItem);
     void                    _insertComplexMissionItemWorker     (const QGeoCoordinate& mapCenterCoordinate, ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem);
     bool                    _isROIBeginItem                     (SimpleMissionItem* simpleItem);
@@ -433,7 +406,6 @@ private:
     void                    _allItemsRemoved                    (void);
     void                    _firstItemAdded                     (void);
 
-    static double           _calcDistanceToHome                 (VisualMissionItem* currentItem, VisualMissionItem* homeItem);
     static double           _normalizeLat                       (double lat);
     static double           _normalizeLon                       (double lon);
     static bool             _convertToMissionItems              (QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent);
@@ -469,6 +441,7 @@ private:
     bool                        _firstItemsFromVehicle =        false;
     bool                        _itemsRequested =               false;
     bool                        _inRecalcSequence =             false;
+    MissionFlightStatusCalculator _flightStatusCalc;
     MissionFlightStatus_t       _missionFlightStatus;
     AppSettings*                _appSettings =                  nullptr;
     double                      _progressPct =                  0;
