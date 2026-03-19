@@ -404,7 +404,6 @@ private:
     void                    _recalcSequence                     (void);
     void                    _recalcChildItems                   (void);
     void                    _recalcAllWithCoordinate            (const QGeoCoordinate& coordinate);
-    void                    _recalcROISpecialVisuals            (void);
     void                    _setupNewVisualItems                (QmlObjectListModel* newItems = nullptr);
     void                    _initAllVisualItems                 (void);
     void                    _deinitAllVisualItems               (void);
@@ -414,8 +413,6 @@ private:
     void                    _calcPrevWaypointValues             (VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     bool                    _findPreviousAltitude               (int newIndex, double* prevAltitude, QGroundControlQmlGlobal::AltitudeFrame* prevAltFrame);
     MissionSettingsItem*    _addMissionSettings                 (QmlObjectListModel* visualItems);
-    bool                    _loadJsonMissionFile                (const QByteArray& bytes, QmlObjectListModel* visualItems, QString& errorString);
-    bool                    _loadJsonMissionFileV1              (const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     bool                    _loadJsonMissionFileV2              (const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     bool                    _loadTextMissionFile                (QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString);
     int                     _nextSequenceNumber                 (void);
@@ -425,7 +422,6 @@ private:
     void                    _addHoverTime                       (double hoverTime, double hoverDistance, int waypointIndex);
     void                    _addCruiseTime                      (double cruiseTime, double cruiseDistance, int wayPointIndex);
     void                    _updateBatteryInfo                  (int waypointIndex);
-    bool                    _loadItemsFromJson                  (const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     void                    _initLoadedVisualItems              (QmlObjectListModel* loadedVisualItems);
     FlightPathSegment*      _addFlightPathSegment               (FlightPathSegmentHashTable& prevItemPairHashTable, VisualItemPair& pair, bool mavlinkTerrainFrame);
     void                    _addTimeDistance                    (bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
@@ -500,7 +496,6 @@ private:
     QGroundControlQmlGlobal::AltitudeFrame _globalAltFrame = QGroundControlQmlGlobal::AltitudeFrameRelative;
 
     static constexpr const char* _settingsGroup =                 "MissionController";
-    static constexpr const char* _jsonFileTypeValue =             "Mission";
     static constexpr const char* _jsonItemsKey =                  "items";
     static constexpr const char* _jsonPlannedHomePositionKey =    "plannedHomePosition";
     static constexpr const char* _jsonFirmwareTypeKey =           "firmwareType";
@@ -509,10 +504,6 @@ private:
     static constexpr const char* _jsonHoverSpeedKey =             "hoverSpeed";
     static constexpr const char* _jsonParamsKey =                 "params";
     static constexpr const char* _jsonGlobalPlanAltitudeModeKey = "globalPlanAltitudeMode";
-
-    // Deprecated V1 format keys
-    static constexpr const char* _jsonComplexItemsKey =           "complexItems";
-    static constexpr const char* _jsonMavAutopilotKey =           "MAV_AUTOPILOT";
 
     static constexpr int   _missionFileVersion =            2;
 };
