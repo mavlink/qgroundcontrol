@@ -5,6 +5,7 @@
 #include "APMHeliComponent.h"
 #include "APMLightsComponent.h"
 #include "APMMotorComponent.h"
+#include "APMServoComponent.h"
 #include "APMPowerComponent.h"
 #include "APMRadioComponent.h"
 #include "APMRemoteSupportComponent.h"
@@ -81,6 +82,12 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
                 _motorComponent = new APMMotorComponent(_vehicle, this);
                 _motorComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_motorComponent)));
+            }
+
+            if (_vehicle->parameterManager()->parameterExists(-1, QStringLiteral("SERVO1_MIN"))) {
+                _servoComponent = new APMServoComponent(_vehicle, this);
+                _servoComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_servoComponent)));
             }
 
             _safetyComponent = new APMSafetyComponent(_vehicle, this);

@@ -581,6 +581,31 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_RC_CHANNELS:
         _handleRCChannels(message);
         break;
+    case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
+    {
+        mavlink_servo_output_raw_t servoOutputRaw;
+        mavlink_msg_servo_output_raw_decode(&message, &servoOutputRaw);
+
+        const int baseIndex = static_cast<int>(servoOutputRaw.port) * 4;
+        if (baseIndex >= 0 && baseIndex < _servoOutputRawValues.size()) {
+            const uint16_t rawValues[4] = {
+                servoOutputRaw.servo1_raw,
+                servoOutputRaw.servo2_raw,
+                servoOutputRaw.servo3_raw,
+                servoOutputRaw.servo4_raw
+            };
+
+            for (int i = 0; i < 4; i++) {
+                const int servoIndex = baseIndex + i;
+                if (servoIndex >= 0 && servoIndex < _servoOutputRawValues.size() && rawValues[i] != UINT16_MAX) {
+                    _servoOutputRawValues[servoIndex] = static_cast<int>(rawValues[i]);
+                }
+            }
+
+            emit servoOutputsChanged(_servoOutputRawValues);
+        }
+    }
+        break;
     case MAVLINK_MSG_ID_BATTERY_STATUS:
         _handleBatteryStatus(message);
         break;
