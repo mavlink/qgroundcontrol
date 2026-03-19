@@ -35,6 +35,10 @@ Item {
     readonly property string resumeMissionUploadFailTitle:  qsTr("Resume FAILED")
     readonly property string pauseTitle:                    qsTr("Pause")
     readonly property string mvPauseTitle:                  qsTr("Pause (MV)")
+    readonly property string mvTakeoffTitle:                qsTr("Takeoff (Swarm)")
+    readonly property string mvLandTitle:                   qsTr("Land (Swarm)")
+    readonly property string mvRTLTitle:                    qsTr("Return (Swarm)")
+    readonly property string mvFollowLeaderTitle:           qsTr("Follow Leader")
     readonly property string changeAltTitle:                qsTr("Change Altitude")
     readonly property string changeLoiterRadiusTitle:       qsTr("Change Loiter Radius")
     readonly property string changeCruiseSpeedTitle:        qsTr("Change Max Ground Speed")
@@ -72,6 +76,10 @@ Item {
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence")
     readonly property string pauseMessage:                      qsTr("Pause at current position")
     readonly property string mvPauseMessage:                    qsTr("Pause selected vehicles at their current position")
+    readonly property string mvTakeoffMessage:                  qsTr("Takeoff all selected vehicles simultaneously")
+    readonly property string mvLandMessage:                     qsTr("Land all selected vehicles at their current positions")
+    readonly property string mvRTLMessage:                      qsTr("Return all selected vehicles to their launch positions")
+    readonly property string mvFollowLeaderMessage:             qsTr("Selected vehicles follow the active vehicle maintaining formation")
     readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest")
     readonly property string setHomeMessage:                    qsTr("Set vehicle home as the specified location. This will affect Return to Home position")
     readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin")
@@ -107,6 +115,10 @@ Item {
     readonly property int actionMVArm:                      28
     readonly property int actionMVDisarm:                   29
     readonly property int actionChangeLoiterRadius:         30
+    readonly property int actionMVTakeoff:                  31
+    readonly property int actionMVLand:                     32
+    readonly property int actionMVRTL:                      33
+    readonly property int actionMVFollowLeader:             34
 
     readonly property int customActionStart:                10000 // Custom actions ids should start here so that they don't collide with the built in actions
 
@@ -511,6 +523,26 @@ Item {
             confirmDialog.message = mvPauseMessage
             confirmDialog.hideTrigger = true
             break;
+        case actionMVTakeoff:
+            confirmDialog.title = mvTakeoffTitle
+            confirmDialog.message = mvTakeoffMessage
+            confirmDialog.hideTrigger = true
+            break;
+        case actionMVLand:
+            confirmDialog.title = mvLandTitle
+            confirmDialog.message = mvLandMessage
+            confirmDialog.hideTrigger = true
+            break;
+        case actionMVRTL:
+            confirmDialog.title = mvRTLTitle
+            confirmDialog.message = mvRTLMessage
+            confirmDialog.hideTrigger = true
+            break;
+        case actionMVFollowLeader:
+            confirmDialog.title = mvFollowLeaderTitle
+            confirmDialog.message = mvFollowLeaderMessage
+            confirmDialog.hideTrigger = true
+            break;
         case actionROI:
             confirmDialog.title = roiTitle
             confirmDialog.message = roiMessage
@@ -652,6 +684,39 @@ Item {
             selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
             for (i = 0; i < selectedVehicles.count; i++) {
                 selectedVehicles.get(i).pauseVehicle()
+            }
+            break
+        case actionMVTakeoff:
+            selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            for (i = 0; i < selectedVehicles.count; i++) {
+                var mvVehicle = selectedVehicles.get(i)
+                if (!mvVehicle.flying) {
+                    mvVehicle.guidedModeTakeoff(mvVehicle.minimumTakeoffAltitudeMeters())
+                }
+            }
+            break
+        case actionMVLand:
+            selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            for (i = 0; i < selectedVehicles.count; i++) {
+                selectedVehicles.get(i).guidedModeLand()
+            }
+            break
+        case actionMVRTL:
+            selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            for (i = 0; i < selectedVehicles.count; i++) {
+                selectedVehicles.get(i).guidedModeRTL(false)
+            }
+            break
+        case actionMVFollowLeader:
+            // Follow leader: reposition selected vehicles relative to active vehicle
+            if (_activeVehicle && _activeVehicle.coordinate.isValid) {
+                selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+                for (i = 0; i < selectedVehicles.count; i++) {
+                    var follower = selectedVehicles.get(i)
+                    if (follower !== _activeVehicle && follower.flying) {
+                        follower.guidedModeGotoLocation(_activeVehicle.coordinate, 0)
+                    }
+                }
             }
             break
         case actionROI:
