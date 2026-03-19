@@ -36,6 +36,7 @@ qt_add_qml_module(FlyViewModule
         FlyViewToolStripActionList.qml
 
         FlyViewTopRightColumnLayout.qml
+        SwarmControlPanel.qml
         FlyViewTopRightPanel.qml
         FlyViewVideo.qml
         FlyViewWidgetLayer.qml
