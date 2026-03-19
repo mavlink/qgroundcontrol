@@ -65,6 +65,7 @@
 #include "DeviceInfo.h"
 #include "StatusTextHandler.h"
 #include "MAVLinkSigning.h"
+#include "MAVLinkSigningKeys.h"
 #include "GimbalController.h"
 #include "MavlinkSettings.h"
 #include "APM.h"
@@ -505,6 +506,15 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
         if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link))) {
             return;
+        }
+    }
+
+    // Try to auto-detect signing key from incoming signed packets
+    if (MAVLinkSigning::isMessageSigned(message) && !MAVLinkSigning::isSigningEnabled(static_cast<mavlink_channel_t>(link->mavlinkChannel()))) {
+        const QString detectedKeyName = MAVLinkSigning::tryDetectKey(static_cast<mavlink_channel_t>(link->mavlinkChannel()), message);
+        if (!detectedKeyName.isEmpty() && link == vehicleLinkManager()->primaryLink().lock().get()) {
+            _mavlinkSigningKeyName = detectedKeyName;
+            emit mavlinkSigningChanged();
         }
     }
 
@@ -3681,6 +3691,20 @@ void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t tota
         _mavlinkLossCount       = totalLoss;
         _mavlinkLossPercent     = lossPercent;
         emit mavlinkStatusChanged();
+
+        // Update signing status from the primary link's channel
+        bool signing = false;
+        SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+        if (sharedLink) {
+            signing = MAVLinkSigning::isSigningEnabled(static_cast<mavlink_channel_t>(sharedLink->mavlinkChannel()));
+        }
+        if (signing != _mavlinkSigning) {
+            _mavlinkSigning = signing;
+            if (!signing) {
+                _mavlinkSigningKeyName.clear();
+            }
+            emit mavlinkSigningChanged();
+        }
     }
 }
 
@@ -4528,7 +4552,50 @@ void Vehicle::_errorMessageReceived(QString message)
 /*                                 Signing                                   */
 /*===========================================================================*/
 
-void Vehicle::sendSetupSigning()
+void Vehicle::sendSetupSigning(int keyIndex)
+{
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "Primary Link Gone!";
+        return;
+    }
+
+    const QByteArray keyBytes = MAVLinkSigningKeys::instance()->keyBytesAt(keyIndex);
+    if (keyBytes.isEmpty()) {
+        qCCritical(VehicleLog) << "Invalid key index:" << keyIndex;
+        return;
+    }
+
+    const mavlink_channel_t channel = static_cast<mavlink_channel_t>(sharedLink->mavlinkChannel());
+
+    mavlink_setup_signing_t setup_signing;
+
+    mavlink_system_t target_system;
+    target_system.sysid = id();
+    target_system.compid = defaultComponentId();
+
+    MAVLinkSigning::createSetupSigning(channel, target_system, keyBytes, setup_signing);
+
+    // Also configure signing on our channel with this key so outgoing packets are signed
+    if (!MAVLinkSigning::initSigning(channel, keyBytes, MAVLinkSigning::insecureConnectionAcceptUnsignedCallback)) {
+        qCCritical(VehicleLog) << "Internal error: failed to initialize signing on channel" << channel;
+        return;
+    }
+
+    _mavlinkSigning = true;
+    _mavlinkSigningKeyName = MAVLinkSigningKeys::instance()->keyNameAt(keyIndex);
+    emit mavlinkSigningChanged();
+
+    mavlink_message_t msg;
+    (void) mavlink_msg_setup_signing_encode_chan(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::getComponentId(), channel, &msg, &setup_signing);
+
+    // Since we don't get an ack back that the message was received send twice to try to make sure it makes it to the vehicle
+    for (uint8_t i = 0; i < 2; ++i) {
+        sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
+    }
+}
+
+void Vehicle::sendDisableSigning()
 {
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
@@ -4544,15 +4611,21 @@ void Vehicle::sendSetupSigning()
     target_system.sysid = id();
     target_system.compid = defaultComponentId();
 
-    MAVLinkSigning::createSetupSigning(channel, target_system, setup_signing);
+    MAVLinkSigning::createDisableSigning(target_system, setup_signing);
 
     mavlink_message_t msg;
     (void) mavlink_msg_setup_signing_encode_chan(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::getComponentId(), channel, &msg, &setup_signing);
 
-    // Since we don't get an ack back that the message was received send twice to try to make sure it makes it to the vehicle
     for (uint8_t i = 0; i < 2; ++i) {
         sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
+
+    // Disable signing on the local channel so we stop signing outgoing packets
+    MAVLinkSigning::initSigning(channel, QByteArrayView(), nullptr);
+
+    _mavlinkSigning = false;
+    _mavlinkSigningKeyName.clear();
+    emit mavlinkSigningChanged();
 }
 
 /*---------------------------------------------------------------------------*/

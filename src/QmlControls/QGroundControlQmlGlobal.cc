@@ -12,6 +12,7 @@
 #include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
 #include "NTRIPManager.h"
+#include "MAVLinkSigningKeys.h"
 #include "MissionCommandTree.h"
 #include "VideoManager.h"
 #include "MultiVehicleManager.h"
@@ -39,6 +40,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _ntripManager(NTRIPManager::instance())
     , _qgcPositionManager(QGCPositionManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
+    , _mavlinkSigningKeys(MAVLinkSigningKeys::instance())
     , _videoManager(VideoManager::instance())
     , _linkManager(LinkManager::instance())
     , _multiVehicleManager(MultiVehicleManager::instance())

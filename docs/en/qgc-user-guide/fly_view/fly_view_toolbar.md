@@ -101,6 +101,17 @@ The Gimbal indicator is shown when the vehicle supports the [MAVLink Gimbal Prot
 
 For VTOL vehicles, a VTOL transition status indicator is shown when applicable. It indicates the current VTOL mode/state and provides transition-related status information.
 
+### MAVLink Signing <img src="../../../assets/fly/toolbar/signing_indicator.jpg" alt="MAVLink Signing indicator" style="height: 1.15em; vertical-align: text-bottom;" />
+
+The MAVLink Signing indicator appears when signing keys have been configured (see [MAVLink 2 Signing](../settings_view/telemetry.md#signing)).
+It shows a lock icon that indicates whether MAVLink 2 message signing is active on the current vehicle connection:
+
+- **Locked (green):** Signing is active — the vehicle's incoming packets matched a stored key, or a key was manually enabled.
+- **Unlocked:** Signing is not active on the current connection.
+
+The dropdown shows the signing status, the name of the active key (if any), and the number of saved keys.
+Expanding the indicator provides full key management: you can enable a key on the vehicle, disable the active key, delete unused keys, or add new keys.
+
 ### Multi-Vehicle Selector <img src="../../../assets/fly/toolbar/multi_vehicle_indicator.png" alt="Multi-Vehicle indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
 The Multi-Vehicle selector appears when more than one vehicle is connected. It allows you to quickly switch the active vehicle from the toolbar.

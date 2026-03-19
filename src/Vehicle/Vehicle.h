@@ -271,6 +271,7 @@ public:
     Q_PROPERTY(QString  vehicleUIDStr               READ vehicleUIDStr              NOTIFY vehicleUIDChanged)
 
     Q_PROPERTY(bool     mavlinkSigning              READ mavlinkSigning             NOTIFY mavlinkSigningChanged)
+    Q_PROPERTY(QString  mavlinkSigningKeyName       READ mavlinkSigningKeyName      NOTIFY mavlinkSigningChanged)
 
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
@@ -396,7 +397,9 @@ public:
     /// Set home from flight map coordinate
     Q_INVOKABLE void doSetHome(const QGeoCoordinate& coord);
 
-    Q_INVOKABLE void sendSetupSigning();
+    /// Send SETUP_SIGNING with the key at the given index in MAVLinkSigningKeys
+    Q_INVOKABLE void sendSetupSigning(int keyIndex);
+    Q_INVOKABLE void sendDisableSigning();
 
     Q_INVOKABLE QVariant expandedToolbarIndicatorSource(const QString& indicatorName);
 
@@ -544,6 +547,7 @@ public:
     bool            hilMode                     () const { return _base_mode & MAV_MODE_FLAG_HIL_ENABLED; }
     Actuators*      actuators                   () const { return _actuators; }
     bool            mavlinkSigning          () const { return _mavlinkSigning; }
+    QString         mavlinkSigningKeyName   () const { return _mavlinkSigningKeyName; }
 
     void startCalibration   (QGCMAVLink::CalibrationType calType);
     void stopCalibration    (bool showError);
@@ -1014,6 +1018,7 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     bool            _readyToFly                             = false;
     bool            _allSensorsHealthy                      = true;
     bool            _mavlinkSigning                         = false;
+    QString         _mavlinkSigningKeyName;
 
     SysStatusSensorInfo _sysStatusSensorInfo;
 

@@ -12,6 +12,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MAVLinkLib.h
         MAVLinkSigning.cc
         MAVLinkSigning.h
+        MAVLinkSigningKeys.cc
+        MAVLinkSigningKeys.h
         MAVLinkStreamConfig.cc
         MAVLinkStreamConfig.h
         QGCMAVLink.cc
