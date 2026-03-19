@@ -399,7 +399,6 @@ VisualMissionItem* MissionController::insertROIMissionItem(QGeoCoordinate coordi
         simpleItem->setCommand(MAV_CMD_DO_SET_ROI)  ;
         simpleItem->missionItem().setParam1(MAV_ROI_LOCATION);
     }
-    _recalcROISpecialVisuals();
     return simpleItem;
 }
 
@@ -411,7 +410,6 @@ VisualMissionItem* MissionController::insertCancelROIMissionItem(int visualItemI
         simpleItem->setCommand(MAV_CMD_DO_SET_ROI)  ;
         simpleItem->missionItem().setParam1(MAV_ROI_NONE);
     }
-    _recalcROISpecialVisuals();
     return simpleItem;
 }
 
@@ -633,108 +631,6 @@ void MissionController::removeAll(void)
     _allItemsRemoved();
 }
 
-bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString)
-{
-    // Validate root object keys
-    QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
-        { _jsonPlannedHomePositionKey,      QJsonValue::Object, true },
-        { _jsonItemsKey,                    QJsonValue::Array,  true },
-        { _jsonMavAutopilotKey,             QJsonValue::Double, false },
-        { _jsonComplexItemsKey,             QJsonValue::Array,  true },
-    };
-    if (!JsonHelper::validateKeys(json, rootKeyInfoList, errorString)) {
-        return false;
-    }
-
-    setGlobalAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameMixed);
-
-    // Read complex items
-    QList<SurveyComplexItem*> surveyItems;
-    QJsonArray complexArray(json[_jsonComplexItemsKey].toArray());
-    qCDebug(MissionControllerLog) << "Json load: complex item count" << complexArray.count();
-    for (int i=0; i<complexArray.count(); i++) {
-        const QJsonValue& itemValue = complexArray[i];
-
-        if (!itemValue.isObject()) {
-            errorString = QStringLiteral("Mission item is not an object");
-            return false;
-        }
-
-        SurveyComplexItem* item = new SurveyComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
-        const QJsonObject itemObject = itemValue.toObject();
-        if (item->load(itemObject, itemObject["id"].toInt(), errorString)) {
-            surveyItems.append(item);
-        } else {
-            return false;
-        }
-    }
-
-    // Read simple items, interspersing complex items into the full list
-
-    int nextSimpleItemIndex= 0;
-    int nextComplexItemIndex= 0;
-    int nextSequenceNumber = 1; // Start with 1 since home is in 0
-    QJsonArray itemArray(json[_jsonItemsKey].toArray());
-
-    MissionSettingsItem* settingsItem = _addMissionSettings(visualItems);
-    if (json.contains(_jsonPlannedHomePositionKey)) {
-        SimpleMissionItem* item = new SimpleMissionItem(_masterController, _flyView, true /* forLoad */);
-        if (item->load(json[_jsonPlannedHomePositionKey].toObject(), 0, errorString)) {
-            settingsItem->setCoordinate(item->coordinate());
-            item->deleteLater();
-        } else {
-            return false;
-        }
-    }
-
-    qCDebug(MissionControllerLog) << "Json load: simple item loop start simpleItemCount:ComplexItemCount" << itemArray.count() << surveyItems.count();
-    do {
-        qCDebug(MissionControllerLog) << "Json load: simple item loop nextSimpleItemIndex:nextComplexItemIndex:nextSequenceNumber" << nextSimpleItemIndex << nextComplexItemIndex << nextSequenceNumber;
-
-        // If there is a complex item that should be next in sequence add it in
-        if (nextComplexItemIndex < surveyItems.count()) {
-            SurveyComplexItem* complexItem = surveyItems[nextComplexItemIndex];
-
-            if (complexItem->sequenceNumber() == nextSequenceNumber) {
-                qCDebug(MissionControllerLog) << "Json load: injecting complex item expectedSequence:actualSequence:" << nextSequenceNumber << complexItem->sequenceNumber();
-                visualItems->append(complexItem);
-                nextSequenceNumber = complexItem->lastSequenceNumber() + 1;
-                nextComplexItemIndex++;
-                continue;
-            }
-        }
-
-        // Add the next available simple item
-        if (nextSimpleItemIndex < itemArray.count()) {
-            const QJsonValue& itemValue = itemArray[nextSimpleItemIndex++];
-
-            if (!itemValue.isObject()) {
-                errorString = QStringLiteral("Mission item is not an object");
-                return false;
-            }
-
-            const QJsonObject itemObject = itemValue.toObject();
-            SimpleMissionItem* item = new SimpleMissionItem(_masterController, _flyView, true /* forLoad */);
-            if (item->load(itemObject, itemObject["id"].toInt(), errorString)) {
-                if (TakeoffMissionItem::isTakeoffCommand(item->mavCommand())) {
-                    // This needs to be a TakeoffMissionItem
-                    TakeoffMissionItem* takeoffItem = new TakeoffMissionItem(_masterController, _flyView, settingsItem, true /* forLoad */);
-                    takeoffItem->load(itemObject, itemObject["id"].toInt(), errorString);
-                    item->deleteLater();
-                    item = takeoffItem;
-                }
-                qCDebug(MissionControllerLog) << "Json load: adding simple item expectedSequence:actualSequence" << nextSequenceNumber << item->sequenceNumber();
-                nextSequenceNumber = item->lastSequenceNumber() + 1;
-                visualItems->append(item);
-            } else {
-                return false;
-            }
-        }
-    } while (nextSimpleItemIndex < itemArray.count() || nextComplexItemIndex < surveyItems.count());
-
-    return true;
-}
-
 bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString)
 {
     // Validate root object keys
@@ -924,19 +820,6 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     }
 
     return true;
-}
-
-bool MissionController::_loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString)
-{
-    int fileVersion;
-    JsonHelper::validateExternalQGCJsonFile(json,
-                                            _jsonFileTypeValue,    // expected file type
-                                            2,                     // minimum supported version
-                                            2,                     // maximum supported version
-                                            fileVersion,
-                                            errorString);
-
-    return _loadJsonMissionFileV2(json, visualItems, errorString);
 }
 
 bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListModel* visualItems, QString& errorString)
@@ -1189,39 +1072,6 @@ FlightPathSegment* MissionController::_addFlightPathSegment(FlightPathSegmentHas
     _simpleFlightPathSegments.append(segment);
 
     return segment;
-}
-
-void MissionController::_recalcROISpecialVisuals(void)
-{
-    return;
-    VisualMissionItem*  lastCoordinateItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(0));
-    bool                roiActive =             false;
-
-    for (int i=1; i<_visualItems->count(); i++) {
-        VisualMissionItem*  visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
-        SimpleMissionItem*  simpleItem = qobject_cast<SimpleMissionItem*>(visualItem);
-        VisualItemPair      viPair;
-
-        if (simpleItem) {
-            if (roiActive) {
-                if (_isROICancelItem(simpleItem)) {
-                    roiActive = false;
-                }
-            } else {
-                if (_isROIBeginItem(simpleItem)) {
-                    roiActive = true;
-                }
-            }
-        }
-
-        if (visualItem->specifiesCoordinate() && !visualItem->isStandaloneCoordinate()) {
-            viPair = VisualItemPair(lastCoordinateItem, visualItem);
-            if (_flightPathSegmentHashTable.contains(viPair)) {
-                _flightPathSegmentHashTable[viPair]->setSpecialVisual(roiActive);
-            }
-            lastCoordinateItem = visualItem;
-        }
-    }
 }
 
 void MissionController::_recalcFlightPathSegments(void)
