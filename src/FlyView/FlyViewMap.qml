@@ -259,6 +259,137 @@ FlightMap {
         }
     }
 
+    // --- Swarm Formation Lines ---
+    // Draw lines connecting selected vehicles to show swarm formation
+    MapPolyline {
+        id:         swarmFormationLines
+        line.width: 2
+        line.color: "#80FFD700"  // Semi-transparent gold
+        z:          QGroundControl.zOrderTrajectoryLines
+        visible:    !pipMode && _swarmLinesVisible
+
+        property bool _swarmLinesVisible: {
+            var sel = QGroundControl.multiVehicleManager.selectedVehicles
+            return sel && sel.count > 1
+        }
+    }
+
+    // Draw lines from leader (active vehicle) to each selected follower
+    Repeater {
+        id:     swarmLeaderLines
+        model:  _swarmFollowerCoords
+
+        property var _swarmFollowerCoords: {
+            var coords = []
+            var sel = QGroundControl.multiVehicleManager.selectedVehicles
+            var active = QGroundControl.multiVehicleManager.activeVehicle
+            if (!sel || !active || sel.count < 2 || pipMode) return coords
+            for (var i = 0; i < sel.count; i++) {
+                var v = sel.get(i)
+                if (v !== active && v.coordinate && v.coordinate.isValid) {
+                    coords.push(v.coordinate)
+                }
+            }
+            return coords
+        }
+
+        MapPolyline {
+            line.width: 2
+            line.color: "#8000FF00"  // Semi-transparent green
+            z:          QGroundControl.zOrderTrajectoryLines
+            path: {
+                var active = QGroundControl.multiVehicleManager.activeVehicle
+                if (active && active.coordinate && active.coordinate.isValid) {
+                    return [active.coordinate, modelData]
+                }
+                return []
+            }
+        }
+    }
+
+    // Leader vehicle indicator label on map
+    MapQuickItem {
+        id:             leaderIndicator
+        visible:        !pipMode && _activeVehicle && _hasMultipleSelected
+        coordinate:     _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+        anchorPoint.x:  leaderLabel.width / 2
+        anchorPoint.y:  leaderLabel.height + ScreenTools.defaultFontPixelHeight * 2
+        z:              QGroundControl.zOrderMapItems
+
+        property bool _hasMultipleSelected: {
+            var sel = QGroundControl.multiVehicleManager.selectedVehicles
+            return sel && sel.count > 1
+        }
+
+        sourceItem: Rectangle {
+            id:             leaderLabel
+            width:          leaderText.implicitWidth + ScreenTools.defaultFontPixelWidth * 2
+            height:         leaderText.implicitHeight + ScreenTools.defaultFontPixelHeight / 2
+            color:          "#E0000000"
+            radius:         height / 4
+            border.color:   "#FFD700"
+            border.width:   1
+
+            QGCLabel {
+                id:                     leaderText
+                anchors.centerIn:       parent
+                text:                   qsTr("LEADER")
+                color:                  "#FFD700"
+                font.bold:              true
+                font.pointSize:         ScreenTools.smallFontPointSize
+            }
+        }
+    }
+
+    // Inter-vehicle distance labels between consecutive selected vehicles
+    Repeater {
+        id:     distanceLabels
+        model:  _distancePairs
+
+        property var _distancePairs: {
+            var pairs = []
+            var sel = QGroundControl.multiVehicleManager.selectedVehicles
+            if (!sel || sel.count < 2 || pipMode) return pairs
+            for (var i = 0; i < sel.count - 1; i++) {
+                var v1 = sel.get(i)
+                var v2 = sel.get(i + 1)
+                if (v1.coordinate.isValid && v2.coordinate.isValid) {
+                    var midLat = (v1.coordinate.latitude + v2.coordinate.latitude) / 2
+                    var midLon = (v1.coordinate.longitude + v2.coordinate.longitude) / 2
+                    var dist = v1.coordinate.distanceTo(v2.coordinate)
+                    pairs.push({
+                        midpoint: QtPositioning.coordinate(midLat, midLon),
+                        distance: dist
+                    })
+                }
+            }
+            return pairs
+        }
+
+        MapQuickItem {
+            coordinate:     modelData.midpoint
+            anchorPoint.x:  distLabel.width / 2
+            anchorPoint.y:  distLabel.height / 2
+            z:              QGroundControl.zOrderMapItems
+
+            sourceItem: Rectangle {
+                id:             distLabel
+                width:          distText.implicitWidth + ScreenTools.defaultFontPixelWidth
+                height:         distText.implicitHeight + 4
+                color:          "#C0000000"
+                radius:         height / 4
+
+                QGCLabel {
+                    id:                 distText
+                    anchors.centerIn:   parent
+                    text:               modelData.distance.toFixed(1) + " m"
+                    color:              "white"
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                }
+            }
+        }
+    }
+
     // Add the vehicles to the map
     MapItemView {
         model: QGroundControl.multiVehicleManager.vehicles

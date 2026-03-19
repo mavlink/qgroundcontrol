@@ -93,8 +93,8 @@ Rectangle {
                 id:                swipePages
                 anchors.fill:      parent
                 spacing:           ScreenTools.defaultFontPixelHeight
-                implicitHeight:    Math.max(buttonsPage.implicitHeight, swarmPage.implicitHeight, photoVideoPage.implicitHeight)
-                implicitWidth:     Math.max(buttonsPage.implicitWidth, swarmPage.implicitWidth, photoVideoPage.implicitWidth)
+                implicitHeight:    Math.max(buttonsPage.implicitHeight, swarmPage.implicitHeight, swarmStatusPage.implicitHeight, photoVideoPage.implicitHeight)
+                implicitWidth:     Math.max(buttonsPage.implicitWidth, swarmPage.implicitWidth, swarmStatusPage.implicitWidth, photoVideoPage.implicitWidth)
 
                 MvPanelPage {
                     id:                buttonsPage
@@ -200,6 +200,19 @@ Rectangle {
                         anchors.verticalCenter:     parent.verticalCenter
                     }
                 } // Swarm Page
+
+                MvPanelPage {
+                    id:                  swarmStatusPage
+                    implicitHeight:      swarmStatusHeader.implicitHeight + ScreenTools.defaultFontPixelHeight * 2
+                    implicitWidth:       swarmStatusHeader.implicitWidth + ScreenTools.defaultFontPixelHeight * 2
+
+                    SwarmStatusHeader {
+                        id:                         swarmStatusHeader
+                        anchors.left:               parent.left
+                        anchors.right:              parent.right
+                        anchors.verticalCenter:     parent.verticalCenter
+                    }
+                } // Swarm Status Page
 
                 MvPanelPage {
 

@@ -39,6 +39,9 @@ Item {
     readonly property string mvLandTitle:                   qsTr("Land (Swarm)")
     readonly property string mvRTLTitle:                    qsTr("Return (Swarm)")
     readonly property string mvFollowLeaderTitle:           qsTr("Follow Leader")
+    readonly property string mvEmergencyStopTitle:          qsTr("EMERGENCY STOP (Swarm)")
+    readonly property string mvChangeAltTitle:              qsTr("Change Altitude (Swarm)")
+    readonly property string mvChangeSpeedTitle:            qsTr("Change Speed (Swarm)")
     readonly property string changeAltTitle:                qsTr("Change Altitude")
     readonly property string changeLoiterRadiusTitle:       qsTr("Change Loiter Radius")
     readonly property string changeCruiseSpeedTitle:        qsTr("Change Max Ground Speed")
@@ -80,6 +83,9 @@ Item {
     readonly property string mvLandMessage:                     qsTr("Land all selected vehicles at their current positions")
     readonly property string mvRTLMessage:                      qsTr("Return all selected vehicles to their launch positions")
     readonly property string mvFollowLeaderMessage:             qsTr("Selected vehicles follow the active vehicle maintaining formation")
+    readonly property string mvEmergencyStopMessage:             qsTr("WARNING: THIS WILL STOP ALL MOTORS ON ALL SELECTED VEHICLES. VEHICLES IN THE AIR WILL CRASH.")
+    readonly property string mvChangeAltMessage:                 qsTr("Change altitude for all selected vehicles to the specified value")
+    readonly property string mvChangeSpeedMessage:               qsTr("Change ground speed for all selected vehicles to the specified value")
     readonly property string roiMessage:                        qsTr("Make the specified location a Region Of Interest")
     readonly property string setHomeMessage:                    qsTr("Set vehicle home as the specified location. This will affect Return to Home position")
     readonly property string setEstimatorOriginMessage:         qsTr("Make the specified location the estimator origin")
@@ -119,6 +125,9 @@ Item {
     readonly property int actionMVLand:                     32
     readonly property int actionMVRTL:                      33
     readonly property int actionMVFollowLeader:             34
+    readonly property int actionMVEmergencyStop:            35
+    readonly property int actionMVChangeAlt:                36
+    readonly property int actionMVChangeSpeed:              37
 
     readonly property int customActionStart:                10000 // Custom actions ids should start here so that they don't collide with the built in actions
 
@@ -543,6 +552,21 @@ Item {
             confirmDialog.message = mvFollowLeaderMessage
             confirmDialog.hideTrigger = true
             break;
+        case actionMVEmergencyStop:
+            confirmDialog.title = mvEmergencyStopTitle
+            confirmDialog.message = mvEmergencyStopMessage
+            confirmDialog.hideTrigger = true
+            break;
+        case actionMVChangeAlt:
+            confirmDialog.title = mvChangeAltTitle
+            confirmDialog.message = mvChangeAltMessage
+            confirmDialog.hideTrigger = true
+            break;
+        case actionMVChangeSpeed:
+            confirmDialog.title = mvChangeSpeedTitle
+            confirmDialog.message = mvChangeSpeedMessage
+            confirmDialog.hideTrigger = true
+            break;
         case actionROI:
             confirmDialog.title = roiTitle
             confirmDialog.message = roiMessage
@@ -708,14 +732,49 @@ Item {
             }
             break
         case actionMVFollowLeader:
-            // Follow leader: reposition selected vehicles relative to active vehicle
+            // Follow leader: reposition selected vehicles in formation around the active vehicle
             if (_activeVehicle && _activeVehicle.coordinate.isValid) {
                 selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+                var followers = []
                 for (i = 0; i < selectedVehicles.count; i++) {
-                    var follower = selectedVehicles.get(i)
-                    if (follower !== _activeVehicle && follower.flying) {
-                        follower.guidedModeGotoLocation(_activeVehicle.coordinate, 0)
+                    var candidate = selectedVehicles.get(i)
+                    if (candidate !== _activeVehicle && candidate.flying) {
+                        followers.push(candidate)
                     }
+                }
+                // Calculate formation offsets based on swarm control panel settings
+                var formationType = 0  // Line by default
+                var formationSpacing = 10  // 10m default
+                var offsets = _calculateFormationOffsets(followers.length, formationType, formationSpacing)
+                for (i = 0; i < followers.length; i++) {
+                    var targetLat = _activeVehicle.coordinate.latitude + (offsets[i].latOffset / 111320)
+                    var targetLon = _activeVehicle.coordinate.longitude + (offsets[i].lonOffset / (111320 * Math.cos(_activeVehicle.coordinate.latitude * Math.PI / 180)))
+                    followers[i].guidedModeGotoLocation(QtPositioning.coordinate(targetLat, targetLon), 0)
+                }
+            }
+            break
+        case actionMVEmergencyStop:
+            selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            for (i = 0; i < selectedVehicles.count; i++) {
+                selectedVehicles.get(i).emergencyStop()
+            }
+            break
+        case actionMVChangeAlt:
+            selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            for (i = 0; i < selectedVehicles.count; i++) {
+                var altVehicle = selectedVehicles.get(i)
+                if (altVehicle.flying) {
+                    var altChangeMeters = actionData - altVehicle.altitudeRelative.rawValue
+                    altVehicle.guidedModeChangeAltitude(altChangeMeters, false)
+                }
+            }
+            break
+        case actionMVChangeSpeed:
+            selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
+            for (i = 0; i < selectedVehicles.count; i++) {
+                var spdVehicle = selectedVehicles.get(i)
+                if (spdVehicle.flying) {
+                    spdVehicle.guidedModeChangeGroundSpeedMetersSecond(actionData)
                 }
             }
             break
@@ -753,5 +812,36 @@ Item {
             break
         }
         return true
+    }
+
+    // Formation offset calculator for follow-leader mode
+    function _calculateFormationOffsets(vehicleCount, formationType, spacing) {
+        var offsets = []
+        for (var i = 0; i < vehicleCount; i++) {
+            var offset = { latOffset: 0, lonOffset: 0 }
+            switch (formationType) {
+            case 0: // Line - vehicles spread along longitude
+                offset.lonOffset = (i + 1) * spacing
+                break
+            case 1: // V-Shape - alternating left/right behind leader
+                var side = (i % 2 === 0) ? 1 : -1
+                var row = Math.floor(i / 2) + 1
+                offset.latOffset = -row * spacing * 0.7071
+                offset.lonOffset = side * row * spacing * 0.7071
+                break
+            case 2: // Circle - evenly distributed around leader
+                var angle = (2 * Math.PI * (i + 1)) / (vehicleCount + 1)
+                offset.latOffset = spacing * Math.cos(angle)
+                offset.lonOffset = spacing * Math.sin(angle)
+                break
+            case 3: // Grid - rows and columns behind leader
+                var cols = Math.ceil(Math.sqrt(vehicleCount))
+                offset.latOffset = -(Math.floor(i / cols) + 1) * spacing
+                offset.lonOffset = (i % cols) * spacing - ((cols - 1) * spacing / 2)
+                break
+            }
+            offsets.push(offset)
+        }
+        return offsets
     }
 }

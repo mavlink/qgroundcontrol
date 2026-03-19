@@ -17,6 +17,10 @@ ColumnLayout {
     property bool   _hasSelection:      _selectedCount > 0
     property real   _spacing:           ScreenTools.defaultFontPixelHeight / 2
 
+    // Expose formation settings so other components can read them
+    property int    selectedFormation:  0
+    property real   formationSpacing:   spacingSlider.value
+
     spacing: _spacing
 
     // --- Swarm Status ---
@@ -30,6 +34,40 @@ ColumnLayout {
     QGCLabel {
         text:               qsTr("%1 of %2 vehicles selected").arg(_selectedCount).arg(_vehicles ? _vehicles.count : 0)
         Layout.alignment:   Qt.AlignHCenter
+    }
+
+    // --- Emergency Stop (prominent, always visible) ---
+    Rectangle {
+        Layout.fillWidth:   true
+        height:             emergencyStopBtn.implicitHeight + ScreenTools.defaultFontPixelHeight
+        color:              "#40FF0000"
+        radius:             ScreenTools.defaultFontPixelHeight / 4
+        border.color:       "red"
+        border.width:       2
+
+        QGCButton {
+            id:                     emergencyStopBtn
+            anchors.fill:           parent
+            anchors.margins:        ScreenTools.defaultFontPixelHeight / 4
+            text:                   qsTr("EMERGENCY STOP ALL")
+            enabled:                _hasSelection && _anyArmed()
+
+            background: Rectangle {
+                color:  emergencyStopBtn.enabled ? (emergencyStopBtn.pressed ? "#CC0000" : "red") : qgcPal.windowShade
+                radius: ScreenTools.defaultFontPixelHeight / 4
+            }
+
+            contentItem: QGCLabel {
+                text:                   emergencyStopBtn.text
+                font.bold:              true
+                font.pointSize:         ScreenTools.mediumFontPointSize
+                color:                  emergencyStopBtn.enabled ? "white" : qgcPal.text
+                horizontalAlignment:    Text.AlignHCenter
+                verticalAlignment:      Text.AlignVCenter
+            }
+
+            onClicked: _guidedController.confirmAction(_guidedController.actionMVEmergencyStop)
+        }
     }
 
     // --- Formation Selector ---
@@ -66,10 +104,10 @@ ColumnLayout {
                         text:                   modelData.icon + "\n" + modelData.name
                         Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 3
                         Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 3
-                        checked:                _selectedFormation === index
+                        checked:                selectedFormation === index
                         checkable:              true
 
-                        onClicked: _selectedFormation = index
+                        onClicked: selectedFormation = index
                     }
                 }
             }
@@ -97,8 +135,6 @@ ColumnLayout {
             }
         }
     }
-
-    property int _selectedFormation: 0
 
     // --- Swarm Action Buttons ---
     Rectangle {
@@ -184,6 +220,106 @@ ColumnLayout {
         }
     }
 
+    // --- Altitude Sync Control ---
+    Rectangle {
+        Layout.fillWidth:   true
+        height:             altSyncColumn.implicitHeight + ScreenTools.defaultFontPixelHeight
+        color:              qgcPal.windowShade
+        radius:             ScreenTools.defaultFontPixelHeight / 4
+
+        ColumnLayout {
+            id:                     altSyncColumn
+            anchors.fill:           parent
+            anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
+            spacing:                _spacing
+
+            QGCLabel {
+                text:               qsTr("Altitude Sync")
+                font.bold:          true
+                Layout.alignment:   Qt.AlignHCenter
+            }
+
+            RowLayout {
+                Layout.alignment:   Qt.AlignHCenter
+                spacing:            ScreenTools.defaultFontPixelWidth
+
+                QGCLabel {
+                    text: qsTr("Target:")
+                }
+
+                QGCSlider {
+                    id:                     altSyncSlider
+                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 10
+                    from:                   5
+                    to:                     200
+                    value:                  30
+                    stepSize:               1
+                }
+
+                QGCLabel {
+                    text: altSyncSlider.value.toFixed(0) + " m"
+                }
+            }
+
+            QGCButton {
+                text:               qsTr("Set Altitude for All Selected")
+                Layout.fillWidth:   true
+                enabled:            _hasSelection && _anyFlying()
+                onClicked:          _guidedController.confirmAction(_guidedController.actionMVChangeAlt, altSyncSlider.value)
+            }
+        }
+    }
+
+    // --- Speed Control ---
+    Rectangle {
+        Layout.fillWidth:   true
+        height:             speedColumn.implicitHeight + ScreenTools.defaultFontPixelHeight
+        color:              qgcPal.windowShade
+        radius:             ScreenTools.defaultFontPixelHeight / 4
+
+        ColumnLayout {
+            id:                     speedColumn
+            anchors.fill:           parent
+            anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
+            spacing:                _spacing
+
+            QGCLabel {
+                text:               qsTr("Speed Control")
+                font.bold:          true
+                Layout.alignment:   Qt.AlignHCenter
+            }
+
+            RowLayout {
+                Layout.alignment:   Qt.AlignHCenter
+                spacing:            ScreenTools.defaultFontPixelWidth
+
+                QGCLabel {
+                    text: qsTr("Max:")
+                }
+
+                QGCSlider {
+                    id:                     speedSlider
+                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 10
+                    from:                   1
+                    to:                     30
+                    value:                  5
+                    stepSize:               0.5
+                }
+
+                QGCLabel {
+                    text: speedSlider.value.toFixed(1) + " m/s"
+                }
+            }
+
+            QGCButton {
+                text:               qsTr("Set Speed for All Selected")
+                Layout.fillWidth:   true
+                enabled:            _hasSelection && _anyFlying()
+                onClicked:          _guidedController.confirmAction(_guidedController.actionMVChangeSpeed, speedSlider.value)
+            }
+        }
+    }
+
     // --- Helper Functions ---
     function _anyFlying() {
         if (!_selectedVehicles) return false
@@ -224,5 +360,44 @@ ColumnLayout {
             if (vehicle.armed && !vehicle.flying) return true
         }
         return false
+    }
+
+    // --- Formation Offset Calculator ---
+    // Calculates position offsets for each vehicle in the formation relative to the leader
+    // Returns an array of {latOffset, lonOffset} in meters
+    function calculateFormationOffsets(vehicleCount, formationType, spacing) {
+        var offsets = []
+        for (var i = 0; i < vehicleCount; i++) {
+            var offset = { latOffset: 0, lonOffset: 0 }
+            switch (formationType) {
+            case 0: // Line
+                offset.lonOffset = i * spacing
+                break
+            case 1: // V-Shape
+                if (i > 0) {
+                    var side = (i % 2 === 0) ? 1 : -1
+                    var row = Math.ceil(i / 2)
+                    offset.latOffset = -row * spacing * 0.7071  // cos(45)
+                    offset.lonOffset = side * row * spacing * 0.7071  // sin(45)
+                }
+                break
+            case 2: // Circle
+                if (i > 0 && vehicleCount > 1) {
+                    var angle = (2 * Math.PI * i) / vehicleCount
+                    offset.latOffset = spacing * Math.cos(angle)
+                    offset.lonOffset = spacing * Math.sin(angle)
+                }
+                break
+            case 3: // Grid
+                if (i > 0) {
+                    var cols = Math.ceil(Math.sqrt(vehicleCount))
+                    offset.latOffset = -Math.floor(i / cols) * spacing
+                    offset.lonOffset = (i % cols) * spacing
+                }
+                break
+            }
+            offsets.push(offset)
+        }
+        return offsets
     }
 }
