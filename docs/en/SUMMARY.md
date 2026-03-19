@@ -53,7 +53,7 @@
   - [General](qgc-user-guide/settings_view/general.md)
     - [CSV Logging](qgc-user-guide/settings_view/csv.md)
   - [Offline Maps](qgc-user-guide/settings_view/offline_maps.md)
-  - [MAVLink](qgc-user-guide/settings_view/mavlink.md)
+  - [Telemetry](qgc-user-guide/settings_view/telemetry.md)
   - [Console Logging](qgc-user-guide/settings_view/console_logging.md)
   - [Virtual Joystick (PX4)](qgc-user-guide/settings_view/virtual_joystick.md)
 - [Analyze](qgc-user-guide/analyze_view/index.md)

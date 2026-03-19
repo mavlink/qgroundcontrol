@@ -52,6 +52,8 @@ public:
     double vehicleLongitude() const { return _vehicleLongitude; }
     double vehicleAltitudeAMSL() const { return _vehicleAltitudeAMSL; }
 
+    bool signingEnabled() const { return _signingEnabled; }
+
     /// Sends the specified mavlink message to QGC
     void respondWithMavlinkMessage(const mavlink_message_t &msg);
 
@@ -208,6 +210,7 @@ private:
     void _handleLogRequestList(const mavlink_message_t &msg);
     void _handleLogRequestData(const mavlink_message_t &msg);
     void _handleParamMapRC(const mavlink_message_t &msg);
+    void _handleSetupSigning(const mavlink_message_t &msg);
     void _handleRequestMessage(const mavlink_command_long_t &request, bool &accepted, bool &noAck);
     void _handleRequestMessageAutopilotVersion(const mavlink_command_long_t &request, bool &accepted);
     void _handleRequestMessageDebug(const mavlink_command_long_t &request, bool &accepted, bool &noAck);
@@ -289,6 +292,7 @@ private:
 
     double _vehicleAltitudeAMSL = _defaultVehicleHomeAltitude;
     bool _commLost = false;
+    bool _signingEnabled = false;
     bool _highLatencyTransmissionEnabled = true;
 
     int _sendHomePositionDelayCount = 10;               ///< No home position for 4 seconds

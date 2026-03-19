@@ -785,20 +785,6 @@ bool LinkManager::isLinkUSBDirect(const LinkInterface *link)
     return false;
 }
 
-void LinkManager::resetMavlinkSigning()
-{
-    // Make a copy under mutex protection to avoid holding lock during signing initialization
-    QList<SharedLinkInterfacePtr> links;
-    {
-        QMutexLocker locker(&_linksMutex);
-        links = _rgLinks;
-    }
-
-    for (const SharedLinkInterfacePtr &sharedLink: links) {
-        sharedLink->initMavlinkSigning();
-    }
-}
-
 #ifndef QGC_NO_SERIAL_LINK // Serial Only Functions
 
 void LinkManager::_filterCompositePorts(QList<QGCSerialPortInfo> &portList)

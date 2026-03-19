@@ -185,7 +185,7 @@ If a failure occurs you should see a status message in the QGC UI similar to:
 
 > Mission transfer failed. Retry transfer. Error: Mission write mission count failed, maximum retries exceeded.
 
-The loss rate for your link can be viewed in [Settings View > MAVLink](../settings_view/mavlink.md).
+The loss rate for your link can be viewed in [App Settings > Telemetry](../settings_view/telemetry.md).
 The loss rate should be in the low single digits (i.e. maximum of 2 or 3):
 
 - A loss rate in the high single digits can lead to intermittent failures.

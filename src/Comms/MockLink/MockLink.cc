@@ -699,6 +699,9 @@ void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
     case MAVLINK_MSG_ID_PARAM_MAP_RC:
         _handleParamMapRC(msg);
         break;
+    case MAVLINK_MSG_ID_SETUP_SIGNING:
+        _handleSetupSigning(msg);
+        break;
     default:
         break;
     }
@@ -724,6 +727,28 @@ void MockLink::_handleParamMapRC(const mavlink_message_t &msg)
     } else {
         qCWarning(MockLinkLog) << "MockLink - PARAM_MAP_RC: Unsupported param_index" << paramMapRC.param_index;
     }
+}
+
+void MockLink::_handleSetupSigning(const mavlink_message_t &msg)
+{
+    mavlink_setup_signing_t setupSigning{};
+    mavlink_msg_setup_signing_decode(&msg, &setupSigning);
+
+    if (setupSigning.target_system != _vehicleSystemId) {
+        return;
+    }
+
+    // All-zero key = disable signing
+    bool allZeroKey = true;
+    for (const uint8_t byte : setupSigning.secret_key) {
+        if (byte != 0) {
+            allZeroKey = false;
+            break;
+        }
+    }
+
+    _signingEnabled = !allZeroKey;
+    qCDebug(MockLinkLog) << "Signing" << (_signingEnabled ? "enabled" : "disabled");
 }
 
 void MockLink::_handleSetMode(const mavlink_message_t &msg)

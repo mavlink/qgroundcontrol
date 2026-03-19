@@ -1,11 +1,9 @@
-# MAVLink Settings
+# Telemetry Settings
 
-The MAVLink settings (**SettingsView > MAVLink**) allow you to configure options and view information specific to MAVLink communications.
+The Telemetry settings (**App Settings > Telemetry**) allow you to configure options and view information specific to MAVLink communications.
 This includes setting the MAVLink system ID for _QGroundControl_ and viewing link quality.
 
 The screen also allows you to manage [MAVLink 2 Log Streaming](#logging) (PX4 only), including _automating log upload to Flight Review_!
-
-![MAVLink settings screen](../../../assets/settings/mavlink/overview.png)
 
 ## Ground Station {#ground_station}
 
@@ -29,6 +27,29 @@ This shows the status of MAVLink message transfer over the communications link.
 A high **Loss rate** may lead to protocol errors for things like parameter download or mission upload/download.
 
 ![Link Status](../../../assets/settings/mavlink/link_status.jpg)
+
+## MAVLink 2 Signing {#signing}
+
+The _MAVLink 2 Signing_ section (under **App Settings > Telemetry**) allows you to manage signing keys used for [MAVLink 2 message signing](https://mavlink.io/en/guide/message_signing.html).
+When signing is enabled, all messages between QGroundControl and the vehicle are cryptographically authenticated, preventing unauthorized command injection.
+
+### Key Management
+
+- **Add Key:** Enter a friendly name and a passphrase. The passphrase is SHA-256 hashed to produce the 32-byte signing key. Only the hash is stored — the passphrase is not saved.
+- **Enable:** Sends the signing key to the active vehicle via `SETUP_SIGNING`. The vehicle and QGroundControl will both begin signing messages. Only available when no key is currently active.
+- **Disable:** Disables signing on the active vehicle by sending an all-zero key. Only shown for the currently active key.
+- **Delete:** Removes a key from QGroundControl's key store. Not available for keys that are in use by any connected vehicle. A warning is shown because the vehicle may still have the key configured — deleting it locally means you can no longer communicate with that vehicle over a signed connection.
+
+### Auto-Detection
+
+When QGroundControl receives signed packets from a vehicle, it automatically tries each stored key to find a match.
+If a match is found, signing is automatically configured on the link — no manual action is needed.
+The detected key name is shown in the Signing toolbar indicator.
+
+::: warning
+Signing keys should only be sent to the vehicle over secure (wired or encrypted) links.
+Anyone who intercepts the key can sign messages and send commands to the vehicle.
+:::
 
 ## MAVLink 2 Logging (PX4 only) {#logging}
 

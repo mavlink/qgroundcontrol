@@ -88,9 +88,6 @@ public:
     /// Returns pointer to the mavlink support forwarding link, or nullptr if it does not exist
     SharedLinkInterfacePtr mavlinkForwardingSupportLink();
 
-    /// Re-initilize the mavlink signing for all links. Used when the signing key changes.
-    void resetMavlinkSigning();
-
     void disconnectAll();
 
     /// Allocates a mavlink channel for use
