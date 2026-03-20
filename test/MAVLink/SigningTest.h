@@ -12,4 +12,5 @@ private slots:
     void _testCreateSetupSigning();
     void _testVerifySignature();
     void _testTryDetectKey();
+    void _testMigrateLegacySigningKey();
 };

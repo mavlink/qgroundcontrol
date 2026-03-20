@@ -98,6 +98,16 @@ QByteArray MAVLinkSigningKeys::keyBytesByName(const QString& name) const
     return QByteArray();
 }
 
+bool MAVLinkSigningKeys::_keyExists(const QString& name) const
+{
+    for (int i = 0; i < _keys->count(); ++i) {
+        if (_keys->value<MAVLinkSigningKey*>(i)->name() == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void MAVLinkSigningKeys::addKey(const QString& name, const QString& passphrase)
 {
     if (name.isEmpty() || passphrase.isEmpty()) {
@@ -152,7 +162,12 @@ void MAVLinkSigningKeys::_save()
 
 void MAVLinkSigningKeys::_load()
 {
+    _keys->clearAndDeleteContents();
+
+    bool migrated = false;
     QSettings settings;
+
+    // Load existing named keys first so _keyExists() sees them during migration.
     settings.beginGroup(kSettingsGroup);
 
     const int count = settings.beginReadArray(kKeysArrayKey);
@@ -167,4 +182,27 @@ void MAVLinkSigningKeys::_load()
     settings.endArray();
 
     settings.endGroup();
+
+    // Migrate old single signing key from the pre-named-keys Fact system.
+    // The old "mavlink2SigningKey" was stored as a raw passphrase at the QSettings root level.
+    if (settings.contains(kOldSigningKeySettingsKey)) {
+        const QString oldPassphrase = settings.value(kOldSigningKeySettingsKey).toString();
+        settings.remove(kOldSigningKeySettingsKey);
+        if (!oldPassphrase.isEmpty()) {
+            QString migratedName = QStringLiteral("Migrated Key");
+            int suffix = 1;
+            while (_keyExists(migratedName)) {
+                migratedName = QStringLiteral("Migrated Key %1").arg(suffix++);
+            }
+            const QByteArray keyBytes = QCryptographicHash::hash(oldPassphrase.toUtf8(), QCryptographicHash::Sha256);
+            _keys->append(new MAVLinkSigningKey(migratedName, keyBytes, _keys));
+            migrated = true;
+            qCDebug(MAVLinkSigningKeysLog) << "Migrated legacy signing key to named key system";
+        }
+        settings.sync();
+    }
+
+    if (migrated) {
+        _save();
+    }
 }

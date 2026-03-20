@@ -68,8 +68,11 @@ signals:
     void keyUsageChanged();
 
 private:
+    friend class SigningTest;
+
     void _save();
     void _load();
+    bool _keyExists(const QString& name) const;
     void _connectVehicle(Vehicle* vehicle);
     void _disconnectVehicle(Vehicle* vehicle);
 
@@ -79,5 +82,8 @@ private:
     static constexpr const char* kKeysArrayKey  = "keys";
     static constexpr const char* kNameKey       = "name";
     static constexpr const char* kKeyBytesKey   = "keyBytes";
+
+    // Old Fact-based signing key (pre-named-keys system)
+    static constexpr const char* kOldSigningKeySettingsKey = "mavlink2SigningKey";
 };
 
