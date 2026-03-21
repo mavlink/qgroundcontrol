@@ -1,0 +1,43 @@
+[project]
+name = "qgc-tools"
+version = "0.0.0"
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+scripts = [
+  "defusedxml>=0.7.1",
+  "httpx>=0.28",
+  "jinja2>=3.1",
+]
+precommit = [
+  "pre-commit",
+]
+test = [
+  "pytest",
+  "jinja2",
+  "pyyaml",
+]
+ci = [
+  "pre-commit",
+  "meson",
+  "ninja",
+]
+qt = [
+  "aqtinstall",
+]
+coverage = [
+  "gcovr",
+]
+dev = [
+  "jinja2",
+  "pyyaml",
+  "pymavlink",
+]
+lsp = [
+  "pygls",
+  "lsprotocol",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

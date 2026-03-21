@@ -2,29 +2,29 @@ name: AWS Upload
 description: Upload release artifacts to AWS S3 and invalidate CloudFront cache
 
 inputs:
-  artifact_name:
+  artifact-name:
     description: Artifact filename to upload
     required: true
-  artifact_path:
+  artifact-path:
     description: Path to artifact file
     required: true
-  aws_key_id:
+  aws-key-id:
     description: AWS access key ID
     required: false
-  aws_secret_access_key:
+  aws-secret-access-key:
     description: AWS secret access key
     required: false
-  aws_role_arn:
+  aws-role-arn:
     description: AWS IAM role ARN for OIDC authentication (preferred over static credentials)
     required: false
-  aws_distribution_id:
+  aws-distribution-id:
     description: AWS CloudFront distribution ID (optional, for cache invalidation)
     required: false
-  aws_region:
+  aws-region:
     description: AWS region
     required: false
     default: 'us-west-2'
-  s3_bucket:
+  s3-bucket:
     description: S3 bucket name
     required: false
     default: 'qgroundcontrol'
@@ -32,78 +32,62 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Validate credentials
+    - name: Validate credentials and artifact
       shell: bash
       env:
-        AWS_ROLE_ARN: ${{ inputs.aws_role_arn }}
-        AWS_KEY_ID: ${{ inputs.aws_key_id }}
-        AWS_SECRET_KEY: ${{ inputs.aws_secret_access_key }}
+        AWS_ROLE_ARN: ${{ inputs.aws-role-arn }}
+        AWS_KEY_ID: ${{ inputs.aws-key-id }}
+        AWS_SECRET_KEY: ${{ inputs.aws-secret-access-key }}
       run: |
-        if [[ -z "$AWS_ROLE_ARN" && ( -z "$AWS_KEY_ID" || -z "$AWS_SECRET_KEY" ) ]]; then
-          echo "::error::Either aws_role_arn (OIDC) or both aws_key_id and aws_secret_access_key (static credentials) must be provided"
-          exit 1
-        fi
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" validate \
+          --role-arn "${AWS_ROLE_ARN:-}" \
+          --key-id "${AWS_KEY_ID:-}" \
+          --secret-key "${AWS_SECRET_KEY:-}" \
+          --artifact-path "${{ inputs.artifact-path }}" \
+          --artifact-name "${{ inputs.artifact-name }}"
 
     - name: Configure AWS Credentials (OIDC)
-      if: inputs.aws_role_arn != ''
-      uses: aws-actions/configure-aws-credentials@v4
+      if: inputs.aws-role-arn != ''
+      uses: aws-actions/configure-aws-credentials@v6
       with:
-        role-to-assume: ${{ inputs.aws_role_arn }}
-        aws-region: ${{ inputs.aws_region }}
+        role-to-assume: ${{ inputs.aws-role-arn }}
+        aws-region: ${{ inputs.aws-region }}
 
     - name: Configure AWS Credentials (Static)
-      if: inputs.aws_role_arn == '' && inputs.aws_key_id != ''
-      uses: aws-actions/configure-aws-credentials@v4
+      if: inputs.aws-role-arn == '' && inputs.aws-key-id != ''
+      uses: aws-actions/configure-aws-credentials@v6
       with:
-        aws-access-key-id: ${{ inputs.aws_key_id }}
-        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
-        aws-region: ${{ inputs.aws_region }}
+        aws-access-key-id: ${{ inputs.aws-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
 
     - name: Upload to S3 builds folder
       shell: bash
-      env:
-        ARTIFACT_PATH: ${{ inputs.artifact_path }}
-        S3_BUCKET: ${{ inputs.s3_bucket }}
-        REF_NAME: ${{ github.ref_name }}
-        ARTIFACT_NAME: ${{ inputs.artifact_name }}
       run: |
-        # Validate artifact path exists and is a file
-        if [[ ! -f "$ARTIFACT_PATH" ]]; then
-          echo "Error: Artifact not found: $ARTIFACT_PATH" >&2
-          exit 1
-        fi
-
-        # Validate artifact name contains only safe characters (no path separators)
-        if [[ "$ARTIFACT_NAME" =~ [/\\] ]] || [[ "$ARTIFACT_NAME" =~ \.\. ]]; then
-          echo "Error: Invalid artifact name (contains path separators): $ARTIFACT_NAME" >&2
-          exit 1
-        fi
-
-        # Sanitize ref name - remove path traversal attempts and special chars
-        SAFE_REF_NAME=$(echo "$REF_NAME" | sed 's/\.\.//g' | sed 's/[^a-zA-Z0-9._-]/_/g')
-        # Intentional: public-read for distributing release builds to users.
-        aws s3 cp "$ARTIFACT_PATH" \
-          "s3://${S3_BUCKET}/builds/${SAFE_REF_NAME}/${ARTIFACT_NAME}" \
-          --acl public-read
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" upload \
+          --artifact-path "${{ inputs.artifact-path }}" \
+          --artifact-name "${{ inputs.artifact-name }}" \
+          --ref-name "${{ github.ref_name }}" \
+          --s3-bucket "${{ inputs.s3-bucket }}"
 
     - name: Upload to S3 latest folder
       if: github.ref_type == 'tag'
       shell: bash
       env:
-        ARTIFACT_PATH: ${{ inputs.artifact_path }}
-        S3_BUCKET: ${{ inputs.s3_bucket }}
-        ARTIFACT_NAME: ${{ inputs.artifact_name }}
+        ARTIFACT_PATH: ${{ inputs.artifact-path }}
+        S3_BUCKET: ${{ inputs.s3-bucket }}
+        ARTIFACT_NAME: ${{ inputs.artifact-name }}
       run: |
         aws s3 cp "$ARTIFACT_PATH" \
           "s3://${S3_BUCKET}/latest/${ARTIFACT_NAME}" \
           --acl public-read
 
     - name: Invalidate CloudFront cache
-      if: github.ref_type == 'tag' && inputs.aws_distribution_id != ''
+      if: github.ref_type == 'tag' && inputs.aws-distribution-id != ''
       shell: bash
       env:
-        DISTRIBUTION_ID: ${{ inputs.aws_distribution_id }}
-        ARTIFACT_NAME: ${{ inputs.artifact_name }}
+        DISTRIBUTION_ID: ${{ inputs.aws-distribution-id }}
+        ARTIFACT_NAME: ${{ inputs.artifact-name }}
       run: |
         aws cloudfront create-invalidation \
           --distribution-id "$DISTRIBUTION_ID" \

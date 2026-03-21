@@ -14,6 +14,7 @@ class APMMotorComponent;
 class APMGimbalComponent;
 class APMLightsComponent;
 class APMSubFrameComponent;
+class APMServoComponent;
 class ESP8266Component;
 class APMHeliComponent;
 class APMRemoteSupportComponent;
@@ -43,6 +44,7 @@ protected:
     APMLightsComponent *_lightsComponent = nullptr;
     APMSubFrameComponent *_subFrameComponent = nullptr;
     APMFlightModesComponent *_flightModesComponent = nullptr;
+    APMServoComponent *_servoComponent = nullptr;
     APMPowerComponent *_powerComponent = nullptr;
     APMMotorComponent *_motorComponent = nullptr;
     APMRadioComponent *_radioComponent = nullptr;

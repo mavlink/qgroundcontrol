@@ -67,18 +67,23 @@ QString StateMachineProfiler::summary() const
                   return a.totalTimeMs > b.totalTimeMs;
               });
 
-    lines << QStringLiteral("%-30s %8s %10s %10s %10s %10s")
-             .arg("State", "Count", "Total(ms)", "Avg(ms)", "Min(ms)", "Max(ms)");
+    lines << QStringLiteral("%1 %2 %3 %4 %5 %6")
+             .arg("State", -30)
+             .arg("Count", 8)
+             .arg("Total(ms)", 10)
+             .arg("Avg(ms)", 10)
+             .arg("Min(ms)", 10)
+             .arg("Max(ms)", 10);
     lines << QString(80, '-');
 
     for (const auto& p : sortedProfiles) {
-        lines << QStringLiteral("%-30s %8d %10lld %10.1f %10lld %10lld")
-                 .arg(p.name.left(30))
-                 .arg(p.entryCount)
-                 .arg(p.totalTimeMs)
-                 .arg(p.averageTimeMs())
-                 .arg(p.minTimeMs == std::numeric_limits<qint64>::max() ? 0 : p.minTimeMs)
-                 .arg(p.maxTimeMs);
+        lines << QStringLiteral("%1 %2 %3 %4 %5 %6")
+                 .arg(p.name.left(30), -30)
+                 .arg(p.entryCount, 8)
+                 .arg(p.totalTimeMs, 10)
+                 .arg(p.averageTimeMs(), 10, 'f', 1)
+                 .arg(p.minTimeMs == std::numeric_limits<qint64>::max() ? 0 : p.minTimeMs, 10)
+                 .arg(p.maxTimeMs, 10);
     }
 
     return lines.join('\n');

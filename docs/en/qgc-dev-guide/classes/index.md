@@ -1,5 +1,9 @@
 # Class Hierarchy (high level)
 
+::: tip
+Doxygen documentation for classes can be found at <https://api.qgroundcontrol.com/master/annotated.html>.
+:::
+
 ## LinkManager, LinkInterface
 
 A "Link" in QGC is a specific type of communication pipe with the vehicle such as a serial port or UDP over WiFi. The base class for all links is LinkInterface. Each link runs on it's own thread and sends bytes to MAVLinkProtocol.

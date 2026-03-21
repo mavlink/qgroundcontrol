@@ -73,7 +73,13 @@ add_qgc_test(GeoTagControllerTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFile
 add_qgc_test(GeoTagDataTest LABELS Unit AnalyzeView)
 add_qgc_test(GeoTagImageModelTest LABELS Unit AnalyzeView)
 add_qgc_test(ULogParserTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFiles)
-add_qgc_test(LogDownloadTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
+add_qgc_test(MAVLinkChartControllerTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkConsoleControllerTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkInspectorControllerTest LABELS Unit AnalyzeView)
+add_qgc_test(OnboardLogDownloadTest LABELS Integration AnalyzeView Vehicle RESOURCE_LOCK MockLink)
+add_qgc_test(MAVLinkMessageFieldTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkMessageTest LABELS Unit AnalyzeView)
+add_qgc_test(MAVLinkSystemTest LABELS Unit AnalyzeView)
 add_qgc_test(MavlinkLogTest LABELS Integration AnalyzeView Vehicle RESOURCE_LOCK MockLink)
 
 # ----------------------------------------------------------------------------
@@ -84,6 +90,12 @@ add_qgc_test(QGCCameraManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockL
 add_qgc_test(VehicleCameraControlTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(QGCVideoStreamInfoTest LABELS Unit Camera)
 add_qgc_test(VideoManagerTest LABELS Unit)
+
+# ----------------------------------------------------------------------------
+# VideoManager
+# ----------------------------------------------------------------------------
+add_subdirectory(VideoManager)
+add_qgc_test(GStreamerTest LABELS Integration)
 
 # ----------------------------------------------------------------------------
 # Comms
@@ -105,6 +117,7 @@ add_qgc_test(FactSystemTestGeneric LABELS Integration Vehicle RESOURCE_LOCK Mock
 add_qgc_test(FactSystemTestPX4 LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(FactTest LABELS Unit)
 add_qgc_test(FactValueSliderListModelTest LABELS Unit)
+add_qgc_test(HashCheckTest LABELS Integration Vehicle SERIAL TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(ParameterManagerTest LABELS Integration Vehicle SERIAL TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 
 # ----------------------------------------------------------------------------
@@ -117,7 +130,10 @@ add_qgc_test(FollowMeTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 # GPS
 # ----------------------------------------------------------------------------
 add_subdirectory(GPS)
-add_qgc_test(GpsTest LABELS Unit GPS)
+add_qgc_test(RTCMParserTest LABELS Unit)
+add_qgc_test(NTRIPManagerTest LABELS Unit)
+add_qgc_test(NTRIPHttpTransportTest LABELS Unit)
+add_qgc_test(NTRIPSourceTableTest LABELS Unit)
 
 # ----------------------------------------------------------------------------
 # Joystick
@@ -133,6 +149,7 @@ add_qgc_test(SDLTest LABELS Unit Joystick RESOURCE_LOCK Joystick)
 # ----------------------------------------------------------------------------
 add_subdirectory(MAVLink)
 add_qgc_test(SigningTest LABELS Unit MAVLink)
+add_qgc_test(MockLinkSigningTest LABELS Integration Vehicle MAVLink RESOURCE_LOCK MockLink)
 add_qgc_test(StatusTextHandlerTest LABELS Unit MAVLink)
 add_qgc_test(SysStatusSensorInfoTest LABELS Unit MAVLink)
 
@@ -149,6 +166,7 @@ add_qgc_test(MissionCommandTreeEditorTest LABELS Unit MissionManager TIMEOUT ${Q
 add_qgc_test(MissionCommandTreeTest LABELS Unit MissionManager)
 add_qgc_test(MissionControllerManagerTest LABELS Integration MissionManager RESOURCE_LOCK MockLink)
 add_qgc_test(MissionControllerTest LABELS Integration MissionManager RESOURCE_LOCK MockLink)
+add_qgc_test(MissionControllerTreeTest LABELS Integration MissionManager RESOURCE_LOCK MockLink)
 add_qgc_test(MissionItemTest LABELS Unit MissionManager)
 add_qgc_test(MissionManagerTest LABELS Integration MissionManager SERIAL)
 add_qgc_test(MissionSettingsTest LABELS Unit MissionManager)
@@ -179,7 +197,10 @@ add_qgc_test(UrlFactoryTest LABELS Unit)
 # QmlControls
 # ----------------------------------------------------------------------------
 add_subdirectory(QmlControls)
+add_qgc_test(ObjectItemModelBaseTest LABELS Unit)
+add_qgc_test(ObjectListModelBaseTest LABELS Unit)
 add_qgc_test(QmlObjectListModelTest LABELS Unit)
+add_qgc_test(QmlObjectTreeModelTest LABELS Unit)
 
 # ----------------------------------------------------------------------------
 # Terrain

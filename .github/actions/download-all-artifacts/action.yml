@@ -13,6 +13,10 @@ inputs:
     description: Comma-separated workflow names to download artifacts from
     required: false
     default: Linux,Windows,MacOS,Android
+  event:
+    description: Optional workflow event name to filter runs by
+    required: false
+    default: ''
   output-dir:
     description: Output directory for downloaded artifacts
     required: false
@@ -43,17 +47,28 @@ runs:
         INPUT_HEAD_SHA: ${{ inputs.head-sha }}
         INPUT_OUTPUT_DIR: ${{ inputs.output-dir }}
         INPUT_WORKFLOWS: ${{ inputs.workflows }}
+        INPUT_EVENT: ${{ inputs.event }}
         INPUT_ARTIFACT_PREFIXES: ${{ inputs.artifact-prefixes }}
         INPUT_ARTIFACT_METADATA_FILE: ${{ inputs.artifact-metadata-file }}
       run: |
-        ARGS=(--repo "$INPUT_REPO" --head-sha "$INPUT_HEAD_SHA" --output-dir "$INPUT_OUTPUT_DIR" --workflows "$INPUT_WORKFLOWS")
-        if [[ -n "$RUNS_FILE" && -f "$RUNS_FILE" ]]; then
-          ARGS+=(--runs-file "$RUNS_FILE")
-        fi
-        if [[ -n "$INPUT_ARTIFACT_PREFIXES" ]]; then
-          ARGS+=(--artifact-prefixes "$INPUT_ARTIFACT_PREFIXES")
-        fi
-        if [[ -n "$INPUT_ARTIFACT_METADATA_FILE" ]]; then
-          ARGS+=(--artifact-metadata-out "$INPUT_ARTIFACT_METADATA_FILE")
-        fi
-        python3 "${GITHUB_WORKSPACE}/tools/setup/download_artifacts.py" "${ARGS[@]}"
+        python3 -c "
+        import os, subprocess, sys
+        args = ['${GITHUB_WORKSPACE}/.github/scripts/download_artifacts.py',
+                '--repo', os.environ['INPUT_REPO'],
+                '--head-sha', os.environ['INPUT_HEAD_SHA'],
+                '--output-dir', os.environ['INPUT_OUTPUT_DIR'],
+                '--workflows', os.environ['INPUT_WORKFLOWS']]
+        event = os.environ.get('INPUT_EVENT', '')
+        if event:
+            args += ['--event', event]
+        runs = os.environ.get('RUNS_FILE', '')
+        if runs and os.path.isfile(runs):
+            args += ['--runs-file', runs]
+        prefixes = os.environ.get('INPUT_ARTIFACT_PREFIXES', '')
+        if prefixes:
+            args += ['--artifact-prefixes', prefixes]
+        meta = os.environ.get('INPUT_ARTIFACT_METADATA_FILE', '')
+        if meta:
+            args += ['--artifact-metadata-out', meta]
+        sys.exit(subprocess.run([sys.executable] + args).returncode)
+        "

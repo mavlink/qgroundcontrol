@@ -5,6 +5,8 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        MockLinkSigningTest.cc
+        MockLinkSigningTest.h
         SigningTest.cc
         SigningTest.h
         StatusTextHandlerTest.cc

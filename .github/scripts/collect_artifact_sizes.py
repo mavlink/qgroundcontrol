@@ -5,13 +5,17 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
-from datetime import datetime
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 from typing import Any
 
-from workflow_runs import list_run_artifacts, list_workflow_runs, parse_csv_list
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import list_run_artifacts, list_workflow_runs_for_sha, parse_csv_list
+from common.github_runs import select_latest_runs_by_name
 
 
 _DISTRIBUTABLE_PREFIXES = (
@@ -39,48 +43,19 @@ def _is_distributable_artifact(name: str) -> bool:
         return False
     return any(name.startswith(prefix) for prefix in _DISTRIBUTABLE_PREFIXES)
 
-
-def _parse_created_at(created_at: Any) -> datetime | None:
-    value = str(created_at).strip()
-    if not value:
-        return None
-    if value.endswith("Z"):
-        value = f"{value[:-1]}+00:00"
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError:
-        return None
-
-
-def _is_newer_run(candidate: dict[str, Any], existing: dict[str, Any]) -> bool:
-    candidate_created_at = str(candidate.get("created_at", ""))
-    existing_created_at = str(existing.get("created_at", ""))
-    candidate_dt = _parse_created_at(candidate_created_at)
-    existing_dt = _parse_created_at(existing_created_at)
-    if candidate_dt is not None and existing_dt is not None:
-        return candidate_dt > existing_dt
-    return candidate_created_at > existing_created_at
-
-
 def latest_successful_runs(
     runs: list[dict[str, Any]],
     platforms: list[str],
+    *,
+    event: str = "",
 ) -> dict[str, dict[str, Any]]:
-    target = set(platforms)
-    latest: dict[str, dict[str, Any]] = {}
-
-    for run in runs:
-        name = str(run.get("name", ""))
-        if name not in target:
-            continue
-        if str(run.get("status", "")) != "completed" or str(run.get("conclusion", "")) != "success":
-            continue
-
-        existing = latest.get(name)
-        if existing is None or _is_newer_run(run, existing):
-            latest[name] = run
-
-    return latest
+    return select_latest_runs_by_name(
+        runs,
+        set(platforms),
+        event=event,
+        status="completed",
+        conclusion="success",
+    )
 
 
 def format_size_human(size_bytes: int) -> str:
@@ -168,6 +143,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Comma-separated platform workflow names",
     )
     parser.add_argument(
+        "--event",
+        default="",
+        choices=["", "push", "pull_request", "workflow_dispatch", "schedule"],
+        help="Optional workflow event name to filter runs by",
+    )
+    parser.add_argument(
         "--output-file",
         default="artifact-sizes.json",
         help="Output JSON file path",
@@ -188,6 +169,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     platforms = parse_csv_list(args.platform_workflows)
+    event = str(args.event).strip()
 
     if args.runs_file:
         try:
@@ -204,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         runs = loaded_runs
     else:
-        runs = list_workflow_runs(args.repo, args.head_sha)
+        runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
     artifacts_by_run_id: dict[int, list[dict[str, Any]]] = {}
     if args.artifacts_file:
         artifacts_path = Path(args.artifacts_file)
@@ -225,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
                             artifact for artifact in run_artifacts if isinstance(artifact, dict)
                         ]
 
-    latest = latest_successful_runs(runs, platforms)
+    latest = latest_successful_runs(runs, platforms, event=event)
     artifacts = collect_artifacts(
         args.repo,
         latest,

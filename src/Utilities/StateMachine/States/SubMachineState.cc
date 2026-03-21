@@ -13,14 +13,14 @@ void SubMachineState::onEntry(QEvent* event)
     QGCState::onEntry(event);
 
     if (!_factory) {
-        qCWarning(QGCStateMachineLog) << stateName() << "no machine factory provided";
+        qCCritical(QGCStateMachineLog) << stateName() << "no machine factory provided";
         emit error();
         return;
     }
 
     _childMachine = _factory(this);
     if (!_childMachine) {
-        qCWarning(QGCStateMachineLog) << stateName() << "factory returned null machine";
+        qCCritical(QGCStateMachineLog) << stateName() << "factory returned null machine";
         emit error();
         return;
     }

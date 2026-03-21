@@ -7,6 +7,9 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "FirmwarePlugin.h"
+#include "FactMetaData.h"
+#include "ParameterManager.h"
+#include "QGC.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QMutexLocker>
@@ -696,6 +699,9 @@ void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
     case MAVLINK_MSG_ID_PARAM_MAP_RC:
         _handleParamMapRC(msg);
         break;
+    case MAVLINK_MSG_ID_SETUP_SIGNING:
+        _handleSetupSigning(msg);
+        break;
     default:
         break;
     }
@@ -721,6 +727,28 @@ void MockLink::_handleParamMapRC(const mavlink_message_t &msg)
     } else {
         qCWarning(MockLinkLog) << "MockLink - PARAM_MAP_RC: Unsupported param_index" << paramMapRC.param_index;
     }
+}
+
+void MockLink::_handleSetupSigning(const mavlink_message_t &msg)
+{
+    mavlink_setup_signing_t setupSigning{};
+    mavlink_msg_setup_signing_decode(&msg, &setupSigning);
+
+    if (setupSigning.target_system != _vehicleSystemId) {
+        return;
+    }
+
+    // All-zero key = disable signing
+    bool allZeroKey = true;
+    for (const uint8_t byte : setupSigning.secret_key) {
+        if (byte != 0) {
+            allZeroKey = false;
+            break;
+        }
+    }
+
+    _signingEnabled = !allZeroKey;
+    qCDebug(MockLinkLog) << "Signing" << (_signingEnabled ? "enabled" : "disabled");
 }
 
 void MockLink::_handleSetMode(const mavlink_message_t &msg)
@@ -782,6 +810,13 @@ void MockLink::_setParamFloatUnionIntoMap(int componentId, const QString &paramN
 
     qCDebug(MockLinkLog) << "_setParamFloatUnionIntoMap" << paramName << paramVariant;
     _mapParamName2Value[componentId][paramName] = paramVariant;
+}
+
+void MockLink::setMockParamValue(int componentId, const QString &paramName, float value)
+{
+    mavlink_param_union_t valueUnion{};
+    valueUnion.param_float = value;
+    _setParamFloatUnionIntoMap(componentId, paramName, valueUnion.param_float);
 }
 
 float MockLink::_floatUnionForParam(int componentId, const QString &paramName)
@@ -852,6 +887,37 @@ float MockLink::_floatUnionForParam(int componentId, const QString &paramName)
     return valueUnion.param_float;
 }
 
+uint32_t MockLink::_computeParamHash(int componentId) const
+{
+    // Volatile parameters are excluded from the hash, matching PX4 firmware and ParameterManager::_tryCacheHashLoad
+    static const QStringList volatileParams = {
+        QStringLiteral("COM_FLIGHT_UUID"),
+        QStringLiteral("EKF2_MAGBIAS_X"),
+        QStringLiteral("EKF2_MAGBIAS_Y"),
+        QStringLiteral("EKF2_MAGBIAS_Z"),
+        QStringLiteral("EKF2_MAG_DECL"),
+        QStringLiteral("LND_FLIGHT_T_HI"),
+        QStringLiteral("LND_FLIGHT_T_LO"),
+        QStringLiteral("SYS_RESTART_TYPE"),
+    };
+
+    uint32_t crc = 0;
+    const auto &params = _mapParamName2Value[componentId];
+    for (auto it = params.constBegin(); it != params.constEnd(); ++it) {
+        const QString &name = it.key();
+        if (volatileParams.contains(name)) {
+            continue;
+        }
+        const QVariant &value = it.value();
+        const MAV_PARAM_TYPE mavType = _mapParamName2MavParamType[componentId][name];
+        const FactMetaData::ValueType_t factType = ParameterManager::mavTypeToFactType(mavType);
+
+        crc = QGC::crc32(reinterpret_cast<const uint8_t *>(qPrintable(name)), name.length(), crc);
+        crc = QGC::crc32(static_cast<const uint8_t *>(value.constData()), FactMetaData::typeToSize(factType), crc);
+    }
+    return crc;
+}
+
 void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
 {
     if (_failureMode == MockConfiguration::FailParamNoResponseToRequestList) {
@@ -875,6 +941,7 @@ void MockLink::_handleParamRequestList(const mavlink_message_t &msg)
     // Start the worker routine
     _currentParamRequestListComponentIndex = 0;
     _currentParamRequestListParamIndex = 0;
+    _paramRequestListHashCheckSent = false;
 }
 
 void MockLink::_paramRequestListWorker()
@@ -897,6 +964,37 @@ void MockLink::_paramRequestListWorker()
     const int cParameters = _paramRequestListParamNames.count();
 
     if (_currentParamRequestListParamIndex >= cParameters) {
+        // All regular params sent — for PX4, append _HASH_CHECK as the last entry in the stream.
+        // Uses param_count=0, param_index=-1 (same as standalone response) so ParameterManager
+        // handles it via the _HASH_CHECK early-return path without affecting param count tracking.
+        if (_firmwareType == MAV_AUTOPILOT_PX4 && !_paramRequestListHashCheckSent) {
+            _paramRequestListHashCheckSent = true;
+
+            mavlink_param_union_t valueUnion{};
+            valueUnion.type = MAV_PARAM_TYPE_UINT32;
+            valueUnion.param_uint32 = _computeParamHash(componentId);
+
+            char paramId[MAVLINK_MSG_ID_PARAM_VALUE_LEN]{};
+            (void) strncpy(paramId, "_HASH_CHECK", MAVLINK_MSG_ID_PARAM_VALUE_LEN);
+
+            qCDebug(MockLinkLog) << "Sending _HASH_CHECK in PARAM_REQUEST_LIST stream" << componentId << "hash:" << valueUnion.param_uint32;
+
+            mavlink_message_t responseMsg{};
+            (void) mavlink_msg_param_value_pack_chan(
+                _vehicleSystemId,
+                componentId,
+                mavlinkChannel(),
+                &responseMsg,
+                paramId,
+                valueUnion.param_float,
+                MAV_PARAM_TYPE_UINT32,
+                0,      // param_count: 0 to avoid affecting ParameterManager's count tracking
+                -1      // param_index: -1 signals this is a virtual/out-of-band parameter
+            );
+            respondWithMavlinkMessage(responseMsg);
+            return;
+        }
+
         // Move to next component
         if (++_currentParamRequestListComponentIndex >= _paramRequestListComponentIds.count()) {
             _currentParamRequestListComponentIndex = -1;
@@ -906,6 +1004,7 @@ void MockLink::_paramRequestListWorker()
             // Cache param names for the new component
             _paramRequestListParamNames = _mapParamName2Value[_paramRequestListComponentIds.at(_currentParamRequestListComponentIndex)].keys();
             _currentParamRequestListParamIndex = 0;
+            _paramRequestListHashCheckSent = false;
         }
         return;
     }
@@ -961,6 +1060,18 @@ void MockLink::_handleParamSet(const mavlink_message_t &msg)
 
     qCDebug(MockLinkLog) << "_handleParamSet" << componentId << paramId << request.param_type;
 
+    // PX4 special case: _HASH_CHECK is a virtual parameter used by ParameterManager
+    // to signal cache-hit and stop parameter streaming. It is intentionally not part
+    // of the normal parameter maps.
+    if ((_firmwareType == MAV_AUTOPILOT_PX4) && (strncmp(paramId, "_HASH_CHECK", MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN) == 0)) {
+        QMutexLocker locker(&_paramRequestListMutex);
+        _currentParamRequestListComponentIndex = -1;
+        _paramRequestListComponentIds.clear();
+        _paramRequestListParamNames.clear();
+        qCDebug(MockLinkLog) << "Received _HASH_CHECK PARAM_SET, stopping parameter stream";
+        return;
+    }
+
     Q_ASSERT(_mapParamName2Value.contains(componentId));
     Q_ASSERT(_mapParamName2MavParamType.contains(componentId));
     Q_ASSERT(_mapParamName2Value[componentId].contains(paramId));
@@ -1005,15 +1116,23 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
     const QString paramName(QString::fromLocal8Bit(request.param_id, static_cast<int>(strnlen(request.param_id, MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN))));
     const int componentId = request.target_component;
 
-    // special case for magic _HASH_CHECK value
-    if ((request.target_component == MAV_COMP_ID_ALL) && (paramName == "_HASH_CHECK")) {
+    // special case for magic _HASH_CHECK value (PX4 only)
+    if ((_firmwareType == MAV_AUTOPILOT_PX4) && (paramName == "_HASH_CHECK")) {
+        _hashCheckRequestCount++;
+        if (_hashCheckNoResponse) {
+            return;
+        }
+
+        const int hashComponentId = _mapParamName2Value.contains(MAV_COMP_ID_AUTOPILOT1)
+            ? MAV_COMP_ID_AUTOPILOT1
+            : _mapParamName2Value.keys().first();
+
         mavlink_param_union_t valueUnion{};
         valueUnion.type = MAV_PARAM_TYPE_UINT32;
-        valueUnion.param_uint32 = 0;
-        // Special case of magic hash check value
+        valueUnion.param_uint32 = _computeParamHash(hashComponentId);
         (void) mavlink_msg_param_value_pack_chan(
             _vehicleSystemId,
-            componentId,
+            hashComponentId,
             mavlinkChannel(),
             &responseMsg,
             request.param_id,
@@ -1887,6 +2006,17 @@ void MockLink::_handleRequestMessage(const mavlink_command_long_t &request, bool
 {
     accepted = false;
     noAck = false;
+
+    const uint32_t requestedMessageId = static_cast<uint32_t>(request.param1);
+
+    // Per-message-ID no-response injection: silently drop the request (no ACK, no message)
+    {
+        QMutexLocker locker(&_requestMessageNoResponseMutex);
+        if (_requestMessageNoResponseIds.contains(requestedMessageId)) {
+            noAck = true;
+            return;
+        }
+    }
 
     switch (static_cast<int>(request.param1)) {
     case MAVLINK_MSG_ID_AUTOPILOT_VERSION:

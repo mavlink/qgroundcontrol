@@ -8,11 +8,11 @@
 #include "QGCMAVLink.h"
 #include "FollowMe.h"
 #include "FactMetaData.h"
+#include "Vehicle.h"
 
 class VehicleComponent;
 class AutoPilotPlugin;
-class Vehicle;
-class MavlinkCameraControl;
+class MavlinkCameraControlInterface;
 class QGCCameraManager;
 class Autotune;
 class LinkInterface;
@@ -82,14 +82,27 @@ public:
         GuidedTakeoffCapability =   1 << 7, ///< Vehicle supports guided takeoff
     };
 
-    /// Maps from on parameter name to another
-    ///     key:    parameter name to translate from
-    ///     value:  mapped parameter name
+    /// Parameter name remapping support:
+    /// When firmware renames a parameter across versions, callers should use the *newest* (current)
+    /// parameter name. ParameterManager::_remapParamNameToVersion() walks the remap tables backwards
+    /// from the highest known minor version down to the vehicle's actual firmware version, translating
+    /// new names to old names at each step. If the name is not found in any remap table it passes
+    /// through unchanged, so remapping is always safe to run.
+    ///
+    /// To bypass remapping (e.g. when checking parameterExists for a specific old or new name to
+    /// decide which unit conversion to apply), prefix the name with "noremap.".
+    ///
+    /// Remap table entries map new_name -> old_name for the version in which the rename occurred.
+    /// For example: remapV4_0["TUNE_MIN"] = "TUNE_LOW" means TUNE_LOW was renamed to TUNE_MIN in 4.0.
+
+    /// Maps from one parameter name to another (new_name -> old_name for a given version)
+    ///     key:    current (new) parameter name
+    ///     value:  previous (old) parameter name
     typedef QMap<QString, QString> remapParamNameMap_t;
 
     /// Maps from firmware minor version to remapParamNameMap_t entry
-    ///     key:    firmware minor version
-    ///     value:  remapParamNameMap_t entry
+    ///     key:    firmware minor version in which the rename(s) occurred
+    ///     value:  remapParamNameMap_t with new->old mappings for that version
     typedef QMap<int, remapParamNameMap_t> remapParamNameMinorVersionRemapMap_t;
 
     /// Maps from firmware major version number to remapParamNameMinorVersionRemapMap_t entry
@@ -184,7 +197,7 @@ public:
     virtual double minimumTakeoffAltitudeMeters(Vehicle* /*vehicle*/) const { return 3.048; }
 
     /// @return The maximum horizontal groundspeed for a multirotor.
-    virtual double maximumHorizontalSpeedMultirotor(Vehicle* /*vehicle*/) const { return NAN; }
+    virtual double maximumHorizontalSpeedMultirotorMetersSecond(Vehicle* /*vehicle*/) const { return NAN; }
 
     /// @return The maximum equivalent airspeed setpoint.
     virtual double maximumEquivalentAirspeed(Vehicle* /*vehicle*/) const { return NAN; }
@@ -207,8 +220,9 @@ public:
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle *vehicle) const;
 
-    /// Command vehicle to move to specified location (altitude is included and relative)
-    virtual void guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius = 0.0) const;
+    /// Command vehicle to move to specified location (altitude is ignored, vehicle uses current altitude)
+    /// @return true: goto command accepted, false: goto failed (vehicle not moved)
+    virtual bool guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius = 0.0) const;
 
     /// Command vehicle to change altitude
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
@@ -305,10 +319,13 @@ public:
     virtual QString missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const;
 
     /// Returns the mapping structure which is used to map from one parameter name to another based on firmware version.
+    /// See remapParamNameMap_t for details on how remapping works.
     virtual const remapParamNameMajorVersionMap_t &paramNameRemapMajorVersionMap() const;
 
-    /// Returns the highest major version number that is known to the remap for this specified major version.
-    virtual int remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const { return 0; }
+    /// Returns the highest minor version number that has remap entries for the specified major version.
+    /// The remap logic iterates backwards from this version down to the vehicle's actual minor version.
+    /// Return Vehicle::versionNotSetValue if remapping is not supported for the given major version.
+    virtual int remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const { return Vehicle::versionNotSetValue; }
 
     /// @return true: Motors are coaxial like an X8 config, false: Quadcopter for example
     virtual bool multiRotorCoaxialMotors(Vehicle* /*vehicle*/) const { return false; }
@@ -342,7 +359,7 @@ public:
     virtual QGCCameraManager *createCameraManager(Vehicle *vehicle) const;
 
     /// Camera control.
-    virtual MavlinkCameraControl *createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent = nullptr) const;
+    virtual MavlinkCameraControlInterface *createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent = nullptr) const;
 
     /// Returns a pointer to a dictionary of firmware-specific FactGroups
     virtual QMap<QString, FactGroup*> *factGroups() { return nullptr; }

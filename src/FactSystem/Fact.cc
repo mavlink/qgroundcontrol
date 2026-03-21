@@ -50,7 +50,6 @@ Fact::Fact(const QString& settingsGroup, FactMetaData *metaData, QObject *parent
             const QVariant defaultValue = metaData->rawDefaultValue();
             QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
             _rawValue = defaultValue;
-            _rawValueIsNotSet = false;
         }
     }
 
@@ -89,7 +88,6 @@ const Fact &Fact::operator=(const Fact& other)
     _name = other._name;
     _componentId = other._componentId;
     _rawValue = other._rawValue;
-    _rawValueIsNotSet = other._rawValueIsNotSet;
     _type = other._type;
     _sendValueChangedSignals = other._sendValueChangedSignals;
     _deferredValueChangeSignal = other._deferredValueChangeSignal;
@@ -113,7 +111,6 @@ void Fact::forceSetRawValue(const QVariant &value)
             {
                 QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
                 _rawValue = typedValue;
-                _rawValueIsNotSet = false;
             }
 
             const QVariant cooked = _metaData->rawTranslator()(typedValue);
@@ -139,7 +136,6 @@ void Fact::setRawValue(const QVariant &value)
                 QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
                 if (typedValue != _rawValue) {
                     _rawValue = typedValue;
-                    _rawValueIsNotSet = false;
                     changed = true;
                 }
             }
@@ -201,7 +197,6 @@ void Fact::containerSetRawValue(const QVariant &value)
         QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
         if (_rawValue != value) {
             _rawValue = value;
-            _rawValueIsNotSet = false;
             changed = true;
         }
         currentRaw = _rawValue;
@@ -357,12 +352,6 @@ QStringList Fact::selectedBitmaskStrings() const
 
 QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
 {
-    QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
-    if (_rawValueIsNotSet) {
-        return invalidValueString(decimalPlaces);
-    }
-    locker.unlock();
-
     QString valueString;
 
     const auto stripNegativeZero = [](QString &candidate) {

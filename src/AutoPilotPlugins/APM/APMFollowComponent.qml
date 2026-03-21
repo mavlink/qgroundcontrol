@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.FactControls
 import QGroundControl.Controls
+import QGroundControl.PlanView
 
 SetupPage {
     id:             followPage
@@ -367,7 +368,7 @@ SetupPage {
                             transform: Rotation {
                                 origin.x:       vehicleIcon.width  / 2
                                 origin.y:       vehicleIcon.height / 2
-                                angle:          _roverFirmware ? 0 :
+                                angle:          _roverFirmware || !_followYawBehavior ? 0 :
                                                                  (_followYawBehavior.rawValue == _followYawBehaviorNone ?
                                                                       0 :
                                                                       (_followYawBehavior.rawValue == _followYawBehaviorFace ?

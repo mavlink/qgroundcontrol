@@ -27,6 +27,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMLightsComponent.h
         APMMotorComponent.cc
         APMMotorComponent.h
+        APMServoComponent.cc
+        APMServoComponent.h
         APMPowerComponent.cc
         APMPowerComponent.h
         APMRadioComponent.cc
@@ -72,6 +74,7 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMLightsComponent.qml
         APMLightsComponentSummary.qml
         APMMotorComponent.qml
+        APMServoComponent.qml
         APMNotSupported.qml
         APMPowerComponent.qml
         APMPowerComponentSummary.qml

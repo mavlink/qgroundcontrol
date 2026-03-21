@@ -28,6 +28,7 @@
         <file alias="gear-black.svg">resources/gear-black.svg</file>
         <file alias="gear-white.svg">resources/gear-white.svg</file>
         <file alias="GearWithPaperPlane.svg">resources/GearWithPaperPlane.svg</file>
+        <file alias="GeoFence.svg">resources/GeoFence.svg</file>
         <file alias="helicoptericon.svg">resources/helicoptericon.svg</file>
         <file alias="JoystickBezel.png">resources/JoystickBezel.png</file>
         <file alias="JoystickBezelLight.png">resources/JoystickBezelLight.png</file>
@@ -52,6 +53,7 @@
         <file alias="QGCLogoWhite.svg">resources/QGCLogoWhite.svg</file>
         <file alias="QGCLogoArrow.svg">resources/QGCLogoArrow.svg</file>
         <file alias="QGroundControlConnect.svg">resources/QGroundControlConnect.svg</file>
+        <file alias="RallyPoint.svg">resources/RallyPoint.svg</file>
         <file alias="rtl.svg">resources/rtl.svg</file>
         <file alias="sliders.svg">resources/sliders.svg</file>
         <file alias="SaveToDisk.svg">resources/SaveToDisk.svg</file>
@@ -100,12 +102,5 @@
         <file alias="gcscontrol_device.svg">resources/gcscontrolIndicator/gcscontrol_device.svg</file>
         <file alias="gcscontrol_gcs.svg">resources/gcscontrolIndicator/gcscontrol_gcs.svg</file>
         <file alias="gcscontrol_line.svg">resources/gcscontrolIndicator/gcscontrol_line.svg</file>
-    </qresource>
-        <qresource prefix="/qml">
-        <file alias="QGroundControl/AppSettings/NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
-        <file alias="NTRIPSettings.qml">src/UI/AppSettings/NTRIPSettings.qml</file>
-    </qresource>
-    <qresource prefix="/json">
-        <file alias="NTRIP.SettingsGroup.json">src/Settings/NTRIP.SettingsGroup.json</file>
     </qresource>
 </RCC>

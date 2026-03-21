@@ -1,7 +1,7 @@
 # Ruff configuration for QGroundControl Python tools
 # https://docs.astral.sh/ruff/
 
-target-version = "py310"
+target-version = "py312"
 line-length = 100
 
 # Exclude build artifacts and external dependencies
@@ -42,5 +42,5 @@ known-first-party = ["qgc"]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
-line-ending = "auto"
+line-ending = "lf"
 docstring-code-format = true

@@ -15,6 +15,7 @@ def _run(
     created_at: str = "2026-02-24T00:00:00Z",
     status: str = "completed",
     conclusion: str = "success",
+    event: str = "pull_request",
 ) -> dict[str, object]:
     return {
         "id": run_id,
@@ -22,6 +23,7 @@ def _run(
         "created_at": created_at,
         "status": status,
         "conclusion": conclusion,
+        "event": event,
     }
 
 
@@ -49,6 +51,17 @@ def test_latest_successful_runs_handles_iso8601_offsets() -> None:
 
     latest = mod.latest_successful_runs(runs, platforms)
     assert latest["Linux"]["id"] == 2
+
+
+def test_latest_successful_runs_filters_by_event() -> None:
+    platforms = ["Linux"]
+    runs = [
+        _run("Linux", run_id=1, created_at="2026-02-24T00:00:00Z", event="pull_request"),
+        _run("Linux", run_id=2, created_at="2026-02-24T01:00:00Z", event="push"),
+    ]
+
+    latest = mod.latest_successful_runs(runs, platforms, event="pull_request")
+    assert latest["Linux"]["id"] == 1
 
 
 def test_collect_artifacts_filters_non_product_artifacts() -> None:
@@ -210,7 +223,7 @@ def test_main_writes_output_json(tmp_path: Path, monkeypatch) -> None:
             return [{"name": "QGroundControl-x86_64", "size_in_bytes": 2 * 1024 * 1024}]
         return [{"name": "QGroundControl-installer-AMD64", "size_in_bytes": 2 * 1024 * 1024}]
 
-    monkeypatch.setattr(mod, "list_workflow_runs", fake_list_workflow_runs)
+    monkeypatch.setattr(mod, "list_workflow_runs_for_sha", fake_list_workflow_runs)
     monkeypatch.setattr(mod, "list_run_artifacts", fake_list_run_artifacts)
 
     rc = mod.main(
@@ -258,7 +271,7 @@ def test_main_reads_artifacts_file_when_provided(tmp_path: Path, monkeypatch) ->
     def fail_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
         raise AssertionError("list_run_artifacts should not be called when artifacts file is provided")
 
-    monkeypatch.setattr(mod, "list_workflow_runs", fake_list_workflow_runs)
+    monkeypatch.setattr(mod, "list_workflow_runs_for_sha", fake_list_workflow_runs)
     monkeypatch.setattr(mod, "list_run_artifacts", fail_list_run_artifacts)
 
     rc = mod.main(

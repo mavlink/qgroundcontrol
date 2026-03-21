@@ -9,10 +9,14 @@
   "tasks": [
     {
       "args": [
-        "--preset",
-        "default"
+        "-B",
+        "build",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DQGC_BUILD_TESTING=ON"
       ],
-      "command": "cmake",
+      "command": "qt-cmake",
       "group": "build",
       "label": "CMake: Configure (Debug)",
       "problemMatcher": [],
@@ -20,10 +24,14 @@
     },
     {
       "args": [
-        "--preset",
-        "default-release"
+        "-B",
+        "build",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DQGC_BUILD_TESTING=OFF"
       ],
-      "command": "cmake",
+      "command": "qt-cmake",
       "group": "build",
       "label": "CMake: Configure (Release)",
       "problemMatcher": [],
@@ -59,9 +67,11 @@
     },
     {
       "args": [
-        "--unittest"
+        "--test-dir",
+        "build",
+        "--output-on-failure"
       ],
-      "command": "${workspaceFolder}/build/QGroundControl",
+      "command": "ctest",
       "dependsOn": "CMake: Build",
       "group": {
         "isDefault": true,
@@ -73,9 +83,13 @@
     },
     {
       "args": [
-        "--unittest:${input:testClass}"
+        "--test-dir",
+        "build",
+        "--output-on-failure",
+        "-R",
+        "${input:testClass}"
       ],
-      "command": "${workspaceFolder}/build/QGroundControl",
+      "command": "ctest",
       "dependsOn": "CMake: Build",
       "group": "test",
       "label": "Run Specific Test",
@@ -84,33 +98,47 @@
     },
     {
       "args": [
-        "--check"
+        "./tools/analyze.py",
+        "--tool",
+        "clang-format"
       ],
-      "command": "${workspaceFolder}/tools/format-check.sh",
+      "command": "python3",
       "group": "none",
       "label": "Format: Check Changed Files",
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "args": [],
-      "command": "${workspaceFolder}/tools/format-check.sh",
+      "args": [
+        "./tools/analyze.py",
+        "--tool",
+        "clang-format",
+        "--fix"
+      ],
+      "command": "python3",
       "group": "none",
       "label": "Format: Fix Changed Files",
       "problemMatcher": [],
       "type": "shell"
     },
     {
-      "command": "${workspaceFolder}/tools/analyze.sh",
+      "args": [
+        "./tools/analyze.py"
+      ],
+      "command": "python3",
       "group": "none",
       "label": "Static Analysis",
       "problemMatcher": "$gcc",
       "type": "shell"
     },
     {
-      "command": "${workspaceFolder}/tools/clean.sh",
+      "args": [
+        "run",
+        "--all-files"
+      ],
+      "command": "pre-commit",
       "group": "none",
-      "label": "Clean All",
+      "label": "Pre-commit: Run All",
       "problemMatcher": [],
       "type": "shell"
     },

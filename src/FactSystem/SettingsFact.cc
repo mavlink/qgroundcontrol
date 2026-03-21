@@ -49,7 +49,6 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
 
         QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
         _rawValue = resolvedValue;
-        _rawValueIsNotSet = false;
     }
 
     (void) connect(this, &Fact::rawValueChanged, this, &SettingsFact::_rawValueChanged);

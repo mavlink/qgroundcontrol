@@ -96,7 +96,12 @@ DECLARE_SETTINGGROUP(App, "")
     #endif
     savePathFact->setVisible(false);
 #else
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        QDir rootDir;
+        if (qgcApp()->runningUnitTests() || qgcApp()->simpleBootTest()) {
+            rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+        } else {
+            rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        }
         savePathFact->setRawValue(rootDir.filePath(appName));
 #endif
     }

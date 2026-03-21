@@ -5,7 +5,7 @@ _Plan View_, aracınız için _ otonom görevler _ planlamak ve onları araca y�
 Ayrıca eğer yazılım tarafından destekleniyorsa [GeoFence](plan_geofence.md) ve [Rally Points](plan_rally_points.md)'leri ayalarmak için kullanılır.
 
 <span id="plan_screenshot"></span>
-![Plan Ekranı](../../../assets/plan/plan_view_overview.jpg)
+![Plan Ekranı](../../../assets/plan/plan_view_overview.png)
 
 ## Kullanıcı Arayüzü'ne Genel Bakış {#ui_overview}
 

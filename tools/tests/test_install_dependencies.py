@@ -3,26 +3,24 @@
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from unittest.mock import MagicMock, call, patch
 
 import pytest
-
-TOOLS_DIR = Path(__file__).parent.parent
-sys.path.insert(0, str(TOOLS_DIR))
 
 from setup.install_dependencies import (
     DEBIAN_PACKAGES,
     MACOS_PACKAGES,
     PIPX_PACKAGES,
     detect_platform,
+    get_available_debian_packages,
     get_apt_install_command,
     get_apt_update_command,
     get_debian_packages,
     get_macos_packages,
     parse_args,
     run_apt_install_with_retry,
+    validate_extra_packages,
 )
 
 
@@ -73,6 +71,11 @@ def test_get_debian_packages_unknown_category_returns_empty() -> None:
 def test_get_debian_packages_no_duplicates() -> None:
     pkgs = get_debian_packages()
     assert len(pkgs) == len(set(pkgs))
+
+
+def test_get_available_debian_packages_filters_unavailable() -> None:
+    with patch("setup.install_dependencies.check_apt_package_available", side_effect=lambda pkg: pkg == "cmake"):
+        assert get_available_debian_packages("core") == ["cmake"]
 
 
 def test_get_macos_packages() -> None:
@@ -145,6 +148,11 @@ def test_parse_args_category() -> None:
     assert args.category == "qt"
 
 
+def test_parse_args_validate_extra_packages() -> None:
+    args = parse_args(["--validate-extra-packages", "foo", "bar"])
+    assert args.validate_extra_packages == ["foo", "bar"]
+
+
 def test_parse_args_gstreamer_version() -> None:
     args = parse_args(["--platform", "windows", "--gstreamer-version", "1.24.0"])
     assert args.gstreamer_version == "1.24.0"
@@ -158,6 +166,15 @@ def test_parse_args_skip_gstreamer() -> None:
 def test_parse_args_vulkan() -> None:
     args = parse_args(["--platform", "windows", "--vulkan"])
     assert args.vulkan is True
+
+
+def test_validate_extra_packages_accepts_valid_names() -> None:
+    assert validate_extra_packages(["foo", "libbar-dev", "baz+1"]) == ["foo", "libbar-dev", "baz+1"]
+
+
+def test_validate_extra_packages_rejects_invalid_names() -> None:
+    with pytest.raises(ValueError, match="Invalid package name"):
+        validate_extra_packages(["good", "bad;rm"])
 
 
 # ---------------------------------------------------------------------------

@@ -1,12 +1,15 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.FactControls
 import QGroundControl.Controls
 
 Item {
-    anchors.fill:   parent
+    implicitWidth: mainLayout.implicitWidth
+    implicitHeight: mainLayout.implicitHeight
+    width: parent.width  // grows when Loader is wider than implicitWidth
 
     FactPanelController { id: controller; }
 
@@ -20,8 +23,9 @@ Item {
     property Fact   _rtlLandDelayFact:  controller.getParameterFact(-1, "RTL_LAND_DELAY")
     property int    _rtlLandDelayValue: _rtlLandDelayFact.value
 
-    Column {
-        anchors.fill:       parent
+    ColumnLayout {
+        id: mainLayout
+        spacing: 0
 
         VehicleSummaryRow {
             labelText: qsTr("Low Battery Failsafe")
@@ -29,12 +33,12 @@ Item {
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("RC Loss Failsafe")
+            labelText: qsTr("RC/Joystick Loss Failsafe")
             valueText: rcLossAction ? rcLossAction.enumStringValue : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("RC Loss Timeout")
+            labelText: qsTr("RC/Joystick Loss Timeout")
             valueText: commRCLossFact ? commRCLossFact.valueString + " " + commRCLossFact.units : ""
         }
 

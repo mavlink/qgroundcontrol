@@ -14,6 +14,10 @@ on:
       - 'package*.json'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -48,7 +52,7 @@ jobs:
           touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: qgc_docs_build
           path: docs/.vitepress/dist/
@@ -66,35 +70,12 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Download Artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: qgc_docs_build
-          path: ~/_book
-
-      - name: Checkout docs repo
-        uses: actions/checkout@v6
-        with:
-          repository: mavlink/docs.qgroundcontrol.com
-          token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
-          path: docs.qgroundcontrol.com
-
       - name: Deploy docs
-        env:
-          BRANCH: ${{ env.BRANCH_NAME }}
-        run: |
-          # Sanitize branch name to prevent path traversal and shell injection
-          SAFE_BRANCH="${BRANCH//[^a-zA-Z0-9._-]/_}"
-          rm -rf "docs.qgroundcontrol.com/${SAFE_BRANCH}"
-          mkdir -p "docs.qgroundcontrol.com/${SAFE_BRANCH}"
-          cp -r ~/_book/* "docs.qgroundcontrol.com/${SAFE_BRANCH}/"
-          cd docs.qgroundcontrol.com
-          git config user.email "bot@px4.io"
-          git config user.name "PX4BuildBot"
-          git add "${SAFE_BRANCH}"
-          if git diff --cached --quiet; then
-            echo "No documentation changes to deploy."
-            exit 0
-          fi
-          git commit -m "QGC docs build update $(date -u +%Y-%m-%d)"
-          git push origin master
+        uses: ./.github/actions/deploy-docs
+        with:
+          artifact-name: qgc_docs_build
+          target-repo: mavlink/docs.qgroundcontrol.com
+          target-branch: master
+          deploy-token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
+          source-branch: ${{ env.BRANCH_NAME }}
+          commit-message: 'QGC docs build update'

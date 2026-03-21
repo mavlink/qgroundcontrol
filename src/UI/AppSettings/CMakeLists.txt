@@ -28,5 +28,8 @@ qt_add_qml_module(AppSettingsModule
         TelemetrySettings.qml
         UdpSettings.qml
         VideoSettings.qml
+
+        OfflineMapEditor.qml
+        OfflineMapInfo.qml
     NO_PLUGIN
 )

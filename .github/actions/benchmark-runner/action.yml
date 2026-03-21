@@ -26,16 +26,7 @@ runs:
         INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
         INPUT_QT_PLATFORM: ${{ inputs.qt-platform }}
       run: |
-        if command -v python3 >/dev/null 2>&1; then
-          py_cmd="python3"
-        elif command -v python >/dev/null 2>&1; then
-          py_cmd="python"
-        else
-          echo "Error: Python interpreter not found in PATH" >&2
-          exit 1
-        fi
-
-        "${py_cmd}" "${GITHUB_WORKSPACE}/.github/scripts/benchmark_runner.py" \
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/benchmark_runner.py" \
           --binary "$INPUT_BINARY_PATH" \
           --filter "$INPUT_TEST_FILTER" \
           --output "$INPUT_OUTPUT_FILE" \

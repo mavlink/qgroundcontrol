@@ -3,8 +3,6 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "MAVLinkSigning.h"
-#include "SettingsManager.h"
-#include "MavlinkSettings.h"
 
 #include <QtQml/QQmlEngine>
 
@@ -42,20 +40,16 @@ bool LinkInterface::mavlinkChannelIsSet() const
 
 bool LinkInterface::initMavlinkSigning()
 {
-    if (!isSecureConnection()) {
-        auto mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
-        const QByteArray signingKeyBytes = mavlinkSettings->mavlink2SigningKey()->rawValue().toByteArray();
-        if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
-            if (signingKeyBytes.isEmpty()) {
-                qCDebug(LinkInterfaceLog) << "Signing disabled on channel" << _mavlinkChannel;
-            } else {
-                qCDebug(LinkInterfaceLog) << "Signing enabled on channel" << _mavlinkChannel;
-            }
-        } else {
-            qCWarning(LinkInterfaceLog) << "Failed To enable Signing on channel" << _mavlinkChannel;
-            // FIXME: What should we do here?
-            return false;
-        }
+    // Always clear any prior signing state on the channel to avoid stale
+    // mavlink_status_t::signing from a previous connection on this channel.
+    // For insecure connections the correct key will be auto-detected from
+    // incoming signed packets via MAVLinkSigning::tryDetectKey().
+    if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), QByteArrayView(), nullptr)) {
+        qCDebug(LinkInterfaceLog) << "Signing cleared on channel" << _mavlinkChannel
+                                  << (isSecureConnection() ? "(secure)" : "(will auto-detect)");
+    } else {
+        qCWarning(LinkInterfaceLog) << "Failed to initialise signing on channel" << _mavlinkChannel;
+        return false;
     }
 
     return true;

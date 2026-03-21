@@ -9,6 +9,7 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
+import QGroundControl.PlanView
 import QGroundControl.Toolbar
 
 /// @brief Native QML top level window
@@ -213,9 +214,9 @@ ApplicationWindow {
     property string closeDialogTitle: qsTr("Close %1").arg(QGroundControl.appName)
 
     function checkForUnsavedMission() {
-        if (planView._planMasterController.dirty) {
+        if (planView._planMasterController.dirtyForSave || planView._planMasterController.dirtyForUpload) {
             QGroundControl.showMessageDialog(mainWindow, closeDialogTitle,
-                              qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?"),
+                              qsTr("You have a mission edit in progress which has not been saved/uploaded. If you close you will lose changes. Are you sure you want to close?"),
                               Dialog.Yes | Dialog.No,
                               function() { _closeChecksToSkip |= _skipUnsavedMissionCheckMask; performCloseChecks() })
             return false
@@ -607,7 +608,7 @@ ApplicationWindow {
     // to mainWindow. Otherwise if they are rooted to the AnalyzeView itself they will die when the analyze viewSwitch
     // closes.
 
-    function createrWindowedAnalyzePage(title, source) {
+    function createWindowedAnalyzePage(title, source) {
         var windowedPage = windowedAnalyzePage.createObject(mainWindow)
         windowedPage.title = title
         windowedPage.source = source

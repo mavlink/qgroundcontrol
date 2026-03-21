@@ -4,18 +4,15 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
-import sys
-from pathlib import Path
 from typing import Any
 
-_SCRIPT_DIR = Path(__file__).resolve().parent
-if str(_SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPT_DIR))
+from ci_bootstrap import ensure_tools_dir
 
-from workflow_runs import list_workflow_runs, parse_csv_list
+ensure_tools_dir(__file__)
+
+from common.gh_actions import list_workflow_runs_for_sha, parse_csv_list, write_github_output
 
 
 def evaluate_readiness(
@@ -53,21 +50,6 @@ def evaluate_readiness(
     return ready, missing, incomplete, failed
 
 
-def write_output(key: str, value: str) -> None:
-    github_output = os.environ.get("GITHUB_OUTPUT")
-    if not github_output:
-        return
-    if "\n" in value:
-        value_hash = hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
-        delim = f"EOF_{key}_{value_hash}"
-        while delim in value:
-            delim = f"{delim}_X"
-        with open(github_output, "a", encoding="utf-8") as f:
-            f.write(f"{key}<<{delim}\n{value}\n{delim}\n")
-    else:
-        with open(github_output, "a", encoding="utf-8") as f:
-            f.write(f"{key}={value}\n")
-
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check baseline readiness for build-results workflow.")
@@ -94,7 +76,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     platforms = parse_csv_list(args.platform_workflows)
-    runs = list_workflow_runs(args.repo, args.head_sha)
+    runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
 
     if args.runs_cache:
         with open(args.runs_cache, "w", encoding="utf-8") as f:
@@ -102,10 +84,12 @@ def main(argv: list[str] | None = None) -> int:
 
     ready, missing, incomplete, failed = evaluate_readiness(runs, platforms, args.event)
 
-    write_output("ready", "true" if ready else "false")
-    write_output("missing", ",".join(missing))
-    write_output("incomplete", ",".join(incomplete))
-    write_output("failed", ",".join(failed))
+    write_github_output({
+        "ready": "true" if ready else "false",
+        "missing": ",".join(missing),
+        "incomplete": ",".join(incomplete),
+        "failed": ",".join(failed),
+    })
 
     if ready:
         print(f"Baseline ready for {args.head_sha}.")

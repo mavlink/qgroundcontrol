@@ -12,6 +12,13 @@ using namespace TestFixtures;
 
 MissionControllerTest::~MissionControllerTest() = default;
 
+namespace {
+// Coordinate checks involve geodesic reconstruction so they use 0.5 m. Altitude
+// checks are direct arithmetic, so they use a much tighter 1e-4 m tolerance.
+constexpr double kCoordToleranceMeters = 0.5;
+constexpr double kAltToleranceMeters = 1e-4;
+}  // namespace
+
 void MissionControllerTest::cleanup()
 {
     _masterController.reset();
@@ -187,6 +194,162 @@ void MissionControllerTest::_testVehicleYawRecalc()
     }
 }
 
+void MissionControllerTest::_testMissionReposition()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    const QGeoCoordinate wp1 = home.atDistanceAndAzimuth(150.0, 15.0);
+    const QGeoCoordinate wp2 = home.atDistanceAndAzimuth(320.0, 120.0);
+    _missionController->insertSimpleMissionItem(wp1, 1);
+    _missionController->insertSimpleMissionItem(wp2, 2);
+
+    SimpleMissionItem* item1 = _missionController->visualItems()->value<SimpleMissionItem*>(1);
+    SimpleMissionItem* item2 = _missionController->visualItems()->value<SimpleMissionItem*>(2);
+    QVERIFY(item1);
+    QVERIFY(item2);
+
+    const double oldHomeAlt = settingsItem->editableAlt();
+    const double oldAlt1 = item1->editableAlt();
+    const double oldAlt2 = item2->editableAlt();
+
+    const QGeoCoordinate newHome = home.atDistanceAndAzimuth(200.0, 65.0);
+    const QGeoCoordinate expectedWp1 =
+        newHome.atDistanceAndAzimuth(home.distanceTo(wp1), home.azimuthTo(wp1));
+    const QGeoCoordinate expectedWp2 =
+        newHome.atDistanceAndAzimuth(home.distanceTo(wp2), home.azimuthTo(wp2));
+    _missionController->repositionMission(newHome, true, true);
+    QVERIFY_TRUE_WAIT((settingsItem->coordinate().distanceTo(newHome) <= kCoordToleranceMeters) &&
+                          (item1->coordinate().distanceTo(expectedWp1) <= kCoordToleranceMeters) &&
+                          (item2->coordinate().distanceTo(expectedWp2) <= kCoordToleranceMeters),
+                      TestTimeout::shortMs());
+
+    QCOMPARE_COORDS(settingsItem->coordinate(), newHome, kCoordToleranceMeters);
+    QCOMPARE_COORDS(item1->coordinate(), expectedWp1, kCoordToleranceMeters);
+    QCOMPARE_COORDS(item2->coordinate(), expectedWp2, kCoordToleranceMeters);
+    QCOMPARE_FUZZY(settingsItem->editableAlt(), oldHomeAlt, kAltToleranceMeters);
+    QCOMPARE_FUZZY(item1->editableAlt(), oldAlt1, kAltToleranceMeters);
+    QCOMPARE_FUZZY(item2->editableAlt(), oldAlt2, kAltToleranceMeters);
+}
+
+void MissionControllerTest::_testMissionOffset()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    const QGeoCoordinate wp1 = home.atDistanceAndAzimuth(150.0, 15.0);
+    const QGeoCoordinate wp2 = home.atDistanceAndAzimuth(320.0, 120.0);
+    _missionController->insertSimpleMissionItem(wp1, 1);
+    _missionController->insertSimpleMissionItem(wp2, 2);
+
+    SimpleMissionItem* item1 = _missionController->visualItems()->value<SimpleMissionItem*>(1);
+    SimpleMissionItem* item2 = _missionController->visualItems()->value<SimpleMissionItem*>(2);
+    QVERIFY(item1);
+    QVERIFY(item2);
+
+    const double oldHomeAlt = settingsItem->editableAlt();
+    const double oldAlt1 = item1->editableAlt();
+    const double oldAlt2 = item2->editableAlt();
+
+    _missionController->offsetMission(0.0, 0.0, 12.0, true, true);
+    QVERIFY_TRUE_WAIT(qAbs(settingsItem->editableAlt() - oldHomeAlt) <= kAltToleranceMeters &&
+                          qAbs(item1->editableAlt() - (oldAlt1 + 12.0)) <= kAltToleranceMeters &&
+                          qAbs(item2->editableAlt() - (oldAlt2 + 12.0)) <= kAltToleranceMeters,
+                      TestTimeout::shortMs());
+
+    QCOMPARE_FUZZY(settingsItem->editableAlt(), oldHomeAlt, kAltToleranceMeters);
+    QCOMPARE_FUZZY(item1->editableAlt(), oldAlt1 + 12.0, kAltToleranceMeters);
+    QCOMPARE_FUZZY(item2->editableAlt(), oldAlt2 + 12.0, kAltToleranceMeters);
+}
+
+void MissionControllerTest::_testMissionRotate()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    const QGeoCoordinate wp1 = home.atDistanceAndAzimuth(180.0, 20.0);
+    const QGeoCoordinate wp2 = home.atDistanceAndAzimuth(260.0, 135.0);
+    _missionController->insertSimpleMissionItem(wp1, 1);
+    _missionController->insertSimpleMissionItem(wp2, 2);
+
+    SimpleMissionItem* item1 = _missionController->visualItems()->value<SimpleMissionItem*>(1);
+    SimpleMissionItem* item2 = _missionController->visualItems()->value<SimpleMissionItem*>(2);
+    QVERIFY(item1);
+    QVERIFY(item2);
+
+    const double oldHomeAlt = settingsItem->editableAlt();
+    const double oldAlt1 = item1->editableAlt();
+    const double oldAlt2 = item2->editableAlt();
+
+    const QGeoCoordinate expectedWp1 =
+        home.atDistanceAndAzimuth(home.distanceTo(wp1), home.azimuthTo(wp1) + 90.0);
+    const QGeoCoordinate expectedWp2 =
+        home.atDistanceAndAzimuth(home.distanceTo(wp2), home.azimuthTo(wp2) + 90.0);
+
+    _missionController->rotateMission(90.0, true, true);
+    QVERIFY_TRUE_WAIT((settingsItem->coordinate().distanceTo(home) <= kCoordToleranceMeters) &&
+                          (item1->coordinate().distanceTo(expectedWp1) <= kCoordToleranceMeters) &&
+                          (item2->coordinate().distanceTo(expectedWp2) <= kCoordToleranceMeters),
+                      TestTimeout::shortMs());
+
+    QCOMPARE_COORDS(settingsItem->coordinate(), home, kCoordToleranceMeters);
+    QCOMPARE_COORDS(item1->coordinate(), expectedWp1, kCoordToleranceMeters);
+    QCOMPARE_COORDS(item2->coordinate(), expectedWp2, kCoordToleranceMeters);
+    QCOMPARE_FUZZY(settingsItem->editableAlt(), oldHomeAlt, kAltToleranceMeters);
+    QCOMPARE_FUZZY(item1->editableAlt(), oldAlt1, kAltToleranceMeters);
+    QCOMPARE_FUZZY(item2->editableAlt(), oldAlt2, kAltToleranceMeters);
+}
+
+void MissionControllerTest::_testMissionTransformsInvalidHome()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    MissionSettingsItem* settingsItem =
+        _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    const QGeoCoordinate wp1 = home.atDistanceAndAzimuth(180.0, 45.0);
+    _missionController->insertSimpleMissionItem(wp1, 1);
+
+    SimpleMissionItem* item1 = _missionController->visualItems()->value<SimpleMissionItem*>(1);
+    QVERIFY(item1);
+
+    const QGeoCoordinate oldItemCoord = item1->coordinate();
+    const double oldItemAlt = item1->editableAlt();
+
+    settingsItem->setCoordinate(QGeoCoordinate());
+    QVERIFY_TRUE_WAIT(!settingsItem->coordinate().isValid(), TestTimeout::shortMs());
+
+    // repositionMission and rotateMission require a valid home — they should be no-ops
+    _missionController->repositionMission(home.atDistanceAndAzimuth(100.0, 0.0), true, true);
+    _missionController->rotateMission(45.0, true, true);
+    QCOMPARE_COORDS(item1->coordinate(), oldItemCoord, kCoordToleranceMeters);
+    QCOMPARE_FUZZY(item1->editableAlt(), oldItemAlt, kAltToleranceMeters);
+
+    // offsetMission does not depend on home — it should still apply
+    _missionController->offsetMission(10.0, 5.0, 8.0, true, true);
+    QVERIFY(item1->coordinate().distanceTo(oldItemCoord) > kCoordToleranceMeters);
+    QCOMPARE_FUZZY(item1->editableAlt(), oldItemAlt + 8.0, kAltToleranceMeters);
+}
+
 void MissionControllerTest::_testLoadJsonSectionAvailable()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
@@ -208,24 +371,24 @@ void MissionControllerTest::_testLoadJsonSectionAvailable()
     }
 }
 
-void MissionControllerTest::_testGlobalAltMode()
+void MissionControllerTest::_testGlobalAltFrame()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
 
-    struct _globalAltMode_s
+    struct _globalAltFrame_s
     {
-        QGroundControlQmlGlobal::AltMode altMode;
+        QGroundControlQmlGlobal::AltitudeFrame altFrame;
         MAV_FRAME expectedMavFrame;
-    } altModeTestCases[] = {
-        {QGroundControlQmlGlobal::AltitudeModeRelative, MAV_FRAME_GLOBAL_RELATIVE_ALT},
-        {QGroundControlQmlGlobal::AltitudeModeAbsolute, MAV_FRAME_GLOBAL},
-        {QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain, MAV_FRAME_GLOBAL},
-        {QGroundControlQmlGlobal::AltitudeModeTerrainFrame, MAV_FRAME_GLOBAL_TERRAIN_ALT},
+    } altFrameTestCases[] = {
+        {QGroundControlQmlGlobal::AltitudeFrameRelative, MAV_FRAME_GLOBAL_RELATIVE_ALT},
+        {QGroundControlQmlGlobal::AltitudeFrameAbsolute, MAV_FRAME_GLOBAL},
+        {QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain, MAV_FRAME_GLOBAL},
+        {QGroundControlQmlGlobal::AltitudeFrameTerrain, MAV_FRAME_GLOBAL_TERRAIN_ALT},
     };
 
-    for (const _globalAltMode_s& testCase : altModeTestCases) {
+    for (const _globalAltFrame_s& testCase : altFrameTestCases) {
         _missionController->removeAll();
-        _missionController->setGlobalAltitudeMode(testCase.altMode);
+        _missionController->setGlobalAltitudeFrame(testCase.altFrame);
         // Use coordinate fixtures
         const QGeoCoordinate start = Coord::zurich();
         _missionController->insertTakeoffItem(start, 1);
@@ -234,13 +397,13 @@ void MissionControllerTest::_testGlobalAltMode()
         _missionController->insertSimpleMissionItem(start.atDistanceAndAzimuth(300, 0), 4);
         SimpleMissionItem* si =
             qobject_cast<SimpleMissionItem*>(_missionController->visualItems()->value<VisualMissionItem*>(1));
-        QCOMPARE(si->altitudeMode(), QGroundControlQmlGlobal::AltitudeModeRelative);
+        QCOMPARE(si->altitudeFrame(), QGroundControlQmlGlobal::AltitudeFrameRelative);
         QCOMPARE(si->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
         for (int i = 2; i < _missionController->visualItems()->count(); i++) {
-            TEST_DEBUG(QStringLiteral("Validating altitude mode index %1").arg(i));
+            TEST_DEBUG(QStringLiteral("Validating altitude frame index %1").arg(i));
             SimpleMissionItem* siLoop =
                 qobject_cast<SimpleMissionItem*>(_missionController->visualItems()->value<VisualMissionItem*>(i));
-            QCOMPARE(siLoop->altitudeMode(), testCase.altMode);
+            QCOMPARE(siLoop->altitudeFrame(), testCase.altFrame);
             QCOMPARE(siLoop->missionItem().frame(), testCase.expectedMavFrame);
         }
     }

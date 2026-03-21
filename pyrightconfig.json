@@ -6,9 +6,10 @@
   ],
   "include": [
     "tools/**/*.py",
-    "test/**/*.py"
+    "test/**/*.py",
+    ".github/scripts/**/*.py"
   ],
-  "pythonVersion": "3.10",
+  "pythonVersion": "3.12",
   "reportMissingImports": "warning",
   "reportMissingTypeStubs": false,
   "reportUnusedImport": "warning",

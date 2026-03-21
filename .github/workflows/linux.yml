@@ -10,16 +10,6 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths:
-      - '.github/workflows/linux.yml'
-      - '.github/actions/**'
-      - 'deploy/linux/**'
-      - 'src/**'
-      - 'test/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
-      - 'tools/setup/*debian*'
-      - 'tools/setup/install_dependencies.py'
   merge_group:
   workflow_dispatch:
     inputs:
@@ -31,7 +21,6 @@ on:
         options:
           - Release
           - Debug
-  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,8 +35,15 @@ permissions:
   checks: write
 
 jobs:
+  changes:
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: linux
+
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
+    needs: changes
+    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
 
@@ -77,6 +73,7 @@ jobs:
 
     steps:
       - name: Harden Runner
+        if: runner.arch != 'ARM64'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
@@ -93,7 +90,6 @@ jobs:
           qt-host: ${{ matrix.host }}
           qt-arch: ${{ matrix.arch }}
           build-type: ${{ matrix.build_type }}
-          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
@@ -128,6 +124,29 @@ jobs:
         with:
           category: "/language:c-cpp"
 
+      - name: Run Unit Tests
+        if: matrix.build_type == 'Debug'
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-linux-${{ matrix.arch }}.xml
+          ctest-output: test-output-linux-${{ matrix.arch }}.txt
+          include-labels: 'Unit|Integration'
+          exclude-labels: 'Flaky|Network'
+
+      - name: Report Test Results
+        if: always() && !cancelled() && matrix.build_type == 'Debug'
+        uses: ./.github/actions/test-report
+        with:
+          name: Unit Tests (${{ matrix.arch }})
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-results-linux-${{ matrix.arch }}.xml
+          output-file: test-output-linux-${{ matrix.arch }}.txt
+          artifact-name: test-results-${{ matrix.arch }}
+          retention-days: 7
+          trunk-org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          trunk-token: ${{ secrets.TRUNK_TOKEN }}
+
       - name: Verify Executable
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/verify-executable
@@ -143,7 +162,7 @@ jobs:
 
       - name: Upload metrics artifact
         if: matrix.build_type == 'Release' && matrix.os == 'ubuntu-22.04'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: size-metrics
           path: ${{ runner.temp }}/build/metrics.json
@@ -161,28 +180,21 @@ jobs:
           binary-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
           type: appimage
 
-      - name: Attest Build with SBOM
+      - name: Attest and Upload
         if: matrix.build_type == 'Release'
-        uses: ./.github/actions/attest-sbom
+        uses: ./.github/actions/attest-and-upload
         with:
-          subject-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
-          subject-name: ${{ matrix.package }}
-          scan-path: ${{ runner.temp }}/build
-
-      - name: Upload Build File
-        if: matrix.build_type == 'Release'
-        uses: ./.github/actions/upload
-        with:
-          artifact_name: ${{ matrix.package }}.AppImage
-          package_name: ${{ matrix.package }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+          artifact-name: ${{ matrix.package }}.AppImage
+          package-name: ${{ matrix.package }}
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
 
   debug-validation:
     name: ${{ matrix.job_name }}
-    if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || inputs.build_type == 'Debug') }}
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped') && (github.event_name != 'workflow_dispatch' || inputs.build_type == 'Debug') }}
     runs-on: ubuntu-22.04
     timeout-minutes: ${{ matrix.timeout_minutes }}
 
@@ -190,11 +202,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - job_name: Test + Coverage linux_gcc_64 Debug
-            mode: coverage
-            timeout_minutes: 60
-            fetch_depth: 0
-            fetch_tags: false
+          # - job_name: Test + Coverage linux_gcc_64 Debug
+          #   mode: coverage
+          #   timeout_minutes: 60
+          #   fetch_depth: 0
+          #   fetch_tags: false
           - job_name: Sanitizers linux_gcc_64 Debug (ASan+UBSan)
             mode: sanitizers
             timeout_minutes: 120
@@ -218,7 +230,7 @@ jobs:
           fetch-tags: ${{ matrix.fetch_tags }}
 
       - name: Restore file timestamps
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: chetan/git-restore-mtime-action@v2
 
       - name: Build Setup
@@ -228,13 +240,12 @@ jobs:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Debug
-          save-cache: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
       - name: Configure (Coverage)
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
@@ -244,7 +255,7 @@ jobs:
           stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
 
       - name: Build (Coverage)
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
@@ -268,7 +279,7 @@ jobs:
           build-type: Debug
 
       - name: Run Unit Tests
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/run-unit-tests
         with:
           build-dir: ${{ runner.temp }}/build
@@ -296,7 +307,7 @@ jobs:
           parallel: '1'
 
       - name: Analyze Unit Test Durations
-        if: always() && !cancelled() && matrix.mode == 'coverage'
+        if: always() && !cancelled() && matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/test-duration-report
         with:
           junit-path: ${{ runner.temp }}/build/junit-results-linux-linux_gcc_64.xml
@@ -322,7 +333,7 @@ jobs:
           fail-on-regression: 'false'
 
       - name: Report Test Results
-        if: always() && !cancelled() && matrix.mode == 'coverage'
+        if: always() && !cancelled() && matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/test-report
         with:
           name: Unit Tests (linux_gcc_64)
@@ -335,8 +346,8 @@ jobs:
           trunk-token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Upload Duration Report
-        if: always() && !cancelled() && matrix.mode == 'coverage'
-        uses: actions/upload-artifact@v6
+        if: always() && !cancelled() && matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
+        uses: actions/upload-artifact@v7
         with:
           name: test-duration-linux_gcc_64
           path: ${{ runner.temp }}/build/test-duration-linux-linux_gcc_64.json
@@ -344,7 +355,7 @@ jobs:
 
       - name: Upload Test Results (Sanitizers)
         if: always() && !cancelled() && matrix.mode == 'sanitizers'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-linux-sanitizers
           path: |
@@ -354,21 +365,24 @@ jobs:
           retention-days: 7
 
       - name: Ensure coverage tools are available
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         run: |
-          if ! command -v ccache >/dev/null 2>&1; then
-            sudo apt-get install -y --no-install-recommends ccache
+          ccache_path="$(command -v ccache 2>/dev/null)" || {
+            echo "Error: ccache not found — expected pinned binary from cache action" >&2
+            exit 1
+          }
+          echo "ccache found at: ${ccache_path}"
+          if [[ "${ccache_path}" != "/usr/local/bin/ccache" ]]; then
+            echo "Warning: ccache resolved to ${ccache_path}, expected /usr/local/bin/ccache" >&2
           fi
-          # Ensure ccache is at /usr/local/bin where the build's ccache-launcher expects it
-          if [ ! -f /usr/local/bin/ccache ] && command -v ccache >/dev/null 2>&1; then
-            sudo ln -s "$(command -v ccache)" /usr/local/bin/ccache
-          fi
+          ccache_ver="$(ccache --version | head -1)"
+          echo "ccache version: ${ccache_ver}"
           if ! command -v gcovr >/dev/null 2>&1; then
             pipx install gcovr
           fi
 
       - name: Verify coverage data files exist
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         working-directory: ${{ runner.temp }}/build
         run: |
           gcda_count=$(find . -name '*.gcda' | wc -l | tr -d '[:space:]')
@@ -379,14 +393,14 @@ jobs:
           fi
 
       - name: Coverage Report
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         uses: ./.github/actions/coverage
         with:
           build-dir: ${{ runner.temp }}/build
           mode: report-only
 
       - name: Verify Coverage Thresholds
-        if: matrix.mode == 'coverage'
+        if: matrix.mode == 'coverage' && vars.COVERAGE_ENABLED == 'true'
         working-directory: ${{ runner.temp }}/build
         run: |
           line_thresh=$(cmake -L -N . 2>/dev/null | sed -n 's/^QGC_COVERAGE_LINE_THRESHOLD:STRING=//p')
@@ -395,9 +409,11 @@ jobs:
           branch_thresh="${branch_thresh:-20}"
 
           python3 - "$line_thresh" "$branch_thresh" <<'PY'
-          import sys
-          import xml.etree.ElementTree as ET
+          import os, sys
           from pathlib import Path
+
+          sys.path.insert(0, os.path.join(os.environ["GITHUB_WORKSPACE"], ".github", "scripts"))
+          from xml_utils import xml_parse
 
           line_thresh = float(sys.argv[1])
           branch_thresh = float(sys.argv[2])
@@ -406,7 +422,7 @@ jobs:
               print("::warning::coverage.xml not found, skipping threshold check")
               sys.exit(0)
 
-          tree = ET.parse("coverage.xml")
+          tree = xml_parse("coverage.xml")
           cov = tree.getroot()
           lines_valid = int(cov.get("lines-valid", 0))
           line_rate = float(cov.get("line-rate", 0)) * 100
@@ -440,117 +456,3 @@ jobs:
           sys.exit(1 if failed else 0)
           PY
 
-  size-metrics:
-    name: Size Metrics
-    if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || inputs.build_type != 'Debug') }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    needs: build
-    permissions:
-      actions: write
-      contents: read
-      pull-requests: write
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - name: Download metrics artifact
-        uses: actions/download-artifact@v7
-        with:
-          name: size-metrics
-          path: .
-
-      - name: Save baseline
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        run: mkdir -p baseline && cp metrics.json baseline/metrics.json
-      - name: Delete stale baseline cache
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && hashFiles('baseline/metrics.json') != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: gh actions-cache delete size-baseline-latest -R "${GH_REPO}" --confirm || true
-
-      - name: Save baseline to cache
-        uses: actions/cache/save@v5
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && hashFiles('baseline/metrics.json') != ''
-        with:
-          path: baseline/metrics.json
-          key: size-baseline-latest
-
-      - name: Restore baseline
-        if: github.event_name == 'pull_request'
-        id: baseline
-        uses: actions/cache/restore@v5
-        with:
-          path: baseline/metrics.json
-          key: size-baseline-latest
-
-      - name: Compare with baseline
-        if: github.event_name == 'pull_request' && hashFiles('baseline/metrics.json') != ''
-        uses: actions/github-script@v8
-        with:
-          script: |
-            if (!context.issue.number) {
-              core.info('No PR number available; skipping size comparison comment.');
-              return;
-            }
-            const fs = require('fs');
-            const current = JSON.parse(fs.readFileSync('metrics.json', 'utf8'));
-            const baseline = JSON.parse(fs.readFileSync('baseline/metrics.json', 'utf8'));
-
-            const find = (arr, name) => arr.find(m => m.name === name)?.value || 0;
-            const fmt = (b) => (b / 1048576).toFixed(2);
-
-            const metrics = ['Binary Size', 'Stripped Size'].map(name => {
-              const cur = find(current, name);
-              const base = find(baseline, name);
-              const delta = base > 0 ? ((cur - base) / base * 100).toFixed(1) : 'N/A';
-              return { name, current: cur, baseline: base, delta };
-            });
-
-            const rows = metrics.map(m =>
-              `| ${m.name} | ${fmt(m.baseline)} MB | ${fmt(m.current)} MB | ${m.delta === 'N/A' ? m.delta : m.delta + '%'} |`
-            ).join('\n');
-
-            const body = `<!-- binary-size-report -->\n` +
-              `## Binary Size Report\n\n` +
-              `| Metric | Baseline | PR | Change |\n` +
-              `|--------|----------|-----|--------|\n${rows}\n`;
-
-            const threshold = 5;
-            const binaryDelta = metrics[0].delta;
-            if (binaryDelta !== 'N/A' && parseFloat(binaryDelta) > threshold) {
-              core.warning(`Binary size increased by ${binaryDelta}% (threshold: ${threshold}%)`);
-            }
-
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                per_page: 100,
-              }
-            );
-            const existing = comments.find(c =>
-              c.user?.type === 'Bot' && c.body?.includes('<!-- binary-size-report -->')
-            );
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }

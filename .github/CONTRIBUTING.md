@@ -89,7 +89,7 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
 
    ```bash
    git add .
-   git commit -m "Add feature: brief description"
+   git commit -m "feat: brief description"
    ```
 
 6. **Push to your fork**
@@ -104,62 +104,7 @@ QGroundControl uses [Crowdin](https://crowdin.com/project/qgroundcontrol) for co
 
 ## Coding Standards
 
-For the complete coding style guide with examples, see [CODING_STYLE.md](../CODING_STYLE.md).
-
-### C++ Guidelines
-
-- **Standard**: C++20
-- **Framework**: Qt 6 guidelines
-- **Naming Conventions**:
-  - Classes: `PascalCase`
-  - Methods/functions: `camelCase`
-  - Private members: `_leadingUnderscore`
-  - Constants: `ALL_CAPS` or `kPascalCase`
-
-- **Always use braces** for if/else/for/while statements
-
-  ```cpp
-  // Good
-  if (condition) {
-      doSomething();
-  }
-
-  // Bad
-  if (condition) doSomething();
-  ```
-
-- **Defensive coding**:
-  - Always null-check pointers before use
-  - Validate all inputs
-  - Use Q_ASSERT for debug-build development checks only (compiled out in release builds)
-  - Always use defensive error handling in production code paths (never rely on Q_ASSERT)
-  - Handle errors gracefully in production code
-
-- **Code formatting**:
-  - Run `clang-format` before committing
-  - Follow `.clang-format`, `.clang-tidy`, `.editorconfig` in repo root
-  - See `CodingStyle.h`, `CodingStyle.cc`, `CodingStyle.qml` for examples
-  - 4 spaces for indentation (no tabs)
-
-### QML Guidelines
-
-- Follow Qt QML coding conventions
-- Use type annotations
-- Prefer declarative over imperative code
-- See `src/QmlControls/QGCButton.qml` for examples
-
-### Logging
-
-Use Qt logging categories:
-
-```cpp
-Q_DECLARE_LOGGING_CATEGORY(MyComponentLog)
-QGC_LOGGING_CATEGORY(MyComponentLog, "qgc.component.name")
-
-qCDebug(MyComponentLog) << "Debug message:" << value;
-qCWarning(MyComponentLog) << "Warning message";
-qCCritical(MyComponentLog) << "Critical error";
-```
+Follow [CODING_STYLE.md](../CODING_STYLE.md) for naming, formatting, C++20 features, QML style, and logging conventions. Run `clang-format` and `pre-commit run` before committing.
 
 ### Architecture Patterns
 

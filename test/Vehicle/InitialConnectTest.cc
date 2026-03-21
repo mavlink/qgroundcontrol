@@ -10,6 +10,7 @@
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "MockConfiguration.h"
+#include "MockLink.h"
 #include "MockLinkMissionItemHandler.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
@@ -20,11 +21,6 @@
 #include "ComponentInformationManager.h"
 
 #include <QtTest/QTest>
-
-void InitialConnectTest::init()
-{
-    VehicleTestManualConnect::init();
-}
 
 void InitialConnectTest::_performTestCases_data()
 {
@@ -243,6 +239,133 @@ void InitialConnectTest::_rallyTimeoutPathDoesNotLeakCompletionHandler()
     rallyPointManager->loadFromVehicle();
     QVERIFY(rallyLoadCompleteSpy.wait(TestTimeout::longMs()));
     QCOMPARE(planCompleteSpy.count(), 1);
+
+    _disconnectMockLink();
+}
+
+void InitialConnectTest::_stateTimeoutFallsThrough_data()
+{
+    QTest::addColumn<QList<uint32_t>>("blockedMessageIds");
+    QTest::addColumn<int>("configFailureMode");
+    QTest::addColumn<bool>("blockMissionProtocolImmediately");
+    QTest::addColumn<bool>("blockMissionProtocolAfterMissionLoad");
+    QTest::addColumn<QStringList>("timeoutOverrideStates");
+    QTest::addColumn<bool>("expectParametersReady");
+    QTest::addColumn<bool>("expectPlanRequestComplete");
+
+    // Timeout matrix:
+    // +----------------+-------------------+------------------+---------+--------+
+    // | State          | Failure Injection | Timeout States   | Params? | Plans? |
+    // +----------------+-------------------+------------------+---------+--------+
+    // | StandardModes  | Block AVAIL_MODES | StdModes         | Yes     | Yes    |
+    // | CompInfo       | Block COMP_META   | CompInfo         | Yes     | Yes    |
+    // | Parameters     | No param response | Parameters       | No      | Yes    |
+    // | Mission        | Block mission req | Msn+Fence+Rally  | Yes     | No     |
+    // | GeoFence       | Block after msn   | Fence+Rally      | Yes     | No     |
+    // +----------------+-------------------+------------------+---------+--------+
+
+    QTest::addRow("StandardModes")
+        << QList<uint32_t>{MAVLINK_MSG_ID_AVAILABLE_MODES}
+        << static_cast<int>(MockConfiguration::FailNone)
+        << false << false
+        << QStringList{QStringLiteral("RequestStandardModes")}
+        << true << true;
+
+    QTest::addRow("CompInfo")
+        << QList<uint32_t>{MAVLINK_MSG_ID_COMPONENT_METADATA}
+        << static_cast<int>(MockConfiguration::FailNone)
+        << false << false
+        << QStringList{QStringLiteral("RequestCompInfo")}
+        << true << true;
+
+    QTest::addRow("Parameters")
+        << QList<uint32_t>{}
+        << static_cast<int>(MockConfiguration::FailParamNoResponseToRequestList)
+        << false << false
+        << QStringList{QStringLiteral("RequestParameters")}
+        << false << true;
+
+    QTest::addRow("Mission")
+        << QList<uint32_t>{}
+        << static_cast<int>(MockConfiguration::FailNone)
+        << true << false
+        << QStringList{QStringLiteral("RequestMission"),
+                       QStringLiteral("RequestGeoFence"),
+                       QStringLiteral("RequestRallyPoints")}
+        << true << false;
+
+    QTest::addRow("GeoFence")
+        << QList<uint32_t>{}
+        << static_cast<int>(MockConfiguration::FailNone)
+        << false << true
+        << QStringList{QStringLiteral("RequestGeoFence"),
+                       QStringLiteral("RequestRallyPoints")}
+        << true << false;
+}
+
+void InitialConnectTest::_stateTimeoutFallsThrough()
+{
+    QFETCH(QList<uint32_t>, blockedMessageIds);
+    QFETCH(int, configFailureMode);
+    QFETCH(bool, blockMissionProtocolImmediately);
+    QFETCH(bool, blockMissionProtocolAfterMissionLoad);
+    QFETCH(QStringList, timeoutOverrideStates);
+    QFETCH(bool, expectParametersReady);
+    QFETCH(bool, expectPlanRequestComplete);
+
+    LinkManager::instance()->setConnectionsAllowed();
+
+    auto* mvm = MultiVehicleManager::instance();
+    QSignalSpy activeVehicleSpy{mvm, &MultiVehicleManager::activeVehicleChanged};
+    auto* mockConfig = new MockConfiguration(QStringLiteral("TimeoutFallthroughMock"));
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_PX4);
+    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
+    if (configFailureMode != static_cast<int>(MockConfiguration::FailNone)) {
+        mockConfig->setFailureMode(static_cast<MockConfiguration::FailureMode_t>(configFailureMode));
+    }
+    mockConfig->setDynamic(true);
+
+    SharedLinkConfigurationPtr linkConfig = LinkManager::instance()->addConfiguration(mockConfig);
+    QVERIFY(LinkManager::instance()->createConnectedLink(linkConfig));
+
+    _mockLink = qobject_cast<MockLink*>(linkConfig->link());
+    QVERIFY(_mockLink);
+
+    for (const uint32_t messageId : blockedMessageIds) {
+        _mockLink->setRequestMessageNoResponse(messageId);
+    }
+
+    if (blockMissionProtocolImmediately) {
+        _mockLink->setMissionItemFailureMode(
+            MockLinkMissionItemHandler::FailReadRequestListNoResponse, MAV_MISSION_ACCEPTED);
+    }
+
+    QVERIFY(activeVehicleSpy.wait(TestTimeout::longMs()));
+    _vehicle = mvm->activeVehicle();
+    QVERIFY(_vehicle);
+
+    auto* initialConnectStateMachine = _vehicle->findChild<InitialConnectStateMachine*>();
+    QVERIFY(initialConnectStateMachine);
+
+    for (const QString& stateName : timeoutOverrideStates) {
+        initialConnectStateMachine->setTimeoutOverride(stateName, 100);
+    }
+
+    if (blockMissionProtocolAfterMissionLoad) {
+        auto* missionManager = _vehicle->findChild<MissionManager*>();
+        QVERIFY(missionManager);
+        connect(missionManager, &MissionManager::newMissionItemsAvailable, this, [this]() {
+            _mockLink->setMissionItemFailureMode(
+                MockLinkMissionItemHandler::FailReadRequestListNoResponse, MAV_MISSION_ACCEPTED);
+        });
+    }
+
+    QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
+    if (!_vehicle->isInitialConnectComplete()) {
+        QVERIFY(initialConnectCompleteSpy.wait(60000));
+    }
+    QCOMPARE(_vehicle->parameterManager()->parametersReady(), expectParametersReady);
+    QCOMPARE(_vehicle->initialPlanRequestComplete(), expectPlanRequestComplete);
 
     _disconnectMockLink();
 }

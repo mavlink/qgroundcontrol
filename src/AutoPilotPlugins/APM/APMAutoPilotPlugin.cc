@@ -5,6 +5,7 @@
 #include "APMHeliComponent.h"
 #include "APMLightsComponent.h"
 #include "APMMotorComponent.h"
+#include "APMServoComponent.h"
 #include "APMPowerComponent.h"
 #include "APMRadioComponent.h"
 #include "APMRemoteSupportComponent.h"
@@ -19,6 +20,7 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleSupports.h"
 #include "VehicleComponent.h"
 #ifdef QT_DEBUG
 #include "APMFollowComponent.h"
@@ -55,7 +57,7 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
             _airframeComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_airframeComponent)));
 
-            if (_vehicle->supportsRadio()) {
+            if (_vehicle->supports()->radio()) {
                 _radioComponent = new APMRadioComponent(_vehicle, this);
                 _radioComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_radioComponent)));
@@ -80,6 +82,12 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
                 _motorComponent = new APMMotorComponent(_vehicle, this);
                 _motorComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_motorComponent)));
+            }
+
+            if (_vehicle->parameterManager()->parameterExists(-1, QStringLiteral("SERVO1_MIN"))) {
+                _servoComponent = new APMServoComponent(_vehicle, this);
+                _servoComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_servoComponent)));
             }
 
             _safetyComponent = new APMSafetyComponent(_vehicle, this);

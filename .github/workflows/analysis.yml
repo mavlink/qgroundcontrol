@@ -49,10 +49,14 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Get build config (clazy/iwyu)
+      - name: Build Setup (clazy/iwyu)
         if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
-        id: config
-        uses: ./.github/actions/build-config
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Debug
+          save-cache: true
 
       - name: Prepare apt repositories (clazy)
         if: inputs.tool == 'clazy'
@@ -74,33 +78,11 @@ jobs:
           packages: clazy ninja-build
           version: clazy-linux-v1
 
-      - name: Initial Setup (clazy/iwyu)
-        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
-        uses: ./.github/actions/common
-
       - name: Install Dependencies (iwyu)
         if: inputs.tool == 'iwyu'
         uses: ./.github/actions/install-dependencies
         with:
           extra-packages: iwyu clang ninja-build
-
-      - name: Setup Caching (iwyu)
-        if: inputs.tool == 'iwyu'
-        uses: ./.github/actions/cache
-        with:
-          host: linux
-          target: linux_gcc_64
-          build-type: Debug
-          save-cache: true
-
-      - name: Install Qt (clazy/iwyu)
-        if: contains(fromJSON('["clazy", "iwyu"]'), inputs.tool)
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: linux
-          arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
 
       - name: Build Setup (sanitizers)
         if: contains(fromJSON('["asan", "ubsan", "tsan"]'), inputs.tool)
@@ -218,7 +200,7 @@ jobs:
 
       - name: Upload Output
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.tool }}-output
           path: |

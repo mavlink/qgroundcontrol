@@ -1,0 +1,59 @@
+name: Attest and Upload
+description: Generate SBOM attestation and upload build artifact
+
+inputs:
+  artifact-name:
+    description: 'Artifact filename (e.g. QGroundControl.AppImage)'
+    required: true
+  package-name:
+    description: 'Package name for GitHub artifact'
+    required: true
+  scan-path:
+    description: 'Path to scan for SBOM (defaults to build dir)'
+    required: false
+    default: ''
+  subject-name:
+    description: 'SBOM subject name (defaults to package-name)'
+    required: false
+    default: ''
+  aws-role-arn:
+    description: 'AWS IAM role ARN for OIDC authentication'
+    required: false
+    default: ''
+  aws-key-id:
+    description: 'AWS access key ID'
+    required: false
+    default: ''
+  aws-secret-access-key:
+    description: 'AWS secret access key'
+    required: false
+    default: ''
+  aws-distribution-id:
+    description: 'AWS CloudFront distribution ID'
+    required: false
+    default: ''
+  upload-aws:
+    description: 'Upload artifact to AWS'
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Attest Build with SBOM
+      uses: ./.github/actions/attest-sbom
+      with:
+        subject-path: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
+        subject-name: ${{ inputs.subject-name || inputs.package-name }}
+        scan-path: ${{ inputs.scan-path || format('{0}/build', runner.temp) }}
+
+    - name: Upload Build File
+      uses: ./.github/actions/upload
+      with:
+        artifact-name: ${{ inputs.artifact-name }}
+        package-name: ${{ inputs.package-name }}
+        aws-role-arn: ${{ inputs.aws-role-arn }}
+        aws-key-id: ${{ inputs.aws-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-distribution-id: ${{ inputs.aws-distribution-id }}
+        upload-aws: ${{ inputs.upload-aws }}

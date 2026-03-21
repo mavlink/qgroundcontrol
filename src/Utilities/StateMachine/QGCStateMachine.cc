@@ -63,7 +63,7 @@ QString QGCStateMachine::currentStateName() const
 void QGCStateMachine::start()
 {
     if (isRunning()) {
-        qCWarning(QGCStateMachineLog) << objectName() << "start() called but already running - check signal connections";
+        qCCritical(QGCStateMachineLog) << objectName() << "start() called but already running - check signal connections";
     }
     QStateMachine::start();
 }
@@ -318,13 +318,13 @@ void QGCStateMachine::clearError(bool restart)
 bool QGCStateMachine::resetToState(QAbstractState* state)
 {
     if (!state) {
-        qCWarning(QGCStateMachineLog) << objectName() << "resetToState: null state";
+        qCCritical(QGCStateMachineLog) << objectName() << "resetToState: null state";
         return false;
     }
 
     // Verify the state belongs to this machine
     if (state->parentState() != this && state->parent() != this) {
-        qCWarning(QGCStateMachineLog) << objectName() << "resetToState: state does not belong to this machine";
+        qCCritical(QGCStateMachineLog) << objectName() << "resetToState: state does not belong to this machine";
         return false;
     }
 

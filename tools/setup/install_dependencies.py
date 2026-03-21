@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -155,6 +156,7 @@ APT_BASE_OPTIONS: list[str] = [
     "-o", "DPkg::Lock::Timeout=300",
     "-o", "Acquire::Retries=3",
 ]
+PACKAGE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.+-]*$")
 
 
 def get_repo_root() -> Path:
@@ -283,6 +285,21 @@ def check_apt_package_available(package: str) -> bool:
         capture_output=True,
     )
     return result.returncode == 0
+
+
+def get_available_debian_packages(category: str) -> list[str]:
+    """Return packages in *category* that exist in apt metadata."""
+    return [pkg for pkg in get_debian_packages(category) if check_apt_package_available(pkg)]
+
+
+def validate_extra_packages(packages: list[str]) -> list[str]:
+    """Validate extra package names passed from CI inputs."""
+    validated: list[str] = []
+    for package in packages:
+        if not PACKAGE_NAME_RE.match(package):
+            raise ValueError(f"Invalid package name '{package}'")
+        validated.append(package)
+    return validated
 
 
 def get_gstreamer_macos_urls(version: str) -> tuple[str, str]:
@@ -769,6 +786,17 @@ Examples:
         action="store_true",
         help="Install Vulkan SDK (Windows only)",
     )
+    parser.add_argument(
+        "--print-available-packages",
+        action="store_true",
+        help="Print available apt packages in the selected Debian category",
+    )
+    parser.add_argument(
+        "--validate-extra-packages",
+        nargs="*",
+        default=None,
+        help="Validate extra apt package names and print them back",
+    )
 
     return parser.parse_args(args)
 
@@ -785,6 +813,24 @@ def main() -> int:
 
     if args.print_packages:
         print_packages(platform or "debian", args.category)
+        return 0
+
+    if args.print_available_packages:
+        if (platform or "debian") != "debian":
+            print("Error: --print-available-packages is only supported for debian", file=sys.stderr)
+            return 1
+        if not args.category:
+            print("Error: --category is required with --print-available-packages", file=sys.stderr)
+            return 1
+        print(" ".join(get_available_debian_packages(args.category)))
+        return 0
+
+    if args.validate_extra_packages is not None:
+        try:
+            print(" ".join(validate_extra_packages(args.validate_extra_packages)))
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
         return 0
 
     if platform is None:

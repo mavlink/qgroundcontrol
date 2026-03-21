@@ -26,7 +26,7 @@ SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, boo
     , _splitConcavePolygonsFact (settingsGroup, _metaDataMap[splitConcavePolygonsName])
     , _entryPoint               (EntryLocationTopLeft)
 {
-    _editorQml = "qrc:/qml/QGroundControl/Controls/SurveyItemEditor.qml";
+    _editorQml = "qrc:/qml/QGroundControl/PlanView/SurveyItemEditor.qml";
 
     if (_controllerVehicle && !(_controllerVehicle->fixedWing() || _controllerVehicle->vtol())) {
         // Only fixed wing flight paths support alternate transects
@@ -239,7 +239,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     _cameraTriggerInTurnAroundFact.setRawValue  (complexObject[_jsonV3CameraTriggerInTurnaroundKey].toBool(true));
 
     _cameraCalc.valueSetIsDistance()->setRawValue   (complexObject[_jsonV3FixedValueIsAltitudeKey].toBool(true));
-    _cameraCalc.setDistanceMode(complexObject[_jsonV3GridAltitudeRelativeKey].toBool(true) ? QGroundControlQmlGlobal::AltitudeModeRelative : QGroundControlQmlGlobal::AltitudeModeAbsolute);
+    _cameraCalc.setDistanceMode(complexObject[_jsonV3GridAltitudeRelativeKey].toBool(true) ? QGroundControlQmlGlobal::AltitudeFrameRelative : QGroundControlQmlGlobal::AltitudeFrameAbsolute);
 
     bool manualGrid = complexObject[_jsonV3ManualGridKey].toBool(true);
 

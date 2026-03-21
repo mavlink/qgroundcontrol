@@ -325,9 +325,9 @@ SetupPage {
                     spacing: _margins / 2
 
                     property Fact _failsafeGCSEnable:               controller.getParameterFact(-1, "FS_GCS_ENABLE")
-                    property Fact _failsafeBattLowAct:              controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT", false /* reportMissing */)
-                    property Fact _failsafeBattMah:                 controller.getParameterFact(-1, "r.BATT_LOW_MAH", false /* reportMissing */)
-                    property Fact _failsafeBattVoltage:             controller.getParameterFact(-1, "r.BATT_LOW_VOLT", false /* reportMissing */)
+                    property Fact _failsafeBattLowAct:              controller.getParameterFact(-1, "BATT_FS_LOW_ACT", false /* reportMissing */)
+                    property Fact _failsafeBattMah:                 controller.getParameterFact(-1, "BATT_LOW_MAH", false /* reportMissing */)
+                    property Fact _failsafeBattVoltage:             controller.getParameterFact(-1, "BATT_LOW_VOLT", false /* reportMissing */)
                     property Fact _failsafeThrEnable:               controller.getParameterFact(-1, "FS_THR_ENABLE")
                     property Fact _failsafeThrValue:                controller.getParameterFact(-1, "FS_THR_VALUE")
 
@@ -524,10 +524,12 @@ SetupPage {
                 Column {
                     spacing: _margins / 2
 
-                    property Fact _landSpeedFact:   controller.getParameterFact(-1, "LAND_SPEED")
-                    property Fact _rtlAltFact:      controller.getParameterFact(-1, "RTL_ALT")
+                    property Fact _landSpeedFact:   controller.getParameterFact(-1, "LAND_SPD_MS")
+                    property Fact _rtlAltFact:      controller.getParameterFact(-1, "RTL_ALT_M")
                     property Fact _rtlLoitTimeFact: controller.getParameterFact(-1, "RTL_LOIT_TIME")
-                    property Fact _rtlAltFinalFact: controller.getParameterFact(-1, "RTL_ALT_FINAL")
+                    property Fact _rtlAltFinalFact: controller.getParameterFact(-1, "RTL_ALT_FINAL_M")
+                    // RTL_ALT_M (4.7+) is in meters, RTL_ALT (pre-4.7) is in centimeters
+                    property bool _rtlAltIsMeters:  controller.parameterExists(-1, "noremap.RTL_ALT_M")
 
                     QGCLabel {
                         id:             rtlLabel
@@ -575,7 +577,8 @@ SetupPage {
                             text:               qsTr("Return at specified altitude:")
                             checked:            _rtlAltFact.value != 0
 
-                            onClicked: _rtlAltFact.value = 1500
+                            // RTL_ALT_M (4.7+) is in meters, RTL_ALT (pre-4.7) is in centimeters
+                            onClicked: _rtlAltFact.value = _rtlAltIsMeters ? 15 : 1500
                         }
 
                         FactTextField {
@@ -651,7 +654,7 @@ SetupPage {
                 Column {
                     spacing: _margins / 2
 
-                    property Fact _rtlAltFact: controller.getParameterFact(-1, "r.RTL_ALTITUDE")
+                    property Fact _rtlAltFact: controller.getParameterFact(-1, "RTL_ALTITUDE")
 
                     QGCLabel {
                         text:           qsTr("Return to Launch")

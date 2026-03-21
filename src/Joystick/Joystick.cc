@@ -9,6 +9,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleSupports.h"
 #include "JoystickManager.h"
 #include "MultiVehicleManager.h"
 
@@ -1001,8 +1002,8 @@ void Joystick::_handleAxis()
         }
 
         // Adjust throttle to 0:1 range
-        if (throttleModeCenterZero && vehicle->supportsThrottleModeCenterZero()) {
-            if (!vehicle->supportsNegativeThrust() || !negativeThrust) {
+        if (throttleModeCenterZero && vehicle->supports()->throttleModeCenterZero()) {
+            if (!vehicle->supports()->negativeThrust() || !negativeThrust) {
                 throttle = std::max(0.0f, throttle);
             }
         } else {

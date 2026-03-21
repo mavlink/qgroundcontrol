@@ -4,7 +4,7 @@
 #include <QtTest/QTest>
 
 #include "LinkManager.h"
-#include "MavlinkCameraControl.h"
+#include "MavlinkCameraControlInterface.h"
 #include "MockConfiguration.h"
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
@@ -158,9 +158,9 @@ void VehicleCameraControlTest::_testCameraCapFlags()
 
     // Find Camera 1 (MAV_COMP_ID_CAMERA) which has our configured flags.
     // Camera 2 (MAV_COMP_ID_CAMERA2) is always photo-only and not what we're testing.
-    MavlinkCameraControl* camera = nullptr;
+    MavlinkCameraControlInterface* camera = nullptr;
     for (int i = 0; i < cameraManager->cameras()->count(); i++) {
-        auto* cam = qobject_cast<MavlinkCameraControl*>(cameraManager->cameras()->get(i));
+        auto* cam = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
         if (cam && cam->compID() == MAV_COMP_ID_CAMERA) {
             camera = cam;
             break;

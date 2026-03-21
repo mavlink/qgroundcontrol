@@ -57,6 +57,21 @@ public:
         uint8_t  image_status        = ImageCaptureIdle;     ///< ImageCaptureStatus enum
         float    image_interval      = 0.0f;                 ///< Interval between image captures (seconds)
         qint64   singleShotStartMs   = 0;                    ///< Timestamp when single-shot capture started (0 = not active)
+
+        // Tracking state
+        uint8_t  trackingMode        = CAMERA_TRACKING_MODE_NONE; ///< CAMERA_TRACKING_MODE enum
+        float    trackPointX         = 0.0f;
+        float    trackPointY         = 0.0f;
+        float    trackRadius         = 0.0f;
+        float    trackRecTopX        = 0.0f;
+        float    trackRecTopY        = 0.0f;
+        float    trackRecBottomX     = 0.0f;
+        float    trackRecBottomY     = 0.0f;
+        qint64   trackingStatusIntervalUs = -1;               ///< Interval for CAMERA_TRACKING_IMAGE_STATUS (-1 = disabled)
+        qint64   trackingStatusLastSentMs = 0;                ///< Timestamp of last tracking status message
+        qint64   trackingStartMs     = 0;                     ///< Timestamp when tracking was started (for drift animation)
+        float    trackAnchorX        = 0.0f;                  ///< Original center X of tracked target
+        float    trackAnchorY        = 0.0f;                  ///< Original center Y of tracked target
     };
 
     explicit MockLinkCamera(MockLink *mockLink,
@@ -97,6 +112,7 @@ private:
     void _sendCameraImageCaptured(uint8_t compId);
     void _sendVideoStreamInformation(uint8_t compId, uint8_t streamId);
     void _sendVideoStreamStatus(uint8_t compId, uint8_t streamId);
+    void _sendCameraTrackingImageStatus(uint8_t compId);
     void _sendCommandAck(uint8_t compId, uint16_t command, uint8_t result, int requestedMsgId = -1);
 
     CameraState *_findCamera(uint8_t compId);

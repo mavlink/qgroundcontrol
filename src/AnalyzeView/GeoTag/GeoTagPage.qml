@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import QGroundControl
+import QGroundControl.AnalyzeView
 import QGroundControl.Controls
 
 AnalyzePage {
@@ -27,7 +28,7 @@ AnalyzePage {
                 Layout.preferredHeight: statusColumn.height + _margin * 2
                 color:                  qgcPal.windowShade
                 radius:                 ScreenTools.defaultFontPixelWidth / 2
-                visible:                geoController.inProgress || geoController.errorMessage || geoController.taggedCount > 0
+                visible:                GeoTagController.inProgress || GeoTagController.errorMessage || GeoTagController.taggedCount > 0
 
                 ColumnLayout {
                     id:                 statusColumn
@@ -40,12 +41,12 @@ AnalyzePage {
                     RowLayout {
                         Layout.fillWidth:   true
                         spacing:            _margin
-                        visible:            geoController.inProgress
+                        visible:            GeoTagController.inProgress
 
                         BusyIndicator {
                             Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 2
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 2
-                            running:                geoController.inProgress
+                            running:                GeoTagController.inProgress
                         }
 
                         ColumnLayout {
@@ -61,32 +62,32 @@ AnalyzePage {
                                 Layout.fillWidth:   true
                                 from:               0
                                 to:                 100
-                                value:              geoController.progress
+                                value:              GeoTagController.progress
                             }
                         }
                     }
 
                     QGCLabel {
                         Layout.fillWidth:       true
-                        text:                   geoController.errorMessage
+                        text:                   GeoTagController.errorMessage
                         color:                  qgcPal.colorRed
                         font.bold:              true
                         wrapMode:               Text.WordWrap
                         horizontalAlignment:    Text.AlignHCenter
-                        visible:                geoController.errorMessage && !geoController.inProgress
+                        visible:                GeoTagController.errorMessage && !GeoTagController.inProgress
                     }
 
                     QGCLabel {
                         Layout.fillWidth:       true
                         text: {
-                            if (geoController.taggedCount > 0 && !geoController.inProgress) {
-                                let msg = qsTr("Successfully tagged %1 images").arg(geoController.taggedCount)
+                            if (GeoTagController.taggedCount > 0 && !GeoTagController.inProgress) {
+                                let msg = qsTr("Successfully tagged %1 images").arg(GeoTagController.taggedCount)
                                 let details = []
-                                if (geoController.skippedCount > 0) {
-                                    details.push(qsTr("%1 skipped").arg(geoController.skippedCount))
+                                if (GeoTagController.skippedCount > 0) {
+                                    details.push(qsTr("%1 skipped").arg(GeoTagController.skippedCount))
                                 }
-                                if (geoController.failedCount > 0) {
-                                    details.push(qsTr("%1 failed").arg(geoController.failedCount))
+                                if (GeoTagController.failedCount > 0) {
+                                    details.push(qsTr("%1 failed").arg(GeoTagController.failedCount))
                                 }
                                 if (details.length > 0) {
                                     msg += " (" + details.join(", ") + ")"
@@ -95,10 +96,10 @@ AnalyzePage {
                             }
                             return ""
                         }
-                        color:                  geoController.failedCount > 0 ? qgcPal.colorOrange : qgcPal.colorGreen
+                        color:                  GeoTagController.failedCount > 0 ? qgcPal.colorOrange : qgcPal.colorGreen
                         font.bold:              true
                         horizontalAlignment:    Text.AlignHCenter
-                        visible:                geoController.taggedCount > 0 && !geoController.inProgress
+                        visible:                GeoTagController.taggedCount > 0 && !GeoTagController.inProgress
                     }
                 }
             }
@@ -126,12 +127,12 @@ AnalyzePage {
                             Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 1.5
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
                             radius:                 height / 2
-                            color:                  geoController.logFile ? qgcPal.colorGreen : qgcPal.button
+                            color:                  GeoTagController.logFile ? qgcPal.colorGreen : qgcPal.button
 
                             QGCLabel {
                                 anchors.centerIn:   parent
-                                text:               geoController.logFile ? "\u2713" : "1"
-                                color:              geoController.logFile ? "white" : qgcPal.buttonText
+                                text:               GeoTagController.logFile ? "\u2713" : "1"
+                                color:              GeoTagController.logFile ? "white" : qgcPal.buttonText
                                 font.bold:          true
                             }
                         }
@@ -148,7 +149,7 @@ AnalyzePage {
 
                         QGCButton {
                             text:               qsTr("Browse...")
-                            enabled:            !geoController.inProgress
+                            enabled:            !GeoTagController.inProgress
                             onClicked:          openLogFile.openForLoad()
 
                             QGCFileDialog {
@@ -157,7 +158,7 @@ AnalyzePage {
                                 nameFilters:    [qsTr("Flight logs (*.ulg *.bin)"), qsTr("ULog (*.ulg)"), qsTr("DataFlash (*.bin)"), qsTr("All Files (*)")]
                                 defaultSuffix:  "ulg"
                                 onAcceptedForLoad: (file) => {
-                                    geoController.logFile = file
+                                    GeoTagController.logFile = file
                                     close()
                                 }
                             }
@@ -165,9 +166,9 @@ AnalyzePage {
 
                         QGCLabel {
                             Layout.fillWidth:   true
-                            text:               geoController.logFile ? geoController.logFile : qsTr("No file selected")
+                            text:               GeoTagController.logFile ? GeoTagController.logFile : qsTr("No file selected")
                             elide:              Text.ElideMiddle
-                            opacity:            geoController.logFile ? 1.0 : 0.5
+                            opacity:            GeoTagController.logFile ? 1.0 : 0.5
                         }
                     }
                 }
@@ -196,12 +197,12 @@ AnalyzePage {
                             Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 1.5
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
                             radius:                 height / 2
-                            color:                  geoController.imageDirectory ? qgcPal.colorGreen : qgcPal.button
+                            color:                  GeoTagController.imageDirectory ? qgcPal.colorGreen : qgcPal.button
 
                             QGCLabel {
                                 anchors.centerIn:   parent
-                                text:               geoController.imageDirectory ? "\u2713" : "2"
-                                color:              geoController.imageDirectory ? "white" : qgcPal.buttonText
+                                text:               GeoTagController.imageDirectory ? "\u2713" : "2"
+                                color:              GeoTagController.imageDirectory ? "white" : qgcPal.buttonText
                                 font.bold:          true
                             }
                         }
@@ -218,7 +219,7 @@ AnalyzePage {
 
                         QGCButton {
                             text:               qsTr("Browse...")
-                            enabled:            !geoController.inProgress
+                            enabled:            !GeoTagController.inProgress
                             onClicked:          selectImageDir.openForLoad()
 
                             QGCFileDialog {
@@ -226,7 +227,7 @@ AnalyzePage {
                                 title:          qsTr("Select Image Folder")
                                 selectFolder:   true
                                 onAcceptedForLoad: (file) => {
-                                    geoController.imageDirectory = file
+                                    GeoTagController.imageDirectory = file
                                     close()
                                 }
                             }
@@ -234,9 +235,9 @@ AnalyzePage {
 
                         QGCLabel {
                             Layout.fillWidth:   true
-                            text:               geoController.imageDirectory ? geoController.imageDirectory : qsTr("No folder selected")
+                            text:               GeoTagController.imageDirectory ? GeoTagController.imageDirectory : qsTr("No folder selected")
                             elide:              Text.ElideMiddle
-                            opacity:            geoController.imageDirectory ? 1.0 : 0.5
+                            opacity:            GeoTagController.imageDirectory ? 1.0 : 0.5
                         }
                     }
                 }
@@ -287,7 +288,7 @@ AnalyzePage {
 
                         QGCButton {
                             text:               qsTr("Browse...")
-                            enabled:            !geoController.inProgress
+                            enabled:            !GeoTagController.inProgress
                             onClicked:          selectDestDir.openForLoad()
 
                             QGCFileDialog {
@@ -295,7 +296,7 @@ AnalyzePage {
                                 title:          qsTr("Select Output Folder")
                                 selectFolder:   true
                                 onAcceptedForLoad: (file) => {
-                                    geoController.saveDirectory = file
+                                    GeoTagController.saveDirectory = file
                                     close()
                                 }
                             }
@@ -304,15 +305,15 @@ AnalyzePage {
                         QGCLabel {
                             Layout.fillWidth:   true
                             text: {
-                                if (geoController.saveDirectory) {
-                                    return geoController.saveDirectory
-                                } else if (geoController.imageDirectory) {
-                                    return geoController.imageDirectory + "/TAGGED"
+                                if (GeoTagController.saveDirectory) {
+                                    return GeoTagController.saveDirectory
+                                } else if (GeoTagController.imageDirectory) {
+                                    return GeoTagController.imageDirectory + "/TAGGED"
                                 }
                                 return qsTr("Default: /TAGGED subfolder")
                             }
                             elide:              Text.ElideMiddle
-                            opacity:            geoController.saveDirectory ? 1.0 : 0.5
+                            opacity:            GeoTagController.saveDirectory ? 1.0 : 0.5
                         }
                     }
                 }
@@ -349,11 +350,11 @@ AnalyzePage {
                         QGCTextField {
                             id:                     timeOffsetField
                             Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 10
-                            text:                   geoController.timeOffsetSecs.toFixed(1)
-                            enabled:                !geoController.inProgress
+                            text:                   GeoTagController.timeOffsetSecs.toFixed(1)
+                            enabled:                !GeoTagController.inProgress
                             inputMethodHints:       Qt.ImhFormattedNumbersOnly
                             validator:              DoubleValidator { bottom: -3600; top: 3600; decimals: 1 }
-                            onEditingFinished:      geoController.timeOffsetSecs = parseFloat(text) || 0
+                            onEditingFinished:      GeoTagController.timeOffsetSecs = parseFloat(text) || 0
                         }
 
                         QGCLabel {
@@ -371,9 +372,9 @@ AnalyzePage {
                         QGCCheckBox {
                             id:         previewCheckbox
                             text:       qsTr("Preview mode (don't write files)")
-                            checked:    geoController.previewMode
-                            enabled:    !geoController.inProgress
-                            onClicked:  geoController.previewMode = checked
+                            checked:    GeoTagController.previewMode
+                            enabled:    !GeoTagController.inProgress
+                            onClicked:  GeoTagController.previewMode = checked
                         }
 
                         QGCLabel {
@@ -391,20 +392,20 @@ AnalyzePage {
                 Layout.alignment:       Qt.AlignHCenter
                 Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 20
                 text: {
-                    if (geoController.inProgress) {
+                    if (GeoTagController.inProgress) {
                         return qsTr("Cancel")
-                    } else if (geoController.previewMode) {
+                    } else if (GeoTagController.previewMode) {
                         return qsTr("Preview")
                     } else {
                         return qsTr("Start Tagging")
                     }
                 }
-                enabled:                (geoController.logFile && geoController.imageDirectory) || geoController.inProgress
+                enabled:                (GeoTagController.logFile && GeoTagController.imageDirectory) || GeoTagController.inProgress
                 onClicked: {
-                    if (geoController.inProgress) {
-                        geoController.cancelTagging()
+                    if (GeoTagController.inProgress) {
+                        GeoTagController.cancelTagging()
                     } else {
-                        geoController.startTagging()
+                        GeoTagController.startTagging()
                     }
                 }
             }
@@ -416,7 +417,7 @@ AnalyzePage {
                 Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 10
                 color:                  qgcPal.windowShade
                 radius:                 ScreenTools.defaultFontPixelWidth / 2
-                visible:                geoController.imageModel.count > 0
+                visible:                GeoTagController.imageModel.count > 0
 
                 ColumnLayout {
                     anchors.fill:       parent
@@ -428,7 +429,7 @@ AnalyzePage {
                         spacing: _margin
 
                         QGCLabel {
-                            text:       qsTr("Images (%1)").arg(geoController.imageModel.count)
+                            text:       qsTr("Images (%1)").arg(GeoTagController.imageModel.count)
                             font.bold:  true
                         }
 
@@ -477,7 +478,7 @@ AnalyzePage {
                         id:                 imageListView
                         Layout.fillWidth:   true
                         Layout.fillHeight:  true
-                        model:              geoController.imageModel
+                        model:              GeoTagController.imageModel
 
                         delegate: Rectangle {
                             width:      imageListView.width

@@ -15,11 +15,12 @@ runs:
         remove_packages_one_command: true
         rm_cmd: rmz
 
-    - uses: lukka/get-cmake@v4.2.1
+    - uses: lukka/get-cmake@v4.2.3
 
-    - uses: actions/setup-python@v6
+    - uses: ./.github/actions/setup-python
       with:
         python-version: '3.12'
+        groups: scripts
 
     - name: Create build directory
       shell: bash

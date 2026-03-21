@@ -22,6 +22,7 @@ class OsmParser : public Viewer3DMapProvider
 
 public:
     explicit OsmParser(QObject *parent = nullptr);
+    ~OsmParser() override;
 
     bool mapLoaded() const override { return _mapLoadedFlag; }
     QGeoCoordinate gpsRef() const override { return _gpsRefPoint; }

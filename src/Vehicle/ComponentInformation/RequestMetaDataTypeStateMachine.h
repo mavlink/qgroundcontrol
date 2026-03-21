@@ -53,9 +53,17 @@ private:
     bool _shouldSkipTranslation() const;
 
     // Download helpers
-    void _requestFile(const QString& cacheFileTag, bool crcValid, const QString& uri, QString& outputFileName);
+    void _requestFile(const QString& cacheFileTag, bool crcValid, const QString& uri, QString& outputFileName, bool trackMetadataSource);
     QString _downloadCompleteJsonWorker(const QString& jsonFileName);
     static bool _uriIsMAVLinkFTP(const QString& uri);
+
+    enum class MetadataSource {
+        None,
+        Cache,
+        FTP,
+        HTTP,
+    };
+    static const char* _metadataSourceToString(MetadataSource source);
 
     // Message result handlers
     void _handleCompMetadataResult(MAV_RESULT result, const mavlink_message_t& message);
@@ -82,6 +90,9 @@ private:
     bool _currentFileValidCrc = false;
 
     QElapsedTimer _downloadStartTime;
+    MetadataSource _metadataSource = MetadataSource::None;
+    QString _metadataUri;
+    bool _metadataIsFallback = false;
 
     // State pointers
     AsyncFunctionState* _stateRequestCompInfo = nullptr;

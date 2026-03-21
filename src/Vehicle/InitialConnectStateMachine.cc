@@ -331,18 +331,22 @@ void InitialConnectStateMachine::_requestStandardModes(AsyncFunctionState* state
     vehicle()->_standardModes->request();
 }
 
-void InitialConnectStateMachine::_requestCompInfo(AsyncFunctionState* /*state*/)
+void InitialConnectStateMachine::_requestCompInfo(AsyncFunctionState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestCompInfo";
 
     connect(vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
             this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
 
+    // Ensure progress tracking is always cleaned up, including timeout/skip paths.
+    state->setOnExit([this]() {
+        disconnect(vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
+                   this, &InitialConnectStateMachine::_onSubProgressUpdate);
+    });
+
     vehicle()->_componentInformationManager->requestAllComponentInformation(
         [](void* requestAllCompleteFnData) {
             auto* self = static_cast<InitialConnectStateMachine*>(requestAllCompleteFnData);
-            disconnect(self->vehicle()->_componentInformationManager, &ComponentInformationManager::progressUpdate,
-                       self, &InitialConnectStateMachine::_onSubProgressUpdate);
             if (self->_stateCompInfo) {
                 self->_stateCompInfo->complete();
             }

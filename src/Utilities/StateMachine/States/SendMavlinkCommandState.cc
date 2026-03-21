@@ -42,7 +42,7 @@ void SendMavlinkCommandState::disconnectWaitSignal()
 void SendMavlinkCommandState::onWaitEntered()
 {
     if (!_configured) {
-        qCWarning(QGCStateMachineLog) << "SendMavlinkCommandState not configured";
+        qCCritical(QGCStateMachineLog) << "SendMavlinkCommandState not configured";
         waitFailed();
         return;
     }

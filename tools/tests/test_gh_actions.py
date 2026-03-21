@@ -6,12 +6,9 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import sys
-from pathlib import Path
 from unittest.mock import patch
 
-TOOLS_DIR = Path(__file__).parent.parent
-sys.path.insert(0, str(TOOLS_DIR))
+import httpx
 
 from common import gh_actions as mod
 
@@ -20,19 +17,20 @@ def _cp(stdout: str = "", stderr: str = "", returncode: int = 0) -> subprocess.C
     return subprocess.CompletedProcess(args=["gh"], returncode=returncode, stdout=stdout, stderr=stderr)
 
 
-class _FakeHttpResponse:
-    def __init__(self, payload: dict[str, object], link: str = "") -> None:
-        self._payload = payload
-        self.headers = {"Link": link}
-
-    def read(self) -> bytes:
-        return json.dumps(self._payload).encode("utf-8")
-
-    def __enter__(self) -> _FakeHttpResponse:
-        return self
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        return None
+def _mock_response(
+    data: dict,
+    next_url: str = "",
+    status_code: int = 200,
+    extra_headers: dict[str, str] | None = None,
+) -> httpx.Response:
+    headers = {}
+    if next_url:
+        headers["link"] = f'<{next_url}>; rel="next"'
+    if extra_headers:
+        headers.update(extra_headers)
+    request = httpx.Request("GET", "https://api.github.com/test")
+    resp = httpx.Response(status_code, json=data, headers=headers, request=request)
+    return resp
 
 
 def test_parse_json_documents_handles_paginated_stream() -> None:
@@ -68,17 +66,41 @@ def test_list_workflow_runs_for_sha_uses_get_method() -> None:
 
 
 def test_list_workflow_runs_for_sha_http_mode() -> None:
-    first = _FakeHttpResponse(
+    first = _mock_response(
         {"workflow_runs": [{"id": 1, "name": "Linux"}]},
-        '<https://api.github.com/next>; rel="next"',
+        next_url="https://api.github.com/next",
     )
-    second = _FakeHttpResponse({"workflow_runs": [{"id": 2, "name": "Windows"}]})
+    second = _mock_response({"workflow_runs": [{"id": 2, "name": "Windows"}]})
+
     with patch.dict(os.environ, {"QGC_GH_API_MODE": "http", "GH_TOKEN": "token"}, clear=False):
-        with patch.object(mod.urllib_request, "urlopen", side_effect=[first, second]), patch.object(mod, "gh") as gh_mock:
-            runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
+        with patch.object(mod, "_build_http_client") as mock_client:
+            client = mock_client.return_value.__enter__.return_value
+            client.get.side_effect = [first, second]
+            with patch.object(mod, "gh") as gh_mock:
+                runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
 
     assert [run["id"] for run in runs] == [1, 2]
     gh_mock.assert_not_called()
+
+
+def test_list_workflow_runs_for_sha_http_mode_retries_retryable_status() -> None:
+    first = _mock_response(
+        {"message": "try again"},
+        status_code=503,
+        extra_headers={"Retry-After": "0"},
+    )
+    second = _mock_response({"workflow_runs": [{"id": 7, "name": "Linux"}]})
+
+    with patch.dict(os.environ, {"QGC_GH_API_MODE": "http", "GH_TOKEN": "token"}, clear=False):
+        with patch.object(mod, "_build_http_client") as mock_client:
+            client = mock_client.return_value.__enter__.return_value
+            client.get.side_effect = [first, second]
+            with patch.object(mod.time, "sleep") as sleep_mock:
+                runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
+
+    assert runs == [{"id": 7, "name": "Linux"}]
+    assert client.get.call_count == 2
+    sleep_mock.assert_called_once_with(1.0)
 
 
 def test_list_run_artifacts_parses_paginated_stream() -> None:
@@ -101,3 +123,98 @@ def test_list_run_artifacts_rejects_invalid_run_id() -> None:
         assert "run_id must be an integer" in str(exc)
     else:
         raise AssertionError("Expected ValueError for invalid run_id")
+
+
+class TestIsForkPr:
+    def test_not_pr_event(self) -> None:
+        with patch.dict(os.environ, {"EVENT_NAME": "push"}, clear=False):
+            assert mod.is_fork_pr() is False
+
+    def test_same_repo_pr(self) -> None:
+        env = {"EVENT_NAME": "pull_request", "PR_REPO": "owner/repo", "THIS_REPO": "owner/repo"}
+        with patch.dict(os.environ, env, clear=False):
+            assert mod.is_fork_pr() is False
+
+    def test_fork_pr(self) -> None:
+        env = {"EVENT_NAME": "pull_request", "PR_REPO": "fork/repo", "THIS_REPO": "owner/repo"}
+        with patch.dict(os.environ, env, clear=False):
+            assert mod.is_fork_pr() is True
+
+    def test_empty_pr_repo(self) -> None:
+        env = {"EVENT_NAME": "pull_request", "PR_REPO": "", "THIS_REPO": "owner/repo"}
+        with patch.dict(os.environ, env, clear=False):
+            assert mod.is_fork_pr() is False
+
+
+class TestResolveCachePolicy:
+    def test_explicit_true(self) -> None:
+        assert mod.resolve_cache_policy("true") == "true"
+
+    def test_explicit_false(self) -> None:
+        assert mod.resolve_cache_policy("false") == "false"
+
+    def test_auto_non_pr(self) -> None:
+        with patch.dict(os.environ, {"EVENT_NAME": "push"}, clear=False):
+            assert mod.resolve_cache_policy("auto") == "true"
+
+    def test_auto_same_repo_pr(self) -> None:
+        env = {"EVENT_NAME": "pull_request", "PR_REPO": "owner/repo", "THIS_REPO": "owner/repo"}
+        with patch.dict(os.environ, env, clear=False):
+            assert mod.resolve_cache_policy("auto") == "true"
+
+    def test_auto_fork_pr(self) -> None:
+        env = {"EVENT_NAME": "pull_request", "PR_REPO": "fork/repo", "THIS_REPO": "owner/repo"}
+        with patch.dict(os.environ, env, clear=False):
+            assert mod.resolve_cache_policy("auto") == "false"
+
+
+class TestWriteGithubOutput:
+    def test_simple_values(self, tmp_path) -> None:
+        out = tmp_path / "output"
+        out.touch()
+        with patch.dict(os.environ, {"GITHUB_OUTPUT": str(out)}, clear=False):
+            mod.write_github_output({"key1": "val1", "key2": "val2"})
+        content = out.read_text()
+        assert "key1=val1\n" in content
+        assert "key2=val2\n" in content
+
+    def test_multiline_value(self, tmp_path) -> None:
+        out = tmp_path / "output"
+        out.touch()
+        with patch.dict(os.environ, {"GITHUB_OUTPUT": str(out)}, clear=False):
+            mod.write_github_output({"body": "line1\nline2"})
+        content = out.read_text()
+        assert "body<<EOF_body_" in content
+        assert "line1\nline2\n" in content
+
+    def test_noop_without_env(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            mod.write_github_output({"key": "val"})
+
+
+class TestWriteStepSummary:
+    def test_writes_markdown(self, tmp_path) -> None:
+        out = tmp_path / "summary"
+        out.touch()
+        with patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": str(out)}, clear=False):
+            mod.write_step_summary("## Hello\n")
+        assert out.read_text() == "## Hello\n"
+
+    def test_noop_without_env(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            mod.write_step_summary("test")
+
+
+class TestAppendGithubEnv:
+    def test_writes_env_vars(self, tmp_path) -> None:
+        out = tmp_path / "env"
+        out.touch()
+        with patch.dict(os.environ, {"GITHUB_ENV": str(out)}, clear=False):
+            mod.append_github_env({"FOO": "bar", "BAZ": "qux"})
+        content = out.read_text()
+        assert "FOO=bar\n" in content
+        assert "BAZ=qux\n" in content
+
+    def test_noop_without_env(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            mod.append_github_env({"FOO": "bar"})

@@ -4,12 +4,16 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 from typing import Any
 
-from workflow_runs import list_workflow_runs, parse_csv_list
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import list_workflow_runs_for_sha, parse_csv_list, write_github_output
+from common.github_runs import select_latest_runs_by_name
 
 
 def latest_runs_by_name(
@@ -17,17 +21,7 @@ def latest_runs_by_name(
     names: set[str],
     event: str,
 ) -> dict[str, dict[str, Any]]:
-    latest: dict[str, dict[str, Any]] = {}
-    for run in runs:
-        name = str(run.get("name", ""))
-        if name not in names:
-            continue
-        if str(run.get("event", "")) != event:
-            continue
-        existing = latest.get(name)
-        if existing is None or str(run.get("created_at", "")) > str(existing.get("created_at", "")):
-            latest[name] = run
-    return latest
+    return select_latest_runs_by_name(runs, names, event=event)
 
 
 def platform_status(
@@ -74,22 +68,6 @@ def render_table(platforms: list[str], states: dict[str, dict[str, str]]) -> str
     return "\n".join(lines)
 
 
-def write_output(key: str, value: str) -> None:
-    github_output = os.environ.get("GITHUB_OUTPUT")
-    if not github_output:
-        return
-
-    if "\n" in value:
-        value_hash = hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
-        delim = f"EOF_{key}_{value_hash}"
-        while delim in value:
-            delim = f"{delim}_X"
-        with open(github_output, "a", encoding="utf-8") as f:
-            f.write(f"{key}<<{delim}\n{value}\n{delim}\n")
-    else:
-        with open(github_output, "a", encoding="utf-8") as f:
-            f.write(f"{key}={value}\n")
-
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Collect build status for PR build-results comment.")
@@ -119,7 +97,7 @@ def main(argv: list[str] | None = None) -> int:
     target_names = set(platforms)
     target_names.add("pre-commit")
 
-    runs = list_workflow_runs(args.repo, args.head_sha)
+    runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
 
     if args.runs_cache:
         with open(args.runs_cache, "w", encoding="utf-8") as f:
@@ -138,13 +116,15 @@ def main(argv: list[str] | None = None) -> int:
         "Some builds failed." if all_complete else "Some builds still in progress."
     )
 
-    write_output("table", table)
-    write_output("summary", summary)
-    write_output("all_complete", "true" if all_complete else "false")
-    write_output("precommit_status", precommit["status"])
-    write_output("precommit_url", precommit["url"])
-    write_output("precommit_conclusion", precommit["conclusion"])
-    write_output("precommit_run_id", precommit["run_id"])
+    write_github_output({
+        "table": table,
+        "summary": summary,
+        "all_complete": "true" if all_complete else "false",
+        "precommit_status": precommit["status"],
+        "precommit_url": precommit["url"],
+        "precommit_conclusion": precommit["conclusion"],
+        "precommit_run_id": precommit["run_id"],
+    })
 
     print(table)
     print(summary)

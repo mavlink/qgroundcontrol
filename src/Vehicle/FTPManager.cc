@@ -663,6 +663,12 @@ void FTPManager::_mavlinkMessageReceived(const mavlink_message_t& message)
 
     MavlinkFTP::Request* request = (MavlinkFTP::Request*)&data.payload[0];
 
+    // Reject messages where hdr.size exceeds data array bounds to prevent over-reads
+    if (request->hdr.size > sizeof(request->data)) {
+        qCWarning(FTPManagerLog) << "_mavlinkMessageReceived: hdr.size exceeds data array, discarding." << request->hdr.size;
+        return;
+    }
+
     // Ignore old/reordered packets (handle wrap-around properly)
     uint16_t actualIncomingSeqNumber = request->hdr.seqNumber;
     if ((uint16_t)((_expectedIncomingSeqNumber - 1) - actualIncomingSeqNumber) < (std::numeric_limits<uint16_t>::max()/2)) {

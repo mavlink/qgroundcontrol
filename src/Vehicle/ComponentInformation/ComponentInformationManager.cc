@@ -21,6 +21,7 @@ ComponentInformationManager::ComponentInformationManager(Vehicle *vehicle, QObje
     , _translation(new ComponentInformationTranslation(this, _cachedFileDownload))
 {
     qCDebug(ComponentInformationManagerLog) << this;
+    qCDebug(ComponentInformationManagerLog) << "Cache location:" << QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + QLatin1String("/QGCCompInfoCache");
 
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_GENERAL]    = new CompInfoGeneral   (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
     _compInfoMap[MAV_COMP_ID_AUTOPILOT1][COMP_METADATA_TYPE_PARAMETER]  = new CompInfoParam     (MAV_COMP_ID_AUTOPILOT1, vehicle, this);
@@ -178,7 +179,13 @@ void ComponentInformationManager::requestAllComponentInformation(RequestAllCompl
     _requestAllCompleteFn       = requestAllCompletFn;
     _requestAllCompleteFnData   = requestAllCompleteFnData;
 
-    start();
+    // Guard against double-start: when InitialConnectStateMachine's CompInfo
+    // state times out, the retry callback re-invokes this method while the CIM
+    // state machine is still running. Only start if not already in progress;
+    // the updated callback pointers above are sufficient for the retry path.
+    if (!isRunning()) {
+        start();
+    }
     emit progressUpdate(progress());
 }
 

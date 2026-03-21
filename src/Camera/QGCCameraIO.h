@@ -5,7 +5,7 @@
 
 #include "MAVLinkLib.h"
 
-class MavlinkCameraControl;
+class MavlinkCameraControlInterface;
 class Fact;
 class Vehicle;
 
@@ -16,7 +16,7 @@ Q_DECLARE_LOGGING_CATEGORY(CameraIOLogVerbose)
 class QGCCameraParamIO : public QObject
 {
 public:
-    QGCCameraParamIO(MavlinkCameraControl *control, Fact *fact, Vehicle *vehicle);
+    QGCCameraParamIO(MavlinkCameraControlInterface *control, Fact *fact, Vehicle *vehicle);
     ~QGCCameraParamIO();
 
     void handleParamAck(const mavlink_param_ext_ack_t &ack);
@@ -36,7 +36,7 @@ private:
     void _sendParameter();
     QVariant _valueFromMessage(const char *value, uint8_t param_type);
 
-    MavlinkCameraControl *_control = nullptr;
+    MavlinkCameraControlInterface *_control = nullptr;
     Fact *_fact = nullptr;
     Vehicle *_vehicle = nullptr;
 

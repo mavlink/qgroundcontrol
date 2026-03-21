@@ -1,6 +1,8 @@
 #include "SendMavlinkCommandStateTest.h"
 #include "StateTestCommon.h"
 
+#include <QtCore/QRegularExpression>
+
 #include "SendMavlinkCommandState.h"
 
 
@@ -39,6 +41,10 @@ void SendMavlinkCommandStateTest::_testDeferredSetup()
 void SendMavlinkCommandStateTest::_testUnconfiguredStateFails()
 {
     QStateMachine machine;
+
+    // Expected: unconfigured state emits critical + Qt warns about null connect
+    expectLogMessage(QtWarningMsg, QRegularExpression("invalid nullptr parameter"));
+    expectLogMessage(QtCriticalMsg, QRegularExpression("SendMavlinkCommandState not configured"));
 
     // Create without configuration
     auto* state = new SendMavlinkCommandState(&machine);

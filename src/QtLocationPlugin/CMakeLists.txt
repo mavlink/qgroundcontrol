@@ -92,6 +92,4 @@ target_include_directories(QGCLocation
         Providers
 )
 
-set_source_files_properties(QMLControl/OfflineMapEditor.qml PROPERTIES QT_RESOURCE_ALIAS OfflineMapEditor.qml)
-
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLocation)

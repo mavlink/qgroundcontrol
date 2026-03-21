@@ -1,8 +1,8 @@
 codecov:
-  require_ci_to_pass: yes
+  require_ci_to_pass: true
   notify:
-    after_n_builds: 2  # Wait for at least 2 builds (Debug + Release)
-    wait_for_ci: yes
+    after_n_builds: 1  # Only Linux Debug generates coverage
+    wait_for_ci: true
 
 coverage:
   precision: 2
@@ -26,9 +26,9 @@ coverage:
 comment:
   layout: "reach,diff,flags,tree,footer"
   behavior: default
-  require_changes: no
-  require_base: no
-  require_head: yes
+  require_changes: false
+  require_base: false
+  require_head: true
 
 ignore:
   - "test/**/*"

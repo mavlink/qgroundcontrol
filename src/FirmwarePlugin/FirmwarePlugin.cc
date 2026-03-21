@@ -141,12 +141,13 @@ void FirmwarePlugin::guidedModeTakeoff(Vehicle *vehicle, double takeoffAltRel) c
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius) const
+bool FirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius) const
 {
     Q_UNUSED(vehicle);
     Q_UNUSED(gotoCoord);
     Q_UNUSED(forwardFlightLoiterRadius);
     qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    return false;
 }
 
 void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double, bool pauseVehicle)
@@ -198,11 +199,12 @@ const QVariantList &FirmwarePlugin::toolIndicators(const Vehicle*)
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GPSResilienceIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/TelemetryRSSIIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RCRSSIIndicator.qml")),
-            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/BatteryIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/BatteryIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/RemoteIDIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/GimbalIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/EscIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/JoystickIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/SigningIndicator.qml")),
             QVariant::fromValue(QUrl::fromUserInput("qrc:/qml/QGroundControl/Toolbar/MultiVehicleSelector.qml")),
 #ifdef QT_DEBUG
             // ControlIndicator is only available in debug builds for the moment
@@ -291,7 +293,7 @@ QGCCameraManager *FirmwarePlugin::createCameraManager(Vehicle *vehicle) const
     return new QGCCameraManager(vehicle);
 }
 
-MavlinkCameraControl *FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent) const
+MavlinkCameraControlInterface *FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject *parent) const
 {
     return new VehicleCameraControl(info, vehicle, compID, parent);
 }

@@ -9,6 +9,7 @@ on:
       - '.github/build-config.json'
       - 'tools/setup/**'
       - 'tools/*.py'
+      - 'tools/uv.lock'
       - 'tools/tests/**'
       - 'tools/common/**'
       - 'tools/generators/**'
@@ -29,6 +30,7 @@ on:
       - '.github/build-config.json'
       - 'tools/setup/**'
       - 'tools/*.py'
+      - 'tools/uv.lock'
       - 'tools/tests/**'
       - 'tools/common/**'
       - 'tools/generators/**'
@@ -96,6 +98,8 @@ jobs:
             .github/actions/setup-python
             .github/build-config.json
             .github/scripts
+            tools/pyproject.toml
+            tools/uv.lock
             tools/*.py
             tools/setup
             tools/tests
@@ -112,7 +116,7 @@ jobs:
       - name: Setup Python
         uses: ./.github/actions/setup-python
         with:
-          groups: test
+          groups: scripts,test
           python-version: '3.12'
 
       - name: Python syntax smoke test

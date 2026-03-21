@@ -1,5 +1,15 @@
 name: Install Qt
-description: Install Qt with standard QGroundControl modules
+description: Install Qt using aqtinstall with caching
+outputs:
+  arch_dir:
+    description: Resolved Qt architecture directory name
+    value: ${{ steps.qt-meta.outputs.arch_dir }}
+  qt_root_dir:
+    description: Absolute Qt root directory
+    value: ${{ steps.qt-install.outputs.qt_root_dir || steps.qt-cached.outputs.qt_root_dir }}
+  qt_bin_dir:
+    description: Qt bin directory
+    value: ${{ steps.qt-install.outputs.qt_bin_dir || steps.qt-cached.outputs.qt_bin_dir }}
 inputs:
   version:
     description: Qt version to install
@@ -26,43 +36,69 @@ inputs:
     description: Optional Qt archives subset to install (space-separated)
     required: false
     default: ''
+  export-env:
+    description: Export QT_ROOT_DIR and prepend the Qt bin directory to PATH
+    required: false
+    default: 'true'
 runs:
   using: composite
   steps:
-    - name: Compute Qt cache fingerprint
-      id: qt-cache-key
+    - name: Resolve arch directory and cache key
+      id: qt-meta
       shell: bash
       env:
+        QT_ARCH: ${{ inputs.arch }}
         QT_MODULES: ${{ inputs.modules }}
         QT_ARCHIVES: ${{ inputs.archives }}
-      run: |
-        set -euo pipefail
-        cache_input="${QT_MODULES}"$'\n'"${QT_ARCHIVES}"
-        if command -v sha256sum >/dev/null 2>&1; then
-          digest="$(printf '%s' "$cache_input" | sha256sum | cut -d' ' -f1)"
-        else
-          digest="$(printf '%s' "$cache_input" | shasum -a 256 | awk '{print $1}')"
-        fi
-        echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+      run: python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" cache-key --arch "${QT_ARCH}" --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}"
 
     - name: Restore extracted Qt cache
+      id: qt-cache
       uses: actions/cache@v5
       with:
         path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
-        key: qt-extracted-${{ runner.os }}-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ steps.qt-cache-key.outputs.digest }}
+        key: qt-${{ runner.os }}-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ steps.qt-meta.outputs.digest }}
 
-    - name: Ensure pip available
-      shell: bash
-      run: python3 -m ensurepip 2>/dev/null || true
     - name: Install Qt ${{ inputs.version }}
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: ${{ inputs.version }}
-        host: ${{ inputs.host }}
-        target: ${{ inputs.target }}
-        arch: ${{ inputs.arch }}
-        dir: ${{ inputs.dir }}
-        modules: ${{ inputs.modules }}
-        archives: ${{ inputs.archives }}
-        setup-python: false
-        cache: true
+      if: steps.qt-cache.outputs.cache-hit != 'true'
+      id: qt-install
+      shell: bash
+      env:
+        QT_VERSION: ${{ inputs.version }}
+        QT_HOST: ${{ inputs.host }}
+        QT_TARGET: ${{ inputs.target }}
+        QT_ARCH: ${{ inputs.arch }}
+        QT_OUTDIR: ${{ inputs.dir }}/Qt
+        QT_MODULES: ${{ inputs.modules }}
+        QT_ARCHIVES: ${{ inputs.archives }}
+      run: |
+        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" install \
+          --version "${QT_VERSION}" \
+          --host "${QT_HOST}" \
+          --target "${QT_TARGET}" \
+          --arch "${QT_ARCH}" \
+          --outdir "${QT_OUTDIR}" \
+          --modules "${QT_MODULES}" \
+          --archives "${QT_ARCHIVES}"
+
+    - name: Resolve Qt paths (cache hit)
+      if: steps.qt-cache.outputs.cache-hit == 'true'
+      id: qt-cached
+      shell: bash
+      env:
+        QT_OUTDIR: ${{ inputs.dir }}/Qt
+        QT_VERSION: ${{ inputs.version }}
+        ARCH_DIR: ${{ steps.qt-meta.outputs.arch_dir }}
+      run: |
+        qt_root="${QT_OUTDIR}/${QT_VERSION}/${ARCH_DIR}"
+        echo "qt_root_dir=${qt_root}" >> "$GITHUB_OUTPUT"
+        echo "qt_bin_dir=${qt_root}/bin" >> "$GITHUB_OUTPUT"
+
+    - name: Set Qt environment
+      if: ${{ inputs.export-env == 'true' }}
+      shell: bash
+      run: |
+        qt_root="${{ steps.qt-install.outputs.qt_root_dir || steps.qt-cached.outputs.qt_root_dir }}"
+        echo "QT_ROOT_DIR=${qt_root}" >> "$GITHUB_ENV"
+        echo "${qt_root}/bin" >> "$GITHUB_PATH"
+        echo "Qt installed at ${qt_root}"

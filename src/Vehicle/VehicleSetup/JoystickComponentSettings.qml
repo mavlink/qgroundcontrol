@@ -46,7 +46,7 @@ ColumnLayout {
             Layout.fillWidth: true
             text: qsTr("Negative Thrust")
             fact: _joystickSettings.negativeThrust
-            visible: globals.activeVehicle.supportsNegativeThrust && fact.visible
+            visible: globals.activeVehicle.supports.negativeThrust && fact.visible
         }
 
         QGCCheckBoxSlider {
