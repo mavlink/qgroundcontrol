@@ -11,6 +11,7 @@ string(REPLACE "--coverage" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 string(REPLACE "-fprofile-arcs" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 string(REPLACE "-ftest-coverage" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 
+if(NOT USE_SYSTEM_RAPIDCHECK)
 CPMAddPackage(
     NAME rapidcheck
     GITHUB_REPOSITORY emil-e/rapidcheck
@@ -27,6 +28,7 @@ CPMAddPackage(
         "RC_ENABLE_EXAMPLES OFF"
 )
 
+endif()
 # Restore coverage flags
 set(CMAKE_CXX_FLAGS_DEBUG "${_RC_SAVED_CXX_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "${_RC_SAVED_C_FLAGS}")

@@ -43,6 +43,7 @@ if(WIN32)
     )
 endif()
 
+if(NOT USE_SYSTEM_ZLIB)
 CPMAddPackage(
     NAME zlib
     GITHUB_REPOSITORY madler/zlib
@@ -74,10 +75,15 @@ if(NOT TARGET ZLIB::ZLIB)
     add_library(ZLIB::ZLIB ALIAS zlibstatic)
 endif()
 
+else()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE z)
+endif()
+
 # ============================================================================
 # XZ (LZMA) Integration - liblzma from xz-utils
 # ============================================================================
 
+if(NOT USE_SYSTEM_XZ-EMBEDDED)
 CPMAddPackage(
     NAME xz
     VERSION 5.8.2
@@ -128,6 +134,26 @@ else()
     message(FATAL_ERROR "liblzma target not found")
 endif()
 
+else()
+
+add_library(xz STATIC ${LIB_PREFIX}/libxz.a)
+set_target_properties(xz PROPERTIES
+    IMPORTED_LOCATION "${LIB_PREFIX}/libxz.a"
+    INTERFACE_INCLUDE_DIRECTORIES "/usr/include/xz-embedded"
+)
+
+target_compile_definitions(xz
+    PUBLIC
+        XZ_USE_CRC64
+        XZ_USE_CRC32
+        XZ_DEC_ANY_CHECK
+)
+
+target_include_directories(xz INTERFACE /usr/include/xz-embedded)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE xz)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE "${LIB_PREFIX}/libxz.a")
+endif()
+
 # ============================================================================
 # Zstandard (ZSTD) Integration
 # ============================================================================
@@ -137,6 +163,7 @@ if(POLICY CMP0194)
     set(CMAKE_POLICY_DEFAULT_CMP0194 NEW CACHE STRING "" FORCE)
 endif()
 
+if(NOT USE_SYSTEM_ZSTD)
 CPMAddPackage(
     NAME zstd
     VERSION 1.5.7
@@ -180,12 +207,16 @@ if(TARGET libzstd_static)
 else()
     message(FATAL_ERROR "libzstd_static target not found")
 endif()
+else()
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE zstd)
+endif()
 
 # ============================================================================
 # LZ4 Integration (Fast compression) - Optional
 # ============================================================================
 
 if(QGC_ENABLE_LZ4)
+    if(NOT USE_SYSTEM_LZ4)
     CPMAddPackage(
         NAME lz4
         VERSION 1.10.0
@@ -213,6 +244,9 @@ if(QGC_ENABLE_LZ4)
     else()
         message(FATAL_ERROR "lz4_static target not found")
     endif()
+    else()
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE lz4)
+    endif()
 endif()
 
 # ============================================================================
@@ -225,6 +259,7 @@ endif()
 # - TODO: Update to tagged release when bzip2 publishes one with CMake support
 
 if(QGC_ENABLE_BZIP2)
+    if(NOT USE_SYSTEM_BZIP2)
     CPMAddPackage(
         NAME bzip2
         VERSION 1.0.8
@@ -254,6 +289,9 @@ if(QGC_ENABLE_BZIP2)
     else()
         message(FATAL_ERROR "bz2_static target not found")
     endif()
+    else()
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE bzip2)
+    endif()
 endif()
 
 # ============================================================================
@@ -273,6 +311,7 @@ else()
     set(_LIBARCHIVE_LZ4 "OFF")
 endif()
 
+if(NOT USE_SYSTEM_LIBARCHIVE)
 CPMAddPackage(
     NAME libarchive
     VERSION 3.8.4
@@ -331,4 +370,7 @@ else()
     message(FATAL_ERROR "libarchive target not found")
 endif()
 
+else()
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libarchive)
+endif()
 

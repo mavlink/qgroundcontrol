@@ -47,11 +47,16 @@ qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_apm_resource
 
 #===========================================================================#
 
+if(NOT USE_SYSTEM_PARAMETERS)
 CPMAddPackage(
     NAME ArduPilotParams
     GITHUB_REPOSITORY ArduPilot/ParameterRepository
     GIT_TAG main
 )
+
+else()
+    set(ArduPilotParams_SOURCE_DIR /usr/share/ParameterRepository)
+endif()
 
 # Dynamically discover all parameter definition files.
 # Directory layout: {Vehicle}-{Major}.{Minor}/apm.pdef.xml

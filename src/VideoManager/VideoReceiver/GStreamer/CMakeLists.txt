@@ -8,6 +8,28 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
         OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
     )
 
+    if(GStreamer_USE_STATIC_LIBS)
+        foreach(_plugin IN LISTS GSTREAMER_PLUGINS)
+            if(GST_PLUGIN_${_plugin}_FOUND)
+                target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE GST_PLUGIN_${_plugin}_FOUND)
+            endif()
+        endforeach()
+    endif()
+
+    # Build GStreamer Qt6 QML GL plugin
+    if(USE_SYSTEM_GSTQML6)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE "${LIB_PREFIX}/gstreamer-1.0/libgstqml6.so")
+    else()
+    add_subdirectory(gstqml6gl)
+    endif()
+
+    # TODO: Add Qt6 Direct3D11 plugin support
+    # https://gstreamer.freedesktop.org/documentation/qt6d3d11/index.html#qml6d3d11sink-page
+endif()
+
+if(TARGET gstqml6gl)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE gstqml6gl)
+
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             GStreamer.cc

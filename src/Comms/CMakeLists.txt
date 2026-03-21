@@ -68,6 +68,35 @@ endif()
 # ----------------------------------------------------------------------------
 add_subdirectory(Bluetooth)
 
+# ----------------------------------------------------------------------------
+# ZeroConf/mDNS Service Discovery
+# ----------------------------------------------------------------------------
+if(QGC_ZEROCONF_ENABLED)
+    if(NOT USE_SYSTEM_QMDNSENGINE)
+    CPMAddPackage(
+        NAME qmdnsengine
+        GITHUB_REPOSITORY nitroshare/qmdnsengine
+        GIT_TAG master
+        OPTIONS
+            "BUILD_DOC OFF"
+            "BUILD_EXAMPLES OFF"
+            "BUILD_TESTS OFF"
+    )
+
+    if(TARGET qmdnsengine)
+        qgc_disable_dependency_warnings(qmdnsengine)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
+    else()
+        message(WARNING "QGC: qmdnsengine target not created, ZeroConf will be disabled")
+    endif()
+    else()
+    find_package(qmdnsengine REQUIRED)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
+    endif()
+endif()
+
 # ============================================================================
 # Communication Link Subdirectories
 # ============================================================================

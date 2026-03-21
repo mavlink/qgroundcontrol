@@ -1,12 +1,14 @@
 # ----------------------------------------------------------------------------
 # nanobench (Microbenchmarking Framework)
 # ----------------------------------------------------------------------------
+if(NOT USE_SYSTEM_NANOBENCH)
 CPMAddPackage(
     NAME nanobench
     GITHUB_REPOSITORY martinus/nanobench
     VERSION 4.3.11
     SYSTEM YES
 )
+endif()
 qgc_disable_dependency_warnings(nanobench)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE nanobench)
 
