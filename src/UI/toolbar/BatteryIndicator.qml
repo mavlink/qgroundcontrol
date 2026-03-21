@@ -14,7 +14,7 @@ Item {
     width:          batteryIndicatorRow.width
 
     property bool       showIndicator:      _activeVehicle && _activeVehicle.batteries.count > 0
-    property bool       waitForParameters:  true    // UI won't show until parameters are ready
+    property bool       waitForParameters:  false
     property Component  expandedPageComponent
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
@@ -193,7 +193,8 @@ Item {
 
         ToolIndicatorPage {
             showExpand:         expandedComponent ? true : false
-            waitForParameters:  control.waitForParameters
+            waitForParameters:                  false
+            expandedComponentWaitForParameters: true
             contentComponent:   batteryContentComponent
             expandedComponent:  batteryExpandedComponent
         }

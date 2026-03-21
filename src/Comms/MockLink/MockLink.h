@@ -59,7 +59,11 @@ public:
 
     MockLinkFTP *mockLinkFTP() const;
 
-    /// Sets a failure mode for unit testingqgcm
+    /// Set the armed state of the simulated vehicle
+    void setArmed(bool armed) { if (armed) _mavBaseMode |= MAV_MODE_FLAG_SAFETY_ARMED; else _mavBaseMode &= ~MAV_MODE_FLAG_SAFETY_ARMED; }
+    bool armed() const { return (_mavBaseMode & MAV_MODE_FLAG_SAFETY_ARMED) != 0; }
+
+    /// Sets a failure mode for unit testing
     ///     @param failureMode Type of failure to simulate
     ///     @param failureAckResult Error to send if one the ack error modes
     void setMissionItemFailureMode(MockLinkMissionItemHandler::FailureMode_t failureMode, MAV_MISSION_RESULT failureAckResult) const { _missionItemHandler->setFailureMode(failureMode, failureAckResult); }
@@ -87,8 +91,9 @@ public:
     int receivedRequestMessageCount(int compId, int messageId) const { return _receivedRequestMessageByCompAndMsgCountMap.value(compId).value(messageId, 0); }
     void clearReceivedRequestMessageCounts() { _receivedRequestMessageCountMap.clear(); _receivedRequestMessageByCompAndMsgCountMap.clear(); }
     int receivedRequestMessageCount(uint32_t messageId) const { return _receivedRequestMessageCountMap.value(messageId, 0); }
-    void clearReceivedMavlinkMessageCounts() { _receivedMavlinkMessageCountMap.clear(); _hashCheckRequestCount = 0; }
+    void clearReceivedMavlinkMessageCounts() { _receivedMavlinkMessageCountMap.clear(); _hashCheckRequestCount = 0; _missionItemHandler->clearRequestListCounts(); }
     int receivedMavlinkMessageCount(uint32_t messageId) const { return _receivedMavlinkMessageCountMap.value(messageId, 0); }
+    int receivedMissionRequestListCount(MAV_MISSION_TYPE type) const { return _missionItemHandler->requestListCount(type); }
 
     enum RequestMessageFailureMode_t {
         FailRequestMessageNone,
