@@ -33,6 +33,12 @@ SettingsPage {
             text:               qsTr("Emit heartbeat")
             fact:               _mavlinkSettings.sendGCSHeartbeat
         }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("Skip param/plan download if flying on connect")
+            fact:               _mavlinkSettings.noInitialDownloadWhenFlying
+        }
     }
 
     SigningKeyManager {

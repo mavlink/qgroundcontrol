@@ -65,9 +65,12 @@ public:
     void sendUnexpectedMissionRequest();
 
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
-    void reset() { _missionItems.clear(); }
+    void reset() { _missionItems.clear(); _requestListCounts.clear(); }
 
     void setSendHomePositionOnEmptyList(bool sendHomePositionOnEmptyList) { _sendHomePositionOnEmptyList = sendHomePositionOnEmptyList; }
+
+    int requestListCount(MAV_MISSION_TYPE type) const { return _requestListCounts.value(type, 0); }
+    void clearRequestListCounts() { _requestListCounts.clear(); }
 
 private slots:
     void _missionItemResponseTimeout();
@@ -101,4 +104,5 @@ private:
     bool _failReadRequestListFirstResponse = true;
     bool _failReadRequest1FirstResponse = true;
     bool _failWriteMissionCountFirstResponse = true;
+    QMap<MAV_MISSION_TYPE, int> _requestListCounts;
 };

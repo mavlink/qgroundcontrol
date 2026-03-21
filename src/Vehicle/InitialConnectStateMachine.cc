@@ -10,6 +10,8 @@
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
+#include "MavlinkSettings.h"
 
 #include <cstring>
 
@@ -77,11 +79,26 @@ void InitialConnectStateMachine::_createStates()
         _timeoutCompInfo
     );
 
-    // State 3: Request parameters
-    _stateParameters = new AsyncFunctionState(
+    // State 3: Request parameters (skippable)
+    _stateParameters = new SkippableAsyncState(
         QStringLiteral("RequestParameters"),
         this,
-        [this](AsyncFunctionState* state) { _requestParameters(state); },
+        [this]() {
+            if (_shouldSkipForFlying()) {
+                // PX4 can try a lightweight hash-check cache load
+                if (vehicle()->px4Firmware()) {
+                    return false;
+                }
+                _lastSkipReason = QStringLiteral("(vehicle is flying)");
+                return true;
+            }
+            return false;
+        },
+        [this](SkippableAsyncState* state) { _requestParameters(state); },
+        [this]() {
+            qCDebug(InitialConnectStateMachineLog) << "Skipping parameter download" << _lastSkipReason;
+            vehicle()->_parameterManager->setParameterDownloadSkipped(true);
+        },
         _timeoutParameters
     );
 
@@ -89,10 +106,10 @@ void InitialConnectStateMachine::_createStates()
     _stateMission = new SkippableAsyncState(
         QStringLiteral("RequestMission"),
         this,
-        [this]() { return _shouldSkipForLinkType() || !_hasPrimaryLink(); },
+        [this]() { return _shouldSkipForPlanLoad(); },
         [this](SkippableAsyncState* state) { _requestMission(state); },
-        []() {
-            qCDebug(InitialConnectStateMachineLog) << "Skipping mission load";
+        [this]() {
+            qCDebug(InitialConnectStateMachineLog) << "Skipping mission load" << _lastSkipReason;
         },
         _timeoutMission
     );
@@ -102,12 +119,18 @@ void InitialConnectStateMachine::_createStates()
         QStringLiteral("RequestGeoFence"),
         this,
         [this]() {
-            return _shouldSkipForLinkType() || !_hasPrimaryLink() ||
-                   !vehicle()->_geoFenceManager->supported();
+            if (_shouldSkipForPlanLoad()) {
+                return true;
+            }
+            if (!vehicle()->_geoFenceManager->supported()) {
+                _lastSkipReason = QStringLiteral("(not supported by vehicle)");
+                return true;
+            }
+            return false;
         },
         [this](SkippableAsyncState* state) { _requestGeoFence(state); },
-        []() {
-            qCDebug(InitialConnectStateMachineLog) << "Skipping geofence load";
+        [this]() {
+            qCDebug(InitialConnectStateMachineLog) << "Skipping geofence load" << _lastSkipReason;
         },
         _timeoutGeoFence
     );
@@ -117,12 +140,18 @@ void InitialConnectStateMachine::_createStates()
         QStringLiteral("RequestRallyPoints"),
         this,
         [this]() {
-            return _shouldSkipForLinkType() || !_hasPrimaryLink() ||
-                   !vehicle()->_rallyPointManager->supported();
+            if (_shouldSkipForPlanLoad()) {
+                return true;
+            }
+            if (!vehicle()->_rallyPointManager->supported()) {
+                _lastSkipReason = QStringLiteral("(not supported by vehicle)");
+                return true;
+            }
+            return false;
         },
         [this](SkippableAsyncState* state) { _requestRallyPoints(state); },
         [this]() {
-            qCDebug(InitialConnectStateMachineLog) << "Skipping rally points load";
+            qCDebug(InitialConnectStateMachineLog) << "Skipping rally points load" << _lastSkipReason;
             // Mark plan request complete when skipping
             vehicle()->_initialPlanRequestComplete = true;
             emit vehicle()->initialPlanRequestCompleteChanged(true);
@@ -155,9 +184,12 @@ void InitialConnectStateMachine::_wireTransitions()
     _stateAutopilotVersion->addTransition(_stateAutopilotVersion, &WaitStateBase::completed, _stateStandardModes);
     _stateStandardModes->addTransition(_stateStandardModes, &WaitStateBase::completed, _stateCompInfo);
     _stateCompInfo->addTransition(_stateCompInfo, &WaitStateBase::completed, _stateParameters);
-    _stateParameters->addTransition(_stateParameters, &WaitStateBase::completed, _stateMission);
 
     // SkippableAsyncStates: both completed and skipped go to next state
+
+    _stateParameters->addTransition(_stateParameters, &WaitStateBase::completed, _stateMission);
+    _stateParameters->addTransition(_stateParameters, &SkippableAsyncState::skipped, _stateMission);
+
     _stateMission->addTransition(_stateMission, &WaitStateBase::completed, _stateGeoFence);
     _stateMission->addTransition(_stateMission, &SkippableAsyncState::skipped, _stateGeoFence);
 
@@ -238,6 +270,17 @@ bool InitialConnectStateMachine::_shouldSkipAutopilotVersionRequest() const
     return false;
 }
 
+bool InitialConnectStateMachine::_shouldSkipForFlying() const
+{
+    if (!SettingsManager::instance()->mavlinkSettings()->noInitialDownloadWhenFlying()->rawValue().toBool()) {
+        return false;
+    }
+    // We use armed() rather than flying() as a surrogate for in-flight state because
+    // armed status is available immediately from the first heartbeat, whereas flying()
+    // depends on additional telemetry that may not have arrived yet at initial connect time.
+    return vehicle()->armed();
+}
+
 bool InitialConnectStateMachine::_shouldSkipForLinkType() const
 {
     SharedLinkInterfacePtr sharedLink = vehicle()->vehicleLinkManager()->primaryLink().lock();
@@ -251,6 +294,23 @@ bool InitialConnectStateMachine::_hasPrimaryLink() const
 {
     SharedLinkInterfacePtr sharedLink = vehicle()->vehicleLinkManager()->primaryLink().lock();
     return sharedLink != nullptr;
+}
+
+bool InitialConnectStateMachine::_shouldSkipForPlanLoad()
+{
+    if (_shouldSkipForFlying()) {
+        _lastSkipReason = QStringLiteral("(vehicle is flying)");
+        return true;
+    }
+    if (!_hasPrimaryLink()) {
+        _lastSkipReason = QStringLiteral("(no primary link)");
+        return true;
+    }
+    if (_shouldSkipForLinkType()) {
+        _lastSkipReason = QStringLiteral("(high latency or log replay link)");
+        return true;
+    }
+    return false;
 }
 
 // ============================================================================
@@ -355,9 +415,21 @@ void InitialConnectStateMachine::_requestCompInfo(AsyncFunctionState* state)
     );
 }
 
-void InitialConnectStateMachine::_requestParameters(AsyncFunctionState* state)
+void InitialConnectStateMachine::_requestParameters(SkippableAsyncState* state)
 {
     qCDebug(InitialConnectStateMachineLog) << "_stateRequestParameters";
+
+    const bool cacheOnly = _shouldSkipForFlying();
+    QMetaObject::Connection cacheFailedConn;
+    if (cacheOnly) {
+        // If cache-only check fails (miss/timeout/non-PX4), complete the state without params
+        cacheFailedConn = connect(vehicle()->_parameterManager, &ParameterManager::cacheCheckOnlyFailed,
+                state, [state, this]() {
+                    qCDebug(InitialConnectStateMachineLog) << "Parameter cache check failed while flying, advancing without parameters";
+                    vehicle()->_parameterManager->setParameterDownloadSkipped(true);
+                    state->complete();
+                });
+    }
 
     connect(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
             this, &InitialConnectStateMachine::_onSubProgressUpdate, Qt::UniqueConnection);
@@ -368,12 +440,19 @@ void InitialConnectStateMachine::_requestParameters(AsyncFunctionState* state)
         });
 
     // Ensure progress tracking is always cleaned up, including timeout/skip paths.
-    state->setOnExit([this]() {
+    state->setOnExit([this, cacheFailedConn]() {
         disconnect(vehicle()->_parameterManager, &ParameterManager::loadProgressChanged,
                    this, &InitialConnectStateMachine::_onSubProgressUpdate);
+        if (cacheFailedConn) {
+            disconnect(cacheFailedConn);
+        }
     });
 
-    vehicle()->_parameterManager->refreshAllParameters();
+    if (cacheOnly) {
+        vehicle()->_parameterManager->tryHashCheckCacheLoad();
+    } else {
+        vehicle()->_parameterManager->refreshAllParameters(MAV_COMP_ID_ALL);
+    }
 }
 
 void InitialConnectStateMachine::_onParametersReady(bool parametersReady)

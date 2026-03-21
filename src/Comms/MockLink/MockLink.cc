@@ -84,6 +84,10 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
 {
     qCDebug(MockLinkLog) << this;
 
+    if (_mockConfig->startArmed()) {
+        setArmed(true);
+    }
+
     // Initialize ADS-B vehicles with different starting conditions
     _adsbVehicles.reserve(_numberOfVehicles);
     for (int i = 0; i < _numberOfVehicles; ++i) {

@@ -18,6 +18,7 @@ MockConfiguration::MockConfiguration(const MockConfiguration *copy, QObject *par
     , _enableGimbal(copy->enableGimbal())
     , _failureMode(copy->failureMode())
     , _incrementVehicleId(copy->incrementVehicleId())
+    , _startArmed(copy->startArmed())
     , _cameraCaptureVideo(copy->cameraCaptureVideo())
     , _cameraCaptureImage(copy->cameraCaptureImage())
     , _cameraHasModes(copy->cameraHasModes())
@@ -72,6 +73,7 @@ void MockConfiguration::copyFrom(const LinkConfiguration *source)
     setGimbalHasYawLock(mockLinkSource->gimbalHasYawLock());
     setGimbalHasRetract(mockLinkSource->gimbalHasRetract());
     setGimbalHasNeutral(mockLinkSource->gimbalHasNeutral());
+    setStartArmed(mockLinkSource->startArmed());
 }
 
 void MockConfiguration::loadSettings(QSettings &settings, const QString &root)

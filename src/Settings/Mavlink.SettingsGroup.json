@@ -66,6 +66,13 @@
     "default":      255,
     "min":          1,
     "max":          255
+},
+{
+    "name":         "noInitialDownloadWhenFlying",
+    "shortDesc":    "Skip param/plan download on connect if flying",
+    "longDesc":     "When enabled, parameter and mission plan downloads are skipped when connecting to a vehicle that is already flying. This prevents bandwidth-heavy transfers from disrupting an active flight.",
+    "type":         "bool",
+    "default":      false
 }
 ]
 }

@@ -96,6 +96,9 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
 
     _failReadRequest1FirstResponse = true;
 
+    mavlink_mission_request_list_t request{};
+    mavlink_msg_mission_request_list_decode(&msg, &request);
+
     if (_failureMode == FailReadRequestListNoResponse) {
         qCDebug(MockLinkMissionItemHandlerLog) << "_handleMissionRequestList not responding due to failure mode FailReadRequestListNoResponse";
         return;
@@ -109,10 +112,8 @@ void MockLinkMissionItemHandler::_handleMissionRequestList(const mavlink_message
 
     _failReadRequestListFirstResponse = true;
 
-    mavlink_mission_request_list_t request{};
-    mavlink_msg_mission_request_list_decode(&msg, &request);
-
     Q_ASSERT(request.target_system == _mockLink->vehicleId());
+    _requestListCounts[static_cast<MAV_MISSION_TYPE>(request.mission_type)]++;
 
     _requestType = static_cast<MAV_MISSION_TYPE>(request.mission_type);
 

@@ -25,10 +25,11 @@ class ParameterManager : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
-    Q_PROPERTY(bool     parametersReady     READ parametersReady    NOTIFY parametersReadyChanged)      ///< true: Parameters are ready for use
-    Q_PROPERTY(bool     missingParameters   READ missingParameters  NOTIFY missingParametersChanged)    ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
-    Q_PROPERTY(double   loadProgress        READ loadProgress       NOTIFY loadProgressChanged)
-    Q_PROPERTY(bool     pendingWrites       READ pendingWrites      NOTIFY pendingWritesChanged)        ///< true: There are still pending write updates against the vehicle
+    Q_PROPERTY(bool     parametersReady             READ parametersReady            NOTIFY parametersReadyChanged)          ///< true: Parameters are ready for use
+    Q_PROPERTY(bool     missingParameters           READ missingParameters          NOTIFY missingParametersChanged)        ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
+    Q_PROPERTY(double   loadProgress                READ loadProgress               NOTIFY loadProgressChanged)
+    Q_PROPERTY(bool     pendingWrites               READ pendingWrites              NOTIFY pendingWritesChanged)            ///< true: There are still pending write updates against the vehicle
+    Q_PROPERTY(bool     parameterDownloadSkipped    READ parameterDownloadSkipped   NOTIFY parameterDownloadSkippedChanged) ///< true: Parameter download was intentionally skipped (e.g. flying)
     friend class ParameterEditorController;
 
 public:
@@ -38,6 +39,8 @@ public:
     bool parametersReady() const { return _parametersReady; }
     bool missingParameters() const { return _missingParameters; }
     double loadProgress() const { return _loadProgress; }
+    bool parameterDownloadSkipped() const { return _parameterDownloadSkipped; }
+    void setParameterDownloadSkipped(bool skipped);
 
     /// @return Directory of parameter caches
     static QDir parameterCacheDir();
@@ -49,8 +52,13 @@ public:
 
     QList<int> componentIds() const;
 
-    /// Re-request the full set of parameters from the autopilot
-    void refreshAllParameters(uint8_t componentID = MAV_COMP_ID_ALL);
+    /// Re-request the full set of parameters from the autopilot.
+    void refreshAllParameters(uint8_t componentID);
+    Q_INVOKABLE void refreshAllParameters() { refreshAllParameters(MAV_COMP_ID_ALL); }
+
+    /// Attempt a PX4 hash-check cache load only. If the cache misses or the
+    /// vehicle is not PX4, cacheCheckOnlyFailed() is emitted.
+    void tryHashCheckCacheLoad();
 
     /// Request a refresh on the specific parameter
     void refreshParameter(int componentId, const QString &paramName);
@@ -104,7 +112,9 @@ signals:
     void parametersReadyChanged(bool parametersReady);
     void missingParametersChanged(bool missingParameters);
     void loadProgressChanged(float value);
+    void cacheCheckOnlyFailed();
     void pendingWritesChanged(bool pendingWrites);
+    void parameterDownloadSkippedChanged();
     void factAdded(int componentId, Fact *fact);
 
     // These signals are used to verify unit tests
@@ -123,6 +133,8 @@ private:
     void _mavlinkParamSet(int componentId, const QString &name, FactMetaData::ValueType_t valueType, const QVariant &rawValue);
     void _waitingParamTimeout();
     void _tryCacheLookup();
+    void _resetHashCheck();
+    void _startParameterDownload(uint8_t componentId);
     void _hashCheckTimeout();
     void _paramRequestListTimeout();
     /// Translates ParameterManager::defaultComponentId to real component id if needed
@@ -171,12 +183,14 @@ private:
 
     double _loadProgress = 0;                   ///< Parameter load progess, [0.0,1.0]
     bool _parametersReady = false;              ///< true: parameter load complete
+    bool _parameterDownloadSkipped = false;     ///< true: parameter download was intentionally skipped
     bool _missingParameters = false;            ///< true: parameter missing from initial load
     bool _initialLoadComplete = false;          ///< true: Initial load of all parameters complete, whether successful or not
     bool _waitingForDefaultComponent = false;   ///< true: last chance wait for default component params
     bool _metaDataAddedToFacts = false;         ///< true: FactMetaData has been adde to the default component facts
     bool _logReplay = false;                    ///< true: running with log replay link
     bool _hashCheckDone = false;                ///< true: _HASH_CHECK has been attempted, go straight to PARAM_REQUEST_LIST
+    bool _cacheOnlyHashCheck = false;           ///< true: current hash check is cache-only, don't fall back to full download
 
     typedef QPair<int /* FactMetaData::ValueType_t */, QVariant /* Fact::rawValue */> ParamTypeVal;
     typedef QMap<QString /* parameter name */, ParamTypeVal> CacheMapName2ParamTypeVal;

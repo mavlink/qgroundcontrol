@@ -19,7 +19,10 @@
 #include "UnitTest.h"
 #include "Vehicle.h"
 #include "ComponentInformationManager.h"
+#include "MavlinkSettings.h"
+#include "SettingsManager.h"
 
+#include <QtCore/qscopeguard.h>
 #include <QtTest/QTest>
 
 void InitialConnectTest::_performTestCases_data()
@@ -377,27 +380,29 @@ void InitialConnectTest::_stateRunMatrix_data()
     QTest::addColumn<bool>("flying");
     QTest::addColumn<bool>("expectAutopilotVersionRequest");
     QTest::addColumn<bool>("expectAvailableModesRequest");
+    QTest::addColumn<bool>("expectParamRequest");
+    QTest::addColumn<bool>("expectHashCheckOnly");
     QTest::addColumn<bool>("expectPlanRequestListTraffic");
+    QTest::addColumn<bool>("expectParameterDownloadSkipped");
 
     // Matrix reference for generated rows and expected request behavior.
     //
-    // +----+----+-----+------------+------------+----------------+
-    // | HL | LR | Fly | AP_VERSION | AVAIL_MODS | PLAN_REQ_LISTS |
-    // +----+----+-----+------------+------------+----------------+
-    // | 0  | 0  | 0   | Run        | Run        | Run            |
-    // | 0  | 0  | 1   | Run        | Run        | Run            |
-    // | 1  | 0  | 0   | Skip       | Run        | Skip           |
-    // | 1  | 0  | 1   | Skip       | Run        | Skip           |
-    // | 0  | 1  | 0   | Skip       | Run        | Skip           |
-    // | 0  | 1  | 1   | Skip       | Run        | Skip           |
-    // | 1  | 1  | 0   | Skip       | Run        | Skip           |
-    // | 1  | 1  | 1   | Skip       | Run        | Skip           |
-    // +----+----+-----+------------+------------+----------------+
-    // HL/LR skip behavior follows: skipForLinkType = (highLatency || logReplay).
+    // +----+----+-----+------------+------------+--------+------------+----------------+----------+
+    // | HL | LR | Fly | AP_VERSION | AVAIL_MODS | PARAMS | HASH_CHECK | PLAN_REQ_LISTS | DL_SKIP  |
+    // +----+----+-----+------------+------------+--------+------------+----------------+----------+
+    // | 0  | 0  | 0   | Run        | Run        | Run    | -          | Run            | false    |
+    // | 0  | 0  | 1   | Run        | Run        | Skip   | Yes        | Skip           | true     |
+    // | 1  | 0  | 0   | Skip       | Run        | Skip*  | -          | Skip           | false    |
+    // | 1  | 0  | 1   | Skip       | Run        | Skip*  | -          | Skip           | true     |
+    // | 0  | 1  | 0   | Skip       | Run        | Skip*  | -          | Skip           | false    |
+    // | 0  | 1  | 1   | Skip       | Run        | Skip*  | -          | Skip           | true     |
+    // | 1  | 1  | 0   | Skip       | Run        | Skip*  | -          | Skip           | false    |
+    // | 1  | 1  | 1   | Skip       | Run        | Skip*  | -          | Skip           | true     |
+    // +----+----+-----+------------+------------+--------+------------+----------------+----------+
+    // * HL/LR params are handled internally (no PARAM_REQUEST_LIST).
+    // Flying (PX4): tries cache-only hash check; cache miss advances without params.
+    // Flying rows enable noInitialDownloadWhenFlying + startArmed.
 
-    // NOTE: Log replay behavior in InitialConnectStateMachine uses the same skip guard
-    // path as high-latency (isHighLatency || isLogReplay). This matrix verifies behavior
-    // across all combinations by mapping logReplay=true to the same effective skip path.
     for (int bits = 0; bits < 8; ++bits) {
         const bool highLatency = bits & 0x1;
         const bool logReplay = bits & 0x2;
@@ -406,13 +411,19 @@ void InitialConnectTest::_stateRunMatrix_data()
 
         const bool expectAutopilotVersionRequest = !skipForLinkType;
         const bool expectAvailableModesRequest = true;
-        const bool expectPlanRequestListTraffic = !skipForLinkType;
+        const bool expectParamRequest = !skipForLinkType && !flying;
+        const bool expectHashCheckOnly = !skipForLinkType && flying;
+        const bool expectPlanRequestListTraffic = !skipForLinkType && !flying;
+        const bool expectParameterDownloadSkipped = flying;
 
         QTest::addRow("HL_%d_LR_%d_Fly_%d", highLatency ? 1 : 0, logReplay ? 1 : 0, flying ? 1 : 0)
             << highLatency << logReplay << flying
             << expectAutopilotVersionRequest
             << expectAvailableModesRequest
-            << expectPlanRequestListTraffic;
+            << expectParamRequest
+            << expectHashCheckOnly
+            << expectPlanRequestListTraffic
+            << expectParameterDownloadSkipped;
     }
 }
 
@@ -423,10 +434,21 @@ void InitialConnectTest::_stateRunMatrix()
     QFETCH(bool, flying);
     QFETCH(bool, expectAutopilotVersionRequest);
     QFETCH(bool, expectAvailableModesRequest);
+    QFETCH(bool, expectParamRequest);
+    QFETCH(bool, expectHashCheckOnly);
     QFETCH(bool, expectPlanRequestListTraffic);
+    QFETCH(bool, expectParameterDownloadSkipped);
 
     // Effective skip path in InitialConnectStateMachine is (isHighLatency || isLogReplay)
     const bool skipForLinkType = highLatency || logReplay;
+
+    // Enable noInitialDownloadWhenFlying setting for flying rows
+    auto* noInitialDownloadWhenFlying = SettingsManager::instance()->mavlinkSettings()->noInitialDownloadWhenFlying();
+    const QVariant previousNoInitialDownloadWhenFlying = noInitialDownloadWhenFlying->rawValue();
+    const auto restoreNoInitialDownloadWhenFlying = qScopeGuard([noInitialDownloadWhenFlying, previousNoInitialDownloadWhenFlying]() {
+        noInitialDownloadWhenFlying->setRawValue(previousNoInitialDownloadWhenFlying);
+    });
+    noInitialDownloadWhenFlying->setRawValue(flying);
 
     LinkManager::instance()->setConnectionsAllowed();
 
@@ -439,6 +461,7 @@ void InitialConnectTest::_stateRunMatrix()
     mockConfig->setFirmwareType(MAV_AUTOPILOT_PX4);
     mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
     mockConfig->setHighLatency(skipForLinkType);
+    mockConfig->setStartArmed(flying);
     mockConfig->setDynamic(true);
 
     SharedLinkConfigurationPtr linkConfig = LinkManager::instance()->addConfiguration(mockConfig);
@@ -455,16 +478,11 @@ void InitialConnectTest::_stateRunMatrix()
     QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
     QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()) || _vehicle->isInitialConnectComplete());
 
-    // Current InitialConnect skip predicates do not branch on vehicle flying state.
-    // This dimension is included in the matrix to validate there is no behavior change.
-    Q_UNUSED(flying);
-
     const int autopilotVersionReqCount =
         _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AUTOPILOT_VERSION);
     const int availableModesReqCount =
         _mockLink->receivedRequestMessageCount(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AVAILABLE_MODES);
     const int paramRequestListCount = _mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_PARAM_REQUEST_LIST);
-    const int missionRequestListCount = _mockLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_MISSION_REQUEST_LIST);
 
     // AutopilotVersion expectation is matrix-driven.
     QCOMPARE(autopilotVersionReqCount > 0, expectAutopilotVersionRequest);
@@ -472,22 +490,38 @@ void InitialConnectTest::_stateRunMatrix()
     // StandardModes expectation is matrix-driven.
     QCOMPARE(availableModesReqCount > 0, expectAvailableModesRequest);
 
-    // Parameters state always runs. In the normal path we expect active PARAM_REQUEST_LIST traffic.
-    // For skip-for-link-type combinations, this test uses high-latency as a proxy for log-replay
-    // path selection and does not assert request-list count equality between those transport modes.
-    if (!skipForLinkType) {
-        QVERIFY2(paramRequestListCount > 0, "Expected PARAM_REQUEST_LIST when not in skip-for-link-type mode");
-    }
-    QVERIFY(_vehicle->parameterManager()->parametersReady());
+    // parameterDownloadSkipped flag: true when params were intentionally not downloaded
+    QCOMPARE(_vehicle->parameterManager()->parameterDownloadSkipped(), expectParameterDownloadSkipped);
 
-    // Mission/GeoFence/Rally are skipped for high-latency/log-replay.
-    // When they run, mock link receives one MISSION_REQUEST_LIST per plan type
-    // (mission/fence/rally), so expect at least 3.
+    // Parameters: skipped when flying (with setting enabled) or on HL/LR links.
+    // PX4 flying: cache-only hash check attempted, no full download.
+    if (expectParamRequest) {
+        QVERIFY2(paramRequestListCount > 0, "Expected PARAM_REQUEST_LIST");
+    } else if (expectHashCheckOnly) {
+        // PX4 flying: hash check was attempted but no full download
+        QCOMPARE(paramRequestListCount, 0);
+        QVERIFY2(_mockLink->hashCheckRequestCount() > 0, "Expected _HASH_CHECK request in cache-only mode");
+        // No cache file in test env → cache miss → params not ready
+        QVERIFY(!_vehicle->parameterManager()->parametersReady());
+    }
+    if (!flying) {
+        // When not flying, params are either loaded normally or via HL/LR internal path
+        QVERIFY(_vehicle->parameterManager()->parametersReady());
+    }
+
+    // Mission/GeoFence/Rally are skipped for high-latency/log-replay or when flying.
+    // Check each plan type individually via per-mission-type request list counts.
+    const int missionReqCount = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_MISSION);
+    const int fenceReqCount   = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_FENCE);
+    const int rallyReqCount   = _mockLink->receivedMissionRequestListCount(MAV_MISSION_TYPE_RALLY);
     if (!expectPlanRequestListTraffic) {
-        QCOMPARE(missionRequestListCount, 0);
+        QCOMPARE(missionReqCount, 0);
+        QCOMPARE(fenceReqCount, 0);
+        QCOMPARE(rallyReqCount, 0);
     } else {
-        QVERIFY2(missionRequestListCount >= 3,
-                 qPrintable(QStringLiteral("Expected >=3 MISSION_REQUEST_LIST messages, got %1").arg(missionRequestListCount)));
+        QVERIFY2(missionReqCount > 0, "Expected MISSION_REQUEST_LIST for missions");
+        QVERIFY2(fenceReqCount > 0, "Expected MISSION_REQUEST_LIST for geofence");
+        QVERIFY2(rallyReqCount > 0, "Expected MISSION_REQUEST_LIST for rally points");
     }
 
     _disconnectMockLink();

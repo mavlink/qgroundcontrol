@@ -22,14 +22,16 @@ RowLayout {
     property bool expanded: false
     property var  drawer
 
-    property var    activeVehicle:      QGroundControl.multiVehicleManager.vehicle
+    property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property bool   parametersReady:    QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable
 
     property bool _showMainComponent: !waitForParameters || parametersReady
-    property bool _showExpand: showExpand && expandedComponent !== undefined && (!expandedComponentWaitForParameters || parametersReady)
+    property bool _showExpand: showExpand && expandedComponent !== undefined
+    property bool _expandedParametersReady: !expandedComponentWaitForParameters || parametersReady
+    property string _waitingForParamsText: activeVehicle && activeVehicle.parameterManager.parameterDownloadSkipped ? qsTr("Parameters not available") : qsTr("Waiting for parameters...")
 
     QGCLabel {
-        text:       qsTr("Waiting for parameters...")
+        text:       control._waitingForParamsText
         visible:    waitForParameters && !parametersReady
     }
 
@@ -49,12 +51,18 @@ RowLayout {
         visible:                expanded
     }
 
+    QGCLabel {
+        text:               activeVehicle && activeVehicle.parameterManager.parameterDownloadSkipped ? qsTr("Parameters not available") : qsTr("Waiting for parameters...")
+        visible:            expanded && !_expandedParametersReady
+        Layout.alignment:   Qt.AlignTop
+    }
+
     Loader {
         id:                     expandedItemLoader
         Layout.alignment:       Qt.AlignTop
         Layout.preferredWidth:  visible ? -1 : 0
-        visible:                expanded
-        sourceComponent:        expanded ? expandedComponent : undefined
+        visible:                expanded && _expandedParametersReady
+        sourceComponent:        expanded && _expandedParametersReady ? expandedComponent : undefined
 
         property var pageProperties: control.pageProperties
     }
