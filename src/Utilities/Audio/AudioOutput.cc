@@ -115,6 +115,11 @@ void AudioOutput::init(Fact *mutedFact)
 void AudioOutput::setMuted(bool muted)
 {
     if (_muted.exchange(muted) != muted) {
+        if (muted) {
+            // Prevent any queued text from being spoken once muted
+            (void) QMetaObject::invokeMethod(_engine, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default);
+            _textQueueSize = 0;
+        }
         (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, muted ? 0.0 : 1.0);
         qCDebug(AudioOutputLog) << "AudioOutput muted state set to:" << muted;
     }
