@@ -2,6 +2,7 @@
 #include "QGCApplication.h"
 #include "ParameterManager.h"
 #include "AppSettings.h"
+#include "SettingsManager.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
@@ -58,6 +59,7 @@ QVariant ParameterTableModel::headerData(int section, Qt::Orientation orientatio
     }
 
     switch (section) {
+    case FavColumn:         return tr("Fav");
     case NameColumn:        return tr("Name");
     case ValueColumn:       return tr("Value");
     case DescriptionColumn: return tr("Description");
@@ -93,6 +95,7 @@ void ParameterTableModel::insert(int row, Fact* fact)
     }
 
     ColumnData colData(_tableViewColCount, QString());
+    colData[FavColumn] = QString();
     colData[NameColumn] = fact->name();
     colData[ValueColumn] = QVariant::fromValue(fact);
     colData[DescriptionColumn] = fact->shortDescription();
@@ -161,8 +164,11 @@ ParameterEditorController::ParameterEditorController(QObject *parent)
     connect(this, &ParameterEditorController::currentGroupChanged,      this, &ParameterEditorController::_currentGroupChanged);
     connect(this, &ParameterEditorController::searchTextChanged,        this, &ParameterEditorController::_searchTextChanged);
     connect(this, &ParameterEditorController::showModifiedOnlyChanged,  this, &ParameterEditorController::_searchTextChanged);
+    connect(this, &ParameterEditorController::showFavoritesOnlyChanged, this, &ParameterEditorController::_searchTextChanged);
     connect(&_searchTimer, &QTimer::timeout,                            this, &ParameterEditorController::_performSearch);
     connect(_parameterMgr, &ParameterManager::factAdded,                this, &ParameterEditorController::_factAdded);
+
+    _loadFavorites();
 
     ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
     setCurrentCategory(category);
@@ -469,11 +475,17 @@ void ParameterEditorController::resetAllToVehicleConfiguration(void)
 
 bool ParameterEditorController::_shouldShow(Fact* fact) const
 {
-    if (!_showModifiedOnly) {
-        return true;
+    if (_showModifiedOnly) {
+        if (!fact->defaultValueAvailable() || fact->valueEqualsDefault()) {
+            return false;
+        }
     }
-
-    return fact->defaultValueAvailable() && !fact->valueEqualsDefault();
+    if (_showFavoritesOnly) {
+        if (!_favoriteNames.contains(fact->name())) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void ParameterEditorController::_searchTextChanged(void)
@@ -487,7 +499,7 @@ void ParameterEditorController::_performSearch(void)
 
     QStringList rgSearchStrings = _searchText.split(' ', Qt::SkipEmptyParts);
 
-    if (rgSearchStrings.isEmpty() && !_showModifiedOnly) {
+    if (rgSearchStrings.isEmpty() && !_showModifiedOnly && !_showFavoritesOnly) {
         ParameterEditorCategory* category = _categories.count() ? _categories.value<ParameterEditorCategory*>(0) : nullptr;
         setCurrentCategory(category);
         _searchParameters.clear();
@@ -502,31 +514,33 @@ void ParameterEditorController::_performSearch(void)
         _searchParameters.beginReset();
         _searchParameters.clear();
 
-        for (const QString &paraName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
-            Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paraName);
-            bool matched = _shouldShow(fact);
-            // All of the search items must match in order for the parameter to be added to the list
-            if (matched) {
-                for (int i = 0; i < rgSearchStrings.size(); ++i) {
-                    const QRegularExpression &re = regexList.at(i);
-                    if (re.isValid()) {
-                        if (!fact->name().contains(re) &&
-                                !fact->shortDescription().contains(re) &&
-                                !fact->longDescription().contains(re)) {
-                            matched = false;
-                        }
-                    } else {
-                        const QString &searchItem = rgSearchStrings.at(i);
-                        if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
-                                !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
-                                !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
-                            matched = false;
+        for (int compId : _parameterMgr->componentIds()) {
+            for (const QString &paraName: _parameterMgr->parameterNames(compId)) {
+                Fact* fact = _parameterMgr->getParameter(compId, paraName);
+                bool matched = _shouldShow(fact);
+                // All of the search items must match in order for the parameter to be added to the list
+                if (matched) {
+                    for (int i = 0; i < rgSearchStrings.size(); ++i) {
+                        const QRegularExpression &re = regexList.at(i);
+                        if (re.isValid()) {
+                            if (!fact->name().contains(re) &&
+                                    !fact->shortDescription().contains(re) &&
+                                    !fact->longDescription().contains(re)) {
+                                matched = false;
+                            }
+                        } else {
+                            const QString &searchItem = rgSearchStrings.at(i);
+                            if (!fact->name().contains(searchItem, Qt::CaseInsensitive) &&
+                                    !fact->shortDescription().contains(searchItem, Qt::CaseInsensitive) &&
+                                    !fact->longDescription().contains(searchItem, Qt::CaseInsensitive)) {
+                                matched = false;
+                            }
                         }
                     }
                 }
-            }
-            if (matched) {
-                _searchParameters.append(fact);
+                if (matched) {
+                    _searchParameters.append(fact);
+                }
             }
         }
 
@@ -576,4 +590,57 @@ void ParameterEditorController::setCurrentGroup(QObject* currentGroup)
         _currentGroup = group;
         emit currentGroupChanged();
     }
+}
+
+QStringList ParameterEditorController::favoriteParameterNames(void) const
+{
+    QStringList list(_favoriteNames.begin(), _favoriteNames.end());
+    list.sort();
+    return list;
+}
+
+void ParameterEditorController::toggleFavorite(const QString& paramName)
+{
+    if (_favoriteNames.contains(paramName)) {
+        _favoriteNames.remove(paramName);
+    } else {
+        _favoriteNames.insert(paramName);
+    }
+    _saveFavorites();
+    emit favoritesChanged();
+
+    if (_showFavoritesOnly) {
+        _performSearch();
+    }
+}
+
+bool ParameterEditorController::isFavorite(const QString& paramName) const
+{
+    return _favoriteNames.contains(paramName);
+}
+
+void ParameterEditorController::clearAllFavorites(void)
+{
+    _favoriteNames.clear();
+    _saveFavorites();
+    emit favoritesChanged();
+
+    if (_showFavoritesOnly) {
+        _performSearch();
+    }
+}
+
+void ParameterEditorController::_loadFavorites()
+{
+    Fact* fact = SettingsManager::instance()->appSettings()->favoriteParameters();
+    const QStringList list = fact->rawValue().toString().split(",", Qt::SkipEmptyParts);
+    _favoriteNames = QSet<QString>(list.begin(), list.end());
+}
+
+void ParameterEditorController::_saveFavorites()
+{
+    QStringList list(_favoriteNames.begin(), _favoriteNames.end());
+    list.sort();
+    Fact* fact = SettingsManager::instance()->appSettings()->favoriteParameters();
+    fact->setRawValue(list.join(","));
 }
