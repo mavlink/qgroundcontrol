@@ -30,7 +30,6 @@ public:
     void mavlinkMessageReceived(const mavlink_message_t &message);
 
     void enableRandomDrops(bool enable) { _randomDropsEnabled = enable; }
-    void enableBinParamFile(bool enable) { _BinParamFileEnabled = enable; }
 
     /// Returns the list of remote paths which have been uploaded in this session.
     QStringList uploadedFiles() const { return _uploadedFiles.keys(); }
@@ -101,6 +100,7 @@ private:
     /// bad sequence numbers when errModeBadSequence is set.
     uint16_t _nextSeqNumber(uint16_t seqNumber) const;
     static QString _createTestTempFile(int size);
+    QString _generateParamPck(bool withDefaults);
 
     /// if request is a string, this ensures it's null-terminated
     static void ensureNullTemination(MavlinkFTP::Request *request);
@@ -109,12 +109,12 @@ private:
     const uint8_t _componentIdServer;           ///< Component ID for server
     MockLink *_mockLink;                        ///< MockLink to communicate through
 
-    bool _BinParamFileEnabled = false;
     bool _lastReplyValid = false;
     bool _randomDropsEnabled = false;
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
     mavlink_message_t _lastReply{};
     QFile _currentFile;
+    QString _paramPckTempFile;
     struct UploadSession {
         bool active = false;
         QString remotePath;

@@ -27,6 +27,7 @@ Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
 class MockLink : public LinkInterface
 {
     Q_OBJECT
+    friend class MockLinkFTP;
 
 public:
     explicit MockLink(SharedLinkConfigurationPtr &config, QObject *parent = nullptr);

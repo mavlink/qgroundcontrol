@@ -1424,15 +1424,9 @@ void MockLink::_respondWithAutopilotVersion()
 
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-        if (_vehicleType == MAV_TYPE_SUBMARINE ) {
-            flightVersion.parts.major = 4;
-            flightVersion.parts.minor = 5;
-            flightVersion.parts.patch = 7;
-        } else {
-            flightVersion.parts.major = 4;
-            flightVersion.parts.minor = 6;
-            flightVersion.parts.patch = 3;
-        }
+        flightVersion.parts.major = 4;
+        flightVersion.parts.minor = 7;
+        flightVersion.parts.patch = 0;
         flightVersion.parts.type = FIRMWARE_VERSION_TYPE_OFFICIAL;
     } else if (_firmwareType == MAV_AUTOPILOT_PX4) {
 #endif
