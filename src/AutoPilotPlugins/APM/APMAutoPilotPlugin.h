@@ -9,6 +9,7 @@ class APMRadioComponent;
 class APMTuningComponent;
 class APMSafetyComponent;
 class APMSensorsComponent;
+class APMESCComponent;
 class APMPowerComponent;
 class APMMotorComponent;
 class APMGimbalComponent;
@@ -46,6 +47,7 @@ protected:
     APMFlightModesComponent *_flightModesComponent = nullptr;
     APMServoComponent *_servoComponent = nullptr;
     APMPowerComponent *_powerComponent = nullptr;
+    APMESCComponent *_escComponent = nullptr;
     APMMotorComponent *_motorComponent = nullptr;
     APMRadioComponent *_radioComponent = nullptr;
     APMSafetyComponent *_safetyComponent = nullptr;

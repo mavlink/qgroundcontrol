@@ -18,7 +18,7 @@ SetupPage {
     Component {
         id: powerPageComponent
 
-        Flow {
+        ColumnLayout {
             id:         flowLayout
             width:      availableWidth
             spacing:    _margins
@@ -32,27 +32,35 @@ SetupPage {
             property bool _batt2ParamsAvailable:    controller.parameterExists(-1, "BATT2_CAPACITY")
             property bool _showBatt1Reboot:         _batt1MonitorEnabled && !_batt1ParamsAvailable
             property bool _showBatt2Reboot:         _batt2MonitorEnabled && !_batt2ParamsAvailable
-            property bool _escCalibrationAvailable: controller.parameterExists(-1, "ESC_CALIBRATION")
-            property Fact _escCalibration:          controller.getParameterFact(-1, "ESC_CALIBRATION", false /* reportMissing */)
-
             property string _restartRequired: qsTr("Requires vehicle reboot")
 
-            QGCPalette { id: ggcPal; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-            // Battery1 Monitor settings only - used when only monitor param is available
+            // Battery section with tab bar
             Column {
                 spacing: _margins / 2
-                visible: !_batt1MonitorEnabled || !_batt1ParamsAvailable
 
                 QGCLabel {
-                    text:       qsTr("Battery 1")
-                    font.bold:   true
+                    text:       qsTr("Battery")
+                    font.bold:  true
                 }
 
+                QGCTabBar {
+                    id: batteryTabBar
+
+                    QGCTabButton { text: qsTr("Battery 1") }
+                    QGCTabButton {
+                        text:       qsTr("Battery 2")
+                        visible:    _batt2MonitorAvailable
+                    }
+                }
+
+                // Battery 1 - Monitor only
                 Rectangle {
                     width:  batt1Column.x + batt1Column.width + _margins
                     height: batt1Column.y + batt1Column.height + _margins
-                    color:  ggcPal.windowShade
+                    color:  qgcPal.windowShade
+                    visible: batteryTabBar.currentIndex === 0 && (!_batt1MonitorEnabled || !_batt1ParamsAvailable)
 
                     ColumnLayout {
                         id:                 batt1Column
@@ -62,12 +70,10 @@ SetupPage {
                         spacing:            ScreenTools.defaultFontPixelWidth
 
                         RowLayout {
-                            id:                 batt1MonitorRow
                             spacing:            ScreenTools.defaultFontPixelWidth
 
-                            QGCLabel { text: qsTr("Battery1 monitor:") }
+                            QGCLabel { text: qsTr("Battery monitor") }
                             FactComboBox {
-                                id:         monitor1Combo
                                 fact:       _batt1Monitor
                                 indexModel: false
                                 sizeToContents: true
@@ -86,30 +92,21 @@ SetupPage {
                         }
                     }
                 }
-            }
 
-            // Battery 1 settings
-            Column {
-                id:         _batt1FullSettings
-                spacing:    _margins / 2
-                visible:    _batt1MonitorEnabled && _batt1ParamsAvailable
-
-                QGCLabel {
-                    text:       qsTr("Battery 1")
-                    font.bold:   true
-                }
-
+                // Battery 1 - Full settings
                 Rectangle {
-                    width:  battery1Loader.x + battery1Loader.width + _margins
-                    height: battery1Loader.y + battery1Loader.height + _margins
-                    color:  ggcPal.windowShade
+                    id:      batt1FullSettingsRect
+                    width:   battery1Loader.x + battery1Loader.width + _margins
+                    height:  battery1Loader.y + battery1Loader.height + _margins
+                    color:   qgcPal.windowShade
+                    visible: batteryTabBar.currentIndex === 0 && _batt1MonitorEnabled && _batt1ParamsAvailable
 
                     Loader {
                         id:                 battery1Loader
                         anchors.margins:    _margins
                         anchors.top:        parent.top
                         anchors.left:       parent.left
-                        sourceComponent:    _batt1FullSettings.visible ? powerSetupComponent : undefined
+                        sourceComponent:    batt1FullSettingsRect.visible ? powerSetupComponent : undefined
 
                         property Fact armVoltMin:       controller.getParameterFact(-1, "BATT_ARM_VOLT", false /* reportMissing */)
                         property Fact battAmpPerVolt:   controller.getParameterFact(-1, "BATT_AMP_PERVLT", false /* reportMissing */)
@@ -119,27 +116,18 @@ SetupPage {
                         property Fact battMonitor:      controller.getParameterFact(-1, "BATT_MONITOR", false /* reportMissing */)
                         property Fact battVoltMult:     controller.getParameterFact(-1, "BATT_VOLT_MULT", false /* reportMissing */)
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT_VOLT_PIN", false /* reportMissing */)
-                        property FactGroup  _batteryFactGroup:  _batt1FullSettings.visible ? controller.vehicle.getFactGroup("battery0") : null
+                        property FactGroup  _batteryFactGroup:  batt1FullSettingsRect.visible ? controller.vehicle.getFactGroup("battery0") : null
                         property Fact vehicleVoltage:   _batteryFactGroup ? _batteryFactGroup.voltage : null
                         property Fact vehicleCurrent:   _batteryFactGroup ? _batteryFactGroup.current : null
                     }
                 }
-            }
 
-            // Battery2 Monitor settings only - used when only monitor param is available
-            Column {
-                spacing: _margins / 2
-                visible: !_batt2MonitorEnabled || !_batt2ParamsAvailable
-
-                QGCLabel {
-                    text:       qsTr("Battery 2")
-                    font.bold:   true
-                }
-
+                // Battery 2 - Monitor only
                 Rectangle {
                     width:  batt2Column.x + batt2Column.width + _margins
                     height: batt2Column.y + batt2Column.height + _margins
-                    color:  ggcPal.windowShade
+                    color:  qgcPal.windowShade
+                    visible: batteryTabBar.currentIndex === 1 && (!_batt2MonitorEnabled || !_batt2ParamsAvailable)
 
                     ColumnLayout {
                         id:                 batt2Column
@@ -149,12 +137,10 @@ SetupPage {
                         spacing:            ScreenTools.defaultFontPixelWidth
 
                         RowLayout {
-                            id:                 batt2MonitorRow
                             spacing:            ScreenTools.defaultFontPixelWidth
 
-                            QGCLabel { text: qsTr("Battery2 monitor:") }
+                            QGCLabel { text: qsTr("Battery monitor") }
                             FactComboBox {
-                                id:         monitor2Combo
                                 fact:       _batt2Monitor
                                 indexModel: false
                                 sizeToContents: true
@@ -173,30 +159,21 @@ SetupPage {
                         }
                     }
                 }
-            }
 
-            // Battery 2 settings - Used when full params are available
-            Column {
-                id:         batt2FullSettings
-                spacing:    _margins / 2
-                visible:    _batt2MonitorEnabled && _batt2ParamsAvailable
-
-                QGCLabel {
-                    text:       qsTr("Battery 2")
-                    font.bold:   true
-                }
-
+                // Battery 2 - Full settings
                 Rectangle {
-                    width:  battery2Loader.x + battery2Loader.width + _margins
-                    height: battery2Loader.y + battery2Loader.height + _margins
-                    color:  ggcPal.windowShade
+                    id:      batt2FullSettingsRect
+                    width:   battery2Loader.x + battery2Loader.width + _margins
+                    height:  battery2Loader.y + battery2Loader.height + _margins
+                    color:   qgcPal.windowShade
+                    visible: batteryTabBar.currentIndex === 1 && _batt2MonitorEnabled && _batt2ParamsAvailable
 
                     Loader {
                         id:                 battery2Loader
                         anchors.margins:    _margins
                         anchors.top:        parent.top
                         anchors.left:       parent.left
-                        sourceComponent:    batt2FullSettings.visible ? powerSetupComponent : undefined
+                        sourceComponent:    batt2FullSettingsRect.visible ? powerSetupComponent : undefined
 
                         property Fact armVoltMin:       controller.getParameterFact(-1, "BATT2_ARM_VOLT", false /* reportMissing */)
                         property Fact battAmpPerVolt:   controller.getParameterFact(-1, "BATT2_AMP_PERVLT", false /* reportMissing */)
@@ -206,68 +183,14 @@ SetupPage {
                         property Fact battMonitor:      controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
                         property Fact battVoltMult:     controller.getParameterFact(-1, "BATT2_VOLT_MULT", false /* reportMissing */)
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT2_VOLT_PIN", false /* reportMissing */)
-                        property FactGroup  _batteryFactGroup:  batt2FullSettings.visible ? controller.vehicle.getFactGroup("battery1") : null
+                        property FactGroup  _batteryFactGroup:  batt2FullSettingsRect.visible ? controller.vehicle.getFactGroup("battery1") : null
                         property Fact vehicleVoltage:   _batteryFactGroup ? _batteryFactGroup.voltage : null
                         property Fact vehicleCurrent:   _batteryFactGroup ? _batteryFactGroup.current : null
                     }
                 }
             }
 
-            Column {
-                spacing:    _margins / 2
-                visible:    _escCalibrationAvailable
-
-                QGCLabel {
-                    text:       qsTr("ESC Calibration")
-                    font.bold:   true
-                }
-
-                Rectangle {
-                    width:  escCalibrationHolder.x + escCalibrationHolder.width + _margins
-                    height: escCalibrationHolder.y + escCalibrationHolder.height + _margins
-                    color:  ggcPal.windowShade
-
-                    Column {
-                        id:         escCalibrationHolder
-                        x:          _margins
-                        y:          _margins
-                        spacing:    _margins
-
-                        Column {
-                            spacing: _margins
-
-                            QGCLabel {
-                                text:   qsTr("WARNING: Remove props prior to calibration!")
-                                color:  qgcPal.warningText
-                            }
-
-                            Row {
-                                spacing: _margins
-
-                                QGCButton {
-                                    text: qsTr("Calibrate")
-                                    enabled:    _escCalibration && _escCalibration.rawValue === 0
-                                    onClicked:  if(_escCalibration) _escCalibration.rawValue = 3
-                                }
-
-                                Column {
-                                    enabled: _escCalibration && _escCalibration.rawValue === 3
-                                    QGCLabel { text:   _escCalibration ? (_escCalibration.rawValue === 3 ? qsTr("Now perform these steps:") : qsTr("Click Calibrate to start, then:")) : "" }
-                                    QGCLabel { text:   qsTr("- Disconnect USB and battery so flight controller powers down") }
-                                    QGCLabel { text:   qsTr("- Connect the battery") }
-                                    QGCLabel { text:   qsTr("- The arming tone will be played (if the vehicle has a buzzer attached)") }
-                                    QGCLabel { text:   qsTr("- If using a flight controller with a safety button press it until it displays solid red") }
-                                    QGCLabel { text:   qsTr("- You will hear a musical tone then two beeps") }
-                                    QGCLabel { text:   qsTr("- A few seconds later you should hear a number of beeps (one for each battery cell you're using)") }
-                                    QGCLabel { text:   qsTr("- And finally a single long beep indicating the end points have been set and the ESC is calibrated") }
-                                    QGCLabel { text:   qsTr("- Disconnect the battery and power up again normally") }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } // Flow
+        } // ColumnLayout
     } // Component - powerPageComponent
 
     Component {
@@ -295,8 +218,6 @@ SetupPage {
                 }
                 sensorCombo.currentIndex = sensorModel.count - 1
             }
-
-            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             ListModel {
                 id: sensorModel

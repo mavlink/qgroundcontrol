@@ -10,6 +10,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMAirframeComponentController.cc
         APMAirframeComponentController.h
         APMAutoPilotPlugin.cc
+        APMESCComponent.cc
+        APMESCComponent.h
         APMAutoPilotPlugin.h
         APMFlightModesComponent.cc
         APMFlightModesComponent.h
@@ -63,6 +65,8 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
     QML_FILES
         APMAirframeComponent.qml
         APMAirframeComponentSummary.qml
+        APMESCComponent.qml
+        APMESCComponentSummary.qml
         APMFlightModesComponent.qml
         APMFlightModesComponentSummary.qml
         APMFollowComponent.qml
