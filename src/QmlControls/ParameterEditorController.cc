@@ -51,6 +51,20 @@ QVariant ParameterTableModel::data(const QModelIndex &index, int role) const
     }
 }
 
+QVariant ParameterTableModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation != Qt::Horizontal || role != Qt::DisplayRole) {
+        return QVariant();
+    }
+
+    switch (section) {
+    case NameColumn:        return tr("Name");
+    case ValueColumn:       return tr("Value");
+    case DescriptionColumn: return tr("Description");
+    default:                return QVariant();
+    }
+}
+
 QHash<int, QByteArray> ParameterTableModel::roleNames() const
 {
     return {
