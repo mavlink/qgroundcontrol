@@ -37,7 +37,7 @@ public:
     static AudioOutput *instance();
 
     /// Initialize the Singleton
-    void init(Fact *mutedFact, Fact* volumeFact);
+    void init(Fact *mutedFact, Fact *volumeFact);
 
     /// Checks if the audio output is muted.
     ///     @return True if muted, false otherwise.
