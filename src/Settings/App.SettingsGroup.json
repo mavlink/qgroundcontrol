@@ -82,13 +82,6 @@
     "userMax":          121.92
 },
 {
-    "name":             "audioMuted",
-    "shortDesc": "Mute audio output",
-    "longDesc":  "If this option is enabled all audio output will be muted.",
-    "type":             "bool",
-    "default":     false
-},
-{
     "name":      "audioVolume",
     "shortDesc": "Audio output volume",
     "longDesc":  "Sets the audio output volume percentage. Has no effect if audio is muted.",

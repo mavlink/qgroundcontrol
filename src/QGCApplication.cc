@@ -261,7 +261,7 @@ void QGCApplication::_initForNormalAppBoot()
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
     QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
 
-    AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioMuted(), SettingsManager::instance()->appSettings()->audioVolume());
+    AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioVolume());
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
     LinkManager::instance()->init();
