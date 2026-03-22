@@ -89,15 +89,16 @@
     "default":     false
 },
 {
-  "name":      "audioVolume",
-  "shortDesc": "Audio output volume",
-  "longDesc":  "Sets the audio output volume percentage. Has no effect if audio is muted.",
-  "type":      "double",
-  "default":   100.0,
-  "units":     "%",
-  "min":       0.0,
-  "max":       100.0,
-  "decimalPlaces": 1
+    "name":      "audioVolume",
+    "shortDesc": "Audio output volume",
+    "longDesc":  "Sets the audio output volume percentage. Has no effect if audio is muted.",
+    "type":      "double",
+    "default":   100.0,
+    "units":     "%",
+    "min":       0.0,
+    "decimalPlaces": 1,
+    "userMin":  0.0,
+    "userMax":  100.0
 },
 {
     "name":             "virtualJoystick",

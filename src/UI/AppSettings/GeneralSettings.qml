@@ -50,21 +50,23 @@ SettingsPage {
         RowLayout {
             Layout.fillWidth:   true
             spacing:            ScreenTools.defaultFontPixelWidth
-            visible:            _audioVolume.visible && !_audioMuted.value
+            visible:            _audioVolume.visible
 
-            FactSlider {
+            FactTextFieldSlider {
                 Layout.fillWidth:   true
-                label:              qsTr("Audio Output Volume")
+                label:              qsTr("Audio Output")
                 fact:               _audioVolume
-                from:               _audioVolume.min
-                to:                 _audioVolume.max
                 visible:            _audioVolume.visible
-                majorTickStepSize:  10
+                showEnableCheckbox: true
+                enableCheckBoxChecked: _audioVolume.rawValue > 0.0
+
+                onEnableCheckboxClicked: _audioVolume.rawValue = enableCheckBoxChecked ? 100 : 0
             }
 
             QGCButton {
                 text:       qsTr("Test")
                 onClicked:  QGroundControl.testAudioOutput()
+                enabled:    _audioVolume.rawValue > 0.0
             }
         }
 
