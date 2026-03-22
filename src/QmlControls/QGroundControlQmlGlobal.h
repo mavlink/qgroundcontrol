@@ -163,6 +163,9 @@ public:
         QJSValue acceptFunction = QJSValue(),
         QJSValue closeFunction = QJSValue());
 
+    // Test audio output
+    Q_INVOKABLE void testAudioOutput();
+
     // Property accessors
 
     static QString appName();
