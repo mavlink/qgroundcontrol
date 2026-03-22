@@ -89,6 +89,17 @@
     "default":     false
 },
 {
+  "name":      "audioVolume",
+  "shortDesc": "Audio output volume",
+  "longDesc":  "Sets the audio output volume percentage. Has no effect if audio is muted.",
+  "type":      "double",
+  "default":   100.0,
+  "units":     "%",
+  "min":       0.0,
+  "max":       100.0,
+  "decimalPlaces": 1
+},
+{
     "name":             "virtualJoystick",
     "shortDesc": "Show virtual joystick",
     "longDesc":  "If this option is enabled the virtual joystick will be shown on the Fly view.",

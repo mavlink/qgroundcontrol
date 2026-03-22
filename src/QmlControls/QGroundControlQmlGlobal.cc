@@ -11,6 +11,7 @@
 #include "PositionManager.h"
 #include "QGCMapEngineManager.h"
 #include "ADSBVehicleManager.h"
+#include "AudioOutput.h"
 #include "NTRIPManager.h"
 #include "MAVLinkSigningKeys.h"
 #include "MissionCommandTree.h"
@@ -312,6 +313,11 @@ void QGroundControlQmlGlobal::showMessageDialog(
     QJSValue closeFunction)
 {
     emit showMessageDialogRequested(owner, title, text, buttons, acceptFunction, closeFunction);
+}
+
+void QGroundControlQmlGlobal::testAudioOutput()
+{
+    AudioOutput::instance()->testAudioOutput();
 }
 
 QString QGroundControlQmlGlobal::elevationProviderName()
