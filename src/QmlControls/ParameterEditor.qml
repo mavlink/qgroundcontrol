@@ -164,7 +164,6 @@ Item {
                 text:       qsTr("Show modified only")
                 checked:    controller.showModifiedOnly
                 onClicked:  controller.showModifiedOnly = checked
-                visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
             }
         }
 
@@ -237,15 +236,72 @@ Item {
         }
     }
 
+    HorizontalHeaderView {
+        id:                 headerView
+        anchors.left:       tableView.left
+        anchors.right:      tableView.right
+        anchors.top:        header.bottom
+        syncView:           tableView
+        clip:               true
+
+        delegate: Rectangle {
+            implicitWidth:  headerLabel.contentWidth + ScreenTools.defaultFontPixelWidth
+            implicitHeight: headerLabel.contentHeight + ScreenTools.defaultFontPixelHeight * 0.5
+            color:          qgcPal.windowShade
+
+            QGCLabel {
+                id:                     headerLabel
+                anchors.left:           parent.left
+                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
+                anchors.verticalCenter: parent.verticalCenter
+                text:                   display
+                font.bold:              true
+            }
+
+            // Top border
+            Rectangle {
+                anchors.top:    parent.top
+                width:          parent.width
+                height:         1
+                color:          qgcPal.groupBorder
+            }
+
+            // Left border
+            Rectangle {
+                anchors.left:   parent.left
+                height:         parent.height
+                width:          1
+                color:          qgcPal.groupBorder
+            }
+
+            // Right border (last column only)
+            Rectangle {
+                anchors.right:  parent.right
+                height:         parent.height
+                width:          1
+                color:          qgcPal.groupBorder
+                visible:        column == 2
+            }
+
+            // Bottom border
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width:          parent.width
+                height:         1
+                color:          qgcPal.groupBorder
+            }
+        }
+    }
+
     TableView {
         id:                 tableView
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-        anchors.top:        header.bottom
+        anchors.top:        headerView.bottom
         anchors.bottom:     parent.bottom
         anchors.left:       _searchFilter ? parent.left : groupScroll.right
         anchors.right:      parent.right
-        columnSpacing:      ScreenTools.defaultFontPixelWidth
-        rowSpacing:         ScreenTools.defaultFontPixelHeight / 4
+        columnSpacing:      0
+        rowSpacing:         0
         model:              controller.parameters
         contentWidth:       width
         clip:               true
@@ -265,26 +321,48 @@ Item {
             forceLayoutTimer.start()
         }
 
-        delegate: Item {
-            implicitWidth:  label.contentWidth
-            implicitHeight: label.contentHeight
+        delegate: Rectangle {
+            implicitWidth:  column == 1 ? ScreenTools.defaultFontPixelWidth * 16 : label.contentWidth + ScreenTools.defaultFontPixelWidth
+            implicitHeight: label.contentHeight + ScreenTools.defaultFontPixelHeight * 0.5
+            color:          row % 2 === 0 ? "transparent" : qgcPal.windowShade
             clip:           true
+
+            // Bottom grid line
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width:          parent.width
+                height:         1
+                color:          qgcPal.groupBorder
+            }
+
+            // Left grid line
+            Rectangle {
+                anchors.left:   parent.left
+                height:         parent.height
+                width:          1
+                color:          qgcPal.groupBorder
+            }
+
+            // Right grid line (last column only)
+            Rectangle {
+                anchors.right:  parent.right
+                height:         parent.height
+                width:          1
+                color:          qgcPal.groupBorder
+                visible:        column == 2
+            }
 
             QGCLabel {
                 id:                 label
+                anchors.left:       parent.left
+                anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
+                anchors.verticalCenter: parent.verticalCenter
                 width:              column == 1 ? ScreenTools.defaultFontPixelWidth * 15 : contentWidth
                 text:               column == 1 ? col1String() : display
-                color:              column == 1 ? col1Color() : qgcPal.text
+                color:              column == 1 && fact.defaultValueAvailable && !fact.valueEqualsDefault ? qgcPal.modifiedParamValue : qgcPal.text
+                font.bold:          column == 1 && fact.defaultValueAvailable && !fact.valueEqualsDefault
                 maximumLineCount:   1
                 elide:              column == 1 ? Text.ElideRight : Text.ElideNone
-
-                Component.onCompleted: {
-                    return
-                    if (tableView.columnWidth(column) < width) {
-                        console.log("setColumnWidth", column, width)
-                        tableView.setColumnWidth(column, width)
-                    }
-                }
 
                 function col1String() {
                     if (fact.enumStrings.length === 0) {
@@ -294,14 +372,6 @@ Item {
                         return fact.selectedBitmaskStrings.join(',')
                     }
                     return fact.enumStringValue
-                }
-
-                function col1Color() {
-                    if (fact.defaultValueAvailable) {
-                        return fact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText
-                    } else {
-                        return qgcPal.text
-                    }
                 }
             }
 
