@@ -47,6 +47,14 @@ Item {
         }
     }
 
+    Connections {
+        target: planToolBar
+        function onToolbarButtonClicked() {
+            _addWaypointOnClick = false
+            _addROIOnClick = false
+        }
+    }
+
     function mapCenter() {
         var coordinate = editorMap.center
         coordinate.latitude  = coordinate.latitude.toFixed(_decimalPlaces)

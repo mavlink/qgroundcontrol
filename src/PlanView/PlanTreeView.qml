@@ -43,13 +43,63 @@ TreeView {
     QGCFlickableScrollIndicator { parent: root; orientation: QGCFlickableScrollIndicator.Horizontal }
     QGCFlickableScrollIndicator { parent: root; orientation: QGCFlickableScrollIndicator.Vertical }
 
+    property int _lastMissionItemCount: 0
+
+    Connections {
+        target: root._missionController.visualItems
+        function onCountChanged() {
+            var newCount = _missionController.visualItems ? _missionController.visualItems.count : 0
+            if (newCount > root._lastMissionItemCount) {
+                // First waypoint added — collapse Plan Info and Defaults
+                if (root._lastMissionItemCount <= 1 && newCount > 1) {
+                    var planFileRow = _rowFor(_missionController.planFileGroupIndex)
+                    if (root.isExpanded(planFileRow)) {
+                        root.collapse(planFileRow)
+                    }
+                    var defaultsRow = _rowFor(_missionController.defaultsGroupIndex)
+                    if (root.isExpanded(defaultsRow)) {
+                        root.collapse(defaultsRow)
+                    }
+                }
+                // Expand mission group and scroll to the new item
+                var missionRow = _rowFor(_missionController.missionGroupIndex)
+                if (!root.isExpanded(missionRow)) {
+                    root.expand(missionRow)
+                }
+                // Scroll happens when the editor signals editorExpandedAndLoaded
+            }
+            root._lastMissionItemCount = newCount
+        }
+    }
+
     Connections {
         target: root._missionController
         function onVisualItemsChanged() {
-            // Mission group always expanded after rebuild (clear / load)
             root.collapseRecursively()
-            root.expand(_rowFor(_missionController.missionGroupIndex))
+            if (_missionController.containsItems) {
+                // Non-empty plan: expand mission group
+                root.expand(_rowFor(_missionController.missionGroupIndex))
+            } else {
+                // Empty plan: expand Plan Info and Defaults, scroll to top
+                root.expand(_rowFor(_missionController.planFileGroupIndex))
+                root.expand(_rowFor(_missionController.defaultsGroupIndex))
+                root.contentY = 0
+            }
+            root._lastMissionItemCount = _missionController.visualItems ? _missionController.visualItems.count : 0
             root.editingLayerChangeRequested(root._layerMission)
+        }
+        function onPlanViewStateChanged() {
+            // Current item changed — bring it on-screen if completely off-screen.
+            // Fine-tuned scroll happens later via editorExpandedAndLoaded.
+            var item = _missionController.currentPlanViewItem
+            if (item) {
+                var modelIndex = _missionController.visualItemsTree.indexForObject(item)
+                var row = root.rowAtIndex(modelIndex)
+                if (row >= 0) {
+                    root.forceLayout()
+                    root.positionViewAtRow(row, TableView.Visible)
+                }
+            }
         }
     }
 
@@ -105,6 +155,16 @@ TreeView {
         running: false
         repeat: false
         onTriggered: root.forceLayout()
+    }
+
+    // Called by MissionItemEditor delegates when their editor height has settled.
+    function _scrollToMissionItem(delegateItem) {
+        root.forceLayout()
+        var bottomY = delegateItem.mapToItem(root.contentItem, 0, delegateItem.height).y
+        var neededContentY = bottomY - root.height
+        if (neededContentY > root.contentY) {
+            root.contentY = neededContentY
+        }
     }
 
     delegate: Item {
@@ -225,6 +285,9 @@ TreeView {
                                 break
                             }
                         }
+                    })
+                    item.editorExpandedAndLoaded.connect(function() {
+                        root._scrollToMissionItem(delegateRoot)
                     })
                 }
             }

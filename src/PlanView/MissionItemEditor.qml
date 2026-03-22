@@ -16,6 +16,7 @@ Rectangle {
     signal clicked
     signal remove
     signal selectNextNotReadyItem
+    signal editorExpandedAndLoaded
 
     id:             _root
     height:         _currentItem ? (editorLoader.y + editorLoader.height + _innerMargin) : (topRowLayout.y + topRowLayout.height + _margin)
@@ -351,5 +352,17 @@ Rectangle {
         asynchronous:       true
 
         Component.onCompleted: _root._loadEditor()
+    }
+
+    onHeightChanged: {
+        if (_currentItem && editorLoader.status === Loader.Ready) {
+            _editorHeightSettleTimer.restart()
+        }
+    }
+
+    Timer {
+        id: _editorHeightSettleTimer
+        interval: 100
+        onTriggered: _root.editorExpandedAndLoaded()
     }
 }
