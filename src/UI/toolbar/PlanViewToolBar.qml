@@ -16,6 +16,8 @@ Rectangle {
     property var planMasterController
     property bool showRallyPointsHelp: false
 
+    signal toolbarButtonClicked()
+
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property real _controllerProgressPct: planMasterController.missionController.progressPct
 
@@ -55,6 +57,7 @@ Rectangle {
             anchors.bottom: parent.bottom
             planMasterController: _root.planMasterController
             showRallyPointsHelp: _root.showRallyPointsHelp
+            onToolbarButtonClicked: _root.toolbarButtonClicked()
         }
     }
 

@@ -73,42 +73,32 @@ Rectangle {
             visible: !_root._waypointsOnlyMode
         }
 
-        GridLayout {
+        RowLayout {
             Layout.fillWidth: true
-            columnSpacing: ScreenTools.defaultFontPixelWidth
-            rowSpacing: columnSpacing
-            columns: 2
+            spacing: ScreenTools.defaultFontPixelWidth
             visible: vehicleInfoSectionHeader.visible && vehicleInfoSectionHeader.checked
 
-            QGCLabel {
-                text: qsTr("Firmware")
-                Layout.fillWidth: true
-                visible: _root._multipleFirmware
-            }
             FactComboBox {
                 fact: QGroundControl.settingsManager.appSettings.offlineEditingFirmwareClass
                 indexModel: false
-                Layout.preferredWidth: _root._fieldWidth
+                Layout.fillWidth: true
                 visible: _root._multipleFirmware && _root._allowFWVehicleTypeSelection
             }
             QGCLabel {
                 text: _root._controllerVehicle ? _root._controllerVehicle.firmwareTypeString : ""
+                Layout.fillWidth: true
                 visible: _root._multipleFirmware && !_root._allowFWVehicleTypeSelection
             }
 
-            QGCLabel {
-                text: qsTr("Vehicle")
-                Layout.fillWidth: true
-                visible: _root._multipleVehicleTypes
-            }
             FactComboBox {
                 fact: QGroundControl.settingsManager.appSettings.offlineEditingVehicleClass
                 indexModel: false
-                Layout.preferredWidth: _root._fieldWidth
+                Layout.fillWidth: true
                 visible: _root._multipleVehicleTypes && _root._allowFWVehicleTypeSelection
             }
             QGCLabel {
                 text: _root._controllerVehicle ? _root._controllerVehicle.vehicleTypeString : ""
+                Layout.fillWidth: true
                 visible: _root._multipleVehicleTypes && !_root._allowFWVehicleTypeSelection
             }
         }

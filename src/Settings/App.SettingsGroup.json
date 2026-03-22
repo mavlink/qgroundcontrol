@@ -7,7 +7,7 @@
     "name":             "offlineEditingFirmwareClass",
     "shortDesc": "Offline editing firmware class",
     "type":             "uint32",
-    "enumStrings":      "ArduPilot,PX4 Pro,Mavlink Generic",
+    "enumStrings":      "ArduPilot,PX4 Pro,MAVLink",
     "enumValues":       "3,12,0",
     "default":     12
 },
@@ -15,7 +15,7 @@
     "name":             "offlineEditingVehicleClass",
     "shortDesc": "Offline editing vehicle class",
     "type":             "uint32",
-    "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Mavlink Generic",
+    "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Unknown",
     "enumValues":       "1,2,20,10,12,0",
     "default":     2
 },

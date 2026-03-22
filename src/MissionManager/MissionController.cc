@@ -1536,7 +1536,6 @@ void MissionController::_initAllVisualItems(void)
 
     connect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_visualItemsDirtyChanged);
     connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::containsItemsChanged);
-    connect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::missionItemCountChanged);
 
     // Connect for incremental tree model sync
     connect(_visualItems, &QAbstractItemModel::rowsInserted, this, &MissionController::_syncTreeMissionItemsInserted);
@@ -1562,7 +1561,6 @@ void MissionController::_initAllVisualItems(void)
     emit visualItemsChanged();
     emit containsItemsChanged();
     emit plannedHomePositionChanged(plannedHomePosition());
-    emit missionItemCountChanged();
 
     if (!_flyView) {
         setCurrentPlanViewSeqNum(0, true);
@@ -1582,7 +1580,6 @@ void MissionController::_deinitAllVisualItems(void)
 
     disconnect(_visualItems, &QmlObjectListModel::dirtyChanged, this, &MissionController::_visualItemsDirtyChanged);
     disconnect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::containsItemsChanged);
-    disconnect(_visualItems, &QmlObjectListModel::countChanged, this, &MissionController::missionItemCountChanged);
 
     // Disconnect incremental tree model sync
     disconnect(_visualItems, &QAbstractItemModel::rowsInserted, this, &MissionController::_syncTreeMissionItemsInserted);
