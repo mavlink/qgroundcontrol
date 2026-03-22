@@ -29,6 +29,24 @@ RowLayout {
         _selectCurrentIndexButton()
     }
 
+    function _updateSeparators() {
+        for (var i = 0; i < _buttons.length; i++) {
+            if (!_buttons[i].visible || _buttons[i].checked) {
+                _buttons[i]._showSeparator = false
+                continue
+            }
+            // Find the next visible button
+            var nextVisible = null
+            for (var j = i + 1; j < _buttons.length; j++) {
+                if (_buttons[j].visible) {
+                    nextVisible = _buttons[j]
+                    break
+                }
+            }
+            _buttons[i]._showSeparator = nextVisible !== null && !nextVisible.checked
+        }
+    }
+
     function _selectCurrentIndexButton() {
         if (_buttons.length === 0) return
 
@@ -60,6 +78,7 @@ RowLayout {
         }
 
         _preventCurrentIndexBindingLoop = false
+        _updateSeparators()
     }
 
     Component.onCompleted: _updateButtons()
