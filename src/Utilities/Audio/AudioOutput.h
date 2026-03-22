@@ -37,17 +37,9 @@ public:
     static AudioOutput *instance();
 
     /// Initialize the Singleton
-    void init(Fact *mutedFact, Fact *volumeFact);
+    void init(Fact *volumeFact);
 
-    /// Checks if the audio output is muted.
-    ///     @return True if muted, false otherwise.
-    bool isMuted() const { return _muted; }
-
-    /// Sets the mute state of the audio output.
-    ///     @param enable True to mute, false to unmute.
-    void setMuted(bool muted);
-
-    /// Sets the volume of the audio output.
+    /// Sets the volume of the audio output. 0.0 mutes the audio, 100.0 is maximum volume.
     ///     @param volume The volume level to set (between 0.0 and 100.0).
     void setVolume(double volume);
 
@@ -63,7 +55,6 @@ private:
     QTextToSpeech *_engine = nullptr;
     QAtomicInteger<qsizetype> _textQueueSize = 0;
     bool _initialized = false;
-    std::atomic_bool _muted = false;
     std::atomic<double> _volume = 100.0;
 
     static const QHash<QString, QString> _textHash;

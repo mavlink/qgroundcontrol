@@ -51,9 +51,8 @@ AudioOutput *AudioOutput::instance()
     return _audioOutput();
 }
 
-void AudioOutput::init(Fact *mutedFact, Fact* volumeFact)
+void AudioOutput::init(Fact* volumeFact)
 {
-    Q_CHECK_PTR(mutedFact);
     Q_CHECK_PTR(volumeFact);
 
     if (_initialized) {
@@ -85,10 +84,6 @@ void AudioOutput::init(Fact *mutedFact, Fact* volumeFact)
         qCDebug(AudioOutputLog) << "Queue Size:" << _textQueueSize;
     });
 
-    (void) connect(mutedFact, &Fact::valueChanged, this, [this](QVariant value) {
-        setMuted(value.toBool());
-    });
-
     (void) connect(volumeFact, &Fact::valueChanged, this, [this](QVariant value) {
         setVolume(value.toDouble());
     });
@@ -112,26 +107,9 @@ void AudioOutput::init(Fact *mutedFact, Fact* volumeFact)
     }
 
     setVolume(volumeFact->rawValue().toDouble());
-    setMuted(mutedFact->rawValue().toBool());
     _initialized = true;
 
-    qCDebug(AudioOutputLog) << "AudioOutput initialized with muted state:" << _muted;
-}
-
-void AudioOutput::setMuted(bool muted)
-{
-    if (_muted.exchange(muted) != muted) {
-        if (muted) {
-            // Prevent any queued text from being spoken once muted
-            (void) QMetaObject::invokeMethod(_engine, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default);
-            _textQueueSize = 0;
-        }
-
-        const double engineVolume = muted ? 0.0 : (_volume.load() / 100.0);
-        (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, engineVolume);
-
-        qCDebug(AudioOutputLog) << "AudioOutput muted state set to:" << muted;
-    }
+    qCDebug(AudioOutputLog) << "AudioOutput initialized with volume:" << _volume.load() * 100.0 << "%";
 }
 
 void AudioOutput::setVolume(double volume)
@@ -141,11 +119,16 @@ void AudioOutput::setVolume(double volume)
         return;
     }
 
+    if(volume == 0.0) {
+        // Prevent any queued text from being spoken once muted
+        (void) QMetaObject::invokeMethod(_engine, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default);
+        _textQueueSize = 0;
+    }
+
     if (_volume.exchange(volume) != volume) {
         // Must normalize volume to 0.0 - 1.0 for QTextToSpeech
         const double normalizedVolume = volume / 100.0;
-        const double engineVolume     = _muted ? 0.0 : normalizedVolume;
-        (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, engineVolume);
+        (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, normalizedVolume);
         qCDebug(AudioOutputLog) << "AudioOutput volume set to:" << volume << "%";
     }
 }
@@ -159,7 +142,7 @@ void AudioOutput::say(const QString &text, TextMods textMods)
         return;
     }
 
-    if (_muted) {
+    if (_volume.load() <= 0.0) {
         return;
     }
 
