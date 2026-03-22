@@ -24,6 +24,7 @@ Button {
     property real backRadius: ScreenTools.defaultBorderRadius
     property real heightFactor: 0.5
 
+    property bool _showSeparator: false
     property bool _showHighlight: enabled && (pressed | checked)
     property int _horizontalPadding: ScreenTools.defaultFontPixelWidth
     property int _verticalPadding: Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
@@ -39,6 +40,19 @@ Button {
         border.width: showBorder ? 1 : 0
         border.color: qgcPal.buttonBorder
         color: _showHighlight ? qgcPal.buttonHighlight : qgcPal.button
+
+        Rectangle {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.topMargin: _vertMargin
+            anchors.bottomMargin: _vertMargin
+            width: 1
+            color: Qt.darker(qgcPal.buttonText, 1.5)
+            visible: control._showSeparator
+
+            property real _vertMargin: ScreenTools.defaultFontPixelHeight * 0.25
+        }
     }
 
     contentItem: Item {
