@@ -144,7 +144,8 @@ void AudioOutput::setVolume(double volume)
     if (_volume.exchange(volume) != volume) {
         // Must normalize volume to 0.0 - 1.0 for QTextToSpeech
         const double normalizedVolume = volume / 100.0;
-        (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, normalizedVolume);
+        const double engineVolume     = _muted ? 0.0 : normalizedVolume;
+        (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, engineVolume);
         qCDebug(AudioOutputLog) << "AudioOutput volume set to:" << volume << "%";
     }
 }
