@@ -608,9 +608,9 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
         (void) connect(ftpManager, &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
         _waitingParamTimeoutTimer.stop();
         if (ftpManager->download(MAV_COMP_ID_AUTOPILOT1,
-                                 QStringLiteral("@PARAM/param.pck"),
+                                 QStringLiteral("@PARAM/param.pck?withdefaults=1"),
                                  QStandardPaths::writableLocation(QStandardPaths::TempLocation),
-                                 QStringLiteral(""),
+                                 QStringLiteral("param.pck"),
                                  false /* No filesize check */)) {
             (void) connect(ftpManager, &FTPManager::commandProgress, this, &ParameterManager::_ftpDownloadProgress);
         } else {
@@ -1616,6 +1616,7 @@ bool ParameterManager::_parseParamFile(const QString& filename)
                                              << "flags" << flags;
 
         QVariant parameterValue = 0;
+        QVariant defaultValue;
         switch (static_cast<ap_var_type>(ptype)) {
         qint8 data8;
         qint16 data16;
@@ -1626,6 +1627,7 @@ bool ParameterManager::_parseParamFile(const QString& filename)
             parameterValue = data8;
             if (withdefault) {
                 in >> data8;
+                defaultValue = data8;
             }
             break;
         case AP_PARAM_INT16:
@@ -1633,6 +1635,7 @@ bool ParameterManager::_parseParamFile(const QString& filename)
             parameterValue = data16;
             if (withdefault) {
                 in >> data16;
+                defaultValue = data16;
             }
             break;
         case AP_PARAM_INT32:
@@ -1640,6 +1643,7 @@ bool ParameterManager::_parseParamFile(const QString& filename)
             parameterValue = data32;
             if (withdefault) {
                 in >> data32;
+                defaultValue = data32;
             }
             break;
         case AP_PARAM_FLOAT:
@@ -1648,6 +1652,9 @@ bool ParameterManager::_parseParamFile(const QString& filename)
             parameterValue = dfloat;
             if (withdefault) {
                 in >> data32;
+                float ddefault;
+                (void) memcpy(&ddefault, &data32, 4);
+                defaultValue = ddefault;
             }
             break;
         default:
@@ -1672,6 +1679,9 @@ bool ParameterManager::_parseParamFile(const QString& filename)
         Fact *fact = nullptr;
         if (_mapCompId2FactMap.contains(componentId) && _mapCompId2FactMap[componentId].contains(parameterName)) {
             fact = _mapCompId2FactMap[componentId][parameterName];
+            if (withdefault && defaultValue.isValid()) {
+                fact->metaData()->setRawDefaultValue(defaultValue);
+            }
         } else {
             qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "Adding new fact" << parameterName;
 
@@ -1683,6 +1693,11 @@ bool ParameterManager::_parseParamFile(const QString& filename)
 
             // We need to know when the fact value changes so we can update the vehicle
             (void) connect(fact, &Fact::containerRawValueChanged, this, &ParameterManager::_factRawValueUpdated);
+
+            // Set default before emitting factAdded so QML sees defaultValueAvailable from the start
+            if (withdefault && defaultValue.isValid()) {
+                fact->metaData()->setRawDefaultValue(defaultValue);
+            }
 
             emit factAdded(componentId, fact);
         }
