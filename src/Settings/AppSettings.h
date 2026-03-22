@@ -47,6 +47,7 @@ public:
     DEFINE_SETTINGFACT(qLocaleLanguage)
     DEFINE_SETTINGFACT(disableAllPersistence)
     DEFINE_SETTINGFACT(firstRunPromptIdsShown)
+    DEFINE_SETTINGFACT(favoriteParameters)
 
     Q_PROPERTY(QString missionSavePath          READ missionSavePath            NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath        READ parameterSavePath          NOTIFY savePathsChanged)
