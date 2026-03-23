@@ -65,6 +65,7 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
     QML_FILES
         APMAirframeComponent.qml
         APMAirframeComponentSummary.qml
+        APMBatteryParams.qml
         APMESCComponent.qml
         APMESCComponentSummary.qml
         APMFlightModesComponent.qml
