@@ -32,9 +32,9 @@ SetupPage {
             Component.onCompleted:  computeDimensions()
 
             function computeDimensions() {
-                var sw  = 0
-                var rw  = 0
-                var idx = Math.floor(mainColumn.width / (_minW + ScreenTools.defaultFontPixelWidth))
+                let sw  = 0
+                let rw  = 0
+                let idx = Math.floor(mainColumn.width / (_minW + ScreenTools.defaultFontPixelWidth))
                 if(idx < 1) {
                     _boxWidth = mainColumn.width
                     _boxSpace = 0
@@ -170,7 +170,7 @@ SetupPage {
                                     }
 
                                     function selectFrameType() {
-                                        var index = object.frameTypeEnumValues.findIndex(checkFrameType)
+                                        let index = object.frameTypeEnumValues.findIndex(checkFrameType)
                                         if (index == -1 && combo.visible) {
                                             // Frame Class/Type is set to an invalid combination
                                             combo.valid = false

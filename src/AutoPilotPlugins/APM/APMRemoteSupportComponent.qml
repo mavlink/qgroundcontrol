@@ -12,19 +12,12 @@ SetupPage {
     Component {
         id: pageComponent
 
-        Rectangle {
-            id:                 backgroundRectangle
-            width:              availableWidth
-            height:             elementsRow.height * 1.5
-            color:              qgcPal.windowShade
+        QGCGroupBox {
+            title: qsTr("Remote Support")
 
             GridLayout {
                 id:               elementsRow
                 columns:          2
-
-                anchors.left:           parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.margins:        ScreenTools.defaultFontPixelWidth
 
                 columnSpacing:          ScreenTools.defaultFontPixelWidth
                 rowSpacing:             ScreenTools.defaultFontPixelWidth

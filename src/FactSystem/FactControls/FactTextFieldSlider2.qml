@@ -117,7 +117,6 @@ Row {
                 id:                 slide
                 width:              parent.width - minLabel.width - maxLabel.width - _margins * 2
                 stepSize:           fact.increment ? Math.max(fact.increment, _minIncrement) : _minIncrement
-                mouseWheelSupport:  false
 
                 onValueChanged: {
                     if (_loadComplete) {

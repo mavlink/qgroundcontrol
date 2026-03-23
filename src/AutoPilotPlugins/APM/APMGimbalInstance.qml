@@ -62,12 +62,14 @@ ColumnLayout {
             label: qsTr("Gimbal Type")
             fact: gimbalParams.typeFact
             indexModel: false
+            comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
         }
 
         LabelledFactComboBox {
             label: qsTr("Default Mode")
             fact: gimbalParams.defaultModeFact
             indexModel: false
+            comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
             visible: fact !== null
         }
     }
@@ -198,13 +200,14 @@ ColumnLayout {
                         LabelledComboBox {
                             id: outputChannelCombo
                             label: modelData.comboLabel
+                            comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
                             model: _rcChannelModel()
 
                             Component.onCompleted: {
                                 let maxRcChannel = _rcChannelCount()
-                                for (var rcIndex = 1; rcIndex <= maxRcChannel; rcIndex++) {
-                                    var parameterName = "RC" + rcIndex + "_OPTION"
-                                    var functionFact = _controller.getParameterFact(-1, parameterName)
+                                for (let rcIndex = 1; rcIndex <= maxRcChannel; rcIndex++) {
+                                    let parameterName = "RC" + rcIndex + "_OPTION"
+                                    let functionFact = _controller.getParameterFact(-1, parameterName)
                                     if (functionFact.value == modelData.optionValue) {
                                         currentIndex = rcIndex
                                         return
@@ -304,13 +307,14 @@ ColumnLayout {
                                 Layout.fillWidth: hasStabilizeParam
                                 id: outputChannelCombo
                                 label: qsTr("Output Channel")
+                                comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
                                 model: _servoChannelModel()
 
                                 Component.onCompleted: {
                                     let maxServoChannel = _servoChannelCount()
-                                    for (var servoIndex = 1; servoIndex <= maxServoChannel; servoIndex++) {
-                                        var parameterName = "SERVO" + servoIndex + "_FUNCTION"
-                                        var functionFact = _controller.getParameterFact(-1, parameterName)
+                                    for (let servoIndex = 1; servoIndex <= maxServoChannel; servoIndex++) {
+                                        let parameterName = "SERVO" + servoIndex + "_FUNCTION"
+                                        let functionFact = _controller.getParameterFact(-1, parameterName)
                                         if (functionFact.value == modelData.functionValue) {
                                             currentIndex = servoIndex
                                             return

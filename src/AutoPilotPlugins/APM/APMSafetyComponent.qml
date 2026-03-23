@@ -48,6 +48,7 @@ SetupPage {
             property Fact _armingSkipCheck: controller.getParameterFact(-1, "ARMING_SKIPCHK", false /* reportMissing */)
 
             property real _margins:         ScreenTools.defaultFontPixelWidth / 2
+            property real _comboWidth:      ScreenTools.defaultFontPixelWidth * 30
             property bool _showIcon:        !ScreenTools.isTinyScreen
             property bool _roverFirmware:   controller.parameterExists(-1, "MODE1") // This catches all usage of ArduRover firmware vehicle types: Rover, Boat...
 
@@ -63,6 +64,7 @@ SetupPage {
                         label:              qsTr("Low action")
                         fact:               failsafeBattLowAct
                         indexModel:         false
+                        comboBoxPreferredWidth: _comboWidth
                         Layout.fillWidth:   true
                     }
 
@@ -70,6 +72,7 @@ SetupPage {
                         label:              qsTr("Critical action")
                         fact:               failsafeBattCritAct
                         indexModel:         false
+                        comboBoxPreferredWidth: _comboWidth
                         Layout.fillWidth:   true
                     }
 
@@ -181,6 +184,7 @@ SetupPage {
                             label:            qsTr("Ground Station failsafe")
                             fact:             _failsafeGCSEnable
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -207,6 +211,7 @@ SetupPage {
                             label:            qsTr("Short failsafe action")
                             fact:             _failsafeShortAction
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -214,6 +219,7 @@ SetupPage {
                             label:            qsTr("Long failsafe action")
                             fact:             _failsafeLongAction
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -228,6 +234,7 @@ SetupPage {
                             label:            qsTr("VTOL transition failure action")
                             fact:             _transFailAction
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                             visible:          _isQuadPlane
                         }
@@ -270,6 +277,7 @@ SetupPage {
                             label:            qsTr("Ground Station failsafe")
                             fact:             _failsafeGCSEnable
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -284,6 +292,7 @@ SetupPage {
                             label:            qsTr("Throttle failsafe")
                             fact:             _failsafeThrEnable
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -297,6 +306,7 @@ SetupPage {
                             label:            qsTr("Failsafe action")
                             fact:             _failsafeAction
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -311,6 +321,7 @@ SetupPage {
                             label:            qsTr("Crash check")
                             fact:             _failsafeCrashCheck
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -318,6 +329,7 @@ SetupPage {
                             label:            qsTr("EKF failsafe action")
                             fact:             _failsafeEkfAction
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -382,6 +394,7 @@ SetupPage {
                             label:            qsTr("Ground Station failsafe")
                             fact:             _failsafeGCSEnable
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -396,6 +409,7 @@ SetupPage {
                             label:            qsTr("Throttle failsafe")
                             fact:             _failsafeThrEnable
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -410,6 +424,7 @@ SetupPage {
                             label:            qsTr("EKF failsafe action")
                             fact:             _failsafeEkfAction
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -430,6 +445,7 @@ SetupPage {
                             label:            qsTr("Crash check")
                             fact:             _failsafeCrashCheck
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -437,6 +453,7 @@ SetupPage {
                             label:            qsTr("Vibration failsafe")
                             fact:             _failsafeVibeEnable
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -444,6 +461,7 @@ SetupPage {
                             label:            qsTr("Dead reckoning failsafe")
                             fact:             _failsafeDREnable
                             indexModel:       false
+                            comboBoxPreferredWidth: _comboWidth
                             Layout.fillWidth: true
                         }
 
@@ -553,6 +571,7 @@ SetupPage {
                             LabelledFactComboBox {
                                 label:            qsTr("Breach action")
                                 fact:             _fenceAction
+                                comboBoxPreferredWidth: _comboWidth
                                 Layout.fillWidth: true
                             }
 

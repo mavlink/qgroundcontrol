@@ -51,6 +51,7 @@ SetupPage {
 
             property string _restartRequired: qsTr("Requires vehicle reboot")
             property real _fieldWidth: ScreenTools.defaultFontPixelWidth * 15
+            property real _comboWidth: ScreenTools.defaultFontPixelWidth * 30
 
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -65,6 +66,7 @@ SetupPage {
                         label: qsTr("Output type")
                         fact: _motPwmType
                         indexModel: false
+                        comboBoxPreferredWidth: _comboWidth
                     }
 
                     QGCLabel {
@@ -112,6 +114,7 @@ SetupPage {
                         label: qsTr("DShot ESC type")
                         fact: _servoDshotEsc
                         indexModel: false
+                        comboBoxPreferredWidth: _comboWidth
                         visible: _isDshot && _servoDshotEscAvailable
                     }
 
@@ -119,6 +122,7 @@ SetupPage {
                         label: qsTr("DShot output rate")
                         fact: _servoDshotRate
                         indexModel: false
+                        comboBoxPreferredWidth: _comboWidth
                         visible: _isDshot && _servoDshotRateAvailable
                     }
                 }

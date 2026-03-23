@@ -71,8 +71,8 @@ SetupPage {
             property var    _mapPosition:                    QGroundControl.flightMapPosition
 
             function showOrientationsDialog(calType) {
-                var dialogTitle
-                var dialogButtons = Dialog.Ok
+                let dialogTitle
+                let dialogButtons = Dialog.Ok
                 _showSimpleAccelCalOption = false
 
                 _orientationDialogCalType = calType
@@ -104,9 +104,9 @@ SetupPage {
             }
 
             function compassLabel(index) {
-                var label = qsTr("Compass %1 ").arg(index+1)
-                var addOpenParan = true
-                var addComma = false
+                let label = qsTr("Compass %1 ").arg(index+1)
+                let addOpenParan = true
+                let addComma = false
                 if (sensorParams.compassPrimaryFactAvailable) {
                     label += sensorParams.rgCompassPrimary[index] ? qsTr("(primary") : qsTr("(secondary")
                     addComma = true
@@ -366,8 +366,8 @@ SetupPage {
 
                                 function selectPriorityfromParams() {
                                     currentIndex = 3
-                                    var compassId = sensorParams.rgCompassId[_compassIndex].rawValue
-                                    for (var prioIndex=0; prioIndex<3; prioIndex++) {
+                                    let compassId = sensorParams.rgCompassId[_compassIndex].rawValue
+                                    for (let prioIndex=0; prioIndex<3; prioIndex++) {
                                         console.log(`comparing ${compassId} with ${sensorParams.rgCompassPrio[prioIndex].rawValue} (index ${prioIndex})`)
                                         if (compassId == sensorParams.rgCompassPrio[prioIndex].rawValue) {
                                             currentIndex = prioIndex
@@ -415,7 +415,7 @@ SetupPage {
 
                 QGCPopupDialog {
                     function compassMask () {
-                        var mask = 0
+                        let mask = 0
                         mask |=  (0 + (sensorParams.rgCompassPrio[0].rawValue !== 0)) << 0
                         mask |=  (0 + (sensorParams.rgCompassPrio[1].rawValue !== 0)) << 1
                         mask |=  (0 + (sensorParams.rgCompassPrio[2].rawValue !== 0)) << 2
@@ -429,8 +429,8 @@ SetupPage {
                             if (!northCalibrationCheckBox.checked) {
                                 controller.calibrateCompass()
                             } else {
-                                var lat = parseFloat(northCalLat.text)
-                                var lon = parseFloat(northCalLon.text)
+                                let lat = parseFloat(northCalLat.text)
+                                let lon = parseFloat(northCalLon.text)
                                 if (useMapPositionCheckbox.checked) {
                                     lat = _mapPosition.latitude
                                     lon = _mapPosition.longitude
