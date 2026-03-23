@@ -16,6 +16,9 @@ private slots:
     void _validateKeysRequired_test();
     void _validateKeysOptional_test();
     void _validateKeysWrongType_test();
+    void _validateKeysStrictValid_test();
+    void _validateKeysStrictUnknownKey_test();
+    void _validateKeysStrictMissingRequired_test();
     void _loadSaveGeoCoordinate_test();
     void _loadSaveGeoCoordinateWithAltitude_test();
     void _loadSaveGeoCoordinateGeoJson_test();

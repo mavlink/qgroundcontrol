@@ -15,6 +15,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MotorComponent.h
         JoystickComponent.cc
         JoystickComponent.h
+        PowerModulePresetController.cc
+        PowerModulePresetController.h
         RadioComponentController.cc
         RadioComponentController.h
         SyslinkComponent.cc
@@ -43,4 +45,12 @@ qt_add_qml_module(AutoPilotPluginsCommonModule
         RadioComponent.qml
         SyslinkComponent.qml
     NO_PLUGIN
+)
+
+# ----------------------------------------------------------------------------
+# Common AutoPilot Plugins Resources
+# ----------------------------------------------------------------------------
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_common_resource
+    PREFIX "/json"
+    FILES PowerModulePresets.json
 )

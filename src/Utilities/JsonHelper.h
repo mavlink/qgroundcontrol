@@ -61,6 +61,10 @@ namespace JsonHelper
 
     bool validateKeys(const QJsonObject& jsonObject, const QList<KeyValidateInfo>& keyInfo, QString& errorString);
 
+    /// Validates keys like validateKeys but also rejects any keys not listed in keyInfo.
+    /// @return false: validation failed, errorString set
+    bool validateKeysStrict(const QJsonObject& jsonObject, const QList<KeyValidateInfo>& keyInfo, QString& errorString);
+
     /// Loads a QGeoCoordinate
     ///     Stored as array [ lat, lon, alt ]
     /// @return false: validation failed

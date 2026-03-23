@@ -6,6 +6,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonParseError>
 #include <QtCore/QObject>
+#include <QtCore/QSet>
 #include <QtCore/QTranslator>
 
 #include "FactMetaData.h"
@@ -363,6 +364,29 @@ bool JsonHelper::validateKeys(const QJsonObject& jsonObject, const QList<JsonHel
     }
 
     return JsonParsing::validateKeyTypes(jsonObject, keyList, typeList, errorString);
+}
+
+bool JsonHelper::validateKeysStrict(const QJsonObject& jsonObject, const QList<JsonHelper::KeyValidateInfo>& keyInfo,
+                                    QString& errorString)
+{
+    if (!validateKeys(jsonObject, keyInfo, errorString)) {
+        return false;
+    }
+
+    QSet<QString> expectedKeys;
+    expectedKeys.reserve(keyInfo.size());
+    for (const KeyValidateInfo &info : keyInfo) {
+        expectedKeys.insert(QLatin1String(info.key));
+    }
+
+    for (const QString &key : jsonObject.keys()) {
+        if (!expectedKeys.contains(key)) {
+            errorString = QStringLiteral("Unknown key: %1").arg(key);
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool JsonHelper::loadPolygon(const QJsonArray& polygonArray, QmlObjectListModel& list, QObject* parent,
