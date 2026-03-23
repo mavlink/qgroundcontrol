@@ -40,6 +40,8 @@ SetupPage {
             property bool _roverFirmware:               controller.roverFirmware
             property bool _showMainSetup:               _followEnabled.rawValue == 1 && _supportedSetup
             property bool _showOffsetsSetup:            _showMainSetup && !_followMaintain
+            property real _textFieldWidth:              ScreenTools.defaultFontPixelWidth * 15
+            property real _comboWidth:                  ScreenTools.defaultFontPixelWidth * 30
 
             readonly property int _followYawBehaviorNone:           0
             readonly property int _followYawBehaviorFace:           1
@@ -52,10 +54,10 @@ SetupPage {
             Component.onCompleted: _setUIFromParams()
 
             function validateSupportedParamSetup() {
-                var followSysIdOk = _followSysId.rawValue == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
-                var followOffsetOk = _followOffsetType.rawValue == _followOffsetTypeRelative
-                var followAltOk = true
-                var followYawOk = true
+                let followSysIdOk = _followSysId.rawValue == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
+                let followOffsetOk = _followOffsetType.rawValue == _followOffsetTypeRelative
+                let followAltOk = true
+                let followYawOk = true
                 if (!_roverFirmware) {
                     followAltOk = _followAltitudeType.rawValue == _followAltitudeTypeRelative
                     followYawOk = _followYawBehavior.rawValue == _followYawBehaviorNone || _followYawBehavior.rawValue == _followYawBehaviorFace || _followYawBehavior.rawValue == _followYawBehaviorFlight
@@ -77,7 +79,7 @@ SetupPage {
                     controller.height.rawValue = 0
                 } else {
                     followPositionCombo.currentIndex =_followComboSpecifyIndex
-                    var angleRadians = Math.atan2(_followOffsetX.rawValue, _followOffsetY.rawValue)
+                    let angleRadians = Math.atan2(_followOffsetX.rawValue, _followOffsetY.rawValue)
                     if (angleRadians == 0) {
                         controller.distance.rawValue = _followOffsetY.rawValue
                     } else {
@@ -87,8 +89,8 @@ SetupPage {
                 }
                 controller.height.rawValue = -_followOffsetZ.rawValue
                 if (!_roverFirmware) {
-                    var comboIndex = -1
-                    for (var i=0; i<pointVehicleCombo.rgValues.length; i++) {
+                    let comboIndex = -1
+                    for (let i=0; i<pointVehicleCombo.rgValues.length; i++) {
                         if (pointVehicleCombo.rgValues[i] == _followYawBehavior.rawValue) {
                             comboIndex = i
                             break
@@ -120,7 +122,7 @@ SetupPage {
                 if (distance == 0) {
                     _followOffsetX.rawValue = _followOffsetY.rawValue = 0
                 } else {
-                    var angleRadians = _headingToRadians(headingAngleDegrees)
+                    let angleRadians = _headingToRadians(headingAngleDegrees)
                     if (angleRadians == 0) {
                         _followOffsetX.rawValue = 0
                         _followOffsetY.rawValue = distance
@@ -138,8 +140,8 @@ SetupPage {
             }
 
             function _radiansToHeading(radians) {
-                var geometricAngle = QGroundControl.unitsConversion.radiansToDegrees(radians)
-                var headingAngle = 90 - geometricAngle
+                let geometricAngle = QGroundControl.unitsConversion.radiansToDegrees(radians)
+                let headingAngle = 90 - geometricAngle
                 if (headingAngle < 0) {
                     headingAngle += 360
                 } else if (headingAngle > 360) {
@@ -149,7 +151,7 @@ SetupPage {
             }
 
             function _headingToRadians(heading) {
-                var geometricAngle = -(heading - 90)
+                let geometricAngle = -(heading - 90)
                 return QGroundControl.unitsConversion.degreesToRadians(geometricAngle)
             }
 
@@ -182,7 +184,7 @@ SetupPage {
                 onClicked: {
                     if (checked) {
                         _followEnabled.rawValue = 1
-                        var missingParameters = [ "FOLL_DIST_MAX", "FOLL_SYSID", "FOLL_OFS_X", "FOLL_OFS_Y", "FOLL_OFS_Z", "FOLL_OFS_TYPE"  ]
+                        let missingParameters = [ "FOLL_DIST_MAX", "FOLL_SYSID", "FOLL_OFS_X", "FOLL_OFS_Y", "FOLL_OFS_Z", "FOLL_OFS_TYPE"  ]
                         if (!_roverFirmware) {
                             missingParameters.push("FOLL_ALT_TYPE", "FOLL_YAW_BEHAVE")
                         }
@@ -210,7 +212,6 @@ SetupPage {
                     anchors.right:  parent.right
                     text:           qsTr("The vehicle parameters required for follow me are currently set in a way which is not supported. Using follow with this setup may lead to unpredictable/hazardous results.")
                     wrapMode:       Text.WordWrap
-                    onWidthChanged: console.log('width', width)
                 }
 
                 QGCButton {
@@ -224,18 +225,19 @@ SetupPage {
                 spacing:            ScreenTools.defaultFontPixelWidth
                 visible:            _showMainSetup
 
-                ColumnLayout {
-                    Layout.fillWidth:   true
-                    spacing:            ScreenTools.defaultFontPixelWidth
+                QGCGroupBox {
+                    title:            qsTr("Follow Me Settings")
 
                     GridLayout {
-                        Layout.fillWidth:   true
-                        columns:            2
+                        columns:        2
+                        rowSpacing:     ScreenTools.defaultFontPixelWidth
+                        columnSpacing:  ScreenTools.defaultFontPixelWidth
 
                         QGCLabel { text: qsTr("Vehicle Position") }
                         QGCComboBox {
-                            id:                 followPositionCombo
-                            Layout.fillWidth:   true
+                            id:                  followPositionCombo
+                            sizeToContents:      true
+                            Layout.maximumWidth: _comboWidth
                             model:              [ qsTr("Maintain Current Offsets"), qsTr("Specify Offsets")]
 
                             onActivated: (index) => {
@@ -253,8 +255,9 @@ SetupPage {
                             visible:    !_roverFirmware
                         }
                         QGCComboBox {
-                            id:                     pointVehicleCombo
-                            Layout.fillWidth:       true
+                            id:                      pointVehicleCombo
+                            sizeToContents:          true
+                            Layout.maximumWidth:     _comboWidth
                             model:                  rgText
                             visible:                !_roverFirmware
                             onActivated: (index) => { _followYawBehavior.rawValue = rgValues[index] }
@@ -262,43 +265,48 @@ SetupPage {
                             property var rgText:    [ qsTr("Maintain current vehicle orientation"), qsTr("Point at ground station location"), qsTr("Same direction as ground station movement") ]
                             property var rgValues:  [ _followYawBehaviorNone, _followYawBehaviorFace, _followYawBehaviorFlight ]
                         }
-                    }
-
-                    GridLayout {
-                        Layout.fillWidth:   true
-                        columns:            4
-                        visible:            !_followMaintain
 
                         QGCLabel {
                             Layout.columnSpan:  2
                             Layout.alignment:   Qt.AlignHCenter
                             text:               qsTr("Vehicle Offsets")
+                            visible:            !_followMaintain
                         }
 
-                        QGCLabel { text: qsTr("Angle") }
+                        QGCLabel {
+                            text:    qsTr("Angle")
+                            visible: !_followMaintain
+                        }
                         FactTextField {
+                            Layout.preferredWidth: _textFieldWidth
+                            visible:    !_followMaintain
                             fact:       controller.angle
-                            onUpdated:  { console.log("updated"); _setXYOffsetByAngleAndDistance(controller.angle.rawValue, controller.distance.rawValue) }
+                            onUpdated:  _setXYOffsetByAngleAndDistance(controller.angle.rawValue, controller.distance.rawValue)
                         }
 
-                        QGCLabel { text: qsTr("Distance") }
+                        QGCLabel {
+                            text:    qsTr("Distance")
+                            visible: !_followMaintain
+                        }
                         FactTextField {
+                            Layout.preferredWidth: _textFieldWidth
+                            visible:    !_followMaintain
                             fact:       controller.distance
                             onUpdated:  _setXYOffsetByAngleAndDistance(controller.angle.rawValue, controller.distance.rawValue)
                         }
 
                         QGCLabel {
-                            id:         heightLabel
-                            text:       qsTr("Height")
-                            visible:    !_roverFirmware && !_followMaintain
+                            text:    qsTr("Height")
+                            visible: !_roverFirmware && !_followMaintain
                         }
                         FactTextField {
+                            Layout.preferredWidth: _textFieldWidth
+                            visible:    !_roverFirmware && !_followMaintain
                             fact:       controller.height
-                            visible:    heightLabel.visible
                             onUpdated:  _followOffsetZ.rawValue = -controller.height.rawValue
                         }
-                    }
-                }
+                    } // GridLayout
+                } // QGCGroupBox
             }
 
             RowLayout {
@@ -421,8 +429,8 @@ SetupPage {
 
                         onClicked: (mouse) => {
                             // Translate x,y to centered
-                            var x = mouse.x - (width / 2)
-                            var y = (height - mouse.y) - (height / 2)
+                            let x = mouse.x - (width / 2)
+                            let y = (height - mouse.y) - (height / 2)
                             controller.angle.rawValue = _radiansToHeading(Math.atan2(y, x))
                             _setXYOffsetByAngleAndDistance(controller.angle.rawValue, controller.distance.rawValue)
                         }

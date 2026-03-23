@@ -58,8 +58,8 @@ SetupPage {
             /// to find them and setup the ui accordindly.
             function calcAutoTuneChannel() {
                 _autoTuneSwitchChannelIndex = 0
-                for (var channel=_firstOptionChannel; channel<=_lastOptionChannel; channel++) {
-                    var optionFact = controller.getParameterFact(-1, "RC" + channel + "_OPTION")
+                for (let channel=_firstOptionChannel; channel<=_lastOptionChannel; channel++) {
+                    let optionFact = controller.getParameterFact(-1, "RC" + channel + "_OPTION")
                     if (optionFact.value == _autoTuneOption) {
                         _autoTuneSwitchChannelIndex = channel - _firstOptionChannel + 1
                         break
@@ -70,8 +70,8 @@ SetupPage {
             /// We need to clear AutoTune from any previous channel before setting it to a new one
             function setChannelAutoTuneOption(channel) {
                 // First clear any previous settings for AutTune
-                for (var optionChannel=_firstOptionChannel; optionChannel<=_lastOptionChannel; optionChannel++) {
-                    var optionFact = controller.getParameterFact(-1, "RC" + optionChannel + "_OPTION")
+                for (let optionChannel=_firstOptionChannel; optionChannel<=_lastOptionChannel; optionChannel++) {
+                    let optionFact = controller.getParameterFact(-1, "RC" + optionChannel + "_OPTION")
                     if (optionFact.value == _autoTuneOption) {
                         optionFact.value = 0
                     }
@@ -79,7 +79,7 @@ SetupPage {
 
                 // Now set the function into the new channel
                 if (channel != 0) {
-                    var optionFact = controller.getParameterFact(-1, "RC" + channel + "_OPTION")
+                    let optionFact = controller.getParameterFact(-1, "RC" + channel + "_OPTION")
                     optionFact.value = _autoTuneOption
                 }
             }
@@ -195,18 +195,21 @@ SetupPage {
                                 spacing: _margins
 
                                 QGCLabel { text: qsTr("Axes to AutoTune:") }
-                                FactBitmask { fact: _autoTuneAxes }
+                                FactBitmask {
+                                    fact: _autoTuneAxes
+                                    Layout.preferredWidth: tuningPage.availableWidth * 0.75
+                                }
                             }
 
                             LabelledComboBox {
                                 id:             autoTuneChannelCombo
-                                width:          ScreenTools.defaultFontPixelWidth * 14
+                                comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
                                 label:          qsTr("Channel for AutoTune switch:")
                                 model:          [qsTr("None"), qsTr("Channel 7"), qsTr("Channel 8"), qsTr("Channel 9"), qsTr("Channel 10"), qsTr("Channel 11"), qsTr("Channel 12") ]
                                 currentIndex:   _autoTuneSwitchChannelIndex
 
                                 onActivated: (index) => {
-                                    var channel = index
+                                    let channel = index
 
                                     if (channel > 0) {
                                         channel += 6
@@ -226,7 +229,7 @@ SetupPage {
 
                             LabelledFactComboBox {
                                 id:         optCombo
-                                width:      ScreenTools.defaultFontPixelWidth * 15
+                                comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
                                 label:      qsTr("RC Channel 6 Option (Tuning):")
                                 fact:       controller.getParameterFact(-1, "TUNE")
                                 indexModel: false

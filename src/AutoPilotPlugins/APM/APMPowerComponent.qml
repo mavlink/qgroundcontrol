@@ -72,7 +72,6 @@ SetupPage {
 
                 // Monitor-only view (monitor disabled or params not yet available after enabling)
                 QGCGroupBox {
-                    Layout.fillWidth:       true
                     title:                  qsTr("Battery Monitor")
                     visible:                !battParams.monitorEnabled || !battParams.paramsAvailable
 
@@ -106,7 +105,6 @@ SetupPage {
                 // Full settings view
                 QGCGroupBox {
                     id:                     fullSettingsRect
-                    Layout.fillWidth:       true
                     visible:                battParams.monitorEnabled && battParams.paramsAvailable
 
                     Loader {

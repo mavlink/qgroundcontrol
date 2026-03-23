@@ -128,13 +128,13 @@ QGCLabel {
     }
 
     function decode (device) {
-        var devid = parseInt(device.valueString)
-        var deviceName = device.name
-        var busType = busTypes[devid & 0x07]
-        var bus = (devid >> 3) & 0x1F
-        var address = (devid >> 8) & 0xFF
-        var devtype = (devid >> 16)
-        var decodedDevname;
+        let devid = parseInt(device.valueString)
+        let deviceName = device.name
+        let busType = busTypes[devid & 0x07]
+        let bus = (devid >> 3) & 0x1F
+        let address = (devid >> 8) & 0xFF
+        let devtype = (devid >> 16)
+        let decodedDevname;
 
         if (devid === 0) {
             return ""

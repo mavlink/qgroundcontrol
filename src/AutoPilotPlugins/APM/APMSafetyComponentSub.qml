@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.FactControls
@@ -12,14 +13,13 @@ SetupPage {
     Component {
         id: safetyPageComponent
 
-        Flow {
+        ColumnLayout {
             id:         flowLayout
-            width:      availableWidth
             spacing:    _margins
 
             FactPanelController { id: controller; }
 
-            QGCPalette { id: ggcPal; colorGroupEnabled: true }
+            QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             property bool _firmware34:       globals.activeVehicle.versionCompare(3, 5, 0) < 0
 
@@ -43,342 +43,210 @@ SetupPage {
             property Fact _failsafeBatteryCapacity:      controller.getParameterFact(-1, "BATT_LOW_MAH", false)
             property bool _batteryDetected:              controller.parameterExists(-1, "BATT_LOW_MAH")
 
-            // Older firmwares use ARMING_CHECK. Newer firmwares use ARMING_SKIPCHK.
-            property Fact _armingCheck:     controller.getParameterFact(-1, "ARMING_CHECK", false /* reportMissing */)
-            property Fact _armingSkipCheck: controller.getParameterFact(-1, "ARMING_SKIPCHK", false /* reportMissing */)
+            property Fact _armingCheck:     controller.getParameterFact(-1, "ARMING_CHECK", false)
+            property Fact _armingSkipCheck: controller.getParameterFact(-1, "ARMING_SKIPCHK", false)
 
-            property real _margins:     ScreenTools.defaultFontPixelHeight
-            property bool _showIcon:    !ScreenTools.isTinyScreen
+            property real _margins:         ScreenTools.defaultFontPixelHeight
+            property real _textFieldWidth:  ScreenTools.defaultFontPixelWidth * 15
+            property real _comboWidth:      ScreenTools.defaultFontPixelWidth * 30
 
-            Column {
-                spacing: _margins / 2
+            QGCGroupBox {
+                title:              qsTr("Failsafe Actions")
 
-                QGCLabel {
-                    id:         failsafeLabel
-                    text:       qsTr("Failsafe Actions")
-                    font.bold:   true
-                }
+                GridLayout {
+                    columns:        2
+                    rowSpacing:     _margins / 2
+                    columnSpacing:  _margins / 2
 
-                Rectangle {
-                    id:     failsafeRectangle
-                    width:  flowLayout.width
-                    height: childrenRect.height + _margins
-                    color:  ggcPal.windowShade
-
-                    Column {
-                        anchors.top: failsafeRectangle.top
-                        anchors.left: failsafeRectangle.left
-                        anchors.margins: _margins / 2
-                        property var _labelWidth: ScreenTools.defaultFontPixelWidth * 15
-                        property var _editWidth: ScreenTools.defaultFontPixelWidth * 20
-                        id:     failsafeSettings
-                        spacing: ScreenTools.defaultFontPixelHeight
-
-                        Row {
-                            spacing: _margins / 2
-
-                            QGCLabel {
-                                id:                     gcsEnableLabel
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: gcsEnableCombo.verticalCenter
-                                text:                   qsTr("GCS Heartbeat:")
-                                wrapMode:               Text.Wrap
-                            }
-
-                            FactComboBox {
-                                id:                 gcsEnableCombo
-                                width:              failsafeSettings._editWidth
-                                fact:               _failsafeGCSEnable
-                                indexModel:         false
-                            }
-                        }
-
-                        Row {
-                            spacing: _margins / 2
-
-                            QGCLabel {
-                                id:                     leakEnableLabel
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: leakEnableCombo.verticalCenter
-                                text:                   qsTr("Leak:")
-                                wrapMode:               Text.Wrap
-                            }
-
-                            FactComboBox {
-                                id:                     leakEnableCombo
-                                width:                  failsafeSettings._editWidth
-                                fact:                   _failsafeLeakEnable
-                                indexModel:             false
-                            }
-
-                            QGCLabel {
-                                text:                   qsTr("Detector Pin:")
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: leakEnableCombo.verticalCenter
-                                visible:                leakEnableCombo.currentIndex != 0
-                            }
-
-                            FactComboBox {
-                                width:                  failsafeSettings._editWidth
-                                visible:                leakEnableCombo.currentIndex != 0
-                                anchors.verticalCenter: leakEnableCombo.verticalCenter
-                                fact:                   _failsafeLeakPin
-                                indexModel:             false
-                            }
-
-                            QGCLabel {
-                                text:                   qsTr("Logic when Dry:")
-                                width:                  failsafeSettings._labelWidth
-                                visible:                leakEnableCombo.currentIndex != 0
-                                anchors.verticalCenter: leakEnableCombo.verticalCenter
-                            }
-
-                            FactComboBox {
-                                width:                  failsafeSettings._editWidth
-                                visible:                leakEnableCombo.currentIndex != 0
-                                anchors.verticalCenter: leakEnableCombo.verticalCenter
-                                fact:                   _failsafeLeakLogic
-                                indexModel:             false
-                            }
-                        }
-
-                        Row {
-                            spacing: _margins / 2
-                            visible: !_firmware34
-
-                            QGCLabel {
-                                id:                     batteryEnableLabel
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
-                                text:                   qsTr("Battery:")
-                                wrapMode:               Text.Wrap
-                            }
-
-                            FactComboBox {
-                                id:                 batteryEnableCombo
-                                enabled:            _batteryDetected
-                                width:              failsafeSettings._editWidth
-                                fact:               _failsafeBatteryEnable
-                                indexModel:         false
-                            }
-
-                            QGCLabel {
-                                text:                   qsTr("Power module not set up")
-                                width:                  failsafeSettings._labelWidth
-                                color:                  ggcPal.warningText
-                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
-                                visible:                !_batteryDetected
-                            }
-
-                            QGCLabel {
-                                text:                   qsTr("Voltage:")
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
-                                visible:                batteryEnableCombo.currentIndex != 0
-                            }
-
-                            FactTextField {
-                                width:                  failsafeSettings._editWidth
-                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
-                                visible:                batteryEnableCombo.currentIndex != 0
-                                fact:                   _failsafeBatteryVoltage
-                            }
-
-                            QGCLabel {
-                                text:                   qsTr("Remaining Capacity:")
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
-                                visible:                batteryEnableCombo.currentIndex != 0
-                            }
-
-                            FactTextField {
-                                width:                  failsafeSettings._editWidth
-                                anchors.verticalCenter: batteryEnableCombo.verticalCenter
-                                visible:                batteryEnableCombo.currentIndex != 0
-                                fact:                   _failsafeBatteryCapacity
-                            }
-                        }
-
-                        Row {
-                            spacing: _margins / 2
-                            visible: !_firmware34
-
-                            QGCLabel {
-                                id:                     ekfEnableLabel
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: ekfEnableCombo.verticalCenter
-                                text:                   qsTr("EKF:")
-                                wrapMode:               Text.Wrap
-                            }
-
-                            FactComboBox {
-                                id:                 ekfEnableCombo
-                                width:              failsafeSettings._editWidth
-                                fact:               _failsafeEKFEnable
-                                indexModel:         false
-                            }
-
-                            QGCLabel {
-                                text: "Threshold:"
-                                width:              failsafeSettings._labelWidth
-                                visible:            ekfEnableCombo.currentIndex != 0
-                                anchors.baseline:   ekfEnableCombo.baseline
-                            }
-
-                            FactTextField {
-                                width:              failsafeSettings._editWidth
-                                visible:            ekfEnableCombo.currentIndex != 0
-                                anchors.baseline:   ekfEnableCombo.baseline
-                                fact:               _failsafeEKFThreshold
-                            }
-                        }
-
-                        Row {
-                            spacing: _margins / 2
-                            visible: !_firmware34
-
-                            QGCLabel {
-                                id:                     pilotEnableLabel
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: pilotEnableCombo.verticalCenter
-                                text:                   qsTr("Pilot Input:")
-                                wrapMode:               Text.Wrap
-                            }
-
-                            FactComboBox {
-                                id:                 pilotEnableCombo
-                                width:              failsafeSettings._editWidth
-                                fact:               _failsafePilotEnable
-                                indexModel:         false
-                            }
-
-                            QGCLabel {
-                                text:                   qsTr("Timeout:")
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: pilotEnableCombo.verticalCenter
-                                visible:                pilotEnableCombo.currentIndex != 0
-
-                            }
-
-                            FactTextField {
-                                width:                  failsafeSettings._editWidth
-                                anchors.verticalCenter: pilotEnableCombo.verticalCenter
-                                visible:                pilotEnableCombo.currentIndex != 0
-                                anchors.baseline:       pilotEnableCombo.baseline
-                                fact:                   _failsafePilotTimeout
-                            }
-                        }
-
-                        Row {
-                            spacing: _margins / 2
-
-                            QGCLabel {
-                                id:                     temperatureEnableLabel
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: temperatureEnableCombo.verticalCenter
-                                text:                   qsTr("Internal Temperature:")
-                                wrapMode:               Text.Wrap
-                            }
-
-                            FactComboBox {
-                                id:                 temperatureEnableCombo
-                                width:              failsafeSettings._editWidth
-                                fact:               _failsafeTemperatureEnable
-                                indexModel:         false
-                            }
-
-                            QGCLabel {
-                                text:               qsTr("Threshold:")
-                                width:              failsafeSettings._labelWidth
-                                visible:            temperatureEnableCombo.currentIndex != 0
-                                anchors.baseline:   temperatureEnableCombo.baseline
-                            }
-
-                            FactTextField {
-                                width:              failsafeSettings._editWidth
-                                visible:            temperatureEnableCombo.currentIndex != 0
-                                anchors.baseline:   temperatureEnableCombo.baseline
-                                fact:               _failsafeTemperatureThreshold
-                            }
-                        }
-
-                        Row {
-                            spacing: _margins / 2
-
-                            QGCLabel {
-                                id:                     pressureEnableLabel
-                                width:                  failsafeSettings._labelWidth
-                                anchors.verticalCenter: pressureEnableCombo.verticalCenter
-                                text:                   qsTr("Internal Pressure:")
-                                wrapMode:               Text.Wrap
-                            }
-
-                            FactComboBox {
-                                id:                 pressureEnableCombo
-                                width:              failsafeSettings._editWidth
-                                fact:               _failsafePressureEnable
-                                indexModel:         false
-                            }
-
-                            QGCLabel {
-                                text:               qsTr("Threshold:")
-                                width:              failsafeSettings._labelWidth
-                                visible:            pressureEnableCombo.currentIndex != 0
-                                anchors.baseline:   pressureEnableCombo.baseline
-                            }
-
-                            FactTextField {
-                                width:              failsafeSettings._editWidth
-                                visible:            pressureEnableCombo.currentIndex != 0
-                                anchors.baseline:   pressureEnableCombo.baseline
-                                fact:               _failsafePressureThreshold
-                            }
-                        }
-                    } // Column - Failsafe Settings
-                }// Rectangle - Failsafe Settings
-            } // Column - Failsafe Settings
-
-            Column {
-                spacing: _margins / 2
-
-                QGCLabel {
-                    text:           _armingCheck ? qsTr("Arming Checks") : qsTr("Skip Arming Checks")
-                    font.bold:      true
-                }
-
-                Rectangle {
-                    width:  flowLayout.width
-                    height: armingCheckInnerColumn.height + (_margins * 2)
-                    color:  ggcPal.windowShade
-
-                    Column {
-                        id:                 armingCheckInnerColumn
-                        anchors.margins:    _margins
-                        anchors.top:        parent.top
-                        anchors.left:       parent.left
-                        anchors.right:      parent.right
-                        spacing: _margins
-
-                        FactBitmask {
-                            id:                 armingCheckBitmask
-                            anchors.left:       parent.left
-                            anchors.right:      parent.right
-                            firstEntryIsAll:    _armingCheck ? true : false
-                            fact:               _armingCheck ? _armingCheck : _armingSkipCheck
-                        }
-
-                        QGCLabel {
-                            id:             armingCheckWarning
-                            anchors.left:   parent.left
-                            anchors.right:  parent.right
-                            wrapMode:       Text.WordWrap
-                            color:          qgcPal.warningText
-                            text:            qsTr("Warning: Turning off arming checks can lead to loss of Vehicle control.")
-                            visible:        _armingCheck ? _armingCheck.value != 1 : _armingSkipCheck.value != 0
-                        }
+                    QGCLabel { text: qsTr("GCS Heartbeat") }
+                    FactComboBox {
+                        Layout.maximumWidth: _comboWidth
+                        fact:               _failsafeGCSEnable
+                        indexModel:         false
+                        sizeToContents:     true
                     }
-                } // Rectangle - Arming checks
-            } // Column - Arming Checks
-        } // Flow
+
+                    QGCLabel { text: qsTr("Leak") }
+                    FactComboBox {
+                        id:                  leakEnableCombo
+                        Layout.maximumWidth: _comboWidth
+                        fact:               _failsafeLeakEnable
+                        indexModel:         false
+                        sizeToContents:     true
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Detector Pin")
+                        visible: leakEnableCombo.currentIndex !== 0
+                    }
+                    FactComboBox {
+                        Layout.maximumWidth: _comboWidth
+                        visible:            leakEnableCombo.currentIndex !== 0
+                        fact:               _failsafeLeakPin
+                        indexModel:         false
+                        sizeToContents:     true
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Logic when Dry")
+                        visible: leakEnableCombo.currentIndex !== 0
+                    }
+                    FactComboBox {
+                        Layout.maximumWidth: _comboWidth
+                        visible:            leakEnableCombo.currentIndex !== 0
+                        fact:               _failsafeLeakLogic
+                        indexModel:         false
+                        sizeToContents:     true
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Battery")
+                        visible: !_firmware34
+                    }
+                    FactComboBox {
+                        id:                  batteryEnableCombo
+                        Layout.maximumWidth: _comboWidth
+                        enabled:            _batteryDetected
+                        visible:            !_firmware34
+                        fact:               _failsafeBatteryEnable
+                        indexModel:         false
+                        sizeToContents:     true
+                    }
+
+                    QGCLabel {
+                        Layout.columnSpan:  2
+                        text:               qsTr("Power module not set up")
+                        color:              qgcPal.warningText
+                        visible:            !_firmware34 && !_batteryDetected
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Voltage")
+                        visible: !_firmware34 && batteryEnableCombo.currentIndex !== 0
+                    }
+                    FactTextField {
+                        Layout.preferredWidth: _textFieldWidth
+                        visible:              !_firmware34 && batteryEnableCombo.currentIndex !== 0
+                        fact:                 _failsafeBatteryVoltage
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Remaining Capacity")
+                        visible: !_firmware34 && batteryEnableCombo.currentIndex !== 0
+                    }
+                    FactTextField {
+                        Layout.preferredWidth: _textFieldWidth
+                        visible:              !_firmware34 && batteryEnableCombo.currentIndex !== 0
+                        fact:                 _failsafeBatteryCapacity
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("EKF")
+                        visible: !_firmware34
+                    }
+                    FactComboBox {
+                        id:                  ekfEnableCombo
+                        Layout.maximumWidth: _comboWidth
+                        visible:            !_firmware34
+                        fact:               _failsafeEKFEnable
+                        indexModel:         false
+                        sizeToContents:     true
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Threshold")
+                        visible: !_firmware34 && ekfEnableCombo.currentIndex !== 0
+                    }
+                    FactTextField {
+                        Layout.preferredWidth: _textFieldWidth
+                        visible:              !_firmware34 && ekfEnableCombo.currentIndex !== 0
+                        fact:                 _failsafeEKFThreshold
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Pilot Input")
+                        visible: !_firmware34
+                    }
+                    FactComboBox {
+                        id:                  pilotEnableCombo
+                        Layout.maximumWidth: _comboWidth
+                        visible:            !_firmware34
+                        fact:               _failsafePilotEnable
+                        indexModel:         false
+                        sizeToContents:     true
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Timeout")
+                        visible: !_firmware34 && pilotEnableCombo.currentIndex !== 0
+                    }
+                    FactTextField {
+                        Layout.preferredWidth: _textFieldWidth
+                        visible:              !_firmware34 && pilotEnableCombo.currentIndex !== 0
+                        fact:                 _failsafePilotTimeout
+                    }
+
+                    QGCLabel { text: qsTr("Internal Temperature") }
+                    FactComboBox {
+                        id:                  temperatureEnableCombo
+                        Layout.maximumWidth: _comboWidth
+                        fact:               _failsafeTemperatureEnable
+                        indexModel:         false
+                        sizeToContents:     true
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Threshold")
+                        visible: temperatureEnableCombo.currentIndex !== 0
+                    }
+                    FactTextField {
+                        Layout.preferredWidth: _textFieldWidth
+                        visible:              temperatureEnableCombo.currentIndex !== 0
+                        fact:                 _failsafeTemperatureThreshold
+                    }
+
+                    QGCLabel { text: qsTr("Internal Pressure") }
+                    FactComboBox {
+                        id:                  pressureEnableCombo
+                        Layout.maximumWidth: _comboWidth
+                        fact:               _failsafePressureEnable
+                        indexModel:         false
+                        sizeToContents:     true
+                    }
+
+                    QGCLabel {
+                        text:    qsTr("Threshold")
+                        visible: pressureEnableCombo.currentIndex !== 0
+                    }
+                    FactTextField {
+                        Layout.preferredWidth: _textFieldWidth
+                        visible:              pressureEnableCombo.currentIndex !== 0
+                        fact:                 _failsafePressureThreshold
+                    }
+                } // GridLayout
+            } // QGCGroupBox - Failsafe Actions
+
+            QGCGroupBox {
+                title:              _armingCheck ? qsTr("Arming Checks") : qsTr("Skip Arming Checks")
+
+                ColumnLayout {
+                    spacing:        _margins
+
+                    FactBitmask {
+                        Layout.preferredWidth:  safetyPage.availableWidth * 0.75
+                        firstEntryIsAll:        _armingCheck ? true : false
+                        fact:                   _armingCheck ? _armingCheck : _armingSkipCheck
+                    }
+
+                    QGCLabel {
+                        Layout.fillWidth:   true
+                        wrapMode:           Text.WordWrap
+                        color:              qgcPal.warningText
+                        text:               qsTr("Warning: Turning off arming checks can lead to loss of Vehicle control.")
+                        visible:            _armingCheck ? _armingCheck.value !== 1 : _armingSkipCheck.value !== 0
+                    }
+                }
+            } // QGCGroupBox - Arming Checks
+        } // ColumnLayout
     } // Component - safetyPageComponent
-} // SetupView
+} // SetupPage
