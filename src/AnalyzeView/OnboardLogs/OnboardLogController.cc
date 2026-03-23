@@ -56,9 +56,9 @@ void OnboardLogController::_downloadToDirectory(const QString &dir)
         _downloadPath += QDir::separator();
     }
 
-    QGCOnboardLogEntry *const log = _getNextSelected();
-    if (log) {
-        log->setStatus(tr("Waiting"));
+    if (!QDir().mkpath(_downloadPath)) {
+        qCWarning(OnboardLogControllerLog) << "Failed to create download directory:" << _downloadPath;
+        return;
     }
 
     _setDownloading(true);
@@ -101,7 +101,7 @@ void OnboardLogController::_findMissingEntries()
         return;
     }
 
-    if (_retries++ > 2) {
+    if (_retries++ > kMaxEntryRetries) {
         for (int i = 0; i < num_logs; i++) {
             QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
             if (entry && !entry->received()) {
@@ -110,7 +110,7 @@ void OnboardLogController::_findMissingEntries()
         }
 
         _receivedAllEntries();
-        qCWarning(OnboardLogControllerLog) << "Too many errors retreiving log list. Giving up.";
+        qCWarning(OnboardLogControllerLog) << "Too many errors retrieving log list. Giving up.";
         return;
     }
 
@@ -230,59 +230,53 @@ void OnboardLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, co
         return;
     }
 
-    bool result = false;
-    if (ofs <= _downloadData->entry->size()) {
-        const uint32_t chunk = ofs / OnboardLogDownloadData::kChunkSize;
-        // qCDebug(OnboardLogControllerLog) << "Received data - Offset:" << ofs << "Chunk:" << chunk;
-        if (chunk != _downloadData->current_chunk) {
-            qCWarning(OnboardLogControllerLog) << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
-            return;
-        }
-
-        const uint16_t bin = (ofs - (chunk * OnboardLogDownloadData::kChunkSize)) / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
-        if (bin >= _downloadData->chunk_table.size()) {
-            qCWarning(OnboardLogControllerLog) << "Out of range bin received";
-        } else {
-            _downloadData->chunk_table.setBit(bin);
-        }
-
-        if (_downloadData->file.pos() != ofs) {
-            if (!_downloadData->file.seek(ofs)) {
-                qCWarning(OnboardLogControllerLog) << "Error while seeking log file offset";
-                return;
-            }
-        }
-
-        if (_downloadData->file.write(reinterpret_cast<const char*>(data), count)) {
-            _downloadData->written += count;
-            _downloadData->rate_bytes += count;
-            _updateDataRate();
-
-            result = true;
-            _retries = 0;
-
-            _timer->start(kTimeOutMs);
-            if (_logComplete()) {
-                _downloadData->entry->setStatus(tr("Downloaded"));
-                _receivedAllData();
-            } else if (_chunkComplete()) {
-                _downloadData->advanceChunk();
-                _requestLogData(_downloadData->ID,
-                                _downloadData->current_chunk * OnboardLogDownloadData::kChunkSize,
-                                _downloadData->chunk_table.size() * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-            } else if ((bin < (_downloadData->chunk_table.size() - 1)) && _downloadData->chunk_table.at(bin + 1)) {
-                // Likely to be grabbing fragments and got to the end of a gap
-                _findMissingData();
-            }
-        } else {
-            qCWarning(OnboardLogControllerLog) << "Error while writing log file chunk";
-        }
-    } else {
+    if (ofs > _downloadData->entry->size()) {
         qCWarning(OnboardLogControllerLog) << "Received log offset greater than expected";
+        _abortDownload();
+        return;
     }
 
-    if (!result) {
-        _downloadData->entry->setStatus(tr("Error"));
+    const uint32_t chunk = ofs / OnboardLogDownloadData::kChunkSize;
+    if (chunk != _downloadData->current_chunk) {
+        qCWarning(OnboardLogControllerLog) << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
+        return;
+    }
+
+    const uint16_t bin = (ofs - (chunk * OnboardLogDownloadData::kChunkSize)) / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
+    if (bin >= _downloadData->chunk_table.size()) {
+        qCWarning(OnboardLogControllerLog) << "Out of range bin received";
+    } else {
+        _downloadData->chunk_table.setBit(bin);
+    }
+
+    if ((_downloadData->file.pos() != ofs) && !_downloadData->file.seek(ofs)) {
+        qCWarning(OnboardLogControllerLog) << "Error while seeking log file offset";
+        _abortDownload();
+        return;
+    }
+
+    if (!_downloadData->file.write(reinterpret_cast<const char*>(data), count)) {
+        qCWarning(OnboardLogControllerLog) << "Error while writing log file chunk";
+        _abortDownload();
+        return;
+    }
+
+    _downloadData->written += count;
+    _downloadData->rate_bytes += count;
+    _updateDataRate();
+    _retries = 0;
+    _timer->start(kTimeOutMs);
+
+    if (_logComplete()) {
+        _downloadData->entry->setStatus(tr("Downloaded"));
+        _receivedAllData();
+    } else if (_chunkComplete()) {
+        _downloadData->advanceChunk();
+        _requestLogData(_downloadData->ID,
+                        _downloadData->current_chunk * OnboardLogDownloadData::kChunkSize,
+                        _downloadData->chunk_table.size() * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
+    } else if ((bin < (_downloadData->chunk_table.size() - 1)) && _downloadData->chunk_table.at(bin + 1)) {
+        _findMissingData();
     }
 }
 
@@ -297,7 +291,11 @@ void OnboardLogController::_findMissingData()
         _downloadData->advanceChunk();
     }
 
-    _retries++;
+    if (_retries++ > kMaxDataRetries) {
+        qCWarning(OnboardLogControllerLog) << "Too many errors downloading log data. Giving up.";
+        _abortDownload();
+        return;
+    }
 
     _updateDataRate();
 
@@ -330,23 +328,15 @@ void OnboardLogController::_updateDataRate()
         return;
     }
 
-    QString status;
     if (timeThresholdMet) {
-        // Update both rate and size
         const qreal rate = _downloadData->rate_bytes / (_downloadData->elapsed.elapsed() / 1000.0);
         _downloadData->rate_avg = (_downloadData->rate_avg * 0.95) + (rate * 0.05);
         _downloadData->rate_bytes = 0;
-
-        status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
-                                                   qgcApp()->bigSizeToString(_downloadData->rate_avg));
         _downloadData->elapsed.start();
-    } else {
-        // Update size only, keep previous rate
-        status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
-                                                   qgcApp()->bigSizeToString(_downloadData->rate_avg));
     }
 
-    _downloadData->entry->setStatus(status);
+    _downloadData->entry->setStatus(QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
+                                                                     qgcApp()->bigSizeToString(_downloadData->rate_avg)));
     _downloadData->last_status_written = _downloadData->written;
 }
 
@@ -358,6 +348,25 @@ bool OnboardLogController::_chunkComplete() const
 bool OnboardLogController::_logComplete() const
 {
     return (_chunkComplete() && ((_downloadData->current_chunk + 1) == _downloadData->numChunks()));
+}
+
+void OnboardLogController::_abortDownload()
+{
+    _timer->stop();
+
+    if (_downloadData) {
+        _downloadData->entry->setStatus(tr("Error"));
+        if (_downloadData->file.isOpen()) {
+            _downloadData->file.close();
+        }
+        if (_downloadData->file.exists()) {
+            (void) _downloadData->file.remove();
+        }
+        _downloadData.reset();
+    }
+
+    _resetSelection(true);
+    _setDownloading(false);
 }
 
 void OnboardLogController::_receivedAllData()
@@ -415,9 +424,9 @@ bool OnboardLogController::_prepareLogDownload()
 
     bool result = false;
     if (!_downloadData->file.open(QIODevice::WriteOnly)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to create log file:" <<  _downloadData->filename;
+        qCWarning(OnboardLogControllerLog) << "Failed to create log file:" << _downloadData->file.fileName();
     } else if (!_downloadData->file.resize(entry->size())) {
-        qCWarning(OnboardLogControllerLog) << "Failed to allocate space for log file:" <<  _downloadData->filename;
+        qCWarning(OnboardLogControllerLog) << "Failed to allocate space for log file:" << _downloadData->file.fileName();
     } else {
         _downloadData->current_chunk = 0;
         _downloadData->chunk_table = QBitArray(_downloadData->chunkBins(), false);
@@ -498,132 +507,71 @@ void OnboardLogController::_resetSelection(bool canceled)
     emit selectionChanged();
 }
 
-void OnboardLogController::eraseAll()
+template<typename PackFn>
+bool OnboardLogController::_sendMavlinkMessage(PackFn packFn)
 {
     if (!_vehicle) {
         qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
-        return;
+        return false;
     }
 
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         qCWarning(OnboardLogControllerLog) << "Link Unavailable";
-        return;
+        return false;
     }
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_log_erase_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId()
-    );
+    packFn(MAVLinkProtocol::instance()->getSystemId(),
+           MAVLinkProtocol::getComponentId(),
+           sharedLink->mavlinkChannel(),
+           &msg,
+           _vehicle->id(),
+           _vehicle->defaultComponentId());
 
     if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
         qCWarning(OnboardLogControllerLog) << "Failed to send";
-        return;
+        return false;
     }
 
-    refresh();
+    return true;
+}
+
+void OnboardLogController::eraseAll()
+{
+    if (_sendMavlinkMessage([](uint8_t sysid, uint8_t compid, uint8_t chan, mavlink_message_t *msg, uint8_t tgt_sys, uint8_t tgt_comp) {
+            (void) mavlink_msg_log_erase_pack_chan(sysid, compid, chan, msg, tgt_sys, tgt_comp);
+        })) {
+        refresh();
+    }
 }
 
 void OnboardLogController::_requestLogList(uint32_t start, uint32_t end)
 {
-    if (!_vehicle) {
-        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
-        return;
+    if (_sendMavlinkMessage([start, end](uint8_t sysid, uint8_t compid, uint8_t chan, mavlink_message_t *msg, uint8_t tgt_sys, uint8_t tgt_comp) {
+            (void) mavlink_msg_log_request_list_pack_chan(sysid, compid, chan, msg, tgt_sys, tgt_comp, start, end);
+        })) {
+        qCDebug(OnboardLogControllerLog) << "Request onboard log entry list (" << start << "through" << end << ")";
+        _setListing(true);
+        _timer->start(kRequestLogListTimeoutMs);
     }
-
-    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
-        return;
-    }
-
-    mavlink_message_t msg{};
-    (void) mavlink_msg_log_request_list_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId(),
-        start,
-        end
-    );
-
-    if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to send";
-        return;
-    }
-
-    qCDebug(OnboardLogControllerLog) << "Request onboard log entry list (" << start << "through" << end << ")";
-    _setListing(true);
-    _timer->start(kRequestLogListTimeoutMs);
 }
 
 void OnboardLogController::_requestLogData(uint16_t id, uint32_t offset, uint32_t count, int retryCount)
 {
-    if (!_vehicle) {
-        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
-        return;
-    }
+    const uint16_t mavId = id + _apmOffset;
+    qCDebug(OnboardLogControllerLog) << "Request log data (id:" << mavId << "offset:" << offset << "size:" << count << "retryCount" << retryCount << ")";
 
-    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
-        return;
-    }
-
-    id += _apmOffset;
-    qCDebug(OnboardLogControllerLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << "retryCount" << retryCount << ")";
-
-    mavlink_message_t msg{};
-    (void) mavlink_msg_log_request_data_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId(),
-        id,
-        offset,
-        count
-    );
-
-    if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to send";
-    }
+    _sendMavlinkMessage([mavId, offset, count](uint8_t sysid, uint8_t compid, uint8_t chan, mavlink_message_t *msg, uint8_t tgt_sys, uint8_t tgt_comp) {
+        (void) mavlink_msg_log_request_data_pack_chan(sysid, compid, chan, msg, tgt_sys, tgt_comp, mavId, offset, count);
+    });
 }
 
 void OnboardLogController::_requestLogEnd()
 {
-    if (!_vehicle) {
-        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
-        return;
-    }
-
-    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
-        return;
-    }
-
-    mavlink_message_t msg{};
-    (void) mavlink_msg_log_request_end_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId()
-    );
-
-    if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to send";
-    }
+    _sendMavlinkMessage([](uint8_t sysid, uint8_t compid, uint8_t chan, mavlink_message_t *msg, uint8_t tgt_sys, uint8_t tgt_comp) {
+        (void) mavlink_msg_log_request_end_pack_chan(sysid, compid, chan, msg, tgt_sys, tgt_comp);
+    });
 }
 
 void OnboardLogController::_setDownloading(bool active)
@@ -644,34 +592,3 @@ void OnboardLogController::_setListing(bool active)
     }
 }
 
-void OnboardLogController::setCompressLogs(bool compress)
-{
-    if (_compressLogs != compress) {
-        _compressLogs = compress;
-        emit compressLogsChanged();
-    }
-}
-
-bool OnboardLogController::compressLogFile(const QString &logPath)
-{
-    Q_UNUSED(logPath)
-    qCWarning(OnboardLogControllerLog) << "Log compression not yet implemented (decompression-only API)";
-    return false;
-}
-
-void OnboardLogController::cancelCompression()
-{
-    // Not implemented - compression API is decompression-only
-}
-
-void OnboardLogController::_handleCompressionProgress(qreal progress)
-{
-    Q_UNUSED(progress)
-    // Not implemented - compression API is decompression-only
-}
-
-void OnboardLogController::_handleCompressionFinished(bool success)
-{
-    Q_UNUSED(success)
-    // Not implemented - compression API is decompression-only
-}

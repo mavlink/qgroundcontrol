@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt.labs.qmlmodels
 
 import QGroundControl
 import QGroundControl.Controls
@@ -18,7 +17,11 @@ AnalyzePage {
             width: availableWidth
             height: availableHeight
 
-            Component.onCompleted: OnboardLogController.refresh()
+            Component.onCompleted: {
+                if (QGroundControl.multiVehicleManager.activeVehicle && !QGroundControl.multiVehicleManager.activeVehicle.isOfflineEditingVehicle) {
+                    OnboardLogController.refresh()
+                }
+            }
 
             QGCFlickable {
                 Layout.fillWidth: true
@@ -36,7 +39,12 @@ AnalyzePage {
 
                     QGCCheckBox {
                         id: headerCheckBox
-                        enabled: false
+                        enabled: OnboardLogController.model.count > 0
+                        onClicked: {
+                            for (var i = 0; i < OnboardLogController.model.count; i++) {
+                                OnboardLogController.model.get(i).selected = checked
+                            }
+                        }
                     }
 
                     Repeater {
