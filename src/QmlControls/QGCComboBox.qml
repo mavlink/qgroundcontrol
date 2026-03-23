@@ -45,10 +45,10 @@ T.ComboBox {
     }
 
     function _calcPopupWidth() {
-        if (_onCompleted && sizeToContents && model) {
+        if (_onCompleted && sizeToContents && control.count > 0) {
             _largestTextWidth = 0
-            for (var i = 0; i < model.length; i++){
-                textMetrics.text = control.textRole ? model[i][control.textRole] : model[i]
+            for (let i = 0; i < control.count; i++) {
+                textMetrics.text = control.textAt(i)
                 _largestTextWidth = Math.max(textMetrics.width, _largestTextWidth)
             }
             _popupWidth = _largestTextWidth + itemDelegateMetrics.leftPadding + itemDelegateMetrics.rightPadding
@@ -56,6 +56,7 @@ T.ComboBox {
     }
 
     onModelChanged: _calcPopupWidth()
+    onCountChanged: _calcPopupWidth()
 
     Component.onCompleted: {
         _onCompleted = true
@@ -107,6 +108,7 @@ T.ComboBox {
         text: control.alternateText === "" ? control.currentText : control.alternateText
         font: control.font
         color: qgcPal.buttonText
+        elide: Text.ElideRight
     }
 
     background: Rectangle {

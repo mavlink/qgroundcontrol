@@ -1,0 +1,54 @@
+{
+    "fileType": "PowerModulePresets",
+    "version": 1,
+    "powerModules": [
+        {
+            "name":       "3DR/Pixhawk Power Module",
+            "voltMult":   10.1,
+            "ampPerVolt": 17.0,
+            "ampOffset":  0
+        },
+        {
+            "name":       "Cube HV Power Module",
+            "voltMult":   12.02,
+            "ampPerVolt": 39.877,
+            "ampOffset":  0
+        },
+        {
+            "name":       "CUAV HV PM",
+            "voltMult":   18.0,
+            "ampPerVolt": 24.0,
+            "ampOffset":  0
+        },
+        {
+            "name":       "Holybro PM02/PM06/PM07",
+            "voltMult":   18.182,
+            "ampPerVolt": 36.364,
+            "ampOffset":  0
+        },
+        {
+            "name":       "Holybro PM08",
+            "voltMult":   18.182,
+            "ampPerVolt": 72.0,
+            "ampOffset":  0
+        },
+        {
+            "name":       "Matek H743/H7A3/F765-SE",
+            "voltMult":   21.0,
+            "ampPerVolt": 40.0,
+            "ampOffset":  0
+        },
+        {
+            "name":       "Blue Robotics Power Sense Module",
+            "voltMult":   11.0,
+            "ampPerVolt": 37.8788,
+            "ampOffset":  0.33
+        },
+        {
+            "name":       "Navigator w/ Blue Robotics PSM",
+            "voltMult":   11.0,
+            "ampPerVolt": 37.8788,
+            "ampOffset":  0.33
+        }
+    ]
+}

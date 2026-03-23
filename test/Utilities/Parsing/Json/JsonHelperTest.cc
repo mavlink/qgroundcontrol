@@ -130,6 +130,58 @@ void JsonHelperTest::_validateKeysWrongType_test()
     QVERIFY(!errorString.isEmpty());
 }
 
+void JsonHelperTest::_validateKeysStrictValid_test()
+{
+    const QJsonObject obj = {
+        {"name", "test"},
+        {"count", 42},
+    };
+
+    const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+        {"name", QJsonValue::String, true},
+        {"count", QJsonValue::Double, true},
+    };
+
+    QString errorString;
+    QVERIFY(JsonHelper::validateKeysStrict(obj, keyInfo, errorString));
+    QVERIFY(errorString.isEmpty());
+}
+
+void JsonHelperTest::_validateKeysStrictUnknownKey_test()
+{
+    const QJsonObject obj = {
+        {"name", "test"},
+        {"count", 42},
+        {"extra", true},
+    };
+
+    const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+        {"name", QJsonValue::String, true},
+        {"count", QJsonValue::Double, true},
+    };
+
+    QString errorString;
+    QVERIFY(!JsonHelper::validateKeysStrict(obj, keyInfo, errorString));
+    QVERIFY(errorString.contains("Unknown key"));
+    QVERIFY(errorString.contains("extra"));
+}
+
+void JsonHelperTest::_validateKeysStrictMissingRequired_test()
+{
+    const QJsonObject obj = {
+        {"name", "test"},
+    };
+
+    const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+        {"name", QJsonValue::String, true},
+        {"count", QJsonValue::Double, true},
+    };
+
+    QString errorString;
+    QVERIFY(!JsonHelper::validateKeysStrict(obj, keyInfo, errorString));
+    QVERIFY(!errorString.isEmpty());
+}
+
 void JsonHelperTest::_loadSaveGeoCoordinate_test()
 {
     const QGeoCoordinate original(47.3764, 8.5481);

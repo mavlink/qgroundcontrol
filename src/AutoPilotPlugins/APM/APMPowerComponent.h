@@ -13,7 +13,7 @@ public:
 
     QString name() const final { return _name; }
     QString description() const final { return tr("The Power Component is used to setup battery parameters."); }
-    QString iconResource() const final { return QStringLiteral("/qmlimages/PowerComponentIcon.png"); }
+    QString iconResource() const final { return QStringLiteral("/qmlimages/Battery.svg"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }
     QUrl setupSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMPowerComponent.qml")); }
