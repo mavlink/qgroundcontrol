@@ -409,7 +409,7 @@ bool OnboardLogController::_prepareLogDownload()
         do {
             numDups += 1;
             const QString filename = filename_spl[0] + '_' + QString::number(numDups) + '.' + filename_spl[1];
-            _downloadData->file.setFileName(filename);
+            _downloadData->file.setFileName(_downloadPath + filename);
         } while ( _downloadData->file.exists());
     }
 
