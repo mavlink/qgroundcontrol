@@ -4,6 +4,7 @@
 #include "AutoPilotPlugin.h"
 
 class APMAirframeComponent;
+class APMAirspeedComponent;
 class APMFlightModesComponent;
 class APMRadioComponent;
 class APMTuningComponent;
@@ -41,6 +42,7 @@ public:
 protected:
     bool _incorrectParameterVersion = false; ///< true: parameter version incorrect, setup not allowed
     APMAirframeComponent *_airframeComponent = nullptr;
+    APMAirspeedComponent *_airspeedComponent = nullptr;
     APMGimbalComponent *_gimbalComponent = nullptr;
     APMLightsComponent *_lightsComponent = nullptr;
     APMSubFrameComponent *_subFrameComponent = nullptr;
