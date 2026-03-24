@@ -20,7 +20,7 @@ QString PowerComponent::description(void) const
 
 QString PowerComponent::iconResource(void) const
 {
-    return "/qmlimages/PowerComponentIcon.png";
+    return "/qmlimages/Battery.svg";
 }
 
 bool PowerComponent::requiresSetup(void) const

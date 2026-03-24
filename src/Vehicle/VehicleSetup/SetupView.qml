@@ -208,7 +208,7 @@ Rectangle {
 
         ColumnLayout {
             id:         buttonColumn
-            spacing:    ScreenTools.defaultFontPixelHeight / 4
+            spacing:    0
 
             ConfigButton {
                 id:                 summaryButton
@@ -220,12 +220,7 @@ Rectangle {
                 onClicked: showSummaryPanel()
             }
 
-            ConfigButton {
-                visible:            _activeVehicle ? _activeVehicle.flowImageIndex > 0 : false
-                text:               qsTr("Optical Flow")
-                Layout.fillWidth:   true
-                onClicked:          showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/OpticalFlowSensor.qml");
-            }
+            Item { Layout.fillWidth: true; Layout.preferredHeight: ScreenTools.defaultFontPixelHeight / 2 }
 
             Repeater {
                 id:     componentRepeater
@@ -242,6 +237,15 @@ Rectangle {
                     property var componentUrl: modelData
                 }
             }
+
+            ConfigButton {
+                visible:            _activeVehicle ? _activeVehicle.flowImageIndex > 0 : false
+                text:               qsTr("Optical Flow")
+                Layout.fillWidth:   true
+                onClicked:          showPanel(this, "qrc:/qml/QGroundControl/VehicleSetup/OpticalFlowSensor.qml");
+            }
+
+            Item { Layout.fillWidth: true; Layout.preferredHeight: ScreenTools.defaultFontPixelHeight / 2 }
 
             ConfigButton {
                 id:                 parametersButton
