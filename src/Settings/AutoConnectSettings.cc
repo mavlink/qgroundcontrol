@@ -96,13 +96,4 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectNmeaBaud)
     return _autoConnectNmeaBaudFact;
 }
 
-DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectZeroConf)
-{
-    if (!_autoConnectZeroConfFact) {
-        _autoConnectZeroConfFact = _createSettingsFact(autoConnectZeroConfName);
-#ifdef Q_OS_IOS
-        _autoConnectZeroConfFact->setVisible(false);
-#endif
-    }
-    return _autoConnectZeroConfFact;
-}
+

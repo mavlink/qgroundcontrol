@@ -66,7 +66,6 @@ option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
 # Communication Options
 # ============================================================================
 
-option(QGC_ZEROCONF_ENABLED "Enable ZeroConf/Bonjour discovery" OFF)
 option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 
 # ============================================================================
