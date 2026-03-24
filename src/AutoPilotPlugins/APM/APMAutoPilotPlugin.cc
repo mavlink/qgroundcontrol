@@ -1,5 +1,6 @@
 #include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
+#include "APMAirspeedComponent.h"
 #include "APMGimbalComponent.h"
 #include "APMFlightModesComponent.h"
 #include "APMHeliComponent.h"
@@ -74,6 +75,12 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
             _sensorsComponent = new APMSensorsComponent(_vehicle, this);
             _sensorsComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_sensorsComponent)));
+
+            if (_vehicle->parameterManager()->parameterExists(-1, QStringLiteral("ARSPD_TYPE"))) {
+                _airspeedComponent = new APMAirspeedComponent(_vehicle, this);
+                _airspeedComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_airspeedComponent)));
+            }
 
             _powerComponent = new APMPowerComponent(_vehicle, this);
             _powerComponent->setupTriggerSignals();
@@ -183,6 +190,8 @@ QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent *component) const
     } else if (qobject_cast<const APMTuningComponent*>(component)) {
         requiresAirframeCheck = true;
     } else if (qobject_cast<const APMSensorsComponent*>(component)) {
+        requiresAirframeCheck = true;
+    } else if (qobject_cast<const APMAirspeedComponent*>(component)) {
         requiresAirframeCheck = true;
     }
 

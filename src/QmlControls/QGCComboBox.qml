@@ -126,12 +126,17 @@ T.ComboBox {
     }
 
     popup: T.Popup {
-        x: control.width - _popupWidth
-        y: control.height
+        x: Math.max(-_controlPos.x, Math.min(control.width - _popupWidth, control.Window.width - _controlPos.x - _popupWidth))
+        y: _openAbove ? -height : control.height
         width: _popupWidth
-        height: Math.min(contentItem.implicitHeight, control.Window.height - topMargin - bottomMargin)
+        height: Math.min(contentItem.implicitHeight, _openAbove ? _spaceAbove : _spaceBelow)
         topMargin: 6
         bottomMargin: 6
+
+        readonly property point _controlPos:    control.mapToItem(null, 0, 0)
+        readonly property real  _spaceBelow:    Math.max(0, control.Window.height - _controlPos.y - control.height - bottomMargin)
+        readonly property real  _spaceAbove:    Math.max(0, _controlPos.y - topMargin)
+        readonly property bool  _openAbove:     contentItem.implicitHeight > _spaceBelow && _spaceAbove > _spaceBelow
 
         contentItem: ListView {
             clip: true
