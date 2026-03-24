@@ -167,8 +167,6 @@ public:
     Q_PROPERTY(bool                 coaxialMotors               READ coaxialMotors                                                  CONSTANT)
     Q_PROPERTY(bool                 xConfigMotors               READ xConfigMotors                                                  CONSTANT)
     Q_PROPERTY(bool                 isOfflineEditingVehicle     READ isOfflineEditingVehicle                                        CONSTANT)
-    Q_PROPERTY(QString              brandImageIndoor            READ brandImageIndoor                                               NOTIFY firmwareTypeChanged)
-    Q_PROPERTY(QString              brandImageOutdoor           READ brandImageOutdoor                                              NOTIFY firmwareTypeChanged)
     Q_PROPERTY(int                  sensorsPresentBits          READ sensorsPresentBits                                             NOTIFY sensorsPresentBitsChanged)
     Q_PROPERTY(int                  sensorsEnabledBits          READ sensorsEnabledBits                                             NOTIFY sensorsEnabledBitsChanged)
     Q_PROPERTY(int                  sensorsHealthBits           READ sensorsHealthBits                                              NOTIFY sensorsHealthBitsChanged)
@@ -510,8 +508,6 @@ public:
     uint8_t         baseMode                    () const { return _base_mode; }
     uint32_t        customMode                  () const { return _custom_mode; }
     bool            isOfflineEditingVehicle     () const { return _offlineEditingVehicle; }
-    QString         brandImageIndoor            () const;
-    QString         brandImageOutdoor           () const;
     int             sensorsPresentBits          () const { return static_cast<int>(_onboardControlSensorsPresent); }
     int             sensorsEnabledBits          () const { return static_cast<int>(_onboardControlSensorsEnabled); }
     int             sensorsHealthBits           () const { return static_cast<int>(_onboardControlSensorsHealth); }
