@@ -336,12 +336,6 @@ public:
     /// Return the resource file which contains the set of params loaded for offline editing.
     virtual QString offlineEditingParamFile(Vehicle* /*vehicle*/) const { return QString(); }
 
-    /// Return the resource file which contains the brand image for the vehicle for Indoor theme.
-    virtual QString brandImageIndoor(const Vehicle* /*vehicle*/) const { return QString(); }
-
-    /// Return the resource file which contains the brand image for the vehicle for Outdoor theme.
-    virtual QString brandImageOutdoor(const Vehicle* /*vehicle*/) const { return QString(); }
-
     /// Return the resource file which contains the vehicle icon used in the flight view when the view is dark (Satellite for instance)
     virtual QString vehicleImageOpaque(const Vehicle* /*vehicle*/) const { return QStringLiteral("/qmlimages/vehicleArrowOpaque.svg"); }
 

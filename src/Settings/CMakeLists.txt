@@ -13,8 +13,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         AutoConnectSettings.h
         BatteryIndicatorSettings.cc
         BatteryIndicatorSettings.h
-        BrandImageSettings.cc
-        BrandImageSettings.h
         MavlinkActionsSettings.cc
         MavlinkActionsSettings.h
         FirmwareUpgradeSettings.cc

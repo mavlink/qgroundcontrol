@@ -4,7 +4,6 @@
 #include "QGCPalette.h"
 #include "QGCMAVLink.h"
 #include "AppSettings.h"
-#include "BrandImageSettings.h"
 
 #include <QtCore/QApplicationStatic>
 #include <QtQml/QQmlApplicationEngine>
@@ -72,17 +71,6 @@ void CustomPlugin::_addSettingsEntry(const QString &title, const char *qmlFile, 
             this)
         )
     );
-}
-
-bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name)
-{
-    // We have set up our own specific brand imaging.
-    // Hide the brand image settings such that the end user can't change it.
-    if (name == BrandImageSettings::name) {
-        return false;
-    }
-
-    return true;
 }
 
 void CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool &visible)

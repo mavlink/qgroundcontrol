@@ -37,8 +37,6 @@ class QGCCorePlugin : public QObject
     Q_PROPERTY(int unitsFirstRunPromptId                MEMBER kUnitsFirstRunPromptId                                       CONSTANT)
     Q_PROPERTY(const QGCOptions *options                READ options                                                        CONSTANT)
     Q_PROPERTY(const QmlObjectListModel *customMapItems READ customMapItems                                                 CONSTANT)
-    Q_PROPERTY(QString brandImageIndoor                 READ brandImageIndoor                                               CONSTANT)
-    Q_PROPERTY(QString brandImageOutdoor                READ brandImageOutdoor                                              CONSTANT)
     Q_PROPERTY(QString showAdvancedUIMessage            READ showAdvancedUIMessage                                          CONSTANT)
     Q_PROPERTY(QVariantList analyzePages                READ analyzePages                                                   CONSTANT)
     Q_PROPERTY(QVariantList toolBarIndicators           READ toolBarIndicators                                              CONSTANT)
@@ -76,13 +74,7 @@ public:
     /// If not overridden, metaData and visible are left unchanged.
     virtual void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible);
 
-    /// Return the resource file which contains the brand image for for Indoor theme.
-    virtual QString brandImageIndoor() const { return QString(); }
-
-    /// Return the resource file which contains the brand image for for Outdoor theme.
-    virtual QString brandImageOutdoor() const { return QString(); }
-
-    /// @return The message to show to the user when they a re prompted to confirm turning on advanced ui.
+    /// @return The message to show to the user when they are prompted to confirm turning on advanced ui.
     virtual QString showAdvancedUIMessage() const;
 
     /// @return An instance of an alternate position source (or NULL if not available)
