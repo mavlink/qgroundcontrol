@@ -4,6 +4,8 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 
+#include <functional>
+
 Q_DECLARE_LOGGING_CATEGORY(AndroidInterfaceLog)
 
 namespace AndroidInterface {
@@ -11,6 +13,7 @@ void setNativeMethods();
 bool checkStoragePermissions();
 QString getSDCardPath();
 void setKeepScreenOn(bool on);
+void openFileImportDialog(const QString& destPath, std::function<void(const QString&)> callback);
 
 constexpr const char* kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";
 

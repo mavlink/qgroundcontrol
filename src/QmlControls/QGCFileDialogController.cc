@@ -5,6 +5,11 @@
 
 #include <QtCore/QDir>
 
+#ifdef Q_OS_ANDROID
+#include <QtCore/QPointer>
+#include "AndroidInterface.h"
+#endif
+
 QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "QMLControls.QGCFileDialogController")
 
 QGCFileDialogController::QGCFileDialogController(QObject *parent)
@@ -104,3 +109,50 @@ QString QGCFileDialogController::urlToLocalFile(QUrl url)
 
     return url.toString();
 }
+
+void QGCFileDialogController::importFromNativePicker()
+{
+#ifdef Q_OS_ANDROID
+    const QString missionPath = SettingsManager::instance()->appSettings()->missionSavePath();
+    if (missionPath.isEmpty()) {
+        qCWarning(QGCFileDialogControllerLog) << "Missions save path is empty";
+        emit importFailed(tr("Missions directory is not configured"));
+        return;
+    }
+
+    QDir dir(missionPath);
+    if (!dir.exists()) {
+        qCWarning(QGCFileDialogControllerLog) << "Missions save path does not exist";
+        emit importFailed(tr("Missions save path does not exist"));
+        return;
+    }
+
+    QPointer<QGCFileDialogController> self = this;
+    AndroidInterface::openFileImportDialog(missionPath, [self](const QString& filePath) {
+        if (self) {
+            QMetaObject::invokeMethod(
+                self,
+                [filePath, self]() { self->_handleImportResult(filePath); },
+                Qt::QueuedConnection);
+        }
+    });
+#else
+    qCWarning(QGCFileDialogControllerLog) << Q_FUNC_INFO << "only supported on Android";
+#endif
+}
+
+#ifdef Q_OS_ANDROID
+
+void QGCFileDialogController::_handleImportResult(const QString& filePath)
+{
+    if (filePath.isEmpty()) {
+        qCWarning(QGCFileDialogControllerLog) << "Import failed: empty file path received from Java";
+        emit importFailed(tr("Failed to import file"));
+        return;
+    }
+
+    qCDebug(QGCFileDialogControllerLog) << "File imported successfully to:" << filePath;
+    emit fileImported(filePath);
+}
+
+#endif // Q_OS_ANDROID
