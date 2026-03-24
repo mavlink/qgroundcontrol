@@ -24,6 +24,9 @@
 #include "Vehicle.h"
 #include "VehicleSupports.h"
 #include "VehicleComponent.h"
+
+#include <algorithm>
+
 #ifdef QT_DEBUG
 #include "APMFollowComponent.h"
 #include "ArduCopterFirmwarePlugin.h"
@@ -162,6 +165,10 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
         } else {
             qCWarning(APMAutoPilotPluginLog) << "Call to vehicleComponents prior to parametersReady";
         }
+
+        std::sort(_components.begin(), _components.end(), [](const QVariant &a, const QVariant &b) {
+            return a.value<VehicleComponent*>()->name().toLower() < b.value<VehicleComponent*>()->name().toLower();
+        });
     }
 
     return _components;

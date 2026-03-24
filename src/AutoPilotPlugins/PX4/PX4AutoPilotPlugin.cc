@@ -12,6 +12,8 @@
 #include "Actuators.h"
 #include "ActuatorComponent.h"
 
+#include <algorithm>
+
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
     , _incorrectParameterVersion(false)
@@ -142,6 +144,10 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
         } else {
             qWarning() << "Internal error";
         }
+
+        std::sort(_components.begin(), _components.end(), [](const QVariant &a, const QVariant &b) {
+            return a.value<VehicleComponent*>()->name().toLower() < b.value<VehicleComponent*>()->name().toLower();
+        });
     }
 
     return _components;

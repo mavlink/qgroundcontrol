@@ -33,13 +33,6 @@ ListModel {
     }
 
     ListElement {
-        name: qsTr("Video")
-        url: "qrc:/qml/QGroundControl/AppSettings/VideoSettings.qml"
-        iconUrl: "qrc:/InstrumentValueIcons/camera.svg"
-        pageVisible: function() { return QGroundControl.settingsManager.videoSettings.visible }
-    }
-
-    ListElement {
         name: "Divider"
     }
 
@@ -105,6 +98,13 @@ ListModel {
         url: "qrc:/qml/QGroundControl/AppSettings/TelemetrySettings.qml"
         iconUrl: "qrc:/InstrumentValueIcons/drone.svg"
         pageVisible: function() { return true }
+    }
+
+    ListElement {
+        name: qsTr("Video")
+        url: "qrc:/qml/QGroundControl/AppSettings/VideoSettings.qml"
+        iconUrl: "qrc:/InstrumentValueIcons/camera.svg"
+        pageVisible: function() { return QGroundControl.settingsManager.videoSettings.visible }
     }
 
     ListElement {
