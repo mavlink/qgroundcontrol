@@ -11,7 +11,9 @@
 #include <QtNetwork/QHttpPart>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
+#include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslConfiguration>
+#include <QtNetwork/QSslKey>
 
 class QIODevice;
 class QNetworkAccessManager;
@@ -249,6 +251,24 @@ QSslConfiguration createInsecureSslConfig();
 /// @param request Request to modify
 /// @param config SSL configuration to apply
 void applySslConfig(QNetworkRequest& request, const QSslConfiguration& config);
+
+/// Load CA certificates from a PEM file
+/// @param filePath Path to PEM file containing one or more certificates
+/// @param errorOut Optional pointer to receive error message
+/// @return List of certificates (empty on failure)
+QList<QSslCertificate> loadCaCertificates(const QString& filePath, QString* errorOut = nullptr);
+
+/// Load a client certificate and private key from PEM files
+/// Tries RSA first, then EC for the key format
+/// @param certPath Path to PEM file containing the client certificate
+/// @param keyPath Path to PEM file containing the private key
+/// @param certOut Receives the loaded certificate
+/// @param keyOut Receives the loaded key
+/// @param errorOut Optional pointer to receive error message
+/// @return true on success
+bool loadClientCertAndKey(const QString& certPath, const QString& keyPath,
+                          QSslCertificate& certOut, QSslKey& keyOut,
+                          QString* errorOut = nullptr);
 
 // ============================================================================
 // JSON Response Helpers

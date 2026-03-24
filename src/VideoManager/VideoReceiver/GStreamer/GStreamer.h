@@ -28,6 +28,7 @@ enum VideoDecoderOptions {
 void prepareEnvironment();
 bool initialize();
 bool completeInit();
+void setDebugLevel(int level);
 void *createVideoSink(QQuickItem *widget, QObject *parent = nullptr);
 void releaseVideoSink(void *sink);
 VideoReceiver *createVideoReceiver(QObject *parent = nullptr);
