@@ -14,6 +14,7 @@ qt_add_qml_module(FactControlsModule
     RESOURCE_PREFIX /qml
     QML_FILES
         AltitudeFactTextField.qml
+        FactBitMaskCheckBoxSlider.qml
         FactBitmask.qml
         FactCheckBox.qml
         FactCheckBoxSlider.qml

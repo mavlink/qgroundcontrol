@@ -41,12 +41,31 @@ QtObject {
         return 16
     }
 
+    /// Returns how many batteries have MONITOR enabled (rawValue != 0).
+    function getEnabledBatteryCount() {
+        let count = 0
+        let total = getBatteryCount()
+        for (let i = 0; i < total; i++) {
+            let mon = controller.getParameterFact(-1, prefixForIndex(i) + "MONITOR", false)
+            if (mon && mon.rawValue !== 0) count++
+        }
+        return count
+    }
+
     property Fact battMonitor: controller.getParameterFact(-1, _prefix + "MONITOR")
     property Fact battCapacity: controller.getParameterFact(-1, _prefix + "CAPACITY", false)
     property Fact battArmVolt: controller.getParameterFact(-1, _prefix + "ARM_VOLT", false)
     property Fact battAmpPerVolt: controller.getParameterFact(-1, _prefix + "AMP_PERVLT", false)
     property Fact battAmpOffset: controller.getParameterFact(-1, _prefix + "AMP_OFFSET", false)
     property Fact battVoltMult: controller.getParameterFact(-1, _prefix + "VOLT_MULT", false)
+
+    // Failsafe parameters
+    property Fact fsLowAct: controller.getParameterFact(-1, _prefix + "FS_LOW_ACT", false)
+    property Fact fsCritAct: controller.getParameterFact(-1, _prefix + "FS_CRT_ACT", false)
+    property Fact lowMah: controller.getParameterFact(-1, _prefix + "LOW_MAH", false)
+    property Fact critMah: controller.getParameterFact(-1, _prefix + "CRT_MAH", false)
+    property Fact lowVolt: controller.getParameterFact(-1, _prefix + "LOW_VOLT", false)
+    property Fact critVolt: controller.getParameterFact(-1, _prefix + "CRT_VOLT", false)
 
     property bool monitorEnabled: battMonitor.rawValue !== 0
     property bool paramsAvailable: controller.parameterExists(-1, _prefix + "CAPACITY")

@@ -6,7 +6,7 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 
 RowLayout {
-    property string label:                   fact.shortDescription
+    property string label:                   fact ? fact.shortDescription : ""
     property alias  fact:                    _factTextField.fact
     property real   textFieldPreferredWidth: -1
     property alias  textFieldUnitsLabel:     _factTextField.unitsLabel
