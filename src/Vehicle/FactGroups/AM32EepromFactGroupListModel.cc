@@ -9,7 +9,11 @@
 
 #include "AM32EepromFactGroupListModel.h"
 #include "AM32EepromSchema.h"
+#include "MAVLinkProtocol.h"
+#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+
+QGC_LOGGING_CATEGORY(AM32EepromLog, "Vehicle.AM32Eeprom")
 
 
 //-----------------------------------------------------------------------------
@@ -191,7 +195,8 @@ bool AM32EepromFactGroupListModel::_allEscsHaveMatchingChanges(const QList<int>&
 
 void AM32EepromFactGroupListModel::_sendEepromWrite(Vehicle* vehicle, uint8_t escIndex, const QByteArray& data, const uint32_t writeMask[6])
 {
-    qCDebug(AM32EepromLog) << "Writing AM32 EEPROM to ESC" << (escIndex == 255 ? "broadcast" : QString::number(escIndex + 1));
+    qCDebug(AM32EepromLog) << "Writing AM32 EEPROM to ESC" << (escIndex == 255 ? "broadcast" : QString::number(escIndex + 1))
+                          << "target system:" << vehicle->id() << "component:" << vehicle->defaultComponentId();
     qCDebug(AM32EepromLog) << "Write mask:" << Qt::hex
              << writeMask[0] << writeMask[1] << writeMask[2]
              << writeMask[3] << writeMask[4] << writeMask[5];
@@ -213,8 +218,8 @@ void AM32EepromFactGroupListModel::_sendEepromWrite(Vehicle* vehicle, uint8_t es
 
     if (sharedLink) {
         mavlink_msg_esc_eeprom_encode_chan(
-            vehicle->id(),
-            vehicle->defaultComponentId(),
+            static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+            static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
             sharedLink->mavlinkChannel(),
             &msg,
             &eeprom

@@ -9,7 +9,6 @@
 
 #include "AM32EepromSchema.h"
 #include "QGCCachedFileDownload.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
@@ -18,8 +17,6 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
-
-QGC_LOGGING_CATEGORY(AM32EepromLog, "Vehicle.AM32EepromSchema")
 
 AM32EepromSchema* AM32EepromSchema::_instance = nullptr;
 
