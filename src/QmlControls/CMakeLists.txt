@@ -90,7 +90,6 @@ qt_add_qml_module(QGroundControlControlsModule
         AltFrameDialog.qml
         AppSettings.qml
         APMSubMotorDisplay.qml
-        AppLogging.qml
         AutotuneUI.qml
         AxisMonitor.qml
         ClickableColor.qml

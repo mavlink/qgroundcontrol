@@ -702,6 +702,20 @@ void _configureDebugLogging()
 
 } // anonymous namespace
 
+void setDebugLevel(int level)
+{
+    if (!gst_is_initialized()) {
+        return;
+    }
+    const int clamped = qBound(0, level, static_cast<int>(GST_LEVEL_MEMDUMP));
+    gst_debug_set_default_threshold(static_cast<GstDebugLevel>(clamped));
+    qCDebug(GStreamerLog) << "GStreamer debug threshold set to" << clamped;
+}
+
+namespace {
+
+} // anonymous namespace
+
 void prepareEnvironment()
 {
     _setGstEnvVars();
