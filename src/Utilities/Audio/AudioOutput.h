@@ -39,10 +39,6 @@ public:
     /// Initialize the Singleton
     void init(Fact *volumeFact);
 
-    /// Sets the volume of the audio output. 0.0 mutes the audio, 100.0 is maximum volume.
-    ///     @param volume The volume level to set (between 0.0 and 100.0).
-    void setVolume(double volume);
-
     /// Reads the specified text with optional text modifications.
     ///     @param text The text to be read.
     ///     @param textMods The text modifications to apply.
@@ -55,7 +51,14 @@ private:
     QTextToSpeech *_engine = nullptr;
     QAtomicInteger<qsizetype> _textQueueSize = 0;
     bool _initialized = false;
-    std::atomic<double> _volume = 100.0;
+    Fact *_volumeFact = nullptr;
+    double _lastVolume = -1.0;
+
+    /// Returns the current volume (0.0 - 100.0) from the settings Fact.
+    double _volume() const;
+
+    /// Sets the TTS engine volume from the current Fact value.
+    void _setVolume();
 
     static const QHash<QString, QString> _textHash;
 

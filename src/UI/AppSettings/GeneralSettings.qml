@@ -48,7 +48,6 @@ SettingsPage {
                 Layout.fillWidth:   true
                 label:              qsTr("Audio Output")
                 fact:               _audioVolume
-                visible:            _audioVolume.visible
                 showEnableCheckbox: true
                 enableCheckBoxChecked: _audioVolume.rawValue > 0.0
 
