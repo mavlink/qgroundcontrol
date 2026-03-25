@@ -85,10 +85,10 @@ It can be in one of the following states:
 - **Landing** - Vehicle is in the process of landing.
 - **Communication Lost** - QGroundControl has lost communication with the vehicle.
 
-The Ready Indicator dropdown also gives you acess to:
+The Ready Indicator dropdown also gives you access to:
 
 - <a id="arm"></a>**Arming** - Arming a vehicle starts the motors in preparation for takeoff. You will only be able to arm the vehicle if it is safe and ready to fly. Generally you do not need to manually arm the vehicle. You can simply takeoff or start a mission and the vehicle will arm itself.
-- <a id="disarm"></a>**Disarm** - Disarming a vehicle is only availble when the vehicle is on the ground. It will stop the motors. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
+- <a id="disarm"></a>**Disarm** - Disarming a vehicle is only available when the vehicle is on the ground. It will stop the motors. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
 - <a id="emergency_stop"></a>**Emergency Stop** - Emergency stop is effectively the same as disarming the vehicle while it is flying. For emergency use only, your vehicle will crash!
 
 In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
