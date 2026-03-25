@@ -50,7 +50,7 @@ APMFlightModesComponentController::APMFlightModesComponentController(QObject *pa
         _rgChannelOptionEnabled.append(QVariant(false));
     }
 
-    (void) connect(_vehicle, &Vehicle::rcChannelsChanged, this, &APMFlightModesComponentController::channelValuesChanged);
+    (void) connect(_vehicle, &Vehicle::rcChannelsClampedChanged, this, &APMFlightModesComponentController::channelValuesChanged);
 }
 
 void APMFlightModesComponentController::channelValuesChanged(QVector<int> channelValues)

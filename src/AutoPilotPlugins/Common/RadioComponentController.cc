@@ -56,7 +56,7 @@ RadioComponentController::~RadioComponentController()
 void RadioComponentController::start(void)
 {
     RemoteControlCalibrationController::start();
-    (void) connect(_vehicle, &Vehicle::rcChannelsChanged, this, &RemoteControlCalibrationController::rawChannelValuesChanged);
+    (void) connect(_vehicle, &Vehicle::rcChannelsClampedChanged, this, &RemoteControlCalibrationController::_clampedChannelValuesChanged);
 
 }
 

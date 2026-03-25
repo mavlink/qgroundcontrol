@@ -1556,14 +1556,15 @@ void Vehicle::_handleRCChannels(mavlink_message_t& message)
     }
 
     QVector<int> channelValues(validChannelCount);
+    QVector<int> clampedValues(validChannelCount);
     for (int channelIndex = 0; channelIndex < validChannelCount; ++channelIndex) {
-        int channelValue = rawChannelValues[channelIndex];
-        // Radio cal can only handle pwm values in the 1000:2000 range, so constrain to that
-        channelValues[channelIndex] = std::min(std::max(channelValue, 1000), 2000);
+        channelValues[channelIndex] = rawChannelValues[channelIndex];
+        clampedValues[channelIndex] = std::clamp(channelValues[channelIndex], 1000, 2000);
     }
 
     emit remoteControlRSSIChanged(channels.rssi);
-    emit rcChannelsChanged(channelValues);
+    emit rcChannelsRawChanged(channelValues);
+    emit rcChannelsClampedChanged(clampedValues);
 }
 
 bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t message)

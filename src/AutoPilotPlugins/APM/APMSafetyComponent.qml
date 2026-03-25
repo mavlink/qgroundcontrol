@@ -35,6 +35,25 @@ SetupPage {
 
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
+            RCChannelMonitorController {
+                id: rcMonitor
+                clampValues: false
+            }
+
+            // Throttle channel PWM tracking (RCMAP_THROTTLE is 1-indexed)
+            property Fact _rcmapThrottle: controller.getParameterFact(-1, "RCMAP_THROTTLE")
+            property int  _zeroBasedThrottleChannel: _rcmapThrottle.rawValue - 1
+            property int  _throttlePwm: -1
+
+            Connections {
+                target: rcMonitor
+                function onChannelValueChanged(channel, rcValue) {
+                    if (channel === _zeroBasedThrottleChannel) {
+                        _throttlePwm = rcValue
+                    }
+                }
+            }
+
             APMBatteryParams {
                 id:           battParams
                 controller:   _controller
@@ -220,6 +239,22 @@ SetupPage {
             }
 
             // ----- Component definitions -----
+
+            Component {
+                id: throttlePwmStatusComponent
+
+                QGCLabel {
+                    property Fact thrThreshold
+
+                    font.pointSize:   ScreenTools.smallFontPointSize
+                    property bool hasData: _throttlePwm >= 0
+                    property bool fsActive: hasData && _throttlePwm < thrThreshold.rawValue
+                    text: hasData
+                          ? qsTr("Current throttle PWM: %1 (%2)").arg(_throttlePwm).arg(fsActive ? qsTr("failsafe active") : qsTr("failsafe inactive"))
+                          : qsTr("Current throttle PWM: waiting for data")
+                    color: fsActive ? qgcPal.warningText : qgcPal.text
+                }
+            }
 
             Component {
                 id: batteryFailsafeComponent
@@ -732,22 +767,34 @@ SetupPage {
                     ColumnLayout {
                         spacing: _margins
 
-                        RowLayout {
+                        ColumnLayout {
                             Layout.fillWidth: true
+                            spacing: 0
 
-                            QGCCheckBox {
-                                id:                 throttleEnableCheckBox
-                                text:               qsTr("Throttle PWM threshold")
-                                checked:            _failsafeThrEnable.value === 1
-                                Layout.fillWidth:   true
+                            RowLayout {
+                                Layout.fillWidth: true
 
-                                onClicked: _failsafeThrEnable.value = (checked ? 1 : 0)
+                                QGCCheckBox {
+                                    id:                 throttleEnableCheckBox
+                                    text:               qsTr("Throttle PWM threshold")
+                                    checked:            _failsafeThrEnable.value === 1
+                                    Layout.fillWidth:   true
+
+                                    onClicked: _failsafeThrEnable.value = (checked ? 1 : 0)
+                                }
+
+                                FactTextField {
+                                    fact:               _failsafeThrValue
+                                    showUnits:          true
+                                    enabled:            throttleEnableCheckBox.checked
+                                }
                             }
 
-                            FactTextField {
-                                fact:               _failsafeThrValue
-                                showUnits:          true
-                                enabled:            throttleEnableCheckBox.checked
+                            Loader {
+                                Layout.fillWidth:   true
+                                visible:            throttleEnableCheckBox.checked
+                                sourceComponent:    throttlePwmStatusComponent
+                                onLoaded: item.thrThreshold = _failsafeThrValue
                             }
                         }
 
@@ -827,6 +874,13 @@ SetupPage {
                             textFieldShowUnits: true
                             Layout.fillWidth:   true
                             visible:            _thrEnabled
+                        }
+
+                        Loader {
+                            Layout.fillWidth:   true
+                            visible:            _thrEnabled
+                            sourceComponent:    throttlePwmStatusComponent
+                            onLoaded: item.thrThreshold = _failsafeThrValue
                         }
 
                         ColumnLayout {
@@ -957,6 +1011,13 @@ SetupPage {
                             textFieldShowUnits: true
                             Layout.fillWidth:   true
                             visible:            _thrEnabled
+                        }
+
+                        Loader {
+                            Layout.fillWidth:   true
+                            visible:            _thrEnabled
+                            sourceComponent:    throttlePwmStatusComponent
+                            onLoaded: item.thrThreshold = _failsafeThrValue
                         }
 
                         LabelledFactTextField {
