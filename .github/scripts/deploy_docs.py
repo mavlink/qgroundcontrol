@@ -24,8 +24,8 @@ def main() -> None:
     parser.add_argument("--branch", required=True, help="Source branch name (used as subdirectory)")
     parser.add_argument("--target-branch", default="main", help="Branch to push to")
     parser.add_argument("--commit-message", default="Docs update")
-    parser.add_argument("--author-email", default="bot@px4.io")
-    parser.add_argument("--author-name", default="PX4BuildBot")
+    parser.add_argument("--author-email", default="github-actions[bot]@users.noreply.github.com")
+    parser.add_argument("--author-name", default="github-actions[bot]")
     args = parser.parse_args()
 
     safe_branch = sanitize_branch(args.branch)

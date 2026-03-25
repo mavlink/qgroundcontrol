@@ -24,14 +24,8 @@ void GStreamerTest::init()
                         "g_once_init_leave.*result != 0"));
     expectLogMessage(QtCriticalMsg, sGLibTypeRe);
 
-    // Under AddressSanitizer, gst_init_check deadlocks on glibc's
-    // _nl_state_lock: g_option_context_parse calls dgettext (read lock) then
-    // GStreamer's init callback calls bindtextdomain (write lock) — a
-    // pthread_rwlock cannot upgrade from read to write, so it self-deadlocks.
-    // GStreamer itself is not ASan-instrumented, so these tests add no
-    // memory-safety value under sanitizers.
 #if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
-    QSKIP("GStreamer tests disabled under AddressSanitizer (gst_init_check deadlocks on glibc _nl_state_lock)");
+    QSKIP("GStreamer init deadlocks under AddressSanitizer (bindtextdomain lock)");
 #endif
 
     if (!gst_is_initialized()) {

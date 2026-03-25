@@ -191,12 +191,11 @@ def test_download_file_dry_run(tmp_path: Path) -> None:
 
 
 def test_download_file_network_error(tmp_path: Path) -> None:
-    import urllib.error
     from setup.install_dependencies import download_file
 
     dest = tmp_path / "test.bin"
-    with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("unreachable")), \
-         patch("setup.install_dependencies.time.sleep", return_value=None):
+    # Mock httpx to raise, then fall through to urllib which also raises
+    with patch("urllib.request.urlopen", side_effect=OSError("unreachable")):
         result = download_file("https://example.com/test.bin", dest, dry_run=False)
     assert result is False
 

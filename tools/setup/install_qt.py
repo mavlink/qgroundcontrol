@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import os
 import shutil
 import subprocess
 import sys
@@ -84,10 +83,8 @@ def install_qt(
     """Install Qt using aqtinstall and return the resolved root directory."""
     aqt = shutil.which("aqt")
     if not aqt:
-        subprocess.run(
-            [sys.executable, "-m", "pip", "install", "aqtinstall", "--quiet"],
-            check=True,
-        )
+        from common import pip_install
+        pip_install(["aqtinstall"])
         aqt = shutil.which("aqt")
         if not aqt:
             print("::error::aqtinstall not found after pip install")

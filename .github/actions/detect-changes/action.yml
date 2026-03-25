@@ -1,15 +1,27 @@
 name: Detect Changes
-description: Detect source, test, and CI changes for a platform
+description: Detect source, test, and CI changes for one or more platforms
 
 inputs:
   platform:
-    description: "Platform (linux, windows, macos, android, ios, docker-linux, docker-android)"
+    description: "Space-separated platform(s) (linux, windows, macos, android, ios, docker-linux, docker-android)"
     required: true
 
 outputs:
   any:
-    description: "Any relevant files changed"
+    description: "Any relevant files changed (first platform result for backwards compat)"
     value: ${{ steps.check.outputs.any }}
+  linux:
+    description: "Linux-relevant files changed"
+    value: ${{ steps.check.outputs.linux }}
+  windows:
+    description: "Windows-relevant files changed"
+    value: ${{ steps.check.outputs.windows }}
+  macos:
+    description: "macOS-relevant files changed"
+    value: ${{ steps.check.outputs.macos }}
+  android:
+    description: "Android-relevant files changed"
+    value: ${{ steps.check.outputs.android }}
 
 runs:
   using: composite
@@ -24,4 +36,4 @@ runs:
         PUSH_BEFORE_SHA: ${{ github.event.before || '' }}
         MERGE_BASE_SHA: ${{ github.event.merge_group.base_sha || '' }}
         CURRENT_SHA: ${{ github.sha }}
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py" --platform "${{ inputs.platform }}"
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py" --platform ${{ inputs.platform }}

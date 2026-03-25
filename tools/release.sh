@@ -62,20 +62,17 @@ if [[ "$NODE_VERSION" -lt 18 ]]; then
     exit 1
 fi
 
-# Install dependencies if requested or missing
 # Pin versions for reproducibility and security (update via Dependabot)
-if [[ "$INSTALL_DEPS" == true ]] || ! command -v semantic-release &> /dev/null; then
-    log_info "Installing semantic-release dependencies..."
-    npm install -g \
-        semantic-release@24.2.5 \
-        @semantic-release/changelog@6.0.3 \
-        @semantic-release/git@10.0.1 \
-        conventional-changelog-conventionalcommits@8.0.0
-    log_ok "Dependencies installed"
+SR_VERSION="24.2.5"
+SR_PACKAGES="semantic-release@$SR_VERSION @semantic-release/changelog@6.0.3 @semantic-release/git@10.0.1 conventional-changelog-conventionalcommits@8.0.0"
 
-    if [[ "$INSTALL_DEPS" == true ]]; then
-        exit 0
-    fi
+# Install to local node_modules if requested
+if [[ "$INSTALL_DEPS" == true ]]; then
+    log_info "Installing semantic-release dependencies locally..."
+    # shellcheck disable=SC2086
+    npm install --save-dev $SR_PACKAGES
+    log_ok "Dependencies installed"
+    exit 0
 fi
 
 # Check for config file
@@ -84,13 +81,14 @@ if [[ ! -f ".releaserc.json" ]]; then
     exit 1
 fi
 
+SR_CMD="npx --yes semantic-release@$SR_VERSION"
+
 if [[ "$DRY_RUN" == true ]]; then
     log_info "Running semantic-release in dry-run mode..."
     log_info "This will show what would happen without making changes"
     echo ""
 
-    # Use globally installed version (pinned above)
-    semantic-release --dry-run
+    $SR_CMD --dry-run
 
     echo ""
     log_ok "Dry-run complete (no changes made)"
@@ -103,7 +101,6 @@ else
     fi
 
     log_info "Running semantic-release..."
-    # Use globally installed version (pinned above)
-    semantic-release
+    $SR_CMD
     log_ok "Release complete"
 fi

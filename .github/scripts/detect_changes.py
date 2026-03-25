@@ -172,28 +172,37 @@ def get_changed_files() -> list[str] | None:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Detect CI-relevant file changes for a platform.")
-    parser.add_argument("--platform", required=True,
-                        help="Platform (linux, windows, macos, android, ios, docker-linux, docker-android)")
+    parser.add_argument("--platform", required=True, nargs="+",
+                        help="Platform(s) (linux, windows, macos, android, ios, docker-linux, docker-android)")
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    platform = args.platform
+    platforms: list[str] = args.platform
 
     changed = get_changed_files()
     if changed is None:
         print("::warning::Unable to compute changed files reliably; forcing build for safety.")
-        write_github_output({"any": "true"})
+        outputs = {p: "true" for p in platforms}
+        outputs["any"] = "true"
+        write_github_output(outputs)
         return 0
 
     print("Changed files:")
     for f in changed:
         print(f"  {f}")
 
-    any_changed = has_relevant_changes(changed, platform)
-    write_github_output({"any": "true" if any_changed else "false"})
-    print(f"Results: any={any_changed}")
+    outputs: dict[str, str] = {}
+    for platform in platforms:
+        result = has_relevant_changes(changed, platform)
+        outputs[platform] = "true" if result else "false"
+        print(f"  {platform}: {result}")
+
+    # Legacy single-platform compat: set "any" to the first (or only) platform result
+    outputs["any"] = outputs[platforms[0]]
+    write_github_output(outputs)
+    print(f"Results: {outputs}")
     return 0
 
 

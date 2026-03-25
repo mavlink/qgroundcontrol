@@ -24,16 +24,16 @@
       "name": "ccache",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache"
+        "QGC_USE_CACHE": "ON",
+        "QGC_CACHE_BACKEND": "ccache"
       }
     },
     {
       "name": "sccache",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_C_COMPILER_LAUNCHER": "sccache",
-        "CMAKE_CXX_COMPILER_LAUNCHER": "sccache"
+        "QGC_USE_CACHE": "ON",
+        "QGC_CACHE_BACKEND": "sccache"
       }
     },
     {

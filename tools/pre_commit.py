@@ -65,22 +65,33 @@ def extract_hook_lines(output: str, *, limit: int = 40) -> list[str]:
     return lines[:limit] or ["No results"]
 
 
-def git_has_master_ref() -> bool:
-    commands = [
-        ["git", "rev-parse", "--verify", "master"],
-        ["git", "rev-parse", "--verify", "origin/master"],
-    ]
-    return any(subprocess.run(cmd, capture_output=True, check=False).returncode == 0 for cmd in commands)
+def git_default_branch_ref() -> str | None:
+    """Find the default branch ref, trying remote HEAD then common names."""
+    result = subprocess.run(
+        ["git", "symbolic-ref", "refs/remotes/origin/HEAD", "--short"],
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode == 0:
+        return result.stdout.strip().removeprefix("origin/")
+
+    for ref in ("master", "main", "origin/master", "origin/main"):
+        if subprocess.run(
+            ["git", "rev-parse", "--verify", ref],
+            capture_output=True, check=False,
+        ).returncode == 0:
+            return ref
+    return None
 
 
 def build_precommit_args(args: argparse.Namespace) -> list[str]:
     result = ["pre-commit", "run", "--show-diff-on-failure", "--color=always"]
     if args.changed:
-        if git_has_master_ref():
-            log_info("Running on files changed vs master...")
-            result.extend(["--from-ref", "master", "--to-ref", "HEAD"])
+        ref = git_default_branch_ref()
+        if ref:
+            log_info(f"Running on files changed vs {ref}...")
+            result.extend(["--from-ref", ref, "--to-ref", "HEAD"])
         else:
-            log_warn("master branch not available, running on all files")
+            log_warn("Default branch not available, running on all files")
             result.append("--all-files")
     else:
         result.append("--all-files")
@@ -121,7 +132,8 @@ def write_step_summary(exit_code: int, passed: int, failed: int, skipped: int, o
 
 def handle_install() -> int:
     log_info("Installing pre-commit and hooks...")
-    subprocess.run([sys.executable, "-m", "pip", "install", "pre-commit"], check=True)
+    from common import pip_install
+    pip_install(["pre-commit"])
     subprocess.run(["pre-commit", "install"], check=True)
     subprocess.run(["pre-commit", "install", "--hook-type", "commit-msg"], check=True)
     log_ok("Pre-commit hooks installed")

@@ -20,6 +20,7 @@
     "git-submodules",
     "pip_requirements",
     "pip_setup",
+    "pep621",
     "pre-commit"
   ],
   "packageRules": [

@@ -43,6 +43,7 @@ _tools_dir = Path(__file__).resolve().parents[1]
 if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
+from common.gh_actions import write_github_output
 from common.logging import log_info, log_ok, log_warn, log_error
 
 
@@ -105,13 +106,6 @@ def read_config(key: str, default: str = '') -> str:
         log_error(f"Failed to parse JSON config '{config_file}': {error}")
         raise
 
-def write_github_output(outputs: dict) -> None:
-    """Write outputs for GitHub Actions."""
-    github_output = os.environ.get('GITHUB_OUTPUT')
-    if github_output:
-        with open(github_output, 'a') as f:
-            for key, value in outputs.items():
-                f.write(f"{key}={value}\n")
 
 
 # ============================================================================
@@ -273,7 +267,8 @@ class MesonBuilder:
             packages.append(f"ninja=={NINJA_VERSION}")
 
         log_info(f"Installing pinned build tools: {', '.join(packages)}")
-        run_cmd([sys.executable, '-m', 'pip', 'install', '--quiet', *packages])
+        from common import pip_install
+        pip_install(packages)
 
         user_scripts = Path(site.getuserbase()) / ('Scripts' if os.name == 'nt' else 'bin')
         os.environ['PATH'] = f"{user_scripts}{os.pathsep}{os.environ['PATH']}"

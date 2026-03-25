@@ -29,9 +29,10 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Doxygen and Graphviz
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y doxygen graphviz
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+        with:
+          packages: doxygen graphviz
+          version: doxygen-deps-v1
 
       - name: Build Doxygen docs
         run: doxygen Doxyfile
@@ -54,6 +55,13 @@ jobs:
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions
+            .github/scripts
 
       - name: Deploy docs
         uses: ./.github/actions/deploy-docs

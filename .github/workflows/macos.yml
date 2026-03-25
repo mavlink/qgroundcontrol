@@ -35,9 +35,20 @@ permissions:
 
 jobs:
   changes:
-    uses: ./.github/workflows/_detect-changes.yml
-    with:
-      platform: macos
+    name: Detect Changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_build: ${{ steps.detect.outputs.any }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: macos
 
   build:
     needs: changes

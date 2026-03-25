@@ -108,8 +108,8 @@ list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH QGC_
 # ----------------------------------------------------------------------------
 CPMAddPackage(
     NAME android_openssl
-    GITHUB_REPOSITORY KDAB/android_openssl
-    GIT_TAG b71f1470962019bd89534a2919f5925f93bc5779
+    URL https://github.com/KDAB/android_openssl/archive/b71f1470962019bd89534a2919f5925f93bc5779.zip
+    URL_HASH SHA256=9277d62ecdb4809801e2c369e0a639c154e0d9137e8d60863b44bf07d16ed5b3
 )
 
 if(android_openssl_ADDED)

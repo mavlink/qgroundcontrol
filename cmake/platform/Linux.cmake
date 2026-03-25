@@ -7,18 +7,6 @@ if(NOT LINUX)
 endif()
 
 # ----------------------------------------------------------------------------
-# Linux-Specific Compiler Flags
-# ----------------------------------------------------------------------------
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            -Wall
-            -Wextra
-            -Wno-unused-parameter
-    )
-endif()
-
-# ----------------------------------------------------------------------------
 # Linux-Specific Definitions
 # ----------------------------------------------------------------------------
 target_compile_definitions(${CMAKE_PROJECT_NAME}

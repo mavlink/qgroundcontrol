@@ -4,17 +4,29 @@ on:
   workflow_call:
     inputs:
       platform:
-        description: 'Platform to detect changes for'
+        description: 'Space-separated platform(s) to detect changes for'
         required: true
         type: string
     outputs:
       should_build:
-        description: 'Whether relevant files changed'
+        description: 'Whether relevant files changed (first platform, backwards compat)'
         value: ${{ jobs.detect.outputs.should_build }}
+      linux:
+        description: 'Whether Linux-relevant files changed'
+        value: ${{ jobs.detect.outputs.linux }}
+      windows:
+        description: 'Whether Windows-relevant files changed'
+        value: ${{ jobs.detect.outputs.windows }}
+      macos:
+        description: 'Whether macOS-relevant files changed'
+        value: ${{ jobs.detect.outputs.macos }}
+      android:
+        description: 'Whether Android-relevant files changed'
+        value: ${{ jobs.detect.outputs.android }}
 
 concurrency:
-  group: detect-changes-${{ inputs.platform }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: detect-changes-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -27,7 +39,16 @@ jobs:
     timeout-minutes: 5
     outputs:
       should_build: ${{ steps.detect.outputs.any }}
+      linux: ${{ steps.detect.outputs.linux }}
+      windows: ${{ steps.detect.outputs.windows }}
+      macos: ${{ steps.detect.outputs.macos }}
+      android: ${{ steps.detect.outputs.android }}
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout repo
         uses: actions/checkout@v6
         with:

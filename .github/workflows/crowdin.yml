@@ -30,7 +30,7 @@ concurrency:
 jobs:
   sync:
     name: Crowdin Sync
-    if: github.repository_owner == 'mavlink'
+    if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.merged == true)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

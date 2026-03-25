@@ -27,6 +27,14 @@ from pygls.lsp.server import LanguageServer
 from pygls.workspace import TextDocument
 
 from .mavlink_data import MAVLinkMessage, get_all_messages
+
+# Pre-compiled patterns for per-keystroke diagnostics
+_ACTIVE_VEHICLE_PATTERN = re.compile(
+    r'(\w+)\s*=\s*(?:MultiVehicleManager::instance\(\)|_vehicleManager|qgcApp\(\)->toolbox\(\)->multiVehicleManager\(\))->activeVehicle\(\)'
+)
+_GET_PARAM_PATTERN = re.compile(
+    r'(\w+)\s*=\s*\w+->parameterManager\(\)->getParameter\s*\([^)]+\)'
+)
 from .fact_schema import (
     FACT_PROPERTIES,
     COMMON_UNITS,
@@ -97,19 +105,13 @@ class QGCLanguageServer(LanguageServer):
         """Check for unsafe activeVehicle() access patterns."""
         diagnostics = []
 
-        # Pattern: activeVehicle() followed by -> without null check
-        # This is a simplified check - the real analyzer is more sophisticated
-        active_vehicle_pattern = re.compile(
-            r'(\w+)\s*=\s*(?:MultiVehicleManager::instance\(\)|_vehicleManager|qgcApp\(\)->toolbox\(\)->multiVehicleManager\(\))->activeVehicle\(\)'
-        )
-
         lines = document.lines
         vehicle_vars: dict[str, int] = {}  # var_name -> line_declared
         null_checked_vars: set[str] = set()
 
         for idx, line in enumerate(lines):
             # Track vehicle variable assignments
-            match = active_vehicle_pattern.search(line)
+            match = _ACTIVE_VEHICLE_PATTERN.search(line)
             if match:
                 var_name = match.group(1)
                 vehicle_vars[var_name] = idx
@@ -166,18 +168,13 @@ class QGCLanguageServer(LanguageServer):
         """Check for unsafe getParameter() access patterns."""
         diagnostics = []
 
-        # Pattern: getParameter() result used without null check
-        get_param_pattern = re.compile(
-            r'(\w+)\s*=\s*\w+->parameterManager\(\)->getParameter\s*\([^)]+\)'
-        )
-
         lines = document.lines
         param_vars: dict[str, int] = {}
         null_checked_vars: set[str] = set()
 
         for idx, line in enumerate(lines):
             # Track parameter variable assignments
-            match = get_param_pattern.search(line)
+            match = _GET_PARAM_PATTERN.search(line)
             if match:
                 var_name = match.group(1)
                 param_vars[var_name] = idx

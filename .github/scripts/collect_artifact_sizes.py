@@ -98,39 +98,43 @@ def collect_artifacts(
         else:
             run_ids.append(run_id)
 
-    if not run_ids:
-        artifacts.sort(key=lambda item: str(item.get("name", "")))
-        return artifacts
-
-    max_workers = min(len(run_ids), 4)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
-        future_to_run = {
-            pool.submit(list_run_artifacts, repo, run_id): run_id
-            for run_id in run_ids
-        }
-        for future in concurrent.futures.as_completed(future_to_run):
-            run_id = future_to_run[future]
-            try:
-                run_artifacts = future.result()
-            except Exception as exc:
-                print(f"Warning: failed to list artifacts for run {run_id}: {exc}", file=sys.stderr)
-                continue
-            for artifact in run_artifacts:
-                name = str(artifact.get("name", ""))
-                if not _is_distributable_artifact(name):
+    if run_ids:
+        max_workers = min(len(run_ids), 4)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
+            future_to_run = {
+                pool.submit(list_run_artifacts, repo, run_id): run_id
+                for run_id in run_ids
+            }
+            for future in concurrent.futures.as_completed(future_to_run):
+                run_id = future_to_run[future]
+                try:
+                    run_artifacts = future.result()
+                except Exception as exc:
+                    print(f"Warning: failed to list artifacts for run {run_id}: {exc}", file=sys.stderr)
                     continue
+                for artifact in run_artifacts:
+                    name = str(artifact.get("name", ""))
+                    if not _is_distributable_artifact(name):
+                        continue
 
-                size_bytes = int(artifact.get("size_in_bytes", 0))
-                artifacts.append(
-                    {
-                        "name": name,
-                        "size_bytes": size_bytes,
-                        "size_human": format_size_human(size_bytes),
-                    }
-                )
+                    size_bytes = int(artifact.get("size_in_bytes", 0))
+                    artifacts.append(
+                        {
+                            "name": name,
+                            "size_bytes": size_bytes,
+                            "size_human": format_size_human(size_bytes),
+                        }
+                    )
 
-    artifacts.sort(key=lambda item: str(item.get("name", "")))
-    return artifacts
+    # Deduplicate by name — when multiple workflows produce an artifact with
+    # the same name (e.g. Android and macOS both upload "QGroundControl"),
+    # keep the largest to avoid misleading size deltas.
+    deduped: dict[str, dict[str, Any]] = {}
+    for artifact in artifacts:
+        name = artifact["name"]
+        if name not in deduped or artifact["size_bytes"] > deduped[name]["size_bytes"]:
+            deduped[name] = artifact
+    return sorted(deduped.values(), key=lambda item: str(item.get("name", "")))
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

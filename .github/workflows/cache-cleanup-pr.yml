@@ -1,0 +1,39 @@
+name: Cache Cleanup (PR)
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    name: Cleanup PR Caches
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Cleanup caches for closed branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: refs/pull/${{ github.event.pull_request.number }}/merge
+        run: |
+          echo "Cleaning caches for branch: $BRANCH"
+
+          KEYS=$(gh actions-cache list -R "$GH_REPO" -B "$BRANCH" --limit 100 -L 1 2>/dev/null | cut -f1 || true)
+          if [[ -z "$KEYS" ]]; then
+            echo "No caches found for this PR branch"
+            exit 0
+          fi
+
+          DELETED=0
+          while IFS= read -r KEY; do
+            [[ -z "$KEY" ]] && continue
+            if gh actions-cache delete "$KEY" -R "$GH_REPO" -B "$BRANCH" --confirm 2>/dev/null; then
+              ((DELETED++))
+            fi
+          done <<< "$KEYS"
+
+          echo "Deleted $DELETED cache(s)"

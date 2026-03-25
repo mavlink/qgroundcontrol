@@ -41,7 +41,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE earcut_hpp::earcut_hpp)
 CPMAddPackage(
     NAME libexpat
     GITHUB_REPOSITORY libexpat/libexpat
-    GIT_TAG R_2_7_4
+    GIT_TAG R_2_7_5
     SOURCE_SUBDIR expat
     OPTIONS
         "EXPAT_BUILD_TESTS OFF"

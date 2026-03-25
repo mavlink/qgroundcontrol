@@ -9,8 +9,6 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from urllib.error import URLError
-from urllib.request import urlopen
 
 from _bootstrap import ensure_tools_dir
 
@@ -98,9 +96,12 @@ def check_submodules(repo_root: Path, *, update: bool) -> None:
 def fetch_latest_qt_minor() -> str | None:
     """Return the latest Qt 6 minor version available on download.qt.io."""
     try:
-        with urlopen(QT_RELEASES_URL, timeout=15) as response:
-            body = response.read().decode("utf-8", errors="ignore")
-    except (OSError, URLError):
+        import httpx
+        with httpx.Client(timeout=15) as client:
+            response = client.get(QT_RELEASES_URL)
+            response.raise_for_status()
+            body = response.text
+    except Exception:
         return None
 
     versions = re.findall(r">6\.(\d+)/<", body)

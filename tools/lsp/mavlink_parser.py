@@ -12,8 +12,9 @@ The parser handles the MAVLink XML format including:
 """
 
 import logging
-import xml.etree.ElementTree as ET
+import defusedxml.ElementTree as ET
 from dataclasses import dataclass, field
+from xml.etree.ElementTree import Element
 from pathlib import Path
 from typing import Optional
 
@@ -48,10 +49,7 @@ def find_mavlink_definitions(project_root: Path) -> Optional[Path]:
     ]
 
     for pattern in search_patterns:
-        import glob
-        matches = glob.glob(str(project_root / pattern))
-        for match in matches:
-            path = Path(match)
+        for path in project_root.glob(pattern):
             if path.is_dir() and (path / "common.xml").exists():
                 logger.info(f"Found MAVLink definitions at: {path}")
                 return path
@@ -135,7 +133,7 @@ def parse_mavlink_xml(xml_path: Path, definitions_dir: Optional[Path] = None) ->
     return dialect
 
 
-def _parse_message(msg_elem: ET.Element, enums: dict) -> Optional[MAVLinkMessage]:
+def _parse_message(msg_elem: Element, enums: dict) -> Optional[MAVLinkMessage]:
     """Parse a single message element."""
     msg_id_str = msg_elem.get("id", "")
     msg_name = msg_elem.get("name", "")
@@ -179,7 +177,7 @@ def _parse_message(msg_elem: ET.Element, enums: dict) -> Optional[MAVLinkMessage
     )
 
 
-def _parse_field(field_elem: ET.Element) -> Optional[MAVLinkField]:
+def _parse_field(field_elem: Element) -> Optional[MAVLinkField]:
     """Parse a single field element."""
     name = field_elem.get("name", "")
     field_type = field_elem.get("type", "")

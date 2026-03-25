@@ -83,6 +83,12 @@ from .errors import (
     Result,
 )
 
+from .deps import (
+    check_dependencies,
+    require_tool,
+    check_and_report,
+)
+
 __all__ = [
     # Patterns
     'FACT_MEMBER_PATTERN',
@@ -142,4 +148,25 @@ __all__ = [
     'FileError',
     'TestError',
     'Result',
+    # Dependencies
+    'check_dependencies',
+    'require_tool',
+    'check_and_report',
+    # Utilities
+    'pip_install',
 ]
+
+
+def pip_install(packages: list[str], quiet: bool = True) -> None:
+    """Install packages using uv (preferred) or pip."""
+    import shutil
+    import subprocess
+    import sys
+
+    if shutil.which("uv"):
+        cmd = ["uv", "pip", "install", "--system"] + packages
+    else:
+        cmd = [sys.executable, "-m", "pip", "install"] + packages
+        if quiet:
+            cmd.append("--quiet")
+    subprocess.run(cmd, check=True)

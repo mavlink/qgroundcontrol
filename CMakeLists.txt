@@ -85,7 +85,7 @@ endif()
 # ----------------------------------------------------------------------------
 project(${QGC_APP_NAME}
     VERSION ${QGC_APP_VERSION}
-    DESCRIPTION ${QGC_APP_DESCRIPTION}
+    DESCRIPTION "${QGC_APP_DESCRIPTION}"
     HOMEPAGE_URL "https://${QGC_ORG_DOMAIN}"
     LANGUAGES C CXX
 )
@@ -147,6 +147,30 @@ set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
 cmake_policy(SET CMP0075 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0075 NEW)
 
+# CMP0194: MSVC is not an assembler for language ASM (zstd)
+if(POLICY CMP0194)
+    cmake_policy(SET CMP0194 NEW)
+    set(CMAKE_POLICY_DEFAULT_CMP0194 NEW)
+endif()
+
+# ============================================================================
+# Vulkan Headers (needed by Qt on Windows when Vulkan SDK is not installed)
+# ============================================================================
+if(WIN32 AND NOT TARGET Vulkan::Headers)
+    find_package(Vulkan QUIET COMPONENTS Headers)
+    if(NOT Vulkan_FOUND)
+        CPMAddPackage(
+            NAME VulkanHeaders
+            GITHUB_REPOSITORY KhronosGroup/Vulkan-Headers
+            GIT_TAG vulkan-sdk-1.4.341.0
+            SYSTEM YES
+        )
+        if(VulkanHeaders_SOURCE_DIR)
+            set(Vulkan_INCLUDE_DIR "${VulkanHeaders_SOURCE_DIR}/include" CACHE PATH "" FORCE)
+        endif()
+    endif()
+endif()
+
 # ============================================================================
 # Qt6 Configuration
 # ============================================================================
@@ -202,7 +226,7 @@ find_package(Qt6
         Test
 )
 
-if(LINUX)
+if(LINUX AND NOT ANDROID)
     find_package(Qt6 ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION} COMPONENTS WaylandClient)
 endif()
 
