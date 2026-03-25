@@ -1,0 +1,220 @@
+name: Release Note Label
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  release-label:
+    name: Label PR for Release Notes
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.type != 'Bot'
+    timeout-minutes: 5
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Check for existing RN label
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          CURRENT_LABEL=$(gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels" \
+            --jq '.[] | select(.name | startswith("RN:")) | .name' | head -1)
+          if [[ -n "$CURRENT_LABEL" ]]; then
+            echo "has_label=true" >> "$GITHUB_OUTPUT"
+            echo "PR already has RN label: ${CURRENT_LABEL}"
+          else
+            echo "has_label=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Classify PR and apply label
+        if: steps.existing.outputs.has_label == 'false'
+        uses: actions/github-script@v8
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        with:
+          script: |
+            const title = (process.env.PR_TITLE || '').trim();
+            const body = (process.env.PR_BODY || '').trim().substring(0, 4000).toLowerCase();
+            const titleLower = title.toLowerCase();
+
+            // --- Gather file-level signals ---
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                per_page: 100
+              }
+            );
+            const filenames = files.map(f => f.filename);
+            const newFiles = files.filter(f => f.status === 'added').map(f => f.filename);
+            const totalAdditions = files.reduce((sum, f) => sum + f.additions, 0);
+            const totalDeletions = files.reduce((sum, f) => sum + f.deletions, 0);
+
+            // --- Custom build detection ---
+            const isCustomBuild = filenames.every(f => f.startsWith('custom-example/'))
+              || /^[a-z]+\([^)]*\bcustom\b[^)]*\):/i.test(title)
+              || /\bcustom(?:\.| )build\b/i.test(body);
+
+            // --- Conventional commit prefix (strongest signal) ---
+            const ccMatch = title.match(/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.*?\))?(!)?:\s/i);
+            const ccType = ccMatch ? ccMatch[1].toLowerCase() : null;
+            const ccBreaking = ccMatch ? !!ccMatch[3] : false;
+
+            // --- Body keyword scoring ---
+            const bugWords = ['bug', 'fix', 'crash', 'regression', 'broken', 'issue',
+                              'error', 'fault', 'fail', 'corrupt', 'wrong', 'incorrect',
+                              'segfault', 'nullptr', 'null pointer', 'use after free',
+                              'heap', 'stack overflow', 'deadlock', 'race condition'];
+            const featureWords = ['add', 'new', 'implement', 'introduce', 'support',
+                                  'feature', 'enable', 'create', 'initial'];
+            const refactorWords = ['refactor', 'cleanup', 'clean up', 'reorganize',
+                                   'restructure', 'simplify', 'modernize', 'migrate',
+                                   'move', 'rename', 'extract', 'consolidate'];
+
+            function escapeRegExp(s) {
+              return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+
+            function scoreText(text, words) {
+              return words.reduce((n, w) => {
+                const re = new RegExp(`\\b${escapeRegExp(w)}\\b`, 'gi');
+                return n + (text.match(re) || []).length;
+              }, 0);
+            }
+
+            const bugScore = scoreText(titleLower, bugWords) * 3 + scoreText(body, bugWords);
+            const featScore = scoreText(titleLower, featureWords) * 3 + scoreText(body, featureWords);
+            const refactorScore = scoreText(titleLower, refactorWords) * 3 + scoreText(body, refactorWords);
+
+            // --- File-pattern signals ---
+            const hasOnlyDocs = filenames.every(f =>
+              f.startsWith('docs/') || f.endsWith('.md') || f === 'crowdin.yml');
+            const hasOnlyCI = filenames.every(f =>
+              f.startsWith('.github/') || f.startsWith('cmake/') || f.startsWith('tools/'));
+            const hasOnlyTests = filenames.every(f =>
+              f.startsWith('test/') || f.includes('Test') || f.includes('_test'));
+
+            const newSourceFiles = newFiles.filter(f =>
+              f.startsWith('src/') && (f.endsWith('.cc') || f.endsWith('.h') || f.endsWith('.qml')));
+            const newQmlFiles = newFiles.filter(f => f.endsWith('.qml'));
+
+            // Board/vehicle support: new files in FirmwarePlugin or AutoPilotPlugins
+            const boardPatterns = [
+              /^src\/FirmwarePlugin\//,
+              /^src\/AutoPilotPlugins\//
+            ];
+            const newBoardFiles = newFiles.filter(f => boardPatterns.some(p => p.test(f)));
+            const isBoardSupport = newBoardFiles.length >= 2
+              || /\bnew board\b|\bboard support\b|\bvehicle type\b|\bairframe\b/i.test(body);
+
+            // --- Classification logic ---
+            let label;
+            let reason;
+
+            // 1. Conventional commit prefix is the strongest signal
+            if (ccType) {
+              if (ccType === 'fix') {
+                label = 'RN: BUGFIX';
+                reason = 'conventional commit: fix';
+              } else if (ccType === 'feat') {
+                // Major if breaking change marker or many new source files
+                if (ccBreaking || newSourceFiles.length >= 5) {
+                  label = 'RN: MAJOR FEATURE';
+                  reason = ccBreaking ? 'feat! (breaking)' : `feat with ${newSourceFiles.length} new source files`;
+                } else {
+                  label = 'RN: MINOR FEATURE';
+                  reason = 'conventional commit: feat';
+                }
+              } else if (ccType === 'refactor') {
+                label = 'RN: REFACTORING';
+                reason = 'conventional commit: refactor';
+              } else {
+                label = 'RN: IMPROVEMENT';
+                reason = `conventional commit: ${ccType}`;
+              }
+            }
+            // 2. Board support detection
+            else if (isBoardSupport) {
+              label = 'RN: NEW BOARD SUPPORT';
+              reason = `board support (${newBoardFiles.length} new plugin files)`;
+            }
+            // 3. Non-code-only PRs
+            else if (hasOnlyDocs) {
+              label = 'RN: IMPROVEMENT';
+              reason = 'docs-only change';
+            } else if (hasOnlyCI) {
+              label = 'RN: IMPROVEMENT';
+              reason = 'CI/build-only change';
+            } else if (hasOnlyTests) {
+              label = 'RN: IMPROVEMENT';
+              reason = 'test-only change';
+            }
+            // 4. Keyword-based scoring from title + body
+            else if (bugScore > 0 && bugScore >= featScore && bugScore >= refactorScore) {
+              label = 'RN: BUGFIX';
+              reason = `keyword score: bug=${bugScore} feat=${featScore} refactor=${refactorScore}`;
+            } else if (refactorScore > 0 && refactorScore >= featScore && refactorScore > bugScore) {
+              label = 'RN: REFACTORING';
+              reason = `keyword score: refactor=${refactorScore} bug=${bugScore} feat=${featScore}`;
+            } else if (featScore > 0) {
+              if (newSourceFiles.length >= 5 || totalAdditions > 500) {
+                label = 'RN: MAJOR FEATURE';
+                reason = `keyword + scope (${newSourceFiles.length} new files, +${totalAdditions} lines)`;
+              } else {
+                label = 'RN: MINOR FEATURE';
+                reason = `keyword score: feat=${featScore}`;
+              }
+            }
+            // 5. Structural heuristics when no keywords match
+            else if (newSourceFiles.length >= 5 || (newQmlFiles.length >= 3 && newSourceFiles.length >= 3)) {
+              label = 'RN: MINOR FEATURE';
+              reason = `many new files (${newSourceFiles.length} source, ${newQmlFiles.length} QML)`;
+            } else if (totalDeletions > totalAdditions * 2 && filenames.length > 3) {
+              label = 'RN: REFACTORING';
+              reason = `high deletion ratio (+${totalAdditions}/-${totalDeletions})`;
+            } else {
+              label = 'RN: IMPROVEMENT';
+              reason = 'no strong signals — defaulting to improvement';
+            }
+
+            // 6. Apply custom build suffix if detected
+            if (isCustomBuild) {
+              const customLabels = {
+                'RN: BUGFIX': 'RN: BUGFIX - CUSTOM BUILD',
+                'RN: MINOR FEATURE': 'RN: MINOR FEATURE - CUSTOM BUILD',
+                'RN: MAJOR FEATURE': 'RN: MAJOR FEATURE - CUSTOM BUILD',
+                'RN: IMPROVEMENT': 'RN: IMPROVEMENT - CUSTOM BUILD',
+              };
+              if (customLabels[label]) {
+                label = customLabels[label];
+                reason += ' + custom build';
+              }
+            }
+
+            // Apply the label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: [label]
+            });
+            core.info(`Applied label: ${label} (reason: ${reason})`);
