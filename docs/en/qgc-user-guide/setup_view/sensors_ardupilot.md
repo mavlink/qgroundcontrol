@@ -21,7 +21,7 @@ The calibration steps are:
    ![Accelerometer calibration](../../../assets/setup/sensor/accelerometer_ardupilot.jpg)
 
    ::: info
-   You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above.
+   You should already have set the [Flight Controller Orientation](#sensor_settings) above.
    If not, you can also set it here.
    :::
 
@@ -53,7 +53,7 @@ You will be asked to place the vehicle in a level orientation while it captures 
    ![Level Horizon calibration](../../../assets/setup/sensor_level_horizon.jpg)
 
    ::: info
-   You should already have set the [Flight Controller Orientation](#flight_controller_orientation) above.
+   You should already have set the [Flight Controller Orientation](#sensor_settings) above.
    If not, you can also set it here.
    :::
 

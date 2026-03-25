@@ -29,7 +29,7 @@ Video stored on the camera may be of much higher quality, but it is likely that 
 
 #### Record Video Stream (on GCS)
 
-Video stream recording is controlled on the [video stream instrument page](#video_instrument_page).
+Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
 
 ![Video Stream Record](../../../assets/fly/video_record.jpg)
@@ -52,7 +52,7 @@ To record video with QGroundControl application elements displayed, you should u
 
 #### Record Video on Camera
 
-Start/stop video recording _on the camera itself_ using the [camera instrument page](#camera_instrument_page).
+Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 First toggle to video mode, then select the red button to start recording.
 
 ![Instrument Page - Camera MAVLink Settings](../../../assets/fly/instrument_page_camera_mavlink.jpg)

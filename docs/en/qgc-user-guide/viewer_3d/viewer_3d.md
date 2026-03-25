@@ -6,10 +6,10 @@ You can use it to:
 - To import and display the 3D map for any region of interest downloaded from the OpenStreetMap website (.osm file).
 - Display the vehicle along with its mission in 3D.
 - And most of the capabilities of the [Fly View](../fly_view/fly_view.md), including:
-    - Run an automated [pre-flight checklist](#preflight_checklist).
+    - Run an automated [pre-flight checklist](../fly_view/hud.md#preflight_checklist).
     - Arm the vehicle (or check why it won't arm).
-    - Control missions: [start](#start_mission), [continue](#continue_mission), [pause](#pause), and [resume](#resume_mission).
-    - Guide the vehicle to [arm](#arm)/[disarm](#disarm)/[emergency stop](#emergency_stop), [takeoff](#takeoff)/[land](#land), [change altitude](#change_altitude), and [return/RTL](#rtl).
+    - Control missions: [start](../fly_view/hud.md#start_mission), [continue](../fly_view/hud.md#continue_mission), [pause](../fly_view/hud.md#pause), and [resume](../fly_view/hud.md#resume_mission).
+    - Guide the vehicle to [arm](../fly_view/hud.md#arm)/[disarm](../fly_view/hud.md#disarm)/[emergency stop](../fly_view/hud.md#emergency_stop), [takeoff](../fly_view/hud.md#takeoff)/[land](../fly_view/hud.md#land), [change altitude](../fly_view/hud.md#change_altitude), and [return/RTL](../fly_view/hud.md#rtl).
     - Switch between a map view and a video view (if available)
     - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
