@@ -84,7 +84,7 @@
 {
     "name":      "audioVolume",
     "shortDesc": "Audio output volume",
-    "longDesc":  "Sets the audio output volume percentage. Has no effect if audio is muted.",
+    "longDesc":  "Sets the audio output volume percentage. Set to 0 to mute.",
     "type":      "double",
     "default":   100.0,
     "units":     "%",

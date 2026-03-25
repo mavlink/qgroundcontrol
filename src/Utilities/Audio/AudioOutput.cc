@@ -7,6 +7,8 @@
 #include <QtCore/QApplicationStatic>
 #include <QtTextToSpeech/QTextToSpeech>
 
+#include <algorithm>
+
 QGC_LOGGING_CATEGORY(AudioOutputLog, "Utilities.AudioOutput");
 // qt.speech.tts.flite
 // qt.speech.tts.android
@@ -84,8 +86,10 @@ void AudioOutput::init(Fact* volumeFact)
         qCDebug(AudioOutputLog) << "Queue Size:" << _textQueueSize;
     });
 
-    (void) connect(volumeFact, &Fact::valueChanged, this, [this](QVariant value) {
-        setVolume(value.toDouble());
+    _volumeFact = volumeFact;
+
+    (void) connect(_volumeFact, &Fact::valueChanged, this, [this]() {
+        _setVolume();
     });
 
     if (AudioOutputLog().isDebugEnabled()) {
@@ -106,31 +110,37 @@ void AudioOutput::init(Fact* volumeFact)
         });
     }
 
-    setVolume(volumeFact->rawValue().toDouble());
     _initialized = true;
+    _setVolume();
 
-    qCDebug(AudioOutputLog) << "AudioOutput initialized with volume:" << _volume.load() * 100.0 << "%";
+    qCDebug(AudioOutputLog) << "AudioOutput initialized with volume:" << _volume() << "%";
 }
 
-void AudioOutput::setVolume(double volume)
+double AudioOutput::_volume() const
 {
-    if (volume < 0.0 || volume > 100.0) {
-        qCWarning(AudioOutputLog) << "Volume must be between 0.0 and 100.0. Given:" << volume;
+    return std::clamp(_volumeFact->rawValue().toDouble(), 0.0, 100.0);
+}
+
+void AudioOutput::_setVolume()
+{
+    const double volume = _volume();
+
+    // qFuzzyCompare fails near zero; adding 1.0 shifts values into a safe range
+    if (qFuzzyCompare(1.0 + volume, 1.0 + _lastVolume)) {
         return;
     }
+    _lastVolume = volume;
 
-    if(volume == 0.0) {
+    if (volume == 0.0) {
         // Prevent any queued text from being spoken once muted
         (void) QMetaObject::invokeMethod(_engine, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default);
         _textQueueSize = 0;
     }
 
-    if (_volume.exchange(volume) != volume) {
-        // Must normalize volume to 0.0 - 1.0 for QTextToSpeech
-        const double normalizedVolume = volume / 100.0;
-        (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, normalizedVolume);
-        qCDebug(AudioOutputLog) << "AudioOutput volume set to:" << volume << "%";
-    }
+    // Must normalize volume to 0.0 - 1.0 for QTextToSpeech
+    const double normalizedVolume = volume / 100.0;
+    (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, normalizedVolume);
+    qCDebug(AudioOutputLog) << "AudioOutput volume set to:" << volume << "%";
 }
 
 void AudioOutput::say(const QString &text, TextMods textMods)
@@ -142,7 +152,7 @@ void AudioOutput::say(const QString &text, TextMods textMods)
         return;
     }
 
-    if (_volume.load() <= 0.0) {
+    if (_volume() <= 0.0) {
         return;
     }
 
@@ -184,7 +194,7 @@ void AudioOutput::testAudioOutput()
     (void) QMetaObject::invokeMethod(_engine, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default);
     _textQueueSize = 0;
 
-    const QString testText = tr("Audio test. Volume is %1 percent").arg(_volume.load(), 0, 'f', 1);
+    const QString testText = tr("Audio test. Volume is %1 percent").arg(_volume(), 0, 'f', 1);
     say(testText);
 }
 
