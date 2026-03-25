@@ -837,9 +837,13 @@ signals:
     void vehicleUIDChanged              ();
     void loadProgressChanged            (float value);
 
-    /// New RC channel values coming from RC_CHANNELS message
-    ///     @param channelValues The current values for rc channels
-    void rcChannelsChanged(QVector<int> channelValues);
+    /// Raw RC channel values coming from RC_CHANNELS message
+    ///     @param channelValues The current raw values for rc channels
+    void rcChannelsRawChanged(QVector<int> channelValues);
+
+    /// Filtered RC channel values coming from RC_CHANNELS message: clamped 1000:2000
+    ///     @param channelValues The clamped values for rc channels
+    void rcChannelsClampedChanged(QVector<int> channelValues);
 
     /// New SERVO output values coming from SERVO_OUTPUT_RAW message
     ///     @param servoValues The current servo output values in microseconds (0-15 -> SERVO1..SERVO16). Invalid values are -1.

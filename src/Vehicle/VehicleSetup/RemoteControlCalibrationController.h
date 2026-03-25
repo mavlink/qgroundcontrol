@@ -258,9 +258,8 @@ signals:
     void calibrationCompleted();
 
 public slots:
-    /// Super class must call this when the raw channel values change
-    ///     @param channelValues The current channel values
-    void rawChannelValuesChanged(QVector<int> channelValues);
+    void _rawChannelValuesChanged(QVector<int> channelValues) { _processChannelValues(channelValues); }
+    void _clampedChannelValuesChanged(QVector<int> channelValues) { _processChannelValues(channelValues); }
 
 protected:
     /// A set of information associated with a radio channel.
@@ -300,6 +299,8 @@ protected:
     virtual bool _stickFunctionEnabled(StickFunction stickFunction); ///< Returns true if the stick function is enabled
 
 private:
+    void _processChannelValues(QVector<int> channelValues);
+
     virtual void _saveStoredCalibrationValues() = 0; ///< Super class must implement to save stored calibration values
     virtual void _readStoredCalibrationValues() = 0; ///< Super class must implement to read stored calibration values
 

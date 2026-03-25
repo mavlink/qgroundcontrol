@@ -389,7 +389,7 @@ void RemoteControlCalibrationController::_setupCurrentState()
     _nextButton->setEnabled(state.nextButtonFn != nullptr);
 }
 
-void RemoteControlCalibrationController::rawChannelValuesChanged(QVector<int> channelValues)
+void RemoteControlCalibrationController::_processChannelValues(QVector<int> channelValues)
 {
     auto channelCount = channelValues.size();
     if (channelCount > _chanMax) {

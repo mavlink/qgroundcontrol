@@ -15,10 +15,10 @@ PX4SimpleFlightModesController::PX4SimpleFlightModesController(void)
         return;
     }
 
-    connect(_vehicle, &Vehicle::rcChannelsChanged, this, &PX4SimpleFlightModesController::channelValuesChanged);
+    connect(_vehicle, &Vehicle::rcChannelsClampedChanged, this, &PX4SimpleFlightModesController::channelValuesChanged);
 }
 
-/// Connected to Vehicle::rcChannelsChanged signal
+/// Connected to Vehicle::rcChannelsClampedChanged signal
 void PX4SimpleFlightModesController::channelValuesChanged(QVector<int> pwmValues)
 {
     int channelCount = pwmValues.size();
