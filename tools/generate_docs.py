@@ -44,6 +44,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("-c", "--clean", action="store_true", help="Clean generated docs")
     parser.add_argument("--output-dir", default="docs/api", help="Output directory (default: docs/api)")
     parser.add_argument("--doxyfile", default="Doxyfile", help="Path to Doxyfile (default: Doxyfile)")
+    parser.add_argument("--check-deps", action="store_true", help="Check required tools, then exit")
     return parser.parse_args(argv)
 
 
@@ -125,6 +126,12 @@ def open_docs(output_dir: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     """Run the requested documentation workflow."""
     args = parse_args(argv)
+
+    if args.check_deps:
+        from common.deps import check_and_report
+        check_and_report(["doxygen"])
+        return 0
+
     repo_root = Path(__file__).resolve().parent.parent
     output_dir = Path(args.output_dir)
     doxyfile_path = Path(args.doxyfile)

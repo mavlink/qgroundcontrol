@@ -272,7 +272,7 @@ The repository includes configuration for automatic formatting:
 - `.qmllint.ini` - QML linting
 - `.editorconfig` - Editor settings
 
-Run pre-commit checks:
+See [.pre-commit-config.yaml](.pre-commit-config.yaml) for the full list of enforced hooks. Run pre-commit checks:
 
 ```bash
 pre-commit run --all-files

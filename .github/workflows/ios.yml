@@ -3,6 +3,7 @@ name: iOS
 # iOS builds are experimental - manual trigger only until stable
 on:
   workflow_dispatch:
+  merge_group:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -35,9 +35,18 @@ option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
 option(QGC_ENABLE_WERROR "Treat compiler warnings as errors for QGC source code" ON)
 
 # Debug-dependent options
-cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
-cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
-cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+# Note: CMAKE_BUILD_TYPE is empty on multi-config generators (VS, Ninja Multi-Config).
+# Multi-config generators always get _QGC_DEBUG_BUILD=TRUE because Debug is selected
+# at build time, not configure time. Release-only CI jobs should pass
+# -DQGC_BUILD_TESTING=OFF explicitly to skip test compilation.
+if(CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(_QGC_DEBUG_BUILD TRUE)
+else()
+    set(_QGC_DEBUG_BUILD FALSE)
+endif()
+cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "_QGC_DEBUG_BUILD" OFF)
+cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "_QGC_DEBUG_BUILD" OFF)
+cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "_QGC_DEBUG_BUILD" OFF)
 option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)
 
 # Git options

@@ -55,17 +55,13 @@ deps:
 
 # Build targets
 configure: submodules
-	$(QT_DIR)/bin/qt-cmake -B $(BUILD_DIR) -G Ninja \
-		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE) \
-		-DQGC_BUILD_TESTING=ON
+	python3 ./tools/configure.py -B $(BUILD_DIR) -t $(BUILD_TYPE) --testing
 
 build:
 	cmake --build $(BUILD_DIR) --config $(BUILD_TYPE) --parallel
 
 release:
-	$(QT_DIR)/bin/qt-cmake -B $(BUILD_DIR) -G Ninja \
-		-DCMAKE_BUILD_TYPE=Release \
-		-DQGC_BUILD_TESTING=OFF
+	python3 ./tools/configure.py -B $(BUILD_DIR) --release
 	cmake --build $(BUILD_DIR) --config Release --parallel
 
 clean:

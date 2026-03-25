@@ -14,7 +14,8 @@ endif()
 # Helper: find files and codesign them in parallel. Safely handles empty
 # find results (BSD xargs runs the command even with no input).
 function(_parallel_codesign IDENTITY)
-    set(_cs_list "${CMAKE_BINARY_DIR}/_codesign_batch.bin")
+    string(RANDOM LENGTH 8 _cs_rand)
+    set(_cs_list "${CMAKE_BINARY_DIR}/_codesign_${_cs_rand}.bin")
     execute_process(
         COMMAND find ${ARGN} -print0
         OUTPUT_FILE "${_cs_list}"
@@ -85,11 +86,9 @@ endif()
 # ----------------------------------------------------------------------------
 file(GLOB FRAMEWORK_DIRS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/*.framework")
 foreach(FRAMEWORK_DIR ${FRAMEWORK_DIRS})
-    # Sign all files inside the framework in parallel, then seal the bundle.
-    # Avoid --deep for the seal: Apple recommends signing contents individually
-    # then sealing the outer bundle to ensure reliable notarization.
+    # Sign Mach-O binaries inside the framework, then seal the outer bundle.
     _parallel_codesign("$ENV{QGC_MACOS_SIGNING_IDENTITY}"
-        "${FRAMEWORK_DIR}" -type f
+        "${FRAMEWORK_DIR}" -type f "(" -name "*.dylib" -o -name "*.so" -o -perm /111 ")"
     )
     execute_process(
         COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${FRAMEWORK_DIR}"

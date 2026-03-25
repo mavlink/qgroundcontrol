@@ -269,6 +269,11 @@ jobs:
       contents: read
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Check if all platform workflows succeeded
         id: gate
         uses: actions/github-script@v8

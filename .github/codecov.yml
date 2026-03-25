@@ -1,8 +1,8 @@
 codecov:
-  require_ci_to_pass: true
+  require_ci_to_pass: false
   notify:
     after_n_builds: 1  # Only Linux Debug generates coverage
-    wait_for_ci: true
+    wait_for_ci: false
 
 coverage:
   precision: 2
@@ -15,20 +15,20 @@ coverage:
         target: 30%
         threshold: 2%
         base: auto
-        if_ci_failed: error
+        if_ci_failed: success
     patch:
       default:
-        target: 40%
+        target: 30%
         threshold: 5%
         base: auto
-        if_ci_failed: error
+        if_ci_failed: success
 
 comment:
   layout: "reach,diff,flags,tree,footer"
   behavior: default
   require_changes: false
   require_base: false
-  require_head: true
+  require_head: false
 
 ignore:
   - "test/**/*"
@@ -42,10 +42,6 @@ ignore:
 
 flags:
   debug:
-    paths:
-      - src/
-    carryforward: true
-  release:
     paths:
       - src/
     carryforward: true

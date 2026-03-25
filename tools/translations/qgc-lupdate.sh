@@ -4,16 +4,32 @@
 
 set -euo pipefail
 
-# Use QT_ROOT_DIR if set (CI), otherwise find local Qt installation
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Use QT_ROOT_DIR if set (CI), otherwise auto-detect via read_config.py
 if [[ -n "${QT_ROOT_DIR:-}" ]]; then
     LUPDATE="${QT_ROOT_DIR}/bin/lupdate"
 else
-    QT_PATH=(~/Qt/6.1[0-9].*/*/bin)
-    LUPDATE="${QT_PATH[0]}/lupdate"
+    QT_VERSION=$(python3 "$REPO_ROOT/tools/setup/read_config.py" --get qt_version 2>/dev/null || echo "")
+    if [[ -n "$QT_VERSION" ]]; then
+        # Search standard Qt install locations
+        for base in "$HOME/Qt" "/opt/Qt"; do
+            for arch in gcc_64 clang_64 linux_gcc_64; do
+                candidate="$base/$QT_VERSION/$arch/bin/lupdate"
+                if [[ -x "$candidate" ]]; then
+                    LUPDATE="$candidate"
+                    break 2
+                fi
+            done
+        done
+    fi
+    LUPDATE="${LUPDATE:-lupdate}"
 fi
 
-if [[ ! -x "$LUPDATE" ]]; then
+if [[ ! -x "$LUPDATE" ]] && ! command -v "$LUPDATE" &>/dev/null; then
     echo "Error: lupdate not found at $LUPDATE" >&2
+    echo "Set QT_ROOT_DIR or install Qt tools" >&2
     exit 1
 fi
 

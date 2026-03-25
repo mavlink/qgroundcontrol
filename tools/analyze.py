@@ -20,11 +20,13 @@ Tools:
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
@@ -57,7 +59,14 @@ class FileCollector:
 
     def get_compare_ref(self) -> str | None:
         """Get the best available ref to compare against."""
-        for ref in ("master", "origin/master"):
+        result = subprocess.run(
+            ["git", "-C", str(self.repo_root), "symbolic-ref", "refs/remotes/origin/HEAD", "--short"],
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip().removeprefix("origin/")
+
+        for ref in ("master", "main", "origin/master", "origin/main"):
             result = subprocess.run(
                 ["git", "-C", str(self.repo_root), "rev-parse", "--verify", ref],
                 capture_output=True,
@@ -99,7 +108,7 @@ class FileCollector:
         if compare_ref:
             return self._get_changed_files(extensions, compare_ref)
 
-        log_warn("master/origin/master not available, analyzing all files")
+        log_warn("Default branch not available, analyzing all files")
         return self._find_files(self.repo_root / "src", extensions)
 
     def _find_files(self, search_path: Path, extensions: tuple[str, ...]) -> list[Path]:
@@ -286,6 +295,18 @@ class ClangTidyAnalyzer(AnalyzerBase):
     name: ClassVar[str] = "clang-tidy"
     install_hint: ClassVar[str] = "Install with: sudo apt install clang-tidy"
 
+    def __init__(self, repo_root: Path, build_dir: Path, jobs: int = 1) -> None:
+        super().__init__(repo_root, build_dir)
+        self.jobs = jobs
+
+    def _analyze_file(self, file: Path) -> tuple[str, bool]:
+        rel_path = self.relative_path(file)
+        result = subprocess.run(
+            ["clang-tidy", "-p", str(self.build_dir), str(file)],
+            capture_output=True,
+        )
+        return rel_path, result.returncode != 0
+
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         if not self.require_compile_commands():
             return AnalysisResult(
@@ -301,30 +322,22 @@ class ClangTidyAnalyzer(AnalyzerBase):
             log_info("No files to analyze")
             return AnalysisResult(tool=self.name, passed=True)
 
-        log_info(f"Running clang-tidy on {len(files)} files...")
+        log_info(f"Running clang-tidy on {len(files)} files ({self.jobs} jobs)...")
 
-        issues_found = False
         files_with_issues: list[str] = []
 
-        for file in files:
-            rel_path = self.relative_path(file)
-            print(f"  Analyzing: {rel_path}... ", end="", flush=True)
-
-            result = subprocess.run(
-                ["clang-tidy", "-p", str(self.build_dir), str(file)],
-                capture_output=True,
-            )
-
-            if result.returncode == 0:
-                print("OK")
-            else:
-                print("ISSUES")
-                issues_found = True
-                files_with_issues.append(rel_path)
+        with ThreadPoolExecutor(max_workers=self.jobs) as pool:
+            futures = {pool.submit(self._analyze_file, f): f for f in files}
+            for future in as_completed(futures):
+                rel_path, has_issues = future.result()
+                status = "ISSUES" if has_issues else "OK"
+                print(f"  {rel_path}... {status}")
+                if has_issues:
+                    files_with_issues.append(rel_path)
 
         return AnalysisResult(
             tool=self.name,
-            passed=not issues_found,
+            passed=not files_with_issues,
             issues=len(files_with_issues),
             files_checked=len(files),
             files_with_issues=files_with_issues,
@@ -390,6 +403,26 @@ class ClazyAnalyzer(AnalyzerBase):
 
     CHECKS: ClassVar[str] = "level1,connect-non-signal,lambda-in-connect,overridden-signal"
 
+    def __init__(self, repo_root: Path, build_dir: Path, jobs: int = 1) -> None:
+        super().__init__(repo_root, build_dir)
+        self.jobs = jobs
+
+    def _analyze_file(self, file: Path) -> tuple[str, bool, str]:
+        rel_path = self.relative_path(file)
+        result = subprocess.run(
+            [
+                "clazy-standalone",
+                "-p",
+                str(self.build_dir),
+                f"--checks={self.CHECKS}",
+                str(file),
+            ],
+            capture_output=True,
+            text=True,
+        )
+        has_issues = result.returncode != 0 and bool(result.stderr.strip())
+        return rel_path, has_issues, result.stderr
+
     def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
         if not self.compile_commands.exists():
             log_warn("compile_commands.json not found - skipping clazy")
@@ -405,39 +438,27 @@ class ClazyAnalyzer(AnalyzerBase):
             log_info("No files to analyze")
             return AnalysisResult(tool=self.name, passed=True)
 
-        log_info(f"Running clazy on {len(files)} files...")
+        log_info(f"Running clazy on {len(files)} files ({self.jobs} jobs)...")
 
-        issues_found = False
         files_with_issues: list[str] = []
         all_output: list[str] = []
 
-        for file in files:
-            rel_path = self.relative_path(file)
-            result = subprocess.run(
-                [
-                    "clazy-standalone",
-                    "-p",
-                    str(self.build_dir),
-                    f"--checks={self.CHECKS}",
-                    str(file),
-                ],
-                capture_output=True,
-                text=True,
-            )
+        with ThreadPoolExecutor(max_workers=self.jobs) as pool:
+            futures = {pool.submit(self._analyze_file, f): f for f in files}
+            for future in as_completed(futures):
+                rel_path, has_issues, stderr = future.result()
+                if has_issues:
+                    log_warn(f"Issues in {rel_path}:")
+                    print(stderr)
+                    all_output.append(stderr)
+                    files_with_issues.append(rel_path)
 
-            if result.returncode != 0 and result.stderr.strip():
-                log_warn(f"Issues in {rel_path}:")
-                print(result.stderr)
-                all_output.append(result.stderr)
-                issues_found = True
-                files_with_issues.append(rel_path)
-
-        if issues_found:
+        if files_with_issues:
             log_warn("Clazy found Qt-specific issues")
 
         return AnalysisResult(
             tool=self.name,
-            passed=not issues_found,
+            passed=not files_with_issues,
             issues=len(files_with_issues),
             output="\n".join(all_output),
             files_checked=len(files),
@@ -520,13 +541,16 @@ def get_analyzer(
     tool: str,
     repo_root: Path,
     build_dir: Path,
+    jobs: int = 1,
 ) -> AnalyzerBase:
     """Get the appropriate analyzer for the given tool."""
+    if tool in ("clang-tidy", "clazy"):
+        cls = ClangTidyAnalyzer if tool == "clang-tidy" else ClazyAnalyzer
+        return cls(repo_root, build_dir, jobs=jobs)
+
     analyzers: dict[str, type[AnalyzerBase]] = {
         "clang-format": ClangFormatAnalyzer,
-        "clang-tidy": ClangTidyAnalyzer,
         "cppcheck": CppcheckAnalyzer,
-        "clazy": ClazyAnalyzer,
         "qmllint": QmlLintAnalyzer,
     }
 
@@ -590,9 +614,23 @@ Examples:
         help="Build directory containing compile_commands.json (default: build)",
     )
     parser.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Parallel jobs for clang-tidy/clazy (default: cpu count, 0=auto)",
+    )
+    parser.add_argument(
         "--no-color",
         action="store_true",
         help="Disable colored output",
+    )
+
+    parser.add_argument(
+        "--check-deps",
+        action="store_true",
+        help="Check that required external tools are available, then exit",
     )
 
     return parser.parse_args()
@@ -601,6 +639,18 @@ Examples:
 def main() -> int:
     """Main entry point."""
     args = parse_args()
+
+    if args.check_deps:
+        from common.deps import check_and_report
+        tool_map = {
+            "clang-format": ["clang-format"],
+            "clang-tidy": ["clang-tidy"],
+            "cppcheck": ["cppcheck"],
+            "clazy": ["clazy-standalone"],
+            "qmllint": ["qmllint"],
+        }
+        check_and_report(tool_map.get(args.tool, [args.tool]))
+        return 0
 
     try:
         repo_root = find_repo_root()
@@ -619,7 +669,8 @@ def main() -> int:
             return 1
 
     try:
-        analyzer = get_analyzer(args.tool, repo_root, build_dir)
+        jobs = args.jobs if args.jobs > 0 else os.cpu_count() or 1
+        analyzer = get_analyzer(args.tool, repo_root, build_dir, jobs=jobs)
     except ValueError as e:
         log_error(str(e))
         return 1
