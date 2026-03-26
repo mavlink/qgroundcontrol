@@ -17,7 +17,9 @@ jobs:
   release-label:
     name: Label PR for Release Notes
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.type != 'Bot'
+    if: >-
+      github.event.pull_request.user.type != 'Bot'
+      && github.event.pull_request.user.login != 'PX4BuildBot'
     timeout-minutes: 5
 
     steps:
