@@ -608,10 +608,11 @@ ApplicationWindow {
     // to mainWindow. Otherwise if they are rooted to the AnalyzeView itself they will die when the analyze viewSwitch
     // closes.
 
-    function createWindowedAnalyzePage(title, source) {
+    function createWindowedAnalyzePage(title, source, requiresVehicle) {
         var windowedPage = windowedAnalyzePage.createObject(mainWindow)
         windowedPage.title = title
         windowedPage.source = source
+        windowedPage.requiresVehicle = requiresVehicle
     }
 
     Component {
@@ -623,6 +624,16 @@ ApplicationWindow {
             visible:    true
 
             property alias source: loader.source
+            property bool requiresVehicle: false
+
+            Connections {
+                target: QGroundControl.multiVehicleManager
+                function onActiveVehicleChanged() {
+                    if (requiresVehicle) {
+                        close()
+                    }
+                }
+            }
 
             Rectangle {
                 color:          QGroundControl.globalPalette.window
@@ -638,6 +649,7 @@ ApplicationWindow {
             onClosing: {
                 visible = false
                 source = ""
+                Qt.callLater(destroy)
             }
         }
     }
