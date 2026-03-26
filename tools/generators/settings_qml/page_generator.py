@@ -434,14 +434,21 @@ def generate_page_qml(page: PageDef, settings_dir: Path) -> str:
     for grp_idx, grp in enumerate(page.groups):
         section_vis = f"(sectionFilter === -1 || sectionFilter === {grp_idx})"
 
-        # Custom component: emit it directly instead of generating controls
+        # Custom component: wrap in a ColumnLayout so that sectionFilter
+        # controls the wrapper's visibility without overriding the
+        # component's own visible: binding.
         if grp.component:
-            lines.append(f"    {grp.component} {{")
-            lines.append("        Layout.fillWidth: true")
+            vis_parts = [section_vis]
             if grp.showWhen:
-                lines.append(f"        visible: {section_vis} && ({grp.showWhen})")
-            else:
-                lines.append(f"        visible: {section_vis}")
+                vis_parts.append(f"({grp.showWhen})")
+            lines.append("    ColumnLayout {")
+            lines.append("        Layout.fillWidth: true")
+            lines.append("        spacing: 0")
+            lines.append(f"        visible: {' && '.join(vis_parts)}")
+            lines.append("")
+            lines.append(f"        {grp.component} {{")
+            lines.append("            Layout.fillWidth: true")
+            lines.append("        }")
             lines.append("    }")
             lines.append("")
             continue

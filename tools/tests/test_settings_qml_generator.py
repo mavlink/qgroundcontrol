@@ -247,6 +247,19 @@ class TestGeneratePageQml:
         qml = generate_page_qml(page, settings_dir)
         assert "MyCustomWidget {" in qml
         assert "Layout.fillWidth: true" in qml
+        # Component should be wrapped in a ColumnLayout so it doesn't
+        # override the component's own visible: binding.
+        assert "ColumnLayout {" in qml
+        assert "spacing: 0" in qml
+
+    def test_component_group_with_showWhen(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(component="MyCustomWidget", showWhen="someFlag"),
+        ])
+        qml = generate_page_qml(page, settings_dir)
+        assert "ColumnLayout {" in qml
+        assert "(someFlag)" in qml
+        assert "MyCustomWidget {" in qml
 
     def test_showWhen_on_group(self, settings_dir: Path):
         page = PageDef(groups=[
