@@ -1,80 +1,90 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":              "enableOnScreenControl",
-    "shortDesc":         "Enable on Screen Camera Control",
-    "type":              "bool",
-    "default":           false
-},
-{
-    "name":              "clickAndDrag",
-    "shortDesc":         "Use click and drag control instead of click to point",
-    "type":              "bool",
-    "default":           false
-},
-{
-    "name":              "cameraVFov",
-    "shortDesc":         "Vertical camera field of view",
-    "type":              "uint32",
-    "default":           80,
-    "units":             "deg"
-},
-{
-    "name":              "cameraHFov",
-    "shortDesc":         "Horizontal camera field of view",
-    "type":              "uint32",
-    "default":           80,
-    "units":             "deg"
-},
-{
-    "name":              "cameraSlideSpeed",
-    "shortDesc":         "Maximum gimbal speed on click and drag (deg/sec)",
-    "type":              "uint32",
-    "default":           30,
-    "units":             "deg/s"
-},
-{
-    "name":              "showAzimuthIndicatorOnMap",
-    "shortDesc":         "Show gimbal Azimuth indicator over vehicle icon in map",
-    "type":              "bool",
-    "default":           true
-},
-{
-    "name":              "toolbarIndicatorShowAzimuth",
-    "shortDesc":         "Show Azimuth instead of local yaw on top toolbar gimbal indicator",
-    "type":              "bool",
-    "default":           true
-},
-{
-    "name":              "toolbarIndicatorShowAcquireReleaseControl",
-    "shortDesc":         "Show Azimuth Acquire/release buttons in the gimbal buttons panel",
-    "type":              "bool",
-    "default":           false
-},
-{
-    "name":              "joystickButtonsSpeed",
-    "shortDesc":         "Rate used for joystick button control (deg/sec)",
-    "longDesc":          "When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released",
-    "type":              "uint32",
-    "default":           20,
-    "units":             "deg/s"
-},
-{
-    "name":              "zoomMinSpeed",
-    "shortDesc":         "Maximum gimbal speed for min zoom (deg/sec)",
-    "type":              "uint32",
-    "default":           5,
-    "units":             "deg/s"
-},
-{
-    "name":              "zoomMaxSpeed",
-    "shortDesc":         "Minimum gimbal speed for max zoom (deg/sec)",
-    "type":              "uint32",
-    "default":           60,
-    "units":             "deg/s"
-}
-]
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "enableOnScreenControl",
+            "shortDesc": "Enable on Screen Camera Control",
+            "type": "bool",
+            "default": false,
+            "label": "Enable on Screen Camera Control"
+        },
+        {
+            "name": "clickAndDrag",
+            "shortDesc": "Use click and drag control instead of click to point",
+            "type": "bool",
+            "default": false,
+            "label": "Use click and drag control instead of click to point"
+        },
+        {
+            "name": "cameraVFov",
+            "shortDesc": "Vertical camera field of view",
+            "type": "uint32",
+            "default": 80,
+            "units": "deg",
+            "label": "Vertical camera field of view"
+        },
+        {
+            "name": "cameraHFov",
+            "shortDesc": "Horizontal camera field of view",
+            "type": "uint32",
+            "default": 80,
+            "units": "deg",
+            "label": "Horizontal camera field of view"
+        },
+        {
+            "name": "cameraSlideSpeed",
+            "shortDesc": "Maximum gimbal speed on click and drag (deg/sec)",
+            "type": "uint32",
+            "default": 30,
+            "units": "deg/s",
+            "label": "Maximum gimbal speed on click and drag (deg/sec)"
+        },
+        {
+            "name": "showAzimuthIndicatorOnMap",
+            "shortDesc": "Show gimbal Azimuth indicator over vehicle icon in map",
+            "type": "bool",
+            "default": true,
+            "label": "Show gimbal Azimuth indicator over vehicle icon in map"
+        },
+        {
+            "name": "toolbarIndicatorShowAzimuth",
+            "shortDesc": "Show Azimuth instead of local yaw on top toolbar gimbal indicator",
+            "type": "bool",
+            "default": true,
+            "label": "Show Azimuth instead of local yaw on top toolbar gimbal indicator"
+        },
+        {
+            "name": "toolbarIndicatorShowAcquireReleaseControl",
+            "shortDesc": "Show Azimuth Acquire/release buttons in the gimbal buttons panel",
+            "type": "bool",
+            "default": false,
+            "label": "Show Azimuth Acquire/release buttons in the gimbal buttons panel"
+        },
+        {
+            "name": "joystickButtonsSpeed",
+            "shortDesc": "Rate used for joystick button control (deg/sec)",
+            "longDesc": "When a joystick button is set to gimbal left/right/up/down, it will send this rate when pressed, and it will stop moving when button is released",
+            "type": "uint32",
+            "default": 20,
+            "units": "deg/s",
+            "label": "Rate used for joystick button control (deg/sec)"
+        },
+        {
+            "name": "zoomMinSpeed",
+            "shortDesc": "Maximum gimbal speed for min zoom (deg/sec)",
+            "type": "uint32",
+            "default": 5,
+            "units": "deg/s",
+            "label": "Maximum gimbal speed for min zoom (deg/sec)"
+        },
+        {
+            "name": "zoomMaxSpeed",
+            "shortDesc": "Minimum gimbal speed for max zoom (deg/sec)",
+            "type": "uint32",
+            "default": 60,
+            "units": "deg/s",
+            "label": "Minimum gimbal speed for max zoom (deg/sec)"
+        }
+    ]
 }

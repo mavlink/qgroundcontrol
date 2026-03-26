@@ -1,0 +1,67 @@
+{
+    "version": 1,
+    "groups": [
+        {
+            "component": "MapProviderSettings",
+            "sectionName": "Map Provider",
+            "keywords": "map provider,satellite,terrain,street,hybrid,google,bing"
+        },
+        {
+            "component": "OfflineMapSettings",
+            "sectionName": "Offline Maps",
+            "keywords": "offline,download,cache,tile set"
+        },
+        {
+            "heading": "Tokens",
+            "headingDescription": "qsTr(\"Allows access to additional providers\")",
+            "controls": [
+                {
+                    "setting": "appSettings.tiandituToken"
+                },
+                {
+                    "setting": "appSettings.mapboxToken"
+                },
+                {
+                    "setting": "appSettings.esriToken"
+                },
+                {
+                    "setting": "appSettings.vworldToken"
+                },
+                {
+                    "setting": "appSettings.openaipToken"
+                }
+            ]
+        },
+        {
+            "heading": "Mapbox Login",
+            "controls": [
+                {
+                    "setting": "appSettings.mapboxAccount"
+                },
+                {
+                    "setting": "appSettings.mapboxStyle"
+                }
+            ]
+        },
+        {
+            "heading": "Custom Map URL",
+            "headingDescription": "qsTr(\"URL with {x} {y} {z} or {zoom} substitutions\")",
+            "controls": [
+                {
+                    "setting": "appSettings.customURL"
+                }
+            ]
+        },
+        {
+            "heading": "Tile Cache",
+            "controls": [
+                {
+                    "setting": "mapsSettings.maxCacheDiskSize"
+                },
+                {
+                    "setting": "mapsSettings.maxCacheMemorySize"
+                }
+            ]
+        }
+    ]
+}

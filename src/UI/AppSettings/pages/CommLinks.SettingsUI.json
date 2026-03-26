@@ -1,0 +1,36 @@
+{
+    "version": 1,
+    "groups": [
+        {
+            "heading": "AutoConnect",
+            "showWhen": "QGroundControl.settingsManager.autoConnectSettings.visible",
+            "controls": [
+                {
+                    "setting": "autoConnectSettings.autoConnectPixhawk"
+                },
+                {
+                    "setting": "autoConnectSettings.autoConnectSiKRadio"
+                },
+                {
+                    "setting": "autoConnectSettings.autoConnectLibrePilot"
+                },
+                {
+                    "setting": "autoConnectSettings.autoConnectUDP"
+                },
+                {
+                    "setting": "autoConnectSettings.autoConnectRTKGPS"
+                }
+            ]
+        },
+        {
+            "component": "NmeaGpsSettings",
+            "sectionName": "NMEA GPS",
+            "keywords": "nmea,gps,serial,baud rate,external gps"
+        },
+        {
+            "component": "LinkConfigurationManager",
+            "sectionName": "Link Management",
+            "keywords": "link,connection,serial,tcp,udp,bluetooth,add link"
+        }
+    ]
+}

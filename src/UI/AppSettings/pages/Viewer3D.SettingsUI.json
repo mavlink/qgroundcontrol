@@ -1,0 +1,31 @@
+{
+    "version": 1,
+    "groups": [
+        {
+            "heading": "General",
+            "controls": [
+                {
+                    "setting": "viewer3DSettings.enabled"
+                },
+                {
+                    "setting": "viewer3DSettings.mapProvider"
+                }
+            ]
+        },
+        {
+            "heading": "Data",
+            "enableWhen": "QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue",
+            "controls": [
+                {
+                    "setting": "viewer3DSettings.osmFilePath"
+                },
+                {
+                    "setting": "viewer3DSettings.buildingLevelHeight"
+                },
+                {
+                    "setting": "viewer3DSettings.altitudeBias"
+                }
+            ]
+        }
+    ]
+}

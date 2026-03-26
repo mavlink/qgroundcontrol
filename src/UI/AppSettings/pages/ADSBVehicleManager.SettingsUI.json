@@ -1,0 +1,19 @@
+{
+    "version": 1,
+    "groups": [
+        {
+            "heading": "ADSB Server",
+            "controls": [
+                {
+                    "setting": "adsbVehicleManagerSettings.adsbServerConnectEnabled"
+                },
+                {
+                    "setting": "adsbVehicleManagerSettings.adsbServerHostAddress"
+                },
+                {
+                    "setting": "adsbVehicleManagerSettings.adsbServerPort"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,84 @@
+{
+    "version": 1,
+    "groups": [
+        {
+            "heading": "Ground Station",
+            "controls": [
+                {
+                    "setting": "mavlinkSettings.gcsMavlinkSystemID"
+                },
+                {
+                    "setting": "mavlinkSettings.sendGCSHeartbeat"
+                },
+                {
+                    "setting": "mavlinkSettings.noInitialDownloadWhenFlying"
+                }
+            ]
+        },
+        {
+            "heading": "MAVLink Forwarding",
+            "controls": [
+                {
+                    "setting": "mavlinkSettings.forwardMavlink"
+                },
+                {
+                    "setting": "mavlinkSettings.forwardMavlinkHostName",
+                    "enableWhen": "QGroundControl.settingsManager.mavlinkSettings.forwardMavlink.rawValue"
+                }
+            ]
+        },
+        {
+            "heading": "Logging",
+            "controls": [
+                {
+                    "setting": "mavlinkSettings.telemetrySave"
+                },
+                {
+                    "setting": "mavlinkSettings.telemetrySaveNotArmed"
+                },
+                {
+                    "setting": "mavlinkSettings.saveCsvTelemetry"
+                }
+            ]
+        },
+        {
+            "heading": "Stream Rates (ArduPilot Only)",
+            "controls": [
+                {
+                    "setting": "mavlinkSettings.apmStartMavlinkStreams"
+                },
+                {
+                    "setting": "apmMavlinkStreamRateSettings.streamRateRawSensors"
+                },
+                {
+                    "setting": "apmMavlinkStreamRateSettings.streamRateExtendedStatus"
+                },
+                {
+                    "setting": "apmMavlinkStreamRateSettings.streamRateRCChannels"
+                },
+                {
+                    "setting": "apmMavlinkStreamRateSettings.streamRatePosition"
+                },
+                {
+                    "setting": "apmMavlinkStreamRateSettings.streamRateExtra1"
+                },
+                {
+                    "setting": "apmMavlinkStreamRateSettings.streamRateExtra2"
+                },
+                {
+                    "setting": "apmMavlinkStreamRateSettings.streamRateExtra3"
+                }
+            ]
+        },
+        {
+            "component": "SigningKeyManager",
+            "sectionName": "Signing Key",
+            "keywords": "signing,encryption,key,security,mavlink2"
+        },
+        {
+            "component": "MavlinkLinkStatus",
+            "sectionName": "Link Status",
+            "keywords": "link status,packet loss,received,sent,latency"
+        }
+    ]
+}

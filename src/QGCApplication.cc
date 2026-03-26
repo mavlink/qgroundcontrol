@@ -106,7 +106,7 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
     }
 
     // The setting will delete all settings on this boot
-    fClearSettingsOptions |= settings.contains(_deleteAllSettingsKey);
+    fClearSettingsOptions |= settings.value(AppSettings::clearSettingsNextBootKey, false).toBool();
 
     if (_runningUnitTests || _simpleBootTest) {
         // Unit tests run with clean settings
@@ -362,18 +362,6 @@ void QGCApplication::_initForNormalAppBoot()
 
     // Connect links with flag AutoconnectLink
     LinkManager::instance()->startAutoConnectedLinks();
-}
-
-void QGCApplication::deleteAllSettingsNextBoot()
-{
-    QSettings settings;
-    settings.setValue(_deleteAllSettingsKey, true);
-}
-
-void QGCApplication::clearDeleteAllSettingsNextBoot()
-{
-    QSettings settings;
-    settings.remove(_deleteAllSettingsKey);
 }
 
 void QGCApplication::reportMissingParameter(int componentId, const QString &name)

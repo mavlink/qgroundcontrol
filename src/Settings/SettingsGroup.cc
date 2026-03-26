@@ -21,5 +21,8 @@ SettingsFact* SettingsGroup::_createSettingsFact(const QString& factName)
         qCritical() << "Fact name " << factName << "not found in" << QString(kJsonFileTemplate).arg(_name);
         exit(-1);
     }
+    if (m->label().isEmpty()) {
+        qCritical() << "Missing or empty label for" << factName << "in" << QString(kJsonFileTemplate).arg(_name);
+    }
     return new SettingsFact(_settingsGroup, m, this);
 }

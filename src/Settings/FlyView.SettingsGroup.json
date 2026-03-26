@@ -1,113 +1,141 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "guidedMinimumAltitude",
-    "shortDesc": "Minimum altitude for guided actions altitude slider.",
-    "type":             "double",
-    "units":            "m",
-    "default":     2
-},
-{
-    "name":             "guidedMaximumAltitude",
-    "shortDesc": "Maximum altitude for guided actions altitude slider.",
-    "type":             "double",
-    "units":            "m",
-    "default":     121.92
-},
-{
-    "name":             "showLogReplayStatusBar",
-    "shortDesc": "Show/Hide Log Replay status bar",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "showAdditionalIndicatorsCompass",
-    "shortDesc": "Show additional heading indicators on Compass",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "lockNoseUpCompass",
-    "shortDesc": "Lock Compass Nose-Up",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "keepMapCenteredOnVehicle",
-    "shortDesc": "Keep map centered on vehicle",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":         "showSimpleCameraControl",
-    "shortDesc":    "Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.",
-    "type":         "bool",
-    "default":      false
-},
-{
-    "name":         "showObstacleDistanceOverlay",
-    "shortDesc":    "Show obstacle distance overlay on map and video.",
-    "type":         "bool",
-    "default":      false
-},
-{
-    "name":             "maxGoToLocationDistance",
-    "shortDesc": "Maximum distance allowed for Go To Location.",
-    "type":             "double",
-    "units":            "m",
-    "default":     1000,
-    "min":              1
-},
-{
-    "name":         "forwardFlightGoToLocationLoiterRad",
-    "shortDesc":    "Loiter radius for orbiting the Go To Location during forward flight. This only applies if the firmware supports a radius in MAV_CMD_DO_REPOSITION commands.",
-    "type":         "double",
-    "units":        "m",
-    "default":      80,
-    "min":          25
-},
-{
-    "name":         "goToLocationRequiresConfirmInGuided",
-    "shortDesc":    "Require slide confirmation for Go To Location when the vehicle is already in Guided mode.",
-    "type":         "bool",
-    "default":      true
-},
-{
-    "name":             "updateHomePosition",
-    "shortDesc": "Send updated GCS' home position to autopilot in case of change of the home position",
-    "type":                 "bool",
-    "default":              false
-},
-{
-    "name":         "instrumentQmlFile2",
-    "shortDesc":    "Qml file for instrument panel",
-    "type":         "string",
-    "enumStrings":  "Integrated Compass & Attitude,Horizontal Compass & Attitude,Large Vertical",
-    "enumValues":   "qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/HorizontalCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/VerticalCompassAttitude.qml",
-    "default":      "qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml"
-},
-{
-    "name":         "requestControlAllowTakeover",
-    "shortDesc":    "When requesting vehicle control, allow other GCS to override control automatically, or require this GCS to accept the request first.",
-    "type":         "bool",
-    "default":      false
-},
-{
-    "name":         "requestControlTimeout",
-    "shortDesc":    "Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.",
-    "type":         "uint32",
-    "min":          3,
-    "max":          60,
-    "default":      10
-},
-{
-    "name":         "enableAutomaticMissionPopups",
-    "shortDesc":    "Enable automatic mission start/resume popups",
-    "type":         "bool",
-    "default":      true
-}
-]
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "guidedMinimumAltitude",
+            "shortDesc": "Minimum altitude for guided actions altitude slider.",
+            "type": "double",
+            "units": "m",
+            "default": 2,
+            "label": "Minimum Altitude",
+            "keywords": "altitude,guided,minimum"
+        },
+        {
+            "name": "guidedMaximumAltitude",
+            "shortDesc": "Maximum altitude for guided actions altitude slider.",
+            "type": "double",
+            "units": "m",
+            "default": 121.92,
+            "label": "Maximum Altitude",
+            "keywords": "altitude,guided,maximum"
+        },
+        {
+            "name": "showLogReplayStatusBar",
+            "shortDesc": "Show/Hide Log Replay status bar",
+            "type": "bool",
+            "default": false,
+            "label": "Show Telemetry Log Replay Status Bar",
+            "keywords": "log replay"
+        },
+        {
+            "name": "showAdditionalIndicatorsCompass",
+            "shortDesc": "Show additional heading indicators on Compass",
+            "type": "bool",
+            "default": false,
+            "label": "Show additional heading indicators on Compass",
+            "keywords": "compass,indicators"
+        },
+        {
+            "name": "lockNoseUpCompass",
+            "shortDesc": "Lock Compass Nose-Up",
+            "type": "bool",
+            "default": false,
+            "label": "Lock Compass Nose-Up",
+            "keywords": "compass,hud"
+        },
+        {
+            "name": "keepMapCenteredOnVehicle",
+            "shortDesc": "Keep map centered on vehicle",
+            "type": "bool",
+            "default": false,
+            "label": "Keep Map Centered On Vehicle",
+            "keywords": "center map"
+        },
+        {
+            "name": "showSimpleCameraControl",
+            "shortDesc": "Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.",
+            "type": "bool",
+            "default": false,
+            "label": "Show simple camera controls (DIGICAM_CONTROL)",
+            "keywords": "camera control"
+        },
+        {
+            "name": "showObstacleDistanceOverlay",
+            "shortDesc": "Show obstacle distance overlay on map and video.",
+            "type": "bool",
+            "default": false,
+            "label": "Show obstacle distance overlay on map and video."
+        },
+        {
+            "name": "maxGoToLocationDistance",
+            "shortDesc": "Maximum distance allowed for Go To Location.",
+            "type": "double",
+            "units": "m",
+            "default": 1000,
+            "min": 1,
+            "label": "Go To Location Max Distance",
+            "keywords": "goto,go to"
+        },
+        {
+            "name": "forwardFlightGoToLocationLoiterRad",
+            "shortDesc": "Loiter radius for orbiting the Go To Location during forward flight. This only applies if the firmware supports a radius in MAV_CMD_DO_REPOSITION commands.",
+            "type": "double",
+            "units": "m",
+            "default": 80,
+            "min": 25,
+            "label": "Loiter Radius in Forward Flight Guided Mode",
+            "keywords": "loiter radius,guided"
+        },
+        {
+            "name": "goToLocationRequiresConfirmInGuided",
+            "shortDesc": "Require slide confirmation for Go To Location when the vehicle is already in Guided mode.",
+            "type": "bool",
+            "default": true,
+            "label": "Require Confirmation for Go To Location in Guided Mode",
+            "keywords": "goto,go to,guided"
+        },
+        {
+            "name": "updateHomePosition",
+            "shortDesc": "Send updated GCS' home position to autopilot in case of change of the home position",
+            "type": "bool",
+            "default": false,
+            "label": "Update return to home position based on device location",
+            "keywords": "home position"
+        },
+        {
+            "name": "instrumentQmlFile2",
+            "shortDesc": "Qml file for instrument panel",
+            "type": "string",
+            "enumStrings": "Integrated Compass & Attitude,Horizontal Compass & Attitude,Large Vertical",
+            "enumValues": "qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/HorizontalCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/VerticalCompassAttitude.qml",
+            "default": "qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml",
+            "label": "Qml file for instrument panel",
+            "keywords": "instrument,hud"
+        },
+        {
+            "name": "requestControlAllowTakeover",
+            "shortDesc": "When requesting vehicle control, allow other GCS to override control automatically, or require this GCS to accept the request first.",
+            "type": "bool",
+            "default": false,
+            "label": "When requesting vehicle control, allow other GCS to override control automatically, or require this GCS to accept the request first."
+        },
+        {
+            "name": "requestControlTimeout",
+            "shortDesc": "Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.",
+            "type": "uint32",
+            "min": 3,
+            "max": 60,
+            "default": 10,
+            "label": "Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control."
+        },
+        {
+            "name": "enableAutomaticMissionPopups",
+            "shortDesc": "Enable automatic mission start/resume popups",
+            "type": "bool",
+            "default": true,
+            "label": "Enable automatic mission start/resume popups",
+            "keywords": "mission popup"
+        }
+    ]
 }

@@ -6,31 +6,36 @@
             "name": "calibrated",
             "shortDesc": "Joystick calibrated",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Joystick calibrated"
         },
         {
             "name": "circleCorrection",
             "shortDesc": "Enable circle correction for joystick input",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable circle correction for joystick input"
         },
         {
             "name": "useDeadband",
             "shortDesc": "Use deadband for joystick input",
             "type": "bool",
-            "default": true
+            "default": true,
+            "label": "Use deadband for joystick input"
         },
         {
             "name": "negativeThrust",
             "shortDesc": "Enable negative thrust (reverse) on throttle axis",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable negative thrust (reverse) on throttle axis"
         },
         {
             "name": "throttleSmoothing",
             "shortDesc": "Enable throttle accumulator mode",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable throttle accumulator mode"
         },
         {
             "name": "axisFrequencyHz",
@@ -42,7 +47,8 @@
             "max": 200,
             "userMin": 0.25,
             "userMax": 200,
-            "decimalPlaces": 2
+            "decimalPlaces": 2,
+            "label": "Axis Update Frequency"
         },
         {
             "name": "buttonFrequencyHz",
@@ -54,19 +60,22 @@
             "max": 50,
             "userMin": 0.25,
             "userMax": 50,
-            "decimalPlaces": 2
+            "decimalPlaces": 2,
+            "label": "Button Repeat Frequency"
         },
         {
             "name": "throttleModeCenterZero",
             "shortDesc": "Enable center zero throttle mode",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable center zero throttle mode"
         },
         {
             "name": "transmitterMode",
             "shortDesc": "Transmitter mode (1-4)",
             "type": "uint32",
-            "default": 2
+            "default": 2,
+            "label": "Transmitter mode (1-4)"
         },
         {
             "name": "exponentialPct",
@@ -78,55 +87,64 @@
             "min": 0,
             "max": 50,
             "userMin": 0,
-            "userMax": 50
+            "userMax": 50,
+            "label": "Stick Exponential"
         },
         {
             "name": "enableManualControlAux1",
             "shortDesc": "Enable manual control for Aux 1",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable manual control for Aux 1"
         },
         {
             "name": "enableManualControlAux2",
             "shortDesc": "Enable manual control for Aux 2",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable manual control for Aux 2"
         },
         {
             "name": "enableManualControlAux3",
             "shortDesc": "Enable manual control for Aux 3",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable manual control for Aux 3"
         },
         {
             "name": "enableManualControlAux4",
             "shortDesc": "Enable manual control for Aux 4",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable manual control for Aux 4"
         },
         {
             "name": "enableManualControlAux5",
             "shortDesc": "Enable manual control for Aux 5",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable manual control for Aux 5"
         },
         {
             "name": "enableManualControlAux6",
             "shortDesc": "Enable manual control for Aux 6",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable manual control for Aux 6"
         },
         {
             "name": "enableManualControlPitchExtension",
             "shortDesc": "Enable manual control pitch extension",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable manual control pitch extension"
         },
         {
             "name": "enableManualControlRollExtension",
             "shortDesc": "Enable manual control roll extension",
             "type": "bool",
-            "default": false
+            "default": false,
+            "label": "Enable manual control roll extension"
         }
     ]
 }

@@ -480,6 +480,16 @@ QString Fact::shortDescription() const
     }
 }
 
+QString Fact::label() const
+{
+    if (_metaData) {
+        return _metaData->label();
+    } else {
+        qCWarning(FactLog) << kMissingMetadata << name();
+        return QString();
+    }
+}
+
 QString Fact::longDescription() const
 {
     if (_metaData) {

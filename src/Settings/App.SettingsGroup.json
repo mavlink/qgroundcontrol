@@ -1,274 +1,337 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "offlineEditingFirmwareClass",
-    "shortDesc": "Offline editing firmware class",
-    "type":             "uint32",
-    "enumStrings":      "ArduPilot,PX4 Pro,MAVLink",
-    "enumValues":       "3,12,0",
-    "default":     12
-},
-{
-    "name":             "offlineEditingVehicleClass",
-    "shortDesc": "Offline editing vehicle class",
-    "type":             "uint32",
-    "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Unknown",
-    "enumValues":       "1,2,20,10,12,0",
-    "default":     2
-},
-{
-    "name":             "offlineEditingCruiseSpeed",
-    "shortDesc": "Offline editing cruise speed",
-    "longDesc":  "This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.",
-    "type":             "double",
-    "default":     15.0,
-    "min":              1.0,
-    "units":            "m/s",
-    "decimalPlaces":    2
-},
-{
-    "name":             "offlineEditingHoverSpeed",
-    "shortDesc": "Offline editing hover speed",
-    "longDesc":  "This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.",
-    "type":             "double",
-    "default":     5.0,
-    "min":              1.0,
-    "units":            "m/s",
-    "decimalPlaces":    2
-},
-{
-    "name":             "offlineEditingAscentSpeed",
-    "shortDesc": "Offline editing ascent speed",
-    "longDesc":  "This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.",
-    "type":             "double",
-    "default":     3.0,
-    "min":              0.1,
-    "units":            "m/s",
-    "decimalPlaces":    2
-},
-{
-    "name":             "offlineEditingDescentSpeed",
-    "shortDesc": "Offline editing descent speed",
-    "longDesc":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.",
-    "type":             "double",
-    "default":     1.0,
-    "min":              0.1,
-    "units":            "m/s",
-    "decimalPlaces":    2
-},
-{
-    "name":             "batteryPercentRemainingAnnounce",
-    "shortDesc": "Announce battery remaining percent",
-    "longDesc":  "Announce the remaining battery percent when it falls below the specified percentage.",
-    "type":             "uint32",
-    "default":     30,
-    "units":            "%",
-    "min":              0,
-    "max":              100
-},
-{
-    "name":             "defaultMissionItemAltitude",
-    "shortDesc": "Default value for altitude",
-    "longDesc":  "This value specifies the default altitude for new items added to a mission.",
-    "type":             "double",
-    "default":     50.0,
-    "min":              0.0,
-    "units":            "m",
-    "decimalPlaces":    1,
-    "userMin":          0.0,
-    "userMax":          121.92
-},
-{
-    "name":      "audioVolume",
-    "shortDesc": "Audio output volume",
-    "longDesc":  "Sets the audio output volume percentage. Set to 0 to mute.",
-    "type":      "double",
-    "default":   100.0,
-    "units":     "%",
-    "min":       0.0,
-    "decimalPlaces": 1,
-    "userMin":  0.0,
-    "userMax":  100.0
-},
-{
-    "name":             "virtualJoystick",
-    "shortDesc": "Show virtual joystick",
-    "longDesc":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "virtualJoystickAutoCenterThrottle",
-    "shortDesc": "Auto-Center Throttle",
-    "longDesc":  "If enabled the throttle stick will snap back to center when released.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "virtualJoystickLeftHandedMode",
-    "shortDesc": "Left Handed Mode",
-    "longDesc":  "If this option is enabled the virtual joystick layout will be reversed",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":                 "gstDebugLevel",
-    "shortDesc":            "Video streaming debug",
-    "longDesc":             "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
-    "type":                 "uint8",
-    "enumStrings":          "Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace",
-    "enumValues":           "0,1,2,3,4,5,6,7",
-    "default":              0,
-    "qgcRebootRequired":    true
-},
-{
-    "name":             "useChecklist",
-    "shortDesc": "Use preflight checklist",
-    "longDesc":  "If this option is enabled the preflight checklist will be used.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "enforceChecklist",
-    "shortDesc": "Preflight checklist must pass before arming",
-    "longDesc":  "If this option is enabled the preflight checklist must pass before arming.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":                 "enableMultiVehiclePanel",
-    "shortDesc":            "Enable Multi-Vehicle Panel",
-    "longDesc":             "Enable Multi-Vehicle Panel when multiple vehicles are connected.",
-    "type":                 "bool",
-    "default":              true
-},
-{
-    "name":                 "appFontPointSize",
-    "shortDesc":     "Application font size",
-    "longDesc":      "The point size for the default font used.",
-    "type":                 "uint32",
-    "units":                "pt",
-    "min":                  6,
-    "max":                  48,
-    "default":         0
-},
-{
-    "name":             "indoorPalette",
-    "shortDesc": "Application color scheme",
-    "longDesc":  "The color scheme for the user interface.",
-    "type":             "uint32",
-    "enumStrings":      "Indoor,Outdoor",
-    "enumValues":       "1,0",
-    "default":     0
-},
-{
-    "name":             "savePath",
-    "shortDesc": "Application save directory",
-    "longDesc":  "Directory to which all data files are saved/loaded from",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":                 "androidDontSaveToSDCard",
-    "shortDesc":            "Don't save to SD card, even if available",
-    "longDesc":             "If this option is enabled, application data will not be saved to the SD card.",
-    "type":                 "bool",
-    "default":              false,
-    "qgcRebootRequired":    true
-},
-{
-    "name":             "tiandituToken",
-    "shortDesc": "Access token to TianDiTu maps",
-    "longDesc":  "Your personal access token for TianDiTu maps",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "mapboxToken",
-    "shortDesc": "Access token to Mapbox maps",
-    "longDesc":  "Your personal access token for Mapbox maps",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "mapboxAccount",
-    "shortDesc": "Account name for Mapbox maps",
-    "longDesc":  "Your personal account name for Mapbox maps",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "mapboxStyle",
-    "shortDesc": "Map style ID",
-    "longDesc":  "Map design style ID for Mapbox maps",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "esriToken",
-    "shortDesc": "Access token to Esri maps",
-    "longDesc":  "Your personal access token for Esri maps",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "customURL",
-    "shortDesc": "Custom Map URL",
-    "longDesc":  "URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "vworldToken",
-    "shortDesc": "VWorld Token",
-    "longDesc":  "Your personal access token for VWorld maps",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "openaipToken",
-    "shortDesc": "OpenAIP API Key",
-    "longDesc":  "Your personal API key for OpenAIP aviation maps. Get one at https://www.openaip.net",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "followTarget",
-    "shortDesc": "Stream GCS' coordinates to Autopilot",
-    "type":             "uint32",
-    "enumStrings":      "Never,Always,When in Follow Me Flight Mode",
-    "enumValues":       "0,1,2",
-    "default":     2
-},
-{
-    "name":                 "qLocaleLanguage",
-    "shortDesc":            "Language",
-    "type":                 "uint32",
-    "default":              0,
-    "qgcRebootRequired":    true,
-    "comment":              "QLocale::Language id. Fact enum metadata is setup in AppSettings code. QGC reboot required in order to load new json translations into FactMetaData."
-},
-{
-    "name":             "disableAllPersistence",
-    "shortDesc": "Disable all data persistence",
-    "longDesc":  "If this option is set, nothing will be saved to disk.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "firstRunPromptIdsShown",
-    "shortDesc": "Comma separated list of first run prompt ids which have already been shown.",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "favoriteParameters",
-    "shortDesc": "Comma separated list of favorite parameter names.",
-    "type":             "string",
-    "default":     ""
-}
-]
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "offlineEditingFirmwareClass",
+            "shortDesc": "Offline editing firmware class",
+            "type": "uint32",
+            "enumStrings": "ArduPilot,PX4 Pro,MAVLink",
+            "enumValues": "3,12,0",
+            "default": 12,
+            "label": "Offline editing firmware class"
+        },
+        {
+            "name": "offlineEditingVehicleClass",
+            "shortDesc": "Offline editing vehicle class",
+            "type": "uint32",
+            "enumStrings": "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub,Unknown",
+            "enumValues": "1,2,20,10,12,0",
+            "default": 2,
+            "label": "Offline editing vehicle class"
+        },
+        {
+            "name": "offlineEditingCruiseSpeed",
+            "shortDesc": "Offline editing cruise speed",
+            "longDesc": "This value defines the default speed for calculating mission statistics for vehicles which do not support hover or VTOL vehicles in fixed wing mode. It does not modify the flight speed for a specific flight plan.",
+            "type": "double",
+            "default": 15.0,
+            "min": 1.0,
+            "units": "m/s",
+            "decimalPlaces": 2,
+            "label": "Offline editing cruise speed"
+        },
+        {
+            "name": "offlineEditingHoverSpeed",
+            "shortDesc": "Offline editing hover speed",
+            "longDesc": "This value defines the default speed for calculating mission statistics for multi-rotor vehicles or VTOL vehicle in multi-rotor mode. It does not modify the flight speed for a specific flight plan.",
+            "type": "double",
+            "default": 5.0,
+            "min": 1.0,
+            "units": "m/s",
+            "decimalPlaces": 2,
+            "label": "Offline editing hover speed"
+        },
+        {
+            "name": "offlineEditingAscentSpeed",
+            "shortDesc": "Offline editing ascent speed",
+            "longDesc": "This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.",
+            "type": "double",
+            "default": 3.0,
+            "min": 0.1,
+            "units": "m/s",
+            "decimalPlaces": 2,
+            "label": "Offline editing ascent speed"
+        },
+        {
+            "name": "offlineEditingDescentSpeed",
+            "shortDesc": "Offline editing descent speed",
+            "longDesc": "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.",
+            "type": "double",
+            "default": 1.0,
+            "min": 0.1,
+            "units": "m/s",
+            "decimalPlaces": 2,
+            "label": "Offline editing descent speed"
+        },
+        {
+            "name": "batteryPercentRemainingAnnounce",
+            "shortDesc": "Announce battery remaining percent",
+            "longDesc": "Announce the remaining battery percent when it falls below the specified percentage.",
+            "type": "uint32",
+            "default": 30,
+            "units": "%",
+            "min": 0,
+            "max": 100,
+            "label": "Announce battery remaining percent"
+        },
+        {
+            "name": "defaultMissionItemAltitude",
+            "shortDesc": "Default value for altitude",
+            "longDesc": "This value specifies the default altitude for new items added to a mission.",
+            "type": "double",
+            "default": 50.0,
+            "min": 0.0,
+            "units": "m",
+            "decimalPlaces": 1,
+            "userMin": 0.0,
+            "userMax": 121.92,
+            "label": "Default Mission Altitude",
+            "keywords": "mission altitude,default altitude"
+        },
+        {
+            "name": "audioVolume",
+            "shortDesc": "Audio output volume",
+            "longDesc": "Sets the audio output volume percentage. Set to 0 to mute.",
+            "type": "double",
+            "default": 100.0,
+            "units": "%",
+            "min": 0.0,
+            "decimalPlaces": 1,
+            "userMin": 0.0,
+            "userMax": 100.0,
+            "label": "Audio Output Volume",
+            "keywords": "audio,volume,sound"
+        },
+        {
+            "name": "virtualJoystick",
+            "shortDesc": "Show virtual joystick",
+            "longDesc": "If this option is enabled the virtual joystick will be shown on the Fly view.",
+            "type": "bool",
+            "default": false,
+            "label": "Virtual Joystick",
+            "keywords": "joystick,virtual stick"
+        },
+        {
+            "name": "virtualJoystickAutoCenterThrottle",
+            "shortDesc": "Auto-Center Throttle",
+            "longDesc": "If enabled the throttle stick will snap back to center when released.",
+            "type": "bool",
+            "default": true,
+            "label": "Auto-Center Throttle",
+            "keywords": "joystick,throttle"
+        },
+        {
+            "name": "virtualJoystickLeftHandedMode",
+            "shortDesc": "Left Handed Mode",
+            "longDesc": "If this option is enabled the virtual joystick layout will be reversed",
+            "type": "bool",
+            "default": false,
+            "label": "Left-Handed Mode",
+            "keywords": "joystick,left handed"
+        },
+        {
+            "name": "gstDebugLevel",
+            "shortDesc": "Video streaming debug",
+            "longDesc": "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
+            "type": "uint8",
+            "enumStrings": "Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace",
+            "enumValues": "0,1,2,3,4,5,6,7",
+            "default": 0,
+            "qgcRebootRequired": true,
+            "label": "Video streaming debug",
+            "keywords": "gstreamer,debug level"
+        },
+        {
+            "name": "useChecklist",
+            "shortDesc": "Use preflight checklist",
+            "longDesc": "If this option is enabled the preflight checklist will be used.",
+            "type": "bool",
+            "default": false,
+            "label": "Use Preflight Checklist",
+            "keywords": "checklist,preflight"
+        },
+        {
+            "name": "enforceChecklist",
+            "shortDesc": "Preflight checklist must pass before arming",
+            "longDesc": "If this option is enabled the preflight checklist must pass before arming.",
+            "type": "bool",
+            "default": false,
+            "label": "Enforce Preflight Checklist",
+            "keywords": "checklist,preflight"
+        },
+        {
+            "name": "enableMultiVehiclePanel",
+            "shortDesc": "Enable Multi-Vehicle Panel",
+            "longDesc": "Enable Multi-Vehicle Panel when multiple vehicles are connected.",
+            "type": "bool",
+            "default": true,
+            "label": "Enable Multi-Vehicle Panel",
+            "keywords": "multi vehicle"
+        },
+        {
+            "name": "uiScalePercent",
+            "shortDesc": "UI scale percentage",
+            "longDesc": "Scales the entire user interface relative to the platform default. 100% is the default size.",
+            "type": "uint32",
+            "units": "%",
+            "min": 50,
+            "max": 200,
+            "default": 100,
+            "label": "UI Scaling",
+            "keywords": "ui scale,font size,zoom"
+        },
+        {
+            "name": "indoorPalette",
+            "shortDesc": "Application color scheme",
+            "longDesc": "The color scheme for the user interface.",
+            "type": "uint32",
+            "enumStrings": "Indoor,Outdoor",
+            "enumValues": "1,0",
+            "default": 0,
+            "label": "Color Scheme",
+            "keywords": "palette,dark mode,theme,color scheme"
+        },
+        {
+            "name": "savePath",
+            "shortDesc": "Application save directory",
+            "longDesc": "Directory to which all data files are saved/loaded from",
+            "type": "string",
+            "default": "",
+            "label": "Application Load/Save Path",
+            "keywords": "save path,storage"
+        },
+        {
+            "name": "androidDontSaveToSDCard",
+            "shortDesc": "Don't save to SD card, even if available",
+            "longDesc": "If this option is enabled, application data will not be saved to the SD card.",
+            "type": "bool",
+            "default": false,
+            "qgcRebootRequired": true,
+            "label": "Don't save to SD card, even if available"
+        },
+        {
+            "name": "tiandituToken",
+            "shortDesc": "Access token to TianDiTu maps",
+            "longDesc": "Your personal access token for TianDiTu maps",
+            "type": "string",
+            "default": "",
+            "label": "TianDiTu",
+            "keywords": "token,api key,tianditu"
+        },
+        {
+            "name": "mapboxToken",
+            "shortDesc": "Access token to Mapbox maps",
+            "longDesc": "Your personal access token for Mapbox maps",
+            "type": "string",
+            "default": "",
+            "label": "Mapbox",
+            "keywords": "token,api key,mapbox"
+        },
+        {
+            "name": "mapboxAccount",
+            "shortDesc": "Account name for Mapbox maps",
+            "longDesc": "Your personal account name for Mapbox maps",
+            "type": "string",
+            "default": "",
+            "label": "Account",
+            "keywords": "mapbox,account"
+        },
+        {
+            "name": "mapboxStyle",
+            "shortDesc": "Map style ID",
+            "longDesc": "Map design style ID for Mapbox maps",
+            "type": "string",
+            "default": "",
+            "label": "Map Style",
+            "keywords": "mapbox,style"
+        },
+        {
+            "name": "esriToken",
+            "shortDesc": "Access token to Esri maps",
+            "longDesc": "Your personal access token for Esri maps",
+            "type": "string",
+            "default": "",
+            "label": "Esri",
+            "keywords": "token,api key,esri"
+        },
+        {
+            "name": "customURL",
+            "shortDesc": "Custom Map URL",
+            "longDesc": "URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka",
+            "type": "string",
+            "default": "",
+            "label": "Server URL",
+            "keywords": "custom map,wms,tile url"
+        },
+        {
+            "name": "vworldToken",
+            "shortDesc": "VWorld Token",
+            "longDesc": "Your personal access token for VWorld maps",
+            "type": "string",
+            "default": "",
+            "label": "VWorld",
+            "keywords": "token,api key,vworld"
+        },
+        {
+            "name": "openaipToken",
+            "shortDesc": "OpenAIP API Key",
+            "longDesc": "Your personal API key for OpenAIP aviation maps. Get one at https://www.openaip.net",
+            "type": "string",
+            "default": "",
+            "label": "OpenAIP",
+            "keywords": "token,api key,openaip"
+        },
+        {
+            "name": "followTarget",
+            "shortDesc": "Stream GCS' coordinates to Autopilot",
+            "type": "uint32",
+            "enumStrings": "Never,Always,When in Follow Me Flight Mode",
+            "enumValues": "0,1,2",
+            "default": 2,
+            "label": "Stream GCS Position",
+            "keywords": "follow me"
+        },
+        {
+            "name": "qLocaleLanguage",
+            "shortDesc": "Language",
+            "type": "uint32",
+            "default": 0,
+            "qgcRebootRequired": true,
+            "comment": "QLocale::Language id. Fact enum metadata is setup in AppSettings code. QGC reboot required in order to load new json translations into FactMetaData.",
+            "label": "Language",
+            "keywords": "language,locale"
+        },
+        {
+            "name": "clearSettingsNextBoot",
+            "shortDesc": "Clear all settings on next start",
+            "longDesc": "When enabled, all application settings will be reset to defaults on the next start.",
+            "type": "bool",
+            "default": false,
+            "label": "Clear all settings on next start",
+            "keywords": "reset,clear settings,factory reset"
+        },
+        {
+            "name": "disableAllPersistence",
+            "shortDesc": "Disable all data persistence",
+            "longDesc": "If this option is set, nothing will be saved to disk.",
+            "type": "bool",
+            "default": false,
+            "label": "Disable all data persistence"
+        },
+        {
+            "name": "firstRunPromptIdsShown",
+            "shortDesc": "Comma separated list of first run prompt ids which have already been shown.",
+            "type": "string",
+            "default": "",
+            "label": "Comma separated list of first run prompt ids which have already been shown."
+        },
+        {
+            "name": "favoriteParameters",
+            "shortDesc": "Comma separated list of favorite parameter names.",
+            "type": "string",
+            "default": "",
+            "label": "Comma separated list of favorite parameter names."
+        }
+    ]
 }

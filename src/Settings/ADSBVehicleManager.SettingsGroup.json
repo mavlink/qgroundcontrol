@@ -1,26 +1,31 @@
 {
     "version": 1,
     "fileType": "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":         "adsbServerConnectEnabled",
-    "shortDesc":    "Connect to ADSB SBS server",
-    "longDesc":     "Connect to ADSB SBS-1 server using specified address/port",
-    "type":         "bool",
-    "default":      false
-},
-{
-    "name":         "adsbServerHostAddress",
-    "shortDesc":    "Host address",
-    "type":         "string",
-    "default":      "127.0.0.1"
-},
-{
-    "name":         "adsbServerPort",
-    "shortDesc":    "Server port",
-    "type":         "string",
-    "default":      30003
-}
-]
+    "QGC.MetaData.Facts": [
+        {
+            "name": "adsbServerConnectEnabled",
+            "shortDesc": "Connect to ADSB SBS server",
+            "longDesc": "Connect to ADSB SBS-1 server using specified address/port",
+            "type": "bool",
+            "default": false,
+            "label": "Connect to ADSB SBS server",
+            "keywords": "adsb,ads-b,traffic,aircraft,tracking"
+        },
+        {
+            "name": "adsbServerHostAddress",
+            "shortDesc": "Host address",
+            "type": "string",
+            "default": "127.0.0.1",
+            "label": "Host address",
+            "keywords": "adsb,server,host"
+        },
+        {
+            "name": "adsbServerPort",
+            "shortDesc": "Server port",
+            "type": "string",
+            "default": 30003,
+            "label": "Server port",
+            "keywords": "adsb,server,port"
+        }
+    ]
 }
