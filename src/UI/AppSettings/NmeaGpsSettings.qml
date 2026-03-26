@@ -43,24 +43,58 @@ SettingsGroupLayout {
 
     LabelledComboBox {
         id: nmeaBaudCombo
-        visible: (nmeaPortCombo.currentText !== "UDP Port") && (nmeaPortCombo.currentText !== "Disabled")
+        visible: nmeaPortCombo.currentIndex > 1
         label: qsTr("Baudrate")
-        model: QGroundControl.linkManager.serialBaudRates
+
+        readonly property string _customLabel:  qsTr("Custom")
+        readonly property bool   isCustomBaud:  currentText === _customLabel
 
         onActivated: (index) => {
-            if (index !== -1) {
+            if (index !== -1 && !isCustomBaud) {
                 QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = parseInt(comboBox.textAt(index));
             }
         }
 
         Component.onCompleted: {
-            const index = nmeaBaudCombo.comboBox.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
-            nmeaBaudCombo.currentIndex = index;
+            var rates = QGroundControl.linkManager.serialBaudRates.slice()
+            rates.push(_customLabel)
+            nmeaBaudCombo.model = rates
+
+            var baud = QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString
+            const index = nmeaBaudCombo.comboBox.find(baud);
+            if (index === -1) {
+                nmeaBaudCombo.currentIndex = nmeaBaudCombo.comboBox.count - 1
+                customNmeaBaudField.text = baud
+            } else {
+                nmeaBaudCombo.currentIndex = index;
+            }
+        }
+    }
+
+    RowLayout {
+        visible: nmeaBaudCombo.visible && nmeaBaudCombo.isCustomBaud
+        spacing: ScreenTools.defaultFontPixelWidth
+
+        QGCLabel {
+            text:               qsTr("Custom Baud Rate")
+            Layout.fillWidth:   true
+        }
+        QGCTextField {
+            id:                 customNmeaBaudField
+            numericValuesOnly:  true
+            validator:          IntValidator { bottom: 1 }
+            onEditingFinished: {
+                if (!nmeaBaudCombo.isCustomBaud) return
+                var baud = parseInt(text)
+                if (baud > 0) {
+                    QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = baud
+                }
+            }
         }
     }
 
     LabelledFactTextField {
-        visible: nmeaPortCombo.currentText === "UDP Port"
+        visible: nmeaPortCombo.currentIndex === 1
         label: qsTr("NMEA stream UDP port")
         fact: QGroundControl.settingsManager.autoConnectSettings.nmeaUdpPort
     }
