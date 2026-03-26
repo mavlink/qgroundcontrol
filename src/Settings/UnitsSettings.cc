@@ -15,6 +15,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, horizontalDistanceUnits)
                    << QVariant::fromValue(static_cast<uint32_t>(HorizontalDistanceUnitsMeters));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(horizontalDistanceUnitsName);
+        metaData->setLabel(UnitsSettings::tr("Horizontal Distance"));
         metaData->setShortDescription(UnitsSettings::tr("Horizontal Distance"));
         metaData->setEnumInfo(enumStrings, enumValues);
 
@@ -46,6 +47,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, verticalDistanceUnits)
                    << QVariant::fromValue(static_cast<uint32_t>(VerticalDistanceUnitsMeters));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(verticalDistanceUnitsName);
+        metaData->setLabel(UnitsSettings::tr("Vertical Distance"));
         metaData->setShortDescription(UnitsSettings::tr("Vertical Distance"));
         metaData->setEnumInfo(enumStrings, enumValues);
         VerticalDistanceUnits defaultVerticalAltitudeUnit = VerticalDistanceUnitsMeters;
@@ -81,6 +83,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, areaUnits)
             QVariant::fromValue(static_cast<uint32_t>(AreaUnitsSquareMiles));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(areaUnitsName);
+        metaData->setLabel(UnitsSettings::tr("Area"));
         metaData->setShortDescription(UnitsSettings::tr("Area"));
         metaData->setEnumInfo(enumStrings, enumValues);
 
@@ -116,6 +119,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, speedUnits)
             QVariant::fromValue(static_cast<uint32_t>(SpeedUnitsKnots));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(speedUnitsName);
+        metaData->setLabel(UnitsSettings::tr("Speed"));
         metaData->setShortDescription(UnitsSettings::tr("Speed"));
         metaData->setEnumInfo(enumStrings, enumValues);
 
@@ -146,6 +150,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, temperatureUnits)
         enumValues << QVariant::fromValue(static_cast<uint32_t>(TemperatureUnitsCelsius)) << QVariant::fromValue(static_cast<uint32_t>(TemperatureUnitsFarenheit));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(temperatureUnitsName);
+        metaData->setLabel(UnitsSettings::tr("Temperature"));
         metaData->setShortDescription(UnitsSettings::tr("Temperature"));
         metaData->setEnumInfo(enumStrings, enumValues);
 
@@ -180,6 +185,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, weightUnits)
             << QVariant::fromValue(static_cast<uint32_t>(WeightUnitsLbs));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(weightUnitsName);
+        metaData->setLabel(UnitsSettings::tr("Weight"));
         metaData->setShortDescription(UnitsSettings::tr("Weight"));
         metaData->setEnumInfo(enumStrings, enumValues);
         WeightUnits defaultWeightUnit = WeightUnitsGrams;

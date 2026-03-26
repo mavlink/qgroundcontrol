@@ -17,14 +17,78 @@ Rectangle {
     readonly property real _verticalMargin:     _defaultTextHeight / 2
 
     property bool _first: true
+    property bool _commingFromRIDSettings: false
+    property int  _selectedPageIndex: -1
+    property int  _selectedSectionIndex: -1
+    property var  _expandedPages: ({})  // pageIndex -> bool
+    property int  _expandedRevision: 0  // bumped to trigger re-evaluation
+    property string _searchQuery: ""
 
-    property bool _commingFromRIDSettings:  false
+    function _setExpanded(pageIndex, value) {
+        _expandedPages[pageIndex] = value
+        _expandedRevision++
+    }
+
+    function _isExpanded(pageIndex) {
+        void _expandedRevision  // create binding dependency
+        return !!_expandedPages[pageIndex]
+    }
+
+    // Search: returns array of matching section indices for a page, or empty if no match
+    function _matchingSections(pageIndex) {
+        var query = _searchQuery.toLowerCase().trim()
+        if (query === "") return []  // empty = no filtering
+
+        var entry = settingsPagesModel.get(pageIndex)
+        if (!entry) return []
+
+        var termsStr = entry.searchTerms
+        if (!termsStr || termsStr === "") return []
+
+        try {
+            var terms = JSON.parse(termsStr)
+        } catch(e) {
+            return []
+        }
+
+        var matches = []
+        for (var i = 0; i < terms.length; i++) {
+            if (terms[i].terms.indexOf(query) !== -1) {
+                matches.push(terms[i].section)
+            }
+        }
+        return matches
+    }
+
+    // Does this page have any search matches? (or is search empty = show all)
+    function _pageMatchesSearch(pageIndex) {
+        if (_searchQuery.trim() === "") return true
+        return _matchingSections(pageIndex).length > 0
+    }
+
+    function _navigateTo(pageIndex, sectionIndex) {
+        var entry = settingsPagesModel.get(pageIndex)
+        if (!entry || entry.name === "Divider") return
+
+        var url = entry.url
+        _selectedSectionIndex = sectionIndex
+
+        if (_selectedPageIndex !== pageIndex) {
+            _selectedPageIndex = pageIndex
+            rightPanel.source = url
+        }
+
+        // Apply section filter after the page is loaded
+        if (rightPanel.item && typeof rightPanel.item.sectionFilter !== "undefined") {
+            rightPanel.item.sectionFilter = sectionIndex
+        }
+    }
 
     function showSettingsPage(settingsPage) {
-        for (var i=0; i<buttonRepeater.count; i++) {
-            var loader = buttonRepeater.itemAt(i)
-            if (loader && loader.item && loader.item.text === settingsPage) {
-                loader.item.clicked()
+        for (var i = 0; i < settingsPagesModel.count; i++) {
+            var entry = settingsPagesModel.get(i)
+            if (entry && entry.name === settingsPage) {
+                _navigateTo(i, -1)
                 break
             }
         }
@@ -38,105 +102,178 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        //-- Default Settings
-        if (globals.commingFromRIDIndicator) {
-            rightPanel.source = "qrc:/qml/QGroundControl/AppSettings/RemoteIDSettings.qml"
-            globals.commingFromRIDIndicator = false
-        } else {
-            rightPanel.source =  "qrc:/qml/QGroundControl/AppSettings/GeneralSettings.qml"
+        // Find and select the default page
+        var targetUrl = globals.commingFromRIDIndicator
+            ? "qrc:/qml/QGroundControl/AppSettings/RemoteIDSettings.qml"
+            : "qrc:/qml/QGroundControl/AppSettings/AppSettings.qml"
+        globals.commingFromRIDIndicator = false
+
+        for (var i = 0; i < settingsPagesModel.count; i++) {
+            var entry = settingsPagesModel.get(i)
+            if (entry && entry.url === targetUrl) {
+                _navigateTo(i, -1)
+                break
+            }
+        }
+    }
+
+    Connections {
+        target: rightPanel
+        function onLoaded() {
+            if (rightPanel.item && typeof rightPanel.item.sectionFilter !== "undefined") {
+                rightPanel.item.sectionFilter = _selectedSectionIndex
+            }
         }
     }
 
     SettingsPagesModel { id: settingsPagesModel }
 
-    ButtonGroup { id: buttonGroup }
-
-    QGCFlickable {
-        id:                 buttonList
-        width:              buttonColumn.width
+    ColumnLayout {
+        id:                 leftPanel
+        width:              Math.max(buttonColumn.implicitWidth + _horizontalMargin, ScreenTools.defaultFontPixelWidth * 22)
         anchors.topMargin:  _verticalMargin
         anchors.top:        parent.top
         anchors.bottom:     parent.bottom
         anchors.leftMargin: _horizontalMargin
         anchors.left:       parent.left
-        contentHeight:      buttonColumn.height + _verticalMargin
-        flickableDirection: Flickable.VerticalFlick
-        clip:               true
+        spacing:            _verticalMargin / 2
+
+        QGCTextField {
+            id:                 searchField
+            Layout.fillWidth:   true
+            placeholderText:    qsTr("Search settings...")
+
+            onTextChanged: {
+                settingsView._searchQuery = text
+            }
+        }
+
+        QGCFlickable {
+            id:                 buttonList
+            Layout.fillWidth:   true
+            Layout.fillHeight:  true
+            contentHeight:      buttonColumn.height + _verticalMargin
+            flickableDirection:  Flickable.VerticalFlick
+            clip:               true
 
         ColumnLayout {
             id:         buttonColumn
             spacing:    0
 
-            property real _maxButtonWidth: 0
-
-            Component {
-                id: dividerComponent
-
-                Item { height: ScreenTools.defaultFontPixelHeight / 2 }
-            }
-
-            Component {
-                id: buttonComponent
-
-                SettingsButton {
-                    text:               modelName
-                    icon.source:        modelIconUrl
-                    visible:            modelPageVisible()
-                    ButtonGroup.group:  buttonGroup
-
-                    onClicked: {
-                        if (mainWindow.allowViewSwitch()) {
-                            if (rightPanel.source !== modelUrl) {
-                                rightPanel.source = modelUrl
-                            }
-                            checked = true
-                        }
-                    }
-
-                    Component.onCompleted: {
-                        if (globals.commingFromRIDIndicator) {
-                            _commingFromRIDSettings = true
-                        }
-                        if(_first) {
-                            _first = false
-                            checked = true
-                        }
-                        if (_commingFromRIDSettings) {
-                            checked = false
-                            _commingFromRIDSettings = false
-                            if (modelUrl == "qrc:/qml/QGroundControl/AppSettings/RemoteIDSettings.qml") {
-                                checked = true
-                            }
-                        }
-                    }
-                }
-            }
-
             Repeater {
                 id:     buttonRepeater
                 model:  settingsPagesModel
 
-                Loader {
+                ColumnLayout {
+                    id:     pageColumn
+                    spacing: 0
                     Layout.fillWidth: true
-                    sourceComponent: _sourceComponent()
 
-                    property var modelName: name
-                    property var modelIconUrl: iconUrl
-                    property var modelUrl: url
-                    property var modelPageVisible: pageVisible
+                    required property int index
+                    required property var model
 
-                    function _sourceComponent() {
-                        if (name === "Divider") {
-                            return dividerComponent
-                        } else if (pageVisible()) {
-                            return buttonComponent
-                        } else {
-                            return undefined
+                    property string pageName:    model.name ?? ""
+                    property string pageUrl:     model.url ?? ""
+                    property string pageIconUrl: model.iconUrl ?? ""
+                    property var    pageVisible: model.pageVisible ?? function() { return true }
+                    property var    pageSections: {
+                        try {
+                            var s = model.sections
+                            return (s && s !== "") ? JSON.parse(s) : []
+                        } catch(e) {
+                            return []
+                        }
+                    }
+                    property bool isSelected: settingsView._selectedPageIndex === index
+                    property bool hasMultipleSections: pageSections.length > 1
+                    property bool isSearching: settingsView._searchQuery.trim() !== ""
+                    property bool matchesSearch: settingsView._pageMatchesSearch(index)
+                    property bool isExpanded: hasMultipleSections && (isSearching ? matchesSearch : settingsView._isExpanded(index))
+
+                    visible: {
+                        if (pageName === "Divider") return !isSearching
+                        if (!pageVisible()) return false
+                        if (isSearching) return matchesSearch
+                        return true
+                    }
+
+                    // Divider
+                    Item {
+                        Layout.fillWidth: true
+                        height: ScreenTools.defaultFontPixelHeight / 2
+                        visible: pageName === "Divider"
+                    }
+
+                    // Page button
+                    SettingsButton {
+                        Layout.fillWidth: true
+                        text:          pageName
+                        icon.source:   pageIconUrl
+                        expandable:    hasMultipleSections
+                        expanded:      isExpanded
+                        checked:       isSelected && settingsView._selectedSectionIndex === -1
+                        visible:       pageName !== "Divider" && pageVisible()
+
+                        onClicked: {
+                            if (mainWindow.allowViewSwitch()) {
+                                settingsView._navigateTo(index, -1)
+                                // Auto-expand when selecting a page
+                                if (hasMultipleSections && !isExpanded) {
+                                    settingsView._setExpanded(index, true)
+                                }
+                            }
+                        }
+
+                        onToggleExpand: {
+                            settingsView._setExpanded(index, !isExpanded)
+                        }
+                    }
+
+                    // Section sub-items (indented, shown when page is expanded)
+                    Repeater {
+                        model: isExpanded ? pageSections : []
+
+                        Button {
+                            id:             sectionBtn
+                            Layout.fillWidth: true
+                            padding:        ScreenTools.defaultFontPixelWidth * 0.75
+                            leftPadding:    ScreenTools.defaultFontPixelWidth * 3
+                            hoverEnabled:   !ScreenTools.isMobile
+
+                            property int sectionIndex: index
+                            property bool sectionChecked: pageColumn.isSelected && settingsView._selectedSectionIndex === sectionIndex
+                            property bool sectionMatchesSearch: {
+                                if (!pageColumn.isSearching) return true
+                                var matches = settingsView._matchingSections(pageColumn.index)
+                                return matches.indexOf(sectionIndex) !== -1
+                            }
+                            property color textColor: sectionChecked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                            visible: sectionMatchesSearch
+
+                            background: Rectangle {
+                                color:   qgcPal.buttonHighlight
+                                opacity: sectionBtn.sectionChecked || sectionBtn.pressed ? 1 : sectionBtn.enabled && sectionBtn.hovered ? 0.2 : 0
+                                radius:  ScreenTools.defaultFontPixelWidth / 2
+                            }
+
+                            contentItem: QGCLabel {
+                                text:  modelData
+                                color: sectionBtn.textColor
+                                font.pointSize: ScreenTools.defaultFontPointSize * 0.9
+                                horizontalAlignment: Text.AlignLeft
+                            }
+
+                            onClicked: {
+                                if (mainWindow.allowViewSwitch()) {
+                                    settingsView._navigateTo(pageColumn.index, sectionIndex)
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+    }
     }
 
     Rectangle {
@@ -144,7 +281,7 @@ Rectangle {
         anchors.topMargin:      _verticalMargin
         anchors.bottomMargin:   _verticalMargin
         anchors.leftMargin:     _horizontalMargin
-        anchors.left:           buttonList.right
+        anchors.left:           leftPanel.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
         width:                  1

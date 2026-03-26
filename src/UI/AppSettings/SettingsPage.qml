@@ -11,6 +11,7 @@ Item {
     id: root
 
     default property alias contentItem: mainLayout.data
+    property int sectionFilter: -1
 
     QGCFlickable {
         anchors.fill:   parent

@@ -138,6 +138,7 @@ public:
     QVariant cookedUserMin() const;
     QVariant cookedUserMax() const;
     QString name() const { return _name; }
+    QString label() const { return _label; }
     QString shortDescription() const { return _shortDescription; }
     ValueType_t type() const { return _type; }
     QString rawUnits() const { return _rawUnits; }
@@ -178,6 +179,7 @@ public:
     void setRawUserMin(const QVariant &rawUserMin);
     void setRawUserMax(const QVariant &rawUserMax);
     void setName(const QString &name) { _name = name; }
+    void setLabel(const QString &label) { _label = label; }
     void setShortDescription(const QString &shortDescription) { _shortDescription = shortDescription; }
     void setRawUnits(const QString &rawUnits);
     void setVehicleRebootRequired(bool rebootRequired) { _vehicleRebootRequired = rebootRequired; }
@@ -340,6 +342,7 @@ private:
     QVariant _rawUserMin;   // Specifically left as unset by default to indicate no user min
     QVariant _rawUserMax;   // Specifically left as unset by default to indicate no user max
     QString _name;
+    QString _label;
     QString _shortDescription;
     QString _rawUnits;
     QString _cookedUnits;
@@ -430,6 +433,7 @@ private:
 
     static constexpr const char *_decimalPlacesJsonKey = "decimalPlaces";
     static constexpr const char *_nameJsonKey = "name";
+    static constexpr const char *_labelJsonKey = "label";
     static constexpr const char *_typeJsonKey = "type";
     static constexpr const char *_shortDescriptionJsonKey = "shortDesc";
     static constexpr const char *_longDescriptionJsonKey = "longDesc";

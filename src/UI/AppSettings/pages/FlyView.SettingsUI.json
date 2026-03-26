@@ -1,0 +1,97 @@
+{
+    "version": 1,
+    "bindings": {
+        "hasChecklist": "QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length",
+        "useChecklistValue": "QGroundControl.settingsManager.appSettings.useChecklist.value",
+        "virtualJoystickOn": "QGroundControl.settingsManager.appSettings.virtualJoystick.rawValue"
+    },
+    "groups": [
+        {
+            "heading": "General",
+            "controls": [
+                {
+                    "setting": "appSettings.useChecklist",
+                    "showWhen": "hasChecklist"
+                },
+                {
+                    "setting": "appSettings.enforceChecklist",
+                    "showWhen": "hasChecklist && QGroundControl.settingsManager.appSettings.useChecklist.visible",
+                    "enableWhen": "useChecklistValue"
+                },
+                {
+                    "setting": "appSettings.enableMultiVehiclePanel"
+                },
+                {
+                    "setting": "flyViewSettings.keepMapCenteredOnVehicle"
+                },
+                {
+                    "setting": "flyViewSettings.showLogReplayStatusBar"
+                },
+                {
+                    "setting": "flyViewSettings.showSimpleCameraControl"
+                },
+                {
+                    "setting": "flyViewSettings.updateHomePosition"
+                },
+                {
+                    "setting": "flyViewSettings.enableAutomaticMissionPopups"
+                }
+            ]
+        },
+        {
+            "heading": "Guided Commands",
+            "controls": [
+                {
+                    "setting": "flyViewSettings.guidedMinimumAltitude"
+                },
+                {
+                    "setting": "flyViewSettings.guidedMaximumAltitude"
+                },
+                {
+                    "setting": "flyViewSettings.maxGoToLocationDistance"
+                },
+                {
+                    "setting": "flyViewSettings.forwardFlightGoToLocationLoiterRad"
+                },
+                {
+                    "setting": "flyViewSettings.goToLocationRequiresConfirmInGuided"
+                }
+            ]
+        },
+        {
+            "component": "MavlinkActionSettings",
+            "sectionName": "MAVLink Actions",
+            "keywords": "mavlink action,pre-arm,post-arm,disarm"
+        },
+        {
+            "heading": "Virtual Joystick",
+            "controls": [
+                {
+                    "setting": "appSettings.virtualJoystick"
+                },
+                {
+                    "setting": "appSettings.virtualJoystickAutoCenterThrottle",
+                    "enableWhen": "virtualJoystickOn"
+                },
+                {
+                    "setting": "appSettings.virtualJoystickLeftHandedMode",
+                    "enableWhen": "virtualJoystickOn"
+                }
+            ]
+        },
+        {
+            "heading": "Instrument Panel",
+            "controls": [
+                {
+                    "setting": "flyViewSettings.showAdditionalIndicatorsCompass"
+                },
+                {
+                    "setting": "flyViewSettings.lockNoseUpCompass"
+                },
+                {
+                    "setting": "flyViewSettings.instrumentQmlFile2"
+                }
+            ]
+        }
+    ]
+}

@@ -13,6 +13,7 @@ class SettingsFact : public Fact
 {
     Q_OBJECT
     Q_PROPERTY(bool visible MEMBER _visible CONSTANT)
+    Q_PROPERTY(bool userVisible MEMBER _visible CONSTANT)
 
 public:
     explicit SettingsFact(QObject *parent = nullptr);

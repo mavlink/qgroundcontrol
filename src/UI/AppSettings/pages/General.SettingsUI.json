@@ -1,0 +1,74 @@
+{
+    "version": 1,
+    "groups": [
+        {
+            "heading": "General",
+            "controls": [
+                {
+                    "setting": "appSettings.qLocaleLanguage",
+                    "control": "combobox"
+                },
+                {
+                    "setting": "appSettings.indoorPalette"
+                },
+                {
+                    "setting": "appSettings.followTarget"
+                },
+                {
+                    "setting": "appSettings.audioVolume",
+                    "control": "slider",
+                    "enableCheckbox": {
+                        "checked": "fact.rawValue > 0.0",
+                        "onClicked": "fact.rawValue = enableCheckBoxChecked ? 100 : 0"
+                    },
+                    "button": {
+                        "text": "Test",
+                        "onClicked": "QGroundControl.testAudioOutput()",
+                        "enabled": "QGroundControl.settingsManager.appSettings.audioVolume.rawValue > 0.0"
+                    }
+                },
+                {
+                    "setting": "appSettings.gstDebugLevel"
+                },
+                {
+                    "setting": "appSettings.uiScalePercent",
+                    "control": "scaler"
+                },
+                {
+                    "setting": "appSettings.savePath",
+                    "control": "browse",
+                    "showWhen": "!ScreenTools.isMobile"
+                },
+                {
+                    "setting": "appSettings.clearSettingsNextBoot"
+                }
+            ]
+        },
+        {
+            "heading": "Units",
+            "showWhen": "QGroundControl.settingsManager.unitsSettings.visible",
+            "controls": [
+                {
+                    "setting": "unitsSettings.horizontalDistanceUnits",
+                    "control": "combobox"
+                },
+                {
+                    "setting": "unitsSettings.verticalDistanceUnits",
+                    "control": "combobox"
+                },
+                {
+                    "setting": "unitsSettings.areaUnits",
+                    "control": "combobox"
+                },
+                {
+                    "setting": "unitsSettings.speedUnits",
+                    "control": "combobox"
+                },
+                {
+                    "setting": "unitsSettings.temperatureUnits",
+                    "control": "combobox"
+                }
+            ]
+        }
+    ]
+}

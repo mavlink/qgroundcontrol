@@ -1,0 +1,118 @@
+{
+    "version": 1,
+    "pages": [
+        {
+            "name": "General",
+            "qml": "AppSettings.qml",
+            "icon": "qrc:/res/QGCLogoWhite.svg",
+            "pageDefinition": "General.SettingsUI.json"
+        },
+        {
+            "name": "Fly View",
+            "qml": "FlyViewSettings.qml",
+            "icon": "qrc:/qmlimages/PaperPlane.svg",
+            "pageDefinition": "FlyView.SettingsUI.json"
+        },
+        {
+            "name": "3D View",
+            "qml": "Viewer3DSettings.qml",
+            "icon": "qrc:/qml/QGroundControl/Viewer3D/City3DMapIcon.svg",
+            "pageDefinition": "Viewer3D.SettingsUI.json",
+            "visible": "QGroundControl.settingsManager.viewer3DSettings.visible"
+        },
+        {
+            "name": "Plan View",
+            "qml": "PlanViewSettings.qml",
+            "icon": "qrc:/qmlimages/Plan.svg",
+            "pageDefinition": "PlanView.SettingsUI.json"
+        },
+        {
+            "divider": true
+        },
+        {
+            "name": "ADSB Server",
+            "qml": "ADSBVehicleManagerSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/airplane.svg",
+            "pageDefinition": "ADSBVehicleManager.SettingsUI.json"
+        },
+        {
+            "name": "Comm Links",
+            "qml": "LinkSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/usb.svg",
+            "pageDefinition": "CommLinks.SettingsUI.json"
+        },
+        {
+            "name": "Logging",
+            "url": "qrc:/qml/QGroundControl/Controls/AppLogging.qml",
+            "icon": "qrc:/InstrumentValueIcons/conversation.svg"
+        },
+        {
+            "name": "Maps",
+            "qml": "MapSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/globe.svg",
+            "pageDefinition": "Maps.SettingsUI.json"
+        },
+        {
+            "name": "NTRIP/RTK",
+            "qml": "NTRIPSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/globe.svg",
+            "visible": "QGroundControl.settingsManager && QGroundControl.settingsManager.ntripSettings !== undefined",
+            "pageDefinition": "NTRIP.SettingsUI.json"
+        },
+        {
+            "name": "PX4 Log Transfer",
+            "qml": "PX4LogTransferSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/inbox-download.svg",
+            "visible": "QGroundControl.corePlugin.options.showPX4LogTransferOptions && QGroundControl.px4ProFirmwareSupported && (QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.px4Firmware : true)",
+            "pageDefinition": "PX4LogTransfer.SettingsUI.json"
+        },
+        {
+            "name": "Remote ID",
+            "qml": "RemoteIDSettings.qml",
+            "icon": "qrc:/qmlimages/RidIconManNoID.svg",
+            "pageDefinition": "RemoteID.SettingsUI.json"
+        },
+        {
+            "name": "Telemetry",
+            "qml": "MavlinkSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/drone.svg",
+            "pageDefinition": "Telemetry.SettingsUI.json"
+        },
+        {
+            "name": "Video",
+            "qml": "VideoSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/camera.svg",
+            "pageDefinition": "Video.SettingsUI.json",
+            "visible": "QGroundControl.settingsManager.videoSettings.visible"
+        },
+        {
+            "divider": true
+        },
+        {
+            "name": "Help",
+            "qml": "HelpSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/question.svg"
+        },
+        {
+            "divider": true
+        },
+        {
+            "name": "Mock Link",
+            "qml": "MockLink.qml",
+            "icon": "qrc:/InstrumentValueIcons/drone.svg",
+            "visible": "ScreenTools.isDebug"
+        },
+        {
+            "name": "Debug",
+            "qml": "DebugWindow.qml",
+            "icon": "qrc:/InstrumentValueIcons/bug.svg",
+            "visible": "ScreenTools.isDebug"
+        },
+        {
+            "name": "Palette Test",
+            "qml": "QmlTest.qml",
+            "icon": "qrc:/InstrumentValueIcons/photo.svg",
+            "visible": "ScreenTools.isDebug"
+        }
+    ]
+}

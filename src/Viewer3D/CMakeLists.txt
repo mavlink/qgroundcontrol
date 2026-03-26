@@ -35,7 +35,6 @@ qt_add_library(Viewer3DModule STATIC)
 set_source_files_properties(Viewer3DQml/Images/city_3d_map_icon.svg PROPERTIES QT_RESOURCE_ALIAS City3DMapIcon.svg)
 set_source_files_properties(Viewer3DQml/Models3D/Shaders/earthMaterial.frag PROPERTIES QT_RESOURCE_ALIAS ShaderFragment/earthMaterial.frag)
 set_source_files_properties(Viewer3DQml/Models3D/Shaders/earthMaterial.vert PROPERTIES QT_RESOURCE_ALIAS ShaderVertex/earthMaterial.vert)
-set_source_files_properties(Viewer3DQml/Viewer3DSettings.qml PROPERTIES QT_RESOURCE_ALIAS Viewer3DSettings.qml)
 set_source_files_properties(Viewer3DQml/Models3D/Viewer3DModel.qml PROPERTIES QT_RESOURCE_ALIAS Models3D/Viewer3DModel.qml)
 
 qt_add_qml_module(Viewer3DModule
@@ -50,7 +49,6 @@ qt_add_qml_module(Viewer3DModule
         Viewer3DQml/Drones/DroneModelDjiF450.qml
         Viewer3DQml/Models3D/Viewer3DVehicleItems.qml
         Viewer3DQml/Viewer3DProgressBar.qml
-        Viewer3DQml/Viewer3DSettings.qml
         Viewer3DQml/Viewer3DShowAction.qml
     RESOURCES
         Viewer3DQml/Images/city_3d_map_icon.svg

@@ -115,8 +115,7 @@ public:
     Q_INVOKABLE void    saveBoolGlobalSetting   (const QString& key, bool value);
     Q_INVOKABLE bool    loadBoolGlobalSetting   (const QString& key, bool defaultValue);
 
-    Q_INVOKABLE static void deleteAllSettingsNextBoot();
-    Q_INVOKABLE static void clearDeleteAllSettingsNextBoot();
+
 
     Q_INVOKABLE void    startPX4MockLink            (bool sendStatusText, bool enableCamera, bool enableGimbal);
     Q_INVOKABLE void    startGenericMockLink        (bool sendStatusText, bool enableCamera, bool enableGimbal);

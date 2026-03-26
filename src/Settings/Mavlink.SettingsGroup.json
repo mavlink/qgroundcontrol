@@ -1,78 +1,96 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "telemetrySave",
-    "shortDesc": "Save telemetry Log after each flight",
-    "longDesc":  "If this option is enabled a telemetry will be saved after each flight completes.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "telemetrySaveNotArmed",
-    "shortDesc": "Save telemetry log even if vehicle was not armed",
-    "longDesc":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":                 "apmStartMavlinkStreams",
-    "shortDesc":     "Request start of MAVLink telemetry streams (ArduPilot only)",
-    "type":                 "bool",
-    "default":         true,
-    "qgcRebootRequired":    true
-},
-{
-    "name":             "saveCsvTelemetry",
-    "shortDesc": "Save CSV Telementry Logs",
-    "longDesc":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "forwardMavlink",
-    "shortDesc": "Enable mavlink forwarding",
-    "longDesc":  "Enable mavlink forwarding",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "forwardMavlinkHostName",
-    "shortDesc": "Host name",
-    "longDesc":  "Host name to forward mavlink to. i.e: localhost:14445",
-    "type":             "string",
-    "default":     "localhost:14445",
-    "qgcRebootRequired":    true
-},
-{
-    "name":      "forwardMavlinkAPMSupportHostName",
-    "shortDesc": "Ardupilot Support Host name",
-    "longDesc":  "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
-    "type":      "string",
-    "default":   "support.ardupilot.org:xxxx"
-},
-{
-    "name":         "sendGCSHeartbeat",
-    "shortDesc":    "Send GCS Heartbeat",
-    "type":         "bool",
-    "default":      true
-},
-{
-    "name":         "gcsMavlinkSystemID",
-    "shortDesc":    "GCS MAVLink System ID",
-    "type":         "uint32",
-    "default":      255,
-    "min":          1,
-    "max":          255
-},
-{
-    "name":         "noInitialDownloadWhenFlying",
-    "shortDesc":    "Skip param/plan download on connect if flying",
-    "longDesc":     "When enabled, parameter and mission plan downloads are skipped when connecting to a vehicle that is already flying. This prevents bandwidth-heavy transfers from disrupting an active flight.",
-    "type":         "bool",
-    "default":      false
-}
-]
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "telemetrySave",
+            "shortDesc": "Save telemetry Log after each flight",
+            "longDesc": "If this option is enabled a telemetry will be saved after each flight completes.",
+            "type": "bool",
+            "default": true,
+            "label": "Save log after each flight",
+            "keywords": "telemetry log,tlog,save log,recording"
+        },
+        {
+            "name": "telemetrySaveNotArmed",
+            "shortDesc": "Save telemetry log even if vehicle was not armed",
+            "longDesc": "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
+            "type": "bool",
+            "default": false,
+            "label": "Save logs even if vehicle was not armed",
+            "keywords": "telemetry log,tlog"
+        },
+        {
+            "name": "apmStartMavlinkStreams",
+            "shortDesc": "Request start of MAVLink telemetry streams (ArduPilot only)",
+            "type": "bool",
+            "default": true,
+            "qgcRebootRequired": true,
+            "label": "Request start of MAVLink telemetry streams (ArduPilot only)",
+            "keywords": "stream rate,ardupilot,apm"
+        },
+        {
+            "name": "saveCsvTelemetry",
+            "shortDesc": "Save CSV Telementry Logs",
+            "longDesc": "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
+            "type": "bool",
+            "default": false,
+            "label": "Save CSV log of telemetry data",
+            "keywords": "csv,save log"
+        },
+        {
+            "name": "forwardMavlink",
+            "shortDesc": "Enable mavlink forwarding",
+            "longDesc": "Enable mavlink forwarding",
+            "type": "bool",
+            "default": false,
+            "label": "Enable",
+            "keywords": "forward,relay,mavlink forward"
+        },
+        {
+            "name": "forwardMavlinkHostName",
+            "shortDesc": "Host name",
+            "longDesc": "Host name to forward mavlink to. i.e: localhost:14445",
+            "type": "string",
+            "default": "localhost:14445",
+            "qgcRebootRequired": true,
+            "label": "Host name",
+            "keywords": "forward,host,mavlink forward"
+        },
+        {
+            "name": "forwardMavlinkAPMSupportHostName",
+            "shortDesc": "Ardupilot Support Host name",
+            "longDesc": "Ardupilot Support server to forward mavlink to. i.e: support.ardupilot.org:xxxx",
+            "type": "string",
+            "default": "support.ardupilot.org:xxxx",
+            "label": "Ardupilot Support Host name"
+        },
+        {
+            "name": "sendGCSHeartbeat",
+            "shortDesc": "Send GCS Heartbeat",
+            "type": "bool",
+            "default": true,
+            "label": "Emit heartbeat",
+            "keywords": "heartbeat"
+        },
+        {
+            "name": "gcsMavlinkSystemID",
+            "shortDesc": "GCS MAVLink System ID",
+            "type": "uint32",
+            "default": 255,
+            "min": 1,
+            "max": 255,
+            "label": "MAVLink System ID",
+            "keywords": "system id,mavlink id"
+        },
+        {
+            "name": "noInitialDownloadWhenFlying",
+            "shortDesc": "Skip param/plan download on connect if flying",
+            "longDesc": "When enabled, parameter and mission plan downloads are skipped when connecting to a vehicle that is already flying. This prevents bandwidth-heavy transfers from disrupting an active flight.",
+            "type": "bool",
+            "default": false,
+            "label": "Skip param/plan download if flying on connect",
+            "keywords": "initial download"
+        }
+    ]
 }

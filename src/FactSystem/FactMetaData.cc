@@ -1172,6 +1172,7 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
 
     static const QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { _nameJsonKey,                 QJsonValue::String, true },
+        { _labelJsonKey,                QJsonValue::String, false },
         { _typeJsonKey,                 QJsonValue::String, true },
         { _shortDescriptionJsonKey,     QJsonValue::String, false },
         { _longDescriptionJsonKey,      QJsonValue::String, false },
@@ -1252,6 +1253,7 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
 
     metaData->setDecimalPlaces(json[_decimalPlacesJsonKey].toInt(kUnknownDecimalPlaces));
     metaData->setShortDescription(json[_shortDescriptionJsonKey].toString());
+    metaData->setLabel(json[_labelJsonKey].toString());
     metaData->setLongDescription(json[_longDescriptionJsonKey].toString());
 
     if (json.contains(_unitsJsonKey)) {

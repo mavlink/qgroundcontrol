@@ -124,9 +124,10 @@ Item {
        I've disabled (in release builds) until I figure out why. Changes require a restart for now.
     */
     Connections {
-        target: QGroundControl.settingsManager.appSettings.appFontPointSize
+        target: QGroundControl.settingsManager.appSettings.uiScalePercent
         function onValueChanged() {
-            _setBasePointSize(QGroundControl.settingsManager.appSettings.appFontPointSize.value)
+            var pct = QGroundControl.settingsManager.appSettings.uiScalePercent.value
+            _setBasePointSize(platformFontPointSize * pct / 100)
         }
     }
 
@@ -200,15 +201,15 @@ Item {
                 platformFontPointSize = _defaultFont.font.pointSize;
             }
             //-- See if we are using a custom size
-            var _appFontPointSizeFact = QGroundControl.settingsManager.appSettings.appFontPointSize
-            var baseSize = _appFontPointSizeFact.value
+            var _uiScalePercentFact = QGroundControl.settingsManager.appSettings.uiScalePercent
+            var pct = _uiScalePercentFact.value
             //-- Sanity check
-            if(baseSize < _appFontPointSizeFact.min || baseSize > _appFontPointSizeFact.max) {
-                baseSize = platformFontPointSize;
-                _appFontPointSizeFact.value = baseSize
+            if(pct < _uiScalePercentFact.min || pct > _uiScalePercentFact.max) {
+                pct = 100;
+                _uiScalePercentFact.value = pct
             }
             //-- Set size saved in settings
-            _screenTools._setBasePointSize(baseSize);
+            _screenTools._setBasePointSize(platformFontPointSize * pct / 100);
         }
     }
 }

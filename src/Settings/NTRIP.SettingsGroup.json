@@ -1,79 +1,94 @@
 {
-  "version": 1,
-  "fileType": "FactMetaData",
-  "QGC.MetaData.Facts": [
-    {
-      "name": "ntripServerConnectEnabled",
-      "shortDesc": "Connect to NTRIP server",
-      "longDesc": "Connect to NTRIP server using specified address/port",
-      "type": "bool",
-      "default": false
-    },
-    {
-      "name": "ntripServerHostAddress",
-      "shortDesc": "Host address",
-      "type": "string",
-      "default": ""
-    },
-    {
-      "name": "ntripServerPort",
-      "shortDesc": "Server port",
-      "type": "uint16",
-      "default": 2101
-    },
-    {
-      "name": "ntripUsername",
-      "shortDesc": "Username",
-      "type": "string",
-      "default": ""
-    },
-    {
-      "name": "ntripPassword",
-      "shortDesc": "Password",
-      "type": "string",
-      "default": ""
-    },
-    {
-      "name": "ntripMountpoint",
-      "shortDesc": "Mount Point",
-      "longDesc": "NTRIP mount point. Leave blank for RTCM over TCP",
-      "type": "string",
-      "default": ""
-    },
-    {
-      "name": "ntripWhitelist",
-      "shortDesc": "RTCM Message Filter",
-      "longDesc": "Comma-separated RTCM message IDs to forward (e.g. 1005,1077,1087). Leave blank for all messages.",
-      "type": "string",
-      "default": ""
-    },
-    {
-      "name": "ntripUseTls",
-      "shortDesc": "Use TLS encryption",
-      "longDesc": "Connect using TLS/SSL encryption (required for some SPARTN casters on port 2102)",
-      "type": "bool",
-      "default": false
-    },
-    {
-      "name": "ntripUdpForwardEnabled",
-      "shortDesc": "UDP forward RTCM data",
-      "longDesc": "Forward received RTCM correction data via UDP to the specified address and port",
-      "type": "bool",
-      "default": false
-    },
-    {
-      "name": "ntripUdpTargetAddress",
-      "shortDesc": "UDP target address",
-      "longDesc": "IP address to forward RTCM data to via UDP",
-      "type": "string",
-      "default": ""
-    },
-    {
-      "name": "ntripUdpTargetPort",
-      "shortDesc": "UDP target port",
-      "longDesc": "Port to forward RTCM data to via UDP",
-      "type": "uint16",
-      "default": 0
-    }
-  ]
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "ntripServerConnectEnabled",
+            "shortDesc": "Connect to NTRIP server",
+            "longDesc": "Connect to NTRIP server using specified address/port",
+            "type": "bool",
+            "default": false,
+            "label": "Connect to NTRIP server"
+        },
+        {
+            "name": "ntripServerHostAddress",
+            "shortDesc": "Host address",
+            "type": "string",
+            "default": "",
+            "label": "Host address"
+        },
+        {
+            "name": "ntripServerPort",
+            "shortDesc": "Server port",
+            "type": "uint16",
+            "default": 2101,
+            "label": "Server port"
+        },
+        {
+            "name": "ntripUsername",
+            "shortDesc": "Username",
+            "type": "string",
+            "default": "",
+            "label": "Username"
+        },
+        {
+            "name": "ntripPassword",
+            "shortDesc": "Password",
+            "type": "string",
+            "default": "",
+            "label": "Password"
+        },
+        {
+            "name": "ntripMountpoint",
+            "shortDesc": "Mount Point",
+            "longDesc": "NTRIP mount point. Leave blank for RTCM over TCP",
+            "type": "string",
+            "default": "",
+            "label": "Mount Point"
+        },
+        {
+            "name": "ntripWhitelist",
+            "shortDesc": "RTCM Message Filter",
+            "longDesc": "Comma-separated RTCM message IDs to forward (e.g. 1005,1077,1087). Leave blank for all messages.",
+            "type": "string",
+            "default": "",
+            "label": "RTCM Message Filter",
+            "keywords": "whitelist,message filter"
+        },
+        {
+            "name": "ntripUseTls",
+            "shortDesc": "Use TLS encryption",
+            "longDesc": "Connect using TLS/SSL encryption (required for some SPARTN casters on port 2102)",
+            "type": "bool",
+            "default": false,
+            "label": "Use TLS encryption"
+        },
+        {
+            "name": "ntripUdpForwardEnabled",
+            "shortDesc": "UDP forward RTCM data",
+            "longDesc": "Forward received RTCM correction data via UDP to the specified address and port",
+            "type": "bool",
+            "default": false,
+            "label": "UDP forward RTCM data",
+            "keywords": "udp forward,relay,corrections forward"
+        },
+        {
+            "name": "ntripUdpTargetAddress",
+            "shortDesc": "UDP target address",
+            "longDesc": "IP address to forward RTCM data to via UDP",
+            "type": "string",
+            "default": "",
+            "label": "UDP target address",
+            "keywords": "udp forward,relay"
+        },
+        {
+            "name": "ntripUdpTargetPort",
+            "shortDesc": "UDP target port",
+            "longDesc": "Port to forward RTCM data to via UDP",
+            "type": "uint16",
+            "default": 0,
+            "label": "UDP target port",
+            "keywords": "udp forward,relay"
+        }
+    ]
 }

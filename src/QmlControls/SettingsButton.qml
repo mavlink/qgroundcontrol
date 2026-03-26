@@ -13,6 +13,10 @@ Button {
     icon.color:     textColor
 
     property color textColor: checked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
+    property bool expandable: false
+    property bool expanded:   false
+
+    signal toggleExpand()
 
     QGCPalette {
         id:                 qgcPal
@@ -41,6 +45,21 @@ Button {
             text:                   control.text
             color:                  control.textColor
             horizontalAlignment:    QGCLabel.AlignLeft
+        }
+
+        QGCColoredImage {
+            visible:    control.expandable
+            source:     "/InstrumentValueIcons/cheveron-right.svg"
+            color:      control.textColor
+            width:      ScreenTools.defaultFontPixelHeight * 0.75
+            height:     width
+            rotation:   control.expanded ? 90 : 0
+
+            MouseArea {
+                anchors.fill: parent
+                anchors.margins: -ScreenTools.defaultFontPixelWidth
+                onClicked: control.toggleExpand()
+            }
         }
     }
 }

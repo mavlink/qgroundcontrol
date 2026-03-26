@@ -48,6 +48,8 @@ def parseJsonArrayForTranslateKeys(
 ):
     for index in range(0, len(jsonArray)):
         jsonObject = jsonArray[index]
+        if not isinstance(jsonObject, dict):
+            continue
         arrayIndexStr = str(index)
         for arrayIDKey in arrayIDKeys:
             if arrayIDKey in jsonObject:
@@ -69,7 +71,7 @@ def addLocKeysBasedOnQGCFileType(jsonPath, jsonDict):
             translateKeyValue = "label,enumStrings,friendlyName,description,category"
             arrayIDKeysKeyValue = "rawName,comment"
         elif qgcFileType == "FactMetaData":
-            translateKeyValue = "shortDesc,longDesc,enumStrings"
+            translateKeyValue = "shortDesc,longDesc,enumStrings,label,keywords"
             arrayIDKeysKeyValue = "name"
         if translateKeysKey not in jsonDict and translateKeyValue != "":
             jsonDict[translateKeysKey] = translateKeyValue
@@ -132,12 +134,12 @@ def writeJsonTSFile(output_path, multiFileLocArray):
             if len(disambiguation):
                 ET.SubElement(message, "comment").text = disambiguation
 
-            extraCommentStr = ""
-            for jsonHierachy in singleFileLocStringDict[locKey]:
-                extraCommentStr += f"{jsonHierachy}, "
+            hierarchies = singleFileLocStringDict[locKey]
+            extraCommentStr = ", ".join(hierarchies)
             ET.SubElement(message, "extracomment").text = extraCommentStr
 
-            if extraCommentStr.endswith(".enumStrings, "):
+            commaSeparatedFields = {"enumStrings", "keywords"}
+            if any(h.rsplit(".", 1)[-1] in commaSeparatedFields for h in hierarchies):
                 ET.SubElement(
                     message, "translatorcomment"
                 ).text = "Only use english comma ',' to separate strings"

@@ -1,0 +1,25 @@
+{
+    "version": 1,
+    "groups": [
+        {
+            "heading": "General",
+            "controls": [
+                {
+                    "setting": "appSettings.defaultMissionItemAltitude"
+                },
+                {
+                    "setting": "planViewSettings.vtolTransitionDistance"
+                },
+                {
+                    "setting": "planViewSettings.useConditionGate"
+                },
+                {
+                    "setting": "planViewSettings.takeoffItemNotRequired"
+                },
+                {
+                    "setting": "planViewSettings.allowMultipleLandingPatterns"
+                }
+            ]
+        }
+    ]
+}
