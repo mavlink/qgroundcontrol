@@ -15,7 +15,28 @@ Rectangle {
     readonly property real  _defaultTextWidth:      ScreenTools.defaultFontPixelWidth
     readonly property real  _horizontalMargin:      _defaultTextWidth / 2
     readonly property real  _verticalMargin:        _defaultTextHeight / 2
-    readonly property real  _buttonWidth:           _defaultTextWidth * 18
+
+    property var  _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var  _currentPage:   null
+
+    function _updatePanelSource() {
+        if (_currentPage) {
+            if (_currentPage.requiresVehicle && !_activeVehicle) {
+                panelLoader.source = ""
+            } else {
+                panelLoader.source = _currentPage.url
+            }
+        }
+    }
+
+    on_ActiveVehicleChanged: {
+        if (_currentPage && _currentPage.requiresVehicle) {
+            panelLoader.source = ""
+            if (_activeVehicle) {
+                Qt.callLater(_updatePanelSource)
+            }
+        }
+    }
 
     // This need to block click event leakage to underlying map.
     DeadMouseArea {
@@ -55,8 +76,9 @@ Rectangle {
                 Component.onCompleted: {
                     if (count > 0) {
                         itemAt(0).checked = true
-                        panelLoader.source = QGroundControl.corePlugin.analyzePages[0].url
-                        panelLoader.title  = QGroundControl.corePlugin.analyzePages[0].title
+                        _currentPage = QGroundControl.corePlugin.analyzePages[0]
+                        panelLoader.title = _currentPage.title
+                        _updatePanelSource()
                     }
                 }
 
@@ -67,9 +89,10 @@ Rectangle {
                     width:              buttonColumn._maxButtonWidth
 
                     onClicked: {
-                        panelLoader.source  = modelData.url
+                        _currentPage        = modelData
                         panelLoader.title   = modelData.title
                         checked             = true
+                        _updatePanelSource()
                     }
                 }
             }
@@ -104,7 +127,13 @@ Rectangle {
 
         Connections {
             target:     panelLoader.item
-            function onPopout() { mainWindow.createWindowedAnalyzePage(panelLoader.title, panelLoader.source) }
+            function onPopout() { mainWindow.createWindowedAnalyzePage(panelLoader.title, panelLoader.source, _currentPage ? _currentPage.requiresVehicle : false) }
         }
+    }
+
+    QGCLabel {
+        anchors.centerIn:   panelLoader
+        text:               qsTr("Requires a connected vehicle")
+        visible:            _currentPage && _currentPage.requiresVehicle && !_activeVehicle
     }
 }
