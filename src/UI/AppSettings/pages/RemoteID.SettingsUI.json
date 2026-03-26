@@ -19,11 +19,6 @@
             ]
         },
         {
-            "component": "RemoteIDStatusFlags",
-            "sectionName": "Status Flags",
-            "keywords": "status,arm,comms,gps,remote id status"
-        },
-        {
             "heading": "Basic ID",
             "controls": [
                 {
@@ -57,11 +52,6 @@
                     "setting": "remoteIDSettings.operatorID"
                 }
             ]
-        },
-        {
-            "component": "RemoteIDOperatorIDValidation",
-            "sectionName": "Operator ID Validation",
-            "keywords": "operator validation,verify"
         },
         {
             "heading": "Self ID",
@@ -105,6 +95,11 @@
                     "enableWhen": "locationIsFixed"
                 }
             ]
+        },
+        {
+            "component": "GcsPositionStatus",
+            "sectionName": "GCS Position",
+            "keywords": "latitude,longitude,hdop,gcs position"
         },
         {
             "component": "RemoteIDGpsLocation",

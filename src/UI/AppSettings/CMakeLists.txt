@@ -79,6 +79,7 @@ qt_add_qml_module(AppSettingsModule
         # Hand-coded pages and components
         BluetoothSettings.qml
         DebugWindow.qml
+        GcsPositionStatus.qml
         HelpSettings.qml
         LinkConfigurationManager.qml
         LogReplaySettings.qml
@@ -99,8 +100,6 @@ qt_add_qml_module(AppSettingsModule
         PX4LogUploadSettings.qml
         QmlTest.qml
         RemoteIDGpsLocation.qml
-        RemoteIDOperatorIDValidation.qml
-        RemoteIDStatusFlags.qml
         SerialSettings.qml
         SettingsPage.qml
         TcpSettings.qml
