@@ -247,8 +247,14 @@ Rectangle {
                                 var matches = settingsView._matchingSections(pageColumn.index)
                                 return matches.indexOf(sectionIndex) !== -1
                             }
+                            property bool sectionContentVisible: {
+                                if (!pageColumn.isSelected) return true
+                                if (!rightPanel.item) return true
+                                if (typeof rightPanel.item.sectionVisible !== "function") return true
+                                return rightPanel.item.sectionVisible(sectionIndex)
+                            }
                             property color textColor: sectionChecked || pressed ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                            visible: sectionMatchesSearch
+                            visible: sectionMatchesSearch && sectionContentVisible
 
                             background: Rectangle {
                                 color:   qgcPal.buttonHighlight

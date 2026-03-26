@@ -406,6 +406,30 @@ def generate_page_qml(page: PageDef, settings_dir: Path) -> str:
 
     lines.append("")
 
+    # Generate sectionVisible(index) function for dynamic sidebar filtering.
+    # Each case returns the visibility expression for that group index,
+    # excluding sectionFilter (which only controls the content area).
+    section_cases: list[str] = []
+    for grp_idx, grp in enumerate(page.groups):
+        vis_parts: list[str] = []
+        if grp.showWhen:
+            vis_parts.append(f"({grp.showWhen})")
+        if grp.controls:
+            fact_refs = [f"QGroundControl.settingsManager.{c.setting}" for c in grp.controls]
+            auto_vis = " || ".join(f"{ref}.userVisible" for ref in fact_refs)
+            vis_parts.append(f"({auto_vis})")
+        if vis_parts:
+            section_cases.append(f"        case {grp_idx}: return {' && '.join(vis_parts)}")
+    if section_cases:
+        lines.append("    function sectionVisible(index) {")
+        lines.append("        switch (index) {")
+        for case_line in section_cases:
+            lines.append(case_line)
+        lines.append("        default: return true")
+        lines.append("        }")
+        lines.append("    }")
+        lines.append("")
+
     # Groups
     for grp_idx, grp in enumerate(page.groups):
         section_vis = f"(sectionFilter === -1 || sectionFilter === {grp_idx})"
