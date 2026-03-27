@@ -2,6 +2,9 @@
 #include "gstqgcelements.h"
 
 #include <gst/gl/gl.h>
+#if defined(__APPLE__) && defined(__MACH__)
+#include <gst/app/gstappsink.h>
+#endif
 
 #define GST_CAT_DEFAULT gst_qgc_video_sink_bin_debug
 GST_DEBUG_CATEGORY_STATIC(GST_CAT_DEFAULT);
@@ -152,6 +155,7 @@ static void
 gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin *self)
 {
     self->using_d3d11 = FALSE;
+    self->using_appsink = FALSE;
 
 #ifdef QGC_GST_D3D11_SINK
     // Prefer D3D11 sink on Windows — zero-copy from D3D hardware decoders,
@@ -171,6 +175,47 @@ gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin *self)
             gst_bin_remove(GST_BIN(self), self->d3d11sink);
             self->d3d11sink = NULL;
         }
+    }
+#endif
+
+#if defined(__APPLE__) && defined(__MACH__)
+    // macOS Metal path: use appsink with videoconvert to avoid OpenGL dependency.
+    // Frames are extracted via the new-sample callback and pushed to a QVideoSink,
+    // which renders through Qt's native Metal RHI backend.
+    self->videoconvert = gst_element_factory_make("videoconvert", NULL);
+    self->appsink = gst_element_factory_make("appsink", "qgcappsink");
+    if (self->videoconvert && self->appsink) {
+        // Accept BGRA so QVideoFrame can use a simple single-plane copy
+        GstCaps *caps = gst_caps_from_string("video/x-raw,format=BGRA");
+        g_object_set(self->appsink,
+                     "caps", caps,
+                     "emit-signals", TRUE,
+                     "max-buffers", 2,
+                     "drop", TRUE,
+                     "sync", FALSE,
+                     NULL);
+        gst_caps_unref(caps);
+
+        gst_bin_add_many(GST_BIN(self), self->videoconvert, self->appsink, NULL);
+        if (gst_element_link(self->videoconvert, self->appsink)
+            && gst_qgc_video_sink_bin_ghost_pad(self, self->videoconvert)) {
+            self->using_appsink = TRUE;
+            GST_INFO_OBJECT(self, "Using appsink (macOS Metal rendering path)");
+            return;
+        }
+
+        GST_ERROR_OBJECT(self, "Failed to link appsink path elements");
+        gst_bin_remove(GST_BIN(self), self->videoconvert);
+        gst_bin_remove(GST_BIN(self), self->appsink);
+        self->videoconvert = NULL;
+        self->appsink = NULL;
+        return;
+    } else {
+        GST_ERROR_OBJECT(self, "Failed to create appsink path elements: videoconvert=%p appsink=%p",
+                           (void *)self->videoconvert, (void *)self->appsink);
+        gst_clear_object(&self->videoconvert);
+        gst_clear_object(&self->appsink);
+        return;
     }
 #endif
 
@@ -210,9 +255,14 @@ gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue
 {
     GstQgcVideoSinkBin *self = GST_QGC_VIDEO_SINK_BIN(object);
 
-    // Route properties to the active sink element
-    GstElement *activeSink = self->using_d3d11 ? self->d3d11sink : self->qmlglsink;
-    GstElement *activeBin  = self->using_d3d11 ? self->d3d11sink : self->glsinkbin;
+    // Route properties to the active sink element.
+    // For the appsink path, widget/force-aspect-ratio/pixel-aspect-ratio are no-ops.
+    GstElement *activeSink = self->using_d3d11 ? self->d3d11sink
+                           : self->using_appsink ? self->appsink
+                           : self->qmlglsink;
+    GstElement *activeBin  = self->using_d3d11 ? self->d3d11sink
+                           : self->using_appsink ? self->appsink
+                           : self->glsinkbin;
 
     switch (prop_id) {
     case PROP_ENABLE_LAST_SAMPLE:
@@ -223,6 +273,8 @@ gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue
                          NULL);
         break;
     case PROP_WIDGET:
+        if (self->using_appsink)
+            break; // appsink path does not use a widget
         if (G_LIKELY(activeSink))
             g_object_set(activeSink,
                          PROP_WIDGET_NAME,
@@ -230,6 +282,8 @@ gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue
                          NULL);
         break;
     case PROP_FORCE_ASPECT_RATIO:
+        if (self->using_appsink)
+            break;
         if (G_LIKELY(activeSink))
             g_object_set(activeSink,
                          PROP_FORCE_ASPECT_RATIO_NAME,
@@ -237,6 +291,8 @@ gst_qgc_video_sink_bin_set_property(GObject *object, guint prop_id, const GValue
                          NULL);
         break;
     case PROP_PIXEL_ASPECT_RATIO: {
+        if (self->using_appsink)
+            break;
         const gint num = gst_value_get_fraction_numerator(value);
         const gint den = gst_value_get_fraction_denominator(value);
         if (G_LIKELY(activeSink))
@@ -272,8 +328,12 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
 {
     GstQgcVideoSinkBin *self = GST_QGC_VIDEO_SINK_BIN(object);
 
-    GstElement *activeSink = self->using_d3d11 ? self->d3d11sink : self->qmlglsink;
-    GstElement *activeBin  = self->using_d3d11 ? self->d3d11sink : self->glsinkbin;
+    GstElement *activeSink = self->using_d3d11 ? self->d3d11sink
+                           : self->using_appsink ? self->appsink
+                           : self->qmlglsink;
+    GstElement *activeBin  = self->using_d3d11 ? self->d3d11sink
+                           : self->using_appsink ? self->appsink
+                           : self->glsinkbin;
 
     switch (prop_id) {
     case PROP_ENABLE_LAST_SAMPLE: {
@@ -300,6 +360,10 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
         break;
     }
     case PROP_WIDGET: {
+        if (self->using_appsink) {
+            g_value_set_pointer(value, NULL);
+            break;
+        }
         gpointer widget = NULL;
         if (G_LIKELY(activeSink))
             g_object_get(activeSink,
@@ -310,6 +374,10 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
         break;
     }
     case PROP_FORCE_ASPECT_RATIO: {
+        if (self->using_appsink) {
+            g_value_set_boolean(value, FALSE);
+            break;
+        }
         gboolean enable = FALSE;
         if (G_LIKELY(activeSink))
             g_object_get(activeSink,
@@ -320,6 +388,10 @@ gst_qgc_video_sink_bin_get_property(GObject *object, guint prop_id, GValue *valu
         break;
     }
     case PROP_PIXEL_ASPECT_RATIO: {
+        if (self->using_appsink) {
+            gst_value_set_fraction(value, 1, 1);
+            break;
+        }
         gint num = 0, den = 1;
         if (G_LIKELY(activeSink))
             g_object_get(activeSink,

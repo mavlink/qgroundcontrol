@@ -27,6 +27,7 @@ class VideoManager : public QObject
 
     Q_PROPERTY(bool     gstreamerEnabled        READ gstreamerEnabled                           CONSTANT)
     Q_PROPERTY(bool     gstreamerD3D11Sink      READ gstreamerD3D11Sink                         CONSTANT)
+    Q_PROPERTY(bool     gstreamerAppleSink      READ gstreamerAppleSink                         CONSTANT)
     Q_PROPERTY(bool     qtmultimediaEnabled     READ qtmultimediaEnabled                        CONSTANT)
     Q_PROPERTY(bool     uvcEnabled              READ uvcEnabled                                 CONSTANT)
     Q_PROPERTY(bool     autoStreamConfigured    READ autoStreamConfigured                       NOTIFY autoStreamConfiguredChanged)
@@ -83,6 +84,7 @@ public:
     void setfullScreen(bool on);
     static bool gstreamerEnabled();
     static bool gstreamerD3D11Sink();
+    static bool gstreamerAppleSink();
     static bool qtmultimediaEnabled();
     static bool uvcEnabled();
 

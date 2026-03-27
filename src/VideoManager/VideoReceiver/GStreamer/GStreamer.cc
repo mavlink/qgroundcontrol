@@ -4,6 +4,10 @@
 #include "AppSettings.h"
 #include "GstVideoReceiver.h"
 
+#ifdef Q_OS_MACOS
+#include "GstAppSinkAdapter.h"
+#endif
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
@@ -868,6 +872,26 @@ void releaseVideoSink(void *sink)
 VideoReceiver *createVideoReceiver(QObject *parent)
 {
     return new GstVideoReceiver(parent);
+}
+
+bool setupAppleSinkAdapter(void *sinkBin, QVideoSink *videoSink, QObject *adapterParent)
+{
+#ifdef Q_OS_MACOS
+    if (!sinkBin || !videoSink) {
+        return false;
+    }
+
+    auto *adapter = new GstAppSinkAdapter(adapterParent);
+    if (!adapter->setup(GST_ELEMENT(sinkBin), videoSink)) {
+        qCCritical(GStreamerLog) << "GstAppSinkAdapter::setup() failed";
+        adapter->deleteLater();
+        return false;
+    }
+    return true;
+#else
+    Q_UNUSED(sinkBin); Q_UNUSED(videoSink); Q_UNUSED(adapterParent);
+    return false;
+#endif
 }
 
 } // namespace GStreamer

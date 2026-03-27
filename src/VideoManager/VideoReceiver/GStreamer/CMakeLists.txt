@@ -4,7 +4,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE VideoItemStub.h)
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
     find_package(QGCGStreamer
         REQUIRED
-        COMPONENTS Core Base Video Gl GlPrototypes Rtsp
+        COMPONENTS Core Base Video Gl GlPrototypes Rtsp App
         OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
     )
 
@@ -19,6 +19,19 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
             GstVideoReceiver.cc
             GstVideoReceiver.h
     )
+
+    if(APPLE)
+        target_sources(${CMAKE_PROJECT_NAME}
+            PRIVATE
+                GstAppSinkAdapter.cc
+                GstAppSinkAdapter.h
+        )
+        target_link_libraries(${CMAKE_PROJECT_NAME}
+            PRIVATE
+                Qt6::Multimedia
+                Qt6::MultimediaQuickPrivate
+        )
+    endif()
 
     add_subdirectory(gstqgc)
 endif()
