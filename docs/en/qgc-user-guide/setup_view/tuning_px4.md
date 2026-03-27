@@ -56,7 +56,7 @@ Be ready to abort the autotuning process by moving the RC controller sticks.
 
 The test steps are:
 
-1. Perform the [pre-tuning test](#pre-tuning-test) above.
+1. Perform the [pre-autotuning test](#pre-autotuning-test) above.
 1. Takeoff using RC control and prepare for test:
    - **Multicopters:** Takeoff using the remote controller in **Altitude mode**.
      Hover the vehicle at a safe distance and at a few meters above ground (between 4 and 20m).

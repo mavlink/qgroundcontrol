@@ -15,7 +15,7 @@ The Fly View is used to command and monitor the vehicle.
 - **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
   - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
   - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
-  - Once flying, you can click on the map to set a [Go to](#goto) or [Orbit at](#orbit) location.
+  - Once flying, you can click on the map to set a [Go to](#map_actions) or [Orbit at](#map_actions) location.
 
 There are a number of other elements that are not displayed by default and are only displayed in certain conditions or for certain vehicle types.
 
@@ -27,7 +27,7 @@ The following sections describe how to perform common operations/tasks in the Fl
 Many of the available options depend on both the vehicle type and its current state.
 :::
 
-### Actions associated with a map position (#map_actions)
+### Actions associated with a map position {#map_actions}
 
 There are a number of actions which can be taken which are associated with a specific position on the map. To use these actions:
 
@@ -94,7 +94,7 @@ You can continue the current mission while (unless already in a mission!):
 
 #### Resume Mission {#resume_mission}
 
-_Resume Mission_ is used to resume a mission after performing an [RTL/Return](#rtl) or [Land](#land) from within a mission (in order, for example, to perform a battery change).
+_Resume Mission_ is used to resume a mission after performing an [RTL/Return](hud.md#rtl) or [Land](hud.md#land) from within a mission (in order, for example, to perform a battery change).
 
 ::: info
 If you are performing a battery change, **do not** disconnect QGC from the vehicle after disconnecting the battery.
@@ -153,7 +153,7 @@ Video stored on the camera may be of much higher quality, but it is likely that 
 
 #### Record Video Stream (on GCS)
 
-Video stream recording is controlled on the [video stream instrument page](#video_instrument_page).
+Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
 
 ![Video Stream Record](../../../assets/fly/video_record.jpg)
@@ -176,7 +176,7 @@ To record video with QGroundControl application elements displayed, you should u
 
 #### Record Video on Camera
 
-Start/stop video recording _on the camera itself_ using the [camera instrument page](#camera_instrument_page).
+Start/stop video recording _on the camera itself_ using the [camera instrument page](hud.md#camera_instrument_page).
 First toggle to video mode, then select the red button to start recording.
 
 ![Instrument Page - Camera MAVLink Settings](../../../assets/fly/instrument_page_camera_mavlink.jpg)

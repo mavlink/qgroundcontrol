@@ -18,7 +18,7 @@ You can use it to:
 The screenshot above shows the main elements of the fly view:
 
 - **[Fly Toolbar](fly_view_toolbar.md):** Key status information for vehicle components (GPS, battery, RC control), and vehicle state (Flight mode, Armed/Disarmed status).
-  - Select the [toolbar indicator](#toolbar_indicator) to view more detail.
+  - Select the [toolbar indicator](#toolbar_indicators) to view more detail.
   - Press the _Flight mode_ text (e.g. "Hold") to select a new mode.
     Not every mode may be available.
   - The text next to the **Q** icon indicates the flight readiness using text: "Not Ready", "Ready to Fly", "Flying", and status using colour: "green" (all good!), amber (a warning), red (serious problem). You can also select the text to reach a button to arm/disarm/emergency-stop the vehicle.
@@ -31,7 +31,7 @@ The screenshot above shows the main elements of the fly view:
 - **Map:** Displays the positions of all connected vehicles and the mission for the current vehicle.
   - You can drag the map to move it around (the map automatically re-centres on the vehicle after a certain amount of time).
   - You can zoom the map in and out using the zoom buttons, mouse wheel, track pad or pinch on a tablet.
-  - Once flying, you can click on the map to set a [Go to](#goto) or [Orbit at](#orbit) location.
+  - Once flying, you can click on the map to set a [Go to](#map_actions) or [Orbit at](#map_actions) location.
 - **[Instrument Panel](instrument_panel.md):** A widget that displays vehicle telemetry.
 - **[Attitude/Compass](hud.md):** A widget that provides virtual horizon and heading information.
 - **Camera Tools**: A widget for switching between still and video modes, starting/stopping capture, and controlling camera settings.
@@ -85,11 +85,11 @@ It can be in one of the following states:
 - **Landing** - Vehicle is in the process of landing.
 - **Communication Lost** - QGroundControl has lost communication with the vehicle.
 
-The Ready Indicator dropdown also gives you acess to:
+The Ready Indicator dropdown also gives you access to:
 
-- **Arming** - Arming a vehicle starts the motors in preparation for takeoff. You will only be able to arm the vehicle if it is safe and ready to fly. Generally you do not need to manually arm the vehicle. You can simply takeoff or start a mission and the vehicle will arm itself.
-- **Disarm** - Disarming a vehicle is only availble when the vehicle is on the ground. It will stop the motors. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
-- **Emergency Stop** - Emergency stop is effectively the same as disarming the vehicle while it is flying. For emergency use only, your vehicle will crash!
+- <a id="arm"></a>**Arming** - Arming a vehicle starts the motors in preparation for takeoff. You will only be able to arm the vehicle if it is safe and ready to fly. Generally you do not need to manually arm the vehicle. You can simply takeoff or start a mission and the vehicle will arm itself.
+- <a id="disarm"></a>**Disarm** - Disarming a vehicle is only available when the vehicle is on the ground. It will stop the motors. Generally you do not need to explicitly disarm as vehicles will disarm automatically after landing, or shortly after arming if you do not take off.
+- <a id="emergency_stop"></a>**Emergency Stop** - Emergency stop is effectively the same as disarming the vehicle while it is flying. For emergency use only, your vehicle will crash!
 
 In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
 
@@ -166,7 +166,7 @@ You can land at the current position at any time while flying:
 1. Press the **Land** button in the _Fly Tools_ (this will toggle to a **Takeoff** button when landed).
 1. Confirm landing using the slider.
 
-### RTL/Return
+### RTL/Return {#rtl}
 
 Return to a "safe point" at any time while flying:
 
@@ -269,7 +269,7 @@ The following sections describe how to perform common operations/tasks in the Fl
 Many of the available options depend on both the vehicle type and its current state.
 :::
 
-### Actions associated with a map position (#map_actions)
+### Actions associated with a map position {#map_actions}
 
 There are a number of actions which can be taken which are associated with a specific position on the map. To use these actions:
 

@@ -30,7 +30,7 @@ This section defines a number of miscellaneous settings, related to (non exhaust
 
 The settings are:
 
-- <span id="language"></span>**Language**: System (System Language) | Bulgarian, Chinese, ...
+- <a id="language"></a>**Language**: System (System Language) | Bulgarian, Chinese, ...
 
   ![Display languages](../../../assets/settings/general/languages.jpg)
 
@@ -40,19 +40,19 @@ The settings are:
   These are downloaded from the internet upon vehicle connection. The translations are then cached locally.
   This means an internet connection during vehicle connection is required at least once.
 
-- <span id="colour_scheme"></span>**Color Scheme**: Indoor (Dark) | Outdoor (Light)
+- <a id="colour_scheme"></a>**Color Scheme**: Indoor (Dark) | Outdoor (Light)
 - **Map Provider**: Google | Mapbox | Bing | Airmap | VWorld | Eniro | Statkart
 - **Map Type**: Road | Hybrid | Satellite
 - **Stream GCS Position**: Never | Always | When in Follow Me Flight Mode.
 - **UI Scaling**: UI scale percentage (affects fonts, icons, button sizes, layout etc.)
 - **Mute all audio output**: Turns off all audio output.
 - **Check for Internet Connection**: Uncheck to allow maps to be used in China/places where map tile downloads are likely to fail (stops the map-tile engine continually rechecking for an Internet connection).
-- <span id="autoload_missions"></span> **Autoload Missions**: If enabled, automatically upload a plan to the vehicle on connection.
+- <a id="autoload_missions"></a> **Autoload Missions**: If enabled, automatically upload a plan to the vehicle on connection.
   - The plan file must be named **AutoLoad#.plan**, where the `#` is replaced with the vehicle id.
   - The plan file must be located in the [Application Load/Save Path](#load_save_path).
 - **Clear all settings on next start**: Resets all settings to the default (including this one) when _QGroundControl_ restarts.
 - **Announce battery lower than**: Battery level at which _QGroundControl_ will start low battery announcements.
-- <span id="load_save_path"></span>**Application Load/Save Path**: Default location for loading/saving application files, including: parameters, telemetry logs, and mission plans.
+- <a id="load_save_path"></a>**Application Load/Save Path**: Default location for loading/saving application files, including: parameters, telemetry logs, and mission plans.
 
 ## Data Persistence {#data_persistence}
 
@@ -69,7 +69,7 @@ The settings are:
 
 The settings are:
 
-- <span id="autosave_log"></span>**Save log after each flight**: Telemetry logs (`.tlog`) automatically saved to the _Application Load/Save Path_ ([above](#load_save_path)) after flight.
+- <a id="autosave_log"></a>**Save log after each flight**: Telemetry logs (`.tlog`) automatically saved to the _Application Load/Save Path_ ([above](#load_save_path)) after flight.
 - **Save logs even if vehicle was not armed**: Logs when a vehicle connects to _QGroundControl_.
   Stops logging when the last vehicle disconnects.
 - [**CSV Logging**](csv.md): Log subset of telemetry data to a CSV file.

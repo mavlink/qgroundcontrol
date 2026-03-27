@@ -137,7 +137,7 @@ Video Recording is turned on/off from the Video widget in the Fly View.
 
 For more information see [Settings > General (Video / Video Recording)](../settings_view/general.md#video).
 
-### Plan View
+### Plan View {#plan-view-v33}
 
 #### Structure Scan
 
@@ -314,7 +314,7 @@ This is now supported from the Sensors page.
 
 This is now supported from the Copy Trims button on the Radio setup page.
 
-### Plan View
+### Plan View {#plan-view-v32}
 
 #### Plan Files
 
