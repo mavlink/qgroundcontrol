@@ -95,12 +95,19 @@ ApplicationWindow {
     //-- Global Scope Functions
 
     // This function is used to prevent view switching if there are validation errors
-    function allowViewSwitch(previousValidationErrorCount = 0) {
+    function allowViewSwitch(previousValidationErrorCount = 0, showErrorOnDisallow = true) {
         // Run validation on active focus control to ensure it is valid before switching views
         if (mainWindow.activeFocusControl instanceof FactTextField) {
             mainWindow.activeFocusControl._onEditingFinished()
         }
-        return globals.validationErrorCount <= previousValidationErrorCount
+        var allowed = globals.validationErrorCount <= previousValidationErrorCount
+        if (!allowed && showErrorOnDisallow) {
+            if (validationErrorToast.visible) {
+                validationErrorToast.close()
+            }
+            validationErrorToast.open()
+        }
+        return allowed
     }
 
     function showPlanView() {
@@ -311,6 +318,26 @@ ApplicationWindow {
     function showToolSelectDialog() {
         if (mainWindow.allowViewSwitch()) {
             mainWindow.showIndicatorDrawer(toolSelectComponent, null)
+        }
+    }
+
+    // Toast notification shown when a view switch is blocked by a validation error
+    ToolTip {
+        id:             validationErrorToast
+        x:              (mainWindow.width - width) / 2
+        y:              mainWindow.height - height - ScreenTools.defaultFontPixelHeight * 3
+        timeout:        3000
+        closePolicy:    Popup.NoAutoClose
+        text:           qsTr("Please correct the invalid value before continuing")
+
+        background: Rectangle {
+            color:  qgcPal.alertBackground
+            radius: ScreenTools.defaultFontPixelWidth / 2
+        }
+
+        contentItem: QGCLabel {
+            text:   validationErrorToast.text
+            color:  qgcPal.alertText
         }
     }
 

@@ -56,7 +56,11 @@ Rectangle {
         anchors.bottom: titleLayout.bottom
         anchors.left: titleLayout.left
         anchors.right: titleLayout.right
-        onClicked: controller.currentRallyPoint = rallyPoint
+        onClicked: {
+            if (mainWindow.allowViewSwitch()) {
+                controller.currentRallyPoint = rallyPoint
+            }
+        }
     }
 
     QGCMouseArea {
@@ -64,7 +68,11 @@ Rectangle {
         anchors.bottom: selectMouseArea.bottom
         anchors.right: selectMouseArea.right
         width: height
-        onClicked: controller.removePoint(rallyPoint)
+        onClicked: {
+            if (mainWindow.allowViewSwitch()) {
+                controller.removePoint(rallyPoint)
+            }
+        }
     }
 
     Rectangle {
