@@ -37,7 +37,7 @@ public:
     static AudioOutput *instance();
 
     /// Initialize the Singleton
-    void init(Fact *volumeFact);
+    void init(Fact *volumeFact, Fact *mutedFact);
 
     /// Reads the specified text with optional text modifications.
     ///     @param text The text to be read.
@@ -52,10 +52,14 @@ private:
     QAtomicInteger<qsizetype> _textQueueSize = 0;
     bool _initialized = false;
     Fact *_volumeFact = nullptr;
+    Fact *_mutedFact = nullptr;
     double _lastVolume = -1.0;
 
     /// Returns the current volume (0.0 - 100.0) from the settings Fact.
-    double _volume() const;
+    double _volumeSetting() const;
+
+    /// Returns the current muted state from the settings Fact.
+    bool _mutedSetting() const;
 
     /// Sets the TTS engine volume from the current Fact value.
     void _setVolume();

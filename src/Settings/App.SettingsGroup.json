@@ -90,9 +90,18 @@
             "keywords": "mission altitude,default altitude"
         },
         {
+            "name": "audioMuted",
+            "shortDesc": "Mute audio output",
+            "longDesc": "Mutes all audio output without changing the volume level.",
+            "type": "bool",
+            "default": false,
+            "label": "Mute Audio Output",
+            "keywords": "audio,mute,sound"
+        },
+        {
             "name": "audioVolume",
             "shortDesc": "Audio output volume",
-            "longDesc": "Sets the audio output volume percentage. Set to 0 to mute.",
+            "longDesc": "Sets the audio output volume percentage.",
             "type": "double",
             "default": 100.0,
             "units": "%",

@@ -53,9 +53,10 @@ AudioOutput *AudioOutput::instance()
     return _audioOutput();
 }
 
-void AudioOutput::init(Fact* volumeFact)
+void AudioOutput::init(Fact* volumeFact, Fact* mutedFact)
 {
     Q_CHECK_PTR(volumeFact);
+    Q_CHECK_PTR(mutedFact);
 
     if (_initialized) {
         return;
@@ -87,8 +88,13 @@ void AudioOutput::init(Fact* volumeFact)
     });
 
     _volumeFact = volumeFact;
+    _mutedFact = mutedFact;
 
     (void) connect(_volumeFact, &Fact::valueChanged, this, [this]() {
+        _setVolume();
+    });
+
+    (void) connect(_mutedFact, &Fact::valueChanged, this, [this]() {
         _setVolume();
     });
 
@@ -113,17 +119,23 @@ void AudioOutput::init(Fact* volumeFact)
     _initialized = true;
     _setVolume();
 
-    qCDebug(AudioOutputLog) << "AudioOutput initialized with volume:" << _volume() << "%";
+    qCDebug(AudioOutputLog) << "AudioOutput initialized with volume:" << _volumeSetting() << "%";
 }
 
-double AudioOutput::_volume() const
+double AudioOutput::_volumeSetting() const
 {
     return std::clamp(_volumeFact->rawValue().toDouble(), 0.0, 100.0);
 }
 
+bool AudioOutput::_mutedSetting() const
+{
+    return _mutedFact->rawValue().toBool();
+}
+
 void AudioOutput::_setVolume()
 {
-    const double volume = _volume();
+    const bool muted = _mutedSetting();
+    const double volume = muted ? 0.0 : _volumeSetting();
 
     // qFuzzyCompare fails near zero; adding 1.0 shifts values into a safe range
     if (qFuzzyCompare(1.0 + volume, 1.0 + _lastVolume)) {
@@ -152,7 +164,7 @@ void AudioOutput::say(const QString &text, TextMods textMods)
         return;
     }
 
-    if (_volume() <= 0.0) {
+    if (_volumeSetting() <= 0.0 || _mutedSetting()) {
         return;
     }
 
@@ -194,7 +206,7 @@ void AudioOutput::testAudioOutput()
     (void) QMetaObject::invokeMethod(_engine, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default);
     _textQueueSize = 0;
 
-    const QString testText = tr("Audio test. Volume is %1 percent").arg(_volume(), 0, 'f', 1);
+    const QString testText = tr("Audio test. Volume is %1 percent").arg(_volumeSetting(), 0, 'f', 1);
     say(testText);
 }
 
