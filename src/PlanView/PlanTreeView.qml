@@ -130,11 +130,13 @@ TreeView {
     }
 
     // Toggle expand/collapse for a group header. Does not affect the editing layer.
+    // Caller is responsible for calling allowViewSwitch() before invoking this.
     function _toggleGroup(row) {
-        if (root.isExpanded(row))
+        if (root.isExpanded(row)) {
             root.collapse(row)
-        else
+        } else {
             root.expand(row)
+        }
         root.forceLayout()
     }
 
@@ -349,7 +351,12 @@ TreeView {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: root._toggleGroup(delegateRoot.row)
+                    onClicked: {
+                        if (!mainWindow.allowViewSwitch()) {
+                            return
+                        }
+                        root._toggleGroup(delegateRoot.row)
+                    }
                 }
             }
         }

@@ -225,6 +225,9 @@ Rectangle {
                         }
 
                         onToggleExpand: {
+                            if (!mainWindow.allowViewSwitch()) {
+                                return
+                            }
                             settingsView._setExpanded(index, !isExpanded)
                         }
                     }
