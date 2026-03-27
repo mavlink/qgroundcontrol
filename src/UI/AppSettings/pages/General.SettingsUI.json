@@ -1,5 +1,8 @@
 {
     "version": 1,
+    "bindings": {
+        "_appSettings": "QGroundControl.settingsManager.appSettings"
+    },
     "groups": [
         {
             "heading": "General",
@@ -18,13 +21,13 @@
                     "setting": "appSettings.audioVolume",
                     "control": "slider",
                     "enableCheckbox": {
-                        "checked": "fact.rawValue > 0.0",
-                        "onClicked": "fact.rawValue = enableCheckBoxChecked ? 100 : 0"
+                        "checked": "!_appSettings.audioMuted.rawValue",
+                        "onClicked": "{ if (enableCheckBoxChecked && _appSettings.audioVolume.rawValue <= 0) _appSettings.audioVolume.rawValue = 75; _appSettings.audioMuted.rawValue = !enableCheckBoxChecked }"
                     },
                     "button": {
                         "text": "Test",
                         "onClicked": "QGroundControl.testAudioOutput()",
-                        "enabled": "QGroundControl.settingsManager.appSettings.audioVolume.rawValue > 0.0"
+                        "enabled": "!_appSettings.audioMuted.rawValue && _appSettings.audioVolume.rawValue > 0"
                     }
                 },
                 {
