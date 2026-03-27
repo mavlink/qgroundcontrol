@@ -5,12 +5,11 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
 
 SettingsGroupLayout {
     Layout.fillWidth:   true
     heading:            qsTr("Mountpoint")
-    visible:            _ntrip.ntripMountpoint.visible
+    visible:            _ntrip.ntripMountpoint.userVisible
 
     QGCPalette { id: qgcPal }
 

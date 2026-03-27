@@ -71,7 +71,7 @@ ToolIndicatorPage {
 
             SettingsGroupLayout {
                 heading:        qsTr("AutoConnect")
-                visible:        autoConnectSettings.visible
+                visible:        autoConnectSettings.userVisible
 
                 Repeater {
                     id: autoConnectRepeater

@@ -4,7 +4,7 @@
     "QGC.MetaData.Facts": [
         {
             "name": "telemetrySave",
-            "shortDesc": "Save telemetry Log after each flight",
+            "shortDesc": "Automatically save a telemetry log file after each flight completes.",
             "longDesc": "If this option is enabled a telemetry will be saved after each flight completes.",
             "type": "bool",
             "default": true,
@@ -13,7 +13,7 @@
         },
         {
             "name": "telemetrySaveNotArmed",
-            "shortDesc": "Save telemetry log even if vehicle was not armed",
+            "shortDesc": "Also save telemetry logs from sessions where the vehicle was never armed.",
             "longDesc": "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
             "type": "bool",
             "default": false,
@@ -22,7 +22,7 @@
         },
         {
             "name": "apmStartMavlinkStreams",
-            "shortDesc": "Request start of MAVLink telemetry streams (ArduPilot only)",
+            "shortDesc": "Request ArduPilot to begin sending MAVLink telemetry streams on connect.",
             "type": "bool",
             "default": true,
             "qgcRebootRequired": true,
@@ -31,7 +31,7 @@
         },
         {
             "name": "saveCsvTelemetry",
-            "shortDesc": "Save CSV Telementry Logs",
+            "shortDesc": "Save all vehicle parameters to CSV files at 1 Hz during flight.",
             "longDesc": "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
             "type": "bool",
             "default": false,
@@ -40,7 +40,7 @@
         },
         {
             "name": "forwardMavlink",
-            "shortDesc": "Enable mavlink forwarding",
+            "shortDesc": "Forward all MAVLink messages to an external address for other ground stations.",
             "longDesc": "Enable mavlink forwarding",
             "type": "bool",
             "default": false,
@@ -49,7 +49,7 @@
         },
         {
             "name": "forwardMavlinkHostName",
-            "shortDesc": "Host name",
+            "shortDesc": "Network address and port to forward MAVLink messages to (e.g. localhost:14445).",
             "longDesc": "Host name to forward mavlink to. i.e: localhost:14445",
             "type": "string",
             "default": "localhost:14445",
@@ -67,7 +67,7 @@
         },
         {
             "name": "sendGCSHeartbeat",
-            "shortDesc": "Send GCS Heartbeat",
+            "shortDesc": "Periodically transmit heartbeat messages to inform vehicles that QGC is connected.",
             "type": "bool",
             "default": true,
             "label": "Emit heartbeat",
@@ -75,7 +75,7 @@
         },
         {
             "name": "gcsMavlinkSystemID",
-            "shortDesc": "GCS MAVLink System ID",
+            "shortDesc": "MAVLink system identifier (1-255) for this ground station.",
             "type": "uint32",
             "default": 255,
             "min": 1,
@@ -85,7 +85,7 @@
         },
         {
             "name": "noInitialDownloadWhenFlying",
-            "shortDesc": "Skip param/plan download on connect if flying",
+            "shortDesc": "Skip downloading parameters and missions when connecting to a vehicle already in flight.",
             "longDesc": "When enabled, parameter and mission plan downloads are skipped when connecting to a vehicle that is already flying. This prevents bandwidth-heavy transfers from disrupting an active flight.",
             "type": "bool",
             "default": false,

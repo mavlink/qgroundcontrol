@@ -100,7 +100,7 @@ Item {
                 anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
                 anchors.verticalCenter: gstCombo.verticalCenter
                 text:                   qsTr("GStreamer Debug Level")
-                visible:                QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
+                visible:                QGroundControl.settingsManager.appSettings.gstDebugLevel.userVisible
             }
 
             FactComboBox {
@@ -109,7 +109,7 @@ Item {
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
                 anchors.bottom:     parent.bottom
                 fact:               QGroundControl.settingsManager.appSettings.gstDebugLevel
-                visible:            QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
+                visible:            QGroundControl.settingsManager.appSettings.gstDebugLevel.userVisible
                 sizeToContents:     true
             }
 

@@ -101,10 +101,10 @@ const QmlObjectListModel *QGCCorePlugin::customMapItems()
     return _emptyCustomMapItems;
 }
 
-void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible)
+void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible)
 {
 #ifdef Q_OS_ANDROID
-    Q_UNUSED(visible);
+    Q_UNUSED(userVisible);
 #endif
 
     if (settingsGroup == AppSettings::settingsGroup) {
@@ -126,7 +126,7 @@ void QGCCorePlugin::adjustSettingMetaData(const QString &settingsGroup, FactMeta
 #endif
 #ifndef Q_OS_ANDROID
         else if (metaData.name() == AppSettings::androidDontSaveToSDCardName) {
-            visible = false;
+            userVisible = false;
             return;
         }
 #endif

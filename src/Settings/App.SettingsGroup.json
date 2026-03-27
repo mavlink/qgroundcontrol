@@ -77,7 +77,7 @@
         },
         {
             "name": "defaultMissionItemAltitude",
-            "shortDesc": "Default value for altitude",
+            "shortDesc": "Default altitude automatically assigned to new waypoints during mission planning.",
             "longDesc": "This value specifies the default altitude for new items added to a mission.",
             "type": "double",
             "default": 50.0,
@@ -100,7 +100,7 @@
         },
         {
             "name": "audioVolume",
-            "shortDesc": "Audio output volume",
+            "shortDesc": "Controls the volume level for audio alerts and notifications.",
             "longDesc": "Sets the audio output volume percentage.",
             "type": "double",
             "default": 100.0,
@@ -114,7 +114,7 @@
         },
         {
             "name": "virtualJoystick",
-            "shortDesc": "Show virtual joystick",
+            "shortDesc": "Displays an on-screen virtual joystick in the Fly view for manual vehicle control.",
             "longDesc": "If this option is enabled the virtual joystick will be shown on the Fly view.",
             "type": "bool",
             "default": false,
@@ -123,7 +123,7 @@
         },
         {
             "name": "virtualJoystickAutoCenterThrottle",
-            "shortDesc": "Auto-Center Throttle",
+            "shortDesc": "Returns the throttle stick to center when released instead of holding position.",
             "longDesc": "If enabled the throttle stick will snap back to center when released.",
             "type": "bool",
             "default": true,
@@ -132,7 +132,7 @@
         },
         {
             "name": "virtualJoystickLeftHandedMode",
-            "shortDesc": "Left Handed Mode",
+            "shortDesc": "Swaps the virtual joystick layout so throttle/yaw is on the left.",
             "longDesc": "If this option is enabled the virtual joystick layout will be reversed",
             "type": "bool",
             "default": false,
@@ -141,7 +141,7 @@
         },
         {
             "name": "gstDebugLevel",
-            "shortDesc": "Video streaming debug",
+            "shortDesc": "Sets the verbosity of video streaming debug logging. Requires restart.",
             "longDesc": "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
             "type": "uint8",
             "enumStrings": "Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace",
@@ -153,7 +153,7 @@
         },
         {
             "name": "useChecklist",
-            "shortDesc": "Use preflight checklist",
+            "shortDesc": "Enables the preflight checklist to help verify system status before flight.",
             "longDesc": "If this option is enabled the preflight checklist will be used.",
             "type": "bool",
             "default": false,
@@ -162,7 +162,7 @@
         },
         {
             "name": "enforceChecklist",
-            "shortDesc": "Preflight checklist must pass before arming",
+            "shortDesc": "Prevents the vehicle from arming until all preflight checklist items pass.",
             "longDesc": "If this option is enabled the preflight checklist must pass before arming.",
             "type": "bool",
             "default": false,
@@ -171,7 +171,7 @@
         },
         {
             "name": "enableMultiVehiclePanel",
-            "shortDesc": "Enable Multi-Vehicle Panel",
+            "shortDesc": "Shows a panel for managing multiple connected vehicles simultaneously.",
             "longDesc": "Enable Multi-Vehicle Panel when multiple vehicles are connected.",
             "type": "bool",
             "default": true,
@@ -180,7 +180,7 @@
         },
         {
             "name": "uiScalePercent",
-            "shortDesc": "UI scale percentage",
+            "shortDesc": "Scales the entire user interface including fonts and controls.",
             "longDesc": "Scales the entire user interface relative to the platform default. 100% is the default size.",
             "type": "uint32",
             "units": "%",
@@ -192,7 +192,7 @@
         },
         {
             "name": "indoorPalette",
-            "shortDesc": "Application color scheme",
+            "shortDesc": "Switches between light and dark color schemes for different lighting conditions.",
             "longDesc": "The color scheme for the user interface.",
             "type": "uint32",
             "enumStrings": "Indoor,Outdoor",
@@ -203,7 +203,7 @@
         },
         {
             "name": "savePath",
-            "shortDesc": "Application save directory",
+            "shortDesc": "Directory where mission files, logs, and other application data are saved.",
             "longDesc": "Directory to which all data files are saved/loaded from",
             "type": "string",
             "default": "",
@@ -221,7 +221,7 @@
         },
         {
             "name": "tiandituToken",
-            "shortDesc": "Access token to TianDiTu maps",
+            "shortDesc": "Personal API token for accessing TianDiTu map tiles.",
             "longDesc": "Your personal access token for TianDiTu maps",
             "type": "string",
             "default": "",
@@ -230,7 +230,7 @@
         },
         {
             "name": "mapboxToken",
-            "shortDesc": "Access token to Mapbox maps",
+            "shortDesc": "Personal API token for accessing Mapbox map tiles and styling.",
             "longDesc": "Your personal access token for Mapbox maps",
             "type": "string",
             "default": "",
@@ -239,7 +239,7 @@
         },
         {
             "name": "mapboxAccount",
-            "shortDesc": "Account name for Mapbox maps",
+            "shortDesc": "Mapbox account username for accessing account-specific map resources.",
             "longDesc": "Your personal account name for Mapbox maps",
             "type": "string",
             "default": "",
@@ -248,7 +248,7 @@
         },
         {
             "name": "mapboxStyle",
-            "shortDesc": "Map style ID",
+            "shortDesc": "Mapbox map design style ID controlling the appearance of map tiles.",
             "longDesc": "Map design style ID for Mapbox maps",
             "type": "string",
             "default": "",
@@ -257,7 +257,7 @@
         },
         {
             "name": "esriToken",
-            "shortDesc": "Access token to Esri maps",
+            "shortDesc": "Personal API token for accessing Esri map services.",
             "longDesc": "Your personal access token for Esri maps",
             "type": "string",
             "default": "",
@@ -266,7 +266,7 @@
         },
         {
             "name": "customURL",
-            "shortDesc": "Custom Map URL",
+            "shortDesc": "URL pattern with {x}, {y}, {z} substitutions for a custom map tile server.",
             "longDesc": "URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka",
             "type": "string",
             "default": "",
@@ -275,7 +275,7 @@
         },
         {
             "name": "vworldToken",
-            "shortDesc": "VWorld Token",
+            "shortDesc": "Personal API token for accessing VWorld map tiles.",
             "longDesc": "Your personal access token for VWorld maps",
             "type": "string",
             "default": "",
@@ -284,7 +284,7 @@
         },
         {
             "name": "openaipToken",
-            "shortDesc": "OpenAIP API Key",
+            "shortDesc": "Personal API key for displaying OpenAIP airspace and aeronautical data.",
             "longDesc": "Your personal API key for OpenAIP aviation maps. Get one at https://www.openaip.net",
             "type": "string",
             "default": "",
@@ -293,7 +293,7 @@
         },
         {
             "name": "followTarget",
-            "shortDesc": "Stream GCS' coordinates to Autopilot",
+            "shortDesc": "Streams the ground station GPS location to the vehicle for Follow Me mode.",
             "type": "uint32",
             "enumStrings": "Never,Always,When in Follow Me Flight Mode",
             "enumValues": "0,1,2",
@@ -303,7 +303,7 @@
         },
         {
             "name": "qLocaleLanguage",
-            "shortDesc": "Language",
+            "shortDesc": "Determines the language used for the application interface. Requires restart.",
             "type": "uint32",
             "default": 0,
             "qgcRebootRequired": true,
@@ -313,7 +313,7 @@
         },
         {
             "name": "clearSettingsNextBoot",
-            "shortDesc": "Clear all settings on next start",
+            "shortDesc": "Resets all application preferences to their defaults on the next launch.",
             "longDesc": "When enabled, all application settings will be reset to defaults on the next start.",
             "type": "bool",
             "default": false,

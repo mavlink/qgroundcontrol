@@ -4,7 +4,7 @@
     "QGC.MetaData.Facts": [
         {
             "name": "adsbServerConnectEnabled",
-            "shortDesc": "Connect to ADSB SBS server",
+            "shortDesc": "Enable connection to an ADS-B SBS-1 server to receive nearby aircraft tracking data.",
             "longDesc": "Connect to ADSB SBS-1 server using specified address/port",
             "type": "bool",
             "default": false,
@@ -13,7 +13,7 @@
         },
         {
             "name": "adsbServerHostAddress",
-            "shortDesc": "Host address",
+            "shortDesc": "IP address or hostname of the ADS-B SBS-1 server to connect to.",
             "type": "string",
             "default": "127.0.0.1",
             "label": "Host address",
@@ -21,7 +21,7 @@
         },
         {
             "name": "adsbServerPort",
-            "shortDesc": "Server port",
+            "shortDesc": "Network port number on which the ADS-B SBS-1 server is listening.",
             "type": "string",
             "default": 30003,
             "label": "Server port",

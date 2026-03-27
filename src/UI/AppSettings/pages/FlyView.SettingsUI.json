@@ -15,7 +15,7 @@
                 },
                 {
                     "setting": "appSettings.enforceChecklist",
-                    "showWhen": "hasChecklist && QGroundControl.settingsManager.appSettings.useChecklist.visible",
+                    "showWhen": "hasChecklist && QGroundControl.settingsManager.appSettings.useChecklist.userVisible",
                     "enableWhen": "useChecklistValue"
                 },
                 {

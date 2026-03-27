@@ -3,7 +3,7 @@
     "pages": [
         {
             "name": "General",
-            "qml": "AppSettings.qml",
+            "qml": "GeneralSettings.qml",
             "icon": "qrc:/res/QGCLogoWhite.svg",
             "pageDefinition": "General.SettingsUI.json"
         },
@@ -18,7 +18,7 @@
             "qml": "Viewer3DSettings.qml",
             "icon": "qrc:/qml/QGroundControl/Viewer3D/City3DMapIcon.svg",
             "pageDefinition": "Viewer3D.SettingsUI.json",
-            "visible": "QGroundControl.settingsManager.viewer3DSettings.visible"
+            "visible": "QGroundControl.settingsManager.viewer3DSettings.userVisible"
         },
         {
             "name": "Plan View",
@@ -31,13 +31,13 @@
         },
         {
             "name": "ADSB Server",
-            "qml": "ADSBVehicleManagerSettings.qml",
+            "qml": "ADSBServerSettings.qml",
             "icon": "qrc:/InstrumentValueIcons/airplane.svg",
             "pageDefinition": "ADSBVehicleManager.SettingsUI.json"
         },
         {
             "name": "Comm Links",
-            "qml": "LinkSettings.qml",
+            "qml": "CommLinksSettings.qml",
             "icon": "qrc:/InstrumentValueIcons/usb.svg",
             "pageDefinition": "CommLinks.SettingsUI.json"
         },
@@ -48,7 +48,7 @@
         },
         {
             "name": "Maps",
-            "qml": "MapSettings.qml",
+            "qml": "MapsSettings.qml",
             "icon": "qrc:/InstrumentValueIcons/globe.svg",
             "pageDefinition": "Maps.SettingsUI.json"
         },
@@ -74,7 +74,7 @@
         },
         {
             "name": "Telemetry",
-            "qml": "MavlinkSettings.qml",
+            "qml": "TelemetrySettings.qml",
             "icon": "qrc:/InstrumentValueIcons/drone.svg",
             "pageDefinition": "Telemetry.SettingsUI.json"
         },
@@ -83,7 +83,7 @@
             "qml": "VideoSettings.qml",
             "icon": "qrc:/InstrumentValueIcons/camera.svg",
             "pageDefinition": "Video.SettingsUI.json",
-            "visible": "QGroundControl.settingsManager.videoSettings.visible"
+            "visible": "QGroundControl.settingsManager.videoSettings.userVisible"
         },
         {
             "divider": true

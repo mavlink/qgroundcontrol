@@ -36,8 +36,9 @@
         Fact* NAME(); \
         static const char* NAME ## Name;
 
-/// Provides access to group of settings. The group is named and has a visible property associated with it which can control whether the group
-/// is shown in the UI.
+/// Provides access to group of settings. The group is named and has a userVisible
+/// property that controls whether the entire group is shown in the UI.
+/// Custom builds can hide groups via QGCCorePlugin::overrideSettingsGroupVisibility.
 class SettingsGroup : public QObject
 {
     Q_OBJECT
@@ -47,20 +48,22 @@ public:
     /// @param settingsGroup Group to place settings in for QSettings::beingGroup
     SettingsGroup(const QString &name, const QString &settingsGroup, QObject* parent = nullptr);
 
-    Q_PROPERTY(bool visible READ visible WRITE setVisible NOTIFY visibleChanged)
+    /// Whether this settings group should be shown in the UI. Custom builds can
+    /// override this via QGCCorePlugin::overrideSettingsGroupVisibility.
+    Q_PROPERTY(bool userVisible READ userVisible WRITE setUserVisible NOTIFY userVisibleChanged)
 
-    virtual bool    visible             () { return _visible; }
-    virtual void    setVisible          (bool vis) { _visible = vis; emit visibleChanged(); }
+    virtual bool    userVisible         () { return _userVisible; }
+    virtual void    setUserVisible      (bool vis) { _userVisible = vis; emit userVisibleChanged(); }
 
     QString settingsGroup() const { return _settingsGroup; }
 
 signals:
-    void            visibleChanged      ();
+    void            userVisibleChanged  ();
 
 protected:
     SettingsFact* _createSettingsFact(const QString& factName);
 
-    bool _visible;
+    bool _userVisible;
     QString _name;
     QString _settingsGroup;
 

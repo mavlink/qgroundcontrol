@@ -4,7 +4,7 @@
     "QGC.MetaData.Facts": [
         {
             "name": "maxCacheDiskSize",
-            "shortDesc": "Max disk cache",
+            "shortDesc": "Maximum disk space in megabytes for caching downloaded map tiles.",
             "type": "Uint32",
             "units": "MB",
             "min": 1,
@@ -15,7 +15,7 @@
         },
         {
             "name": "maxCacheMemorySize",
-            "shortDesc": "Max memory cache",
+            "shortDesc": "Maximum RAM in megabytes for caching map tiles in memory.",
             "type": "Uint32",
             "units": "MB",
             "min": 1,

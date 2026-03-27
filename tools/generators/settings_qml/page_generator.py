@@ -190,28 +190,58 @@ def _split_translated_list(csv: str) -> list[str]:
 
 
 def _get_fact_search_terms(setting: str, settings_dir: Path) -> list[str]:
-    """Get search terms for a fact from its keywords."""
+    """Get search terms for a fact from its label, shortDesc, and keywords."""
     meta = _load_settings_metadata(settings_dir)
     fact = meta.get(setting, {})
+    terms: list[str] = []
+    # Include label and shortDesc so users can search by visible text
+    for field in ("label", "shortDesc"):
+        val = fact.get(field, "")
+        if val:
+            terms.append(val.lower())
     kw_str = fact.get("keywords", "")
-    if not kw_str:
-        return []
-    return [kw.lower() for kw in _split_translated_list(kw_str)]
+    if kw_str:
+        terms.extend(kw.lower() for kw in _split_translated_list(kw_str))
+    return terms
 
 
 # --------------------------------------------------------------------------- #
 # QML generation
 # --------------------------------------------------------------------------- #
 
+def _wrap_with_description(control_qml: str, fact_ref: str, vis_expr: str, indent: str) -> str:
+    """Wrap a control's QML in a ColumnLayout that appends a shortDescription label."""
+    wrapper_lines = [
+        f"{indent}ColumnLayout {{",
+        f"{indent}    Layout.fillWidth: true",
+        f"{indent}    spacing: ScreenTools.defaultFontPixelHeight / 4",
+        f"{indent}    visible: {vis_expr}",
+        f"",
+    ]
+    # Indent the inner control QML by one extra level
+    for line in control_qml.splitlines():
+        wrapper_lines.append(f"    {line}" if line.strip() else line)
+    wrapper_lines.append(f"")
+    wrapper_lines.append(f"{indent}    QGCLabel {{")
+    wrapper_lines.append(f"{indent}        Layout.fillWidth: true")
+    wrapper_lines.append(f"{indent}        text: {fact_ref}.shortDescription")
+    wrapper_lines.append(f"{indent}        visible: text !== \"\"")
+    wrapper_lines.append(f"{indent}        font.pointSize: ScreenTools.smallFontPointSize")
+    wrapper_lines.append(f"{indent}        wrapMode: Text.WordWrap")
+    wrapper_lines.append(f"{indent}    }}")
+    wrapper_lines.append(f"{indent}}}")
+    return "\n".join(wrapper_lines)
+
+
 def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
     """Generate QML for a single control."""
     indent = "        "
     fact_ref = f"QGroundControl.settingsManager.{ctrl.setting}"
 
-    def _vis_line() -> str:
+    def _vis_expr() -> str:
         if ctrl.showWhen:
-            return f"{indent}    visible: ({ctrl.showWhen}) && fact.userVisible"
-        return f"{indent}    visible: fact.userVisible"
+            return f"({ctrl.showWhen}) && {fact_ref}.userVisible"
+        return f"{fact_ref}.userVisible"
 
     def _enabled_line() -> str:
         if ctrl.enableWhen:
@@ -230,19 +260,10 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
             lines.append(f"{indent}RowLayout {{")
             lines.append(f"{indent}    Layout.fillWidth: true")
             lines.append(f"{indent}    spacing: ScreenTools.defaultFontPixelWidth")
-            if ctrl.showWhen:
-                lines.append(f"{indent}    visible: ({ctrl.showWhen}) && {fact_ref}.userVisible")
-            else:
-                lines.append(f"{indent}    visible: {fact_ref}.userVisible")
         lines.append(f"{inner_indent}FactTextFieldSlider {{")
         lines.append(f"{inner_indent}    Layout.fillWidth: true")
         lines.append(f"{inner_indent}{label_line}")
         lines.append(f"{inner_indent}    fact: {fact_ref}")
-        if not has_button:
-            if ctrl.showWhen:
-                lines.append(f"{inner_indent}    visible: ({ctrl.showWhen}) && fact.userVisible")
-            else:
-                lines.append(f"{inner_indent}    visible: fact.userVisible")
         if ctrl.enableCheckbox:
             lines.append(f"{inner_indent}    showEnableCheckbox: true")
             if ctrl.enableCheckbox.get("checked"):
@@ -261,31 +282,32 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
                 lines.append(f'{inner_indent}    enabled: {btn["enabled"]}')
             lines.append(f'{inner_indent}}}')
             lines.append(f"{indent}}}")
-        return "\n".join(lines)
+        control_qml = "\n".join(lines)
+        return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif ctrl.control == "browse":
         label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
         enabled = _enabled_line()
-        return (
+        control_qml = (
             f"{indent}LabelledFactBrowse {{\n"
             f"{indent}    Layout.fillWidth: true\n"
             f"{indent}{label_line}\n"
             f"{indent}    fact: {fact_ref}\n"
-            f"{_vis_line()}\n"
             f"{enabled}"
             f"{indent}}}"
         )
+        return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif ctrl.control == "scaler":
         label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
         enabled = _enabled_line()
-        return (
+        control_qml = (
             f"{indent}LabelledFactIncrementer {{\n"
             f"{indent}    Layout.fillWidth: true\n"
             f"{indent}{label_line}\n"
             f"{indent}    fact: {fact_ref}\n"
-            f"{_vis_line()}\n"
             f"{enabled}"
             f"{indent}}}"
         )
+        return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif ctrl.control == "checkbox":
         use_checkbox = True
         use_combobox = False
@@ -305,27 +327,27 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
 
     if use_checkbox:
         label_line = f'    text: qsTr("{ctrl.label}")' if ctrl.label else "    text: fact.label"
-        return (
+        control_qml = (
             f"{indent}FactCheckBoxSlider {{\n"
             f"{indent}    Layout.fillWidth: true\n"
             f"{indent}{label_line}\n"
             f"{indent}    fact: {fact_ref}\n"
-            f"{_vis_line()}\n"
             f"{enabled}"
             f"{indent}}}"
         )
+        return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif use_combobox:
         label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
-        return (
+        control_qml = (
             f"{indent}LabelledFactComboBox {{\n"
             f"{indent}    Layout.fillWidth: true\n"
             f"{indent}{label_line}\n"
             f"{indent}    fact: {fact_ref}\n"
             f"{indent}    indexModel: false\n"
-            f"{_vis_line()}\n"
             f"{enabled}"
             f"{indent}}}"
         )
+        return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     else:
         label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
         fact_type = _get_fact_type(ctrl.setting, settings_dir)
@@ -334,7 +356,6 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
             f"{indent}    Layout.fillWidth: true",
             f"{indent}{label_line}",
             f"{indent}    fact: {fact_ref}",
-            _vis_line(),
         ]
         if ctrl.enableWhen:
             lines.append(f"{indent}    enabled: {ctrl.enableWhen}")
@@ -343,7 +364,8 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
         if ctrl.placeholder:
             lines.append(f'{indent}    textField.placeholderText: qsTr("{ctrl.placeholder}")')
         lines.append(f"{indent}}}")
-        return "\n".join(lines)
+        control_qml = "\n".join(lines)
+        return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
 
 
 def _qml_missing_placeholder(description: str) -> str:

@@ -98,8 +98,8 @@ public:
     /// Allows for overriding the meta data before the fact is created.
     ///     @param settingsGroup - QSettings group which contains this item
     ///     @param metaData - MetaData for setting fact
-    ///     @param visible - true: Setting should be visible in ui, false: Setting should not be shown in ui (default value will be used as value)
-    static void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible);
+    ///     @param userVisible - true: Setting should be visible in ui, false: Setting should not be shown in ui (default value will be used as value)
+    static void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible);
 
     ADSBVehicleManagerSettings *adsbVehicleManagerSettings() const;
 #ifndef QGC_NO_ARDUPILOT_DIALECT

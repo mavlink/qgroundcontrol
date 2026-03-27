@@ -156,7 +156,7 @@ ToolIndicatorPage {
                 Layout.fillWidth:   true
                 text:               qsTr("AutoConnect")
                 fact:               QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
-                visible:            fact.visible
+                visible:            fact.userVisible
             }
 
             GridLayout {
@@ -168,7 +168,7 @@ ToolIndicatorPage {
                 FactComboBox {
                     Layout.fillWidth:   true
                     fact:               QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers
-                    visible:            QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers.visible
+                    visible:            QGroundControl.settingsManager.rtkSettings.baseReceiverManufacturers.userVisible
                 }
             }
 
@@ -196,7 +196,7 @@ ToolIndicatorPage {
                 majorTickStepSize:      0.1
                 visible:                (
                     useFixedPosition == BaseModeDefinition.BaseSurveyIn
-                    && rtkSettings.surveyInAccuracyLimit.visible
+                    && rtkSettings.surveyInAccuracyLimit.userVisible
                     && (settingsDisplayId & _ublox)
                 )
             }
@@ -209,7 +209,7 @@ ToolIndicatorPage {
                 majorTickStepSize:      10
                 visible:                (
                     useFixedPosition == BaseModeDefinition.BaseSurveyIn
-                    && rtkSettings.surveyInMinObservationDuration.visible
+                    && rtkSettings.surveyInMinObservationDuration.userVisible
                     && (settingsDisplayId & (_ublox | _femtomes | _trimble))
                 )
             }

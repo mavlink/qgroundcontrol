@@ -9,7 +9,7 @@
     "QGC.MetaData.Facts": [
         {
             "name": "streamRateRawSensors",
-            "shortDesc": "Stream rate for MAVLink Raw Sensors telemetry stream.",
+            "shortDesc": "Frequency (Hz) for receiving raw sensor data from ArduPilot vehicles.",
             "type": "int32",
             "enumStrings": "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues": "QGC.MetaData.Defines.StreamRateEnumValues",
@@ -19,7 +19,7 @@
         },
         {
             "name": "streamRateExtendedStatus",
-            "shortDesc": "Stream rate for MAVLink Extended Status telemetry stream.",
+            "shortDesc": "Frequency (Hz) for receiving extended status data from ArduPilot vehicles.",
             "type": "int32",
             "enumStrings": "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues": "QGC.MetaData.Defines.StreamRateEnumValues",
@@ -29,7 +29,7 @@
         },
         {
             "name": "streamRateRCChannels",
-            "shortDesc": "Stream rate for MAVLink RC Channels telemetry stream.",
+            "shortDesc": "Frequency (Hz) for receiving RC channel data from ArduPilot vehicles.",
             "type": "int32",
             "enumStrings": "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues": "QGC.MetaData.Defines.StreamRateEnumValues",
@@ -39,7 +39,7 @@
         },
         {
             "name": "streamRatePosition",
-            "shortDesc": "Stream rate for MAVLink Position telemetry stream.",
+            "shortDesc": "Frequency (Hz) for receiving vehicle position data from ArduPilot vehicles.",
             "type": "int32",
             "enumStrings": "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues": "QGC.MetaData.Defines.StreamRateEnumValues",
@@ -49,7 +49,7 @@
         },
         {
             "name": "streamRateExtra1",
-            "shortDesc": "Stream rate for MAVLink Extra1 telemetry stream.",
+            "shortDesc": "Frequency (Hz) for receiving extra1 telemetry from ArduPilot vehicles.",
             "type": "int32",
             "enumStrings": "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues": "QGC.MetaData.Defines.StreamRateEnumValues",
@@ -59,7 +59,7 @@
         },
         {
             "name": "streamRateExtra2",
-            "shortDesc": "Stream rate for MAVLink Extra2 telemetry stream.",
+            "shortDesc": "Frequency (Hz) for receiving extra2 telemetry from ArduPilot vehicles.",
             "type": "int32",
             "enumStrings": "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues": "QGC.MetaData.Defines.StreamRateEnumValues",
@@ -69,7 +69,7 @@
         },
         {
             "name": "streamRateExtra3",
-            "shortDesc": "Stream rate for MAVLink Extra3 telemetry stream.",
+            "shortDesc": "Frequency (Hz) for receiving extra3 telemetry from ArduPilot vehicles.",
             "type": "int32",
             "enumStrings": "QGC.MetaData.Defines.StreamRateEnumStrings",
             "enumValues": "QGC.MetaData.Defines.StreamRateEnumValues",

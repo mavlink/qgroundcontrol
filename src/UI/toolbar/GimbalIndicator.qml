@@ -284,7 +284,7 @@ Item {
                 LabelledFactTextField {
                     label:      qsTr("Joystick buttons speed:")
                     fact:       _gimbalControllerSettings.joystickButtonsSpeed
-                    enabled:    joystickButtonsAvailable && _gimbalControllerSettings.visible
+                    enabled:    joystickButtonsAvailable && _gimbalControllerSettings.userVisible
                 }
 
                 FactCheckBoxSlider {

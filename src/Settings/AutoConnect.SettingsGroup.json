@@ -4,7 +4,7 @@
     "QGC.MetaData.Facts": [
         {
             "name": "autoConnectUDP",
-            "shortDesc": "Automatically open a connection over UDP",
+            "shortDesc": "Automatically connect to vehicles detected on UDP network connections.",
             "longDesc": "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a UDP communication link.",
             "type": "bool",
             "default": true,
@@ -13,7 +13,7 @@
         },
         {
             "name": "autoConnectPixhawk",
-            "shortDesc": "Automatically connect to a Pixhawk board",
+            "shortDesc": "Automatically connect to Pixhawk autopilots detected on USB.",
             "longDesc": "If this option is enabled GroundControl will automatically connect to a Pixhawk board which is connected via USB.",
             "type": "bool",
             "default": true,
@@ -22,7 +22,7 @@
         },
         {
             "name": "autoConnectSiKRadio",
-            "shortDesc": "Automatically connect to a SiK Radio",
+            "shortDesc": "Automatically connect to SiK radio modules detected on serial/USB.",
             "longDesc": "If this option is enabled GroundControl will automatically connect to a vehicle which is detected on a SiK Radio communication link.",
             "type": "bool",
             "default": true,
@@ -31,7 +31,7 @@
         },
         {
             "name": "autoConnectRTKGPS",
-            "shortDesc": "Automatically connect to an RTK GPS",
+            "shortDesc": "Automatically connect to RTK GPS receivers detected on USB.",
             "longDesc": "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
             "type": "bool",
             "default": true,
@@ -40,7 +40,7 @@
         },
         {
             "name": "autoConnectLibrePilot",
-            "shortDesc": "Automatically connect to a LibrePilot",
+            "shortDesc": "Automatically connect to LibrePilot autopilots detected on USB.",
             "longDesc": "If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.",
             "type": "bool",
             "default": true,

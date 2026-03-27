@@ -73,20 +73,20 @@ void CustomPlugin::_addSettingsEntry(const QString &title, const char *qmlFile, 
     );
 }
 
-void CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool &visible)
+void CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool &userVisible)
 {
-    QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData, visible);
+    QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData, userVisible);
 
     if (settingsGroup == AppSettings::settingsGroup) {
         // This tells QGC than when you are creating Plans while not connected to a vehicle
         // the specific firmware/vehicle the plan is for.
         if (metaData.name() == AppSettings::offlineEditingFirmwareClassName) {
             metaData.setRawDefaultValue(QGCMAVLink::FirmwareClassPX4);
-            visible = false;
+            userVisible = false;
             return;
         } else if (metaData.name() == AppSettings::offlineEditingVehicleClassName) {
             metaData.setRawDefaultValue(QGCMAVLink::VehicleClassMultiRotor);
-            visible = false;
+            userVisible = false;
             return;
         }
     }

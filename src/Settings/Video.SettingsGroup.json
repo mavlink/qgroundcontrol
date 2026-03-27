@@ -4,7 +4,7 @@
     "QGC.MetaData.Facts": [
         {
             "name": "videoSource",
-            "shortDesc": "Video source",
+            "shortDesc": "Source for video stream (UDP, TCP, RTSP, or connected USB camera).",
             "longDesc": "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
             "type": "string",
             "default": "",
@@ -13,7 +13,7 @@
         },
         {
             "name": "udpUrl",
-            "shortDesc": "Video UDP Url",
+            "shortDesc": "Network address and port for UDP video stream (e.g. 0.0.0.0:5600).",
             "longDesc": "UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600",
             "type": "string",
             "default": "0.0.0.0:5600",
@@ -22,7 +22,7 @@
         },
         {
             "name": "rtspUrl",
-            "shortDesc": "Video RTSP Url",
+            "shortDesc": "Network address for RTSP video stream (e.g. rtsp://192.168.42.1:554/live).",
             "longDesc": "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
             "type": "string",
             "default": "",
@@ -31,7 +31,7 @@
         },
         {
             "name": "tcpUrl",
-            "shortDesc": "Video TCP Url",
+            "shortDesc": "Network address and port for TCP video stream (e.g. 192.168.143.200:3001).",
             "longDesc": "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
             "type": "string",
             "default": "",
@@ -48,7 +48,7 @@
         },
         {
             "name": "aspectRatio",
-            "shortDesc": "Video Aspect Ratio",
+            "shortDesc": "Video frame aspect ratio as width divided by height. Use 0 to auto-detect.",
             "longDesc": "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
             "type": "float",
             "decimalPlaces": 6,
@@ -84,7 +84,7 @@
         },
         {
             "name": "recordingFormat",
-            "shortDesc": "Video Recording Format",
+            "shortDesc": "File format for saved video recordings.",
             "longDesc": "Video recording file format.",
             "type": "uint32",
             "enumStrings": "mp4,mov,mkv",
@@ -95,7 +95,7 @@
         },
         {
             "name": "maxVideoSize",
-            "shortDesc": "Max Video Storage Usage",
+            "shortDesc": "Maximum disk space available for video recording storage.",
             "longDesc": "Maximum amount of disk space used by video recording.",
             "type": "uint32",
             "min": 100,
@@ -107,7 +107,7 @@
         },
         {
             "name": "enableStorageLimit",
-            "shortDesc": "Enable/Disable Limits on Storage Usage",
+            "shortDesc": "Automatically delete oldest recordings when the storage limit is exceeded.",
             "longDesc": "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
             "type": "bool",
             "default": false,
@@ -135,7 +135,7 @@
         },
         {
             "name": "disableWhenDisarmed",
-            "shortDesc": "Video Stream Disnabled When Armed",
+            "shortDesc": "Disables the video stream when the vehicle is disarmed to save bandwidth.",
             "longDesc": "Disable Video Stream when disarmed.",
             "type": "bool",
             "default": false,
@@ -144,7 +144,7 @@
         },
         {
             "name": "lowLatencyMode",
-            "shortDesc": "Tweaks video for lower latency",
+            "shortDesc": "Reduce video latency by approximately 200ms using optimized streaming settings.",
             "longDesc": "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
             "type": "bool",
             "default": false,
@@ -153,7 +153,7 @@
         },
         {
             "name": "forceVideoDecoder",
-            "shortDesc": "Force video decoder priority",
+            "shortDesc": "Override automatic video decoder selection to force a specific decoding method.",
             "longDesc": "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
             "type": "uint32",
             "enumStrings": "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
