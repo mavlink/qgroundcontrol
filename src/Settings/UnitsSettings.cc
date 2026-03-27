@@ -16,7 +16,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, horizontalDistanceUnits)
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(horizontalDistanceUnitsName);
         metaData->setLabel(UnitsSettings::tr("Horizontal Distance"));
-        metaData->setShortDescription(UnitsSettings::tr("Horizontal Distance"));
+        metaData->setShortDescription(UnitsSettings::tr("Display unit for horizontal distances and ranges."));
         metaData->setEnumInfo(enumStrings, enumValues);
 
         HorizontalDistanceUnits defaultHorizontalDistanceUnit = HorizontalDistanceUnitsMeters;
@@ -48,7 +48,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, verticalDistanceUnits)
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(verticalDistanceUnitsName);
         metaData->setLabel(UnitsSettings::tr("Vertical Distance"));
-        metaData->setShortDescription(UnitsSettings::tr("Vertical Distance"));
+        metaData->setShortDescription(UnitsSettings::tr("Display unit for altitudes and vertical heights."));
         metaData->setEnumInfo(enumStrings, enumValues);
         VerticalDistanceUnits defaultVerticalAltitudeUnit = VerticalDistanceUnitsMeters;
         switch(QLocale::system().measurementSystem()) {
@@ -84,7 +84,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, areaUnits)
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(areaUnitsName);
         metaData->setLabel(UnitsSettings::tr("Area"));
-        metaData->setShortDescription(UnitsSettings::tr("Area"));
+        metaData->setShortDescription(UnitsSettings::tr("Display unit for area measurements."));
         metaData->setEnumInfo(enumStrings, enumValues);
 
         AreaUnits defaultAreaUnit = AreaUnitsSquareMeters;
@@ -120,7 +120,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, speedUnits)
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(speedUnitsName);
         metaData->setLabel(UnitsSettings::tr("Speed"));
-        metaData->setShortDescription(UnitsSettings::tr("Speed"));
+        metaData->setShortDescription(UnitsSettings::tr("Display unit for speed and velocity values."));
         metaData->setEnumInfo(enumStrings, enumValues);
 
         SpeedUnits defaultSpeedUnit = SpeedUnitsMetersPerSecond;
@@ -151,7 +151,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, temperatureUnits)
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(temperatureUnitsName);
         metaData->setLabel(UnitsSettings::tr("Temperature"));
-        metaData->setShortDescription(UnitsSettings::tr("Temperature"));
+        metaData->setShortDescription(UnitsSettings::tr("Display unit for temperature readings."));
         metaData->setEnumInfo(enumStrings, enumValues);
 
         TemperatureUnits defaultTemperatureUnit = TemperatureUnitsCelsius;

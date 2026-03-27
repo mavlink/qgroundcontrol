@@ -4,7 +4,7 @@
     "QGC.MetaData.Facts": [
         {
             "name": "enabled",
-            "shortDesc": "Enable the 3D viewer",
+            "shortDesc": "Enable 3D terrain and building visualization alongside the 2D map.",
             "type": "bool",
             "default": false,
             "label": "Enable the 3D viewer",
@@ -12,7 +12,7 @@
         },
         {
             "name": "mapProvider",
-            "shortDesc": "3D map data provider",
+            "shortDesc": "Data source for 3D map terrain and building information.",
             "type": "uint32",
             "enumStrings": "OpenStreetMap",
             "enumValues": "0",
@@ -22,7 +22,7 @@
         },
         {
             "name": "osmFilePath",
-            "shortDesc": "Path to the OSM file for the 3D viewer.",
+            "shortDesc": "Path to an offline OpenStreetMap file for 3D terrain rendering.",
             "type": "string",
             "default": "",
             "label": "Path to the OSM file for the 3D viewer.",
@@ -30,7 +30,7 @@
         },
         {
             "name": "buildingLevelHeight",
-            "shortDesc": "Average Height for each level of the buildings",
+            "shortDesc": "Average floor-to-floor height in meters used for 3D building visualization.",
             "type": "double",
             "units": "m",
             "min": 0.5,
@@ -41,7 +41,7 @@
         },
         {
             "name": "altitudeBias",
-            "shortDesc": "Altitude bias for vehicles in the 3D View",
+            "shortDesc": "Vertical offset in meters for vehicle rendering in the 3D viewer.",
             "type": "double",
             "units": "m",
             "min": -1000,

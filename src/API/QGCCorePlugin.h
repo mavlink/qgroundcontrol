@@ -70,9 +70,9 @@ public:
     /// Allows the core plugin to override the meta data before the fact is created.
     ///     @param settingsGroup - QSettings group which contains this item
     ///     @param metaData - MetaData for setting fact
-    ///     @param visible - true: Setting should be visible in ui, false: Setting should not be shown in ui (default value will be used as value)
-    /// If not overridden, metaData and visible are left unchanged.
-    virtual void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible);
+    ///     @param userVisible - true: Setting should be visible in ui, false: Setting should not be shown in ui (default value will be used as value)
+    /// If not overridden, metaData and userVisible are left unchanged.
+    virtual void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible);
 
     /// @return The message to show to the user when they are prompted to confirm turning on advanced ui.
     virtual QString showAdvancedUIMessage() const;

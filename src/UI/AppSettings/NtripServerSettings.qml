@@ -9,8 +9,8 @@ import QGroundControl.FactControls
 SettingsGroupLayout {
     Layout.fillWidth:   true
     heading:            qsTr("Server")
-    visible:            _ntrip.ntripServerHostAddress.visible || _ntrip.ntripServerPort.visible ||
-                        _ntrip.ntripUsername.visible || _ntrip.ntripPassword.visible
+    visible:            _ntrip.ntripServerHostAddress.userVisible || _ntrip.ntripServerPort.userVisible ||
+                        _ntrip.ntripUsername.userVisible || _ntrip.ntripPassword.userVisible
 
     property var  _ntrip:       QGroundControl.settingsManager.ntripSettings
     property bool _isActive:    _ntrip.ntripServerConnectEnabled.rawValue
@@ -20,7 +20,7 @@ SettingsGroupLayout {
         Layout.fillWidth:           true
         textFieldPreferredWidth:    _textFieldWidth
         fact:               _ntrip.ntripServerHostAddress
-        visible:            fact.visible
+        visible:            fact.userVisible
         enabled:            !_isActive
     }
 
@@ -28,7 +28,7 @@ SettingsGroupLayout {
         Layout.fillWidth:           true
         textFieldPreferredWidth:    _textFieldWidth
         fact:               _ntrip.ntripServerPort
-        visible:            fact.visible
+        visible:            fact.userVisible
         enabled:            !_isActive
     }
 
@@ -37,13 +37,13 @@ SettingsGroupLayout {
         textFieldPreferredWidth:    _textFieldWidth
         label:              fact.shortDescription
         fact:               _ntrip.ntripUsername
-        visible:            fact.visible
+        visible:            fact.userVisible
         enabled:            !_isActive
     }
 
     RowLayout {
         Layout.fillWidth:   true
-        visible:            _ntrip.ntripPassword.visible
+        visible:            _ntrip.ntripPassword.userVisible
         spacing:            ScreenTools.defaultFontPixelWidth * 0.5
 
         LabelledFactTextField {
@@ -69,7 +69,7 @@ SettingsGroupLayout {
         Layout.fillWidth:   true
         text:               fact.shortDescription
         fact:               _ntrip.ntripUseTls
-        visible:            fact.visible
+        visible:            fact.userVisible
         enabled:            !_isActive
     }
 }

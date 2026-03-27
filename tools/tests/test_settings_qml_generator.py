@@ -287,7 +287,7 @@ class TestGeneratePageQml:
         ])
         qml = generate_page_qml(page, settings_dir)
         assert "(x === 1)" in qml
-        assert "fact.userVisible" in qml
+        assert "appSettings.enableFeature.userVisible" in qml
 
     def test_enableWhen_on_control(self, settings_dir: Path):
         page = PageDef(groups=[

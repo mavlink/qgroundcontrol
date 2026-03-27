@@ -94,7 +94,7 @@ DECLARE_SETTINGGROUP(App, "")
         }
         savePathFact->setRawValue(QDir(rootDirPath).filePath(appName));
     #endif
-    savePathFact->setVisible(false);
+    savePathFact->setUserVisible(false);
 #else
         QDir rootDir;
         if (qgcApp()->runningUnitTests() || qgcApp()->simpleBootTest()) {

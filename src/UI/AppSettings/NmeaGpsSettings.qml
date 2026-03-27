@@ -7,7 +7,7 @@ import QGroundControl.FactControls
 
 SettingsGroupLayout {
     heading: qsTr("NMEA GPS")
-    visible: QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
+    visible: QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.userVisible && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.userVisible
 
     LabelledComboBox {
         id: nmeaPortCombo

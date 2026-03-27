@@ -26,7 +26,7 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
     }
 
     // Allow core plugin a chance to override the default value
-    SettingsManager::adjustSettingMetaData(settingsGroup, *metaData, _visible);
+    SettingsManager::adjustSettingMetaData(settingsGroup, *metaData, _userVisible);
     setMetaData(metaData);
 
     if (metaData->defaultValueAvailable()) {
@@ -36,7 +36,7 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
         if (qgcApp()->runningUnitTests()) {
             // Don't use saved settings
             resolvedValue = rawDefaultValue;
-        } else if (_visible) {
+        } else if (_userVisible) {
             QVariant typedValue;
             QString errorString;
             (void) metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);

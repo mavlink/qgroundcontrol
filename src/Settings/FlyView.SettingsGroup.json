@@ -4,7 +4,7 @@
     "QGC.MetaData.Facts": [
         {
             "name": "guidedMinimumAltitude",
-            "shortDesc": "Minimum altitude for guided actions altitude slider.",
+            "shortDesc": "Minimum altitude allowed for guided mode actions like takeoff and altitude changes.",
             "type": "double",
             "units": "m",
             "default": 2,
@@ -13,7 +13,7 @@
         },
         {
             "name": "guidedMaximumAltitude",
-            "shortDesc": "Maximum altitude for guided actions altitude slider.",
+            "shortDesc": "Maximum altitude allowed for guided mode actions like takeoff and altitude changes.",
             "type": "double",
             "units": "m",
             "default": 121.92,
@@ -22,7 +22,7 @@
         },
         {
             "name": "showLogReplayStatusBar",
-            "shortDesc": "Show/Hide Log Replay status bar",
+            "shortDesc": "Show the playback control bar during telemetry log replay.",
             "type": "bool",
             "default": false,
             "label": "Show Telemetry Log Replay Status Bar",
@@ -30,7 +30,7 @@
         },
         {
             "name": "showAdditionalIndicatorsCompass",
-            "shortDesc": "Show additional heading indicators on Compass",
+            "shortDesc": "Display additional heading reference indicators on the compass.",
             "type": "bool",
             "default": false,
             "label": "Show additional heading indicators on Compass",
@@ -38,7 +38,7 @@
         },
         {
             "name": "lockNoseUpCompass",
-            "shortDesc": "Lock Compass Nose-Up",
+            "shortDesc": "Always show north pointing up on the compass instead of rotating with vehicle heading.",
             "type": "bool",
             "default": false,
             "label": "Lock Compass Nose-Up",
@@ -46,7 +46,7 @@
         },
         {
             "name": "keepMapCenteredOnVehicle",
-            "shortDesc": "Keep map centered on vehicle",
+            "shortDesc": "Automatically pan the map to keep the vehicle centered on screen during flight.",
             "type": "bool",
             "default": false,
             "label": "Keep Map Centered On Vehicle",
@@ -54,7 +54,7 @@
         },
         {
             "name": "showSimpleCameraControl",
-            "shortDesc": "Show controls for camera triggering using MAV_CMD_DO_DIGICAM_CONTROL.",
+            "shortDesc": "Display simple camera trigger controls using MAVLink DIGICAM_CONTROL commands.",
             "type": "bool",
             "default": false,
             "label": "Show simple camera controls (DIGICAM_CONTROL)",
@@ -69,7 +69,7 @@
         },
         {
             "name": "maxGoToLocationDistance",
-            "shortDesc": "Maximum distance allowed for Go To Location.",
+            "shortDesc": "Maximum allowed distance for go-to-location commands from the vehicle.",
             "type": "double",
             "units": "m",
             "default": 1000,
@@ -79,7 +79,7 @@
         },
         {
             "name": "forwardFlightGoToLocationLoiterRad",
-            "shortDesc": "Loiter radius for orbiting the Go To Location during forward flight. This only applies if the firmware supports a radius in MAV_CMD_DO_REPOSITION commands.",
+            "shortDesc": "Loiter radius when circling a go-to destination during fixed-wing flight.",
             "type": "double",
             "units": "m",
             "default": 80,
@@ -89,7 +89,7 @@
         },
         {
             "name": "goToLocationRequiresConfirmInGuided",
-            "shortDesc": "Require slide confirmation for Go To Location when the vehicle is already in Guided mode.",
+            "shortDesc": "Require explicit confirmation for go-to-location commands while in Guided mode.",
             "type": "bool",
             "default": true,
             "label": "Require Confirmation for Go To Location in Guided Mode",
@@ -97,7 +97,7 @@
         },
         {
             "name": "updateHomePosition",
-            "shortDesc": "Send updated GCS' home position to autopilot in case of change of the home position",
+            "shortDesc": "Automatically update the vehicle return-to-home position from the GCS GPS location.",
             "type": "bool",
             "default": false,
             "label": "Update return to home position based on device location",
@@ -105,7 +105,7 @@
         },
         {
             "name": "instrumentQmlFile2",
-            "shortDesc": "Qml file for instrument panel",
+            "shortDesc": "Select the instrument panel display style for the Fly view.",
             "type": "string",
             "enumStrings": "Integrated Compass & Attitude,Horizontal Compass & Attitude,Large Vertical",
             "enumValues": "qrc:/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/HorizontalCompassAttitude.qml,qrc:/qml/QGroundControl/FlightMap/Widgets/VerticalCompassAttitude.qml",
@@ -131,7 +131,7 @@
         },
         {
             "name": "enableAutomaticMissionPopups",
-            "shortDesc": "Enable automatic mission start/resume popups",
+            "shortDesc": "Automatically show mission start and resume confirmation dialogs.",
             "type": "bool",
             "default": true,
             "label": "Enable automatic mission start/resume popups",

@@ -105,7 +105,7 @@ Rectangle {
         // Find and select the default page
         var targetUrl = globals.commingFromRIDIndicator
             ? "qrc:/qml/QGroundControl/AppSettings/RemoteIDSettings.qml"
-            : "qrc:/qml/QGroundControl/AppSettings/AppSettings.qml"
+            : "qrc:/qml/QGroundControl/AppSettings/GeneralSettings.qml"
         globals.commingFromRIDIndicator = false
 
         for (var i = 0; i < settingsPagesModel.count; i++) {
@@ -217,9 +217,13 @@ Rectangle {
                         onClicked: {
                             if (mainWindow.allowViewSwitch()) {
                                 settingsView._navigateTo(index, -1)
-                                // Auto-expand when selecting a page
-                                if (hasMultipleSections && !isExpanded) {
-                                    settingsView._setExpanded(index, true)
+                                if (hasMultipleSections) {
+                                    // Toggle expand/collapse when re-clicking the same page
+                                    if (isSelected && isExpanded) {
+                                        settingsView._setExpanded(index, false)
+                                    } else if (!isExpanded) {
+                                        settingsView._setExpanded(index, true)
+                                    }
                                 }
                             }
                         }
@@ -228,7 +232,11 @@ Rectangle {
                             if (!mainWindow.allowViewSwitch()) {
                                 return
                             }
-                            settingsView._setExpanded(index, !isExpanded)
+                            var expanding = !isExpanded
+                            settingsView._setExpanded(index, expanding)
+                            if (!expanding && isSelected) {
+                                settingsView._navigateTo(index, -1)
+                            }
                         }
                     }
 

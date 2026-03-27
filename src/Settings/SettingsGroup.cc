@@ -5,7 +5,7 @@
 
 SettingsGroup::SettingsGroup(const QString& name, const QString& settingsGroup, QObject* parent)
     : QObject       (parent)
-    , _visible      (QGCCorePlugin::instance()->overrideSettingsGroupVisibility(name))
+    , _userVisible  (QGCCorePlugin::instance()->overrideSettingsGroupVisibility(name))
     , _name         (name)
     , _settingsGroup(settingsGroup)
 {

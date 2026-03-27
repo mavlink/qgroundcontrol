@@ -12,8 +12,10 @@ Q_DECLARE_LOGGING_CATEGORY(SettingsFactLog)
 class SettingsFact : public Fact
 {
     Q_OBJECT
-    Q_PROPERTY(bool visible MEMBER _visible CONSTANT)
-    Q_PROPERTY(bool userVisible MEMBER _visible CONSTANT)
+    /// Whether this setting should be shown in the UI. When false the setting is
+    /// hidden from the user and its value is forced to the default. Controlled by
+    /// QGCCorePlugin::adjustSettingMetaData and settings-override JSON files.
+    Q_PROPERTY(bool userVisible MEMBER _userVisible CONSTANT)
 
 public:
     explicit SettingsFact(QObject *parent = nullptr);
@@ -24,12 +26,12 @@ public:
     const SettingsFact &operator=(const SettingsFact &other);
 
     // Must be called before any references to fact
-    void setVisible(bool visible) { _visible = visible; }
+    void setUserVisible(bool userVisible) { _userVisible = userVisible; }
 
 private slots:
     void _rawValueChanged(const QVariant &value);
 
 private:
     QString _settingsGroup;
-    bool _visible = true;
+    bool _userVisible = true;
 };

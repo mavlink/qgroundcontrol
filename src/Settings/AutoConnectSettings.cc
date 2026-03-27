@@ -35,7 +35,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectPixhawk)
     if (!_autoConnectPixhawkFact) {
         _autoConnectPixhawkFact = _createSettingsFact(autoConnectPixhawkName);
 #ifdef Q_OS_IOS
-        _autoConnectPixhawkFact->setVisible(false);
+        _autoConnectPixhawkFact->setUserVisible(false);
 #endif
     }
     return _autoConnectPixhawkFact;
@@ -46,7 +46,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectSiKRadio)
     if (!_autoConnectSiKRadioFact) {
         _autoConnectSiKRadioFact = _createSettingsFact(autoConnectSiKRadioName);
 #ifdef Q_OS_IOS
-        _autoConnectSiKRadioFact->setVisible(false);
+        _autoConnectSiKRadioFact->setUserVisible(false);
 #endif
     }
     return _autoConnectSiKRadioFact;
@@ -57,7 +57,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectRTKGPS)
     if (!_autoConnectRTKGPSFact) {
         _autoConnectRTKGPSFact = _createSettingsFact(autoConnectRTKGPSName);
 #ifdef Q_OS_IOS
-        _autoConnectRTKGPSFact->setVisible(false);
+        _autoConnectRTKGPSFact->setUserVisible(false);
 #endif
     }
     return _autoConnectRTKGPSFact;
@@ -68,7 +68,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectLibrePilot)
     if (!_autoConnectLibrePilotFact) {
         _autoConnectLibrePilotFact = _createSettingsFact(autoConnectLibrePilotName);
 #ifdef Q_OS_IOS
-        _autoConnectLibrePilotFact->setVisible(false);
+        _autoConnectLibrePilotFact->setUserVisible(false);
 #endif
     }
     return _autoConnectLibrePilotFact;
@@ -79,7 +79,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectNmeaPort)
     if (!_autoConnectNmeaPortFact) {
         _autoConnectNmeaPortFact = _createSettingsFact(autoConnectNmeaPortName);
 #ifdef Q_OS_IOS
-        _autoConnectNmeaPortFact->setVisible(false);
+        _autoConnectNmeaPortFact->setUserVisible(false);
 #endif
     }
     return _autoConnectNmeaPortFact;
@@ -90,7 +90,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectNmeaBaud)
     if (!_autoConnectNmeaBaudFact) {
         _autoConnectNmeaBaudFact = _createSettingsFact(autoConnectNmeaBaudName);
 #ifdef Q_OS_IOS
-        _autoConnectNmeaBaudFact->setVisible(false);
+        _autoConnectNmeaBaudFact->setUserVisible(false);
 #endif
     }
     return _autoConnectNmeaBaudFact;

@@ -9,8 +9,8 @@ SettingsGroupLayout {
     heading:            qsTr("NMEA External GPS")
     Layout.fillWidth:   true
     visible:            !ScreenTools.isMobile
-                        && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
-                        && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
+                        && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.userVisible
+                        && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.userVisible
                         && _locationType !== RemoteIDSettings.LocationType.TAKEOFF
 
     property int    _locationType:    QGroundControl.settingsManager.remoteIDSettings.locationType.value

@@ -206,9 +206,9 @@ void SettingsManager::_loadSettingsFiles()
     }
 }
 
-void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible)
+void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible)
 {
-    visible = true; // By default all settings are visible
+    userVisible = true; // By default all settings are visible
 
     SettingsManager *settingsManager = SettingsManager::instance();
     if (!settingsManager) {
@@ -234,11 +234,11 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
             for (const QString &metaDataName : settingOverrideJsonObject.keys()) {
                 if (metaDataName == kJsonVisibleKey) {
                     qCDebug(SettingsManagerLog) << "  Setting visibility to" << settingOverrideJsonObject[kJsonVisibleKey].toBool();
-                    visible = settingOverrideJsonObject[kJsonVisibleKey].toBool();
+                    userVisible = settingOverrideJsonObject[kJsonVisibleKey].toBool();
                 } else if (metaDataName == kJsonForceRawValueKey) {
                     qCDebug(SettingsManagerLog) << "  Setting forceRawValue to" << settingOverrideJsonObject[kJsonForceRawValueKey];
                     metaData.setRawDefaultValue(settingOverrideJsonObject[kJsonForceRawValueKey].toVariant());
-                    visible = false;
+                    userVisible = false;
                 } else if (metaDataName == FactMetaData::_defaultValueJsonKey) {
                     qCDebug(SettingsManagerLog) << "  Setting default to" << overrideMetaData->rawDefaultValue();
                     metaData.setRawDefaultValue(overrideMetaData->rawDefaultValue());
@@ -269,5 +269,5 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
     }
 
     // Give QGCCorePlugin a whack at it too
-    QGCCorePlugin::instance()->adjustSettingMetaData(settingsGroup, metaData, visible);
+    QGCCorePlugin::instance()->adjustSettingMetaData(settingsGroup, metaData, userVisible);
 }

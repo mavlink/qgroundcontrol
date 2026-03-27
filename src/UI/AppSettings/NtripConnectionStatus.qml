@@ -5,12 +5,11 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
-import QGroundControl.Palette
 
 SettingsGroupLayout {
     Layout.fillWidth:   true
     heading:            qsTr("Connection")
-    visible:            _ntrip.visible
+    visible:            _ntrip.userVisible
 
     QGCPalette { id: qgcPal }
 

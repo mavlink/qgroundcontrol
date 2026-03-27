@@ -49,7 +49,7 @@
         },
         {
             "heading": "Units",
-            "showWhen": "QGroundControl.settingsManager.unitsSettings.visible",
+            "showWhen": "QGroundControl.settingsManager.unitsSettings.userVisible",
             "controls": [
                 {
                     "setting": "unitsSettings.horizontalDistanceUnits",

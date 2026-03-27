@@ -23,7 +23,7 @@ SetupPage {
                 rowSpacing:             ScreenTools.defaultFontPixelWidth
 
                 QGCLabel {
-                    visible:            QGroundControl.settingsManager.mavlinkSettings.forwardMavlinkAPMSupportHostName.visible
+                    visible:            QGroundControl.settingsManager.mavlinkSettings.forwardMavlinkAPMSupportHostName.userVisible
                     text:               qsTr("Host name:")
                 }
                 FactTextField {

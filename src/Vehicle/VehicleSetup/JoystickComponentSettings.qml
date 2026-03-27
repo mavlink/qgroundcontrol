@@ -26,14 +26,14 @@ ColumnLayout {
             Layout.fillWidth: true
             text: qsTr("Center stick is zero throttle")
             fact: _joystickSettings.throttleModeCenterZero
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
             text: qsTr("Spring loaded throttle smoothing")
             fact: _joystickSettings.throttleSmoothing
-            visible: fact.visible && _joystickSettings.throttleModeCenterZero.rawValue
+            visible: fact.userVisible && _joystickSettings.throttleModeCenterZero.rawValue
         }
 
         FactTextFieldSlider {
@@ -46,7 +46,7 @@ ColumnLayout {
             Layout.fillWidth: true
             text: qsTr("Negative Thrust")
             fact: _joystickSettings.negativeThrust
-            visible: globals.activeVehicle.supports.negativeThrust && fact.visible
+            visible: globals.activeVehicle.supports.negativeThrust && fact.userVisible
         }
 
         QGCCheckBoxSlider {
@@ -65,21 +65,21 @@ ColumnLayout {
             Layout.fillWidth: true
             text: qsTr("Circle Correction")
             fact: _joystickSettings.circleCorrection
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactTextFieldSlider {
             Layout.fillWidth: true
             label: fact.shortDescription
             fact: _joystickSettings.axisFrequencyHz
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactTextFieldSlider {
             Layout.fillWidth: true
             label: fact.shortDescription
             fact: _joystickSettings.buttonFrequencyHz
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         ColumnLayout {
@@ -90,7 +90,7 @@ ColumnLayout {
             FactCheckBoxSlider {
                 text: qsTr("Deadband")
                 fact: _joystickSettings.useDeadband
-                visible: fact.visible
+                visible: fact.userVisible
             }
 
             QGCLabel{
@@ -105,56 +105,56 @@ ColumnLayout {
             Layout.fillWidth: true
             text: qsTr("MANUAL_CONTROL Pitch Extension")
             fact: _joystickSettings.enableManualControlPitchExtension
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
             text: qsTr("MANUAL_CONTROL Roll Extension")
             fact: _joystickSettings.enableManualControlRollExtension
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
             text: qsTr("MANUAL_CONTROL Aux1")
             fact: _joystickSettings.enableManualControlAux1
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
             text: qsTr("MANUAL_CONTROL Aux2")
             fact: _joystickSettings.enableManualControlAux2
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
             text: qsTr("MANUAL_CONTROL Aux3")
             fact: _joystickSettings.enableManualControlAux3
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
             text: qsTr("MANUAL_CONTROL Aux4")
             fact: _joystickSettings.enableManualControlAux4
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
             text: qsTr("MANUAL_CONTROL Aux5")
             fact: _joystickSettings.enableManualControlAux5
-            visible: fact.visible
+            visible: fact.userVisible
         }
 
         FactCheckBoxSlider {
             Layout.fillWidth: true
             text: qsTr("MANUAL_CONTROL Aux6")
             fact: _joystickSettings.enableManualControlAux6
-            visible: fact.visible
+            visible: fact.userVisible
         }
     }
 }

@@ -48,7 +48,7 @@
         },
         {
             "name": "ntripWhitelist",
-            "shortDesc": "RTCM Message Filter",
+            "shortDesc": "Comma-separated RTCM message IDs to forward. Leave blank for all messages.",
             "longDesc": "Comma-separated RTCM message IDs to forward (e.g. 1005,1077,1087). Leave blank for all messages.",
             "type": "string",
             "default": "",
@@ -65,7 +65,7 @@
         },
         {
             "name": "ntripUdpForwardEnabled",
-            "shortDesc": "UDP forward RTCM data",
+            "shortDesc": "Forward received RTCM correction data to another application via UDP.",
             "longDesc": "Forward received RTCM correction data via UDP to the specified address and port",
             "type": "bool",
             "default": false,
@@ -74,7 +74,7 @@
         },
         {
             "name": "ntripUdpTargetAddress",
-            "shortDesc": "UDP target address",
+            "shortDesc": "IP address to forward RTCM correction data to.",
             "longDesc": "IP address to forward RTCM data to via UDP",
             "type": "string",
             "default": "",
@@ -83,7 +83,7 @@
         },
         {
             "name": "ntripUdpTargetPort",
-            "shortDesc": "UDP target port",
+            "shortDesc": "Port number for forwarding RTCM correction data via UDP.",
             "longDesc": "Port to forward RTCM data to via UDP",
             "type": "uint16",
             "default": 0,
