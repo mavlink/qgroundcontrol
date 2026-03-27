@@ -5,7 +5,10 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        PositionManager.cpp
+        NmeaStreamSplitter.cc
+        NmeaStreamSplitter.h
+        PositionHealth.h
+        PositionManager.cc
         PositionManager.h
         SimulatedPosition.cc
         SimulatedPosition.h

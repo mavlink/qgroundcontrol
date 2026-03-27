@@ -18,21 +18,7 @@
                 },
                 {
                     "setting": "autoConnectSettings.autoConnectUDP"
-                },
-                {
-                    "setting": "autoConnectSettings.autoConnectRTKGPS"
                 }
-            ]
-        },
-        {
-            "component": "NmeaGpsSettings",
-            "sectionName": "NMEA GPS",
-            "keywords": [
-                "nmea",
-                "gps",
-                "serial",
-                "baud rate",
-                "external gps"
             ]
         },
         {

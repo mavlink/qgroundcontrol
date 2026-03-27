@@ -3,6 +3,7 @@
 #include "FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "PositionManager.h"
+#include "QGCMAVLink.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QGCLoggingCategory.h"
@@ -17,7 +18,7 @@ FollowMe::FollowMe(QObject *parent)
     : QObject(parent)
     , _gcsMotionReportTimer(new QTimer(this))
 {
-    // qCDebug(FollowMeLog) << Q_FUNC_INFO << this;
+    qCDebug(FollowMeLog) << this;
 
     _gcsMotionReportTimer->setSingleShot(false);
     // We set the update interval to a fixed amount of time.
@@ -28,7 +29,7 @@ FollowMe::FollowMe(QObject *parent)
 
 FollowMe::~FollowMe()
 {
-    // qCDebug(FollowMeLog) << Q_FUNC_INFO << this;
+    qCDebug(FollowMeLog) << this;
 }
 
 FollowMe *FollowMe::instance()
@@ -116,8 +117,8 @@ void FollowMe::_sendGCSMotionReport()
 
     // Get the current location coordinates
     // Important note: QGC only supports sending the constant GCS home position altitude for follow me.
-    motionReport.lat_int = static_cast<int>(gcsCoordinate.latitude() * 1e7);
-    motionReport.lon_int = static_cast<int>(gcsCoordinate.longitude() * 1e7);
+    motionReport.lat_int = QGCMAVLink::doubleToMavlinkLatLon(gcsCoordinate.latitude());
+    motionReport.lon_int = QGCMAVLink::doubleToMavlinkLatLon(gcsCoordinate.longitude());
     motionReport.altMetersAMSL = gcsCoordinate.altitude();
     estimationCapabilities |= (1 << POS);
 

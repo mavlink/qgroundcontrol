@@ -13,7 +13,7 @@ inline QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
     const int payloadLen = 2 + extraPayloadBytes;
     QByteArray frame;
 
-    frame.append(static_cast<char>(RTCM3_PREAMBLE));
+    frame.append(static_cast<char>(RTCMParser::kPreamble));
     frame.append(static_cast<char>((payloadLen >> 8) & 0x03));
     frame.append(static_cast<char>(payloadLen & 0xFF));
 

@@ -1,7 +1,9 @@
 #pragma once
 
-#include <QtCore/QByteArray>
+#include "LineBuffer.h"
+
 #include <QtCore/QLoggingCategory>
+
 #include <QtNetwork/QUdpSocket>
 
 Q_DECLARE_LOGGING_CATEGORY(UdpIODeviceLog)
@@ -25,5 +27,5 @@ private slots:
     void _readAvailableData();
 
 private:
-    QByteArray _buffer;
+    LineBuffer _buffer;
 };

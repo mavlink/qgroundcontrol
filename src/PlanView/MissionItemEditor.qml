@@ -225,7 +225,7 @@ Rectangle {
                     QGCButton {
                         Layout.fillWidth:   true
                         text:               qsTr("Move to vehicle position")
-                        enabled:            _activeVehicle && missionItem.specifiesCoordinate
+                        enabled:            _activeVehicle && missionItem.specifiesCoordinate && _activeVehicle.coordinate.isValid
 
                         onClicked: {
                             missionItem.coordinate = _activeVehicle.coordinate

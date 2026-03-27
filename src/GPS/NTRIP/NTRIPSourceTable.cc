@@ -1,10 +1,8 @@
 #include "NTRIPSourceTable.h"
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
 #include "QmlObjectListModel.h"
 
 #include <algorithm>
-#include <QtNetwork/QNetworkAccessManager>
 
 QGC_LOGGING_CATEGORY(NTRIPSourceTableLog, "GPS.NTRIPSourceTable")
 
@@ -129,74 +127,3 @@ void NTRIPSourceTableModel::clear()
     }
 }
 
-// ---------------------------------------------------------------------------
-// NTRIPSourceTableFetcher
-// ---------------------------------------------------------------------------
-
-NTRIPSourceTableFetcher::NTRIPSourceTableFetcher(const QString& host, int port,
-                                                   const QString& username, const QString& password,
-                                                   bool useTls,
-                                                   QObject* parent)
-    : QObject(parent)
-    , _host(host)
-    , _port(port)
-    , _username(username)
-    , _password(password)
-    , _useTls(useTls)
-{
-    _networkManager = QGCNetworkHelper::createNetworkManager(this);
-}
-
-void NTRIPSourceTableFetcher::fetch()
-{
-    QUrl url;
-    url.setScheme(_useTls ? QStringLiteral("https") : QStringLiteral("http"));
-    url.setHost(_host);
-    url.setPort(_port);
-    url.setPath(QStringLiteral("/"));
-
-    QGCNetworkHelper::RequestConfig config;
-    config.timeoutMs = kFetchTimeoutMs;
-    config.userAgent = QStringLiteral("QGC-NTRIP");
-    config.http2Allowed = false;
-    config.cacheEnabled = false;
-
-    QNetworkRequest request = QGCNetworkHelper::createRequest(url, config);
-    request.setRawHeader("Ntrip-Version", "Ntrip/2.0");
-    if (!_username.isEmpty() || !_password.isEmpty()) {
-        QGCNetworkHelper::setBasicAuth(request, _username, _password);
-    }
-
-    _reply = _networkManager->get(request);
-    connect(_reply, &QNetworkReply::finished, this, &NTRIPSourceTableFetcher::_onReplyFinished);
-}
-
-void NTRIPSourceTableFetcher::_onReplyFinished()
-{
-    if (!_reply) {
-        emit error(tr("No reply received"));
-        emit finished();
-        return;
-    }
-
-    const QString body = QString::fromUtf8(_reply->readAll());
-
-    if (_reply->error() != QNetworkReply::NoError && !body.contains(QStringLiteral("ENDSOURCETABLE"))) {
-        emit error(QGCNetworkHelper::errorMessage(_reply));
-        _reply->deleteLater();
-        _reply = nullptr;
-        emit finished();
-        return;
-    }
-    _reply->deleteLater();
-    _reply = nullptr;
-
-    if (!body.contains(QStringLiteral("ENDSOURCETABLE"))) {
-        emit error(tr("Response does not contain a valid source table"));
-        emit finished();
-        return;
-    }
-
-    emit sourceTableReceived(body);
-    emit finished();
-}

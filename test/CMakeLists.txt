@@ -23,6 +23,12 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Test)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Test-only preprocessor toggle. Kept in lockstep with QGC_BUILD_TESTING: this
+# CMakeLists is only entered when that option is ON (see the guard above and
+# the `if(QGC_BUILD_TESTING)` gate in the root CMakeLists.txt), so the two
+# flags cannot diverge. DO NOT add QGC_UNITTEST_BUILD to CMAKE_CXX_FLAGS from
+# anywhere else — `target_compile_definitions` must remain the single source
+# so the symbol is cleanly removed when tests are turned back off.
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UNITTEST_BUILD)
 
 # ----------------------------------------------------------------------------
@@ -135,15 +141,43 @@ add_qgc_test(FollowMeTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 # GPS
 # ----------------------------------------------------------------------------
 add_subdirectory(GPS)
-# TODO: GpsTest.cc excluded — references removed NTRIP.h API. Needs rewrite to
-# cover higher-level GPS behavior previously tested there. NTRIP transport-level
-# coverage is currently provided by NTRIPHttpTransportTest, NTRIPManagerTest,
-# NTRIPSourceTableTest, and RTCMParserTest. Track a replacement under a
-# dedicated issue before removing this marker.
+# Note: legacy GpsTest.cc was removed — it referenced the old NTRIP.h API. The
+# feat(gps) overhaul replaces it with the focused tests below (driver, manager,
+# events, position source, transport, RTK fact groups) plus NTRIP transport-
+# level coverage (NTRIPHttpTransportTest, NTRIPManagerTest, NTRIPSourceTableTest,
+# RTCMParserTest).
+add_qgc_test(GPSProviderTest LABELS Unit)
+add_qgc_test(GPSManagerTest LABELS Unit)
+add_qgc_test(GPSEventModelTest LABELS Unit)
+add_qgc_test(GPSPositionSourceTest LABELS Unit)
+add_qgc_test(GPSTransportTest LABELS Unit)
+add_qgc_test(GPSRTKFactGroupTest LABELS Unit)
+add_qgc_test(VehicleGPSFactGroupTest LABELS Unit)
+add_qgc_test(VehicleGPSAggregateFactGroupTest LABELS Unit)
+# RTK
+add_qgc_test(RTCMMavlinkTest LABELS Unit)
+add_qgc_test(RTKSatelliteModelTest LABELS Unit)
+add_qgc_test(RTKIntegrationTest LABELS Integration)
+add_qgc_test(RTKEndToEndTest LABELS Integration)
+# NTRIP
 add_qgc_test(RTCMParserTest LABELS Unit)
 add_qgc_test(NTRIPManagerTest LABELS Unit)
 add_qgc_test(NTRIPHttpTransportTest LABELS Unit)
 add_qgc_test(NTRIPSourceTableTest LABELS Unit)
+add_qgc_test(NTRIPSourceTableControllerTest LABELS Unit)
+add_qgc_test(NTRIPConnectionStatsTest LABELS Unit)
+add_qgc_test(NTRIPGgaProviderTest LABELS Unit)
+add_qgc_test(NTRIPReconnectPolicyTest LABELS Unit)
+add_qgc_test(NTRIPUdpForwarderTest LABELS Unit)
+add_qgc_test(NTRIPIntegrationTest LABELS Integration)
+add_qgc_test(NTRIPEndToEndTest LABELS Integration)
+add_qgc_test(SettingsLifecycleTest LABELS Unit)
+
+# ----------------------------------------------------------------------------
+# PositionManager
+# ----------------------------------------------------------------------------
+add_subdirectory(PositionManager)
+add_qgc_test(NmeaStreamSplitterTest LABELS Unit)
 
 # ----------------------------------------------------------------------------
 # Joystick

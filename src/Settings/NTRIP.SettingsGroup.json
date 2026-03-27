@@ -64,6 +64,24 @@
             "label": "Use TLS encryption"
         },
         {
+            "name": "ntripAllowSelfSignedCerts",
+            "shortDesc": "Accept self-signed TLS certificates",
+            "longDesc": "Allow connections to NTRIP casters with self-signed TLS certificates. Disabling this rejects self-signed certificates to prevent man-in-the-middle attacks.",
+            "type": "bool",
+            "default": false,
+            "label": "Accept self-signed certificates"
+        },
+        {
+            "name": "ntripGgaPositionSource",
+            "shortDesc": "GGA Position Source",
+            "longDesc": "Position source for NMEA GGA sentences sent to the NTRIP caster. Auto selects the best available source.",
+            "type": "uint8",
+            "enumStrings": "Auto,Vehicle GPS,Vehicle EKF,RTK Base Station,GCS Position",
+            "enumValues": "0,1,2,3,4",
+            "default": 0,
+            "label": "GGA Position Source"
+        },
+        {
             "name": "ntripUdpForwardEnabled",
             "shortDesc": "Forward received RTCM correction data to another application via UDP.",
             "longDesc": "Forward received RTCM correction data via UDP to the specified address and port",

@@ -5,15 +5,13 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QDateTime>
-#include <QtCore/QTimer>
 
 QGC_LOGGING_CATEGORY(SimulatedPositionLog, "PositionManager.SimulatedPosition")
 
 SimulatedPosition::SimulatedPosition(QObject* parent)
     : QGeoPositionInfoSource(parent)
-    , _updateTimer(new QTimer(this))
 {
-    // qCDebug(SimulatedPositionLog) << Q_FUNC_INFO << this;
+    qCDebug(SimulatedPositionLog) << this;
 
     _lastPosition.setTimestamp(QDateTime::currentDateTime());
     _lastPosition.setCoordinate(QGeoCoordinate(47.3977420, 8.5455941, 488.));
@@ -23,23 +21,23 @@ SimulatedPosition::SimulatedPosition(QObject* parent)
 
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::vehicleAdded, this, &SimulatedPosition::_vehicleAdded);
 
-    _updateTimer->setSingleShot(false);
-    (void) connect(_updateTimer, &QTimer::timeout, this, &SimulatedPosition::_updatePosition);
+    _updateTimer.setSingleShot(false);
+    (void) connect(&_updateTimer, &QTimer::timeout, this, &SimulatedPosition::_updatePosition);
 }
 
 SimulatedPosition::~SimulatedPosition()
 {
-    // qCDebug(SimulatedPositionLog) << Q_FUNC_INFO << this;
+    qCDebug(SimulatedPositionLog) << this;
 }
 
 void SimulatedPosition::startUpdates()
 {
-    _updateTimer->start(qMax(updateInterval(), minimumUpdateInterval()));
+    _updateTimer.start(qMax(updateInterval(), minimumUpdateInterval()));
 }
 
 void SimulatedPosition::stopUpdates()
 {
-    _updateTimer->stop();
+    _updateTimer.stop();
 }
 
 void SimulatedPosition::requestUpdate(int /*timeout*/)
@@ -49,11 +47,11 @@ void SimulatedPosition::requestUpdate(int /*timeout*/)
 
 void SimulatedPosition::_updatePosition()
 {
-    const int intervalMsecs = _updateTimer->interval();
+    const int intervalMsecs = _updateTimer.interval();
 
     const QGeoCoordinate coord = _lastPosition.coordinate();
-    const qreal horizontalDistance = kHorizontalVelocityMetersPerSec * (1000. / static_cast<qreal>(intervalMsecs));
-    const qreal verticalDistance = kVerticalVelocityMetersPerSec * (1000. / static_cast<qreal>(intervalMsecs));
+    const qreal horizontalDistance = kHorizontalVelocityMetersPerSec * (static_cast<qreal>(intervalMsecs) / 1000.);
+    const qreal verticalDistance = kVerticalVelocityMetersPerSec * (static_cast<qreal>(intervalMsecs) / 1000.);
 
     _lastPosition.setCoordinate(coord.atDistanceAndAzimuth(horizontalDistance, kHeading, verticalDistance));
     emit positionUpdated(_lastPosition);

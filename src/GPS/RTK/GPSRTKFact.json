@@ -1,0 +1,126 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "connected",
+    "shortDesc": "Connected",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "currentAccuracy",
+    "shortDesc": "Current Survey-In Accuracy",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m",
+    "default":          null
+},
+{
+    "name":             "currentLatitude",
+    "shortDesc": "Current Survey-In Latitude",
+    "type":             "double",
+    "decimalPlaces":    7,
+    "default":          null
+},
+{
+    "name":             "currentLongitude",
+    "shortDesc": "Current Survey-In Longitude",
+    "type":             "double",
+    "decimalPlaces":    7,
+    "default":          null
+},
+{
+    "name":             "currentAltitude",
+    "shortDesc": "Current Survey-In Altitude",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
+},
+{
+    "name":             "currentDuration",
+    "shortDesc": "Current Survey-In Duration",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "s",
+    "default":          0
+},
+{
+    "name":             "valid",
+    "shortDesc": "Survey-In Valid",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "active",
+    "shortDesc": "Survey-In Active",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "numSatellites",
+    "shortDesc": "Number of Satellites",
+    "type":             "int32",
+    "default":          0
+},
+{
+    "name":             "baseLatitude",
+    "shortDesc": "Base Station Latitude",
+    "type":             "double",
+    "decimalPlaces":    7,
+    "default":          null
+},
+{
+    "name":             "baseLongitude",
+    "shortDesc": "Base Station Longitude",
+    "type":             "double",
+    "decimalPlaces":    7,
+    "default":          null
+},
+{
+    "name":             "baseAltitude",
+    "shortDesc": "Base Station Altitude",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m",
+    "default":          null
+},
+{
+    "name":             "baseFixType",
+    "shortDesc": "Base Station Fix Type",
+    "type":             "uint8",
+    "enumStrings":      "None,No Fix,2D,3D,DGPS,RTK Float,RTK Fixed,PPP,Static",
+    "enumValues":       "0,1,2,3,4,5,6,7,8",
+    "default":          0
+},
+{
+    "name":             "heading",
+    "shortDesc": "GNSS Heading",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg",
+    "default":          null
+},
+{
+    "name":             "headingValid",
+    "shortDesc": "GNSS Heading Valid",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "baselineLength",
+    "shortDesc": "Baseline Length",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "m",
+    "default":          null
+},
+{
+    "name":             "carrierFixed",
+    "shortDesc": "Carrier Solution Fixed",
+    "type":             "bool",
+    "default":          false
+}
+]
+}

@@ -12,6 +12,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         DeviceInfo.h
         JsonHelper.cc
         JsonHelper.h
+        LineBuffer.cc
+        LineBuffer.h
         FileSystem/QGCCachedFileDownload.cc
         FileSystem/QGCCachedFileDownload.h
         FileSystem/QGCFileDownload.cc
@@ -24,6 +26,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         FileSystem/QGCFileWatcher.h
         FileSystem/QGCFileWriter.cc
         FileSystem/QGCFileWriter.h
+        DataRateTracker.cc
+        DataRateTracker.h
+        NMEAUtils.cc
+        NMEAUtils.h
         QGC.cc
         QGC.h
         QGCCommandLineParser.cc

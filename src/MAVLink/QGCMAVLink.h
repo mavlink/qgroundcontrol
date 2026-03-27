@@ -198,6 +198,12 @@ public:
         uint8_t type;
     }) param_ext_union_t;
 
+    // MAVLink wire-format coordinate scaling
+    static constexpr double  mavlinkLatLonToDouble(int32_t value)   { return value * 1e-7; }
+    static constexpr int32_t doubleToMavlinkLatLon(double degrees)  { return static_cast<int32_t>(degrees * 1e7); }
+    static constexpr double  mavlinkMmToMeters(int32_t mm)          { return mm / 1000.0; }
+    static constexpr int32_t metersToMavlinkMm(double meters)       { return static_cast<int32_t>(meters * 1000.0); }
+
     static bool isValidChannel(uint8_t channel) { return (channel < MAVLINK_COMM_NUM_BUFFERS); }
     static bool isValidChannel(mavlink_channel_t channel) { return isValidChannel(static_cast<uint8_t>(channel)); }
 

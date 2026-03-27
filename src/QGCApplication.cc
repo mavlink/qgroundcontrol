@@ -23,11 +23,14 @@
 #include "LogRemoteSink.h"
 #include "AudioOutput.h"
 #include "FollowMe.h"
+#include "GPSEvent.h"
+#include "GPSManager.h"
 #include "JoystickManager.h"
 #include "JsonHelper.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
+#include "NTRIPManager.h"
 #include "ParameterManager.h"
 #include "PositionManager.h"
 #include "QGCCommandLineParser.h"
@@ -351,6 +354,18 @@ void QGCApplication::_initForNormalAppBoot()
     AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioVolume(), SettingsManager::instance()->appSettings()->audioMuted());
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
+
+    // Wire NTRIPManager dependencies from GPSManager before init(). Done here
+    // rather than in the NTRIPManager constructor so the coupling is explicit
+    // and does not depend on Q_APPLICATION_STATIC construction ordering between
+    // singletons.
+    {
+        GPSManager* gpsMgr = GPSManager::instance();
+        NTRIPManager* ntripMgr = NTRIPManager::instance();
+        ntripMgr->setRtcmMavlink(gpsMgr->rtcmMavlink());
+        ntripMgr->setEventLogger([gpsMgr](const GPSEvent& e) { gpsMgr->logEvent(e); });
+    }
+    NTRIPManager::instance()->init();
     LinkManager::instance()->init();
     VideoManager::instance()->init(mainRootWindow());
 

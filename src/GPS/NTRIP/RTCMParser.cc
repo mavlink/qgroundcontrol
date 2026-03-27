@@ -7,7 +7,7 @@ RTCMParser::RTCMParser()
 
 void RTCMParser::reset()
 {
-    _state = WaitingForPreamble;
+    _state = State::WaitingForPreamble;
     _messageLength = 0;
     _bytesRead = 0;
     _lengthBytesRead = 0;
@@ -17,39 +17,43 @@ void RTCMParser::reset()
 bool RTCMParser::addByte(uint8_t byte)
 {
     switch (_state) {
-    case WaitingForPreamble:
-        if (byte == RTCM3_PREAMBLE) {
+    case State::WaitingForPreamble:
+        if (byte == kPreamble) {
             _buffer[0] = byte;
             _bytesRead = 1;
-            _state = ReadingLength;
+            _state = State::ReadingLength;
             _lengthBytesRead = 0;
         }
         break;
 
-    case ReadingLength:
+    case State::ReadingLength:
         _lengthBytes[_lengthBytesRead++] = byte;
         _buffer[_bytesRead++] = byte;
         if (_lengthBytesRead == 2) {
             _messageLength = ((_lengthBytes[0] & 0x03) << 8) | _lengthBytes[1];
             if (_messageLength > 0 && _messageLength <= kMaxPayloadLength) {
-                _state = ReadingMessage;
+                _state = State::ReadingMessage;
             } else {
                 reset();
             }
         }
         break;
 
-    case ReadingMessage:
+    case State::ReadingMessage:
         if (_bytesRead < kHeaderSize + kMaxPayloadLength) {
             _buffer[_bytesRead++] = byte;
+        } else {
+            // Buffer overflow — corrupt or oversized message; discard
+            reset();
+            break;
         }
         if (_bytesRead >= _messageLength + kHeaderSize) {
-            _state = ReadingCRC;
+            _state = State::ReadingCRC;
             _crcBytesRead = 0;
         }
         break;
 
-    case ReadingCRC:
+    case State::ReadingCRC:
         _crcBytes[_crcBytesRead++] = byte;
         if (_crcBytesRead == kCrcSize) {
             return true;

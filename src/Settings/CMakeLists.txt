@@ -37,8 +37,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         PlanViewSettings.h
         RemoteIDSettings.cc
         RemoteIDSettings.h
-        RTKSettings.cc
-        RTKSettings.h
+        GcsGpsSettings.cc
+        GcsGpsSettings.h
         NTRIPSettings.cc
         NTRIPSettings.h
         SettingsGroup.cc

@@ -21,7 +21,7 @@ class MapsSettings;
 class OfflineMapsSettings;
 class PlanViewSettings;
 class RemoteIDSettings;
-class RTKSettings;
+class GcsGpsSettings;
 class UnitsSettings;
 class NTRIPSettings;
 class VideoSettings;
@@ -55,7 +55,7 @@ class SettingsManager : public QObject
     Q_MOC_INCLUDE("OfflineMapsSettings.h")
     Q_MOC_INCLUDE("PlanViewSettings.h")
     Q_MOC_INCLUDE("RemoteIDSettings.h")
-    Q_MOC_INCLUDE("RTKSettings.h")
+    Q_MOC_INCLUDE("GcsGpsSettings.h")
     Q_MOC_INCLUDE("UnitsSettings.h")
     Q_MOC_INCLUDE("NTRIPSettings.h")
     Q_MOC_INCLUDE("VideoSettings.h")
@@ -79,7 +79,7 @@ class SettingsManager : public QObject
     Q_PROPERTY(QObject *offlineMapsSettings             READ offlineMapsSettings            CONSTANT)
     Q_PROPERTY(QObject *planViewSettings                READ planViewSettings               CONSTANT)
     Q_PROPERTY(QObject *remoteIDSettings                READ remoteIDSettings               CONSTANT)
-    Q_PROPERTY(QObject *rtkSettings                     READ rtkSettings                    CONSTANT)
+    Q_PROPERTY(QObject *gcsGpsSettings                     READ gcsGpsSettings                    CONSTANT)
     Q_PROPERTY(QObject *unitsSettings                   READ unitsSettings                  CONSTANT)
     Q_PROPERTY(QObject *ntripSettings                   READ ntripSettings                  CONSTANT)
     Q_PROPERTY(QObject *videoSettings                   READ videoSettings                  CONSTANT)
@@ -118,7 +118,7 @@ public:
     OfflineMapsSettings *offlineMapsSettings() const;
     PlanViewSettings *planViewSettings() const;
     RemoteIDSettings *remoteIDSettings() const;
-    RTKSettings *rtkSettings() const;
+    GcsGpsSettings *gcsGpsSettings() const;
     UnitsSettings *unitsSettings() const;
     NTRIPSettings *ntripSettings() const;
     VideoSettings *videoSettings() const;
@@ -146,7 +146,7 @@ private:
     OfflineMapsSettings *_offlineMapsSettings = nullptr;
     PlanViewSettings *_planViewSettings = nullptr;
     RemoteIDSettings *_remoteIDSettings = nullptr;
-    RTKSettings *_rtkSettings = nullptr;
+    GcsGpsSettings *_gcsGpsSettings = nullptr;
     UnitsSettings *_unitsSettings = nullptr;
     NTRIPSettings *_ntripSettings = nullptr;
     VideoSettings *_videoSettings = nullptr;

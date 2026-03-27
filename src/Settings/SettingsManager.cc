@@ -17,7 +17,7 @@
 #include "OfflineMapsSettings.h"
 #include "PlanViewSettings.h"
 #include "RemoteIDSettings.h"
-#include "RTKSettings.h"
+#include "GcsGpsSettings.h"
 #include "UnitsSettings.h"
 #include "NTRIPSettings.h"
 #include "VideoSettings.h"
@@ -78,7 +78,7 @@ void SettingsManager::init()
     _offlineMapsSettings = new OfflineMapsSettings(this);
     _planViewSettings = new PlanViewSettings(this);
     _remoteIDSettings = new RemoteIDSettings(this);
-    _rtkSettings = new RTKSettings(this);
+    _gcsGpsSettings = new GcsGpsSettings(this);
     _ntripSettings = new NTRIPSettings(this);
     _videoSettings = new VideoSettings(this);
     _mavlinkSettings = new MavlinkSettings(this);
@@ -107,7 +107,7 @@ MapsSettings *SettingsManager::mapsSettings() const { return _mapsSettings; }
 OfflineMapsSettings *SettingsManager::offlineMapsSettings() const { return _offlineMapsSettings; }
 PlanViewSettings *SettingsManager::planViewSettings() const { return _planViewSettings; }
 RemoteIDSettings *SettingsManager::remoteIDSettings() const { return _remoteIDSettings; }
-RTKSettings *SettingsManager::rtkSettings() const { return _rtkSettings; }
+GcsGpsSettings *SettingsManager::gcsGpsSettings() const { return _gcsGpsSettings; }
 UnitsSettings *SettingsManager::unitsSettings() const { return _unitsSettings; }
 NTRIPSettings *SettingsManager::ntripSettings() const { return _ntripSettings; }
 VideoSettings *SettingsManager::videoSettings() const { return _videoSettings; }

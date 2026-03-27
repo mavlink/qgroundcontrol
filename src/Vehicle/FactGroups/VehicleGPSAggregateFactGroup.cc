@@ -13,7 +13,7 @@
 #include <QtMath>
 
 VehicleGPSAggregateFactGroup::VehicleGPSAggregateFactGroup(QObject *parent)
-    : FactGroup(1000, ":/json/Vehicle/GPSFact.json", parent)
+    : FactGroup(1000, ":/json/Vehicle/GPSAggregateFact.json", parent)
 {
     _addFact(&_spoofingStateFact);
     _addFact(&_jammingStateFact);
@@ -76,41 +76,51 @@ void VehicleGPSAggregateFactGroup::_clearConnections()
 int VehicleGPSAggregateFactGroup::_valueOrInvalid(Fact* fact)
 {
     if (!fact) {
-        return -1;
+        return 255;
     }
     const QVariant v = fact->rawValue();
     if (!v.isValid()) {
-        return -1;
+        return 255;
     }
     bool ok = false;
     const int val = v.toInt(&ok);
-    if (!ok) {
-        return -1;
-    }
-    return (val == 255) ? -1 : val;
+    return ok ? val : 255;
 }
 
 int VehicleGPSAggregateFactGroup::_mergeWorst(int a, int b)
 {
+    // 255 is the invalid sentinel; prefer a valid reading over none
+    const bool aValid = (a != 255);
+    const bool bValid = (b != 255);
+    if (!aValid && !bValid) return 255;
+    if (!aValid) return b;
+    if (!bValid) return a;
     return qMax(a, b);
 }
 
 int VehicleGPSAggregateFactGroup::_mergeAuthentication(int a, int b)
 {
+    using AS = VehicleGPSFactGroup::AuthenticationState;
     // Priority: Unknown < Disabled < Initializing < OK < Error
-    auto getWeight = [](int val) {
-        switch (val) {
-        case AUTH_INVALID:      return -1;
-        case AUTH_UNKNOWN:      return 0;   // lowest priority)
-        case AUTH_DISABLED:     return 1;
-        case AUTH_INITIALIZING: return 2;
-        case AUTH_OK:           return 3;
-        case AUTH_ERROR:        return 4;   // highest priority
-        default:                return -1;
+    // Invalid (255) means no data — prefer any valid reading over none
+    auto getWeight = [](int val) -> int {
+        switch (static_cast<AS>(val)) {
+        case AS::AuthUnknown:      return 0;   // lowest priority
+        case AS::AuthDisabled:     return 1;
+        case AS::AuthInitializing: return 2;
+        case AS::AuthOk:           return 3;
+        case AS::AuthError:        return 4;   // highest priority
+        case AS::AuthInvalid:      return -1;
+        default:                   return -1;
         }
     };
 
-    return (getWeight(a) >= getWeight(b)) ? a : b;
+    const int wa = getWeight(a);
+    const int wb = getWeight(b);
+    if (wa < 0 && wb < 0) return static_cast<int>(AS::AuthInvalid);
+    if (wa < 0) return b;
+    if (wb < 0) return a;
+    return (wa >= wb) ? a : b;
 }
 
 void VehicleGPSAggregateFactGroup::updateFromGps(VehicleGPSFactGroup* gps1, VehicleGPSFactGroup* gps2)
@@ -126,7 +136,7 @@ void VehicleGPSAggregateFactGroup::updateFromGps(VehicleGPSFactGroup* gps1, Vehi
     const int jamMerged   = _mergeWorst(jam1,   jam2);
     const int authMerged  = _mergeAuthentication(auth1, auth2);
 
-    _spoofingStateFact.setRawValue(spoofMerged == -1 ? 255 : spoofMerged);
-    _jammingStateFact.setRawValue(jamMerged == -1 ? 255 : jamMerged);
-    _authenticationStateFact.setRawValue(authMerged == -1 ? 255 : authMerged);
+    _spoofingStateFact.setRawValue(spoofMerged);
+    _jammingStateFact.setRawValue(jamMerged);
+    _authenticationStateFact.setRawValue(authMerged);
 }

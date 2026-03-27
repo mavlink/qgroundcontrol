@@ -103,26 +103,6 @@
             ]
         },
         {
-            "component": "GcsPositionStatus",
-            "sectionName": "GCS Position",
-            "keywords": [
-                "latitude",
-                "longitude",
-                "hdop",
-                "gcs position"
-            ]
-        },
-        {
-            "component": "RemoteIDGpsLocation",
-            "sectionName": "GPS Location",
-            "keywords": [
-                "gps",
-                "nmea",
-                "hdop",
-                "position"
-            ]
-        },
-        {
             "heading": "EU Vehicle Info",
             "keywords": ["eu", "classification", "category", "class", "ce marking"],
             "showWhen": "isEURegion",

@@ -54,11 +54,10 @@
             "pageDefinition": "Maps.SettingsUI.json"
         },
         {
-            "name": "NTRIP/RTK",
-            "qml": "NTRIPSettings.qml",
-            "icon": "qrc:/InstrumentValueIcons/globe.svg",
-            "visible": "QGroundControl.settingsManager && QGroundControl.settingsManager.ntripSettings !== undefined",
-            "pageDefinition": "NTRIP.SettingsUI.json"
+            "name": "GPS",
+            "qml": "GPSSettings.qml",
+            "icon": "qrc:/qml/QGroundControl/GPS/RTK/Images/Gps.svg",
+            "pageDefinition": "GPS.SettingsUI.json"
         },
         {
             "name": "PX4 Log Transfer",

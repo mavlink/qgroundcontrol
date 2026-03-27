@@ -100,9 +100,6 @@
         <file alias="GeoFence.svg">src/AutoPilotPlugins/PX4/Images/GeoFence.svg</file>
         <file alias="GeoFenceLight.svg">src/AutoPilotPlugins/PX4/Images/GeoFenceLight.svg</file>
         <file alias="GeoTagIcon.svg">src/AnalyzeView/GeoTag/GeoTagIcon.svg</file>
-        <file alias="Gps.svg">src/UI/toolbar/Images/Gps.svg</file>
-        <file alias="GpsAuthentication.svg">src/UI/toolbar/Images/GpsAuthentication.svg</file>
-        <file alias="GpsInterference.svg">src/UI/toolbar/Images/GpsInterference.svg</file>
         <file alias="Hamburger.svg">src/UI/toolbar/Images/Hamburger.svg</file>
         <file alias="HamburgerThin.svg">src/UI/toolbar/Images/HamburgerThin.svg</file>
         <file alias="Help.svg">src/FlightMap/Images/Help.svg</file>
@@ -172,7 +169,6 @@
         <file alias="roi.svg">src/UI/toolbar/Images/roi.svg</file>
         <file alias="rollDialWhite.svg">src/FlightMap/Images/rollDialWhite.svg</file>
         <file alias="rollPointerWhite.svg">src/FlightMap/Images/rollPointerWhite.svg</file>
-        <file alias="RTK.svg">src/UI/toolbar/Images/RTK.svg</file>
         <file alias="SafetyComponentIcon.png">src/AutoPilotPlugins/Common/Images/SafetyComponentIcon.png</file>
         <file alias="scale.png">src/FlightMap/Images/scale.png</file>
         <file alias="scale_end.png">src/FlightMap/Images/scale_end.png</file>

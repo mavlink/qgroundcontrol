@@ -6,50 +6,34 @@ QGC_LOGGING_CATEGORY(UdpIODeviceLog, "Comms.UdpIODevice")
 UdpIODevice::UdpIODevice(QObject *parent)
     : QUdpSocket(parent)
 {
-    // qCDebug(UdpIODeviceLog) << Q_FUNC_INFO << this;
-
     (void) connect(this, &QUdpSocket::readyRead, this, &UdpIODevice::_readAvailableData);
 }
 
 UdpIODevice::~UdpIODevice()
 {
-    // qCDebug(UdpIODeviceLog) << Q_FUNC_INFO << this;
 }
 
 bool UdpIODevice::canReadLine() const
 {
-    return _buffer.contains('\n');
+    return _buffer.canReadLine();
 }
 
 qint64 UdpIODevice::readLineData(char *data, qint64 maxSize)
 {
-    const qint64 newlinePos = _buffer.indexOf('\n');
-    if (newlinePos < 0) {
-        return 0;
-    }
-
-    const qint64 length = std::min(newlinePos + 1, maxSize);
-    (void) std::copy_n(_buffer.constData(), length, data);
-
-    (void) _buffer.remove(0, length);
-    return length;
+    return _buffer.readLine(data, maxSize);
 }
 
 qint64 UdpIODevice::readData(char *data, qint64 maxSize)
 {
-    const qint64 length = std::min<qint64>(_buffer.size(), maxSize);
-    (void) std::copy_n(_buffer.constData(), length, data);
-
-    (void) _buffer.remove(0, length);
-    return length;
+    return _buffer.read(data, maxSize);
 }
 
 void UdpIODevice::_readAvailableData()
 {
     while (hasPendingDatagrams()) {
         const qint64 size = pendingDatagramSize();
-        const int oldSize = _buffer.size();
-        _buffer.resize(oldSize + static_cast<int>(size));
-        (void) readDatagram(_buffer.data() + oldSize, size);
+        QByteArray datagram(static_cast<int>(size), Qt::Uninitialized);
+        (void) readDatagram(datagram.data(), size);
+        (void) _buffer.append(datagram);
     }
 }

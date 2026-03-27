@@ -21,6 +21,20 @@
     "type":             "string"
 },
 {
+    "name":             "altitudeMSL",
+    "shortDesc": "Altitude MSL",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "altitudeEllipsoid",
+    "shortDesc": "Altitude WGS84",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
     "name":             "hdop",
     "shortDesc": "HDOP",
     "type":             "double",
@@ -31,6 +45,41 @@
     "shortDesc": "VDOP",
     "type":             "double",
     "decimalPlaces":    1
+},
+{
+    "name":             "hAcc",
+    "shortDesc": "Horizontal Accuracy",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "m"
+},
+{
+    "name":             "vAcc",
+    "shortDesc": "Vertical Accuracy",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "m"
+},
+{
+    "name":             "groundSpeed",
+    "shortDesc": "Ground Speed",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m/s"
+},
+{
+    "name":             "velAcc",
+    "shortDesc": "Speed Accuracy",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "m/s"
+},
+{
+    "name":             "hdgAcc",
+    "shortDesc": "Heading Accuracy",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "deg"
 },
 {
     "name":             "courseOverGround",
@@ -49,7 +98,7 @@
 {
     "name":             "lock",
     "shortDesc": "GPS Lock",
-    "type":             "uint32",
+    "type":             "uint8",
     "enumStrings":      "None,No Fix,2D Lock,3D Lock,3D DGPS Lock,3D RTK GPS Lock (float),3D RTK GPS Lock (fixed),Static (fixed)",
     "enumValues":       "0,1,2,3,4,5,6,7",
     "decimalPlaces":    0
@@ -107,6 +156,41 @@
     "name":             "postProcessingQuality",
     "shortDesc": "Post Processing Quality",
     "type":             "uint8"
+},
+{
+    "name":             "rtkHealth",
+    "shortDesc": "RTK Health",
+    "type":             "uint8"
+},
+{
+    "name":             "rtkRate",
+    "shortDesc": "RTK Baseline Rate",
+    "type":             "uint8",
+    "units":            "Hz"
+},
+{
+    "name":             "rtkNumSats",
+    "shortDesc": "RTK Satellites",
+    "type":             "uint8"
+},
+{
+    "name":             "rtkBaseline",
+    "shortDesc": "RTK Baseline",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "m"
+},
+{
+    "name":             "rtkAccuracy",
+    "shortDesc": "RTK Accuracy",
+    "type":             "double",
+    "decimalPlaces":    3,
+    "units":            "m"
+},
+{
+    "name":             "rtkIAR",
+    "shortDesc": "RTK Ambiguity Hypotheses",
+    "type":             "int32"
 }
 ]
 }

@@ -7,6 +7,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.GPS
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
 import QGroundControl.PlanView
@@ -745,8 +746,8 @@ FlightMap {
 
                     ColumnLayout {
                         spacing: 0
-                        QGCLabel { text: qsTr("Lat: %1").arg(mapClickCoord.latitude.toFixed(6)) }
-                        QGCLabel { text: qsTr("Lon: %1").arg(mapClickCoord.longitude.toFixed(6)) }
+                        QGCLabel { text: qsTr("Lat: %1").arg(GPSFormatter.formatLatitude(mapClickCoord.latitude, 6)) }
+                        QGCLabel { text: qsTr("Lon: %1").arg(GPSFormatter.formatLongitude(mapClickCoord.longitude, 6)) }
                     }
                 }
             }

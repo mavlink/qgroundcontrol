@@ -25,7 +25,6 @@ class QmlObjectListModel;
 class QTimer;
 class SerialLink;
 class UDPConfiguration;
-class UdpIODevice;
 
 /// @brief Manage communication links
 ///        The Link Manager organizes the physical Links. It can manage arbitrary
@@ -179,14 +178,10 @@ private:
     bool _portAlreadyConnected(const QString &portName);
     void _filterCompositePorts(QList<QGCSerialPortInfo> &portList);
 
-    UdpIODevice *_nmeaSocket = nullptr;
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
     QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
     QStringList _commPortList;
     QStringList _commPortDisplayList;
-    QString _autoConnectRTKPort;
-    QString _nmeaDeviceName;
-    uint32_t _nmeaBaud = 0;
-    QSerialPort *_nmeaPort = nullptr;
+    QStringList _autoConnectRTKPorts;
 #endif // QGC_NO_SERIAL_LINK
 };

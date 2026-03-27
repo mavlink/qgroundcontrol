@@ -6,6 +6,7 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
+import QGroundControl.GPS
 
 QGCPopupDialog {
     id:         root
@@ -105,14 +106,14 @@ QGCPopupDialog {
 
         LabelledLabel {
             label:              qsTr("Latitude")
-            labelText:          globals.activeVehicle ? globals.activeVehicle.coordinate.latitude.toFixed(7) : ""
+            labelText:          globals.activeVehicle ? GPSFormatter.formatLatitude(globals.activeVehicle.coordinate.latitude) : ""
             Layout.fillWidth:   true
             visible:            _showVehicle
         }
 
         LabelledLabel {
             label:              qsTr("Longitude")
-            labelText:          globals.activeVehicle ? globals.activeVehicle.coordinate.longitude.toFixed(7) : ""
+            labelText:          globals.activeVehicle ? GPSFormatter.formatLongitude(globals.activeVehicle.coordinate.longitude) : ""
             Layout.fillWidth:   true
             visible:            _showVehicle
         }

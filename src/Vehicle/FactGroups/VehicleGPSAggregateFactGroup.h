@@ -10,29 +10,22 @@
 #pragma once
 
 #include "FactGroup.h"
+#include "VehicleGPSFactGroup.h"
 #include <QtCore/QTimer>
 #include <QtCore/QVector>
 #include <QtCore/QMetaObject>
-
-class VehicleGPSFactGroup;
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class VehicleGPSAggregateFactGroup : public FactGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
     Q_PROPERTY(Fact* spoofingState       READ spoofingState       CONSTANT)
     Q_PROPERTY(Fact* jammingState        READ jammingState        CONSTANT)
     Q_PROPERTY(Fact* authenticationState READ authenticationState CONSTANT)
     Q_PROPERTY(Fact* isStale             READ isStale             CONSTANT)
 public:
-    enum AuthState {
-        AUTH_UNKNOWN = 0,
-        AUTH_INITIALIZING = 1,
-        AUTH_ERROR = 2,
-        AUTH_OK = 3,
-        AUTH_DISABLED = 4,
-        AUTH_INVALID = -1
-    };
-
     explicit VehicleGPSAggregateFactGroup(QObject *parent = nullptr);
 
     Fact* spoofingState()       { return &_spoofingStateFact; }

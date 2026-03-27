@@ -15,9 +15,6 @@ qt_add_qml_module(ToolbarModule
         FlyViewToolBarIndicators.qml
         GCSControlIndicator.qml
         GimbalIndicator.qml
-        GPSIndicator.qml
-        GPSIndicatorPage.qml
-        GPSResilienceIndicator.qml
         JoystickIndicator.qml
         MainStatusIndicator.qml
         MainStatusIndicatorOfflinePage.qml
@@ -28,12 +25,10 @@ qt_add_qml_module(ToolbarModule
         RCRSSIIndicator.qml
         RemoteIDIndicator.qml
         RemoteIDIndicatorPage.qml
-        RTKGPSIndicator.qml
         SelectViewDropdown.qml
         SignalStrength.qml
         SigningIndicator.qml
         TelemetryRSSIIndicator.qml
-        VehicleGPSIndicator.qml
         VehicleMessageList.qml
     NO_PLUGIN
 )

@@ -57,7 +57,7 @@ bool QGCAmbientTemperature::init()
     const qrangelist dataRates = _ambientTemperature->availableDataRates();
     if (!dataRates.isEmpty()) {
         qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << "Available Data Rates:" << dataRates;
-        // _ambientTemperature->setDataRate(dataRates.first().first);
+        // TODO: select an appropriate data rate via setDataRate()
         qCDebug(QGCDeviceInfoLog) << Q_FUNC_INFO << "Selected Data Rate:" << _ambientTemperature->dataRate();
     }
 
@@ -83,7 +83,6 @@ bool QGCAmbientTemperature::init()
         emit temperatureUpdated(_temperatureC);
     });
 
-    // _ambientTemperature->setActive(true);
     const bool started = _ambientTemperature->start();
     if (!started) {
         qCWarning(QGCDeviceInfoLog) << Q_FUNC_INFO << "Failed to start ambient temperature";
@@ -95,7 +94,6 @@ bool QGCAmbientTemperature::init()
 
 void QGCAmbientTemperature::quit()
 {
-    // _ambientTemperature->setActive(false);
     _ambientTemperature->stop();
     _ambientTemperature->disconnect(_readingChangedConnection);
 }
@@ -318,11 +316,18 @@ bool QGCCompass::init()
 
         emit compassUpdated(_azimuth);
 
-        QGeoPositionInfo update;
-        update.setAttribute(QGeoPositionInfo::Attribute::Direction, _azimuth);
-        update.setAttribute(QGeoPositionInfo::Attribute::DirectionAccuracy, _calibrationLevel);
-        update.setTimestamp(QDateTime::currentDateTimeUtc());
-        emit positionUpdated(update);
+        static constexpr qreal kMinCalibration = 0.65;
+        if (_calibrationLevel >= kMinCalibration) {
+            // Convert calibration level (0-1) to estimated accuracy in degrees
+            // 1.0 = well calibrated (~5°), 0.65 = marginal (~20°), below threshold = rejected
+            const qreal accuracyDeg = 5.0 + (1.0 - _calibrationLevel) * 45.0;
+
+            QGeoPositionInfo update;
+            update.setAttribute(QGeoPositionInfo::Attribute::Direction, _azimuth);
+            update.setAttribute(QGeoPositionInfo::Attribute::DirectionAccuracy, accuracyDeg);
+            update.setTimestamp(QDateTime::currentDateTimeUtc());
+            emit positionUpdated(update);
+        }
     });
 
     // _compass->setActive(true);

@@ -54,6 +54,7 @@ set(JSON_FILES
     RPMFact.json
     TemperatureFact.json
     GPSFact.json
+    GPSAggregateFact.json
     EscStatusFactGroup.json
     LocalPositionFact.json
     EstimatorStatusFactGroup.json

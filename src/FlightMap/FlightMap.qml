@@ -8,6 +8,7 @@ import Qt.labs.animation
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.GPS.RTK
 
 Map {
     id: _map
@@ -17,8 +18,8 @@ Map {
 
     property string mapName:                        'defaultMap'
     property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
-    property var    gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
-    property real   gcsHeading:                     QGroundControl.qgcPositionManger.gcsHeading
+    property var    gcsPosition:                    QGroundControl.qgcPositionManager.gcsPosition
+    property real   gcsHeading:                     QGroundControl.qgcPositionManager.gcsHeading
     property bool   allowGCSLocationCenter:         false   ///< true: map will center/zoom to gcs location one time
     property bool   allowVehicleLocationCenter:     false   ///< true: map will center/zoom to vehicle location one time
     property bool   firstGCSPositionReceived:       false   ///< true: first gcs position update was responded to
@@ -225,12 +226,30 @@ Map {
         }
     }
 
+    RTKBaseStationMapItem {
+        activeVehicle: _activeVehicle
+        planView:      _map.planView
+    }
+
+    /// GCS position accuracy circle
+    MapCircle {
+        center:         gcsPosition
+        radius:         QGroundControl.qgcPositionManager.gcsPositionHorizontalAccuracy
+        color:          Qt.rgba(0.2, 0.4, 0.8, 0.15)
+        border.color:   Qt.rgba(0.2, 0.4, 0.8, 0.4)
+        border.width:   1
+        visible:        gcsPosition.isValid && !planView
+                        && isFinite(QGroundControl.qgcPositionManager.gcsPositionHorizontalAccuracy)
+                        && QGroundControl.qgcPositionManager.gcsPositionHorizontalAccuracy < 100
+    }
+
     /// Ground Station location
     MapQuickItem {
         anchorPoint.x:  sourceItem.width / 2
         anchorPoint.y:  sourceItem.height / 2
         visible:        gcsPosition.isValid && !planView
         coordinate:     gcsPosition
+        opacity:        QGroundControl.qgcPositionManager.positionStale ? 0.4 : 1.0
 
         sourceItem: Image {
             id:             mapItemImage

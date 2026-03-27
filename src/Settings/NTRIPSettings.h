@@ -2,9 +2,13 @@
 
 #include "SettingsGroup.h"
 
+#include <QtQmlIntegration/QtQmlIntegration>
+
 class NTRIPSettings : public SettingsGroup
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
 
 public:
     NTRIPSettings(QObject* parent = nullptr);
@@ -19,6 +23,8 @@ public:
     DEFINE_SETTINGFACT(ntripMountpoint)
     DEFINE_SETTINGFACT(ntripWhitelist)
     DEFINE_SETTINGFACT(ntripUseTls)
+    DEFINE_SETTINGFACT(ntripAllowSelfSignedCerts)
+    DEFINE_SETTINGFACT(ntripGgaPositionSource)
     DEFINE_SETTINGFACT(ntripUdpForwardEnabled)
     DEFINE_SETTINGFACT(ntripUdpTargetAddress)
     DEFINE_SETTINGFACT(ntripUdpTargetPort)

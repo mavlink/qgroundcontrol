@@ -26,8 +26,12 @@ class QGCPositionManager;
 class SettingsManager;
 class VideoManager;
 class QmlObjectListModel;
+class GPSEventModel;
+class GPSManager;
 
 Q_MOC_INCLUDE("ADSBVehicleManager.h")
+Q_MOC_INCLUDE("GPSEventModel.h")
+Q_MOC_INCLUDE("GPSManager.h")
 Q_MOC_INCLUDE("NTRIPManager.h")
 Q_MOC_INCLUDE("FactGroup.h")
 Q_MOC_INCLUDE("LinkManager.h")
@@ -67,17 +71,17 @@ public:
     Q_PROPERTY(LinkManager*         linkManager             READ    linkManager             CONSTANT)
     Q_PROPERTY(MultiVehicleManager* multiVehicleManager     READ    multiVehicleManager     CONSTANT)
     Q_PROPERTY(QGCMapEngineManager* mapEngineManager        READ    mapEngineManager        CONSTANT)
-    Q_PROPERTY(QGCPositionManager*  qgcPositionManger       READ    qgcPositionManger       CONSTANT)
+    Q_PROPERTY(QGCPositionManager*  qgcPositionManager       READ    qgcPositionManager       CONSTANT)
     Q_PROPERTY(VideoManager*        videoManager            READ    videoManager            CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager         READ    settingsManager         CONSTANT)
     Q_PROPERTY(ADSBVehicleManager*  adsbVehicleManager      READ    adsbVehicleManager      CONSTANT)
     Q_PROPERTY(NTRIPManager*        ntripManager            READ    ntripManager            CONSTANT)
+    Q_PROPERTY(GPSManager*          gpsManager              READ    gpsManager              CONSTANT)
     Q_PROPERTY(QGCCorePlugin*       corePlugin              READ    corePlugin              CONSTANT)
     Q_PROPERTY(MissionCommandTree*  missionCommandTree      READ    missionCommandTree      CONSTANT)
     Q_PROPERTY(MAVLinkSigningKeys*   mavlinkSigningKeys      READ    mavlinkSigningKeys      CONSTANT)
-#ifndef QGC_NO_SERIAL_LINK
-    Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         CONSTANT)
-#endif
+    Q_PROPERTY(FactGroup*           gpsRtk                  READ    gpsRtkFactGroup         NOTIFY  gpsDeviceChanged)
+    Q_PROPERTY(GPSEventModel*       gpsEventModel           READ    gpsEventModel           CONSTANT)
     Q_PROPERTY(QGCPalette*          globalPalette           MEMBER  _globalPalette          CONSTANT)   ///< This palette will always return enabled colors
     Q_PROPERTY(QmlUnitsConversion*  unitsConversion         READ    unitsConversion         CONSTANT)
     Q_PROPERTY(bool                 singleFirmwareSupport   READ    singleFirmwareSupport   CONSTANT)
@@ -157,17 +161,17 @@ public:
     LinkManager*            linkManager         ()  { return _linkManager; }
     MultiVehicleManager*    multiVehicleManager ()  { return _multiVehicleManager; }
     QGCMapEngineManager*    mapEngineManager    ()  { return _mapEngineManager; }
-    QGCPositionManager*     qgcPositionManger   ()  { return _qgcPositionManager; }
+    QGCPositionManager*     qgcPositionManager   ()  { return _qgcPositionManager; }
     MissionCommandTree*     missionCommandTree  ()  { return _missionCommandTree; }
     MAVLinkSigningKeys*     mavlinkSigningKeys  ()  { return _mavlinkSigningKeys; }
     VideoManager*           videoManager        ()  { return _videoManager; }
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
-#ifndef QGC_NO_SERIAL_LINK
-    FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
-#endif
+    FactGroup*              gpsRtkFactGroup     ();
+    GPSEventModel*          gpsEventModel       ();
     ADSBVehicleManager*     adsbVehicleManager  ()  { return _adsbVehicleManager; }
     NTRIPManager*           ntripManager        ()  { return _ntripManager; }
+    GPSManager*             gpsManager          ()  { return _gpsManager; }
     QmlUnitsConversion*     unitsConversion     ()  { return &_unitsConversion; }
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
     static double           flightMapZoom       ()  { return _zoom; }
@@ -214,11 +218,13 @@ signals:
     void flightMapPositionChanged       (QGeoCoordinate flightMapPosition);
     void flightMapZoomChanged           (double flightMapZoom);
     void showMessageDialogRequested     (QObject* owner, QString title, QString text, int buttons, QJSValue acceptFunction, QJSValue closeFunction);
+    void gpsDeviceChanged               ();
 
 private:
     QGCMapEngineManager*    _mapEngineManager       = nullptr;
     ADSBVehicleManager*     _adsbVehicleManager     = nullptr;
     NTRIPManager*           _ntripManager           = nullptr;
+    GPSManager*             _gpsManager             = nullptr;
     QGCPositionManager*     _qgcPositionManager     = nullptr;
     MissionCommandTree*     _missionCommandTree     = nullptr;
     MAVLinkSigningKeys*     _mavlinkSigningKeys     = nullptr;
@@ -228,9 +234,6 @@ private:
     SettingsManager*        _settingsManager        = nullptr;
     QGCCorePlugin*          _corePlugin             = nullptr;
     QGCPalette*             _globalPalette          = nullptr;
-#ifndef QGC_NO_SERIAL_LINK
-    FactGroup*              _gpsRtkFactGroup        = nullptr;
-#endif
 
     double                  _flightMapInitialZoom   = 17.0;
     QmlUnitsConversion      _unitsConversion;

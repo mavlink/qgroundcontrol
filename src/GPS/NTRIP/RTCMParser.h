@@ -3,13 +3,18 @@
 #include <cstddef>
 #include <cstdint>
 
-static constexpr uint8_t RTCM3_PREAMBLE = 0xD3;
+#include <QtCore/QSet>
+#include <QtCore/QVector>
 
 class RTCMParser
 {
 public:
+    static constexpr uint8_t kPreamble = 0xD3;
+
     RTCMParser();
     void reset();
+    void setWhitelist(const QVector<int>& ids) { _whitelist = QSet<int>(ids.begin(), ids.end()); }
+    bool isWhitelisted(uint16_t id) const { return _whitelist.isEmpty() || _whitelist.contains(id); }
     bool addByte(uint8_t byte);
     uint8_t* message() { return _buffer; }
     uint16_t messageLength() const { return _messageLength; }
@@ -21,7 +26,7 @@ public:
     static uint32_t crc24q(const uint8_t* data, size_t len);
 
 private:
-    enum State {
+    enum class State {
         WaitingForPreamble,
         ReadingLength,
         ReadingMessage,
@@ -31,6 +36,7 @@ private:
     static constexpr uint16_t kMaxPayloadLength = 1023;
     static constexpr int kHeaderSize = 3;
 
+    QSet<int> _whitelist;
     State _state;
     uint8_t _buffer[kHeaderSize + kMaxPayloadLength];
     uint16_t _messageLength;

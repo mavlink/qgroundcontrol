@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.AnalyzeView
 import QGroundControl.Controls
+import QGroundControl.GPS
 
 AnalyzePage {
     id:                 geoTagPage
@@ -530,7 +531,7 @@ AnalyzePage {
                                     Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 20
                                     text: {
                                         if (model.coordinate && model.coordinate.isValid) {
-                                            return model.coordinate.latitude.toFixed(6) + ", " + model.coordinate.longitude.toFixed(6)
+                                            return GPSFormatter.formatCoordinate(model.coordinate.latitude, model.coordinate.longitude, 6)
                                         }
                                         return ""
                                     }

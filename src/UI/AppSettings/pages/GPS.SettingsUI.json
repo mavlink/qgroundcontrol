@@ -1,0 +1,78 @@
+{
+    "version": 1,
+    "bindings": {
+        "gcsGpsSettings": "QGroundControl.settingsManager.gcsGpsSettings",
+        "isUblox": "gcsGpsSettings.baseReceiverManufacturers.rawValue === 0 || gcsGpsSettings.baseReceiverManufacturers.rawValue === 4",
+        "isNotNmea": "gcsGpsSettings.baseReceiverManufacturers.rawValue !== 5",
+        "rtkConnected": "QGroundControl.gpsManager && QGroundControl.gpsManager.deviceCount > 0"
+    },
+    "groups": [
+        {
+            "component": "GcsPositionStatus",
+            "sectionName": "GCS Position",
+            "headingDescription": "Ground station location used on the map and as GGA source for NTRIP",
+            "keywords": "gcs,position,latitude,longitude,accuracy,heading,source"
+        },
+        {
+            "component": "GcsGpsReceivers",
+            "sectionName": "GCS GPS Receivers",
+            "headingDescription": "Attach a GPS receiver to the ground station (NMEA serial, NMEA UDP, or RTK)",
+            "keywords": "gcs,gps,receiver,nmea,rtk,serial,udp,baudrate,connect,disconnect,autoconnect"
+        },
+        {
+            "component": "RtkBaseStationConfig",
+            "sectionName": "RTK Base Configuration",
+            "showWhen": "rtkConnected",
+            "headingDescription": "Output mode, survey-in, fixed position, and heading offset for the connected RTK receiver",
+            "keywords": "rtk,base station,output mode,survey-in,fixed position,latitude,longitude,altitude,heading,dual-antenna,offset"
+        },
+        {
+            "component": "RtkGnssConstellations",
+            "sectionName": "GNSS Constellations",
+            "showWhen": "isNotNmea && rtkConnected",
+            "headingDescription": "Select which satellite systems to use",
+            "keywords": "gnss,gps,sbas,galileo,beidou,glonass,constellations,satellite"
+        },
+        {
+            "heading": "U-blox Configuration",
+            "headingDescription": "qsTr(\"Advanced settings for u-blox RTK receivers\")",
+            "showWhen": "isUblox && rtkConnected",
+            "keywords": "ublox,u-blox,uart,baudrate,dynamic model,dgnss,ppk,jam detection,cno,elevation",
+            "controls": [
+                {
+                    "setting": "gcsGpsSettings.ubxMode"
+                },
+                {
+                    "setting": "gcsGpsSettings.ubxDynamicModel"
+                },
+                {
+                    "setting": "gcsGpsSettings.ubxUart2Baudrate"
+                },
+                {
+                    "setting": "gcsGpsSettings.ubxDgnssTimeout"
+                },
+                {
+                    "setting": "gcsGpsSettings.ubxMinCno"
+                },
+                {
+                    "setting": "gcsGpsSettings.ubxMinElevation"
+                },
+                {
+                    "setting": "gcsGpsSettings.ubxOutputRate"
+                },
+                {
+                    "setting": "gcsGpsSettings.ubxPpkOutput"
+                },
+                {
+                    "setting": "gcsGpsSettings.ubxJamDetSensitivityHi"
+                }
+            ]
+        },
+        {
+            "component": "NtripConfig",
+            "sectionName": "NTRIP",
+            "headingDescription": "Internet-based RTK correction service",
+            "keywords": "ntrip,rtk,corrections,caster,host,port,username,password,mountpoint,gga,whitelist,udp,forward,tls"
+        }
+    ]
+}

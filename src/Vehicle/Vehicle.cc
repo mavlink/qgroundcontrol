@@ -2786,8 +2786,8 @@ void Vehicle::_sendMavCommandFromList(int index)
         cmd.param2 =            commandEntry.rgParam2;
         cmd.param3 =            commandEntry.rgParam3;
         cmd.param4 =            commandEntry.rgParam4;
-        cmd.x =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam5 : commandEntry.rgParam5 * 1e7;
-        cmd.y =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam6 : commandEntry.rgParam6 * 1e7;
+        cmd.x =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam5 : QGCMAVLink::doubleToMavlinkLatLon(commandEntry.rgParam5);
+        cmd.y =                 commandEntry.frame == MAV_FRAME_MISSION ? commandEntry.rgParam6 : QGCMAVLink::doubleToMavlinkLatLon(commandEntry.rgParam6);
         cmd.z =                 commandEntry.rgParam7;
         mavlink_msg_command_int_encode_chan(MAVLinkProtocol::instance()->getSystemId(),
                                             MAVLinkProtocol::getComponentId(),
@@ -4190,9 +4190,9 @@ void Vehicle::setEstimatorOrigin(const QGeoCoordinate& centerCoord)
         sharedLink->mavlinkChannel(),
         &msg,
         id(),
-        centerCoord.latitude() * 1e7,
-        centerCoord.longitude() * 1e7,
-        centerCoord.altitude() * 1e3,
+        QGCMAVLink::doubleToMavlinkLatLon(centerCoord.latitude()),
+        QGCMAVLink::doubleToMavlinkLatLon(centerCoord.longitude()),
+        QGCMAVLink::metersToMavlinkMm(centerCoord.altitude()),
         static_cast<float>(qQNaN())
     );
     sendMessageOnLinkThreadSafe(sharedLink.get(), msg);

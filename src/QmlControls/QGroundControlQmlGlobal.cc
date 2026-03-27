@@ -18,10 +18,8 @@
 #include "VideoManager.h"
 #include "MultiVehicleManager.h"
 #include "LoggingCategoryModel.h"
-#ifndef QGC_NO_SERIAL_LINK
+#include "GPSEventModel.h"
 #include "GPSManager.h"
-#include "GPSRtk.h"
-#endif
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
@@ -41,6 +39,7 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _mapEngineManager(QGCMapEngineManager::instance())
     , _adsbVehicleManager(ADSBVehicleManager::instance())
     , _ntripManager(NTRIPManager::instance())
+    , _gpsManager(GPSManager::instance())
     , _qgcPositionManager(QGCPositionManager::instance())
     , _missionCommandTree(MissionCommandTree::instance())
     , _mavlinkSigningKeys(MAVLinkSigningKeys::instance())
@@ -50,10 +49,10 @@ QGroundControlQmlGlobal::QGroundControlQmlGlobal(QObject *parent)
     , _settingsManager(SettingsManager::instance())
     , _corePlugin(QGCCorePlugin::instance())
     , _globalPalette(new QGCPalette(this))
-#ifndef QGC_NO_SERIAL_LINK
-    , _gpsRtkFactGroup(GPSManager::instance()->gpsRtk()->gpsRtkFactGroup())
-#endif
 {
+    connect(_gpsManager, &GPSManager::deviceConnected,    this, &QGroundControlQmlGlobal::gpsDeviceChanged);
+    connect(_gpsManager, &GPSManager::deviceDisconnected, this, &QGroundControlQmlGlobal::gpsDeviceChanged);
+
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
     // setParent(nullptr);
 
@@ -345,6 +344,16 @@ QString QGroundControlQmlGlobal::telemetryFileExtension() const
 QString QGroundControlQmlGlobal::appName()
 {
     return QCoreApplication::applicationName();
+}
+
+FactGroup* QGroundControlQmlGlobal::gpsRtkFactGroup()
+{
+    return _gpsManager->gpsRtkFactGroup();
+}
+
+GPSEventModel* QGroundControlQmlGlobal::gpsEventModel()
+{
+    return _gpsManager->eventModel();
 }
 
 

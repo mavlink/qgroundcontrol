@@ -30,15 +30,6 @@
             "keywords": "auto connect,sik radio"
         },
         {
-            "name": "autoConnectRTKGPS",
-            "shortDesc": "Automatically connect to RTK GPS receivers detected on USB.",
-            "longDesc": "If this option is enabled GroundControl will automatically connect to an RTK GPS which is connected via USB.",
-            "type": "bool",
-            "default": true,
-            "label": "Automatically connect to an RTK GPS",
-            "keywords": "auto connect,rtk gps"
-        },
-        {
             "name": "autoConnectLibrePilot",
             "shortDesc": "Automatically connect to LibrePilot autopilots detected on USB.",
             "longDesc": "If this option is enabled GroundControl will automatically connect to a LibrePilot board which is connected via USB.",
@@ -46,22 +37,6 @@
             "default": true,
             "label": "Automatically connect to a LibrePilot",
             "keywords": "auto connect,librepilot"
-        },
-        {
-            "name": "autoConnectNmeaPort",
-            "shortDesc": "NMEA GPS device for GCS position",
-            "longDesc": "NMEA GPS device for GCS position",
-            "type": "string",
-            "default": "Disabled",
-            "label": "NMEA GPS device for GCS position"
-        },
-        {
-            "name": "autoConnectNmeaBaud",
-            "shortDesc": "NMEA GPS Baudrate",
-            "longDesc": "NMEA GPS Baudrate",
-            "type": "uint32",
-            "default": 4800,
-            "label": "NMEA GPS Baudrate"
         },
         {
             "name": "autoConnectZeroConf",
@@ -91,13 +66,6 @@
             "type": "uint32",
             "default": 14550,
             "label": "UDP target host port for autoconnect"
-        },
-        {
-            "name": "nmeaUdpPort",
-            "shortDesc": "Udp port to receive NMEA streams",
-            "type": "uint32",
-            "default": 14401,
-            "label": "Udp port to receive NMEA streams"
         }
     ]
 }

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtPositioning/QGeoPositionInfoSource>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QTimer>
+#include <QtPositioning/QGeoPositionInfoSource>
 
 Q_DECLARE_LOGGING_CATEGORY(SimulatedPositionLog)
 
 class Vehicle;
-class QTimer;
 
 class SimulatedPosition : public QGeoPositionInfoSource
 {
@@ -33,7 +33,7 @@ private slots:
     void _vehicleHomePositionChanged(QGeoCoordinate homePosition);
 
 private:
-    QTimer *_updateTimer = nullptr;
+    QTimer _updateTimer;
     QGeoPositionInfo _lastPosition;
     QMetaObject::Connection _homePositionChangedConnection;
 

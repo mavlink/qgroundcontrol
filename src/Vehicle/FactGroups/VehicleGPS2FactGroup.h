@@ -11,6 +11,7 @@ public:
         : VehicleGPSFactGroup(parent)
     {
         _gnssIntegrityId = 1;
+        _rtkReceiverId = 1;
     }
 
     // Overrides from VehicleGPSFactGroup

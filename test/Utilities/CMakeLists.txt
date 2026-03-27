@@ -16,6 +16,8 @@ add_subdirectory(StateMachine)
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        DataRateTrackerTest.cc
+        DataRateTrackerTest.h
         QGCCommandLineParserTest.cc
         QGCCommandLineParserTest.h
         QGCMathTest.cc

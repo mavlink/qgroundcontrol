@@ -67,7 +67,7 @@ SetupPage {
             property bool   _compassAutoRot:                _compassAutoRotAvailable ? _compassAutoRotFact.rawValue == 2 : false
             property bool   _showSimpleAccelCalOption:      false
             property bool   _doSimpleAccelCal:              false
-            property var    _gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
+            property var    _gcsPosition:                    QGroundControl.qgcPositionManager.gcsPosition
             property var    _mapPosition:                    QGroundControl.flightMapPosition
 
             function showOrientationsDialog(calType) {

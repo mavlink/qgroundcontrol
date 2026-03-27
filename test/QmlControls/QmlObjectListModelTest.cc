@@ -112,5 +112,3 @@ void QmlObjectListModelTest::_appendObjectWithoutDirtySignal()
 }
 
 UT_REGISTER_TEST(QmlObjectListModelTest, TestLabel::Unit)
-
-#include "QmlObjectListModelTest.moc"

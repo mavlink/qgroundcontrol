@@ -22,8 +22,8 @@ set(_generated_qml_names
     CommLinksSettings.qml
     FlyViewSettings.qml
     GeneralSettings.qml
+    GPSSettings.qml
     MapsSettings.qml
-    NTRIPSettings.qml
     PlanViewSettings.qml
     PX4LogTransferSettings.qml
     RemoteIDSettings.qml
@@ -79,6 +79,7 @@ qt_add_qml_module(AppSettingsModule
         # Hand-coded pages and components
         BluetoothSettings.qml
         DebugWindow.qml
+        GcsGpsReceivers.qml
         GcsPositionStatus.qml
         HelpSettings.qml
         LinkConfigurationManager.qml
@@ -88,9 +89,7 @@ qt_add_qml_module(AppSettingsModule
         MavlinkLinkStatus.qml
         MockLink.qml
         MockLinkSettings.qml
-        NmeaGpsSettings.qml
-        NtripConnectionStatus.qml
-        NtripMountpointBrowser.qml
+        NtripConfig.qml
         NtripServerSettings.qml
         OfflineMapEditor.qml
         OfflineMapInfo.qml
@@ -99,7 +98,8 @@ qt_add_qml_module(AppSettingsModule
         PX4LogFileManager.qml
         PX4LogUploadSettings.qml
         QmlTest.qml
-        RemoteIDGpsLocation.qml
+        RtkBaseStationConfig.qml
+        RtkGnssConstellations.qml
         SerialSettings.qml
         SettingsPage.qml
         TcpSettings.qml

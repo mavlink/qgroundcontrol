@@ -2,35 +2,33 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
-#include <QtNetwork/QNetworkReply>
 #include <QtPositioning/QGeoCoordinate>
 
 Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableLog)
 
 class QmlObjectListModel;
-class QNetworkAccessManager;
 
 class NTRIPMountpointModel : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString mountpoint   READ mountpoint   CONSTANT)
-    Q_PROPERTY(QString identifier   READ identifier   CONSTANT)
-    Q_PROPERTY(QString format       READ format       CONSTANT)
-    Q_PROPERTY(QString formatDetails READ formatDetails CONSTANT)
-    Q_PROPERTY(int     carrier      READ carrier      CONSTANT)
-    Q_PROPERTY(QString navSystem    READ navSystem    CONSTANT)
-    Q_PROPERTY(QString network      READ network      CONSTANT)
-    Q_PROPERTY(QString country      READ country      CONSTANT)
-    Q_PROPERTY(double  latitude     READ latitude     CONSTANT)
-    Q_PROPERTY(double  longitude    READ longitude    CONSTANT)
-    Q_PROPERTY(bool    nmea         READ nmea         CONSTANT)
-    Q_PROPERTY(bool    solution     READ solution     CONSTANT)
-    Q_PROPERTY(QString generator    READ generator    CONSTANT)
-    Q_PROPERTY(QString compression  READ compression  CONSTANT)
-    Q_PROPERTY(QString authentication READ authentication CONSTANT)
-    Q_PROPERTY(bool    fee          READ fee          CONSTANT)
-    Q_PROPERTY(int     bitrate      READ bitrate      CONSTANT)
-    Q_PROPERTY(double  distanceKm   READ distanceKm   NOTIFY distanceKmChanged)
+    Q_PROPERTY(QString mountpoint      READ mountpoint      CONSTANT)
+    Q_PROPERTY(QString identifier      READ identifier      CONSTANT)
+    Q_PROPERTY(QString format          READ format          CONSTANT)
+    Q_PROPERTY(QString formatDetails   READ formatDetails   CONSTANT)
+    Q_PROPERTY(int     carrier         READ carrier         CONSTANT)
+    Q_PROPERTY(QString navSystem       READ navSystem       CONSTANT)
+    Q_PROPERTY(QString network         READ network         CONSTANT)
+    Q_PROPERTY(QString country         READ country         CONSTANT)
+    Q_PROPERTY(double  latitude        READ latitude        CONSTANT)
+    Q_PROPERTY(double  longitude       READ longitude       CONSTANT)
+    Q_PROPERTY(bool    nmea            READ nmea            CONSTANT)
+    Q_PROPERTY(bool    solution        READ solution        CONSTANT)
+    Q_PROPERTY(QString generator       READ generator       CONSTANT)
+    Q_PROPERTY(QString compression     READ compression     CONSTANT)
+    Q_PROPERTY(QString authentication  READ authentication  CONSTANT)
+    Q_PROPERTY(bool    fee             READ fee             CONSTANT)
+    Q_PROPERTY(int     bitrate         READ bitrate         CONSTANT)
+    Q_PROPERTY(double  distanceKm      READ distanceKm      NOTIFY distanceKmChanged)
 
 public:
     explicit NTRIPMountpointModel(QObject* parent = nullptr) : QObject(parent) {}
@@ -109,38 +107,3 @@ private:
     QmlObjectListModel* _mountpoints = nullptr;
 };
 
-// ---------------------------------------------------------------------------
-// NTRIPSourceTableFetcher
-// ---------------------------------------------------------------------------
-
-class NTRIPSourceTableFetcher : public QObject
-{
-    Q_OBJECT
-
-public:
-    static constexpr int kFetchTimeoutMs = 10000;
-
-    NTRIPSourceTableFetcher(const QString& host, int port,
-                            const QString& username, const QString& password,
-                            bool useTls = false,
-                            QObject* parent = nullptr);
-    ~NTRIPSourceTableFetcher() override = default;
-
-    void fetch();
-
-signals:
-    void sourceTableReceived(const QString& table);
-    void error(const QString& errorMsg);
-    void finished();
-
-private:
-    void _onReplyFinished();
-
-    QNetworkAccessManager* _networkManager = nullptr;
-    QNetworkReply* _reply = nullptr;
-    QString _host;
-    int _port;
-    QString _username;
-    QString _password;
-    bool _useTls = false;
-};
