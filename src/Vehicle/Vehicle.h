@@ -24,6 +24,7 @@ class Actuators;
 class AutoPilotPlugin;
 class BatteryFactGroupListModel;
 class EscStatusFactGroupListModel;
+class AM32EepromFactGroupListModel;
 class GimbalController;
 class TerrainFactGroup;
 class VehicleClockFactGroup;
@@ -255,6 +256,7 @@ public:
     // Dynamic FactGroupListModel properties
     Q_PROPERTY(QmlObjectListModel*  batteries       READ batteries                  CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  escs            READ escs                       CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  am32eeproms     READ am32eeproms                CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
@@ -572,6 +574,7 @@ public:
 
     QmlObjectListModel* batteries           ();
     QmlObjectListModel* escs                ();
+    QmlObjectListModel* am32eeproms         ();
 
     MissionManager*                 missionManager      () { return _missionManager; }
     GeoFenceManager*                geoFenceManager     () { return _geoFenceManager; }
@@ -1253,6 +1256,7 @@ public:
     // Dynamic FactGroups
     BatteryFactGroupListModel*          _batteryFactGroupListModel  = nullptr;
     EscStatusFactGroupListModel*        _escStatusFactGroupListModel = nullptr;
+    AM32EepromFactGroupListModel*       _am32EepromFactGroupListModel = nullptr;
 
     TerrainProtocolHandler* _terrainProtocolHandler = nullptr;
 

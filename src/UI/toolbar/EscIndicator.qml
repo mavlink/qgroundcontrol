@@ -17,44 +17,81 @@ Item {
 
     // ESC status properties derived from vehicle data
     property int    _motorCount:        _escs && _escs.count > 0 ? _escs.get(0).count.rawValue : 0
-    property int    _onlineBitmask:       _escs && _escs.count > 0? _escs.get(0).info.rawValue : 0
 
-    property int    _onlineMotorCount:  _getOnlineMotorCount()
-    property bool   _escHealthy:        _getEscHealthStatus()
+    property int    _onlineMotorCount:  0
+    property bool   _escHealthy:        false
 
-    function _getOnlineMotorCount() {
-        if (_motorCount === 0) return 0;
-
-        let count = 0;
-        let mask = _onlineBitmask;
-
-        // Count all set bits in the bitmask
-        while (mask) {
-            count += mask & 1;
-            mask >>= 1;
-        }
-
-        return count;
+    function _isMotorOnline(motorIndex) {
+        // Each ESC's info fact now contains its individual online status (1=online, 0=offline)
+        return _escs && motorIndex < _escs.count && _escs.get(motorIndex).info.rawValue !== 0
     }
 
-    function _getEscHealthStatus() {
-        // Health is good if all expected motors are online and have no failure flags
-        if (_onlineMotorCount !== _motorCount) return false
-
-        // Check failure flags for each motor (4 per group)
-        for (let index = 0; index < 4; index++) {
-            if ((_onlineBitmask & (1 << index)) !== 0) { // Motor is online
-                if (_escs.get(index).failureFlags > 0) { // Any failure flag set means unhealthy
-                    return false
+    function _recalcEscStatus() {
+        // Recalculate online motor count
+        let onlineCount = 0;
+        if (_escs && _escs.count > 0) {
+            for (let i = 0; i < _escs.count; i++) {
+                if (_isMotorOnline(i)) {
+                    onlineCount++;
                 }
             }
         }
+        _onlineMotorCount = onlineCount;
 
-        return true
+        // Recalculate health status
+        let healthy = true;
+        if (_onlineMotorCount !== _motorCount) {
+            healthy = false;
+        } else if (_escs) {
+            for (let index = 0; index < _escs.count; index++) {
+                if (_isMotorOnline(index)) {
+                    if (_escs.get(index).failureFlags.rawValue > 0) {
+                        healthy = false;
+                        break;
+                    }
+                }
+            }
+        }
+        _escHealthy = healthy;
     }
 
     function getEscStatusColor() {
         return _escHealthy ? qgcPal.colorGreen : qgcPal.colorRed
+    }
+
+    Component.onCompleted: _recalcEscStatus()
+
+    Timer {
+        id:         escDebounceTimer
+        interval:   50
+        running:    false
+        repeat:     false
+        onTriggered: control._recalcEscStatus()
+    }
+
+    Connections {
+        target: _escs
+        function onCountChanged() { escDebounceTimer.restart() }
+    }
+
+    // Connect to each ESC's info and failureFlags changes via an Instantiator
+    Instantiator {
+        model:  _escs
+        active: _escs && _escs.count > 0
+
+        delegate: QtObject {
+            property var esc: model ? _escs.get(index) : null
+
+            property var _infoConn: Connections {
+                target: esc ? esc.info : null
+                function onRawValueChanged() { escDebounceTimer.restart() }
+            }
+
+            property var _failureFlagsConn: Connections {
+                target: esc ? esc.failureFlags : null
+                function onRawValueChanged() { escDebounceTimer.restart() }
+            }
+        }
     }
 
     QGCPalette { id: qgcPal }
