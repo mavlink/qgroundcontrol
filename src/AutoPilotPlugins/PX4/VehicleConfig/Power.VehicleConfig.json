@@ -1,0 +1,149 @@
+{
+    "fileType": "VehicleConfig",
+    "version": 1,
+    "imports": [
+        "QGroundControl.AutoPilotPlugins.PX4"
+    ],
+    "controllerType": "PowerComponentController",
+    "params": {
+        "_uavcanEnable": "UAVCAN_ENABLE",
+        "_uavcanAvailable": {
+            "name": "UAVCAN_ENABLE",
+            "existsOnly": true
+        }
+    },
+    "sections": [
+        {
+            "image": "/qmlimages/Battery.svg",
+            "repeat": {
+                "paramPrefix": "BAT",
+                "probePostfix": "_SOURCE",
+                "startIndex": 1,
+                "firstIndexOmitsNumber": false
+            },
+            "controls": [
+                {
+                    "param": "_SOURCE",
+                    "label": "Source",
+                    "control": "combobox"
+                },
+                {
+                    "param": "_N_CELLS",
+                    "label": "Number of cells (in series)",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"_N_CELLS\"))"
+                },
+                {
+                    "param": "_V_EMPTY",
+                    "label": "Empty voltage (per cell)",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"_V_EMPTY\"))"
+                },
+                {
+                    "param": "_V_CHARGED",
+                    "label": "Full voltage (per cell)",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"_V_CHARGED\"))"
+                },
+                {
+                    "param": "_V_DIV",
+                    "label": "Voltage divider",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"_V_DIV\"))",
+                    "control": "dialogButton",
+                    "dialogButton": {
+                        "text": "Calculate",
+                        "dialogComponent": "CalcVoltageDividerDialog",
+                        "buttonAfter": false,
+                        "dialogParams": {
+                            "batteryIndex": "_rawIndex"
+                        }
+                    }
+                },
+                {
+                    "param": "_A_PER_V",
+                    "label": "Amps per volt",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"_A_PER_V\"))",
+                    "control": "dialogButton",
+                    "dialogButton": {
+                        "text": "Calculate",
+                        "dialogComponent": "CalcAmpsPerVoltDialog",
+                        "buttonAfter": false,
+                        "dialogParams": {
+                            "batteryIndex": "_rawIndex"
+                        }
+                    }
+                },
+                {
+                    "param": "_V_LOAD_DROP",
+                    "label": "Voltage drop on full load (per cell)",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"_V_LOAD_DROP\"))"
+                }
+            ],
+            "title": "Battery"
+        },
+        {
+            "image": "/qmlimages/Gears.svg",
+            "controls": [
+                {
+                    "control": "label",
+                    "label": "WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.",
+                    "warning": true
+                },
+                {
+                    "control": "label",
+                    "label": "You must use USB connection for this operation."
+                },
+                {
+                    "control": "dialogButton",
+                    "dialogButton": {
+                        "text": "Calibrate",
+                        "dialogComponent": "ESCCalibrationDialog"
+                    }
+                }
+            ],
+            "title": "ESC PWM Calibration"
+        },
+        {
+            "image": "/qmlimages/Gears.svg",
+            "showWhen": "_uavcanAvailable && _uavcanEnable.rawValue !== 0",
+            "controls": [
+                {
+                    "param": "UAVCAN_ENABLE",
+                    "label": "UAVCAN",
+                    "control": "combobox"
+                },
+                {
+                    "control": "label",
+                    "label": "WARNING: Propellers must be removed from vehicle prior to performing UAVCAN ESC configuration.",
+                    "warning": true
+                },
+                {
+                    "control": "label",
+                    "label": "ESC parameters will only be accessible in the editor after assignment."
+                },
+                {
+                    "control": "label",
+                    "label": "Start the process, then turn each motor into its turn direction, in the order of their motor indices."
+                },
+                {
+                    "control": "actionButton",
+                    "actionButton": {
+                        "text": "Start Assignment",
+                        "onClicked": "controller.startBusConfigureActuators()"
+                    }
+                },
+                {
+                    "control": "actionButton",
+                    "actionButton": {
+                        "text": "Stop Assignment",
+                        "onClicked": "controller.stopBusConfigureActuators()"
+                    }
+                }
+            ],
+            "title": "UAVCAN Bus Configuration"
+        }
+    ]
+}

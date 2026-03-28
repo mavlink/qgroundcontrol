@@ -8,21 +8,22 @@ APMSafetyComponent::APMSafetyComponent(Vehicle *vehicle, AutoPilotPlugin *autopi
 
 }
 
+QString APMSafetyComponent::vehicleConfigJson() const
+{
+    return QStringLiteral(":/qml/QGroundControl/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json");
+}
+
 QString APMSafetyComponent::description() const
 {
     switch (_vehicle->vehicleType()) {
     case MAV_TYPE_SUBMARINE:
-        return tr("Safety Setup is used to setup failsafe actions, leak detection, and arming checks.");
+        return tr("Configure failsafe actions, leak detection, and arming checks.");
     case MAV_TYPE_GROUND_ROVER:
+        return tr("Configure Return to Launch, battery/GCS/throttle/EKF failsafes, and arming checks.");
     case MAV_TYPE_FIXED_WING:
-    case MAV_TYPE_QUADROTOR:
-    case MAV_TYPE_COAXIAL:
-    case MAV_TYPE_HELICOPTER:
-    case MAV_TYPE_HEXAROTOR:
-    case MAV_TYPE_OCTOROTOR:
-    case MAV_TYPE_TRICOPTER:
+        return tr("Configure Return to Launch, battery/GCS failsafes, failsafe triggers, and arming checks.");
     default:
-        return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
+        return tr("Configure Return to Launch, battery/GCS/RC/throttle/EKF failsafes, geofence, and arming checks.");
     }
 }
 

@@ -1,5 +1,6 @@
 {
     "version": 1,
+    "fileType": "SettingsUI",
     "bindings": {
         "ridSettings": "QGroundControl.settingsManager.remoteIDSettings",
         "isEURegion": "ridSettings.region.rawValue === RemoteIDSettings.RegionOperation.EU",

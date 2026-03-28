@@ -13,8 +13,9 @@ RowLayout {
     spacing: ScreenTools.defaultFontPixelWidth * 2
 
     QGCLabel {
-        id:                 label
-        Layout.fillWidth:   true
+        id:                  label
+        Layout.fillWidth:    true
+        Layout.minimumWidth: implicitWidth
     }
 
     QGCSlider {

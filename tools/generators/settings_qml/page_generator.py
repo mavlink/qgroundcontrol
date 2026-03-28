@@ -16,6 +16,17 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ..common.controls import (
+    EnableCheckboxDef,
+    ButtonDef,
+    parse_enable_checkbox,
+    parse_button,
+    render_slider,
+    render_checkbox,
+    render_combobox,
+    render_textfield,
+)
+
 # Matches C++ FactMetaData::splitTranslatedList() regex: [,，、]
 # Handles ASCII comma, fullwidth comma (U+FF0C), and enumeration comma (U+3001)
 # which translators sometimes substitute for standard commas.
@@ -35,8 +46,8 @@ class ControlDef:
     showWhen: str = ""  # extra visibility expression (ANDed with fact.userVisible)
     enableWhen: str = ""  # enabled expression
     placeholder: str = ""  # placeholder text for text fields
-    enableCheckbox: dict = field(default_factory=dict)  # slider: {"checked": expr, "onClicked": expr}
-    button: dict = field(default_factory=dict)           # adjacent button: {"text": str, "onClicked": expr, "enabled": expr}
+    enableCheckbox: EnableCheckboxDef | None = None  # slider: checked/onClicked
+    button: ButtonDef | None = None                    # adjacent button: text/onClicked/enabled
 
     @property
     def settings_group(self) -> str:
@@ -104,8 +115,8 @@ def load_page_def(json_path: Path) -> PageDef:
                 showWhen=ctrl_data.get("showWhen", ""),
                 enableWhen=ctrl_data.get("enableWhen", ""),
                 placeholder=ctrl_data.get("placeholder", ""),
-                enableCheckbox=ctrl_data.get("enableCheckbox", {}),
-                button=ctrl_data.get("button", {}),
+                enableCheckbox=parse_enable_checkbox(ctrl_data.get("enableCheckbox")),
+                button=parse_button(ctrl_data.get("button")),
             ))
         page.groups.append(grp)
     return page
@@ -250,39 +261,13 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
 
     # Determine control type: explicit override or auto-detect from metadata
     if ctrl.control == "slider":
-        label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
-        inner_indent = indent
-        has_button = bool(ctrl.button)
-        if has_button:
-            inner_indent = indent + "    "
-        lines = []
-        if has_button:
-            lines.append(f"{indent}RowLayout {{")
-            lines.append(f"{indent}    Layout.fillWidth: true")
-            lines.append(f"{indent}    spacing: ScreenTools.defaultFontPixelWidth")
-        lines.append(f"{inner_indent}FactTextFieldSlider {{")
-        lines.append(f"{inner_indent}    Layout.fillWidth: true")
-        lines.append(f"{inner_indent}{label_line}")
-        lines.append(f"{inner_indent}    fact: {fact_ref}")
-        if ctrl.enableCheckbox:
-            lines.append(f"{inner_indent}    showEnableCheckbox: true")
-            if ctrl.enableCheckbox.get("checked"):
-                lines.append(f"{inner_indent}    enableCheckBoxChecked: {ctrl.enableCheckbox['checked']}")
-            if ctrl.enableCheckbox.get("onClicked"):
-                lines.append(f"{inner_indent}    onEnableCheckboxClicked: {ctrl.enableCheckbox['onClicked']}")
-        if ctrl.enableWhen:
-            lines.append(f"{inner_indent}    enabled: {ctrl.enableWhen}")
-        lines.append(f"{inner_indent}}}")
-        if has_button:
-            btn = ctrl.button
-            lines.append(f'{inner_indent}QGCButton {{')
-            lines.append(f'{inner_indent}    text: qsTr("{btn["text"]}")')
-            lines.append(f'{inner_indent}    onClicked: {btn["onClicked"]}')
-            if btn.get("enabled"):
-                lines.append(f'{inner_indent}    enabled: {btn["enabled"]}')
-            lines.append(f'{inner_indent}}}')
-            lines.append(f"{indent}}}")
-        control_qml = "\n".join(lines)
+        control_qml = render_slider(
+            fact_ref, indent,
+            label=ctrl.label,
+            enable_checkbox=ctrl.enableCheckbox,
+            button=ctrl.button,
+            enable_when=ctrl.enableWhen,
+        )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif ctrl.control == "browse":
         label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
@@ -326,45 +311,38 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
     enabled = _enabled_line()
 
     if use_checkbox:
-        label_line = f'    text: qsTr("{ctrl.label}")' if ctrl.label else "    text: fact.label"
-        control_qml = (
-            f"{indent}FactCheckBoxSlider {{\n"
-            f"{indent}    Layout.fillWidth: true\n"
-            f"{indent}{label_line}\n"
-            f"{indent}    fact: {fact_ref}\n"
-            f"{enabled}"
-            f"{indent}}}"
+        control_qml = render_checkbox(
+            fact_ref, indent,
+            label=ctrl.label,
+            enable_when=ctrl.enableWhen,
+            label_property="text",
+            label_source="fact.label",
+            qml_type="FactCheckBoxSlider",
         )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif use_combobox:
-        label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
-        control_qml = (
-            f"{indent}LabelledFactComboBox {{\n"
-            f"{indent}    Layout.fillWidth: true\n"
-            f"{indent}{label_line}\n"
-            f"{indent}    fact: {fact_ref}\n"
-            f"{indent}    indexModel: false\n"
-            f"{enabled}"
-            f"{indent}}}"
+        control_qml = render_combobox(
+            fact_ref, indent,
+            label=ctrl.label,
+            enable_when=ctrl.enableWhen,
+            label_source="fact.label",
+            qml_type="LabelledFactComboBox",
         )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     else:
-        label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
         fact_type = _get_fact_type(ctrl.setting, settings_dir)
-        lines = [
-            f"{indent}LabelledFactTextField {{",
-            f"{indent}    Layout.fillWidth: true",
-            f"{indent}{label_line}",
-            f"{indent}    fact: {fact_ref}",
-        ]
-        if ctrl.enableWhen:
-            lines.append(f"{indent}    enabled: {ctrl.enableWhen}")
+        extra: list[str] = []
         if fact_type == "string":
-            lines.append(f"{indent}    textFieldPreferredWidth: _stringFieldWidth")
-        if ctrl.placeholder:
-            lines.append(f'{indent}    textField.placeholderText: qsTr("{ctrl.placeholder}")')
-        lines.append(f"{indent}}}")
-        control_qml = "\n".join(lines)
+            extra.append("textFieldPreferredWidth: _stringFieldWidth")
+        control_qml = render_textfield(
+            fact_ref, indent,
+            label=ctrl.label,
+            enable_when=ctrl.enableWhen,
+            placeholder=ctrl.placeholder,
+            label_source="fact.label",
+            qml_type="LabelledFactTextField",
+            extra_lines=extra if extra else None,
+        )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
 
 

@@ -1,5 +1,6 @@
 {
     "version": 1,
+    "fileType": "SettingsPages",
     "pages": [
         {
             "name": "General",

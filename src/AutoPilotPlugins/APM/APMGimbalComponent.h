@@ -12,7 +12,7 @@ public:
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
 
     QString name() const final { return _name; }
-    QString description() const final { return tr("Gimbal Setup"); }
+    QString description() const final { return tr("Configure camera mount type and stabilization settings."); }
     QString iconResource() const final { return QStringLiteral("/res/CameraGimbal.png"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }

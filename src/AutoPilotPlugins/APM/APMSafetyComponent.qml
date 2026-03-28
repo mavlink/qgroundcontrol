@@ -29,6 +29,9 @@ SetupPage {
             width:      availableWidth
             spacing:    ScreenTools.defaultFontPixelHeight
 
+            property string sectionNameFilter: safetyPage.sectionNameFilter
+            function _showSection(name) { return sectionNameFilter === "" || sectionNameFilter === name }
+
             property var _controller: controller
 
             FactPanelController { id: controller; }
@@ -114,10 +117,12 @@ SetupPage {
             // ----- Loaders (display order) -----
 
             Loader {
+                visible: _showSection(qsTr("Return to Launch"))
                 sourceComponent: controller.vehicle.multiRotor ? copterRTL : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("Return to Launch"))
                 sourceComponent: controller.vehicle.fixedWing ? planeRTL : undefined
             }
 
@@ -136,7 +141,7 @@ SetupPage {
                     title:   _enabledBatteryCount > 1
                                 ? qsTr("Battery %1 Failsafe").arg(battParams.labelForIndex(index))
                                 : qsTr("Battery Failsafe")
-                    visible: _batt.monitorEnabled
+                    visible: _batt.monitorEnabled && _showSection(qsTr("Battery Failsafe"))
 
                     Loader {
                         sourceComponent: _batt.paramsAvailable ? batteryFailsafeComponent : restartRequiredComponent
@@ -152,59 +157,73 @@ SetupPage {
             }
 
             Loader {
+                visible: _showSection(qsTr("Ground Station Failsafe"))
                 sourceComponent: controller.vehicle.multiRotor ? copterGcsFailsafe : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("Ground Station Failsafe"))
                 sourceComponent: controller.vehicle.fixedWing ? planeGcsFailsafe : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("Ground Station Failsafe"))
                 sourceComponent: _roverFirmware ? roverGcsFailsafe : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("Failsafe Triggers"))
                 sourceComponent: controller.vehicle.fixedWing ? planeGeneralFS : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("RC Failsafe"))
                 sourceComponent: controller.vehicle.multiRotor ? rcFailsafeComponent : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("Throttle Failsafe"))
                 sourceComponent: controller.vehicle.multiRotor ? copterThrottleFailsafe : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("Throttle Failsafe"))
                 sourceComponent: _roverFirmware ? roverThrottleFailsafe : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("EKF Failsafe"))
                 sourceComponent: controller.vehicle.multiRotor ? copterEkfFailsafe : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("EKF Failsafe"))
                 sourceComponent: _roverFirmware ? roverEkfFailsafe : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("Dead Reckoning Failsafe"))
                 sourceComponent: (controller.vehicle.multiRotor && controller.parameterExists(-1, "FS_DR_ENABLE")) ? deadReckoningFailsafeComponent : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("Other Failsafe Options"))
                 sourceComponent: controller.vehicle.multiRotor ? copterGeneralFS : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("Other Failsafe Options"))
                 sourceComponent: _roverFirmware ? roverGeneralFS : undefined
             }
 
             Loader {
+                visible: _showSection(qsTr("GeoFence"))
                 sourceComponent: controller.vehicle.multiRotor ? copterGeoFence : undefined
             }
 
             QGCGroupBox {
                 id:    armingChecksGroupBox
+                visible: _showSection(qsTr("Arming Checks"))
                 title: _armingCheck ? qsTr("Arming Checks") : qsTr("Skip Arming Checks")
 
                 property bool _hasSkippedChecks: _armingCheck ? _armingCheck.value != 1 : _armingSkipCheck.value != 0

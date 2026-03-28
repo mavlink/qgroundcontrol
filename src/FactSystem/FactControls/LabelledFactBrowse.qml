@@ -27,8 +27,9 @@ RowLayout {
     spacing: ScreenTools.defaultFontPixelWidth * 2
 
     ColumnLayout {
-        Layout.fillWidth:   true
-        spacing:            0
+        Layout.fillWidth:    true
+        Layout.minimumWidth: implicitWidth
+        spacing:             0
 
         QGCLabel {
             Layout.fillWidth:   true
