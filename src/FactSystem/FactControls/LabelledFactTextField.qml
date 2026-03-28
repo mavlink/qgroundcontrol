@@ -17,9 +17,10 @@ RowLayout {
     spacing: ScreenTools.defaultFontPixelWidth * 2
 
     QGCLabel {
-        Layout.fillWidth:   true
-        text:               label
-        visible:            label !== ""
+        Layout.fillWidth:    true
+        Layout.minimumWidth: implicitWidth
+        text:                label
+        visible:             label !== ""
     }
 
     FactTextField {

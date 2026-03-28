@@ -15,7 +15,7 @@ QString PowerComponent::name(void) const
 
 QString PowerComponent::description(void) const
 {
-    return tr("Power Setup is used to setup battery parameters as well as advanced settings for propellers.");
+    return tr("Configure battery parameters, ESC calibration, and UAVCAN bus settings.");
 }
 
 QString PowerComponent::iconResource(void) const
@@ -55,4 +55,9 @@ QUrl PowerComponent::setupSource(void) const
 QUrl PowerComponent::summaryQmlSource(void) const
 {
     return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PowerComponentSummary.qml");
+}
+
+QString PowerComponent::vehicleConfigJson(void) const
+{
+    return QStringLiteral(":/qml/QGroundControl/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json");
 }

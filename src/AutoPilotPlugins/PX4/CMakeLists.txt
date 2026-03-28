@@ -50,28 +50,87 @@ qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_px4_resource
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # ----------------------------------------------------------------------------
+# Code-generation: produce QML config pages from VehicleConfig.json definitions
+# ----------------------------------------------------------------------------
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+set(CONFIG_QML_GENERATOR_DIR "${CMAKE_SOURCE_DIR}/tools/generators/config_qml")
+set(CONFIG_PAGES_DIR         "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
+set(CONFIG_QML_GEN_DIR       "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+# Generator source files (changes here trigger regeneration)
+file(GLOB _config_generator_sources CONFIGURE_DEPENDS
+    "${CONFIG_QML_GENERATOR_DIR}/*.py"
+    "${CMAKE_SOURCE_DIR}/tools/generators/common/*.py"
+)
+
+# JSON inputs
+file(GLOB _config_page_definitions CONFIGURE_DEPENDS "${CONFIG_PAGES_DIR}/*.VehicleConfig.json")
+
+# Generated QML outputs (must match what generate_pages.py produces)
+set(_config_generated_qml_names
+    PowerComponent.qml
+    SafetyComponent.qml
+)
+
+# Full paths in the build tree
+set(_config_generated_qml "")
+foreach(_name IN LISTS _config_generated_qml_names)
+    list(APPEND _config_generated_qml "${CONFIG_QML_GEN_DIR}/${_name}")
+endforeach()
+
+add_custom_command(
+    OUTPUT  ${_config_generated_qml}
+    COMMAND ${Python3_EXECUTABLE} -m tools.generators.config_qml.generate_pages
+            --pages-dir "${CONFIG_PAGES_DIR}"
+            --output-dir "${CONFIG_QML_GEN_DIR}"
+    DEPENDS ${_config_generator_sources} ${_config_page_definitions}
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    COMMENT "Generating QML config pages from VehicleConfig.json definitions"
+    VERBATIM
+)
+
+add_custom_target(GenerateConfigQmlPX4 DEPENDS ${_config_generated_qml})
+
+# Set QT_RESOURCE_ALIAS so qt_add_qml_module places generated files at the
+# correct QRC path despite living in the build tree.
+foreach(_name IN LISTS _config_generated_qml_names)
+    set_source_files_properties("${CONFIG_QML_GEN_DIR}/${_name}"
+        PROPERTIES QT_RESOURCE_ALIAS "${_name}"
+    )
+endforeach()
+
+# ----------------------------------------------------------------------------
 # PX4 QML Module
 # ----------------------------------------------------------------------------
 qt_add_library(AutoPilotPluginsPX4Module STATIC)
+
+# Ensure generated files exist before the module is built
+add_dependencies(AutoPilotPluginsPX4Module GenerateConfigQmlPX4)
 
 qt_add_qml_module(AutoPilotPluginsPX4Module
     URI QGroundControl.AutoPilotPlugins.PX4
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
+        # Generated from VehicleConfig.json definitions (output in build tree)
+        ${_config_generated_qml}
+
+        # Hand-coded pages and components
         ActuatorComponent.qml
         ActuatorFact.qml
         ActuatorSlider.qml
         AirframeComponent.qml
         AirframeComponentSummary.qml
         BatteryParams.qml
+        CalcAmpsPerVoltDialog.qml
+        CalcVoltageDividerDialog.qml
+        ESCCalibrationDialog.qml
         FlightModesComponentSummary.qml
-        PowerComponent.qml
         PowerComponentSummary.qml
         PX4FlightBehaviorCopter.qml
         PX4FlightModes.qml
         PX4RadioComponentSummary.qml
-        PX4SimpleFlightModes.qml
         PX4TuningComponent.qml
         PX4TuningComponentCopter.qml
         PX4TuningComponentCopterAll.qml
@@ -91,11 +150,13 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         PX4TuningComponentSpacecraftRate.qml
         PX4TuningComponentSpacecraftVelocity.qml
         PX4TuningComponentVTOL.qml
-        SafetyComponent.qml
         SafetyComponentSummary.qml
         SensorsComponent.qml
         SensorsComponentSummary.qml
         SensorsComponentSummaryFixedWing.qml
         SensorsSetup.qml
+    RESOURCES
+        VehicleConfig/Power.VehicleConfig.json
+        VehicleConfig/Safety.VehicleConfig.json
     NO_PLUGIN
 )

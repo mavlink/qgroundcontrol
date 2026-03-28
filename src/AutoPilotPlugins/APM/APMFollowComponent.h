@@ -10,7 +10,7 @@ public:
     explicit APMFollowComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
 
     QString name() const final { return _name; }
-    QString description() const final { return QStringLiteral("Follow Me Setup is used to configure support for the vehicle following the ground station location."); }
+    QString description() const final { return tr("Configure the vehicle to track the ground station position."); }
     QString iconResource() const final { return QStringLiteral("/qmlimages/FollowComponentIcon.png"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }

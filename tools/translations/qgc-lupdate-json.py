@@ -73,6 +73,15 @@ def addLocKeysBasedOnQGCFileType(jsonPath, jsonDict):
         elif qgcFileType == "FactMetaData":
             translateKeyValue = "shortDesc,longDesc,enumStrings,label,keywords"
             arrayIDKeysKeyValue = "name"
+        elif qgcFileType == "VehicleConfig":
+            translateKeyValue = "title,label,text,heading"
+            arrayIDKeysKeyValue = "title"
+        elif qgcFileType == "SettingsUI":
+            translateKeyValue = "heading,sectionName,label,text,placeholder"
+            arrayIDKeysKeyValue = "heading,sectionName"
+        elif qgcFileType == "SettingsPages":
+            translateKeyValue = "name"
+            arrayIDKeysKeyValue = "name"
         if translateKeysKey not in jsonDict and translateKeyValue != "":
             jsonDict[translateKeysKey] = translateKeyValue
         if arrayIDKeysKey not in jsonDict and arrayIDKeysKeyValue != "":

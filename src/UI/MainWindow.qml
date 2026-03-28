@@ -74,6 +74,9 @@ ApplicationWindow {
         // Number of QGCTextField's with validation errors. Used to prevent closing panels with validation errors.
         property int                validationErrorCount:           0
 
+        // Set to a non-empty string to block navigation with a custom reason (e.g. during calibration)
+        property string             navigationBlockedReason:        ""
+
         // Property to manage RemoteID quick access to settings page
         property bool               commingFromRIDIndicator:        false
     }
@@ -96,12 +99,24 @@ ApplicationWindow {
 
     // This function is used to prevent view switching if there are validation errors
     function allowViewSwitch(previousValidationErrorCount = 0, showErrorOnDisallow = true) {
+        // Check for explicit navigation block (e.g. calibration in progress)
+        if (globals.navigationBlockedReason !== "") {
+            if (showErrorOnDisallow) {
+                validationErrorToast.text = globals.navigationBlockedReason
+                if (validationErrorToast.visible) {
+                    validationErrorToast.close()
+                }
+                validationErrorToast.open()
+            }
+            return false
+        }
         // Run validation on active focus control to ensure it is valid before switching views
         if (mainWindow.activeFocusControl instanceof FactTextField) {
             mainWindow.activeFocusControl._onEditingFinished()
         }
         var allowed = globals.validationErrorCount <= previousValidationErrorCount
         if (!allowed && showErrorOnDisallow) {
+            validationErrorToast.text = qsTr("Please correct the invalid value before continuing")
             if (validationErrorToast.visible) {
                 validationErrorToast.close()
             }
@@ -135,7 +150,7 @@ ApplicationWindow {
     }
 
     function showVehicleConfig() {
-        showTool(qsTr("Vehicle Configuration"), "qrc:/qml/QGroundControl/VehicleSetup/SetupView.qml", "/qmlimages/Gears.svg")
+        showTool(qsTr("Vehicle Configuration"), "qrc:/qml/QGroundControl/VehicleSetup/VehicleConfigView.qml", "/qmlimages/Gears.svg")
     }
 
     function showVehicleConfigParametersPage() {

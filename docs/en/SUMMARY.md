@@ -93,6 +93,7 @@
   - [Top Level Views](qgc-dev-guide/views/index.md)
     - [Settings View](qgc-dev-guide/views/settings.md)
     - [Setup View](qgc-dev-guide/views/setup.md)
+      - [Generated Vehicle Config Pages](qgc-dev-guide/views/vehicle_config_generation.md)
     - [Plan View](qgc-dev-guide/views/plan.md)
       - [Dynamic UI for mission item editing](qgc-dev-guide/plan/mission_command_tree.md)
     - [Fly View](qgc-dev-guide/views/fly.md)

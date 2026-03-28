@@ -19,14 +19,9 @@ public:
     Q_PROPERTY(QQuickItem* statusLog MEMBER _statusLog)
     Q_PROPERTY(QQuickItem* progressBar MEMBER _progressBar)
 
-    Q_PROPERTY(QQuickItem* compassButton MEMBER _compassButton)
-    Q_PROPERTY(QQuickItem* gyroButton MEMBER _gyroButton)
-    Q_PROPERTY(QQuickItem* accelButton MEMBER _accelButton)
-    Q_PROPERTY(QQuickItem* airspeedButton MEMBER _airspeedButton)
-    Q_PROPERTY(QQuickItem* levelButton MEMBER _levelButton)
-    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
-    Q_PROPERTY(QQuickItem* setOrientationsButton MEMBER _setOrientationsButton)
     Q_PROPERTY(QQuickItem* orientationCalAreaHelpText MEMBER _orientationCalAreaHelpText)
+
+    Q_PROPERTY(bool calibrationActive READ calibrationActive NOTIFY calibrationActiveChanged)
 
     Q_PROPERTY(bool showOrientationCalArea MEMBER _showOrientationCalArea NOTIFY showOrientationCalAreaChanged)
 
@@ -69,6 +64,8 @@ public:
     Q_INVOKABLE bool usingUDPLink(void);
     Q_INVOKABLE void resetFactoryParameters();
 
+    bool calibrationActive() const { return _magCalInProgress || _gyroCalInProgress || _accelCalInProgress || _airspeedCalInProgress || _levelCalInProgress; }
+
 signals:
     void showGyroCalAreaChanged(void);
     void showOrientationCalAreaChanged(void);
@@ -79,6 +76,7 @@ signals:
     void resetStatusTextArea(void);
     void waitingForCancelChanged(void);
     void magCalComplete(void);
+    void calibrationActiveChanged(void);
 
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text, const QString &description);
@@ -103,13 +101,6 @@ private:
 
     QQuickItem* _statusLog;
     QQuickItem* _progressBar;
-    QQuickItem* _compassButton;
-    QQuickItem* _gyroButton;
-    QQuickItem* _accelButton;
-    QQuickItem* _airspeedButton;
-    QQuickItem* _levelButton;
-    QQuickItem* _cancelButton;
-    QQuickItem* _setOrientationsButton;
     QQuickItem* _orientationCalAreaHelpText;
 
     bool _showGyroCalArea;
