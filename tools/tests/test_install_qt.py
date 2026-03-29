@@ -33,18 +33,18 @@ class TestResolveArchDir:
 
 class TestComputeCacheDigest:
     def test_deterministic(self) -> None:
-        a = compute_cache_digest("qtcharts qtlocation", "")
-        b = compute_cache_digest("qtcharts qtlocation", "")
+        a = compute_cache_digest("qtgraphs qtlocation", "")
+        b = compute_cache_digest("qtgraphs qtlocation", "")
         assert a == b
 
     def test_different_modules_differ(self) -> None:
-        a = compute_cache_digest("qtcharts", "")
+        a = compute_cache_digest("qtgraphs", "")
         b = compute_cache_digest("qtlocation", "")
         assert a != b
 
     def test_archives_affect_digest(self) -> None:
-        a = compute_cache_digest("qtcharts", "")
-        b = compute_cache_digest("qtcharts", "icu")
+        a = compute_cache_digest("qtgraphs", "")
+        b = compute_cache_digest("qtgraphs", "icu")
         assert a != b
 
     def test_returns_hex_string(self) -> None:
