@@ -15,14 +15,24 @@ def parseJsonObjectForTranslateKeys(
 ):
     for translateKey in translateKeys:
         if translateKey in jsonObject:
-            locStr = jsonObject[translateKey]
-            currentHierarchy = jsonObjectHierarchy + "." + translateKey
-            if locStr in locStringDict:
-                # Duplicate of an existing string
-                locStringDict[locStr].append(currentHierarchy)
-            else:
-                # First time we are seeing this string
-                locStringDict[locStr] = [currentHierarchy]
+            value = jsonObject[translateKey]
+            if isinstance(value, list):
+                # Array of translatable strings (e.g. keywords)
+                for idx, locStr in enumerate(value):
+                    if not isinstance(locStr, str) or not locStr:
+                        continue
+                    currentHierarchy = jsonObjectHierarchy + "." + translateKey + "[" + str(idx) + "]"
+                    if locStr in locStringDict:
+                        locStringDict[locStr].append(currentHierarchy)
+                    else:
+                        locStringDict[locStr] = [currentHierarchy]
+            elif isinstance(value, str) and value:
+                locStr = value
+                currentHierarchy = jsonObjectHierarchy + "." + translateKey
+                if locStr in locStringDict:
+                    locStringDict[locStr].append(currentHierarchy)
+                else:
+                    locStringDict[locStr] = [currentHierarchy]
     for key in jsonObject:
         currentHierarchy = jsonObjectHierarchy + "." + key
         if isinstance(jsonObject[key], dict):
@@ -74,10 +84,10 @@ def addLocKeysBasedOnQGCFileType(jsonPath, jsonDict):
             translateKeyValue = "shortDesc,longDesc,enumStrings,label,keywords"
             arrayIDKeysKeyValue = "name"
         elif qgcFileType == "VehicleConfig":
-            translateKeyValue = "title,label,text,heading"
+            translateKeyValue = "title,label,text,heading,keywords"
             arrayIDKeysKeyValue = "title"
         elif qgcFileType == "SettingsUI":
-            translateKeyValue = "heading,sectionName,label,text,placeholder"
+            translateKeyValue = "heading,sectionName,label,text,placeholder,keywords"
             arrayIDKeysKeyValue = "heading,sectionName"
         elif qgcFileType == "SettingsPages":
             translateKeyValue = "name"

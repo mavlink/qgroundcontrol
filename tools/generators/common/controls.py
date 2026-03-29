@@ -301,6 +301,7 @@ def render_radiogroup(
     options: list[RadioOptionDef],
     enable_when: str = "",
     raw: bool = False,
+    optional: bool = False,
     tr_context: str = "",
 ) -> str:
     """Render a group of ``QGCRadioButton`` controls with an optional label."""
@@ -317,8 +318,14 @@ def render_radiogroup(
         lines.append(f'{inner}QGCRadioButton {{')
         lines.append(f'{inner}    text: {qml_tr(opt.label, tr_context)}')
         if opt.checked:
-            lines.append(f'{inner}    checked: {opt.checked}')
-        lines.append(f'{inner}    onClicked: {fact_ref}.{value_prop} = {opt.value}')
+            if optional:
+                lines.append(f'{inner}    checked: {fact_ref} ? {opt.checked} : false')
+            else:
+                lines.append(f'{inner}    checked: {opt.checked}')
+        if optional:
+            lines.append(f'{inner}    onClicked: if ({fact_ref}) {{ {fact_ref}.{value_prop} = {opt.value} }}')
+        else:
+            lines.append(f'{inner}    onClicked: {fact_ref}.{value_prop} = {opt.value}')
         if enable_when:
             lines.append(f'{inner}    enabled: {enable_when}')
         lines.append(f'{inner}}}')
@@ -454,6 +461,8 @@ def render_toggle_checkbox(
     label: str = "",
     toggle: ToggleCheckboxDef,
     enable_when: str = "",
+    optional: bool = False,
+    fact_ref: str = "",
     tr_context: str = "",
 ) -> str:
     """Render a ``QGCCheckBoxSlider`` with custom checked/onClicked logic."""
@@ -462,7 +471,10 @@ def render_toggle_checkbox(
     if label:
         lines.append(f'{indent}    text: {qml_tr(label, tr_context)}')
     if toggle.checked:
-        lines.append(f"{indent}    checked: {toggle.checked}")
+        if optional and fact_ref:
+            lines.append(f"{indent}    checked: {fact_ref} ? {toggle.checked} : false")
+        else:
+            lines.append(f"{indent}    checked: {toggle.checked}")
     on_parts = []
     if toggle.onChecked and toggle.onUnchecked:
         on_parts.append(f"if (checked) {{ {toggle.onChecked} }} else {{ {toggle.onUnchecked} }}")
@@ -471,7 +483,10 @@ def render_toggle_checkbox(
     elif toggle.onUnchecked:
         on_parts.append(f"if (!checked) {{ {toggle.onUnchecked} }}")
     if on_parts:
-        lines.append(f"{indent}    onClicked: {on_parts[0]}")
+        if optional and fact_ref:
+            lines.append(f"{indent}    onClicked: if ({fact_ref}) {{ {on_parts[0]} }}")
+        else:
+            lines.append(f"{indent}    onClicked: {on_parts[0]}")
     if enable_when:
         lines.append(f"{indent}    enabled: {enable_when}")
     lines.append(f"{indent}}}")

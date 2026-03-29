@@ -1,19 +1,19 @@
-#include "APMSafetyComponent.h"
+#include "APMFlightSafetyComponent.h"
 #include "Vehicle.h"
 #include "QGCMAVLink.h"
 
-APMSafetyComponent::APMSafetyComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
+APMFlightSafetyComponent::APMFlightSafetyComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent)
     : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::KnownSafetyVehicleComponent, parent)
 {
 
 }
 
-QString APMSafetyComponent::vehicleConfigJson() const
+QString APMFlightSafetyComponent::vehicleConfigJson() const
 {
-    return QStringLiteral(":/qml/QGroundControl/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json");
+    return QStringLiteral(":/qml/QGroundControl/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json");
 }
 
-QString APMSafetyComponent::description() const
+QString APMFlightSafetyComponent::description() const
 {
     switch (_vehicle->vehicleType()) {
     case MAV_TYPE_SUBMARINE:
@@ -27,7 +27,7 @@ QString APMSafetyComponent::description() const
     }
 }
 
-QUrl APMSafetyComponent::setupSource() const
+QUrl APMFlightSafetyComponent::setupSource() const
 {
     switch (_vehicle->vehicleType()) {
     case MAV_TYPE_FIXED_WING:
@@ -38,15 +38,15 @@ QUrl APMSafetyComponent::setupSource() const
     case MAV_TYPE_OCTOROTOR:
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_GROUND_ROVER:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSafetyComponent.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMFlightSafetyComponent.qml"));
     case MAV_TYPE_SUBMARINE:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSafetyComponentSub.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml"));
     default:
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMNotSupported.qml"));
     }
 }
 
-QUrl APMSafetyComponent::summaryQmlSource() const
+QUrl APMFlightSafetyComponent::summaryQmlSource() const
 {
     switch (_vehicle->vehicleType()) {
     case MAV_TYPE_FIXED_WING:
@@ -57,9 +57,9 @@ QUrl APMSafetyComponent::summaryQmlSource() const
     case MAV_TYPE_OCTOROTOR:
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_GROUND_ROVER:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMFlightSafetyComponentSummary.qml"));
     case MAV_TYPE_SUBMARINE:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMFlightSafetyComponentSummarySub.qml"));
     default:
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMNotSupported.qml"));
     }

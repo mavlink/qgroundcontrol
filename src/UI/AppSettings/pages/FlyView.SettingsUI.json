@@ -9,6 +9,7 @@
     "groups": [
         {
             "heading": "General",
+            "keywords": ["checklist", "preflight", "multi vehicle", "center map", "log replay", "camera control", "home position", "mission popup"],
             "controls": [
                 {
                     "setting": "appSettings.useChecklist",
@@ -41,6 +42,7 @@
         },
         {
             "heading": "Guided Commands",
+            "keywords": ["altitude", "guided", "minimum", "maximum", "goto", "go to", "loiter radius", "confirmation"],
             "controls": [
                 {
                     "setting": "flyViewSettings.guidedMinimumAltitude"
@@ -62,10 +64,16 @@
         {
             "component": "MavlinkActionSettings",
             "sectionName": "MAVLink Actions",
-            "keywords": "mavlink action,pre-arm,post-arm,disarm"
+            "keywords": [
+                "mavlink action",
+                "pre-arm",
+                "post-arm",
+                "disarm"
+            ]
         },
         {
             "heading": "Virtual Joystick",
+            "keywords": ["joystick", "virtual stick", "throttle", "left handed", "auto center"],
             "controls": [
                 {
                     "setting": "appSettings.virtualJoystick"
@@ -82,6 +90,7 @@
         },
         {
             "heading": "Instrument Panel",
+            "keywords": ["compass", "indicators", "hud", "instrument", "nose up"],
             "controls": [
                 {
                     "setting": "flyViewSettings.showAdditionalIndicatorsCompass"
