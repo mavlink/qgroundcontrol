@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Window
-import QtCharts
+import QtGraphs
 
 import QGroundControl
 import QGroundControl.Controls
