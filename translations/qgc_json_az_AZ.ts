@@ -52,19 +52,19 @@
   <context>
     <name>PX4LogTransfer.SettingsUI.json</name>
     <message>
-      <extracomment>.groups[0].sectionName</extracomment>
+      <extracomment>.groups[Log Control].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
       <source>Log Control</source>
       <translation type="unfinished">Log Control</translation>
     </message>
     <message>
-      <extracomment>.groups[1].sectionName</extracomment>
+      <extracomment>.groups[Upload Settings].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
       <source>Upload Settings</source>
       <translation type="unfinished">Upload Settings</translation>
     </message>
     <message>
-      <extracomment>.groups[2].sectionName</extracomment>
+      <extracomment>.groups[Log Files].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
       <source>Log Files</source>
       <translation type="unfinished">Log Files</translation>
@@ -73,13 +73,13 @@
   <context>
     <name>Maps.SettingsUI.json</name>
     <message>
-      <extracomment>.groups[0].sectionName</extracomment>
+      <extracomment>.groups[Map Provider].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
       <source>Map Provider</source>
       <translation type="unfinished">Map Provider</translation>
     </message>
     <message>
-      <extracomment>.groups[1].sectionName</extracomment>
+      <extracomment>.groups[Offline Maps].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
       <source>Offline Maps</source>
       <translation type="unfinished">Offline Maps</translation>
@@ -142,19 +142,19 @@
   <context>
     <name>NTRIP.SettingsUI.json</name>
     <message>
-      <extracomment>.groups[0].sectionName</extracomment>
+      <extracomment>.groups[Connection Status].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
       <source>Connection Status</source>
       <translation type="unfinished">Connection Status</translation>
     </message>
     <message>
-      <extracomment>.groups[1].sectionName</extracomment>
+      <extracomment>.groups[Server Settings].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
       <source>Server Settings</source>
       <translation type="unfinished">Server Settings</translation>
     </message>
     <message>
-      <extracomment>.groups[2].sectionName</extracomment>
+      <extracomment>.groups[Mountpoint Browser].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
       <source>Mountpoint Browser</source>
       <translation type="unfinished">Mountpoint Browser</translation>
@@ -223,13 +223,13 @@
       <translation type="unfinished">AutoConnect</translation>
     </message>
     <message>
-      <extracomment>.groups[1].sectionName</extracomment>
+      <extracomment>.groups[NMEA GPS].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
       <source>NMEA GPS</source>
       <translation type="unfinished">NMEA GPS</translation>
     </message>
     <message>
-      <extracomment>.groups[2].sectionName</extracomment>
+      <extracomment>.groups[Link Management].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
       <source>Link Management</source>
       <translation type="unfinished">Link Management</translation>
@@ -268,13 +268,13 @@
       <translation type="unfinished">GroundStation Location</translation>
     </message>
     <message>
-      <extracomment>.groups[5].sectionName</extracomment>
+      <extracomment>.groups[GCS Position].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>GCS Position</source>
       <translation type="unfinished">GCS Position</translation>
     </message>
     <message>
-      <extracomment>.groups[6].sectionName</extracomment>
+      <extracomment>.groups[GPS Location].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>GPS Location</source>
       <translation type="unfinished">GPS Location</translation>
@@ -301,7 +301,7 @@
       <translation type="unfinished">Guided Commands</translation>
     </message>
     <message>
-      <extracomment>.groups[2].sectionName</extracomment>
+      <extracomment>.groups[MAVLink Actions].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
       <source>MAVLink Actions</source>
       <translation type="unfinished">MAVLink Actions</translation>
@@ -346,13 +346,13 @@
       <translation type="unfinished">Stream Rates (ArduPilot Only)</translation>
     </message>
     <message>
-      <extracomment>.groups[4].sectionName</extracomment>
+      <extracomment>.groups[Signing Key].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>Signing Key</source>
       <translation type="unfinished">Signing Key</translation>
     </message>
     <message>
-      <extracomment>.groups[5].sectionName</extracomment>
+      <extracomment>.groups[Link Status].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>Link Status</source>
       <translation type="unfinished">Link Status</translation>
@@ -5059,502 +5059,853 @@
     </message>
   </context>
   <context>
-    <name>APMSafety.VehicleConfig.json</name>
-    <message>
-      <extracomment>.sections[Return to Launch].title, .sections[Return to Launch].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Return to Launch</source>
-      <translation type="unfinished">Return to Launch</translation>
-    </message>
-    <message>
-      <extracomment>.sections[Return to Launch].controls[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Return at specified altitude:</source>
-      <translation type="unfinished">Return at specified altitude:</translation>
-    </message>
-    <message>
-      <extracomment>.sections[Return to Launch].controls[0].options[0].label, .sections[Return to Launch].controls[0].options[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Return at current altitude</source>
-      <translation type="unfinished">Return at current altitude</translation>
-    </message>
-    <message>
-      <extracomment>.sections[Return to Launch].controls[0].options[1].label, .sections[Return to Launch].controls[0].options[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Return at specified altitude</source>
-      <translation type="unfinished">Return at specified altitude</translation>
-    </message>
-    <message>
-      <extracomment>.sections[Return to Launch].controls[1].label, .sections[Return to Launch].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Return altitude</source>
-      <translation type="unfinished">Return altitude</translation>
-    </message>
-    <message>
-      <extracomment>.sections[Return to Launch].controls[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Loiter above Home</source>
-      <translation type="unfinished">Loiter above Home</translation>
-    </message>
-    <message>
-      <extracomment>.sections[Return to Launch].controls[3].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Loiter time</source>
-      <translation type="unfinished">Loiter time</translation>
-    </message>
-    <message>
-      <extracomment>.sections[Return to Launch].controls[4].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Final land stage altitude</source>
-      <translation type="unfinished">Final land stage altitude</translation>
-    </message>
-    <message>
-      <extracomment>.sections[Return to Launch].controls[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Final land stage descent speed</source>
-      <translation type="unfinished">Final land stage descent speed</translation>
-    </message>
-    <message>
-      <extracomment>.sections[Return to Launch].controls[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Return altitude:</source>
-      <translation type="unfinished">Return altitude:</translation>
-    </message>
+    <name>APMFailsafes.VehicleConfig.json</name>
     <message>
       <extracomment>.sections[Battery Failsafe].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Battery Failsafe</source>
       <translation type="unfinished">Battery Failsafe</translation>
     </message>
     <message>
+      <extracomment>.sections[Battery Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>voltage</source>
+      <translation type="unfinished">voltage</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery Failsafe].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>mah</source>
+      <translation type="unfinished">mah</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery Failsafe].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>capacity</source>
+      <translation type="unfinished">capacity</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery Failsafe].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>low battery</source>
+      <translation type="unfinished">low battery</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery Failsafe].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>critical battery</source>
+      <translation type="unfinished">critical battery</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery Failsafe].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>lipo</source>
+      <translation type="unfinished">lipo</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery Failsafe].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>power</source>
+      <translation type="unfinished">power</translation>
+    </message>
+    <message>
       <extracomment>.sections[Battery Failsafe].controls[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Low action</source>
       <translation type="unfinished">Low action</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Critical action</source>
       <translation type="unfinished">Critical action</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Low voltage threshold</source>
       <translation type="unfinished">Low voltage threshold</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[3].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Critical voltage threshold</source>
       <translation type="unfinished">Critical voltage threshold</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[4].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Low mAh threshold</source>
       <translation type="unfinished">Low mAh threshold</translation>
     </message>
     <message>
       <extracomment>.sections[Battery Failsafe].controls[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Critical mAh threshold</source>
       <translation type="unfinished">Critical mAh threshold</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].title, .sections[Ground Station Failsafe].title, .sections[Ground Station Failsafe].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Ground Station Failsafe</source>
       <translation type="unfinished">Ground Station Failsafe</translation>
     </message>
     <message>
-      <extracomment>.sections[Ground Station Failsafe].controls[0].label, .sections[Ground Station Failsafe].controls[0].label, .sections[Ground Station Failsafe].controls[0].label, .sections[Throttle Failsafe].controls[0].label, .sections[Throttle Failsafe].controls[0].label, .sections[EKF Failsafe].controls[0].label, .sections[EKF Failsafe].controls[0].label, .sections[Dead Reckoning Failsafe].controls[0].label, .sections[GeoFence].controls[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <extracomment>.sections[Ground Station Failsafe].keywords[0], .sections[Ground Station Failsafe].keywords[0], .sections[Ground Station Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>gcs</source>
+      <translation type="unfinished">gcs</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Ground Station Failsafe].keywords[1], .sections[Ground Station Failsafe].keywords[1], .sections[Ground Station Failsafe].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>ground station</source>
+      <translation type="unfinished">ground station</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Ground Station Failsafe].keywords[2], .sections[Ground Station Failsafe].keywords[2], .sections[Ground Station Failsafe].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>heartbeat</source>
+      <translation type="unfinished">heartbeat</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Ground Station Failsafe].keywords[3], .sections[Ground Station Failsafe].keywords[3], .sections[Ground Station Failsafe].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>telemetry</source>
+      <translation type="unfinished">telemetry</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Ground Station Failsafe].keywords[4], .sections[Ground Station Failsafe].keywords[4], .sections[Ground Station Failsafe].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>link loss</source>
+      <translation type="unfinished">link loss</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Ground Station Failsafe].keywords[5], .sections[Ground Station Failsafe].keywords[5], .sections[Ground Station Failsafe].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>disconnect</source>
+      <translation type="unfinished">disconnect</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Ground Station Failsafe].keywords[6], .sections[Ground Station Failsafe].keywords[6], .sections[Ground Station Failsafe].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>rssi</source>
+      <translation type="unfinished">rssi</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Ground Station Failsafe].controls[0].label, .sections[Ground Station Failsafe].controls[0].label, .sections[Ground Station Failsafe].controls[0].label, .sections[Throttle Failsafe].controls[0].label, .sections[Throttle Failsafe].controls[0].label, .sections[EKF Failsafe].controls[0].label, .sections[EKF Failsafe].controls[0].label, .sections[Dead Reckoning Failsafe].controls[0].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Enabled</source>
       <translation type="unfinished">Enabled</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].label, .sections[Ground Station Failsafe].controls[1].label, .sections[Throttle Failsafe].controls[2].label, .sections[Dead Reckoning Failsafe].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Timeout</source>
       <translation type="unfinished">Timeout</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].label, .sections[Throttle Failsafe].controls[2].label, .sections[Throttle Failsafe].controls[3].label, .sections[EKF Failsafe].controls[2].label, .sections[EKF Failsafe].controls[2].label, .sections[Dead Reckoning Failsafe].controls[2].label, .sections[Other Failsafe Options].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Action:</source>
       <translation type="unfinished">Action:</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[0].label, .sections[Throttle Failsafe].controls[3].options[1].label, .sections[Dead Reckoning Failsafe].controls[2].options[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>RTL</source>
       <translation type="unfinished">RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[1].label, .sections[Dead Reckoning Failsafe].controls[2].options[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Land</source>
       <translation type="unfinished">Land</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[2].label, .sections[Throttle Failsafe].controls[3].options[3].label, .sections[Dead Reckoning Failsafe].controls[2].options[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>SmartRTL or RTL</source>
       <translation type="unfinished">SmartRTL or RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[3].label, .sections[Dead Reckoning Failsafe].controls[2].options[3].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>SmartRTL or Land</source>
       <translation type="unfinished">SmartRTL or Land</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[4].label, .sections[Throttle Failsafe].controls[2].options[4].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Auto DO_LAND_START or RTL</source>
       <translation type="unfinished">Auto DO_LAND_START or RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[2].options[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Brake or Land</source>
       <translation type="unfinished">Brake or Land</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[3].label, .sections[Ground Station Failsafe].controls[2].label, .sections[RC Failsafe].controls[1].label, .sections[Throttle Failsafe].controls[3].label, .sections[Throttle Failsafe].controls[4].label, .sections[EKF Failsafe].controls[3].label, .sections[Dead Reckoning Failsafe].controls[3].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Ignore failsafe if:</source>
       <translation type="unfinished">Ignore failsafe if:</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[4].label, .sections[Ground Station Failsafe].controls[3].label, .sections[RC Failsafe].controls[2].label, .sections[Throttle Failsafe].controls[4].label, .sections[Throttle Failsafe].controls[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>In Auto mode</source>
       <translation type="unfinished">In Auto mode</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>In pilot control</source>
       <translation type="unfinished">In pilot control</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Trigger:</source>
       <translation type="unfinished">Trigger:</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].options[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Heartbeat</source>
       <translation type="unfinished">Heartbeat</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].options[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Heartbeat and Remote RSSI</source>
       <translation type="unfinished">Heartbeat and Remote RSSI</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[1].options[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Heartbeat and AUTO</source>
       <translation type="unfinished">Heartbeat and AUTO</translation>
     </message>
     <message>
       <extracomment>.sections[Ground Station Failsafe].controls[4].label, .sections[Throttle Failsafe].controls[6].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>In Hold mode</source>
       <translation type="unfinished">In Hold mode</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Failsafe Triggers</source>
       <translation type="unfinished">Failsafe Triggers</translation>
     </message>
     <message>
+      <extracomment>.sections[Failsafe Triggers].keywords[0], .sections[Throttle Failsafe].keywords[0], .sections[Throttle Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>throttle</source>
+      <translation type="unfinished">throttle</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Failsafe Triggers].keywords[1], .sections[Throttle Failsafe].keywords[1], .sections[Throttle Failsafe].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>pwm</source>
+      <translation type="unfinished">pwm</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Failsafe Triggers].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>short failsafe</source>
+      <translation type="unfinished">short failsafe</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Failsafe Triggers].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>long failsafe</source>
+      <translation type="unfinished">long failsafe</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Failsafe Triggers].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>vtol transition</source>
+      <translation type="unfinished">vtol transition</translation>
+    </message>
+    <message>
       <extracomment>.sections[Failsafe Triggers].controls[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Throttle PWM threshold</source>
       <translation type="unfinished">Throttle PWM threshold</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[1].label, .sections[Throttle Failsafe].controls[1].label, .sections[Throttle Failsafe].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>PWM threshold</source>
       <translation type="unfinished">PWM threshold</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Short failsafe action</source>
       <translation type="unfinished">Short failsafe action</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[3].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Long failsafe action</source>
       <translation type="unfinished">Long failsafe action</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[4].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Long failsafe timeout</source>
       <translation type="unfinished">Long failsafe timeout</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>VTOL transition failure action</source>
       <translation type="unfinished">VTOL transition failure action</translation>
     </message>
     <message>
       <extracomment>.sections[Failsafe Triggers].controls[6].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>VTOL transition failure timeout</source>
       <translation type="unfinished">VTOL transition failure timeout</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>RC Failsafe</source>
       <translation type="unfinished">RC Failsafe</translation>
     </message>
     <message>
+      <extracomment>.sections[RC Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>radio</source>
+      <translation type="unfinished">radio</translation>
+    </message>
+    <message>
+      <extracomment>.sections[RC Failsafe].keywords[1], .sections[Throttle Failsafe].keywords[2], .sections[Throttle Failsafe].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>receiver</source>
+      <translation type="unfinished">receiver</translation>
+    </message>
+    <message>
+      <extracomment>.sections[RC Failsafe].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>transmitter</source>
+      <translation type="unfinished">transmitter</translation>
+    </message>
+    <message>
+      <extracomment>.sections[RC Failsafe].keywords[3], .sections[Throttle Failsafe].keywords[3], .sections[Throttle Failsafe].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>rc loss</source>
+      <translation type="unfinished">rc loss</translation>
+    </message>
+    <message>
+      <extracomment>.sections[RC Failsafe].keywords[4], .sections[Throttle Failsafe].keywords[4], .sections[Throttle Failsafe].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>signal loss</source>
+      <translation type="unfinished">signal loss</translation>
+    </message>
+    <message>
       <extracomment>.sections[RC Failsafe].controls[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always enabled</source>
       <translation type="unfinished">Always enabled</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].controls[3].label, .sections[Throttle Failsafe].controls[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>In Guided mode</source>
       <translation type="unfinished">In Guided mode</translation>
     </message>
     <message>
       <extracomment>.sections[RC Failsafe].controls[4].label, .sections[Throttle Failsafe].controls[6].label, .sections[EKF Failsafe].controls[4].label, .sections[Dead Reckoning Failsafe].controls[4].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Landing</source>
       <translation type="unfinished">Landing</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].title, .sections[Throttle Failsafe].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Throttle Failsafe</source>
       <translation type="unfinished">Throttle Failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always RTL</source>
       <translation type="unfinished">Always RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always Land</source>
       <translation type="unfinished">Always Land</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always SmartRTL or RTL</source>
       <translation type="unfinished">Always SmartRTL or RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[3].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always SmartRTL or Land</source>
       <translation type="unfinished">Always SmartRTL or Land</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[2].options[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Always Brake or Land</source>
       <translation type="unfinished">Always Brake or Land</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Nothing</source>
       <translation type="unfinished">Nothing</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[2].label, .sections[EKF Failsafe].controls[2].options[0].label, .sections[Other Failsafe Options].controls[1].options[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Hold</source>
       <translation type="unfinished">Hold</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[4].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>SmartRTL or Hold</source>
       <translation type="unfinished">SmartRTL or Hold</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Terminate</source>
       <translation type="unfinished">Terminate</translation>
     </message>
     <message>
       <extracomment>.sections[Throttle Failsafe].controls[3].options[6].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Loiter or Hold</source>
       <translation type="unfinished">Loiter or Hold</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].title, .sections[EKF Failsafe].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>EKF Failsafe</source>
       <translation type="unfinished">EKF Failsafe</translation>
     </message>
     <message>
+      <extracomment>.sections[EKF Failsafe].keywords[0], .sections[EKF Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>ekf</source>
+      <translation type="unfinished">ekf</translation>
+    </message>
+    <message>
+      <extracomment>.sections[EKF Failsafe].keywords[1], .sections[EKF Failsafe].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>extended kalman filter</source>
+      <translation type="unfinished">extended kalman filter</translation>
+    </message>
+    <message>
+      <extracomment>.sections[EKF Failsafe].keywords[2], .sections[EKF Failsafe].keywords[2], .sections[Dead Reckoning Failsafe].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>position estimate</source>
+      <translation type="unfinished">position estimate</translation>
+    </message>
+    <message>
+      <extracomment>.sections[EKF Failsafe].keywords[3], .sections[EKF Failsafe].keywords[3], .sections[Dead Reckoning Failsafe].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>navigation</source>
+      <translation type="unfinished">navigation</translation>
+    </message>
+    <message>
+      <extracomment>.sections[EKF Failsafe].keywords[4], .sections[EKF Failsafe].keywords[4], .sections[Dead Reckoning Failsafe].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>gps loss</source>
+      <translation type="unfinished">gps loss</translation>
+    </message>
+    <message>
       <extracomment>.sections[EKF Failsafe].controls[1].label, .sections[EKF Failsafe].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Threshold</source>
       <translation type="unfinished">Threshold</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].controls[2].options[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Land if position required</source>
       <translation type="unfinished">Land if position required</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].controls[2].options[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>AltHold if position required</source>
       <translation type="unfinished">AltHold if position required</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].controls[2].options[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Land from all modes</source>
       <translation type="unfinished">Land from all modes</translation>
     </message>
     <message>
       <extracomment>.sections[EKF Failsafe].controls[2].options[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Report only</source>
       <translation type="unfinished">Report only</translation>
     </message>
     <message>
       <extracomment>.sections[Dead Reckoning Failsafe].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Dead Reckoning Failsafe</source>
       <translation type="unfinished">Dead Reckoning Failsafe</translation>
     </message>
     <message>
+      <extracomment>.sections[Dead Reckoning Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>dead reckoning</source>
+      <translation type="unfinished">dead reckoning</translation>
+    </message>
+    <message>
       <extracomment>.sections[Dead Reckoning Failsafe].controls[2].options[4].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Auto Land/Return or RTL</source>
       <translation type="unfinished">Auto Land/Return or RTL</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].title, .sections[Other Failsafe Options].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Other Failsafe Options</source>
       <translation type="unfinished">Other Failsafe Options</translation>
     </message>
     <message>
+      <extracomment>.sections[Other Failsafe Options].keywords[0], .sections[Other Failsafe Options].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>crash</source>
+      <translation type="unfinished">crash</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Other Failsafe Options].keywords[1], .sections[Other Failsafe Options].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>vibration</source>
+      <translation type="unfinished">vibration</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Other Failsafe Options].keywords[2], .sections[Other Failsafe Options].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
+      <source>gripper</source>
+      <translation type="unfinished">gripper</translation>
+    </message>
+    <message>
       <extracomment>.sections[Other Failsafe Options].controls[0].label, .sections[Other Failsafe Options].controls[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Crash check failsafe</source>
       <translation type="unfinished">Crash check failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Vibration failsafe</source>
       <translation type="unfinished">Vibration failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].controls[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Release gripper on any failsafe</source>
       <translation type="unfinished">Release gripper on any failsafe</translation>
     </message>
     <message>
       <extracomment>.sections[Other Failsafe Options].controls[1].options[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFailsafes.VehicleConfig.json"/>
       <source>Hold and Disarm</source>
       <translation type="unfinished">Hold and Disarm</translation>
     </message>
+  </context>
+  <context>
+    <name>APMFlightSafety.VehicleConfig.json</name>
     <message>
-      <extracomment>.sections[GeoFence].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <extracomment>.sections[Return to Launch].title, .sections[Return to Launch].title</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Return to Launch</source>
+      <translation type="unfinished">Return to Launch</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].keywords[0], .sections[Return to Launch].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>rtl</source>
+      <translation type="unfinished">rtl</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].keywords[1], .sections[Return to Launch].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>return home</source>
+      <translation type="unfinished">return home</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].keywords[2], .sections[Return to Launch].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>return to launch</source>
+      <translation type="unfinished">return to launch</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].keywords[3], .sections[Return to Launch].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>loiter</source>
+      <translation type="unfinished">loiter</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].keywords[4], .sections[Return to Launch].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>land</source>
+      <translation type="unfinished">land</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].keywords[5], .sections[Return to Launch].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>altitude</source>
+      <translation type="unfinished">altitude</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[0].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Return at specified altitude:</source>
+      <translation type="unfinished">Return at specified altitude:</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[0].options[0].label, .sections[Return to Launch].controls[0].options[0].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Return at current altitude</source>
+      <translation type="unfinished">Return at current altitude</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[0].options[1].label, .sections[Return to Launch].controls[0].options[1].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Return at specified altitude</source>
+      <translation type="unfinished">Return at specified altitude</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[1].label, .sections[Return to Launch].controls[1].label, .sections[GeoFence].controls[12].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Return altitude</source>
+      <translation type="unfinished">Return altitude</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[2].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Loiter above Home</source>
+      <translation type="unfinished">Loiter above Home</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[3].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Loiter time</source>
+      <translation type="unfinished">Loiter time</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[4].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Final land stage altitude</source>
+      <translation type="unfinished">Final land stage altitude</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[5].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Final land stage descent speed</source>
+      <translation type="unfinished">Final land stage descent speed</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[0].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Return altitude:</source>
+      <translation type="unfinished">Return altitude:</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].title, .sections[GeoFence].title</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>GeoFence</source>
       <translation type="unfinished">GeoFence</translation>
     </message>
     <message>
-      <extracomment>.sections[GeoFence].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <extracomment>.sections[GeoFence].keywords[0], .sections[GeoFence].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>geofence</source>
+      <translation type="unfinished">geofence</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].keywords[1], .sections[GeoFence].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>boundary</source>
+      <translation type="unfinished">boundary</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].keywords[2], .sections[GeoFence].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>fence</source>
+      <translation type="unfinished">fence</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].keywords[3], .sections[GeoFence].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>containment</source>
+      <translation type="unfinished">containment</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].keywords[4], .sections[GeoFence].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>rally</source>
+      <translation type="unfinished">rally</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].keywords[5], .sections[GeoFence].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>breach</source>
+      <translation type="unfinished">breach</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].keywords[6], .sections[GeoFence].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>radius</source>
+      <translation type="unfinished">radius</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].keywords[7], .sections[GeoFence].keywords[7]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>inclusion</source>
+      <translation type="unfinished">inclusion</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].keywords[8], .sections[GeoFence].keywords[8]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>exclusion</source>
+      <translation type="unfinished">exclusion</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].controls[0].label, .sections[GeoFence].controls[0].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Enabled</source>
+      <translation type="unfinished">Enabled</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].controls[1].label, .sections[GeoFence].controls[1].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Maximum Altitude</source>
       <translation type="unfinished">Maximum Altitude</translation>
     </message>
     <message>
-      <extracomment>.sections[GeoFence].controls[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <extracomment>.sections[GeoFence].controls[2].label, .sections[GeoFence].controls[2].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Maximum altitude</source>
       <translation type="unfinished">Maximum altitude</translation>
     </message>
     <message>
-      <extracomment>.sections[GeoFence].controls[3].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <extracomment>.sections[GeoFence].controls[3].label, .sections[GeoFence].controls[3].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Minimum Altitude</source>
+      <translation type="unfinished">Minimum Altitude</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].controls[4].label, .sections[GeoFence].controls[4].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Minimum altitude</source>
+      <translation type="unfinished">Minimum altitude</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].controls[5].label, .sections[GeoFence].controls[5].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Circle centered on Home</source>
       <translation type="unfinished">Circle centered on Home</translation>
     </message>
     <message>
-      <extracomment>.sections[GeoFence].controls[4].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <extracomment>.sections[GeoFence].controls[6].label, .sections[GeoFence].controls[6].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Circle radius</source>
       <translation type="unfinished">Circle radius</translation>
     </message>
     <message>
-      <extracomment>.sections[GeoFence].controls[5].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <extracomment>.sections[GeoFence].controls[7].label, .sections[GeoFence].controls[7].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Inclusion/Exclusion Circles+Polygons</source>
       <translation type="unfinished">Inclusion/Exclusion Circles+Polygons</translation>
     </message>
     <message>
-      <extracomment>.sections[GeoFence].controls[6].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
-      <source>Breach action</source>
-      <translation type="unfinished">Breach action</translation>
-    </message>
-    <message>
-      <extracomment>.sections[GeoFence].controls[7].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <extracomment>.sections[GeoFence].controls[8].label, .sections[GeoFence].controls[8].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Fence margin</source>
       <translation type="unfinished">Fence margin</translation>
     </message>
     <message>
+      <extracomment>.sections[GeoFence].controls[9].label, .sections[GeoFence].controls[9].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Auto-enable</source>
+      <translation type="unfinished">Auto-enable</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].controls[10].label, .sections[GeoFence].controls[10].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Breach action</source>
+      <translation type="unfinished">Breach action</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].controls[11].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Custom return altitude</source>
+      <translation type="unfinished">Custom return altitude</translation>
+    </message>
+    <message>
+      <extracomment>.sections[GeoFence].controls[13].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Return to nearest rally point</source>
+      <translation type="unfinished">Return to nearest rally point</translation>
+    </message>
+    <message>
       <extracomment>.sections[Arming Checks].title</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Arming Checks</source>
       <translation type="unfinished">Arming Checks</translation>
     </message>
     <message>
+      <extracomment>.sections[Arming Checks].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>arming</source>
+      <translation type="unfinished">arming</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Arming Checks].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>pre-arm</source>
+      <translation type="unfinished">pre-arm</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Arming Checks].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>preflight</source>
+      <translation type="unfinished">preflight</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Arming Checks].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>safety check</source>
+      <translation type="unfinished">safety check</translation>
+    </message>
+    <message>
       <extracomment>.sections[Arming Checks].controls[0].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Warning: Skipping arming checks can lead to loss of Vehicle control.</source>
       <translation type="unfinished">Warning: Skipping arming checks can lead to loss of Vehicle control.</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].controls[1].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Arming checks</source>
       <translation type="unfinished">Arming checks</translation>
     </message>
     <message>
       <extracomment>.sections[Arming Checks].controls[2].label</extracomment>
-      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMSafety.VehicleConfig.json"/>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Skip arming checks</source>
       <translation type="unfinished">Skip arming checks</translation>
     </message>
@@ -5566,6 +5917,48 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMPower.VehicleConfig.json"/>
       <source>Battery</source>
       <translation type="unfinished">Battery</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMPower.VehicleConfig.json"/>
+      <source>battery</source>
+      <translation type="unfinished">battery</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMPower.VehicleConfig.json"/>
+      <source>voltage</source>
+      <translation type="unfinished">voltage</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMPower.VehicleConfig.json"/>
+      <source>current</source>
+      <translation type="unfinished">current</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMPower.VehicleConfig.json"/>
+      <source>power module</source>
+      <translation type="unfinished">power module</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMPower.VehicleConfig.json"/>
+      <source>sensor</source>
+      <translation type="unfinished">sensor</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMPower.VehicleConfig.json"/>
+      <source>capacity</source>
+      <translation type="unfinished">capacity</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMPower.VehicleConfig.json"/>
+      <source>amps</source>
+      <translation type="unfinished">amps</translation>
     </message>
     <message>
       <extracomment>.sections[Battery].repeat.disabledSection.heading</extracomment>
@@ -5646,6 +6039,48 @@
       <translation type="unfinished">Battery</translation>
     </message>
     <message>
+      <extracomment>.sections[Battery].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>battery</source>
+      <translation type="unfinished">battery</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>voltage</source>
+      <translation type="unfinished">voltage</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>current</source>
+      <translation type="unfinished">current</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>power module</source>
+      <translation type="unfinished">power module</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>sensor</source>
+      <translation type="unfinished">sensor</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>cells</source>
+      <translation type="unfinished">cells</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Battery].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>lipo</source>
+      <translation type="unfinished">lipo</translation>
+    </message>
+    <message>
       <extracomment>.sections[Battery].controls[0].label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>Source</source>
@@ -5700,6 +6135,36 @@
       <translation type="unfinished">ESC PWM Calibration</translation>
     </message>
     <message>
+      <extracomment>.sections[ESC PWM Calibration].keywords[0], .sections[UAVCAN Bus Configuration].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>esc</source>
+      <translation type="unfinished">esc</translation>
+    </message>
+    <message>
+      <extracomment>.sections[ESC PWM Calibration].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>calibration</source>
+      <translation type="unfinished">calibration</translation>
+    </message>
+    <message>
+      <extracomment>.sections[ESC PWM Calibration].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>motor</source>
+      <translation type="unfinished">motor</translation>
+    </message>
+    <message>
+      <extracomment>.sections[ESC PWM Calibration].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>pwm</source>
+      <translation type="unfinished">pwm</translation>
+    </message>
+    <message>
+      <extracomment>.sections[ESC PWM Calibration].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>electronic speed controller</source>
+      <translation type="unfinished">electronic speed controller</translation>
+    </message>
+    <message>
       <extracomment>.sections[ESC PWM Calibration].controls[0].label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>WARNING: Propellers must be removed from vehicle prior to performing ESC calibration.</source>
@@ -5722,6 +6187,30 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
       <source>UAVCAN Bus Configuration</source>
       <translation type="unfinished">UAVCAN Bus Configuration</translation>
+    </message>
+    <message>
+      <extracomment>.sections[UAVCAN Bus Configuration].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>uavcan</source>
+      <translation type="unfinished">uavcan</translation>
+    </message>
+    <message>
+      <extracomment>.sections[UAVCAN Bus Configuration].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>can bus</source>
+      <translation type="unfinished">can bus</translation>
+    </message>
+    <message>
+      <extracomment>.sections[UAVCAN Bus Configuration].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>dronecan</source>
+      <translation type="unfinished">dronecan</translation>
+    </message>
+    <message>
+      <extracomment>.sections[UAVCAN Bus Configuration].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Power.VehicleConfig.json"/>
+      <source>node</source>
+      <translation type="unfinished">node</translation>
     </message>
     <message>
       <extracomment>.sections[UAVCAN Bus Configuration].controls[0].label</extracomment>
@@ -5769,6 +6258,42 @@
       <translation type="unfinished">Low Battery Failsafe</translation>
     </message>
     <message>
+      <extracomment>.sections[Low Battery Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>battery</source>
+      <translation type="unfinished">battery</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Low Battery Failsafe].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>voltage</source>
+      <translation type="unfinished">voltage</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Low Battery Failsafe].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>low battery</source>
+      <translation type="unfinished">low battery</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Low Battery Failsafe].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>critical battery</source>
+      <translation type="unfinished">critical battery</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Low Battery Failsafe].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>emergency</source>
+      <translation type="unfinished">emergency</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Low Battery Failsafe].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>power</source>
+      <translation type="unfinished">power</translation>
+    </message>
+    <message>
       <extracomment>.sections[Low Battery Failsafe].controls[0].label, .sections[RC/Joystick Loss Failsafe].controls[0].label, .sections[Data Link Loss Failsafe].controls[0].label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Failsafe action</source>
@@ -5799,6 +6324,36 @@
       <translation type="unfinished">Object Detection</translation>
     </message>
     <message>
+      <extracomment>.sections[Object Detection].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>collision</source>
+      <translation type="unfinished">collision</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Object Detection].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>avoidance</source>
+      <translation type="unfinished">avoidance</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Object Detection].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>obstacle</source>
+      <translation type="unfinished">obstacle</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Object Detection].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>proximity</source>
+      <translation type="unfinished">proximity</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Object Detection].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>distance</source>
+      <translation type="unfinished">distance</translation>
+    </message>
+    <message>
       <extracomment>.sections[Object Detection].controls[0].label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Collision prevention minimum distance</source>
@@ -5817,6 +6372,42 @@
       <translation type="unfinished">RC/Joystick Loss Failsafe</translation>
     </message>
     <message>
+      <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>radio</source>
+      <translation type="unfinished">radio</translation>
+    </message>
+    <message>
+      <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>receiver</source>
+      <translation type="unfinished">receiver</translation>
+    </message>
+    <message>
+      <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>transmitter</source>
+      <translation type="unfinished">transmitter</translation>
+    </message>
+    <message>
+      <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>rc loss</source>
+      <translation type="unfinished">rc loss</translation>
+    </message>
+    <message>
+      <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>joystick</source>
+      <translation type="unfinished">joystick</translation>
+    </message>
+    <message>
+      <extracomment>.sections[RC/Joystick Loss Failsafe].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>signal loss</source>
+      <translation type="unfinished">signal loss</translation>
+    </message>
+    <message>
       <extracomment>.sections[RC/Joystick Loss Failsafe].controls[1].label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>RC/joystick loss timeout</source>
@@ -5829,6 +6420,36 @@
       <translation type="unfinished">Data Link Loss Failsafe</translation>
     </message>
     <message>
+      <extracomment>.sections[Data Link Loss Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>telemetry</source>
+      <translation type="unfinished">telemetry</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Data Link Loss Failsafe].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>link loss</source>
+      <translation type="unfinished">link loss</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Data Link Loss Failsafe].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>ground station</source>
+      <translation type="unfinished">ground station</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Data Link Loss Failsafe].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>gcs</source>
+      <translation type="unfinished">gcs</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Data Link Loss Failsafe].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>disconnect</source>
+      <translation type="unfinished">disconnect</translation>
+    </message>
+    <message>
       <extracomment>.sections[Data Link Loss Failsafe].controls[1].label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Data link loss timeout</source>
@@ -5839,6 +6460,48 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Geofence Failsafe</source>
       <translation type="unfinished">Geofence Failsafe</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Geofence Failsafe].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>geofence</source>
+      <translation type="unfinished">geofence</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Geofence Failsafe].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>boundary</source>
+      <translation type="unfinished">boundary</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Geofence Failsafe].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>fence</source>
+      <translation type="unfinished">fence</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Geofence Failsafe].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>containment</source>
+      <translation type="unfinished">containment</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Geofence Failsafe].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>radius</source>
+      <translation type="unfinished">radius</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Geofence Failsafe].keywords[5], .sections[Return to launch settings].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>altitude</source>
+      <translation type="unfinished">altitude</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Geofence Failsafe].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>breach</source>
+      <translation type="unfinished">breach</translation>
     </message>
     <message>
       <extracomment>.sections[Geofence Failsafe].controls[0].label</extracomment>
@@ -5863,6 +6526,36 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Return to launch settings</source>
       <translation type="unfinished">Return to launch settings</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to launch settings].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>rtl</source>
+      <translation type="unfinished">rtl</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to launch settings].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>return home</source>
+      <translation type="unfinished">return home</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to launch settings].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>return to launch</source>
+      <translation type="unfinished">return to launch</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to launch settings].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>loiter</source>
+      <translation type="unfinished">loiter</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to launch settings].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>land</source>
+      <translation type="unfinished">land</translation>
     </message>
     <message>
       <extracomment>.sections[Return to launch settings].controls[0].label</extracomment>
@@ -5911,6 +6604,30 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
       <source>Land Mode Settings</source>
       <translation type="unfinished">Land Mode Settings</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Land Mode Settings].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>landing</source>
+      <translation type="unfinished">landing</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Land Mode Settings].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>descent</source>
+      <translation type="unfinished">descent</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Land Mode Settings].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>disarm</source>
+      <translation type="unfinished">disarm</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Land Mode Settings].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/PX4/VehicleConfig/Safety.VehicleConfig.json"/>
+      <source>touchdown</source>
+      <translation type="unfinished">touchdown</translation>
     </message>
     <message>
       <extracomment>.sections[Land Mode Settings].controls[0].label</extracomment>
