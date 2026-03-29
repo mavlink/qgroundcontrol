@@ -1,7 +1,11 @@
 #pragma once
 
 #include "WaitStateBase.h"
-#include "Vehicle.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
+#include "VehicleTypes.h"
+
+class Vehicle;
 
 #include <functional>
 
@@ -29,7 +33,7 @@ class RetryableRequestMessageState : public WaitStateBase
 
 public:
     using MessageHandler = std::function<void(Vehicle* vehicle, const mavlink_message_t& message)>;
-    using FailureHandler = std::function<void(Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, MAV_RESULT result)>;
+    using FailureHandler = std::function<void(VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, MAV_RESULT result)>;
     using SkipPredicate = std::function<bool()>;
 
     /// Create a retryable request message state
@@ -59,7 +63,7 @@ public:
     void setFailOnMaxRetries(bool fail) { _failOnMaxRetries = fail; }
 
     /// Get the failure code from the last attempt
-    Vehicle::RequestMessageResultHandlerFailureCode_t lastFailureCode() const { return _lastFailureCode; }
+    VehicleTypes::RequestMessageResultHandlerFailureCode_t lastFailureCode() const { return _lastFailureCode; }
 
     /// Get the MAV_RESULT from the last attempt
     MAV_RESULT lastResult() const { return _lastResult; }
@@ -88,7 +92,7 @@ private:
     void _sendRequest();
     void _queueRetry();
     void _handleResult(MAV_RESULT result,
-                       Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
+                       VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
                        const mavlink_message_t& message);
 
     uint32_t _messageId;
@@ -102,6 +106,6 @@ private:
 
     bool _requestActive = false;
 
-    Vehicle::RequestMessageResultHandlerFailureCode_t _lastFailureCode = Vehicle::RequestMessageNoFailure;
+    VehicleTypes::RequestMessageResultHandlerFailureCode_t _lastFailureCode = VehicleTypes::RequestMessageNoFailure;
     MAV_RESULT _lastResult = MAV_RESULT_ACCEPTED;
 };

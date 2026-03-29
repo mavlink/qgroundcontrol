@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CompInfo.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
 #include "FactMetaData.h"
 
 #include <QtCore/QLoggingCategory>

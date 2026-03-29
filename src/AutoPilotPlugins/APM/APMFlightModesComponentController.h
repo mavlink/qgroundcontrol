@@ -5,7 +5,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
-#include "QGCMAVLink.h"
+#include "QGCMAVLinkTypes.h"
 
 /// MVC Controller for FlightModesComponent.qml.
 class APMFlightModesComponentController : public FactPanelController
@@ -57,7 +57,7 @@ private:
     Fact *_superSimpleModeFact = nullptr;
     const bool _simpleModesSupported = false;
     int _activeFlightMode = 0;
-    int _channelCount = QGCMAVLink::maxRcChannels;
+    int _channelCount = QGCMAVLinkTypes::maxRcChannels;
     int _simpleMode = SimpleModeStandard;
     QString _modeChannelParam;
     QString _modeParamPrefix;

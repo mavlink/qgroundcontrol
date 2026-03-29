@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
 
 #include <QtCore/QObject>
 

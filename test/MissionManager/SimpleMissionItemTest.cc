@@ -40,13 +40,13 @@ void SimpleMissionItemTest::cleanup()
     _simpleItem = nullptr;
 }
 
-bool SimpleMissionItemTest::_classMatch(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass)
+bool SimpleMissionItemTest::_classMatch(QGCMAVLinkTypes::VehicleClass_t vehicleClass, QGCMAVLinkTypes::VehicleClass_t testClass)
 {
     return vehicleClass == QGCMAVLink::VehicleClassGeneric || vehicleClass == testClass;
 }
 
-void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t vehicleClass,
-                                                   QGCMAVLink::VehicleClass_t vtolMode)
+void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLinkTypes::VehicleClass_t vehicleClass,
+                                                   QGCMAVLinkTypes::VehicleClass_t vtolMode)
 {
     TEST_DEBUG(QStringLiteral("vehicleClass:vtolMode %1 %2")
                    .arg(QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass),

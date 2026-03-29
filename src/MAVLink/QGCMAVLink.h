@@ -6,14 +6,24 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
+#include "QGCMAVLinkTypes.h"
+
+// Forward declare - only used by reference in highLatencyFailuresToMavSysStatus()
+typedef struct __mavlink_high_latency2_t mavlink_high_latency2_t;
+
+// From mavlink_msg_param_ext_set.h - avoids pulling in the full message header
+#ifndef MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN
+#define MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN 128
+#endif
 
 Q_DECLARE_LOGGING_CATEGORY(QGCMAVLinkLog)
 // Q_DECLARE_METATYPE(mavlink_message_t)
 Q_DECLARE_METATYPE(MAV_TYPE)
 Q_DECLARE_METATYPE(MAV_AUTOPILOT)
 
-class QGCMAVLink : public QObject
+class QGCMAVLink : public QObject, public QGCMAVLinkTypes
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(MAVLink)
@@ -24,8 +34,7 @@ public:
     QGCMAVLink(QObject *parent = nullptr);
     ~QGCMAVLink();
 
-    typedef int FirmwareClass_t;
-    typedef int VehicleClass_t;
+    // FirmwareClass_t, VehicleClass_t, VehicleClassGeneric, maxRcChannels inherited from QGCMAVLinkTypes
 
     static constexpr const FirmwareClass_t FirmwareClassPX4       = MAV_AUTOPILOT_PX4;
     static constexpr const FirmwareClass_t FirmwareClassArduPilot = MAV_AUTOPILOT_ARDUPILOTMEGA;
@@ -38,9 +47,8 @@ public:
     static constexpr const VehicleClass_t VehicleClassSpacecraft  = MAV_TYPE_SPACECRAFT_ORBITER;
     static constexpr const VehicleClass_t VehicleClassMultiRotor  = MAV_TYPE_QUADROTOR;
     static constexpr const VehicleClass_t VehicleClassVTOL        = MAV_TYPE_VTOL_TAILSITTER_QUADROTOR;
-    static constexpr const VehicleClass_t VehicleClassGeneric     = MAV_TYPE_GENERIC;
-
-    static constexpr const uint8_t        maxRcChannels           = 18; // mavlink_rc_channels_t->chancount
+    // VehicleClassGeneric inherited from QGCMAVLinkTypes
+    static_assert(QGCMAVLinkTypes::VehicleClassGeneric == MAV_TYPE_GENERIC, "VehicleClassGeneric value mismatch");
 
     static bool                     isPX4FirmwareClass          (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_PX4; }
     static bool                     isArduPilotFirmwareClass    (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA; }

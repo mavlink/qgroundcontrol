@@ -3,11 +3,13 @@
 #include "FirmwarePlugin.h"
 #include "Joystick.h"
 #include "JoystickManager.h"
+#include "MAVLinkLib.h"
 #include "MavlinkCameraControlInterface.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 #include "QGCVideoStreamInfo.h"
 #include "SimulatedCameraControl.h"
+#include "Vehicle.h"
 
 #include <cmath>
 #include "GimbalControllerSettings.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
 #include "QGCStateMachine.h"
 #include "RequestMetaDataTypeStateMachine.h"
 

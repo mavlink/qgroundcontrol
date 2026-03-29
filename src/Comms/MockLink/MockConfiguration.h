@@ -3,7 +3,7 @@
 #include "LinkConfiguration.h"
 
 #include <QtCore/QLoggingCategory>
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
 
 Q_DECLARE_LOGGING_CATEGORY(MockConfigurationLog)
 

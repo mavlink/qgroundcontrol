@@ -5,7 +5,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Gimbal.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 
 Q_DECLARE_LOGGING_CATEGORY(GimbalControllerLog)
 

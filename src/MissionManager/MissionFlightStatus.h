@@ -1,6 +1,6 @@
 #pragma once
 
-#include "QGCMAVLink.h"
+#include "QGCMAVLinkTypes.h"
 
 struct MissionFlightStatus_t {
     double                      maxTelemetryDistance;
@@ -23,7 +23,7 @@ struct MissionFlightStatus_t {
     double                      gimbalYaw;              ///< NaN signals yaw was never changed
     double                      gimbalPitch;            ///< NaN signals pitch was never changed
     // The following values are the state prior to executing this item
-    QGCMAVLink::VehicleClass_t  vtolMode;               ///< Either VehicleClassFixedWing, VehicleClassMultiRotor, VehicleClassGeneric (mode unknown)
+    QGCMAVLinkTypes::VehicleClass_t  vtolMode;               ///< Either VehicleClassFixedWing, VehicleClassMultiRotor, VehicleClassGeneric (mode unknown)
     double                      cruiseSpeed;
     double                      hoverSpeed;
     double                      vehicleSpeed;           ///< Either cruise or hover speed based on vehicle type and vtol state

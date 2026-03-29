@@ -90,7 +90,7 @@ FactValueGrid::~FactValueGrid()
     _vehicleCardInstanceList.removeAll(this);
 }
 
-QGCMAVLink::VehicleClass_t FactValueGrid::vehicleClass(void) const
+QGCMAVLinkTypes::VehicleClass_t FactValueGrid::vehicleClass(void) const
 {
     return QGCMAVLink::vehicleClass(currentVehicle()->vehicleType());
 }

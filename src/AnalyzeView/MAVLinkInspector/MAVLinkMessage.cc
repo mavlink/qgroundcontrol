@@ -1,4 +1,5 @@
 #include "MAVLinkMessage.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkMessageField.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"

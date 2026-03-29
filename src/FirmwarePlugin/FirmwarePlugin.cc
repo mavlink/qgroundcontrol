@@ -7,6 +7,7 @@
 #include "QGCCameraManager.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
+#include "Vehicle.h"
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
 
