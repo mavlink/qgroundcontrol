@@ -32,8 +32,11 @@ ColumnLayout {
 
         RowLayout {
             id: _contentRow
-            x: _margins
             y: _margins
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: _margins
+            anchors.rightMargin: _margins
             spacing: ScreenTools.defaultFontPixelWidth * 2
 
             QGCColoredImage {
