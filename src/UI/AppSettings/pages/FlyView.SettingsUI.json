@@ -1,5 +1,6 @@
 {
     "version": 1,
+    "fileType": "SettingsUI",
     "bindings": {
         "hasChecklist": "QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length",
         "useChecklistValue": "QGroundControl.settingsManager.appSettings.useChecklist.value",

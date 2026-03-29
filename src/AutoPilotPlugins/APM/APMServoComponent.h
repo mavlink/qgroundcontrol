@@ -11,7 +11,7 @@ public:
 
     // VehicleComponent overrides
     QString     name() const final                 { return _name; }
-    QString     description() const final          { return tr("Configure servo PWM limits, trim, direction, and function."); }
+    QString     description() const final          { return tr("Configure servo PWM limits, trim, direction, and function assignment."); }
     QString     iconResource() const final         { return QStringLiteral("/qmlimages/MotorComponentIcon.svg"); }
     bool        requiresSetup() const final        { return false; }
     bool        setupComplete() const final        { return true; }

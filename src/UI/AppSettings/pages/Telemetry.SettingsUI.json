@@ -1,5 +1,6 @@
 {
     "version": 1,
+    "fileType": "SettingsUI",
     "groups": [
         {
             "heading": "Ground Station",

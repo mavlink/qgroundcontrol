@@ -13,6 +13,7 @@ public:
 
     QString name() const final { return _name; }
     QString description() const final;
+    QString vehicleConfigJson() const final;
     QString iconResource() const final { return QStringLiteral("/qmlimages/SafetyComponentIcon.png"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; } // FIXME: What aboout invalid settings?

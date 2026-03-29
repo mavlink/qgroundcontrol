@@ -25,7 +25,7 @@ JoystickComponent::~JoystickComponent()
 
 QString JoystickComponent::description() const
 {
-    return tr("Configure joystick input, calibrate axes, and manage button assignments.");
+    return tr("Configure axis calibration, button assignments, and input settings.");
 }
 
 bool JoystickComponent::setupComplete() const

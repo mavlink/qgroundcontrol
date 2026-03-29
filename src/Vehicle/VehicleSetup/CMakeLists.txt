@@ -50,7 +50,7 @@ qt_add_qml_module(VehicleSetupModule
         RemoteControlChannelMonitor.qml
         RemoteControlChannelValueDisplay.qml
         SetupParameterEditor.qml
-        SetupView.qml
+        VehicleConfigView.qml
         VehicleSummary.qml
     NO_PLUGIN
 )

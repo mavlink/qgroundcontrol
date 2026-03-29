@@ -18,8 +18,9 @@ RowLayout {
     signal activated(int index)
 
     QGCLabel {
-        id:                 label
-        Layout.fillWidth:   true
+        id:                  label
+        Layout.fillWidth:    true
+        Layout.minimumWidth: implicitWidth
     }
 
     QGCComboBox {

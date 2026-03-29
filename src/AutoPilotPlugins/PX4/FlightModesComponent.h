@@ -18,6 +18,7 @@ public:
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
+    QStringList sections() const final;
 
 private:
     const QString   _name;

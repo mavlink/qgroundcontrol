@@ -20,6 +20,7 @@ public:
     bool    setupComplete           (void) const override;
     QUrl    setupSource             (void) const override;
     QUrl    summaryQmlSource        (void) const override;
+    QString vehicleConfigJson       (void) const override;
     bool    allowSetupWhileArmed    (void) const override { return true; }
 
 private:

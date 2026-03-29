@@ -12,7 +12,7 @@ public:
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
 
     QString name() const final { return _name; }
-    QString description() const final { return tr("The ESC Component is used to configure and calibrate Electronic Speed Controllers."); }
+    QString description() const final { return tr("Configure and calibrate Electronic Speed Controllers."); }
     QString iconResource() const final { return QStringLiteral("/qmlimages/EscIndicator.svg"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }

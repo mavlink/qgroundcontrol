@@ -19,6 +19,20 @@ Item {
     property real   availableHeight:        height - pageLoader.y
     property bool   showAdvanced:           false
     property alias  advanced:               advancedCheckBox.checked
+    property string sectionNameFilter:       ""
+
+    function sectionVisible(name) {
+        if (pageLoader.item && typeof pageLoader.item.sectionVisible === "function") {
+            return pageLoader.item.sectionVisible(name)
+        }
+        return true
+    }
+
+    onSectionNameFilterChanged: {
+        if (pageLoader.item && typeof pageLoader.item.sectionNameFilter !== "undefined") {
+            pageLoader.item.sectionNameFilter = sectionNameFilter
+        }
+    }
 
     property bool   _vehicleIsRover:        globals.activeVehicle ? globals.activeVehicle.rover : false
     property bool   _vehicleArmed:          globals.activeVehicle ? globals.activeVehicle.armed : false
@@ -28,11 +42,13 @@ Item {
     property bool   _disableDueToFlying:    vehicleComponent ? (!_vehicleIsRover && !vehicleComponent.allowSetupWhileFlying && _vehicleFlying) : false
     property string _disableReason:         _disableDueToArmed ? qsTr("armed") : qsTr("flying")
     property real   _margins:               ScreenTools.defaultFontPixelHeight * 0.5
-    property string _pageTitle:             qsTr("%1 Config").arg(pageName)
 
     Component.onCompleted: {
         if(pageLoader.item && pageLoader.item.setupPageCompleted) {
             pageLoader.item.setupPageCompleted()
+        }
+        if (pageLoader.item && typeof pageLoader.item.sectionNameFilter !== "undefined") {
+            pageLoader.item.sectionNameFilter = sectionNameFilter
         }
     }
 
@@ -61,16 +77,17 @@ Item {
 
                 QGCLabel {
                     Layout.fillWidth:   true
-                    font.pointSize:     ScreenTools.largeFontPointSize
-                    text:               !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
-                    visible:            !ScreenTools.isShortScreen
+                    wrapMode:           Text.WordWrap
+                    text:               pageDescription
+                    visible:            pageDescription !== "" && !ScreenTools.isShortScreen
                 }
 
                 QGCLabel {
                     Layout.fillWidth:   true
                     wrapMode:           Text.WordWrap
-                    text:               pageDescription
-                    visible:            pageDescription !== "" && !ScreenTools.isShortScreen
+                    text:               qsTr("Disabled while the vehicle is %1").arg(_disableReason)
+                    color:              qgcPal.warningText
+                    visible:            !setupView.enabled && !ScreenTools.isShortScreen
                 }
             }
         }
