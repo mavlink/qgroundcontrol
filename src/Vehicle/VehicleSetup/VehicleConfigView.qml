@@ -290,7 +290,7 @@ Rectangle {
         QGCTextField {
             id:                 searchField
             Layout.fillWidth:   true
-            placeholderText:    qsTr("Search components...")
+            placeholderText:    qsTr("Search configuration...")
             visible:            _fullParameterVehicleAvailable
 
             onTextChanged: {
