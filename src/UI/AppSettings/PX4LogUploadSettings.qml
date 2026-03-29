@@ -26,6 +26,7 @@ SettingsGroupLayout {
         _mavlinkLogManager.uploadURL     = urlField.text
         if (autoUploadCheck.checked && _mavlinkLogManager.emailAddress === "") {
             autoUploadCheck.checked = false
+            _mavlinkLogManager.enableAutoUpload = false
         } else {
             _mavlinkLogManager.enableAutoUpload = autoUploadCheck.checked
         }
@@ -198,8 +199,9 @@ SettingsGroupLayout {
         checked: _mavlinkLogManager ? _mavlinkLogManager.enableAutoUpload : false
         enabled: !_disableDataPersistence
         onClicked: {
+            const wantsAutoUpload = checked
             saveItems()
-            if (checked && _mavlinkLogManager.emailAddress === "")
+            if (wantsAutoUpload && _mavlinkLogManager && _mavlinkLogManager.emailAddress === "")
                 emptyEmailDialog.open()
         }
     }
