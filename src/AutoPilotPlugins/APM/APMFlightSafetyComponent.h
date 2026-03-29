@@ -2,12 +2,12 @@
 
 #include "VehicleComponent.h"
 
-class APMSafetyComponent : public VehicleComponent
+class APMFlightSafetyComponent : public VehicleComponent
 {
     Q_OBJECT
 
 public:
-    explicit APMSafetyComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
+    explicit APMFlightSafetyComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot, QObject *parent = nullptr);
 
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
 
@@ -16,7 +16,7 @@ public:
     QString vehicleConfigJson() const final;
     QString iconResource() const final { return QStringLiteral("/qmlimages/SafetyComponentIcon.png"); }
     bool requiresSetup() const final { return false; }
-    bool setupComplete() const final { return true; } // FIXME: What aboout invalid settings?
+    bool setupComplete() const final { return true; } // FIXME: What about invalid settings?
     QUrl setupSource() const final;
     QUrl summaryQmlSource() const final;
     bool allowSetupWhileArmed() const final { return true; }

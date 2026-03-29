@@ -5,20 +5,39 @@
         {
             "component": "NtripConnectionStatus",
             "sectionName": "Connection Status",
-            "keywords": "ntrip,rtk,connection status,corrections"
+            "keywords": [
+                "ntrip",
+                "rtk",
+                "connection status",
+                "corrections"
+            ]
         },
         {
             "component": "NtripServerSettings",
             "sectionName": "Server Settings",
-            "keywords": "ntrip server,rtk,caster,host,port,username,password,mountpoint"
+            "keywords": [
+                "ntrip server",
+                "rtk",
+                "caster",
+                "host",
+                "port",
+                "username",
+                "password",
+                "mountpoint"
+            ]
         },
         {
             "component": "NtripMountpointBrowser",
             "sectionName": "Mountpoint Browser",
-            "keywords": "mountpoint,browse,stream"
+            "keywords": [
+                "mountpoint",
+                "browse",
+                "stream"
+            ]
         },
         {
             "heading": "Options",
+            "keywords": ["rtcm", "whitelist", "message filter", "ntrip"],
             "controls": [
                 {
                     "setting": "ntripSettings.ntripWhitelist",
@@ -28,6 +47,7 @@
         },
         {
             "heading": "UDP Forwarding",
+            "keywords": ["udp forward", "relay", "corrections forward", "rtcm"],
             "controls": [
                 {
                     "setting": "ntripSettings.ntripUdpForwardEnabled"

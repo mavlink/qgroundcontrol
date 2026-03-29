@@ -14,6 +14,16 @@
     },
     "sections": [
         {
+            "title": "Battery",
+            "keywords": [
+                "battery",
+                "voltage",
+                "current",
+                "power module",
+                "sensor",
+                "cells",
+                "lipo"
+            ],
             "image": "/qmlimages/Battery.svg",
             "repeat": {
                 "paramPrefix": "BAT",
@@ -81,10 +91,17 @@
                     "optional": true,
                     "showWhen": "controller.parameterExists(-1, _fullParamName(\"_V_LOAD_DROP\"))"
                 }
-            ],
-            "title": "Battery"
+            ]
         },
         {
+            "title": "ESC PWM Calibration",
+            "keywords": [
+                "esc",
+                "calibration",
+                "motor",
+                "pwm",
+                "electronic speed controller"
+            ],
             "image": "/qmlimages/Gears.svg",
             "controls": [
                 {
@@ -103,10 +120,17 @@
                         "dialogComponent": "ESCCalibrationDialog"
                     }
                 }
-            ],
-            "title": "ESC PWM Calibration"
+            ]
         },
         {
+            "title": "UAVCAN Bus Configuration",
+            "keywords": [
+                "uavcan",
+                "can bus",
+                "dronecan",
+                "esc",
+                "node"
+            ],
             "image": "/qmlimages/Gears.svg",
             "showWhen": "_uavcanAvailable && _uavcanEnable.rawValue !== 0",
             "controls": [
@@ -142,8 +166,7 @@
                         "onClicked": "controller.stopBusConfigureActuators()"
                     }
                 }
-            ],
-            "title": "UAVCAN Bus Configuration"
+            ]
         }
     ]
 }

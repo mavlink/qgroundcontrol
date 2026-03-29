@@ -51,10 +51,8 @@ Rectangle {
     /// Translate a section name using the component's JSON filename as context.
     /// Falls back to the raw name when no vehicleConfigJson is set.
     function _translateSection(component, name) {
-        if (!component || !component.vehicleConfigJson) return name
-        var path = component.vehicleConfigJson.toString()
-        var slash = path.lastIndexOf("/")
-        var context = slash >= 0 ? path.substring(slash + 1) : path
+        var context = _translationContext(component)
+        if (!context) return name
         return qsTranslate(context, name)
     }
 
@@ -68,14 +66,51 @@ Rectangle {
         return ""
     }
 
+    /// Extract the translation context (JSON filename) from a component.
+    function _translationContext(component) {
+        if (!component || !component.vehicleConfigJson) return ""
+        var path = component.vehicleConfigJson.toString()
+        var slash = path.lastIndexOf("/")
+        return slash >= 0 ? path.substring(slash + 1) : path
+    }
+
     function _componentMatchesSearch(component) {
         if (_searchQuery.trim() === "") return true
         var query = _searchQuery.toLowerCase().trim()
         if (component.name.toLowerCase().indexOf(query) !== -1) return true
+        var context = _translationContext(component)
         var secs = component.sections
         if (secs) {
             for (var i = 0; i < secs.length; i++) {
                 if (secs[i].toLowerCase().indexOf(query) !== -1) return true
+                if (context && qsTranslate(context, secs[i]).toLowerCase().indexOf(query) !== -1) return true
+            }
+        }
+        var keywords = component.sectionKeywords
+        if (keywords) {
+            for (var key in keywords) {
+                var terms = keywords[key]
+                for (var j = 0; j < terms.length; j++) {
+                    if (terms[j].toLowerCase().indexOf(query) !== -1) return true
+                    if (context && qsTranslate(context, terms[j]).toLowerCase().indexOf(query) !== -1) return true
+                }
+            }
+        }
+        return false
+    }
+
+    function _sectionMatchesSearch(component, sectionName) {
+        if (_searchQuery.trim() === "") return true
+        var query = _searchQuery.toLowerCase().trim()
+        if (sectionName.toLowerCase().indexOf(query) !== -1) return true
+        var context = _translationContext(component)
+        if (context && qsTranslate(context, sectionName).toLowerCase().indexOf(query) !== -1) return true
+        var keywords = component.sectionKeywords
+        if (keywords && keywords[sectionName]) {
+            var terms = keywords[sectionName]
+            for (var i = 0; i < terms.length; i++) {
+                if (terms[i].toLowerCase().indexOf(query) !== -1) return true
+                if (context && qsTranslate(context, terms[i]).toLowerCase().indexOf(query) !== -1) return true
             }
         }
         return false
@@ -402,8 +437,7 @@ Rectangle {
                                 property bool sectionChecked: compColumn.isSelected && vehicleConfigView._selectedSectionIndex === sectionIndex
                                 property bool sectionMatchesSearch: {
                                     if (!compColumn.isSearching) return true
-                                    var query = vehicleConfigView._searchQuery.toLowerCase().trim()
-                                    return modelData.toLowerCase().indexOf(query) !== -1
+                                    return vehicleConfigView._sectionMatchesSearch(compColumn.comp, modelData)
                                 }
                                 property bool sectionContentVisible: {
                                     if (!compColumn.isSelected) return true

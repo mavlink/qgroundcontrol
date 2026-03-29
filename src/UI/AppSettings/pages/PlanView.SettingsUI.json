@@ -4,6 +4,7 @@
     "groups": [
         {
             "heading": "General",
+            "keywords": ["mission altitude", "default altitude", "vtol transition", "condition gate", "takeoff", "landing pattern", "waypoint"],
             "controls": [
                 {
                     "setting": "appSettings.defaultMissionItemAltitude"

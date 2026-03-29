@@ -4,6 +4,7 @@
     "groups": [
         {
             "heading": "Ground Station",
+            "keywords": ["system id", "mavlink id", "heartbeat", "initial download", "gcs"],
             "controls": [
                 {
                     "setting": "mavlinkSettings.gcsMavlinkSystemID"
@@ -18,6 +19,7 @@
         },
         {
             "heading": "MAVLink Forwarding",
+            "keywords": ["forward", "relay", "mavlink forward", "host"],
             "controls": [
                 {
                     "setting": "mavlinkSettings.forwardMavlink"
@@ -30,6 +32,7 @@
         },
         {
             "heading": "Logging",
+            "keywords": ["telemetry log", "tlog", "save log", "recording", "csv"],
             "controls": [
                 {
                     "setting": "mavlinkSettings.telemetrySave"
@@ -44,6 +47,7 @@
         },
         {
             "heading": "Stream Rates (ArduPilot Only)",
+            "keywords": ["stream rate", "ardupilot", "apm", "raw sensors", "rc channels", "position rate"],
             "controls": [
                 {
                     "setting": "mavlinkSettings.apmStartMavlinkStreams"
@@ -74,12 +78,24 @@
         {
             "component": "SigningKeyManager",
             "sectionName": "Signing Key",
-            "keywords": "signing,encryption,key,security,mavlink2"
+            "keywords": [
+                "signing",
+                "encryption",
+                "key",
+                "security",
+                "mavlink2"
+            ]
         },
         {
             "component": "MavlinkLinkStatus",
             "sectionName": "Link Status",
-            "keywords": "link status,packet loss,received,sent,latency"
+            "keywords": [
+                "link status",
+                "packet loss",
+                "received",
+                "sent",
+                "latency"
+            ]
         }
     ]
 }

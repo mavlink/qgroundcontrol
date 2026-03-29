@@ -15,6 +15,16 @@
     },
     "sections": [
         {
+            "title": "Battery",
+            "keywords": [
+                "battery",
+                "voltage",
+                "current",
+                "power module",
+                "sensor",
+                "capacity",
+                "amps"
+            ],
             "image": "/qmlimages/Battery.svg",
             "repeat": {
                 "paramPrefix": "BATT",
@@ -81,8 +91,7 @@
                     "optional": true,
                     "showWhen": "controller.parameterExists(-1, _fullParamName(\"AMP_OFFSET\")) && [_monitorParamValueAnalogVoltageAndCurrent, _monitorParamValueAnalogCurrentOnly].includes(controller.getParameterFact(-1, _fullParamName(\"MONITOR\")).rawValue)"
                 }
-            ],
-            "title": "Battery"
+            ]
         }
     ]
 }

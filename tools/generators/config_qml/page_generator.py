@@ -98,6 +98,7 @@ class SectionDef:
     component: str = ""        # escape hatch: hand-written QML component name
     showWhen: str = ""
     repeat: RepeatDef | None = None  # repeat for indexed params
+    keywords: list[str] = field(default_factory=list)  # extra search terms for section filtering
 
 
 @dataclass
@@ -201,9 +202,81 @@ def load_page_def(json_path: Path) -> PageDef:
             component=sec_data.get("component", ""),
             showWhen=sec_data.get("showWhen", ""),
             repeat=repeat_def,
+            keywords=sec_data.get("keywords", []),
         ))
     return PageDef(json_filename=json_path.name, constants=constants, params=params, bindings=bindings, sections=sections, imports=extra_imports,
                    controllerType=data.get("controllerType", "FactPanelController"))
+
+
+def _propagate_optional(page: PageDef) -> None:
+    """Mark controls as optional when their param is not required in the params section.
+
+    Non-required params use ``getParameterFact(-1, name, false)`` which returns
+    null when the param doesn't exist.  Controls referencing such params must
+    also use the optional form so the inline ``fact:`` binding doesn't error
+    on vehicle types that lack the parameter.
+    """
+    required_params: set[str] = set()
+    for p in page.params.values():
+        if p.required:
+            required_params.add(p.name)
+    for sec in page.sections:
+        for ctrl in sec.controls:
+            if ctrl.param and ctrl.param not in required_params:
+                ctrl.optional = True
+
+
+def _build_search_terms(page: PageDef) -> dict[str, list[str]]:
+    """Build a mapping of section title → list of lowercase search terms.
+
+    Search terms are derived from: section title words, control labels,
+    referenced param names, and explicit keywords from JSON.
+    These are always matched in English (lowercased).
+    """
+    result: dict[str, list[str]] = {}
+    for sec in page.sections:
+        terms: set[str] = set()
+        # Title words
+        for word in sec.title.lower().split():
+            terms.add(word)
+        # Explicit keywords
+        for kw in sec.keywords:
+            terms.add(kw.lower())
+        # Control labels
+        for ctrl in sec.controls:
+            if ctrl.label:
+                terms.add(ctrl.label.lower())
+        # Param names (the param key from JSON, lowercased)
+        for ctrl in sec.controls:
+            if ctrl.param:
+                terms.add(ctrl.param.lower())
+        # Disabled section heading if repeat
+        if sec.repeat and sec.repeat.disabledSection:
+            for word in sec.repeat.disabledSection.heading.lower().split():
+                terms.add(word)
+        result[sec.title] = sorted(terms)
+    return result
+
+
+def _build_translatable_terms(page: PageDef) -> dict[str, list[str]]:
+    """Build a mapping of section title → list of original-case translatable strings.
+
+    These are passed through qsTranslate() at runtime so the search works in
+    the user's language.  Param names are excluded (not translatable).
+    """
+    result: dict[str, list[str]] = {}
+    for sec in page.sections:
+        terms: set[str] = set()
+        terms.add(sec.title)
+        for kw in sec.keywords:
+            terms.add(kw)
+        for ctrl in sec.controls:
+            if ctrl.label:
+                terms.add(ctrl.label)
+        if sec.repeat and sec.repeat.disabledSection:
+            terms.add(sec.repeat.disabledSection.heading)
+        result[sec.title] = sorted(terms)
+    return result
 
 
 # --------------------------------------------------------------------------- #
@@ -399,6 +472,7 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             options=ctrl.options,
             enable_when=ctrl.enableWhen,
             raw=ctrl.raw,
+            optional=ctrl.optional,
             tr_context=tr_context,
         )
         if ctrl.showWhen:
@@ -409,6 +483,7 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
                 options=ctrl.options,
                 enable_when=ctrl.enableWhen,
                 raw=ctrl.raw,
+                optional=ctrl.optional,
                 tr_context=tr_context,
             )
             qml = (
@@ -451,6 +526,8 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             label=ctrl.label,
             toggle=ctrl.toggleCheckbox,
             enable_when=ctrl.enableWhen,
+            optional=ctrl.optional,
+            fact_ref=fact_ref,
             tr_context=tr_context,
         )
         if ctrl.showWhen:
@@ -523,7 +600,7 @@ def _qml_generated_section(sec: SectionDef, sec_idx: int, tr_context: str = "") 
     ind = "                "  # base indent inside outerColumn
     lines: list[str] = []
 
-    name_vis = f'(sectionNameFilter === "" || sectionNameFilter === "{sec.title}")'
+    name_vis = f'sectionMatchesFilter("{sec.title}")'
     show_vis = f"{name_vis} && {sec.showWhen}" if sec.showWhen else name_vis
 
     lines.append(f'{ind}ConfigSection {{')
@@ -548,7 +625,7 @@ def _qml_component_section(sec: SectionDef, sec_idx: int, tr_context: str = "") 
     ind = "                "
     lines: list[str] = []
 
-    name_vis = f'(sectionNameFilter === "" || sectionNameFilter === "{sec.title}")'
+    name_vis = f'sectionMatchesFilter("{sec.title}")'
     show_vis = f"{name_vis} && {sec.showWhen}" if sec.showWhen else name_vis
 
     lines.append(f'{ind}QGCLabel {{')
@@ -633,7 +710,7 @@ def _qml_repeat_section(sec: SectionDef, sec_idx: int, tr_context: str = "") -> 
     assert rep is not None
     ind = "                "  # base indent inside outerColumn
 
-    name_vis = f'(sectionNameFilter === "" || sectionNameFilter === heading)'
+    name_vis = f'sectionMatchesFilter(heading)'
     show_vis = f"{name_vis} && {sec.showWhen}" if sec.showWhen else name_vis
     safe = _safe_id(sec.title)
 
@@ -711,7 +788,7 @@ def _qml_disabled_companion_section(sec: SectionDef, tr_context: str = "") -> st
     lines.append(f"{ind}    Layout.fillWidth: true")
 
     # Visible when sectionNameFilter allows it AND any item is disabled
-    lines.append(f'{ind}    visible: (sectionNameFilter === "" || sectionNameFilter === "{rep.disabledSection.heading}") && _hasDisabled{camel}')
+    lines.append(f'{ind}    visible: sectionMatchesFilter("{rep.disabledSection.heading}") && _hasDisabled{camel}')
     lines.append(f"{ind}    property bool _hasDisabled{camel}: {{")
     lines.append(f"{ind}        for (var i = 0; i < _{safe}Count; i++) {{")
     if rep.indexing == "apm_battery":
@@ -790,6 +867,7 @@ def _qml_disabled_companion_section(sec: SectionDef, tr_context: str = "") -> st
 
 def generate_config_page_qml(page: PageDef) -> str:
     """Generate a complete QML file for a vehicle config page."""
+    _propagate_optional(page)
     lines: list[str] = [_HEADER]
     for imp in page.imports:
         lines.append(f"import {imp}")
@@ -845,6 +923,48 @@ def generate_config_page_qml(page: PageDef) -> str:
 
     lines.append("            property string sectionNameFilter: \"\"")
     lines.append("")
+
+    # Build search terms index for keyword matching
+    search_terms = _build_search_terms(page)
+    lines.append("            readonly property var _searchTerms: ({")
+    for i, (title, terms) in enumerate(search_terms.items()):
+        terms_str = ", ".join(f'"{t}"' for t in terms)
+        comma = "," if i < len(search_terms) - 1 else ""
+        lines.append(f'                "{title}": [{terms_str}]{comma}')
+    lines.append("            })")
+    lines.append("")
+
+    # Translatable terms — original-case strings run through qsTranslate() at search time
+    tr_terms = _build_translatable_terms(page)
+    tr_ctx = page.json_filename
+    lines.append("            readonly property var _translatableSearchTerms: ({")
+    for i, (title, terms) in enumerate(tr_terms.items()):
+        terms_str = ", ".join(f'"{t}"' for t in terms)
+        comma = "," if i < len(tr_terms) - 1 else ""
+        lines.append(f'                "{title}": [{terms_str}]{comma}')
+    lines.append("            })")
+    lines.append("")
+
+    lines.append("            function sectionMatchesFilter(sectionTitle) {")
+    lines.append("                if (sectionNameFilter === \"\") return true")
+    lines.append("                if (sectionNameFilter === sectionTitle) return true")
+    lines.append("                var filter = sectionNameFilter.toLowerCase()")
+    lines.append("                var terms = _searchTerms[sectionTitle]")
+    lines.append("                if (terms) {")
+    lines.append("                    for (var i = 0; i < terms.length; i++) {")
+    lines.append("                        if (terms[i].indexOf(filter) >= 0) return true")
+    lines.append("                    }")
+    lines.append("                }")
+    lines.append("                var trTerms = _translatableSearchTerms[sectionTitle]")
+    lines.append("                if (trTerms) {")
+    lines.append("                    for (var j = 0; j < trTerms.length; j++) {")
+    lines.append(f'                        if (qsTranslate("{tr_ctx}", trTerms[j]).toLowerCase().indexOf(filter) >= 0) return true')
+    lines.append("                    }")
+    lines.append("                }")
+    lines.append("                return false")
+    lines.append("            }")
+    lines.append("")
+
     lines.append("            function sectionVisible(name) {")
     # Build a switch that returns visibility per section.
     # Merge showWhen conditions for sections that share the same name

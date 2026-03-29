@@ -69,7 +69,7 @@ class GroupDef:
     headingDescription: str = ""   # optional dynamic heading description
     component: str = ""            # custom QML component (replaces generated controls)
     sectionName: str = ""          # display name for tree nav (falls back to heading)
-    keywords: str = ""                                    # curated search keywords (comma-separated)
+    keywords: list[str] = field(default_factory=list)  # curated search keywords
     controls: list[ControlDef] = field(default_factory=list)
     missing: list[str] = field(default_factory=list)  # descriptions of complex UI not yet generated
 
@@ -104,7 +104,7 @@ def load_page_def(json_path: Path) -> PageDef:
             headingDescription=grp_data.get("headingDescription", ""),
             component=grp_data.get("component", ""),
             sectionName=grp_data.get("sectionName", ""),
-            keywords=grp_data.get("keywords", ""),
+            keywords=_parse_keywords(grp_data.get("keywords", [])),
             missing=grp_data.get("missing", []),
         )
         for ctrl_data in grp_data.get("controls", []):
@@ -200,20 +200,13 @@ def _split_translated_list(csv: str) -> list[str]:
     return [s.strip() for s in _TRANSLATED_LIST_RE.split(csv) if s.strip()]
 
 
-def _get_fact_search_terms(setting: str, settings_dir: Path) -> list[str]:
-    """Get search terms for a fact from its label, shortDesc, and keywords."""
-    meta = _load_settings_metadata(settings_dir)
-    fact = meta.get(setting, {})
-    terms: list[str] = []
-    # Include label and shortDesc so users can search by visible text
-    for field in ("label", "shortDesc"):
-        val = fact.get(field, "")
-        if val:
-            terms.append(val.lower())
-    kw_str = fact.get("keywords", "")
-    if kw_str:
-        terms.extend(kw.lower() for kw in _split_translated_list(kw_str))
-    return terms
+def _parse_keywords(raw: list[str] | str) -> list[str]:
+    """Accept keywords as a JSON array or comma-separated string."""
+    if isinstance(raw, list):
+        return raw
+    if isinstance(raw, str) and raw:
+        return [kw.strip() for kw in _split_translated_list(raw) if kw.strip()]
+    return []
 
 
 # --------------------------------------------------------------------------- #
@@ -538,31 +531,26 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
 
         # Extract section names and search terms from the page definition
         sections: list[str] = []
-        # searchTerms: list of {section: index, terms: "section heading keywords..."}
+        # searchTerms: list of {section: index, terms: "lowercased terms..."}
         search_terms: list[dict] = []
+        # translatableTerms: list of {section: index, context: "file.json", terms: ["Original Case", ...]}
+        translatable_terms: list[dict] = []
         page_def_name = entry.get("pageDefinition")
         if page_def_name:
             page_def_path = pages_dir / page_def_name
             if page_def_path.exists():
-                settings_dir = pages_dir.parent.parent.parent / "Settings"
                 page_def = load_page_def(page_def_path)
                 for grp_idx, grp in enumerate(page_def.groups):
                     section_name = grp.display_name
                     sections.append(section_name)
-                    # Build search terms from page name + section heading
+
+                    # English search terms (lowercased): heading + keywords + control labels
                     terms_parts = [name.lower(), section_name.lower()]
-                    if grp.controls:
-                        # Collect keywords from individual fact metadata
-                        for ctrl in grp.controls:
-                            terms_parts.extend(
-                                _get_fact_search_terms(ctrl.setting, settings_dir)
-                            )
-                    else:
-                        # Component-only group: use group-level keywords
-                        if grp.keywords:
-                            terms_parts.extend(
-                                kw.lower() for kw in _split_translated_list(grp.keywords)
-                            )
+                    for kw in grp.keywords:
+                        terms_parts.append(kw.lower())
+                    for ctrl in grp.controls:
+                        if ctrl.label:
+                            terms_parts.append(ctrl.label.lower())
                     # Deduplicate while preserving order
                     seen: set[str] = set()
                     unique_terms: list[str] = []
@@ -575,9 +563,29 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
                         "terms": " ".join(unique_terms),
                     })
 
+                    # Translatable terms (original case): heading + keywords + control labels
+                    tr_parts: list[str] = [section_name]
+                    for kw in grp.keywords:
+                        tr_parts.append(kw)
+                    for ctrl in grp.controls:
+                        if ctrl.label:
+                            tr_parts.append(ctrl.label)
+                    seen_tr: set[str] = set()
+                    unique_tr: list[str] = []
+                    for t in tr_parts:
+                        if t not in seen_tr:
+                            seen_tr.add(t)
+                            unique_tr.append(t)
+                    translatable_terms.append({
+                        "section": grp_idx,
+                        "context": page_def_name,
+                        "terms": unique_tr,
+                    })
+
         # Encode as JSON strings for the ListElement
         sections_json = json.dumps(sections)
         search_json = json.dumps(search_terms).replace("'", "\\'")
+        translatable_json = json.dumps(translatable_terms).replace("'", "\\'")
 
         lines.append("")
         lines.append("    ListElement {")
@@ -586,6 +594,7 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
         lines.append(f'        iconUrl: "{icon}"')
         lines.append(f"        sections: '{sections_json}'")
         lines.append(f"        searchTerms: '{search_json}'")
+        lines.append(f"        translatableTerms: '{translatable_json}'")
         if visible:
             lines.append(f"        pageVisible: function() {{ return {visible} }}")
         else:

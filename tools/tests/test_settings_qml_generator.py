@@ -102,7 +102,7 @@ class TestLoadPageDef:
         page = load_page_def(_make_page_json(tmp_path, data))
         assert page.groups[0].component == "MyCustomComponent"
         assert page.groups[0].sectionName == "Custom"
-        assert page.groups[0].keywords == "a,b"
+        assert page.groups[0].keywords == ["a", "b"]
 
     def test_loads_showWhen_enableWhen(self, tmp_path: Path):
         data = {

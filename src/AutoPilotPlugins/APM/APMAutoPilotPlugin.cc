@@ -11,7 +11,8 @@
 #include "APMPowerComponent.h"
 #include "APMRadioComponent.h"
 #include "APMRemoteSupportComponent.h"
-#include "APMSafetyComponent.h"
+#include "APMFailsafesComponent.h"
+#include "APMFlightSafetyComponent.h"
 #include "APMSensorsComponent.h"
 #include "APMSubFrameComponent.h"
 #include "APMTuningComponent.h"
@@ -105,9 +106,13 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
                 _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_servoComponent)));
             }
 
-            _safetyComponent = new APMSafetyComponent(_vehicle, this);
-            _safetyComponent->setupTriggerSignals();
-            _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_safetyComponent)));
+            _flightSafetyComponent = new APMFlightSafetyComponent(_vehicle, this);
+            _flightSafetyComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_flightSafetyComponent)));
+
+            _failsafesComponent = new APMFailsafesComponent(_vehicle, this);
+            _failsafesComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_failsafesComponent)));
 
 #ifdef QT_DEBUG
             if ((qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) || qobject_cast<ArduRoverFirmwarePlugin*>(_vehicle->firmwarePlugin())) &&
@@ -192,7 +197,7 @@ QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent *component) const
         requiresAirframeCheck = true;
     } else if (qobject_cast<const APMESCComponent*>(component)) {
         requiresAirframeCheck = true;
-    } else if (qobject_cast<const APMSafetyComponent*>(component)) {
+    } else if (qobject_cast<const APMFlightSafetyComponent*>(component)) {
         requiresAirframeCheck = true;
     } else if (qobject_cast<const APMTuningComponent*>(component)) {
         requiresAirframeCheck = true;
