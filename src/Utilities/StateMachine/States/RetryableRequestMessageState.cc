@@ -1,5 +1,6 @@
 #include "RetryableRequestMessageState.h"
 #include "QGCStateMachine.h"
+#include "Vehicle.h"
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QMetaObject>
@@ -59,7 +60,7 @@ void RetryableRequestMessageState::_sendRequest()
     v->requestMessage(
         [](void* resultHandlerData,
            MAV_RESULT result,
-           Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
+           VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
            const mavlink_message_t& message) {
             auto* self = static_cast<RetryableRequestMessageState*>(resultHandlerData);
             if (!self->_requestActive) {
@@ -87,20 +88,20 @@ void RetryableRequestMessageState::_queueRetry()
 
 void RetryableRequestMessageState::_handleResult(
     MAV_RESULT result,
-    Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
+    VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
     const mavlink_message_t& message)
 {
-    Vehicle::RequestMessageResultHandlerFailureCode_t effectiveFailureCode = failureCode;
-    if (failureCode == Vehicle::RequestMessageFailureDuplicate) {
+    VehicleTypes::RequestMessageResultHandlerFailureCode_t effectiveFailureCode = failureCode;
+    if (failureCode == VehicleTypes::RequestMessageFailureDuplicate) {
         // Retryable request flows can re-enter while Vehicle still tracks the prior
         // request as active. Treat duplicate as an in-flight timeout-equivalent.
-        effectiveFailureCode = Vehicle::RequestMessageFailureMessageNotReceived;
+        effectiveFailureCode = VehicleTypes::RequestMessageFailureMessageNotReceived;
     }
 
     _lastResult = result;
     _lastFailureCode = effectiveFailureCode;
 
-    if (effectiveFailureCode == Vehicle::RequestMessageNoFailure) {
+    if (effectiveFailureCode == VehicleTypes::RequestMessageNoFailure) {
         // Success
         qCDebug(QGCStateMachineLog) << stateName() << "Message received successfully";
 
@@ -140,7 +141,7 @@ void RetryableRequestMessageState::onWaitTimeout()
 {
     qCDebug(QGCStateMachineLog) << stateName() << "Timeout waiting for message";
 
-    _lastFailureCode = Vehicle::RequestMessageFailureMessageNotReceived;
+    _lastFailureCode = VehicleTypes::RequestMessageFailureMessageNotReceived;
 
     if (_retryCount < _maxRetries) {
         _retryCount++;

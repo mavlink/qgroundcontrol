@@ -1,7 +1,11 @@
 #pragma once
 
 #include "WaitStateBase.h"
-#include "Vehicle.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
+#include "VehicleTypes.h"
+
+class Vehicle;
 
 #include <cstdint>
 #include <functional>
@@ -38,7 +42,7 @@ public:
                         float param5 = 0.0f);
 
     /// @return The failure code from the last request attempt
-    Vehicle::RequestMessageResultHandlerFailureCode_t failureCode() const { return _failureCode; }
+    VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode() const { return _failureCode; }
 
     /// @return The MAV_RESULT from the last request attempt
     MAV_RESULT commandResult() const { return _commandResult; }
@@ -56,7 +60,7 @@ protected:
 private:
     static void _resultHandler(void* resultHandlerData,
                                MAV_RESULT commandResult,
-                               Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
+                               VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
                                const mavlink_message_t& message);
 
     uint32_t        _messageId;
@@ -68,6 +72,6 @@ private:
     float           _param4;
     float           _param5;
 
-    Vehicle::RequestMessageResultHandlerFailureCode_t _failureCode = Vehicle::RequestMessageNoFailure;
+    VehicleTypes::RequestMessageResultHandlerFailureCode_t _failureCode = VehicleTypes::RequestMessageNoFailure;
     MAV_RESULT _commandResult = MAV_RESULT_ACCEPTED;
 };

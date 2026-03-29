@@ -1,12 +1,15 @@
 #pragma once
 
-#include "Vehicle.h"
+#include "VehicleTypes.h"
+#include "MAVLinkLib.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
 
+class Fact;
 class QmlObjectListModel;
+class Vehicle;
 
 /**
  * Handles automatic motor ordering assignment by spinning individual motors, and then having the user
@@ -53,8 +56,8 @@ private:
     static constexpr int _spinTimeoutDefaultSec = 1000;
     static constexpr int _spinTimeoutHighSec = 3000; ///< wait a bit longer after assigning motors, so ESCs can initialize
 
-    static void ackHandlerEntry(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
-    void ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void ackHandlerEntry(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, VehicleTypes::MavCmdResultFailureCode_t failureCode);
+    void ackHandler(MAV_RESULT commandResult, VehicleTypes::MavCmdResultFailureCode_t failureCode);
     void sendMavlinkRequest(int function, float value);
 
     enum class State {

@@ -8,7 +8,9 @@
 #include "QGCMAVLink.h"
 #include "FollowMe.h"
 #include "FactMetaData.h"
-#include "Vehicle.h"
+#include "VehicleTypes.h"
+
+class Vehicle;
 
 class VehicleComponent;
 class AutoPilotPlugin;
@@ -324,8 +326,8 @@ public:
 
     /// Returns the highest minor version number that has remap entries for the specified major version.
     /// The remap logic iterates backwards from this version down to the vehicle's actual minor version.
-    /// Return Vehicle::versionNotSetValue if remapping is not supported for the given major version.
-    virtual int remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const { return Vehicle::versionNotSetValue; }
+    /// Return VehicleTypes::versionNotSetValue if remapping is not supported for the given major version.
+    virtual int remapParamNameHigestMinorVersionNumber(int /*majorVersionNumber*/) const { return VehicleTypes::versionNotSetValue; }
 
     /// @return true: Motors are coaxial like an X8 config, false: Quadcopter for example
     virtual bool multiRotorCoaxialMotors(Vehicle* /*vehicle*/) const { return false; }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "QGCMAVLink.h"
+#include "QGCMAVLinkTypes.h"
 #include "QGroundControlQmlGlobal.h"
 #include "MultiSignalSpy.h"
 #include "VisualMissionItemTest.h"
@@ -31,8 +31,8 @@ private slots:
     void _testCalcAboveTerrainSaveLoad();
 
 private:
-    void _testEditorFactsWorker(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t vtolMode);
-    bool _classMatch(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass);
+    void _testEditorFactsWorker(QGCMAVLinkTypes::VehicleClass_t vehicleClass, QGCMAVLinkTypes::VehicleClass_t vtolMode);
+    bool _classMatch(QGCMAVLinkTypes::VehicleClass_t vehicleClass, QGCMAVLinkTypes::VehicleClass_t testClass);
 
     SimpleMissionItem* _simpleItem = nullptr;
     std::unique_ptr<MultiSignalSpy> _spySimpleItem;

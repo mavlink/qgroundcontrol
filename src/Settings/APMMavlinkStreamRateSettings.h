@@ -3,7 +3,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "SettingsGroup.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
 
 class APMMavlinkStreamRateSettings : public SettingsGroup
 {

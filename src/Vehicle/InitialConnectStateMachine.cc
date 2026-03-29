@@ -1,4 +1,5 @@
 #include "InitialConnectStateMachine.h"
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"

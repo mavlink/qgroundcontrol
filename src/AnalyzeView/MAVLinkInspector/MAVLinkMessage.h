@@ -5,7 +5,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 
 class QmlObjectListModel;
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "VehicleTestManualConnect.h"
-#include "MAVLinkLib.h"
 #include "Vehicle.h"
 
 /// Tests for RetryableRequestMessageState

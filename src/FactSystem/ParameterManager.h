@@ -10,7 +10,8 @@
 
 #include "Fact.h"
 #include "FactMetaData.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerLog)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)

@@ -1,5 +1,6 @@
 #include "ActuatorActions.h"
 #include "QGCApplication.h"
+#include "Vehicle.h"
 
 using namespace ActuatorActions;
 
@@ -32,16 +33,16 @@ void Action::trigger()
     sendMavlinkRequest();
 }
 
-void Action::ackHandlerEntry(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
+void Action::ackHandlerEntry(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack, VehicleTypes::MavCmdResultFailureCode_t failureCode)
 {
     Action* action = (Action*)resultHandlerData;
     action->ackHandler(static_cast<MAV_RESULT>(ack.result), failureCode);
 }
 
-void Action::ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode)
+void Action::ackHandler(MAV_RESULT commandResult, VehicleTypes::MavCmdResultFailureCode_t failureCode)
 {
     _commandInProgress = false;
-    if (failureCode != Vehicle::MavCmdResultFailureNoResponseToCommand && commandResult != MAV_RESULT_ACCEPTED) {
+    if (failureCode != VehicleTypes::MavCmdResultFailureNoResponseToCommand && commandResult != MAV_RESULT_ACCEPTED) {
         qgcApp()->showAppMessage(tr("Actuator action command failed"));
     }
 }

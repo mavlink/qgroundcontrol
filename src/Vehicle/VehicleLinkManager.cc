@@ -1,4 +1,5 @@
 #include "VehicleLinkManager.h"
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 #include "LinkManager.h"
 #include "QGCApplication.h"

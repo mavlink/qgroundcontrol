@@ -2,6 +2,7 @@
 #include "StateTestCommon.h"
 
 #include "RequestMessageState.h"
+#include "Vehicle.h"
 
 
 void RequestMessageStateTest::_testStateCreation()

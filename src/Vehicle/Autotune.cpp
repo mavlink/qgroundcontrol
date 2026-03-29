@@ -1,5 +1,6 @@
 #include "Autotune.h"
 #include "QGCApplication.h"
+#include "Vehicle.h"
 
 //-----------------------------------------------------------------------------
 Autotune::Autotune(Vehicle *vehicle) :
@@ -26,7 +27,7 @@ void Autotune::autotuneRequest()
 
 
 //-----------------------------------------------------------------------------
-void Autotune::ackHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode)
+void Autotune::ackHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, VehicleTypes::MavCmdResultFailureCode_t failureCode)
 {
     Q_UNUSED(compId);
     Q_UNUSED(failureCode);

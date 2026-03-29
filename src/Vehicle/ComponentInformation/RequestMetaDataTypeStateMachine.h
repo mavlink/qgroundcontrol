@@ -1,7 +1,9 @@
 #pragma once
 
 #include "QGCStateMachine.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
+#include "VehicleTypes.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
@@ -67,7 +69,7 @@ private:
 
     // Message result handlers
     void _handleCompMetadataResult(MAV_RESULT result, const mavlink_message_t& message);
-    void _handleCompInfoResult(MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
+    void _handleCompInfoResult(MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message);
 
 private slots:
     void _ftpDownloadComplete(const QString& file, const QString& errorMsg);

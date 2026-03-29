@@ -7,7 +7,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MissionController.h"
-#include "QGCMAVLink.h"
+#include "QGCMAVLinkTypes.h"
 #include "QmlObjectListModel.h"
 
 class MissionItem;
@@ -265,7 +265,7 @@ protected:
     QString                     _editorQml;                                                     ///< Qml resource for editing item
     double                      _missionGimbalYaw           = qQNaN();
     double                      _missionVehicleYaw          = qQNaN();
-    QGCMAVLink::VehicleClass_t  _previousVTOLMode           = QGCMAVLink::VehicleClassGeneric;  ///< Generic == unknown
+    QGCMAVLinkTypes::VehicleClass_t  _previousVTOLMode           = QGCMAVLinkTypes::VehicleClassGeneric;  ///< Generic == unknown
 
     PlanMasterController*   _masterController           = nullptr;
     MissionController*      _missionController          = nullptr;

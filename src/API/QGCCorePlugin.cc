@@ -3,6 +3,7 @@
 #include "AppSettings.h"
 #include "MavlinkSettings.h"
 #include "FactMetaData.h"
+#include "QGCMAVLink.h"
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
 #endif

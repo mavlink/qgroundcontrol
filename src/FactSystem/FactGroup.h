@@ -8,7 +8,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Fact.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 
 class Vehicle;
 
