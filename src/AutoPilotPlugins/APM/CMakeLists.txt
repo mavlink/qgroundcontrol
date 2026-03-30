@@ -53,6 +53,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMSubMotorComponentController.h
         APMTuningComponent.cc
         APMTuningComponent.h
+        APMAdvancedTuningCopterComponent.cc
+        APMAdvancedTuningCopterComponent.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -80,6 +82,7 @@ set(_apm_config_generated_qml_names
     APMFailsafesComponent.qml
     APMPowerComponent.qml
     APMFlightSafetyComponent.qml
+    APMTuningCopterComponent.qml
 )
 
 # Full paths in the build tree
@@ -163,12 +166,14 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMSubFrameComponent.qml
         APMSubFrameComponentSummary.qml
         APMSubMotorComponent.qml
-        APMTuningComponentCopter.qml
         APMTuningComponentSub.qml
+        APMAutoTuneChannelSelector.qml
+        APMAdvancedTuningCopterComponent.qml
     RESOURCES
         VehicleConfig/APMFailsafes.VehicleConfig.json
         VehicleConfig/APMPower.VehicleConfig.json
         VehicleConfig/APMFlightSafety.VehicleConfig.json
+        VehicleConfig/APMTuningCopter.VehicleConfig.json
     NO_PLUGIN
 )
 

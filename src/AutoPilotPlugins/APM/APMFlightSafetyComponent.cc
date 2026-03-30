@@ -38,6 +38,7 @@ QUrl APMFlightSafetyComponent::setupSource() const
     case MAV_TYPE_OCTOROTOR:
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_GROUND_ROVER:
+        // Generated from APMFlightSafety.VehicleConfig.json
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMFlightSafetyComponent.qml"));
     case MAV_TYPE_SUBMARINE:
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMFlightSafetyComponentSub.qml"));

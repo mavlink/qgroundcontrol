@@ -49,6 +49,7 @@ QStringList PowerComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl PowerComponent::setupSource(void) const
 {
+    // Generated from Power.VehicleConfig.json
     return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PowerComponent.qml");
 }
 

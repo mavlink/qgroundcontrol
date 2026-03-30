@@ -14,5 +14,6 @@ QString APMPowerComponent::vehicleConfigJson() const
 
 QUrl APMPowerComponent::setupSource() const
 {
+    // Generated from APMPower.VehicleConfig.json
     return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMPowerComponent.qml"));
 }
