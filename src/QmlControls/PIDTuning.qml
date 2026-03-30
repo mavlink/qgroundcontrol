@@ -19,6 +19,7 @@ RowLayout {
     property double chartDisplaySec:    8 // number of seconds to display
     property bool   showAutoModeChange: false
     property bool   showAutoTuning:     false
+    property bool   useAutoTuning:      false
 
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property int    _currentAxis:       0

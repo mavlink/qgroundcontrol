@@ -8,6 +8,7 @@ class APMAirspeedComponent;
 class APMFlightModesComponent;
 class APMRadioComponent;
 class APMTuningComponent;
+class APMAdvancedTuningCopterComponent;
 class APMFailsafesComponent;
 class APMFlightSafetyComponent;
 class APMSensorsComponent;
@@ -57,6 +58,7 @@ protected:
     APMFlightSafetyComponent *_flightSafetyComponent = nullptr;
     APMSensorsComponent *_sensorsComponent = nullptr;
     APMTuningComponent *_tuningComponent = nullptr;
+    APMAdvancedTuningCopterComponent *_advancedTuningCopterComponent = nullptr;
     ESP8266Component *_esp8266Component = nullptr;
     APMHeliComponent *_heliComponent = nullptr;
     APMRemoteSupportComponent *_apmRemoteSupportComponent = nullptr;

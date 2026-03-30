@@ -61,6 +61,13 @@ class ActionButtonDef:
 
 
 @dataclass
+class LinkedParamDef:
+    """A parameter whose value is updated when a FactSlider changes."""
+    param: str = ""          # vehicle parameter name
+    expression: str = ""     # JS expression using ``value`` (e.g. "value", "value * 2")
+
+
+@dataclass
 class ToggleCheckboxDef:
     """A non-Fact checkbox with custom checked/onClicked logic."""
     checked: str = ""        # QML expression for checkbox state
@@ -505,3 +512,76 @@ def parse_toggle_checkbox(data: dict | None) -> ToggleCheckboxDef | None:
         onChecked=data.get("onChecked", ""),
         onUnchecked=data.get("onUnchecked", ""),
     )
+
+
+def parse_linked_params(data: dict | None) -> list[LinkedParamDef]:
+    """Parse a linkedParams dict from JSON.
+
+    Input is ``{"PARAM_NAME": "expression", ...}``.
+    """
+    if not data:
+        return []
+    return [
+        LinkedParamDef(param=name, expression=expr)
+        for name, expr in data.items()
+    ]
+
+
+def render_factslider(
+    fact_ref: str,
+    indent: str,
+    *,
+    label: str = "",
+    description: str = "",
+    from_: str = "",
+    to: str = "",
+    major_tick_step_size: str = "",
+    decimal_places: str = "",
+    linked_params: list[LinkedParamDef] | None = None,
+    show_when: str = "",
+    enable_when: str = "",
+    tr_context: str = "",
+) -> str:
+    """Render a ``FactSlider`` wrapped in a ``SettingsGroupLayout``."""
+    lines: list[str] = []
+    inner = indent + "    "
+
+    # Wrap in SettingsGroupLayout for consistent bordered look
+    lines.append(f"{indent}SettingsGroupLayout {{")
+    lines.append(f"{indent}    Layout.fillWidth: true")
+    lines.append(f"{indent}    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 60")
+    if label:
+        lines.append(f"{indent}    heading: {qml_tr(label, tr_context)}")
+    if description:
+        lines.append(f"{indent}    headingDescription: {qml_tr(description, tr_context)}")
+    if show_when:
+        lines.append(f"{indent}    visible: {show_when}")
+
+    lines.append(f"")
+    lines.append(f"{inner}FactSlider {{")
+    lines.append(f"{inner}    Layout.fillWidth: true")
+    lines.append(f"{inner}    fact: {fact_ref}")
+
+    if from_:
+        lines.append(f"{inner}    from: {from_}")
+    if to:
+        lines.append(f"{inner}    to: {to}")
+    if major_tick_step_size:
+        lines.append(f"{inner}    majorTickStepSize: {major_tick_step_size}")
+    else:
+        lines.append(f"{inner}    majorTickStepSize: {fact_ref}.increment")
+    if decimal_places:
+        lines.append(f"{inner}    decimalPlaces: {decimal_places}")
+
+    if linked_params:
+        lines.append(f"{inner}    onValueChanged: {{")
+        for lp in linked_params:
+            lines.append(f'{inner}        controller.getParameterFact(-1, "{lp.param}").rawValue = {lp.expression}')
+        lines.append(f"{inner}    }}")
+
+    if enable_when:
+        lines.append(f"{inner}    enabled: {enable_when}")
+
+    lines.append(f"{inner}}}")
+    lines.append(f"{indent}}}")
+    return "\n".join(lines)

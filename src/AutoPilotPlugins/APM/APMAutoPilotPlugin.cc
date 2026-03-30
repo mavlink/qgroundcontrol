@@ -16,6 +16,7 @@
 #include "APMSensorsComponent.h"
 #include "APMSubFrameComponent.h"
 #include "APMTuningComponent.h"
+#include "APMAdvancedTuningCopterComponent.h"
 #include "ESP8266Component.h"
 #include "ScriptingComponent.h"
 #include "JoystickComponent.h"
@@ -132,6 +133,12 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
             _tuningComponent = new APMTuningComponent(_vehicle, this);
             _tuningComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_tuningComponent)));
+
+            if (_vehicle->multiRotor()) {
+                _advancedTuningCopterComponent = new APMAdvancedTuningCopterComponent(_vehicle, this);
+                _advancedTuningCopterComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_advancedTuningCopterComponent)));
+            }
 
             _gimbalComponent = new APMGimbalComponent(_vehicle, this);
             _gimbalComponent->setupTriggerSignals();

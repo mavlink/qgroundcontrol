@@ -39,6 +39,7 @@ QUrl APMFailsafesComponent::setupSource() const
     case MAV_TYPE_OCTOROTOR:
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_GROUND_ROVER:
+        // Generated from APMFailsafes.VehicleConfig.json
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMFailsafesComponent.qml"));
     default:
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMNotSupported.qml"));
