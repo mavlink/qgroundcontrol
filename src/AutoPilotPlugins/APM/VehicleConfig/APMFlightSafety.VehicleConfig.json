@@ -126,6 +126,23 @@
                     "label": "Return altitude",
                     "optional": true,
                     "enableWhen": "_planeRtlAltFact && _planeRtlAltFact.value >= 0"
+                },
+                {
+                    "param": "RTL_RADIUS",
+                    "label": "Loiter radius",
+                    "optional": true
+                },
+                {
+                    "control": "label",
+                    "label": "0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise",
+                    "indent": true,
+                    "smallFont": true
+                },
+                {
+                    "param": "RTL_AUTOLAND",
+                    "label": "Auto land after RTL",
+                    "optional": true,
+                    "control": "combobox"
                 }
             ]
         },

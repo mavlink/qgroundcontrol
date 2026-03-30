@@ -67,6 +67,7 @@ class ControlDef:
     firstEntryIsAll: bool = False                    # bitmask: first entry is "all" toggle
     toggleCheckbox: ToggleCheckboxDef | None = None  # toggleCheckbox: custom checked/onClicked
     indent: bool = False                              # indent control with left margin
+    smallFont: bool = False                           # label: use small font size
 
 
 @dataclass
@@ -168,6 +169,7 @@ def load_page_def(json_path: Path) -> PageDef:
                 firstEntryIsAll=ctrl_data.get("firstEntryIsAll", False),
                 toggleCheckbox=parse_toggle_checkbox(ctrl_data.get("toggleCheckbox")),
                 indent=ctrl_data.get("indent", False),
+                smallFont=ctrl_data.get("smallFont", False),
             ))
         repeat_data = sec_data.get("repeat")
         repeat_def = None
@@ -339,6 +341,7 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             indent,
             text=ctrl.label,
             warning=ctrl.warning,
+            small_font=ctrl.smallFont,
             tr_context=tr_context,
         )
         if ctrl.showWhen:

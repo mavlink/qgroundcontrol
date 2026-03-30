@@ -90,6 +90,7 @@ def render_label(
     *,
     text: str = "",
     warning: bool = False,
+    small_font: bool = False,
     tr_context: str = "",
 ) -> str:
     """Render a static ``QGCLabel`` (no fact binding)."""
@@ -98,6 +99,8 @@ def render_label(
     lines.append(f"{indent}    wrapMode: Text.WordWrap")
     lines.append(f"{indent}    Layout.fillWidth: true")
     lines.append(f"{indent}    Layout.preferredWidth: 0")
+    if small_font:
+        lines.append(f"{indent}    font.pointSize: ScreenTools.smallFontPointSize")
     if warning:
         lines.append(f"{indent}    color: qgcPal.warningText")
     lines.append(f"{indent}}}")
