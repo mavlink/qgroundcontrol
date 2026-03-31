@@ -9,8 +9,11 @@
 - 🚤 **载具类型锁定**：仅支持 Rover/Boat 类型载具
 - 🔧 **双固件支持**：同时兼容 ArduPilot (ArduRover) 和 PX4
 - ✂️ **功能精简**：隐藏不适用于无人船的功能（起飞、降落、高度控制等）
-- 📋 **专用检查清单**：无人船预航检查清单
+- 📋 **专用检查清单**：无人船预航检查清单（含载荷状态自动检测）
 - 🎨 **可选品牌定制**：支持自定义 Logo 和主题颜色
+- 📊 **水质载荷面板**：实时显示检测电压、吸光度、泵组角度，支持采样/校准控制
+- 🧭 **综合仪表盘**：替换默认罗盘，集成航行状态和姿态监测
+- ⚠️ **姿态预警**：船体横滚/俯仰超限时顶部闪烁警告
 
 ## 支持的固件
 
@@ -39,25 +42,79 @@
 ```
 custom/
 ├── cmake/
-│   └── CustomOverrides.cmake       # CMake 配置覆盖
+│   └── CustomOverrides.cmake           # CMake 配置覆盖
 ├── res/
 │   ├── img/
-│   │   ├── usv-logo-white.svg      # 白色 Logo (深色背景)
-│   │   └── usv-logo-black.svg      # 黑色 Logo (浅色背景)
-│   ├── USVChecklist.qml            # 无人船预航检查清单
-│   └── USVFlyViewCustomLayer.qml   # 飞行视图自定义层
+│   │   ├── usv-logo-white.png          # 白色 Logo (深色主题)
+│   │   └── usv-logo-black.png          # 黑色 Logo (浅色主题)
+│   ├── actions/
+│   │   └── usv_actions.json            # MAVLink Actions 定义
+│   ├── USVChecklist.qml                # 无人船预航检查清单 (qrc 覆盖)
+│   ├── USVFlyViewCustomLayer.qml       # 飞行视图自定义层 (qrc 覆盖)
+│   ├── USVFlyViewCustomLayer_TEST.qml  # 覆盖机制测试文件
+│   ├── USVFlyViewBottomRightRowLayout.qml  # 隐藏原版遥测条 (qrc 覆盖)
+│   ├── USVInstrumentPanel.qml          # 综合仪表盘 (qrc 覆盖 IntegratedCompassAttitude)
+│   ├── USVPayloadPanel.qml             # 水质载荷控制面板 (USV QML 模块)
+│   ├── USVPayloadFactGroup.json        # 载荷 FactGroup 元数据
+│   ├── USVSelectViewDropdown.qml       # 中文化视图选择菜单 (qrc 覆盖)
+│   └── USVToolBarButton.qml            # 主题感知 Logo 按钮 (qrc 覆盖)
 ├── src/
-│   ├── USVPlugin.h/cc              # 主插件 (核心)
-│   ├── USVOptions.h/cc             # 选项配置
+│   ├── USVPlugin.h/cc                  # 主插件 + URL 拦截器
+│   ├── USVOptions.h/cc                 # 选项配置 (功能开关/检查清单)
+│   ├── USVPayloadFactGroup.h/cc        # 水质载荷 FactGroup (MAVLink 数据)
 │   ├── FirmwarePlugin/
-│   │   ├── USVFirmwarePlugin.h/cc  # 双固件插件 (ArduPilot + PX4)
+│   │   ├── USVFirmwarePlugin.h/cc      # 双固件插件 (ArduPilot + PX4)
 │   │   └── USVFirmwarePluginFactory.h/cc
 │   └── AutoPilotPlugin/
-│       └── USVAutoPilotPlugin.h/cc # 双固件自动驾驶插件
-├── CMakeLists.txt
-├── custom.qrc
+│       └── USVAutoPilotPlugin.h/cc     # 双固件自动驾驶插件
+├── CMakeLists.txt                      # 构建配置 + USV QML 模块定义
+├── custom.qrc                          # qrc 覆盖资源映射
 └── README.md
 ```
+
+## 架构说明
+
+### QML 覆盖机制
+
+通过 `USVQmlOverrideInterceptor`（`QQmlAbstractUrlInterceptor`）实现 QML 文件替换：
+- 拦截器检查 `:/USV` + 原始路径是否存在，存在则返回覆盖 URL
+- 覆盖映射在 `custom.qrc` 中定义
+- 例：`qrc:/qml/QGroundControl/FlyView/FlyViewCustomLayer.qml` → `qrc:/USV/qml/QGroundControl/FlyView/FlyViewCustomLayer.qml`
+
+### USV QML 模块
+
+通过 `qt_add_qml_module(USVModule URI USV VERSION 1.0)` 注册：
+- `USVPayloadPanel.qml` 作为模块组件，通过 `import USV 1.0` 引用
+- `addImportPath("qrc:/qml")` 使模块可被发现
+- 注意：通过 qrc 覆盖加载的文件（Checklist、FlyViewCustomLayer 等）**不应**同时在 USV 模块的 QML_FILES 中注册，避免双重加载冲突
+
+### 载荷数据流
+
+```
+Jetson Nano → NAMED_VALUE_FLOAT MAVLink → Vehicle → USVPayloadFactGroup.handleMessage()
+                                                   → QML: vehicle.getFact("usvPayload.xxx")
+```
+
+- `USVPayloadFactGroup` 通过 FirmwarePlugin 的 `factGroups()` 注册到 Vehicle
+- Vehicle 自动将 MAVLink 消息分发给所有注册的 FactGroup
+- QML 通过 `vehicle.getFact("usvPayload.status")` 等访问数据
+
+### QML Import 规范
+
+custom QML 文件应遵循以下 import 风格：
+```qml
+import QtQuick
+import QtQuick.Controls
+import QGroundControl
+import QGroundControl.Controls
+```
+
+**禁止使用**以下 import（当前构建中不可用，会导致组件加载失败和崩溃）：
+- `import QGroundControl.ScreenTools`
+- `import QGroundControl.Palette`
+- `import QGroundControl.Vehicle`
+
+`ScreenTools`、`QGCPalette`、`Vehicle` 等类型通过 `import QGroundControl` 全局暴露。
 
 ## 定制内容
 
@@ -88,11 +145,26 @@ custom/
 - 罗盘/加速度计/陀螺仪校准
 
 ### 5. 无人船专用检查清单
-- 船体检查
-- 螺旋桨检查
-- 水域检查
-- 天气检查
-- 通信检查
+- 船体/螺旋桨/电池/GPS/罗盘/遥控器检查
+- 解锁前电机/舵机/任务检查
+- 下水前水域/天气/通信/载荷/安全检查
+- 载荷状态自动检测（通过 `usvPayload.status` FactGroup）
+
+### 6. 水质载荷控制面板 (USVPayloadPanel)
+- 实时显示：检测电压、吸光度、泵组角度 (X/Y/Z/A)
+- 控制按钮：开始采样、停止、暂停、恢复、零点校准
+- 按钮根据载荷状态自动启用/禁用
+- 状态指示灯带呼吸动画，故障状态红色高亮
+- MAVLink 指令：CMD 31010-31014
+
+### 7. 综合仪表盘 (USVInstrumentPanel)
+- 替换默认 IntegratedCompassAttitude
+- 集成罗盘、航行状态（航速/航向/油门/距Home）、姿态监测（横滚/俯仰）
+- 姿态警告/危险双阈值，颜色渐变提示
+
+### 8. 姿态危险警告横幅
+- 横滚 > 25° 或俯仰 > 20° 时顶部闪烁红色警告
+- 实时显示当前姿态角度
 
 ## 飞行模式对照
 

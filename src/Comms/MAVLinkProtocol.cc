@@ -103,6 +103,11 @@ void MAVLinkProtocol::receiveBytes(LinkInterface *link, const QByteArray &data)
 
     for (const uint8_t &byte: data) {
         const uint8_t mavlinkChannel = link->mavlinkChannel();
+        if (mavlinkChannel >= MAVLINK_COMM_NUM_BUFFERS) {
+            qCWarning(MAVLinkProtocolLog) << "receiveBytes: invalid mavlink channel" << mavlinkChannel << "- link likely already freed";
+            return;
+        }
+
         mavlink_message_t message{};
         mavlink_status_t status{};
 

@@ -1,0 +1,78 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "voltage",
+    "shortDesc": "检测电压",
+    "type":             "float",
+    "units":            "V",
+    "decimalPlaces":    3,
+    "default":          0
+},
+{
+    "name":             "absorbance",
+    "shortDesc": "吸光度",
+    "type":             "float",
+    "units":            "Abs",
+    "decimalPlaces":    4,
+    "default":          0
+},
+{
+    "name":             "pumpX",
+    "shortDesc": "X轴角度",
+    "type":             "float",
+    "units":            "deg",
+    "decimalPlaces":    1,
+    "default":          0
+},
+{
+    "name":             "pumpY",
+    "shortDesc": "Y轴角度",
+    "type":             "float",
+    "units":            "deg",
+    "decimalPlaces":    1,
+    "default":          0
+},
+{
+    "name":             "pumpZ",
+    "shortDesc": "Z轴角度",
+    "type":             "float",
+    "units":            "deg",
+    "decimalPlaces":    1,
+    "default":          0
+},
+{
+    "name":             "pumpA",
+    "shortDesc": "A轴角度",
+    "type":             "float",
+    "units":            "deg",
+    "decimalPlaces":    1,
+    "default":          0
+},
+{
+    "name":             "status",
+    "shortDesc": "载荷状态",
+    "type":             "uint32",
+    "enumStrings":      "空闲,正在采样,正在检测,故障,校准中",
+    "enumValues":       "0,1,2,3,4",
+    "default":          0
+},
+{
+    "name":             "linkActive",
+    "shortDesc":        "链路状态",
+    "type":             "uint32",
+    "enumStrings":      "断开,正常",
+    "enumValues":       "0,1",
+    "default":          0
+},
+{
+    "name":             "packetCount",
+    "shortDesc":        "遥测包计数",
+    "type":             "float",
+    "decimalPlaces":    0,
+    "default":          0
+}
+]
+}

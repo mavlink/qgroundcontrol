@@ -33,4 +33,19 @@
         <file alias="actions/usv_actions.json">res/actions/usv_actions.json</file>
     </qresource>
 
+    <!-- 工具栏覆盖 - 视图选择下拉菜单中文化 -->
+    <qresource prefix="/USV/qml/QGroundControl/Toolbar">
+        <file alias="SelectViewDropdown.qml">res/USVSelectViewDropdown.qml</file>
+    </qresource>
+
+    <!-- 工具栏按钮覆盖 - 主题感知 Logo -->
+    <qresource prefix="/USV/qml/QGroundControl/Controls">
+        <file alias="QGCToolBarButton.qml">res/USVToolBarButton.qml</file>
+    </qresource>
+
+    <!-- FactGroup 元数据 -->
+    <qresource prefix="/json">
+        <file alias="USVPayloadFactGroup.json">res/USVPayloadFactGroup.json</file>
+    </qresource>
+
 </RCC>

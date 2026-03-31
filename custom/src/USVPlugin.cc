@@ -7,6 +7,7 @@
 
 #include "USVPlugin.h"
 #include "USVOptions.h"
+#include "USVPayloadFactGroup.h"
 
 #include "QGCPalette.h"
 #include "QGCMAVLink.h"
@@ -289,7 +290,7 @@ QQmlApplicationEngine *USVPlugin::createQmlApplicationEngine(QObject *parent)
     _qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
 
     // 添加 USV QML 模块导入路径
-    _qmlEngine->addImportPath("qrc:/qml/USV");
+    _qmlEngine->addImportPath("qrc:/qml");
 
     // 安装 URL 拦截器，用于替换默认 QML 文件
     _interceptor = new USVQmlOverrideInterceptor();

@@ -46,6 +46,15 @@ if(mavlink_ADDED)
             ${mavlink_BINARY_DIR}/include/mavlink
             ${mavlink_BINARY_DIR}/include/mavlink/${QGC_MAVLINK_DIALECT}
     )
+
+    if(TARGET USVModule)
+        add_dependencies(USVModule mavlink)
+        target_include_directories(USVModule
+            PRIVATE
+                ${mavlink_BINARY_DIR}/include/mavlink
+                ${mavlink_BINARY_DIR}/include/mavlink/${QGC_MAVLINK_DIALECT}
+        )
+    endif()
 endif()
 
 # ----------------------------------------------------------------------------

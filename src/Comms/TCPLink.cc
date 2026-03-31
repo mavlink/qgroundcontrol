@@ -94,9 +94,10 @@ void TCPConfiguration::saveSettings(QSettings &settings, const QString &root) co
 
 /*===========================================================================*/
 
-TCPWorker::TCPWorker(const TCPConfiguration *config, QObject *parent)
+TCPWorker::TCPWorker(SharedLinkConfigurationPtr config, QObject *parent)
     : QObject(parent)
-    , _config(config)
+    , _configShared(std::move(config))
+    , _config(qobject_cast<const TCPConfiguration*>(_configShared.get()))
 {
     qCDebug(TCPLinkLog) << this;
 }
@@ -257,7 +258,7 @@ void TCPWorker::_onSocketErrorOccurred(QAbstractSocket::SocketError socketError)
 TCPLink::TCPLink(SharedLinkConfigurationPtr &config, QObject *parent)
     : LinkInterface(config, parent)
     , _tcpConfig(qobject_cast<const TCPConfiguration*>(config.get()))
-    , _worker(new TCPWorker(_tcpConfig))
+    , _worker(new TCPWorker(config))
     , _workerThread(new QThread(this))
 {
     qCDebug(TCPLinkLog) << this;

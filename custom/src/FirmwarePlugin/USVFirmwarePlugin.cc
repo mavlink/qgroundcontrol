@@ -20,6 +20,7 @@ Q_LOGGING_CATEGORY(USVFirmwarePluginLog, "USV.FirmwarePlugin")
 USVArduPilotFirmwarePlugin::USVArduPilotFirmwarePlugin(QObject *parent)
     : ArduRoverFirmwarePlugin(parent)
 {
+    _nameToFactGroupMap["usvPayload"] = &_payloadFactGroup;
     qCDebug(USVFirmwarePluginLog) << "USVArduPilotFirmwarePlugin created";
 }
 
@@ -51,6 +52,11 @@ QString USVArduPilotFirmwarePlugin::brandImageOutdoor(const Vehicle *vehicle) co
     return QStringLiteral("/custom/img/usv-logo-black.png");
 }
 
+QMap<QString, FactGroup*>* USVArduPilotFirmwarePlugin::factGroups()
+{
+    return &_nameToFactGroupMap;
+}
+
 /*===========================================================================*/
 // USVPX4FirmwarePlugin - PX4 实现
 /*===========================================================================*/
@@ -59,6 +65,7 @@ USVPX4FirmwarePlugin::USVPX4FirmwarePlugin(QObject *parent)
     : PX4FirmwarePlugin()
 {
     Q_UNUSED(parent)
+    _nameToFactGroupMap["usvPayload"] = &_payloadFactGroup;
     qCDebug(USVFirmwarePluginLog) << "USVPX4FirmwarePlugin created";
 }
 
@@ -88,4 +95,9 @@ QString USVPX4FirmwarePlugin::brandImageOutdoor(const Vehicle *vehicle) const
 {
     Q_UNUSED(vehicle)
     return QStringLiteral("/custom/img/usv-logo-black.png");
+}
+
+QMap<QString, FactGroup*>* USVPX4FirmwarePlugin::factGroups()
+{
+    return &_nameToFactGroupMap;
 }

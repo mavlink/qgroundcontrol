@@ -15,6 +15,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import USV 1.0
 
 /// @brief 无人船飞行视图自定义层
 Item {
@@ -95,5 +96,15 @@ Item {
         anchors.bottomMargin:   parentToolInsets.bottomEdgeRightInset + _toolsMargin
         anchors.rightMargin:    _toolsMargin
         vehicle:                activeVehicle
+    }
+
+    // ========== 左侧：载荷控制面板 ==========
+    USVPayloadPanel {
+        id:                     payloadPanel
+        anchors.left:           parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin:     parentToolInsets.leftEdgeCenterInset + _toolsMargin
+        vehicle:                activeVehicle
+        visible:                activeVehicle && activeVehicle.rover // 仅在无人船模式下显示
     }
 }

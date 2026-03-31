@@ -49,10 +49,20 @@ qt_add_qml_module(USVModule
     URI USV
     VERSION 1.0
     RESOURCE_PREFIX /qml
+    SOURCES
+        src/USVPayloadFactGroup.cc
+        src/USVPayloadFactGroup.h
     QML_FILES
-        res/USVChecklist.qml
-        res/USVFlyViewCustomLayer.qml
+        res/USVPayloadPanel.qml
     NO_PLUGIN
+)
+
+target_include_directories(USVModule PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/MAVLink
+    ${CMAKE_SOURCE_DIR}/src/Vehicle
+    ${CMAKE_SOURCE_DIR}/src/Vehicle/FactGroups
 )
 
 # ============================================================================
@@ -105,6 +115,10 @@ set(CUSTOM_INCLUDE_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin
     ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/MAVLink
+    ${CMAKE_SOURCE_DIR}/src/Vehicle
+    ${CMAKE_SOURCE_DIR}/src/Vehicle/FactGroups
     CACHE INTERNAL "" FORCE
 )
 

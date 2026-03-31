@@ -66,7 +66,7 @@ class TCPWorker : public QObject
     Q_OBJECT
 
 public:
-    explicit TCPWorker(const TCPConfiguration *config, QObject *parent = nullptr);
+    explicit TCPWorker(SharedLinkConfigurationPtr config, QObject *parent = nullptr);
     ~TCPWorker() override;
 
     bool isConnected() const;
@@ -92,6 +92,7 @@ private slots:
     void _onSocketErrorOccurred(QAbstractSocket::SocketError socketError);
 
 private:
+    SharedLinkConfigurationPtr _configShared;
     const TCPConfiguration *_config = nullptr;
     QTcpSocket *_socket = nullptr;
     std::atomic<bool> _errorEmitted{false};

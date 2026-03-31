@@ -11,6 +11,7 @@
 
 #include "FirmwarePlugin/APM/ArduRoverFirmwarePlugin.h"
 #include "FirmwarePlugin/PX4/PX4FirmwarePlugin.h"
+#include "USVPayloadFactGroup.h"
 
 #include <QtCore/QLoggingCategory>
 
@@ -34,6 +35,11 @@ public:
     QString vehicleImageOutline(const Vehicle *vehicle) const override;
     QString brandImageIndoor(const Vehicle *vehicle) const override;
     QString brandImageOutdoor(const Vehicle *vehicle) const override;
+    QMap<QString, FactGroup*> *factGroups() override;
+
+private:
+    QMap<QString, FactGroup*> _nameToFactGroupMap;
+    USVPayloadFactGroup       _payloadFactGroup;
 };
 
 /*===========================================================================*/
@@ -54,4 +60,9 @@ public:
     QString vehicleImageOutline(const Vehicle *vehicle) const override;
     QString brandImageIndoor(const Vehicle *vehicle) const override;
     QString brandImageOutdoor(const Vehicle *vehicle) const override;
+    QMap<QString, FactGroup*> *factGroups() override;
+
+private:
+    QMap<QString, FactGroup*> _nameToFactGroupMap;
+    USVPayloadFactGroup       _payloadFactGroup;
 };

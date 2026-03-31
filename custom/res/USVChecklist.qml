@@ -8,16 +8,16 @@
 
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
+import QtQml.Models
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.ScreenTools
-import QGroundControl.Palette
-import QGroundControl.Vehicle
+import QGroundControl.FlyView
 
-PreFlightCheckModel {
-    id: usvChecklist
+Item {
+    property var model: listModel
+    PreFlightCheckModel {
+    id: listModel
 
     // ========== 第一组：无人船初始检查 ==========
     PreFlightCheckGroup {
@@ -122,7 +122,12 @@ PreFlightCheckModel {
         // 载荷检查
         PreFlightCheckButton {
             name:       qsTr("载荷")
-            manualText: qsTr("载荷已配置并启动？舱盖已关闭？")
+            telemetryFailure: {
+                try { return activeVehicle ? activeVehicle.getFact("usvPayload.status").value === 3 : false }
+                catch(e) { return false }
+            }
+            telemetryTextFailure: qsTr("载荷状态异常")
+            manualText: qsTr("载荷已配置并启动？分光检测器供电正常？")
         }
 
         // 安全检查
@@ -131,4 +136,5 @@ PreFlightCheckModel {
             manualText: qsTr("周围无人员？已通知相关人员？")
         }
     }
+}
 }
