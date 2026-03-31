@@ -890,6 +890,7 @@ private slots:
     void _sendQGCTimeToVehicle              ();
     void _mavlinkMessageStatus              (int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
     void _orbitTelemetryTimeout             ();
+    void _signingConfirmationTimeout        ();
     void _updateFlightTime                  ();
     void _gotProgressUpdate                 (float progressValue);
     void _doSetHomeTerrainReceived          (bool success, QList<double> heights);
@@ -919,6 +920,9 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     void _handleGimbalOrientation       (const mavlink_message_t& message);
     void _handleObstacleDistance        (const mavlink_message_t& message);
     void _handleFenceStatus             (const mavlink_message_t& message);
+    void _confirmSigningSetup           ();
+    void _cancelPendingSigning          (const QString& reason);
+    bool _isSigningPending              () const;
     void _handleEvent(uint8_t comp_id, std::unique_ptr<events::parser::ParsedEvent> event);
     // ArduPilot dialect messages
 #if !defined(QGC_NO_ARDUPILOT_DIALECT)
@@ -1010,6 +1014,16 @@ void _activeVehicleChanged          (Vehicle* newActiveVehicle);
     bool            _allSensorsHealthy                      = true;
     bool            _mavlinkSigning                         = false;
     QString         _mavlinkSigningKeyName;
+
+    // Signing confirmation state: defer local signing changes until vehicle confirms
+    int             _pendingSigningKeyIndex                  = -1;
+    QByteArray      _pendingSigningKeyBytes;
+    mavlink_channel_t _pendingSigningChannel                 = {};
+    QTimer          _signingConfirmationTimer;
+    bool            _pendingSigningDisable                   = false;
+    QByteArray      _previousSigningKeyBytes;                ///< For rollback on disable failure
+    QString         _previousSigningKeyName;
+    static constexpr int kSigningConfirmationTimeoutMs       = 3000;
 
     SysStatusSensorInfo _sysStatusSensorInfo;
 

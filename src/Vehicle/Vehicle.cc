@@ -142,6 +142,11 @@ Vehicle::Vehicle(LinkInterface*             link,
     _prearmErrorTimer.setInterval(_prearmErrorTimeoutMSecs);
     _prearmErrorTimer.setSingleShot(true);
 
+    // Signing confirmation timer
+    _signingConfirmationTimer.setSingleShot(true);
+    _signingConfirmationTimer.setInterval(kSigningConfirmationTimeoutMs);
+    connect(&_signingConfirmationTimer, &QTimer::timeout, this, &Vehicle::_signingConfirmationTimeout);
+
     // Send MAV_CMD ack timer
     _mavCommandResponseCheckTimer.setSingleShot(false);
     _mavCommandResponseCheckTimer.setInterval(_mavCommandResponseCheckTimeoutMSecs());
@@ -1431,6 +1436,11 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
         if (previousFlightMode != flightMode()) {
             emit flightModeChanged(flightMode());
         }
+    }
+
+    // A heartbeat from the vehicle while signing setup is pending means the vehicle accepted
+    if (_isSigningPending()) {
+        _confirmSigningSetup();
     }
 }
 
@@ -4548,6 +4558,14 @@ void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY sever
         return;
     }
 
+    // Detect signing rejection from vehicle while a signing change is pending
+    if (_isSigningPending() && severity <= MAV_SEVERITY_WARNING) {
+        const QString lower = text.toLower();
+        if (lower.contains(QStringLiteral("signing")) && (lower.contains(QStringLiteral("reject")) || lower.contains(QStringLiteral("denied")) || lower.contains(QStringLiteral("fail")))) {
+            _cancelPendingSigning(tr("Vehicle rejected signing request: %1").arg(text));
+        }
+    }
+
     bool skipSpoken = false;
     const bool ardupilotPrearm = text.startsWith(QStringLiteral("PreArm"));
     const bool px4Prearm = text.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive) && (severity >= MAV_SEVERITY::MAV_SEVERITY_CRITICAL);
@@ -4622,23 +4640,24 @@ void Vehicle::sendSetupSigning(int keyIndex)
 
     MAVLinkSigning::createSetupSigning(channel, target_system, keyBytes, setup_signing);
 
-    // Also configure signing on our channel with this key so outgoing packets are signed
-    if (!MAVLinkSigning::initSigning(channel, keyBytes, MAVLinkSigning::insecureConnectionAcceptUnsignedCallback)) {
-        qCCritical(VehicleLog) << "Internal error: failed to initialize signing on channel" << channel;
-        return;
-    }
-
-    _mavlinkSigning = true;
-    _mavlinkSigningKeyName = MAVLinkSigningKeys::instance()->keyNameAt(keyIndex);
-    emit mavlinkSigningChanged();
-
     mavlink_message_t msg;
     (void) mavlink_msg_setup_signing_encode_chan(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::getComponentId(), channel, &msg, &setup_signing);
 
-    // Since we don't get an ack back that the message was received send twice to try to make sure it makes it to the vehicle
+    // Send the SETUP_SIGNING message FIRST (unsigned) before enabling local signing.
+    // This avoids the bug where if the vehicle rejects the key, QGC would already be
+    // signing with a key the vehicle does not have, causing communication loss.
     for (uint8_t i = 0; i < 2; ++i) {
         sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
+
+    // Store pending state and wait for vehicle confirmation (heartbeat) or rejection (STATUSTEXT)
+    _pendingSigningKeyIndex = keyIndex;
+    _pendingSigningKeyBytes = keyBytes;
+    _pendingSigningChannel = channel;
+    _pendingSigningDisable = false;
+    _signingConfirmationTimer.start();
+
+    qCDebug(VehicleLog) << "SETUP_SIGNING sent, waiting for vehicle confirmation";
 }
 
 void Vehicle::sendDisableSigning()
@@ -4662,16 +4681,94 @@ void Vehicle::sendDisableSigning()
     mavlink_message_t msg;
     (void) mavlink_msg_setup_signing_encode_chan(MAVLinkProtocol::instance()->getSystemId(), MAVLinkProtocol::getComponentId(), channel, &msg, &setup_signing);
 
+    // Send disable while still signed (vehicle needs to verify the signed message)
     for (uint8_t i = 0; i < 2; ++i) {
         sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
     }
 
-    // Disable signing on the local channel so we stop signing outgoing packets
-    MAVLinkSigning::initSigning(channel, QByteArrayView(), nullptr);
+    // Save current signing state for rollback if the vehicle rejects the disable
+    _previousSigningKeyBytes = _pendingSigningKeyBytes.isEmpty() ? QByteArray() : _pendingSigningKeyBytes;
+    _previousSigningKeyName = _mavlinkSigningKeyName;
 
-    _mavlinkSigning = false;
-    _mavlinkSigningKeyName.clear();
-    emit mavlinkSigningChanged();
+    // Store pending state and wait for vehicle confirmation before disabling local signing
+    _pendingSigningKeyIndex = -1;
+    _pendingSigningKeyBytes.clear();
+    _pendingSigningChannel = channel;
+    _pendingSigningDisable = true;
+    _signingConfirmationTimer.start();
+
+    qCDebug(VehicleLog) << "Disable signing sent, waiting for vehicle confirmation";
+}
+
+bool Vehicle::_isSigningPending() const
+{
+    return _pendingSigningKeyIndex >= 0 || _pendingSigningDisable;
+}
+
+void Vehicle::_confirmSigningSetup()
+{
+    _signingConfirmationTimer.stop();
+
+    if (_pendingSigningDisable) {
+        // Vehicle confirmed disable: now safe to turn off local signing
+        MAVLinkSigning::initSigning(_pendingSigningChannel, QByteArrayView(), nullptr);
+
+        _mavlinkSigning = false;
+        _mavlinkSigningKeyName.clear();
+        _previousSigningKeyBytes.clear();
+        _previousSigningKeyName.clear();
+        emit mavlinkSigningChanged();
+
+        qCDebug(VehicleLog) << "Signing disabled confirmed by vehicle";
+    } else if (_pendingSigningKeyIndex >= 0) {
+        // Vehicle confirmed enable: now safe to enable local signing
+        if (!MAVLinkSigning::initSigning(_pendingSigningChannel, _pendingSigningKeyBytes, MAVLinkSigning::insecureConnectionAcceptUnsignedCallback)) {
+            qCCritical(VehicleLog) << "Internal error: failed to initialize signing on channel" << _pendingSigningChannel;
+        } else {
+            _mavlinkSigning = true;
+            _mavlinkSigningKeyName = MAVLinkSigningKeys::instance()->keyNameAt(_pendingSigningKeyIndex);
+            emit mavlinkSigningChanged();
+
+            qCDebug(VehicleLog) << "Signing setup confirmed by vehicle, key:" << _mavlinkSigningKeyName;
+        }
+    }
+
+    _pendingSigningKeyIndex = -1;
+    _pendingSigningKeyBytes.clear();
+    _pendingSigningDisable = false;
+}
+
+void Vehicle::_cancelPendingSigning(const QString& reason)
+{
+    _signingConfirmationTimer.stop();
+
+    if (_pendingSigningDisable) {
+        // Disable was rejected or timed out: keep current signing state (no change needed,
+        // local signing was never disabled)
+        qCWarning(VehicleLog) << "Signing disable cancelled:" << reason;
+    } else if (_pendingSigningKeyIndex >= 0) {
+        // Enable was rejected or timed out: local signing was never enabled, nothing to undo
+        qCWarning(VehicleLog) << "Signing setup cancelled:" << reason;
+    }
+
+    _pendingSigningKeyIndex = -1;
+    _pendingSigningKeyBytes.clear();
+    _pendingSigningDisable = false;
+    _previousSigningKeyBytes.clear();
+    _previousSigningKeyName.clear();
+
+    qgcApp()->showAppMessage(reason);
+}
+
+void Vehicle::_signingConfirmationTimeout()
+{
+    if (_isSigningPending()) {
+        if (_pendingSigningDisable) {
+            _cancelPendingSigning(tr("Signing disable not confirmed by vehicle (timeout)"));
+        } else {
+            _cancelPendingSigning(tr("Signing setup not confirmed by vehicle (timeout)"));
+        }
+    }
 }
 
 /*---------------------------------------------------------------------------*/
