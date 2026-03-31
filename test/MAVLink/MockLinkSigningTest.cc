@@ -55,8 +55,8 @@ void MockLinkSigningTest::_testSendSetupSigning()
     QVERIFY_TRUE_WAIT(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_SETUP_SIGNING) >= 2, TestTimeout::mediumMs());
     QVERIFY(mockLink()->signingEnabled());
 
-    // Verify the signal was emitted and the vehicle tracks the active key name
-    QVERIFY(signingChangedSpy.count() > 0);
+    // Wait for vehicle to confirm signing via heartbeat (deferred confirmation flow)
+    QVERIFY_TRUE_WAIT(signingChangedSpy.count() > 0, TestTimeout::mediumMs());
     QCOMPARE(vehicle()->mavlinkSigningKeyName(), QStringLiteral("TestKey"));
 }
 
@@ -73,7 +73,7 @@ void MockLinkSigningTest::_testSendDisableSigning()
 
     vehicle()->sendSetupSigning(0);
     QVERIFY_TRUE_WAIT(mockLink()->signingEnabled(), TestTimeout::mediumMs());
-    QVERIFY(signingChangedSpy.count() > 0);
+    QVERIFY_TRUE_WAIT(signingChangedSpy.count() > 0, TestTimeout::mediumMs());
 
     // Now disable signing
     signingChangedSpy.clear();
@@ -84,8 +84,8 @@ void MockLinkSigningTest::_testSendDisableSigning()
     QVERIFY_TRUE_WAIT(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_SETUP_SIGNING) >= 2, TestTimeout::mediumMs());
     QVERIFY(!mockLink()->signingEnabled());
 
-    // Verify the signal was emitted and the vehicle cleared the active key name
-    QVERIFY(signingChangedSpy.count() > 0);
+    // Wait for vehicle to confirm disable via heartbeat (deferred confirmation flow)
+    QVERIFY_TRUE_WAIT(signingChangedSpy.count() > 0, TestTimeout::mediumMs());
     QVERIFY(vehicle()->mavlinkSigningKeyName().isEmpty());
 }
 
