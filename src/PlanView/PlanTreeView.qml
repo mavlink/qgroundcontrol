@@ -27,6 +27,7 @@ TreeView {
     readonly property int _layerMission: 1
     readonly property int _layerFence:   2
     readonly property int _layerRally:   3
+    readonly property bool _createNewPlanMode: planMasterController.readyForPlanCreation
 
     property var _missionController: planMasterController.missionController
     property var _geoFenceController: planMasterController.geoFenceController
@@ -173,8 +174,9 @@ TreeView {
         id: delegateRoot
         implicitWidth: root.width
         implicitHeight: (loader.item ? loader.item.height : 1) + (separatorLine.visible ? separatorLine.height + root.rowSpacing : 0)
+        visible: !root._createNewPlanMode || _visibleInCreateMode
+        height: visible ? implicitHeight : 0
         width: root.width
-        height: implicitHeight
 
         required property TreeView treeView
         required property bool isTreeNode
@@ -187,6 +189,10 @@ TreeView {
         readonly property var nodeObject: model.object
         readonly property string nodeType: model.nodeType
         readonly property bool separator: model.separator ?? false
+
+        // In create-new-plan mode, only show Plan Info and Defaults groups and their children
+        readonly property bool _visibleInCreateMode: nodeType === "planFileGroup" || nodeType === "planFileInfo"
+                                                     || nodeType === "defaultsGroup" || nodeType === "defaultsInfo"
 
         onImplicitHeightChanged: layoutTimer.restart()
 

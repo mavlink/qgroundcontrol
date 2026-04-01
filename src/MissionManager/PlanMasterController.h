@@ -48,6 +48,7 @@ public:
     Q_PROPERTY(RallyPointController*    rallyPointController    READ rallyPointController                   CONSTANT)
     Q_PROPERTY(bool                     offline                 READ offline                                NOTIFY offlineChanged)          ///< true: controller is not connected to an active vehicle
     Q_PROPERTY(bool                     containsItems           READ containsItems                          NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
+    Q_PROPERTY(bool                     readyForPlanCreation    READ readyForPlanCreation                   NOTIFY readyForPlanCreationChanged) ///< true: All controllers are empty, UI should show "create new plan" mode
     Q_PROPERTY(bool                     syncInProgress          READ syncInProgress                         NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
     Q_PROPERTY(bool                     dirtyForSave            READ dirtyForSave                           NOTIFY dirtyForSaveChanged)     ///< true: Unsaved changes to disk are present, false: no changes since last save to disk
     Q_PROPERTY(bool                     dirtyForUpload          READ dirtyForUpload                         NOTIFY dirtyForUploadChanged)   ///< true: Unsent changes are present, false: no changes since last upload/download sync
@@ -106,6 +107,7 @@ public:
 
     bool        offline         (void) const { return _offline; }
     bool        containsItems   (void) const;
+    bool        readyForPlanCreation(void) const { return !containsItems(); }
     bool        syncInProgress  (void) const;
     bool        dirtyForSave    (void) const { return _dirtyForSave; }
     bool        dirtyForUpload  (void) const { return _dirtyForUpload; }
@@ -137,6 +139,7 @@ public:
 
 signals:
     void containsItemsChanged               ();
+    void readyForPlanCreationChanged        ();
     void syncInProgressChanged              (void);
     void dirtyForSaveChanged                (bool dirtyForSave);
     void dirtyForUploadChanged              (bool dirtyForUpload);
@@ -159,6 +162,7 @@ private slots:
     void _sendGeoFenceComplete      (void);
     void _sendRallyPointsComplete   (void);
     void _updateOverallDirty        (void);
+    void _updateReadyForPlanCreation (void);
     void _updatePlanCreatorsList    (void);
     void _handleExtractionFinished  (bool success);
 
@@ -198,6 +202,7 @@ private:
     bool                    _deleteWhenSendCompleted =  false;
     bool                    _dirtyForSave =             false;
     bool                    _dirtyForUpload =           false;
+    bool                    _readyForPlanCreation =     true;
     bool                    _suppressOverallDirtyUpdate = false;
     QmlObjectListModel*     _planCreators =             nullptr;
     bool                    _manualCreation =           false;
