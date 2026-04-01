@@ -3,6 +3,28 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
+            "name": "preferredFirmwareClass",
+            "shortDesc": "Tailors the interface to a specific firmware for a simpler experience.",
+            "longDesc": "When set to a specific firmware type, the interface is streamlined for that firmware.",
+            "type": "uint32",
+            "enumStrings": "All,ArduPilot,PX4 Pro",
+            "enumValues": "0,3,12",
+            "default": 0,
+            "label": "Preferred Firmware",
+            "keywords": "firmware,ardupilot,px4"
+        },
+        {
+            "name": "preferredVehicleClass",
+            "shortDesc": "Tailors the interface to a specific vehicle type for a simpler experience.",
+            "longDesc": "When set to a specific vehicle class, the interface is streamlined for that vehicle type.",
+            "type": "uint32",
+            "enumStrings": "All,Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
+            "enumValues": "0,1,2,20,10,12",
+            "default": 0,
+            "label": "Preferred Vehicle",
+            "keywords": "vehicle,multirotor,fixed wing,vtol,rover,sub"
+        },
+        {
             "name": "offlineEditingFirmwareClass",
             "shortDesc": "Offline editing firmware class",
             "type": "uint32",
