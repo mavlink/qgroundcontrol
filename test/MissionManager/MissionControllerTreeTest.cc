@@ -33,7 +33,7 @@ void MissionControllerTreeTest::_initForTest()
 
     SignalSpyFixture spy(_missionController);
     QVERIFY(spy.spy());
-    spy.expect("visualItemsChanged");
+    spy.expect("visualItemsReset");
     _masterController->start();
     QVERIFY(spy.waitAndVerify(TestTimeout::mediumMs()));
 

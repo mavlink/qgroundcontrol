@@ -51,7 +51,7 @@ public:
     // Legacy alias kept for source compatibility with external code
     using MissionFlightStatus_t = ::MissionFlightStatus_t;
 
-    Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsReset)
     Q_PROPERTY(QmlObjectTreeModel*  visualItemsTree                 READ visualItemsTree                CONSTANT)                               ///< Tree-structured view of visualItems for TreeView
     Q_PROPERTY(QPersistentModelIndex planFileGroupIndex              READ planFileGroupIndex              CONSTANT)
     Q_PROPERTY(QPersistentModelIndex defaultsGroupIndex              READ defaultsGroupIndex              CONSTANT)
@@ -307,7 +307,7 @@ public:
     static constexpr int kGroupCount       = 6;
 
 signals:
-    void visualItemsChanged                 (void);
+    void visualItemsReset                 (void);
     void splitSegmentChanged                (void);
     void newItemsFromVehicle                (void);
     void missionTotalDistanceChanged        (double missionTotalDistance);
