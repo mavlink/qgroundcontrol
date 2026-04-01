@@ -1,4 +1,5 @@
 #include "RemoteIDManager.h"
+#include "MAVLinkLib.h"
 #include "SettingsManager.h"
 #include "RemoteIDSettings.h"
 #include "PositionManager.h"

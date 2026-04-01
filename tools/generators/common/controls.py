@@ -61,6 +61,13 @@ class ActionButtonDef:
 
 
 @dataclass
+class LinkedParamDef:
+    """A parameter whose value is updated when a FactSlider changes."""
+    param: str = ""          # vehicle parameter name
+    expression: str = ""     # JS expression using ``value`` (e.g. "value", "value * 2")
+
+
+@dataclass
 class ToggleCheckboxDef:
     """A non-Fact checkbox with custom checked/onClicked logic."""
     checked: str = ""        # QML expression for checkbox state
@@ -90,6 +97,7 @@ def render_label(
     *,
     text: str = "",
     warning: bool = False,
+    small_font: bool = False,
     tr_context: str = "",
 ) -> str:
     """Render a static ``QGCLabel`` (no fact binding)."""
@@ -98,6 +106,8 @@ def render_label(
     lines.append(f"{indent}    wrapMode: Text.WordWrap")
     lines.append(f"{indent}    Layout.fillWidth: true")
     lines.append(f"{indent}    Layout.preferredWidth: 0")
+    if small_font:
+        lines.append(f"{indent}    font.pointSize: ScreenTools.smallFontPointSize")
     if warning:
         lines.append(f"{indent}    color: qgcPal.warningText")
     lines.append(f"{indent}}}")
@@ -301,6 +311,7 @@ def render_radiogroup(
     options: list[RadioOptionDef],
     enable_when: str = "",
     raw: bool = False,
+    optional: bool = False,
     tr_context: str = "",
 ) -> str:
     """Render a group of ``QGCRadioButton`` controls with an optional label."""
@@ -317,8 +328,14 @@ def render_radiogroup(
         lines.append(f'{inner}QGCRadioButton {{')
         lines.append(f'{inner}    text: {qml_tr(opt.label, tr_context)}')
         if opt.checked:
-            lines.append(f'{inner}    checked: {opt.checked}')
-        lines.append(f'{inner}    onClicked: {fact_ref}.{value_prop} = {opt.value}')
+            if optional:
+                lines.append(f'{inner}    checked: {fact_ref} ? {opt.checked} : false')
+            else:
+                lines.append(f'{inner}    checked: {opt.checked}')
+        if optional:
+            lines.append(f'{inner}    onClicked: if ({fact_ref}) {{ {fact_ref}.{value_prop} = {opt.value} }}')
+        else:
+            lines.append(f'{inner}    onClicked: {fact_ref}.{value_prop} = {opt.value}')
         if enable_when:
             lines.append(f'{inner}    enabled: {enable_when}')
         lines.append(f'{inner}}}')
@@ -454,6 +471,8 @@ def render_toggle_checkbox(
     label: str = "",
     toggle: ToggleCheckboxDef,
     enable_when: str = "",
+    optional: bool = False,
+    fact_ref: str = "",
     tr_context: str = "",
 ) -> str:
     """Render a ``QGCCheckBoxSlider`` with custom checked/onClicked logic."""
@@ -462,7 +481,10 @@ def render_toggle_checkbox(
     if label:
         lines.append(f'{indent}    text: {qml_tr(label, tr_context)}')
     if toggle.checked:
-        lines.append(f"{indent}    checked: {toggle.checked}")
+        if optional and fact_ref:
+            lines.append(f"{indent}    checked: {fact_ref} ? {toggle.checked} : false")
+        else:
+            lines.append(f"{indent}    checked: {toggle.checked}")
     on_parts = []
     if toggle.onChecked and toggle.onUnchecked:
         on_parts.append(f"if (checked) {{ {toggle.onChecked} }} else {{ {toggle.onUnchecked} }}")
@@ -471,7 +493,10 @@ def render_toggle_checkbox(
     elif toggle.onUnchecked:
         on_parts.append(f"if (!checked) {{ {toggle.onUnchecked} }}")
     if on_parts:
-        lines.append(f"{indent}    onClicked: {on_parts[0]}")
+        if optional and fact_ref:
+            lines.append(f"{indent}    onClicked: if ({fact_ref}) {{ {on_parts[0]} }}")
+        else:
+            lines.append(f"{indent}    onClicked: {on_parts[0]}")
     if enable_when:
         lines.append(f"{indent}    enabled: {enable_when}")
     lines.append(f"{indent}}}")
@@ -487,3 +512,76 @@ def parse_toggle_checkbox(data: dict | None) -> ToggleCheckboxDef | None:
         onChecked=data.get("onChecked", ""),
         onUnchecked=data.get("onUnchecked", ""),
     )
+
+
+def parse_linked_params(data: dict | None) -> list[LinkedParamDef]:
+    """Parse a linkedParams dict from JSON.
+
+    Input is ``{"PARAM_NAME": "expression", ...}``.
+    """
+    if not data:
+        return []
+    return [
+        LinkedParamDef(param=name, expression=expr)
+        for name, expr in data.items()
+    ]
+
+
+def render_factslider(
+    fact_ref: str,
+    indent: str,
+    *,
+    label: str = "",
+    description: str = "",
+    from_: str = "",
+    to: str = "",
+    major_tick_step_size: str = "",
+    decimal_places: str = "",
+    linked_params: list[LinkedParamDef] | None = None,
+    show_when: str = "",
+    enable_when: str = "",
+    tr_context: str = "",
+) -> str:
+    """Render a ``FactSlider`` wrapped in a ``SettingsGroupLayout``."""
+    lines: list[str] = []
+    inner = indent + "    "
+
+    # Wrap in SettingsGroupLayout for consistent bordered look
+    lines.append(f"{indent}SettingsGroupLayout {{")
+    lines.append(f"{indent}    Layout.fillWidth: true")
+    lines.append(f"{indent}    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 60")
+    if label:
+        lines.append(f"{indent}    heading: {qml_tr(label, tr_context)}")
+    if description:
+        lines.append(f"{indent}    headingDescription: {qml_tr(description, tr_context)}")
+    if show_when:
+        lines.append(f"{indent}    visible: {show_when}")
+
+    lines.append(f"")
+    lines.append(f"{inner}FactSlider {{")
+    lines.append(f"{inner}    Layout.fillWidth: true")
+    lines.append(f"{inner}    fact: {fact_ref}")
+
+    if from_:
+        lines.append(f"{inner}    from: {from_}")
+    if to:
+        lines.append(f"{inner}    to: {to}")
+    if major_tick_step_size:
+        lines.append(f"{inner}    majorTickStepSize: {major_tick_step_size}")
+    else:
+        lines.append(f"{inner}    majorTickStepSize: {fact_ref}.increment")
+    if decimal_places:
+        lines.append(f"{inner}    decimalPlaces: {decimal_places}")
+
+    if linked_params:
+        lines.append(f"{inner}    onValueChanged: {{")
+        for lp in linked_params:
+            lines.append(f'{inner}        controller.getParameterFact(-1, "{lp.param}").rawValue = {lp.expression}')
+        lines.append(f"{inner}    }}")
+
+    if enable_when:
+        lines.append(f"{inner}    enabled: {enable_when}")
+
+    lines.append(f"{inner}}}")
+    lines.append(f"{indent}}}")
+    return "\n".join(lines)

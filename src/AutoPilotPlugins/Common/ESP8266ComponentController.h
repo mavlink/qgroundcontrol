@@ -5,7 +5,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ESP8266ComponentControllerLog)
 

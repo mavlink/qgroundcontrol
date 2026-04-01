@@ -12,8 +12,8 @@
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 
-void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_t firmwareClass,
-                                                      QGCMAVLink::VehicleClass_t vehicleClass)
+void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLinkTypes::FirmwareClass_t firmwareClass,
+                                                      QGCMAVLinkTypes::VehicleClass_t vehicleClass)
 {
     QString firmwareClassString = QGCMAVLink::firmwareClassToString(firmwareClass).replace(" ", "");
     QString vehicleClassString = QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass).replace(" ", "");

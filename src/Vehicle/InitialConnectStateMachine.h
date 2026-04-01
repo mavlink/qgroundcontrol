@@ -1,7 +1,7 @@
 #pragma once
 
 #include "QGCStateMachine.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 
 #include <QtCore/QLoggingCategory>
 

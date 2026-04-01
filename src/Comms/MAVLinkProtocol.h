@@ -6,7 +6,8 @@
 #include <QtCore/QString>
 
 #include "LinkInterface.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
 
 class QFile;
 

@@ -5,15 +5,29 @@
         {
             "component": "MapProviderSettings",
             "sectionName": "Map Provider",
-            "keywords": "map provider,satellite,terrain,street,hybrid,google,bing"
+            "keywords": [
+                "map provider",
+                "satellite",
+                "terrain",
+                "street",
+                "hybrid",
+                "google",
+                "bing"
+            ]
         },
         {
             "component": "OfflineMapSettings",
             "sectionName": "Offline Maps",
-            "keywords": "offline,download,cache,tile set"
+            "keywords": [
+                "offline",
+                "download",
+                "cache",
+                "tile set"
+            ]
         },
         {
             "heading": "Tokens",
+            "keywords": ["token", "api key", "tianditu", "mapbox", "esri", "vworld", "openaip"],
             "headingDescription": "qsTr(\"Allows access to additional providers\")",
             "controls": [
                 {
@@ -35,6 +49,7 @@
         },
         {
             "heading": "Mapbox Login",
+            "keywords": ["mapbox", "account", "style"],
             "controls": [
                 {
                     "setting": "appSettings.mapboxAccount"
@@ -46,6 +61,7 @@
         },
         {
             "heading": "Custom Map URL",
+            "keywords": ["custom map", "wms", "tile url", "tile server"],
             "headingDescription": "qsTr(\"URL with {x} {y} {z} or {zoom} substitutions\")",
             "controls": [
                 {
@@ -55,6 +71,7 @@
         },
         {
             "heading": "Tile Cache",
+            "keywords": ["cache", "disk size", "memory size", "tile cache"],
             "controls": [
                 {
                     "setting": "mapsSettings.maxCacheDiskSize"

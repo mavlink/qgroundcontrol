@@ -4,7 +4,7 @@
 #include <QtCore/QObject>
 
 #include "ADSB.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 
 Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
 

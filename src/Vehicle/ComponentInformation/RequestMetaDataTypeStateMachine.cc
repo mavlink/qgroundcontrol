@@ -306,7 +306,7 @@ void RequestMetaDataTypeStateMachine::_requestCompInfoDeprecated()
     );
 }
 
-void RequestMetaDataTypeStateMachine::_handleCompInfoResult(MAV_RESULT result, Vehicle::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message)
+void RequestMetaDataTypeStateMachine::_handleCompInfoResult(MAV_RESULT result, VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode, const mavlink_message_t& message)
 {
     if (result == MAV_RESULT_ACCEPTED) {
         mavlink_component_information_t componentInformation;

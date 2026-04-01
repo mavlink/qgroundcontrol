@@ -33,7 +33,7 @@ VehicleComponent::~VehicleComponent()
 
 QStringList VehicleComponent::sections() const
 {
-    _ensureParsed();
+    _ensureSectionsCached();
 
     if (_repeatFilters.isEmpty()) {
         return _expandedSections;
@@ -63,12 +63,22 @@ QStringList VehicleComponent::sections() const
     return result;
 }
 
-void VehicleComponent::_ensureParsed() const
+QVariantMap VehicleComponent::sectionKeywords() const
 {
-    if (_parsed) {
+    _ensureSectionsCached();
+    QVariantMap map;
+    for (auto it = _sectionKeywords.constBegin(); it != _sectionKeywords.constEnd(); ++it) {
+        map.insert(it.key(), it.value());
+    }
+    return map;
+}
+
+void VehicleComponent::_ensureSectionsCached() const
+{
+    if (_sectionsCached) {
         return;
     }
-    _parsed = true;
+    _sectionsCached = true;
 
     const QString path = vehicleConfigJson();
     if (path.isEmpty()) {
@@ -106,6 +116,22 @@ void VehicleComponent::_ensureParsed() const
         if (name.isEmpty()) {
             continue;
         }
+
+        // Collect translatable search terms: title + explicit keywords + control labels
+        // Stored in original case so QML can pass them through qsTranslate() at search time
+        QStringList terms;
+        terms.append(name);
+        const QJsonArray kwArray = secObj.value("keywords").toArray();
+        for (const QJsonValue &kw : kwArray) {
+            terms.append(kw.toString());
+        }
+        for (const QJsonValue &ctrl : secObj.value("controls").toArray()) {
+            const QString label = ctrl.toObject().value("label").toString();
+            if (!label.isEmpty()) {
+                terms.append(label);
+            }
+        }
+        terms.removeDuplicates();
 
         const QJsonObject repeatObj = secObj.value("repeat").toObject();
         if (!repeatObj.isEmpty() && _vehicle && _vehicle->parameterManager()) {
@@ -146,6 +172,7 @@ void VehicleComponent::_ensureParsed() const
                 }
                 if (count <= 1) {
                     _expandedSections.append(name);
+                    _sectionKeywords.insert(name, terms);
                     if (hasFilter) {
                         filter.sectionNames.append(name);
                         filter.paramNames.append(battPrefix(0) + enableParam);
@@ -154,6 +181,7 @@ void VehicleComponent::_ensureParsed() const
                     for (int i = 0; i < count; i++) {
                         const QString sectionName = name + QStringLiteral(" ") + battLabel(i);
                         _expandedSections.append(sectionName);
+                        _sectionKeywords.insert(sectionName, terms);
                         if (hasFilter) {
                             filter.sectionNames.append(sectionName);
                             filter.paramNames.append(battPrefix(i) + enableParam);
@@ -171,6 +199,7 @@ void VehicleComponent::_ensureParsed() const
 
                 if (count <= 1) {
                     _expandedSections.append(name);
+                    _sectionKeywords.insert(name, terms);
                     if (hasFilter) {
                         const QString idx = (firstOmits) ? QString() : QString::number(startIndex);
                         filter.sectionNames.append(name);
@@ -181,6 +210,7 @@ void VehicleComponent::_ensureParsed() const
                         const QString idx = (firstOmits && i == 0) ? QString() : QString::number(startIndex + i);
                         const QString sectionName = name + QStringLiteral(" ") + QString::number(startIndex + i);
                         _expandedSections.append(sectionName);
+                        _sectionKeywords.insert(sectionName, terms);
                         if (hasFilter) {
                             filter.sectionNames.append(sectionName);
                             filter.paramNames.append(paramPrefix + idx + enableParam);
@@ -196,6 +226,7 @@ void VehicleComponent::_ensureParsed() const
             if (!_expandedSections.contains(name)) {
                 _expandedSections.append(name);
             }
+            _sectionKeywords.insert(name, terms);
         }
     }
 }
@@ -234,7 +265,7 @@ void VehicleComponent::setupTriggerSignals()
     }
 
     // Watch enableParam facts so the sections list updates when items are enabled/disabled
-    _ensureParsed();
+    _ensureSectionsCached();
     for (const auto &filter : _repeatFilters) {
         for (const QString &paramName : filter.paramNames) {
             if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {

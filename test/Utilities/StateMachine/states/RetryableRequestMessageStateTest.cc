@@ -1,4 +1,5 @@
 #include "RetryableRequestMessageStateTest.h"
+#include "MAVLinkLib.h"
 #include "StateTestCommon.h"
 
 #include "QGCStateMachine.h"

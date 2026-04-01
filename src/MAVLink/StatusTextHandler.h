@@ -4,7 +4,8 @@
 #include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
 
 Q_DECLARE_LOGGING_CATEGORY(StatusTextHandlerLog)
 

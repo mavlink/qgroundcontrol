@@ -5,8 +5,9 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "QmlObjectListModel.h"
-#include "QGCMAVLink.h"
-#include "Vehicle.h"
+#include "QGCMAVLinkTypes.h"
+
+class Vehicle;
 
 class InstrumentValueData;
 
@@ -47,7 +48,7 @@ public:
     QString                     settingsGroup           (void) const { return _settingsGroup; }
     FontSize                    fontSize                (void) const { return _fontSize; }
     QStringList                 iconNames               (void) const { return _iconNames; }
-    QGCMAVLink::VehicleClass_t  vehicleClass            (void) const;
+    QGCMAVLinkTypes::VehicleClass_t  vehicleClass            (void) const;
     Vehicle*                    currentVehicle          (void) const { return _specificVehicleForCard ? _specificVehicleForCard : _activeVehicle; }
     Vehicle*                    specificVehicleForCard  (void) const { return _specificVehicleForCard; }
 

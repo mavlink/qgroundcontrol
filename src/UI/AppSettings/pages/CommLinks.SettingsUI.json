@@ -4,6 +4,7 @@
     "groups": [
         {
             "heading": "AutoConnect",
+            "keywords": ["auto connect", "pixhawk", "sik radio", "librepilot", "udp", "rtk gps", "usb"],
             "showWhen": "QGroundControl.settingsManager.autoConnectSettings.userVisible",
             "controls": [
                 {
@@ -26,12 +27,26 @@
         {
             "component": "NmeaGpsSettings",
             "sectionName": "NMEA GPS",
-            "keywords": "nmea,gps,serial,baud rate,external gps"
+            "keywords": [
+                "nmea",
+                "gps",
+                "serial",
+                "baud rate",
+                "external gps"
+            ]
         },
         {
             "component": "LinkConfigurationManager",
             "sectionName": "Link Management",
-            "keywords": "link,connection,serial,tcp,udp,bluetooth,add link"
+            "keywords": [
+                "link",
+                "connection",
+                "serial",
+                "tcp",
+                "udp",
+                "bluetooth",
+                "add link"
+            ]
         }
     ]
 }

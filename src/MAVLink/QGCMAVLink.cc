@@ -1,4 +1,5 @@
 #include "QGCMAVLink.h"
+#include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCMAVLinkLog, "MAVLink.QGCMAVLink")

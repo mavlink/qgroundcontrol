@@ -7,7 +7,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LinkInterface.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLinkManagerLog)
 

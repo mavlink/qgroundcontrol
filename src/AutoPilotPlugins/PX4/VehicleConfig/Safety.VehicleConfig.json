@@ -34,6 +34,15 @@
     },
     "sections": [
         {
+            "title": "Low Battery Failsafe",
+            "keywords": [
+                "battery",
+                "voltage",
+                "low battery",
+                "critical battery",
+                "emergency",
+                "power"
+            ],
             "image": "/qmlimages/LowBattery.svg",
             "controls": [
                 {
@@ -53,10 +62,17 @@
                     "param": "BAT_EMERGEN_THR",
                     "label": "Battery emergency level"
                 }
-            ],
-            "title": "Low Battery Failsafe"
+            ]
         },
         {
+            "title": "Object Detection",
+            "keywords": [
+                "collision",
+                "avoidance",
+                "obstacle",
+                "proximity",
+                "distance"
+            ],
             "image": "/qmlimages/ObjectAvoidance.svg",
             "controls": [
                 {
@@ -73,10 +89,18 @@
                     "label": "Show obstacle distance overlay",
                     "control": "checkbox"
                 }
-            ],
-            "title": "Object Detection"
+            ]
         },
         {
+            "title": "RC/Joystick Loss Failsafe",
+            "keywords": [
+                "radio",
+                "receiver",
+                "transmitter",
+                "rc loss",
+                "joystick",
+                "signal loss"
+            ],
             "image": "/qmlimages/RCLoss.svg",
             "controls": [
                 {
@@ -88,10 +112,17 @@
                     "param": "COM_RC_LOSS_T",
                     "label": "RC/joystick loss timeout"
                 }
-            ],
-            "title": "RC/Joystick Loss Failsafe"
+            ]
         },
         {
+            "title": "Data Link Loss Failsafe",
+            "keywords": [
+                "telemetry",
+                "link loss",
+                "ground station",
+                "gcs",
+                "disconnect"
+            ],
             "image": "/qmlimages/DatalinkLoss.svg",
             "controls": [
                 {
@@ -103,10 +134,19 @@
                     "param": "COM_DL_LOSS_T",
                     "label": "Data link loss timeout"
                 }
-            ],
-            "title": "Data Link Loss Failsafe"
+            ]
         },
         {
+            "title": "Geofence Failsafe",
+            "keywords": [
+                "geofence",
+                "boundary",
+                "fence",
+                "containment",
+                "radius",
+                "altitude",
+                "breach"
+            ],
             "image": "/qmlimages/GeoFence.svg",
             "controls": [
                 {
@@ -132,10 +172,18 @@
                         "onClicked": "{ _fenceAlt.value = enableCheckBoxChecked ? 100 : 0 }"
                     }
                 }
-            ],
-            "title": "Geofence Failsafe"
+            ]
         },
         {
+            "title": "Return to launch settings",
+            "keywords": [
+                "rtl",
+                "return home",
+                "return to launch",
+                "loiter",
+                "land",
+                "altitude"
+            ],
             "image": "/qmlimages/ReturnToHomeAltitudeCopter.svg",
             "controls": [
                 {
@@ -174,10 +222,16 @@
                     "label": "Loiter altitude",
                     "enableWhen": "_rtlLandDelay.value !== _rtlLandDelayParamValueLandImmediately"
                 }
-            ],
-            "title": "Return to launch settings"
+            ]
         },
         {
+            "title": "Land Mode Settings",
+            "keywords": [
+                "landing",
+                "descent",
+                "disarm",
+                "touchdown"
+            ],
             "image": "/qmlimages/LandModeCopter.svg",
             "controls": [
                 {
@@ -197,8 +251,7 @@
                         "onClicked": "{ _disarmLandDelay.value = enableCheckBoxChecked ? 2 : 0 }"
                     }
                 }
-            ],
-            "title": "Land Mode Settings"
+            ]
         }
     ]
 }

@@ -23,5 +23,5 @@ public:
     bool allowSetupWhileFlying() const final { return true; }
 
 private:
-    const QString _name = tr("Safety");
+    const QString _name = tr("Flight Safety");
 };

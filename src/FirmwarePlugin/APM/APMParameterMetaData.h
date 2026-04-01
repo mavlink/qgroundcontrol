@@ -5,7 +5,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QXmlStreamReader>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
 #include "FactMetaData.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)

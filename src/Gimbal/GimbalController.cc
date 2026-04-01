@@ -1,5 +1,6 @@
 #include "GimbalController.h"
 #include "GimbalControllerSettings.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"

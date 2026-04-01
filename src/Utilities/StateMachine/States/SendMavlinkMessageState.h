@@ -1,7 +1,7 @@
 #pragma once
 
 #include "QGCState.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkMessageType.h"
 
 #include <cstdint>
 #include <functional>

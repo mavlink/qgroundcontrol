@@ -1,5 +1,6 @@
 #include "RequestMessageState.h"
 #include "QGCLoggingCategory.h"
+#include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
 RequestMessageState::RequestMessageState(QState* parent,
@@ -57,7 +58,7 @@ void RequestMessageState::onWaitTimeout()
 
 void RequestMessageState::_resultHandler(void* resultHandlerData,
                                          MAV_RESULT commandResult,
-                                         Vehicle::RequestMessageResultHandlerFailureCode_t failureCode,
+                                         VehicleTypes::RequestMessageResultHandlerFailureCode_t failureCode,
                                          const mavlink_message_t& message)
 {
     auto* state = static_cast<RequestMessageState*>(resultHandlerData);

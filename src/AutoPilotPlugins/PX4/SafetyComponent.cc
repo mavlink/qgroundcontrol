@@ -39,6 +39,7 @@ QStringList SafetyComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl SafetyComponent::setupSource(void) const
 {
+    // Generated from Safety.VehicleConfig.json
     return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/SafetyComponent.qml");
 }
 

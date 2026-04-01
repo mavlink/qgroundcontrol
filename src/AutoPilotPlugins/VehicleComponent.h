@@ -34,6 +34,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(bool     allowSetupWhileFlying                               READ allowSetupWhileFlying  CONSTANT)
     Q_PROPERTY(AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent READ KnownVehicleComponent  CONSTANT)
     Q_PROPERTY(QStringList sections                                         READ sections               NOTIFY sectionsChanged)
+    Q_PROPERTY(QVariantMap sectionKeywords                                   READ sectionKeywords        NOTIFY sectionsChanged)
     Q_PROPERTY(QString  vehicleConfigJson                                   READ vehicleConfigJson      CONSTANT)
     Q_PROPERTY(bool     showFirstSectionOnRootClick                         READ showFirstSectionOnRootClick CONSTANT)
 
@@ -55,6 +56,9 @@ public:
     /// Section names for sidebar navigation. Auto-populated from vehicleConfigJson() JSON.
     /// Repeat sections are expanded by probing vehicle parameters.
     virtual QStringList sections() const;
+
+    /// Search keywords per section, keyed by section title. Values are original-case translatable terms.
+    QVariantMap sectionKeywords() const;
 
     /// When true, clicking the root component in the tree selects the first section instead of showing all.
     virtual bool showFirstSectionOnRootClick() const { return false; }
@@ -95,7 +99,7 @@ protected:
 
 private:
     /// Lazily parse the vehicleConfigJson() file to populate _expandedSections and _repeatFilters.
-    void _ensureParsed() const;
+    void _ensureSectionsCached() const;
 
     /// Metadata for a repeat group that has enableParam/disabledParamValue filtering.
     struct RepeatFilter {
@@ -107,5 +111,6 @@ private:
 
     mutable QStringList            _expandedSections;  ///< All sections before enable/disable filtering
     mutable QVector<RepeatFilter>  _repeatFilters;     ///< Filter metadata for repeat groups with enableParam
-    mutable bool                   _parsed = false;
+    mutable QMap<QString, QStringList> _sectionKeywords;  ///< section title -> original-case translatable search terms
+    mutable bool                   _sectionsCached = false;
 };

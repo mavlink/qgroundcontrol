@@ -126,8 +126,6 @@ Item {
             visible:        homePosition.isValid && _radius > 0
 
             property real _radius: myGeoFenceController.paramCircularFence
-
-            on_RadiusChanged: console.log("_radius", _radius, homePosition.isValid, homePosition)
         }
     }
 

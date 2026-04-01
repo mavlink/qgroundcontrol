@@ -7,6 +7,7 @@
     "groups": [
         {
             "heading": "General",
+            "keywords": ["language", "locale", "color scheme", "dark mode", "theme", "palette", "follow me", "audio", "volume", "sound", "gstreamer", "debug level", "ui scale", "font size", "zoom", "save path", "storage", "reset", "clear settings", "factory reset"],
             "controls": [
                 {
                     "setting": "appSettings.qLocaleLanguage",
@@ -50,6 +51,7 @@
         },
         {
             "heading": "Units",
+            "keywords": ["units", "metric", "imperial", "distance", "speed", "area", "temperature", "feet", "meters"],
             "showWhen": "QGroundControl.settingsManager.unitsSettings.userVisible",
             "controls": [
                 {

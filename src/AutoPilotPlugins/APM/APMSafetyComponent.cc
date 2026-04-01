@@ -17,13 +17,13 @@ QString APMSafetyComponent::description() const
 {
     switch (_vehicle->vehicleType()) {
     case MAV_TYPE_SUBMARINE:
-        return tr("Configure failsafe actions, leak detection, and arming checks.");
+        return tr("Configure Return to Launch, geofence, and arming checks.");
     case MAV_TYPE_GROUND_ROVER:
-        return tr("Configure Return to Launch, battery/GCS/throttle/EKF failsafes, and arming checks.");
+        return tr("Configure Return to Launch, geofence, and arming checks.");
     case MAV_TYPE_FIXED_WING:
-        return tr("Configure Return to Launch, battery/GCS failsafes, failsafe triggers, and arming checks.");
+        return tr("Configure Return to Launch, geofence, and arming checks.");
     default:
-        return tr("Configure Return to Launch, battery/GCS/RC/throttle/EKF failsafes, geofence, and arming checks.");
+        return tr("Configure Return to Launch, geofence, and arming checks.");
     }
 }
 
