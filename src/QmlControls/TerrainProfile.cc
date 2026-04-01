@@ -36,7 +36,7 @@ void TerrainProfile::setMissionController(MissionController* missionController)
 
         emit missionControllerChanged();
 
-        connect(_missionController, &MissionController::visualItemsChanged,         this, &TerrainProfile::_newVisualItems);
+        connect(_missionController, &MissionController::visualItemsReset,           this, &TerrainProfile::_newVisualItems);
 
         connect(this,               &TerrainProfile::visibleWidthChanged,           this, &TerrainProfile::_updateSignal, Qt::QueuedConnection);
         connect(_missionController, &MissionController::recalcTerrainProfile,       this, &TerrainProfile::_updateSignal, Qt::QueuedConnection);

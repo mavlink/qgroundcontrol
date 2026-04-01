@@ -74,7 +74,7 @@ TreeView {
 
     Connections {
         target: root._missionController
-        function onVisualItemsChanged() {
+        function onVisualItemsReset() {
             root.collapseRecursively()
             if (_missionController.containsItems) {
                 // Non-empty plan: expand mission group

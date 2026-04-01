@@ -229,7 +229,7 @@ Node {
     }
 
     Connections {
-        function onVisualItemsChanged() {
+        function onVisualItemsReset() {
             addMissionItemsToListModel();
             addSegmentToMissionPathModel();
         }

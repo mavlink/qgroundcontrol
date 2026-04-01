@@ -37,9 +37,9 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     _missionController = _masterController->missionController();
     SignalSpyFixture missionControllerSpy(_missionController);
     QVERIFY(missionControllerSpy.spy());
-    missionControllerSpy.expect("visualItemsChanged");
+    missionControllerSpy.expect("visualItemsReset");
     _masterController->start();
-    // visualItemsChanged should be emitted during start (along with many other signals)
+    // visualItemsReset should be emitted during start (along with many other signals)
     QVERIFY(missionControllerSpy.waitAndVerify(TestTimeout::mediumMs()));
     QmlObjectListModel* visualItems = _missionController->visualItems();
     QVERIFY(visualItems);

@@ -1558,7 +1558,7 @@ void MissionController::_initAllVisualItems(void)
         _syncTreeRallyPointsReset();
     }
 
-    emit visualItemsChanged();
+    emit visualItemsReset();
     emit containsItemsChanged();
     emit plannedHomePositionChanged(plannedHomePosition());
 
