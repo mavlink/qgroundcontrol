@@ -15,6 +15,8 @@ public:
 
     DEFINE_SETTING_NAME_GROUP()
 
+    DEFINE_SETTINGFACT(preferredFirmwareClass)
+    DEFINE_SETTINGFACT(preferredVehicleClass)
     DEFINE_SETTINGFACT(offlineEditingFirmwareClass)
     DEFINE_SETTINGFACT(offlineEditingVehicleClass)
     DEFINE_SETTINGFACT(offlineEditingCruiseSpeed)

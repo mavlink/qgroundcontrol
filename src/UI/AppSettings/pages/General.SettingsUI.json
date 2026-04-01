@@ -50,6 +50,20 @@
             ]
         },
         {
+            "heading": "Vehicle Preferences",
+            "keywords": ["firmware", "ardupilot", "px4", "vehicle", "multirotor", "fixed wing", "vtol", "rover", "sub"],
+            "controls": [
+                {
+                    "setting": "appSettings.preferredFirmwareClass",
+                    "control": "combobox"
+                },
+                {
+                    "setting": "appSettings.preferredVehicleClass",
+                    "control": "combobox"
+                }
+            ]
+        },
+        {
             "heading": "Units",
             "keywords": ["units", "metric", "imperial", "distance", "speed", "area", "temperature", "feet", "meters"],
             "showWhen": "QGroundControl.settingsManager.unitsSettings.userVisible",
