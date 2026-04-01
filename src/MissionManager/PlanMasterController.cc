@@ -64,6 +64,10 @@ void PlanMasterController::_commonInit(void)
     connect(&_geoFenceController,   &GeoFenceController::containsItemsChanged,      this, &PlanMasterController::containsItemsChanged);
     connect(&_rallyPointController, &RallyPointController::containsItemsChanged,    this, &PlanMasterController::containsItemsChanged);
 
+    connect(&_missionController,    &MissionController::containsItemsChanged,       this, &PlanMasterController::_updateReadyForPlanCreation);
+    connect(&_geoFenceController,   &GeoFenceController::containsItemsChanged,      this, &PlanMasterController::_updateReadyForPlanCreation);
+    connect(&_rallyPointController, &RallyPointController::containsItemsChanged,    this, &PlanMasterController::_updateReadyForPlanCreation);
+
     connect(&_missionController,    &MissionController::syncInProgressChanged,      this, &PlanMasterController::syncInProgressChanged);
     connect(&_geoFenceController,   &GeoFenceController::syncInProgressChanged,     this, &PlanMasterController::syncInProgressChanged);
     connect(&_rallyPointController, &RallyPointController::syncInProgressChanged,   this, &PlanMasterController::syncInProgressChanged);
@@ -574,6 +578,15 @@ void PlanMasterController::removeAllFromVehicle(void)
 bool PlanMasterController::containsItems(void) const
 {
     return _missionController.containsItems() || _geoFenceController.containsItems() || _rallyPointController.containsItems();
+}
+
+void PlanMasterController::_updateReadyForPlanCreation(void)
+{
+    const bool ready = readyForPlanCreation();
+    if (ready != _readyForPlanCreation) {
+        _readyForPlanCreation = ready;
+        emit readyForPlanCreationChanged();
+    }
 }
 
 QString PlanMasterController::fileExtension(void) const

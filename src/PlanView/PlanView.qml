@@ -33,8 +33,7 @@ Item {
     property bool   _promptForPlanUsageShowing: false
     property bool   _addROIOnClick: false
     property bool   _addWaypointOnClick: false
-    property bool   _homeTrackingMapCenter: true
-    property bool   _updatingHomeFromMapCenter: false
+    property bool   _homePositionSet: _missionController.homePositionSet
 
     readonly property int _layerMission: 1
     readonly property int _layerFence: 2
@@ -170,31 +169,6 @@ Item {
         }
     }
 
-    // Stop tracking map center when the home position is changed externally (e.g. drag, file load)
-    Connections {
-        target: _visualItems.count > 0 ? _visualItems.get(0) : null
-        function onCoordinateChanged() {
-            if (!_updatingHomeFromMapCenter && !_planMasterController.containsItems) {
-                _homeTrackingMapCenter = false
-            }
-        }
-    }
-
-    // Resume tracking when the plan becomes empty again
-    Connections {
-        target: _planMasterController
-        function onContainsItemsChanged() {
-            if (!_planMasterController.containsItems) {
-                _homeTrackingMapCenter = true
-                if (_visualItems.count > 0) {
-                    _updatingHomeFromMapCenter = true
-                    _visualItems.get(0).coordinate = editorMap.center
-                    _updatingHomeFromMapCenter = false
-                }
-            }
-        }
-    }
-
     function insertSimpleItemAfterCurrent(coordinate) {
         var nextIndex = _missionController.currentPlanViewVIIndex + 1
         _missionController.insertSimpleMissionItem(coordinate, nextIndex, true /* makeCurrentItem */)
@@ -289,11 +263,6 @@ Item {
             }
             onCenterChanged: {
                 QGroundControl.flightMapPosition = editorMap.center
-                if (_homeTrackingMapCenter && !_planMasterController.containsItems && _visualItems.count > 0) {
-                    _updatingHomeFromMapCenter = true
-                    _visualItems.get(0).coordinate = editorMap.center
-                    _updatingHomeFromMapCenter = false
-                }
             }
 
             onMapClicked: (mouse) => {
@@ -314,7 +283,9 @@ Item {
 
                 switch (_editingLayer) {
                 case _layerMission:
-                    if (_addROIOnClick) {
+                    if (_planMasterController.readyForPlanCreation) {
+                        _missionController.setHomePosition(coordinate)
+                    } else if (_addROIOnClick) {
                         _addROIOnClick = false
                         if (_missionController.isROIActive) {
                             var pos = Qt.point(mouse.x, mouse.y)
@@ -466,7 +437,7 @@ Item {
                     ToolStripAction {
                         text: qsTr("Takeoff")
                         iconSource: "/res/takeoff.svg"
-                        enabled: _missionController.isInsertTakeoffValid
+                        enabled: _homePositionSet && _missionController.isInsertTakeoffValid
                         visible: toolStrip._isMissionLayer && !_planMasterController.controllerVehicle.rover
                         onTriggered: {
                             insertTakeoffItemAfterCurrent()
@@ -475,7 +446,7 @@ Item {
                     ToolStripAction {
                         text: _singleComplexItem ? _missionController.complexMissionItemNames[0] : qsTr("Pattern")
                         iconSource: "/qmlimages/MapDrawShape.svg"
-                        enabled: _missionController.flyThroughCommandsAllowed
+                        enabled: _homePositionSet && _missionController.flyThroughCommandsAllowed
                         visible: toolStrip._isMissionLayer
                         dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
                         onTriggered: {
@@ -488,6 +459,7 @@ Item {
                         id: waypointButton
                         text: qsTr("Waypoint")
                         iconSource: "/res/waypoint.svg"
+                        enabled: _homePositionSet
                         visible: toolStrip._isMissionLayer
                         checkable: true
                         onTriggered: { _addWaypointOnClick = !_addWaypointOnClick; if (_addWaypointOnClick) _addROIOnClick = false }
@@ -496,6 +468,7 @@ Item {
                         id: roiButton
                         text: qsTr("ROI")
                         iconSource: "/qmlimages/roi.svg"
+                        enabled: _homePositionSet
                         visible: toolStrip._isMissionLayer && _planMasterController.controllerVehicle.supports.roiMode
                         checkable: true
                         onTriggered: { _addROIOnClick = !_addROIOnClick; if (_addROIOnClick) _addWaypointOnClick = false }
@@ -507,7 +480,7 @@ Item {
                                       ? qsTr("Alt Land")
                                       : qsTr("Land")
                         iconSource: "/res/rtl.svg"
-                        enabled: _missionController.isInsertLandValid
+                        enabled: _homePositionSet && _missionController.isInsertLandValid
                         visible: toolStrip._isMissionLayer
                         onTriggered: {
                             insertLandItemAfterCurrent()
