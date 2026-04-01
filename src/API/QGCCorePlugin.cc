@@ -337,10 +337,8 @@ QVariantList QGCCorePlugin::firstRunPromptsToShow()
 QString QGCCorePlugin::firstRunPromptResource(int id) const
 {
     switch (id) {
-    case kUnitsFirstRunPromptId:
-        return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml");
-    case kOfflineVehicleFirstRunPromptId:
-        return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml");
+    case kInitialSetupPromptId:
+        return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/InitialSetupPrompt.qml");
     default:
         return QString();
     }
