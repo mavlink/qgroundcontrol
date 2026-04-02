@@ -265,7 +265,15 @@ void QGCApplication::_initForNormalAppBoot()
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
     LinkManager::instance()->init();
-    VideoManager::instance()->init(mainRootWindow());
+
+    QQuickWindow *const rootWindow = mainRootWindow();
+    if (!rootWindow) {
+        qCCritical(QGCApplicationLog) << "Failed to create main root window. QML startup failed before VideoManager initialization.";
+        QCoreApplication::quit();
+        return;
+    }
+
+    VideoManager::instance()->init(rootWindow);
 
     // Image provider for Optical Flow
     _qmlAppEngine->addImageProvider(_qgcImageProviderId, new QGCImageProvider());
@@ -449,7 +457,16 @@ void QGCApplication::_showDelayedAppMessages()
 QQuickWindow *QGCApplication::mainRootWindow()
 {
     if (!_mainRootWindow) {
-        _mainRootWindow = qobject_cast<QQuickWindow*>(_rootQmlObject());
+        QObject *const rootObject = _rootQmlObject();
+        if (!rootObject) {
+            qCCritical(QGCApplicationLog) << "mainRootWindow requested before a root QML object was created";
+            return nullptr;
+        }
+
+        _mainRootWindow = qobject_cast<QQuickWindow*>(rootObject);
+        if (!_mainRootWindow) {
+            qCCritical(QGCApplicationLog) << "Root QML object is not a QQuickWindow:" << rootObject->metaObject()->className();
+        }
     }
 
     return _mainRootWindow;
@@ -645,6 +662,11 @@ bool QGCApplication::event(QEvent *e)
         // On OSX if the user selects Quit from the menu (or Command-Q) the ApplicationWindow does not signal closing. Instead you get a Quit event here only.
         // This in turn causes the standard QGC shutdown sequence to not run. So in this case we close the window ourselves such that the
         // signal is sent and the normal shutdown sequence runs.
+        if (!_mainRootWindow) {
+            qCWarning(QGCApplicationLog) << "Quit event received without a main root window; allowing application to exit directly";
+            return QApplication::event(e);
+        }
+
         const bool forceClose = _mainRootWindow->property("_forceClose").toBool();
         qCDebug(QGCApplicationLog) << "Quit event" << forceClose;
         // forceClose
@@ -663,6 +685,10 @@ bool QGCApplication::event(QEvent *e)
 
 QGCImageProvider *QGCApplication::qgcImageProvider()
 {
+    if (!_qmlAppEngine) {
+        return nullptr;
+    }
+
     return dynamic_cast<QGCImageProvider*>(_qmlAppEngine->imageProvider(_qgcImageProviderId));
 }
 

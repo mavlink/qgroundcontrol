@@ -39,7 +39,15 @@ CPMAddPackage(
         "MAVLINK_VERSION ${QGC_MAVLINK_VERSION}"
 )
 
-if(mavlink_ADDED)
+set(_qgc_mavlink_requirements_file "${mavlink_SOURCE_DIR}/pymavlink/requirements.txt")
+if(EXISTS "${_qgc_mavlink_requirements_file}")
+    file(READ "${_qgc_mavlink_requirements_file}" _qgc_mavlink_requirements_content)
+    string(REPLACE "\n# dev dependencies:\npytest<=7.4.4\nsyrupy; python_version>='3.6'\nwsproto\n" "\n" _qgc_mavlink_requirements_content "${_qgc_mavlink_requirements_content}")
+    file(WRITE "${_qgc_mavlink_requirements_file}" "${_qgc_mavlink_requirements_content}")
+    message(STATUS "QGC: Patched pymavlink requirements for offline-compatible mavgen build")
+endif()
+
+if(TARGET mavlink)
     add_dependencies(${CMAKE_PROJECT_NAME} mavlink)
     target_include_directories(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -56,6 +64,8 @@ if(mavlink_ADDED)
         )
     endif()
 endif()
+
+
 
 # ----------------------------------------------------------------------------
 # LibEvents - MAVLink event handling

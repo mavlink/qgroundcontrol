@@ -24,6 +24,7 @@ MavlinkAction::MavlinkAction(
     const QString &description,
     MAV_CMD mavCmd,
     MAV_COMPONENT compId,
+    bool showError,
     float param1,
     float param2,
     float param3,
@@ -37,6 +38,7 @@ MavlinkAction::MavlinkAction(
     , _description(description)
     , _mavCmd(mavCmd)
     , _compId(compId)
+    , _showError(showError)
     , _params{ param1, param2, param3, param4, param5, param6, param7 }
 {
     // qCDebug(MavlinkActionLog) << Q_FUNC_INFO << this;
@@ -50,7 +52,6 @@ MavlinkAction::~MavlinkAction()
 void MavlinkAction::sendTo(Vehicle *vehicle)
 {
     if (vehicle) {
-        const bool showError = true;
-        vehicle->sendMavCommand(_compId, _mavCmd, showError, _params[0], _params[1], _params[2], _params[3], _params[4], _params[5], _params[6]);
+        vehicle->sendMavCommand(_compId, _mavCmd, _showError, _params[0], _params[1], _params[2], _params[3], _params[4], _params[5], _params[6]);
     }
 };

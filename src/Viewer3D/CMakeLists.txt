@@ -4,8 +4,22 @@
 # @author Omid Esrafilian <esrafilian.omid@gmail.com>
 # ============================================================================
 
-# Only build when 3D viewer is enabled
+# Provide a compatible stub QML module when 3D viewer is disabled so FlyView.qml
+# can still import QGroundControl.Viewer3D on lightweight/debug builds.
 if(NOT QGC_VIEWER3D)
+    qt_add_library(Viewer3DModule STATIC)
+
+    qt_add_qml_module(Viewer3DModule
+        URI QGroundControl.Viewer3D
+        VERSION 1.0
+        RESOURCE_PREFIX /qml
+        QML_FILES
+            Viewer3DStub/Viewer3D.qml
+        IMPORTS
+            QtQuick
+        NO_PLUGIN
+    )
+
     return()
 endif()
 

@@ -42,12 +42,26 @@ void USVPayloadFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_
     Q_UNUSED(vehicle);
 
     switch (message.msgid) {
+    case MAVLINK_MSG_ID_HEARTBEAT:
+        _handleHeartbeat(message);
+        break;
     case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
         _handleNamedValueFloat(message);
         break;
     default:
         break;
     }
+}
+
+void USVPayloadFactGroup::_handleHeartbeat(const mavlink_message_t &message)
+{
+    if (message.compid != MAV_COMP_ID_ONBOARD_COMPUTER) {
+        return;
+    }
+
+    _setTelemetryAvailable(true);
+    _timeoutTimer.start();
+    linkActive()->setRawValue(1);
 }
 
 void USVPayloadFactGroup::_handleNamedValueFloat(const mavlink_message_t &message)
@@ -61,26 +75,38 @@ void USVPayloadFactGroup::_handleNamedValueFloat(const mavlink_message_t &messag
     memcpy(nameBuf, namedValue.name, sizeof(namedValue.name));
     nameBuf[sizeof(namedValue.name)] = '\0';
     const QString name = QString::fromLatin1(nameBuf);
+    bool handled = false;
 
     if (name == QLatin1String("USV_VOLT")) {
         voltage()->setRawValue(namedValue.value);
+        handled = true;
+    } else if (name == QLatin1String("USV_ABS")) {
+        absorbance()->setRawValue(namedValue.value);
+        handled = true;
+    } else if (name == QLatin1String("PUMP_X")) {
+        pumpX()->setRawValue(namedValue.value);
+        handled = true;
+    } else if (name == QLatin1String("PUMP_Y")) {
+        pumpY()->setRawValue(namedValue.value);
+        handled = true;
+    } else if (name == QLatin1String("PUMP_Z")) {
+        pumpZ()->setRawValue(namedValue.value);
+        handled = true;
+    } else if (name == QLatin1String("PUMP_A")) {
+        pumpA()->setRawValue(namedValue.value);
+        handled = true;
+    } else if (name == QLatin1String("USV_STAT")) {
+        status()->setRawValue(static_cast<uint32_t>(namedValue.value));
+        handled = true;
+    } else if (name == QLatin1String("USV_PKT")) {
+        packetCount()->setRawValue(namedValue.value);
+        handled = true;
+    }
+
+    if (handled) {
         _setTelemetryAvailable(true);
         _timeoutTimer.start();
         linkActive()->setRawValue(1);
-    } else if (name == QLatin1String("USV_ABS")) {
-        absorbance()->setRawValue(namedValue.value);
-    } else if (name == QLatin1String("PUMP_X")) {
-        pumpX()->setRawValue(namedValue.value);
-    } else if (name == QLatin1String("PUMP_Y")) {
-        pumpY()->setRawValue(namedValue.value);
-    } else if (name == QLatin1String("PUMP_Z")) {
-        pumpZ()->setRawValue(namedValue.value);
-    } else if (name == QLatin1String("PUMP_A")) {
-        pumpA()->setRawValue(namedValue.value);
-    } else if (name == QLatin1String("USV_STAT")) {
-        status()->setRawValue(static_cast<uint32_t>(namedValue.value));
-    } else if (name == QLatin1String("USV_PKT")) {
-        packetCount()->setRawValue(namedValue.value);
     }
 }
 

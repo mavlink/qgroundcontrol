@@ -154,9 +154,7 @@ if(NOT QGC_DISABLE_PX4_PLUGIN)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AutoPilotPluginsPX4Module)
 endif()
 
-if(QGC_VIEWER3D)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
-endif()
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Viewer3DModule)
 
 if(NOT QGC_AIRLINK_DISABLED)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModule)

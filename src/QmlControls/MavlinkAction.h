@@ -34,6 +34,7 @@ public:
         const QString &description,
         MAV_CMD mavCmd,
         MAV_COMPONENT compId,
+        bool showError,
         float param1,
         float param2,
         float param3,
@@ -55,5 +56,6 @@ private:
     const QString _description;
     const MAV_CMD _mavCmd = MAV_CMD_ENUM_END;
     const MAV_COMPONENT _compId = MAV_COMPONENT_ENUM_END;
+    const bool _showError = true;
     const float _params[7]{};
 };

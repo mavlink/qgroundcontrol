@@ -30,6 +30,7 @@ Rectangle {
     readonly property int _cmdPause:     31012
     readonly property int _cmdResume:    31013
     readonly property int _cmdCalibrate: 31014
+    readonly property int _payloadCompId: 191
 
     // 当前载荷状态（绑定 Fact，确保 valueChanged 能驱动 UI）
     property var payloadStatusFact: {
@@ -68,10 +69,15 @@ Rectangle {
                               payloadStatus === _stCalibrating
     property real _margins:   ScreenTools.defaultFontPixelHeight
 
-    // TODO: compId=1 targets autopilot. Ideally use compId=191 (ONBOARD_COMPUTER).
-    // Current approach works because MAVROS forwards all from-messages.
+    // 链路活跃状态（用于断链降级）
+    property bool _linkOk: {
+        if (!vehicle) return false
+        try { return vehicle.getFact("usvPayload.linkActive").value === 1 }
+        catch(e) { return true }  // Fact 不存在时不降级
+    }
+
     function _send(cmdId) {
-        if (vehicle) vehicle.sendCommand(1, cmdId, true)
+        if (vehicle) vehicle.sendCommand(_payloadCompId, cmdId, false)
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -131,7 +137,7 @@ Rectangle {
             QGCLabel {
                 id: _linkWarnLabel
                 anchors.centerIn: parent
-                text: "数据链路超时"
+                text: "载荷遥测超时，仍可尝试发送命令"
                 color: qgcPal.colorRed
                 font.bold: true
             }
@@ -143,6 +149,7 @@ Rectangle {
             rowSpacing:    ScreenTools.defaultFontPixelHeight * 0.3
             columnSpacing: ScreenTools.defaultFontPixelWidth * 2
             anchors.left: parent.left; anchors.right: parent.right
+            opacity: _linkOk ? 1.0 : 0.4
 
             QGCLabel { text: "检测电压:" }
             QGCLabel {
@@ -168,11 +175,12 @@ Rectangle {
         Rectangle { height: 1; anchors.left: parent.left; anchors.right: parent.right; color: qgcPal.windowShade }
 
         // ===== 泵组角度 =====
-        QGCLabel { text: "泵组角度"; font.pointSize: ScreenTools.smallFontPointSize; color: qgcPal.textFieldText }
+        QGCLabel { text: "泵组角度"; font.pointSize: ScreenTools.smallFontPointSize; color: qgcPal.textFieldText; opacity: _linkOk ? 1.0 : 0.4 }
 
         RowLayout {
             anchors.left: parent.left; anchors.right: parent.right
             spacing: ScreenTools.defaultFontPixelWidth * 0.5
+            opacity: _linkOk ? 1.0 : 0.4
 
             Repeater {
                 model: ["X", "Y", "Z", "A"]
@@ -213,6 +221,7 @@ Rectangle {
             rowSpacing:    ScreenTools.defaultFontPixelHeight * 0.4
             columnSpacing: ScreenTools.defaultFontPixelWidth
             anchors.left: parent.left; anchors.right: parent.right
+            opacity: vehicle ? 1.0 : 0.5
 
             // 开始采样
             QGCButton {
@@ -222,12 +231,24 @@ Rectangle {
                 onClicked: _send(_cmdStart)
             }
 
-            // 停止采样
+            // 停止采样 — 紧急操作，采样/检测/暂停/校准中均可用
             QGCButton {
                 Layout.fillWidth: true
                 text:    "■ 停止"
-                enabled: vehicle && (payloadStatus === _stSampling || payloadStatus === _stDetecting)
+                enabled: vehicle && _isWorking
                 onClicked: _send(_cmdStop)
+
+                background: Rectangle {
+                    color:  parent.enabled ? "#cc3333" : qgcPal.windowShade
+                    radius: ScreenTools.defaultFontPixelWidth * 0.5
+                }
+                contentItem: QGCLabel {
+                    text:                   parent.text
+                    color:                  parent.enabled ? "white" : qgcPal.text
+                    font.bold:              true
+                    horizontalAlignment:    Text.AlignHCenter
+                    verticalAlignment:      Text.AlignVCenter
+                }
             }
 
             // 暂停
@@ -238,11 +259,11 @@ Rectangle {
                 onClicked: _send(_cmdPause)
             }
 
-            // 恢复
+            // 恢复 — 暂停后可用（ROS 侧暂停后 USV_STAT 仍报 1=sampling）
             QGCButton {
                 Layout.fillWidth: true
                 text:    "⏵ 恢复"
-                enabled: vehicle && payloadStatus === _stIdle  // 暂停后回到 idle
+                enabled: vehicle && (payloadStatus === _stSampling || payloadStatus === _stIdle)
                 onClicked: _send(_cmdResume)
             }
 

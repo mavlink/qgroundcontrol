@@ -43,6 +43,7 @@ private slots:
     void _telemetryTimeout();
 
 private:
+    void _handleHeartbeat(const mavlink_message_t &message);
     void _handleNamedValueFloat(const mavlink_message_t &message);
 
     Fact _voltageFact    = Fact(0, QStringLiteral("voltage"),    FactMetaData::valueTypeFloat);

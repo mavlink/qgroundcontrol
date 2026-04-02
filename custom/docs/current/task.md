@@ -1,0 +1,35 @@
+# task
+
+- time: init
+- status: started
+- evidence:
+  - `docs/build-log.md:824-846`
+  - `src/MAVLink/CMakeLists.txt:33-58`
+  - `build/.../mavlink/CMakeLists.txt:30-41`
+- remeber.intake.1: `label=scope|fact=首个失败目标是 _deps/mavlink-build/include/mavlink/all/mavlink.h|impact=QML 不是当前 first failing subcommand|next=修复 MAVLink 生成链`
+- remeber.intake.2: `label=interface|fact=失败命令为 pip install requirements + pymavlink.tools.mavgen|impact=构建依赖 Python 包解析与网络|next=检查 mavlink CMake`
+- remeber.intake.3: `label=risk|fact=requirements 含 syrupy 开发依赖|impact=网络或索引异常会阻塞全量构建|next=剔除非生成必需依赖`
+- remeber.scope.1: `label=file|fact=计划修改 src/MAVLink/CMakeLists.txt 单文件逻辑|impact=跨模块 API 变更=0|next=局部插入 patch`
+- remeber.scope.2: `label=size|fact=预计新增约 20 行 CMake|impact=符合快速可回滚修改|next=精确编辑`
+- remeber.scope.3: `label=guard|fact=patch 需受目标存在与文件存在条件保护|impact=避免影响非 CPM 流程|next=实现 if(EXISTS ...)`
+- remeber.audit.1: `label=upstream|fact=build/cpm_modules/mavlink/CMakeLists.txt 固定执行 pip install -r pymavlink/requirements.txt|impact=仓库本体需在接入层修补 requirements 文件|next=在 src/MAVLink/CMakeLists.txt 回写文件`
+- remeber.audit.2: `label=deps|fact=必需依赖为 fastcrc lxml setuptools wheel|impact=pytest syrupy wsproto 可剔除|next=删除 dev 依赖段`
+- remeber.audit.3: `label=examples|fact=custom-example/cmake/CustomOverrides.cmake 展示 CACHE FORCE 覆盖模式|impact=当前修复继续沿用现有 CMake 覆盖风格|next=保持最小改动`
+- time: implement
+- status: patched
+- diff: `src/MAVLink/CMakeLists.txt +10/-1`
+- evidence_impl:
+  - `src/MAVLink/CMakeLists.txt:42-66`
+  - `git diff -- src/MAVLink/CMakeLists.txt`
+- commands:
+  - `cmake --build ... --target mavlink => exit 1`
+  - `cmake -S ... -B build/... => exit 1`
+- command_notes:
+  - `configure 输出停在 Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR)`
+  - `本次未再次出现 syrupy/No matching distribution 终端输出，但因本机 CMake 重新配置未完成，未能完成全量绿灯验证`
+- remeber.exec.1: `label=patch|fact=在 CPMAddPackage 后读取并回写 ${mavlink_SOURCE_DIR}/pymavlink/requirements.txt|impact=移除开发依赖在线安装阻塞|next=重新生成 build 目录验证`
+- remeber.exec.2: `label=guard|fact=条件从 mavlink_ADDED 调整为 TARGET mavlink|impact=已存在缓存场景也会执行 patch|next=观察重新配置输出`
+- remeber.exec.3: `label=verify|fact=diagnostics 对修改文件返回 0 issue|impact=语法层面无新增 IDE 报错|next=用户侧重跑构建`
+- remeber.docs.1: `label=overview|fact=初始化 custom/docs/current/overview.md|impact=记录根因 KPI 回滚命令|next=补充最终结果`
+- remeber.docs.2: `label=plan|fact=初始化 custom/docs/current/plan.md|impact=固化 affected_files checkpoints verify_commands|next=按验证结果更新`
+- remeber.docs.3: `label=task|fact=task.md 追加实现与验证记录|impact=技术证据可追溯|next=如用户反馈新日志再追加`

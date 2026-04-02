@@ -8,6 +8,7 @@
 #include "USVPlugin.h"
 #include "USVOptions.h"
 #include "USVPayloadFactGroup.h"
+#include "FirmwarePlugin/USVFirmwarePluginFactory.h"
 
 #include "QGCPalette.h"
 #include "QGCMAVLink.h"
@@ -30,6 +31,16 @@
 Q_LOGGING_CATEGORY(USVPluginLog, "USV.Plugin")
 
 Q_APPLICATION_STATIC(USVPlugin, _usvPluginInstance);
+
+namespace {
+
+void registerUSVFirmwarePluginFactory()
+{
+    static USVFirmwarePluginFactory *factory = new USVFirmwarePluginFactory(QCoreApplication::instance());
+    Q_UNUSED(factory);
+}
+
+}
 
 /*===========================================================================*/
 // USVPlugin Implementation
@@ -62,6 +73,8 @@ QGCCorePlugin *USVPlugin::instance()
 void USVPlugin::init()
 {
     qCInfo(USVPluginLog) << "USV Custom Plugin initialized - 无人船专用模式";
+
+    registerUSVFirmwarePluginFactory();
 
     // 加载 USV 专用翻译文件 (覆盖默认翻译中的航空术语)
     _loadUSVTranslations();

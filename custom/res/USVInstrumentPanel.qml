@@ -2,7 +2,7 @@
  *
  * USV Integrated Instrument Panel - 无人船综合仪表盘
  *
- * 整合罗盘、航行状态、姿态监测和遥测数据
+ * 整合罗盘、航行状态和姿态监测
  * 替换默认的 IntegratedCompassAttitude.qml
  *
  ****************************************************************************/
@@ -203,93 +203,14 @@ Item {
                 }
             }
 
-            // 分隔线
-            Rectangle {
-                Layout.fillWidth:   true
-                height:             1
-                color:              qgcPal.text
-                opacity:            0.2
-            }
-
-            // -------- 遥测数据条 --------
-            HorizontalFactValueGrid {
-                id:                     factValueGrid
-                Layout.fillWidth:       true
-                settingsGroup:          factValueGrid.telemetryBarSettingsGroup
-                specificVehicleForCard: null  // null = 跟踪当前活动载具
-            }
         }
 
-        // ========== 右侧：罗盘 + 姿态指示条 ==========
-        Item {
-            id:                 compassContainer
+        // ========== 右侧：罗盘 ==========
+        QGCCompassWidget {
+            id:                 compassWidget
             Layout.alignment:   Qt.AlignVCenter
-            implicitWidth:      compassWidget.width + attitudeColumn.width + _toolsMargin
-            implicitHeight:     compassWidget.height + pitchRow.height + _toolsMargin
-
-            // 罗盘
-            QGCCompassWidget {
-                id:         compassWidget
-                size:       _compassSize
-                vehicle:    control.vehicle
-                anchors.left: parent.left
-            }
-
-            // 横滚指示条 (右侧垂直)
-            Column {
-                id:             attitudeColumn
-                anchors.left:   compassWidget.right
-                anchors.leftMargin: _toolsMargin / 2
-                anchors.verticalCenter: compassWidget.verticalCenter
-                spacing:        2
-
-                Repeater {
-                    model: 20
-                    Rectangle {
-                        width:  4
-                        height: (_compassSize - 20) / 20
-                        radius: 1
-                        color:  {
-                            var normalizedRoll = (roll + 45) / 90
-                            var segmentPos = index / 19
-                            var diff = Math.abs(normalizedRoll - segmentPos)
-                            if (diff < 0.1) {
-                                return isRollCritical ? qgcPal.colorRed :
-                                       (isRollWarning ? qgcPal.colorOrange : qgcPal.colorGreen)
-                            }
-                            return qgcPal.windowShade
-                        }
-                    }
-                }
-            }
-
-            // 俯仰指示条 (底部水平)
-            Row {
-                id:                     pitchRow
-                anchors.top:            compassWidget.bottom
-                anchors.topMargin:      _toolsMargin / 2
-                anchors.horizontalCenter: compassWidget.horizontalCenter
-                spacing:                2
-
-                Repeater {
-                    model: 20
-                    Rectangle {
-                        width:  (_compassSize - 20) / 20
-                        height: 4
-                        radius: 1
-                        color:  {
-                            var normalizedPitch = (pitch + 30) / 60
-                            var segmentPos = index / 19
-                            var diff = Math.abs(normalizedPitch - segmentPos)
-                            if (diff < 0.1) {
-                                return isPitchCritical ? qgcPal.colorRed :
-                                       (isPitchWarning ? qgcPal.colorOrange : qgcPal.colorGreen)
-                            }
-                            return qgcPal.windowShade
-                        }
-                    }
-                }
-            }
+            size:               _compassSize
+            vehicle:            control.vehicle
         }
     }
 }

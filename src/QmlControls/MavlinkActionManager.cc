@@ -113,6 +113,7 @@ void MavlinkActionManager::_loadActionsFile()
             { "mavCmd",         QJsonValue::Double, /* required= */ true },
 
             { "compId",         QJsonValue::Double, /* required= */ false },
+            { "showError",      QJsonValue::Bool,   /* required= */ false },
             { "param1",         QJsonValue::Double, /* required= */ false },
             { "param2",         QJsonValue::Double, /* required= */ false },
             { "param3",         QJsonValue::Double, /* required= */ false },
@@ -133,6 +134,7 @@ void MavlinkActionManager::_loadActionsFile()
         const auto description = actionObj["description"].toString();
         const auto mavCmd = (MAV_CMD)actionObj["mavCmd"].toInt();
         const auto compId = (MAV_COMPONENT)actionObj["compId"].toInt(MAV_COMP_ID_AUTOPILOT1);
+        const auto showError = actionObj["showError"].toBool(true);
         const auto param1 = actionObj["param1"].toDouble(0.0);
         const auto param2 = actionObj["param2"].toDouble(0.0);
         const auto param3 = actionObj["param3"].toDouble(0.0);
@@ -141,7 +143,7 @@ void MavlinkActionManager::_loadActionsFile()
         const auto param6 = actionObj["param6"].toDouble(0.0);
         const auto param7 = actionObj["param7"].toDouble(0.0);
 
-        MavlinkAction *const action = new MavlinkAction(label, description, mavCmd, compId, param1, param2, param3, param4, param5, param6, param7, this);
+        MavlinkAction *const action = new MavlinkAction(label, description, mavCmd, compId, showError, param1, param2, param3, param4, param5, param6, param7, this);
         QQmlEngine::setObjectOwnership(action, QQmlEngine::CppOwnership);
         (void) _actions->append(action);
     }
