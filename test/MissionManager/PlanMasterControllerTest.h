@@ -28,6 +28,19 @@ private slots:
     void _testFileNamesClearedOnRemoveAllFromVehicle();
     void _testSaveUpdatesOriginalFileName();
 
+    // showCreateFromTemplate tests — template selection mode
+    void _testTemplateModeHidesTemplatesOnPlanCreatorSelection();
+    void _testTemplateModeHidesTemplatesOnFileLoad();
+    void _testTemplateModeRestoredOnRemoveAll();
+    void _testTemplateModeRestoredOnIndividualItemRemoval();
+
+    // showCreateFromTemplate tests — manual creation mode
+    void _testManualCreationHidesTemplates();
+    void _testManualCreationRestoredOnRemoveAll();
+    void _testManualCreationRestoredOnIndividualItemRemoval();
+
+    void _testPlanCreatorsFiltered();
+
 private:
     enum DirtyScenario {
         UploadPreservesSaveDirtyTrue,

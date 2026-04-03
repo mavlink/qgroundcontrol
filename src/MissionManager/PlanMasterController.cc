@@ -9,10 +9,7 @@
 #include "JsonParsing.h"
 #include "MissionManager.h"
 #include "KMLPlanDomDocument.h"
-#include "SurveyPlanCreator.h"
-#include "StructureScanPlanCreator.h"
-#include "CorridorScanPlanCreator.h"
-#include "BlankPlanCreator.h"
+#include "PlanCreator.h"
 #include "QmlObjectListModel.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
@@ -40,7 +37,7 @@ PlanMasterController::PlanMasterController(QObject* parent)
     _commonInit();
 }
 
-#ifdef QT_DEBUG
+#ifdef QGC_UNITTEST_BUILD
 PlanMasterController::PlanMasterController(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, QObject* parent)
     : QObject               (parent)
     , _multiVehicleMgr      (MultiVehicleManager::instance())
@@ -64,9 +61,7 @@ void PlanMasterController::_commonInit(void)
     connect(&_geoFenceController,   &GeoFenceController::containsItemsChanged,      this, &PlanMasterController::containsItemsChanged);
     connect(&_rallyPointController, &RallyPointController::containsItemsChanged,    this, &PlanMasterController::containsItemsChanged);
 
-    connect(&_missionController,    &MissionController::containsItemsChanged,       this, &PlanMasterController::_updateReadyForPlanCreation);
-    connect(&_geoFenceController,   &GeoFenceController::containsItemsChanged,      this, &PlanMasterController::_updateReadyForPlanCreation);
-    connect(&_rallyPointController, &RallyPointController::containsItemsChanged,    this, &PlanMasterController::_updateReadyForPlanCreation);
+    connect(this, &PlanMasterController::containsItemsChanged, this, &PlanMasterController::_updateShowCreateFromTemplate);
 
     connect(&_missionController,    &MissionController::syncInProgressChanged,      this, &PlanMasterController::syncInProgressChanged);
     connect(&_geoFenceController,   &GeoFenceController::syncInProgressChanged,     this, &PlanMasterController::syncInProgressChanged);
@@ -554,7 +549,7 @@ void PlanMasterController::removeAll(void)
     if (_offline) {
         _clearFileNames();
     }
-    setManualCreation(false);
+    setUserSelectedManualCreation(false);
 }
 
 void PlanMasterController::removeAllFromVehicle(void)
@@ -572,7 +567,7 @@ void PlanMasterController::removeAllFromVehicle(void)
     } else {
         qCCritical(PlanMasterControllerLog) << "PlanMasterController::removeAllFromVehicle called while offline";
     }
-    setManualCreation(false);
+    setUserSelectedManualCreation(false);
 }
 
 bool PlanMasterController::containsItems(void) const
@@ -580,12 +575,18 @@ bool PlanMasterController::containsItems(void) const
     return _missionController.containsItems() || _geoFenceController.containsItems() || _rallyPointController.containsItems();
 }
 
-void PlanMasterController::_updateReadyForPlanCreation(void)
+void PlanMasterController::_updateShowCreateFromTemplate(void)
 {
-    const bool ready = readyForPlanCreation();
-    if (ready != _readyForPlanCreation) {
-        _readyForPlanCreation = ready;
-        emit readyForPlanCreationChanged();
+    // When the plan becomes empty, always return to template-selection mode regardless
+    // of how the items were removed.
+    if (!containsItems() && _userSelectedManualCreation) {
+        _userSelectedManualCreation = false;
+        emit userSelectedManualCreationChanged();
+    }
+    const bool show = showCreateFromTemplate();
+    if (show != _showCreateFromTemplate) {
+        _showCreateFromTemplate = show;
+        emit showCreateFromTemplateChanged();
     }
 }
 
@@ -783,25 +784,38 @@ void PlanMasterController::_setDirtyStates(bool dirtyForSave, bool dirtyForUploa
 
 void PlanMasterController::_updatePlanCreatorsList(void)
 {
-    if (!_flyView) {
-        if (!_planCreators) {
-            _planCreators = new QmlObjectListModel(this);
-            _planCreators->append(new BlankPlanCreator(this, this));
-            _planCreators->append(new SurveyPlanCreator(this, this));
-            _planCreators->append(new CorridorScanPlanCreator(this, this));
-            emit planCreatorsChanged(_planCreators);
-        }
+    if (_flyView) {
+        return;
+    }
 
-        if (_managerVehicle->fixedWing()) {
-            if (_planCreators->count() == 4) {
-                _planCreators->removeAt(_planCreators->count() - 1);
-            }
+    const auto vehicleClass = _managerVehicle->vehicleClass();
+
+    // Only rebuild if the vehicle class actually changed
+    if (_planCreators && _planCreatorsVehicleClass == vehicleClass) {
+        return;
+    }
+
+    if (!_planCreators) {
+        _planCreators = new QmlObjectListModel(this);
+    } else {
+        _planCreators->clearAndDeleteContents();
+    }
+
+    _planCreatorsVehicleClass = vehicleClass;
+
+    // Allow custom builds to provide their own list of plan creators
+    const QList<PlanCreator*> creators = QGCCorePlugin::instance()->planCreators(this);
+
+    // Filter by vehicle class and add to the model
+    for (PlanCreator* creator : creators) {
+        if (creator->supportsVehicleClass(vehicleClass)) {
+            _planCreators->append(creator);
         } else {
-            if (_planCreators->count() != 4) {
-                _planCreators->append(new StructureScanPlanCreator(this, this));
-            }
+            delete creator;
         }
     }
+
+    emit planCreatorsChanged(_planCreators);
 }
 
 void PlanMasterController::showPlanFromManagerVehicle(void)
@@ -817,11 +831,18 @@ void PlanMasterController::showPlanFromManagerVehicle(void)
     }
 }
 
-void PlanMasterController::setManualCreation(bool manualCreation)
+void PlanMasterController::setUserSelectedManualCreation(bool userSelectedManualCreation)
 {
-    if (_manualCreation != manualCreation) {
-        _manualCreation = manualCreation;
-        emit manualCreationChanged();
+    if (_userSelectedManualCreation != userSelectedManualCreation) {
+        _userSelectedManualCreation = userSelectedManualCreation;
+        emit userSelectedManualCreationChanged();
+        // Update showCreateFromTemplate directly — do not go through _updateShowCreateFromTemplate,
+        // which would immediately auto-clear the flag if the plan happens to be empty right now.
+        const bool show = showCreateFromTemplate();
+        if (show != _showCreateFromTemplate) {
+            _showCreateFromTemplate = show;
+            emit showCreateFromTemplateChanged();
+        }
     }
 }
 

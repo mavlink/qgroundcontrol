@@ -8,6 +8,7 @@
 
 class FactMetaData;
 class LinkInterface;
+class PlanCreator;
 class PlanMasterController;
 class QFile;
 class QGCOptions;
@@ -137,6 +138,12 @@ public:
     /// @param complexMissionItemNames Default set of complex items
     /// @return Complex items to be made available to user
     virtual QStringList complexMissionItemNames(Vehicle *vehicle, const QStringList &complexMissionItemNames) { Q_UNUSED(vehicle); return complexMissionItemNames; }
+
+    /// Returns the list of plan creators to show when creating a new plan.
+    /// Custom builds can override to provide their own set of plan creators.
+    /// @param planMasterController The plan master controller for the plan being created
+    /// @return Plan creators to show. Caller takes ownership.
+    virtual QList<PlanCreator*> planCreators(PlanMasterController *planMasterController);
 
     /// Returns the standard list of first run prompt ids for possible display. Actual display is based on the
     /// current AppSettings::firstRunPromptIds value. The order of this list also determines the order the prompts

@@ -284,7 +284,7 @@ Item {
 
                 switch (_editingLayer) {
                 case _layerMission:
-                    if (_planMasterController.readyForPlanCreation) {
+                    if (_planMasterController.showCreateFromTemplate) {
                         _missionController.setHomePosition(coordinate)
                     } else if (_addROIOnClick) {
                         _addROIOnClick = false

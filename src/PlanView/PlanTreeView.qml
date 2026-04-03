@@ -27,7 +27,17 @@ TreeView {
     readonly property int _layerMission: 1
     readonly property int _layerFence:   2
     readonly property int _layerRally:   3
-    readonly property bool _createNewPlanMode: planMasterController.readyForPlanCreation
+    readonly property bool _createNewPlanMode: planMasterController.showCreateFromTemplate
+
+    on_CreateNewPlanModeChanged: {
+        if (_createNewPlanMode) {
+            var planFileRow = _rowFor(_missionController.planFileGroupIndex)
+            if (!root.isExpanded(planFileRow)) {
+                root.expand(planFileRow)
+            }
+            root.contentY = 0
+        }
+    }
 
     property var _missionController: planMasterController.missionController
     property var _geoFenceController: planMasterController.geoFenceController
