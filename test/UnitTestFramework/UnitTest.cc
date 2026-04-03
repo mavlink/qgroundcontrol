@@ -141,6 +141,8 @@ constexpr LabelMapping kLabelMappings[] = {
     {TestLabel::Joystick,       "joystick"},
     {TestLabel::AnalyzeView,    "analyzeview"},
     {TestLabel::Terrain,        "terrain"},
+    {TestLabel::SITL,           "sitl"},
+    {TestLabel::MAVLinkProtocol,"mavlinkprotocol"},
 };
 // clang-format on
 
