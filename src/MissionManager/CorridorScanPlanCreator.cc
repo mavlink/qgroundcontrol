@@ -1,9 +1,10 @@
 #include "CorridorScanPlanCreator.h"
 #include "PlanMasterController.h"
+#include "QGCMAVLink.h"
 #include "CorridorScanComplexItem.h"
 
-CorridorScanPlanCreator::CorridorScanPlanCreator(PlanMasterController* planMasterController, QObject* parent)
-    : PlanCreator(planMasterController, CorridorScanComplexItem::name, QStringLiteral("/qmlimages/PlanCreator/CorridorScanPlanCreator.png"), parent)
+CorridorScanPlanCreator::CorridorScanPlanCreator(PlanMasterController* planMasterController)
+    : PlanCreator(planMasterController, CorridorScanComplexItem::name, QStringLiteral("/qmlimages/PlanCreator/CorridorScanPlanCreator.png"), QGCMAVLink::allVehicleClasses())
 {
 
 }
