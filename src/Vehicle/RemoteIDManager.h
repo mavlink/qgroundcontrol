@@ -79,6 +79,9 @@ private slots:
 
 private:
     void _handleArmStatus(mavlink_message_t& message);
+    void _handleOperatorIDChanged(const QVariant& value);
+    void _refreshOperatorIDState();
+    void _setOperatorIDGood(bool operatorIDGood);
 
     // Self ID
     void        _sendSelfIDMsg ();
@@ -113,6 +116,7 @@ private:
     bool    _basicIDGood;
     bool    _GCSBasicIDValid;
     bool    _operatorIDGood;
+    bool    _updatingOperatorID = false;
 
     bool        _emergencyDeclared;
     QDateTime   _lastGeoPositionTimeStamp;

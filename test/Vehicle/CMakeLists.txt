@@ -19,6 +19,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MAVLinkLogManagerTest.h
         APMAirframeComponentControllerTest.cc
         APMAirframeComponentControllerTest.h
+        RemoteIDManagerTest.cc
+        RemoteIDManagerTest.h
         RequestMessageTest.cc
         RequestMessageTest.h
         SendMavCommandWithHandlerTest.cc

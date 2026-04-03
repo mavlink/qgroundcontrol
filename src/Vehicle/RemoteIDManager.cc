@@ -53,17 +53,14 @@ RemoteIDManager::RemoteIDManager(Vehicle* vehicle)
     connect(_settings->basicID(), &Fact::rawValueChanged, this, &RemoteIDManager::_checkGCSBasicID);
     connect(_settings->basicIDType(), &Fact::rawValueChanged, this, &RemoteIDManager::_checkGCSBasicID);
     connect(_settings->basicIDUaType(), &Fact::rawValueChanged, this, &RemoteIDManager::_checkGCSBasicID);
+    connect(_settings->operatorID(), &Fact::rawValueChanged, this, &RemoteIDManager::_handleOperatorIDChanged);
+    connect(_settings->operatorIDType(), &Fact::rawValueChanged, this, [this]() { _refreshOperatorIDState(); });
+    connect(_settings->region(), &Fact::rawValueChanged, this, [this]() { _refreshOperatorIDState(); });
 
     // Assign vehicle sysid and compid. GCS must target these messages to autopilot, and autopilot will redirect them to RID device
     _targetSystem = _vehicle->id();
     _targetComponent = _vehicle->compId();
-
-    if (_settings->operatorIDValid()->rawValue() == true || (_settings->region()->rawValue().toInt() != Region::EU && _settings->operatorID()->rawValue().toString().length() > 0)) {
-        // If it was already checked, we can flag this as good to go.
-        // We don't do a fresh verification because we don't store the private part of the ID.
-        _operatorIDGood = true;
-        emit operatorIDGoodChanged();
-    }
+    _refreshOperatorIDState();
 }
 
 void RemoteIDManager::mavlinkMessageReceived(mavlink_message_t& message )
@@ -391,34 +388,59 @@ void RemoteIDManager::_checkGCSBasicID()
 
 void RemoteIDManager::checkOperatorID(const QString& operatorID)
 {
-    // We overwrite the fact that is also set by the text input but we want to update
-    // after every letter rather than when editing is done.
-    // We check whether it actually changed to avoid triggering this on startup.
-    if (operatorID != _settings->operatorID()->rawValueString()) {
-        _settings->operatorIDValid()->setRawValue(_isEUOperatorIDValid(operatorID));
+    const bool operatorIDValid = (operatorID.length() > 16) && _isEUOperatorIDValid(operatorID);
+    if (_settings->operatorIDValid()->rawValue().toBool() != operatorIDValid) {
+        _settings->operatorIDValid()->setRawValue(operatorIDValid);
     }
 }
 
 void RemoteIDManager::setOperatorID()
 {
-    QString operatorID = _settings->operatorID()->rawValue().toString();
+    _refreshOperatorIDState();
+}
 
-    if (_settings->region()->rawValue().toInt() == Region::EU) {
-        // Save for next time because we don't save the private part,
-        // so we can't re-verify next time and just trust the value
-        // in the settings.
-        _operatorIDGood = _settings->operatorIDValid()->rawValue() == true;
-        if (_operatorIDGood) {
-            // Strip private part
-            _settings->operatorID()->setRawValue(operatorID.sliced(0, 16));
-        }
-
-    } else {
-        // Otherwise, we just check if there is anything entered
-        _operatorIDGood =
-            (!operatorID.isEmpty() && (_settings->operatorIDType()->rawValue().toInt() >= 0));
+void RemoteIDManager::_handleOperatorIDChanged(const QVariant& value)
+{
+    if (_updatingOperatorID) {
+        return;
     }
 
+    const QString operatorID = value.toString();
+    const bool operatorIDValid = (operatorID.length() > 16) && _isEUOperatorIDValid(operatorID);
+    if (_settings->operatorIDValid()->rawValue().toBool() != operatorIDValid) {
+        _settings->operatorIDValid()->setRawValue(operatorIDValid);
+    }
+
+    _refreshOperatorIDState();
+}
+
+void RemoteIDManager::_refreshOperatorIDState()
+{
+    const QString operatorID = _settings->operatorID()->rawValue().toString();
+    const bool isEURegion = (_settings->region()->rawValue().toInt() == Region::EU);
+    const bool operatorIDValid = _settings->operatorIDValid()->rawValue().toBool();
+
+    if (isEURegion && operatorIDValid && (operatorID.length() > 16)) {
+        // Keep only the public 16-character EU operator ID once a full value has been validated.
+        _updatingOperatorID = true;
+        _settings->operatorID()->setRawValue(operatorID.sliced(0, 16));
+        _updatingOperatorID = false;
+    }
+
+    const bool operatorIDGood = isEURegion
+        ? operatorIDValid
+        : (!operatorID.isEmpty() && (_settings->operatorIDType()->rawValue().toInt() >= 0));
+
+    _setOperatorIDGood(operatorIDGood);
+}
+
+void RemoteIDManager::_setOperatorIDGood(bool operatorIDGood)
+{
+    if (_operatorIDGood == operatorIDGood) {
+        return;
+    }
+
+    _operatorIDGood = operatorIDGood;
     emit operatorIDGoodChanged();
 }
 
