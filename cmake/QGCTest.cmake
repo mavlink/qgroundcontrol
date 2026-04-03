@@ -25,6 +25,7 @@ set(QGC_TEST_TIMEOUT_UNIT 60 CACHE STRING "Timeout for unit tests (seconds)")
 set(QGC_TEST_TIMEOUT_INTEGRATION 120 CACHE STRING "Timeout for integration tests (seconds)")
 set(QGC_TEST_TIMEOUT_SLOW 180 CACHE STRING "Timeout for slow tests (seconds)")
 set(QGC_TEST_TIMEOUT_DEFAULT 90 CACHE STRING "Default test timeout (seconds)")
+set(QGC_TEST_TIMEOUT_SITL 300 CACHE STRING "Timeout for SITL integration tests (seconds)")
 
 # ----------------------------------------------------------------------------
 # Convenience Targets
@@ -65,6 +66,13 @@ add_custom_target(check-ci
     VERBATIM
 )
 
+add_custom_target(check-sitl
+    COMMAND ${CMAKE_CTEST_COMMAND} -L SITL --output-on-failure
+    USES_TERMINAL
+    COMMENT "Running SITL integration tests"
+    VERBATIM
+)
+
 # Category-specific targets
 foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
     string(TOLOWER ${_category} _target_suffix)
@@ -77,7 +85,7 @@ foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
 endforeach()
 
 # Collect all check targets for build dependency injection
-set(_qgc_check_targets check check-unit check-integration check-fast check-ci)
+set(_qgc_check_targets check check-unit check-integration check-fast check-ci check-sitl)
 foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
     string(TOLOWER ${_category} _target_suffix)
     list(APPEND _qgc_check_targets check-${_target_suffix})
@@ -123,6 +131,8 @@ function(add_qgc_test test_name)
     # Determine timeout based on labels or explicit value
     if(ARG_TIMEOUT)
         set(_timeout ${ARG_TIMEOUT})
+    elseif("SITL" IN_LIST ARG_LABELS)
+        set(_timeout ${QGC_TEST_TIMEOUT_SITL})
     elseif("Slow" IN_LIST ARG_LABELS)
         set(_timeout ${QGC_TEST_TIMEOUT_SLOW})
     elseif("Integration" IN_LIST ARG_LABELS)

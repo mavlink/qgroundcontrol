@@ -132,7 +132,7 @@ jobs:
           junit-output: junit-results-linux-${{ matrix.arch }}.xml
           ctest-output: test-output-linux-${{ matrix.arch }}.txt
           include-labels: 'Unit|Integration'
-          exclude-labels: 'Flaky|Network'
+          exclude-labels: 'Flaky|Network|SITL'
 
       - name: Report Test Results
         if: always() && !cancelled() && matrix.build_type == 'Debug'
@@ -455,4 +455,91 @@ jobs:
 
           sys.exit(1 if failed else 0)
           PY
+
+  px4-sitl-test:
+    name: PX4 SITL Integration Tests
+    needs: [changes]
+    if: >-
+      always() && !cancelled() &&
+      (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    continue-on-error: true
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Debug
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Pull PX4 SITL image
+        run: |
+          DIGEST=$(cat .github/px4-sitl-digest.txt)
+          echo "Pulling px4io/px4-sitl-sih@${DIGEST}"
+          docker pull "px4io/px4-sitl-sih@${DIGEST}"
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          testing: 'true'
+          extra-args: '-DQGC_SITL_TESTS=ON'
+
+      - name: Build
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+
+      - name: Run SITL Tests
+        uses: ./.github/actions/run-unit-tests
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-sitl.xml
+          ctest-output: test-output-sitl.txt
+          include-labels: 'SITL'
+          exclude-labels: 'Flaky'
+          parallel: '1'
+        env:
+          PX4_SITL_IMAGE: px4io/px4-sitl-sih
+
+      - name: Report Test Results
+        if: always() && !cancelled()
+        uses: ./.github/actions/test-report
+        with:
+          name: PX4 SITL Tests
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-results-sitl.xml
+          output-file: test-output-sitl.txt
+          artifact-name: test-results-sitl
+          retention-days: 7
+          trunk-org-slug: ${{ vars.TRUNK_ORG_SLUG }}
+          trunk-token: ${{ secrets.TRUNK_TOKEN }}
+
+      - name: Upload PX4 SITL logs
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: px4-sitl-logs
+          path: ${{ runner.temp }}/build/sitl-logs/
+          retention-days: 7
+          if-no-files-found: ignore
 

@@ -36,6 +36,7 @@ option(QGC_ENABLE_WERROR "Treat compiler warnings as errors for QGC source code"
 
 # Debug-dependent options
 cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+option(QGC_SITL_TESTS "Build SITL integration tests (requires Docker + PX4 SITL container)" OFF)
 cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
 option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)

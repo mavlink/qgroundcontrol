@@ -34,6 +34,8 @@ enum class TestLabel
     Joystick = 1 << 9,        ///< Joystick/controller tests
     AnalyzeView = 1 << 10,    ///< Log analysis and geo-tagging tests
     Terrain = 1 << 11,        ///< Terrain query and tile tests
+    SITL = 1 << 12,            ///< SITL integration tests (requires Docker + PX4 container)
+    MAVLinkProtocol = 1 << 13, ///< MAVLink protocol-level tests against real autopilot
 };
 Q_DECLARE_FLAGS(TestLabels, TestLabel)
 Q_DECLARE_OPERATORS_FOR_FLAGS(TestLabels)

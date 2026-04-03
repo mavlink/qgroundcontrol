@@ -315,3 +315,8 @@ add_qgc_test(RequestMetaDataTypeStateMachineTest LABELS Integration Vehicle RESO
 add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(SendMavCommandWithSignallingTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
+
+# ----------------------------------------------------------------------------
+# SITL Integration Tests (requires Docker + PX4 SITL container)
+# ----------------------------------------------------------------------------
+add_subdirectory(SITL)
