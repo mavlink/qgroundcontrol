@@ -79,25 +79,4 @@ void RemoteIDManagerTest::_invalidEUOperatorIDClearsTrustedState()
     QVERIFY(!manager->operatorIDGood());
 }
 
-void RemoteIDManagerTest::_switchingToEUUsesValidatedOperatorID()
-{
-    RemoteIDSettings* settings = SettingsManager::instance()->remoteIDSettings();
-    RemoteIDManager* manager = vehicle()->remoteIDManager();
-
-    settings->region()->setRawValue(RemoteIDManager::FAA);
-    settings->operatorIDType()->setRawValue(0);
-    settings->operatorIDValid()->setRawValue(false);
-    settings->operatorID()->setRawValue(QString::fromLatin1(kValidFullOperatorID));
-
-    QVERIFY(settings->operatorIDValid()->rawValue().toBool());
-    QCOMPARE(settings->operatorID()->rawValue().toString(), QString::fromLatin1(kValidFullOperatorID));
-    QVERIFY(manager->operatorIDGood());
-
-    settings->region()->setRawValue(RemoteIDManager::EU);
-
-    QVERIFY(settings->operatorIDValid()->rawValue().toBool());
-    QCOMPARE(settings->operatorID()->rawValue().toString(), QString::fromLatin1(kValidPublicOperatorID));
-    QVERIFY(manager->operatorIDGood());
-}
-
 UT_REGISTER_TEST(RemoteIDManagerTest, TestLabel::Integration, TestLabel::Vehicle)

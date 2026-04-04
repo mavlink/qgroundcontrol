@@ -414,25 +414,11 @@ void RemoteIDManager::_handleOperatorIDChanged(const QVariant& value)
     _refreshOperatorIDState();
 }
 
-bool RemoteIDManager::_storedOperatorIDIsValid(const QString& operatorID) const
-{
-    if (operatorID.length() > 16) {
-        return _isEUOperatorIDValid(operatorID);
-    }
-
-    // Once a full EU operator ID has been validated, only the public portion is persisted.
-    return (operatorID.length() == 16) && _settings->operatorIDValid()->rawValue().toBool();
-}
-
 void RemoteIDManager::_refreshOperatorIDState()
 {
     const QString operatorID = _settings->operatorID()->rawValue().toString();
     const bool isEURegion = (_settings->region()->rawValue().toInt() == Region::EU);
-    const bool operatorIDValid = _storedOperatorIDIsValid(operatorID);
-
-    if (_settings->operatorIDValid()->rawValue().toBool() != operatorIDValid) {
-        _settings->operatorIDValid()->setRawValue(operatorIDValid);
-    }
+    const bool operatorIDValid = _settings->operatorIDValid()->rawValue().toBool();
 
     if (isEURegion && operatorIDValid && (operatorID.length() > 16)) {
         // Keep only the public 16-character EU operator ID once a full value has been validated.

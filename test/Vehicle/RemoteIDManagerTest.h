@@ -20,7 +20,6 @@ private slots:
 
     void _validEUOperatorIDIsSanitized();
     void _invalidEUOperatorIDClearsTrustedState();
-    void _switchingToEUUsesValidatedOperatorID();
 
 private:
     QVariant _savedOperatorID;

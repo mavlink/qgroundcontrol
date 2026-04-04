@@ -81,7 +81,6 @@ private:
     void _handleArmStatus(mavlink_message_t& message);
     void _handleOperatorIDChanged(const QVariant& value);
     void _refreshOperatorIDState();
-    bool _storedOperatorIDIsValid(const QString& operatorID) const;
     void _setOperatorIDGood(bool operatorIDGood);
 
     // Self ID
