@@ -50,16 +50,30 @@ QList<QGCMAVLink::FirmwareClass_t> FirmwarePluginManager::supportedFirmwareClass
 QList<QGCMAVLink::VehicleClass_t> FirmwarePluginManager::supportedVehicleClasses(QGCMAVLink::FirmwareClass_t firmwareClass)
 {
     QList<QGCMAVLink::VehicleClass_t> vehicleClasses;
-    const FirmwarePluginFactory *const factory = _findPluginFactory(firmwareClass);
+    const QList<FirmwarePluginFactory*> factoryList = FirmwarePluginFactoryRegister::instance()->pluginFactories();
 
-    if (factory) {
-        vehicleClasses = factory->supportedVehicleClasses();
-    } else if (firmwareClass == QGCMAVLink::FirmwareClassGeneric) {
-        // Generic supports all specific vehicle class
-        vehicleClasses = QGCMAVLink::allVehicleClasses();
-        (void) vehicleClasses.removeOne(QGCMAVLink::VehicleClassGeneric);
-    } else {
-        qCWarning(FirmwarePluginManagerLog) << "Request for unknown firmware plugin factory" << firmwareClass;
+    for (int i = factoryList.count() - 1; i >= 0; --i) {
+        const FirmwarePluginFactory *const factory = factoryList[i];
+        if (!factory->supportedFirmwareClasses().contains(firmwareClass)) {
+            continue;
+        }
+
+        const QList<QGCMAVLink::VehicleClass_t> supportedVehicleClasses = factory->supportedVehicleClasses();
+        for (const QGCMAVLink::VehicleClass_t vehicleClass : supportedVehicleClasses) {
+            if (!vehicleClasses.contains(vehicleClass)) {
+                vehicleClasses.append(vehicleClass);
+            }
+        }
+    }
+
+    if (vehicleClasses.isEmpty()) {
+        if (firmwareClass == QGCMAVLink::FirmwareClassGeneric) {
+            // Generic supports all specific vehicle class
+            vehicleClasses = QGCMAVLink::allVehicleClasses();
+            (void) vehicleClasses.removeOne(QGCMAVLink::VehicleClassGeneric);
+        } else {
+            qCWarning(FirmwarePluginManagerLog) << "Request for unknown firmware plugin factory" << firmwareClass;
+        }
     }
 
     return vehicleClasses;
@@ -67,7 +81,9 @@ QList<QGCMAVLink::VehicleClass_t> FirmwarePluginManager::supportedVehicleClasses
 
 FirmwarePlugin *FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType)
 {
-    FirmwarePluginFactory *const factory = _findPluginFactory(firmwareType);
+    const QGCMAVLink::FirmwareClass_t firmwareClass = QGCMAVLink::firmwareClass(firmwareType);
+    const QGCMAVLink::VehicleClass_t vehicleClass = QGCMAVLink::vehicleClass(vehicleType);
+    FirmwarePluginFactory *const factory = _findPluginFactory(firmwareClass, vehicleClass);
     FirmwarePlugin *plugin = nullptr;
 
     if (factory) {
@@ -84,15 +100,27 @@ FirmwarePlugin *FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT 
     return plugin;
 }
 
-FirmwarePluginFactory *FirmwarePluginManager::_findPluginFactory(QGCMAVLink::FirmwareClass_t firmwareClass)
+FirmwarePluginFactory *FirmwarePluginManager::_findPluginFactory(QGCMAVLink::FirmwareClass_t firmwareClass,
+                                                                 QGCMAVLink::VehicleClass_t vehicleClass)
 {
     const QList<FirmwarePluginFactory*> factoryList = FirmwarePluginFactoryRegister::instance()->pluginFactories();
+    FirmwarePluginFactory *firmwareMatch = nullptr;
 
-    for (FirmwarePluginFactory *factory: factoryList) {
-        if (factory->supportedFirmwareClasses().contains(firmwareClass)) {
+    for (int i = factoryList.count() - 1; i >= 0; --i) {
+        FirmwarePluginFactory *const factory = factoryList[i];
+        if (!factory->supportedFirmwareClasses().contains(firmwareClass)) {
+            continue;
+        }
+
+        if (!firmwareMatch) {
+            firmwareMatch = factory;
+        }
+
+        const QList<QGCMAVLink::VehicleClass_t> supportedVehicleClasses = factory->supportedVehicleClasses();
+        if (supportedVehicleClasses.contains(vehicleClass)) {
             return factory;
         }
     }
 
-    return nullptr;
+    return firmwareMatch;
 }

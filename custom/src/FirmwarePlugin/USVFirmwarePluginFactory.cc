@@ -21,8 +21,6 @@ USVFirmwarePluginFactory::USVFirmwarePluginFactory(QObject *parent)
 
 USVFirmwarePluginFactory::~USVFirmwarePluginFactory()
 {
-    delete _arduPilotPlugin;
-    delete _px4Plugin;
 }
 
 QList<QGCMAVLink::FirmwareClass_t> USVFirmwarePluginFactory::supportedFirmwareClasses() const

@@ -64,7 +64,7 @@ QMap<QString, FactGroup*>* USVArduPilotFirmwarePlugin::factGroups()
 USVPX4FirmwarePlugin::USVPX4FirmwarePlugin(QObject *parent)
     : PX4FirmwarePlugin()
 {
-    Q_UNUSED(parent)
+    setParent(parent);
     _nameToFactGroupMap["usvPayload"] = &_payloadFactGroup;
     qCDebug(USVFirmwarePluginLog) << "USVPX4FirmwarePlugin created";
 }

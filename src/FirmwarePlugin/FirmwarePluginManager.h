@@ -49,7 +49,8 @@ public:
     FirmwarePlugin *firmwarePluginForAutopilot(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType);
 
 private:
-    FirmwarePluginFactory *_findPluginFactory(QGCMAVLink::FirmwareClass_t firmwareClass);
+    FirmwarePluginFactory *_findPluginFactory(QGCMAVLink::FirmwareClass_t firmwareClass,
+                                              QGCMAVLink::VehicleClass_t vehicleClass = QGCMAVLink::VehicleClassGeneric);
 
     FirmwarePlugin *_genericFirmwarePlugin = nullptr;
     QList<QGCMAVLink::FirmwareClass_t> _supportedFirmwareClasses;

@@ -439,7 +439,16 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     if (message.sysid != _id && message.sysid != 0) {
         // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
         if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link))) {
-            return;
+            // USV: Allow companion computer messages (sysid != FCU) to reach FactGroups.
+            // The bridge uses sysid=2 so ArduPilot forwards them via telemetry radio.
+            // Without this exception, NAMED_VALUE_FLOAT from the payload never reaches USVPayloadFactGroup.
+            const bool isCompanionPayloadMsg =
+                _vehicleLinkManager->containsLink(link) &&
+                (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT ||
+                 (message.msgid == MAVLINK_MSG_ID_HEARTBEAT && message.compid == 191));
+            if (!isCompanionPayloadMsg) {
+                return;
+            }
         }
     }
 

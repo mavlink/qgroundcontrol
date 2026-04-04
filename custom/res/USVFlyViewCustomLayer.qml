@@ -1,15 +1,8 @@
 /****************************************************************************
  *
- * USV Fly View Custom Layer - 无人船飞行视图自定义层
- *
- * 包含：
- * - 右下角：USV 综合仪表盘（罗盘 + 航行状态 + 姿态监测）
- * - 左侧：载荷控制面板
- * - 顶部：姿态危险警告横幅
- * - 底部居中：采样状态胶囊
+ * USV Fly View Custom Layer
  *
  ****************************************************************************/
-import USV 1.0
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -18,20 +11,31 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// @brief 无人船飞行视图自定义层
 Item {
     id: _root
 
-    // ========== 必需的属性 - 与 QGC 原生接口保持一致 ==========
     property var parentToolInsets
     property var totalToolInsets:   _toolInsets
     property var mapControl
 
-    // 更新边距以适应左下角的仪表盘
+    property var  activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property real _toolsMargin: ScreenTools.defaultFontPixelWidth * 0.75
+
+    // 姿态 - 安全访问 rawValue
+    property real roll:  (activeVehicle && activeVehicle.roll  && activeVehicle.roll.rawValue  !== undefined) ? activeVehicle.roll.rawValue  : 0
+    property real pitch: (activeVehicle && activeVehicle.pitch && activeVehicle.pitch.rawValue !== undefined) ? activeVehicle.pitch.rawValue : 0
+    property bool isAttitudeCritical: Math.abs(roll) > 25 || Math.abs(pitch) > 20
+
+    // Fact 缓存
+    property bool _hasCapsulePayload: activeVehicle && activeVehicle.factGroupNames.indexOf("usvPayload") >= 0
+    property var  _capsuleStatusFact: _hasCapsulePayload ? activeVehicle.getFact("usvPayload.status") : null
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
     QGCToolInsets {
         id:                     _toolInsets
-        leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
-        leftEdgeCenterInset:    parentToolInsets.leftEdgeCenterInset
+        leftEdgeTopInset:       Math.max(parentToolInsets.leftEdgeTopInset, payloadPanel.visible ? payloadPanel.x + payloadPanel.width + _toolsMargin : 0)
+        leftEdgeCenterInset:    Math.max(parentToolInsets.leftEdgeCenterInset, payloadPanel.visible ? payloadPanel.x + payloadPanel.width + _toolsMargin : 0)
         leftEdgeBottomInset:    parentToolInsets.leftEdgeBottomInset
         rightEdgeTopInset:      parentToolInsets.rightEdgeTopInset
         rightEdgeCenterInset:   parentToolInsets.rightEdgeCenterInset
@@ -44,126 +48,116 @@ Item {
         bottomEdgeRightInset:   Math.max(parentToolInsets.bottomEdgeRightInset, instrumentPanel.width + _toolsMargin * 2)
     }
 
-    // ========== USV 自定义属性 ==========
-    property var  activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
-    property real roll:             activeVehicle && activeVehicle.roll ? activeVehicle.roll.rawValue : 0
-    property real pitch:            activeVehicle && activeVehicle.pitch ? activeVehicle.pitch.rawValue : 0
-    property real _toolsMargin:     ScreenTools.defaultFontPixelWidth * 0.75
-
-    // 姿态警告阈值
-    property real rollCriticalThreshold:  25.0
-    property real pitchCriticalThreshold: 20.0
-    property bool isAttitudeCritical:     Math.abs(roll) > rollCriticalThreshold ||
-                                          Math.abs(pitch) > pitchCriticalThreshold
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: true }
-
-    // ========== 姿态危险警告横幅 (顶部居中) ==========
+    // ===== 姿态警告横幅 =====
     Rectangle {
-        id:                         warningBanner
-        anchors.horizontalCenter:   parent.horizontalCenter
-        anchors.top:                parent.top
-        anchors.topMargin:          parentToolInsets.topEdgeCenterInset + ScreenTools.defaultFontPixelHeight
-        width:                      warningLabel.width + ScreenTools.defaultFontPixelWidth * 4
-        height:                     warningLabel.height + ScreenTools.defaultFontPixelHeight
-        color:                      qgcPal.colorRed
-        radius:                     ScreenTools.defaultFontPixelWidth / 2
-        visible:                    isAttitudeCritical
-        opacity:                    0.95
-        z:                          1000
+        id: warningBanner
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parentToolInsets.topEdgeCenterInset + ScreenTools.defaultFontPixelHeight
+        width: warningLabel.width + ScreenTools.defaultFontPixelWidth * 4
+        height: warningLabel.height + ScreenTools.defaultFontPixelHeight
+        color: qgcPal.colorRed
+        radius: ScreenTools.defaultFontPixelWidth * 0.5
+        visible: isAttitudeCritical
+        opacity: 0.95
+        z: 1000
 
         SequentialAnimation on opacity {
-            running:    warningBanner.visible
-            loops:      Animation.Infinite
+            running: warningBanner.visible
+            loops: Animation.Infinite
             NumberAnimation { to: 0.6; duration: 500 }
             NumberAnimation { to: 0.95; duration: 500 }
         }
 
         QGCLabel {
-            id:                 warningLabel
-            anchors.centerIn:   parent
-            text:               qsTr("⚠️ 船体姿态异常 - 横滚: %1° 俯仰: %2° - 请检查水况或减速！")
-                                    .arg(roll.toFixed(1)).arg(pitch.toFixed(1))
-            color:              "white"
-            font.bold:          true
+            id: warningLabel
+            anchors.centerIn: parent
+            text: qsTr("⚠ 姿态异常 - R:%1° P:%2°").arg(Number(roll).toFixed(1)).arg(Number(pitch).toFixed(1))
+            color: "white"
+            font.bold: true
         }
     }
 
-    // ========== 右下角：USV 综合仪表盘 ==========
+    // ===== 右下角仪表盘 =====
     IntegratedCompassAttitude {
-        id:                     instrumentPanel
-        anchors.bottom:         parent.bottom
-        anchors.right:          parent.right
-        anchors.bottomMargin:   parentToolInsets.bottomEdgeRightInset + _toolsMargin
-        anchors.rightMargin:    _toolsMargin
-        vehicle:                activeVehicle
+        id: instrumentPanel
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        anchors.bottomMargin: _toolsMargin
+        anchors.rightMargin: _toolsMargin
+        vehicle: activeVehicle
     }
 
-    // ========== 左侧：载荷控制面板 ==========
-    USVPayloadPanel {
-        id:                     payloadPanel
-        anchors.left:           parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin:     parentToolInsets.leftEdgeCenterInset + _toolsMargin
-        vehicle:                activeVehicle
-        visible:                activeVehicle  // USV 专用构建，连接即显示
-    }
+    // ===== 左上载荷面板 (通过 source 路径加载，绕过 QML 模块 import 上下文问题) =====
+    Loader {
+        id: payloadPanel
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.topMargin: parentToolInsets.topEdgeLeftInset + _toolsMargin
+        anchors.leftMargin: parentToolInsets.leftEdgeTopInset + _toolsMargin
+        width: ScreenTools.defaultFontPixelWidth * 26
+        visible: status === Loader.Ready && item && item.height > 0
+        z: 999
+        active: activeVehicle ? true : false
+        source: "qrc:/qml/USV/res/USVPayloadPanel.qml"
 
-    // ========== 地图顶部：采样状态胶囊 ==========
-    Rectangle {
-        id:                         statusCapsule
-        anchors.horizontalCenter:   parent.horizontalCenter
-        anchors.bottom:             parent.bottom
-        anchors.bottomMargin:       parentToolInsets.bottomEdgeCenterInset + ScreenTools.defaultFontPixelHeight
-        width:                      statusCapsuleRow.width + ScreenTools.defaultFontPixelWidth * 3
-        height:                     statusCapsuleRow.height + ScreenTools.defaultFontPixelHeight * 0.6
-        radius:                     height / 2
-        color:                      _capsuleColor
-        opacity:                    0.9
-        visible:                    activeVehicle && _capsuleStatus !== 0
-        z:                          500
-
-        property int _capsuleStatus: {
-            if (!activeVehicle) return 0
-            try { return activeVehicle.getFact("usvPayload.status").value } catch(e) { return 0 }
+        onStatusChanged: {
+            if (status === Loader.Ready && item) {
+                item.vehicle = Qt.binding(function() { return _root.activeVehicle })
+                console.log("USVPayloadPanel loaded OK, size:", item.width, "x", item.height)
+            } else if (status === Loader.Error) {
+                console.warn("USVPayloadPanel LOAD FAILED")
+            }
         }
+    }
+
+    // ===== 底部状态胶囊 =====
+    Rectangle {
+        id: statusCapsule
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: parentToolInsets.bottomEdgeCenterInset + ScreenTools.defaultFontPixelHeight
+        width: capsuleLabel.width + ScreenTools.defaultFontPixelWidth * 3
+        height: capsuleLabel.height + ScreenTools.defaultFontPixelHeight * 0.6
+        radius: height / 2
+        color: _capsuleColor
+        opacity: 0.9
+        visible: activeVehicle && _capsuleStatus !== 0
+        z: 500
+
+        property int _capsuleStatus: _root._capsuleStatusFact ? _root._capsuleStatusFact.value : 0
 
         property color _capsuleColor: {
             switch(_capsuleStatus) {
-            case 1: return qgcPal.colorGreen   // sampling
-            case 2: return qgcPal.brandingBlue  // detecting
-            case 3: return qgcPal.colorRed      // fault
-            case 4: return qgcPal.colorOrange   // calibrating
+            case 1: return qgcPal.colorGreen
+            case 2: return qgcPal.brandingBlue
+            case 3: return qgcPal.colorRed
+            case 4: return qgcPal.colorOrange
             default: return "transparent"
             }
         }
 
         property string _capsuleText: {
             switch(_capsuleStatus) {
-            case 1: return qsTr("● 正在采样")
-            case 2: return qsTr("● 正在检测")
-            case 3: return qsTr("⚠ 载荷故障")
-            case 4: return qsTr("● 校准中")
+            case 1: return "● 采样中"
+            case 2: return "● 检测中"
+            case 3: return "⚠ 故障"
+            case 4: return "● 校准中"
             default: return ""
             }
         }
 
-        Row {
-            id: statusCapsuleRow
+        QGCLabel {
+            id: capsuleLabel
             anchors.centerIn: parent
-            spacing: ScreenTools.defaultFontPixelWidth * 0.5
-
-            QGCLabel {
-                text:           statusCapsule._capsuleText
-                color:          "white"
-                font.bold:      true
-                anchors.verticalCenter: parent.verticalCenter
-            }
+            text: statusCapsule._capsuleText
+            color: "white"
+            font.bold: true
         }
 
         SequentialAnimation on opacity {
             running: statusCapsule._capsuleStatus === 1 || statusCapsule._capsuleStatus === 4
-            loops:   Animation.Infinite
+            loops: Animation.Infinite
             NumberAnimation { to: 0.6; duration: 800 }
             NumberAnimation { to: 0.9; duration: 800 }
         }

@@ -6,35 +6,35 @@
             "label": "开始采样",
             "description": "启动自动化水质采样序列",
             "mavCmd": 31010,
-            "compId": 1,
+            "compId": 191,
             "showError": false
         },
         {
             "label": "停止采样",
             "description": "紧急停止采样任务并复位泵组",
             "mavCmd": 31011,
-            "compId": 1,
+            "compId": 191,
             "showError": false
         },
         {
             "label": "暂停采样",
             "description": "暂停当前正在进行的采样任务",
             "mavCmd": 31012,
-            "compId": 1,
+            "compId": 191,
             "showError": false
         },
         {
             "label": "恢复采样",
             "description": "恢复已暂停的采样任务",
             "mavCmd": 31013,
-            "compId": 1,
+            "compId": 191,
             "showError": false
         },
         {
             "label": "零点校准",
             "description": "对分光检测器进行零点归一化校准",
             "mavCmd": 31014,
-            "compId": 1,
+            "compId": 191,
             "showError": false
         }
     ]
