@@ -63,8 +63,8 @@ void USVPayloadFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_
         _handleDebug(message);
         break;
     case MAVLINK_MSG_ID_HEARTBEAT:
-        // 伴随计算机心跳: sysid=2 compid=191 (MAV_COMP_ID_ONBOARD_COMPUTER)
-        if (message.sysid == 2 && message.compid == 191) {
+        // 伴随计算机心跳: sysid=1 compid=240
+        if (message.compid == 240) {
             _rxHeartbeat++;
             _latencyMs = _latencyTimer.elapsed();
             _latencyTimer.restart();

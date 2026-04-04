@@ -29,7 +29,7 @@ Rectangle {
     readonly property int _cmdPause:     31012
     readonly property int _cmdResume:    31013
     readonly property int _cmdCalibrate: 31014
-    readonly property int _payloadCompId: 191
+    readonly property int _payloadCompId: 240
 
     property real _m: ScreenTools.defaultFontPixelWidth
 
