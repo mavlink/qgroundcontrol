@@ -15,15 +15,15 @@ Q_LOGGING_CATEGORY(USVPayloadLog, "USV.Payload")
 
 USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/USVPayloadFactGroup.json"), parent)
-    , _voltageFact    (0, QStringLiteral("voltage"),     FactMetaData::valueTypeFloat,  this)
-    , _absorbanceFact (0, QStringLiteral("absorbance"),  FactMetaData::valueTypeFloat,  this)
-    , _pumpXFact      (0, QStringLiteral("pumpX"),       FactMetaData::valueTypeFloat,  this)
-    , _pumpYFact      (0, QStringLiteral("pumpY"),       FactMetaData::valueTypeFloat,  this)
-    , _pumpZFact      (0, QStringLiteral("pumpZ"),       FactMetaData::valueTypeFloat,  this)
-    , _pumpAFact      (0, QStringLiteral("pumpA"),       FactMetaData::valueTypeFloat,  this)
-    , _statusFact     (0, QStringLiteral("status"),      FactMetaData::valueTypeUint32, this)
-    , _linkActiveFact (0, QStringLiteral("linkActive"),  FactMetaData::valueTypeUint32, this)
-    , _packetCountFact(0, QStringLiteral("packetCount"), FactMetaData::valueTypeFloat,  this)
+    , _voltageFact    (0, QStringLiteral("voltage"),     FactMetaData::valueTypeFloat)
+    , _absorbanceFact (0, QStringLiteral("absorbance"),  FactMetaData::valueTypeFloat)
+    , _pumpXFact      (0, QStringLiteral("pumpX"),       FactMetaData::valueTypeFloat)
+    , _pumpYFact      (0, QStringLiteral("pumpY"),       FactMetaData::valueTypeFloat)
+    , _pumpZFact      (0, QStringLiteral("pumpZ"),       FactMetaData::valueTypeFloat)
+    , _pumpAFact      (0, QStringLiteral("pumpA"),       FactMetaData::valueTypeFloat)
+    , _statusFact     (0, QStringLiteral("status"),      FactMetaData::valueTypeUint32)
+    , _linkActiveFact (0, QStringLiteral("linkActive"),  FactMetaData::valueTypeUint32)
+    , _packetCountFact(0, QStringLiteral("packetCount"), FactMetaData::valueTypeFloat)
 {
     _addFact(&_voltageFact);
     _addFact(&_absorbanceFact);
@@ -63,8 +63,8 @@ void USVPayloadFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_
         _handleDebug(message);
         break;
     case MAVLINK_MSG_ID_HEARTBEAT:
-        // 伴随计算机心跳: sysid=1 compid=240
-        if (message.compid == 240) {
+        // 伴随计算机心跳: sysid=2 compid=191 (MAV_COMP_ID_ONBOARD_COMPUTER)
+        if (message.sysid == 2 && message.compid == 191) {
             _rxHeartbeat++;
             _latencyMs = _latencyTimer.elapsed();
             _latencyTimer.restart();
