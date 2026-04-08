@@ -3,6 +3,7 @@
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
+#include <QtCore/QVersionNumber>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "QGCMAVLink.h"
@@ -19,6 +20,7 @@ class QGCCameraManager;
 class Autotune;
 class LinkInterface;
 class FactGroup;
+class ParameterMetaData;
 
 struct FirmwareFlightMode
 {
@@ -293,26 +295,6 @@ public:
     ///     false: Do not send first item to vehicle, sequence numbers must be adjusted
     virtual bool sendHomePositionToVehicle() const { return false; }
 
-    /// Returns the parameter set version info pulled from inside the meta data file. -1 if not found.
-    /// Note: The implementation for this must not vary by vehicle type.
-    /// Important: Only CompInfoParam code should use this method
-    virtual void _getParameterMetaDataVersionInfo(const QString &metaDataFile, int &majorVersion, int &minorVersion) const;
-
-    /// Returns the internal resource parameter meta date file.
-    /// Important: Only CompInfoParam code should use this method
-    virtual QString _internalParameterMetaDataFile(const Vehicle* /*vehicle*/) const { return QString(); }
-
-    /// Loads the specified parameter meta data file.
-    /// @return Opaque parameter meta data information which must be stored with Vehicle. Vehicle is responsible to
-    ///         call deleteParameterMetaData when no longer needed.
-    /// Important: Only CompInfoParam code should use this method
-    virtual QObject *_loadParameterMetaData(const QString& /*metaDataFile*/) { return nullptr; }
-
-    /// Returns the FactMetaData associated with the parameter name
-    ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
-    /// Important: Only CompInfoParam code should use this method
-    virtual FactMetaData *_getMetaDataForFact(QObject* /*parameterMetaData*/, const QString& /*name*/, FactMetaData::ValueType_t /* type */, MAV_TYPE /*vehicleType*/) const { return nullptr; }
-
     /// List of supported mission commands. Empty list for all commands supported.
     virtual QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t /*vehicleClass*/) const { return QList<MAV_CMD>(); }
 
@@ -404,6 +386,9 @@ public:
     /// Update Available flight modes recieved from vehicle
     virtual void updateAvailableFlightModes(FlightModeList &flightModeList) { _updateFlightModeList(flightModeList); }
 
+    ParameterMetaData *loadParameterMetaData(const Vehicle *vehicle);
+    void cacheParameterMetaDataFile(const QString &metaDataFile);
+
 signals:
     void toolIndicatorsChanged();
 
@@ -415,6 +400,11 @@ protected:
     /// Sets the vehicle to the specified flight mode with validation and retries
     ///     @return: true - vehicle in specified flight mode, false - flight mode change failed
     bool _setFlightModeAndValidate(Vehicle *vehicle, const QString &flightMode) const;
+
+    virtual QString _internalParameterMetaDataFile(const Vehicle* /*vehicle*/) const { return QString(); }
+    virtual MAV_AUTOPILOT _autopilotType() const { return MAV_AUTOPILOT_GENERIC; }
+    virtual ParameterMetaData *_createParameterMetaData() { return nullptr; }
+    QString _cachedParameterMetaDataFile(const Vehicle *vehicle) const;
 
     /// returns url with latest firmware release information.
     virtual QString _getLatestVersionFileUrl(Vehicle* /*vehicle*/) const { return QString(); }

@@ -111,8 +111,10 @@ add_qgc_test(QGCSerialPortInfoTest LABELS Unit Comms)
 # FactSystem
 # ----------------------------------------------------------------------------
 add_subdirectory(FactSystem)
+add_qgc_test(APMParameterMetaDataTest LABELS Unit)
 add_qgc_test(FactGroupTest LABELS Unit)
 add_qgc_test(FactMetaDataTest LABELS Unit)
+add_qgc_test(PX4ParameterMetaDataTest LABELS Unit)
 add_qgc_test(FactSystemTestGeneric LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(FactSystemTestPX4 LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(FactTest LABELS Unit)

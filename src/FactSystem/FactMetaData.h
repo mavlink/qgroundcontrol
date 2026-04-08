@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QHash>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonObject>
@@ -47,7 +48,7 @@ public:
     //  @return Error string for failed validation explanation to user. Empty string indicates no error.
     typedef QString (*CustomCookedValidator)(const QVariant &cookedValue);
 
-    typedef QMap<QString /* param Name */, FactMetaData*> NameToMetaDataMap_t;
+    typedef QHash<QString /* param Name */, FactMetaData*> NameToMetaDataMap_t;
 
     explicit FactMetaData(QObject *parent = nullptr);
     explicit FactMetaData(ValueType_t type, QObject *parent = nullptr);
@@ -451,4 +452,5 @@ private:
     static constexpr const char *_categoryJsonKey = "category";
     static constexpr const char *_groupJsonKey = "group";
     static constexpr const char *_volatileJsonKey = "volatile";
+    static constexpr const char *_readOnlyJsonKey = "readOnly";
 };
