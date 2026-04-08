@@ -287,6 +287,9 @@ void Vehicle::_commonInit(LinkInterface* link)
     });
     connect(_initialConnectStateMachine, &InitialConnectStateMachine::progressUpdate,
             this, &Vehicle::_gotProgressUpdate);
+    connect(this, &Vehicle::initialConnectComplete, this, [this]() {
+        _batteryFactGroupListModel->startV2Negotiation(this);
+    });
     connect(_parameterManager, &ParameterManager::loadProgressChanged, this, &Vehicle::_gotProgressUpdate);
 
     _objectAvoidance = new VehicleObjectAvoidance(this, this);
@@ -1131,6 +1134,7 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
 
 void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
 {
+    if (_batteryFactGroupListModel->isV2Active()) return;
     mavlink_battery_status_t batteryStatus;
     mavlink_msg_battery_status_decode(&message, &batteryStatus);
     _announceBatteryChargeState(batteryStatus.id, batteryStatus.charge_state);
