@@ -854,6 +854,8 @@ private:
     void _handleCurrentMode             (mavlink_message_t& message);
     void _handleRCChannels              (mavlink_message_t& message);
     void _handleBatteryStatus           (mavlink_message_t& message);
+    void _handleBatteryStatusV2         (mavlink_message_t& message);
+    void _announceBatteryChargeState    (uint8_t batteryId, uint8_t chargeState);
     void _handleSysStatus               (mavlink_message_t& message);
     void _handleExtendedSysState        (mavlink_message_t& message);
     void _handleCommandAck              (mavlink_message_t& message);
