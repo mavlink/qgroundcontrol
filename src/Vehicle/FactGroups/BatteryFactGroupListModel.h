@@ -2,6 +2,8 @@
 
 #include "FactGroupListModel.h"
 
+class Vehicle;
+
 class BatteryFactGroupListModel : public FactGroupListModel
 {
     Q_OBJECT
@@ -11,10 +13,38 @@ class BatteryFactGroupListModel : public FactGroupListModel
 public:
     explicit BatteryFactGroupListModel(QObject* parent = nullptr);
 
+    /// Called after initial connect completes. Requests BATTERY_STATUS_V2 and
+    /// BATTERY_INFO streams if they are not already being received, and suppresses
+    /// BATTERY_STATUS once V2 is active.
+    void startV2Negotiation(Vehicle *vehicle);
+
+    /// Returns true once BATTERY_STATUS_V2 has been confirmed active.
+    /// When true, BATTERY_STATUS messages should be ignored.
+    bool isV2Active() const { return _v2State == V2NegotiationActive; }
+
+    // Override to detect arriving V2/INFO frames during negotiation
+    void handleMessageForFactGroupCreation(Vehicle *vehicle,
+                                           const mavlink_message_t &message) override;
+
 protected:
     // Overrides from FactGroupListModel
     bool _shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const final;
     FactGroupWithId *_createFactGroupWithId(uint32_t id) final;
+
+private:
+    enum V2NegotiationState {
+        V2NegotiationUnknown,      ///< Initial — negotiation not yet started
+        V2NegotiationRequesting,   ///< SET_MESSAGE_INTERVAL sent, awaiting first V2 frame
+        V2NegotiationActive,       ///< V2 confirmed; BATTERY_STATUS suppressed
+        V2NegotiationUnsupported   ///< Flight stack returned UNSUPPORTED; use V1
+    };
+
+    void _activateV2(Vehicle *vehicle);
+
+    V2NegotiationState _v2State            = V2NegotiationUnknown;
+    bool               _v2StatusReceived   = false;  ///< true once any BATTERY_STATUS_V2 frame arrives
+    bool               _infoReceived       = false;  ///< true once any BATTERY_INFO frame arrives
+    Vehicle           *_negotiationVehicle = nullptr;
 };
 
 class BatteryFactGroup : public FactGroupWithId

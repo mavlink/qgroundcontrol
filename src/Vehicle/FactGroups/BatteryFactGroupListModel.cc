@@ -1,4 +1,5 @@
 #include "BatteryFactGroupListModel.h"
+#include "Vehicle.h"
 
 BatteryFactGroupListModel::BatteryFactGroupListModel(QObject* parent)
     : FactGroupListModel("battery", parent)
@@ -44,6 +45,77 @@ bool BatteryFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &me
 FactGroupWithId *BatteryFactGroupListModel::_createFactGroupWithId(uint32_t id)
 {
     return new BatteryFactGroup(id, this);
+}
+
+void BatteryFactGroupListModel::handleMessageForFactGroupCreation(
+    Vehicle *vehicle, const mavlink_message_t &message)
+{
+    if (message.msgid == MAVLINK_MSG_ID_BATTERY_STATUS_V2) {
+        _v2StatusReceived = true;
+        if (_v2State == V2NegotiationRequesting) {
+            _activateV2(vehicle);
+        }
+    } else if (message.msgid == MAVLINK_MSG_ID_BATTERY_INFO) {
+        _infoReceived = true;
+    }
+
+    FactGroupListModel::handleMessageForFactGroupCreation(vehicle, message);
+}
+
+void BatteryFactGroupListModel::startV2Negotiation(Vehicle *vehicle)
+{
+    if (_v2State != V2NegotiationUnknown) return;
+
+    // --- BATTERY_STATUS_V2 ---
+    if (_v2StatusReceived) {
+        // Already streaming — activate immediately, no request needed
+        _activateV2(vehicle);
+    } else {
+        _v2State            = V2NegotiationRequesting;
+        _negotiationVehicle = vehicle;
+
+        // sendMavCommandWithLambdaFallback calls the lambda only on MAV_RESULT_UNSUPPORTED.
+        // On ACCEPTED (or other), we simply wait: handleMessageForFactGroupCreation will
+        // call _activateV2 when the first V2 frame arrives. If no frame ever arrives we
+        // stay in Requesting and V1 continues to be used (safe fallback).
+        vehicle->sendMavCommandWithLambdaFallback(
+            [this]() {
+                _v2State            = V2NegotiationUnsupported;
+                _negotiationVehicle = nullptr;
+            },
+            vehicle->defaultComponentId(),
+            MAV_CMD_SET_MESSAGE_INTERVAL,
+            false,   // showError = false
+            static_cast<float>(MAVLINK_MSG_ID_BATTERY_STATUS_V2),
+            2000000.0f   // 0.5 Hz
+        );
+    }
+
+    // --- BATTERY_INFO (independent, fire-and-forget) ---
+    if (!_infoReceived) {
+        vehicle->sendMavCommand(
+            vehicle->defaultComponentId(),
+            MAV_CMD_SET_MESSAGE_INTERVAL,
+            false,   // showError = false
+            static_cast<float>(MAVLINK_MSG_ID_BATTERY_INFO),
+            10000000.0f   // 0.1 Hz
+        );
+    }
+}
+
+void BatteryFactGroupListModel::_activateV2(Vehicle *vehicle)
+{
+    _v2State            = V2NegotiationActive;
+    _negotiationVehicle = nullptr;
+
+    // Ask the flight stack to stop streaming BATTERY_STATUS (V1)
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_SET_MESSAGE_INTERVAL,
+        false,                                          // showError = false
+        static_cast<float>(MAVLINK_MSG_ID_BATTERY_STATUS),
+        -1.0f                                           // interval −1 = disable
+    );
 }
 
 BatteryFactGroup::BatteryFactGroup(uint32_t batteryId, QObject *parent)
@@ -118,6 +190,11 @@ BatteryFactGroup::BatteryFactGroup(uint32_t batteryId, QObject *parent)
 
 void BatteryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
+    if (message.msgid == MAVLINK_MSG_ID_BATTERY_STATUS) {
+        const auto *listModel = qobject_cast<const BatteryFactGroupListModel *>(parent());
+        if (listModel && listModel->isV2Active()) return;
+    }
+
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HIGH_LATENCY:
         _handleHighLatency(vehicle, message);
