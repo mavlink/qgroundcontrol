@@ -73,99 +73,9 @@ Rectangle {
                               payloadStatus === _stDetecting ||
                               payloadStatus === _stCalibrating
     property bool _linkOk: _linkActiveFact ? _linkActiveFact.value === 1 : !_hasPayloadGroup
-    property bool _commandPending: false
-    property int _pendingCmdId: 0
-    property int _pendingExpectedStatus: -1
-    property string _pendingCommandText: ""
-    property string _commandMessage: ""
-    property bool _commandMessageIsError: false
-
-    Timer {
-        id: commandTimeoutTimer
-        interval: 10000
-        repeat: false
-        onTriggered: {
-            if (!root._commandPending)
-                return
-
-            root._commandPending = false
-            root._pendingCmdId = 0
-            root._pendingExpectedStatus = -1
-            root._commandMessage = root._pendingCommandText + "命令已发送，10秒内未收到预期状态更新"
-            root._commandMessageIsError = true
-            messageClearTimer.restart()
-        }
-    }
-
-    Timer {
-        id: messageClearTimer
-        interval: 5000
-        repeat: false
-        onTriggered: root._commandMessage = ""
-    }
-
-    onPayloadStatusChanged: {
-        if (!root._commandPending)
-            return
-
-        if (root._pendingExpectedStatus >= 0 && payloadStatus === root._pendingExpectedStatus) {
-            root._commandPending = false
-            root._pendingCmdId = 0
-            root._pendingExpectedStatus = -1
-            root._commandMessage = root._pendingCommandText + "已执行"
-            root._commandMessageIsError = false
-            commandTimeoutTimer.stop()
-            messageClearTimer.restart()
-        }
-    }
-
-    onLinkOkChanged: {
-        if (!root._linkOk && root._commandPending) {
-            root._commandPending = false
-            root._pendingCmdId = 0
-            root._pendingExpectedStatus = -1
-            root._commandMessage = "载荷链路离线，无法确认命令执行结果"
-            root._commandMessageIsError = true
-            commandTimeoutTimer.stop()
-            messageClearTimer.restart()
-        }
-    }
-
-    function _commandText(cmdId) {
-       switch (cmdId) {
-        case _cmdStart:     return "采样"
-        case _cmdStop:      return "停止"
-        case _cmdPause:     return "暂停"
-        case _cmdResume:    return "恢复"
-        case _cmdCalibrate: return "校准"
-        default:            return "载荷"
-        }
-    }
-
-    function _expectedStatusForCommand(cmdId) {
-        switch (cmdId) {
-        case _cmdStart:     return _stSampling
-        case _cmdStop:      return _stIdle
-        case _cmdPause:     return _stSampling
-        case _cmdResume:    return _stSampling
-        case _cmdCalibrate: return _stCalibrating
-        default:            return -1
-        }
-    }
 
     function _send(cmdId) {
-        if (!vehicle || root._commandPending)
-            return
-
-        root._commandPending = true
-        root._pendingCmdId = cmdId
-        root._pendingExpectedStatus = _expectedStatusForCommand(cmdId)
-        root._pendingCommandText = _commandText(cmdId)
-        root._commandMessage = root._pendingCommandText + "命令发送中..."
-        root._commandMessageIsError = false
-        messageClearTimer.stop()
-        commandTimeoutTimer.restart()
-        vehicle.sendCommand(_payloadCompId, cmdId, false)
+        if (vehicle) vehicle.sendCommand(_payloadCompId, cmdId, false)
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -259,23 +169,6 @@ Rectangle {
                     }
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: cmdMsgLabel.height + _m
-                    color: root._commandMessageIsError ? Qt.rgba(1, 0, 0, 0.12) : Qt.rgba(qgcPal.brandingBlue.r, qgcPal.brandingBlue.g, qgcPal.brandingBlue.b, 0.12)
-                    radius: _m * 0.5
-                    visible: root._commandPending || root._commandMessage.length > 0
-
-                    QGCLabel {
-                        id: cmdMsgLabel
-                        anchors.centerIn: parent
-                        text: root._commandPending ? (root._pendingCommandText + "命令发送中...") : root._commandMessage
-                        color: root._commandMessageIsError ? qgcPal.colorRed : qgcPal.brandingBlue
-                        font.pointSize: ScreenTools.smallFontPointSize
-                        font.bold: true
-                    }
-                }
-
                 // 数据显示
                 RowLayout {
                     Layout.fillWidth: true
@@ -359,11 +252,11 @@ Rectangle {
 
                     Repeater {
                         model: [
-                            { text: "▶ 采样",  cmd: _cmdStart,     en: vehicle && !_commandPending && payloadStatus === _stIdle, warn: false, span: 1 },
-                            { text: "■ 停止",   cmd: _cmdStop,      en: vehicle && !_commandPending && _isWorking,                warn: true,  span: 1 },
-                            { text: "⏸ 暂停",  cmd: _cmdPause,     en: vehicle && !_commandPending && payloadStatus === _stSampling, warn: false, span: 1 },
-                            { text: "⏵ 恢复",  cmd: _cmdResume,    en: vehicle && !_commandPending && (payloadStatus === _stSampling || payloadStatus === _stIdle), warn: false, span: 1 },
-                            { text: "⚙ 校准",  cmd: _cmdCalibrate, en: vehicle && !_commandPending && payloadStatus === _stIdle, warn: false, span: 2 }
+                            { text: "▶ 采样",  cmd: _cmdStart,     en: vehicle && payloadStatus === _stIdle, warn: false, span: 1 },
+                            { text: "■ 停止",   cmd: _cmdStop,      en: vehicle && _isWorking,                warn: true,  span: 1 },
+                            { text: "⏸ 暂停",  cmd: _cmdPause,     en: vehicle && payloadStatus === _stSampling, warn: false, span: 1 },
+                            { text: "⏵ 恢复",  cmd: _cmdResume,    en: vehicle && (payloadStatus === _stSampling || payloadStatus === _stIdle), warn: false, span: 1 },
+                            { text: "⚙ 校准",  cmd: _cmdCalibrate, en: vehicle && payloadStatus === _stIdle, warn: false, span: 2 }
                         ]
                         delegate: Rectangle {
                             Layout.fillWidth: true
