@@ -31,6 +31,7 @@ QGCPopupDialog {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     onAccepted: {
+        if (fact.readOnly) return
         if (bitmaskColumn.visible && !manualEntry.checked) {
             fact.value = bitmaskValue();
             fact.valueChanged(fact.value)
