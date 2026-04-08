@@ -13,7 +13,10 @@ struct _GstQgcVideoSinkBin
     GstElement *glsinkbin;
     GstElement *qmlglsink;
     GstElement *d3d11sink;
+    GstElement *appsink;
+    GstElement *videoconvert;
     gboolean using_d3d11;
+    gboolean using_appsink;
 };
 
 G_END_DECLS

@@ -16,6 +16,7 @@ qt_add_qml_module(FlyViewModule
         FlightDisplayViewDummy.qml
         FlightDisplayViewGStreamer.qml
         FlightDisplayViewGStreamerD3D11.qml
+        FlightDisplayViewMetal.qml
         FlightDisplayViewQtMultimedia.qml
         FlightDisplayViewUVC.qml
         FlightDisplayViewVideo.qml

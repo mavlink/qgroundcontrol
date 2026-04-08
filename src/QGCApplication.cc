@@ -239,10 +239,11 @@ void QGCApplication::init()
 bool QGCApplication::_initVideo()
 {
 #ifdef QGC_GST_STREAMING
-    // GStreamer video playback requires OpenGL. On platforms where OpenGL
-    // is unavailable (e.g. recent macOS with only Metal), fall back to the
-    // default graphics API — video streaming won't work but the rest of
-    // QGC remains functional.
+    // GStreamer video rendering backend selection:
+    //  - Windows D3D11: native RHI, no OpenGL needed.
+    //  - macOS: appsink → QVideoSink → Metal RHI VideoOutput, no OpenGL needed.
+    //  - Linux/other: qml6glsink requires OpenGL. Probe for a working GL context
+    //    and fall back to the default graphics API if unavailable.
     //
     // The offscreen platform (used in CI boot tests) never provides a real
     // GL context, so skip the probe there — just set OpenGL API to exercise
@@ -255,15 +256,17 @@ bool QGCApplication::_initVideo()
         QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
     }
     qCDebug(QGCApplicationLog) << "D3D11 video sink available, using default graphics API";
+#elif defined(Q_OS_MACOS)
+    // macOS Metal rendering path: appsink → QVideoSink → VideoOutput.
+    // Do NOT force OpenGL — let Qt use the default Metal RHI backend.
+    // The appsink path in qgcvideosinkbin avoids the GL-dependent qml6glsink.
+    if (isOffscreen) {
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    } else {
+        qCDebug(QGCApplicationLog) << "macOS: using default RHI backend (Metal) for appsink video path";
+    }
 #else
-    const bool skipGLProbe = isOffscreen
-#if defined(Q_OS_MACOS)
-        // macOS still provides OpenGL (deprecated but functional). The
-        // QOpenGLContext::create() probe is unreliable without a native
-        // surface, so skip it and force OpenGL for qml6glsink.
-        || true
-#endif
-        ;
+    const bool skipGLProbe = isOffscreen;
 
     if (skipGLProbe) {
         QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
@@ -276,7 +279,7 @@ bool QGCApplication::_initVideo()
                                          << "Using default graphics API (Metal/Vulkan).";
         }
     }
-#endif  // QGC_GST_D3D11_SINK
+#endif  // QGC_GST_D3D11_SINK / Q_OS_MACOS
 #endif
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup

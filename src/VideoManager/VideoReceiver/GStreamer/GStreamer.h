@@ -7,6 +7,7 @@ Q_DECLARE_LOGGING_CATEGORY(GStreamerAPILog)
 Q_DECLARE_LOGGING_CATEGORY(GStreamerDecoderRanksLog)
 
 class QQuickItem;
+class QVideoSink;
 class VideoReceiver;
 
 namespace GStreamer
@@ -30,5 +31,9 @@ bool completeInit();
 void *createVideoSink(QQuickItem *widget, QObject *parent = nullptr);
 void releaseVideoSink(void *sink);
 VideoReceiver *createVideoReceiver(QObject *parent = nullptr);
+
+/// On macOS: connect the appsink inside the sinkbin to a QVideoSink.
+/// Returns true on success. No-op (returns false) on other platforms.
+bool setupAppleSinkAdapter(void *sinkBin, QVideoSink *videoSink, QObject *adapterParent);
 
 }
