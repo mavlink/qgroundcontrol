@@ -250,6 +250,7 @@ public:
     virtual bool validateParameter(Fact *pFact, QVariant &newValue) = 0;    ///< Allow controller to modify or invalidate parameter change
 
     virtual void handleBatteryStatus(const mavlink_battery_status_t &bs) = 0;
+    virtual void handleBatteryStatusV2(const mavlink_battery_status_v2_t &bs) = 0;
     virtual void handleCameraCaptureStatus(const mavlink_camera_capture_status_t &cameraCaptureStatus) = 0;
     virtual void handleParamExtAck(const mavlink_param_ext_ack_t &paramExtAck) = 0;
     virtual void handleParamExtValue(const mavlink_param_ext_value_t &paramExtValue) = 0;

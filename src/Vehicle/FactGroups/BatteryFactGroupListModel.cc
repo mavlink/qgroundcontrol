@@ -22,6 +22,20 @@ bool BatteryFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &me
         ids.append(batteryStatus.id);
         return true;
     }
+    case MAVLINK_MSG_ID_BATTERY_STATUS_V2:
+    {
+        mavlink_battery_status_v2_t bs{};
+        mavlink_msg_battery_status_v2_decode(&message, &bs);
+        ids.append(bs.id);
+        return true;
+    }
+    case MAVLINK_MSG_ID_BATTERY_INFO:
+    {
+        mavlink_battery_info_t bi{};
+        mavlink_msg_battery_info_decode(&message, &bi);
+        ids.append(bi.id);
+        return true;
+    }
     default:
         return false; // Not a message we care about
     }
@@ -46,6 +60,26 @@ BatteryFactGroup::BatteryFactGroup(uint32_t batteryId, QObject *parent)
     _addFact(&_timeRemainingStrFact);
     _addFact(&_chargeStateFact);
     _addFact(&_instantPowerFact);
+    _addFact(&_capacityRemainingFact);
+    _addFact(&_capacityRemainingIsInferredFact);
+    _addFact(&_statusFlagsFact);
+    _addFact(&_batteryNameFact);
+    _addFact(&_serialNumberFact);
+    _addFact(&_manufactureDateFact);
+    _addFact(&_fullChargeCapacityFact);
+    _addFact(&_designCapacityFact);
+    _addFact(&_nominalVoltageFact);
+    _addFact(&_dischargeMinimumVoltageFact);
+    _addFact(&_chargingMinimumVoltageFact);
+    _addFact(&_restingMinimumVoltageFact);
+    _addFact(&_chargingMaximumVoltageFact);
+    _addFact(&_chargingMaximumCurrentFact);
+    _addFact(&_dischargeMaximumCurrentFact);
+    _addFact(&_dischargeMaximumBurstCurrentFact);
+    _addFact(&_cycleCountFact);
+    _addFact(&_weightFact);
+    _addFact(&_stateOfHealthFact);
+    _addFact(&_cellsInSeriesFact);
 
     _idFact.setRawValue(batteryId);
     _batteryFunctionFact.setRawValue(MAV_BATTERY_FUNCTION_UNKNOWN);
@@ -58,6 +92,26 @@ BatteryFactGroup::BatteryFactGroup(uint32_t batteryId, QObject *parent)
     _timeRemainingFact.setRawValue(qQNaN());
     _chargeStateFact.setRawValue(MAV_BATTERY_CHARGE_STATE_UNDEFINED);
     _instantPowerFact.setRawValue(qQNaN());
+    _capacityRemainingFact.setRawValue(qQNaN());
+    _capacityRemainingIsInferredFact.setRawValue(false);
+    _statusFlagsFact.setRawValue(0U);
+    _batteryNameFact.setRawValue(QString());
+    _serialNumberFact.setRawValue(QString());
+    _manufactureDateFact.setRawValue(QString());
+    _fullChargeCapacityFact.setRawValue(qQNaN());
+    _designCapacityFact.setRawValue(qQNaN());
+    _nominalVoltageFact.setRawValue(qQNaN());
+    _dischargeMinimumVoltageFact.setRawValue(qQNaN());
+    _chargingMinimumVoltageFact.setRawValue(qQNaN());
+    _restingMinimumVoltageFact.setRawValue(qQNaN());
+    _chargingMaximumVoltageFact.setRawValue(qQNaN());
+    _chargingMaximumCurrentFact.setRawValue(qQNaN());
+    _dischargeMaximumCurrentFact.setRawValue(qQNaN());
+    _dischargeMaximumBurstCurrentFact.setRawValue(qQNaN());
+    _cycleCountFact.setRawValue(qQNaN());
+    _weightFact.setRawValue(qQNaN());
+    _stateOfHealthFact.setRawValue(qQNaN());
+    _cellsInSeriesFact.setRawValue(qQNaN());
 
     (void) connect(&_timeRemainingFact, &Fact::rawValueChanged, this, &BatteryFactGroup::_timeRemainingChanged);
 }
@@ -73,6 +127,12 @@ void BatteryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &
         break;
     case MAVLINK_MSG_ID_BATTERY_STATUS:
         _handleBatteryStatus(vehicle, message);
+        break;
+    case MAVLINK_MSG_ID_BATTERY_STATUS_V2:
+        _handleBatteryStatusV2(vehicle, message);
+        break;
+    case MAVLINK_MSG_ID_BATTERY_INFO:
+        _handleBatteryInfo(vehicle, message);
         break;
     default:
         break;
@@ -156,4 +216,107 @@ void BatteryFactGroup::_timeRemainingChanged(const QVariant &value)
 
         _timeRemainingStrFact.setRawValue(QString::asprintf("%02dH:%02dM:%02dS", hours, minutes, seconds));
     }
+}
+
+void BatteryFactGroup::_handleBatteryStatusV2(Vehicle * /*vehicle*/, const mavlink_message_t &message)
+{
+    mavlink_battery_status_v2_t bs{};
+    mavlink_msg_battery_status_v2_decode(&message, &bs);
+
+    if (bs.id != id()->rawValue().toUInt()) {
+        return;
+    }
+
+    temperature()->setRawValue((bs.temperature == INT16_MAX) ? qQNaN() : static_cast<double>(bs.temperature) / 100.0);
+
+    const double v = qIsNaN(bs.voltage)  ? qQNaN() : static_cast<double>(bs.voltage);
+    const double i = qIsNaN(bs.current)  ? qQNaN() : static_cast<double>(bs.current);
+    voltage()->setRawValue(v);
+    current()->setRawValue(i);
+
+    double consumed  = qIsNaN(bs.capacity_consumed)  ? qQNaN() : static_cast<double>(bs.capacity_consumed);
+    double remaining = qIsNaN(bs.capacity_remaining) ? qQNaN() : static_cast<double>(bs.capacity_remaining);
+    const double fcc = fullChargeCapacity()->rawValue().toDouble(); // NaN if BATTERY_INFO not yet received
+
+    bool remainingInferred = false;
+    if (qIsNaN(remaining) && !qIsNaN(consumed) && !qIsNaN(fcc)) {
+        remaining = fcc - consumed;
+        remainingInferred = true;
+    } else if (qIsNaN(consumed) && !qIsNaN(remaining) && !qIsNaN(fcc)) {
+        consumed = fcc - remaining;
+        // remaining was measured directly — remainingInferred stays false
+    }
+
+    mahConsumed()->setRawValue(qIsNaN(consumed) ? qQNaN() : consumed * 1000.0);
+    capacityRemaining()->setRawValue(remaining);
+    capacityRemainingIsInferred()->setRawValue(remainingInferred);
+
+    percentRemaining()->setRawValue((bs.percent_remaining == UINT8_MAX) ? qQNaN() : static_cast<double>(bs.percent_remaining));
+
+    statusFlags()->setRawValue(bs.status_flags);
+
+    // Derive a MAV_BATTERY_CHARGE_STATE from the status_flags bitmask for display and audio alerts.
+    // Note: LOW/CRITICAL states have no equivalent in BATTERY_STATUS_V2 status_flags.
+    constexpr uint32_t faultMask =
+        MAV_BATTERY_STATUS_FLAGS_FAULT_BATTERY_OVER_TEMPERATURE  |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_BATTERY_UNDER_TEMPERATURE |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_BATTERY_OVER_VOLTAGE      |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_BATTERY_UNDER_VOLTAGE     |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_BATTERY_OVER_CURRENT      |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_SHORT_CIRCUIT             |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_VOLTAGE      |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_FIRMWARE     |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_CELLS_LEGACY;
+
+    uint8_t derivedChargeState = MAV_BATTERY_CHARGE_STATE_OK;
+    if (bs.status_flags & faultMask) {
+        derivedChargeState = MAV_BATTERY_CHARGE_STATE_FAILED;
+    } else if (bs.status_flags & MAV_BATTERY_STATUS_FLAGS_NOT_READY_TO_USE) {
+        derivedChargeState = MAV_BATTERY_CHARGE_STATE_EMERGENCY;
+    } else if (bs.status_flags & MAV_BATTERY_STATUS_FLAGS_CHARGING) {
+        derivedChargeState = MAV_BATTERY_CHARGE_STATE_CHARGING;
+    }
+    chargeState()->setRawValue(derivedChargeState);
+
+    instantPower()->setRawValue(v * i);
+
+    _setTelemetryAvailable(true);
+}
+
+void BatteryFactGroup::_handleBatteryInfo(Vehicle * /*vehicle*/, const mavlink_message_t &message)
+{
+    mavlink_battery_info_t bi{};
+    mavlink_msg_battery_info_decode(&message, &bi);
+
+    if (bi.id != id()->rawValue().toUInt()) {
+        return;
+    }
+
+    function()->setRawValue(bi.battery_function);
+    type()->setRawValue(bi.type);
+
+    // Fields using 0 as "not provided" are converted to NaN for consistent invalid-value handling
+    auto zeroAsNaN = [](float v) -> double { return (v == 0.0f) ? qQNaN() : static_cast<double>(v); };
+
+    fullChargeCapacity()->setRawValue(qIsNaN(bi.full_charge_capacity) ? qQNaN() : static_cast<double>(bi.full_charge_capacity));
+    designCapacity()->setRawValue(zeroAsNaN(bi.design_capacity));
+    nominalVoltage()->setRawValue(zeroAsNaN(bi.nominal_voltage));
+    dischargeMinimumVoltage()->setRawValue(zeroAsNaN(bi.discharge_minimum_voltage));
+    chargingMinimumVoltage()->setRawValue(zeroAsNaN(bi.charging_minimum_voltage));
+    restingMinimumVoltage()->setRawValue(zeroAsNaN(bi.resting_minimum_voltage));
+    chargingMaximumVoltage()->setRawValue(zeroAsNaN(bi.charging_maximum_voltage));
+    chargingMaximumCurrent()->setRawValue(zeroAsNaN(bi.charging_maximum_current));
+    dischargeMaximumCurrent()->setRawValue(zeroAsNaN(bi.discharge_maximum_current));
+    dischargeMaximumBurstCurrent()->setRawValue(zeroAsNaN(bi.discharge_maximum_burst_current));
+    cycleCount()->setRawValue((bi.cycle_count == UINT16_MAX) ? qQNaN() : static_cast<double>(bi.cycle_count));
+    weight()->setRawValue(zeroAsNaN(static_cast<float>(bi.weight)));
+    stateOfHealth()->setRawValue((bi.state_of_health == 255) ? qQNaN() : static_cast<double>(bi.state_of_health));
+    cellsInSeries()->setRawValue((bi.cells_in_series == 0) ? qQNaN() : static_cast<double>(bi.cells_in_series));
+
+    // String fields: fromLatin1 stops at the null terminator; all-zero yields an empty string
+    batteryName()->setRawValue(QString::fromLatin1(bi.name));
+    serialNumber()->setRawValue(QString::fromLatin1(bi.serial_number));
+    manufactureDate()->setRawValue(QString::fromLatin1(bi.manufacture_date));
+
+    _setTelemetryAvailable(true);
 }

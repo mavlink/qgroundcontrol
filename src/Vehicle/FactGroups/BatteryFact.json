@@ -85,6 +85,135 @@
     "enumStrings":      "n/a,Ok,Low,Critical,Emergency,Failed,Unhealthy,Charging",
     "enumValues":       "0,1,2,3,4,5,6,7",
     "decimalPlaces":    0
+},
+{
+    "name":             "capacityRemaining",
+    "shortDesc":        "Capacity Remaining",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "Ah"
+},
+{
+    "name":             "capacityRemainingIsInferred",
+    "shortDesc":        "Capacity Remaining Is Inferred",
+    "type":             "bool"
+},
+{
+    "name":             "statusFlags",
+    "shortDesc":        "Status Flags",
+    "type":             "uint32",
+    "decimalPlaces":    0
+},
+{
+    "name":             "batteryName",
+    "shortDesc":        "Battery Name",
+    "type":             "string"
+},
+{
+    "name":             "serialNumber",
+    "shortDesc":        "Serial Number",
+    "type":             "string"
+},
+{
+    "name":             "manufactureDate",
+    "shortDesc":        "Manufacture Date",
+    "type":             "string"
+},
+{
+    "name":             "fullChargeCapacity",
+    "shortDesc":        "Full Charge Capacity",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "Ah"
+},
+{
+    "name":             "designCapacity",
+    "shortDesc":        "Design Capacity",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "Ah"
+},
+{
+    "name":             "nominalVoltage",
+    "shortDesc":        "Nominal Voltage",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "V"
+},
+{
+    "name":             "dischargeMinimumVoltage",
+    "shortDesc":        "Discharge Min Voltage",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "V"
+},
+{
+    "name":             "chargingMinimumVoltage",
+    "shortDesc":        "Charging Min Voltage",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "V"
+},
+{
+    "name":             "restingMinimumVoltage",
+    "shortDesc":        "Resting Min Voltage",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "V"
+},
+{
+    "name":             "chargingMaximumVoltage",
+    "shortDesc":        "Charging Max Voltage",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "V"
+},
+{
+    "name":             "chargingMaximumCurrent",
+    "shortDesc":        "Charging Max Current",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "A"
+},
+{
+    "name":             "dischargeMaximumCurrent",
+    "shortDesc":        "Discharge Max Current",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "A"
+},
+{
+    "name":             "dischargeMaximumBurstCurrent",
+    "shortDesc":        "Discharge Max Burst Current",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "A"
+},
+{
+    "name":             "cycleCount",
+    "shortDesc":        "Cycle Count",
+    "type":             "double",
+    "decimalPlaces":    0
+},
+{
+    "name":             "weight",
+    "shortDesc":        "Weight",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "g"
+},
+{
+    "name":             "stateOfHealth",
+    "shortDesc":        "State of Health",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "%"
+},
+{
+    "name":             "cellsInSeries",
+    "shortDesc":        "Cells In Series",
+    "type":             "double",
+    "decimalPlaces":    0
 }
 ]
 }

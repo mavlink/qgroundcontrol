@@ -122,7 +122,8 @@ public:
     virtual void        handleParamExtAck   (const mavlink_param_ext_ack_t& paramExtAck);
     virtual void        handleParamExtValue (const mavlink_param_ext_value_t& paramExtValue);
     virtual void        handleStorageInformation(const mavlink_storage_information_t& storageInformation);
-    virtual void        handleBatteryStatus (const mavlink_battery_status_t& bs);
+    virtual void        handleBatteryStatus   (const mavlink_battery_status_t& bs);
+    virtual void        handleBatteryStatusV2 (const mavlink_battery_status_v2_t& bs);
     virtual void        handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t &trackingImageStatus);
     virtual void        handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation);
     virtual void        handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus);
