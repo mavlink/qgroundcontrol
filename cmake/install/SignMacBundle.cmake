@@ -77,7 +77,7 @@ endif()
 
 if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0")
     _parallel_codesign("$ENV{QGC_MACOS_SIGNING_IDENTITY}"
-        "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0" -type f -perm /111
+        "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0" -type f -perm +111
     )
 endif()
 
@@ -88,7 +88,7 @@ file(GLOB FRAMEWORK_DIRS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/*.frame
 foreach(FRAMEWORK_DIR ${FRAMEWORK_DIRS})
     # Sign Mach-O binaries inside the framework, then seal the outer bundle.
     _parallel_codesign("$ENV{QGC_MACOS_SIGNING_IDENTITY}"
-        "${FRAMEWORK_DIR}" -type f "(" -name "*.dylib" -o -name "*.so" -o -perm /111 ")"
+        "${FRAMEWORK_DIR}" -type f "(" -name "*.dylib" -o -name "*.so" -o -perm +111 ")"
     )
     execute_process(
         COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${FRAMEWORK_DIR}"
