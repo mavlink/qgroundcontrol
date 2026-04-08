@@ -54,9 +54,9 @@ CPMAddPackage(
 )
 
 # Dynamically discover all parameter definition files.
-# Directory layout: {Vehicle}-{Major}.{Minor}/apm.pdef.xml
-# Resource alias:   FirmwarePlugin/APM/APMParameterFactMetaData.{Vehicle}.{Major}.{Minor}.xml
-file(GLOB _apm_pdef_files "${ArduPilotParams_SOURCE_DIR}/*/apm.pdef.xml")
+# Directory layout: {Vehicle}-{Major}.{Minor}/apm.pdef.json
+# Resource alias:   FirmwarePlugin/APM/APMParameterFactMetaData.{Vehicle}.{Major}.{Minor}.json
+file(GLOB _apm_pdef_files "${ArduPilotParams_SOURCE_DIR}/*/apm.pdef.json")
 list(SORT _apm_pdef_files)
 
 set(_apm_param_resources "")
@@ -64,7 +64,6 @@ foreach(_pdef IN LISTS _apm_pdef_files)
     get_filename_component(_dir "${_pdef}" DIRECTORY)
     get_filename_component(_dirname "${_dir}" NAME)
 
-    # Parse "{Vehicle}-{Version}" directory name (e.g. "Plane-4.7")
     string(REGEX MATCH "^([A-Za-z_]+)-(.+)$" _match "${_dirname}")
     if(NOT _match)
         continue()
@@ -72,10 +71,9 @@ foreach(_pdef IN LISTS _apm_pdef_files)
     set(_vehicle "${CMAKE_MATCH_1}")
     set(_version "${CMAKE_MATCH_2}")
 
-    # Convert dash-separated version to dot-separated (e.g. "4.7" stays, "3.10" stays)
     string(REPLACE "-" "." _version_dots "${_version}")
 
-    set(_alias "FirmwarePlugin/APM/APMParameterFactMetaData.${_vehicle}.${_version_dots}.xml")
+    set(_alias "FirmwarePlugin/APM/APMParameterFactMetaData.${_vehicle}.${_version_dots}.json")
     set_source_files_properties("${_pdef}" PROPERTIES QT_RESOURCE_ALIAS "${_alias}")
     list(APPEND _apm_param_resources "${_pdef}")
 endforeach()

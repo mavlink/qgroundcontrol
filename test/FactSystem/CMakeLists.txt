@@ -5,10 +5,14 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        APMParameterMetaDataTest.cc
+        APMParameterMetaDataTest.h
         FactGroupTest.cc
         FactGroupTest.h
         FactMetaDataTest.cc
         FactMetaDataTest.h
+        PX4ParameterMetaDataTest.cc
+        PX4ParameterMetaDataTest.h
         FactSystemTestBase.cc
         FactSystemTestBase.h
         FactSystemTestGeneric.cc

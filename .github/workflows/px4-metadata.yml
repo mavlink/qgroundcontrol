@@ -31,7 +31,7 @@ jobs:
         run: curl -fsSL https://artifacts.px4.io/Firmware/_general/airframes.xml -o src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
 
       - name: Download PX4 parameter metadata
-        run: curl -fsSL https://artifacts.px4.io/Firmware/_general/parameters.xml -o src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml
+        run: curl -fsSL https://artifacts.px4.io/Firmware/_general/parameters.json.xz | xz -d > src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.json
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
@@ -44,6 +44,6 @@ jobs:
 
             Updated files:
             - `src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml` (airframe definitions)
-            - `src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.xml` (parameter catalog)
+            - `src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.json` (parameter catalog)
 
             Source: https://artifacts.px4.io/Firmware/_general/

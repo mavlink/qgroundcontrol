@@ -1,16 +1,17 @@
 #include "APMParameterMetaData.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QFile>
+#include <algorithm>
+#include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
-#include <QtCore/QRegularExpressionMatch>
-#include <QtCore/QStack>
+
+using namespace Qt::StringLiterals;
 
 QGC_LOGGING_CATEGORY(APMParameterMetaDataLog, "FirmwarePlugin.APMParameterMetaData")
 QGC_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog, "FirmwarePlugin.APMParameterMetaData:verbose")
 
 APMParameterMetaData::APMParameterMetaData(QObject *parent)
-    : QObject(parent)
+    : ParameterMetaData(parent)
 {
     qCDebug(APMParameterMetaDataLog) << this;
 }
@@ -20,608 +21,182 @@ APMParameterMetaData::~APMParameterMetaData()
     qCDebug(APMParameterMetaDataLog) << this;
 }
 
-QString APMParameterMetaData::_mavTypeToString(MAV_TYPE vehicleTypeEnum)
-{
-    QString vehicleName;
-
-    switch(vehicleTypeEnum) {
-        case MAV_TYPE_FIXED_WING:
-        case MAV_TYPE_VTOL_TAILSITTER_DUOROTOR:
-        case MAV_TYPE_VTOL_TAILSITTER_QUADROTOR:
-        case MAV_TYPE_VTOL_TILTROTOR:
-        case MAV_TYPE_VTOL_FIXEDROTOR:
-        case MAV_TYPE_VTOL_TAILSITTER:
-        case MAV_TYPE_VTOL_TILTWING:
-        case MAV_TYPE_VTOL_RESERVED5:
-            vehicleName = "ArduPlane";
-            break;
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_COAXIAL:
-        case MAV_TYPE_HELICOPTER:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
-        case MAV_TYPE_TRICOPTER:
-            vehicleName = "ArduCopter";
-            break;
-        case MAV_TYPE_ANTENNA_TRACKER:
-            vehicleName = "Antenna Tracker";
-            break;
-        case MAV_TYPE_GENERIC:
-        case MAV_TYPE_GCS:
-        case MAV_TYPE_AIRSHIP:
-        case MAV_TYPE_FREE_BALLOON:
-        case MAV_TYPE_ROCKET:
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-        case MAV_TYPE_SURFACE_BOAT:
-            vehicleName = "Rover";
-            break;
-        case MAV_TYPE_SUBMARINE:
-            vehicleName = "ArduSub";
-            break;
-        case MAV_TYPE_FLAPPING_WING:
-        case MAV_TYPE_KITE:
-        case MAV_TYPE_ONBOARD_CONTROLLER:
-        case MAV_TYPE_GIMBAL:
-        case MAV_TYPE_ENUM_END:
-        default:
-            break;
-    }
-    return vehicleName;
-}
-
 QString APMParameterMetaData::_groupFromParameterName(const QString &name)
 {
-    static const QRegularExpression regex = QRegularExpression("[0-9]*$");
+    static const QRegularExpression regex(QStringLiteral("[0-9]*$"));
     QString group = name.split('_').first();
-    return group.remove(regex); // remove any numbers from the end
+    return group.remove(regex);
 }
 
-void APMParameterMetaData::loadParameterFactMetaDataFile(const QString &metaDataFile)
+void APMParameterMetaData::parseParameterJson(const QJsonObject &json)
 {
-    if (_parameterMetaDataLoaded) {
-        return;
-    }
-    _parameterMetaDataLoaded = true;
-
-    qCDebug(APMParameterMetaDataLog) << "Loading parameter meta data:" << metaDataFile;
-
-    QFile xmlFile(metaDataFile);
-    Q_ASSERT(xmlFile.exists());
-
-    const bool success = xmlFile.open(QIODevice::ReadOnly);
-    Q_UNUSED(success);
-    Q_ASSERT(success);
-
-    QXmlStreamReader xml(xmlFile.readAll());
-    xmlFile.close();
-    if (xml.hasError()) {
-        qCWarning(APMParameterMetaDataLog) << "Badly formed XML, reading failed:" << xml.errorString();
-        return;
-    }
-
-    bool badMetaData = true;
-    APMFactMetaDataRaw *rawMetaData = nullptr;
-    QString currentCategory;
-
-    QStack<int> xmlState;
-    xmlState.push(XmlState::None);
-
-    QMap<QString,QStringList> groupMembers; //used to remove groups with single item
-
-    while (!xml.atEnd()) {
-        if (xml.isStartElement()) {
-            const QString elementName = xml.name().toString();
-
-            if (elementName.isEmpty()) {
-                // skip empty elements
-            } else if (elementName == "paramfile") {
-                if (xmlState.top() != XmlState::None) {
-                    qCWarning(APMParameterMetaDataLog) << "Badly formed XML, paramfile matched";
-                }
-                xmlState.push(XmlState::ParamFileFound);
-                // we don't really do anything with this element
-            } else if (elementName == "vehicles") {
-                if (xmlState.top() != XmlState::ParamFileFound) {
-                    qCWarning(APMParameterMetaDataLog) << "Badly formed XML, vehicles matched";
-                    return;
-                }
-                xmlState.push(XmlState::FoundVehicles);
-            } else if (elementName == "libraries") {
-                if (xmlState.top() != XmlState::ParamFileFound) {
-                    qCWarning(APMParameterMetaDataLog) << "Badly formed XML, libraries matched";
-                    return;
-                }
-                currentCategory = "libraries";
-                xmlState.push(XmlState::FoundLibraries);
-            } else if (elementName == "parameters") {
-                if (xmlState.top() != XmlState::FoundVehicles && xmlState.top() != XmlState::FoundLibraries) {
-                    qCWarning(APMParameterMetaDataLog) << "Badly formed XML, parameters matched"
-                                                       << "but we don't have proper vehicle or libraries yet";
-                    return;
-                }
-
-                if (xml.attributes().hasAttribute("name")) {
-                    // we will handle metadata only for specific MAV_TYPEs and libraries
-                    const QString nameValue = xml.attributes().value("name").toString();
-                    static const QRegularExpression parameterCategories = QRegularExpression("ArduCopter|ArduPlane|APMrover2|Rover|ArduSub|AntennaTracker");
-                    if (nameValue.contains(parameterCategories)) {
-                        xmlState.push(XmlState::FoundParameters);
-                        currentCategory = nameValue;
-                    } else if(xmlState.top() == XmlState::FoundLibraries) {
-                        // we handle all libraries section under the same category libraries
-                        // so not setting currentCategory
-                        xmlState.push(XmlState::FoundParameters);
-                    } else {
-                        qCDebug(APMParameterMetaDataVerboseLog) << "not interested in this block of parameters, skipping:" << nameValue;
-                        if (_skipXMLBlock(xml, "parameters")) {
-                            qCWarning(APMParameterMetaDataLog) << "something wrong with the xml, skip of the xml failed";
-                            return;
-                        }
-                        (void) xml.readNext();
-                        continue;
-                    }
-                }
-            } else if (elementName == "param") {
-                if (xmlState.top() != XmlState::FoundParameters) {
-                    qCWarning(APMParameterMetaDataLog) << "Badly formed XML, element param matched"
-                                                       << "while we are not yet in parameters";
-                    return;
-                }
-                xmlState.push(XmlState::FoundParameter);
-
-                if (!xml.attributes().hasAttribute("name")) {
-                    qCWarning(APMParameterMetaDataLog) << "Badly formed XML, parameter attribute name missing";
-                    return;
-                }
-
-                QString name = xml.attributes().value("name").toString();
-                if (name.contains(':')) {
-                    name = name.split(':').last();
-                }
-                const QString group = _groupFromParameterName(name);
-
-                const QString category = xml.attributes().value("user").toString();
-
-                const QString shortDescription = xml.attributes().value("humanName").toString();
-                const QString longDescription = xml.attributes().value("documentation").toString();
-
-                qCDebug(APMParameterMetaDataVerboseLog) << "Found parameter name:" << name
-                                                        << "short Desc:" << shortDescription
-                                                        << "longDescription:" << longDescription
-                                                        << "category:" << category
-                                                        << "group:" << group;
-
-                Q_ASSERT(!rawMetaData);
-                if (_vehicleTypeToParametersMap[currentCategory].contains(name)) {
-                    qCDebug(APMParameterMetaDataLog) << "Duplicate parameter found:" << name;
-                    rawMetaData = _vehicleTypeToParametersMap[currentCategory][name];
-                } else {
-                    rawMetaData = new APMFactMetaDataRaw(this);
-                    _vehicleTypeToParametersMap[currentCategory][name] = rawMetaData;
-                    groupMembers[group] << name;
-                }
-                qCDebug(APMParameterMetaDataVerboseLog) << "inserting metadata for field" << name;
-                rawMetaData->name = name;
-                if (!category.isEmpty()) {
-                    rawMetaData->category = category;
-                }
-                rawMetaData->group = group;
-                rawMetaData->shortDescription = shortDescription;
-                rawMetaData->longDescription = longDescription;
-            } else {
-                // We should be getting meta data now
-                if (xmlState.top() != XmlState::FoundParameter) {
-                    qCWarning(APMParameterMetaDataLog) << "Badly formed XML, while reading parameter fields wrong state";
-                    return;
-                }
-                if (!badMetaData) {
-                    if (!_parseParameterAttributes(xml, rawMetaData)) {
-                        qCDebug(APMParameterMetaDataLog) << "Badly formed XML, failed to read parameter attributes";
-                        return;
-                    }
-                    continue;
-                }
-            }
-        } else if (xml.isEndElement()) {
-            const QString elementName = xml.name().toString();
-
-            if ((elementName == "param") && (xmlState.top() == XmlState::FoundParameter)) {
-                // Done loading this parameter
-                // Reset for next parameter
-                qCDebug(APMParameterMetaDataVerboseLog) << "done loading parameter";
-                rawMetaData = nullptr;
-                badMetaData = false;
-                xmlState.pop();
-            } else if (elementName == "parameters") {
-                qCDebug(APMParameterMetaDataVerboseLog) << "end of parameters for category: " << currentCategory;
-                _correctGroupMemberships(_vehicleTypeToParametersMap[currentCategory], groupMembers);
-                groupMembers.clear();
-                xmlState.pop();
-            } else if (elementName == "vehicles") {
-                qCDebug(APMParameterMetaDataVerboseLog) << "vehicles end here, libraries will follow";
-                xmlState.pop();
-            }
+    for (auto groupIt = json.constBegin(); groupIt != json.constEnd(); ++groupIt) {
+        if (!groupIt->isObject()) {
+            continue;
         }
-        (void) xml.readNext();
+
+        const QJsonObject params = groupIt->toObject();
+
+        for (auto paramIt = params.constBegin(); paramIt != params.constEnd(); ++paramIt) {
+            if (!paramIt->isObject()) {
+                continue;
+            }
+
+            const QString name = paramIt.key();
+            const QString group = _groupFromParameterName(name);
+
+            if (_rawParams.contains(name)) {
+                qCWarning(APMParameterMetaDataLog) << "Duplicate parameter found:" << name;
+            }
+
+            _rawParams[name] = RawParamData{group, paramIt->toObject()};
+        }
     }
+
+    _correctGroupMemberships();
 }
 
-void APMParameterMetaData::_correctGroupMemberships(ParameterNametoFactMetaDataMap &parameterToFactMetaDataMap, QMap<QString,QStringList> &groupMembers)
+void APMParameterMetaData::_correctGroupMemberships()
 {
-    for (const QString &groupName : groupMembers.keys()) {
-        if (groupMembers[groupName].count() == 1) {
-            for (const QString &parameter : groupMembers.value(groupName)) {
-                parameterToFactMetaDataMap[parameter]->group = FactMetaData::defaultGroup();
-            }
+    // Demote groups with only one member to the default group.
+    QHash<QString, int> groupCount;
+    for (const auto &raw : std::as_const(_rawParams)) {
+        groupCount[raw.group]++;
+    }
+    for (auto &raw : _rawParams) {
+        if (groupCount.value(raw.group) == 1) {
+            raw.group = FactMetaData::defaultGroup();
         }
     }
 }
 
-bool APMParameterMetaData::_skipXMLBlock(QXmlStreamReader &xml, const QString &blockName)
+FactMetaData *APMParameterMetaData::_lookupMetaData(const QString &name, FactMetaData::ValueType_t type)
 {
-    QString elementName;
-    do {
-        (void) xml.readNext();
-        elementName = xml.name().toString();
-    } while ((elementName != blockName) && (xml.isEndElement()));
-    return !xml.isEndDocument();
-}
-
-bool APMParameterMetaData::_parseParameterAttributes(QXmlStreamReader &xml, APMFactMetaDataRaw *rawMetaData)
-{
-    QString elementName = xml.name().toString();
-    QList<QPair<QString,QString>> values;
-    bool bitmaskElementSeen = false; // parse legacy <field name="Bitmask"> only if no <bitmask> was found
-
-    // as long as param doesn't end
-    while (!((elementName == "param") && xml.isEndElement())) {
-        if (elementName.isEmpty()) {
-            // skip empty elements
-        } else if (elementName == "field") {
-            const QString attributeName = xml.attributes().value("name").toString();
-
-            if (attributeName == "Range") {
-                const QString range = xml.readElementText().trimmed();
-                QStringList rangeList = range.split(' ');
-                if (rangeList.count() != 2) {
-                    qCDebug(APMParameterMetaDataVerboseLog) << "space separator didn't work, trying 'to' separator";
-                    rangeList = range.split("to");
-                    if (rangeList.count() != 2) {
-                        qCDebug(APMParameterMetaDataVerboseLog) << "'to' separator didn't work, trying '-' as separator";
-                        rangeList = range.split('-');
-                        if (rangeList.count() != 2) {
-                            qCDebug(APMParameterMetaDataLog) << "something wrong with range, all three separators have failed" << range;
-                        }
-                    }
-                }
-
-                // everything should be good. let's collect min and max
-                if (rangeList.count() == 2) {
-                    rawMetaData->min = rangeList.first().trimmed();
-                    rawMetaData->max = rangeList.last().trimmed();
-
-                    // sanitize min and max off any comments that they may have
-                    if (rawMetaData->min.contains(' ')) {
-                        rawMetaData->min = rawMetaData->min.split(' ').first();
-                    }
-                    if (rawMetaData->max.contains(' ')) {
-                        rawMetaData->max = rawMetaData->max.split(' ').first();
-                    }
-                    qCDebug(APMParameterMetaDataVerboseLog) << "read field parameter"
-                                                            << "min:" << rawMetaData->min
-                                                            << "max:" << rawMetaData->max;
-                }
-            } else if (attributeName == "Increment") {
-                const QString increment = xml.readElementText();
-                qCDebug(APMParameterMetaDataVerboseLog) << "read Increment:" << increment;
-                rawMetaData->incrementSize = increment;
-            } else if (attributeName == "Units") {
-                const QString units = xml.readElementText();
-                qCDebug(APMParameterMetaDataVerboseLog) << "read Units:" << units;
-                rawMetaData->units = units;
-            } else if (attributeName == "ReadOnly") {
-                const QString strValue = xml.readElementText().trimmed();
-                if (strValue.compare("true", Qt::CaseInsensitive) == 0) {
-                    rawMetaData->readOnly = true;
-                }
-                qCDebug(APMParameterMetaDataVerboseLog) << "read ReadOnly:" << rawMetaData->readOnly;
-            } else if (attributeName == "Bitmask") {
-                if (bitmaskElementSeen) {
-                    // A <bitmask> block was already parsed; ignore legacy field to avoid duplicates
-                    (void) xml.readElementText();
-                } else {
-                    bool parseError = false;
-
-                    const QString bitmaskString = xml.readElementText();
-                    qCDebug(APMParameterMetaDataVerboseLog) << "read Bitmask:" << bitmaskString;
-                    const QStringList bitmaskList = bitmaskString.split(",");
-                    if (!bitmaskList.isEmpty()) {
-                        for (const QString &bitmask : bitmaskList) {
-                            const QStringList pair = bitmask.split(":");
-                            if (pair.count() == 2) {
-                                rawMetaData->bitmask << QPair<QString, QString>(pair[0].trimmed(), pair[1].trimmed());
-                            } else {
-                                qCDebug(APMParameterMetaDataLog) << "parse error: bitmask:" << bitmaskString << "pair count:" << pair.count();
-                                parseError = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (parseError) {
-                        rawMetaData->bitmask.clear();
-                    }
-                }
-            } else if (attributeName == "RebootRequired") {
-                const QString strValue = xml.readElementText().trimmed();
-                if (strValue.compare("true", Qt::CaseInsensitive) == 0) {
-                    rawMetaData->rebootRequired = true;
-                }
-            }
-        } else if (elementName == "values") {
-            // doing nothing individual value will follow anyway. May be used for sanity checking.
-        } else if (elementName == "value") {
-            const QString valueValue = xml.attributes().value("code").toString();
-            const QString valueName = xml.readElementText();
-            qCDebug(APMParameterMetaDataVerboseLog) << "read value parameter" << "value desc:"
-                                                    << valueName << "code:" << valueValue;
-            values << QPair<QString,QString>(valueValue, valueName);
-            rawMetaData->values = values;
-        } else if (elementName == "bitmask") {
-            QList<QPair<QString,QString>> parsed;
-            bool parseError = false;
-
-            while (!(xml.isEndElement() && (xml.name() == QStringLiteral("bitmask")))) {
-                (void) xml.readNext();
-                if (xml.isStartElement()) {
-                    if (xml.name() == QStringLiteral("bit")) {
-                        const QString code = xml.attributes().value("code").toString().trimmed();
-                        const QString desc = xml.readElementText().trimmed();
-                        if (code.isEmpty()) {
-                            parseError = true;
-                            qCDebug(APMParameterMetaDataLog) << "parse error: <bit> missing code attribute";
-                            break;
-                        }
-                        parsed << qMakePair(code, desc);
-                    } else {
-                        qCWarning(APMParameterMetaDataLog) << "Unknown element inside <bitmask>:" << xml.name().toString();
-                    }
-                } else if (xml.hasError() || xml.atEnd()) {
-                    parseError = true;
-                    break;
-                }
-            }
-
-            if (!parseError && !parsed.isEmpty()) {
-                rawMetaData->bitmask = parsed;
-                bitmaskElementSeen = true;
-                qCDebug(APMParameterMetaDataVerboseLog) << "parsed bitmask from <bitmask> tag with" << parsed.size() << "entries";
-            } else if (parseError) {
-                qCDebug(APMParameterMetaDataLog) << "parse error while reading <bitmask> block";
-            }
-        } else {
-            qCWarning(APMParameterMetaDataLog) << "Unknown parameter element in XML: " << elementName;
-        }
-
-        (void) xml.readNext();
-        elementName = xml.name().toString();
-    }
-    return true;
-}
-
-FactMetaData *APMParameterMetaData::getMetaDataForFact(const QString &name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type)
-{
-    bool keepTrying = true;
-    QString mavTypeString = _mavTypeToString(vehicleType);
-    APMFactMetaDataRaw *rawMetaData = nullptr;
-
-    // check if we have metadata for fact, use generic otherwise
-    while (keepTrying) {
-        if (_vehicleTypeToParametersMap[mavTypeString].contains(name)) {
-            rawMetaData = _vehicleTypeToParametersMap[mavTypeString][name];
-        } else if (_vehicleTypeToParametersMap["libraries"].contains(name)) {
-            rawMetaData = _vehicleTypeToParametersMap["libraries"][name];
-        }
-        if (!rawMetaData && (mavTypeString == "Rover")) {
-            // Hack city: Older versions of Rover have different name
-            mavTypeString = "APMrover2";
-        } else {
-            keepTrying = false;
-        }
+    auto it = _rawParams.constFind(name);
+    if (it == _rawParams.constEnd()) {
+        return nullptr;
     }
 
-    FactMetaData *const metaData = new FactMetaData(type, this);
+    const RawParamData &raw = *it;
+    const QJsonObject &f = raw.fields;
 
-    // we don't have data for this fact
-    if (!rawMetaData) {
-        metaData->setCategory(QStringLiteral("Advanced"));
-        metaData->setGroup(_groupFromParameterName(name));
-        qCDebug(APMParameterMetaDataLog) << "No metaData for" << name << "using generic metadata";
-        return metaData;
+    auto *metaData = new FactMetaData(type, this);
+    metaData->setName(name);
+    metaData->setGroup(raw.group);
+
+    const QString displayName = f.value(u"DisplayName").toString();
+    if (!displayName.isEmpty()) {
+        metaData->setShortDescription(displayName);
     }
 
-    metaData->setName(rawMetaData->name);
-    if (!rawMetaData->category.isEmpty()) {
-        metaData->setCategory(rawMetaData->category);
-    }
-    metaData->setGroup(rawMetaData->group);
-    metaData->setVehicleRebootRequired(rawMetaData->rebootRequired);
-    metaData->setReadOnly(rawMetaData->readOnly);
-
-    if (!rawMetaData->shortDescription.isEmpty()) {
-        metaData->setShortDescription(rawMetaData->shortDescription);
+    const QString description = f.value(u"Description").toString();
+    if (!description.isEmpty()) {
+        metaData->setLongDescription(description);
     }
 
-    if (!rawMetaData->longDescription.isEmpty()) {
-        metaData->setLongDescription(rawMetaData->longDescription);
+    const QString units = f.value(u"Units").toString();
+    if (!units.isEmpty()) {
+        metaData->setRawUnits(units);
     }
 
-    if (!rawMetaData->units.isEmpty()) {
-        metaData->setRawUnits(rawMetaData->units);
+    const QString category = f.value(u"User").toString();
+    if (!category.isEmpty()) {
+        metaData->setCategory(category);
     }
 
-    if (!rawMetaData->min.isEmpty()) {
-        QVariant varMin;
-        QString errorString;
-        if (metaData->convertAndValidateRaw(rawMetaData->min, false /* validate as well */, varMin, errorString)) {
-            metaData->setRawMin(varMin);
-        } else {
-            qCDebug(APMParameterMetaDataLog) << "Invalid min value, name:" << metaData->name()
-                                             << "type:" << metaData->type()
-                                             << "min:" << rawMetaData->min
-                                             << "error:" << errorString;
-        }
+    if (f.contains(u"ReadOnly")) {
+        metaData->setReadOnly(jsonToBool(f.value(u"ReadOnly")));
+    }
+    if (f.contains(u"RebootRequired")) {
+        metaData->setVehicleRebootRequired(jsonToBool(f.value(u"RebootRequired")));
     }
 
-    if (!rawMetaData->max.isEmpty()) {
-        QVariant varMax;
-        QString errorString;
-        if (metaData->convertAndValidateRaw(rawMetaData->max, false /* validate as well */, varMax, errorString)) {
-            metaData->setRawMax(varMax);
-        } else {
-            qCDebug(APMParameterMetaDataLog) << "Invalid max value, name:" << metaData->name()
-                                             << "type:" << metaData->type()
-                                             << "max:" << rawMetaData->max
-                                             << "error:" << errorString;
-        }
-    }
-
-    if (!rawMetaData->values.isEmpty()) {
-        QStringList enumStrings;
-        QVariantList enumValues;
-
-        for (int i = 0; i < rawMetaData->values.count(); i++) {
-            QVariant enumValue;
-            QString errorString;
-            const QPair<QString, QString> enumPair = rawMetaData->values[i];
-
-            if (metaData->convertAndValidateRaw(enumPair.first, false /* validate */, enumValue, errorString)) {
-                enumValues << enumValue;
-                enumStrings << enumPair.second;
-            } else {
-                qCDebug(APMParameterMetaDataLog) << "Invalid enum value, name:" << metaData->name()
-                                                 << "type:" << metaData->type()
-                                                 << "value:" << enumPair.first
-                                                 << "error:" << errorString;
-                enumStrings.clear();
-                enumValues.clear();
-                break;
-            }
-        }
-
-        if (!enumStrings.isEmpty()) {
-            metaData->setEnumInfo(enumStrings, enumValues);
-        }
-    }
-
-    if (!rawMetaData->bitmask.isEmpty()) {
-        QStringList bitmaskStrings;
-        QVariantList bitmaskValues;
-
-        for (int i = 0; i < rawMetaData->bitmask.count(); i++) {
-            QString errorString;
-            const QPair<QString, QString> bitmaskPair = rawMetaData->bitmask[i];
-
-            bool ok = false;
-            const unsigned int bitIndex = bitmaskPair.first.toUInt(&ok);
-            const quint64 bitSet = ok ? (1ull << bitIndex) : 0ull;
-
-            QVariant typedBitSet;
-
-            switch (type) {
-            case FactMetaData::valueTypeInt8:
-                typedBitSet = QVariant(static_cast<qint8>(bitSet));
-                break;
-            case FactMetaData::valueTypeInt16:
-                typedBitSet = QVariant(static_cast<qint16>(bitSet));
-                break;
-            case FactMetaData::valueTypeInt32:
-                typedBitSet = QVariant(static_cast<qint32>(bitSet));
-                break;
-            case FactMetaData::valueTypeInt64:
-                typedBitSet = QVariant(static_cast<qint64>(bitSet));
-                break;
-            case FactMetaData::valueTypeUint8:
-                typedBitSet = QVariant(static_cast<quint8>(bitSet));
-                break;
-            case FactMetaData::valueTypeUint16:
-                typedBitSet = QVariant(static_cast<quint16>(bitSet));
-                break;
-            case FactMetaData::valueTypeUint32:
-                typedBitSet = QVariant(static_cast<quint32>(bitSet));
-                break;
-            case FactMetaData::valueTypeUint64:
-                typedBitSet = QVariant(static_cast<quint64>(bitSet));
-                break;
-            default:
-                break;
-            }
-
-            if (typedBitSet.isNull()) {
-                qCDebug(APMParameterMetaDataLog) << "Invalid type for bitmask, name:" << metaData->name()
-                                                 << "type:" << metaData->type();
-            }
-
-            if (!ok) {
-                qCDebug(APMParameterMetaDataLog) << "Invalid bitmask value, name:" << metaData->name()
-                                                 << "type:" << metaData->type()
-                                                 << "value:" << bitmaskPair.first
-                                                 << "error: toUInt failed";
-                bitmaskStrings.clear();
-                bitmaskValues.clear();
-                break;
-            }
-
-            QVariant bitmaskValue;
-            if (metaData->convertAndValidateRaw(typedBitSet, false /* validate */, bitmaskValue, errorString)) {
-                bitmaskValues << bitmaskValue;
-                bitmaskStrings << bitmaskPair.second;
-            } else {
-                qCDebug(APMParameterMetaDataLog) << "Invalid bitmask value, name:" << metaData->name()
-                                                 << "type:" << metaData->type()
-                                                 << "value:" << typedBitSet
-                                                 << "error:" << errorString;
-                bitmaskStrings.clear();
-                bitmaskValues.clear();
-                break;
-            }
-        }
-
-        if (!bitmaskStrings.isEmpty()) {
-            metaData->setBitmaskInfo(bitmaskStrings, bitmaskValues);
-        }
-    }
-
-    if (!rawMetaData->incrementSize.isEmpty()) {
-        bool ok;
-        const double increment = rawMetaData->incrementSize.toDouble(&ok);
+    const QString increment = f.value(u"Increment").toString();
+    if (!increment.isEmpty()) {
+        bool ok = false;
+        const double val = increment.toDouble(&ok);
         if (ok) {
-            metaData->setRawIncrement(increment);
-        } else {
-            qCDebug(APMParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << "increment:" << rawMetaData->incrementSize;
+            metaData->setRawIncrement(val);
         }
     }
 
-    // ArduPilot does not yet support decimal places meta data. So for P/I/D parameters we force to 6 places
-    if ((name.endsWith(QStringLiteral("_P")) || name.endsWith(QStringLiteral("_I")) || name.endsWith(QStringLiteral("_D"))) &&
-        ((type == FactMetaData::valueTypeFloat) || (type == FactMetaData::valueTypeDouble))) {
-        metaData->setDecimalPlaces(6);
+    const QJsonObject range = f.value(u"Range").toObject();
+    if (!range.isEmpty()) {
+        const QString lowStr = range.value(u"low").toString();
+        const QString highStr = range.value(u"high").toString();
+        if (!lowStr.isEmpty()) {
+            setRawConvertedValue(metaData, lowStr, &FactMetaData::setRawMin);
+            setRawConvertedValue(metaData, lowStr, &FactMetaData::setRawUserMin);
+        }
+        if (!highStr.isEmpty()) {
+            setRawConvertedValue(metaData, highStr, &FactMetaData::setRawMax);
+            setRawConvertedValue(metaData, highStr, &FactMetaData::setRawUserMax);
+        }
+    }
+
+    const QJsonObject valuesObj = f.value(u"Values").toObject();
+    if (!valuesObj.isEmpty()) {
+        _applyEnumValues(metaData, valuesObj);
+    }
+
+    const QJsonObject bitmaskObj = f.value(u"Bitmask").toObject();
+    if (!bitmaskObj.isEmpty()) {
+        _applyBitmask(metaData, bitmaskObj);
     }
 
     return metaData;
 }
 
-void APMParameterMetaData::getParameterMetaDataVersionInfo(const QString &metaDataFile, int &majorVersion, int &minorVersion)
+QList<ParameterMetaData::ValueDescPair> APMParameterMetaData::_sortedNumericPairs(const QJsonObject &obj, const QString &paramName)
 {
-    static const QRegularExpression regex(".*\\.(\\d)\\.(\\d)\\.xml$");
-    const QRegularExpressionMatch match = regex.match(metaDataFile);
-    if (match.hasMatch() && (match.lastCapturedIndex() == 2)) {
-        majorVersion = match.captured(1).toInt();
-        minorVersion = match.captured(2).toInt();
-    } else {
-        majorVersion = -1;
-        minorVersion = -1;
-        qCWarning(APMParameterMetaDataLog) << "Unable to parse version from parameter meta data file name:" << metaDataFile;
+    // APM format: {"0":"Disabled","1":"Enabled"} — sort by numeric value
+    // but preserve original string keys to avoid float round-trip issues.
+    struct Entry { double sortKey; QString key; QString desc; };
+    QList<Entry> entries;
+    entries.reserve(obj.size());
+    for (auto it = obj.constBegin(); it != obj.constEnd(); ++it) {
+        bool ok = false;
+        const double sortKey = it.key().toDouble(&ok);
+        if (!ok) {
+            qCWarning(APMParameterMetaDataLog) << "Non-numeric key:" << it.key() << "for" << paramName;
+            continue;
+        }
+        entries.append({sortKey, it.key(), it->toString()});
+    }
+    std::sort(entries.begin(), entries.end(), [](const auto &a, const auto &b) {
+        return a.sortKey < b.sortKey;
+    });
+
+    QList<ValueDescPair> pairs;
+    pairs.reserve(entries.size());
+    for (const auto &e : std::as_const(entries)) {
+        pairs.append({e.key, e.desc});
+    }
+    return pairs;
+}
+
+void APMParameterMetaData::_applyEnumValues(FactMetaData *metaData, const QJsonObject &valuesObj)
+{
+    setEnumFromPairs(metaData, _sortedNumericPairs(valuesObj, metaData->name()));
+}
+
+void APMParameterMetaData::_applyBitmask(FactMetaData *metaData, const QJsonObject &bitmaskObj)
+{
+    setBitmaskFromPairs(metaData, _sortedNumericPairs(bitmaskObj, metaData->name()));
+}
+
+FactMetaData *APMParameterMetaData::_createDefaultMetaData(const QString &name, FactMetaData::ValueType_t type)
+{
+    auto *metaData = new FactMetaData(type, this);
+    metaData->setCategory(QStringLiteral("Advanced"));
+    metaData->setGroup(_groupFromParameterName(name));
+    return metaData;
+}
+
+void APMParameterMetaData::_postProcessMetaData(const QString &name, FactMetaData *metaData)
+{
+    if ((name.endsWith(u"_P") || name.endsWith(u"_I") || name.endsWith(u"_D")) &&
+        (metaData->type() == FactMetaData::valueTypeFloat || metaData->type() == FactMetaData::valueTypeDouble)) {
+        metaData->setDecimalPlaces(6);
     }
 }
