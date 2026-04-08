@@ -2,9 +2,13 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE VideoItemStub.h)
 
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
+    set(_gst_required_components Core Base Video Gl GlPrototypes Rtsp)
+    if(APPLE)
+        list(APPEND _gst_required_components App)
+    endif()
     find_package(QGCGStreamer
         REQUIRED
-        COMPONENTS Core Base Video Gl GlPrototypes Rtsp App
+        COMPONENTS ${_gst_required_components}
         OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
     )
 

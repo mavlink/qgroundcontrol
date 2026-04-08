@@ -1,6 +1,7 @@
 #include "GstAppSinkAdapter.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QMetaObject>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
@@ -28,6 +29,11 @@ bool GstAppSinkAdapter::setup(GstElement *sinkBin, QVideoSink *videoSink)
     }
 
     teardown();
+
+    if (!GST_IS_BIN(sinkBin)) {
+        qCWarning(GstAppSinkAdapterLog) << "sinkBin is not a GstBin";
+        return false;
+    }
 
     _appsink = gst_bin_get_by_name(GST_BIN(sinkBin), "qgcappsink");
     if (!_appsink) {
@@ -143,8 +149,13 @@ GstFlowReturn GstAppSinkAdapter::onNewSample(GstElement *appsink, gpointer userD
     gst_buffer_unmap(buffer, &mapInfo);
     gst_sample_unref(sample);
 
+    // Dispatch to the QVideoSink's owning thread — onNewSample runs on a
+    // GStreamer streaming thread, but QVideoSink is a QObject bound to the
+    // main/Qt thread.
     if (self->_videoSink) {
-        self->_videoSink->setVideoFrame(videoFrame);
+        QMetaObject::invokeMethod(self->_videoSink, [sink = self->_videoSink, frame = std::move(videoFrame)]() {
+            sink->setVideoFrame(frame);
+        }, Qt::QueuedConnection);
     }
 
     return GST_FLOW_OK;

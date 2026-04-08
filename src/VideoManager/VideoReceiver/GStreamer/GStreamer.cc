@@ -798,6 +798,16 @@ bool completeInit()
         haveSink = true;
     }
 #endif
+#if defined(__APPLE__) && defined(__MACH__)
+    if (!haveSink) {
+        GstElementFactory *appsinkFactory = gst_element_factory_find("appsink");
+        if (appsinkFactory) {
+            qCDebug(GStreamerLog) << "appsink factory available (macOS Metal rendering)";
+            gst_object_unref(appsinkFactory);
+            haveSink = true;
+        }
+    }
+#endif
     if (!haveSink) {
         GstElementFactory *glSinkFactory = gst_element_factory_find("qml6glsink");
         if (glSinkFactory) {
@@ -806,7 +816,7 @@ bool completeInit()
         }
     }
     if (!haveSink) {
-        qCCritical(GStreamerLog) << "No QML video sink factory found (tried qml6d3d11sink, qml6glsink)";
+        qCCritical(GStreamerLog) << "No QML video sink factory found (tried qml6d3d11sink, appsink, qml6glsink)";
         return false;
     }
 

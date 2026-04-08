@@ -204,18 +204,16 @@ gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin *self)
             return;
         }
 
-        GST_ERROR_OBJECT(self, "Failed to link appsink path elements");
+        GST_WARNING_OBJECT(self, "Failed to link appsink path, falling back to GL");
         gst_bin_remove(GST_BIN(self), self->videoconvert);
         gst_bin_remove(GST_BIN(self), self->appsink);
         self->videoconvert = NULL;
         self->appsink = NULL;
-        return;
     } else {
-        GST_ERROR_OBJECT(self, "Failed to create appsink path elements: videoconvert=%p appsink=%p",
+        GST_WARNING_OBJECT(self, "Failed to create appsink path elements: videoconvert=%p appsink=%p, falling back to GL",
                            (void *)self->videoconvert, (void *)self->appsink);
         gst_clear_object(&self->videoconvert);
         gst_clear_object(&self->appsink);
-        return;
     }
 #endif
 
