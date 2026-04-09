@@ -1,0 +1,49 @@
+name: S3 Compatible Upload
+description: Upload build artifact to S3-compatible storage (no GitHub artifact storage)
+
+inputs:
+  artifact-path:
+    description: Local path to the artifact file
+    required: true
+  artifact-name:
+    description: Filename to use in S3 (e.g. QGroundControl.apk)
+    required: true
+  s3-endpoint:
+    description: S3-compatible endpoint URL (e.g. https://s3.twcstorage.ru)
+    required: true
+  s3-bucket:
+    description: S3 bucket name
+    required: true
+  s3-access-key:
+    description: S3 access key ID
+    required: true
+  s3-secret-key:
+    description: S3 secret access key
+    required: true
+  s3-region:
+    description: S3 region (use any value for non-AWS providers)
+    required: false
+    default: us-east-1
+  ref-name:
+    description: Git ref name used to build the S3 path (branch or tag)
+    required: false
+    default: ${{ github.ref_name }}
+
+runs:
+  using: composite
+  steps:
+    - name: Upload to S3
+      shell: bash
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.s3-access-key }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.s3-secret-key }}
+        AWS_DEFAULT_REGION: ${{ inputs.s3-region }}
+      run: |
+        set -euo pipefail
+        SAFE_REF=$(echo "${{ inputs.ref-name }}" | sed 's/[^a-zA-Z0-9._-]/_/g')
+        S3_KEY="builds/${SAFE_REF}/${{ inputs.artifact-name }}"
+        echo "Uploading ${{ inputs.artifact-path }} → s3://${{ inputs.s3-bucket }}/${S3_KEY}"
+        aws s3 cp "${{ inputs.artifact-path }}" \
+          "s3://${{ inputs.s3-bucket }}/${S3_KEY}" \
+          --endpoint-url "${{ inputs.s3-endpoint }}" \
+          --no-progress
