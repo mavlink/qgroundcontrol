@@ -350,8 +350,9 @@ Item {
 
         delegate: Rectangle {
             implicitWidth:  column === 0 ? ScreenTools.implicitCheckBoxHeight + ScreenTools.defaultFontPixelWidth
+                                         : column === 1 ? nameRow.implicitWidth + ScreenTools.defaultFontPixelWidth
                                          : column === 2 ? ScreenTools.defaultFontPixelWidth * 16
-                                                        : nameRow.implicitWidth + ScreenTools.defaultFontPixelWidth
+                                                        : label.contentWidth + ScreenTools.defaultFontPixelWidth
             implicitHeight: label.contentHeight + ScreenTools.defaultFontPixelHeight * 0.5
             color:          row % 2 === 0 ? "transparent" : qgcPal.windowShade
             clip:           true
@@ -409,7 +410,7 @@ Item {
                 }
 
                 QGCLabel {
-                    text:               display
+                    text:               column === 1 ? display : ""
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
