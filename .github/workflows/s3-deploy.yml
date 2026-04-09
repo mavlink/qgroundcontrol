@@ -1,14 +1,22 @@
 name: S3 Build & Deploy
 
-# Runs on every push to any branch.
-# Builds Android APK and Windows installer, then uploads both
-# directly to S3-compatible storage — no GitHub artifact storage used.
+# Builds Android APK and Windows installer on push to master,
+# then uploads directly to S3-compatible storage.
+# Use workflow_dispatch to trigger manually on any branch.
 
 on:
   push:
     branches:
-      - '**'
+      - master
+      - 'Stable*'
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build (informational only)'
+        required: false
+        default: ''
 
 permissions:
   contents: read
