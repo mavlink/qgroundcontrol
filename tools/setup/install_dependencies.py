@@ -126,6 +126,16 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
     "audio": [
         "libpulse-dev",
     ],
+    "keychain": [
+        # Headers for the application-side gcry_check_version() init in src/main.cc;
+        # without it, multiple gcrypt consumers (libsystemd, libdbus, libsecret)
+        # crash at shutdown via gcry_mpi_release on a half-owned secmem pool.
+        "libgcrypt20-dev",
+        # Enables qtkeychain's libsecret backend at *build* time. Without this
+        # package, qtkeychain falls back to KWallet-only and most non-KDE Linux
+        # users get NoBackendAvailable → QSettings fallback.
+        "libsecret-1-dev",
+    ],
     "misc": [
         "libvulkan-dev",
         "libpipewire-0.3-dev",

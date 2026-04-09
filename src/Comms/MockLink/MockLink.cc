@@ -2,6 +2,8 @@
 #include "MAVLinkLib.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
+#include "MAVLinkSigning.h"
+#include "SecureMemory.h"
 #include "MockLinkCamera.h"
 #include "MockLinkFTP.h"
 #include "MockLinkGimbal.h"
@@ -754,6 +756,25 @@ void MockLink::_handleSetupSigning(const mavlink_message_t &msg)
     }
 
     _signingEnabled = !allZeroKey;
+
+    // Write libmavlink C-state from our private mavlink_signing_t — bypassing SigningController
+    // avoids trampling its _keyHint during Vehicle's deferred-confirmation flow.
+    mavlink_status_t* const status = mavlink_get_channel_status(mavlinkChannel());
+    if (_signingEnabled) {
+        memcpy(_mockSigning.secret_key, setupSigning.secret_key, sizeof(_mockSigning.secret_key));
+        _mockSigning.link_id = static_cast<uint8_t>(mavlinkChannel());
+        _mockSigning.flags = MAVLINK_SIGNING_FLAG_SIGN_OUTGOING;
+        _mockSigning.timestamp = MAVLinkSigning::currentSigningTimestampTicks();
+        _mockSigning.accept_unsigned_callback = MAVLinkSigning::insecureConnectionAcceptUnsignedCallback;
+        status->signing = &_mockSigning;
+        status->signing_streams = &_mockSigningStreams;
+    } else {
+        QGC::secureZero(_mockSigning.secret_key, sizeof(_mockSigning.secret_key));
+        _mockSigning.accept_unsigned_callback = nullptr;
+        status->signing = nullptr;
+        status->signing_streams = nullptr;
+    }
+
     qCDebug(MockLinkLog) << "Signing" << (_signingEnabled ? "enabled" : "disabled");
 }
 

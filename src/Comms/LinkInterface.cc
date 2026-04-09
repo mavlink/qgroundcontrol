@@ -4,7 +4,7 @@
 #include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
-#include "MAVLinkSigning.h"
+#include "SigningController.h"
 
 #include <QtQml/QQmlEngine>
 
@@ -40,23 +40,6 @@ bool LinkInterface::mavlinkChannelIsSet() const
     return (LinkManager::invalidMavlinkChannel() != _mavlinkChannel);
 }
 
-bool LinkInterface::initMavlinkSigning()
-{
-    // Always clear any prior signing state on the channel to avoid stale
-    // mavlink_status_t::signing from a previous connection on this channel.
-    // For insecure connections the correct key will be auto-detected from
-    // incoming signed packets via MAVLinkSigning::tryDetectKey().
-    if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), QByteArrayView(), nullptr)) {
-        qCDebug(LinkInterfaceLog) << "Signing cleared on channel" << _mavlinkChannel
-                                  << (isSecureConnection() ? "(secure)" : "(will auto-detect)");
-    } else {
-        qCWarning(LinkInterfaceLog) << "Failed to initialise signing on channel" << _mavlinkChannel;
-        return false;
-    }
-
-    return true;
-}
-
 bool LinkInterface::_allocateMavlinkChannel()
 {
     Q_ASSERT(!mavlinkChannelIsSet());
@@ -76,7 +59,12 @@ bool LinkInterface::_allocateMavlinkChannel()
     qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << _mavlinkChannel;
 
     mavlink_set_proto_version(_mavlinkChannel, MAVLINK_VERSION); // We only support v2 protcol
-    initMavlinkSigning();
+
+    _signingController = std::make_unique<SigningController>(static_cast<mavlink_channel_t>(_mavlinkChannel));
+    _signingController->clearSigning();
+
+    qCDebug(LinkInterfaceLog) << "SigningController created for channel" << _mavlinkChannel
+                              << (isSecureConnection() ? "(secure)" : "(will auto-detect)");
 
     return true;
 }
@@ -88,6 +76,9 @@ void LinkInterface::_freeMavlinkChannel()
     if (!mavlinkChannelIsSet()) {
         return;
     }
+
+    // Destroy the controller before freeing the channel so it can flush the final timestamp.
+    _signingController.reset();
 
     LinkManager::instance()->freeMavlinkChannel(_mavlinkChannel);
     _mavlinkChannel = LinkManager::invalidMavlinkChannel();
@@ -116,16 +107,6 @@ void LinkInterface::_connectionRemoved()
         disconnect();
     } else {
         // If there are still vehicles on this link we allow communication lost to trigger and don't automatically disconect until all the vehicles go away
-    }
-}
-
-void LinkInterface::setSigningSignatureFailure(bool failure)
-{
-    if (_signingSignatureFailure != failure) {
-        _signingSignatureFailure = failure;
-        if (_signingSignatureFailure) {
-            emit communicationError(tr("Signing Failure"), tr("Signing signature mismatch"));
-        }
     }
 }
 

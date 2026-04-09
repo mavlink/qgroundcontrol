@@ -14,5 +14,8 @@ private slots:
     void cleanup() override;
     void _testSendSetupSigning();
     void _testSendDisableSigning();
+    void _testSigningEnableTimeout();
     void _testSigningKeysAddRemove();
+    void _testSigningPendingState();
+    void _testSigningStatusChangedSignalFiresOnEnable();
 };
