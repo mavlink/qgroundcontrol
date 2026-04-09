@@ -1,49 +1,20 @@
 #pragma once
 
-
-#include "MAVLinkEnums.h"
-#include "FactMetaData.h"
-
-#include <QtCore/QObject>
 #include <QtCore/QLoggingCategory>
+
+#include "ParameterMetaData.h"
 
 Q_DECLARE_LOGGING_CATEGORY(PX4ParameterMetaDataLog)
 
-//#define GENERATE_PARAMETER_JSON
-
-/// Loads and holds parameter fact meta data for PX4 stack
-class PX4ParameterMetaData : public QObject
+class PX4ParameterMetaData : public ParameterMetaData
 {
-    Q_OBJECT
+    Q_DECLARE_TR_FUNCTIONS(PX4ParameterMetaData)
 
 public:
-    PX4ParameterMetaData(QObject* parent = nullptr);
+    explicit PX4ParameterMetaData(QObject *parent = nullptr);
+    ~PX4ParameterMetaData() override;
 
-    void            loadParameterFactMetaDataFile   (const QString& metaDataFile);
-    FactMetaData*   getMetaDataForFact              (const QString& name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type);
-
-    static void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
-
-private:
-    enum {
-        XmlStateNone,
-        XmlStateFoundParameters,
-        XmlStateFoundVersion,
-        XmlStateFoundGroup,
-        XmlStateFoundParameter,
-        XmlStateDone
-    };
-
-    QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
-    static void _outputFileWarning(const QString& metaDataFile, const QString& error1, const QString& error2);
-
-#ifdef GENERATE_PARAMETER_JSON
-    void _generateParameterJson();
-#endif
-
-    bool                                _parameterMetaDataLoaded        = false;    ///< true: parameter meta data already loaded
-    FactMetaData::NameToMetaDataMap_t   _mapParameterName2FactMetaData;             ///< Maps from a parameter name to FactMetaData
-
-    static constexpr const char* kInvalidConverstion = "Internal Error: No support for string parameters";
-
+protected:
+    void parseParameterJson(const QJsonObject &json) override;
+    void _postProcessMetaData(const QString &name, FactMetaData *metaData) override;
 };

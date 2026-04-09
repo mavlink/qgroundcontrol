@@ -137,10 +137,15 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
     if (fClearCache) {
         QDir dir(ParameterManager::parameterCacheDir());
         dir.removeRecursively();
-        QFile airframe(cachedAirframeMetaDataFile());
-        airframe.remove();
         QFile parameter(cachedParameterMetaDataFile());
         parameter.remove();
+        QFile airframe(cachedAirframeMetaDataFile());
+        airframe.remove();
+
+        // Clear versioned parameter metadata cache
+        const QString metaDataCachePath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation)
+                                          + QStringLiteral("/ParameterMetaData");
+        QDir(metaDataCachePath).removeRecursively();
     }
 
     // Set up our logging filters
@@ -604,7 +609,7 @@ QString QGCApplication::cachedParameterMetaDataFile()
 {
     QSettings settings;
     const QDir parameterDir = QFileInfo(settings.fileName()).dir();
-    return parameterDir.filePath(QStringLiteral("ParameterFactMetaData.xml"));
+    return parameterDir.filePath(QStringLiteral("ParameterFactMetaData.json"));
 }
 
 QString QGCApplication::cachedAirframeMetaDataFile()

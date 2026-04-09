@@ -513,24 +513,6 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle *vehicle)
     }
 }
 
-FactMetaData* APMFirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData, const QString& name, FactMetaData::ValueType_t type, MAV_TYPE vehicleType) const
-{
-    APMParameterMetaData *const apmMetaData = qobject_cast<APMParameterMetaData*>(parameterMetaData);
-
-    if (apmMetaData) {
-        return apmMetaData->getMetaDataForFact(name, vehicleType, type);
-    } else {
-        qWarning() << "Internal error: pointer passed to APMFirmwarePlugin::addMetaDataToFact not APMParameterMetaData";
-    }
-
-    return nullptr;
-}
-
-void APMFirmwarePlugin::_getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) const
-{
-    APMParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion);
-}
-
 QList<MAV_CMD> APMFirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const
 {
     QList<MAV_CMD> supportedCommands = {
@@ -611,13 +593,9 @@ QString APMFirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t ve
     }
 }
 
-QObject *APMFirmwarePlugin::_loadParameterMetaData(const QString &metaDataFile)
+ParameterMetaData *APMFirmwarePlugin::_createParameterMetaData()
 {
-    Q_UNUSED(metaDataFile);
-
-    APMParameterMetaData *const metaData = new APMParameterMetaData(this);
-    metaData->loadParameterFactMetaDataFile(metaDataFile);
-    return metaData;
+    return new APMParameterMetaData(this);
 }
 
 QString APMFirmwarePlugin::getHobbsMeter(Vehicle* vehicle) const
@@ -721,34 +699,32 @@ QString APMFirmwarePlugin::_internalParameterMetaDataFile(const Vehicle *vehicle
     const QGCMAVLink::VehicleClass_t vehicleClass = QGCMAVLink::vehicleClass(vehicle->vehicleType());
 
     const QString vehicleName = _vehicleClassToString(vehicleClass);
-    if(vehicleName.isEmpty()) {
+    if (vehicleName.isEmpty()) {
         qCWarning(APMFirmwarePluginLog) << Q_FUNC_INFO << "called with bad VehicleClass_t:" << vehicleClass;
         return QString();
     }
 
-    const QString fileNameFormat = QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.%1.%2.%3.xml");
     int currMajor = vehicle->firmwareMajorVersion();
     int currMinor = vehicle->firmwareMinorVersion();
 
     // Find next newest version available
     while ((currMajor >= 4) && (currMinor > 0)) {
-        const QString tempFileName = fileNameFormat.arg(vehicleName).arg(currMajor).arg(currMinor);
-        if (QFileInfo::exists(tempFileName)) {
-            return tempFileName;
+        const QString file = QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.%1.%2.%3.json").arg(vehicleName).arg(currMajor).arg(currMinor);
+        if (QFileInfo::exists(file)) {
+            return file;
         }
         currMinor--;
         if (currMinor == 0) {
-            currMinor = 10; // Some suitably high possible minor version.
+            currMinor = 10;
             currMajor--;
         }
     }
-    // currMajor or currMinor were likely invalid (-1)
 
-    // Use oldest version available which should be equivalent to offline params
+    // Fallback: use oldest version available
     for (int i = 0; i < 10; i++) {
-        const QString tempFileName = fileNameFormat.arg(vehicleName).arg(4).arg(i);
-        if (QFileInfo::exists(tempFileName)) {
-            return tempFileName;
+        const QString file = QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.%1.%2.%3.json").arg(vehicleName).arg(4).arg(i);
+        if (QFileInfo::exists(file)) {
+            return file;
         }
     }
 

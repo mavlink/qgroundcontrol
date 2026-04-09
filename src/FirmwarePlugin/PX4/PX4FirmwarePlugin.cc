@@ -1,4 +1,5 @@
 #include "PX4FirmwarePlugin.h"
+#include "ParameterMetaData.h"
 #include "PX4ParameterMetaData.h"
 #include "QGCApplication.h"
 #include "PX4AutoPilotPlugin.h"
@@ -8,7 +9,7 @@
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
-#include <QString>
+#include <QtCore/QString>
 
 #include "px4_custom_mode.h"
 
@@ -177,24 +178,6 @@ bool PX4FirmwarePlugin::sendHomePositionToVehicle(void) const
     return false;
 }
 
-FactMetaData* PX4FirmwarePlugin::_getMetaDataForFact(QObject* parameterMetaData, const QString& name, FactMetaData::ValueType_t type, MAV_TYPE vehicleType) const
-{
-    PX4ParameterMetaData* px4MetaData = qobject_cast<PX4ParameterMetaData*>(parameterMetaData);
-
-    if (px4MetaData) {
-        return px4MetaData->getMetaDataForFact(name, vehicleType, type);
-    } else {
-        qCWarning(PX4FirmwarePluginLog) << "Internal error: pointer passed to PX4FirmwarePlugin::getMetaDataForFact not PX4ParameterMetaData";
-    }
-
-    return nullptr;
-}
-
-void PX4FirmwarePlugin::_getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion) const
-{
-    return PX4ParameterMetaData::getParameterMetaDataVersionInfo(metaDataFile, majorVersion, minorVersion);
-}
-
 QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const
 {
     QList<MAV_CMD> supportedCommands = {
@@ -267,13 +250,9 @@ QString PX4FirmwarePlugin::missionCommandOverrides(QGCMAVLink::VehicleClass_t ve
     }
 }
 
-QObject* PX4FirmwarePlugin::_loadParameterMetaData(const QString& metaDataFile)
+ParameterMetaData* PX4FirmwarePlugin::_createParameterMetaData()
 {
-    PX4ParameterMetaData* metaData = new PX4ParameterMetaData(this);
-    if (!metaDataFile.isEmpty()) {
-        metaData->loadParameterFactMetaDataFile(metaDataFile);
-    }
-    return metaData;
+    return new PX4ParameterMetaData(this);
 }
 
 void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle) const

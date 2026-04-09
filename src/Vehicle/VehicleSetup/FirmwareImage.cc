@@ -1,16 +1,17 @@
 #include "FirmwareImage.h"
 #include "JsonParsing.h"
 #include "QGCApplication.h"
-#include "CompInfoParam.h"
+#include "FirmwarePlugin.h"
+#include "FirmwarePluginManager.h"
 #include "Bootloader.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
-#include <QtCore/QTextStream>
+#include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
-#include <QtCore/QFileInfo>
-#include <QtCore/QDir>
+#include <QtCore/QTextStream>
 
 FirmwareImage::FirmwareImage(QObject* parent) :
     QObject(parent),
@@ -237,7 +238,13 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     MAV_AUTOPILOT firmwareType = (MAV_AUTOPILOT)px4Json[_jsonMavAutopilotKey].toInt(MAV_AUTOPILOT_PX4);
     emit statusMessage(QString("MAV_AUTOPILOT = %1").arg(firmwareType));
 
-    // Decompress the parameter xml and save to file
+    // NOTE: PX4 firmware currently embeds parameter metadata as XML
+    // ("parameter_xml" key), but the metadata system now expects JSON.
+    // cacheParameterMetaDataFile() skips non-JSON content (debug-level
+    // log only). This is a no-op until PX4 upstream switches px_mkfw.py
+    // to embed JSON. Modern PX4 vehicles (v1.13+) serve metadata via
+    // the component metadata protocol on connect, so this only affects
+    // pre-v1.13 boards that lack that capability.
     QByteArray decompressedBytes;
     bool success = _decompressJsonValue(px4Json,               // JSON object
                                         bytes,                 // Raw bytes of JSON document
@@ -246,7 +253,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
                                         decompressedBytes);    // Returned decompressed bytes
     if (success) {
         QString parameterFilename = QGCApplication::cachedParameterMetaDataFile();
-        QFile parameterFile(QGCApplication::cachedParameterMetaDataFile());
+        QFile parameterFile(parameterFilename);
 
         if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = parameterFile.write(decompressedBytes);
@@ -261,8 +268,10 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
             emit statusMessage(tr("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename, parameterFile.errorString()));
         }
 
-        // Cache this file with the system
-        CompInfoParam::_cachePX4MetaDataFile(parameterFilename);
+        FirmwarePlugin *fwPlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_GENERIC);
+        if (fwPlugin) {
+            fwPlugin->cacheParameterMetaDataFile(parameterFilename);
+        }
     }
 
     // Decompress the airframe xml and save to file

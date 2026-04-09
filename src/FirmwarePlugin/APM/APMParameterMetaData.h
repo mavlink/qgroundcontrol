@@ -1,78 +1,37 @@
 #pragma once
 
+#include <QtCore/QHash>
+#include <QtCore/QJsonObject>
 #include <QtCore/QLoggingCategory>
-#include <QtCore/QMap>
-#include <QtCore/QObject>
-#include <QtCore/QXmlStreamReader>
 
-#include "MAVLinkEnums.h"
-#include "FactMetaData.h"
+#include "ParameterMetaData.h"
 
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
 Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog)
 
-class APMFactMetaDataRaw : public QObject
+class APMParameterMetaData : public ParameterMetaData
 {
-    Q_OBJECT
-public:
-    explicit APMFactMetaDataRaw(QObject *parent = nullptr)
-        : QObject(parent)
-    { }
-    ~APMFactMetaDataRaw() {}
-
-    QString name;
-    QString category;
-    QString group;
-    QString shortDescription;
-    QString longDescription;
-    QString min;
-    QString max;
-    QString incrementSize;
-    QString units;
-    bool rebootRequired = false;
-    bool readOnly = false;
-    QList<QPair<QString, QString>> values;
-    QList<QPair<QString, QString>> bitmask;
-};
-
-/*===========================================================================*/
-
-typedef QMap<QString, APMFactMetaDataRaw*> ParameterNametoFactMetaDataMap;
-
-/// Collection of Parameter Facts for ArduPilot
-class APMParameterMetaData : public QObject
-{
-    Q_OBJECT
-
 public:
     explicit APMParameterMetaData(QObject *parent = nullptr);
-    ~APMParameterMetaData();
+    ~APMParameterMetaData() override;
 
-    FactMetaData *getMetaDataForFact(const QString &name, MAV_TYPE vehicleType, FactMetaData::ValueType_t type);
-    void loadParameterFactMetaDataFile(const QString &metaDataFile);
-
-    static void getParameterMetaDataVersionInfo(const QString &metaDataFile, int &majorVersion, int &minorVersion);
+protected:
+    void parseParameterJson(const QJsonObject &json) override;
+    FactMetaData *_lookupMetaData(const QString &name, FactMetaData::ValueType_t type) override;
+    FactMetaData *_createDefaultMetaData(const QString &name, FactMetaData::ValueType_t type) override;
+    void _postProcessMetaData(const QString &name, FactMetaData *metaData) override;
 
 private:
-    enum XmlState {
-        None,
-        ParamFileFound,
-        FoundVehicles,
-        FoundLibraries,
-        FoundParameters,
-        FoundVersion,
-        FoundGroup,
-        FoundParameter,
-        Done
+    struct RawParamData {
+        QString group;
+        QJsonObject fields;
     };
 
-    static bool _skipXMLBlock(QXmlStreamReader &xml, const QString &blockName);
-    bool _parseParameterAttributes(QXmlStreamReader &xml, APMFactMetaDataRaw *rawMetaData);
-    static void _correctGroupMemberships(ParameterNametoFactMetaDataMap &parameterToFactMetaDataMap, QMap<QString,QStringList> &groupMembers);
-    static QString _mavTypeToString(MAV_TYPE vehicleTypeEnum);
+    void _correctGroupMemberships();
     static QString _groupFromParameterName(const QString &name);
+    static QList<ValueDescPair> _sortedNumericPairs(const QJsonObject &obj, const QString &paramName);
+    static void _applyEnumValues(FactMetaData *metaData, const QJsonObject &valuesObj);
+    static void _applyBitmask(FactMetaData *metaData, const QJsonObject &bitmaskObj);
 
-    bool _parameterMetaDataLoaded = false; ///< true: parameter meta data already loaded
-    // FIXME: metadata is vehicle type specific now
-    QMap<QString, ParameterNametoFactMetaDataMap> _vehicleTypeToParametersMap; ///< Maps from a vehicle type to paramametertoFactMeta map>
+    QHash<QString, RawParamData> _rawParams;
 };
