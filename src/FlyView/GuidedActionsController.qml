@@ -8,6 +8,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.Logging
 
 /// This provides the smarts behind the guided mode commands, minus the user interface. This way you can change UI
 /// without affecting the underlying functionality.
@@ -189,7 +190,7 @@ Item {
     property var _customController: customController
 
     function _isGuidedActionsControllerLogEnabled() {
-        return QGroundControl.categoryLoggingOn("GuidedActionsControllerLog")
+        return QGCLoggingCategoryManager.isCategoryEnabled("GuidedActionsControllerLog")
     }
 
     function _outputState() {

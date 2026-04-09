@@ -17,7 +17,7 @@
 #include "MissionCommandTree.h"
 #include "VideoManager.h"
 #include "MultiVehicleManager.h"
-#include "QGCLoggingCategory.h"
+#include "LoggingCategoryModel.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "GPSManager.h"
 #include "GPSRtk.h"
@@ -28,6 +28,8 @@
 
 #include <QtCore/QSettings>
 #include <QtCore/QLineF>
+
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog, "QMLControls.GuidedActionsController")
 
@@ -345,27 +347,4 @@ QString QGroundControlQmlGlobal::appName()
     return QCoreApplication::applicationName();
 }
 
-QmlObjectListModel *QGroundControlQmlGlobal::treeLoggingCategoriesModel()
-{
-    return QGCLoggingCategoryManager::instance()->treeCategoryModel();
-}
 
-QmlObjectListModel *QGroundControlQmlGlobal::flatLoggingCategoriesModel()
-{
-    return QGCLoggingCategoryManager::instance()->flatCategoryModel();
-}
-
-void QGroundControlQmlGlobal::setCategoryLoggingOn(const QString &category, bool enable)
-{
-    QGCLoggingCategoryManager::instance()->setCategoryLoggingOn(category, enable);
-}
-
-bool QGroundControlQmlGlobal::categoryLoggingOn(const QString &category)
-{
-    return QGCLoggingCategoryManager::categoryLoggingOn(category);
-}
-
-void QGroundControlQmlGlobal::disableAllLoggingCategories()
-{
-    QGCLoggingCategoryManager::instance()->disableAllCategories();
-}

@@ -1,6 +1,6 @@
 #include "QGCApplication.h"
 #include "QGCCommandLineParser.h"
-#include "QGCLogging.h"
+#include "LogManager.h"
 #include "QGCLoggingCategory.h"
 #include "Platform.h"
 
@@ -25,11 +25,14 @@ int main(int argc, char *argv[])
 
     QGCApplication app(argc, argv, args);
 
-    QGCLogging::installHandler();
+    LogManager::installHandler();
 
     Platform::setupPostApp();
 
     app.init();
+
+    // Apply after installFilter() (called during app.init) so rules aren't overwritten.
+    LogManager::applyEnvironmentLogLevel();
 
     // --- Run application or tests ---
     const auto run = [&]() -> int {
@@ -60,5 +63,9 @@ int main(int argc, char *argv[])
     app.shutdown();
 
     qCInfo(MainLog) << "Exiting main";
+
+    // Destroy LogManager while Qt is still fully functional (before static destruction).
+    delete LogManager::instance();
+
     return exitCode;
 }
