@@ -13,12 +13,12 @@ OnboardLogDownloadData::OnboardLogDownloadData(QGCOnboardLogEntry * const logEnt
     : ID(logEntry->id())
     , entry(logEntry)
 {
-    // qCDebug(OnboardLogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(OnboardLogEntryLog) << Q_FUNC_INFO << "id" << ID;
 }
 
 OnboardLogDownloadData::~OnboardLogDownloadData()
 {
-    // qCDebug(OnboardLogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(OnboardLogEntryLog) << Q_FUNC_INFO << "id" << ID;
 }
 
 void OnboardLogDownloadData::advanceChunk()
@@ -53,12 +53,12 @@ QGCOnboardLogEntry::QGCOnboardLogEntry(uint logId, const QDateTime &dateTime, ui
     , _logTimeUTC(dateTime)
     , _received(received)
 {
-    // qCDebug(OnboardLogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(OnboardLogEntryLog) << Q_FUNC_INFO << "id" << _logID;
 }
 
 QGCOnboardLogEntry::~QGCOnboardLogEntry()
 {
-    // qCDebug(OnboardLogEntryLog) << Q_FUNC_INFO << this;
+    qCDebug(OnboardLogEntryLog) << Q_FUNC_INFO << "id" << _logID;
 }
 
 QString QGCOnboardLogEntry::sizeStr() const

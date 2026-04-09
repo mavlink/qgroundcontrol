@@ -20,4 +20,12 @@ if(NOT ANDROID AND NOT IOS)
     )
 endif()
 
+# QGCKeychain tests always run — QSettings fallback is used when qtkeychain
+# is unavailable (Linux), so tests exercise whichever backend is active.
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGCKeychainTest.cc
+        QGCKeychainTest.h
+)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

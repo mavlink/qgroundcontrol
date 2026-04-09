@@ -185,6 +185,8 @@ private:
 
     uint8_t _getMavlinkAuxChannel() const { return _mavlinkAuxChannel; }
     bool _mavlinkAuxChannelIsSet() const;
+    uint8_t _getMavlinkVehicleChannel() const { return _mavlinkVehicleChannel; }
+    bool _mavlinkVehicleChannelIsSet() const;
 
     void _loadParams();
 
@@ -279,6 +281,11 @@ private:
 
     uint8_t _mavlinkAuxChannel = std::numeric_limits<uint8_t>::max();
     QMutex _mavlinkAuxMutex;
+    /// Vehicle-side outgoing channel; signing state lives here, decoupled from QGC's parser channel.
+    uint8_t _mavlinkVehicleChannel = std::numeric_limits<uint8_t>::max();
+
+    mavlink_signing_t _mockSigning{};
+    mavlink_signing_streams_t _mockSigningStreams{};
 
     bool _connected = false;
     bool _inNSH = false;

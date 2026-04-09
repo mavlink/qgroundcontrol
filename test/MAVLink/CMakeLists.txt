@@ -11,12 +11,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ImageProtocolManagerTest.h
         MAVLinkStreamConfigTest.cc
         MAVLinkStreamConfigTest.h
-        MockLinkSigningTest.cc
-        MockLinkSigningTest.h
         QGCMAVLinkTest.cc
         QGCMAVLinkTest.h
-        SigningTest.cc
-        SigningTest.h
         StatusTextHandlerTest.cc
         StatusTextHandlerTest.h
         SysStatusSensorInfoTest.cc
@@ -24,3 +20,5 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_subdirectory(Signing)

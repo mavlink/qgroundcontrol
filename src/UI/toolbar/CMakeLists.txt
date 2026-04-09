@@ -31,7 +31,6 @@ qt_add_qml_module(ToolbarModule
         RTKGPSIndicator.qml
         SelectViewDropdown.qml
         SignalStrength.qml
-        SigningIndicator.qml
         TelemetryRSSIIndicator.qml
         VehicleGPSIndicator.qml
         VehicleMessageList.qml
