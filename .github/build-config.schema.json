@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "QGC Build Configuration",
+  "description": "Centralized version numbers and build settings for QGroundControl CI",
+  "type": "object",
+  "required": [
+    "qt_version",
+    "qt_minimum_version",
+    "cmake_minimum_version",
+    "ndk_version",
+    "ndk_full_version",
+    "android_platform",
+    "android_min_sdk",
+    "android_build_tools",
+    "java_version",
+    "gstreamer_default_version",
+    "gstreamer_minimum_version",
+    "platform_workflows"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference (ignored by validators)"
+    },
+    "qt_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Target Qt version"
+    },
+    "qt_minimum_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Minimum supported Qt version"
+    },
+    "qt_modules": {
+      "type": "string",
+      "description": "Space-separated list of Qt modules to install"
+    },
+    "cmake_minimum_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Minimum required CMake version"
+    },
+    "ndk_version": {
+      "type": "string",
+      "pattern": "^r[0-9]+[a-z]?$",
+      "description": "Android NDK short version (e.g. r27c)"
+    },
+    "ndk_full_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Android NDK full version number"
+    },
+    "android_platform": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Android target API level"
+    },
+    "android_min_sdk": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Android minimum SDK version"
+    },
+    "android_build_tools": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Android build tools version"
+    },
+    "android_cmdline_tools": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Android command-line tools version"
+    },
+    "java_version": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Java version for Android builds"
+    },
+    "gstreamer_default_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gstreamer_minimum_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gstreamer_android_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gstreamer_ios_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gstreamer_macos_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gstreamer_windows_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "gstreamer_checksums": {
+      "type": "object",
+      "description": "Per-version checksums for GStreamer SDK downloads",
+      "patternProperties": {
+        "^[0-9]+\\.[0-9]+\\.[0-9]+$": {
+          "type": "object",
+          "patternProperties": {
+            ".*": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
+      }
+    },
+    "ios_deployment_target": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "macos_deployment_target": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "ccache_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "vulkan_sdk_version": {
+      "type": "string"
+    },
+    "xcode_version": {
+      "type": "string"
+    },
+    "xcode_ios_version": {
+      "type": "string"
+    },
+    "platform_workflows": {
+      "type": "string",
+      "description": "Comma-separated list of platform workflow names"
+    }
+  },
+  "additionalProperties": false
+}

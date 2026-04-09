@@ -81,9 +81,10 @@ Coverage: **{% if coverage.current is not none %}{{ "%.1f"|format(coverage.curre
 {% endif -%}
 {% if artifacts.has_baseline and artifacts.total_delta != 0 -%}
 **Total size {{ "increased" if artifacts.total_delta > 0 else "decreased" }} by {{ "%.2f"|format(artifacts.total_delta_mb) }} MB**
-{%- elif not artifacts.has_baseline -%}
+{% elif not artifacts.has_baseline %}
 *No baseline available for comparison*
-{%- endif %}
 {% endif %}
+{% endif %}
+
 ---
 <sub>Updated: {{ timestamp }} • Triggered by: {{ triggered_by }}</sub>

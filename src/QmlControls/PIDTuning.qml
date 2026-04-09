@@ -170,6 +170,7 @@ RowLayout {
 
     Column {
         id:                 leftPanel
+        Layout.fillWidth:   true
         Layout.alignment:   Qt.AlignTop
         spacing:            ScreenTools.defaultFontPixelHeight / 4
         clip:               true // chart has redraw problems

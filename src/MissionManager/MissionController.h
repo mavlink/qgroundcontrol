@@ -51,7 +51,7 @@ public:
     // Legacy alias kept for source compatibility with external code
     using MissionFlightStatus_t = ::MissionFlightStatus_t;
 
-    Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsChanged)
+    Q_PROPERTY(QmlObjectListModel*  visualItems                     READ visualItems                    NOTIFY visualItemsReset)
     Q_PROPERTY(QmlObjectTreeModel*  visualItemsTree                 READ visualItemsTree                CONSTANT)                               ///< Tree-structured view of visualItems for TreeView
     Q_PROPERTY(QPersistentModelIndex planFileGroupIndex              READ planFileGroupIndex              CONSTANT)
     Q_PROPERTY(QPersistentModelIndex defaultsGroupIndex              READ defaultsGroupIndex              CONSTANT)
@@ -63,6 +63,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  directionArrows                 READ directionArrows                CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames         READ complexMissionItemNames        NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition             READ plannedHomePosition            NOTIFY plannedHomePositionChanged)      ///< Includes AMSL altitude
+    Q_PROPERTY(bool                 homePositionSet                 READ homePositionSet                NOTIFY homePositionSetChanged)          ///< true: Home position has been set by the user
     Q_PROPERTY(QGeoCoordinate       previousCoordinate              MEMBER _previousCoordinate          NOTIFY planViewStateChanged)
     Q_PROPERTY(FlightPathSegment*   splitSegment                    MEMBER _splitSegment                NOTIFY splitSegmentChanged)             ///< Segment which show show + split ui element
     Q_PROPERTY(double               progressPct                     READ progressPct                    NOTIFY progressPctChanged)
@@ -104,6 +105,9 @@ public:
 
     /// Returns the visual item index for the given VisualMissionItem object, or -1 if not found
     Q_INVOKABLE int visualItemIndexForObject(QObject* object) const;
+
+    /// Set the planned home position from a map click
+    Q_INVOKABLE void setHomePosition(QGeoCoordinate coordinate);
 
     /// Add a new simple mission item to the list
     ///     @param coordinate: Coordinate for item
@@ -262,6 +266,7 @@ public:
     QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
     QStringList         complexMissionItemNames     (void) const;
     QGeoCoordinate      plannedHomePosition         (void) const;
+    bool                homePositionSet             (void) const;
     VisualMissionItem*  currentPlanViewItem         (void) const { return _currentPlanViewItem; }
     TakeoffMissionItem* takeoffMissionItem          (void) const { return _takeoffMissionItem; }
     double              progressPct                 (void) const { return _progressPct; }
@@ -307,7 +312,7 @@ public:
     static constexpr int kGroupCount       = 6;
 
 signals:
-    void visualItemsChanged                 (void);
+    void visualItemsReset                   (void);
     void splitSegmentChanged                (void);
     void newItemsFromVehicle                (void);
     void missionTotalDistanceChanged        (double missionTotalDistance);
@@ -325,6 +330,7 @@ signals:
     void batteryChangePointChanged          (int batteryChangePoint);
     void batteriesRequiredChanged           (int batteriesRequired);
     void plannedHomePositionChanged         (QGeoCoordinate plannedHomePosition);
+    void homePositionSetChanged              (void);
     void progressPctChanged                 (double progressPct);
     void currentMissionIndexChanged         (int currentMissionIndex);
     void planViewStateChanged               (void);  ///< All plan-view properties are recomputed together in setCurrentPlanViewSeqNum, so one signal covers them all

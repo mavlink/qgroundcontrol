@@ -19,7 +19,9 @@ SetupPage {
             FactPanelController { id: controller }
 
             PIDTuning {
-                Layout.fillWidth: true
+                id: pidTuning
+                availableWidth:     pidTuningPage.availableWidth
+                availableHeight:    pidTuningPage.availableHeight - pidTuning.y
 
                 property var roll: QtObject {
                     property string name: qsTr("Roll")

@@ -21,4 +21,5 @@ private slots:
     void _testCreateVideoReceiver();
     void _testPipelineSmokeTest();
     void _testRuntimeVersionCheck();
+    void _testAppsinkFrameDelivery();
 };

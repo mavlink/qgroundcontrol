@@ -294,6 +294,33 @@ def test_main_reads_artifacts_file_when_provided(tmp_path: Path, monkeypatch) ->
     assert data["artifacts"][0]["name"] == "QGroundControl-x86_64"
 
 
+def test_collect_artifacts_deduplicates_same_name_keeps_largest() -> None:
+    """When multiple workflows produce artifacts with the same name, keep the largest."""
+    latest = {
+        "MacOS": {"id": 61},
+        "Android": {"id": 62},
+    }
+    prefetched = {
+        61: [
+            {"name": "QGroundControl", "size_in_bytes": 337 * 1024 * 1024},
+        ],
+        62: [
+            {"name": "QGroundControl", "size_in_bytes": 247 * 1024 * 1024},
+        ],
+    }
+
+    artifacts = mod.collect_artifacts(
+        "owner/repo",
+        latest,
+        ["MacOS", "Android"],
+        artifacts_by_run_id=prefetched,
+    )
+
+    assert len(artifacts) == 1
+    assert artifacts[0]["name"] == "QGroundControl"
+    assert artifacts[0]["size_bytes"] == 337 * 1024 * 1024
+
+
 def test_main_returns_one_on_invalid_runs_file(tmp_path: Path) -> None:
     runs_file = tmp_path / "runs.json"
     runs_file.write_text("{not-json", encoding="utf-8")

@@ -43,9 +43,9 @@ endif()
 if(NOT USE_SYSTEM_SDL3)
 CPMAddPackage(
     NAME SDL3
-    VERSION 3.4.0
+    VERSION 3.4.2
     GITHUB_REPOSITORY libsdl-org/SDL
-    GIT_TAG release-3.4.0
+    GIT_TAG release-3.4.2
     OPTIONS
         "SDL_INSTALL OFF"
         "SDL_UNINSTALL OFF"
@@ -110,7 +110,7 @@ if(NOT USE_SYSTEM_SDL_GAMECONTROLLERDB)
 CPMAddPackage(
     NAME sdl_gamecontrollerdb
     GITHUB_REPOSITORY mdqinc/SDL_GameControllerDB
-    GIT_TAG master
+    GIT_TAG 7c3baed7e78f4b85c12df22089b2b97410edec15
     DOWNLOAD_ONLY
 )
 

@@ -44,7 +44,7 @@ public:
     int     lastSequenceNumber  (void) const final;
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     double  greatestDistanceTo  (const QGeoCoordinate &other) const final;
-    QString mapVisualQML        (void) const final { return QStringLiteral("SimpleItemMapVisual.qml"); }
+    QString mapVisualQML        (void) const final { return QStringLiteral("HomePositionMapVisual.qml"); }
     bool    isSingleItem        (void) const final { return true; }
     bool    terrainCollision    (void) const final { return false; }
 

@@ -108,106 +108,33 @@ Follow [CODING_STYLE.md](../CODING_STYLE.md) for naming, formatting, C++20 featu
 
 ### Architecture Patterns
 
-#### Fact System (Most Important!)
+QGroundControl has several core architecture patterns you must follow. See [CODING_STYLE.md](../CODING_STYLE.md) for full details with code examples:
 
-The Fact System handles ALL vehicle parameters. Never create custom parameter storage.
-
-```cpp
-// Access parameters (always null-check!)
-Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
-if (param && param->validate(newValue, false).isEmpty()) {
-    param->setCookedValue(newValue);  // Use cookedValue for UI (with units)
-    // param->rawValue() for MAVLink/storage
-}
-```
-
-**Key classes:**
-
-- `Fact` - Single parameter with validation, units, metadata
-- `FactGroup` - Hierarchical container (handles MAVLink via `handleMessage()`)
-- `FactMetaData` - JSON-based metadata (min/max, enums, descriptions)
-
-**Rules:**
-
-- Wait for `parametersReady` signal before accessing
-- Use `cookedValue` (display) vs `rawValue` (storage)
-- Metadata in `*.FactMetaData.json` files
-
-#### Multi-Vehicle Support
-
-Always null-check the active vehicle:
-
-```cpp
-Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
-if (!vehicle) return;
-
-// Other managers
-SettingsManager::instance()->appSettings()->...
-LinkManager::instance()->...
-```
-
-#### Firmware Plugin System
-
-Use FirmwarePlugin for firmware-specific behavior:
-
-```cpp
-// FirmwarePlugin - Firmware behavior (flight modes, capabilities)
-vehicle->firmwarePlugin()->flightModes();
-vehicle->firmwarePlugin()->isCapable(capability);
-
-// AutoPilotPlugin - Vehicle setup UI
-// VehicleComponent - Individual setup items (Radio, Sensors, Safety)
-```
-
-#### QML/C++ Integration
-
-```cpp
-Q_OBJECT
-QML_ELEMENT           // Creatable in QML
-QML_SINGLETON         // Singleton
-QML_UNCREATABLE("")   // C++-only
-
-Q_PROPERTY(Type name READ getter WRITE setter NOTIFY signal)
-Q_INVOKABLE void method();
-Q_ENUM(EnumType)
-```
+- **Fact System**: ALL vehicle parameters use Facts — never create custom parameter storage
+- **Multi-Vehicle**: ALWAYS null-check `activeVehicle()` before use
+- **Firmware Plugin**: Use `vehicle->firmwarePlugin()` for firmware-specific behavior
+- **QML Integration**: Use `QML_ELEMENT`/`QML_SINGLETON`/`QML_UNCREATABLE` macros, `Q_PROPERTY` for bindings
 
 ---
 
 ## Testing Requirements
 
-### Unit Tests
+See [test/TESTING.md](../test/TESTING.md) for the complete testing guide, including base classes, CTest labels, `MultiSignalSpy`, and coverage.
 
-- Add unit tests for new functionality
-- Place tests in `test/` directory mirroring `src/` structure
-- Use Qt Test framework with `UnitTest` base class
-- Run tests before submitting:
+**Key points:**
 
-  ```bash
-  ./qgroundcontrol --unittest
-  ```
-
-### Manual Testing
-
-Test your changes on:
-
-- Multiple platforms (Windows, macOS, Linux if possible)
-- Both PX4 and ArduPilot firmware (if applicable)
-- Different vehicle types (multirotor, fixed-wing, VTOL, rover)
+- Add unit tests for new functionality in `test/` mirroring `src/` structure
+- Use the `UnitTest` base class (or `VehicleTest`, `MissionTest`, etc.)
+- Run `ctest --output-on-failure -L Unit` before submitting
+- Test on multiple platforms and both PX4/ArduPilot when applicable
 
 ### Pre-commit Checks
 
 Run before committing:
 
 ```bash
-# Using Makefile or justfile (recommended)
-make lint        # or: just lint
-
-# Format code
-clang-format -i path/to/changed/files.cc
-
-# Run pre-commit hooks (optional)
-pre-commit run --all-files
+make lint                    # or: just lint
+pre-commit run --all-files   # full check
 ```
 
 See [tools/README.md](../tools/README.md) for all available development commands.
@@ -257,51 +184,9 @@ See [tools/README.md](../tools/README.md) for all available development commands
 
 ## License Requirements
 
-### Dual-License Requirement
+All contributions must be compatible with QGroundControl's **dual-license system** (Apache 2.0 AND GPL v3). Your code must be original or from a compatible license (BSD, MIT, Apache 2.0).
 
-**Important**: All contributions to QGroundControl must be compatible with our **dual-license system** (Apache 2.0 AND GPL v3).
-
-### What This Means
-
-- **Your code must be original** or from a compatible license
-- **Compatible licenses**: BSD 2-clause, BSD 3-clause, MIT, Apache 2.0
-- **Incompatible licenses**: GPL-only, proprietary, copyleft-only licenses
-
-By contributing, you agree that:
-
-1. Your contributions are your original work or properly licensed
-2. You grant QGroundControl rights under **both** Apache 2.0 and GPL v3 licenses
-3. You have the right to submit the contribution
-
-### License Background
-
-QGroundControl uses a dual-license system:
-
-#### Apache License 2.0
-
-- Permissive license
-- Allows use in proprietary applications
-- Allows distribution via app stores
-- **Requires commercial Qt license**
-
-Full text: [LICENSE-APACHE](../LICENSE-APACHE)
-
-#### GNU General Public License v3 (GPL v3)
-
-- Copyleft license
-- Ensures software remains open source
-- **Can use open-source Qt**
-- Users can use later GPL versions (v3 is minimum for contributions)
-
-Full text: [LICENSE-GPL](../LICENSE-GPL)
-
-### Questions About Licensing
-
-If you have questions about licensing, please contact:
-
-- Lorenz Meier: <lm@qgroundcontrol.org>
-
-For more details, see [COPYING.md](COPYING.md).
+See [COPYING.md](COPYING.md) for full license details, compatible licenses, and contact information.
 
 ---
 

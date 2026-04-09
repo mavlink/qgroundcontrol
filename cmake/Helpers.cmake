@@ -40,10 +40,19 @@ function(qgc_config_caching)
         endif()
     endfunction()
 
-    find_program(QGC_CACHE_PROGRAM
-        NAMES ccache sccache
-        VALIDATOR _qgc_verify_cache_tool
-    )
+    # Allow presets to prefer a specific backend via QGC_CACHE_BACKEND
+    if(QGC_CACHE_BACKEND)
+        find_program(QGC_CACHE_PROGRAM
+            NAMES "${QGC_CACHE_BACKEND}"
+            VALIDATOR _qgc_verify_cache_tool
+        )
+    endif()
+    if(NOT QGC_CACHE_PROGRAM)
+        find_program(QGC_CACHE_PROGRAM
+            NAMES ccache sccache
+            VALIDATOR _qgc_verify_cache_tool
+        )
+    endif()
 
     if(QGC_CACHE_PROGRAM)
         get_filename_component(_cache_tool "${QGC_CACHE_PROGRAM}" NAME_WE)
@@ -109,6 +118,7 @@ endfunction()
 # Falls back to the system default linker
 # ----------------------------------------------------------------------------
 function(qgc_set_linker)
+    # Cross-compilation toolchains (Android NDK, iOS) configure their own linker
     if(CMAKE_CROSSCOMPILING)
         return()
     endif()

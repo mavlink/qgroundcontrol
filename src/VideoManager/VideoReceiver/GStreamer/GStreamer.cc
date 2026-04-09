@@ -4,6 +4,10 @@
 #include "AppSettings.h"
 #include "GstVideoReceiver.h"
 
+#ifdef Q_OS_MACOS
+#include "GstAppSinkAdapter.h"
+#endif
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
@@ -702,6 +706,20 @@ void _configureDebugLogging()
 
 } // anonymous namespace
 
+void setDebugLevel(int level)
+{
+    if (!gst_is_initialized()) {
+        return;
+    }
+    const int clamped = qBound(0, level, static_cast<int>(GST_LEVEL_MEMDUMP));
+    gst_debug_set_default_threshold(static_cast<GstDebugLevel>(clamped));
+    qCDebug(GStreamerLog) << "GStreamer debug threshold set to" << clamped;
+}
+
+namespace {
+
+} // anonymous namespace
+
 void prepareEnvironment()
 {
     _setGstEnvVars();
@@ -794,6 +812,16 @@ bool completeInit()
         haveSink = true;
     }
 #endif
+#if defined(__APPLE__) && defined(__MACH__)
+    if (!haveSink) {
+        GstElementFactory *appsinkFactory = gst_element_factory_find("appsink");
+        if (appsinkFactory) {
+            qCDebug(GStreamerLog) << "appsink factory available (macOS Metal rendering)";
+            gst_object_unref(appsinkFactory);
+            haveSink = true;
+        }
+    }
+#endif
     if (!haveSink) {
         GstElementFactory *glSinkFactory = gst_element_factory_find("qml6glsink");
         if (glSinkFactory) {
@@ -802,7 +830,7 @@ bool completeInit()
         }
     }
     if (!haveSink) {
-        qCCritical(GStreamerLog) << "No QML video sink factory found (tried qml6d3d11sink, qml6glsink)";
+        qCCritical(GStreamerLog) << "No QML video sink factory found (tried qml6d3d11sink, appsink, qml6glsink)";
         return false;
     }
 
@@ -868,6 +896,26 @@ void releaseVideoSink(void *sink)
 VideoReceiver *createVideoReceiver(QObject *parent)
 {
     return new GstVideoReceiver(parent);
+}
+
+bool setupAppleSinkAdapter(void *sinkBin, QVideoSink *videoSink, QObject *adapterParent)
+{
+#ifdef Q_OS_MACOS
+    if (!sinkBin || !videoSink) {
+        return false;
+    }
+
+    auto *adapter = new GstAppSinkAdapter(adapterParent);
+    if (!adapter->setup(GST_ELEMENT(sinkBin), videoSink)) {
+        qCCritical(GStreamerLog) << "GstAppSinkAdapter::setup() failed";
+        adapter->deleteLater();
+        return false;
+    }
+    return true;
+#else
+    Q_UNUSED(sinkBin); Q_UNUSED(videoSink); Q_UNUSED(adapterParent);
+    return false;
+#endif
 }
 
 } // namespace GStreamer

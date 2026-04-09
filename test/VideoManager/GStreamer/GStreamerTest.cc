@@ -11,6 +11,12 @@
 #include <QtCore/QFileInfo>
 #include <gst/gst.h>
 
+#ifdef Q_OS_MACOS
+#include "GstAppSinkAdapter.h"
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoSink>
+#endif
+
 void GStreamerTest::init()
 {
     UnitTest::init();
@@ -24,14 +30,8 @@ void GStreamerTest::init()
                         "g_once_init_leave.*result != 0"));
     expectLogMessage(QtCriticalMsg, sGLibTypeRe);
 
-    // Under AddressSanitizer, gst_init_check deadlocks on glibc's
-    // _nl_state_lock: g_option_context_parse calls dgettext (read lock) then
-    // GStreamer's init callback calls bindtextdomain (write lock) — a
-    // pthread_rwlock cannot upgrade from read to write, so it self-deadlocks.
-    // GStreamer itself is not ASan-instrumented, so these tests add no
-    // memory-safety value under sanitizers.
 #if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
-    QSKIP("GStreamer tests disabled under AddressSanitizer (gst_init_check deadlocks on glibc _nl_state_lock)");
+    QSKIP("GStreamer init deadlocks under AddressSanitizer (bindtextdomain lock)");
 #endif
 
     if (!gst_is_initialized()) {
@@ -351,6 +351,104 @@ void GStreamerTest::_testRuntimeVersionCheck()
 #endif
 }
 
+void GStreamerTest::_testAppsinkFrameDelivery()
+{
+#ifndef Q_OS_MACOS
+    QSKIP("Appsink frame delivery test is macOS-only");
+#else
+    // Ensure the qgc plugin (including qgcvideosinkbin) is registered.
+    // _testCompleteInit runs before this slot, but guard against reorder.
+    GstElementFactory *guardFactory = gst_element_factory_find("qgcvideosinkbin");
+    if (!guardFactory) {
+        GStreamer::completeInit();
+    } else {
+        gst_object_unref(guardFactory);
+    }
+
+    GstElementFactory *factory = gst_element_factory_find("qgcvideosinkbin");
+    QVERIFY2(factory, "qgcvideosinkbin factory not found");
+    gst_object_unref(factory);
+
+    // Build pipeline: videotestsrc → videoconvert → qgcvideosinkbin(appsink)
+    GError *error = nullptr;
+    GstElement *pipeline = gst_parse_launch(
+        "videotestsrc num-buffers=10 ! "
+        "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
+        "videoconvert ! "
+        "video/x-raw,format=BGRA ! "
+        "qgcvideosinkbin name=sink",
+        &error);
+    if (error) {
+        const QString msg = QString::fromUtf8(error->message);
+        g_clear_error(&error);
+        QFAIL(qPrintable(QStringLiteral("Pipeline parse error: %1").arg(msg)));
+    }
+    QVERIFY2(pipeline, "Failed to create appsink test pipeline");
+
+    // Get the sink bin element
+    GstElement *sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
+    QVERIFY2(sinkBin, "Could not find 'sink' element in pipeline");
+
+    // Create a QVideoSink and adapter
+    QVideoSink videoSink;
+    GstAppSinkAdapter adapter;
+
+    int frameCount = 0;
+    QSize lastFrameSize;
+    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &adapter, [&](const QVideoFrame &frame) {
+        frameCount++;
+        lastFrameSize = frame.size();
+    });
+
+    const bool setupOk = adapter.setup(sinkBin, &videoSink);
+    QVERIFY2(setupOk, "GstAppSinkAdapter::setup() failed");
+
+    gst_object_unref(sinkBin);
+
+    // Run the pipeline to completion
+    GstStateChangeReturn ret = gst_element_set_state(pipeline, GST_STATE_PLAYING);
+    QVERIFY2(ret != GST_STATE_CHANGE_FAILURE, "Pipeline failed to transition to PLAYING");
+
+    GstBus *bus = gst_element_get_bus(pipeline);
+    QVERIFY(bus);
+
+    GstMessage *msg = gst_bus_timed_pop_filtered(bus, 10 * GST_SECOND,
+        static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+    QVERIFY2(msg, "Pipeline timed out waiting for EOS or ERROR");
+
+    if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
+        GError *err = nullptr;
+        gchar *debug = nullptr;
+        gst_message_parse_error(msg, &err, &debug);
+        const QString errMsg = QStringLiteral("%1 (%2)")
+            .arg(err ? QString::fromUtf8(err->message) : QStringLiteral("unknown"))
+            .arg(debug ? QString::fromUtf8(debug) : QString());
+        g_clear_error(&err);
+        g_free(debug);
+        gst_message_unref(msg);
+        gst_object_unref(bus);
+        adapter.teardown();
+        gst_element_set_state(pipeline, GST_STATE_NULL);
+        gst_object_unref(pipeline);
+        QFAIL(qPrintable(QStringLiteral("Pipeline error: %1").arg(errMsg)));
+    }
+
+    QCOMPARE(GST_MESSAGE_TYPE(msg), GST_MESSAGE_EOS);
+    gst_message_unref(msg);
+    gst_object_unref(bus);
+
+    // Wait for frames to be delivered via queued videoFrameChanged signals
+    QTRY_VERIFY_WITH_TIMEOUT(frameCount > 0, 5000);
+
+    // Verify frames have the expected size
+    QCOMPARE(lastFrameSize, QSize(320, 240));
+
+    adapter.teardown();
+    gst_element_set_state(pipeline, GST_STATE_NULL);
+    gst_object_unref(pipeline);
+#endif // Q_OS_MACOS
+}
+
 #else
 
 void GStreamerTest::init() { UnitTest::init(); QSKIP("GStreamer not enabled"); }
@@ -366,6 +464,7 @@ void GStreamerTest::_testCompleteInit() { QSKIP("GStreamer not enabled"); }
 void GStreamerTest::_testCreateVideoReceiver() { QSKIP("GStreamer not enabled"); }
 void GStreamerTest::_testPipelineSmokeTest() { QSKIP("GStreamer not enabled"); }
 void GStreamerTest::_testRuntimeVersionCheck() { QSKIP("GStreamer not enabled"); }
+void GStreamerTest::_testAppsinkFrameDelivery() { QSKIP("GStreamer not enabled"); }
 
 #endif
 

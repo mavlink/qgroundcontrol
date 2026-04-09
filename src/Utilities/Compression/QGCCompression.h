@@ -305,4 +305,47 @@ bool extractFromDevice(QIODevice *device, const QString &outputDirectoryPath,
 /// @return File contents, or empty QByteArray if not found
 QByteArray extractFileDataFromDevice(QIODevice *device, const QString &fileName);
 
+// ============================================================================
+// In-Memory Compression (zlib via qCompress/qUncompress)
+// ============================================================================
+
+enum class CompressionLevel {
+    None    = 0,
+    Fast    = 1,
+    Default = 6,
+    Best    = 9
+};
+
+/// Compress data using qCompress (4-byte size header + zlib payload).
+/// @param data Raw data to compress
+/// @param level Compression level
+/// @return Compressed data in qCompress format, or empty on failure
+QByteArray compress(const QByteArray &data,
+                    CompressionLevel level = CompressionLevel::Default);
+
+/// Decompress data using qUncompress (expects 4-byte size header + zlib payload).
+/// @param data Compressed data in qCompress format
+/// @return Decompressed data, or empty on failure
+QByteArray uncompress(const QByteArray &data);
+
+/// Compress data in memory with a framing header byte.
+/// Returns header(1) + payload. If compression doesn't reduce size, returns uncompressed with header.
+/// @param data Raw data to compress
+/// @param level Compression level
+/// @param minSize Minimum data size to attempt compression (smaller data returned uncompressed)
+QByteArray compressData(const QByteArray &data,
+                        CompressionLevel level = CompressionLevel::Default,
+                        int minSize = 256);
+
+/// Decompress data produced by compressData().
+/// @param data Header byte + payload (as produced by compressData)
+/// @param maxDecompressedSize Maximum allowed decompressed size (0 = no limit)
+QByteArray uncompressData(const QByteArray &data, qint64 maxDecompressedSize = 64LL * 1024 * 1024);
+
+/// Check if data has the compressed framing header.
+bool isDataCompressed(const QByteArray &data);
+
+/// Compression ratio from the last compressData() call (thread-local, percentage of original size).
+int lastCompressionRatio();
+
 } // namespace QGCCompression

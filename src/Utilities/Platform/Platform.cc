@@ -154,12 +154,16 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
 
     // --- Environment setup ---
 #ifdef Q_OS_UNIX
+#ifndef Q_OS_ANDROID
+    // On Android, skip these — either env var triggers shouldLogToStderr(),
+    // which bypasses Qt's __android_log_print path to logcat.
     if (!qEnvironmentVariableIsSet("QT_ASSUME_STDERR_HAS_CONSOLE")) {
         (void) qputenv("QT_ASSUME_STDERR_HAS_CONSOLE", "1");
     }
     if (!qEnvironmentVariableIsSet("QT_FORCE_STDERR_LOGGING")) {
         (void) qputenv("QT_FORCE_STDERR_LOGGING", "1");
     }
+#endif
 #endif
 
 #ifdef Q_OS_WIN

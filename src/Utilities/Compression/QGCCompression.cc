@@ -900,4 +900,103 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
     return result;
 }
 
+// ============================================================================
+// In-Memory Compression
+// ============================================================================
+
+QByteArray compress(const QByteArray &data, CompressionLevel level)
+{
+    if (data.isEmpty() || level == CompressionLevel::None) {
+        return data;
+    }
+    return qCompress(data, static_cast<int>(level));
+}
+
+QByteArray uncompress(const QByteArray &data)
+{
+    if (data.isEmpty()) {
+        return {};
+    }
+    return qUncompress(data);
+}
+
+static constexpr quint8 kHeaderUncompressed = 0x00;
+static constexpr quint8 kHeaderCompressed   = 0x01;
+
+static thread_local int s_lastCompressionRatio = 100; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+
+QByteArray compressData(const QByteArray &data, CompressionLevel level, int minSize)
+{
+    if (level == CompressionLevel::None || data.size() < minSize) {
+        s_lastCompressionRatio = 100;
+        QByteArray result;
+        result.reserve(1 + data.size());
+        result.append(static_cast<char>(kHeaderUncompressed));
+        result.append(data);
+        return result;
+    }
+
+    const QByteArray compressed = qCompress(data, static_cast<int>(level));
+
+    if (!compressed.isEmpty() && compressed.size() < data.size()) {
+        s_lastCompressionRatio = (compressed.size() * 100) / data.size();
+        QByteArray result;
+        result.reserve(1 + compressed.size());
+        result.append(static_cast<char>(kHeaderCompressed));
+        result.append(compressed);
+        return result;
+    }
+
+    s_lastCompressionRatio = 100;
+    QByteArray result;
+    result.reserve(1 + data.size());
+    result.append(static_cast<char>(kHeaderUncompressed));
+    result.append(data);
+    return result;
+}
+
+QByteArray uncompressData(const QByteArray &data, qint64 maxDecompressedSize)
+{
+    if (data.isEmpty()) {
+        return {};
+    }
+
+    const auto header = static_cast<quint8>(data[0]);
+    const QByteArray payload = data.mid(1);
+
+    if (header == kHeaderUncompressed) {
+        return payload;
+    }
+
+    if (header == kHeaderCompressed) {
+        if (maxDecompressedSize > 0 && payload.size() >= 4) {
+            const quint32 declaredSize = qFromBigEndian<quint32>(payload.constData());
+            if (declaredSize > static_cast<quint32>(maxDecompressedSize)) {
+                qCWarning(QGCCompressionLog) << "Rejected decompression: declared size"
+                                             << declaredSize << "exceeds limit" << maxDecompressedSize;
+                return {};
+            }
+        }
+
+        const QByteArray result = qUncompress(payload);
+        if (result.isEmpty() && !payload.isEmpty()) {
+            qCWarning(QGCCompressionLog) << "Decompression failed";
+        }
+        return result;
+    }
+
+    qCWarning(QGCCompressionLog) << "Unknown compression header byte:" << header;
+    return {};
+}
+
+bool isDataCompressed(const QByteArray &data)
+{
+    return !data.isEmpty() && static_cast<quint8>(data[0]) == kHeaderCompressed;
+}
+
+int lastCompressionRatio()
+{
+    return s_lastCompressionRatio;
+}
+
 }  // namespace QGCCompression

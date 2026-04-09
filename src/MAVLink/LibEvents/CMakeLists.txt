@@ -22,7 +22,7 @@ if(NOT USE_SYSTEM_LIBEVENTS)
 CPMAddPackage(
     NAME libevents
     GITHUB_REPOSITORY mavlink/libevents
-    GIT_TAG main
+    GIT_TAG e78a77197bea7d5af504b5d00536fb09625feb67
     SOURCE_SUBDIR libs/cpp
 )
 

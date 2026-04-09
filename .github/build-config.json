@@ -1,4 +1,5 @@
 {
+  "$schema": "build-config.schema.json",
   "android_build_tools": "35.0.0",
   "ccache_version": "4.13.1",
   "android_cmdline_tools": "13114758",

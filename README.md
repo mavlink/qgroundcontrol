@@ -47,7 +47,7 @@ QGroundControl is *open-source*, meaning you have the power to shape it! Whether
 - 📘 [User Manual](https://docs.qgroundcontrol.com/en/)
 - 🛠️ [Developer Guide](https://dev.qgroundcontrol.com/en/)
 - 💬 [Discussion & Support](https://docs.qgroundcontrol.com/en/Support/Support.html)
-- 🤝 [Contributing](https://dev.qgroundcontrol.com/en/contribute/)
+- 🤝 [Contributing](.github/CONTRIBUTING.md) ([Dev Guide](https://dev.qgroundcontrol.com/en/contribute/))
 - 📜 [License Information](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md)
 
 ---

@@ -70,6 +70,13 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions
+            .github/scripts
+
       - name: Deploy docs
         uses: ./.github/actions/deploy-docs
         with:

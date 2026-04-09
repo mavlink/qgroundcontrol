@@ -51,7 +51,7 @@ if(NOT USE_SYSTEM_PARAMETERS)
 CPMAddPackage(
     NAME ArduPilotParams
     GITHUB_REPOSITORY ArduPilot/ParameterRepository
-    GIT_TAG main
+    GIT_TAG 037ff6bcfc080608544a4526f2c22406f2cce60f
 )
 
 else()

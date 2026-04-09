@@ -61,8 +61,8 @@ def run_command(
 
 def check_dependencies() -> None:
     """Ensure required tooling is installed."""
-    if shutil.which("gcovr") is None:
-        raise RuntimeError("gcovr not found. Install with: pip install gcovr")
+    from common.deps import require_tool
+    require_tool("gcovr", hint="Install with: pip install gcovr")
 
 
 def clean_coverage(build_dir: Path) -> None:

@@ -110,8 +110,22 @@ DECLARE_SETTINGGROUP(App, "")
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
 
     _checkSavePathDirectories();
+
+    // When a specific preferred firmware/vehicle is chosen, keep the offline editing settings in sync
+    connect(preferredFirmwareClass(), &Fact::rawValueChanged, this, [this](QVariant value) {
+        if (value.toUInt() != 0) {
+            offlineEditingFirmwareClass()->setRawValue(value);
+        }
+    });
+    connect(preferredVehicleClass(), &Fact::rawValueChanged, this, [this](QVariant value) {
+        if (value.toUInt() != 0) {
+            offlineEditingVehicleClass()->setRawValue(value);
+        }
+    });
 }
 
+DECLARE_SETTINGSFACT(AppSettings, preferredFirmwareClass)
+DECLARE_SETTINGSFACT(AppSettings, preferredVehicleClass)
 DECLARE_SETTINGSFACT(AppSettings, offlineEditingFirmwareClass)
 DECLARE_SETTINGSFACT(AppSettings, offlineEditingVehicleClass)
 DECLARE_SETTINGSFACT(AppSettings, offlineEditingCruiseSpeed)
@@ -145,6 +159,15 @@ DECLARE_SETTINGSFACT(AppSettings, clearSettingsNextBoot)
 DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 DECLARE_SETTINGSFACT(AppSettings, firstRunPromptIdsShown)
 DECLARE_SETTINGSFACT(AppSettings, favoriteParameters)
+DECLARE_SETTINGSFACT(AppSettings, remoteLoggingEnabled)
+DECLARE_SETTINGSFACT(AppSettings, remoteLoggingHost)
+DECLARE_SETTINGSFACT(AppSettings, remoteLoggingPort)
+DECLARE_SETTINGSFACT(AppSettings, remoteLoggingProtocol)
+DECLARE_SETTINGSFACT(AppSettings, remoteLoggingVehicleId)
+DECLARE_SETTINGSFACT(AppSettings, remoteLoggingTlsEnabled)
+DECLARE_SETTINGSFACT(AppSettings, remoteLoggingTlsVerifyPeer)
+DECLARE_SETTINGSFACT(AppSettings, remoteLoggingCompressionEnabled)
+DECLARE_SETTINGSFACT(AppSettings, remoteLoggingCompressionLevel)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {

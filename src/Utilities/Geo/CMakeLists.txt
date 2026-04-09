@@ -75,8 +75,9 @@ endif()
 if(NOT USE_SYSTEM_SHAPE)
 CPMAddPackage(
     NAME Shapelib
-    VERSION 1.6.2
+    VERSION 1.6.3
     GITHUB_REPOSITORY OSGeo/shapelib
+    GIT_TAG v1.6.3
     OPTIONS
         "BUILD_SHAPELIB_CONTRIB OFF"
         "BUILD_APPS OFF"

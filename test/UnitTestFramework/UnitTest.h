@@ -1,5 +1,7 @@
 #pragma once
 
+#include "LogEntry.h"
+
 #include <QtCore/QFlags>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
@@ -444,7 +446,7 @@ protected:
 
 private:
     struct ExpectedLogMessage {
-        QtMsgType type;
+        LogEntry::Level level;
         QRegularExpression pattern;
     };
 

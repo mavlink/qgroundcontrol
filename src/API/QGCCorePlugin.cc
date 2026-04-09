@@ -1,5 +1,4 @@
 #include "QGCCorePlugin.h"
-#include "QGCLogging.h"
 #include "AppSettings.h"
 #include "MavlinkSettings.h"
 #include "FactMetaData.h"
@@ -261,7 +260,6 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
     QQmlApplicationEngine *const qmlEngine = new QQmlApplicationEngine(parent);
     qmlEngine->addImportPath(QStringLiteral("qrc:/qml"));
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("joystickManager"), JoystickManager::instance());
-    qmlEngine->rootContext()->setContextProperty(QStringLiteral("debugMessageModel"), QGCLogging::instance());
     return qmlEngine;
 }
 
@@ -337,10 +335,8 @@ QVariantList QGCCorePlugin::firstRunPromptsToShow()
 QString QGCCorePlugin::firstRunPromptResource(int id) const
 {
     switch (id) {
-    case kUnitsFirstRunPromptId:
-        return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/UnitsFirstRunPrompt.qml");
-    case kOfflineVehicleFirstRunPromptId:
-        return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/OfflineVehicleFirstRunPrompt.qml");
+    case kInitialSetupPromptId:
+        return QStringLiteral("/qml/QGroundControl/FirstRunPromptDialogs/InitialSetupPrompt.qml");
     default:
         return QString();
     }

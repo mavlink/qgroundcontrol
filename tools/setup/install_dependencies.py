@@ -22,7 +22,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -290,7 +289,11 @@ def check_apt_package_available(package: str) -> bool:
 
 def get_available_debian_packages(category: str) -> list[str]:
     """Return packages in *category* that exist in apt metadata."""
-    return [pkg for pkg in get_debian_packages(category) if check_apt_package_available(pkg)]
+    from concurrent.futures import ThreadPoolExecutor
+    packages = get_debian_packages(category)
+    with ThreadPoolExecutor() as pool:
+        available = list(pool.map(check_apt_package_available, packages))
+    return [pkg for pkg, ok in zip(packages, available) if ok]
 
 
 def validate_extra_packages(packages: list[str]) -> list[str]:
@@ -390,32 +393,36 @@ def download_file(
     retries: int = 3,
 ) -> bool:
     """Download a file from a URL."""
-    import urllib.error
-    import urllib.request
-
     if dry_run:
         print(f"  Would download: {url} -> {dest.name}")
         return True
 
-    req = urllib.request.Request(url, headers={"User-Agent": "qgc-deps-installer/1.0"})
-    for attempt in range(1, retries + 1):
-        print(f"  Downloading {dest.name} (attempt {attempt}/{retries})...")
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as response, open(dest, "wb") as out:
-                shutil.copyfileobj(response, out)
-            return True
-        except (TimeoutError, urllib.error.URLError, OSError) as e:
-            if attempt == retries:
-                print(f"Failed to download {url}: {e}", file=sys.stderr)
-                return False
-            backoff_seconds = attempt * 2
-            print(
-                f"  Download attempt {attempt} failed for {dest.name}: {e}. "
-                f"Retrying in {backoff_seconds}s...",
-                file=sys.stderr,
-            )
-            time.sleep(backoff_seconds)
-    return False
+    try:
+        import httpx
+        transport = httpx.HTTPTransport(retries=retries)
+        with httpx.Client(
+            transport=transport,
+            timeout=timeout,
+            headers={"User-Agent": "qgc-deps-installer/1.0"},
+            follow_redirects=True,
+        ) as client:
+            print(f"  Downloading {dest.name}...")
+            with client.stream("GET", url) as response:
+                response.raise_for_status()
+                with open(dest, "wb") as out:
+                    for chunk in response.iter_bytes(chunk_size=65536):
+                        out.write(chunk)
+        return True
+    except ImportError:
+        import urllib.request
+        req = urllib.request.Request(url, headers={"User-Agent": "qgc-deps-installer/1.0"})
+        print(f"  Downloading {dest.name}...")
+        with urllib.request.urlopen(req, timeout=timeout) as response, open(dest, "wb") as out:
+            shutil.copyfileobj(response, out)
+        return True
+    except Exception as e:
+        print(f"Failed to download {url}: {e}", file=sys.stderr)
+        return False
 
 
 def install_debian(

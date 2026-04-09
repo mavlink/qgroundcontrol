@@ -19,7 +19,7 @@
 #include "MultiVehicleManager.h"
 #include "QGC.h"
 #include "QGCApplication.h"
-#include "QGCLogging.h"
+#include "LogManager.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
@@ -631,7 +631,7 @@ int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels 
 // Test‑time capture handler
 // ============================================================================
 // QTest::qExec() replaces the application message handler with its own.
-// Our QGCLogging::msgHandler is therefore NOT called during test execution.
+// Our LogManager::msgHandler is therefore NOT called during test execution.
 // We work around this by installing a thin wrapper ON TOP of QTest's handler
 // inside initTestCase() and restoring it in cleanupTestCase().
 // The wrapper captures messages for the test log‑capture API and then chains
@@ -642,7 +642,7 @@ static QtMessageHandler s_qtestHandler = nullptr;
 static void testCaptureHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     // Capture for unit‑test introspection
-    QGCLogging::captureIfEnabled(type, context, msg);
+    LogManager::captureIfEnabled(type, context, msg);
 
     // Chain to QTest's handler for normal test output
     if (s_qtestHandler) {
@@ -670,7 +670,7 @@ void UnitTest::cleanupTestCase()
 
 void UnitTest::expectLogMessage(QtMsgType type, const QRegularExpression &pattern)
 {
-    _expectedLogMessages.append({type, pattern});
+    _expectedLogMessages.append({LogEntry::fromQtMsgType(type), pattern});
 }
 
 void UnitTest::init()
@@ -680,8 +680,8 @@ void UnitTest::init()
     _expectedLogMessages.clear();
 
     // Start capturing log messages for this test (cleared from previous test)
-    QGCLogging::clearCapturedMessages();
-    QGCLogging::setCaptureEnabled(true);
+    LogManager::clearCapturedMessages();
+    LogManager::setCaptureEnabled(true);
 
     // Force offline vehicle back to defaults
     AppSettings* const appSettings = SettingsManager::instance()->appSettings();
@@ -697,7 +697,7 @@ void UnitTest::cleanup()
     dumpFailureContextIfTestFailed(QStringLiteral("cleanup"));
 
     // Stop capturing log messages after the test finishes
-    QGCLogging::setCaptureEnabled(false);
+    LogManager::setCaptureEnabled(false);
 
     _cleanupTempFiles();
 
@@ -710,28 +710,28 @@ void UnitTest::cleanup()
         QString uncategorizedDetails;
         QString criticalDetails;
 
-        auto isExpected = [this](const CapturedLogMessage &m) {
+        auto isExpected = [this](const LogEntry &m) {
             for (const auto &e : _expectedLogMessages) {
-                if (e.type == m.type && e.pattern.match(m.message).hasMatch()) {
+                if (e.level == m.level && e.pattern.match(m.message).hasMatch()) {
                     return true;
                 }
             }
             return false;
         };
 
-        const auto allMsgs = QGCLogging::capturedMessages();
+        const auto allMsgs = LogManager::capturedMessages();
         for (const auto &m : allMsgs) {
             if (isExpected(m)) {
                 continue;
             }
             if (m.category.isEmpty() || m.category == QStringLiteral("default")) {
-                const char *level = (m.type == QtDebugMsg)   ? "debug"
-                                  : (m.type == QtWarningMsg) ? "warning"
-                                  : (m.type == QtInfoMsg)    ? "info"
-                                                             : "other";
-                uncategorizedDetails += QStringLiteral("  [%1] %2\n").arg(QLatin1String(level), m.message);
+                const char *lvl = (m.level == LogEntry::Debug)   ? "debug"
+                                : (m.level == LogEntry::Warning) ? "warning"
+                                : (m.level == LogEntry::Info)    ? "info"
+                                                                 : "other";
+                uncategorizedDetails += QStringLiteral("  [%1] %2\n").arg(QLatin1String(lvl), m.message);
             }
-            if (m.type == QtCriticalMsg) {
+            if (m.level == LogEntry::Critical) {
                 criticalDetails += QStringLiteral("  [%1] %2\n").arg(m.category, m.message);
             }
         }

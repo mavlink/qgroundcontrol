@@ -3,6 +3,28 @@
     "fileType": "FactMetaData",
     "QGC.MetaData.Facts": [
         {
+            "name": "preferredFirmwareClass",
+            "shortDesc": "Tailors the interface to a specific firmware for a simpler experience.",
+            "longDesc": "When set to a specific firmware type, the interface is streamlined for that firmware.",
+            "type": "uint32",
+            "enumStrings": "All,ArduPilot,PX4 Pro",
+            "enumValues": "0,3,12",
+            "default": 0,
+            "label": "Preferred Firmware",
+            "keywords": "firmware,ardupilot,px4"
+        },
+        {
+            "name": "preferredVehicleClass",
+            "shortDesc": "Tailors the interface to a specific vehicle type for a simpler experience.",
+            "longDesc": "When set to a specific vehicle class, the interface is streamlined for that vehicle type.",
+            "type": "uint32",
+            "enumStrings": "All,Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
+            "enumValues": "0,1,2,20,10,12",
+            "default": 0,
+            "label": "Preferred Vehicle",
+            "keywords": "vehicle,multirotor,fixed wing,vtol,rover,sub"
+        },
+        {
             "name": "offlineEditingFirmwareClass",
             "shortDesc": "Offline editing firmware class",
             "type": "uint32",
@@ -141,13 +163,12 @@
         },
         {
             "name": "gstDebugLevel",
-            "shortDesc": "Sets the verbosity of video streaming debug logging. Requires restart.",
-            "longDesc": "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
+            "shortDesc": "Sets the verbosity of GStreamer debug logging.",
+            "longDesc": "Controls the GStreamer debug threshold for all pipeline elements. Changes take effect immediately.",
             "type": "uint8",
             "enumStrings": "Disabled,Error,Warning,FixMe,Info,Debug,Log,Trace",
             "enumValues": "0,1,2,3,4,5,6,7",
             "default": 0,
-            "qgcRebootRequired": true,
             "label": "Video streaming debug",
             "keywords": "gstreamer,debug level"
         },
@@ -341,6 +362,95 @@
             "type": "string",
             "default": "",
             "label": "Comma separated list of favorite parameter names."
+        },
+        {
+            "name": "remoteLoggingEnabled",
+            "shortDesc": "Enable remote log streaming",
+            "longDesc": "Stream application logs to a remote endpoint.",
+            "type": "bool",
+            "default": false,
+            "label": "Remote Logging",
+            "keywords": "remote,logging,stream"
+        },
+        {
+            "name": "remoteLoggingHost",
+            "shortDesc": "Remote logging host",
+            "longDesc": "IP address or hostname of the remote log receiver.",
+            "type": "string",
+            "default": "",
+            "max": 253,
+            "regexString": "^[a-zA-Z0-9._:-]*$",
+            "label": "Remote Logging Host",
+            "keywords": "remote,logging,host"
+        },
+        {
+            "name": "remoteLoggingPort",
+            "shortDesc": "Remote logging port",
+            "longDesc": "Port of the remote log receiver.",
+            "type": "uint16",
+            "default": 14570,
+            "min": 1,
+            "max": 65535,
+            "label": "Remote Logging Port",
+            "keywords": "remote,logging,port"
+        },
+        {
+            "name": "remoteLoggingProtocol",
+            "shortDesc": "Remote logging protocol",
+            "longDesc": "Transport protocol: 0=UDP, 1=TCP, 2=Auto (UDP with TCP fallback).",
+            "type": "uint8",
+            "default": 0,
+            "min": 0,
+            "max": 2,
+            "label": "Remote Logging Protocol",
+            "keywords": "remote,logging,protocol"
+        },
+        {
+            "name": "remoteLoggingVehicleId",
+            "shortDesc": "Vehicle ID for remote logs",
+            "longDesc": "Identifier included in remote log messages for multi-vehicle discrimination.",
+            "type": "string",
+            "default": "",
+            "label": "Remote Logging Vehicle ID",
+            "keywords": "remote,logging,vehicle"
+        },
+        {
+            "name": "remoteLoggingTlsEnabled",
+            "shortDesc": "Enable TLS encryption",
+            "longDesc": "Encrypt remote log connections using TLS.",
+            "type": "bool",
+            "default": false,
+            "label": "Remote Logging TLS",
+            "keywords": "remote,logging,tls"
+        },
+        {
+            "name": "remoteLoggingTlsVerifyPeer",
+            "shortDesc": "Verify TLS peer certificate",
+            "longDesc": "Verify the remote server's TLS certificate.",
+            "type": "bool",
+            "default": true,
+            "label": "Verify TLS Peer",
+            "keywords": "remote,logging,tls,certificate"
+        },
+        {
+            "name": "remoteLoggingCompressionEnabled",
+            "shortDesc": "Enable log compression",
+            "longDesc": "Compress log messages before sending to the remote endpoint.",
+            "type": "bool",
+            "default": false,
+            "label": "Remote Log Compression",
+            "keywords": "remote,logging,compression"
+        },
+        {
+            "name": "remoteLoggingCompressionLevel",
+            "shortDesc": "Compression level",
+            "longDesc": "zlib compression level (1=fast, 6=default, 9=best).",
+            "type": "uint8",
+            "default": 6,
+            "min": 1,
+            "max": 9,
+            "label": "Compression Level",
+            "keywords": "remote,logging,compression"
         }
     ]
 }

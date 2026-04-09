@@ -35,9 +35,20 @@ permissions:
 
 jobs:
   changes:
-    uses: ./.github/workflows/_detect-changes.yml
-    with:
-      platform: android
+    name: Detect Changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_build: ${{ steps.detect.outputs.any }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+      - id: detect
+        uses: ./.github/actions/detect-changes
+        with:
+          platform: android
 
   build:
     name: Android (${{ matrix.host }})
@@ -117,7 +128,7 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
 
@@ -376,7 +387,7 @@ jobs:
         uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ env.PACKAGE }}.apk
-          package-name: ${{ matrix.primary && env.PACKAGE || format('{0}-{1}', env.PACKAGE, matrix.host) }}
+          package-name: ${{ format('{0}-{1}', env.PACKAGE, matrix.host) }}
           subject-name: ${{ env.PACKAGE }}-${{ matrix.host }}
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}

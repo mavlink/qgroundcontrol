@@ -240,13 +240,14 @@ run_sanitize() {
     log_info "Building with sanitizers..."
 
     local sanitize_build="$REPO_ROOT/build-sanitize"
+    local sanitize_flags="-fsanitize=address,undefined -fno-omit-frame-pointer"
 
-    cmake -B "$sanitize_build" -S "$REPO_ROOT" \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
-        -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
-        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
-        -G Ninja
+    python3 "$REPO_ROOT/tools/configure.py" \
+        -B "$sanitize_build" -S "$REPO_ROOT" --debug \
+        -- \
+        "-DCMAKE_C_FLAGS=$sanitize_flags" \
+        "-DCMAKE_CXX_FLAGS=$sanitize_flags" \
+        "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"
 
     cmake --build "$sanitize_build" --parallel
 
@@ -254,7 +255,6 @@ run_sanitize() {
     log_info "Run: $sanitize_build/QGroundControl"
     log_info "Errors will be reported at runtime"
 
-    # Set sanitizer options
     export ASAN_OPTIONS="detect_leaks=1:halt_on_error=0:print_stats=1"
     export UBSAN_OPTIONS="print_stacktrace=1"
 

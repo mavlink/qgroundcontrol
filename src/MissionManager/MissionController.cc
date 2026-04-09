@@ -1521,6 +1521,7 @@ void MissionController::_initAllVisualItems(void)
 
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::_recalcMissionFlightStatus);
     connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::plannedHomePositionChanged);
+    connect(_settingsItem, &MissionSettingsItem::coordinateChanged,     this, &MissionController::homePositionSetChanged);
 
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
@@ -1558,9 +1559,10 @@ void MissionController::_initAllVisualItems(void)
         _syncTreeRallyPointsReset();
     }
 
-    emit visualItemsChanged();
+    emit visualItemsReset();
     emit containsItemsChanged();
     emit plannedHomePositionChanged(plannedHomePosition());
+    emit homePositionSetChanged();
 
     if (!_flyView) {
         setCurrentPlanViewSeqNum(0, true);
@@ -1573,6 +1575,7 @@ void MissionController::_deinitAllVisualItems(void)
 {
     disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
     disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::plannedHomePositionChanged);
+    disconnect(_settingsItem, &MissionSettingsItem::coordinateChanged, this, &MissionController::homePositionSetChanged);
 
     for (int i=0; i<_visualItems->count(); i++) {
         _deinitVisualItem(qobject_cast<VisualMissionItem*>(_visualItems->get(i)));
@@ -1890,6 +1893,18 @@ QGeoCoordinate MissionController::plannedHomePosition(void) const
         return _settingsItem->coordinate();
     } else {
         return QGeoCoordinate();
+    }
+}
+
+bool MissionController::homePositionSet(void) const
+{
+    return _settingsItem && _settingsItem->coordinate().isValid();
+}
+
+void MissionController::setHomePosition(QGeoCoordinate coordinate)
+{
+    if (_settingsItem) {
+        _settingsItem->setCoordinate(coordinate);
     }
 }
 

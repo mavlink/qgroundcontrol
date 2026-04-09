@@ -125,20 +125,6 @@ public:
     Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText, bool enableCamera, bool enableGimbal);
     Q_INVOKABLE void    stopOneMockLink             (void);
 
-    /// Returns the hierarchical list of available logging category names.
-    Q_INVOKABLE static QmlObjectListModel *treeLoggingCategoriesModel();
-
-    /// Returns the flat list of available logging category names.
-    Q_INVOKABLE static QmlObjectListModel *flatLoggingCategoriesModel();
-
-    /// Turns on/off logging for the specified category. State is saved in app settings.
-    Q_INVOKABLE static void setCategoryLoggingOn(const QString &category, bool enable);
-
-    /// Returns true if logging is turned on for the specified category.
-    Q_INVOKABLE static bool categoryLoggingOn(const QString &category);
-
-    Q_INVOKABLE static void disableAllLoggingCategories();
-
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
     Q_INVOKABLE QString altitudeFrameExtraUnits(AltitudeFrame altFrame);        ///< String shown in the FactTextField.extraUnits ui

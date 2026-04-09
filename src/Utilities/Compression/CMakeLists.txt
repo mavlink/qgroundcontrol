@@ -47,13 +47,12 @@ if(NOT USE_SYSTEM_ZLIB)
 CPMAddPackage(
     NAME zlib
     GITHUB_REPOSITORY madler/zlib
-    VERSION 1.3.1.2
-    GIT_TAG v1.3.1.2
+    VERSION 1.3.2
+    GIT_TAG v1.3.2
     OPTIONS
         "ZLIB_BUILD_TESTING OFF"
         "ZLIB_BUILD_SHARED OFF"
         "ZLIB_BUILD_STATIC ON"
-        "ZLIB_BUILD_MINIZIP OFF"
         "ZLIB_INSTALL OFF"
         "ZLIB_PREFIX OFF"
         "${ZLIB_EXTRA_OPTIONS}"
@@ -314,9 +313,9 @@ endif()
 if(NOT USE_SYSTEM_LIBARCHIVE)
 CPMAddPackage(
     NAME libarchive
-    VERSION 3.8.4
+    VERSION 3.8.6
     GITHUB_REPOSITORY libarchive/libarchive
-    GIT_TAG v3.8.4
+    GIT_TAG v3.8.6
     OPTIONS
         "ENABLE_WERROR OFF"
         "ENABLE_TEST OFF"

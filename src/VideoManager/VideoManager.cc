@@ -22,6 +22,11 @@
 #include "UVCReceiver.h"
 #ifdef QGC_GST_STREAMING
 #include "GStreamerHelpers.h"
+#include "GStreamer.h"
+#endif
+#if defined(QGC_GST_STREAMING) && defined(Q_OS_MACOS)
+#include <QtMultimedia/QVideoSink>
+#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #endif
 
 #include <QtConcurrent/QtConcurrent>
@@ -201,6 +206,13 @@ void VideoManager::init(QQuickWindow *mainWindow)
     (void) connect(_videoSettings->tcpUrl(), &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
     (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(_videoSettings->lowLatencyMode(), &Fact::rawValueChanged, this, [this](const QVariant &value) { Q_UNUSED(value); _restartAllVideos(); });
+    (void) connect(SettingsManager::instance()->appSettings()->gstDebugLevel(), &Fact::rawValueChanged, this, [](const QVariant &value) {
+#ifdef QGC_GST_STREAMING
+        GStreamer::setDebugLevel(value.toInt());
+#else
+        Q_UNUSED(value);
+#endif
+    });
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
     (void) connect(this, &VideoManager::autoStreamConfiguredChanged, this, &VideoManager::_videoSourceChanged);
@@ -495,6 +507,15 @@ bool VideoManager::gstreamerEnabled()
 bool VideoManager::gstreamerD3D11Sink()
 {
 #ifdef QGC_GST_D3D11_SINK
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool VideoManager::gstreamerAppleSink()
+{
+#if defined(QGC_GST_STREAMING) && defined(Q_OS_MACOS) && !defined(QGC_GST_D3D11_SINK)
     return true;
 #else
     return false;
@@ -887,6 +908,22 @@ void VideoManager::_initVideoReceiver(VideoReceiver *receiver, QQuickWindow *win
         qCCritical(VideoManagerLog) << "createVideoSink() failed" << receiver->name();
     }
     receiver->setSink(sink);
+
+#if defined(QGC_GST_STREAMING) && defined(Q_OS_MACOS) && !defined(QGC_GST_D3D11_SINK)
+    // macOS Metal path: connect appsink inside the sinkbin to the QVideoSink
+    // belonging to the QML VideoOutput widget.
+    if (sink && widget) {
+        auto *videoOutput = qobject_cast<QQuickVideoOutput *>(widget);
+        if (videoOutput) {
+            QVideoSink *videoSink = videoOutput->videoSink();
+            if (!GStreamer::setupAppleSinkAdapter(sink, videoSink, receiver)) {
+                qCWarning(VideoManagerLog) << "setupAppleSinkAdapter failed" << receiver->name();
+            }
+        } else {
+            qCWarning(VideoManagerLog) << "Widget is not a VideoOutput, cannot connect appsink" << receiver->name();
+        }
+    }
+#endif
 
     (void) connect(receiver, &VideoReceiver::onStartComplete, this, [this, receiver](VideoReceiver::STATUS status) {
         qCDebug(VideoManagerLog) << "Video" << receiver->name() << "Start complete, status:" << status;

@@ -19,7 +19,8 @@
 
 #include <QtCore/private/qthread_p.h>
 
-#include "QGCLogging.h"
+#include "LogManager.h"
+#include "LogRemoteSink.h"
 #include "AudioOutput.h"
 #include "FollowMe.h"
 #include "JoystickManager.h"
@@ -143,7 +144,8 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
     }
 
     // Set up our logging filters
-    QGCLoggingCategoryManager::instance()->setFilterRulesFromSettings(loggingOptions);
+    QGCLoggingCategoryManager::init();
+    QGCLoggingCategoryManager::instance()->installFilter(loggingOptions);
 
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();
@@ -218,6 +220,45 @@ void QGCApplication::init()
         SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(_systemId);
     }
 
+    // Set up log directory for disk logging and SQLite store, and re-apply on path change
+    {
+        auto *logMgr = LogManager::instance();
+        auto *appSettings = SettingsManager::instance()->appSettings();
+        logMgr->setLogDirectory(appSettings->logSavePath());
+        QObject::connect(appSettings, &AppSettings::savePathsChanged, logMgr, [logMgr, appSettings]() {
+            logMgr->setLogDirectory(appSettings->logSavePath());
+        });
+    }
+
+    // Wire remote logging settings to the sink
+    {
+        auto *appSettings = SettingsManager::instance()->appSettings();
+        auto *sink = LogManager::instance()->remoteSink();
+        auto applySetting = [appSettings, sink]() {
+            sink->setHost(appSettings->remoteLoggingHost()->rawValue().toString());
+            sink->setPort(static_cast<quint16>(appSettings->remoteLoggingPort()->rawValue().toUInt()));
+            sink->setProtocol(static_cast<TransportStrategy::Protocol>(
+                appSettings->remoteLoggingProtocol()->rawValue().toInt()));
+            sink->setVehicleId(appSettings->remoteLoggingVehicleId()->rawValue().toString());
+            sink->setTlsEnabled(appSettings->remoteLoggingTlsEnabled()->rawValue().toBool());
+            sink->setTlsVerifyPeer(appSettings->remoteLoggingTlsVerifyPeer()->rawValue().toBool());
+            sink->setCompressionEnabled(appSettings->remoteLoggingCompressionEnabled()->rawValue().toBool());
+            sink->setCompressionLevel(appSettings->remoteLoggingCompressionLevel()->rawValue().toInt());
+            sink->setEnabled(appSettings->remoteLoggingEnabled()->rawValue().toBool());
+        };
+        for (auto *fact : {
+                 appSettings->remoteLoggingEnabled(),    appSettings->remoteLoggingHost(),
+                 appSettings->remoteLoggingPort(),       appSettings->remoteLoggingProtocol(),
+                 appSettings->remoteLoggingVehicleId(),  appSettings->remoteLoggingTlsEnabled(),
+                 appSettings->remoteLoggingTlsVerifyPeer(),
+                 appSettings->remoteLoggingCompressionEnabled(),
+                 appSettings->remoteLoggingCompressionLevel(),
+             }) {
+            QObject::connect(fact, &Fact::rawValueChanged, sink, applySetting);
+        }
+        applySetting();
+    }
+
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
     if (QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans font";
@@ -239,10 +280,11 @@ void QGCApplication::init()
 bool QGCApplication::_initVideo()
 {
 #ifdef QGC_GST_STREAMING
-    // GStreamer video playback requires OpenGL. On platforms where OpenGL
-    // is unavailable (e.g. recent macOS with only Metal), fall back to the
-    // default graphics API — video streaming won't work but the rest of
-    // QGC remains functional.
+    // GStreamer video rendering backend selection:
+    //  - Windows D3D11: native RHI, no OpenGL needed.
+    //  - macOS: appsink → QVideoSink → Metal RHI VideoOutput, no OpenGL needed.
+    //  - Linux/other: qml6glsink requires OpenGL. Probe for a working GL context
+    //    and fall back to the default graphics API if unavailable.
     //
     // The offscreen platform (used in CI boot tests) never provides a real
     // GL context, so skip the probe there — just set OpenGL API to exercise
@@ -255,15 +297,17 @@ bool QGCApplication::_initVideo()
         QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
     }
     qCDebug(QGCApplicationLog) << "D3D11 video sink available, using default graphics API";
+#elif defined(Q_OS_MACOS)
+    // macOS Metal rendering path: appsink → QVideoSink → VideoOutput.
+    // Do NOT force OpenGL — let Qt use the default Metal RHI backend.
+    // The appsink path in qgcvideosinkbin avoids the GL-dependent qml6glsink.
+    if (isOffscreen) {
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    } else {
+        qCDebug(QGCApplicationLog) << "macOS: using default RHI backend (Metal) for appsink video path";
+    }
 #else
-    const bool skipGLProbe = isOffscreen
-#if defined(Q_OS_MACOS)
-        // macOS still provides OpenGL (deprecated but functional). The
-        // QOpenGLContext::create() probe is unreliable without a native
-        // surface, so skip it and force OpenGL for qml6glsink.
-        || true
-#endif
-        ;
+    const bool skipGLProbe = isOffscreen;
 
     if (skipGLProbe) {
         QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
@@ -276,7 +320,7 @@ bool QGCApplication::_initVideo()
                                          << "Using default graphics API (Metal/Vulkan).";
         }
     }
-#endif  // QGC_GST_D3D11_SINK
+#endif  // QGC_GST_D3D11_SINK / Q_OS_MACOS
 #endif
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup

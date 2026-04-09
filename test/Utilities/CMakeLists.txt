@@ -5,8 +5,10 @@
 
 add_subdirectory(Audio)
 add_subdirectory(Compression)
+add_subdirectory(Database)
 add_subdirectory(FileSystem)
 add_subdirectory(Geo)
+add_subdirectory(Logging)
 add_subdirectory(Network)
 add_subdirectory(Parsing)
 add_subdirectory(Platform)
