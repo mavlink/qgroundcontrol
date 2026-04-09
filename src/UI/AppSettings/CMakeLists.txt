@@ -86,6 +86,7 @@ qt_add_qml_module(AppSettingsModule
         MapProviderSettings.qml
         MavlinkActionSettings.qml
         MavlinkLinkStatus.qml
+        SigningKeyManager.qml
         MockLink.qml
         MockLinkSettings.qml
         NmeaGpsSettings.qml

@@ -38,6 +38,22 @@ SettingsGroupLayout {
     LabelledLabel {
         Layout.fillWidth:   true
         label:              qsTr("Signing")
-        labelText:          _activeVehicle ? (_activeVehicle.mavlinkSigning ? qsTr("On") : qsTr("Off")) : _notConnectedStr
+        labelText:          _activeVehicle ? _activeVehicle.signingController.signingStatus.statusText : _notConnectedStr
+    }
+
+    LabelledLabel {
+        Layout.fillWidth:   true
+        label:              qsTr("Signing key")
+        labelText:          _activeVehicle && _activeVehicle.signingController.signingStatus.keyName !== ""
+                                ? _activeVehicle.signingController.signingStatus.keyName
+                                : qsTr("None")
+        visible:            _activeVehicle && _activeVehicle.signingController.signingStatus.enabled
+    }
+
+    LabelledLabel {
+        Layout.fillWidth:   true
+        label:              qsTr("Signing streams")
+        labelText:          _activeVehicle ? _activeVehicle.signingController.signingStatus.streamCount : _notConnectedStr
+        visible:            _activeVehicle && _activeVehicle.signingController.signingStatus.enabled
     }
 }

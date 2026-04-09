@@ -10,9 +10,13 @@ public:
     explicit MockLinkSigningTest(QObject* parent = nullptr);
 
 private slots:
+    void initTestCase() override;
     void init() override;
     void cleanup() override;
     void _testSendSetupSigning();
     void _testSendDisableSigning();
+    void _testSigningEnableTimeout();
     void _testSigningKeysAddRemove();
+    void _testSigningPendingState();
+    void _testSigningStatusChangedSignalFiresOnEnable();
 };

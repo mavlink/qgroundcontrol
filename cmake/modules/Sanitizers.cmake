@@ -206,6 +206,8 @@ leak:libfontconfig
 leak:libpulse
 leak:QGCCorePlugin::QGCCorePlugin
 leak:QGCOptions::QGCOptions
+leak:AirframeComponentAirframes::insert
+leak:PX4AirframeLoader::loadAirframeMetaData
 ")
 
     file(WRITE ${CMAKE_BINARY_DIR}/tsan_suppressions.txt

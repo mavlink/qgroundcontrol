@@ -22,6 +22,10 @@
     #include <sys/wait.h>
 #endif
 
+#ifdef QGC_HAS_LIBGCRYPT
+    #include <gcrypt.h>
+#endif
+
 #if defined(Q_OS_MACOS)
     #include <CoreFoundation/CoreFoundation.h>
 #elif defined(Q_OS_WIN)
@@ -156,7 +160,15 @@ void setWindowsErrorModes(bool quietWindowsAsserts)
 std::optional<int> Platform::initialize(int argc, char* argv[],
                                          const QGCCommandLineParser::CommandLineParseResult& args)
 {
-    // --- Safety checks (may cause early exit) ---
+#ifdef QGC_HAS_LIBGCRYPT
+    // qtkeychain's libsecret backend uses libgcrypt; init must run before Qt threads start.
+    // nullptr (not GCRYPT_VERSION) — build-host/runtime version skew shouldn't silently skip init.
+    if (gcry_check_version(nullptr)) {
+        (void) gcry_control(GCRYCTL_DISABLE_SECMEM, 0);
+        (void) gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
+    }
+#endif
+
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     if (isRunningAsRoot()) {
         return showRootError(argc, argv);
@@ -173,7 +185,6 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
     Q_UNUSED(argv);
 #endif
 
-    // --- Environment setup ---
 #ifdef Q_OS_UNIX
 #ifndef Q_OS_ANDROID
     // On Android, skip these — either env var triggers shouldLogToStderr(),
@@ -198,7 +209,6 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
     disableAppNapViaInfoDict();
 #endif
 
-    // --- Unit test mode: run headless ---
 #ifdef QGC_UNITTEST_BUILD
     if (args.runningUnitTests || args.listTests) {
         if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) {

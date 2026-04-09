@@ -25,8 +25,10 @@
 #include "MockLink.h"
 #endif
 
-#include <QtCore/QSettings>
 #include <QtCore/QLineF>
+#include <QtCore/QSettings>
+#include <QtGui/QClipboard>
+#include <QtGui/QGuiApplication>
 
 #include "QGCLoggingCategory.h"
 
@@ -319,6 +321,11 @@ void QGroundControlQmlGlobal::showMessageDialog(
 void QGroundControlQmlGlobal::testAudioOutput()
 {
     AudioOutput::instance()->testAudioOutput();
+}
+
+void QGroundControlQmlGlobal::copyToClipboard(const QString& text)
+{
+    QGuiApplication::clipboard()->setText(text);
 }
 
 QString QGroundControlQmlGlobal::elevationProviderName()
