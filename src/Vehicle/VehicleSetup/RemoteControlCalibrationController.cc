@@ -387,6 +387,7 @@ void RemoteControlCalibrationController::_setupCurrentState()
     _saveCurrentRawValues();
 
     _nextButton->setEnabled(state.nextButtonFn != nullptr);
+    emit unableButtonVisibleChanged(unableButtonVisible());
 }
 
 void RemoteControlCalibrationController::_processChannelValues(QVector<int> channelValues)
@@ -480,6 +481,15 @@ void RemoteControlCalibrationController::nextButtonClicked()
             (this->*state.nextButtonFn)();
         }
     }
+}
+
+void RemoteControlCalibrationController::unableButtonClicked()
+{
+    if (!unableButtonVisible()) {
+        return;
+    }
+
+    _skipOptionalStep();
 }
 
 void RemoteControlCalibrationController::cancelButtonClicked()
@@ -673,6 +683,39 @@ void RemoteControlCalibrationController::_inputCenterWait(StickFunction stickFun
     }
 }
 
+void RemoteControlCalibrationController::_skipOptionalStep()
+{
+    if (!_isOptionalExtensionOmitStep(_currentStep)) {
+        return;
+    }
+
+    const StateMachineEntry &state = _getStateMachineEntry(_currentStep);
+    const int channel = _rgFunctionChannelMapping[state.stickFunction];
+    if (channel < 0 || channel >= _chanMax) {
+        return;
+    }
+
+    ChannelInfo &channelInfo = _rgChannelInfo[channel];
+    const int trimValue = _channelValueSave[channel];
+    channelInfo.channelTrim = trimValue;
+
+    if (channelInfo.channelReversed) {
+        channelInfo.channelMax = trimValue;
+    } else {
+        channelInfo.channelMin = trimValue;
+    }
+
+    qCDebug(RemoteControlCalibrationControllerLog)
+        << "Skipping optional extension step - function:channel:min:max:trim"
+        << _stickFunctionToString(state.stickFunction)
+        << channel
+        << channelInfo.channelMin
+        << channelInfo.channelMax
+        << channelInfo.channelTrim;
+
+    _advanceState();
+}
+
 void RemoteControlCalibrationController::_inputSwitchMinMax(StickFunction /*stickFunction*/, int channel, int value)
 {
     // If the channel is mapped we already have min/max
@@ -725,15 +768,35 @@ void RemoteControlCalibrationController::_validateAndAdjustCalibrationValues()
         auto& channelInfo = _rgChannelInfo[chan];
 
         if (chan < _chanCount) {
+            const bool extensionFunction = channelInfo.stickFunction == stickFunctionPitchExtension ||
+                                           channelInfo.stickFunction == stickFunctionRollExtension ||
+                                           channelInfo.stickFunction == stickFunctionAux1Extension ||
+                                           channelInfo.stickFunction == stickFunctionAux2Extension ||
+                                           channelInfo.stickFunction == stickFunctionAux3Extension ||
+                                           channelInfo.stickFunction == stickFunctionAux4Extension ||
+                                           channelInfo.stickFunction == stickFunctionAux5Extension ||
+                                           channelInfo.stickFunction == stickFunctionAux6Extension;
+            const bool positiveOnlyExtension = extensionFunction &&
+                                               (channelInfo.channelTrim == channelInfo.channelMin) &&
+                                               (channelInfo.channelMax >= _calValidMaxValue);
+            const bool negativeOnlyExtension = extensionFunction &&
+                                               (channelInfo.channelTrim == channelInfo.channelMax) &&
+                                               (channelInfo.channelMin <= _calValidMinValue);
+            const bool oneSidedExtension = positiveOnlyExtension || negativeOnlyExtension;
+
             // Validate Min/Max values. Although the channel appears as available we still may
             // not have good min/max/trim values for it. Set to defaults if needed.
-            if (channelInfo.channelMin > _calValidMinValue || channelInfo.channelMax < _calValidMaxValue) {
+            if (!oneSidedExtension && (channelInfo.channelMin > _calValidMinValue || channelInfo.channelMax < _calValidMaxValue)) {
                 qCDebug(RemoteControlCalibrationControllerLog) << "resetting channel invalid min/max - chan:channelMin:calValidMinValue:channelMax:calValidMaxValue"
                     << chan << channelInfo.channelMin << _calValidMinValue << channelInfo.channelMax << _calValidMaxValue;
                 channelInfo.channelMin = _calDefaultMinValue;
                 channelInfo.channelMax = _calDefaultMaxValue;
                 channelInfo.channelTrim = channelInfo.channelMin + ((channelInfo.channelMax - channelInfo.channelMin) / 2);
             } else {
+                if (oneSidedExtension) {
+                    continue;
+                }
+
                 switch (channelInfo.stickFunction) {
                 case stickFunctionThrottle:
                 case stickFunctionYaw:
@@ -821,6 +884,22 @@ void RemoteControlCalibrationController::_stopCalibration()
     _stickDisplayPositions = { _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical,
                                _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical };
     emit stickDisplayPositionsChanged();
+    emit unableButtonVisibleChanged(false);
+}
+
+bool RemoteControlCalibrationController::unableButtonVisible() const
+{
+    return _calibrating && _isOptionalExtensionOmitStep(_currentStep);
+}
+
+bool RemoteControlCalibrationController::_isOptionalExtensionOmitStep(int step) const
+{
+    if (step < 0 || step >= _stateMachine.size()) {
+        return false;
+    }
+
+    const StateMachineStepFunction stepFunction = _stateMachine[step].stepFunction;
+    return stepFunction == StateMachineStepExtensionLowHorz || stepFunction == StateMachineStepExtensionLowVert;
 }
 
 void RemoteControlCalibrationController::_saveCurrentRawValues()

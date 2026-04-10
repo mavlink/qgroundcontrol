@@ -3044,6 +3044,92 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
     sendMessageOnLinkThreadSafe(sharedLink.get(), message);
 }
 
+void Vehicle::sendJoystickAuxRcOverrideThreadSafe(const std::array<uint16_t, 6> &channelValues, const std::array<bool, 6> &channelEnabled, bool useRcOverride)
+{
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCDebug(VehicleLog) << "sendJoystickAuxRcOverrideThreadSafe: primary link gone!";
+        return;
+    }
+
+    if (sharedLink->linkConfiguration()->isHighLatency()) {
+        return;
+    }
+
+    bool anyEnabledChannel = false;
+    for (bool enabled : channelEnabled) {
+        if (enabled) {
+            anyEnabledChannel = true;
+            break;
+        }
+    }
+
+    if (!useRcOverride || !anyEnabledChannel) {
+        if (!_joystickAuxRcOverrideActive) {
+            return;
+        }
+
+        mavlink_message_t releaseMessage;
+        mavlink_msg_rc_channels_override_pack_chan(
+            static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+            static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+            sharedLink->mavlinkChannel(),
+            &releaseMessage,
+            static_cast<uint8_t>(_systemID),
+            static_cast<uint8_t>(_defaultComponentId),
+            UINT16_MAX,
+            UINT16_MAX,
+            UINT16_MAX,
+            UINT16_MAX,
+            0,
+            0,
+            0,
+            0,
+            static_cast<uint16_t>(UINT16_MAX - 1),
+            static_cast<uint16_t>(UINT16_MAX - 1),
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0);
+        sendMessageOnLinkThreadSafe(sharedLink.get(), releaseMessage);
+        _joystickAuxRcOverrideActive = false;
+        return;
+    }
+
+    mavlink_message_t message;
+    mavlink_msg_rc_channels_override_pack_chan(
+        static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+        static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+        sharedLink->mavlinkChannel(),
+        &message,
+        static_cast<uint8_t>(_systemID),
+        static_cast<uint8_t>(_defaultComponentId),
+        UINT16_MAX,
+        UINT16_MAX,
+        UINT16_MAX,
+        UINT16_MAX,
+        channelEnabled[0] ? channelValues[0] : static_cast<uint16_t>(0),
+        channelEnabled[1] ? channelValues[1] : static_cast<uint16_t>(0),
+        channelEnabled[2] ? channelValues[2] : static_cast<uint16_t>(0),
+        channelEnabled[3] ? channelValues[3] : static_cast<uint16_t>(0),
+        channelEnabled[4] ? channelValues[4] : static_cast<uint16_t>(UINT16_MAX - 1),
+        channelEnabled[5] ? channelValues[5] : static_cast<uint16_t>(UINT16_MAX - 1),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0);
+    sendMessageOnLinkThreadSafe(sharedLink.get(), message);
+    _joystickAuxRcOverrideActive = true;
+}
+
 void Vehicle::triggerSimpleCamera()
 {
     sendMavCommand(_defaultComponentId,

@@ -133,6 +133,13 @@
             "label": "Enable manual control for Aux 6"
         },
         {
+            "name": "useRcOverrideForAuxChannels",
+            "shortDesc": "Use RC override for Aux channels",
+            "type": "bool",
+            "default": false,
+            "label": "Use RC override for Aux channels"
+        },
+        {
             "name": "enableManualControlPitchExtension",
             "shortDesc": "Enable manual control pitch extension",
             "type": "bool",
