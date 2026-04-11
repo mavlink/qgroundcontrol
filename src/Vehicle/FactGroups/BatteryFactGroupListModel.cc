@@ -1,4 +1,6 @@
 #include "BatteryFactGroupListModel.h"
+#include "BatteryIndicatorSettings.h"
+#include "SettingsManager.h"
 #include "Vehicle.h"
 
 BatteryFactGroupListModel::BatteryFactGroupListModel(QObject* parent)
@@ -71,8 +73,7 @@ void BatteryFactGroupListModel::startV2Negotiation(Vehicle *vehicle)
         // Already streaming — activate immediately, no request needed
         _activateV2(vehicle);
     } else {
-        _v2State            = V2NegotiationRequesting;
-        _negotiationVehicle = vehicle;
+        _v2State = V2NegotiationRequesting;
 
         // sendMavCommandWithLambdaFallback calls the lambda only on MAV_RESULT_UNSUPPORTED.
         // On ACCEPTED (or other), we simply wait: handleMessageForFactGroupCreation will
@@ -80,8 +81,7 @@ void BatteryFactGroupListModel::startV2Negotiation(Vehicle *vehicle)
         // stay in Requesting and V1 continues to be used (safe fallback).
         vehicle->sendMavCommandWithLambdaFallback(
             [this]() {
-                _v2State            = V2NegotiationUnsupported;
-                _negotiationVehicle = nullptr;
+                _v2State = V2NegotiationUnsupported;
             },
             vehicle->defaultComponentId(),
             MAV_CMD_SET_MESSAGE_INTERVAL,
@@ -105,8 +105,7 @@ void BatteryFactGroupListModel::startV2Negotiation(Vehicle *vehicle)
 
 void BatteryFactGroupListModel::_activateV2(Vehicle *vehicle)
 {
-    _v2State            = V2NegotiationActive;
-    _negotiationVehicle = nullptr;
+    _v2State = V2NegotiationActive;
 
     // Ask the flight stack to stop streaming BATTERY_STATUS (V1)
     vehicle->sendMavCommand(
@@ -354,6 +353,17 @@ void BatteryFactGroup::_handleBatteryStatusV2(Vehicle * /*vehicle*/, const mavli
         derivedChargeState = MAV_BATTERY_CHARGE_STATE_EMERGENCY;
     } else if (bs.status_flags & MAV_BATTERY_STATUS_FLAGS_CHARGING) {
         derivedChargeState = MAV_BATTERY_CHARGE_STATE_CHARGING;
+    } else if (bs.percent_remaining != UINT8_MAX) {
+        // BATTERY_STATUS_V2 has no LOW/CRITICAL flags — derive from percentRemaining
+        // using the same thresholds as the battery indicator UI.
+        const auto *battSettings = SettingsManager::instance()->batteryIndicatorSettings();
+        const int thr1 = battSettings->threshold1()->rawValue().toInt();
+        const int thr2 = battSettings->threshold2()->rawValue().toInt();
+        if (static_cast<int>(bs.percent_remaining) <= thr2) {
+            derivedChargeState = MAV_BATTERY_CHARGE_STATE_CRITICAL;
+        } else if (static_cast<int>(bs.percent_remaining) <= thr1) {
+            derivedChargeState = MAV_BATTERY_CHARGE_STATE_LOW;
+        }
     }
     chargeState()->setRawValue(derivedChargeState);
 
