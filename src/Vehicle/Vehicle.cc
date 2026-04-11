@@ -1183,39 +1183,8 @@ void Vehicle::_handleBatteryStatusV2(mavlink_message_t& message)
     mavlink_battery_status_v2_t bs;
     mavlink_msg_battery_status_v2_decode(&message, &bs);
 
-    // Derive a MAV_BATTERY_CHARGE_STATE from the status_flags bitmask for audio alerts.
-    // Note: LOW/CRITICAL states have no equivalent in BATTERY_STATUS_V2 status_flags.
-    constexpr uint32_t faultMask =
-        MAV_BATTERY_STATUS_FLAGS_FAULT_CELL_IMBALANCE                  |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_PROTECTION_SYSTEM               |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_VOLT                       |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_UNDER_VOLT                      |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_TEMPERATURE                |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_UNDER_TEMPERATURE               |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_CURRENT                    |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_SHORT_CIRCUIT                   |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_VOLTAGE            |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_FIRMWARE           |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_CELLS_CONFIGURATION;
-
-    uint8_t chargeState = MAV_BATTERY_CHARGE_STATE_OK;
-    if (bs.status_flags & faultMask) {
-        chargeState = MAV_BATTERY_CHARGE_STATE_FAILED;
-    } else if (bs.status_flags & MAV_BATTERY_STATUS_FLAGS_NOT_READY_TO_USE) {
-        chargeState = MAV_BATTERY_CHARGE_STATE_EMERGENCY;
-    } else if (bs.percent_remaining != UINT8_MAX) {
-        // BATTERY_STATUS_V2 has no LOW/CRITICAL flags — derive from percentRemaining
-        // using conventional alert thresholds (25 % LOW, 10 % CRITICAL).
-        constexpr int kLowPct      = 25;
-        constexpr int kCriticalPct = 10;
-        if (static_cast<int>(bs.percent_remaining) <= kCriticalPct) {
-            chargeState = MAV_BATTERY_CHARGE_STATE_CRITICAL;
-        } else if (static_cast<int>(bs.percent_remaining) <= kLowPct) {
-            chargeState = MAV_BATTERY_CHARGE_STATE_LOW;
-        }
-    }
-    // CHARGING is not an alertable state — intentionally not mapped here
-
+    // CHARGING is not a voice-alertable state; fault/level states handled by chargeStateFromV2.
+    const uint8_t chargeState = BatteryFactGroup::chargeStateFromV2(bs.status_flags, bs.percent_remaining);
     _announceBatteryChargeState(bs.id, chargeState);
 }
 
