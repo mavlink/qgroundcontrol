@@ -1,6 +1,8 @@
 #include "BatteryFactGroupListModel.h"
 #include "Vehicle.h"
 
+#include <cstring> // strnlen
+
 BatteryFactGroupListModel::BatteryFactGroupListModel(QObject* parent)
     : FactGroupListModel("battery", parent)
 {
@@ -50,13 +52,19 @@ FactGroupWithId *BatteryFactGroupListModel::_createFactGroupWithId(uint32_t id)
 void BatteryFactGroupListModel::handleMessageForFactGroupCreation(
     Vehicle *vehicle, const mavlink_message_t &message)
 {
-    if (message.msgid == MAVLINK_MSG_ID_BATTERY_STATUS_V2) {
-        _v2StatusReceived = true;
-        if (_v2State == V2NegotiationRequesting) {
-            _activateV2(vehicle);
+    // Only drive negotiation state from the autopilot component. A camera
+    // peripheral on a different compid may also send BATTERY_STATUS_V2, but
+    // must not trigger V2 activation or cause BATTERY_STATUS to be suppressed
+    // for the autopilot (which may not be sending V2 at all).
+    if (message.compid == static_cast<uint8_t>(vehicle->defaultComponentId())) {
+        if (message.msgid == MAVLINK_MSG_ID_BATTERY_STATUS_V2) {
+            _v2StatusReceived = true;
+            if (_v2State == V2NegotiationRequesting) {
+                _activateV2(vehicle);
+            }
+        } else if (message.msgid == MAVLINK_MSG_ID_BATTERY_INFO) {
+            _infoReceived = true;
         }
-    } else if (message.msgid == MAVLINK_MSG_ID_BATTERY_INFO) {
-        _infoReceived = true;
     }
 
     FactGroupListModel::handleMessageForFactGroupCreation(vehicle, message);
@@ -183,6 +191,37 @@ BatteryFactGroup::BatteryFactGroup(uint32_t batteryId, QObject *parent)
     _cellsInSeriesFact.setRawValue(qQNaN());
 
     (void) connect(&_timeRemainingFact, &Fact::rawValueChanged, this, &BatteryFactGroup::_timeRemainingChanged);
+}
+
+// static
+uint8_t BatteryFactGroup::chargeStateFromV2(uint32_t statusFlags, uint8_t percentRemaining)
+{
+    constexpr uint32_t faultMask =
+        MAV_BATTERY_STATUS_FLAGS_FAULT_CELL_IMBALANCE                  |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_PROTECTION_SYSTEM               |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_VOLT                       |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_UNDER_VOLT                      |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_TEMPERATURE                |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_UNDER_TEMPERATURE               |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_CURRENT                    |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_SHORT_CIRCUIT                   |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_VOLTAGE            |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_FIRMWARE           |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_CELLS_CONFIGURATION;
+
+    if (statusFlags & faultMask)                              return MAV_BATTERY_CHARGE_STATE_FAILED;
+    if (statusFlags & MAV_BATTERY_STATUS_FLAGS_NOT_READY_TO_USE) return MAV_BATTERY_CHARGE_STATE_EMERGENCY;
+
+    // BATTERY_STATUS_V2 has no LOW/CRITICAL flags — derive from percentRemaining
+    // using conventional alarm thresholds. CHARGING is intentionally excluded here;
+    // UI callers add it for display; audio callers skip it (not a voice-alertable state).
+    if (percentRemaining != UINT8_MAX) {
+        constexpr int kCriticalPct = 10;
+        constexpr int kLowPct      = 25;
+        if (static_cast<int>(percentRemaining) <= kCriticalPct) return MAV_BATTERY_CHARGE_STATE_CRITICAL;
+        if (static_cast<int>(percentRemaining) <= kLowPct)      return MAV_BATTERY_CHARGE_STATE_LOW;
+    }
+    return MAV_BATTERY_CHARGE_STATE_OK;
 }
 
 void BatteryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
@@ -329,38 +368,12 @@ void BatteryFactGroup::_handleBatteryStatusV2(Vehicle * /*vehicle*/, const mavli
 
     statusFlags()->setRawValue(bs.status_flags);
 
-    // Derive a MAV_BATTERY_CHARGE_STATE from the status_flags bitmask for display and audio alerts.
-    // Note: LOW/CRITICAL states have no equivalent in BATTERY_STATUS_V2 status_flags.
-    constexpr uint32_t faultMask =
-        MAV_BATTERY_STATUS_FLAGS_FAULT_CELL_IMBALANCE                  |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_PROTECTION_SYSTEM               |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_VOLT                       |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_UNDER_VOLT                      |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_TEMPERATURE                |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_UNDER_TEMPERATURE               |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_CURRENT                    |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_SHORT_CIRCUIT                   |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_VOLTAGE            |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_FIRMWARE           |
-        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_CELLS_CONFIGURATION;
-
-    uint8_t derivedChargeState = MAV_BATTERY_CHARGE_STATE_OK;
-    if (bs.status_flags & faultMask) {
-        derivedChargeState = MAV_BATTERY_CHARGE_STATE_FAILED;
-    } else if (bs.status_flags & MAV_BATTERY_STATUS_FLAGS_NOT_READY_TO_USE) {
-        derivedChargeState = MAV_BATTERY_CHARGE_STATE_EMERGENCY;
-    } else if (bs.status_flags & MAV_BATTERY_STATUS_FLAGS_CHARGING) {
+    // Derive charge state for UI display. CHARGING is added here (display-only;
+    // audio alerts skip it — see Vehicle::_handleBatteryStatusV2).
+    uint8_t derivedChargeState = chargeStateFromV2(bs.status_flags, bs.percent_remaining);
+    if (derivedChargeState == MAV_BATTERY_CHARGE_STATE_OK
+            && (bs.status_flags & MAV_BATTERY_STATUS_FLAGS_CHARGING)) {
         derivedChargeState = MAV_BATTERY_CHARGE_STATE_CHARGING;
-    } else if (bs.percent_remaining != UINT8_MAX) {
-        // BATTERY_STATUS_V2 has no LOW/CRITICAL flags — derive from percentRemaining
-        // using conventional alert thresholds (25 % LOW, 10 % CRITICAL).
-        constexpr int kLowPct      = 25;
-        constexpr int kCriticalPct = 10;
-        if (static_cast<int>(bs.percent_remaining) <= kCriticalPct) {
-            derivedChargeState = MAV_BATTERY_CHARGE_STATE_CRITICAL;
-        } else if (static_cast<int>(bs.percent_remaining) <= kLowPct) {
-            derivedChargeState = MAV_BATTERY_CHARGE_STATE_LOW;
-        }
     }
     chargeState()->setRawValue(derivedChargeState);
 
@@ -399,10 +412,10 @@ void BatteryFactGroup::_handleBatteryInfo(Vehicle * /*vehicle*/, const mavlink_m
     stateOfHealth()->setRawValue((bi.state_of_health == 255) ? qQNaN() : static_cast<double>(bi.state_of_health));
     cellsInSeries()->setRawValue((bi.cells_in_series == 0) ? qQNaN() : static_cast<double>(bi.cells_in_series));
 
-    // String fields: fromLatin1 stops at the null terminator; all-zero yields an empty string
-    batteryName()->setRawValue(QString::fromLatin1(bi.name));
-    serialNumber()->setRawValue(QString::fromLatin1(bi.serial_number));
-    manufactureDate()->setRawValue(QString::fromLatin1(bi.manufacture_date));
+    // String fields: bound by field size in case the sender omits the null terminator
+    batteryName()->setRawValue(   QString::fromLatin1(bi.name,             strnlen(bi.name,             sizeof(bi.name))));
+    serialNumber()->setRawValue(  QString::fromLatin1(bi.serial_number,    strnlen(bi.serial_number,    sizeof(bi.serial_number))));
+    manufactureDate()->setRawValue(QString::fromLatin1(bi.manufacture_date, strnlen(bi.manufacture_date, sizeof(bi.manufacture_date))));
 
     _setTelemetryAvailable(true);
 }

@@ -118,6 +118,11 @@ public:
     Fact *stateOfHealth()                { return &_stateOfHealthFact; }
     Fact *cellsInSeries()                { return &_cellsInSeriesFact; }
 
+    /// Derives MAV_BATTERY_CHARGE_STATE from BATTERY_STATUS_V2 status_flags and
+    /// percent_remaining. CHARGING is excluded — callers that display it (UI) add
+    /// it themselves; callers that only trigger audio alerts (Vehicle) skip it.
+    static uint8_t chargeStateFromV2(uint32_t statusFlags, uint8_t percentRemaining);
+
     // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
