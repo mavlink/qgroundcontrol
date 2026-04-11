@@ -56,6 +56,7 @@ qt_add_qml_module(USVModule
         res/USVFlyViewLayout.js
         res/USVPayloadSummaryStrip.qml
         res/USVPayloadDetailPanel.qml
+        res/USVSamplingChartPanel.qml
         res/USVActionBar.qml
         res/USVInstrumentPanel.qml
     NO_PLUGIN
@@ -135,5 +136,6 @@ set(CUSTOM_DEFINITIONS
 
 set(CUSTOM_QT_COMPONENTS
     Core
+    Charts
     CACHE INTERNAL "" FORCE
 )
