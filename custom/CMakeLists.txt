@@ -53,7 +53,11 @@ qt_add_qml_module(USVModule
         src/USVPayloadFactGroup.cc
         src/USVPayloadFactGroup.h
     QML_FILES
-        res/USVPayloadPanel.qml
+        res/USVFlyViewLayout.js
+        res/USVPayloadSummaryStrip.qml
+        res/USVPayloadDetailPanel.qml
+        res/USVActionBar.qml
+        res/USVInstrumentPanel.qml
     NO_PLUGIN
 )
 

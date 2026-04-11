@@ -18,11 +18,6 @@
         <file alias="FlyViewBottomRightRowLayout.qml">res/USVFlyViewBottomRightRowLayout.qml</file>
     </qresource>
 
-    <!-- 综合仪表盘覆盖 - 替换默认的 IntegratedCompassAttitude -->
-    <qresource prefix="/USV/qml/QGroundControl/FlightMap/Widgets">
-        <file alias="IntegratedCompassAttitude.qml">res/USVInstrumentPanel.qml</file>
-    </qresource>
-
     <!-- USV 专用 QML 模块文件 -->
     <qresource prefix="/qml/USV">
         <file alias="USVChecklist.qml">res/USVChecklist.qml</file>

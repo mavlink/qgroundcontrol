@@ -371,7 +371,6 @@ USVQmlOverrideInterceptor::USVQmlOverrideInterceptor()
     // 启动时检查关键覆盖资源是否存在
     QStringList checkPaths = {
         QStringLiteral(":/USV/qml/QGroundControl/FlyView/FlyViewCustomLayer.qml"),
-        QStringLiteral(":/USV/qml/QGroundControl/FlightMap/Widgets/IntegratedCompassAttitude.qml"),
     };
 
     for (const QString &path : checkPaths) {

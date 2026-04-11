@@ -1,0 +1,10 @@
+********* Start testing of qmltestrunner *********
+Config: Using QtTest library 6.10.1, Qt 6.10.1 (x86_64-little_endian-llp64 shared (dynamic) release build; by MSVC 2022), windows 11
+PASS   : qmltestrunner::USVFlyViewLayoutLogic::initTestCase()
+PASS   : qmltestrunner::USVFlyViewLayoutLogic::test_faultState_forcesDiagnostics()
+PASS   : qmltestrunner::USVFlyViewLayoutLogic::test_idleState_staysCompact()
+PASS   : qmltestrunner::USVFlyViewLayoutLogic::test_linkLoss_forcesVisibility()
+PASS   : qmltestrunner::USVFlyViewLayoutLogic::test_samplingState_showsQuickActions()
+PASS   : qmltestrunner::USVFlyViewLayoutLogic::cleanupTestCase()
+Totals: 6 passed, 0 failed, 0 skipped, 0 blacklisted, 5ms
+********* Finished testing of qmltestrunner *********

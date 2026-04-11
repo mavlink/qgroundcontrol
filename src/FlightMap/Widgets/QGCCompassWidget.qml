@@ -143,10 +143,5 @@ Rectangle {
         }
     }
 
-    QGCLabel {
-        anchors.horizontalCenter:   parent.horizontalCenter
-        y:                          size * 0.74
-        text:                       vehicle && !usedByMultipleVehicleList ? _heading.toFixed(0) + "°" : ""
-        horizontalAlignment:        Text.AlignHCenter
-    }
+
 }
