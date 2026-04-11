@@ -1207,7 +1207,7 @@ void Vehicle::_handleBatteryStatusV2(mavlink_message_t& message)
     } else if (bs.percent_remaining != UINT8_MAX) {
         // BATTERY_STATUS_V2 has no LOW/CRITICAL flags — derive from percentRemaining
         // using the same thresholds as the battery indicator UI.
-        const auto *battSettings = SettingsManager::instance()->batteryIndicatorSettings();
+        auto *battSettings = SettingsManager::instance()->batteryIndicatorSettings();
         const int thr1 = battSettings->threshold1()->rawValue().toInt();
         const int thr2 = battSettings->threshold2()->rawValue().toInt();
         if (static_cast<int>(bs.percent_remaining) <= thr2) {
