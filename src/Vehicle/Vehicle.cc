@@ -53,6 +53,7 @@
 #include "RemoteIDManager.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "BatteryIndicatorSettings.h"
 #include "FlyViewSettings.h"
 #include "StandardModes.h"
 #include "TerrainProtocolHandler.h"
@@ -1203,6 +1204,17 @@ void Vehicle::_handleBatteryStatusV2(mavlink_message_t& message)
         chargeState = MAV_BATTERY_CHARGE_STATE_FAILED;
     } else if (bs.status_flags & MAV_BATTERY_STATUS_FLAGS_NOT_READY_TO_USE) {
         chargeState = MAV_BATTERY_CHARGE_STATE_EMERGENCY;
+    } else if (bs.percent_remaining != UINT8_MAX) {
+        // BATTERY_STATUS_V2 has no LOW/CRITICAL flags — derive from percentRemaining
+        // using the same thresholds as the battery indicator UI.
+        const auto *battSettings = SettingsManager::instance()->batteryIndicatorSettings();
+        const int thr1 = battSettings->threshold1()->rawValue().toInt();
+        const int thr2 = battSettings->threshold2()->rawValue().toInt();
+        if (static_cast<int>(bs.percent_remaining) <= thr2) {
+            chargeState = MAV_BATTERY_CHARGE_STATE_CRITICAL;
+        } else if (static_cast<int>(bs.percent_remaining) <= thr1) {
+            chargeState = MAV_BATTERY_CHARGE_STATE_LOW;
+        }
     }
     // CHARGING is not an alertable state — intentionally not mapped here
 

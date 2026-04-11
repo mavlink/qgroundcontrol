@@ -41,10 +41,9 @@ private:
 
     void _activateV2(Vehicle *vehicle);
 
-    V2NegotiationState _v2State            = V2NegotiationUnknown;
-    bool               _v2StatusReceived   = false;  ///< true once any BATTERY_STATUS_V2 frame arrives
-    bool               _infoReceived       = false;  ///< true once any BATTERY_INFO frame arrives
-    Vehicle           *_negotiationVehicle = nullptr;
+    V2NegotiationState _v2State          = V2NegotiationUnknown;
+    bool               _v2StatusReceived = false;  ///< true once any BATTERY_STATUS_V2 frame arrives
+    bool               _infoReceived     = false;  ///< true once any BATTERY_INFO frame arrives
 };
 
 class BatteryFactGroup : public FactGroupWithId
