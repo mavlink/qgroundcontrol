@@ -1125,7 +1125,10 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
 void Vehicle::_announceBatteryChargeState(uint8_t batteryId, uint8_t chargeState)
 {
     if (!_lowestBatteryChargeStateAnnouncedMap.contains(batteryId)) {
-        _lowestBatteryChargeStateAnnouncedMap[batteryId] = chargeState;
+        // Seed at OK (1), not chargeState. CHARGING (7) is numerically the highest
+        // enum value, so initialising with it would cause all subsequent LOW/CRITICAL
+        // alerts to fail the "chargeState > tracked" guard permanently.
+        _lowestBatteryChargeStateAnnouncedMap[batteryId] = MAV_BATTERY_CHARGE_STATE_OK;
     }
 
     QString batteryMessage;
