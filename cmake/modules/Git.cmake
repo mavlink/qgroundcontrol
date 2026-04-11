@@ -125,8 +125,10 @@ endif()
 string(REGEX REPLACE "^v" "" QGC_APP_VERSION_CLEAN "${QGC_APP_VERSION}")
 
 # Extract version components using regex
-if(QGC_APP_VERSION_CLEAN MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)")
-    set(QGC_APP_VERSION "${QGC_APP_VERSION_CLEAN}")
+# 允许 Git tag 带后缀（如 v0.2.0-stable），但传给 project(VERSION ...)
+# 的版本号必须严格为 major.minor.patch。
+if(QGC_APP_VERSION_CLEAN MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)([-+].*)?$")
+    set(QGC_APP_VERSION "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
     set(QGC_APP_VERSION_MAJOR "${CMAKE_MATCH_1}")
     set(QGC_APP_VERSION_MINOR "${CMAKE_MATCH_2}")
     set(QGC_APP_VERSION_PATCH "${CMAKE_MATCH_3}")
