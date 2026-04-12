@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/Custom/qml">
+        <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">src/FlyViewCustomLayer.qml</file>
+    </qresource>
+</RCC>
