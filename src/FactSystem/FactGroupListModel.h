@@ -6,6 +6,8 @@
 
 #include <QList>
 
+class Vehicle;
+
 /// Dynamically manages FactGroupWithIds based on incoming messages.
 class FactGroupListModel : public QmlObjectListModel
 {
