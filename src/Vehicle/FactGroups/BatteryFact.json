@@ -138,35 +138,35 @@
     "shortDesc":        "Nominal Voltage",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "V"
+    "units":            "v"
 },
 {
     "name":             "dischargeMinimumVoltage",
     "shortDesc":        "Discharge Min Voltage",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "V"
+    "units":            "v"
 },
 {
     "name":             "chargingMinimumVoltage",
     "shortDesc":        "Charging Min Voltage",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "V"
+    "units":            "v"
 },
 {
     "name":             "restingMinimumVoltage",
     "shortDesc":        "Resting Min Voltage",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "V"
+    "units":            "v"
 },
 {
     "name":             "chargingMaximumVoltage",
     "shortDesc":        "Charging Max Voltage",
     "type":             "double",
     "decimalPlaces":    2,
-    "units":            "V"
+    "units":            "v"
 },
 {
     "name":             "chargingMaximumCurrent",
