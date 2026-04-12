@@ -1183,6 +1183,7 @@ void Vehicle::_announceBatteryChargeState(uint8_t batteryId, uint8_t chargeState
 
 void Vehicle::_handleBatteryStatusV2(mavlink_message_t& message)
 {
+    if (message.compid != _defaultComponentId) return;
     mavlink_battery_status_v2_t bs;
     mavlink_msg_battery_status_v2_decode(&message, &bs);
 
