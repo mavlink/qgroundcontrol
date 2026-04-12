@@ -59,7 +59,7 @@ void BatteryFactGroupListModel::handleMessageForFactGroupCreation(
     if (message.compid == static_cast<uint8_t>(vehicle->defaultComponentId())) {
         if (message.msgid == MAVLINK_MSG_ID_BATTERY_STATUS_V2) {
             _v2StatusReceived = true;
-            if (_v2State == V2NegotiationRequesting) {
+            if (_v2State != V2NegotiationActive) {
                 _activateV2(vehicle);
             }
         } else if (message.msgid == MAVLINK_MSG_ID_BATTERY_INFO) {
