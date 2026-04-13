@@ -1,5 +1,6 @@
 #include "MockLink.h"
 #include "LinkManager.h"
+#include "MAVLinkProtocol.h"
 #include "MockLinkCamera.h"
 #include "MockLinkFTP.h"
 #include "MockLinkGimbal.h"
@@ -1093,6 +1094,14 @@ void MockLink::_handleParamSet(const mavlink_message_t &msg)
         return;
     }
 
+    if (_paramSetFailureMode == FailParamSetParamError) {
+        qCDebug(MockLinkLog) << "Param set failure: PARAM_ERROR" << paramId;
+        _sendParamError(componentId, paramId,
+                        _mapParamName2Value[componentId].keys().indexOf(paramId),
+                        MAV_PARAM_ERROR_VALUE_OUT_OF_RANGE);
+        return;
+    }
+
     // Normal success path
     _setParamFloatUnionIntoMap(componentId, paramId, request.param_value);
 
@@ -1188,6 +1197,12 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         return;
     }
 
+    if (_paramRequestReadFailureMode == FailParamRequestReadParamError) {
+        qCDebug(MockLinkLog) << "Param request read failure: PARAM_ERROR" << paramId;
+        _sendParamError(componentId, paramId, request.param_index, MAV_PARAM_ERROR_DOES_NOT_EXIST);
+        return;
+    }
+
     (void) mavlink_msg_param_value_pack_chan(
         _vehicleSystemId,
         componentId,                                               // component id
@@ -1198,6 +1213,26 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t &msg)
         _mapParamName2MavParamType[componentId][paramId],          // Parameter type
         _mapParamName2Value[componentId].count(),                  // Total number of parameters
         _mapParamName2Value[componentId].keys().indexOf(paramId)   // Index of this parameter
+    );
+    respondWithMavlinkMessage(responseMsg);
+}
+
+void MockLink::_sendParamError(int componentId, const char *paramId, int16_t paramIndex, uint8_t errorCode)
+{
+    mavlink_message_t responseMsg{};
+    char paramIdBuf[MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN + 1] = {};
+    (void) strncpy(paramIdBuf, paramId, MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN);
+
+    (void) mavlink_msg_param_error_pack_chan(
+        _vehicleSystemId,
+        static_cast<uint8_t>(componentId),
+        mavlinkChannel(),
+        &responseMsg,
+        MAVLinkProtocol::instance()->getSystemId(),
+        MAVLinkProtocol::getComponentId(),
+        paramIdBuf,
+        paramIndex,
+        errorCode
     );
     respondWithMavlinkMessage(responseMsg);
 }

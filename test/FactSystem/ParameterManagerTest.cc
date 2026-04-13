@@ -182,6 +182,35 @@ void ParameterManagerTest::_paramReadNoResponse()
     _disconnectMockLink();
 }
 
+void ParameterManagerTest::_paramWriteParamError()
+{
+    _setParamWithFailureMode(MockLink::FailParamSetParamError, false /* expectSuccess */);
+}
+
+void ParameterManagerTest::_paramReadParamError()
+{
+    QVERIFY2(!_mockLink, "MockLink already connected");
+    _connectMockLink();
+    QVERIFY(_mockLink);
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+    _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadParamError);
+    Fact* const fact = paramManager->getParameter(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("BAT1_V_CHARGED"));
+    QVERIFY(fact);
+    QSignalSpy vehicleUpdatedSpy(fact, &Fact::vehicleUpdated);
+    QSignalSpy paramReadFailureSpy(paramManager, &ParameterManager::_paramRequestReadFailure);
+    QVERIFY(vehicleUpdatedSpy.isValid());
+    QVERIFY(paramReadFailureSpy.isValid());
+    paramManager->refreshParameter(MAV_COMP_ID_AUTOPILOT1, fact->name());
+    // PARAM_ERROR should cause immediate failure - no retries needed, so wait just one ack interval plus buffer
+    const int maxWaitTimeMs = ParameterManager::kWaitForParamValueAckMs + TestTimeout::shortMs();
+    QVERIFY_SIGNAL_WAIT(paramReadFailureSpy, maxWaitTimeMs);
+    QCOMPARE(paramReadFailureSpy.count(), 1);
+    QCOMPARE(vehicleUpdatedSpy.count(), 0);
+    _disconnectMockLink();
+}
+
 void ParameterManagerTest::_setParamWithFailureMode(MockLink::ParamSetFailureMode_t failureMode, bool expectSuccess)
 {
     QVERIFY2(!_mockLink, "MockLink already connected");

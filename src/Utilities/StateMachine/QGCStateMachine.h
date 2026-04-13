@@ -35,6 +35,7 @@
 #include "ProgressState.h"
 #include "RetryableRequestMessageState.h"
 #include "WaitForMavlinkMessageState.h"
+#include "WaitForParamResponseState.h"
 #include "WaitForSignalState.h"
 #include "WaitStateBase.h"
 #include "StateContext.h"

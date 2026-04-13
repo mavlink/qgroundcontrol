@@ -67,6 +67,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         States/SubMachineState.h
         States/WaitForMavlinkMessageState.cc
         States/WaitForMavlinkMessageState.h
+        States/WaitForParamResponseState.cc
+        States/WaitForParamResponseState.h
         States/WaitForSignalState.cc
         States/WaitForSignalState.h
         States/WaitStateBase.cc
