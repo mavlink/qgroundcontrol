@@ -72,29 +72,32 @@ void BatteryFactGroupListModel::handleMessageForFactGroupCreation(
 
 void BatteryFactGroupListModel::startV2Negotiation(Vehicle *vehicle)
 {
-    if (_v2State != V2NegotiationUnknown) return;
-
     // --- BATTERY_STATUS_V2 ---
-    if (_v2StatusReceived) {
-        // Already streaming — activate immediately, no request needed
-        _activateV2(vehicle);
-    } else {
-        _v2State = V2NegotiationRequesting;
+    // Guard is scoped to this block only: a V2 frame arriving before
+    // initialConnectComplete can call _activateV2 early (state → Active),
+    // but must not prevent the BATTERY_INFO request below from running.
+    if (_v2State == V2NegotiationUnknown) {
+        if (_v2StatusReceived) {
+            // Already streaming — activate immediately, no request needed
+            _activateV2(vehicle);
+        } else {
+            _v2State = V2NegotiationRequesting;
 
-        // sendMavCommandWithLambdaFallback calls the lambda only on MAV_RESULT_UNSUPPORTED.
-        // On ACCEPTED (or other), we simply wait: handleMessageForFactGroupCreation will
-        // call _activateV2 when the first V2 frame arrives. If no frame ever arrives we
-        // stay in Requesting and V1 continues to be used (safe fallback).
-        vehicle->sendMavCommandWithLambdaFallback(
-            [this]() {
-                _v2State = V2NegotiationUnsupported;
-            },
-            vehicle->defaultComponentId(),
-            MAV_CMD_SET_MESSAGE_INTERVAL,
-            false,   // showError = false
-            static_cast<float>(MAVLINK_MSG_ID_BATTERY_STATUS_V2),
-            2000000.0f   // 0.5 Hz
-        );
+            // sendMavCommandWithLambdaFallback calls the lambda only on MAV_RESULT_UNSUPPORTED.
+            // On ACCEPTED (or other), we simply wait: handleMessageForFactGroupCreation will
+            // call _activateV2 when the first V2 frame arrives. If no frame ever arrives we
+            // stay in Requesting and V1 continues to be used (safe fallback).
+            vehicle->sendMavCommandWithLambdaFallback(
+                [this]() {
+                    _v2State = V2NegotiationUnsupported;
+                },
+                vehicle->defaultComponentId(),
+                MAV_CMD_SET_MESSAGE_INTERVAL,
+                false,   // showError = false
+                static_cast<float>(MAVLINK_MSG_ID_BATTERY_STATUS_V2),
+                2000000.0f   // 0.5 Hz
+            );
+        }
     }
 
     // --- BATTERY_INFO (independent, fire-and-forget) ---
