@@ -124,9 +124,12 @@ Rectangle {
                 }
 
                 QGCLabel {
-                    text: !vehicle ? qsTr("未连接载具") : (_linkOk ? statusText(payloadStatus) : qsTr("载荷离线"))
+                    text: !vehicle ? qsTr("未连接载具")
+                         : (payloadStatus === _stFault ? statusText(payloadStatus)
+                         : (_linkOk ? statusText(payloadStatus) : qsTr("载荷离线")))
                     color: !vehicle ? qgcPal.text :
-                           (_linkOk ? statusColor(payloadStatus) : qgcPal.colorOrange)
+                           (payloadStatus === _stFault ? qgcPal.colorRed
+                           : (_linkOk ? statusColor(payloadStatus) : qgcPal.colorOrange))
                     font.pointSize: ScreenTools.smallFontPointSize
                     opacity: 0.85
                     font.bold: _panelState.emphasizeSummary
@@ -229,8 +232,8 @@ Rectangle {
                 }
 
                 QGCLabel {
-                    text: !vehicle ? "--" : (_linkOk ? qsTr("在线") : qsTr("离线"))
-                    color: _linkOk ? qgcPal.colorGreen : qgcPal.colorOrange
+                    text: !vehicle ? "--" : (payloadStatus === _stFault ? qsTr("故障") : (_linkOk ? qsTr("在线") : qsTr("离线")))
+                    color: payloadStatus === _stFault ? qgcPal.colorRed : (_linkOk ? qgcPal.colorGreen : qgcPal.colorOrange)
                     font.bold: true
                     elide: Text.ElideRight
                 }

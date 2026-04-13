@@ -35,6 +35,7 @@ Rectangle {
     property bool _isWorking: payloadStatus === USVLayout.StatusSampling || payloadStatus === USVLayout.StatusDetecting || payloadStatus === USVLayout.StatusCalibrating
 
     function statusText(st) {
+        if (st === USVLayout.StatusFault) return qsTr("故障")
         if (!_linkOk) return qsTr("离线")
         switch(st) {
             case USVLayout.StatusIdle:        return qsTr("空闲")
@@ -47,6 +48,7 @@ Rectangle {
     }
 
     function statusColor(st) {
+        if (st === USVLayout.StatusFault) return qgcPal.colorRed
         if (!_linkOk) return qgcPal.colorOrange
         switch(st) {
             case USVLayout.StatusIdle:        return qgcPal.text
