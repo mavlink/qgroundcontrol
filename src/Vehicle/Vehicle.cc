@@ -1116,6 +1116,7 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
 
 void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
 {
+    if (message.compid != _defaultComponentId) return;
     if (_batteryFactGroupListModel->isV2Active()) return;
     mavlink_battery_status_t batteryStatus;
     mavlink_msg_battery_status_decode(&message, &batteryStatus);
