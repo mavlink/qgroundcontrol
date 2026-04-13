@@ -17,6 +17,8 @@ private slots:
     void _paramWriteNoAckPermanent();
     void _paramReadFirstAttemptNoResponseRetry();
     void _paramReadNoResponse();
+    void _paramWriteParamError();
+    void _paramReadParamError();
     void _FTPnoFailure();
     void _FTPChangeParam();
 

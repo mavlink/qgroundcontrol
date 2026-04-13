@@ -119,6 +119,7 @@ public:
         FailParamSetNone,               ///< Normal behavior
         FailParamSetNoAck,              ///< Do not send PARAM_VALUE ack
         FailParamSetFirstAttemptNoAck,  ///< Skip ack on first attempt, respond to retry
+        FailParamSetParamError,         ///< Respond with PARAM_ERROR (VALUE_OUT_OF_RANGE) instead of PARAM_VALUE
     };
     void setParamSetFailureMode(ParamSetFailureMode_t mode) {
         _paramSetFailureMode = mode;
@@ -129,6 +130,7 @@ public:
         FailParamRequestReadNone,               ///< Normal behavior
         FailParamRequestReadNoResponse,         ///< Do not respond to PARAM_REQUEST_READ
         FailParamRequestReadFirstAttemptNoResponse, ///< Skip response on first attempt, respond to retry
+        FailParamRequestReadParamError,         ///< Respond with PARAM_ERROR (DOES_NOT_EXIST) instead of PARAM_VALUE
     };
     void setParamRequestReadFailureMode(ParamRequestReadFailureMode_t mode) {
         _paramRequestReadFailureMode = mode;
@@ -217,6 +219,7 @@ private:
     void _handleLogRequestData(const mavlink_message_t &msg);
     void _handleParamMapRC(const mavlink_message_t &msg);
     void _handleSetupSigning(const mavlink_message_t &msg);
+    void _sendParamError(int componentId, const char *paramId, int16_t paramIndex, uint8_t errorCode);
     void _handleRequestMessage(const mavlink_command_long_t &request, bool &accepted, bool &noAck);
     void _handleRequestMessageAutopilotVersion(const mavlink_command_long_t &request, bool &accepted);
     void _handleRequestMessageDebug(const mavlink_command_long_t &request, bool &accepted, bool &noAck);
