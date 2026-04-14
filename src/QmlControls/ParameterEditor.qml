@@ -398,6 +398,11 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing:               lockIcon.visible ? ScreenTools.defaultFontPixelWidth / 3 : 0
 
+                QGCLabel {
+                    text:               column === 1 ? display : ""
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
                 QGCColoredImage {
                     id:                 lockIcon
                     visible:            fact.readOnly
@@ -406,11 +411,6 @@ Item {
                     width:              ScreenTools.defaultFontPixelHeight * 0.8
                     height:             width
                     sourceSize.width:   width
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                QGCLabel {
-                    text:               column === 1 ? display : ""
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
