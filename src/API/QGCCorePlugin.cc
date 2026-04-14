@@ -108,6 +108,34 @@ const QVariantList &QGCCorePlugin::analyzePages()
     return analyzeList;
 }
 
+//Create ECAM Pages List
+const QVariantList &QGCCorePlugin::ecamPages()
+{
+    static const QVariantList ecamList = {
+        QVariant::fromValue(new QmlComponentInfo(
+            tr("Engine"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/EngineSummary.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/EngineIcon.svg")))),
+        QVariant::fromValue(new QmlComponentInfo(
+            tr("Electronic"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/LogDownloadPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/ElectronicIcon.svg")))),
+        QVariant::fromValue(new QmlComponentInfo(
+            tr("Fuel"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/LogDownloadPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/FuelIcon.svg")))),
+        QVariant::fromValue(new QmlComponentInfo
+            (tr("F/Ctl"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/LogDownloadPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/FctlIcon.svg")))),
+        QVariant::fromValue(new QmlComponentInfo
+            (tr("Crusie"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/LogDownloadPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/CursieIcon.svg")))),
+    };
+    return ecamList;
+}
+
 QGCOptions *QGCCorePlugin::options()
 {
     return _defaultOptions;

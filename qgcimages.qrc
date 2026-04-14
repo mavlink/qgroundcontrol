@@ -214,5 +214,11 @@
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
         <file alias="Viewer3D/City3DMapIcon.svg">src/Viewer3D/Images/city_3d_map_icon.svg</file>
+        <file alias="EcamIcon.svg">resources/EcamIcon.svg</file>
+        <file alias="EngineIcon.svg">src/Engine/images/EngineIcon.svg</file>
+        <file alias="ElectronicIcon.svg">src/Engine/images/ElectronicIcon.svg</file>
+        <file alias="FuelIcon.svg">src/Engine/images/FuelIcon.svg</file>
+        <file alias="FctlIcon.svg">src/Engine/images/FctlIcon.svg</file>
+        <file alias="CursieIcon.svg">src/Engine/images/CursieIcon.svg</file>
     </qresource>
 </RCC>

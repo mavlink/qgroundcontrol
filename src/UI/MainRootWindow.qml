@@ -167,6 +167,11 @@ ApplicationWindow {
         }
     }
 
+    //Add Engine EngineStatus icon
+    function showEngineStatus(){
+        showTool(qsTr("ECAM"), "qrc:/qml/src/Engine/EngineStatus.qml", "/qmlimages/EcamIcon.svg")
+    }
+
     //-------------------------------------------------------------------------
     //-- Global simple message dialog
 
@@ -358,6 +363,19 @@ ApplicationWindow {
                                     mainWindow.showPlanView()
                                 }
                             }
+                        }
+                        //Add engineButton
+                        SubMenuButton{
+                        id:                 engineButton
+                        height:             toolSelectDialog._toolButtonHeight
+                        Layout.fillWidth:   true
+                        text:               qsTr("ECAM")
+                        imageResource:      "/qmlimages/EcamIcon.svg"
+                        visible:            QGroundControl.corePlugin.showAdvancedUI
+                        onClicked:{
+                            if(mainWindow.allowViewSwitch()){
+                                mainWindow.closeIndicatorDrawer()
+                                mainWindow.showEngineStatus()
                         }
 
                         SubMenuButton {

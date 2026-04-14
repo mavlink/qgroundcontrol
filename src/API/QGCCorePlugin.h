@@ -49,6 +49,8 @@ class QGCCorePlugin : public QObject
     Q_PROPERTY(QString showAdvancedUIMessage            READ showAdvancedUIMessage                                          CONSTANT)
     Q_PROPERTY(QVariantList analyzePages                READ analyzePages                                                   CONSTANT)
     Q_PROPERTY(QVariantList toolBarIndicators           READ toolBarIndicators                                              CONSTANT)
+    //Register of ECAM Page List
+    Q_PROPERTY(QVariantList ecamPages                   READ ecamPages                                                      CONSTANT)
 
 public:
     explicit QGCCorePlugin(QObject *parent = nullptr);
@@ -62,6 +64,10 @@ public:
     /// The list of pages/buttons under the Analyze Menu
     /// @return A list of QmlPageInfo
     virtual const QVariantList &analyzePages();
+
+    ///The list of pages/buttons under the ECAM Menu
+    ///@return A list of QmlPageInfo
+    virtual const QVariantList &ecamPages();
 
     /// The default settings panel to show
     /// @return The settings index
