@@ -12,7 +12,7 @@ public final class QGCUsbId {
     public static final int VENDOR_PX4 = 0x26AC;
     public static final int DEVICE_PX4FMU_V1 = 0x0010;
     public static final int DEVICE_PX4FMU_V2 = 0x0011;
-    public static final int DEVICE_PX4FMU_V3 = 0x0011; // V3 shares V2 USB PID
+    public static final int DEVICE_PX4FMU_V3 = 0x0011; // V3 shares V2 USB PID; covered by V2 probe entry
     public static final int DEVICE_PX4FMU_V4 = 0x0012;
     public static final int DEVICE_PX4FMU_V4PRO = 0x0013;
     public static final int DEVICE_PX4FMU_V5 = 0x0032;
@@ -28,6 +28,7 @@ public final class QGCUsbId {
     public static final int DEVICE_UBLOX_6 = 0x01a6;
     public static final int DEVICE_UBLOX_7 = 0x01a7;
     public static final int DEVICE_UBLOX_8 = 0x01a8;
+    public static final int DEVICE_UBLOX_9 = 0x01a9; // ZED-F9P and other u-blox 9 series
 
     public static final int VENDOR_OPENPILOT = 0x20A0;
     public static final int DEVICE_REVOLUTION = 0x415E;
@@ -45,7 +46,7 @@ public final class QGCUsbId {
     public static final int VENDOR_CUBEPILOT = 0x2DAE;
     public static final int DEVICE_CUBE_BLACK = 0x1011;
     public static final int DEVICE_CUBE_BLACK_BOOTLOADER = 0x1001;
-    public static final int DEVICE_CUBE_BLACK_PLUS = 0x1011;
+    public static final int DEVICE_CUBE_BLACK_PLUS = 0x1011; // Shares PID with CUBE_BLACK; covered by that probe entry
     public static final int DEVICE_CUBE_ORANGE = 0x1016;
     public static final int DEVICE_CUBE_ORANGE2 = 0x1017;
     public static final int DEVICE_CUBE_ORANGEPLUS = 0x1058;
@@ -56,7 +57,7 @@ public final class QGCUsbId {
 
     public static final int VENDOR_CUAV = 0x3163;
     public static final int DEVICE_CUAV_NORA = 0x004C;
-    public static final int DEVICE_CUAV_X7PRO = 0x004C; // X7PRO shares NORA USB PID
+    public static final int DEVICE_CUAV_X7PRO = 0x004C; // X7PRO shares NORA USB PID; covered by NORA probe entry
 
     public static final int VENDOR_HOLYBRO = 0x3162;
     public static final int DEVICE_PIXHAWK4 = 0x0047;

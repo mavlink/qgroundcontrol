@@ -1161,6 +1161,37 @@ QBindable<bool> QSerialPort::bindableIsBreakEnabled()
     return &d_func()->isBreakEnabled;
 }
 
+bool QSerialPort::sendBreak(int duration)
+{
+    // Timed break is not supported over Android USB host API.
+    // setBreakEnabled(true/false) is available for untimed break.
+    Q_UNUSED(duration);
+    return false;
+}
+
+bool QSerialPort::settingsRestoredOnClose() const
+{
+    // No-op on Android — USB serial devices have no persistent terminal settings to restore.
+    return false;
+}
+
+void QSerialPort::setSettingsRestoredOnClose(bool restore)
+{
+    Q_UNUSED(restore);
+    // No-op on Android — USB serial devices have no persistent terminal settings.
+}
+
+qint64 QSerialPort::writeBufferSize() const
+{
+    return 0;
+}
+
+void QSerialPort::setWriteBufferSize(qint64 size)
+{
+    Q_UNUSED(size);
+    // No-op on Android — writes are sent directly to the USB IO manager.
+}
+
 /*!
     \reimp
 

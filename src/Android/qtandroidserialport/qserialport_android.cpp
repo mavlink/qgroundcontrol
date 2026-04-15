@@ -45,15 +45,17 @@ bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
         return false;
     }
 
+    // Assert DTR — chips like CP210x and CH340 gate UART output on this line.
+    // Linux kernel drivers assert DTR implicitly on open(); the Android USB host API does not.
+    if (!AndroidSerial::setDataTerminalReady(_deviceId, true)) {
+        qCWarning(AndroidSerialPortLog) << "Failed to set DTR for" << systemLocation;
+    }
+
     if (mode & QIODevice::ReadOnly) {
         if (!startAsyncRead()) {
             qCWarning(AndroidSerialPortLog) << "Failed to start async read for" << systemLocation;
             close();
             return false;
-        }
-    } else if (mode & QIODevice::WriteOnly) {
-        if (!_stopAsyncRead()) {
-            qCWarning(AndroidSerialPortLog) << "Failed to stop async read for" << systemLocation;
         }
     }
 
@@ -85,7 +87,15 @@ void QSerialPortPrivate::close()
 void QSerialPortPrivate::exceptionArrived(const QString& ex)
 {
     qCWarning(AndroidSerialPortLog) << "Exception arrived on device ID" << _deviceId << ":" << ex;
-    setError(QSerialPortErrorInfo(QSerialPort::UnknownError, ex));
+
+    // Map Java IOExceptions to ResourceError for hot-unplug detection.
+    // Code checking error() == ResourceError (standard Qt pattern) will otherwise never trigger.
+    const bool isResourceError = ex.contains(QLatin1String("IOException"), Qt::CaseInsensitive)
+                                 || ex.contains(QLatin1String("USB device disconnected"), Qt::CaseInsensitive)
+                                 || ex.contains(QLatin1String("device not found"), Qt::CaseInsensitive)
+                                 || ex.contains(QLatin1String("connection closed"), Qt::CaseInsensitive);
+
+    setError(QSerialPortErrorInfo(isResourceError ? QSerialPort::ResourceError : QSerialPort::UnknownError, ex));
 }
 
 bool QSerialPortPrivate::startAsyncRead()
@@ -245,16 +255,17 @@ void QSerialPortPrivate::_scheduleReadyRead()
                     (void)_drainPendingDataLocked();
                 }
 
-                // Reset flag after drain so data arriving during the drain
-                // does not enqueue redundant lambdas. If pending data remains,
-                // reschedule so nothing is left undelivered.
                 const bool more = (_pendingSizeLocked() > 0);
-                _readyReadPending.store(false);
 
                 _readWaitCondition.wakeAll();
                 locker.unlock();
 
                 emit guard->readyRead();
+
+                // Reset flag AFTER emit to prevent re-entrant scheduling from
+                // inside a readyRead slot (matches Qt's emittedReadyRead guard).
+                // If pending data remains, reschedule for the next event loop pass.
+                _readyReadPending.store(false);
 
                 if (more) {
                     _scheduleReadyRead();
@@ -301,46 +312,10 @@ bool QSerialPortPrivate::waitForReadyRead(int msecs)
 
 bool QSerialPortPrivate::waitForBytesWritten(int msecs)
 {
-    const bool result = _writeDataOneShot(msecs);
-    if (!result) {
-        qCWarning(AndroidSerialPortLog) << "Timeout while waiting for bytes written on device ID" << _deviceId;
-        setError(QSerialPortErrorInfo(QSerialPort::TimeoutError,
-                                      QSerialPort::tr("Timeout while waiting for bytes written")));
-    }
-
-    return result;
-}
-
-bool QSerialPortPrivate::_writeDataOneShot(int msecs)
-{
-    if (writeBuffer.isEmpty()) {
-        return true;
-    }
-
-    qint64 pendingBytesWritten = 0;
-
-    while (!writeBuffer.isEmpty()) {
-        const char* dataPtr = writeBuffer.readPointer();
-        const qint64 dataSize = writeBuffer.nextDataBlockSize();
-
-        const qint64 written = _writeToPort(dataPtr, dataSize, msecs);
-        if (written < 0) {
-            qCWarning(AndroidSerialPortLog) << "Failed to write data one shot on device ID" << _deviceId;
-            setError(QSerialPortErrorInfo(QSerialPort::WriteError, QSerialPort::tr("Failed to write data one shot")));
-            return false;
-        }
-
-        writeBuffer.free(written);
-        pendingBytesWritten += written;
-    }
-
-    const bool result = (pendingBytesWritten > 0);
-    if (result) {
-        Q_Q(QSerialPort);
-        emit q->bytesWritten(pendingBytesWritten);
-    }
-
-    return result;
+    Q_UNUSED(msecs);
+    // Writes are sent to the Java IO manager immediately in writeData() via async write.
+    // There is no internal write buffer to drain, so this is always satisfied.
+    return true;
 }
 
 qint64 QSerialPortPrivate::_writeToPort(const char* data, qint64 maxSize, int timeout, bool async)
@@ -362,18 +337,37 @@ qint64 QSerialPortPrivate::writeData(const char* data, qint64 maxSize)
         return -1;
     }
 
-    return _writeToPort(data, maxSize);
+    // Use async write to avoid blocking the caller. Qt's contract requires writeData()
+    // to return immediately after accepting data. The Java IO manager handles the
+    // actual USB transfer on its own thread.
+    const qint64 written = _writeToPort(data, maxSize, DEFAULT_WRITE_TIMEOUT, /*async=*/true);
+    if (written < 0) {
+        return -1;
+    }
+
+    if (written > 0) {
+        Q_Q(QSerialPort);
+        const qint64 w = written;
+        QMetaObject::invokeMethod(
+            q, [q, w]() { emit q->bytesWritten(w); }, Qt::QueuedConnection);
+    }
+
+    return written;
 }
 
 bool QSerialPortPrivate::flush()
 {
-    const bool result = _writeDataOneShot();
-    if (!result) {
-        qCWarning(AndroidSerialPortLog) << "Flush operation failed for device ID" << _deviceId;
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QSerialPort::tr("Failed to flush")));
-    }
+    // Writes are sent to the Java IO manager immediately in writeData() via async write.
+    // There is no internal write buffer to flush.
+    return true;
+}
 
-    return result;
+bool QSerialPortPrivate::sendBreak(int duration)
+{
+    Q_UNUSED(duration);
+    // Timed break is not supported over Android USB host API.
+    // setBreakEnabled(true/false) is available for untimed break.
+    return false;
 }
 
 bool QSerialPortPrivate::clear(QSerialPort::Directions directions)

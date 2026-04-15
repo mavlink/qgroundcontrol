@@ -13,7 +13,9 @@ public class QGCUsbSerialProber {
     public static ProbeTable getQGCProbeTable() {
         final ProbeTable probeTable = UsbSerialProber.getDefaultProbeTable();
 
-        // FTDI (D2XX-backed adapter). When unavailable, keep default FTDI probing.
+        // FTDI (D2XX-backed adapter). Override the default FtdiSerialDriver entries
+        // with our QGCFtdiSerialDriver. ProbeTable.addProduct overwrites existing
+        // VID/PID entries. When D2XX is unavailable, keep the default FTDI driver.
         if (QGCFtdiDriver.isAvailable()) {
             probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT232R, QGCFtdiSerialDriver.class);
             probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT2232H, QGCFtdiSerialDriver.class);
@@ -40,6 +42,7 @@ public class QGCUsbSerialProber {
         probeTable.addProduct(QGCUsbId.VENDOR_UBLOX, QGCUsbId.DEVICE_UBLOX_6, CdcAcmSerialDriver.class);
         probeTable.addProduct(QGCUsbId.VENDOR_UBLOX, QGCUsbId.DEVICE_UBLOX_7, CdcAcmSerialDriver.class);
         probeTable.addProduct(QGCUsbId.VENDOR_UBLOX, QGCUsbId.DEVICE_UBLOX_8, CdcAcmSerialDriver.class);
+        probeTable.addProduct(QGCUsbId.VENDOR_UBLOX, QGCUsbId.DEVICE_UBLOX_9, CdcAcmSerialDriver.class);
 
         // OpenPilot
         probeTable.addProduct(QGCUsbId.VENDOR_OPENPILOT, QGCUsbId.DEVICE_REVOLUTION, CdcAcmSerialDriver.class);

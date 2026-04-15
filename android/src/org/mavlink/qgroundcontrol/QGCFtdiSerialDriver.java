@@ -162,7 +162,13 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
             _ftdi = ftdi;
 
             if (!resolveBulkEndpoints()) {
-                close();
+                // Close only the D2XX handle; do not close the caller-provided
+                // connection — the caller owns its lifecycle.
+                _ftdi.close();
+                _ftdi = null;
+                _connection = null;
+                _readEndpoint = null;
+                _writeEndpoint = null;
                 throw new IOException("Failed to resolve FTDI bulk endpoints for " + _device.getDeviceName());
             }
         }
@@ -400,25 +406,21 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
                 }
             }
 
-            // Fallback to global endpoint scan for devices that don't expose
-            // interface-per-port semantics.
-            if (read == null || write == null) {
-                for (int i = 0; i < _device.getInterfaceCount(); i++) {
-                    final UsbInterface usbInterface = _device.getInterface(i);
-                    for (int e = 0; e < usbInterface.getEndpointCount(); e++) {
-                        final UsbEndpoint endpoint = usbInterface.getEndpoint(e);
-                        if (endpoint.getType() != UsbConstants.USB_ENDPOINT_XFER_BULK) {
-                            continue;
-                        }
-                        if (endpoint.getDirection() == UsbConstants.USB_DIR_IN && read == null) {
-                            read = endpoint;
-                        } else if (endpoint.getDirection() == UsbConstants.USB_DIR_OUT && write == null) {
-                            write = endpoint;
-                        }
+            // Fallback: scan interface 0 only for single-port devices that
+            // don't expose interface-per-port semantics. For multi-port devices,
+            // scanning all interfaces would incorrectly assign port 0's endpoints
+            // to every port.
+            if ((read == null || write == null) && _device.getInterfaceCount() == 1) {
+                final UsbInterface usbInterface = _device.getInterface(0);
+                for (int e = 0; e < usbInterface.getEndpointCount(); e++) {
+                    final UsbEndpoint endpoint = usbInterface.getEndpoint(e);
+                    if (endpoint.getType() != UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                        continue;
                     }
-
-                    if (read != null && write != null) {
-                        break;
+                    if (endpoint.getDirection() == UsbConstants.USB_DIR_IN && read == null) {
+                        read = endpoint;
+                    } else if (endpoint.getDirection() == UsbConstants.USB_DIR_OUT && write == null) {
+                        write = endpoint;
                     }
                 }
             }

@@ -30,6 +30,8 @@ class Q_SERIALPORT_EXPORT QSerialPort : public QIODevice
     Q_PROPERTY(SerialPortError error READ error RESET clearError NOTIFY errorOccurred BINDABLE bindableError)
     Q_PROPERTY(bool breakEnabled READ isBreakEnabled WRITE setBreakEnabled NOTIFY breakEnabledChanged BINDABLE
                    bindableIsBreakEnabled)
+    Q_PROPERTY(bool settingsRestoredOnClose READ settingsRestoredOnClose
+                WRITE setSettingsRestoredOnClose NOTIFY settingsRestoredOnCloseChanged)
 
     typedef int Handle;
 
@@ -171,6 +173,8 @@ public:
 
     qint64 readBufferSize() const;
     void setReadBufferSize(qint64 size);
+    qint64 writeBufferSize() const;
+    void setWriteBufferSize(qint64 size);
 
     bool isSequential() const override;
 
@@ -184,6 +188,10 @@ public:
     bool setBreakEnabled(bool set = true);
     bool isBreakEnabled() const;
     QBindable<bool> bindableIsBreakEnabled();
+    bool sendBreak(int duration = 0);
+
+    bool settingsRestoredOnClose() const;
+    void setSettingsRestoredOnClose(bool restore);
 
     Handle handle() const;
 
@@ -197,6 +205,7 @@ Q_SIGNALS:
     void requestToSendChanged(bool set);
     void errorOccurred(QSerialPort::SerialPortError error);
     void breakEnabledChanged(bool set);
+    void settingsRestoredOnCloseChanged(bool restore);
 
 protected:
     qint64 readData(char* data, qint64 maxSize) override;

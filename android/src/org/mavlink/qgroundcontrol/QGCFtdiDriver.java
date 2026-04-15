@@ -13,8 +13,8 @@ import java.util.List;
 final class QGCFtdiDriver {
     private static final String TAG = QGCFtdiDriver.class.getSimpleName();
 
-    private static Context sAppContext;
-    private static D2xxManager sManager;
+    private static volatile Context sAppContext;
+    private static volatile D2xxManager sManager;
 
     private final FT_Device _device;
 
@@ -215,8 +215,10 @@ final class QGCFtdiDriver {
             return false;
         }
         try {
+            final byte XON = 0x11;  // DC1 — standard ASCII XON
+            final byte XOFF = 0x13; // DC3 — standard ASCII XOFF
             final short flowMode = toD2xxFlowControl(flowControl);
-            final boolean result = _device.setFlowControl(flowMode, (byte) 0x11, (byte) 0x13);
+            final boolean result = _device.setFlowControl(flowMode, XON, XOFF);
             if (result) {
                 _flowControl = flowControl;
             }
