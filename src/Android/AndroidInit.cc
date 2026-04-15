@@ -182,8 +182,4 @@ void JNI_OnUnload(JavaVM* vm, void*)
     }
 
     _java_vm.store(nullptr, std::memory_order_release);
-
-#ifndef QGC_NO_SERIAL_LINK
-    AndroidSerial::cleanupJniCache();
-#endif
 }

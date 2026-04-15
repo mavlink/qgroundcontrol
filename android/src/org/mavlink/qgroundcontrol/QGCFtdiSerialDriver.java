@@ -1,21 +1,32 @@
 package org.mavlink.qgroundcontrol;
 
+import android.content.Context;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
+import com.ftdi.j2xx.D2xxManager;
+import com.ftdi.j2xx.FT_Device;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
 public final class QGCFtdiSerialDriver implements UsbSerialDriver {
+
+    private static final String TAG = QGCFtdiSerialDriver.class.getSimpleName();
+
+    // D2XX manager lifecycle — shared across all ports on all FTDI devices.
+    private static volatile Context sAppContext;
+    private static volatile D2xxManager sManager;
+
     private final UsbDevice _device;
     private final List<UsbSerialPort> _ports;
 
@@ -34,6 +45,42 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
 
         _ports = Collections.unmodifiableList(ports);
     }
+
+    // -------------------------------------------------------------------------
+    // D2XX lifecycle
+    // -------------------------------------------------------------------------
+
+    public static void initialize(final Context context) {
+        sAppContext = context.getApplicationContext();
+        try {
+            sManager = D2xxManager.getInstance(sAppContext);
+        } catch (D2xxManager.D2xxException e) {
+            sManager = null;
+            QGCLogger.w(TAG, "D2XX manager unavailable: " + e.getMessage());
+        } catch (Throwable t) {
+            sManager = null;
+            QGCLogger.w(TAG, "D2XX manager unavailable: " + t.getMessage());
+        }
+    }
+
+    public static void cleanup() {
+        sManager = null;
+        sAppContext = null;
+    }
+
+    public static boolean isAvailable() {
+        return (sManager != null) && (sAppContext != null);
+    }
+
+    public static boolean isFtdiDevice(final UsbDevice device) {
+        return device != null
+            && device.getVendorId() == QGCUsbId.VENDOR_FTDI
+            && QGCUsbId.isSupportedFtdiProductId(device.getProductId());
+    }
+
+    // -------------------------------------------------------------------------
+    // UsbSerialDriver
+    // -------------------------------------------------------------------------
 
     public static Map<Integer, int[]> getSupportedDevices() {
         return Collections.singletonMap(QGCUsbId.VENDOR_FTDI, new int[] {
@@ -55,6 +102,54 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
         return _ports;
     }
 
+    // -------------------------------------------------------------------------
+    // D2XX conversion helpers
+    // -------------------------------------------------------------------------
+
+    private static byte toD2xxDataBits(final int dataBits) {
+        return (dataBits == 7) ? D2xxManager.FT_DATA_BITS_7 : D2xxManager.FT_DATA_BITS_8;
+    }
+
+    private static byte toD2xxStopBits(final int stopBits) {
+        if (stopBits == UsbSerialPort.STOPBITS_2) {
+            return D2xxManager.FT_STOP_BITS_2;
+        }
+        return D2xxManager.FT_STOP_BITS_1;
+    }
+
+    private static byte toD2xxParity(final int parity) {
+        switch (parity) {
+            case UsbSerialPort.PARITY_ODD:
+                return D2xxManager.FT_PARITY_ODD;
+            case UsbSerialPort.PARITY_EVEN:
+                return D2xxManager.FT_PARITY_EVEN;
+            case UsbSerialPort.PARITY_MARK:
+                return D2xxManager.FT_PARITY_MARK;
+            case UsbSerialPort.PARITY_SPACE:
+                return D2xxManager.FT_PARITY_SPACE;
+            case UsbSerialPort.PARITY_NONE:
+            default:
+                return D2xxManager.FT_PARITY_NONE;
+        }
+    }
+
+    private static short toD2xxFlowControl(final int flowControl) {
+        if (flowControl == UsbSerialPort.FlowControl.RTS_CTS.ordinal()) {
+            return D2xxManager.FT_FLOW_RTS_CTS;
+        }
+        if (flowControl == UsbSerialPort.FlowControl.DTR_DSR.ordinal()) {
+            return D2xxManager.FT_FLOW_DTR_DSR;
+        }
+        if (flowControl == UsbSerialPort.FlowControl.XON_XOFF.ordinal()) {
+            return D2xxManager.FT_FLOW_XON_XOFF;
+        }
+        return D2xxManager.FT_FLOW_NONE;
+    }
+
+    // -------------------------------------------------------------------------
+    // Inner port class
+    // -------------------------------------------------------------------------
+
     private static final class QGCFtdiSerialPort implements UsbSerialPort {
         private final QGCFtdiSerialDriver _driver;
         private final UsbDevice _device;
@@ -63,7 +158,10 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
         private UsbDeviceConnection _connection;
         private UsbEndpoint _readEndpoint;
         private UsbEndpoint _writeEndpoint;
-        private QGCFtdiDriver _ftdi;
+        private FT_Device _ftDevice;
+        private int _flowControl = UsbSerialPort.FlowControl.NONE.ordinal();
+        private boolean _dtr;
+        private boolean _rts;
         private int _readQueueBufferCount;
         private int _readQueueBufferSize;
 
@@ -152,20 +250,31 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
             if (connection == null) {
                 throw new IOException("Null USB device connection");
             }
+            if (sManager == null || sAppContext == null || !isFtdiDevice(_device)) {
+                throw new IOException("D2XX manager unavailable or device is not an FTDI device");
+            }
 
-            final QGCFtdiDriver ftdi = QGCFtdiDriver.open(_device);
-            if (ftdi == null || !ftdi.isOpen()) {
+            FT_Device d2xxDevice;
+            try {
+                d2xxDevice = sManager.openByUsbDevice(sAppContext, _device);
+            } catch (Throwable t) {
+                throw new IOException("Failed to open D2XX FTDI device " + _device.getDeviceName() + ": " + t.getMessage());
+            }
+
+            if (d2xxDevice == null || !d2xxDevice.isOpen()) {
                 throw new IOException("Failed to open D2XX FTDI device " + _device.getDeviceName());
             }
 
             _connection = connection;
-            _ftdi = ftdi;
+            _ftDevice = d2xxDevice;
 
             if (!resolveBulkEndpoints()) {
                 // Close only the D2XX handle; do not close the caller-provided
                 // connection — the caller owns its lifecycle.
-                _ftdi.close();
-                _ftdi = null;
+                try {
+                    _ftDevice.close();
+                } catch (Throwable ignored) {}
+                _ftDevice = null;
                 _connection = null;
                 _readEndpoint = null;
                 _writeEndpoint = null;
@@ -175,9 +284,13 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
 
         @Override
         public void close() throws IOException {
-            if (_ftdi != null) {
-                _ftdi.close();
-                _ftdi = null;
+            if (_ftDevice != null) {
+                try {
+                    _ftDevice.close();
+                } catch (Throwable t) {
+                    QGCLogger.w(TAG, "Error closing D2XX device: " + t.getMessage());
+                }
+                _ftDevice = null;
             }
 
             if (_connection != null) {
@@ -205,11 +318,19 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
             }
 
             final int readLength = Math.min(length, dest.length);
-            final byte[] data = _ftdi.read(readLength, timeout);
-            if (data.length > 0) {
-                System.arraycopy(data, 0, dest, 0, data.length);
+            final byte[] buffer = new byte[readLength];
+            try {
+                final int bytesRead = _ftDevice.read(buffer, readLength, timeout);
+                if (bytesRead <= 0) {
+                    return 0;
+                }
+                final int n = Math.min(bytesRead, readLength);
+                System.arraycopy(buffer, 0, dest, 0, n);
+                return n;
+            } catch (Throwable t) {
+                QGCLogger.e(TAG, "Error reading D2XX data", t);
+                return 0;
             }
-            return data.length;
         }
 
         @Override
@@ -228,69 +349,105 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
             }
 
             final int writeLength = Math.min(length, src.length);
-            final int written = _ftdi.write(src, writeLength, timeout);
-            if (written < writeLength) {
-                throw new IOException("D2XX write failed or short write: " + written + " / " + writeLength);
+            final byte[] writeData = (writeLength == src.length) ? src : Arrays.copyOf(src, writeLength);
+            try {
+                final int written = _ftDevice.write(writeData, writeLength, true, timeout);
+                if (written < writeLength) {
+                    throw new IOException("D2XX write failed or short write: " + written + " / " + writeLength);
+                }
+            } catch (IOException e) {
+                throw e;
+            } catch (Throwable t) {
+                QGCLogger.e(TAG, "Error writing D2XX data", t);
+                throw new IOException("D2XX write error: " + t.getMessage());
             }
         }
 
         @Override
         public void setParameters(final int baudRate, final int dataBits, final int stopBits, final int parity) throws IOException {
             ensureOpen();
-            if (!_ftdi.setParameters(baudRate, dataBits, stopBits, parity)) {
-                throw new IOException("Failed to set FTDI serial parameters");
+            try {
+                final boolean baudOk = _ftDevice.setBaudRate(baudRate);
+                final boolean charsOk = _ftDevice.setDataCharacteristics(
+                    toD2xxDataBits(dataBits), toD2xxStopBits(stopBits), toD2xxParity(parity));
+                if (!baudOk || !charsOk) {
+                    throw new IOException("Failed to set FTDI serial parameters");
+                }
+            } catch (IOException e) {
+                throw e;
+            } catch (Throwable t) {
+                QGCLogger.e(TAG, "Error setting D2XX parameters", t);
+                throw new IOException("Failed to set FTDI serial parameters: " + t.getMessage());
             }
         }
 
         @Override
         public boolean getCD() throws IOException {
             ensureOpen();
-            return _ftdi.getControlLine(ControlLine.CD);
+            return readModemStatusBit(D2xxManager.FT_DCD);
         }
 
         @Override
         public boolean getCTS() throws IOException {
             ensureOpen();
-            return _ftdi.getControlLine(ControlLine.CTS);
+            return readModemStatusBit(D2xxManager.FT_CTS);
         }
 
         @Override
         public boolean getDSR() throws IOException {
             ensureOpen();
-            return _ftdi.getControlLine(ControlLine.DSR);
+            return readModemStatusBit(D2xxManager.FT_DSR);
         }
 
         @Override
         public boolean getDTR() throws IOException {
             ensureOpen();
-            return _ftdi.getControlLine(ControlLine.DTR);
+            return _dtr;
         }
 
         @Override
         public void setDTR(final boolean value) throws IOException {
             ensureOpen();
-            if (!_ftdi.setControlLine(ControlLine.DTR, value)) {
-                throw new IOException("Failed to set DTR");
+            try {
+                final boolean ok = value ? _ftDevice.setDtr() : _ftDevice.clrDtr();
+                if (!ok) {
+                    throw new IOException("Failed to set DTR");
+                }
+                _dtr = value;
+            } catch (IOException e) {
+                throw e;
+            } catch (Throwable t) {
+                QGCLogger.e(TAG, "Error setting D2XX control line DTR", t);
+                throw new IOException("Failed to set DTR: " + t.getMessage());
             }
         }
 
         @Override
         public boolean getRI() throws IOException {
             ensureOpen();
-            return _ftdi.getControlLine(ControlLine.RI);
+            return readModemStatusBit(D2xxManager.FT_RI);
         }
 
         @Override
         public boolean getRTS() throws IOException {
             ensureOpen();
-            return _ftdi.getControlLine(ControlLine.RTS);
+            return _rts;
         }
 
         @Override
         public void setRTS(final boolean value) throws IOException {
             ensureOpen();
-            if (!_ftdi.setControlLine(ControlLine.RTS, value)) {
-                throw new IOException("Failed to set RTS");
+            try {
+                final boolean ok = value ? _ftDevice.setRts() : _ftDevice.clrRts();
+                if (!ok) {
+                    throw new IOException("Failed to set RTS");
+                }
+                _rts = value;
+            } catch (IOException e) {
+                throw e;
+            } catch (Throwable t) {
+                QGCLogger.e(TAG, "Error setting D2XX control line RTS", t);
+                throw new IOException("Failed to set RTS: " + t.getMessage());
             }
         }
 
@@ -298,24 +455,12 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
         public EnumSet<ControlLine> getControlLines() throws IOException {
             ensureOpen();
             final EnumSet<ControlLine> lines = EnumSet.noneOf(ControlLine.class);
-            if (getRTS()) {
-                lines.add(ControlLine.RTS);
-            }
-            if (getCTS()) {
-                lines.add(ControlLine.CTS);
-            }
-            if (getDTR()) {
-                lines.add(ControlLine.DTR);
-            }
-            if (getDSR()) {
-                lines.add(ControlLine.DSR);
-            }
-            if (getCD()) {
-                lines.add(ControlLine.CD);
-            }
-            if (getRI()) {
-                lines.add(ControlLine.RI);
-            }
+            if (getRTS()) lines.add(ControlLine.RTS);
+            if (getCTS()) lines.add(ControlLine.CTS);
+            if (getDTR()) lines.add(ControlLine.DTR);
+            if (getDSR()) lines.add(ControlLine.DSR);
+            if (getCD())  lines.add(ControlLine.CD);
+            if (getRI())  lines.add(ControlLine.RI);
             return lines;
         }
 
@@ -330,9 +475,20 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
             if (flowControl == FlowControl.XON_XOFF_INLINE) {
                 throw new IOException("XON/XOFF inline flow control is not supported by D2XX adapter");
             }
-
-            if (!_ftdi.setFlowControl(flowControl.ordinal())) {
-                throw new IOException("Failed to set flow control: " + flowControl);
+            try {
+                final byte XON  = 0x11; // DC1 — standard ASCII XON
+                final byte XOFF = 0x13; // DC3 — standard ASCII XOFF
+                final short flowMode = toD2xxFlowControl(flowControl.ordinal());
+                final boolean ok = _ftDevice.setFlowControl(flowMode, XON, XOFF);
+                if (!ok) {
+                    throw new IOException("Failed to set flow control: " + flowControl);
+                }
+                _flowControl = flowControl.ordinal();
+            } catch (IOException e) {
+                throw e;
+            } catch (Throwable t) {
+                QGCLogger.e(TAG, "Error setting D2XX flow control", t);
+                throw new IOException("Failed to set flow control: " + t.getMessage());
             }
         }
 
@@ -341,12 +497,11 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
             if (!isOpen()) {
                 return FlowControl.NONE;
             }
-            final int ordinal = _ftdi.getFlowControl();
             final FlowControl[] values = FlowControl.values();
-            if (ordinal < 0 || ordinal >= values.length) {
+            if (_flowControl < 0 || _flowControl >= values.length) {
                 return FlowControl.NONE;
             }
-            return values[ordinal];
+            return values[_flowControl];
         }
 
         @Override
@@ -363,27 +518,57 @@ public final class QGCFtdiSerialDriver implements UsbSerialDriver {
         @Override
         public void purgeHwBuffers(final boolean purgeReadBuffers, final boolean purgeWriteBuffers) throws IOException {
             ensureOpen();
-            if (!_ftdi.purgeBuffers(purgeReadBuffers, purgeWriteBuffers)) {
-                throw new IOException("Failed to purge FTDI buffers");
+            byte purgeFlags = 0;
+            if (purgeReadBuffers)  purgeFlags |= D2xxManager.FT_PURGE_RX;
+            if (purgeWriteBuffers) purgeFlags |= D2xxManager.FT_PURGE_TX;
+            if (purgeFlags == 0) {
+                return;
+            }
+            try {
+                if (!_ftDevice.purge(purgeFlags)) {
+                    throw new IOException("Failed to purge FTDI buffers");
+                }
+            } catch (IOException e) {
+                throw e;
+            } catch (Throwable t) {
+                QGCLogger.e(TAG, "Error purging D2XX buffers", t);
+                throw new IOException("Failed to purge FTDI buffers: " + t.getMessage());
             }
         }
 
         @Override
         public void setBreak(final boolean value) throws IOException {
             ensureOpen();
-            if (!_ftdi.setBreak(value)) {
-                throw new IOException("Failed to set break condition");
+            try {
+                final boolean ok = value ? _ftDevice.setBreakOn() : _ftDevice.setBreakOff();
+                if (!ok) {
+                    throw new IOException("Failed to set break condition");
+                }
+            } catch (IOException e) {
+                throw e;
+            } catch (Throwable t) {
+                QGCLogger.e(TAG, "Error setting D2XX break condition", t);
+                throw new IOException("Failed to set break condition: " + t.getMessage());
             }
         }
 
         @Override
         public boolean isOpen() {
-            return _ftdi != null && _ftdi.isOpen();
+            return _ftDevice != null && _ftDevice.isOpen();
         }
 
         private void ensureOpen() throws IOException {
             if (!isOpen()) {
                 throw new IOException("Port not open");
+            }
+        }
+
+        private boolean readModemStatusBit(final int mask) {
+            try {
+                return (_ftDevice.getModemStatus() & mask) != 0;
+            } catch (Throwable t) {
+                QGCLogger.e(TAG, "Error reading D2XX modem status", t);
+                return false;
             }
         }
 

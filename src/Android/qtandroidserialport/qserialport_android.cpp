@@ -1,7 +1,9 @@
-#include <QtCore/QMetaObject>
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QTimer>
+#include <QtCore/private/qobject_p.h>
 
+#include <climits>
 #include <iterator>
 
 #include "QGCLoggingCategory.h"
@@ -71,6 +73,9 @@ void QSerialPortPrivate::close()
 
     _stopAsyncRead();
 
+    delete _writeTimer;
+    _writeTimer = nullptr;
+
     if (_deviceId != INVALID_DEVICE_ID) {
         if (!AndroidSerial::close(_deviceId)) {
             qCWarning(AndroidSerialPortLog) << "Failed to close device with ID" << _deviceId;
@@ -131,100 +136,29 @@ bool QSerialPortPrivate::_stopAsyncRead()
     return result;
 }
 
-qint64 QSerialPortPrivate::_drainPendingDataLocked(qint64 maxBytes)
-{
-    const qsizetype pendingSize = _pendingSizeLocked();
-    if (pendingSize <= 0) {
-        _pendingData.clear();
-        _pendingDataOffset = 0;
-        return 0;
-    }
-
-    qint64 toDrain = pendingSize;
-    if (maxBytes >= 0) {
-        toDrain = qMin(toDrain, maxBytes);
-    }
-
-    if (toDrain <= 0) {
-        return 0;
-    }
-
-    buffer.append(_pendingData.constData() + _pendingDataOffset, toDrain);
-    _pendingDataOffset += static_cast<qsizetype>(toDrain);
-
-    if (_pendingDataOffset >= _pendingData.size()) {
-        _pendingData.clear();
-        _pendingDataOffset = 0;
-    } else {
-        // Compact occasionally to keep append operations efficient without
-        // paying the cost on every drain.
-        constexpr qsizetype kCompactThreshold = 4096;
-        if (_pendingDataOffset >= kCompactThreshold && (_pendingDataOffset * 2) >= _pendingData.size()) {
-            _compactPendingDataLocked();
-        }
-    }
-
-    _bufferBytesEstimate.store(buffer.size(), std::memory_order_relaxed);
-    return toDrain;
-}
-
-qsizetype QSerialPortPrivate::_pendingSizeLocked() const
-{
-    return qMax<qsizetype>(0, _pendingData.size() - _pendingDataOffset);
-}
-
-void QSerialPortPrivate::_compactPendingDataLocked()
-{
-    if (_pendingDataOffset <= 0) {
-        return;
-    }
-
-    if (_pendingDataOffset >= _pendingData.size()) {
-        _pendingData.clear();
-        _pendingDataOffset = 0;
-        return;
-    }
-
-    _pendingData.remove(0, _pendingDataOffset);
-    _pendingDataOffset = 0;
-}
-
 void QSerialPortPrivate::newDataArrived(const char* bytes, int length)
 {
-    // qCDebug(AndroidSerialPortLog) << "newDataArrived" << length;
-
-    qint64 droppedBytes = 0;
-
     QMutexLocker locker(&_readMutex);
-    int bytesToRead = length;
-    if (readBufferMaxSize) {
-        const qint64 totalBuffered = _pendingSizeLocked() + _bufferBytesEstimate.load(std::memory_order_relaxed);
-        const qint64 headroom = readBufferMaxSize - totalBuffered;
-        if (bytesToRead > headroom) {
-            bytesToRead = static_cast<int>(qMax(qint64(0), headroom));
-            droppedBytes = static_cast<qint64>(length - bytesToRead);
-        }
+
+    qint64 toAccept = length;
+    if (readBufferMaxSize > 0) {
+        const qint64 headroom = readBufferMaxSize - _pendingData.size();
+        toAccept = qMin(toAccept, qMax(qint64(0), headroom));
     }
 
-    if (bytesToRead > 0) {
-        constexpr qsizetype kCompactBeforeAppendThreshold = 8192;
-        if (_pendingDataOffset >= kCompactBeforeAppendThreshold) {
-            _compactPendingDataLocked();
-        }
-        _pendingData.append(bytes, bytesToRead);
+    if (toAccept > 0) {
+        _pendingData.append(bytes, toAccept);
         _readWaitCondition.wakeAll();
     }
     locker.unlock();
 
-    if (droppedBytes > 0) {
-        qCWarning(AndroidSerialPortLog) << "Read buffer full, dropping" << droppedBytes << "bytes";
+    if (toAccept < length) {
+        qCWarning(AndroidSerialPortLog) << "Read buffer full, dropped" << (length - toAccept) << "bytes";
     }
 
-    if (bytesToRead <= 0) {
-        return;
+    if (toAccept > 0) {
+        _scheduleReadyRead();
     }
-
-    _scheduleReadyRead();
 }
 
 void QSerialPortPrivate::_scheduleReadyRead()
@@ -240,31 +174,50 @@ void QSerialPortPrivate::_scheduleReadyRead()
                     return;
                 }
 
-                QMutexLocker locker(&_readMutex);
-                if (_pendingSizeLocked() <= 0) {
-                    _readyReadPending.store(false);
-                    return;
-                }
-
-                if (readBufferMaxSize > 0) {
-                    const qint64 canAccept = readBufferMaxSize - buffer.size();
-                    if (canAccept > 0) {
-                        (void)_drainPendingDataLocked(canAccept);
+                // Drain _pendingData → buffer on the owner thread.
+                // buffer (QIODevicePrivate) is only safe to modify here.
+                QByteArray pending;
+                bool more = false;
+                {
+                    QMutexLocker locker(&_readMutex);
+                    if (_pendingData.isEmpty()) {
+                        _readyReadPending.store(false);
+                        return;
                     }
-                } else {
-                    (void)_drainPendingDataLocked();
+
+                    if (readBufferMaxSize <= 0) {
+                        // No limit — O(1) swap takes everything
+                        pending.swap(_pendingData);
+                    } else {
+                        // Partial drain respecting buffer limit
+                        const qint64 canAccept = qMax(qint64(0), readBufferMaxSize - buffer.size());
+                        if (canAccept <= 0) {
+                            _readyReadPending.store(false);
+                            return;
+                        }
+                        const qsizetype n = qMin(static_cast<qsizetype>(canAccept), _pendingData.size());
+                        if (n >= _pendingData.size()) {
+                            pending.swap(_pendingData);
+                        } else {
+                            pending = _pendingData.first(n);
+                            _pendingData.remove(0, n);
+                        }
+                    }
+
+                    more = !_pendingData.isEmpty();
+                    _readWaitCondition.wakeAll();
                 }
 
-                const bool more = (_pendingSizeLocked() > 0);
-
-                _readWaitCondition.wakeAll();
-                locker.unlock();
+                if (!pending.isEmpty()) {
+                    // Zero-copy O(1) move into QRingBuffer — avoids memcpy.
+                    // QRingBufferRef doesn't expose the move overload, so
+                    // access the underlying QRingBuffer directly.
+                    readBuffers[0].append(std::move(pending));
+                }
 
                 emit guard->readyRead();
 
-                // Reset flag AFTER emit to prevent re-entrant scheduling from
-                // inside a readyRead slot (matches Qt's emittedReadyRead guard).
-                // If pending data remains, reschedule for the next event loop pass.
+                // Reset AFTER emit to block re-entrant scheduling from readyRead slots
                 _readyReadPending.store(false);
 
                 if (more) {
@@ -277,50 +230,43 @@ void QSerialPortPrivate::_scheduleReadyRead()
 
 bool QSerialPortPrivate::waitForReadyRead(int msecs)
 {
-    QMutexLocker locker(&_readMutex);
+    // Owner-thread buffer already has data — return immediately
     if (!buffer.isEmpty()) {
         return true;
     }
 
-    if (_pendingSizeLocked() > 0) {
-        (void)_drainPendingDataLocked();
-        return true;
-    }
-
-    QDeadlineTimer deadline(msecs);
-    while (buffer.isEmpty() && (_pendingSizeLocked() <= 0)) {
-        if (!_readWaitCondition.wait(&_readMutex, deadline)) {
-            break;
+    // Wait for the Java read thread to deliver data into _pendingData
+    {
+        QMutexLocker locker(&_readMutex);
+        if (_pendingData.isEmpty()) {
+            QDeadlineTimer deadline(msecs);
+            while (_pendingData.isEmpty()) {
+                if (!_readWaitCondition.wait(&_readMutex, deadline)) {
+                    break;
+                }
+            }
         }
 
-        if (!buffer.isEmpty()) {
+        // Drain pending → buffer while we're on the owner thread
+        if (!_pendingData.isEmpty()) {
+            QByteArray data;
+            data.swap(_pendingData);
+            locker.unlock();
+            readBuffers[0].append(std::move(data));
             return true;
         }
-
-        if (_pendingSizeLocked() > 0) {
-            (void)_drainPendingDataLocked();
-            return true;
-        }
     }
-    locker.unlock();
 
     qCWarning(AndroidSerialPortLog) << "Timeout while waiting for ready read on device ID" << _deviceId;
     setError(QSerialPortErrorInfo(QSerialPort::TimeoutError, QSerialPort::tr("Timeout while waiting for ready read")));
-
     return false;
-}
-
-bool QSerialPortPrivate::waitForBytesWritten(int msecs)
-{
-    Q_UNUSED(msecs);
-    // Writes are sent to the Java IO manager immediately in writeData() via async write.
-    // There is no internal write buffer to drain, so this is always satisfied.
-    return true;
 }
 
 qint64 QSerialPortPrivate::_writeToPort(const char* data, qint64 maxSize, int timeout, bool async)
 {
-    const qint64 result = AndroidSerial::write(_deviceId, data, maxSize, timeout, async);
+    // JNI layer uses jint (32-bit); cap to INT_MAX to avoid silent truncation
+    const int cappedSize = static_cast<int>(qMin(maxSize, static_cast<qint64>(INT_MAX)));
+    const qint64 result = AndroidSerial::write(_deviceId, data, cappedSize, timeout, async);
     if (result < 0) {
         qCWarning(AndroidSerialPortLog) << "Failed to write to port ID" << _deviceId;
         setError(QSerialPortErrorInfo(QSerialPort::WriteError, QSerialPort::tr("Failed to write to port")));
@@ -337,29 +283,81 @@ qint64 QSerialPortPrivate::writeData(const char* data, qint64 maxSize)
         return -1;
     }
 
-    // Use async write to avoid blocking the caller. Qt's contract requires writeData()
-    // to return immediately after accepting data. The Java IO manager handles the
-    // actual USB transfer on its own thread.
-    const qint64 written = _writeToPort(data, maxSize, DEFAULT_WRITE_TIMEOUT, /*async=*/true);
-    if (written < 0) {
-        return -1;
-    }
+    // Buffer data and schedule async drain — matches Qt Unix writeData() which
+    // appends to writeBuffer and arms a write notifier.
+    qint64 toAppend = maxSize;
+    if (writeBufferMaxSize && (writeBuffer.size() + toAppend > writeBufferMaxSize))
+        toAppend = writeBufferMaxSize - writeBuffer.size();
+    if (toAppend <= 0)
+        return 0;
 
-    if (written > 0) {
+    writeBuffer.append(data, toAppend);
+
+    // Lazy-init zero-interval timer — matches Qt Win's startAsyncWriteTimer pattern.
+    // QObjectPrivate::connect routes timeout directly to our private method.
+    if (!_writeTimer) {
         Q_Q(QSerialPort);
-        const qint64 w = written;
-        QMetaObject::invokeMethod(
-            q, [q, w]() { emit q->bytesWritten(w); }, Qt::QueuedConnection);
+        _writeTimer = new QTimer(q);
+        _writeTimer->setSingleShot(true);
+        QObjectPrivate::connect(_writeTimer, &QTimer::timeout,
+                                this, &QSerialPortPrivate::_drainWriteBuffer);
+    }
+    if (!_writeTimer->isActive())
+        _writeTimer->start();
+
+    return toAppend;
+}
+
+void QSerialPortPrivate::_drainWriteBuffer()
+{
+    qint64 totalWritten = 0;
+
+    while (!writeBuffer.isEmpty()) {
+        const qint64 written = _writeToPort(writeBuffer.readPointer(), writeBuffer.nextDataBlockSize(),
+                                            DEFAULT_WRITE_TIMEOUT, /*async=*/true);
+        if (written <= 0) {
+            break;
+        }
+        writeBuffer.free(written);
+        totalWritten += written;
     }
 
-    return written;
+    if (totalWritten > 0) {
+        Q_Q(QSerialPort);
+        emit q->bytesWritten(totalWritten);
+    }
+
+    // If data remains (partial write), reschedule via timer
+    if (!writeBuffer.isEmpty() && _writeTimer)
+        _writeTimer->start();
 }
 
 bool QSerialPortPrivate::flush()
 {
-    // Writes are sent to the Java IO manager immediately in writeData() via async write.
-    // There is no internal write buffer to flush.
-    return true;
+    // Synchronously drain writeBuffer via blocking JNI write
+    qint64 totalWritten = 0;
+    while (!writeBuffer.isEmpty()) {
+        const qint64 written = _writeToPort(writeBuffer.readPointer(), writeBuffer.nextDataBlockSize(),
+                                            DEFAULT_WRITE_TIMEOUT, /*async=*/false);
+        if (written <= 0) {
+            break;
+        }
+        writeBuffer.free(written);
+        totalWritten += written;
+    }
+
+    if (totalWritten > 0) {
+        Q_Q(QSerialPort);
+        emit q->bytesWritten(totalWritten);
+    }
+
+    return writeBuffer.isEmpty();
+}
+
+bool QSerialPortPrivate::waitForBytesWritten(int msecs)
+{
+    Q_UNUSED(msecs);
+    return flush();
 }
 
 bool QSerialPortPrivate::sendBreak(int duration)

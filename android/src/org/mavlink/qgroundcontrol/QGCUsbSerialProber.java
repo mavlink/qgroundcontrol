@@ -16,7 +16,7 @@ public class QGCUsbSerialProber {
         // FTDI (D2XX-backed adapter). Override the default FtdiSerialDriver entries
         // with our QGCFtdiSerialDriver. ProbeTable.addProduct overwrites existing
         // VID/PID entries. When D2XX is unavailable, keep the default FTDI driver.
-        if (QGCFtdiDriver.isAvailable()) {
+        if (QGCFtdiSerialDriver.isAvailable()) {
             probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT232R, QGCFtdiSerialDriver.class);
             probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT2232H, QGCFtdiSerialDriver.class);
             probeTable.addProduct(QGCUsbId.VENDOR_FTDI, QGCUsbId.DEVICE_FTDI_FT4232H, QGCFtdiSerialDriver.class);

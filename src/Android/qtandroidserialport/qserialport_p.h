@@ -31,7 +31,7 @@ constexpr int INVALID_DEVICE_ID = 0;
 constexpr int MIN_READ_TIMEOUT = 500;
 constexpr qint64 MAX_READ_SIZE = 16 * 1024;
 constexpr qint64 DEFAULT_READ_BUFFER_SIZE = MAX_READ_SIZE;
-constexpr qint64 DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
+constexpr qint64 DEFAULT_WRITE_BUFFER_SIZE = 32 * 1024;
 constexpr int DEFAULT_WRITE_TIMEOUT = 5000;
 constexpr int DEFAULT_READ_TIMEOUT = 0;
 #ifndef QSERIALPORT_BUFFERSIZE
@@ -41,6 +41,8 @@ constexpr int DEFAULT_READ_TIMEOUT = 0;
 Q_DECLARE_LOGGING_CATEGORY(AndroidSerialPortLog)
 
 QT_BEGIN_NAMESPACE
+
+class QTimer;
 
 class QSerialPortErrorInfo
 {
@@ -141,15 +143,14 @@ public:
     qint32 inputBaudRate = QSerialPort::Baud9600;
     qint32 outputBaudRate = QSerialPort::Baud9600;
     qint64 readBufferMaxSize = 0;
+    qint64 writeBufferMaxSize = 0;
     int descriptor = -1;
 
 private:
     qint64 _writeToPort(const char* data, qint64 maxSize, int timeout = DEFAULT_WRITE_TIMEOUT, bool async = false);
     bool _stopAsyncRead();
     void _scheduleReadyRead();
-    qsizetype _pendingSizeLocked() const;
-    void _compactPendingDataLocked();
-    qint64 _drainPendingDataLocked(qint64 maxBytes = -1);
+    void _drainWriteBuffer();
     bool _setParameters(qint32 baudRate, QSerialPort::DataBits dataBits, QSerialPort::StopBits stopBits,
                         QSerialPort::Parity parity);
     static int _stopBitsToAndroidStopBits(QSerialPort::StopBits stopBits);
@@ -159,12 +160,16 @@ private:
 
     int _deviceId = INVALID_DEVICE_ID;
 
+    // Read: Java thread appends to _pendingData under _readMutex; owner thread
+    // drains it into QIODevicePrivate::buffer in the _scheduleReadyRead lambda.
     std::atomic<bool> _readyReadPending{false};
-    std::atomic<qint64> _bufferBytesEstimate{0};
     QMutex _readMutex;
     QWaitCondition _readWaitCondition;
     QByteArray _pendingData;
-    qsizetype _pendingDataOffset = 0;
+
+    // Write: writeData() appends to writeBuffer; _drainWriteBuffer() fires via
+    // zero-interval QTimer on the owner thread's event loop (matches Qt Win pattern).
+    QTimer *_writeTimer = nullptr;
 };
 
 QT_END_NAMESPACE

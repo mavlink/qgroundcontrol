@@ -929,7 +929,6 @@ bool QSerialPort::clear(Directions directions)
         QMutexLocker locker(&d->_readMutex);
         d->buffer.clear();
         d->_pendingData.clear();
-        d->_bufferBytesEstimate.store(0, std::memory_order_relaxed);
     }
     if (directions & Output)
         d->writeBuffer.clear();
@@ -1163,10 +1162,8 @@ QBindable<bool> QSerialPort::bindableIsBreakEnabled()
 
 bool QSerialPort::sendBreak(int duration)
 {
-    // Timed break is not supported over Android USB host API.
-    // setBreakEnabled(true/false) is available for untimed break.
-    Q_UNUSED(duration);
-    return false;
+    Q_D(QSerialPort);
+    return d->sendBreak(duration);
 }
 
 bool QSerialPort::settingsRestoredOnClose() const
@@ -1183,13 +1180,14 @@ void QSerialPort::setSettingsRestoredOnClose(bool restore)
 
 qint64 QSerialPort::writeBufferSize() const
 {
-    return 0;
+    Q_D(const QSerialPort);
+    return d->writeBufferMaxSize;
 }
 
 void QSerialPort::setWriteBufferSize(qint64 size)
 {
-    Q_UNUSED(size);
-    // No-op on Android — writes are sent directly to the USB IO manager.
+    Q_D(QSerialPort);
+    d->writeBufferMaxSize = size;
 }
 
 /*!
@@ -1205,10 +1203,6 @@ qint64 QSerialPort::readData(char* data, qint64 maxSize)
 {
     Q_UNUSED(data);
     Q_UNUSED(maxSize);
-
-    // QIODevice drains from d->buffer before calling here; refresh estimate so
-    // Android read-backpressure tracks current buffered bytes.
-    d_func()->_bufferBytesEstimate.store(d_func()->buffer.size(), std::memory_order_relaxed);
 
     // In any case we need to start the notifications if they were
     // disabled by the read handler. If enabled, next call does nothing.

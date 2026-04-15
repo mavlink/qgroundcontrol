@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <qserialport.h>
@@ -66,7 +65,6 @@ int getDeviceHandle(int deviceId);
 int open(const QString& portName, QSerialPortPrivate* classPtr);
 bool close(int deviceId);
 bool isOpen(const QString& portName);
-QByteArray read(int deviceId, int length, int timeout);
 int write(int deviceId, const char* data, int length, int timeout, bool async);
 bool setParameters(int deviceId, int baudRate, int dataBits, int stopBits, int parity);
 bool setDataTerminalReady(int deviceId, bool set);
@@ -82,5 +80,4 @@ bool readThreadRunning(int deviceId);
 
 void registerPointer(QSerialPortPrivate* ptr);
 void unregisterPointer(QSerialPortPrivate* ptr);
-void cleanupJniCache();
 }  // namespace AndroidSerial
