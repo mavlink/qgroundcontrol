@@ -1,15 +1,15 @@
 #include "GeoJsonHelperTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
-#include <QtCore/QTemporaryDir>
 
 #include "GeoJsonHelper.h"
 
 namespace {
 
-QString _writeGeoJsonFile(QTemporaryDir &tempDir, const QString &fileName, const QByteArray &contents)
+QString _writeGeoJsonFile(const QString& dirPath, const QString& fileName, const QByteArray& contents)
 {
-    const QString filePath = tempDir.filePath(fileName);
+    const QString filePath = QDir(dirPath).filePath(fileName);
     QFile file(filePath);
     const bool opened = file.open(QIODevice::WriteOnly | QIODevice::Truncate);
     Q_ASSERT(opened);
@@ -144,10 +144,7 @@ const QByteArray kInvalidGeoJson = "{not valid json";
 
 void GeoJsonHelperTest::_determineShapeTypePolygon_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "polygon.geojson", kPolygonGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "polygon.geojson", kPolygonGeoJson);
     QString error;
 
     const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
@@ -157,10 +154,7 @@ void GeoJsonHelperTest::_determineShapeTypePolygon_test()
 
 void GeoJsonHelperTest::_determineShapeTypePolyline_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "line.geojson", kPolylineGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "line.geojson", kPolylineGeoJson);
     QString error;
 
     const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
@@ -170,10 +164,7 @@ void GeoJsonHelperTest::_determineShapeTypePolyline_test()
 
 void GeoJsonHelperTest::_determineShapeTypeNoShapes_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "empty.geojson", kNoShapesGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "empty.geojson", kNoShapesGeoJson);
     QString error;
 
     const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
@@ -193,10 +184,7 @@ void GeoJsonHelperTest::_determineShapeTypeMissingFile_test()
 
 void GeoJsonHelperTest::_determineShapeTypeUnsupportedGeometry_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "point.geojson", kPointGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "point.geojson", kPointGeoJson);
     QString error;
 
     const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
@@ -207,10 +195,7 @@ void GeoJsonHelperTest::_determineShapeTypeUnsupportedGeometry_test()
 
 void GeoJsonHelperTest::_determineShapeTypeInvalidJson_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "invalid.geojson", kInvalidGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "invalid.geojson", kInvalidGeoJson);
     QString error;
 
     const ShapeFileHelper::ShapeType shapeType = GeoJsonHelper::determineShapeType(filePath, error);
@@ -220,10 +205,7 @@ void GeoJsonHelperTest::_determineShapeTypeInvalidJson_test()
 
 void GeoJsonHelperTest::_loadPolygonFromFile_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "polygon.geojson", kPolygonGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "polygon.geojson", kPolygonGeoJson);
     QList<QGeoCoordinate> vertices;
     QString error;
 
@@ -237,10 +219,7 @@ void GeoJsonHelperTest::_loadPolygonFromFile_test()
 
 void GeoJsonHelperTest::_loadPolylineFromFile_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "line.geojson", kPolylineGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "line.geojson", kPolylineGeoJson);
     QList<QGeoCoordinate> coords;
     QString error;
 
@@ -256,10 +235,7 @@ void GeoJsonHelperTest::_loadPolylineFromFile_test()
 
 void GeoJsonHelperTest::_loadPolygonFromNestedGeometryCollection_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "nested-polygon.geojson", kNestedPolygonGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "nested-polygon.geojson", kNestedPolygonGeoJson);
     QList<QGeoCoordinate> vertices;
     QString error;
 
@@ -273,10 +249,7 @@ void GeoJsonHelperTest::_loadPolygonFromNestedGeometryCollection_test()
 
 void GeoJsonHelperTest::_loadPolylineFromNestedGeometryCollection_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "nested-polyline.geojson", kNestedPolylineGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "nested-polyline.geojson", kNestedPolylineGeoJson);
     QList<QGeoCoordinate> coords;
     QString error;
 
@@ -292,10 +265,7 @@ void GeoJsonHelperTest::_loadPolylineFromNestedGeometryCollection_test()
 
 void GeoJsonHelperTest::_loadPolygonFromPolylineFails_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "line.geojson", kPolylineGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "line.geojson", kPolylineGeoJson);
     QList<QGeoCoordinate> vertices;
     QString error;
 
@@ -308,10 +278,7 @@ void GeoJsonHelperTest::_loadPolygonFromPolylineFails_test()
 
 void GeoJsonHelperTest::_loadPolylineFromPolygonFails_test()
 {
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-
-    const QString filePath = _writeGeoJsonFile(tempDir, "polygon.geojson", kPolygonGeoJson);
+    const QString filePath = _writeGeoJsonFile(tempDirPath(), "polygon.geojson", kPolygonGeoJson);
     QList<QGeoCoordinate> coords;
     QString error;
 

@@ -19,7 +19,7 @@ void DelayStateTest::_testDelayState()
 
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(timer.elapsed() >= delayMs - 10);
 }
 

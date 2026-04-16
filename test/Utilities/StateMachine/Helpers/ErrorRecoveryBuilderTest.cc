@@ -5,13 +5,6 @@
 
 #include <QtTest/QSignalSpy>
 
-namespace {
-bool _spyTriggered(QSignalSpy& spy, int timeoutMsecs)
-{
-    return (spy.count() > 0) || spy.wait(timeoutMsecs);
-}
-}
-
 void ErrorRecoveryBuilderTest::_testPrimarySuccessAdvances()
 {
     QGCStateMachine machine(QStringLiteral("ErrorRecoveryPrimarySuccess"), nullptr);
@@ -34,7 +27,7 @@ void ErrorRecoveryBuilderTest::_testPrimarySuccessAdvances()
 
     machine.start();
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(primaryCalls, 1);
     QCOMPARE(succeededSpy.count(), 1);
     QCOMPARE(exhaustedSpy.count(), 0);
@@ -71,7 +64,7 @@ void ErrorRecoveryBuilderTest::_testFallbackAfterRetriesSucceeds()
 
     machine.start();
 
-    QVERIFY(_spyTriggered(finishedSpy, 1000));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(primaryCalls, 2);
     QCOMPARE(fallbackCalls, 1);
     QCOMPARE(retryingSpy.count(), 1);
@@ -109,7 +102,7 @@ void ErrorRecoveryBuilderTest::_testFallbackFailureEndsInExhaustedError()
 
     machine.start();
 
-    QVERIFY(_spyTriggered(finishedSpy, 1000));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(primaryCalls, 2);
     QCOMPARE(fallbackCalls, 1);
     QCOMPARE(tryingFallbackSpy.count(), 1);
@@ -142,7 +135,7 @@ void ErrorRecoveryBuilderTest::_testExhaustedEmitAdvanceRunsRollback()
 
     machine.start();
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(rollbackCalls, 1);
     QCOMPARE(rollingBackSpy.count(), 1);
     QCOMPARE(exhaustedSpy.count(), 1);
@@ -181,7 +174,7 @@ void ErrorRecoveryBuilderTest::_testExhaustedBehaviorMatrix()
 
         machine.start();
 
-        QVERIFY(_spyTriggered(finishedSpy, 500));
+        QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
         QCOMPARE(exhaustedSpy.count(), 1);
         QCOMPARE(advanceSpy.count() > 0, tc.expectAdvance);
         QCOMPARE(errorSpy.count() > 0, !tc.expectAdvance);
@@ -211,7 +204,7 @@ void ErrorRecoveryBuilderTest::_testTimeoutExhaustsWithoutExtraRetries()
 
     machine.start();
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(primaryCalls, 1);
     QCOMPARE(exhaustedSpy.count(), 1);
 }

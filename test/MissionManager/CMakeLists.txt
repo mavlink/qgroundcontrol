@@ -7,6 +7,7 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         CameraCalcTest.cc CameraCalcTest.h
         CameraSectionTest.cc CameraSectionTest.h
+        CameraSpecTest.cc CameraSpecTest.h
         CorridorScanComplexItemTest.cc CorridorScanComplexItemTest.h
         FWLandingPatternTest.cc FWLandingPatternTest.h
         LandingComplexItemTest.cc LandingComplexItemTest.h
@@ -21,6 +22,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         PlanMasterControllerTest.cc PlanMasterControllerTest.h
         QGCMapPolygonTest.cc QGCMapPolygonTest.h
         QGCMapPolylineTest.cc QGCMapPolylineTest.h
+        RallyPointTest.cc RallyPointTest.h
         SectionTest.cc SectionTest.h
         SimpleMissionItemTest.cc SimpleMissionItemTest.h
         SpeedSectionTest.cc SpeedSectionTest.h

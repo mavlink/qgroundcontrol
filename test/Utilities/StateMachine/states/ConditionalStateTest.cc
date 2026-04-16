@@ -27,7 +27,7 @@ void ConditionalStateTest::_testConditionalStateExecute()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(predicateCalled);
     QVERIFY(actionExecuted);
 }
@@ -67,7 +67,7 @@ void ConditionalStateTest::_testConditionalStateSkip()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(predicateCalled);
     QVERIFY(!actionExecuted);
     QVERIFY(skipHandled);

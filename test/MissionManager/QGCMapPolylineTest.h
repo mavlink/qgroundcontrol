@@ -1,14 +1,13 @@
 #pragma once
 
 #include "CoordFixtures.h"
-#include "UnitTest.h"
+#include "TempDirectoryTest.h"
 
 class MultiSignalSpy;
 class QGCMapPolyline;
 class QmlObjectListModel;
-class QTemporaryDir;
 
-class QGCMapPolylineTest : public UnitTest
+class QGCMapPolylineTest : public TempDirectoryTest
 {
     Q_OBJECT
 
@@ -23,7 +22,7 @@ private slots:
     void _testSelectVertex();
 
 private:
-    QString _copyRes(const QTemporaryDir& tmpDir, const QString& name);
+    QString _copyRes(const QString& dirPath, const QString& name);
 
     MultiSignalSpy* _multiSpyPolyline = nullptr;
     MultiSignalSpy* _multiSpyModel = nullptr;

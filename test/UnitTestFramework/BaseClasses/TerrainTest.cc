@@ -2,8 +2,8 @@
 
 #include "TerrainTileManager.h"
 
-/// Point Nemo is a point on Earth furthest from land
-static const QGeoCoordinate pointNemo = QGeoCoordinate(-48.875556, -123.392500);
+// Use the canonical definition from TerrainTest::pointNemo()
+static const QGeoCoordinate pointNemo = TerrainTest::pointNemo();
 
 const UnitTestTerrainQuery::Flat10Region UnitTestTerrainQuery::flat10Region{
     {pointNemo, QGeoCoordinate{pointNemo.latitude() - UnitTestTerrainQuery::regionSizeDeg,

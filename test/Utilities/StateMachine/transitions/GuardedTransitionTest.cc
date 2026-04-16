@@ -29,7 +29,7 @@ void GuardedTransitionTest::_testGuardedTransitionAllowed()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(guardCalled);
     QVERIFY(transitionTaken);
 }
@@ -67,7 +67,7 @@ void GuardedTransitionTest::_testGuardedTransitionBlocked()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(guardCalled);
     QVERIFY(!targetReached);
     QVERIFY(alternateReached);

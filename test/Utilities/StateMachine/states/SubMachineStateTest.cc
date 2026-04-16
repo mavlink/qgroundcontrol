@@ -33,7 +33,7 @@ void SubMachineStateTest::_testSubMachineState()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(childMachineRan);
 }
 

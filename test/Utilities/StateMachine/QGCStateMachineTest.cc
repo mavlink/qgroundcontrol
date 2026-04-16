@@ -10,11 +10,6 @@
 #include <QtTest/QTest>
 
 namespace {
-bool _spyTriggered(QSignalSpy& spy, int timeoutMsecs)
-{
-    return (spy.count() > 0) || spy.wait(timeoutMsecs);
-}
-
 float _spyFloatArg(const QSignalSpy& spy, int index)
 {
     return spy.at(index).at(0).toFloat();
@@ -62,7 +57,7 @@ void QGCStateMachineTest::_testQGCStateMachineFactories()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(functionCalled);
 }
 
@@ -92,7 +87,7 @@ void QGCStateMachineTest::_testGlobalErrorState()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(errorHandled);
 }
 
@@ -124,10 +119,10 @@ void QGCStateMachineTest::_testGlobalErrorStateWithAbstractState()
     QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
     abstractState->triggerError();
-    QVERIFY((errorSpy.count() > 0) || errorSpy.wait(500));
-    QVERIFY((stoppedSpy.count() > 0) || stoppedSpy.wait(500));
+    QVERIFY((errorSpy.count() > 0) || errorSpy.wait(TestTimeout::shortMs()));
+    QVERIFY((stoppedSpy.count() > 0) || stoppedSpy.wait(TestTimeout::shortMs()));
 }
 
 void QGCStateMachineTest::_testLocalErrorState()
@@ -164,7 +159,7 @@ void QGCStateMachineTest::_testLocalErrorState()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(!globalErrorHandled);  // Global error should NOT be called
     QVERIFY(localErrorHandled);    // Local error should be called
 }
@@ -196,14 +191,14 @@ void QGCStateMachineTest::_testPropertyAssignment()
     machine.start();
 
     // Wait for state1 to be entered
-    QVERIFY(state1EnteredSpy.wait(500));
+    QVERIFY(state1EnteredSpy.wait(TestTimeout::shortMs()));
     // Property should be set to 42 while in state1
     QCOMPARE(target.property("testProp").toInt(), 42);
 
     // Trigger transition to state2
     machine.postEvent(QStringLiteral("next"));
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     // Property should be restored after leaving state1
     QCOMPARE(target.property("testProp").toInt(), 0);
 }
@@ -232,7 +227,7 @@ void QGCStateMachineTest::_testTimeoutTransitionBuilder()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 }
 
 void QGCStateMachineTest::_testRetryTransitionBuilder()
@@ -255,7 +250,7 @@ void QGCStateMachineTest::_testRetryTransitionBuilder()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(1000));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     // Should have retried twice before advancing
     QCOMPARE(retryCount, 2);
 }
@@ -285,7 +280,7 @@ void QGCStateMachineTest::_testConditionalTransitionBuilder()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(state3EnteredSpy.count(), 1);
 }
 
@@ -313,7 +308,7 @@ void QGCStateMachineTest::_testErrorRecoveryFactory()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(_spyTriggered(finishedSpy, 1000));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(actionCalls, 2);
 }
 
@@ -338,7 +333,7 @@ void QGCStateMachineTest::_testErrorHandlerFactories()
 
         QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
         machine.start();
-        QVERIFY(_spyTriggered(finishedSpy, 500));
+        QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     }
 
     {
@@ -359,7 +354,7 @@ void QGCStateMachineTest::_testErrorHandlerFactories()
 
         QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
         machine.start();
-        QVERIFY(_spyTriggered(stoppedSpy, 500));
+        QVERIFY(spyTriggered(stoppedSpy, TestTimeout::shortMs()));
     }
 }
 
@@ -457,18 +452,18 @@ void QGCStateMachineTest::_testProgressTrackingWithSubProgress()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(_spyTriggered(state1EnteredSpy, 500));
+    QVERIFY(spyTriggered(state1EnteredSpy, TestTimeout::shortMs()));
 
     machine.setSubProgress(0.5f);
     machine.postEvent(QStringLiteral("toState2"));
-    QVERIFY(_spyTriggered(state2EnteredSpy, 500));
+    QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
 
     machine.setSubProgress(0.5f);
     machine.setSubProgress(0.4f); // lower value should not emit
     machine.setSubProgress(1.0f);
 
     machine.postEvent(QStringLiteral("finish"));
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
 
     QCOMPARE(progressSpy.count(), 4);
     QVERIFY(qAbs(_spyFloatArg(progressSpy, 0) - 0.125f) < 0.001f);
@@ -501,11 +496,11 @@ void QGCStateMachineTest::_testStateHistoryLimit()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(_spyTriggered(state1EnteredSpy, 500));
+    QVERIFY(spyTriggered(state1EnteredSpy, TestTimeout::shortMs()));
     machine.postEvent(QStringLiteral("toState2"));
-    QVERIFY(_spyTriggered(state2EnteredSpy, 500));
+    QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
     machine.postEvent(QStringLiteral("toState3"));
-    QVERIFY(_spyTriggered(state3EnteredSpy, 500));
+    QVERIFY(spyTriggered(state3EnteredSpy, TestTimeout::shortMs()));
 
     const QStringList history = machine.stateHistory();
     QCOMPARE(history.size(), 2);
@@ -515,7 +510,7 @@ void QGCStateMachineTest::_testStateHistoryLimit()
     QCOMPARE(machine.currentStateName(), QStringLiteral("State3"));
 
     machine.postEvent(QStringLiteral("finish"));
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
 }
 
 void QGCStateMachineTest::_testRuntimeDiagnosticsHelpers()
@@ -543,11 +538,11 @@ void QGCStateMachineTest::_testRuntimeDiagnosticsHelpers()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(_spyTriggered(state1EnteredSpy, 500));
+    QVERIFY(spyTriggered(state1EnteredSpy, TestTimeout::shortMs()));
     machine.postEvent(QStringLiteral("next"));
-    QVERIFY(_spyTriggered(state2EnteredSpy, 500));
+    QVERIFY(spyTriggered(state2EnteredSpy, TestTimeout::shortMs()));
     machine.postEvent(QStringLiteral("finish"));
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
 
     QVERIFY(!machine.dumpRecordedHistory().isEmpty());
     QVERIFY(machine.recordedHistoryJson().size() >= 2);
@@ -583,7 +578,7 @@ void QGCStateMachineTest::_testTimedActionState()
     machine.start();
 
     // Should finish after ~50ms
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 }
 
 void QGCStateMachineTest::_testTimedActionStateWithCallbacks()
@@ -608,7 +603,7 @@ void QGCStateMachineTest::_testTimedActionStateWithCallbacks()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(entryActionCalled);
     QVERIFY(exitActionCalled);
 }
@@ -637,7 +632,7 @@ void QGCStateMachineTest::_testSelfLoopTransition()
     QSignalSpy enteredSpy(loopState, &QState::entered);
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // Trigger the self-loop 3 times
     signalSource.setObjectName(QStringLiteral("1"));
@@ -653,7 +648,7 @@ void QGCStateMachineTest::_testSelfLoopTransition()
     machine.postEvent(QStringLiteral("done"));
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 }
 
 void QGCStateMachineTest::_testInternalTransition()
@@ -683,7 +678,7 @@ void QGCStateMachineTest::_testInternalTransition()
     QSignalSpy enteredSpy(state, &QState::entered);
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(entryCount, 1);  // Entered once
 
     // Trigger internal transition
@@ -697,7 +692,7 @@ void QGCStateMachineTest::_testInternalTransition()
     machine.postEvent(QStringLiteral("done"));
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 }
 
 #include "QGCStateMachineTest.moc"

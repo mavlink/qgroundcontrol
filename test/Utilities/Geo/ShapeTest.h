@@ -1,10 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "TempDirectoryTest.h"
 
-class QTemporaryDir;
-
-class ShapeTest : public UnitTest
+class ShapeTest : public TempDirectoryTest
 {
     Q_OBJECT
 
@@ -28,7 +26,7 @@ private slots:
     void _testKMLExportSchemaValidation();
 
 private:
-    static QString _copyRes(const QTemporaryDir& tmpDir, const QString& name);
+    static QString _copyRes(const QString& dirPath, const QString& name);
     static void _writePrjFile(const QString& path, const QString& content);
-    static QString _writeKmlFile(const QTemporaryDir& tmpDir, const QString& name, const QString& content);
+    static QString _writeKmlFile(const QString& dirPath, const QString& name, const QString& content);
 };

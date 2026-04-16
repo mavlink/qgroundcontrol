@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "UnitTest.h"
 
 class QmlObjectListModel;
@@ -28,8 +30,8 @@ private slots:
     void _testCenterDegenerate();
 
 private:
-    MultiSignalSpy* _multiSpyPolygon = nullptr;
-    MultiSignalSpy* _multiSpyModel = nullptr;
+    std::unique_ptr<MultiSignalSpy> _multiSpyPolygon;
+    std::unique_ptr<MultiSignalSpy> _multiSpyModel;
     QGCMapPolygon* _mapPolygon = nullptr;
     QmlObjectListModel* _pathModel = nullptr;
     QList<QGeoCoordinate> _polyPoints;

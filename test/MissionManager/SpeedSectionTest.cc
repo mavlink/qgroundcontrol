@@ -26,14 +26,6 @@ void SpeedSectionTest::cleanup()
     SectionTest::cleanup();
 }
 
-void SpeedSectionTest::_createSpy(SpeedSection* speedSection, MultiSignalSpy** speedSpy)
-{
-    *speedSpy = nullptr;
-    MultiSignalSpy* spy = new MultiSignalSpy();
-    QCOMPARE(spy->init(speedSection), true);
-    *speedSpy = spy;
-}
-
 void SpeedSectionTest::_testDirty()
 {
     // Check for dirty not signalled if same value

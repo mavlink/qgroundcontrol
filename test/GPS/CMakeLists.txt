@@ -5,6 +5,7 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        GpsTestHelpers.h
         NTRIPManagerTest.cc
         NTRIPManagerTest.h
         NTRIPSourceTableTest.cc

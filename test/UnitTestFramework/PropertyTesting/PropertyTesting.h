@@ -116,16 +116,16 @@
 /// Namespace for QGC-specific RapidCheck generators
 namespace rc::qgc {
 
-/// Generator for valid latitude values [-90, 90]
+/// Generator for valid latitude values [-90, 90] at ~0.1m resolution
 inline auto latitude()
 {
-    return rc::gen::map(rc::gen::inRange(-9000, 9001), [](int i) { return static_cast<double>(i) / 100.0; });
+    return rc::gen::map(rc::gen::inRange(-90000000, 90000001), [](int i) { return static_cast<double>(i) / 1000000.0; });
 }
 
-/// Generator for valid longitude values [-180, 180]
+/// Generator for valid longitude values [-180, 180] at ~0.1m resolution
 inline auto longitude()
 {
-    return rc::gen::map(rc::gen::inRange(-18000, 18001), [](int i) { return static_cast<double>(i) / 100.0; });
+    return rc::gen::map(rc::gen::inRange(-180000000, 180000001), [](int i) { return static_cast<double>(i) / 1000000.0; });
 }
 
 /// Generator for valid altitude values (reasonable range for aircraft)

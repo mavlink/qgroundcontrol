@@ -100,6 +100,7 @@ private:
 class TerrainTest : public UnitTest
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(TerrainTest)
 
 public:
     explicit TerrainTest(QObject* parent = nullptr);

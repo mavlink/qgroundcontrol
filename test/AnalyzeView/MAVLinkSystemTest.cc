@@ -2,22 +2,10 @@
 
 #include <QtTest/QSignalSpy>
 
-#include "MAVLinkLib.h"
 #include "MAVLinkMessage.h"
 #include "MAVLinkSystem.h"
+#include "MAVLinkTestHelpers.h"
 #include "QmlObjectListModel.h"
-
-namespace {
-
-QGCMAVLinkMessage *makeHeartbeatMsg(uint8_t sysId = 1, uint8_t compId = 1, QObject *parent = nullptr)
-{
-    mavlink_message_t msg{};
-    mavlink_msg_heartbeat_pack_chan(sysId, compId, MAVLINK_COMM_0, &msg,
-                                   MAV_TYPE_QUADROTOR, MAV_AUTOPILOT_PX4, 0, 0, MAV_STATE_ACTIVE);
-    return new QGCMAVLinkMessage(msg, parent);
-}
-
-} // namespace
 
 void MAVLinkSystemTest::_constructionTest()
 {
@@ -46,7 +34,7 @@ void MAVLinkSystemTest::_appendAndFindMessageTest()
 {
     QGCMAVLinkSystem system(1);
 
-    QGCMAVLinkMessage *msg = makeHeartbeatMsg(1, 1);
+    QGCMAVLinkMessage *msg = MAVLinkTestHelpers::makeHeartbeatMsg(1, 1);
     system.append(msg);
 
     QCOMPARE(system.messages()->count(), 1);
@@ -66,7 +54,7 @@ void MAVLinkSystemTest::_findMessageNotFoundTest()
     QVERIFY(found == nullptr);
 
     // findMessage with a wrong compId also returns nullptr
-    QGCMAVLinkMessage *msg = makeHeartbeatMsg(1, 1);
+    QGCMAVLinkMessage *msg = MAVLinkTestHelpers::makeHeartbeatMsg(1, 1);
     system.append(msg);
 
     QGCMAVLinkMessage *wrongComp = system.findMessage(MAVLINK_MSG_ID_HEARTBEAT, 99);
@@ -77,7 +65,7 @@ void MAVLinkSystemTest::_findMessageByPointerTest()
 {
     QGCMAVLinkSystem system(1);
 
-    QGCMAVLinkMessage *msg = makeHeartbeatMsg(1, 1);
+    QGCMAVLinkMessage *msg = MAVLinkTestHelpers::makeHeartbeatMsg(1, 1);
     system.append(msg);
 
     const int idx = system.findMessage(msg);
@@ -122,7 +110,7 @@ void MAVLinkSystemTest::_setSelectedOutOfBoundsTest()
 {
     QGCMAVLinkSystem system(1);
 
-    QGCMAVLinkMessage *msg = makeHeartbeatMsg();
+    QGCMAVLinkMessage *msg = MAVLinkTestHelpers::makeHeartbeatMsg();
     system.append(msg);
 
     QSignalSpy selectedSpy(&system, &QGCMAVLinkSystem::selectedChanged);
@@ -138,7 +126,7 @@ void MAVLinkSystemTest::_appendUpdatesCompIDsTest()
 
     QSignalSpy compSpy(&system, &QGCMAVLinkSystem::compIDsChanged);
 
-    QGCMAVLinkMessage *msg = makeHeartbeatMsg(1, 42);
+    QGCMAVLinkMessage *msg = MAVLinkTestHelpers::makeHeartbeatMsg(1, 42);
     system.append(msg);
 
     QCOMPARE(compSpy.count(), 1);
@@ -146,7 +134,7 @@ void MAVLinkSystemTest::_appendUpdatesCompIDsTest()
     QVERIFY(!system.compIDsStr().isEmpty());
 
     // Appending another message with the same compId must not emit again
-    QGCMAVLinkMessage *msg2 = makeHeartbeatMsg(1, 42);
+    QGCMAVLinkMessage *msg2 = MAVLinkTestHelpers::makeHeartbeatMsg(1, 42);
     // Give it a different msgid so it is a distinct entry - use a raw msg
     mavlink_message_t raw{};
     mavlink_msg_heartbeat_pack_chan(1, 42, MAVLINK_COMM_1, &raw,

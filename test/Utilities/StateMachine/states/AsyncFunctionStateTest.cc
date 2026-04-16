@@ -32,7 +32,7 @@ void AsyncFunctionStateTest::_testAsyncFunctionState()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(setupCalled);
     QVERIFY(capturedState != nullptr);
 }
@@ -69,7 +69,7 @@ void AsyncFunctionStateTest::_testAsyncFunctionStateTimeout()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(timeoutReached);
     // Verify timeout path taken, not success path
     QVERIFY(stateSpy.emittedByMask(stateSpy.mask("timeout")));
@@ -110,7 +110,7 @@ void AsyncFunctionStateTest::_testErrorTransition()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(errorHandled);
     // Verify error path taken, not success path
     QVERIFY(stateSpy.emittedByMask(stateSpy.mask("error")));

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "StateMachineTest.h"
 
-class QGCHistoryStateTest : public UnitTest
+class QGCHistoryStateTest : public StateMachineTest
 {
     Q_OBJECT
 

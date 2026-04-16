@@ -9,16 +9,15 @@ void CameraCalcTest::init()
     _cameraCalc = new CameraCalc(planController(), "CameraCalcUnitTest" /* settingsGroup */, this);
     _cameraCalc->setCameraBrand(CameraCalc::canonicalCustomCameraName());
     _cameraCalc->setDirty(false);
-    _multiSpy = new MultiSignalSpy();
+    _multiSpy = std::make_unique<MultiSignalSpy>();
     QVERIFY(_multiSpy->init(_cameraCalc));
 }
 
 void CameraCalcTest::cleanup()
 {
     delete _cameraCalc;
-    delete _multiSpy;
+    _multiSpy.reset();
     _cameraCalc = nullptr;
-    _multiSpy = nullptr;
     OfflineMissionTest::cleanup();
 }
 

@@ -17,7 +17,7 @@ void QGCFinalStateTest::_testQGCFinalState()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 }
 
 UT_REGISTER_TEST(QGCFinalStateTest, TestLabel::Unit, TestLabel::Utilities)

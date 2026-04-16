@@ -24,6 +24,7 @@ class FTPManager;
 class FTPTest : public VehicleTest
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(FTPTest)
 
 public:
     explicit FTPTest(QObject* parent = nullptr);

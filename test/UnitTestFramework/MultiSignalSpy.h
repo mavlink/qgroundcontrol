@@ -6,6 +6,7 @@
 #include <QtCore/QStringList>
 #include <QtTest/QSignalSpy>
 
+#include <chrono>
 #include <memory>
 #include <vector>
 
@@ -31,6 +32,7 @@ Q_DECLARE_LOGGING_CATEGORY(MultiSignalSpyLog)
 class MultiSignalSpy : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(MultiSignalSpy)
 
 public:
     static constexpr int kMaxSignals = 64;
@@ -103,6 +105,12 @@ public:
     // ------------------------------------------------------------------------
 
     bool waitForSignal(const char* signalName, int msec = TestTimeout::mediumMs());
+
+    /// std::chrono overload — prefer in new code
+    bool waitForSignal(const char* signalName, std::chrono::milliseconds timeout)
+    {
+        return waitForSignal(signalName, static_cast<int>(timeout.count()));
+    }
 
     // ------------------------------------------------------------------------
     // Access methods
@@ -186,6 +194,11 @@ public:
         bool wait(int msec = TestTimeout::mediumMs()) const
         {
             return _spy.waitForSignal(_signalName, msec);
+        }
+
+        bool wait(std::chrono::milliseconds timeout) const
+        {
+            return _spy.waitForSignal(_signalName, static_cast<int>(timeout.count()));
         }
 
         void clear()

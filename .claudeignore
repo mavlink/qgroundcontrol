@@ -1,0 +1,23 @@
+# Token efficiency — tracked paths Claude doesn't need to read.
+# Build artifacts are already covered by .gitignore (respected by ripgrep).
+
+# Localization
+translations/
+docs/ko/
+docs/tr/
+docs/zh/
+
+# Binary resource assets
+resources/audio/
+resources/calibration/
+resources/firmware/
+resources/fonts/
+resources/gcscontrolIndicator/
+resources/icons/
+resources/InstrumentValueIcons/
+resources/opengl/
+resources/*.dat
+*.apj
+
+# Prebuilt platform binaries
+android/libs/

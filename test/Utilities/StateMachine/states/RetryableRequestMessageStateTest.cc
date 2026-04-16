@@ -38,7 +38,7 @@ void RetryableRequestMessageStateTest::_testSuccessFirstAttempt()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(5000));
+    QVERIFY(finishedSpy.wait(TestTimeout::mediumMs()));
     QVERIFY(messageReceived);
     QCOMPARE(requestState->retryCount(), 0);  // No retries needed
     QCOMPARE(requestState->lastFailureCode(), Vehicle::RequestMessageNoFailure);
@@ -82,7 +82,7 @@ void RetryableRequestMessageStateTest::_testRetryOnFailure()
     machine.start();
 
     // Should finish after retries are exhausted (failure mode always fails)
-    QVERIFY(finishedSpy.wait(10000));
+    QVERIFY(finishedSpy.wait(TestTimeout::longMs()));
 
     // With FailRequestMessageCommandAcceptedMsgNotSent, the result handler is called each time
     // but with failure code, so messageReceived stays false
@@ -126,7 +126,7 @@ void RetryableRequestMessageStateTest::_testMaxRetriesExhausted()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(10000));
+    QVERIFY(finishedSpy.wait(TestTimeout::longMs()));
     QVERIFY(retriesExhaustedEmitted);
     QCOMPARE(requestState->retryCount(), 1);  // One retry was performed
 
@@ -174,7 +174,7 @@ void RetryableRequestMessageStateTest::_testFailOnMaxRetries()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(10000));
+    QVERIFY(finishedSpy.wait(TestTimeout::longMs()));
     QVERIFY(errorStateReached);
     QVERIFY(!successStateReached);
 

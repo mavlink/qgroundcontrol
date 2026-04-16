@@ -25,13 +25,13 @@ void WaitForSignalStateTest::_testWaitForSignalState()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     QTimer::singleShot(50, &signalSource, [&signalSource]() {
         signalSource.setObjectName(QStringLiteral("triggered"));
     });
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 }
 
 void WaitForSignalStateTest::_testWaitForSignalStateTimeout()
@@ -65,7 +65,7 @@ void WaitForSignalStateTest::_testWaitForSignalStateTimeout()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(timeoutReached);
     // Verify timeout path taken, not success path
     QVERIFY(stateSpy.emittedByMask(stateSpy.mask("timeout")));
@@ -103,7 +103,7 @@ void WaitForSignalStateTest::_testCompletedSignal()
         signalSource.setObjectName(QStringLiteral("triggered"));
     });
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     // Both completed() and advance() should have fired
     QCOMPARE(completedSpy.count(), 1);
     QCOMPARE(advanceSpy.count(), 1);
@@ -136,7 +136,7 @@ void WaitForSignalStateTest::_testTimedOutSignal()
 
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     // Both timedOut() and timeout() should have fired
     QCOMPARE(timedOutSpy.count(), 1);
     QCOMPARE(timeoutSpy.count(), 1);

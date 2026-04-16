@@ -2,10 +2,14 @@
 
 #include "UnitTest.h"
 
-/// @brief Runner for QML-based tests using Qt Quick Test
+/// @brief Structural validator for QML test files.
 ///
-/// This integrates Qt Quick Test with the QGC unit test framework.
-/// QML test files are loaded from the qmltests/ directory in the build folder.
+/// Despite its name, this class does NOT execute QML tests in-process.
+/// Qt Quick Test's quick_test_main() calls exit(), so actual QML test
+/// execution must happen in a separate executable via CTest.
+///
+/// This validator checks that QML test files exist, are readable, contain
+/// a TestCase element, and define at least one test_ function.
 class QmlTestRunner : public UnitTest
 {
     Q_OBJECT

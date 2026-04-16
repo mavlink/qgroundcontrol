@@ -24,14 +24,13 @@ void CorridorScanComplexItemTest::init()
     int expectedTransectCount = _expectedTransectCount;
     QCOMPARE(_corridorItem->_transectCount(), expectedTransectCount);
     _corridorItem->setDirty(false);
-    _multiSpyCorridorPolygon = new MultiSignalSpy();
+    _multiSpyCorridorPolygon = std::make_unique<MultiSignalSpy>();
     QCOMPARE(_multiSpyCorridorPolygon->init(_corridorItem->surveyAreaPolygon()), true);
 }
 
 void CorridorScanComplexItemTest::cleanup()
 {
-    delete _multiSpyCorridorPolygon;
-    _multiSpyCorridorPolygon = nullptr;
+    _multiSpyCorridorPolygon.reset();
 
     TransectStyleComplexItemTestBase::cleanup();
     // _corridorItem is deleted when planController() goes away
@@ -54,11 +53,6 @@ void CorridorScanComplexItemTest::_testDirty()
     _corridorItem->setDirty(false);
 }
 
-void CorridorScanComplexItemTest::_testCameraTrigger()
-{
-    QSKIP("cameraTrigger property API removed in TransectStyle refactor");
-}
-
 void CorridorScanComplexItemTest::_waitForReadyForSave()
 {
     QVERIFY_TRUE_WAIT(_corridorItem->readyForSaveState() == CorridorScanComplexItem::ReadyForSave,
@@ -67,17 +61,16 @@ void CorridorScanComplexItemTest::_waitForReadyForSave()
 
 void CorridorScanComplexItemTest::_testItemCount()
 {
-    typedef struct
-    {
+    struct TestCase_t {
         bool triggerInTurnAround;
         bool hasTurnaround;
-    } TestCase_t;
+    };
 
     static const TestCase_t rgTestCases[] = {
         {false, false},
-        {false, false},
+        {true,  false},
         {false, true},
-        {false, true},
+        {true,  true},
     };
     QList<MissionItem*> items;
     for (const TestCase_t& testCase : rgTestCases) {
@@ -152,11 +145,10 @@ void CorridorScanComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaro
 void CorridorScanComplexItemTest::_testItemGeneration()
 {
     // Test all the combinations of: cameraTriggerInTurnAround: false, hasTurnAround: *, useConditionGate: *
-    typedef struct
-    {
+    struct TestCase_t {
         bool hasTurnaround;
         bool useConditionGate;
-    } TestCase_t;
+    };
 
     static const TestCase_t rgTestCases[] = {
         {false, false},

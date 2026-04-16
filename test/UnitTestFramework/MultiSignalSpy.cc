@@ -5,8 +5,8 @@
 Q_LOGGING_CATEGORY(MultiSignalSpyLog, "Test.MultiSignalSpy")
 
 namespace {
-// Normalize signal name from SIGNAL() macro format to plain method name
-// Input: "2isCurrentItemChanged(bool)" -> Output: "isCurrentItemChanged"
+// Strip legacy SIGNAL() prefix and parameter list to yield a plain method name.
+// Input examples: "2isCurrentItemChanged(bool)" or "isCurrentItemChanged" -> "isCurrentItemChanged"
 QString normalizeSignalName(const char* signalName)
 {
     QString name = QString::fromLatin1(signalName);
@@ -86,8 +86,7 @@ bool MultiSignalSpy::init(QObject* signalEmitter)
             break;
         }
 
-        const QString signature = QStringLiteral("2%1").arg(QString::fromLatin1(method.methodSignature()));
-        auto spy = std::make_unique<QSignalSpy>(_signalEmitter, signature.toLatin1().constData());
+        auto spy = std::make_unique<QSignalSpy>(_signalEmitter, method);
 
         if (!spy->isValid()) {
             qCWarning(MultiSignalSpyLog) << "Invalid signal:" << signalName;
@@ -151,8 +150,7 @@ bool MultiSignalSpy::init(QObject* signalEmitter, const QStringList& signalNames
         }
 
         const QMetaMethod method = metaObject->method(it.value());
-        const QString signature = QStringLiteral("2%1").arg(QString::fromLatin1(method.methodSignature()));
-        auto spy = std::make_unique<QSignalSpy>(_signalEmitter, signature.toLatin1().constData());
+        auto spy = std::make_unique<QSignalSpy>(_signalEmitter, method);
 
         if (!spy->isValid()) {
             qCWarning(MultiSignalSpyLog) << "Invalid signal:" << signalName;

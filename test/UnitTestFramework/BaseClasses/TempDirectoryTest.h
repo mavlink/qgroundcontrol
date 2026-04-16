@@ -29,6 +29,7 @@
 class TempDirectoryTest : public UnitTest
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(TempDirectoryTest)
 
 public:
     explicit TempDirectoryTest(QObject* parent = nullptr) : UnitTest(parent)
@@ -102,6 +103,45 @@ public:
     bool createFile(const QString& relativePath, const QString& content)
     {
         return createFile(relativePath, content.toUtf8());
+    }
+
+    /// Copies a Qt resource to the temp directory, returns filesystem path.
+    /// @param resourcePath Path starting with ":/" (e.g., ":/unittest/data.json")
+    /// @param destName Destination filename; if empty, derived from resourcePath
+    /// @return Full filesystem path to the copied file, or empty on failure
+    QString copyResourceToTemp(const QString& resourcePath, const QString& destName = {})
+    {
+        if (!_tempDir) {
+            return {};
+        }
+        QFile res(resourcePath);
+        if (!res.open(QIODevice::ReadOnly)) {
+            return {};
+        }
+        const QString name = destName.isEmpty()
+                                 ? resourcePath.mid(resourcePath.lastIndexOf('/') + 1)
+                                 : destName;
+        const QString dest = tempPath(name);
+        QFile out(dest);
+        if (!out.open(QIODevice::WriteOnly)) {
+            return {};
+        }
+        if (out.write(res.readAll()) == -1) {
+            return {};
+        }
+        return dest;
+    }
+
+    /// Reads a Qt resource as raw bytes (static — usable from any test).
+    /// @param resourcePath Path starting with ":/" (e.g., ":/unittest/data.bin")
+    /// @return File contents, or empty QByteArray on failure
+    static QByteArray readResource(const QString& resourcePath)
+    {
+        QFile file(resourcePath);
+        if (!file.open(QIODevice::ReadOnly)) {
+            return {};
+        }
+        return file.readAll();
     }
 
 protected slots:

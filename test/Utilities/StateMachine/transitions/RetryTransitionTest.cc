@@ -52,7 +52,7 @@ void RetryTransitionTest::_testRetryActionCalled()
     machine.start();
 
     // Should finish after retry + final transition
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(retryCount, 1);  // Retry action called once
     QVERIFY(targetReached);   // Then transitioned to target
 }
@@ -98,7 +98,7 @@ void RetryTransitionTest::_testTransitionAfterMaxRetries()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(retryCount, 2);      // Both retries used
     QVERIFY(targetReached);       // Transitioned to retry target
     QVERIFY(!alternateReached);   // Not to alternate
@@ -133,7 +133,7 @@ void RetryTransitionTest::_testRetryCountResets()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 
     // Verify the transition's internal count was reset
     QCOMPARE(retryTransition->retryCount(), 0);
@@ -171,7 +171,7 @@ void RetryTransitionTest::_testMultipleRetries()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(1000));  // Longer timeout for multiple retries
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(retryCount, 3);  // All 3 retries used
     QVERIFY(targetReached);
 }
@@ -208,7 +208,7 @@ void RetryTransitionTest::_testZeroRetries()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(retryCount, 0);  // No retries attempted
     QVERIFY(targetReached);   // Immediate transition
 }
@@ -237,7 +237,7 @@ void RetryTransitionTest::_testWaitRearmedBeforeRetryAction()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(waitWasRearmedBeforeRetryAction);
 }
 
