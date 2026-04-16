@@ -29,6 +29,7 @@ class Vehicle;
 class CommsTest : public UnitTest
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(CommsTest)
 
 public:
     explicit CommsTest(QObject* parent = nullptr);

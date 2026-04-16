@@ -18,7 +18,7 @@ void FunctionStateTest::_testFunctionState()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(functionCalled);
 }
 
@@ -46,7 +46,7 @@ void FunctionStateTest::_testFunctionStateChain()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(executionOrder.size(), 3);
     QCOMPARE(executionOrder[0], QStringLiteral("state1"));
     QCOMPARE(executionOrder[1], QStringLiteral("state2"));

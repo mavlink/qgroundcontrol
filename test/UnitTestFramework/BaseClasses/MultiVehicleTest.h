@@ -29,6 +29,7 @@ class Vehicle;
 class MultiVehicleTest : public UnitTest
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(MultiVehicleTest)
 
 public:
     explicit MultiVehicleTest(QObject* parent = nullptr);
@@ -53,8 +54,8 @@ protected:
     /// Creates N vehicles with unique IDs
     bool createVehicles(int count, MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4);
 
-    /// Creates a single vehicle with specific system ID
-    Vehicle* createVehicle(int systemId, MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4);
+    /// Creates a single vehicle
+    Vehicle* createVehicle(MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4);
 
     /// Sets the active vehicle
     void setActiveVehicle(Vehicle* vehicle);

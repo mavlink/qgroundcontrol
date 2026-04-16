@@ -60,6 +60,7 @@ inline void addAutopilotRows()
 class VehicleTest : public UnitTest
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(VehicleTest)
 
 public:
     explicit VehicleTest(QObject* parent = nullptr);
@@ -143,8 +144,6 @@ protected:
     /// Disconnects the current MockLink and waits for vehicle to be removed
     void _disconnectMockLink();
 
-    /// Compares two MissionItems for equality using QCOMPARE/QVERIFY
-    static void _missionItemsEqual(const MissionItem& actual, const MissionItem& expected);
     QString failureContextSummary() const override;
 
     MockLink* _mockLink = nullptr;

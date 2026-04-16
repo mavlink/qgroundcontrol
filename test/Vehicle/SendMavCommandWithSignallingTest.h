@@ -19,13 +19,13 @@ private slots:
     void _duplicateCommand();
 
 private:
-    typedef struct
+    struct TestCase_t
     {
         MAV_CMD command;
         MAV_RESULT expectedCommandResult;
         Vehicle::MavCmdResultFailureCode_t expectedFailureCode;
         int expectedSendCount;
-    } TestCase_t;
+    };
 
     void _testCaseWorker(TestCase_t& testCase);
 

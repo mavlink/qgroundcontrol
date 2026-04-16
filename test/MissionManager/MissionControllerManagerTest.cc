@@ -41,4 +41,4 @@ void MissionControllerManagerTest::_checkInProgressValues(bool inProgress)
 
 #include "UnitTest.h"
 
-UT_REGISTER_TEST(MissionControllerManagerTest, TestLabel::Integration, TestLabel::MissionManager)
+UT_REGISTER_TEST_STANDALONE(MissionControllerManagerTest, TestLabel::Integration, TestLabel::MissionManager)

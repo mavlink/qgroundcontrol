@@ -30,7 +30,7 @@ void QGCSignalTransitionTest::_testTransitionMachineAccessor()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(capturedMachine, &machine);
 }
 
@@ -61,11 +61,11 @@ void QGCSignalTransitionTest::_testTransitionMachineAccessorAbstract()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     machine.postEvent(QStringLiteral("testEvent"));
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(capturedMachine, &machine);
 }
 

@@ -1,6 +1,7 @@
 #include "MissionManagerTest.h"
 
 #include <QtTest/QSignalSpy>
+#include <iterator>
 
 #include "MissionManager.h"
 #include "MultiSignalSpy.h"
@@ -75,7 +76,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         // This should be clean run
         // Wait for write sequence to complete. We should get:
         //      inProgressChanged(false) signal
-        //      sednComplete signal
+        //      sendComplete signal
         QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "sendComplete", _missionManagerSignalWaitTime);
         QVERIFY(_multiSpyMissionManager->emittedByMask(
             _multiSpyMissionManager->mask("inProgressChanged", "sendComplete")));
@@ -175,20 +176,11 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
 
 void MissionManagerTest::_testWriteFailureHandlingWorker()
 {
-    /*
-    /// Called to send a MISSION_ACK message while the MissionManager is in idle state
-    void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType) { _missionItemHandler.sendUnexpectedMissionAck(ackType); }
-    /// Called to send a MISSION_ITEM message while the MissionManager is in idle state
-    void sendUnexpectedMissionItem() { _missionItemHandler.sendUnexpectedMissionItem(); }
-    /// Called to send a MISSION_REQUEST message while the MissionManager is in idle state
-    void sendUnexpectedMissionRequest() { _missionItemHandler.sendUnexpectedMissionRequest(); }
-    */
-    typedef struct
-    {
+    struct WriteTestCase_t {
         const char* failureText;
         MockLinkMissionItemHandler::FailureMode_t failureMode;
         bool shouldFail;
-    } WriteTestCase_t;
+    };
 
     static const WriteTestCase_t rgTestCases[] = {
         {"No Failure", MockLinkMissionItemHandler::FailNone, false},
@@ -203,7 +195,7 @@ void MissionManagerTest::_testWriteFailureHandlingWorker()
         {"FailWriteFinalAckErrorAck", MockLinkMissionItemHandler::FailWriteFinalAckErrorAck, true},
         {"FailWriteFinalAckMissingRequests", MockLinkMissionItemHandler::FailWriteFinalAckMissingRequests, true},
     };
-    for (size_t i = 0; i < sizeof(rgTestCases) / sizeof(rgTestCases[0]); i++) {
+    for (size_t i = 0; i < std::size(rgTestCases); i++) {
         const WriteTestCase_t* pCase = &rgTestCases[i];
         qCDebug(UnitTestLog) << "TEST CASE _testWriteFailureHandlingWorker" << pCase->failureText;
         _writeItems(pCase->failureMode, MAV_MISSION_ERROR, pCase->shouldFail);
@@ -213,21 +205,11 @@ void MissionManagerTest::_testWriteFailureHandlingWorker()
 
 void MissionManagerTest::_testReadFailureHandlingWorker()
 {
-    /*
-     /// Called to send a MISSION_ACK message while the MissionManager is in idle state
-     void sendUnexpectedMissionAck(MAV_MISSION_RESULT ackType) { _missionItemHandler.sendUnexpectedMissionAck(ackType);
-     }
-     /// Called to send a MISSION_ITEM message while the MissionManager is in idle state
-     void sendUnexpectedMissionItem() { _missionItemHandler.sendUnexpectedMissionItem(); }
-     /// Called to send a MISSION_REQUEST message while the MissionManager is in idle state
-     void sendUnexpectedMissionRequest() { _missionItemHandler.sendUnexpectedMissionRequest(); }
-     */
-    typedef struct
-    {
+    struct ReadTestCase_t {
         const char* failureText;
         MockLinkMissionItemHandler::FailureMode_t failureMode;
         bool shouldFail;
-    } ReadTestCase_t;
+    };
 
     /*
     static const ReadTestCase_t rgTestCases[] = {
@@ -245,7 +227,7 @@ void MissionManagerTest::_testReadFailureHandlingWorker()
         {"FailReadRequest0ErrorAck", MockLinkMissionItemHandler::FailReadRequest0ErrorAck, true},
         {"FailReadRequest1ErrorAck", MockLinkMissionItemHandler::FailReadRequest1ErrorAck, true},
     };
-    for (size_t i = 0; i < sizeof(rgTestCases) / sizeof(rgTestCases[0]); i++) {
+    for (size_t i = 0; i < std::size(rgTestCases); i++) {
         const ReadTestCase_t* pCase = &rgTestCases[i];
         qCDebug(UnitTestLog) << "TEST CASE _testReadFailureHandlingWorker" << pCase->failureText;
         _roundTripItems(pCase->failureMode, MAV_MISSION_ERROR, pCase->shouldFail);
@@ -282,11 +264,10 @@ void MissionManagerTest::_testErrorAckFailureStrings()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);
 
-    typedef struct
-    {
+    struct ErrorStringTestCase_t {
         const char* ackResultStr;
         MAV_MISSION_RESULT ackResult;
-    } ErrorStringTestCase_t;
+    };
 
     static const ErrorStringTestCase_t rgTestCases[] = {
         {"MAV_MISSION_UNSUPPORTED_FRAME", MAV_MISSION_UNSUPPORTED_FRAME},
@@ -300,7 +281,7 @@ void MissionManagerTest::_testErrorAckFailureStrings()
         {"MAV_MISSION_INVALID_PARAM7", MAV_MISSION_INVALID_PARAM7},
         {"MAV_MISSION_INVALID_SEQUENCE", MAV_MISSION_INVALID_SEQUENCE},
     };
-    for (size_t i = 0; i < sizeof(rgTestCases) / sizeof(rgTestCases[0]); i++) {
+    for (size_t i = 0; i < std::size(rgTestCases); i++) {
         const ErrorStringTestCase_t* pCase = &rgTestCases[i];
         qCDebug(UnitTestLog) << "TEST CASE _testErrorAckFailureStrings" << pCase->ackResultStr;
         _writeItems(MockLinkMissionItemHandler::FailWriteRequest1ErrorAck, pCase->ackResult, true /* shouldFail */);

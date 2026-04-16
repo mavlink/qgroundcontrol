@@ -1,13 +1,6 @@
 #include "QGCAbstractStateTest.h"
 #include "StateTestCommon.h"
 
-namespace {
-bool _spyTriggered(QSignalSpy& spy, int timeoutMsecs)
-{
-    return (spy.count() > 0) || spy.wait(timeoutMsecs);
-}
-}
-
 
 /// Concrete implementation for testing QGCAbstractState
 class TestAbstractState : public QGCAbstractState
@@ -48,7 +41,7 @@ void QGCAbstractStateTest::_testEntryCallback()
     QSignalSpy enteredSpy(state, &QAbstractState::entered);
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
     QVERIFY(callbackCalled);
 
     // Cleanup - emit advance to exit
@@ -68,7 +61,7 @@ void QGCAbstractStateTest::_testExitCallback()
     QSignalSpy enteredSpy(state, &QAbstractState::entered);
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
     QVERIFY(!callbackCalled);  // Not called yet
 
     state->emitAdvance();
@@ -93,7 +86,7 @@ void QGCAbstractStateTest::_testBothCallbacks()
     QSignalSpy enteredSpy(state, &QAbstractState::entered);
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
     QVERIFY(entryCallbackCalled);
     QVERIFY(!exitCallbackCalled);
 
@@ -116,7 +109,7 @@ void QGCAbstractStateTest::_testOnEnterOverride()
     QSignalSpy enteredSpy(state, &QAbstractState::entered);
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
     QVERIFY(state->onEnterCalled);
 
     state->emitAdvance();
@@ -132,7 +125,7 @@ void QGCAbstractStateTest::_testOnLeaveOverride()
     QSignalSpy enteredSpy(state, &QAbstractState::entered);
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
     QVERIFY(!state->onLeaveCalled);
 
     state->emitAdvance();
@@ -164,11 +157,11 @@ void QGCAbstractStateTest::_testAdvanceSignal()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     state->emitAdvance();
 
-    QVERIFY(_spyTriggered(stoppedSpy, 500));
+    QVERIFY(spyTriggered(stoppedSpy, TestTimeout::shortMs()));
     QCOMPARE(advanceSpy.count(), 1);
 }
 
@@ -186,11 +179,11 @@ void QGCAbstractStateTest::_testErrorSignal()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     state->emitError();
 
-    QVERIFY(_spyTriggered(stoppedSpy, 500));
+    QVERIFY(spyTriggered(stoppedSpy, TestTimeout::shortMs()));
     QCOMPARE(errorSpy.count(), 1);
 }
 
@@ -215,7 +208,7 @@ void QGCAbstractStateTest::_testEventHandler()
     QSignalSpy enteredSpy(state, &QAbstractState::entered);
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // Event handler was called during state machine processing
     // (the exact timing depends on Qt's event handling)

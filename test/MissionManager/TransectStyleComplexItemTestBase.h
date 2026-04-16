@@ -13,8 +13,6 @@ protected:
     void init() override;
     void cleanup() override;
 
-    void _printItemCommands(QList<MissionItem*> items);
-
     Vehicle* _controllerVehicle = nullptr;
     PlanViewSettings* _planViewSettings = nullptr;
 };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "StateMachineTest.h"
 
 #include "MultiSignalSpy.h"
 #include "QGCStateMachine.h"

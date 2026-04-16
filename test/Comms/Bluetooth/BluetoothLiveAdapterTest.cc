@@ -21,11 +21,16 @@ static QVariantList _waitForConfigAdapters(BluetoothConfiguration &config, QSign
         return adapters;
     }
 
+    // Block on the adapter-state signal in slices so the helper exits as soon
+    // as adapters appear, yet still honours the overall timeout. Previously
+    // the wait fell through to the next spy.wait slot on spurious wake-ups;
+    // breaking out early when the list populates avoids wasted slices.
     QElapsedTimer waitTimer;
     waitTimer.start();
 
     while (adapters.isEmpty() && (waitTimer.elapsed() < timeoutMs)) {
-        (void) adapterStateSpy.wait(200);
+        const int remaining = qMax(0, timeoutMs - static_cast<int>(waitTimer.elapsed()));
+        (void) adapterStateSpy.wait(qMin(200, remaining));
         adapters = config.getAllAvailableAdapters();
     }
 
@@ -137,17 +142,12 @@ void BluetoothLiveAdapterTest::_testLiveScanLifecycle()
 
     config.startScan();
 
-    bool observedScanOrError = false;
-    QElapsedTimer waitTimer;
-    waitTimer.start();
-    while (waitTimer.elapsed() < 5000) {
-        if (config.scanning() || (errorSpy.count() > 0)) {
-            observedScanOrError = true;
-            break;
-        }
-        QTest::qWait(100);
-    }
-
+    // Exit as soon as the config reports scanning=true OR an error is emitted,
+    // rather than polling every 100 ms for up to 5 s. QTRY_VERIFY pumps the
+    // event loop on a tight default interval (~50 ms) so signals land
+    // promptly; the timeout matches the previous upper bound.
+    QTRY_VERIFY_WITH_TIMEOUT(config.scanning() || (errorSpy.count() > 0), 5000);
+    const bool observedScanOrError = config.scanning() || (errorSpy.count() > 0);
     QVERIFY2(observedScanOrError, "Scan neither started nor produced an error within timeout");
 
     if (!config.scanning() && (errorSpy.count() > 0)) {
@@ -158,13 +158,10 @@ void BluetoothLiveAdapterTest::_testLiveScanLifecycle()
 
     if (config.scanning()) {
         config.stopScan();
-        QElapsedTimer stopTimer;
-        stopTimer.start();
-        while (config.scanning() && (stopTimer.elapsed() < 3000)) {
-            if (!scanningSpy.wait(100)) {
-                QTest::qWait(50);
-            }
-        }
+        // Single bounded QTRY call replaces the previous spy.wait / qWait(50)
+        // fallback pair — exits immediately once scanning is false, otherwise
+        // times out at the same 3 s bound.
+        QTRY_VERIFY_WITH_TIMEOUT(!config.scanning(), 3000);
         QVERIFY2(!config.scanning(), "Scan did not stop within timeout");
     }
 }

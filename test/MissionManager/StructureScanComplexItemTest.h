@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "BaseClasses/MissionTest.h"
 
 class StructureScanComplexItem;
@@ -25,7 +27,7 @@ private:
     void _initItem();
     void _validateItem(StructureScanComplexItem* item);
 
-    MultiSignalSpy* _multiSpy = nullptr;
+    std::unique_ptr<MultiSignalSpy> _multiSpy;
     StructureScanComplexItem* _structureScanItem = nullptr;
     QList<QGeoCoordinate> _polyPoints;
 };

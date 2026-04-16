@@ -13,8 +13,12 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QTest>
 
+#include <atomic>
+#include <chrono>
 #include <functional>
 #include <initializer_list>
+#include <memory>
+#include <vector>
 
 // ============================================================================
 // Test Labels - Categories for filtering and organizing tests
@@ -141,12 +145,15 @@ QStringList availableLabelNames();
                             .arg(timeoutMs) \
                             .arg(QStringLiteral(#spy))))
 
-/// Wait for a condition with timeout
+/// Wait for a condition with timeout.
+/// Prefer QTRY_VERIFY_WITH_TIMEOUT for new code — it is the idiomatic Qt 6 equivalent.
 /// @param condition Boolean expression to wait for
 /// @param timeoutMs Timeout in milliseconds
-#define QVERIFY_TRUE_WAIT(condition, timeoutMs)                           \
-    QVERIFY2(UnitTest::waitForCondition([&]() { return (condition); }, (timeoutMs), QStringLiteral(#condition)), \
-             qPrintable(QString("Condition not met within %1ms: " #condition).arg(timeoutMs)))
+#define QVERIFY_TRUE_WAIT(condition, timeoutMs) QTRY_VERIFY_WITH_TIMEOUT(condition, timeoutMs)
+
+/// Compare with polling timeout. Retries until actual == expected or timeout.
+/// Wrapper around QTRY_COMPARE_WITH_TIMEOUT for consistency with QVERIFY_TRUE_WAIT.
+#define QCOMPARE_TRUE_WAIT(actual, expected, timeoutMs) QTRY_COMPARE_WITH_TIMEOUT(actual, expected, timeoutMs)
 
 /// Compare floating point values with configurable epsilon
 #define QCOMPARE_FUZZY(actual, expected, epsilon)                                             \
@@ -169,33 +176,41 @@ QStringList availableLabelNames();
 // ============================================================================
 
 namespace TestTimeout {
+
 /// Returns true when running under CI (GitHub Actions, etc.)
+///
+/// Evaluated on every call so tests may use EnvVarFixture to toggle the
+/// CI/GITHUB_ACTIONS variables and observe the corresponding timeout changes
+/// within the same process.
 inline bool isCI()
 {
-    static const bool ci = qEnvironmentVariableIsSet("CI") || qEnvironmentVariableIsSet("GITHUB_ACTIONS");
-    return ci;
+    return qEnvironmentVariableIsSet("CI") || qEnvironmentVariableIsSet("GITHUB_ACTIONS");
 }
 
-/// Short timeout for quick operations (1 second, 2s on CI)
-inline int shortMs()
+/// Short timeout for quick operations (1s local, 2s CI)
+inline std::chrono::milliseconds shortDuration()
 {
-    static const int timeout = isCI() ? 2000 : 1000;
-    return timeout;
+    return std::chrono::milliseconds{isCI() ? 2000 : 1000};
 }
 
-/// Medium timeout for normal async operations (5 seconds, 10s on CI)
-inline int mediumMs()
+/// Medium timeout for normal async operations (5s local, 10s CI)
+inline std::chrono::milliseconds mediumDuration()
 {
-    static const int timeout = isCI() ? 10000 : 5000;
-    return timeout;
+    return std::chrono::milliseconds{isCI() ? 10000 : 5000};
 }
 
-/// Long timeout for slow operations like vehicle connection (30 seconds, 60s on CI)
-inline int longMs()
+/// Long timeout for slow operations like vehicle connection (30s local, 60s CI)
+inline std::chrono::milliseconds longDuration()
 {
-    static const int timeout = isCI() ? 60000 : 30000;
-    return timeout;
+    return std::chrono::milliseconds{isCI() ? 60000 : 30000};
 }
+
+/// @name Legacy int-millisecond accessors (prefer the chrono versions above)
+/// @{
+inline int shortMs() { return static_cast<int>(shortDuration().count()); }
+inline int mediumMs() { return static_cast<int>(mediumDuration().count()); }
+inline int longMs() { return static_cast<int>(longDuration().count()); }
+/// @}
 
 /// Iteration count for stress tests.
 /// Uses QGC_TEST_STRESS_ITERATIONS when set to a positive integer.
@@ -209,6 +224,23 @@ inline int stressIterations(int localDefault, int ciDefault)
     return isCI() ? ciDefault : localDefault;
 }
 }  // namespace TestTimeout
+
+// ============================================================================
+// QTest::toString specializations for better QCOMPARE diagnostics
+// ============================================================================
+
+namespace QTest {
+/// Provides readable QCOMPARE failure messages for QGeoCoordinate.
+/// Without this, QCOMPARE prints "Compared values are not the same" with no detail.
+template <>
+inline char* toString(const QGeoCoordinate& c)
+{
+    return qstrdup(qPrintable(QStringLiteral("(%1, %2, %3)")
+                                  .arg(c.latitude(), 0, 'f', 7)
+                                  .arg(c.longitude(), 0, 'f', 7)
+                                  .arg(c.altitude(), 0, 'f', 2)));
+}
+}  // namespace QTest
 
 // ============================================================================
 // Forward Declarations
@@ -229,6 +261,8 @@ class Vehicle;
 /// Usage: TEST_CONTEXT("Loading mission file: " + filename);
 class TestContext
 {
+    Q_DISABLE_COPY_MOVE(TestContext)
+
 public:
     explicit TestContext(const QString& context);
     ~TestContext();
@@ -277,6 +311,7 @@ private:
 class UnitTest : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(UnitTest)
 
 public:
     explicit UnitTest(QObject* parent = nullptr);
@@ -328,6 +363,37 @@ public:
     /// Waits for a QObject to be deleted (QPointer becomes null) while draining deferred deletes.
     static bool waitForDeleted(const QPointer<QObject>& objectPtr, int timeoutMs,
                                QStringView objectName = {});
+
+    /// @name std::chrono overloads — prefer these in new code
+    /// @{
+    static bool waitForSignal(QSignalSpy& spy, std::chrono::milliseconds timeout, QStringView signalName = {})
+    {
+        return waitForSignal(spy, static_cast<int>(timeout.count()), signalName);
+    }
+
+    static bool waitForNoSignal(QSignalSpy& spy, std::chrono::milliseconds timeout, QStringView signalName = {})
+    {
+        return waitForNoSignal(spy, static_cast<int>(timeout.count()), signalName);
+    }
+
+    static bool waitForSignalCount(QSignalSpy& spy, int expectedCount, std::chrono::milliseconds timeout,
+                                   QStringView signalName = {})
+    {
+        return waitForSignalCount(spy, expectedCount, static_cast<int>(timeout.count()), signalName);
+    }
+
+    static bool waitForCondition(const std::function<bool()>& condition, std::chrono::milliseconds timeout,
+                                 QStringView conditionName = {})
+    {
+        return waitForCondition(condition, static_cast<int>(timeout.count()), conditionName);
+    }
+
+    static bool waitForDeleted(const QPointer<QObject>& objectPtr, std::chrono::milliseconds timeout,
+                               QStringView objectName = {})
+    {
+        return waitForDeleted(objectPtr, static_cast<int>(timeout.count()), objectName);
+    }
+    /// @}
 
     /// Process queued events/deferred deletes to stabilize teardown between tests.
     /// If iterations <= 0, CI-aware defaults are used.
@@ -456,8 +522,8 @@ private:
     static QList<UnitTest*>& _testList();
     static QString& _outputFile();
 
-    QList<QTemporaryFile*> _tempFiles;
-    QList<QTemporaryDir*> _tempDirs;
+    std::vector<std::unique_ptr<QTemporaryFile>> _tempFiles;
+    std::vector<std::unique_ptr<QTemporaryDir>> _tempDirs;
     QList<ExpectedLogMessage> _expectedLogMessages;
 
     TestLabels _labels;
@@ -473,15 +539,15 @@ private:
 // ============================================================================
 
 /// Template class for automatic test registration at static initialization time.
-/// Test instances are owned by the static wrapper and live for the program duration.
+/// Test instances are owned by the wrapper via unique_ptr and destroyed at static
+/// destruction time, avoiding leak-sanitizer reports.
 template <class T>
 class UnitTestWrapper
 {
 public:
     UnitTestWrapper(const QString& name, bool standalone, std::initializer_list<TestLabel> labels = {})
     {
-        // Create test instance - lives for program duration (static storage)
-        _unitTest = new T;
+        _unitTest = std::make_unique<T>();
         _unitTest->setObjectName(name);
         _unitTest->setStandalone(standalone);
 
@@ -491,9 +557,9 @@ public:
         }
         _unitTest->setLabels(combinedLabels);
 
-        UnitTest::_addTest(_unitTest);
+        UnitTest::_addTest(_unitTest.get());
     }
 
 private:
-    T* _unitTest = nullptr;  // Intentionally leaked - static lifetime
+    std::unique_ptr<T> _unitTest;
 };

@@ -26,10 +26,10 @@ private slots:
     void cleanup() override;
 
 private:
-    typedef struct
+    struct TestCase_t
     {
         const char* file;
-    } TestCase_t;
+    };
 
     void _testCaseWorker(const TestCase_t& testCase);
     void _sizeTestCaseWorker(int fileSize);

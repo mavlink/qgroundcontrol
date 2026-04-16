@@ -8,7 +8,13 @@
 
 void MissionCommandTreeTest::init()
 {
+    UnitTest::init();
     _commandTree = new MissionCommandTree(true /* unitTest */, this);
+}
+
+void MissionCommandTreeTest::cleanup()
+{
+    UnitTest::cleanup();
 }
 
 QString MissionCommandTreeTest::_rawName(int id) const

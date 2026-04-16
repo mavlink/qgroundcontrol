@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "LogStoreTestBase.h"
 
-class LogStoreQueryModelTest : public UnitTest
+class LogStoreQueryModelTest : public LogStoreTestBase
 {
     Q_OBJECT
 
@@ -15,4 +15,10 @@ private slots:
     void _textFilter();
     void _availableSessions();
     void _loadMore();
+
+private:
+    static void populateStore(LogStore* store, int count,
+                              const QString& prefix = QStringLiteral("msg"),
+                              LogEntry::Level level = LogEntry::Info,
+                              const QString& category = QStringLiteral("Test"));
 };

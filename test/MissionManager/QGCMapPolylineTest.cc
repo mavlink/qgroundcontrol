@@ -1,6 +1,8 @@
 #include "QGCMapPolylineTest.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDir>
+#include <QtCore/QFile>
 
 #include "MultiSignalSpy.h"
 #include "QGCMapPolyline.h"
@@ -9,7 +11,7 @@
 
 void QGCMapPolylineTest::init()
 {
-    UnitTest::init();
+    TempDirectoryTest::init();
     _mapPolyline = new QGCMapPolyline(this);
     _pathModel = _mapPolyline->qmlPathModel();
     QVERIFY(_pathModel);
@@ -27,7 +29,7 @@ void QGCMapPolylineTest::cleanup()
     _multiSpyPolyline = nullptr;
     delete _mapPolyline;
     _mapPolyline = nullptr;
-    UnitTest::cleanup();
+    TempDirectoryTest::cleanup();
 }
 
 void QGCMapPolylineTest::_testDirty()
@@ -148,9 +150,9 @@ void QGCMapPolylineTest::_testVertexManipulation()
     delete multiSpyGeoCoord;
 }
 
-QString QGCMapPolylineTest::_copyRes(const QTemporaryDir& tmpDir, const QString& name)
+QString QGCMapPolylineTest::_copyRes(const QString& dirPath, const QString& name)
 {
-    const QString dstPath = tmpDir.filePath(name);
+    const QString dstPath = QDir(dirPath).filePath(name);
     (void)QFile::remove(dstPath);
     const QString resPath = QStringLiteral(":/unittest/%1").arg(name);
     (void)QFile(resPath).copy(dstPath);
@@ -159,13 +161,12 @@ QString QGCMapPolylineTest::_copyRes(const QTemporaryDir& tmpDir, const QString&
 
 void QGCMapPolylineTest::_testShapeLoad()
 {
-    const QTemporaryDir tmpDir;
-    (void)_copyRes(tmpDir, "pline.dbf");
-    (void)_copyRes(tmpDir, "pline.shx");
-    (void)_copyRes(tmpDir, "pline.prj");
-    const QString shpFile = _copyRes(tmpDir, "pline.shp");
+    (void)_copyRes(tempDirPath(), "pline.dbf");
+    (void)_copyRes(tempDirPath(), "pline.shx");
+    (void)_copyRes(tempDirPath(), "pline.prj");
+    const QString shpFile = _copyRes(tempDirPath(), "pline.shp");
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(shpFile));
-    const QString kmlFile = _copyRes(tmpDir, "polyline.kml");
+    const QString kmlFile = _copyRes(tempDirPath(), "polyline.kml");
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(kmlFile));
 }
 

@@ -4,7 +4,7 @@
 
 #include <QtPositioning/QGeoCoordinate>
 
-void NTRIPSourceTableTest::testParseSTRLine()
+void NTRIPSourceTableTest::_testParseSTRLine()
 {
     const QString line = "STR;MOUNT01;Mount Identifier;RTCM 3.2;1005(1),1074(1),1084(1),1094(1);2;GPS+GLO+GAL;NET01;USA;40.0000;-74.0000;0;1;QGC Test;none;B;N;4800;misc";
     auto* mp = NTRIPMountpointModel::fromSourceTableLine(line);
@@ -29,21 +29,21 @@ void NTRIPSourceTableTest::testParseSTRLine()
     delete mp;
 }
 
-void NTRIPSourceTableTest::testParseShortLine()
+void NTRIPSourceTableTest::_testParseShortLine()
 {
     const QString line = "STR;SHORT;Too;Few;Fields";
     auto* mp = NTRIPMountpointModel::fromSourceTableLine(line);
     QVERIFY(mp == nullptr);
 }
 
-void NTRIPSourceTableTest::testParseNonSTRLine()
+void NTRIPSourceTableTest::_testParseNonSTRLine()
 {
     const QString line = "CAS;caster.example.com;2101;NTRIP Caster;Operator;0;USA;0.0;0.0;0.0;0.0;0;0;misc";
     auto* mp = NTRIPMountpointModel::fromSourceTableLine(line);
     QVERIFY(mp == nullptr);
 }
 
-void NTRIPSourceTableTest::testParseFullTable()
+void NTRIPSourceTableTest::_testParseFullTable()
 {
     const QString table =
         "SOURCETABLE 200 OK\r\n"
@@ -58,7 +58,7 @@ void NTRIPSourceTableTest::testParseFullTable()
     QCOMPARE(model.count(), 2);
 }
 
-void NTRIPSourceTableTest::testDistanceCalculation()
+void NTRIPSourceTableTest::_testDistanceCalculation()
 {
     const QString line = "STR;NEAR;Id;RTCM 3.2;details;2;GPS;NET;USA;40.7128;-74.0060;0;1;gen;none;B;N;4800;misc";
     auto* mp = NTRIPMountpointModel::fromSourceTableLine(line);
@@ -78,7 +78,7 @@ void NTRIPSourceTableTest::testDistanceCalculation()
     delete mp;
 }
 
-void NTRIPSourceTableTest::testUpdateDistancesAll()
+void NTRIPSourceTableTest::_testUpdateDistancesAll()
 {
     const QString table =
         "STR;NYC;Id1;RTCM 3.2;details;2;GPS;NET;USA;40.7128;-74.0060;0;1;gen;none;B;N;4800;misc\r\n"
@@ -105,7 +105,7 @@ void NTRIPSourceTableTest::testUpdateDistancesAll()
     QVERIFY(mp1->distanceKm() > 5000.0);
 }
 
-void NTRIPSourceTableTest::testEmptyTable()
+void NTRIPSourceTableTest::_testEmptyTable()
 {
     NTRIPSourceTableModel model;
     model.parseSourceTable("");

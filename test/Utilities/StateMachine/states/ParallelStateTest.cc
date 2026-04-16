@@ -35,7 +35,7 @@ void ParallelStateTest::_testParallelState()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(region1Executed);
     QVERIFY(region2Executed);
 }
@@ -54,7 +54,7 @@ void ParallelStateTest::_testParallelStateEmpty()
     machine.start();
 
     // Empty parallel state should complete immediately
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 }
 
 UT_REGISTER_TEST(ParallelStateTest, TestLabel::Unit, TestLabel::Utilities)

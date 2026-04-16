@@ -299,7 +299,10 @@ void QGCArchiveWatcherTest::_testCancelExtractionResetsState()
     watcher.cancelExtraction();
 
     QVERIFY_TRUE_WAIT(!watcher.isExtracting() && watcher.progress() == 0.0, TestTimeout::shortMs());
-    QVERIFY_NO_SIGNAL_WAIT(extractionSpy, TestTimeout::shortMs());
+    // State is already settled (not extracting, progress == 0). A quarter-second
+    // is ample to catch any stray queued completion signal without burning a
+    // full shortMs() budget — QVERIFY_NO_SIGNAL_WAIT always waits the full timeout.
+    QVERIFY_NO_SIGNAL_WAIT(extractionSpy, 250);
     QVERIFY(extractionSpy.count() <= 1);
 }
 

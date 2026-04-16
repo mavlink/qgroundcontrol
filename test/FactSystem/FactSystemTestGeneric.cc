@@ -2,7 +2,7 @@
 
 #include "QGCMAVLink.h"
 
-/// FactSystem Unit Test for PX4 autpilot
+/// FactSystem Unit Test for Generic autopilot
 
 void FactSystemTestGeneric::init()
 {

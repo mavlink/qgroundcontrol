@@ -2,6 +2,7 @@
 #include "LogModel.h"
 #include "UnitTest.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -20,7 +21,7 @@ void LogModelTest::_appendAndRowCount()
 
     model.enqueue(entry);
 
-    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 1, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 1, TestTimeout::shortMs());
     QCOMPARE(model.rowCount(), 1);
 
     const QModelIndex idx = model.index(0, 0);
@@ -42,7 +43,7 @@ void LogModelTest::_batchFlush()
         model.enqueue(entry);
     }
 
-    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 10, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 10, TestTimeout::shortMs());
     QVERIFY(insertSpy.count() <= 2);
 }
 
@@ -51,7 +52,9 @@ void LogModelTest::_trimExcessOnOverflow()
     LogModel model;
     model.setMaxEntries(1000);
 
-    for (int i = 0; i < 1100; ++i) {
+    // Only need to exceed maxEntries to trigger the trim path; 1005 validates
+    // the boundary without allocating ~100 extra LogEntry objects per run.
+    for (int i = 0; i < 1005; ++i) {
         LogEntry entry;
         entry.level = LogEntry::Debug;
         entry.message = QString::number(i);
@@ -59,7 +62,7 @@ void LogModelTest::_trimExcessOnOverflow()
         model.enqueue(entry);
     }
 
-    QTRY_VERIFY_WITH_TIMEOUT(model.totalCount() <= 1000, 2000);
+    QTRY_VERIFY_WITH_TIMEOUT(model.totalCount() <= 1000, TestTimeout::shortMs());
 }
 
 void LogModelTest::_categories()
@@ -81,7 +84,7 @@ void LogModelTest::_categories()
     e3.buildFormatted();
     model.enqueue(e3);
 
-    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 3, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 3, TestTimeout::shortMs());
 
     const QStringList cats = model.categoriesList();
     QCOMPARE(cats.size(), 2);
@@ -99,7 +102,7 @@ void LogModelTest::_clear()
         entry.buildFormatted();
         model.enqueue(entry);
     }
-    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 5, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 5, TestTimeout::shortMs());
 
     model.clear();
     QCOMPARE(model.totalCount(), 0);
@@ -133,7 +136,7 @@ static void populateWithMixedEntries(LogModel &model)
         entry.buildFormatted();
         model.enqueue(entry);
     }
-    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 5, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 5, TestTimeout::shortMs());
 }
 
 void LogModelTest::_filterByLevel()
@@ -236,7 +239,7 @@ void LogModelTest::_categoriesComboList()
     e2.buildFormatted();
     model.enqueue(e2);
 
-    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 2, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 2, TestTimeout::shortMs());
 
     cats = model.categoriesList();
     QCOMPARE(cats.size(), 2);
@@ -263,7 +266,7 @@ void LogModelTest::_setFilterTextDeferred()
     e2.buildFormatted();
     model.enqueue(e2);
 
-    QTRY_COMPARE_WITH_TIMEOUT(model.rowCount(), 2, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.rowCount(), 2, TestTimeout::shortMs());
 
     // Deferred filter should not apply immediately
     QSignalSpy filterSpy(&model, &LogModel::filterTextChanged);
@@ -272,7 +275,7 @@ void LogModelTest::_setFilterTextDeferred()
     QCOMPARE(filterSpy.count(), 0);
 
     // After debounce interval it should apply
-    QTRY_COMPARE_WITH_TIMEOUT(filterSpy.count(), 1, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(filterSpy.count(), 1, TestTimeout::shortMs());
     QCOMPARE(model.filterText(), QStringLiteral("hello"));
     QCOMPARE(model.rowCount(), 1);
 
@@ -282,8 +285,10 @@ void LogModelTest::_setFilterTextDeferred()
     QCOMPARE(model.rowCount(), 1);
     QCOMPARE(model.filterText(), QStringLiteral("goodbye"));
 
-    // Deferred should not overwrite since immediate already set
-    QTRY_VERIFY_WITH_TIMEOUT(true, 300);
+    // Deferred should not overwrite since immediate already set. Flush pending
+    // events so any buffered deferred-filter timer fires in-line, rather than
+    // burning a fixed 300 ms QTRY spin.
+    QCoreApplication::processEvents();
     QCOMPARE(model.filterText(), QStringLiteral("goodbye"));
 }
 
@@ -338,7 +343,7 @@ void LogModelTest::_multiData()
     entry.buildFormatted();
     model.enqueue(entry);
 
-    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 1, 2000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.totalCount(), 1, TestTimeout::shortMs());
 
     const QModelIndex idx = model.index(0, 0);
 

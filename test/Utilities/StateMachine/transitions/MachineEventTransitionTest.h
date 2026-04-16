@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "StateMachineTest.h"
 
-class MachineEventTransitionTest : public UnitTest
+class MachineEventTransitionTest : public StateMachineTest
 {
     Q_OBJECT
 

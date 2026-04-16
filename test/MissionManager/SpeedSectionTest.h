@@ -26,8 +26,6 @@ private slots:
     void _testSpecifiedFlightSpeedChanged();
 
 private:
-    void _createSpy(SpeedSection* speedSection, MultiSignalSpy** speedSpy);
-
     std::unique_ptr<MultiSignalSpy> _spySpeed;
     std::unique_ptr<MultiSignalSpy> _spySection;
     SpeedSection* _speedSection = nullptr;

@@ -62,7 +62,7 @@ void SendMavlinkCommandStateTest::_testUnconfiguredStateFails()
     machine.start();
 
     // Should fail immediately because not configured and no vehicle
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(errorSpy.count(), 1);
 }
 

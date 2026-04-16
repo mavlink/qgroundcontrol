@@ -33,6 +33,7 @@
 class SignalSpyTest : public UnitTest
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(SignalSpyTest)
 
 public:
     explicit SignalSpyTest(QObject* parent = nullptr) : UnitTest(parent)
@@ -44,25 +45,25 @@ protected:
     /// The spy is owned by the test and cleaned up automatically
     MultiSignalSpy* createMultiSpy(QObject* target)
     {
-        auto spy = new MultiSignalSpy(this);
+        auto spy = std::make_unique<MultiSignalSpy>(this);
         if (!spy->init(target)) {
-            delete spy;
             return nullptr;
         }
-        _spies.push_back(spy);
-        return spy;
+        MultiSignalSpy* ptr = spy.get();
+        _spies.push_back(std::move(spy));
+        return ptr;
     }
 
     /// Creates a MultiSignalSpy for specific signals
     MultiSignalSpy* createMultiSpy(QObject* target, const QStringList& signalNames)
     {
-        auto spy = new MultiSignalSpy(this);
+        auto spy = std::make_unique<MultiSignalSpy>(this);
         if (!spy->init(target, signalNames)) {
-            delete spy;
             return nullptr;
         }
-        _spies.push_back(spy);
-        return spy;
+        MultiSignalSpy* ptr = spy.get();
+        _spies.push_back(std::move(spy));
+        return ptr;
     }
 
     /// Creates a QSignalSpy for a specific signal
@@ -79,10 +80,10 @@ protected:
     /// Clears all managed spies
     void clearAllSpies()
     {
-        for (auto* spy : _spies) {
+        for (const auto& spy : _spies) {
             spy->clearAllSignals();
         }
-        for (auto& spy : _qspies) {
+        for (const auto& spy : _qspies) {
             spy->clear();
         }
     }
@@ -124,6 +125,6 @@ protected slots:
     }
 
 private:
-    std::vector<MultiSignalSpy*> _spies;  // Owned by this (as QObject children)
+    std::vector<std::unique_ptr<MultiSignalSpy>> _spies;
     std::vector<std::unique_ptr<QSignalSpy>> _qspies;
 };

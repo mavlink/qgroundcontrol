@@ -20,7 +20,7 @@ void QGCStateTest::_testEntryExitCallbacks()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(entryCalled);
     QVERIFY(exitCalled);
 }
@@ -49,7 +49,7 @@ void QGCStateTest::_testOnEnterOnLeaveVirtuals()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(state->onEnterCalled);
     QVERIFY(state->onLeaveCalled);
 }

@@ -1,6 +1,5 @@
 #include "QGCSqlHelperTest.h"
 
-#include <QtCore/QTemporaryDir>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 #include <QtTest/QTest>
@@ -31,10 +30,7 @@ void QGCSqlHelperTest::_escapeLikePattern()
 
 void QGCSqlHelperTest::_scopedConnectionOpen()
 {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-
-    const QString dbPath = dir.filePath(QStringLiteral("test.db"));
+    const QString dbPath = tempPath(QStringLiteral("test.db"));
 
     {
         QGCSqlHelper::ScopedConnection conn(dbPath);
@@ -58,10 +54,7 @@ void QGCSqlHelperTest::_scopedConnectionOpen()
 
 void QGCSqlHelperTest::_scopedConnectionReadOnly()
 {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-
-    const QString dbPath = dir.filePath(QStringLiteral("readonly.db"));
+    const QString dbPath = tempPath(QStringLiteral("readonly.db"));
 
     // Create a database with data first
     {
@@ -96,10 +89,7 @@ void QGCSqlHelperTest::_scopedConnectionInvalidPath()
 
 void QGCSqlHelperTest::_scopedConnectionUniqueNames()
 {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-
-    const QString dbPath = dir.filePath(QStringLiteral("unique.db"));
+    const QString dbPath = tempPath(QStringLiteral("unique.db"));
 
     // Open two connections simultaneously — should not conflict
     QGCSqlHelper::ScopedConnection conn1(dbPath);
@@ -118,10 +108,7 @@ void QGCSqlHelperTest::_scopedConnectionUniqueNames()
 
 void QGCSqlHelperTest::_scopedConnectionCleanup()
 {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-
-    const QString dbPath = dir.filePath(QStringLiteral("cleanup.db"));
+    const QString dbPath = tempPath(QStringLiteral("cleanup.db"));
     const int beforeCount = QSqlDatabase::connectionNames().size();
 
     {
@@ -136,10 +123,7 @@ void QGCSqlHelperTest::_scopedConnectionCleanup()
 
 void QGCSqlHelperTest::_applySqlitePragmas()
 {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
-
-    const QString dbPath = dir.filePath(QStringLiteral("pragma.db"));
+    const QString dbPath = tempPath(QStringLiteral("pragma.db"));
 
     // ScopedConnection applies pragmas automatically, verify them
     QGCSqlHelper::ScopedConnection conn(dbPath);

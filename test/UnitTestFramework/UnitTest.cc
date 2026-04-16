@@ -1,15 +1,17 @@
 #include "UnitTest.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEvent>
 #include <QtCore/QHash>
-#include <QtCore/QCoreApplication>
 #include <QtCore/QStandardPaths>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include <atomic>
+#include <cstring>
 #include <iterator>
 
 #include "AppSettings.h"
@@ -33,7 +35,8 @@ QGC_LOGGING_CATEGORY(UnitTestLog, "Test.UnitTest")
 
 QStringList& TestContext::stack()
 {
-    static thread_local QStringList s_stack;
+    // QTest runs test functions sequentially on the main thread — no TLS needed.
+    static QStringList s_stack;
     return s_stack;
 }
 
@@ -74,7 +77,7 @@ void TestContext::pop()
 
 QStringList& TestDebug::messages()
 {
-    static thread_local QStringList s_messages;
+    static QStringList s_messages;
     return s_messages;
 }
 
@@ -471,10 +474,10 @@ bool UnitTest::waitForDeleted(const QPointer<QObject>& objectPtr, int timeoutMs,
 void UnitTest::settleEventLoopForCleanup(int iterations, int waitMs)
 {
     if (iterations <= 0) {
-        iterations = TestTimeout::isCI() ? 10 : 5;
+        iterations = TestTimeout::isCI() ? 6 : 3;
     }
     if (waitMs < 0) {
-        waitMs = TestTimeout::isCI() ? 20 : 10;
+        waitMs = TestTimeout::isCI() ? 10 : 5;
     }
 
     for (int i = 0; i < iterations; ++i) {
@@ -637,7 +640,7 @@ int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels 
 // The wrapper captures messages for the test log‑capture API and then chains
 // to QTest's handler so QWARN / QCRITICAL output keeps working.
 
-static QtMessageHandler s_qtestHandler = nullptr;
+static std::atomic<QtMessageHandler> s_qtestHandler{nullptr};
 
 static void testCaptureHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -645,8 +648,9 @@ static void testCaptureHandler(QtMsgType type, const QMessageLogContext &context
     LogManager::captureIfEnabled(type, context, msg);
 
     // Chain to QTest's handler for normal test output
-    if (s_qtestHandler) {
-        s_qtestHandler(type, context, msg);
+    const QtMessageHandler handler = s_qtestHandler.load(std::memory_order_acquire);
+    if (handler) {
+        handler(type, context, msg);
     }
 }
 
@@ -656,15 +660,15 @@ void UnitTest::initTestCase()
     _resetTestState();
 
     // Install the capture wrapper on top of QTest's handler
-    s_qtestHandler = qInstallMessageHandler(testCaptureHandler);
+    s_qtestHandler.store(qInstallMessageHandler(testCaptureHandler), std::memory_order_release);
 }
 
 void UnitTest::cleanupTestCase()
 {
     // Restore QTest's handler so qExec teardown stays consistent
-    if (s_qtestHandler) {
-        (void) qInstallMessageHandler(s_qtestHandler);
-        s_qtestHandler = nullptr;
+    const QtMessageHandler prev = s_qtestHandler.exchange(nullptr, std::memory_order_acq_rel);
+    if (prev) {
+        (void)qInstallMessageHandler(prev);
     }
 }
 
@@ -815,10 +819,7 @@ QString UnitTest::failureContextSummary() const
 
 void UnitTest::_cleanupTempFiles()
 {
-    qDeleteAll(_tempFiles);
     _tempFiles.clear();
-
-    qDeleteAll(_tempDirs);
     _tempDirs.clear();
 }
 
@@ -831,14 +832,6 @@ void UnitTest::_resetTestState()
 
 bool UnitTest::fileCompare(const QString& file1, const QString& file2)
 {
-    const QFileInfo info1(file1);
-    const QFileInfo info2(file2);
-
-    if (info1.size() != info2.size()) {
-        qCWarning(UnitTestLog) << "fileCompare: sizes differ -" << info1.size() << "vs" << info2.size();
-        return false;
-    }
-
     QFile f1(file1);
     QFile f2(file2);
 
@@ -851,14 +844,42 @@ bool UnitTest::fileCompare(const QString& file1, const QString& file2)
         return false;
     }
 
-    // Use buffered comparison for efficiency
+    const qint64 size1 = f1.size();
+    const qint64 size2 = f2.size();
+    if (size1 != size2) {
+        qCWarning(UnitTestLog) << "fileCompare: sizes differ -" << size1 << "vs" << size2;
+        return false;
+    }
+
+    if (size1 == 0) {
+        return true;
+    }
+
+    // Memory-map both files for zero-copy comparison
+    const uchar* m1 = f1.map(0, size1);
+    const uchar* m2 = f2.map(0, size2);
+
+    if (m1 && m2) {
+        if (std::memcmp(m1, m2, static_cast<size_t>(size1)) == 0) {
+            return true;
+        }
+        // Find exact mismatch position for diagnostics
+        for (qint64 i = 0; i < size1; ++i) {
+            if (m1[i] != m2[i]) {
+                qCWarning(UnitTestLog) << "fileCompare: mismatch at offset" << i << "- got"
+                                       << static_cast<int>(m1[i]) << "expected" << static_cast<int>(m2[i]);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    // Fallback to buffered read if mapping fails (e.g. special filesystems)
     qint64 offset = 0;
     while (!f1.atEnd()) {
         const QByteArray buf1 = f1.read(kFileCompareBufferSize);
         const QByteArray buf2 = f2.read(kFileCompareBufferSize);
-
         if (buf1 != buf2) {
-            // Find exact mismatch position
             for (int i = 0; i < buf1.size() && i < buf2.size(); ++i) {
                 if (buf1[i] != buf2[i]) {
                     qCWarning(UnitTestLog) << "fileCompare: mismatch at offset" << (offset + i) << "- got"
@@ -931,31 +952,32 @@ QGeoCoordinate UnitTest::changeCoordinateValue(const QGeoCoordinate& coordinate)
 
 QTemporaryFile* UnitTest::createTempFile(const QString& templateName)
 {
-    auto* tempFile = templateName.isEmpty() ? new QTemporaryFile(this)
-                                            : new QTemporaryFile(QDir::tempPath() + "/" + templateName, this);
+    auto tempFile = templateName.isEmpty()
+                        ? std::make_unique<QTemporaryFile>(this)
+                        : std::make_unique<QTemporaryFile>(QDir::tempPath() + "/" + templateName, this);
 
     if (!tempFile->open()) {
         qCWarning(UnitTestLog) << "createTempFile: failed to create temp file:" << tempFile->errorString();
-        delete tempFile;
         return nullptr;
     }
 
-    _tempFiles.append(tempFile);
-    return tempFile;
+    QTemporaryFile* ptr = tempFile.get();
+    _tempFiles.push_back(std::move(tempFile));
+    return ptr;
 }
 
 QTemporaryDir* UnitTest::createTempDir()
 {
-    auto* tempDir = new QTemporaryDir();
+    auto tempDir = std::make_unique<QTemporaryDir>();
 
     if (!tempDir->isValid()) {
         qCWarning(UnitTestLog) << "createTempDir: failed to create temp directory";
-        delete tempDir;
         return nullptr;
     }
 
-    _tempDirs.append(tempDir);
-    return tempDir;
+    QTemporaryDir* ptr = tempDir.get();
+    _tempDirs.push_back(std::move(tempDir));
+    return ptr;
 }
 
 QString UnitTest::testResourcePath(const QString& relativePath)

@@ -19,6 +19,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/TempDirectoryTest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/SignalSpyTest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/JsonTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/LogStoreTestBase.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/ModelTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/StateMachineTest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/TcpServerTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME}

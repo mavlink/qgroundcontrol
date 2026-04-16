@@ -13,22 +13,23 @@ void FWLandingPatternTest::init()
 {
     VisualMissionItemTest::init();
     _fwItem = new FixedWingLandingComplexItem(planController(), false /* flyView */);
-    _createSpy(_fwItem, &_viSpy);
+    MultiSignalSpy* viSpyRaw = nullptr;
+    _createSpy(_fwItem, &viSpyRaw);
+    _viSpy.reset(viSpyRaw);
     // Start in a clean state
     QVERIFY(!_fwItem->dirty());
     _fwItem->setLandingCoordinate(Coord::seattle());
     _fwItem->setDirty(false);
     QVERIFY(!_fwItem->dirty());
     _viSpy->clearAllSignals();
-    _validStopVideoItem = CameraSectionTest::createValidStopTimeItem(planController());
-    _validStopDistanceItem = CameraSectionTest::createValidStopTimeItem(planController());
+    _validStopVideoItem = CameraSectionTest::createValidStopVideoItem(planController());
+    _validStopDistanceItem = CameraSectionTest::createValidStopDistanceItem(planController());
     _validStopTimeItem = CameraSectionTest::createValidStopTimeItem(planController());
 }
 
 void FWLandingPatternTest::cleanup()
 {
-    delete _viSpy;
-    _viSpy = nullptr;
+    _viSpy.reset();
     VisualMissionItemTest::cleanup();
     // These items go away when planController() goes away
     _fwItem = nullptr;
