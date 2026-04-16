@@ -1568,6 +1568,17 @@ void VehicleCameraControl::handleBatteryStatus(const mavlink_battery_status_t& b
     }
 }
 
+void VehicleCameraControl::handleBatteryStatusV2(const mavlink_battery_status_v2_t& bs)
+{
+    qCDebug(CameraControlLog).noquote() << "Received BATTERY_STATUS_V2:"
+        << "\n\tBattery remaining (%):" << bs.percent_remaining;
+
+    if (bs.percent_remaining != UINT8_MAX && _batteryRemaining != static_cast<int>(bs.percent_remaining)) {
+        _batteryRemaining = static_cast<int>(bs.percent_remaining);
+        emit batteryRemainingChanged();
+    }
+}
+
 void VehicleCameraControl::handleCameraCaptureStatus(const mavlink_camera_capture_status_t& cameraCaptureStatus)
 {
     qCDebug(CameraControlLog).noquote() << "Received CAMERA_CAPTURE_STATUS - stopping timer, resetting retries:"

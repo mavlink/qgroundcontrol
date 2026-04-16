@@ -1,4 +1,7 @@
 #include "BatteryFactGroupListModel.h"
+#include "Vehicle.h"
+
+#include <cstring> // strnlen
 
 BatteryFactGroupListModel::BatteryFactGroupListModel(QObject* parent)
     : FactGroupListModel("battery", parent)
@@ -22,6 +25,20 @@ bool BatteryFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &me
         ids.append(batteryStatus.id);
         return true;
     }
+    case MAVLINK_MSG_ID_BATTERY_STATUS_V2:
+    {
+        mavlink_battery_status_v2_t bs{};
+        mavlink_msg_battery_status_v2_decode(&message, &bs);
+        ids.append(bs.id);
+        return true;
+    }
+    case MAVLINK_MSG_ID_BATTERY_INFO:
+    {
+        mavlink_battery_info_t bi{};
+        mavlink_msg_battery_info_decode(&message, &bi);
+        ids.append(bi.id);
+        return true;
+    }
     default:
         return false; // Not a message we care about
     }
@@ -30,6 +47,83 @@ bool BatteryFactGroupListModel::_shouldHandleMessage(const mavlink_message_t &me
 FactGroupWithId *BatteryFactGroupListModel::_createFactGroupWithId(uint32_t id)
 {
     return new BatteryFactGroup(id, this);
+}
+
+void BatteryFactGroupListModel::handleMessageForFactGroupCreation(
+    Vehicle *vehicle, const mavlink_message_t &message)
+{
+    // Only drive negotiation state from the autopilot component. A camera
+    // peripheral on a different compid may also send BATTERY_STATUS_V2, but
+    // must not trigger V2 activation or cause BATTERY_STATUS to be suppressed
+    // for the autopilot (which may not be sending V2 at all).
+    if (message.compid == static_cast<uint8_t>(vehicle->defaultComponentId())) {
+        if (message.msgid == MAVLINK_MSG_ID_BATTERY_STATUS_V2) {
+            _v2StatusReceived = true;
+            if (_v2State != V2NegotiationActive) {
+                _activateV2(vehicle);
+            }
+        } else if (message.msgid == MAVLINK_MSG_ID_BATTERY_INFO) {
+            _infoReceived = true;
+        }
+    }
+
+    FactGroupListModel::handleMessageForFactGroupCreation(vehicle, message);
+}
+
+void BatteryFactGroupListModel::startV2Negotiation(Vehicle *vehicle)
+{
+    // --- BATTERY_STATUS_V2 ---
+    // Guard is scoped to this block only: a V2 frame arriving before
+    // initialConnectComplete can call _activateV2 early (state → Active),
+    // but must not prevent the BATTERY_INFO request below from running.
+    if (_v2State == V2NegotiationUnknown) {
+        if (_v2StatusReceived) {
+            // Already streaming — activate immediately, no request needed
+            _activateV2(vehicle);
+        } else {
+            _v2State = V2NegotiationRequesting;
+
+            // sendMavCommandWithLambdaFallback calls the lambda only on MAV_RESULT_UNSUPPORTED.
+            // On ACCEPTED (or other), we simply wait: handleMessageForFactGroupCreation will
+            // call _activateV2 when the first V2 frame arrives. If no frame ever arrives we
+            // stay in Requesting and V1 continues to be used (safe fallback).
+            vehicle->sendMavCommandWithLambdaFallback(
+                [this]() {
+                    _v2State = V2NegotiationUnsupported;
+                },
+                vehicle->defaultComponentId(),
+                MAV_CMD_SET_MESSAGE_INTERVAL,
+                false,   // showError = false
+                static_cast<float>(MAVLINK_MSG_ID_BATTERY_STATUS_V2),
+                2000000.0f   // 0.5 Hz
+            );
+        }
+    }
+
+    // --- BATTERY_INFO (independent, fire-and-forget) ---
+    if (!_infoReceived) {
+        vehicle->sendMavCommand(
+            vehicle->defaultComponentId(),
+            MAV_CMD_SET_MESSAGE_INTERVAL,
+            false,   // showError = false
+            static_cast<float>(MAVLINK_MSG_ID_BATTERY_INFO),
+            10000000.0f   // 0.1 Hz
+        );
+    }
+}
+
+void BatteryFactGroupListModel::_activateV2(Vehicle *vehicle)
+{
+    _v2State = V2NegotiationActive;
+
+    // Ask the flight stack to stop streaming BATTERY_STATUS (V1)
+    vehicle->sendMavCommand(
+        vehicle->defaultComponentId(),
+        MAV_CMD_SET_MESSAGE_INTERVAL,
+        false,                                          // showError = false
+        static_cast<float>(MAVLINK_MSG_ID_BATTERY_STATUS),
+        -1.0f                                           // interval −1 = disable
+    );
 }
 
 BatteryFactGroup::BatteryFactGroup(uint32_t batteryId, QObject *parent)
@@ -46,6 +140,26 @@ BatteryFactGroup::BatteryFactGroup(uint32_t batteryId, QObject *parent)
     _addFact(&_timeRemainingStrFact);
     _addFact(&_chargeStateFact);
     _addFact(&_instantPowerFact);
+    _addFact(&_capacityRemainingFact);
+    _addFact(&_capacityRemainingIsInferredFact);
+    _addFact(&_statusFlagsFact);
+    _addFact(&_batteryNameFact);
+    _addFact(&_serialNumberFact);
+    _addFact(&_manufactureDateFact);
+    _addFact(&_fullChargeCapacityFact);
+    _addFact(&_designCapacityFact);
+    _addFact(&_nominalVoltageFact);
+    _addFact(&_dischargeMinimumVoltageFact);
+    _addFact(&_chargingMinimumVoltageFact);
+    _addFact(&_restingMinimumVoltageFact);
+    _addFact(&_chargingMaximumVoltageFact);
+    _addFact(&_chargingMaximumCurrentFact);
+    _addFact(&_dischargeMaximumCurrentFact);
+    _addFact(&_dischargeMaximumBurstCurrentFact);
+    _addFact(&_cycleCountFact);
+    _addFact(&_weightFact);
+    _addFact(&_stateOfHealthFact);
+    _addFact(&_cellsInSeriesFact);
 
     _idFact.setRawValue(batteryId);
     _batteryFunctionFact.setRawValue(MAV_BATTERY_FUNCTION_UNKNOWN);
@@ -58,12 +172,68 @@ BatteryFactGroup::BatteryFactGroup(uint32_t batteryId, QObject *parent)
     _timeRemainingFact.setRawValue(qQNaN());
     _chargeStateFact.setRawValue(MAV_BATTERY_CHARGE_STATE_UNDEFINED);
     _instantPowerFact.setRawValue(qQNaN());
+    _capacityRemainingFact.setRawValue(qQNaN());
+    _capacityRemainingIsInferredFact.setRawValue(false);
+    _statusFlagsFact.setRawValue(0U);
+    _batteryNameFact.setRawValue(QString());
+    _serialNumberFact.setRawValue(QString());
+    _manufactureDateFact.setRawValue(QString());
+    _fullChargeCapacityFact.setRawValue(qQNaN());
+    _designCapacityFact.setRawValue(qQNaN());
+    _nominalVoltageFact.setRawValue(qQNaN());
+    _dischargeMinimumVoltageFact.setRawValue(qQNaN());
+    _chargingMinimumVoltageFact.setRawValue(qQNaN());
+    _restingMinimumVoltageFact.setRawValue(qQNaN());
+    _chargingMaximumVoltageFact.setRawValue(qQNaN());
+    _chargingMaximumCurrentFact.setRawValue(qQNaN());
+    _dischargeMaximumCurrentFact.setRawValue(qQNaN());
+    _dischargeMaximumBurstCurrentFact.setRawValue(qQNaN());
+    _cycleCountFact.setRawValue(qQNaN());
+    _weightFact.setRawValue(qQNaN());
+    _stateOfHealthFact.setRawValue(qQNaN());
+    _cellsInSeriesFact.setRawValue(qQNaN());
 
     (void) connect(&_timeRemainingFact, &Fact::rawValueChanged, this, &BatteryFactGroup::_timeRemainingChanged);
 }
 
+// static
+uint8_t BatteryFactGroup::chargeStateFromV2(uint32_t statusFlags, uint8_t percentRemaining)
+{
+    constexpr uint32_t faultMask =
+        MAV_BATTERY_STATUS_FLAGS_FAULT_CELL_IMBALANCE                  |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_PROTECTION_SYSTEM               |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_VOLT                       |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_UNDER_VOLT                      |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_TEMPERATURE                |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_UNDER_TEMPERATURE               |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_OVER_CURRENT                    |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_SHORT_CIRCUIT                   |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_VOLTAGE            |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_FIRMWARE           |
+        MAV_BATTERY_STATUS_FLAGS_FAULT_INCOMPATIBLE_CELLS_CONFIGURATION;
+
+    if (statusFlags & faultMask)                              return MAV_BATTERY_CHARGE_STATE_FAILED;
+    if (statusFlags & MAV_BATTERY_STATUS_FLAGS_NOT_READY_TO_USE) return MAV_BATTERY_CHARGE_STATE_EMERGENCY;
+
+    // BATTERY_STATUS_V2 has no LOW/CRITICAL flags — derive from percentRemaining
+    // using conventional alarm thresholds. CHARGING is intentionally excluded here;
+    // UI callers add it for display; audio callers skip it (not a voice-alertable state).
+    if (percentRemaining != UINT8_MAX) {
+        constexpr int kCriticalPct = 10;
+        constexpr int kLowPct      = 25;
+        if (static_cast<int>(percentRemaining) <= kCriticalPct) return MAV_BATTERY_CHARGE_STATE_CRITICAL;
+        if (static_cast<int>(percentRemaining) <= kLowPct)      return MAV_BATTERY_CHARGE_STATE_LOW;
+    }
+    return MAV_BATTERY_CHARGE_STATE_OK;
+}
+
 void BatteryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)
 {
+    if (message.msgid == MAVLINK_MSG_ID_BATTERY_STATUS) {
+        const auto *listModel = qobject_cast<const BatteryFactGroupListModel *>(parent());
+        if (listModel && listModel->isV2Active()) return;
+    }
+
     switch (message.msgid) {
     case MAVLINK_MSG_ID_HIGH_LATENCY:
         _handleHighLatency(vehicle, message);
@@ -73,6 +243,12 @@ void BatteryFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &
         break;
     case MAVLINK_MSG_ID_BATTERY_STATUS:
         _handleBatteryStatus(vehicle, message);
+        break;
+    case MAVLINK_MSG_ID_BATTERY_STATUS_V2:
+        _handleBatteryStatusV2(vehicle, message);
+        break;
+    case MAVLINK_MSG_ID_BATTERY_INFO:
+        _handleBatteryInfo(vehicle, message);
         break;
     default:
         break;
@@ -156,4 +332,93 @@ void BatteryFactGroup::_timeRemainingChanged(const QVariant &value)
 
         _timeRemainingStrFact.setRawValue(QString::asprintf("%02dH:%02dM:%02dS", hours, minutes, seconds));
     }
+}
+
+void BatteryFactGroup::_handleBatteryStatusV2(Vehicle * /*vehicle*/, const mavlink_message_t &message)
+{
+    mavlink_battery_status_v2_t bs{};
+    mavlink_msg_battery_status_v2_decode(&message, &bs);
+
+    if (bs.id != id()->rawValue().toUInt()) {
+        return;
+    }
+
+    temperature()->setRawValue((bs.temperature == INT16_MAX) ? qQNaN() : static_cast<double>(bs.temperature) / 100.0);
+
+    const double v = qIsNaN(bs.voltage)  ? qQNaN() : static_cast<double>(bs.voltage);
+    const double i = qIsNaN(bs.current)  ? qQNaN() : static_cast<double>(bs.current);
+    voltage()->setRawValue(v);
+    current()->setRawValue(i);
+
+    double consumed  = qIsNaN(bs.capacity_consumed)  ? qQNaN() : static_cast<double>(bs.capacity_consumed);
+    double remaining = qIsNaN(bs.capacity_remaining) ? qQNaN() : static_cast<double>(bs.capacity_remaining);
+    const double fcc = fullChargeCapacity()->rawValue().toDouble(); // NaN if BATTERY_INFO not yet received
+
+    bool remainingInferred = false;
+    if (qIsNaN(remaining) && !qIsNaN(consumed) && !qIsNaN(fcc)) {
+        remaining = fcc - consumed;
+        remainingInferred = true;
+    } else if (qIsNaN(consumed) && !qIsNaN(remaining) && !qIsNaN(fcc)) {
+        consumed = fcc - remaining;
+        // remaining was measured directly — remainingInferred stays false
+    }
+
+    mahConsumed()->setRawValue(qIsNaN(consumed) ? qQNaN() : consumed * 1000.0);
+    capacityRemaining()->setRawValue(remaining);
+    capacityRemainingIsInferred()->setRawValue(remainingInferred);
+
+    percentRemaining()->setRawValue((bs.percent_remaining == UINT8_MAX) ? qQNaN() : static_cast<double>(bs.percent_remaining));
+
+    statusFlags()->setRawValue(bs.status_flags);
+
+    // Derive charge state for UI display. CHARGING is added here (display-only;
+    // audio alerts skip it — see Vehicle::_handleBatteryStatusV2).
+    uint8_t derivedChargeState = chargeStateFromV2(bs.status_flags, bs.percent_remaining);
+    if (derivedChargeState == MAV_BATTERY_CHARGE_STATE_OK
+            && (bs.status_flags & MAV_BATTERY_STATUS_FLAGS_CHARGING)) {
+        derivedChargeState = MAV_BATTERY_CHARGE_STATE_CHARGING;
+    }
+    chargeState()->setRawValue(derivedChargeState);
+
+    instantPower()->setRawValue(v * i);
+
+    _setTelemetryAvailable(true);
+}
+
+void BatteryFactGroup::_handleBatteryInfo(Vehicle * /*vehicle*/, const mavlink_message_t &message)
+{
+    mavlink_battery_info_t bi{};
+    mavlink_msg_battery_info_decode(&message, &bi);
+
+    if (bi.id != id()->rawValue().toUInt()) {
+        return;
+    }
+
+    function()->setRawValue(bi.battery_function);
+    type()->setRawValue(bi.type);
+
+    // Fields using 0 as "not provided" are converted to NaN for consistent invalid-value handling
+    auto zeroAsNaN = [](float v) -> double { return (v == 0.0f) ? qQNaN() : static_cast<double>(v); };
+
+    fullChargeCapacity()->setRawValue(qIsNaN(bi.full_charge_capacity) ? qQNaN() : static_cast<double>(bi.full_charge_capacity));
+    designCapacity()->setRawValue(zeroAsNaN(bi.design_capacity));
+    nominalVoltage()->setRawValue(zeroAsNaN(bi.nominal_voltage));
+    dischargeMinimumVoltage()->setRawValue(zeroAsNaN(bi.discharge_minimum_voltage));
+    chargingMinimumVoltage()->setRawValue(zeroAsNaN(bi.charging_minimum_voltage));
+    restingMinimumVoltage()->setRawValue(zeroAsNaN(bi.resting_minimum_voltage));
+    chargingMaximumVoltage()->setRawValue(zeroAsNaN(bi.charging_maximum_voltage));
+    chargingMaximumCurrent()->setRawValue(zeroAsNaN(bi.charging_maximum_current));
+    dischargeMaximumCurrent()->setRawValue(zeroAsNaN(bi.discharge_maximum_current));
+    dischargeMaximumBurstCurrent()->setRawValue(zeroAsNaN(bi.discharge_maximum_burst_current));
+    cycleCount()->setRawValue((bi.cycle_count == UINT16_MAX) ? qQNaN() : static_cast<double>(bi.cycle_count));
+    weight()->setRawValue(zeroAsNaN(static_cast<float>(bi.weight)));
+    stateOfHealth()->setRawValue((bi.state_of_health == 255) ? qQNaN() : static_cast<double>(bi.state_of_health));
+    cellsInSeries()->setRawValue((bi.cells_in_series == 0) ? qQNaN() : static_cast<double>(bi.cells_in_series));
+
+    // String fields: bound by field size in case the sender omits the null terminator
+    batteryName()->setRawValue(   QString::fromLatin1(bi.name,             strnlen(bi.name,             sizeof(bi.name))));
+    serialNumber()->setRawValue(  QString::fromLatin1(bi.serial_number,    strnlen(bi.serial_number,    sizeof(bi.serial_number))));
+    manufactureDate()->setRawValue(QString::fromLatin1(bi.manufacture_date, strnlen(bi.manufacture_date, sizeof(bi.manufacture_date))));
+
+    _setTelemetryAvailable(true);
 }

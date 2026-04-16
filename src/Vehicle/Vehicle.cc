@@ -271,6 +271,9 @@ void Vehicle::_commonInit(LinkInterface* link)
     });
     connect(_initialConnectStateMachine, &InitialConnectStateMachine::progressUpdate,
             this, &Vehicle::_gotProgressUpdate);
+    connect(this, &Vehicle::initialConnectComplete, this, [this]() {
+        _batteryFactGroupListModel->startV2Negotiation(this);
+    });
     connect(_parameterManager, &ParameterManager::loadProgressChanged, this, &Vehicle::_gotProgressUpdate);
 
     _objectAvoidance = new VehicleObjectAvoidance(this, this);
@@ -625,6 +628,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_BATTERY_STATUS:
         _handleBatteryStatus(message);
+        break;
+    case MAVLINK_MSG_ID_BATTERY_STATUS_V2:
+        _handleBatteryStatusV2(message);
         break;
     case MAVLINK_MSG_ID_SYS_STATUS:
         _handleSysStatus(message);
@@ -1110,46 +1116,55 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
 
 void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
 {
+    if (message.compid != _defaultComponentId) return;
+    if (_batteryFactGroupListModel->isV2Active()) return;
     mavlink_battery_status_t batteryStatus;
     mavlink_msg_battery_status_decode(&message, &batteryStatus);
+    _announceBatteryChargeState(batteryStatus.id, batteryStatus.charge_state);
+}
 
-    if (!_lowestBatteryChargeStateAnnouncedMap.contains(batteryStatus.id)) {
-        _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+void Vehicle::_announceBatteryChargeState(uint8_t batteryId, uint8_t chargeState)
+{
+    if (!_lowestBatteryChargeStateAnnouncedMap.contains(batteryId)) {
+        // Seed at OK (1), not chargeState. CHARGING (7) is numerically the highest
+        // enum value, so initialising with it would cause all subsequent LOW/CRITICAL
+        // alerts to fail the "chargeState > tracked" guard permanently.
+        _lowestBatteryChargeStateAnnouncedMap[batteryId] = MAV_BATTERY_CHARGE_STATE_OK;
     }
 
     QString batteryMessage;
 
-    switch (batteryStatus.charge_state) {
+    switch (chargeState) {
     case MAV_BATTERY_CHARGE_STATE_OK:
-        _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+        _lowestBatteryChargeStateAnnouncedMap[batteryId] = chargeState;
         break;
     case MAV_BATTERY_CHARGE_STATE_LOW:
-        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
-            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+        if (chargeState > _lowestBatteryChargeStateAnnouncedMap[batteryId]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryId] = chargeState;
             batteryMessage = tr("battery %1 level low");
         }
         break;
     case MAV_BATTERY_CHARGE_STATE_CRITICAL:
-        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
-            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+        if (chargeState > _lowestBatteryChargeStateAnnouncedMap[batteryId]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryId] = chargeState;
             batteryMessage = tr("battery %1 level is critical");
         }
         break;
     case MAV_BATTERY_CHARGE_STATE_EMERGENCY:
-        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
-            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+        if (chargeState > _lowestBatteryChargeStateAnnouncedMap[batteryId]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryId] = chargeState;
             batteryMessage = tr("battery %1 level emergency");
         }
         break;
     case MAV_BATTERY_CHARGE_STATE_FAILED:
-        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
-            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+        if (chargeState > _lowestBatteryChargeStateAnnouncedMap[batteryId]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryId] = chargeState;
             batteryMessage = tr("battery %1 failed");
         }
         break;
     case MAV_BATTERY_CHARGE_STATE_UNHEALTHY:
-        if (batteryStatus.charge_state > _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id]) {
-            _lowestBatteryChargeStateAnnouncedMap[batteryStatus.id] = batteryStatus.charge_state;
+        if (chargeState > _lowestBatteryChargeStateAnnouncedMap[batteryId]) {
+            _lowestBatteryChargeStateAnnouncedMap[batteryId] = chargeState;
             batteryMessage = tr("battery %1 unhealthy");
         }
         break;
@@ -1158,13 +1173,24 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
     if (!batteryMessage.isEmpty()) {
         QString batteryIdStr("%1");
         if (_batteryFactGroupListModel->count() > 1) {
-            batteryIdStr = batteryIdStr.arg(batteryStatus.id);
+            batteryIdStr = batteryIdStr.arg(batteryId);
         } else {
             batteryIdStr = batteryIdStr.arg("");
         }
         _say(tr("warning"));
         _say(QStringLiteral("%1 %2 ").arg(_vehicleIdSpeech()).arg(batteryMessage.arg(batteryIdStr)));
     }
+}
+
+void Vehicle::_handleBatteryStatusV2(mavlink_message_t& message)
+{
+    if (message.compid != _defaultComponentId) return;
+    mavlink_battery_status_v2_t bs;
+    mavlink_msg_battery_status_v2_decode(&message, &bs);
+
+    // CHARGING is not a voice-alertable state; fault/level states handled by chargeStateFromV2.
+    const uint8_t chargeState = BatteryFactGroup::chargeStateFromV2(bs.status_flags, bs.percent_remaining);
+    _announceBatteryChargeState(bs.id, chargeState);
 }
 
 void Vehicle::_setHomePosition(QGeoCoordinate& homeCoord)

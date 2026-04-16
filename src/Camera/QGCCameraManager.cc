@@ -185,6 +185,9 @@ void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t &message)
         case MAVLINK_MSG_ID_BATTERY_STATUS:
             _handleBatteryStatus(message);
             break;
+        case MAVLINK_MSG_ID_BATTERY_STATUS_V2:
+            _handleBatteryStatusV2(message);
+            break;
         case MAVLINK_MSG_ID_CAMERA_TRACKING_IMAGE_STATUS:
             _handleTrackingImageStatus(message);
             break;
@@ -489,6 +492,16 @@ void QGCCameraManager::_handleBatteryStatus(const mavlink_message_t &message)
         mavlink_battery_status_t batteryStatus{};
         mavlink_msg_battery_status_decode(&message, &batteryStatus);
         pCamera->handleBatteryStatus(batteryStatus);
+    }
+}
+
+void QGCCameraManager::_handleBatteryStatusV2(const mavlink_message_t &message)
+{
+    MavlinkCameraControlInterface *pCamera = _findCamera(message.compid);
+    if (pCamera) {
+        mavlink_battery_status_v2_t bs{};
+        mavlink_msg_battery_status_v2_decode(&message, &bs);
+        pCamera->handleBatteryStatusV2(bs);
     }
 }
 

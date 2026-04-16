@@ -6,6 +6,8 @@
 
 #include <QList>
 
+class Vehicle;
+
 /// Dynamically manages FactGroupWithIds based on incoming messages.
 class FactGroupListModel : public QmlObjectListModel
 {
@@ -17,7 +19,7 @@ public:
     explicit FactGroupListModel(const char* factGroupNamePrefix, QObject* parent = nullptr);
 
     /// Allows for creation/updating of dynamic FactGroups based on incoming messages
-    void handleMessageForFactGroupCreation(Vehicle *vehicle, const mavlink_message_t &message);
+    virtual void handleMessageForFactGroupCreation(Vehicle *vehicle, const mavlink_message_t &message);
 
 protected:
     virtual bool _shouldHandleMessage(const mavlink_message_t &message, QList<uint32_t> &ids) const = 0;

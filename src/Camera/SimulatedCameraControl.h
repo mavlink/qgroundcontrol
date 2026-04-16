@@ -118,6 +118,7 @@ public:
     bool validateParameter(Fact* /*pFact*/, QVariant& /*newValue*/) override { return false; }
 
     void handleBatteryStatus(const mavlink_battery_status_t& /*bs*/) override {}
+    void handleBatteryStatusV2(const mavlink_battery_status_v2_t& /*bs*/) override {}
     void handleCameraCaptureStatus(const mavlink_camera_capture_status_t& /*cameraCaptureStatus*/) override {}
     void handleParamExtAck(const mavlink_param_ext_ack_t& /*paramExtAck*/) override {}
     void handleParamExtValue(const mavlink_param_ext_value_t& /*paramExtValue*/) override {}
