@@ -260,10 +260,17 @@ MavlinkCameraControlInterface::CapturePhotosState VehicleCameraControl::captureP
 
 QString VehicleCameraControl::firmwareVersion() const
 {
-    int major = (_mavlinkCameraInfo.firmware_version >> 24) & 0xFF;
-    int minor = (_mavlinkCameraInfo.firmware_version >> 16) & 0xFF;
-    int build = _mavlinkCameraInfo.firmware_version & 0xFFFF;
-    return QString::asprintf("%d.%d.%d", major, minor, build);
+    if (_mavlinkCameraInfo.firmware_version == 0) {
+        return {};
+    }
+    int major = (_mavlinkCameraInfo.firmware_version)       & 0xFF;
+    int minor = (_mavlinkCameraInfo.firmware_version >> 8)  & 0xFF;
+    int patch = (_mavlinkCameraInfo.firmware_version >> 16) & 0xFF;
+    int dev   = (_mavlinkCameraInfo.firmware_version >> 24) & 0xFF;
+    if (dev != 0) {
+        return QString::asprintf("%d.%d.%d.%d", major, minor, patch, dev);
+    }
+    return QString::asprintf("%d.%d.%d", major, minor, patch);
 }
 
 QString VehicleCameraControl::recordTimeStr() const
