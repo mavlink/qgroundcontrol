@@ -93,6 +93,17 @@ void LinkManager::createConnectedLink(const LinkConfiguration *config)
 
 bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
 {
+#ifndef QGC_NO_SERIAL_LINK
+    // If manually connecting to a serial port, disconnect any existing autoconnect link first.
+    // Prevents "Access denied" on Windows when autoconnect already holds the port open.
+    if (config->type() == LinkConfiguration::TypeSerial && !config->isAutoConnect()) {
+        const SerialConfiguration *newSerialConfig = qobject_cast<const SerialConfiguration*>(config.get());
+        if (newSerialConfig) {
+            _disconnectAutoConnectLink(newSerialConfig->portName());
+        }
+    }
+#endif
+
     SharedLinkInterfacePtr link = nullptr;
 
     switch(config->type()) {
@@ -883,11 +894,42 @@ bool LinkManager::_portAlreadyConnected(const QString &portName)
         const SharedLinkConfigurationPtr linkConfig = linkInterface->linkConfiguration();
         const SerialConfiguration* const serialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
         if (serialConfig && (serialConfig->portName() == searchPort)) {
+            // Async open may have failed or still be pending — allow autoconnect retry
+            if (!linkInterface->isConnected()) {
+                qCDebug(LinkManagerLog) << "Port in link list but not connected, allowing retry:" << searchPort;
+                return false;
+            }
             return true;
         }
     }
 
     return false;
+}
+
+void LinkManager::_disconnectAutoConnectLink(const QString &portName)
+{
+    const QString searchPort = portName.trimmed();
+    SharedLinkInterfacePtr linkToDisconnect;
+
+    {
+        QMutexLocker locker(&_linksMutex);
+        for (const SharedLinkInterfacePtr &linkInterface : _rgLinks) {
+            const SharedLinkConfigurationPtr linkConfig = linkInterface->linkConfiguration();
+            if (!linkConfig || !linkConfig->isAutoConnect()) {
+                continue;
+            }
+            const SerialConfiguration *serialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
+            if (serialConfig && (serialConfig->portName() == searchPort)) {
+                linkToDisconnect = linkInterface;
+                break;
+            }
+        }
+    }
+
+    if (linkToDisconnect) {
+        qCDebug(LinkManagerLog) << "Disconnecting existing autoconnect link on port" << searchPort << "to allow manual connection";
+        linkToDisconnect->disconnect();
+    }
 }
 
 void LinkManager::_updateSerialPorts()

@@ -177,6 +177,7 @@ private:
     bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
     void _addSerialAutoConnectLink();
     bool _portAlreadyConnected(const QString &portName);
+    void _disconnectAutoConnectLink(const QString &portName);
     void _filterCompositePorts(QList<QGCSerialPortInfo> &portList);
 
     UdpIODevice *_nmeaSocket = nullptr;
