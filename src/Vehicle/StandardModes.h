@@ -31,15 +31,13 @@ public:
 
     void availableModesMonitorReceived(uint8_t seq);
 
-    void gotMessage(MAV_RESULT result, const mavlink_message_t &message);
+    void availableModesReceived(const mavlink_message_t &message);
 
 signals:
     void modesUpdated();
     void requestCompleted();
 
 private:
-
-    void requestMode(int modeIndex);
     void ensureUniqueModeNames();
 
     Vehicle*const _vehicle;

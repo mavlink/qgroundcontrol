@@ -693,6 +693,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     }
         break;
+        case MAVLINK_MSG_ID_AVAILABLE_MODES:
+        _standardModes->availableModesReceived(message);
+        break;
         case MAVLINK_MSG_ID_AVAILABLE_MODES_MONITOR:
     {
         // Avoid duplicate requests during initial connection setup
