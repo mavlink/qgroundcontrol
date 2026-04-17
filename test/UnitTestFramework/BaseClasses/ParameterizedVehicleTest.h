@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include "VehicleTestManualConnect.h"
 
 /// Test fixture for parameterized vehicle tests with test case arrays.
@@ -25,15 +27,10 @@
 ///             {"normal", 1, true},
 ///             {"edge", 0, false},
 ///         };
-///         runTestCases(cases, std::size(cases));
-///     }
-///
-/// protected:
-///     template<typename T>
-///     void runSingleTestCase(const T& testCase, int index) override {
-///         const auto& tc = static_cast<const TestCase&>(testCase);
-///         logTestCase(index, tc.name);
-///         // ... test logic ...
+///         runTestCases<TestCase>(cases, std::size(cases), [this](const TestCase& tc, int i) {
+///             logTestCase(i, tc.name);
+///             // ... test logic ...
+///         });
 ///     }
 /// };
 /// @endcode
@@ -47,12 +44,13 @@ public:
     }
 
 protected:
-    /// Runs all test cases in the array
+    /// Runs all test cases, invoking @a testBody for each one.
     /// @tparam T Test case struct type
     /// @param cases Array of test cases
     /// @param count Number of test cases
+    /// @param testBody Callback invoked with (const T& testCase, int index)
     template <typename T>
-    void runTestCases(const T* cases, size_t count)
+    void runTestCases(const T* cases, size_t count, std::function<void(const T&, int)> testBody)
     {
         _totalCases = static_cast<int>(count);
         _executedCases = 0;
@@ -60,25 +58,19 @@ protected:
 
         for (size_t i = 0; i < count; ++i) {
             _currentCase = static_cast<int>(i);
-            runSingleTestCase(cases[i], static_cast<int>(i));
+            testBody(cases[i], static_cast<int>(i));
             _executedCases++;
+
+            // Stop iterating if the current test function has already failed
+            if (QTest::currentTestFailed()) {
+                break;
+            }
 
             // Ensure clean state between test cases
             if (_mockLink) {
                 _disconnectMockLink();
             }
         }
-    }
-
-    /// Override in derived class to run a single test case
-    /// @param testCase The test case data
-    /// @param index Zero-based index of the test case
-    template <typename T>
-    void runSingleTestCase(const T& testCase, int index)
-    {
-        Q_UNUSED(testCase);
-        Q_UNUSED(index);
-        QFAIL("runSingleTestCase must be implemented in derived class");
     }
 
     /// Logs the start of a test case
@@ -109,12 +101,6 @@ protected:
     int passedCases() const
     {
         return _executedCases;
-    }
-
-    /// Returns number of failed test cases so far (not tracked by this helper)
-    int failedCases() const
-    {
-        return 0;
     }
 
 private:

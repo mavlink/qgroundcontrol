@@ -1,5 +1,7 @@
 #include "SignalHandlerTest.h"
 
+#include <memory>
+
 #include "SignalHandler.h"
 #include "UnitTest.h"
 
@@ -45,20 +47,17 @@ void SignalHandlerTest::_testDestructorClearsCurrent()
 
 void SignalHandlerTest::_testCurrentUpdatesWithNewHandler()
 {
-    SignalHandler* handler1 = new SignalHandler();
-    QCOMPARE(SignalHandler::current(), handler1);
+    auto handler1 = std::make_unique<SignalHandler>();
+    QCOMPARE(SignalHandler::current(), handler1.get());
     // Creating a second handler should update current
-    SignalHandler* handler2 = new SignalHandler();
-    QCOMPARE(SignalHandler::current(), handler2);
+    auto handler2 = std::make_unique<SignalHandler>();
+    QCOMPARE(SignalHandler::current(), handler2.get());
     // Delete in reverse order
-    delete handler2;
+    handler2.reset();
     // Note: current() is now null because handler2's destructor cleared it
     // This is expected behavior - the last handler to be destroyed clears current
     QVERIFY(SignalHandler::current() == nullptr);
-    delete handler1;
+    handler1.reset();
     QVERIFY(SignalHandler::current() == nullptr);
 }
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-#endif
-
 UT_REGISTER_TEST(SignalHandlerTest, TestLabel::Unit, TestLabel::Utilities)

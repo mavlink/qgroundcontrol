@@ -14,14 +14,13 @@ void TransectStyleComplexItemTest::init()
     _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(true);
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(100);
     _transectStyleItem->setDirty(false);
-    _multiSpy = new MultiSignalSpy;
+    _multiSpy = std::make_unique<MultiSignalSpy>();
     QVERIFY(_multiSpy->init(_transectStyleItem));
 }
 
 void TransectStyleComplexItemTest::cleanup()
 {
-    delete _multiSpy;
-    _multiSpy = nullptr;
+    _multiSpy.reset();
     TransectStyleComplexItemTestBase::cleanup();
     // These items are deleted when planController() is deleted
     _transectStyleItem = nullptr;

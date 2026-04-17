@@ -1,8 +1,8 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "StateMachineTest.h"
 
-class WaitStateBaseTest : public UnitTest
+class WaitStateBaseTest : public StateMachineTest
 {
     Q_OBJECT
 

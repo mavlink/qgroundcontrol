@@ -179,18 +179,29 @@ inline ankerl::nanobench::Bench thoroughConfig()
 // Qt QBENCHMARK Helpers
 // ============================================================================
 
-/// @brief Benchmark with a specific iteration count using QBENCHMARK
-/// Use when you need precise control over iterations.
+/// @brief Benchmark with a manual warm-up pass before the measured block.
+///
+/// Qt's QBENCHMARK already auto-calibrates, so this macro adds a warm-up
+/// loop that actually executes @p code @p n times *before* the measured
+/// QBENCHMARK pass. The body is supplied as a macro argument (rather than
+/// a trailing brace block) so it can be expanded in both the warm-up and
+/// the measured pass.
 ///
 /// Example:
 /// @code
-/// QBENCHMARK_ITERATIONS(1000) {
+/// QBENCHMARK_ITERATIONS(1000, {
 ///     expensiveOperation();
-/// }
+/// });
 /// @endcode
-#define QBENCHMARK_ITERATIONS(n)                                       \
-    for (bool _qbench_once = true; _qbench_once; _qbench_once = false) \
-    QBENCHMARK
+#define QBENCHMARK_ITERATIONS(n, code)                                              \
+    do {                                                                            \
+        for (int _qbench_warmup = 0; _qbench_warmup < (n); ++_qbench_warmup) {      \
+            code;                                                                   \
+        }                                                                           \
+        QBENCHMARK {                                                                \
+            code;                                                                   \
+        }                                                                           \
+    } while (0)
 
 /// @brief Prevent compiler from optimizing away a value in QBENCHMARK
 /// Qt's version of doNotOptimizeAway for consistency.
@@ -205,9 +216,7 @@ inline ankerl::nanobench::Bench thoroughConfig()
 template <typename T>
 inline void qtBenchmarkKeep(T const& value)
 {
-    // Use volatile to prevent optimization
-    volatile auto unused = &value;
-    Q_UNUSED(unused);
+    ankerl::nanobench::doNotOptimizeAway(value);
 }
 
 #define QT_BENCHMARK_KEEP(x) qtBenchmarkKeep(x)

@@ -23,7 +23,7 @@ void ProgressStateTest::_testFixedProgress()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(receivedProgress, 0.5f);
     QCOMPARE(progressState->progress(), 0.5f);
 }
@@ -50,7 +50,7 @@ void ProgressStateTest::_testProgressCallback()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(receivedProgress, 0.75f);
     QVERIFY(callbackCount >= 1);  // Callback was invoked
 }
@@ -82,7 +82,7 @@ void ProgressStateTest::_testProgressClamping()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(receivedProgress.size(), 3);
     QCOMPARE(receivedProgress[0], 0.0f);  // Clamped from -0.5
     QCOMPARE(receivedProgress[1], 1.0f);  // Clamped from 1.5
@@ -118,7 +118,7 @@ void ProgressStateTest::_testProgressSequence()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(progressValues.size(), 4);
 
     // Verify progress increases
@@ -148,7 +148,7 @@ void ProgressStateTest::_testActionExecuted()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(actionCalled);
     QCOMPARE(receivedProgress, 0.5f);
 }

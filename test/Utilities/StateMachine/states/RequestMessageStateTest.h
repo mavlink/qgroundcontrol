@@ -1,10 +1,10 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "StateMachineTest.h"
 
 /// Tests for RequestMessageState
 /// Note: Most tests require a MockLink/Vehicle connection
-class RequestMessageStateTest : public UnitTest
+class RequestMessageStateTest : public StateMachineTest
 {
     Q_OBJECT
 

@@ -1,5 +1,6 @@
 #include "HashCheckTest.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtTest/QSignalSpy>
@@ -187,8 +188,18 @@ void HashCheckTest::_hashCheckMatrix()
         QVERIFY(_vehicle->parameterManager()->parametersReady());
 
         _mockLink->clearReceivedMavlinkMessageCounts();
+
+        // refreshAllParameters() toggles parametersReady (false -> true) as
+        // the refresh state machine restarts and completes. Wait on the
+        // ready-transition rather than a fixed 100 ms sleep so the test
+        // advances as soon as the refresh is observable. The 100 ms ceiling
+        // matches the previous qWait bound so unexpected regressions still
+        // fail loudly.
+        QSignalSpy readySpy(_vehicle->parameterManager(),
+                            &ParameterManager::parametersReadyChanged);
         _vehicle->parameterManager()->refreshAllParameters();
-        QTest::qWait(100);
+        (void) readySpy.wait(100);
+        QCoreApplication::processEvents();
 
     } else if (highLatency) {
         _mockLink = _startPX4MockLinkHighLatency();

@@ -47,6 +47,13 @@ private:
     bool _waitForJoystickNames(JoystickManager* manager, const QStringList& expectedNames,
                                int timeoutMs = TestTimeout::mediumMs());
 
+    /// Cached probe result for whether the SDL backend exposes multiple concurrent
+    /// virtual joysticks. Evaluated once in initTestCase(); subsequent multi-joystick
+    /// tests use this instead of burning a 1s timeout each before QSKIP.
+    ///   < 0  = not yet probed   0 = unsupported   > 0 = supported
+    int _multiJoystickSupport = -1;
+    bool _multiJoysticksSupported();
+
     std::unique_ptr<MockJoystick> _mockJoystick1;
     std::unique_ptr<MockJoystick> _mockJoystick2;
 };

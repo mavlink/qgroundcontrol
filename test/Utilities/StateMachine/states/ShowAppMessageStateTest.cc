@@ -26,7 +26,7 @@ void ShowAppMessageStateTest::_testShowAppMessageStateAdvance()
     machine.start();
 
     // ShowAppMessageState should emit advance() after showing the message
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
 }
 
 UT_REGISTER_TEST(ShowAppMessageStateTest, TestLabel::Unit, TestLabel::Utilities)

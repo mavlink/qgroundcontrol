@@ -1,25 +1,16 @@
 #include "VideoManagerTest.h"
 
-#include <QtCore/QScopeGuard>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 
+#include "Fixtures/RAIIFixtures.h"
 #include "VideoManager.h"
 
 void VideoManagerTest::_gstQt6VideoItemQmlTypeAvailableInUnitTestMode_test()
 {
     static constexpr auto envName = "QGC_TEST_ENABLE_GSTREAMER";
-    const bool wasSet = qEnvironmentVariableIsSet(envName);
-    const QByteArray previousValue = qgetenv(envName);
-    const auto restoreEnv = qScopeGuard([wasSet, previousValue]() {
-        if (wasSet) {
-            qputenv(envName, previousValue);
-        } else {
-            qunsetenv(envName);
-        }
-    });
-
+    TestFixtures::EnvVarFixture envBackup(envName);
     qunsetenv(envName);
 
     VideoManager testManager;

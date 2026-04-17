@@ -8,36 +8,6 @@
 #include "UnitTest.h"
 #include "qgc_version.h"
 
-namespace {
-
-class ScopedEnvVarRestore
-{
-public:
-    explicit ScopedEnvVarRestore(const char *name)
-        : _name(name)
-        , _hadValue(qEnvironmentVariableIsSet(name))
-    {
-        if (_hadValue) {
-            _value = qgetenv(name);
-        }
-    }
-
-    ~ScopedEnvVarRestore()
-    {
-        if (_hadValue) {
-            (void) qputenv(_name, _value);
-        } else {
-            (void) qunsetenv(_name);
-        }
-    }
-
-private:
-    const char *_name = nullptr;
-    bool _hadValue = false;
-    QByteArray _value;
-};
-
-} // namespace
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
 void PlatformTest::_testCheckSingleInstanceAllowMultiple()
@@ -74,9 +44,9 @@ void PlatformTest::_testIsRunningAsRootNormal()
 #if defined(QGC_UNITTEST_BUILD)
 void PlatformTest::_testInitializeSetsUnitTestEnvironment()
 {
-    ScopedEnvVarRestore restoreConsole("QT_ASSUME_STDERR_HAS_CONSOLE");
-    ScopedEnvVarRestore restoreLogging("QT_FORCE_STDERR_LOGGING");
-    ScopedEnvVarRestore restoreQpa("QT_QPA_PLATFORM");
+    TestFixtures::EnvVarFixture restoreConsole("QT_ASSUME_STDERR_HAS_CONSOLE");
+    TestFixtures::EnvVarFixture restoreLogging("QT_FORCE_STDERR_LOGGING");
+    TestFixtures::EnvVarFixture restoreQpa("QT_QPA_PLATFORM");
 
     (void) qunsetenv("QT_ASSUME_STDERR_HAS_CONSOLE");
     (void) qunsetenv("QT_FORCE_STDERR_LOGGING");

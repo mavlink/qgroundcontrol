@@ -60,18 +60,15 @@ Vehicle* MultiVehicleTest::activeVehicle() const
 bool MultiVehicleTest::createVehicles(int count, MAV_AUTOPILOT autopilot)
 {
     for (int i = 0; i < count; ++i) {
-        const int systemId = 128 + i;
-        if (!createVehicle(systemId, autopilot)) {
+        if (!createVehicle(autopilot)) {
             return false;
         }
     }
     return true;
 }
 
-Vehicle* MultiVehicleTest::createVehicle(int systemId, MAV_AUTOPILOT autopilot)
+Vehicle* MultiVehicleTest::createVehicle(MAV_AUTOPILOT autopilot)
 {
-    Q_UNUSED(systemId);  // MockConfiguration auto-increments vehicle IDs
-
     const QString name = QString("Vehicle_%1").arg(_vehicles.count() + 1);
 
     MockConfiguration* mockConfig = new MockConfiguration(name);

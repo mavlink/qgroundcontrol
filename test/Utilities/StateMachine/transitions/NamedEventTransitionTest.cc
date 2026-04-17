@@ -24,12 +24,12 @@ void NamedEventTransitionTest::_testNamedEventTransition()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // Post the event to the state machine
     machine.postEvent(QStringLiteral("myEvent"));
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(transitioned);
 }
 
@@ -61,16 +61,16 @@ void NamedEventTransitionTest::_testNamedEventTransitionWithGuard()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // This should NOT trigger (guard blocks)
     machine.postEvent(QStringLiteral("myEvent"), QStringLiteral("blocked"));
-    QTest::qWait(50);
+    QCoreApplication::processEvents();
     QVERIFY(!transitioned);
 
     // This should trigger
     machine.postEvent(QStringLiteral("myEvent"), QStringLiteral("allowed"));
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(guardCalled);
     QVERIFY(transitioned);
 }

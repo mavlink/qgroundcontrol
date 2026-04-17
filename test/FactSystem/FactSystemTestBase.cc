@@ -47,12 +47,3 @@ void FactSystemTestBase::_parameter_specific_component_id_test()
     QCOMPARE(factValue.toInt(), 3);
 }
 
-void FactSystemTestBase::_qml_test()
-{
-    QSKIP("Requires QML test infrastructure (QGCQuickWidget removed in Qt6 migration)");
-}
-
-void FactSystemTestBase::_qmlUpdate_test()
-{
-    QSKIP("Requires QML test infrastructure (QGCQuickWidget removed in Qt6 migration)");
-}

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "StateMachineTest.h"
 
 /// Tests for SendMavlinkCommandState
 /// Note: Full integration tests require a MockLink/Vehicle connection
-class SendMavlinkCommandStateTest : public UnitTest
+class SendMavlinkCommandStateTest : public StateMachineTest
 {
     Q_OBJECT
 

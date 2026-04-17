@@ -37,11 +37,11 @@ void SignalDataTransitionTest::_testSignalDataTransition()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // This should not trigger (guard returns false)
     emitter.emitValueChanged(QStringLiteral("notTrigger"));
-    QTest::qWait(50);
+    QCoreApplication::processEvents();
     // Guard might not be called if signal isn't reaching transition
     // This is testing the blocking case
     QVERIFY(!actionCalled);
@@ -50,7 +50,7 @@ void SignalDataTransitionTest::_testSignalDataTransition()
     emitter.emitValueChanged(QStringLiteral("trigger"));
 
     // Give time for event processing
-    if (!finishedSpy.wait(500)) {
+    if (!finishedSpy.wait(TestTimeout::shortMs())) {
         qDebug() << "finishedSpy wait failed. guardCalled:" << guardCalled << "actionCalled:" << actionCalled;
     }
     QVERIFY(guardCalled);

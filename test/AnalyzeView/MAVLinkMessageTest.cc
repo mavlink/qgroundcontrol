@@ -2,26 +2,13 @@
 
 #include <QtTest/QSignalSpy>
 
-#include "MAVLinkLib.h"
 #include "MAVLinkMessage.h"
+#include "MAVLinkTestHelpers.h"
 #include "QmlObjectListModel.h"
-
-namespace {
-
-mavlink_message_t makeHeartbeat(uint8_t sysId = 1, uint8_t compId = 1)
-{
-    mavlink_message_t msg{};
-    mavlink_msg_heartbeat_pack_chan(
-        sysId, compId, MAVLINK_COMM_0, &msg,
-        MAV_TYPE_QUADROTOR, MAV_AUTOPILOT_PX4, 0, 0, MAV_STATE_ACTIVE);
-    return msg;
-}
-
-} // namespace
 
 void MAVLinkMessageTest::_constructionTest()
 {
-    const mavlink_message_t msg = makeHeartbeat(2, 3);
+    const mavlink_message_t msg = MAVLinkTestHelpers::makeHeartbeat(2, 3);
     QGCMAVLinkMessage message(msg);
 
     QCOMPARE(message.id(), static_cast<quint32>(MAVLINK_MSG_ID_HEARTBEAT));
@@ -32,7 +19,7 @@ void MAVLinkMessageTest::_constructionTest()
 
 void MAVLinkMessageTest::_countStartsAtOneTest()
 {
-    const mavlink_message_t msg = makeHeartbeat();
+    const mavlink_message_t msg = MAVLinkTestHelpers::makeHeartbeat();
     QGCMAVLinkMessage message(msg);
 
     QCOMPARE(message.count(), static_cast<quint64>(1));
@@ -40,7 +27,7 @@ void MAVLinkMessageTest::_countStartsAtOneTest()
 
 void MAVLinkMessageTest::_updateIncrementsCountTest()
 {
-    const mavlink_message_t msg = makeHeartbeat();
+    const mavlink_message_t msg = MAVLinkTestHelpers::makeHeartbeat();
     QGCMAVLinkMessage message(msg);
 
     QSignalSpy countSpy(&message, &QGCMAVLinkMessage::countChanged);
@@ -56,7 +43,7 @@ void MAVLinkMessageTest::_updateIncrementsCountTest()
 
 void MAVLinkMessageTest::_setSelectedTest()
 {
-    const mavlink_message_t msg = makeHeartbeat();
+    const mavlink_message_t msg = MAVLinkTestHelpers::makeHeartbeat();
     QGCMAVLinkMessage message(msg);
 
     QSignalSpy selectedSpy(&message, &QGCMAVLinkMessage::selectedChanged);
@@ -78,7 +65,7 @@ void MAVLinkMessageTest::_setSelectedTest()
 
 void MAVLinkMessageTest::_fieldsPopulatedTest()
 {
-    const mavlink_message_t msg = makeHeartbeat();
+    const mavlink_message_t msg = MAVLinkTestHelpers::makeHeartbeat();
     QGCMAVLinkMessage message(msg);
 
     const QmlObjectListModel *fields = message.fields();
@@ -92,7 +79,7 @@ void MAVLinkMessageTest::_fieldsPopulatedTest()
 
 void MAVLinkMessageTest::_setTargetRateHzTest()
 {
-    const mavlink_message_t msg = makeHeartbeat();
+    const mavlink_message_t msg = MAVLinkTestHelpers::makeHeartbeat();
     QGCMAVLinkMessage message(msg);
 
     QSignalSpy rateSpy(&message, &QGCMAVLinkMessage::targetRateHzChanged);
@@ -110,7 +97,7 @@ void MAVLinkMessageTest::_setTargetRateHzTest()
 
 void MAVLinkMessageTest::_updateFreqTest()
 {
-    const mavlink_message_t msg = makeHeartbeat();
+    const mavlink_message_t msg = MAVLinkTestHelpers::makeHeartbeat();
     QGCMAVLinkMessage message(msg);
 
     // Initial frequency is zero

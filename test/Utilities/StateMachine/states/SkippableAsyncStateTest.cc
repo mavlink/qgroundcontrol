@@ -37,7 +37,7 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateExecute()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(skipPredicateCalled);
     QVERIFY(setupCalled);
     QVERIFY(capturedState != nullptr);
@@ -82,7 +82,7 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateSkip()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(skipPredicateCalled);
     QVERIFY(!setupCalled);  // Setup should NOT have been called
     QVERIFY(skipHandled);
@@ -126,7 +126,7 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateTimeout()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(timeoutReached);
     // Verify timeout path taken
     QVERIFY(stateSpy.emittedByMask(stateSpy.mask("timeout")));
@@ -161,7 +161,7 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateWithSkipAction()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(skipActionCalled);  // Skip action should have been called
     QVERIFY(!setupCalled);      // Setup should NOT have been called
 }

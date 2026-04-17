@@ -69,11 +69,11 @@ void AdditionalTransitionsCoverageTest::_testQGCEventTransitionMatchesEvent()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     watchedObject.trigger();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(targetReached);
 }
 
@@ -110,11 +110,11 @@ void AdditionalTransitionsCoverageTest::_testQGCEventTransitionGuardBlocksThenFa
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     watchedObject.trigger();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(guardCalled);
     QVERIFY(!blockedStateReached);
     QVERIFY(fallbackStateReached);
@@ -140,7 +140,7 @@ void AdditionalTransitionsCoverageTest::_testQGCAbstractTransitionAccessorsAndCu
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     QCOMPARE(transition->machine(), &machine);
     QCOMPARE(transition->vehicle(), nullptr);
@@ -148,7 +148,7 @@ void AdditionalTransitionsCoverageTest::_testQGCAbstractTransitionAccessorsAndCu
 
     machine.QStateMachine::postEvent(new QEvent(CustomTransitionEventType));
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(targetReached);
 }
 

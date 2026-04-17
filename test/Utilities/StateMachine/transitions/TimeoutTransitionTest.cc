@@ -22,7 +22,7 @@ void TimeoutTransitionTest::_testTimeoutFires()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(timeoutReached);
 }
 
@@ -56,7 +56,7 @@ void TimeoutTransitionTest::_testTimeoutCancelledOnExit()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(200));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(normalExitReached);   // Normal path taken
     QVERIFY(!timeoutReached);     // Timeout never fired
     QVERIFY(!timeoutTransition->isTimerActive());  // Timer stopped
@@ -92,7 +92,7 @@ void TimeoutTransitionTest::_testTimeoutRestartsOnReentry()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(timeoutCount, 2);  // Timeout fired twice (timer restarted on reentry)
 }
 
@@ -127,7 +127,7 @@ void TimeoutTransitionTest::_testMultipleTimeoutTransitions()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(shortTimeoutReached);   // Short timeout fired first
     QVERIFY(!longTimeoutReached);   // Long timeout never reached
 }

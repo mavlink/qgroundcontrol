@@ -28,6 +28,7 @@
 class JsonTest : public UnitTest
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(JsonTest)
 
 public:
     explicit JsonTest(QObject* parent = nullptr) : UnitTest(parent)
@@ -42,14 +43,14 @@ protected:
     {
         QFile file(resourcePath);
         if (!file.open(QIODevice::ReadOnly)) {
-            qWarning() << "JsonTest: Failed to open resource:" << resourcePath;
+            qCWarning(UnitTestLog) << "JsonTest: Failed to open resource:" << resourcePath;
             return QJsonDocument();
         }
 
         QJsonParseError error;
         QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &error);
         if (error.error != QJsonParseError::NoError) {
-            qWarning() << "JsonTest: Parse error in" << resourcePath << ":" << error.errorString();
+            qCWarning(UnitTestLog) << "JsonTest: Parse error in" << resourcePath << ":" << error.errorString();
             return QJsonDocument();
         }
         return doc;
@@ -74,14 +75,14 @@ protected:
     {
         QFile file(filePath);
         if (!file.open(QIODevice::ReadOnly)) {
-            qWarning() << "JsonTest: Failed to open file:" << filePath;
+            qCWarning(UnitTestLog) << "JsonTest: Failed to open file:" << filePath;
             return QJsonDocument();
         }
 
         QJsonParseError error;
         QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &error);
         if (error.error != QJsonParseError::NoError) {
-            qWarning() << "JsonTest: Parse error in" << filePath << ":" << error.errorString();
+            qCWarning(UnitTestLog) << "JsonTest: Parse error in" << filePath << ":" << error.errorString();
             return QJsonDocument();
         }
         return doc;
@@ -93,7 +94,7 @@ protected:
         QJsonParseError error;
         QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8(), &error);
         if (error.error != QJsonParseError::NoError) {
-            qWarning() << "JsonTest: Parse error:" << error.errorString();
+            qCWarning(UnitTestLog) << "JsonTest: Parse error:" << error.errorString();
             return QJsonDocument();
         }
         return doc;
@@ -158,7 +159,7 @@ protected:
     {
         QFile file(filePath);
         if (!file.open(QIODevice::WriteOnly)) {
-            qWarning() << "JsonTest: Failed to create file:" << filePath;
+            qCWarning(UnitTestLog) << "JsonTest: Failed to create file:" << filePath;
             return false;
         }
         return file.write(doc.toJson()) != -1;

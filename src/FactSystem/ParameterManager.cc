@@ -339,17 +339,31 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
         }
     };
 
+    auto checkForParamError = [componentId, paramName](const mavlink_message_t &message) -> bool {
+        if (message.compid != componentId) {
+            return false;
+        }
+
+        mavlink_param_error_t paramError{};
+        mavlink_msg_param_error_decode(&message, &paramError);
+
+        char paramId[MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN + 1] = {};
+        (void) strncpy(paramId, paramError.param_id, MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN);
+
+        return QString(paramId) == paramName;
+    };
+
     // State Machine:
     //  Send PARAM_SET - 2 retries after initial attempt
     //  Increment pending write count
-    //  Wait for PARAM_VALUE ack
+    //  Wait for PARAM_VALUE ack or PARAM_ERROR rejection
     //  Decrement pending write count
     //
     //  timeout:
     //      Decrement pending write count
     //      Back up to PARAM_SET for retries
     //
-    //  error:
+    //  error (PARAM_ERROR or retries exhausted):
     //      Refresh parameter from vehicle
     //      Notify user of failure
 
@@ -365,11 +379,20 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
     auto retryDecPendingWriteCountState = new FunctionState(QStringLiteral("ParameterManager retry decrement pending write count"), stateMachine, [this]() {
         _decrementPendingWriteCount();
     });
-    auto waitAckState = new WaitForMavlinkMessageState(stateMachine, MAVLINK_MSG_ID_PARAM_VALUE, kWaitForParamValueAckMs, checkForCorrectParamValue);
+    auto errorDecPendingWriteCountState = new FunctionState(QStringLiteral("ParameterManager error decrement pending write count"), stateMachine, [this]() {
+        _decrementPendingWriteCount();
+    });
+    auto waitAckState = new WaitForParamResponseState(stateMachine, kWaitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
     auto paramRefreshState = new FunctionState(QStringLiteral("ParameterManager param refresh"), stateMachine, [this, componentId, paramName]() {
         refreshParameter(componentId, paramName);
     });
-    auto userNotifyState = new ShowAppMessageState(stateMachine, QStringLiteral("Parameter write failed: param: %1 %2").arg(paramName).arg(_vehicleAndComponentString(componentId)));
+    auto userNotifyState = new FunctionState(QStringLiteral("ParameterManager user notify"), stateMachine, [waitAckState, paramName, this, componentId]() {
+        const QString errorDetail = waitAckState->lastParamErrorString();
+        const QString msg = errorDetail.isEmpty()
+            ? QStringLiteral("Parameter write failed: param: %1 %2").arg(paramName, _vehicleAndComponentString(componentId))
+            : QStringLiteral("Parameter write failed: param: %1 %2 - %3").arg(paramName, _vehicleAndComponentString(componentId), errorDetail);
+        qgcApp()->showAppMessage(msg);
+    });
     auto logSuccessState = new FunctionState(QStringLiteral("ParameterManager log success"), stateMachine, [this, componentId, paramName]() {
         qCDebug(ParameterManagerLog) << "Parameter write succeeded: param:" << paramName << _vehicleAndComponentString(componentId);
         emit _paramSetSuccess(componentId, paramName);
@@ -388,12 +411,16 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
     decPendingWriteCountState->addThisTransition(&QGCState::advance, logSuccessState);
     logSuccessState->addThisTransition          (&QGCState::advance, finalState);
 
-    // Retry transitions
-    waitAckState->addTransition(waitAckState, &WaitForMavlinkMessageState::timeout, retryDecPendingWriteCountState); // Retry on timeout
+    // Retry transitions (timeout path)
+    waitAckState->addTransition(waitAckState, &WaitStateBase::timeout, retryDecPendingWriteCountState);
     retryDecPendingWriteCountState->addThisTransition(&QGCState::advance, sendParamSetState);
 
-    // Error transitions
-    sendParamSetState->addThisTransition(&QGCState::error, logFailureState); // Error is signaled after retries exhausted or internal error
+    // PARAM_ERROR path (definitive rejection - no retries)
+    waitAckState->addThisTransition                     (&QGCState::error, errorDecPendingWriteCountState);
+    errorDecPendingWriteCountState->addThisTransition   (&QGCState::advance, logFailureState);
+
+    // Error transitions (retries exhausted)
+    sendParamSetState->addThisTransition(&QGCState::error, logFailureState);
 
     // Error state branching transitions
     logFailureState->addThisTransition  (&QGCState::advance, userNotifyState);
@@ -880,21 +907,45 @@ void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &
         return true;
     };
 
+    auto checkForParamError = [componentId, paramName, paramIndex](const mavlink_message_t &message) -> bool {
+        if (message.compid != componentId) {
+            return false;
+        }
+
+        mavlink_param_error_t paramError{};
+        mavlink_msg_param_error_decode(&message, &paramError);
+
+        char paramId[MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN + 1] = {};
+        (void) strncpy(paramId, paramError.param_id, MAVLINK_MSG_PARAM_ERROR_FIELD_PARAM_ID_LEN);
+
+        if (paramIndex != -1) {
+            return paramError.param_index == paramIndex;
+        } else {
+            return QString(paramId) == paramName;
+        }
+    };
+
     // State Machine:
     //  Send PARAM_REQUEST_READ - 2 retries after initial attempt
-    //  Wait for PARAM_VALUE ack
+    //  Wait for PARAM_VALUE ack or PARAM_ERROR rejection
     //
     //  timeout:
     //      Back up to PARAM_REQUEST_READ for retries
     //
-    //  error:
+    //  error (PARAM_ERROR or retries exhausted):
     //      Notify user of failure
 
     // Create states
     auto stateMachine = new QGCStateMachine(QStringLiteral("PARAM_REQUEST_READ"), vehicle(), this);
     auto sendParamRequestReadState = new SendMavlinkMessageState(stateMachine, paramRequestReadEncoder, kParamRequestReadRetryCount);
-    auto waitAckState = new WaitForMavlinkMessageState(stateMachine, MAVLINK_MSG_ID_PARAM_VALUE, kWaitForParamValueAckMs, checkForCorrectParamValue);
-    auto userNotifyState = new ShowAppMessageState(stateMachine, QStringLiteral("Parameter read failed: param: %1 %2").arg(paramName).arg(_vehicleAndComponentString(componentId)));
+    auto waitAckState = new WaitForParamResponseState(stateMachine, kWaitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
+    auto userNotifyState = new FunctionState(QStringLiteral("User notify"), stateMachine, [waitAckState, paramName, this, componentId]() {
+        const QString errorDetail = waitAckState->lastParamErrorString();
+        const QString msg = errorDetail.isEmpty()
+            ? QStringLiteral("Parameter read failed: param: %1 %2").arg(paramName, _vehicleAndComponentString(componentId))
+            : QStringLiteral("Parameter read failed: param: %1 %2 - %3").arg(paramName, _vehicleAndComponentString(componentId), errorDetail);
+        qgcApp()->showAppMessage(msg);
+    });
     auto logSuccessState = new FunctionState(QStringLiteral("Log success"), stateMachine, [this, componentId, paramName, paramIndex]() {
         qCDebug(ParameterManagerLog) << "PARAM_REQUEST_READ succeeded: name:" << paramName << "index" << paramIndex << _vehicleAndComponentString(componentId);
         emit _paramRequestReadSuccess(componentId, paramName, paramIndex);
@@ -911,11 +962,14 @@ void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &
     waitAckState->addThisTransition             (&QGCState::advance, logSuccessState);
     logSuccessState->addThisTransition          (&QGCState::advance, finalState);
 
-    // Retry transitions
-    waitAckState->addTransition(waitAckState, &WaitForMavlinkMessageState::timeout, sendParamRequestReadState); // Retry on timeout
+    // Retry transitions (timeout path)
+    waitAckState->addTransition(waitAckState, &WaitStateBase::timeout, sendParamRequestReadState);
 
-    // Error transitions
-    sendParamRequestReadState->addThisTransition(&QGCState::error, logFailureState); // Error is signaled after retries exhausted or internal error
+    // PARAM_ERROR path (definitive rejection - no retries)
+    waitAckState->addThisTransition(&QGCState::error, logFailureState);
+
+    // Error transitions (retries exhausted)
+    sendParamRequestReadState->addThisTransition(&QGCState::error, logFailureState);
 
     // Error state branching transitions
     if (notifyFailure) {

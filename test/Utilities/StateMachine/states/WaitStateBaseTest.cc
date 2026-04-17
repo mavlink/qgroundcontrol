@@ -1,12 +1,7 @@
 #include "WaitStateBaseTest.h"
 #include "StateTestCommon.h"
 
-namespace {
-bool _spyTriggered(QSignalSpy& spy, int timeoutMsecs)
-{
-    return (spy.count() > 0) || spy.wait(timeoutMsecs);
-}
-}
+#include <QtCore/QCoreApplication>
 
 
 /// Concrete implementation for testing WaitStateBase
@@ -46,7 +41,7 @@ void WaitStateBaseTest::_testTimeoutEmission()
 
     machine.start();
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(timeoutSpy.count(), 1);
     QCOMPARE(timedOutSpy.count(), 1);
 }
@@ -68,12 +63,12 @@ void WaitStateBaseTest::_testWaitComplete()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // Trigger completion
     waitState->triggerComplete();
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(completedSpy.count(), 1);
     QCOMPARE(advanceSpy.count(), 1);
 }
@@ -96,12 +91,12 @@ void WaitStateBaseTest::_testWaitFailed()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // Trigger failure
     waitState->triggerFailed();
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(errorSpy.count(), 1);
 }
 
@@ -121,10 +116,11 @@ void WaitStateBaseTest::_testNoTimeoutWhenZero()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
-    // Wait a bit - no timeout should occur
-    QTest::qWait(100);
+    // Zero-timeout state arms no timer; a single event-loop flush is enough
+    // to prove no spurious timeout fires.
+    QCoreApplication::processEvents();
     QCOMPARE(timeoutSpy.count(), 0);
 
     // Complete manually to end the test
@@ -147,13 +143,13 @@ void WaitStateBaseTest::_testDoubleCompleteProtection()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // Call complete twice - should only emit once
     waitState->triggerComplete();
     waitState->triggerComplete();
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(completedSpy.count(), 1);
 }
 
@@ -175,13 +171,13 @@ void WaitStateBaseTest::_testDoubleFailProtection()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // Call fail twice - should only emit once
     waitState->triggerFailed();
     waitState->triggerFailed();
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(errorSpy.count(), 1);
 }
 
@@ -203,14 +199,14 @@ void WaitStateBaseTest::_testTimeoutCancelledOnComplete()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     // Complete before timeout
     QTimer::singleShot(50, waitState, [waitState]() {
         waitState->triggerComplete();
     });
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QCOMPARE(completedSpy.count(), 1);
     QCOMPARE(timeoutSpy.count(), 0);  // Timeout should have been cancelled
 }
@@ -230,12 +226,12 @@ void WaitStateBaseTest::_testSignalDisconnectOnExit()
 
     machine.start();
 
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
     QVERIFY(waitState->connectCalled);
 
     waitState->triggerComplete();
 
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
     QVERIFY(waitState->disconnectCalled);
 }
 

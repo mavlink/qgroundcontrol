@@ -1,6 +1,5 @@
 #include "LogStoreTest.h"
 
-#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -10,55 +9,30 @@
 #include "LogFormatter.h"
 #include "LogStore.h"
 
-static LogEntry makeEntry(const QString& msg, LogEntry::Level level = LogEntry::Info,
-                          const QString& cat = QStringLiteral("test.store"))
+static void appendAndWait(LogStore* store, const QList<LogEntry>& entries)
 {
-    LogEntry e;
-    e.timestamp = QDateTime::currentDateTime();
-    e.level = level;
-    e.category = cat;
-    e.message = msg;
-    e.buildFormatted();
-    return e;
-}
-
-static void waitForOpen(LogStore& store)
-{
-    QTRY_VERIFY_WITH_TIMEOUT(store.isOpen(), 3000);
-}
-
-static void appendAndWait(LogStore& store, const QList<LogEntry>& entries)
-{
-    const qint64 before = store.entryCount();
+    const qint64 before = store->entryCount();
     for (const auto& e : entries) {
-        store.append(e);
+        store->append(e);
     }
-    store.flush();
-    QTRY_VERIFY_WITH_TIMEOUT(store.entryCount() >= before + entries.size(), 3000);
+    store->flush();
+    QTRY_VERIFY_WITH_TIMEOUT(store->entryCount() >= before + entries.size(), TestTimeout::shortMs());
 }
 
 void LogStoreTest::_openAndClose()
 {
-    QTemporaryDir dir;
-    QVERIFY(dir.isValid());
+    LogStore* store = openStore();
+    QVERIFY(store);
+    QVERIFY(!store->sessionId().isEmpty());
 
-    LogStore store;
-    QVERIFY(!store.isOpen());
-
-    store.open(dir.filePath(QStringLiteral("test.db")));
-    waitForOpen(store);
-    QVERIFY(!store.sessionId().isEmpty());
-
-    store.close();
-    QVERIFY(!store.isOpen());
+    store->close();
+    QVERIFY(!store->isOpen());
 }
 
 void LogStoreTest::_appendAndQuery()
 {
-    QTemporaryDir dir;
-    LogStore store;
-    store.open(dir.filePath(QStringLiteral("test.db")));
-    waitForOpen(store);
+    LogStore* store = openStore();
+    QVERIFY(store);
 
     appendAndWait(store, {
         makeEntry(QStringLiteral("first")),
@@ -67,8 +41,8 @@ void LogStoreTest::_appendAndQuery()
     });
 
     LogStore::QueryParams params;
-    params.sessionId = store.sessionId();
-    const auto results = store.query(params);
+    params.sessionId = store->sessionId();
+    const auto results = store->query(params);
 
     QCOMPARE(results.size(), 3);
     QCOMPARE(results[0].message, QStringLiteral("first"));
@@ -78,10 +52,8 @@ void LogStoreTest::_appendAndQuery()
 
 void LogStoreTest::_queryFilters()
 {
-    QTemporaryDir dir;
-    LogStore store;
-    store.open(dir.filePath(QStringLiteral("test.db")));
-    waitForOpen(store);
+    LogStore* store = openStore();
+    QVERIFY(store);
 
     appendAndWait(store, {
         makeEntry(QStringLiteral("debug msg"), LogEntry::Debug, QStringLiteral("cat.a")),
@@ -90,68 +62,60 @@ void LogStoreTest::_queryFilters()
     });
 
     LogStore::QueryParams params;
-    params.sessionId = store.sessionId();
+    params.sessionId = store->sessionId();
     params.minLevel = LogEntry::Warning;
-    auto results = store.query(params);
+    auto results = store->query(params);
     QCOMPARE(results.size(), 1);
     QCOMPARE(results[0].message, QStringLiteral("warn msg"));
 
     params.minLevel = LogEntry::Debug;
     params.category = QStringLiteral("cat.a");
-    results = store.query(params);
+    results = store->query(params);
     QCOMPARE(results.size(), 2);
 
     params.category.clear();
     params.textFilter = QStringLiteral("info");
-    results = store.query(params);
+    results = store->query(params);
     QCOMPARE(results.size(), 1);
     QCOMPARE(results[0].message, QStringLiteral("info msg"));
 }
 
 void LogStoreTest::_sessions()
 {
-    QTemporaryDir dir;
-    LogStore store;
-    store.open(dir.filePath(QStringLiteral("test.db")));
-    waitForOpen(store);
+    LogStore* store = openStore();
+    QVERIFY(store);
 
     appendAndWait(store, {makeEntry(QStringLiteral("entry"))});
 
-    const QStringList sessions = store.sessions();
-    QVERIFY(sessions.contains(store.sessionId()));
+    const QStringList sessions = store->sessions();
+    QVERIFY(sessions.contains(store->sessionId()));
 }
 
 void LogStoreTest::_deleteSession()
 {
-    QTemporaryDir dir;
-    const QString dbPath = dir.filePath(QStringLiteral("test.db"));
+    LogStore* store = openStore();
+    QVERIFY(store);
 
-    LogStore store;
-    store.open(dbPath);
-    waitForOpen(store);
-
-    const QString sessionId = store.sessionId();
+    const QString sessionId = store->sessionId();
     appendAndWait(store, {makeEntry(QStringLiteral("to delete"))});
 
-    QVERIFY(store.sessionEntryCount(sessionId) > 0);
-    QVERIFY(store.deleteSession(sessionId));
-    QCOMPARE(store.sessionEntryCount(sessionId), 0);
+    QVERIFY(store->sessionEntryCount(sessionId) > 0);
+    QVERIFY(store->deleteSession(sessionId));
+    QCOMPARE(store->sessionEntryCount(sessionId), 0);
 }
 
 void LogStoreTest::_exportSession()
 {
-    QTemporaryDir dir;
-    LogStore store;
-    store.open(dir.filePath(QStringLiteral("test.db")));
-    waitForOpen(store);
+    LogStore* store = openStore();
+    QVERIFY(store);
 
     appendAndWait(store, {makeEntry(QStringLiteral("export me"))});
 
-    const QString exportPath = dir.filePath(QStringLiteral("export.txt"));
+    const QString exportPath = tempPath(QStringLiteral("export.txt"));
 
-    QSignalSpy exportSpy(&store, &LogStore::exportFinished);
-    store.exportSession(store.sessionId(), exportPath, LogFormatter::PlainText);
-    QVERIFY(exportSpy.wait(5000));
+    QSignalSpy exportSpy(store, &LogStore::exportFinished);
+    store->exportSession(store->sessionId(), exportPath, LogFormatter::PlainText);
+    QVERIFY(exportSpy.wait(TestTimeout::mediumMs()));
     QCOMPARE(exportSpy.first().first().toBool(), true);
 
     QFile file(exportPath);
@@ -162,12 +126,10 @@ void LogStoreTest::_exportSession()
 
 void LogStoreTest::_entryCount()
 {
-    QTemporaryDir dir;
-    LogStore store;
-    store.open(dir.filePath(QStringLiteral("test.db")));
-    waitForOpen(store);
+    LogStore* store = openStore();
+    QVERIFY(store);
 
-    QCOMPARE(store.entryCount(), 0);
+    QCOMPARE(store->entryCount(), 0);
 
     appendAndWait(store, {
         makeEntry(QStringLiteral("0")),
@@ -177,22 +139,20 @@ void LogStoreTest::_entryCount()
         makeEntry(QStringLiteral("4")),
     });
 
-    QCOMPARE(store.entryCount(), 5);
+    QCOMPARE(store->entryCount(), 5);
 }
 
 void LogStoreTest::_exportSessionEmpty()
 {
-    QTemporaryDir dir;
-    LogStore store;
-    store.open(dir.filePath(QStringLiteral("test.db")));
-    waitForOpen(store);
+    LogStore* store = openStore();
+    QVERIFY(store);
 
-    const QString exportPath = dir.filePath(QStringLiteral("empty_export.txt"));
+    const QString exportPath = tempPath(QStringLiteral("empty_export.txt"));
 
     // Export a non-existent session should signal failure
-    QSignalSpy exportSpy(&store, &LogStore::exportFinished);
-    store.exportSession(QStringLiteral("nonexistent"), exportPath, 0);
-    QVERIFY(exportSpy.wait(5000));
+    QSignalSpy exportSpy(store, &LogStore::exportFinished);
+    store->exportSession(QStringLiteral("nonexistent"), exportPath, 0);
+    QVERIFY(exportSpy.wait(TestTimeout::mediumMs()));
     QCOMPARE(exportSpy.first().first().toBool(), false);
 
     // File should not exist

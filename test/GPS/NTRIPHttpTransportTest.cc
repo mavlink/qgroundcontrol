@@ -1,37 +1,12 @@
 #include "NTRIPHttpTransportTest.h"
 #include "NTRIPHttpTransport.h"
-#include "RTCMParser.h"
-
-namespace {
-
-static QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
-{
-    const int payloadLen = 2 + extraPayloadBytes;
-    QByteArray frame;
-    frame.append(static_cast<char>(RTCM3_PREAMBLE));
-    frame.append(static_cast<char>((payloadLen >> 8) & 0x03));
-    frame.append(static_cast<char>(payloadLen & 0xFF));
-    frame.append(static_cast<char>((messageId >> 4) & 0xFF));
-    frame.append(static_cast<char>((messageId & 0x0F) << 4));
-    for (int i = 0; i < extraPayloadBytes; i++) {
-        frame.append(static_cast<char>(i & 0xFF));
-    }
-    const uint32_t crc = RTCMParser::crc24q(
-        reinterpret_cast<const uint8_t*>(frame.constData()),
-        static_cast<size_t>(frame.size()));
-    frame.append(static_cast<char>((crc >> 16) & 0xFF));
-    frame.append(static_cast<char>((crc >> 8) & 0xFF));
-    frame.append(static_cast<char>(crc & 0xFF));
-    return frame;
-}
-
-} // namespace
+#include "GpsTestHelpers.h"
 
 // ---------------------------------------------------------------------------
 // Whitelist Parsing
 // ---------------------------------------------------------------------------
 
-void NTRIPHttpTransportTest::testWhitelistEmpty()
+void NTRIPHttpTransportTest::_testWhitelistEmpty()
 {
     NTRIPHttpTransport t(NTRIPTransportConfig{});
     QVERIFY(t._whitelist.isEmpty());
@@ -42,7 +17,7 @@ void NTRIPHttpTransportTest::testWhitelistEmpty()
     QVERIFY(t2._whitelist.isEmpty());
 }
 
-void NTRIPHttpTransportTest::testWhitelistSingle()
+void NTRIPHttpTransportTest::_testWhitelistSingle()
 {
     NTRIPTransportConfig cfg;
     cfg.whitelist = QStringLiteral("1005");
@@ -51,7 +26,7 @@ void NTRIPHttpTransportTest::testWhitelistSingle()
     QCOMPARE(t._whitelist[0], 1005);
 }
 
-void NTRIPHttpTransportTest::testWhitelistMultiple()
+void NTRIPHttpTransportTest::_testWhitelistMultiple()
 {
     NTRIPTransportConfig cfg;
     cfg.whitelist = QStringLiteral("1005,1077,1087");
@@ -62,7 +37,7 @@ void NTRIPHttpTransportTest::testWhitelistMultiple()
     QVERIFY(t._whitelist.contains(1087));
 }
 
-void NTRIPHttpTransportTest::testWhitelistInvalidEntries()
+void NTRIPHttpTransportTest::_testWhitelistInvalidEntries()
 {
     // "abc" and "" should be skipped (toInt returns 0)
     NTRIPTransportConfig cfg;
@@ -77,7 +52,7 @@ void NTRIPHttpTransportTest::testWhitelistInvalidEntries()
 // HTTP Status Line Parsing
 // ---------------------------------------------------------------------------
 
-void NTRIPHttpTransportTest::testParseHttpStatus200()
+void NTRIPHttpTransportTest::_testParseHttpStatus200()
 {
     const auto status = NTRIPHttpTransport::parseHttpStatusLine("HTTP/1.1 200 OK");
     QVERIFY(status.valid);
@@ -85,7 +60,7 @@ void NTRIPHttpTransportTest::testParseHttpStatus200()
     QCOMPARE(status.reason, QStringLiteral("OK"));
 }
 
-void NTRIPHttpTransportTest::testParseHttpStatusICY()
+void NTRIPHttpTransportTest::_testParseHttpStatusICY()
 {
     const auto status = NTRIPHttpTransport::parseHttpStatusLine("ICY 200 OK");
     QVERIFY(status.valid);
@@ -93,7 +68,7 @@ void NTRIPHttpTransportTest::testParseHttpStatusICY()
     QCOMPARE(status.reason, QStringLiteral("OK"));
 }
 
-void NTRIPHttpTransportTest::testParseHttpStatus401()
+void NTRIPHttpTransportTest::_testParseHttpStatus401()
 {
     const auto status = NTRIPHttpTransport::parseHttpStatusLine("HTTP/1.0 401 Unauthorized");
     QVERIFY(status.valid);
@@ -101,7 +76,7 @@ void NTRIPHttpTransportTest::testParseHttpStatus401()
     QCOMPARE(status.reason, QStringLiteral("Unauthorized"));
 }
 
-void NTRIPHttpTransportTest::testParseHttpStatus404()
+void NTRIPHttpTransportTest::_testParseHttpStatus404()
 {
     const auto status = NTRIPHttpTransport::parseHttpStatusLine("HTTP/1.1 404 Not Found");
     QVERIFY(status.valid);
@@ -109,7 +84,7 @@ void NTRIPHttpTransportTest::testParseHttpStatus404()
     QCOMPARE(status.reason, QStringLiteral("Not Found"));
 }
 
-void NTRIPHttpTransportTest::testParseHttpStatusInvalid()
+void NTRIPHttpTransportTest::_testParseHttpStatusInvalid()
 {
     QVERIFY(!NTRIPHttpTransport::parseHttpStatusLine("").valid);
     QVERIFY(!NTRIPHttpTransport::parseHttpStatusLine("garbage data").valid);
@@ -121,7 +96,7 @@ void NTRIPHttpTransportTest::testParseHttpStatusInvalid()
     QCOMPARE(sourceTable.reason, QStringLiteral("OK"));
 }
 
-void NTRIPHttpTransportTest::testParseHttpStatus201()
+void NTRIPHttpTransportTest::_testParseHttpStatus201()
 {
     const auto status = NTRIPHttpTransport::parseHttpStatusLine("HTTP/1.1 201 Created");
     QVERIFY(status.valid);
@@ -129,7 +104,7 @@ void NTRIPHttpTransportTest::testParseHttpStatus201()
     QCOMPARE(status.reason, QStringLiteral("Created"));
 }
 
-void NTRIPHttpTransportTest::testParseHttpStatus500()
+void NTRIPHttpTransportTest::_testParseHttpStatus500()
 {
     const auto status = NTRIPHttpTransport::parseHttpStatusLine("HTTP/1.0 500 Internal Server Error");
     QVERIFY(status.valid);
@@ -137,7 +112,7 @@ void NTRIPHttpTransportTest::testParseHttpStatus500()
     QCOMPARE(status.reason, QStringLiteral("Internal Server Error"));
 }
 
-void NTRIPHttpTransportTest::testParseHttpStatusNoReason()
+void NTRIPHttpTransportTest::_testParseHttpStatusNoReason()
 {
     const auto status = NTRIPHttpTransport::parseHttpStatusLine("HTTP/1.1 400");
     QVERIFY(status.valid);
@@ -166,7 +141,7 @@ static bool hasValidNmeaChecksum(const QByteArray& sentence)
     return actual == expected;
 }
 
-void NTRIPHttpTransportTest::testRepairNmeaChecksumCorrect()
+void NTRIPHttpTransportTest::_testRepairNmeaChecksumCorrect()
 {
     const QByteArray input = "$GPGGA,120000,4723.8620,N,00832.7360,E,1,12,1.0,100.0,M,0.0,M,,*64";
     const QByteArray result = NTRIPHttpTransport::repairNmeaChecksum(input);
@@ -176,7 +151,7 @@ void NTRIPHttpTransportTest::testRepairNmeaChecksumCorrect()
     QVERIFY(result.startsWith("$GPGGA,"));
 }
 
-void NTRIPHttpTransportTest::testRepairNmeaChecksumWrong()
+void NTRIPHttpTransportTest::_testRepairNmeaChecksumWrong()
 {
     const QByteArray input = "$GPGGA,120000,4723.8620,N,00832.7360,E,1,12,1.0,100.0,M,0.0,M,,*FF";
     const QByteArray result = NTRIPHttpTransport::repairNmeaChecksum(input);
@@ -186,7 +161,7 @@ void NTRIPHttpTransportTest::testRepairNmeaChecksumWrong()
     QVERIFY(!result.contains("*FF"));
 }
 
-void NTRIPHttpTransportTest::testRepairNmeaChecksumMissing()
+void NTRIPHttpTransportTest::_testRepairNmeaChecksumMissing()
 {
     const QByteArray input = "$GPGGA,120000,4723.8620,N,00832.7360,E,1,12,1.0,100.0,M,0.0,M,,";
     const QByteArray result = NTRIPHttpTransport::repairNmeaChecksum(input);
@@ -196,7 +171,7 @@ void NTRIPHttpTransportTest::testRepairNmeaChecksumMissing()
     QVERIFY(hasValidNmeaChecksum(result.trimmed()));
 }
 
-void NTRIPHttpTransportTest::testRepairNmeaChecksumTruncated()
+void NTRIPHttpTransportTest::_testRepairNmeaChecksumTruncated()
 {
     const QByteArray input = "$GPGGA,120000,0000.0000,N,00000.0000,E,1,12,1.0,0.0,M,0.0,M,,*";
     const QByteArray result = NTRIPHttpTransport::repairNmeaChecksum(input);
@@ -209,7 +184,7 @@ void NTRIPHttpTransportTest::testRepairNmeaChecksumTruncated()
     QVERIFY(hasValidNmeaChecksum(trimmed));
 }
 
-void NTRIPHttpTransportTest::testRepairNmeaChecksumAppendsCrLf()
+void NTRIPHttpTransportTest::_testRepairNmeaChecksumAppendsCrLf()
 {
     const QByteArray input = "$GPGGA,000000,0000.0000,N,00000.0000,E,1,12,1.0,0.0,M,0.0,M,,*00";
     QVERIFY(!input.endsWith("\r\n"));
@@ -223,7 +198,7 @@ void NTRIPHttpTransportTest::testRepairNmeaChecksumAppendsCrLf()
     QVERIFY(!result2.endsWith("\r\n\r\n"));
 }
 
-void NTRIPHttpTransportTest::testRepairNmeaChecksumShortSentence()
+void NTRIPHttpTransportTest::_testRepairNmeaChecksumShortSentence()
 {
     const QByteArray input = "$GP";
     const QByteArray result = NTRIPHttpTransport::repairNmeaChecksum(input);
@@ -238,7 +213,7 @@ void NTRIPHttpTransportTest::testRepairNmeaChecksumShortSentence()
 // RTCM Filtering
 // ---------------------------------------------------------------------------
 
-void NTRIPHttpTransportTest::testFilterNoWhitelist()
+void NTRIPHttpTransportTest::_testFilterNoWhitelist()
 {
     NTRIPTransportConfig cfg;
     cfg.mountpoint = QStringLiteral("TEST");
@@ -249,13 +224,13 @@ void NTRIPHttpTransportTest::testFilterNoWhitelist()
         received.append(msg);
     });
 
-    QByteArray stream = buildRtcmFrame(1005, 4) + buildRtcmFrame(1077, 8) + buildRtcmFrame(1087, 2);
+    QByteArray stream = GpsTestHelpers::buildRtcmFrame(1005, 4) + GpsTestHelpers::buildRtcmFrame(1077, 8) + GpsTestHelpers::buildRtcmFrame(1087, 2);
     t._parseRtcm(stream);
 
     QCOMPARE(received.size(), 3);
 }
 
-void NTRIPHttpTransportTest::testFilterWithWhitelist()
+void NTRIPHttpTransportTest::_testFilterWithWhitelist()
 {
     NTRIPTransportConfig cfg;
     cfg.mountpoint = QStringLiteral("TEST");
@@ -270,7 +245,7 @@ void NTRIPHttpTransportTest::testFilterWithWhitelist()
         }
     });
 
-    QByteArray stream = buildRtcmFrame(1005, 4) + buildRtcmFrame(1077, 8) + buildRtcmFrame(1087, 2);
+    QByteArray stream = GpsTestHelpers::buildRtcmFrame(1005, 4) + GpsTestHelpers::buildRtcmFrame(1077, 8) + GpsTestHelpers::buildRtcmFrame(1087, 2);
     t._parseRtcm(stream);
 
     QCOMPARE(receivedIds.size(), 2);
@@ -279,7 +254,7 @@ void NTRIPHttpTransportTest::testFilterWithWhitelist()
     QVERIFY(!receivedIds.contains(1077));
 }
 
-void NTRIPHttpTransportTest::testFilterRejectsBadCrc()
+void NTRIPHttpTransportTest::_testFilterRejectsBadCrc()
 {
     NTRIPTransportConfig cfg;
     cfg.mountpoint = QStringLiteral("TEST");
@@ -290,10 +265,10 @@ void NTRIPHttpTransportTest::testFilterRejectsBadCrc()
         count++;
     });
 
-    QByteArray bad = buildRtcmFrame(1005, 4);
+    QByteArray bad = GpsTestHelpers::buildRtcmFrame(1005, 4);
     bad[bad.size() - 1] = static_cast<char>(bad[bad.size() - 1] ^ 0xFF);
 
-    QByteArray good = buildRtcmFrame(1077, 2);
+    QByteArray good = GpsTestHelpers::buildRtcmFrame(1077, 2);
 
     t._parseRtcm(bad + good);
 

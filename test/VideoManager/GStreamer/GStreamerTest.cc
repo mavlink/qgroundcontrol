@@ -2,6 +2,7 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
@@ -11,6 +12,10 @@
 #include <QtCore/QFileInfo>
 #include <gst/gst.h>
 
+#include <iterator>
+#include <memory>
+#include <vector>
+
 #ifdef Q_OS_MACOS
 #include "GstAppSinkAdapter.h"
 #include <QtMultimedia/QVideoFrame>
@@ -19,6 +24,13 @@
 
 void GStreamerTest::init()
 {
+    // Skip under AddressSanitizer BEFORE chaining to UnitTest::init(). QSKIP
+    // causes Qt to skip the matching cleanup() call, which would leave the
+    // UnitTest destructor's _cleanupCalled assertion tripped.
+#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
+    QSKIP("GStreamer init deadlocks under AddressSanitizer (bindtextdomain lock)");
+#endif
+
     UnitTest::init();
 
     // In-process plugin scanning (GST_REGISTRY_FORK=no) can trigger harmless
@@ -29,10 +41,6 @@ void GStreamerTest::init()
                         "g_type_add_interface_static.*G_TYPE_IS_INSTANTIATABLE|"
                         "g_once_init_leave.*result != 0"));
     expectLogMessage(QtCriticalMsg, sGLibTypeRe);
-
-#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
-    QSKIP("GStreamer init deadlocks under AddressSanitizer (bindtextdomain lock)");
-#endif
 
     if (!gst_is_initialized()) {
         GStreamer::prepareEnvironment();
@@ -201,11 +209,6 @@ void GStreamerTest::_testVerifyRequiredPlugins()
 void GStreamerTest::_testEnvironmentSetup()
 {
     // Save and clear relevant env vars
-    struct EnvBackup {
-        const char *name;
-        QByteArray value;
-        bool wasSet;
-    };
     static constexpr const char *envVars[] = {
         "GIO_EXTRA_MODULES", "GIO_MODULE_DIR", "GIO_USE_VFS",
         "GST_PTP_HELPER", "GST_PTP_HELPER_1_0",
@@ -218,9 +221,10 @@ void GStreamerTest::_testEnvironmentSetup()
         "VIRTUAL_ENV", "CONDA_PREFIX", "CONDA_DEFAULT_ENV",
         "PYTHONNOUSERSITE",
     };
-    QList<EnvBackup> backups;
+    std::vector<TestFixtures::EnvVarFixture> envBackups;
+    envBackups.reserve(std::size(envVars));
     for (const char *var : envVars) {
-        backups.append({var, qgetenv(var), qEnvironmentVariableIsSet(var)});
+        envBackups.emplace_back(var);
         qunsetenv(var);
     }
 
@@ -250,14 +254,7 @@ void GStreamerTest::_testEnvironmentSetup()
         }
     }
 
-    // Restore env vars
-    for (const EnvBackup &backup : backups) {
-        if (backup.wasSet) {
-            qputenv(backup.name, backup.value);
-        } else {
-            qunsetenv(backup.name);
-        }
-    }
+    // EnvVarFixture destructors auto-restore env vars
 }
 
 void GStreamerTest::_testCompleteInit()
@@ -291,10 +288,9 @@ void GStreamerTest::_testCompleteInit()
 
 void GStreamerTest::_testCreateVideoReceiver()
 {
-    VideoReceiver *receiver = GStreamer::createVideoReceiver(nullptr);
+    std::unique_ptr<VideoReceiver> receiver(GStreamer::createVideoReceiver(nullptr));
     QVERIFY2(receiver, "GStreamer::createVideoReceiver() returned nullptr");
-    QVERIFY(qobject_cast<GstVideoReceiver*>(receiver));
-    delete receiver;
+    QVERIFY(qobject_cast<GstVideoReceiver*>(receiver.get()));
 }
 
 void GStreamerTest::_testPipelineSmokeTest()
@@ -438,7 +434,7 @@ void GStreamerTest::_testAppsinkFrameDelivery()
     gst_object_unref(bus);
 
     // Wait for frames to be delivered via queued videoFrameChanged signals
-    QTRY_VERIFY_WITH_TIMEOUT(frameCount > 0, 5000);
+    QTRY_VERIFY_WITH_TIMEOUT(frameCount > 0, TestTimeout::mediumMs());
 
     // Verify frames have the expected size
     QCOMPARE(lastFrameSize, QSize(320, 240));

@@ -117,7 +117,6 @@ void MissionControllerTest::_testGimbalRecalc()
     }()),
                       TestTimeout::mediumMs());
     for (int i = 1; i < _missionController->visualItems()->count(); i++) {
-        // qDebug() << i;
         VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
         if (i >= yawIndex) {
             QCOMPARE(visualItem->missionGimbalYaw(), 0.0);
@@ -158,7 +157,6 @@ void MissionControllerTest::_testVehicleYawRecalc()
     // No specific vehicle yaw set yet. Vehicle yaw should track flight path.
     double expectedVehicleYaw = wpAngleInc;
     for (int i = 2; i < cMissionItems; i++) {
-        // qDebug() << i;
         VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
         QCOMPARE(visualItem->missionVehicleYaw(), expectedVehicleYaw);
         if (i <= cMissionItems - 1) {
@@ -185,7 +183,6 @@ void MissionControllerTest::_testVehicleYawRecalc()
     // All item should track vehicle path except for the one changed
     expectedVehicleYaw = wpAngleInc;
     for (int i = 2; i < cMissionItems; i++) {
-        // qDebug() << i;
         VisualMissionItem* visualItem = _missionController->visualItems()->value<VisualMissionItem*>(i);
         QCOMPARE(visualItem->missionVehicleYaw(), i == 3 ? 66.0 : expectedVehicleYaw);
         if (i <= cMissionItems - 1) {

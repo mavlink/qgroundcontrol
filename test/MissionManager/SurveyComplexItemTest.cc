@@ -34,15 +34,14 @@ void SurveyComplexItemTest::init()
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can
     // lead to incorrect ui or perf impact of uneeded signals propogating ui change.
-    _multiSpy = new MultiSignalSpy();
+    _multiSpy = std::make_unique<MultiSignalSpy>();
     QVERIFY(_multiSpy);
     QCOMPARE(_multiSpy->init(_surveyItem), true);
 }
 
 void SurveyComplexItemTest::cleanup()
 {
-    delete _multiSpy;
-    _multiSpy = nullptr;
+    _multiSpy.reset();
     TransectStyleComplexItemTestBase::cleanup();
     // These items are deleted when planController() is deleted
     _surveyItem = nullptr;
@@ -134,13 +133,12 @@ void SurveyComplexItemTest::_testEntryLocation()
 
 void SurveyComplexItemTest::_testItemCount()
 {
-    typedef struct
-    {
+    struct TestCase_t {
         bool hoverAndCapture;
         bool triggerInTurnAround;
         bool refly90;
         bool hasTurnaround;
-    } TestCase_t;
+    };
 
     QList<TestCase_t> rgTestCases;
     for (int i = 0; i < 2; i++) {
@@ -220,11 +218,10 @@ void SurveyComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaround, b
 void SurveyComplexItemTest::_testItemGeneration()
 {
     // Test all the combinations of: cameraTriggerInTurnAround: false, hasTurnAround: *, useConditionGate: *
-    typedef struct
-    {
+    struct TestCase_t {
         bool hasTurnaround;
         bool useConditionGate;
-    } TestCase_t;
+    };
 
     static const TestCase_t rgTestCases[] = {
         {false, false},

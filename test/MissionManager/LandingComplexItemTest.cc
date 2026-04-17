@@ -36,17 +36,16 @@ void LandingComplexItemTest::init()
     _item->setDirty(false);
     QVERIFY(!_item->dirty());
     VisualMissionItemTest::_createSpy(_item, &_viMultiSpy);
-    _multiSpy = new MultiSignalSpy();
+    _multiSpy = std::make_unique<MultiSignalSpy>();
     QCOMPARE(_multiSpy->init(_item), true);
-    _validStopVideoItem = CameraSectionTest::createValidStopTimeItem(planController());
-    _validStopDistanceItem = CameraSectionTest::createValidStopTimeItem(planController());
+    _validStopVideoItem = CameraSectionTest::createValidStopVideoItem(planController());
+    _validStopDistanceItem = CameraSectionTest::createValidStopDistanceItem(planController());
     _validStopTimeItem = CameraSectionTest::createValidStopTimeItem(planController());
 }
 
 void LandingComplexItemTest::cleanup()
 {
-    delete _multiSpy;
-    _multiSpy = nullptr;
+    _multiSpy.reset();
     VisualMissionItemTest::cleanup();
     // These items go away when planController() is deleted
     _item = nullptr;
@@ -123,7 +122,7 @@ void LandingComplexItemTest::_testItemCount()
         {true, true},
     };
 
-    for (size_t i = 0; i < sizeof(rgTestCases) / sizeof(rgTestCases[0]); i++) {
+    for (size_t i = 0; i < std::size(rgTestCases); i++) {
         TestCase_s& testCase = rgTestCases[i];
         _item->stopTakingPhotos()->setRawValue(testCase.stopTakingPhotos);
         _item->stopTakingVideo()->setRawValue(testCase.stopTakingVideo);
@@ -149,7 +148,7 @@ void LandingComplexItemTest::_testAppendSectionItems()
         {true, false, false},  {true, false, true},  {true, true, false},  {true, true, true},
     };
 
-    for (size_t i = 0; i < sizeof(rgTestCases) / sizeof(rgTestCases[0]); i++) {
+    for (size_t i = 0; i < std::size(rgTestCases); i++) {
         TestCase_s& testCase = rgTestCases[i];
         qDebug() << "stopTakingPhotos" << testCase.stopTakingPhotos << "stopTakingVideo" << testCase.stopTakingVideo
                  << "useLoiterToAlt" << testCase.useLoiterToAlt;
@@ -201,7 +200,7 @@ void LandingComplexItemTest::_testScanForItems()
         {true, false, false},  {true, false, true},  {true, true, false},  {true, true, true},
     };
 
-    for (size_t i = 0; i < sizeof(rgTestCases) / sizeof(rgTestCases[0]); i++) {
+    for (size_t i = 0; i < std::size(rgTestCases); i++) {
         TestCase_s& testCase = rgTestCases[i];
         qDebug() << "stopTakingPhotos" << testCase.stopTakingPhotos << "stopTakingVideo" << testCase.stopTakingVideo
                  << "useLoiterToAlt" << testCase.useLoiterToAlt;

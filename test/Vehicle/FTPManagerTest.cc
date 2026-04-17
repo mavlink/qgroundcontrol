@@ -16,15 +16,13 @@ const FTPManagerTest::TestCase_t FTPManagerTest::_rgTestCases[] = {
 
 void FTPManagerTest::cleanup()
 {
-    _disconnectMockLink();
+    VehicleTestManualConnect::cleanup();
 }
 
 void FTPManagerTest::_testCaseWorker(const TestCase_t& testCase)
 {
     _connectMockLinkNoInitialConnectSequence();
-    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
-    Vehicle* vehicle = vehicleMgr->activeVehicle();
-    FTPManager* ftpManager = vehicle->ftpManager();
+    FTPManager* ftpManager = _vehicle->ftpManager();
     QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
     // void downloadComplete   (const QString& file, const QString& errorMsg);
     ftpManager->download(MAV_COMP_ID_AUTOPILOT1, testCase.file,
@@ -129,9 +127,7 @@ void FTPManagerTest::_verifyFileSizeAndDelete(const QString& filename, int expec
 void FTPManagerTest::_testListDirectory()
 {
     _connectMockLinkNoInitialConnectSequence();
-    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
-    Vehicle* vehicle = vehicleMgr->activeVehicle();
-    FTPManager* ftpManager = vehicle->ftpManager();
+    FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoSecondResponseAllowRetry);
     QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
     ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
@@ -146,9 +142,7 @@ void FTPManagerTest::_testListDirectory()
 void FTPManagerTest::_testListDirectoryNoResponse()
 {
     _connectMockLinkNoInitialConnectSequence();
-    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
-    Vehicle* vehicle = vehicleMgr->activeVehicle();
-    FTPManager* ftpManager = vehicle->ftpManager();
+    FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoResponse);
     QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
     ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
@@ -163,9 +157,7 @@ void FTPManagerTest::_testListDirectoryNoResponse()
 void FTPManagerTest::_testListDirectoryNakResponse()
 {
     _connectMockLinkNoInitialConnectSequence();
-    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
-    Vehicle* vehicle = vehicleMgr->activeVehicle();
-    FTPManager* ftpManager = vehicle->ftpManager();
+    FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNakResponse);
     QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
     ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
@@ -180,9 +172,7 @@ void FTPManagerTest::_testListDirectoryNakResponse()
 void FTPManagerTest::_testListDirectoryNoSecondResponse()
 {
     _connectMockLinkNoInitialConnectSequence();
-    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
-    Vehicle* vehicle = vehicleMgr->activeVehicle();
-    FTPManager* ftpManager = vehicle->ftpManager();
+    FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoSecondResponse);
     QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
     ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
@@ -197,9 +187,7 @@ void FTPManagerTest::_testListDirectoryNoSecondResponse()
 void FTPManagerTest::_testListDirectoryNoSecondResponseAllowRetry()
 {
     _connectMockLinkNoInitialConnectSequence();
-    MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
-    Vehicle* vehicle = vehicleMgr->activeVehicle();
-    FTPManager* ftpManager = vehicle->ftpManager();
+    FTPManager* ftpManager = _vehicle->ftpManager();
     _mockLink->mockLinkFTP()->setErrorMode(MockLinkFTP::errModeNoSecondResponseAllowRetry);
     QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
     ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
