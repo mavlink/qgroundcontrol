@@ -157,10 +157,8 @@ Qt*-linux*.tar.*
 
 # AI Assistants
 .claude/
-.claudeignore
 .geminiignore
 .cursorignore
-**/CLAUDE.md
 
 # Pre-commit hooks
 .ruff_cache/

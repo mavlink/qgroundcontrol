@@ -24,7 +24,7 @@ private slots:
     void _duplicateWhileQueued();
 
 private:
-    typedef struct
+    struct TestCase_t
     {
         MockLink::RequestMessageFailureMode_t failureMode;
         MAV_RESULT expectedCommandResult;
@@ -33,7 +33,7 @@ private:
         int expectedMessageId;
         bool resultHandlerCalled;
         int callbackCount;
-    } TestCase_t;
+    };
 
     void _testCaseWorker(TestCase_t& testCase);
 

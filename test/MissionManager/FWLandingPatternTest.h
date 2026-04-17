@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "VisualMissionItemTest.h"
 
 class MultiSignalSpy;
@@ -23,7 +25,7 @@ private:
     void _validateItem(FixedWingLandingComplexItem* newItem);
 
     FixedWingLandingComplexItem* _fwItem = nullptr;
-    MultiSignalSpy* _viSpy = nullptr;
+    std::unique_ptr<MultiSignalSpy> _viSpy;
     SimpleMissionItem* _validStopVideoItem = nullptr;
     SimpleMissionItem* _validStopDistanceItem = nullptr;
     SimpleMissionItem* _validStopTimeItem = nullptr;

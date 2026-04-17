@@ -44,6 +44,7 @@ protected slots:
 
     void cleanup() override
     {
+        dumpFailureContextIfTestFailed(QStringLiteral("before VehicleTestManualConnect teardown"));
         _disconnectMockLink();
         UnitTest::cleanup();
     }

@@ -37,7 +37,7 @@ static int countFields(const QByteArray& gga)
 // GGA Format and Structure
 // ---------------------------------------------------------------------------
 
-void NTRIPManagerTest::testMakeGGAFormat()
+void NTRIPManagerTest::_testMakeGGAFormat()
 {
     QGeoCoordinate coord(47.3977, 8.5456);
     QByteArray gga = NTRIPManager::makeGGA(coord, 408.0);
@@ -52,7 +52,7 @@ void NTRIPManagerTest::testMakeGGAFormat()
     QVERIFY(gga.contains(",408.0,M,"));
 }
 
-void NTRIPManagerTest::testMakeGGAFieldCount()
+void NTRIPManagerTest::_testMakeGGAFieldCount()
 {
     // GGA has 15 fields: $GPGGA,hhmmss,lat,N,lon,E,qual,nsat,hdop,alt,M,geoid,M,age,refid
     QGeoCoordinate coord(40.0, -74.0);
@@ -62,7 +62,7 @@ void NTRIPManagerTest::testMakeGGAFieldCount()
     QCOMPARE(countFields(gga), 15);
 }
 
-void NTRIPManagerTest::testMakeGGAChecksum()
+void NTRIPManagerTest::_testMakeGGAChecksum()
 {
     QGeoCoordinate coord(37.7749, -122.4194);
     QByteArray gga = NTRIPManager::makeGGA(coord, 16.0);
@@ -74,7 +74,7 @@ void NTRIPManagerTest::testMakeGGAChecksum()
 // GGA Hemisphere Encoding
 // ---------------------------------------------------------------------------
 
-void NTRIPManagerTest::testMakeGGANorthEast()
+void NTRIPManagerTest::_testMakeGGANorthEast()
 {
     QGeoCoordinate coord(51.5074, 0.1278);
     QByteArray gga = NTRIPManager::makeGGA(coord, 11.0);
@@ -84,7 +84,7 @@ void NTRIPManagerTest::testMakeGGANorthEast()
     QVERIFY(verifyNmeaChecksum(gga));
 }
 
-void NTRIPManagerTest::testMakeGGASouthWest()
+void NTRIPManagerTest::_testMakeGGASouthWest()
 {
     QGeoCoordinate coord(-33.8688, -151.2093);
     QByteArray gga = NTRIPManager::makeGGA(coord, 58.0);
@@ -94,7 +94,7 @@ void NTRIPManagerTest::testMakeGGASouthWest()
     QVERIFY(verifyNmeaChecksum(gga));
 }
 
-void NTRIPManagerTest::testMakeGGAEquator()
+void NTRIPManagerTest::_testMakeGGAEquator()
 {
     // Latitude exactly 0 should be N (>= 0.0)
     QGeoCoordinate coord(0.0, 10.0);
@@ -104,7 +104,7 @@ void NTRIPManagerTest::testMakeGGAEquator()
     QVERIFY(verifyNmeaChecksum(gga));
 }
 
-void NTRIPManagerTest::testMakeGGADateLine()
+void NTRIPManagerTest::_testMakeGGADateLine()
 {
     // Longitude near 180 (Fiji)
     QGeoCoordinate coordEast(17.7134, 178.065);
@@ -123,7 +123,7 @@ void NTRIPManagerTest::testMakeGGADateLine()
 // GGA Altitude
 // ---------------------------------------------------------------------------
 
-void NTRIPManagerTest::testMakeGGAZeroAltitude()
+void NTRIPManagerTest::_testMakeGGAZeroAltitude()
 {
     QGeoCoordinate coord(0.0001, 0.0001);
     QByteArray gga = NTRIPManager::makeGGA(coord, 0.0);
@@ -132,7 +132,7 @@ void NTRIPManagerTest::testMakeGGAZeroAltitude()
     QVERIFY(verifyNmeaChecksum(gga));
 }
 
-void NTRIPManagerTest::testMakeGGAHighAltitude()
+void NTRIPManagerTest::_testMakeGGAHighAltitude()
 {
     QGeoCoordinate coord(27.9881, 86.9250);
     QByteArray gga = NTRIPManager::makeGGA(coord, 8848.9);
@@ -141,7 +141,7 @@ void NTRIPManagerTest::testMakeGGAHighAltitude()
     QVERIFY(verifyNmeaChecksum(gga));
 }
 
-void NTRIPManagerTest::testMakeGGANegativeAltitude()
+void NTRIPManagerTest::_testMakeGGANegativeAltitude()
 {
     // Dead Sea: ~-430m
     QGeoCoordinate coord(31.5, 35.5);
@@ -155,7 +155,7 @@ void NTRIPManagerTest::testMakeGGANegativeAltitude()
 // GGA Coordinate Precision
 // ---------------------------------------------------------------------------
 
-void NTRIPManagerTest::testMakeGGADMMPrecision()
+void NTRIPManagerTest::_testMakeGGADMMPrecision()
 {
     // 47.3977 degrees = 47 degrees, 23.8620 minutes
     // 8.5456 degrees = 008 degrees, 32.7360 minutes
@@ -185,7 +185,7 @@ void NTRIPManagerTest::testMakeGGADMMPrecision()
 // GGA Time Field
 // ---------------------------------------------------------------------------
 
-void NTRIPManagerTest::testMakeGGATimeFormat()
+void NTRIPManagerTest::_testMakeGGATimeFormat()
 {
     QGeoCoordinate coord(40.0, -74.0);
     QByteArray gga = NTRIPManager::makeGGA(coord, 10.0);

@@ -5,8 +5,16 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        HealthAndArmingCheckReportTest.cc
+        HealthAndArmingCheckReportTest.h
+        ImageProtocolManagerTest.cc
+        ImageProtocolManagerTest.h
+        MAVLinkStreamConfigTest.cc
+        MAVLinkStreamConfigTest.h
         MockLinkSigningTest.cc
         MockLinkSigningTest.h
+        QGCMAVLinkTest.cc
+        QGCMAVLinkTest.h
         SigningTest.cc
         SigningTest.h
         StatusTextHandlerTest.cc

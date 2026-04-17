@@ -5,13 +5,6 @@
 
 #include <QtTest/QSignalSpy>
 
-namespace {
-bool _spyTriggered(QSignalSpy& spy, int timeoutMsecs)
-{
-    return (spy.count() > 0) || spy.wait(timeoutMsecs);
-}
-}
-
 void StateHistoryRecorderTest::_testManualEntriesRequireEnabledAndTrim()
 {
     QGCStateMachine machine(QStringLiteral("RecorderManualTrim"), nullptr);
@@ -79,7 +72,7 @@ void StateHistoryRecorderTest::_testStateEntryExitRecording()
 
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
-    QVERIFY(_spyTriggered(finishedSpy, 500));
+    QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
 
     const auto state1Entries = recorder.entriesForState(QStringLiteral("State1"));
     bool sawEntered = false;

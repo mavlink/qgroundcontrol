@@ -116,14 +116,6 @@ void CameraSectionTest::cleanup()
     _validCameraSurveyPhotoModeItem = nullptr;
 }
 
-void CameraSectionTest::_createSpy(CameraSection* cameraSection, MultiSignalSpy** cameraSpy)
-{
-    *cameraSpy = nullptr;
-    MultiSignalSpy* spy = new MultiSignalSpy();
-    QCOMPARE(spy->init(cameraSection), true);
-    *cameraSpy = spy;
-}
-
 void CameraSectionTest::_testDirty()
 {
     // Check for dirty not signalled if same value

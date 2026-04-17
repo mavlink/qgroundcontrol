@@ -231,7 +231,7 @@ void InitialConnectTest::_rallyTimeoutPathDoesNotLeakCompletionHandler()
     });
 
     QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
-    QVERIFY(initialConnectCompleteSpy.wait(60000) || _vehicle->isInitialConnectComplete());
+    QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()) || _vehicle->isInitialConnectComplete());
     QVERIFY(!_vehicle->initialPlanRequestComplete());
 
     _mockLink->setMissionItemFailureMode(MockLinkMissionItemHandler::FailNone, MAV_MISSION_ACCEPTED);
@@ -365,7 +365,7 @@ void InitialConnectTest::_stateTimeoutFallsThrough()
 
     QSignalSpy initialConnectCompleteSpy{_vehicle, &Vehicle::initialConnectComplete};
     if (!_vehicle->isInitialConnectComplete()) {
-        QVERIFY(initialConnectCompleteSpy.wait(60000));
+        QVERIFY(initialConnectCompleteSpy.wait(TestTimeout::longMs()));
     }
     QCOMPARE(_vehicle->parameterManager()->parametersReady(), expectParametersReady);
     QCOMPARE(_vehicle->initialPlanRequestComplete(), expectPlanRequestComplete);

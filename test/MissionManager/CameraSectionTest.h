@@ -43,7 +43,6 @@ private slots:
     void _testSpecifiedGimbalValuesChanged();
 
 private:
-    void _createSpy(CameraSection* cameraSection, MultiSignalSpy** cameraSpy);
     void _validateItemScan(SimpleMissionItem* validItem);
     void _resetSection();
 

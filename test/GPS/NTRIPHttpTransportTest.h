@@ -8,31 +8,31 @@ class NTRIPHttpTransportTest : public UnitTest
 
 private slots:
     // HTTP status line parsing
-    void testParseHttpStatus200();
-    void testParseHttpStatusICY();
-    void testParseHttpStatus401();
-    void testParseHttpStatus404();
-    void testParseHttpStatusInvalid();
-    void testParseHttpStatus201();
-    void testParseHttpStatus500();
-    void testParseHttpStatusNoReason();
+    void _testParseHttpStatus200();
+    void _testParseHttpStatusICY();
+    void _testParseHttpStatus401();
+    void _testParseHttpStatus404();
+    void _testParseHttpStatusInvalid();
+    void _testParseHttpStatus201();
+    void _testParseHttpStatus500();
+    void _testParseHttpStatusNoReason();
 
     // Whitelist parsing
-    void testWhitelistEmpty();
-    void testWhitelistSingle();
-    void testWhitelistMultiple();
-    void testWhitelistInvalidEntries();
+    void _testWhitelistEmpty();
+    void _testWhitelistSingle();
+    void _testWhitelistMultiple();
+    void _testWhitelistInvalidEntries();
 
     // RTCM filtering
-    void testFilterNoWhitelist();
-    void testFilterWithWhitelist();
-    void testFilterRejectsBadCrc();
+    void _testFilterNoWhitelist();
+    void _testFilterWithWhitelist();
+    void _testFilterRejectsBadCrc();
 
     // NMEA checksum repair
-    void testRepairNmeaChecksumCorrect();
-    void testRepairNmeaChecksumWrong();
-    void testRepairNmeaChecksumMissing();
-    void testRepairNmeaChecksumTruncated();
-    void testRepairNmeaChecksumAppendsCrLf();
-    void testRepairNmeaChecksumShortSentence();
+    void _testRepairNmeaChecksumCorrect();
+    void _testRepairNmeaChecksumWrong();
+    void _testRepairNmeaChecksumMissing();
+    void _testRepairNmeaChecksumTruncated();
+    void _testRepairNmeaChecksumAppendsCrLf();
+    void _testRepairNmeaChecksumShortSentence();
 };

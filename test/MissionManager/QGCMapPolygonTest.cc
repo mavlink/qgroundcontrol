@@ -20,10 +20,10 @@ void QGCMapPolygonTest::init()
     _mapPolygon = new QGCMapPolygon(this);
     _pathModel = _mapPolygon->qmlPathModel();
     QVERIFY(_pathModel);
-    _multiSpyPolygon = new MultiSignalSpy();
+    _multiSpyPolygon = std::make_unique<MultiSignalSpy>();
     QVERIFY(_multiSpyPolygon->init(_mapPolygon,
                                    {"countChanged", "pathChanged", "dirtyChanged", "cleared", "centerChanged"}));
-    _multiSpyModel = new MultiSignalSpy();
+    _multiSpyModel = std::make_unique<MultiSignalSpy>();
     QVERIFY(_multiSpyModel->init(_pathModel, {"countChanged", "dirtyChanged"}));
 }
 
@@ -31,10 +31,8 @@ void QGCMapPolygonTest::cleanup()
 {
     delete _mapPolygon;
     _mapPolygon = nullptr;
-    delete _multiSpyPolygon;
-    _multiSpyPolygon = nullptr;
-    delete _multiSpyModel;
-    _multiSpyModel = nullptr;
+    _multiSpyPolygon.reset();
+    _multiSpyModel.reset();
     UnitTest::cleanup();
 }
 

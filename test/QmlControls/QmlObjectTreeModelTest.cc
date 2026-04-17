@@ -1,38 +1,10 @@
 #include "QmlObjectTreeModelTest.h"
 
+#include "TestDirtyObject.h"
+
 #include <QtTest/QSignalSpy>
 #include <QtCore/QPersistentModelIndex>
 #include <QtCore/QAbstractItemModel>
-
-// ---------------------------------------------------------------------------
-// DirtyObject — minimal QObject with a dirty property for signal testing
-// ---------------------------------------------------------------------------
-namespace {
-
-class DirtyObject : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
-
-public:
-    explicit DirtyObject(QObject* parent = nullptr) : QObject(parent) {}
-
-    bool dirty() const { return _dirty; }
-    void setDirty(bool dirty)
-    {
-        if (_dirty == dirty) return;
-        _dirty = dirty;
-        emit dirtyChanged(_dirty);
-    }
-
-signals:
-    void dirtyChanged(bool dirty);
-
-private:
-    bool _dirty = false;
-};
-
-} // namespace
 
 // ===========================================================================
 // Construction & empty state
@@ -528,7 +500,7 @@ void QmlObjectTreeModelTest::_insertSetsDirty()
 void QmlObjectTreeModelTest::_childDirtyPropagates()
 {
     QmlObjectTreeModel model;
-    DirtyObject obj;
+    TestDirtyObject obj;
 
     QSignalSpy dirtySpy(&model, &QmlObjectTreeModel::dirtyChanged);
     QVERIFY(dirtySpy.isValid());
@@ -546,7 +518,7 @@ void QmlObjectTreeModelTest::_childDirtyPropagates()
 void QmlObjectTreeModelTest::_removeDisconnectsDirty()
 {
     QmlObjectTreeModel model;
-    DirtyObject obj;
+    TestDirtyObject obj;
 
     model.appendItem(&obj);
     const QModelIndex idx = model.indexForObject(&obj);
@@ -760,5 +732,3 @@ void QmlObjectTreeModelTest::_destructorSafeWithDestroyedObjects()
 }
 
 UT_REGISTER_TEST(QmlObjectTreeModelTest, TestLabel::Unit)
-
-#include "QmlObjectTreeModelTest.moc"

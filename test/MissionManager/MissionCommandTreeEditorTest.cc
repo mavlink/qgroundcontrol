@@ -58,4 +58,4 @@ void MissionCommandTreeEditorTest::testEditors()
     }
 }
 
-UT_REGISTER_TEST(MissionCommandTreeEditorTest, TestLabel::Unit, TestLabel::MissionManager)
+UT_REGISTER_TEST(MissionCommandTreeEditorTest, TestLabel::Integration, TestLabel::MissionManager)

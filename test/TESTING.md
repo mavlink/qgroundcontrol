@@ -27,6 +27,18 @@ ctest -R "Camera|Mission"          # Tests matching pattern
 ctest --rerun-failed               # Re-run only failed tests
 ```
 
+### Via the QGroundControl binary (unittest build)
+
+```bash
+./QGroundControl --list-tests                          # List all registered tests
+./QGroundControl --list-tests --label=Unit,Utilities   # List tests matching labels
+./QGroundControl --unittest:MyTest                     # Run one test suite
+./QGroundControl --unittest                            # Run all tests
+./QGroundControl --unittest --label=Unit               # Run by label filter (comma-sep)
+./QGroundControl --unittest:MyTest --unittest-output:results.xml  # JUnit XML
+./QGroundControl --unittest:MyTest --unittest-stress:50           # Stress: 50 iterations
+```
+
 ### Convenience Targets
 
 ```bash
@@ -83,6 +95,10 @@ private slots:
 UT_REGISTER_TEST(MyTest, TestLabel::Unit)
 ```
 
+`UT_REGISTER_TEST` auto-registers the class at static-init time. There is no central list of tests to update — `main.cc`, `QGCApplication`, `QGCCommandLineParser`, and `UnitTestList` are all generic and enumerate tests at runtime via `UnitTest::registeredTests()`.
+
+Available `TestLabel::*` enum values: `Unit`, `Integration`, `Vehicle`, `MissionManager`, `Comms`, `Utilities`, `Slow`, `Network`, `Serial`, `Joystick`, `AnalyzeView`, `Terrain`. CTest `LABELS` in `CMakeLists.txt` are a superset (e.g. `MAVLink`, `Settings`) — the two lists are independent.
+
 ### Register in CMakeLists.txt
 
 ```cmake
@@ -116,6 +132,50 @@ add_qgc_test(MyTest LABELS Unit RESOURCE_LOCK TempFiles)
 | `Utilities` | 60s | Utility function tests |
 | `Comms` | 60s | Communication tests |
 | `MAVLink` | 60s | MAVLink protocol tests |
+
+## Wait/Timeout Helpers
+
+### Prefer `TestTimeout::*` over literal millisecond values
+
+All `.wait()`, `QTRY_*_WITH_TIMEOUT`, and `QVERIFY_*_WAIT` calls should use the CI-adaptive helpers rather than hard-coded numbers. The helpers auto-scale (roughly 2×) on CI so the same test works on a loaded build agent without slowing local runs:
+
+```cpp
+#include "UnitTest.h"  // provides TestTimeout namespace
+
+TestTimeout::shortMs()   // 1s local / 2s CI   — quick signals, in-memory ops
+TestTimeout::mediumMs()  // 5s local / 10s CI  — normal async work, file I/O
+TestTimeout::longMs()    // 30s local / 60s CI — vehicle connect, FTP, metadata
+```
+
+Chrono-typed variants are also available: `TestTimeout::shortDuration()`, `mediumDuration()`, `longDuration()`.
+
+### Wait macros
+
+Prefer the QGC wrapper macros over raw `QSignalSpy::wait()`/`QTest::qWaitFor()` — they emit readable failure messages that include the signal/condition name and the elapsed time:
+
+```cpp
+QVERIFY_SIGNAL_WAIT(spy, TestTimeout::shortMs());          // spy.count() >= 1
+QVERIFY_SIGNAL_COUNT_WAIT(spy, 3, TestTimeout::shortMs()); // spy.count() >= 3
+QVERIFY_NO_SIGNAL_WAIT(spy, 250);                          // see gotcha below
+QVERIFY_TRUE_WAIT(condition, TestTimeout::shortMs());      // QTRY_VERIFY wrapper
+QCOMPARE_TRUE_WAIT(actual, expected, TestTimeout::shortMs());
+```
+
+**Gotcha — `QVERIFY_NO_SIGNAL_WAIT` always burns the full timeout.** It has to, because proving absence requires waiting the entire window. Keep its timeout as tight as possible (a few hundred ms), and put it *after* any `QVERIFY_TRUE_WAIT` that already proves state has settled.
+
+### Condition polling
+
+```cpp
+QVERIFY(UnitTest::waitForCondition([&]() { return thing.ready(); },
+                                   TestTimeout::shortMs(),
+                                   QStringLiteral("thing.ready()")));
+```
+
+### Avoid
+
+- `QTest::qWait(N)` — unconditional sleep, doesn't early-exit.
+- Polling `while (!done) { QTest::qWait(20); }` — use `QTRY_VERIFY_WITH_TIMEOUT` or `waitForCondition` instead.
+- Literal milliseconds in timeouts. If you *must* use a literal (e.g. tight `QVERIFY_NO_SIGNAL_WAIT`), add a comment explaining why `TestTimeout::*` isn't appropriate.
 
 ## MultiSignalSpy
 
@@ -217,3 +277,17 @@ QGC_TEST_VERBOSE=1 ./QGroundControl --unittest:MyTest
 2. **Resource conflicts**: Use `RESOURCE_LOCK` or `SERIAL` for exclusive access
 3. **Flaky signals**: Use `MultiSignalSpy::waitForSignal()` instead of `QSignalSpy::wait()`
 4. **Stale singletons**: Ensure proper cleanup in `cleanup()` method
+5. **"Uncategorized log messages" lint failure**: If the code under test logs via plain
+   `qDebug()`/`qWarning()`/`qCritical()` (no `qCDebug(Category)` wrapper), use the QGC
+   base-class helper instead of `QTest::ignoreMessage`:
+
+   ```cpp
+   // Correct — satisfies the uncategorized-log lint in the QGC harness
+   expectLogMessage(QtWarningMsg, QRegularExpression(QStringLiteral("Flight mode group not set")));
+   somethingThatLogs();
+   ```
+
+6. **Expensive SKIP paths**: If a test conditionally `QSKIP`s based on a backend probe
+   (e.g. "SDL didn't expose a second virtual joystick"), cache the probe result in a
+   test-class member so subsequent skipping tests don't each burn a full timeout.
+   See `JoystickManagerTest::_multiJoysticksSupported()` for the pattern.

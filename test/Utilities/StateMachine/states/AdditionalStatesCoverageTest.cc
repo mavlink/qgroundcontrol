@@ -33,7 +33,7 @@ void AdditionalStatesCoverageTest::_testCircuitBreakerTripsAndFailFast()
 
     machine.start();
 
-    QVERIFY(firstFinishedSpy.wait(500));
+    QVERIFY(firstFinishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(actionCallCount, 1);
     QCOMPARE(trippedSpy.count(), 1);
     QVERIFY(breaker->isTripped());
@@ -41,7 +41,7 @@ void AdditionalStatesCoverageTest::_testCircuitBreakerTripsAndFailFast()
     QSignalSpy secondFinishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(secondFinishedSpy.wait(500));
+    QVERIFY(secondFinishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(actionCallCount, 1);  // still open, should fail fast without action call
 }
 
@@ -60,15 +60,15 @@ void AdditionalStatesCoverageTest::_testEventQueuedStateMatchesExpectedEvent()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
     machine.start();
-    QVERIFY(enteredSpy.wait(500));
+    QVERIFY(enteredSpy.wait(TestTimeout::shortMs()));
 
     QVERIFY(QMetaObject::invokeMethod(waitState, "_onMachineEvent", Q_ARG(QString, QStringLiteral("ignore"))));
-    QTest::qWait(20);
+    QCoreApplication::processEvents();
     QCOMPARE(eventReceivedSpy.count(), 0);
 
     QVERIFY(QMetaObject::invokeMethod(waitState, "_onMachineEvent", Q_ARG(QString, QStringLiteral("ready"))));
 
-    QVERIFY((finishedSpy.count() > 0) || finishedSpy.wait(500));
+    QVERIFY((finishedSpy.count() > 0) || finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(eventReceivedSpy.count(), 1);
     QCOMPARE(waitState->receivedEvent(), QStringLiteral("ready"));
 }
@@ -100,7 +100,7 @@ void AdditionalStatesCoverageTest::_testFallbackChainUsesFallbackStrategy()
 
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(attemptedStrategies, QStringList({QStringLiteral("first"), QStringLiteral("second")}));
     QCOMPARE(strategyFailedSpy.count(), 1);
     QCOMPARE(strategySucceededSpy.count(), 1);
@@ -131,7 +131,7 @@ void AdditionalStatesCoverageTest::_testLoopStateProcessesFilteredItems()
     QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(processedItems, QList<int>({2, 4}));
     QCOMPARE(loopState->processedCount(), 2);
     QCOMPARE(loopState->totalItems(), 4);
@@ -163,7 +163,7 @@ void AdditionalStatesCoverageTest::_testRetryThenFailEmitsExhausted()
 
     machine.start();
 
-    QVERIFY(finishedSpy.wait(1000));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(attemptCount, 3);
     QCOMPARE(retryingSpy.count(), 2);
     QCOMPARE(exhaustedSpy.count(), 1);
@@ -196,7 +196,7 @@ void AdditionalStatesCoverageTest::_testRetryThenSkipAdvancesAfterSkip()
 
     machine.start();
 
-    QVERIFY(finishedSpy.wait(1000));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(attemptCount, 2);
     QCOMPARE(skippedSpy.count(), 1);
     QCOMPARE(succeededSpy.count(), 0);
@@ -229,7 +229,7 @@ void AdditionalStatesCoverageTest::_testRollbackStateExecutesRollbackOnFailure()
 
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(rollbackCalled);
     QVERIFY(rollbackState->wasRolledBack());
     QVERIFY(rollbackState->rollbackSucceeded());
@@ -268,7 +268,7 @@ void AdditionalStatesCoverageTest::_testSequenceStateStopsOnFailedStep()
 
     machine.start();
 
-    QVERIFY(finishedSpy.wait(500));
+    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QCOMPARE(executedSteps, QStringList({QStringLiteral("step1"), QStringLiteral("step2")}));
     QCOMPARE(stepCompletedSpy.count(), 1);
     QCOMPARE(sequenceState->failedStepName(), QStringLiteral("step2"));

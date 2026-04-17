@@ -19,16 +19,15 @@ void StructureScanComplexItemTest::init()
     OfflineMissionTest::init();
     _structureScanItem = new StructureScanComplexItem(planController(), false /* flyView */, QString() /* kmlFile */);
     _structureScanItem->setDirty(false);
-    _multiSpy = new MultiSignalSpy();
+    _multiSpy = std::make_unique<MultiSignalSpy>();
     QVERIFY(_multiSpy);
     QCOMPARE(_multiSpy->init(_structureScanItem), true);
 }
 
 void StructureScanComplexItemTest::cleanup()
 {
-    delete _multiSpy;
+    _multiSpy.reset();
     _structureScanItem = nullptr;  // Deleted when planController is deleted
-    _multiSpy = nullptr;
     OfflineMissionTest::cleanup();
 }
 

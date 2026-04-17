@@ -1,6 +1,7 @@
 #include "LogFormatterTest.h"
 #include "LogEntry.h"
 #include "LogFormatter.h"
+#include "LogTestHelpers.h"
 #include "UnitTest.h"
 
 #include <QtCore/QJsonArray>
@@ -8,16 +9,7 @@
 #include <QtCore/QJsonObject>
 #include <QtTest/QTest>
 
-static LogEntry makeEntry(const QString &msg, LogEntry::Level level = LogEntry::Info)
-{
-    LogEntry e;
-    e.timestamp = QDateTime(QDate(2024, 1, 15), QTime(10, 30, 0), QTimeZone::UTC);
-    e.level = level;
-    e.category = QStringLiteral("test.category");
-    e.message = msg;
-    e.buildFormatted();
-    return e;
-}
+using LogTestHelpers::makeEntry;
 
 void LogFormatterTest::_formatAsText()
 {

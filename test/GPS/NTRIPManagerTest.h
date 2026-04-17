@@ -8,24 +8,24 @@ class NTRIPManagerTest : public UnitTest
 
 private slots:
     // GGA format and structure
-    void testMakeGGAFormat();
-    void testMakeGGAFieldCount();
-    void testMakeGGAChecksum();
+    void _testMakeGGAFormat();
+    void _testMakeGGAFieldCount();
+    void _testMakeGGAChecksum();
 
     // GGA hemisphere encoding
-    void testMakeGGANorthEast();
-    void testMakeGGASouthWest();
-    void testMakeGGAEquator();
-    void testMakeGGADateLine();
+    void _testMakeGGANorthEast();
+    void _testMakeGGASouthWest();
+    void _testMakeGGAEquator();
+    void _testMakeGGADateLine();
 
     // GGA altitude
-    void testMakeGGAZeroAltitude();
-    void testMakeGGAHighAltitude();
-    void testMakeGGANegativeAltitude();
+    void _testMakeGGAZeroAltitude();
+    void _testMakeGGAHighAltitude();
+    void _testMakeGGANegativeAltitude();
 
     // GGA coordinate precision
-    void testMakeGGADMMPrecision();
+    void _testMakeGGADMMPrecision();
 
     // GGA time field
-    void testMakeGGATimeFormat();
+    void _testMakeGGATimeFormat();
 };

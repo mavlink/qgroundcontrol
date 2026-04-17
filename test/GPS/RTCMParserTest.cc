@@ -1,44 +1,18 @@
 #include "RTCMParserTest.h"
 #include "RTCMParser.h"
-
-static QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
-{
-    const int payloadLen = 2 + extraPayloadBytes;
-    QByteArray frame;
-
-    frame.append(static_cast<char>(RTCM3_PREAMBLE));
-    frame.append(static_cast<char>((payloadLen >> 8) & 0x03));
-    frame.append(static_cast<char>(payloadLen & 0xFF));
-
-    frame.append(static_cast<char>((messageId >> 4) & 0xFF));
-    frame.append(static_cast<char>((messageId & 0x0F) << 4));
-
-    for (int i = 0; i < extraPayloadBytes; i++) {
-        frame.append(static_cast<char>(i & 0xFF));
-    }
-
-    const uint32_t crc = RTCMParser::crc24q(
-        reinterpret_cast<const uint8_t*>(frame.constData()),
-        static_cast<size_t>(frame.size()));
-
-    frame.append(static_cast<char>((crc >> 16) & 0xFF));
-    frame.append(static_cast<char>((crc >> 8) & 0xFF));
-    frame.append(static_cast<char>(crc & 0xFF));
-
-    return frame;
-}
+#include "GpsTestHelpers.h"
 
 // ---------------------------------------------------------------------------
 // CRC-24Q Tests
 // ---------------------------------------------------------------------------
 
-void RTCMParserTest::testCrc24qEmpty()
+void RTCMParserTest::_testCrc24qEmpty()
 {
     const uint32_t crc = RTCMParser::crc24q(nullptr, 0);
     QCOMPARE(crc, 0u);
 }
 
-void RTCMParserTest::testCrc24qSingleByte()
+void RTCMParserTest::_testCrc24qSingleByte()
 {
     // CRC-24Q of 0x00 with initial value 0 is 0 (no bits set to trigger polynomial)
     const uint8_t zero = 0x00;
@@ -51,7 +25,7 @@ void RTCMParserTest::testCrc24qSingleByte()
     QCOMPARE(crc & 0xFF000000u, 0u);
 }
 
-void RTCMParserTest::testCrc24qKnownVector()
+void RTCMParserTest::_testCrc24qKnownVector()
 {
     const uint8_t data[] = { 0xD3, 0x00, 0x02, 0x3E, 0xD0 };
     const uint32_t crc1 = RTCMParser::crc24q(data, sizeof(data));
@@ -60,7 +34,7 @@ void RTCMParserTest::testCrc24qKnownVector()
     QVERIFY((crc1 & 0xFF000000u) == 0u);
 }
 
-void RTCMParserTest::testCrc24qReferenceVector()
+void RTCMParserTest::_testCrc24qReferenceVector()
 {
     // Standard CRC-24Q check value: "123456789" -> 0xCDE703
     const uint8_t data[] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
@@ -68,9 +42,9 @@ void RTCMParserTest::testCrc24qReferenceVector()
     QCOMPARE(crc, static_cast<uint32_t>(0xCDE703));
 }
 
-void RTCMParserTest::testCrc24qIncremental()
+void RTCMParserTest::_testCrc24qIncremental()
 {
-    QByteArray frame = buildRtcmFrame(1005, 10);
+    QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 10);
 
     // header(3) + payload(12) + crc(3) = 18
     QCOMPARE(frame.size(), 18);
@@ -89,7 +63,7 @@ void RTCMParserTest::testCrc24qIncremental()
 // RTCMParser State Machine Tests
 // ---------------------------------------------------------------------------
 
-void RTCMParserTest::testParserReset()
+void RTCMParserTest::_testParserReset()
 {
     RTCMParser parser;
     QCOMPARE(parser.messageLength(), static_cast<uint16_t>(0));
@@ -102,9 +76,9 @@ void RTCMParserTest::testParserReset()
     QCOMPARE(parser.messageLength(), static_cast<uint16_t>(0));
 }
 
-void RTCMParserTest::testParserValidMessage()
+void RTCMParserTest::_testParserValidMessage()
 {
-    QByteArray frame = buildRtcmFrame(1005, 4);
+    QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 4);
     RTCMParser parser;
 
     bool complete = false;
@@ -120,9 +94,9 @@ void RTCMParserTest::testParserValidMessage()
     QCOMPARE(parser.messageId(), static_cast<uint16_t>(1005));
 }
 
-void RTCMParserTest::testParserCrcValidation()
+void RTCMParserTest::_testParserCrcValidation()
 {
-    QByteArray frame = buildRtcmFrame(1077, 8);
+    QByteArray frame = GpsTestHelpers::buildRtcmFrame(1077, 8);
     RTCMParser parser;
 
     for (int i = 0; i < frame.size(); i++) {
@@ -132,9 +106,9 @@ void RTCMParserTest::testParserCrcValidation()
     QVERIFY(parser.validateCrc());
 }
 
-void RTCMParserTest::testParserInvalidCrc()
+void RTCMParserTest::_testParserInvalidCrc()
 {
-    QByteArray frame = buildRtcmFrame(1077, 8);
+    QByteArray frame = GpsTestHelpers::buildRtcmFrame(1077, 8);
     frame[frame.size() - 1] = static_cast<char>(frame[frame.size() - 1] ^ 0xFF);
 
     RTCMParser parser;
@@ -145,12 +119,12 @@ void RTCMParserTest::testParserInvalidCrc()
     QVERIFY(!parser.validateCrc());
 }
 
-void RTCMParserTest::testParserMessageId()
+void RTCMParserTest::_testParserMessageId()
 {
     const uint16_t testIds[] = { 1001, 1005, 1006, 1033, 1077, 1087, 1097, 1127, 4094 };
 
     for (uint16_t id : testIds) {
-        QByteArray frame = buildRtcmFrame(id, 0);
+        QByteArray frame = GpsTestHelpers::buildRtcmFrame(id, 0);
         RTCMParser parser;
 
         for (int i = 0; i < frame.size(); i++) {
@@ -161,9 +135,9 @@ void RTCMParserTest::testParserMessageId()
     }
 }
 
-void RTCMParserTest::testParserGarbageBeforePreamble()
+void RTCMParserTest::_testParserGarbageBeforePreamble()
 {
-    QByteArray frame = buildRtcmFrame(1005, 2);
+    QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 2);
 
     QByteArray input;
     input.append('\x00');
@@ -186,7 +160,7 @@ void RTCMParserTest::testParserGarbageBeforePreamble()
     QVERIFY(parser.validateCrc());
 }
 
-void RTCMParserTest::testParserInvalidLength()
+void RTCMParserTest::_testParserInvalidLength()
 {
     // Length = 0 is invalid; parser should reset
     QByteArray frame;
@@ -200,7 +174,7 @@ void RTCMParserTest::testParserInvalidLength()
     }
 
     // Parser should recover and parse a valid message
-    QByteArray valid = buildRtcmFrame(1005, 0);
+    QByteArray valid = GpsTestHelpers::buildRtcmFrame(1005, 0);
     bool complete = false;
     for (int i = 0; i < valid.size(); i++) {
         if (parser.addByte(static_cast<uint8_t>(valid[i]))) {
@@ -211,7 +185,7 @@ void RTCMParserTest::testParserInvalidLength()
     QVERIFY(parser.validateCrc());
 }
 
-void RTCMParserTest::testParserOverlengthRejected()
+void RTCMParserTest::_testParserOverlengthRejected()
 {
     // Length > 1023 (10-bit max) — set reserved bits in length field
     QByteArray frame;
@@ -225,7 +199,7 @@ void RTCMParserTest::testParserOverlengthRejected()
     }
 
     // Parser should have reset; verify recovery
-    QByteArray valid = buildRtcmFrame(1077, 0);
+    QByteArray valid = GpsTestHelpers::buildRtcmFrame(1077, 0);
     bool complete = false;
     for (int i = 0; i < valid.size(); i++) {
         if (parser.addByte(static_cast<uint8_t>(valid[i]))) {
@@ -236,11 +210,11 @@ void RTCMParserTest::testParserOverlengthRejected()
     QCOMPARE(parser.messageId(), static_cast<uint16_t>(1077));
 }
 
-void RTCMParserTest::testParserMultipleMessages()
+void RTCMParserTest::_testParserMultipleMessages()
 {
-    QByteArray msg1 = buildRtcmFrame(1005, 4);
-    QByteArray msg2 = buildRtcmFrame(1077, 8);
-    QByteArray msg3 = buildRtcmFrame(1087, 2);
+    QByteArray msg1 = GpsTestHelpers::buildRtcmFrame(1005, 4);
+    QByteArray msg2 = GpsTestHelpers::buildRtcmFrame(1077, 8);
+    QByteArray msg3 = GpsTestHelpers::buildRtcmFrame(1087, 2);
 
     QByteArray stream = msg1 + msg2 + msg3;
 
@@ -263,7 +237,7 @@ void RTCMParserTest::testParserMultipleMessages()
     QCOMPARE(ids[2], static_cast<uint16_t>(1087));
 }
 
-void RTCMParserTest::testParserMaxLength()
+void RTCMParserTest::_testParserMaxLength()
 {
     QByteArray frame;
     frame.append(static_cast<char>(RTCM3_PREAMBLE));
@@ -298,9 +272,9 @@ void RTCMParserTest::testParserMaxLength()
     QVERIFY(parser.validateCrc());
 }
 
-void RTCMParserTest::testParserTruncatedFrame()
+void RTCMParserTest::_testParserTruncatedFrame()
 {
-    QByteArray frame = buildRtcmFrame(1005, 4);
+    QByteArray frame = GpsTestHelpers::buildRtcmFrame(1005, 4);
 
     // Feed only half the frame; parser should never report complete
     RTCMParser parser;
@@ -321,7 +295,7 @@ void RTCMParserTest::testParserTruncatedFrame()
     QVERIFY(parser.validateCrc());
 }
 
-void RTCMParserTest::testParserCorruptedPreamble()
+void RTCMParserTest::_testParserCorruptedPreamble()
 {
     // Bytes that look like preamble but aren't, followed by a valid frame
     QByteArray input;
@@ -331,7 +305,7 @@ void RTCMParserTest::testParserCorruptedPreamble()
     input.append(static_cast<char>(0x00));
     input.append(static_cast<char>(0x02));
 
-    QByteArray valid = buildRtcmFrame(1033, 6);
+    QByteArray valid = GpsTestHelpers::buildRtcmFrame(1033, 6);
     input.append(valid);
 
     RTCMParser parser;

@@ -15,8 +15,6 @@ protected:
 
     void _parameter_default_component_id_test();
     void _parameter_specific_component_id_test();
-    void _qml_test();
-    void _qmlUpdate_test();
 
     AutoPilotPlugin* _plugin;
 };
