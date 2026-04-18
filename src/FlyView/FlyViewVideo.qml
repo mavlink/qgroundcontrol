@@ -2,12 +2,19 @@ import QtQuick
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.VideoManager  // VideoCompositor
 
 Item {
     id: _root
 
     property Item pipView
     property Item pipState: videoPipState
+
+    // Camera resolution — lives here because it depends on vehicle state
+    property var    _dynamicCameras:    globals.activeVehicle ? globals.activeVehicle.cameraManager : null
+    property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
+    property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
+    property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
 
     PipState {
         id:         videoPipState
@@ -40,11 +47,12 @@ Item {
     }
 
     //-- Video Streaming
-    FlightDisplayViewVideo {
+    VideoCompositor {
         id:             videoStreaming
         anchors.fill:   parent
         useSmallFont:   _root.pipState.state !== _root.pipState.fullState
-        visible:        QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc
+        visible:        QGroundControl.videoManager.hasVideo
+        camera:         _root._camera
     }
 
     QGCLabel {
@@ -71,15 +79,15 @@ Item {
     OnScreenGimbalController {
         id:                      onScreenGimbalController
         anchors.fill:            parent
-        cameraTrackingEnabled:   !!(videoStreaming._camera && videoStreaming._camera.trackingEnabled)
+        cameraTrackingEnabled:   !!(_root._camera && _root._camera.trackingEnabled)
     }
 
     OnScreenCameraTrackingController {
         id:                      cameraTrackingController
         anchors.fill:            parent
-        camera:                  videoStreaming._camera
-        videoWidth:              videoStreaming.getWidth()
-        videoHeight:             videoStreaming.getHeight()
+        camera:                  _root._camera
+        videoWidth:              videoStreaming.videoWidth
+        videoHeight:             videoStreaming.videoHeight
     }
 
     MouseArea {

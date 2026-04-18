@@ -3,48 +3,79 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
+#include <chrono>
 
 #include "VideoReceiver.h"
 
 class QMediaPlayer;
 class QVideoSink;
-class QMediaCaptureSession;
-class QMediaRecorder;
-class QRhi;
-class QQuickItem;
-class QQuickVideoOutput;
 
 class QtMultimediaReceiver : public VideoReceiver
 {
     Q_OBJECT
 
 public:
-    explicit QtMultimediaReceiver(QObject *parent = nullptr);
+    explicit QtMultimediaReceiver(QObject* parent = nullptr);
     virtual ~QtMultimediaReceiver();
 
-    static bool enabled();
-    static void *createVideoSink(QQuickItem *widget, QObject *parent = nullptr);
-    static void releaseVideoSink(void *sink);
-    static VideoReceiver *createVideoReceiver(QObject *parent);
+    static VideoReceiver* createVideoReceiver(QObject* parent);
+
+    [[nodiscard]] Capabilities capabilities() const override { return CapStreaming | CapRecording; }
+
+    [[nodiscard]] BackendKind kind() const override { return BackendKind::QtMultimedia; }
+
+    [[nodiscard]] bool isStreaming() const override { return _streamingActive; }
+
+    [[nodiscard]] bool isDecoding() const override { return _decoderActive; }
+
+    /// Qt Multimedia (FFmpeg backend) provides no per-frame PTS-vs-clock measurement.
+    [[nodiscard]] bool latencySupported() const override { return false; }
 
 public slots:
     void start(uint32_t timeout) override;
     void stop() override;
-    void startDecoding(void *sink) override;
+    void startDecoding() override;
     void stopDecoding() override;
-    void startRecording(const QString &videoFile, VideoReceiver::FILE_FORMAT format) override;
-    void stopRecording() override;
-    void takeScreenshot(const QString &imageFile) override;
+    void pause() override;
+    void resume() override;
 
 protected:
-    QTimer _frameTimer;
-    QMediaPlayer *_mediaPlayer = nullptr;
-    QVideoSink *_videoSink = nullptr;
-    QMediaCaptureSession *_captureSession = nullptr;
-    QMediaRecorder *_mediaRecorder = nullptr;
-    QMetaObject::Connection _videoSizeUpdater;
-    QMetaObject::Connection _videoFrameUpdater;
-    QRhi *_rhi = nullptr;
-    const QIODevice *_streamDevice;
-    QQuickVideoOutput *_videoOutput = nullptr;
+    void onSinkAboutToChange() override;
+    void onSinkChanged(QVideoSink* newSink) override;
+
+    /// Read the current codec/decoder info from the media player's metadata
+    /// and update the base-class decoder fields. Called from hasVideoChanged
+    /// and metaDataChanged to give QML parity with GstVideoReceiver on the
+    /// decoder-name readout (HW decode status is not exposed by Qt's FFmpeg
+    /// backend, so hwDecoding stays false).
+    void _pullDecoderInfoFromMetadata();
+
+    QMediaPlayer* _mediaPlayer = nullptr;
+
+    /// Internal sink that QMediaPlayer writes to. Its videoFrameChanged signal
+    /// is connected to VideoFrameDelivery::deliverFrame so all frames are pushed
+    /// through the delivery endpoint symmetrically with the GStreamer path.
+    QVideoSink* _internalSink = nullptr;
+    QMetaObject::Connection _internalFrameConn;
+
+    /// Per-frame watchdog interval, stashed in start() and applied to the
+    /// delivery watchdog in startDecoding(). The delivery endpoint owns the timer.
+    std::chrono::milliseconds _watchdogInterval{0};
+
+    /// Connections and timer used for async start-result signalling (receiverStarted / receiverError).
+    /// The timer is a value member — it lives as long as this receiver and is
+    /// rewired per start() call. Single-shot semantics are set in the ctor body.
+    QMetaObject::Connection _startPlayingConn;
+    QMetaObject::Connection _startBufferConn;
+    QMetaObject::Connection _startTimeoutConn;
+    QTimer _startTimeoutTimer;
+
+    void _clearStartHandlers();
+    void _rewireInternalSink();
+
+    void _setStreamingActive(bool active);
+    void _setDecoderActive(bool active);
+
+    bool _streamingActive = false;
+    bool _decoderActive = false;
 };

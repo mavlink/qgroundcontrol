@@ -1,46 +1,106 @@
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE VideoItemStub.h)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core
+    ${CMAKE_CURRENT_SOURCE_DIR}/Pipeline
+    ${CMAKE_CURRENT_SOURCE_DIR}/FrameDelivery
+    ${CMAKE_CURRENT_SOURCE_DIR}/Health
+    ${CMAKE_CURRENT_SOURCE_DIR}/Recording
+)
 
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
-    set(_gst_required_components Core Base Video Gl GlPrototypes Rtsp)
-    if(APPLE)
-        list(APPEND _gst_required_components App)
-    endif()
     find_package(QGCGStreamer
         REQUIRED
-        COMPONENTS ${_gst_required_components}
-        OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
+        COMPONENTS Core Base Video Rtsp App Pbutils
+        OPTIONAL_COMPONENTS Allocators
     )
+    if(LINUX)
+        find_package(OpenGL REQUIRED COMPONENTS EGL)
+    endif()
 
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
-            GStreamer.cc
-            GStreamer.h
-            GStreamerHelpers.cc
-            GStreamerHelpers.h
-            GStreamerLogging.cc
-            GStreamerLogging.h
-            GstVideoReceiver.cc
-            GstVideoReceiver.h
+            Core/GStreamer.cc
+            Core/GStreamer.h
+            Core/GStreamerHelpers.cc
+            Core/GStreamerHelpers.h
+            Core/GStreamerLogging.cc
+            Core/GStreamerLogging.h
+            Core/GstCallbackDispatch.h
+            Core/GstEnvironment.cc
+            Core/GstEnvironment.h
+            Core/GstObjectPtr.h
+            Core/GstPluginRegistry.cc
+            Core/GstPluginRegistry.h
+            Core/GstVideoReceiver.cc
+            Core/GstVideoReceiver.h
+            Core/GstVideoReceiverCallbacks.cc
+            # --- Pipeline: topology + element construction ---
+            Pipeline/GstPipelineController.cc
+            Pipeline/GstPipelineController.h
+            Pipeline/GstPipelineFactory.cc
+            Pipeline/GstPipelineFactory.h
+            Pipeline/GstSourceFactory.cc
+            Pipeline/GstSourceFactory.h
+            Pipeline/GstTeeBranch.h
+            Pipeline/GstDecodingBranch.cc
+            Pipeline/GstDecodingBranch.h
+            Pipeline/GstRecordingBranch.cc
+            Pipeline/GstRecordingBranch.h
+            # --- FrameDelivery: appsink → QVideoFrame ---
+            FrameDelivery/GstAppsinkBridge.cc
+            FrameDelivery/GstAppsinkBridge.h
+            FrameDelivery/GstCpuVideoBuffer.cc
+            FrameDelivery/GstCpuVideoBuffer.h
+            FrameDelivery/GstDmaBufRhiVideoBuffer.cc
+            FrameDelivery/GstDmaBufRhiVideoBuffer.h
+            FrameDelivery/GstDmaBufVideoBuffer.cc
+            FrameDelivery/GstDmaBufVideoBuffer.h
+            FrameDelivery/GstFrameFormatNegotiator.cc
+            FrameDelivery/GstFrameFormatNegotiator.h
+            FrameDelivery/GstFrameImportStrategy.cc
+            FrameDelivery/GstFrameImportStrategy.h
+            FrameDelivery/GstFormatTable.cc
+            FrameDelivery/GstFormatTable.h
+            FrameDelivery/GstLatencyTracker.cc
+            FrameDelivery/GstLatencyTracker.h
+            FrameDelivery/GstVideoBufferFactory.cc
+            FrameDelivery/GstVideoBufferFactory.h
+            FrameDelivery/GstSampleFrameConverter.cc
+            FrameDelivery/GstSampleFrameConverter.h
+            FrameDelivery/GstCapsToMediaMetaData.cc
+            FrameDelivery/GstCapsToMediaMetaData.h
+            # --- Health: watchdog + decoder fallback ---
+            Health/StreamHealthMonitor.cc
+            Health/StreamHealthMonitor.h
+            Health/GstDecoderFallbackController.cc
+            Health/GstDecoderFallbackController.h
+            # --- Recording: GStreamer-native tee recorder ---
+            Recording/GstTeeRecorder.cc
+            Recording/GstTeeRecorder.h
     )
 
-    if(APPLE)
-        target_sources(${CMAKE_PROJECT_NAME}
-            PRIVATE
-                GstAppSinkAdapter.cc
-                GstAppSinkAdapter.h
-        )
-        target_link_libraries(${CMAKE_PROJECT_NAME}
-            PRIVATE
-                Qt6::Multimedia
-                Qt6::MultimediaQuickPrivate
-        )
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_STREAMING)
+
+    # DMA-BUF support is auto-detected inside FindQGCGStreamer when the
+    # Allocators component is available. It adds QGC_GST_DMABUF + the libdrm
+    # include path as INTERFACE properties on GStreamer::GStreamer; consumers
+    # pick them up transitively through the link below.
+
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            Qt6::Concurrent
+            Qt6::MultimediaPrivate
+            Qt6::Multimedia
+            GStreamer::GStreamer
+    )
+
+    if(LINUX)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenGL::EGL)
     endif()
 
-    add_subdirectory(gstqgc)
 endif()
 
-if(NOT QGC_ENABLE_GST_VIDEOSTREAMING OR NOT TARGET gstqml6gl)
+if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
     return()
 endif()
 
@@ -67,27 +127,7 @@ if(LINUX)
         DEST_DIR "lib/gio/modules"
         EXTENSION "so"
     )
-    # Helper binary path varies by distro: Debian lib/<multiarch>/gstreamer1.0/,
-    # Fedora libexec/gstreamer-1.0/, Arch lib/gstreamer-1.0/.
-    set(_gst_helper_search_paths
-        "${GSTREAMER_LIB_PATH}/gstreamer1.0/gstreamer-1.0"
-        "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0"
-        "${GSTREAMER_PLUGIN_PATH}"
-    )
-    find_program(_GST_PLUGIN_SCANNER gst-plugin-scanner
-        PATHS ${_gst_helper_search_paths} NO_DEFAULT_PATH)
-    find_program(_GST_PTP_HELPER gst-ptp-helper
-        PATHS ${_gst_helper_search_paths} NO_DEFAULT_PATH)
-    if(_GST_PLUGIN_SCANNER)
-        install(PROGRAMS "${_GST_PLUGIN_SCANNER}"
-            DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
-    else()
-        message(WARNING "gst-plugin-scanner not found; AppImage video may not work")
-    endif()
-    if(_GST_PTP_HELPER)
-        install(PROGRAMS "${_GST_PTP_HELPER}"
-            DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
-    endif()
+    # GST_REGISTRY_FORK=no — scanner/PTP helpers are not used (in-process scanning)
 
 elseif(WIN32)
     gstreamer_install_libs(
@@ -106,16 +146,7 @@ elseif(WIN32)
         EXTENSION "dll"
         PREFIX "gst"
     )
-    install(
-        DIRECTORY "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0/"
-        DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0"
-        FILE_PERMISSIONS
-            OWNER_READ OWNER_WRITE OWNER_EXECUTE
-            GROUP_READ             GROUP_EXECUTE
-            WORLD_READ             WORLD_EXECUTE
-        FILES_MATCHING
-            PATTERN "*.exe"
-    )
+    # GST_REGISTRY_FORK=no — scanner/PTP helpers are not used (in-process scanning)
 
 elseif(MACOS)
     if(GSTREAMER_FRAMEWORK)
@@ -233,19 +264,7 @@ elseif(MACOS)
             ")
         endforeach()
 
-        if(EXISTS "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0")
-            install(
-                DIRECTORY "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0/"
-                DESTINATION "${_mac_libexec_dest}"
-                FILE_PERMISSIONS
-                    OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                    GROUP_READ             GROUP_EXECUTE
-                    WORLD_READ             WORLD_EXECUTE
-                FILES_MATCHING
-                    PATTERN "gst-plugin-scanner"
-                    PATTERN "gst-ptp-helper"
-            )
-        endif()
+        # GST_REGISTRY_FORK=no — scanner/PTP helpers are not used (in-process scanning)
     endif()
 endif()
 

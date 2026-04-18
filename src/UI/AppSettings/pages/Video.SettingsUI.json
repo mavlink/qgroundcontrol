@@ -23,8 +23,8 @@
         },
         {
             "heading": "Connection",
-            "keywords": ["rtsp", "tcp", "udp", "mpegts", "video url", "stream url"],
-            "showWhen": "!sourceDisabled && !autoStreamConfig",
+            "keywords": ["rtsp", "tcp", "udp", "mpegts", "video url", "stream url", "gstreamer", "pipeline"],
+            "showWhen": "!sourceDisabled && !autoStreamConfig && isStreamSource",
             "controls": [
                 {
                     "setting": "videoSettings.rtspUrl",
@@ -37,13 +37,17 @@
                 {
                     "setting": "videoSettings.udpUrl",
                     "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource || videoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource || videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource"
+                },
+                {
+                    "setting": "videoSettings.gstPipelineUrl",
+                    "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.gstPipelineVideoSource"
                 }
             ]
         },
         {
             "heading": "Settings",
             "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed"],
-            "showWhen": "!sourceDisabled",
+            "showWhen": "!sourceDisabled && isStreamSource",
             "controls": [
                 {
                     "setting": "videoSettings.aspectRatio",
@@ -59,6 +63,19 @@
                 },
                 {
                     "setting": "videoSettings.forceVideoDecoder"
+                }
+            ]
+        },
+        {
+            "heading": "Overlays",
+            "keywords": ["overlay", "grid", "stats", "fps", "latency", "debug"],
+            "showWhen": "!sourceDisabled && isStreamSource",
+            "controls": [
+                {
+                    "setting": "videoSettings.gridLines"
+                },
+                {
+                    "setting": "videoSettings.showVideoStats"
                 }
             ]
         },

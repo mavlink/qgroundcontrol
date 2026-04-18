@@ -4,7 +4,6 @@
 #include "QGCFormat.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "VideoManager.h"
 #include "QGCCameraManager.h"
 #include "FTPManager.h"
 #include "QGCCompression.h"
@@ -205,8 +204,8 @@ void VehicleCameraControl::_initWhenReady()
     connect(&_storageInfoTimer, &QTimer::timeout, this, &VehicleCameraControl::_storageInfoTimeout);
     QTimer::singleShot(2000, this, &VehicleCameraControl::_requestStorageInfo);
 
-    connect(VideoManager::instance(), &VideoManager::recordingChanged, this, &VehicleCameraControl::captureVideoStateChanged);
-    connect(VideoManager::instance(), &VideoManager::recordingChanged, this, &VehicleCameraControl::_onVideoManagerRecordingChanged);
+    // Recording state connections are set up by VideoManager in _setActiveVehicle
+    // to avoid direct singleton coupling.
     connect(this, &VehicleCameraControl::videoCaptureStatusChanged, this, &VehicleCameraControl::captureVideoStateChanged);
     connect(this, &VehicleCameraControl::photoCaptureStatusChanged, this, &VehicleCameraControl::captureVideoStateChanged);
     connect(this, &VehicleCameraControl::cameraModeChanged, this, &VehicleCameraControl::captureVideoStateChanged);
@@ -236,7 +235,7 @@ bool VehicleCameraControl::capturesPhotos() const
 
 MavlinkCameraControlInterface::CaptureVideoState VehicleCameraControl::captureVideoState() const
 {
-    if (_videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING || VideoManager::instance()->recording()) {
+    if (_videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING || _localRecording) {
         return CaptureVideoStateCapturing;
     } else if (_photoCaptureStatus() != PHOTO_CAPTURE_IDLE) {
         return CaptureVideoStateDisabled;
@@ -451,7 +450,7 @@ bool VehicleCameraControl::takePhoto()
         return true;
     } else {
         if (_photoCaptureMode == PHOTO_CAPTURE_SINGLE) {
-            VideoManager::instance()->grabImage();
+            emit localImageCaptureRequested(QString());
             _setPhotoCaptureStatus(PHOTO_CAPTURE_IN_PROGRESS);
             QTimer::singleShot(500, this, [this]() {
                 _setPhotoCaptureStatus(PHOTO_CAPTURE_IDLE);
@@ -516,7 +515,7 @@ bool VehicleCameraControl::startVideoRecording()
             0,                              // CAMERA_CAPTURE_STATUS streaming frequency
             0);                             // All cameras
     } else {
-        VideoManager::instance()->startRecording();
+        emit localRecordingRequested();
     }
 
     return true;
@@ -544,7 +543,7 @@ bool VehicleCameraControl::stopVideoRecording()
             0,                          // All streams
             0);                         // All cameras
     } else {
-        VideoManager::instance()->stopRecording();
+        emit localRecordingStopRequested();
     }
 
     return true;
@@ -843,9 +842,16 @@ void VehicleCameraControl::_recTimerHandler()
     emit recordTimeChanged();
 }
 
-void VehicleCameraControl::_onVideoManagerRecordingChanged(bool recording)
+void VehicleCameraControl::setVideoState(bool /*hasVideo*/, bool /*decoding*/, bool recording)
 {
-    // Only track time here when not using MAVLink video capture (to avoid double-tracking)
+    if (recording == _localRecording) {
+        return;
+    }
+
+    _localRecording = recording;
+    emit captureVideoStateChanged();
+
+    // Track record time for local recording (skip if MAVLink capture is active)
     if (_videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
         return;
     }
@@ -1658,7 +1664,7 @@ void VehicleCameraControl::handleCameraCaptureStatus(const mavlink_camera_captur
         const QString photoDir = SettingsManager::instance()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
         QGCFileHelper::ensureDirectoryExists(photoDir);
         const QString photoPath = photoDir + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-        VideoManager::instance()->grabImage(photoPath);
+        emit localImageCaptureRequested(photoPath);
     }
 }
 

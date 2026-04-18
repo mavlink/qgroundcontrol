@@ -227,8 +227,10 @@ protected slots:
     virtual void    _storageInfoTimeout     ();
     virtual void    _recTimerHandler        ();
     virtual void    _checkForVideoStreams   ();
-    virtual void    _onVideoManagerRecordingChanged  (bool recording);
     void            _paramDone              () override;
+
+public:
+    void setVideoState(bool hasVideo, bool decoding, bool recording) override;
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);
@@ -308,4 +310,5 @@ protected:
     QRectF                                  _trackingImageRect;
     QPointF                                 _trackingImagePoint;
     qreal                                   _trackingImageRadius = 0.0;
+    bool                                    _localRecording      = false;
 };
