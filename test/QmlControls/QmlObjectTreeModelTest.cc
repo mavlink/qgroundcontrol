@@ -2,9 +2,9 @@
 
 #include "TestDirtyObject.h"
 
-#include <QtTest/QSignalSpy>
 #include <QtCore/QPersistentModelIndex>
 #include <QtCore/QAbstractItemModel>
+#include <QtTest/QSignalSpy>
 
 // ===========================================================================
 // Construction & empty state

@@ -39,113 +39,113 @@ class VehicleCameraControl : public MavlinkCameraControlInterface
 {
 public:
     VehicleCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
-    virtual ~VehicleCameraControl();
+    ~VehicleCameraControl() override;
 
-    Q_INVOKABLE virtual void setCameraModeVideo();
-    Q_INVOKABLE virtual void setCameraModePhoto();
-    Q_INVOKABLE virtual void toggleCameraMode       ();
-    Q_INVOKABLE virtual bool takePhoto              ();
-    Q_INVOKABLE virtual bool stopTakePhoto          ();
-    Q_INVOKABLE virtual bool startVideoRecording    ();
-    Q_INVOKABLE virtual bool stopVideoRecording     ();
-    Q_INVOKABLE virtual bool toggleVideoRecording   ();
-    Q_INVOKABLE virtual void resetSettings          ();
-    Q_INVOKABLE virtual void formatCard             (int id = 1);
-    Q_INVOKABLE virtual void stepZoom               (int direction);
-    Q_INVOKABLE virtual void startZoom              (int direction);
-    Q_INVOKABLE virtual void stopZoom               ();
-    Q_INVOKABLE virtual void stopStream             ();
-    Q_INVOKABLE virtual void resumeStream           ();
-    Q_INVOKABLE virtual void startTrackingRect      (QRectF rec);
-    Q_INVOKABLE virtual void startTrackingPoint     (QPointF point, double radius);
-    Q_INVOKABLE virtual void stopTracking           ();
+    Q_INVOKABLE void setCameraModeVideo() override;
+    Q_INVOKABLE void setCameraModePhoto() override;
+    Q_INVOKABLE void toggleCameraMode       () override;
+    Q_INVOKABLE bool takePhoto              () override;
+    Q_INVOKABLE bool stopTakePhoto          () override;
+    Q_INVOKABLE bool startVideoRecording    () override;
+    Q_INVOKABLE bool stopVideoRecording     () override;
+    Q_INVOKABLE bool toggleVideoRecording   () override;
+    Q_INVOKABLE void resetSettings          () override;
+    Q_INVOKABLE void formatCard             (int id = 1) override;
+    Q_INVOKABLE void stepZoom               (int direction) override;
+    Q_INVOKABLE void startZoom              (int direction) override;
+    Q_INVOKABLE void stopZoom               () override;
+    Q_INVOKABLE void stopStream             () override;
+    Q_INVOKABLE void resumeStream           () override;
+    Q_INVOKABLE void startTrackingRect      (QRectF rec) override;
+    Q_INVOKABLE void startTrackingPoint     (QPointF point, double radius) override;
+    Q_INVOKABLE void stopTracking           () override;
 
-    virtual int         version             () const { return _version; }
-    virtual QString     modelName           () const { return _modelName; }
-    virtual QString     vendor              () const { return _vendor; }
-    virtual QString     firmwareVersion     () const;
-    virtual qreal       focalLength         () const { return static_cast<qreal>(_mavlinkCameraInfo.focal_length); }
-    virtual QSizeF      sensorSize          () const { return QSizeF(static_cast<qreal>(_mavlinkCameraInfo.sensor_size_h), static_cast<qreal>(_mavlinkCameraInfo.sensor_size_v)); }
-    virtual QSize       resolution          () const { return QSize(_mavlinkCameraInfo.resolution_h, _mavlinkCameraInfo.resolution_v); }
-    virtual bool        capturesVideo       () const;
-    virtual bool        capturesPhotos      () const;
-    virtual bool        hasModes            () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_MODES; }
-    virtual bool        hasZoom             () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM; }
-    virtual bool        hasFocus            () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS; }
-    virtual bool        hasTracking         () const { return _hasTrackingRectCapability || _hasTrackingPointCapability; }
-    virtual bool        supportsTrackingPoint() const { return _hasTrackingPointCapability; }
-    virtual bool        supportsTrackingRect () const { return _hasTrackingRectCapability; }
-    virtual bool        hasVideoStream      () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM; }
-    virtual bool        photosInVideoMode   () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE; }
-    virtual bool        videoInPhotoMode    () const { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE; }
-    virtual CaptureVideoState captureVideoState() const;
-    virtual CapturePhotosState capturePhotosState() const;
+    int         version             () const override { return _version; }
+    QString     modelName           () const override { return _modelName; }
+    QString     vendor              () const override { return _vendor; }
+    QString     firmwareVersion     () const override;
+    qreal       focalLength         () const override { return static_cast<qreal>(_mavlinkCameraInfo.focal_length); }
+    QSizeF      sensorSize          () const override { return QSizeF(static_cast<qreal>(_mavlinkCameraInfo.sensor_size_h), static_cast<qreal>(_mavlinkCameraInfo.sensor_size_v)); }
+    QSize       resolution          () const override { return QSize(_mavlinkCameraInfo.resolution_h, _mavlinkCameraInfo.resolution_v); }
+    bool        capturesVideo       () const override;
+    bool        capturesPhotos      () const override;
+    bool        hasModes            () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_MODES; }
+    bool        hasZoom             () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM; }
+    bool        hasFocus            () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS; }
+    bool        hasTracking         () const override { return _hasTrackingRectCapability || _hasTrackingPointCapability; }
+    bool        supportsTrackingPoint() const override { return _hasTrackingPointCapability; }
+    bool        supportsTrackingRect () const override { return _hasTrackingRectCapability; }
+    bool        hasVideoStream      () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM; }
+    bool        photosInVideoMode   () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE; }
+    bool        videoInPhotoMode    () const override { return _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE; }
+    CaptureVideoState captureVideoState() const override;
+    CapturePhotosState capturePhotosState() const override;
 
-    virtual int                 compID              () const { return _compID; }
-    virtual bool                isBasic             () const { return _settings.size() == 0; }
-    virtual StorageStatus       storageStatus       () const { return _storageStatus; }
-    virtual QStringList         activeSettings      () const;
-    virtual quint32             storageFree         () const { return _storageFree;  }
-    virtual QString             storageFreeStr      () const;
-    virtual quint32             storageTotal        () const { return _storageTotal; }
-    virtual int                 batteryRemaining    () const { return _batteryRemaining; }
-    virtual QString             batteryRemainingStr () const;
-    virtual bool                paramComplete       () const { return _paramComplete; }
-    virtual qreal               zoomLevel           () const { return _zoomLevel; }
-    virtual qreal               focusLevel          () const { return _focusLevel; }
+    int                 compID              () const override { return _compID; }
+    bool                isBasic             () const override { return _settings.size() == 0; }
+    StorageStatus       storageStatus       () const override { return _storageStatus; }
+    QStringList         activeSettings      () const override;
+    quint32             storageFree         () const override { return _storageFree;  }
+    QString             storageFreeStr      () const override;
+    quint32             storageTotal        () const override { return _storageTotal; }
+    int                 batteryRemaining    () const override { return _batteryRemaining; }
+    QString             batteryRemainingStr () const override;
+    bool                paramComplete       () const override { return _paramComplete; }
+    qreal               zoomLevel           () const override { return _zoomLevel; }
+    qreal               focusLevel          () const override { return _focusLevel; }
 
-    virtual QmlObjectListModel* streams             () { return &_streams; }
-    virtual QGCVideoStreamInfo* currentStreamInstance();
-    virtual QGCVideoStreamInfo* thermalStreamInstance();
-    virtual int                 currentStream       () const { return _currentStream; }
-    virtual void                setCurrentStream    (int stream);
-    virtual bool                autoStream          () const;
-    virtual quint32             recordTime          () const { return _recordTime; }
-    virtual QString             recordTimeStr       () const;
+    QmlObjectListModel* streams             () override { return &_streams; }
+    QGCVideoStreamInfo* currentStreamInstance() override;
+    QGCVideoStreamInfo* thermalStreamInstance() override;
+    int                 currentStream       () const override { return _currentStream; }
+    void                setCurrentStream    (int stream) override;
+    bool                autoStream          () const override;
+    quint32             recordTime          () const override { return _recordTime; }
+    QString             recordTimeStr       () const override;
 
-    virtual QStringList streamLabels        () const { return _streamLabels; }
+    QStringList streamLabels        () const override { return _streamLabels; }
 
-    virtual ThermalViewMode thermalMode     () const { return _thermalMode; }
-    virtual void        setThermalMode      (ThermalViewMode mode);
-    virtual double      thermalOpacity      () const { return _thermalOpacity; }
-    virtual void        setThermalOpacity   (double val);
+    ThermalViewMode thermalMode     () const override { return _thermalMode; }
+    void        setThermalMode      (ThermalViewMode mode) override;
+    double      thermalOpacity      () const override { return _thermalOpacity; }
+    void        setThermalOpacity   (double val) override;
 
-    virtual void        setZoomLevel        (qreal level);
-    virtual void        setFocusLevel       (qreal level);
-    virtual void        setCameraMode(CameraMode cameraMode);
-    virtual void        setPhotoCaptureMode        (PhotoCaptureMode mode);
-    virtual void        setPhotoLapse       (qreal interval);
-    virtual void        setPhotoLapseCount  (int count);
+    void        setZoomLevel        (qreal level) override;
+    void        setFocusLevel       (qreal level) override;
+    void        setCameraMode(CameraMode cameraMode) override;
+    void        setPhotoCaptureMode        (PhotoCaptureMode mode) override;
+    void        setPhotoLapse       (qreal interval) override;
+    void        setPhotoLapseCount  (int count) override;
 
-    virtual void        handleCameraSettings(const mavlink_camera_settings_t& settings);
-    virtual void        handleCameraCaptureStatus(const mavlink_camera_capture_status_t& cameraCaptureStatus);
-    virtual void        handleParamExtAck   (const mavlink_param_ext_ack_t& paramExtAck);
-    virtual void        handleParamExtValue (const mavlink_param_ext_value_t& paramExtValue);
-    virtual void        handleStorageInformation(const mavlink_storage_information_t& storageInformation);
-    virtual void        handleBatteryStatus (const mavlink_battery_status_t& bs);
-    virtual void        handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t &trackingImageStatus);
-    virtual void        handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation);
-    virtual void        handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus);
+    void        handleCameraSettings(const mavlink_camera_settings_t& settings) override;
+    void        handleCameraCaptureStatus(const mavlink_camera_capture_status_t& cameraCaptureStatus) override;
+    void        handleParamExtAck   (const mavlink_param_ext_ack_t& paramExtAck) override;
+    void        handleParamExtValue (const mavlink_param_ext_value_t& paramExtValue) override;
+    void        handleStorageInformation(const mavlink_storage_information_t& storageInformation) override;
+    void        handleBatteryStatus (const mavlink_battery_status_t& bs) override;
+    void        handleTrackingImageStatus(const mavlink_camera_tracking_image_status_t &trackingImageStatus) override;
+    void        handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation) override;
+    void        handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus) override;
 
-    virtual bool        trackingEnabled     () const { return _trackingEnabled; }
-    virtual void        setTrackingEnabled  (bool set);
+    bool        trackingEnabled     () const override { return _trackingEnabled; }
+    void        setTrackingEnabled  (bool set) override;
 
-    virtual bool trackingImageIsActive() const { return _trackingImageIsActive; }
-    virtual bool trackingImageIsPoint() const { return _trackingImageIsPoint; }
-    virtual QRectF trackingImageRect() const { return _trackingImageRect; }
-    virtual QPointF trackingImagePoint() const { return _trackingImagePoint; }
-    virtual qreal trackingImageRadius() const { return _trackingImageRadius; }
+    bool trackingImageIsActive() const override { return _trackingImageIsActive; }
+    bool trackingImageIsPoint() const override { return _trackingImageIsPoint; }
+    QRectF trackingImageRect() const override { return _trackingImageRect; }
+    QPointF trackingImagePoint() const override { return _trackingImagePoint; }
+    qreal trackingImageRadius() const override { return _trackingImageRadius; }
 
-    virtual Fact*   exposureMode        ();
-    virtual Fact*   ev                  ();
-    virtual Fact*   iso                 ();
-    virtual Fact*   shutterSpeed        ();
-    virtual Fact*   aperture            ();
-    virtual Fact*   wb                  ();
-    virtual Fact*   mode                ();
-    virtual void    factChanged         (Fact* pFact);
-    virtual bool    incomingParameter   (Fact* pFact, QVariant& newValue);
-    virtual bool    validateParameter   (Fact* pFact, QVariant& newValue);
+    Fact*   exposureMode        () override;
+    Fact*   ev                  () override;
+    Fact*   iso                 () override;
+    Fact*   shutterSpeed        () override;
+    Fact*   aperture            () override;
+    Fact*   wb                  () override;
+    Fact*   mode                () override;
+    void    factChanged         (Fact* pFact) override;
+    bool    incomingParameter   (Fact* pFact, QVariant& newValue) override;
+    bool    validateParameter   (Fact* pFact, QVariant& newValue) override;
 
     static constexpr const char* kCondition       = "condition";
     static constexpr const char* kControl         = "control";
@@ -218,7 +218,6 @@ protected slots:
     virtual void    _downloadFinished       ();
     virtual void    _mavCommandResult       (int vehicleId, int component, int command, int result, int failureCode);
     virtual void    _dataReady              (QByteArray data);
-    virtual void    _paramDone              ();
     virtual void    _streamInfoTimeout      ();
     virtual void    _streamStatusTimeout    ();
     virtual void    _cameraSettingsTimeout  ();
@@ -226,6 +225,7 @@ protected slots:
     virtual void    _recTimerHandler        ();
     virtual void    _checkForVideoStreams   ();
     virtual void    _onVideoManagerRecordingChanged  (bool recording);
+    void            _paramDone              () override;
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);

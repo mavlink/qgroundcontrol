@@ -1,5 +1,8 @@
 #include "Mixer.h"
 #include "ParameterManager.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(MixerLog, "Vehicle.Actuators.Mixer")
 
 using namespace Mixer;
 
@@ -39,7 +42,7 @@ ChannelConfigInstance* ChannelConfig::instantiate(int paramIndex, int actuatorTy
         }
         factAddedCb(function(), fact);
     } else {
-        qCDebug(ActuatorsConfigLog) << "ActuatorOutputChannel: Param does not exist:" << param;
+        qCDebug(MixerLog) << "ActuatorOutputChannel: Param does not exist:" << param;
     }
 
     ChannelConfigInstance* instance = new ChannelConfigInstance(this, fact, *this);
@@ -422,7 +425,7 @@ void Mixers::update()
 
         subscribeFact(_mixerConditions[_selectedMixer].fact());
 
-        qCDebug(ActuatorsConfigLog) << "selected mixer index:" << _selectedMixer;
+        qCDebug(MixerLog) << "selected mixer index:" << _selectedMixer;
 
         const auto& actuatorGroups = _mixerOptions[_selectedMixer].actuators;
         QMap<QString, int> actuatorTypeCount;
@@ -496,7 +499,7 @@ void Mixers::update()
                     actuatorFunction = actuatorType->functionMin + actuatorTypeIndex;
                     label = _functions.value(actuatorFunction).label;
                     if (label == "") {
-                        qCWarning(ActuatorsConfigLog) << "No label for output function" << actuatorFunction;
+                        qCWarning(MixerLog) << "No label for output function" << actuatorFunction;
                     }
                     QString itemLabelPrefix{};
                     if (actuatorGroup.itemLabelPrefix.size() == 1) {
@@ -623,7 +626,7 @@ QString Mixers::helpUrl() const
 Fact* Mixers::getFact(const QString& paramName)
 {
     if (!_parameterManager->parameterExists(ParameterManager::defaultComponentId, paramName)) {
-        qCDebug(ActuatorsConfigLog) << "Mixers: Param does not exist:" << paramName;
+        qCDebug(MixerLog) << "Mixers: Param does not exist:" << paramName;
         return nullptr;
     }
     Fact* fact = _parameterManager->getParameter(ParameterManager::defaultComponentId, paramName);

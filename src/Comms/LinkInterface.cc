@@ -1,5 +1,7 @@
 #include "LinkInterface.h"
+#include "MAVLinkLib.h"
 #include "LinkManager.h"
+#include "QGC.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "MAVLinkSigning.h"
@@ -139,6 +141,6 @@ void LinkInterface::reportMavlinkV1Traffic()
                                    "%2 only supports MAVLink v2. "
                                    "Please ensure your vehicle is configured to use MAVLink v2.")
                                     .arg(linkName).arg(qgcApp()->applicationName());
-        qgcApp()->showAppMessage(message);
+        QGC::showAppMessage(message);
     }
 }

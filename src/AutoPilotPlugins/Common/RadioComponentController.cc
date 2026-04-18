@@ -1,7 +1,6 @@
 #include "RadioComponentController.h"
 #include "Fact.h"
 #include "ParameterManager.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 

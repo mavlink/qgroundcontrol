@@ -3,12 +3,9 @@
 #include "CompInfo.h"
 #include "FactMetaData.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QRegularExpression>
 
 class ParameterMetaData;
-
-Q_DECLARE_LOGGING_CATEGORY(CompInfoParamLog)
 
 class CompInfoParam : public CompInfo
 {

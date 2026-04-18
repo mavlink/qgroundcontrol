@@ -1,12 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DGeometry>
-
-Q_DECLARE_LOGGING_CATEGORY(CityMapGeometryLog)
 
 class OsmParser;
 class Viewer3DMapProvider;

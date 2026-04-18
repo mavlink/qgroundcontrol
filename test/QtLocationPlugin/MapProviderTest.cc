@@ -10,7 +10,7 @@ public:
     explicit TestableMapProvider(const QString& name = QStringLiteral("TestProvider"),
                                  const QString& imageFormat = QStringLiteral("png"),
                                  quint32 avgSize = QGC_AVERAGE_TILE_SIZE)
-        : MapProvider(name, QString(), imageFormat, avgSize, QGeoMapType::CustomMap)
+        : MapProvider(name, QString(), imageFormat, avgSize, MapProvider::CustomMap)
     {
     }
 
@@ -204,7 +204,7 @@ void MapProviderTest::_testGettersReturnConstructorValues()
     TestableMapProvider p(QStringLiteral("MyMap"), QStringLiteral("jpg"), 7777);
     QCOMPARE(p.getMapName(), QStringLiteral("MyMap"));
     QCOMPARE(p.getAverageSize(), static_cast<quint32>(7777));
-    QCOMPARE(p.getMapStyle(), QGeoMapType::CustomMap);
+    QCOMPARE(p.getMapStyle(), MapProvider::CustomMap);
     QVERIFY(!p.isElevationProvider());
     QVERIFY(!p.isBingProvider());
     QVERIFY(p.getMapId() > 0);

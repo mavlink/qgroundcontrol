@@ -2,9 +2,10 @@
 
 #include <QtStateMachine/QFinalState>
 #include <QtStateMachine/QStateMachine>
-#include <QtTest/QSignalSpy>
 
 #include "UnitTest.h"
+
+class QSignalSpy;
 
 /// Test fixture for QStateMachine-based state and transition tests.
 ///
@@ -72,17 +73,9 @@ protected:
 
     /// Start the machine and wait for QStateMachine::finished.
     /// @return true if the machine reached a final state within timeout
-    static bool startAndWaitForFinished(QStateMachine* machine, int timeoutMs = TestTimeout::shortMs())
-    {
-        QSignalSpy finishedSpy(machine, &QStateMachine::finished);
-        machine->start();
-        return spyTriggered(finishedSpy, timeoutMs);
-    }
+    static bool startAndWaitForFinished(QStateMachine* machine, int timeoutMs = TestTimeout::shortMs());
 
     /// Check if spy was already triggered or wait for it.
     /// Replaces the `_spyTriggered` free function duplicated in 5+ state machine test files.
-    static bool spyTriggered(QSignalSpy& spy, int timeoutMs = TestTimeout::shortMs())
-    {
-        return (spy.count() > 0) || spy.wait(timeoutMs);
-    }
+    static bool spyTriggered(QSignalSpy& spy, int timeoutMs = TestTimeout::shortMs());
 };

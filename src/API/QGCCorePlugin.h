@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -21,8 +20,6 @@ class VideoReceiver;
 class VideoSink;
 class FactValueGrid;
 typedef struct __mavlink_message mavlink_message_t;
-
-Q_DECLARE_LOGGING_CATEGORY(QGCCorePluginLog)
 
 class QGCCorePlugin : public QObject
 {

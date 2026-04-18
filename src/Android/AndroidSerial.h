@@ -1,12 +1,9 @@
 #pragma once
 
 #include <QtCore/QByteArray>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <qserialport.h>
 #include <qserialportinfo.h>
-
-Q_DECLARE_LOGGING_CATEGORY(AndroidSerialLog);
 
 class QSerialPortPrivate;
 

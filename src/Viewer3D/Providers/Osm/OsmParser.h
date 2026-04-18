@@ -1,14 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QVariant>
 #include <QtGui/QVector2D>
 #include <QtGui/QVector3D>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Viewer3DMapProvider.h"
-
-Q_DECLARE_LOGGING_CATEGORY(OsmParserLog)
 
 class OsmParserThread;
 

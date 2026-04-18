@@ -1,3 +1,4 @@
+#include "QmlObjectListModel.h"
 #include "MissionController.h"
 #include "Vehicle.h"
 #include "VehicleSupports.h"

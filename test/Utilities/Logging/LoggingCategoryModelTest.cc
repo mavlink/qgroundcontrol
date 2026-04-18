@@ -1,9 +1,8 @@
 #include "LoggingCategoryModelTest.h"
+#include <QtTest/QSignalSpy>
 
 #include "LoggingCategoryModel.h"
 
-#include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
 
 // ---------------------------------------------------------------------------
 // QGCLoggingCategoryItem

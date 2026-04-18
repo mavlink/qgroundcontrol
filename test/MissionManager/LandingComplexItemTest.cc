@@ -1,3 +1,4 @@
+#include "QmlObjectListModel.h"
 #include "LandingComplexItemTest.h"
 
 #include "CameraSection.h"

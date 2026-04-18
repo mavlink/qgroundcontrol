@@ -1,20 +1,21 @@
 #pragma once
 
 #include <QtCore/QList>
+#include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
-#include <QtCore/QVersionNumber>
 #include <QtPositioning/QGeoCoordinate>
 
-#include "QGCMAVLink.h"
+#include "MAVLinkEnums.h"
+#include "QGCMAVLinkTypes.h"
 #include "FollowMe.h"
-#include "FactMetaData.h"
 #include "VehicleTypes.h"
 
 class Vehicle;
 
 class VehicleComponent;
 class AutoPilotPlugin;
+class FactMetaData;
 class MavlinkCameraControlInterface;
 class QGCCameraManager;
 class Autotune;
@@ -296,11 +297,11 @@ public:
     virtual bool sendHomePositionToVehicle() const { return false; }
 
     /// List of supported mission commands. Empty list for all commands supported.
-    virtual QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t /*vehicleClass*/) const { return QList<MAV_CMD>(); }
+    virtual QList<MAV_CMD> supportedMissionCommands(QGCMAVLinkTypes::VehicleClass_t /*vehicleClass*/) const { return QList<MAV_CMD>(); }
 
     /// Returns the name of the mission command json override file for the specified vehicle type.
     ///     @param vehicleClass Vehicle class to return file for, VehicleClassGeneric is a request for overrides for all vehicle types
-    virtual QString missionCommandOverrides(QGCMAVLink::VehicleClass_t vehicleClass) const;
+    virtual QString missionCommandOverrides(QGCMAVLinkTypes::VehicleClass_t vehicleClass) const;
 
     /// Returns the mapping structure which is used to map from one parameter name to another based on firmware version.
     /// See remapParamNameMap_t for details on how remapping works.

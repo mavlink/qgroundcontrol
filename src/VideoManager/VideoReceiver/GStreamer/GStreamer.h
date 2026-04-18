@@ -1,11 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(GStreamerLog)
-Q_DECLARE_LOGGING_CATEGORY(GStreamerAPILog)
-Q_DECLARE_LOGGING_CATEGORY(GStreamerDecoderRanksLog)
-
 class QQuickItem;
 class QVideoSink;
 class VideoReceiver;

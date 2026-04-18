@@ -2,8 +2,6 @@
 
 #include "QGCSignalTransition.h"
 
-#include <QtCore/QLoggingCategory>
-
 #include <functional>
 
 /// Transition that retries an action N times before advancing to target state.

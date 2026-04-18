@@ -37,6 +37,9 @@ cpm_modules
 .cache/
 .ccache/
 
+# CTest working files created in the source tree when tests run
+Testing/
+
 # ------------------------------------------------------------------------------
 # Qt Generated Files
 # ------------------------------------------------------------------------------

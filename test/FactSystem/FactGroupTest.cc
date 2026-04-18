@@ -1,6 +1,6 @@
 #include "FactGroupTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "Fact.h"
 #include "FactGroup.h"

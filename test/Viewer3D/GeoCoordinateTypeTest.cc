@@ -1,6 +1,7 @@
 #include "GeoCoordinateTypeTest.h"
-
+#include "UnitTestCoords.h"
 #include <QtTest/QSignalSpy>
+
 
 #include "Viewer3DGeoCoordinateType.h"
 

@@ -1,17 +1,14 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
 #include "RemoteControlCalibrationController.h"
-#include "Joystick.h"
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerLog)
-Q_DECLARE_LOGGING_CATEGORY(JoystickConfigControllerVerboseLog)
+class Joystick;
 
 class JoystickConfigController : public RemoteControlCalibrationController
 {
     Q_OBJECT
     QML_ELEMENT
+    Q_MOC_INCLUDE("Joystick.h")
 
 public:
     JoystickConfigController(QObject *parent = nullptr);

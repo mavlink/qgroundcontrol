@@ -6,7 +6,7 @@ class ElevationProvider : public MapProvider
 {
 protected:
     ElevationProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize,
-                      QGeoMapType::MapStyle mapType)
+                      MapProvider::MapStyle mapType)
         : MapProvider(
             mapName,
             referrer,
@@ -29,7 +29,7 @@ public:
             kProviderURL,
             QStringLiteral("bin"),
             kAvgElevSize,
-            QGeoMapType::TerrainMap) {}
+            MapProvider::TerrainMap) {}
 
     int long2tileX(double lon, int z) const final;
     int lat2tileY(double lat, int z) const final;

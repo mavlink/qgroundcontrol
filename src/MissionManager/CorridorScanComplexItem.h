@@ -1,12 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
 #include "TransectStyleComplexItem.h"
 #include "SettingsFact.h"
 #include "QGCMapPolyline.h"
-
-Q_DECLARE_LOGGING_CATEGORY(CorridorScanComplexItemLog)
 
 class CorridorScanComplexItem : public TransectStyleComplexItem
 {

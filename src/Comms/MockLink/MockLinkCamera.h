@@ -2,10 +2,7 @@
 
 #include "MAVLinkLib.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
-
-Q_DECLARE_LOGGING_CATEGORY(MockLinkCameraLog)
 
 class MockLink;
 

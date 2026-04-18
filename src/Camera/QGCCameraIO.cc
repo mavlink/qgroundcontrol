@@ -1,9 +1,11 @@
 #include "QGCCameraIO.h"
+#include "MAVLinkLib.h"
 #include "MavlinkCameraControlInterface.h"
 #include "LinkInterface.h"
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 QGC_LOGGING_CATEGORY(QGCCameraParamIOLog, "Camera.QGCCameraParamIO")
 QGC_LOGGING_CATEGORY(QGCCameraParamIOVerbose, "Camera.QGCCameraParamIO:verbose")

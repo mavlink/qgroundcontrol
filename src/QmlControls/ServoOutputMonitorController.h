@@ -2,10 +2,7 @@
 
 #include "FactPanelController.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(ServoOutputMonitorControllerLog)
 
 class ServoOutputMonitorController : public FactPanelController
 {

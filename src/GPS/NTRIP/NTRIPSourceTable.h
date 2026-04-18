@@ -1,11 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtNetwork/QNetworkReply>
 #include <QtPositioning/QGeoCoordinate>
-
-Q_DECLARE_LOGGING_CATEGORY(NTRIPSourceTableLog)
 
 class QmlObjectListModel;
 class QNetworkAccessManager;

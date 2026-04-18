@@ -82,6 +82,21 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         qgc_set_linker()
     endif()
 
+    # Split-DWARF for faster Debug links. Must run after qgc_set_linker()
+    # so QGC_LINKER is populated when deciding whether to add --gdb-index.
+    qgc_enable_split_dwarf()
+
+    # Build profiling: -ftime-trace emits per-TU Chrome-tracing JSON next to each .o.
+    # Aggregate with ClangBuildAnalyzer; see docs in tools/README.md.
+    if(QGC_TIME_TRACE)
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            add_compile_options(-ftime-trace -ftime-trace-granularity=100)
+            message(STATUS "QGC: -ftime-trace enabled (granularity=100us)")
+        else()
+            message(WARNING "QGC_TIME_TRACE requires Clang; ignoring with ${CMAKE_CXX_COMPILER_ID}")
+        endif()
+    endif()
+
     # LTO is handled by qgc_enable_ipo() above
 elseif(MSVC)
     # MSVC-specific optimizations

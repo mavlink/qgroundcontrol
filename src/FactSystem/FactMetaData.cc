@@ -5,6 +5,8 @@
 #include "SettingsManager.h"
 #include "UnitsSettings.h"
 
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonObject>
 #include <QtCore/QtMath>
 
 QGC_LOGGING_CATEGORY(FactMetaDataLog, "FactSystem.FactMetaData")

@@ -2,7 +2,6 @@
 #include "StateHistoryRecorder.h"
 #include "StateMachineLogger.h"
 #include "StateMachineProfiler.h"
-#include "QGCApplication.h"
 #include "AudioOutput.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"

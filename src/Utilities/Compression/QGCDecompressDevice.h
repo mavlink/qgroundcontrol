@@ -5,10 +5,6 @@
 
 #include "QGCArchiveDeviceBase.h"
 
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(QGCDecompressDeviceLog)
-
 /// QIODevice wrapper for streaming decompression of single-file formats
 /// Supports .gz, .xz, .zst, .bz2, .lz4 compressed data
 /// Read-only, sequential access only

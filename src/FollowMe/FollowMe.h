@@ -1,11 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtCore/QVariant>
-
-Q_DECLARE_LOGGING_CATEGORY(FollowMeLog)
 
 class Vehicle;
 

@@ -1,7 +1,6 @@
 #include "VehicleCameraControlTest.h"
-
 #include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
+
 
 #include "LinkManager.h"
 #include "MavlinkCameraControlInterface.h"

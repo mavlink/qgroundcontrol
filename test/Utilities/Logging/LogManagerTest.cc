@@ -1,9 +1,11 @@
 #include "LogManagerTest.h"
 
-#include <QtTest/QTest>
 
 #include "LogManager.h"
 #include "UnitTestList.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(LogManagerTestLog, "Test.Logging.LogManagerTest")
 
 void LogManagerTest::_buildEntry()
 {
@@ -51,11 +53,11 @@ void LogManagerTest::_captureByCategory()
     LogManager::setCaptureEnabled(true);
     LogManager::clearCapturedMessages();
 
-    qCWarning(LogManagerLog) << "categorized message";
+    qCWarning(LogManagerTestLog) << "categorized message";
     qWarning("uncategorized message");
 
     const auto all = LogManager::capturedMessages();
-    const auto filtered = LogManager::capturedMessages(QStringLiteral("Utilities.LogManager"));
+    const auto filtered = LogManager::capturedMessages(QStringLiteral("Test.Logging.LogManagerTest"));
     QVERIFY(all.size() >= filtered.size());
 
     bool foundCategorized = false;
@@ -76,10 +78,10 @@ void LogManagerTest::_hasCapturedWarning()
     LogManager::setCaptureEnabled(true);
     LogManager::clearCapturedMessages();
 
-    qCWarning(LogManagerLog) << "a warning";
+    qCWarning(LogManagerTestLog) << "a warning";
 
-    QVERIFY(LogManager::hasCapturedWarning(QStringLiteral("Utilities.LogManager")));
-    QVERIFY(!LogManager::hasCapturedCritical(QStringLiteral("Utilities.LogManager")));
+    QVERIFY(LogManager::hasCapturedWarning(QStringLiteral("Test.Logging.LogManagerTest")));
+    QVERIFY(!LogManager::hasCapturedCritical(QStringLiteral("Test.Logging.LogManagerTest")));
 
     LogManager::clearCapturedMessages();
     LogManager::setCaptureEnabled(false);
@@ -90,9 +92,9 @@ void LogManagerTest::_hasCapturedCritical()
     LogManager::setCaptureEnabled(true);
     LogManager::clearCapturedMessages();
 
-    qCCritical(LogManagerLog) << "a critical";
+    qCCritical(LogManagerTestLog) << "a critical";
 
-    QVERIFY(LogManager::hasCapturedCritical(QStringLiteral("Utilities.LogManager")));
+    QVERIFY(LogManager::hasCapturedCritical(QStringLiteral("Test.Logging.LogManagerTest")));
 
     LogManager::clearCapturedMessages();
     LogManager::setCaptureEnabled(false);

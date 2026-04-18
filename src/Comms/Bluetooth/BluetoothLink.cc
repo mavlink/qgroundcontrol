@@ -1,9 +1,12 @@
 #include "BluetoothLink.h"
 #include "BluetoothWorker.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QPermissions>
 #include <QtCore/QThread>
+
+QGC_LOGGING_CATEGORY(BluetoothLinkLog, "Comms.Bluetooth.BluetoothLink")
 
 /*===========================================================================*/
 

@@ -2,6 +2,7 @@
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
 #include "AppSettings.h"
+#include "QGCLoggingCategory.h"
 #include "GstVideoReceiver.h"
 
 #ifdef Q_OS_MACOS
@@ -24,6 +25,9 @@
 #endif
 
 #include <gst/gst.h>
+
+QGC_LOGGING_CATEGORY(GStreamerLog, "VideoManager.GStreamer.GStreamer")
+QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "VideoManager.GStreamer.GStreamer.DecoderRanks")
 
 #ifdef Q_OS_IOS
 extern "C" {

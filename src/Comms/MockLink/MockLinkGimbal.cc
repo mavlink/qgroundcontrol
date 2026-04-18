@@ -1,4 +1,5 @@
 #include "MockLinkGimbal.h"
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "MissionCommandTree.h"
 #include "QGCLoggingCategory.h"

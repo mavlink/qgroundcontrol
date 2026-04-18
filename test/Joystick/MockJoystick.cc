@@ -1,10 +1,10 @@
 #include "MockJoystick.h"
 
-#include <QtCore/QLoggingCategory>
+#include "QGCLoggingCategory.h"
 
 #include "SDLJoystick.h"
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickSDLLog)
+QGC_LOGGING_CATEGORY(MockJoystickLog, "Test.Joystick.MockJoystick")
 
 namespace {
 
@@ -25,7 +25,7 @@ MockJoystick* MockJoystick::create(const QString& name, int axisCount, int butto
 {
     const int instanceId = SDLJoystick::createVirtualJoystick(name, axisCount, buttonCount, hatCount);
     if (instanceId < 0) {
-        qCWarning(JoystickSDLLog) << "MockJoystick: Failed to create virtual joystick" << name;
+        qCWarning(MockJoystickLog) << "MockJoystick: Failed to create virtual joystick" << name;
         return nullptr;
     }
 
@@ -34,7 +34,7 @@ MockJoystick* MockJoystick::create(const QString& name, int axisCount, int butto
 
     auto* mock = new MockJoystick(name, axisCount, buttonCount, hatCount, ballCount, touchpadCount, instanceId, parent);
     if (!mock->_open()) {
-        qCWarning(JoystickSDLLog) << "MockJoystick: Failed to open virtual joystick" << name;
+        qCWarning(MockJoystickLog) << "MockJoystick: Failed to open virtual joystick" << name;
         delete mock;
         return nullptr;
     }

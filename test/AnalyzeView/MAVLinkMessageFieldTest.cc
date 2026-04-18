@@ -1,8 +1,8 @@
 #include "MAVLinkMessageFieldTest.h"
+#include <QtTest/QSignalSpy>
 
 #include <memory>
 
-#include <QtTest/QSignalSpy>
 
 #include "MAVLinkMessage.h"
 #include "MAVLinkMessageField.h"

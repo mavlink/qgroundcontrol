@@ -3,7 +3,6 @@
 #include <QtCore/QProcess>
 #include <QtCore/QString>
 #include <QtCore/QByteArray>
-#include <QtTest/QTest>
 
 void BluetoothEmulatedAdapterTest::_testOptionalEmulatorHarness()
 {

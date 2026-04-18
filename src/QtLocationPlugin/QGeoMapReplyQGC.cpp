@@ -5,12 +5,14 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QSslError>
 
-#include "QGCNetworkHelper.h"
 #include "ElevationMapProvider.h"
 #include "MapProvider.h"
+#include "QGCCacheTile.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
+#include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCNetworkHelper.h"
 #include "QGeoFileTileCacheQGC.h"
 
 QGC_LOGGING_CATEGORY(QGeoTiledMapReplyQGCLog, "QtLocationPlugin.QGeoTiledMapReplyQGC")

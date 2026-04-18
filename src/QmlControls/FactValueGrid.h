@@ -4,18 +4,18 @@
 #include <QtQuick/QQuickItem>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QmlObjectListModel.h"
 #include "QGCMAVLinkTypes.h"
 
-class Vehicle;
-
 class InstrumentValueData;
+class QmlObjectListModel;
+class Vehicle;
 
 class FactValueGrid : public QQuickItem
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
 public:
     FactValueGrid(QQuickItem *parent = nullptr);
     ~FactValueGrid();
@@ -26,7 +26,7 @@ public:
         MediumFontSize,
         LargeFontSize,
     };
-    Q_ENUMS(FontSize)
+    Q_ENUM(FontSize)
 
     Q_PROPERTY(QmlObjectListModel*  columns         MEMBER _columns                                     NOTIFY columnsChanged)
     Q_PROPERTY(int                  rowCount        MEMBER _rowCount                                    NOTIFY rowCountChanged)
@@ -116,5 +116,3 @@ private:
 };
 
 QML_DECLARE_TYPE(FactValueGrid)
-
-Q_DECLARE_METATYPE(FactValueGrid::FontSize)

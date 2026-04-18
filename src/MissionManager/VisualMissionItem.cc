@@ -135,7 +135,7 @@ void VisualMissionItem::setAzimuth(double azimuth)
     }
 }
 
-void VisualMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
+void VisualMissionItem::setMissionFlightStatus(MissionFlightStatus_t& missionFlightStatus)
 {
     if (!QGC::fuzzyCompare(missionFlightStatus.gimbalYaw, _missionGimbalYaw)) {
         _missionGimbalYaw = missionFlightStatus.gimbalYaw;

@@ -1,4 +1,9 @@
+#include "QmlObjectListModel.h"
 #include "ParameterManager.h"
+
+#include <QtCore/QDir>
+#include <QtCore/QTextStream>
+
 #include "AutoPilotPlugin.h"
 #include "CompInfoParam.h"
 #include "ComponentInformationManager.h"
@@ -10,6 +15,7 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 #include "QGCStateMachine.h"
 #include "MultiVehicleManager.h"
 
@@ -46,11 +52,11 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
     (void) connect(&_hashCheckTimer, &QTimer::timeout, this, &ParameterManager::_hashCheckTimeout);
 
     _paramRequestListTimer.setSingleShot(true);
-    _paramRequestListTimer.setInterval(qgcApp()->runningUnitTests() ? kTestInitialRequestIntervalMs : kParamRequestListTimeoutMs);
+    _paramRequestListTimer.setInterval(QGC::runningUnitTests() ? kTestInitialRequestIntervalMs : kParamRequestListTimeoutMs);
     (void) connect(&_paramRequestListTimer, &QTimer::timeout, this, &ParameterManager::_paramRequestListTimeout);
 
     _waitingParamTimeoutTimer.setSingleShot(true);
-    _waitingParamTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? 500 : 3000);
+    _waitingParamTimeoutTimer.setInterval(QGC::runningUnitTests() ? 500 : 3000);
     if (!_logReplay) {
         (void) connect(&_waitingParamTimeoutTimer, &QTimer::timeout, this, &ParameterManager::_waitingParamTimeout);
     }
@@ -391,7 +397,7 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
         const QString msg = errorDetail.isEmpty()
             ? QStringLiteral("Parameter write failed: param: %1 %2").arg(paramName, _vehicleAndComponentString(componentId))
             : QStringLiteral("Parameter write failed: param: %1 %2 - %3").arg(paramName, _vehicleAndComponentString(componentId), errorDetail);
-        qgcApp()->showAppMessage(msg);
+        QGC::showAppMessage(msg);
     });
     auto logSuccessState = new FunctionState(QStringLiteral("ParameterManager log success"), stateMachine, [this, componentId, paramName]() {
         qCDebug(ParameterManagerLog) << "Parameter write succeeded: param:" << paramName << _vehicleAndComponentString(componentId);
@@ -944,7 +950,7 @@ void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &
         const QString msg = errorDetail.isEmpty()
             ? QStringLiteral("Parameter read failed: param: %1 %2").arg(paramName, _vehicleAndComponentString(componentId))
             : QStringLiteral("Parameter read failed: param: %1 %2 - %3").arg(paramName, _vehicleAndComponentString(componentId), errorDetail);
-        qgcApp()->showAppMessage(msg);
+        QGC::showAppMessage(msg);
     });
     auto logSuccessState = new FunctionState(QStringLiteral("Log success"), stateMachine, [this, componentId, paramName, paramIndex]() {
         qCDebug(ParameterManagerLog) << "PARAM_REQUEST_READ succeeded: name:" << paramName << "index" << paramIndex << _vehicleAndComponentString(componentId);
@@ -1124,7 +1130,7 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, const Q
             for (const QString &name: cacheMap.keys()) {
                 _debugCacheParamSeen[componentId][name] = false;
             }
-            qgcApp()->showAppMessage(tr("Parameter cache CRC match failed"));
+            QGC::showAppMessage(tr("Parameter cache CRC match failed"));
         }
         if (!_hashCheckDone) {
             _hashCheckDone = true;
@@ -1342,8 +1348,8 @@ void ParameterManager::_checkInitialLoadComplete()
                                     "If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. "
                                     "If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.").arg(QCoreApplication::applicationName()).arg(_vehicle->id());
         qCDebug(ParameterManagerLog) << errorMsg;
-        qgcApp()->showAppMessage(errorMsg);
-        if (!qgcApp()->runningUnitTests()) {
+        QGC::showAppMessage(errorMsg);
+        if (!QGC::runningUnitTests()) {
             qCWarning(ParameterManagerLog) << _logVehiclePrefix(-1) << "The following parameter indices could not be loaded after the maximum number of retries:" << indexList;
         }
     }
@@ -1388,7 +1394,7 @@ void ParameterManager::_paramRequestListTimeout()
         const QString errorMsg = tr("Vehicle %1 did not respond to request for parameters. "
                                     "This will cause %2 to be unable to display its full user interface.").arg(_vehicle->id()).arg(QCoreApplication::applicationName());
         qCDebug(ParameterManagerLog) << errorMsg;
-        qgcApp()->showAppMessage(errorMsg);
+        QGC::showAppMessage(errorMsg);
     }
 }
 

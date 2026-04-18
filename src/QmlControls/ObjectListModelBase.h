@@ -7,12 +7,9 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include "ObjectItemModelBase.h"
-
-Q_DECLARE_LOGGING_CATEGORY(ObjectListModelBaseLog)
 
 /// Base class for flat QObject* list models. Inherits common dirty/reset/role
 /// handling from ObjectItemModelBase and adds flat-list index()/parent() overrides.

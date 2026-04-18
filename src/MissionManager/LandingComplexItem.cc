@@ -1,4 +1,5 @@
 #include "LandingComplexItem.h"
+#include "QGC.h"
 #include "QGCApplication.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
@@ -777,7 +778,7 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
         bool loiterAltitudeRelative = complexObject[_jsonDeprecatedLoiterAltitudeRelativeKey].toBool();
         bool landingAltitudeRelative = complexObject[_jsonDeprecatedLandingAltitudeRelativeKey].toBool();
         if (loiterAltitudeRelative != landingAltitudeRelative) {
-            qgcApp()->showAppMessage(tr("Fixed Wing Landing Pattern: "
+            QGC::showAppMessage(tr("Fixed Wing Landing Pattern: "
                                         "Setting the loiter and landing altitudes with different settings for altitude relative is no longer supported. "
                                         "Both have been set to relative altitude. Be sure to adjust/check your plan prior to flight."));
             _altitudesAreRelative = true;

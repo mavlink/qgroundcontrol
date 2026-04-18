@@ -2,13 +2,16 @@
 #include "AutoPilotPlugin.h"
 #include "Autotune.h"
 #include "GenericAutoPilotPlugin.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterMetaData.h"
+#include "QGC.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 #include "VehicleCameraControl.h"
 #include "VehicleComponent.h"
 
@@ -112,33 +115,33 @@ void FirmwarePlugin::setGuidedMode(Vehicle *vehicle, bool guidedMode) const
 {
     Q_UNUSED(vehicle);
     Q_UNUSED(guidedMode);
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::pauseVehicle(Vehicle *vehicle) const
 {
     Q_UNUSED(vehicle);
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeRTL(Vehicle *vehicle, bool smartRTL) const
 {
     Q_UNUSED(vehicle);
     Q_UNUSED(smartRTL);
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeLand(Vehicle *vehicle) const
 {
     Q_UNUSED(vehicle);
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeTakeoff(Vehicle *vehicle, double takeoffAltRel) const
 {
     Q_UNUSED(vehicle);
     Q_UNUSED(takeoffAltRel);
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 bool FirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius) const
@@ -146,41 +149,41 @@ bool FirmwarePlugin::guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordina
     Q_UNUSED(vehicle);
     Q_UNUSED(gotoCoord);
     Q_UNUSED(forwardFlightLoiterRadius);
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
     return false;
 }
 
 void FirmwarePlugin::guidedModeChangeAltitude(Vehicle*, double, bool pauseVehicle)
 {
     Q_UNUSED(pauseVehicle);
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeChangeGroundSpeedMetersSecond(Vehicle*, double) const
 {
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle*, double) const
 {
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &/*headingCoord*/) const
 {
     Q_UNUSED(vehicle);
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::startTakeoff(Vehicle*) const
 {
     // Not supported by generic vehicle
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 void FirmwarePlugin::startMission(Vehicle*) const
 {
-    qgcApp()->showAppMessage(guided_mode_not_supported_by_vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
 const FirmwarePlugin::remapParamNameMajorVersionMap_t &FirmwarePlugin::paramNameRemapMajorVersionMap(void) const
@@ -301,7 +304,7 @@ MavlinkCameraControlInterface *FirmwarePlugin::createCameraControl(const mavlink
 void FirmwarePlugin::checkIfIsLatestStable(Vehicle *vehicle) const
 {
     // This is required as mocklink uses a hardcoded firmware version
-    if (qgcApp()->runningUnitTests()) {
+    if (QGC::runningUnitTests()) {
         qCDebug(FirmwarePluginLog) << "Skipping version check";
         return;
     }
@@ -356,7 +359,7 @@ void FirmwarePlugin::_versionFileDownloadFinished(const QString &remoteFile, con
         const QString currentVersionNumber = QStringLiteral("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
                                                                        .arg(vehicle->firmwareMinorVersion())
                                                                        .arg(vehicle->firmwarePatchVersion());
-        qgcApp()->showAppMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
+        QGC::showAppMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
     }
 }
 
@@ -502,7 +505,7 @@ QString FirmwarePlugin::_cachedParameterMetaDataFile(const Vehicle *vehicle) con
 
     // Without a known internal version we can't safely compare against
     // cache — use the bundled file to avoid stale overrides.
-    if (internalVersion.isNull() || qgcApp()->runningUnitTests()) {
+    if (internalVersion.isNull() || QGC::runningUnitTests()) {
         qCDebug(FirmwarePluginLog) << "Using internal parameter metadata:" << internalFile;
         return internalFile;
     }

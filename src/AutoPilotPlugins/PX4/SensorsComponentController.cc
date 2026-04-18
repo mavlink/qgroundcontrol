@@ -1,7 +1,8 @@
 #include "SensorsComponentController.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "AutoPilotPlugins.SensorsComponentController")
@@ -147,7 +148,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
         default:
             // Assume failed
             _hideAllCalAreas();
-            qgcApp()->showAppMessage(tr("Calibration failed. Calibration log will be displayed."));
+            QGC::showAppMessage(tr("Calibration failed. Calibration log will be displayed."));
             break;
     }
 
@@ -467,14 +468,14 @@ void SensorsComponentController::cancelCalibration(void)
 void SensorsComponentController::_handleParametersReset(bool success)
 {
     if (success) {
-        qgcApp()->showAppMessage(tr("Reset successful"));
+        QGC::showAppMessage(tr("Reset successful"));
 
         QTimer::singleShot(1000, this, [this]() {
             _refreshParams();
         });
     }
     else {
-        qgcApp()->showAppMessage(tr("Reset failed"));
+        QGC::showAppMessage(tr("Reset failed"));
     }
 }
 

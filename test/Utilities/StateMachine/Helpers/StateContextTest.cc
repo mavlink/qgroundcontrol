@@ -5,8 +5,6 @@
 #include "StateContext.h"
 
 #include <QtCore/QTimer>
-#include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
 
 
 void StateContextTest::_testSetAndGet()

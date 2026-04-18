@@ -1,10 +1,13 @@
 #include "OnboardLogEntry.h"
-#include "QGCApplication.h"
+#include "MAVLinkLib.h"
+#include "QGC.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QtMath>
 
 QGC_LOGGING_CATEGORY(OnboardLogEntryLog, "AnalyzeView.QGCOnboardLogEntry")
+
+const uint32_t OnboardLogDownloadData::kChunkSize = OnboardLogDownloadData::kTableBins * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
 
 OnboardLogDownloadData::OnboardLogDownloadData(QGCOnboardLogEntry * const logEntry)
     : ID(logEntry->id())
@@ -60,5 +63,5 @@ QGCOnboardLogEntry::~QGCOnboardLogEntry()
 
 QString QGCOnboardLogEntry::sizeStr() const
 {
-    return qgcApp()->bigSizeToString(_logSize);
+    return QGC::bigSizeToString(_logSize);
 }

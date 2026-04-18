@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include <QtPositioning/QGeoCoordinate>
+
 #include "AppSettings.h"
 #include "CameraSection.h"
 #include "MissionCommandTree.h"

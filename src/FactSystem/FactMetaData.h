@@ -1,15 +1,10 @@
 #pragma once
 
 #include <QtCore/QHash>
-#include <QtCore/QLoggingCategory>
-#include <QtCore/QJsonArray>
-#include <QtCore/QJsonObject>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(FactMetaDataLog)
 
 class SettingsManager;
 

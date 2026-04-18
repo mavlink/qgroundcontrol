@@ -1,5 +1,9 @@
 #include "LogEntry.h"
 
+#include <QtCore/QByteArray>
+#include <QtCore/QHash>
+#include <QtCore/QVariant>
+
 QString LogEntry::levelLabel() const
 {
     static const QString labels[] = {

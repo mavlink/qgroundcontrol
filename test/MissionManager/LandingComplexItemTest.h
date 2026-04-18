@@ -8,6 +8,7 @@
 
 class MultiSignalSpy;
 class PlanMasterController;
+class SimpleMissionItem;
 
 class LandingComplexItemTest : public VisualMissionItemTest
 {

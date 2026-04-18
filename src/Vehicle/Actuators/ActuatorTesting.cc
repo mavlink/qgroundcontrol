@@ -1,7 +1,11 @@
 #include "ActuatorTesting.h"
+#include "MAVLinkLib.h"
 #include "Common.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "Vehicle.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(ActuatorTestingLog, "Vehicle.Actuators.ActuatorTesting")
 
 using namespace ActuatorTesting;
 
@@ -60,7 +64,7 @@ void ActuatorTest::watchdogTimeout()
     for (int i = 0; i < _states.size(); ++i) {
         if (_states[i].state == ActuatorState::State::Active) {
             if (_states[i].lastUpdated.elapsed() > 100) {
-                qCWarning(ActuatorsConfigLog) << "Stopping actuator due to timeout:" << i;
+                qCWarning(ActuatorTestingLog) << "Stopping actuator due to timeout:" << i;
                 _states[i].state = ActuatorState::State::StopRequest;
             }
         }
@@ -73,7 +77,7 @@ void ActuatorTest::setChannelTo(int index, float value)
     if (!_active || index >= _states.size()) {
         return;
     }
-    qCDebug(ActuatorsConfigLog) << "setting actuator: index:" << index << "value:" << value;
+    qCDebug(ActuatorTestingLog) << "setting actuator: index:" << index << "value:" << value;
 
     _states[index].value = value;
     _states[index].state = ActuatorState::State::Active;
@@ -86,7 +90,7 @@ void ActuatorTest::stopControl(int index)
     if (index >= _states.size() || index < -1) {
         return;
     }
-    qCDebug(ActuatorsConfigLog) << "stop actuator control: index:" << index;
+    qCDebug(ActuatorTestingLog) << "stop actuator control: index:" << index;
 
     if (index == -1) {
         for (int i = 0; i < _states.size(); ++i) {
@@ -104,7 +108,7 @@ void ActuatorTest::stopControl(int index)
 
 void ActuatorTest::setActive(bool active)
 {
-    qCDebug(ActuatorsConfigLog) << "setting active: " << active;
+    qCDebug(ActuatorTestingLog) << "setting active: " << active;
     if (!active) {
         stopControl(-1);
     }
@@ -145,7 +149,7 @@ void ActuatorTest::ackHandler(MAV_RESULT commandResult, VehicleTypes::MavCmdResu
             } else {
                 message = tr("Actuator test command failed");
             }
-            qgcApp()->showAppMessage(message);
+            QGC::showAppMessage(message);
             _hadFailure = true;
             emit hadFailureChanged();
         }
@@ -176,7 +180,7 @@ void ActuatorTest::sendNext()
 
 void ActuatorTest::sendMavlinkRequest(int function, float value, float timeout)
 {
-    qCDebug(ActuatorsConfigLog) << "Sending actuator test function:" << function << "value:" << value;
+    qCDebug(ActuatorTestingLog) << "Sending actuator test function:" << function << "value:" << value;
 
     // TODO: consider using a lower command timeout
 

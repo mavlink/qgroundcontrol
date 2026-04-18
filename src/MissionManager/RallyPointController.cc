@@ -28,7 +28,7 @@ RallyPointController::~RallyPointController()
 
 void RallyPointController::start(bool flyView)
 {
-    qCDebug(GeoFenceControllerLog) << "start flyView" << flyView;
+    qCDebug(RallyPointControllerLog) << "start flyView" << flyView;
 
     _managerVehicleChanged(_masterController->managerVehicle());
     connect(_masterController, &PlanMasterController::managerVehicleChanged, this, &RallyPointController::_managerVehicleChanged);

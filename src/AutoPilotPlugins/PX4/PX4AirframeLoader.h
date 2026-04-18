@@ -2,11 +2,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QMap>
-#include <QtCore/QLoggingCategory>
-
 class AutoPilotPlugin;
-
-Q_DECLARE_LOGGING_CATEGORY(PX4AirframeLoaderLog)
 
 class FactMetaData;
 

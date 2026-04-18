@@ -1,8 +1,11 @@
 #include "TransformPositionController.h"
-#include "QGCGeo.h"
+
+#include "Fact.h"
+#include "FactMetaData.h"
 #include "MultiVehicleManager.h"
-#include "Vehicle.h"
+#include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
+#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(TransformPositionControllerLog, "QMLControls.TransformPositionController")
 

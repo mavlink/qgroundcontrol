@@ -3,16 +3,12 @@
 #include <QtCore/QBitArray>
 #include <QtCore/QDateTime>
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
+#include <QtCore/QFile>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "MAVLinkLib.h"
-
 class QGCOnboardLogEntry;
-
-Q_DECLARE_LOGGING_CATEGORY(OnboardLogEntryLog)
 
 struct OnboardLogDownloadData
 {
@@ -44,7 +40,7 @@ struct OnboardLogDownloadData
     QElapsedTimer elapsed;
 
     static constexpr uint32_t kTableBins = 2048;  // 2048 packets = ~180 KB chunks (4x larger for better throughput)
-    static constexpr uint32_t kChunkSize = kTableBins * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
+    static const uint32_t kChunkSize;             // kTableBins * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN (defined in .cc)
 };
 
 /*===========================================================================*/

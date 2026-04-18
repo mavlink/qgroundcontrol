@@ -1,7 +1,6 @@
 #include "DataFlashParserTest.h"
 
 #include <QtCore/QTemporaryFile>
-#include <QtTest/QTest>
 
 #include "DataFlashParser.h"
 #include "DataFlashTestGenerator.h"

@@ -1,14 +1,11 @@
 #pragma once
 
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "ShapeFileHelper.h"
 
 class QJsonValue;
-
-Q_DECLARE_LOGGING_CATEGORY(GeoJsonHelperLog)
 
 namespace GeoJsonHelper
 {

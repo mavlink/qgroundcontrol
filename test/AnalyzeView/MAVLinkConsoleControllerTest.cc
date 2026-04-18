@@ -2,7 +2,6 @@
 
 #include <QtGui/QClipboard>
 #include <QtGui/QGuiApplication>
-#include <QtTest/QTest>
 
 #include "MAVLinkConsoleController.h"
 

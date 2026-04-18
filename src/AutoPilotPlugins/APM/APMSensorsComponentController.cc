@@ -1,11 +1,13 @@
 #include "APMSensorsComponentController.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMSensorsComponent.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterManager.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 #include <QtCore/QVariant>
 
@@ -146,7 +148,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
     default:
         // Assume failed
         _hideAllCalAreas();
-        qgcApp()->showAppMessage(tr("Calibration failed. Calibration log will be displayed."));
+        QGC::showAppMessage(tr("Calibration failed. Calibration log will be displayed."));
         break;
     }
 

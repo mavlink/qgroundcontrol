@@ -1,5 +1,6 @@
 #include "Fact.h"
 #include "FactValueSliderListModel.h"
+#include "QGC.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
@@ -44,7 +45,7 @@ Fact::Fact(const QString& settingsGroup, FactMetaData *metaData, QObject *parent
     SettingsManager::adjustSettingMetaData(settingsGroup, *metaData, visible);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
 
-    if (!qgcApp()->runningUnitTests()) {
+    if (!QGC::runningUnitTests()) {
         if (metaData->defaultValueAvailable() && !visible) {
             // If setting is not visible, we force to default value
             const QVariant defaultValue = metaData->rawDefaultValue();
@@ -866,11 +867,11 @@ FactValueSliderListModel *Fact::valueSliderModel()
 void Fact::_checkForRebootMessaging()
 {
     if (qgcApp()) {
-        if (!qgcApp()->runningUnitTests()) {
+        if (!QGC::runningUnitTests()) {
             if (vehicleRebootRequired()) {
-                qgcApp()->showRebootAppMessage(tr("Reboot vehicle for changes to take effect."));
+                QGC::showRebootAppMessage(tr("Reboot vehicle for changes to take effect."));
             } else if (qgcRebootRequired()) {
-                qgcApp()->showRebootAppMessage(tr("Restart application for changes to take effect."));
+                QGC::showRebootAppMessage(tr("Restart application for changes to take effect."));
             }
         }
     }

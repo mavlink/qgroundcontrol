@@ -2,7 +2,9 @@
 
 #include "Common.h"
 #include "VehicleTypes.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
+#include "MAVLinkEnums.h"
+#include "QGCMAVLinkTypes.h"
 #include "QmlObjectListModel.h"
 
 class Vehicle;

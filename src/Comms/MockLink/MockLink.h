@@ -2,12 +2,12 @@
 
 #include "PX4/px4_custom_mode.h"
 #include "LinkInterface.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
+#include "QGCMAVLinkTypes.h"
 #include "MockConfiguration.h"
 #include "MockLinkMissionItemHandler.h"
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QMutex>
 #include <QtCore/QSet>
@@ -20,9 +20,6 @@ class MockLinkFTP;
 class MockLinkGimbal;
 class MockLinkWorker;
 class QThread;
-
-Q_DECLARE_LOGGING_CATEGORY(MockLinkLog)
-Q_DECLARE_LOGGING_CATEGORY(MockLinkVerboseLog)
 
 class MockLink : public LinkInterface
 {

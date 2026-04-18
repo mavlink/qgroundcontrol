@@ -1,6 +1,6 @@
 #include "MAVLinkMessageTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "MAVLinkMessage.h"
 #include "MAVLinkTestHelpers.h"

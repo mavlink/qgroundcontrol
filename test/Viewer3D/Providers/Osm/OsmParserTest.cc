@@ -1,6 +1,6 @@
 #include "OsmParserTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "OsmParser.h"
 #include "OsmParserThread.h"

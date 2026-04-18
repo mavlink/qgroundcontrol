@@ -3,7 +3,6 @@
 #include <QtCore/QFuture>
 #include <QtCore/QHash>
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QSet>
 #include <QtCore/QString>
@@ -20,8 +19,6 @@ class LogRemoteSink;
 class LogStore;
 class LogStoreQueryModel;
 class QGCFileWriter;
-
-Q_DECLARE_LOGGING_CATEGORY(LogManagerLog)
 
 class LogManager : public QObject
 {

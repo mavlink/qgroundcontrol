@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QByteArray>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -9,8 +8,6 @@
 
 #include <cstdint>
 #include <functional>
-
-Q_DECLARE_LOGGING_CATEGORY(DataFlashUtilityLog)
 
 namespace DataFlashUtility
 {

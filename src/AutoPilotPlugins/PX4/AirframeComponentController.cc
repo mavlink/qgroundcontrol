@@ -1,7 +1,9 @@
+#include "QmlObjectListModel.h"
 #include "AirframeComponentController.h"
+#include <QtGui/QGuiApplication>
 #include "AirframeComponentAirframes.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "LinkManager.h"
 #include "Fact.h"
 #include "Vehicle.h"
@@ -74,7 +76,7 @@ AirframeComponentController::~AirframeComponentController()
 void AirframeComponentController::changeAutostart(void)
 {
     if (MultiVehicleManager::instance()->vehicles()->count() > 1) {
-        qgcApp()->showAppMessage(tr("You cannot change airframe configuration while connected to multiple vehicles."));
+        QGC::showAppMessage(tr("You cannot change airframe configuration while connected to multiple vehicles."));
 		return;
 	}
 

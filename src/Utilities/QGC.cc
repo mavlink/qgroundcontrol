@@ -1,6 +1,10 @@
 #include "QGC.h"
 
+#include "QGCApplication.h"
+
 #include <QtCore/QDateTime>
+#include <QtCore/QLocale>
+#include <QtCore/QString>
 #include <QtCore/QtNumeric>
 
 #include <float.h>
@@ -149,6 +153,81 @@ bool fuzzyCompare(float value1, float value2, float tolerance)
     } else {
         return fabsf(value1 - value2) <= tolerance;
     }
+}
+
+// ---- Locale-aware number/size formatting ----------------------------------
+// QGCApplication calls QLocale::setDefault() at startup, so default-constructed
+// QLocale matches the app's active language.
+
+namespace {
+constexpr quint64 kKB = 1024ULL;
+constexpr quint64 kMB = kKB * 1024ULL;
+constexpr quint64 kGB = kMB * 1024ULL;
+constexpr quint64 kTB = kGB * 1024ULL;
+} // namespace
+
+QString numberToString(quint64 number)
+{
+    return QLocale().toString(number);
+}
+
+QString bigSizeToString(quint64 size)
+{
+    const QLocale locale;
+    if (size < kKB) {
+        return locale.toString(size) + QStringLiteral("B");
+    }
+    if (size < kMB) {
+        return locale.toString(static_cast<double>(size) / kKB, 'f', 1) + QStringLiteral("KB");
+    }
+    if (size < kGB) {
+        return locale.toString(static_cast<double>(size) / kMB, 'f', 1) + QStringLiteral("MB");
+    }
+    if (size < kTB) {
+        return locale.toString(static_cast<double>(size) / kGB, 'f', 1) + QStringLiteral("GB");
+    }
+    return locale.toString(static_cast<double>(size) / kTB, 'f', 1) + QStringLiteral("TB");
+}
+
+QString bigSizeMBToString(quint64 sizeMB)
+{
+    const QLocale locale;
+    if (sizeMB < kKB) {
+        return locale.toString(static_cast<double>(sizeMB), 'f', 0) + QStringLiteral(" MB");
+    }
+    if (sizeMB < kMB) {
+        return locale.toString(static_cast<double>(sizeMB) / kKB, 'f', 1) + QStringLiteral(" GB");
+    }
+    return locale.toString(static_cast<double>(sizeMB) / kMB, 'f', 2) + QStringLiteral(" TB");
+}
+
+// ---- Application message helpers ------------------------------------------
+
+void showAppMessage(const QString &message, const QString &title)
+{
+    if (auto *const app = qgcApp()) {
+        app->showAppMessage(message, title);
+    }
+}
+
+void showCriticalVehicleMessage(const QString &message)
+{
+    if (auto *const app = qgcApp()) {
+        app->showCriticalVehicleMessage(message);
+    }
+}
+
+void showRebootAppMessage(const QString &message, const QString &title)
+{
+    if (auto *const app = qgcApp()) {
+        app->showRebootAppMessage(message, title);
+    }
+}
+
+bool runningUnitTests()
+{
+    auto *const app = qgcApp();
+    return app && app->runningUnitTests();
 }
 
 }

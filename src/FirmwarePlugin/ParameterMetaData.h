@@ -1,14 +1,11 @@
 #pragma once
 
 #include <QtCore/QJsonValue>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QStringView>
 #include <QtCore/QVersionNumber>
 
 #include "FactMetaData.h"
-
-Q_DECLARE_LOGGING_CATEGORY(ParameterMetaDataLog)
 
 class QJsonObject;
 

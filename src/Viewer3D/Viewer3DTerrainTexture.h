@@ -1,14 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QSize>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DTextureData>
 
 #include "Viewer3DTileQuery.h"
-
-Q_DECLARE_LOGGING_CATEGORY(Viewer3DTerrainTextureLog)
 
 class FlightMapSettings;
 class Viewer3DMapProvider;

@@ -2,6 +2,7 @@
 #include "TerrainFactGroup.h"
 #include "TerrainQuery.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 

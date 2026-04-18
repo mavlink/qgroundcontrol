@@ -1,23 +1,21 @@
 #pragma once
 
-#include <libevents_includes.h>
-
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
+class EventHandler;
 class QmlObjectListModel;
 
 class HealthAndArmingCheckProblem : public QObject
 {
     Q_OBJECT
-public:
-    HealthAndArmingCheckProblem(const QString& message, const QString& description, const QString& severity)
-    : _message(message), _description(description), _severity(severity) {}
+    Q_PROPERTY(QString message      READ message        CONSTANT)
+    Q_PROPERTY(QString description  READ description    CONSTANT)
+    Q_PROPERTY(QString severity     READ severity       CONSTANT)
+    Q_PROPERTY(bool expanded        READ expanded       WRITE setExpanded NOTIFY expandedChanged)
 
-    Q_PROPERTY(QString message                            READ message                CONSTANT)
-    Q_PROPERTY(QString description                        READ description            CONSTANT)
-    Q_PROPERTY(QString severity                           READ severity               CONSTANT)
-    Q_PROPERTY(bool expanded                              READ expanded               WRITE setExpanded NOTIFY expandedChanged)
+public:
+    HealthAndArmingCheckProblem(const QString& message, const QString& description, const QString& severity, QObject *parent = nullptr);
 
     const QString& message() const { return _message; }
     const QString& description() const { return _description; }
@@ -28,6 +26,7 @@ public:
 
 signals:
     void expandedChanged();
+
 private:
     const QString _message;
     const QString _description;
@@ -35,13 +34,12 @@ private:
     bool _expanded{false};
 };
 
+/*===========================================================================*/
 
 class HealthAndArmingCheckReport : public QObject
 {
     Q_OBJECT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
-public:
-
     Q_PROPERTY(bool supported                              READ supported               NOTIFY updated)
     Q_PROPERTY(bool canArm                                 READ canArm                  NOTIFY updated)
     Q_PROPERTY(bool canTakeoff                             READ canTakeoff              NOTIFY updated)
@@ -50,21 +48,19 @@ public:
     Q_PROPERTY(QString gpsState                            READ gpsState                NOTIFY updated)
     Q_PROPERTY(QmlObjectListModel* problemsForCurrentMode  READ problemsForCurrentMode  NOTIFY updated)
 
-    HealthAndArmingCheckReport(QObject *parent = nullptr);
-    virtual ~HealthAndArmingCheckReport();
+public:
+    explicit HealthAndArmingCheckReport(QObject *parent = nullptr);
+    ~HealthAndArmingCheckReport() override;
 
     bool supported() const { return _supported; }
     bool canArm() const { return _canArm; }
     bool canTakeoff() const { return _canTakeoff; }
     bool canStartMission() const { return _canStartMission; }
     bool hasWarningsOrErrors() const { return _hasWarningsOrErrors; }
-
     const QString& gpsState() const { return _gpsState; }
-
     QmlObjectListModel* problemsForCurrentMode() { return _problemsForCurrentMode; }
 
-    void update(uint8_t compid, const events::HealthAndArmingChecks::Results& results, int flightModeGroup);
-
+    void update(uint8_t compid, const EventHandler &eventHandler, int flightModeGroup);
     void setModeGroups(int takeoffModeGroup, int missionModeGroup);
 
 signals:
@@ -72,7 +68,7 @@ signals:
 
 private:
     bool _supported{false};
-    bool _canArm{true}; ///< whether arming is possible for the current mode
+    bool _canArm{true};
     bool _canTakeoff{true};
     bool _canStartMission{true};
     bool _hasWarningsOrErrors{false};

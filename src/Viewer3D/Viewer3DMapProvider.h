@@ -2,12 +2,9 @@
 
 #include <utility>
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(Viewer3DMapProviderLog)
 
 class Viewer3DMapProvider : public QObject
 {

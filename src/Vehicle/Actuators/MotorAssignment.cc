@@ -1,10 +1,14 @@
 #include "MotorAssignment.h"
-#include "QGCApplication.h"
+#include "MAVLinkLib.h"
+#include "QGC.h"
 #include "ActuatorOutputs.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"
+#include "QGCLoggingCategory.h"
 
 #include <vector>
+
+QGC_LOGGING_CATEGORY(MotorAssignmentLog, "Vehicle.Actuators.MotorAssignment")
 
 MotorAssignment::MotorAssignment(QObject* parent, Vehicle* vehicle, QmlObjectListModel* actuators)
         : QObject(parent), _vehicle(vehicle), _actuators(actuators)
@@ -17,7 +21,7 @@ MotorAssignment::MotorAssignment(QObject* parent, Vehicle* vehicle, QmlObjectLis
 bool MotorAssignment::initAssignment(int selectedActuatorIdx, int firstMotorsFunction, int numMotors)
 {
     if (_state != State::Idle) {
-        qCWarning(ActuatorsConfigLog) << "Already init/running";
+        qCWarning(MotorAssignmentLog) << "Already init/running";
     }
 
     // gather all the function facts
@@ -108,7 +112,7 @@ Do you wish to proceed?)").arg(extraMessage);
 void MotorAssignment::start()
 {
     if (_state != State::Init) {
-        qCWarning(ActuatorsConfigLog) << "Invalid state";
+        qCWarning(MotorAssignmentLog) << "Invalid state";
         return;
     }
 
@@ -140,7 +144,7 @@ void MotorAssignment::start()
 void MotorAssignment::selectMotor(int motorIndex)
 {
     if (_state != State::Running) {
-        qCDebug(ActuatorsConfigLog) << "Not running";
+        qCDebug(MotorAssignmentLog) << "Not running";
         return;
     }
 
@@ -200,13 +204,13 @@ void MotorAssignment::ackHandler(MAV_RESULT commandResult, VehicleTypes::MavCmdR
     _commandInProgress = false;
     if (failureCode != VehicleTypes::MavCmdResultFailureNoResponseToCommand && commandResult != MAV_RESULT_ACCEPTED) {
         abort();
-        qgcApp()->showAppMessage(tr("Actuator test command failed"));
+        QGC::showAppMessage(tr("Actuator test command failed"));
     }
 }
 
 void MotorAssignment::sendMavlinkRequest(int function, float value)
 {
-    qCDebug(ActuatorsConfigLog) << "Sending actuator test function:" << function << "value:" << value;
+    qCDebug(MotorAssignmentLog) << "Sending actuator test function:" << function << "value:" << value;
 
     Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
     handlerInfo.resultHandler       = ackHandlerEntry;

@@ -7,6 +7,10 @@
 #include <QtCore/QEvent>
 #include <QtCore/QHash>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
+#include <QtCore/QTemporaryFile>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -17,6 +21,7 @@
 #include "AppSettings.h"
 #include "Fact.h"
 #include "LinkManager.h"
+#include "LogEntry.h"
 #include "MissionItem.h"
 #include "MultiVehicleManager.h"
 #include "QGC.h"
@@ -26,6 +31,16 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+
+struct UnitTest::ExpectedLogMessages
+{
+    struct Entry
+    {
+        LogEntry::Level level;
+        QRegularExpression pattern;
+    };
+    QList<Entry> list;
+};
 
 QGC_LOGGING_CATEGORY(UnitTestLog, "Test.UnitTest")
 
@@ -257,7 +272,9 @@ QStringList availableLabelNames()
 // UnitTest Implementation
 // ============================================================================
 
-UnitTest::UnitTest(QObject* parent) : QObject(parent)
+UnitTest::UnitTest(QObject* parent)
+    : QObject(parent)
+    , _expectedLogMessages(std::make_unique<ExpectedLogMessages>())
 {
 }
 
@@ -674,14 +691,14 @@ void UnitTest::cleanupTestCase()
 
 void UnitTest::expectLogMessage(QtMsgType type, const QRegularExpression &pattern)
 {
-    _expectedLogMessages.append({LogEntry::fromQtMsgType(type), pattern});
+    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), pattern});
 }
 
 void UnitTest::init()
 {
     _initCalled = true;
     _failureContextDumped = false;
-    _expectedLogMessages.clear();
+    _expectedLogMessages->list.clear();
 
     // Start capturing log messages for this test (cleared from previous test)
     LogManager::clearCapturedMessages();
@@ -715,7 +732,7 @@ void UnitTest::cleanup()
         QString criticalDetails;
 
         auto isExpected = [this](const LogEntry &m) {
-            for (const auto &e : _expectedLogMessages) {
+            for (const auto &e : _expectedLogMessages->list) {
                 if (e.level == m.level && e.pattern.match(m.message).hasMatch()) {
                     return true;
                 }

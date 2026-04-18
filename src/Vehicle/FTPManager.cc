@@ -1,8 +1,9 @@
 #include "FTPManager.h"
 #include "MAVLinkProtocol.h"
-#include "Vehicle.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "QGCLoggingCategory.h"
+#include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -17,7 +18,7 @@ FTPManager::FTPManager(Vehicle* vehicle)
 {
     _ackOrNakTimeoutTimer.setSingleShot(true);
     // Mock link responds immediately if at all, speed up unit tests with faster timeout
-    _ackOrNakTimeoutTimer.setInterval(qgcApp()->runningUnitTests() ? kTestAckTimeoutMs : _ackOrNakTimeoutMsecs);
+    _ackOrNakTimeoutTimer.setInterval(QGC::runningUnitTests() ? kTestAckTimeoutMs : _ackOrNakTimeoutMsecs);
     connect(&_ackOrNakTimeoutTimer, &QTimer::timeout, this, &FTPManager::_ackOrNakTimeout);
 
     // Make sure we don't have bad structure packing

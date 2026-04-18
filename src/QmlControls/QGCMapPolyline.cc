@@ -3,6 +3,7 @@
 #include "JsonHelper.h"
 #include "JsonParsing.h"
 #include "QGCQGeoCoordinate.h"
+#include "QGC.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "ShapeFileHelper.h"
@@ -377,11 +378,11 @@ bool QGCMapPolyline::loadKMLOrSHPFile(const QString &file)
     QString errorString;
     QList<QList<QGeoCoordinate>> polylines;
     if (!ShapeFileHelper::loadPolylinesFromFile(file, polylines, errorString)) {
-        qgcApp()->showAppMessage(errorString);
+        QGC::showAppMessage(errorString);
         return false;
     }
     if (polylines.isEmpty()) {
-        qgcApp()->showAppMessage(tr("No polylines found in file"));
+        QGC::showAppMessage(tr("No polylines found in file"));
         return false;
     }
     const QList<QGeoCoordinate>& rgCoords = polylines.first();

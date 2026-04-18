@@ -1,6 +1,6 @@
 #include "CityMapGeometryTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "CityMapGeometry.h"
 #include "OsmParser.h"

@@ -7,7 +7,6 @@
 #include "Fixtures/RAIIFixtures.h"
 
 #include <QtCore/QSettings>
-#include <QtTest/QSignalSpy>
 
 // ============================================================================
 // LinkConfiguration base tests (exercised via TCPConfiguration)

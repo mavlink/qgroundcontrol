@@ -3,10 +3,6 @@
 #include "QGCStateMachine.h"
 #include "MAVLinkMessageType.h"
 
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(InitialConnectStateMachineLog)
-
 class Vehicle;
 class SkippableAsyncState;
 class AsyncFunctionState;

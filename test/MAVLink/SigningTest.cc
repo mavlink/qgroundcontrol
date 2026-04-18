@@ -1,4 +1,5 @@
 #include "SigningTest.h"
+#include "MAVLinkLib.h"
 
 #include "MAVLinkSigning.h"
 #include "MAVLinkSigningKeys.h"

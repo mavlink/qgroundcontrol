@@ -1,14 +1,16 @@
 #include "OnboardLogController.h"
 #include "AppSettings.h"
 #include "OnboardLogEntry.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
@@ -337,13 +339,13 @@ void OnboardLogController::_updateDataRate()
         _downloadData->rate_avg = (_downloadData->rate_avg * 0.95) + (rate * 0.05);
         _downloadData->rate_bytes = 0;
 
-        status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
-                                                   qgcApp()->bigSizeToString(_downloadData->rate_avg));
+        status = QStringLiteral("%1 (%2/s)").arg(QGC::bigSizeToString(_downloadData->written),
+                                                   QGC::bigSizeToString(_downloadData->rate_avg));
         _downloadData->elapsed.start();
     } else {
         // Update size only, keep previous rate
-        status = QStringLiteral("%1 (%2/s)").arg(qgcApp()->bigSizeToString(_downloadData->written),
-                                                   qgcApp()->bigSizeToString(_downloadData->rate_avg));
+        status = QStringLiteral("%1 (%2/s)").arg(QGC::bigSizeToString(_downloadData->written),
+                                                   QGC::bigSizeToString(_downloadData->rate_avg));
     }
 
     _downloadData->entry->setStatus(status);

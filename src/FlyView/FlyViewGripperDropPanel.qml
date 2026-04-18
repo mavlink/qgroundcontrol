@@ -9,7 +9,7 @@ ColumnLayout {
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property var _buttonTitles: [qsTr("Release"), qsTr("Grab"), qsTr("Hold")]
-    property var _buttonActions: [QGCMAVLink.GripperActionRelease, QGCMAVLink.GripperActionGrab, QGCMAVLink.GripperActionHold]
+    property var _buttonActions: [MAVLinkEnums.GRIPPER_ACTION_RELEASE, MAVLinkEnums.GRIPPER_ACTION_GRAB, MAVLinkEnums.GRIPPER_ACTION_HOLD]
 
     Repeater {
         model: _buttonTitles

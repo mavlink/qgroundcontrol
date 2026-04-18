@@ -1,11 +1,6 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
 #include "RemoteControlCalibrationController.h"
-
-Q_DECLARE_LOGGING_CATEGORY(RadioComponentControllerLog)
-Q_DECLARE_LOGGING_CATEGORY(RadioComponentControllerVerboseLog)
 
 /// Controller class for RC Transmitter calibration
 class RadioComponentController : public RemoteControlCalibrationController

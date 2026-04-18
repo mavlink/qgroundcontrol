@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -13,8 +12,6 @@
 #include "QmlObjectListModel.h"
 
 class Vehicle;
-
-Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 
 class CameraMetaData;
 class Joystick;

@@ -1,19 +1,17 @@
 #pragma once
 
-#include "LogEntry.h"
-
 #include <QtCore/QFlags>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
-#include <QtCore/QRegularExpression>
 #include <QtCore/QStringView>
-#include <QtCore/QTemporaryDir>
-#include <QtCore/QTemporaryFile>
-#include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QTest>
 
-#include <atomic>
+class QGeoCoordinate;
+class QRegularExpression;
+class QTemporaryDir;
+class QTemporaryFile;
+
 #include <chrono>
 #include <functional>
 #include <initializer_list>
@@ -88,37 +86,7 @@ QStringList availableLabelNames();
 // Test Assertion Macros
 // ============================================================================
 
-/// Compare two QGeoCoordinates with meter tolerance
-/// @param actual The actual coordinate
-/// @param expected The expected coordinate
-/// @param toleranceMeters Maximum distance in meters (default 1.0)
-#define QCOMPARE_COORDS(actual, expected, ...)                                                                 \
-    do {                                                                                                       \
-        const QGeoCoordinate _actual = (actual);                                                               \
-        const QGeoCoordinate _expected = (expected);                                                           \
-        const double _tolerance = (0.0 __VA_OPT__(+) __VA_ARGS__) > 0 ? (0.0 __VA_OPT__(+) __VA_ARGS__) : 1.0; \
-        const double _distance = _actual.distanceTo(_expected);                                                \
-        if (_distance > _tolerance) {                                                                          \
-            const QString _msg = QString(                                                                      \
-                                     "Coordinates differ by %1m (tolerance: %2m)\n"                            \
-                                     "  Actual:   (%3, %4, %5)\n"                                              \
-                                     "  Expected: (%6, %7, %8)")                                               \
-                                     .arg(_distance, 0, 'f', 3)                                                \
-                                     .arg(_tolerance, 0, 'f', 3)                                               \
-                                     .arg(_actual.latitude(), 0, 'f', 7)                                       \
-                                     .arg(_actual.longitude(), 0, 'f', 7)                                      \
-                                     .arg(_actual.altitude(), 0, 'f', 2)                                       \
-                                     .arg(_expected.latitude(), 0, 'f', 7)                                     \
-                                     .arg(_expected.longitude(), 0, 'f', 7)                                    \
-                                     .arg(_expected.altitude(), 0, 'f', 2);                                    \
-            QFAIL(qPrintable(_msg));                                                                           \
-        }                                                                                                      \
-    } while (false)
-
-/// Verify coordinates are equal within tolerance (less verbose than QCOMPARE_COORDS)
-#define QVERIFY_COORDS_NEAR(actual, expected, toleranceMeters)   \
-    QVERIFY2((actual).distanceTo(expected) <= (toleranceMeters), \
-             qPrintable(QString("Coordinates differ by %1m").arg((actual).distanceTo(expected))))
+// Coordinate helpers live in UnitTestCoords.h.
 
 /// Wait for a signal with timeout, with better error message
 /// @param spy QSignalSpy to wait on
@@ -226,23 +194,6 @@ inline int stressIterations(int localDefault, int ciDefault)
 }  // namespace TestTimeout
 
 // ============================================================================
-// QTest::toString specializations for better QCOMPARE diagnostics
-// ============================================================================
-
-namespace QTest {
-/// Provides readable QCOMPARE failure messages for QGeoCoordinate.
-/// Without this, QCOMPARE prints "Compared values are not the same" with no detail.
-template <>
-inline char* toString(const QGeoCoordinate& c)
-{
-    return qstrdup(qPrintable(QStringLiteral("(%1, %2, %3)")
-                                  .arg(c.latitude(), 0, 'f', 7)
-                                  .arg(c.longitude(), 0, 'f', 7)
-                                  .arg(c.altitude(), 0, 'f', 2)));
-}
-}  // namespace QTest
-
-// ============================================================================
 // Forward Declarations
 // ============================================================================
 
@@ -251,7 +202,6 @@ Q_DECLARE_LOGGING_CATEGORY(UnitTestLog)
 class Fact;
 class MissionItem;
 class QSignalSpy;
-class Vehicle;
 
 // ============================================================================
 // Test Context - Improved failure diagnostics
@@ -511,11 +461,6 @@ protected:
     void expectLogMessage(QtMsgType type, const QRegularExpression &pattern);
 
 private:
-    struct ExpectedLogMessage {
-        LogEntry::Level level;
-        QRegularExpression pattern;
-    };
-
     void _cleanupTempFiles();
     void _resetTestState();
 
@@ -524,7 +469,10 @@ private:
 
     std::vector<std::unique_ptr<QTemporaryFile>> _tempFiles;
     std::vector<std::unique_ptr<QTemporaryDir>> _tempDirs;
-    QList<ExpectedLogMessage> _expectedLogMessages;
+
+    // Defined in UnitTest.cc to keep LogEntry.h out of test TUs.
+    struct ExpectedLogMessages;
+    std::unique_ptr<ExpectedLogMessages> _expectedLogMessages;
 
     TestLabels _labels;
     bool _unitTestRun = false;

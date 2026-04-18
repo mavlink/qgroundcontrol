@@ -1,0 +1,47 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[
+{
+    "name":             "lrssi",
+    "shortDesc": "Local RSSI",
+    "type":             "int16",
+    "units":            "dBm"
+},
+{
+    "name":             "rrssi",
+    "shortDesc": "Remote RSSI",
+    "type":             "int16",
+    "units":            "dBm"
+},
+{
+    "name":             "rxErrors",
+    "shortDesc": "RX Errors",
+    "type":             "uint32"
+},
+{
+    "name":             "fixed",
+    "shortDesc": "Errors Fixed",
+    "type":             "uint32"
+},
+{
+    "name":             "txBuffer",
+    "shortDesc": "TX Buffer",
+    "type":             "uint32",
+    "units":            "%"
+},
+{
+    "name":             "lNoise",
+    "shortDesc": "Local Noise",
+    "type":             "int16",
+    "units":            "dBm"
+},
+{
+    "name":             "rNoise",
+    "shortDesc": "Remote Noise",
+    "type":             "int16",
+    "units":            "dBm"
+}
+]
+}

@@ -1,6 +1,6 @@
 #include "FactTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "Fact.h"
 #include "FactMetaData.h"

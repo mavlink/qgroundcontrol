@@ -1,14 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtNetwork/QSslSocket>
 #include <QtNetwork/QTcpSocket>
 
 #include "RTCMParser.h"
-
-Q_DECLARE_LOGGING_CATEGORY(NTRIPHttpTransportLog)
 
 struct NTRIPTransportConfig {
     QString host;

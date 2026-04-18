@@ -1,8 +1,8 @@
 #include "ObjectItemModelBaseTest.h"
+#include <QtTest/QSignalSpy>
 
 #include "ObjectItemModelBase.h"
 
-#include <QtTest/QSignalSpy>
 
 // ---------------------------------------------------------------------------
 // Concrete subclass — ObjectItemModelBase is abstract, so we need a minimal
