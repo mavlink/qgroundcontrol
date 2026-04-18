@@ -1,3 +1,4 @@
+#include "QmlObjectListModel.h"
 #include "MockLinkSigningTest.h"
 
 #include "MAVLinkSigningKeys.h"

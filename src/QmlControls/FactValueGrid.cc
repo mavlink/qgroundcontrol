@@ -1,6 +1,7 @@
+#include "QmlObjectListModel.h"
 #include "FactValueGrid.h"
 #include "InstrumentValueData.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "QGCCorePlugin.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
@@ -320,7 +321,7 @@ void FactValueGrid::_resetFromSettings(void)
 
         int version = settings.value(_versionKey, 0).toInt();
         if (version != 1) {
-            qgcApp()->showAppMessage(tr("Settings version %1 for %2 is not supported. Setup will be reset to defaults.").arg(version).arg(_settingsGroup), tr("Load Settings"));
+            QGC::showAppMessage(tr("Settings version %1 for %2 is not supported. Setup will be reset to defaults.").arg(version).arg(_settingsGroup), tr("Load Settings"));
             settings.remove("");
             QGCCorePlugin::instance()->factValueGridCreateDefaultSettings(this);
         }

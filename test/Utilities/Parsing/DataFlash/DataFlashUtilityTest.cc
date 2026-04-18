@@ -1,6 +1,5 @@
 #include "DataFlashUtilityTest.h"
 
-#include <QtTest/QTest>
 
 #include <cmath>
 #include <cstring>

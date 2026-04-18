@@ -73,7 +73,7 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName)
         if (uris.uriMetaData.isEmpty() || !uris.crcMetaDataValid) {
             // The CRC is optional for dynamically updated metadata, and once we want to support that this logic needs
             // to be updated.
-            qCDebug(ComponentInformationManagerLog) << "Metadata missing fields: type:uri:crcValid" << metadataType <<
+            qCDebug(CompInfoGeneralLog) << "Metadata missing fields: type:uri:crcValid" << metadataType <<
                     uris.uriMetaData << uris.crcMetaDataValid;
             continue;
         }

@@ -1,14 +1,11 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QJsonObject>
 #include <QtCore/QVariantList>
 #include <QtPositioning/QGeoCoordinate>
 
 class QmlObjectListModel;
 class QTranslator;
-
-Q_DECLARE_LOGGING_CATEGORY(JsonHelperLog)
 
 /// Json manipulation helper class.
 /// Primarily used for parsing and processing Fact metadata.

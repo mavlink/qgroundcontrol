@@ -84,9 +84,6 @@ function(qgc_config_caching)
                 endif()
                 string(APPEND _wrapper "export CCACHE_DIR=\"\${CCACHE_DIR:-${CMAKE_SOURCE_DIR}/.ccache}\"\n")
                 string(APPEND _wrapper "export CCACHE_BASEDIR=\"\${CCACHE_BASEDIR:-${CMAKE_SOURCE_DIR}}\"\n")
-                if(APPLE)
-                    string(APPEND _wrapper "export CCACHE_COMPILERCHECK=\"\${CCACHE_COMPILERCHECK:-content}\"\n")
-                endif()
                 string(APPEND _wrapper "exec \"${QGC_CACHE_PROGRAM}\" \"$@\"\n")
                 file(WRITE "${_ccache_wrapper}" "${_wrapper}")
                 file(CHMOD "${_ccache_wrapper}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
@@ -165,6 +162,53 @@ function(qgc_enable_pie)
     else()
         message(WARNING "QGC: PIE not supported - ${_output}")
     endif()
+endfunction()
+
+# ----------------------------------------------------------------------------
+# qgc_enable_split_dwarf
+# Enables -gsplit-dwarf + --gdb-index for the current build.
+#
+# Split-DWARF emits debug info into sidecar .dwo files instead of embedding
+# it in .o; the linker then never reads/relocates DWARF, cutting Debug link
+# time by 40-60% on QGC-sized projects. gdb follows the .dwo sidecars
+# transparently at debug time.
+#
+# Only applies on ELF targets (Linux, Android). macOS uses dSYM bundles and
+# Windows MSVC uses PDBs — both already separate debug info, so split-DWARF
+# is a no-op or actively harmful there. Skipped under IPO/LTO because LTO
+# rewrites debug info at link time and defeats the split.
+#
+# --gdb-index requires gold, lld, or mold; qgc_set_linker() prefers those.
+# ----------------------------------------------------------------------------
+function(qgc_enable_split_dwarf)
+    if(NOT QGC_SPLIT_DWARF)
+        return()
+    endif()
+    if(APPLE OR MSVC OR NOT (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang"))
+        return()
+    endif()
+    if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+        message(STATUS "QGC: split-DWARF disabled (IPO/LTO active)")
+        return()
+    endif()
+
+    # Per-config so Release (no debug info) is untouched.
+    add_compile_options($<$<CONFIG:Debug,RelWithDebInfo>:-gsplit-dwarf>)
+
+    # --gdb-index is a linker feature; only emit when the selected linker
+    # supports it. mold/lld/gold do; bfd (system default on older distros)
+    # does not. qgc_set_linker() exports QGC_LINKER when it picks one.
+    if(QGC_LINKER MATCHES "^(mold|lld|gold)$")
+        add_link_options($<$<CONFIG:Debug,RelWithDebInfo>:LINKER:--gdb-index>)
+        set(_gdb_index ON)
+    else()
+        set(_gdb_index OFF)
+        message(STATUS "QGC: --gdb-index skipped (needs mold/lld/gold; have '${QGC_LINKER}')")
+    endif()
+
+    set(QGC_SPLIT_DWARF_ACTIVE ON PARENT_SCOPE)
+    set(QGC_SPLIT_DWARF_GDB_INDEX ${_gdb_index} PARENT_SCOPE)
+    message(STATUS "QGC: split-DWARF enabled (-gsplit-dwarf, gdb-index=${_gdb_index})")
 endfunction()
 
 # ----------------------------------------------------------------------------

@@ -1,13 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 class QTextToSpeech;
 class Fact;
 class AudioOutputTest;
-
-Q_DECLARE_LOGGING_CATEGORY(AudioOutputLog)
 
 /// The AudioOutput class provides functionality for audio output using text-to-speech.
 class AudioOutput : public QObject

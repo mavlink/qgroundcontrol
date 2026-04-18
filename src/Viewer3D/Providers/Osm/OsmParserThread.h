@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
@@ -10,8 +9,6 @@
 #include <QtPositioning/QGeoCoordinate>
 
 #include <vector>
-
-Q_DECLARE_LOGGING_CATEGORY(OsmParserThreadLog)
 
 class OsmParserThread : public QObject
 {

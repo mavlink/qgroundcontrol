@@ -28,7 +28,7 @@ TransectStyleComplexItem::TransectStyleComplexItem(PlanMasterController* masterC
     , _terrainAdjustMaxClimbRateFact    (settingsGroup, _metaDataMap[terrainAdjustMaxClimbRateName])
     , _terrainAdjustMaxDescentRateFact  (settingsGroup, _metaDataMap[terrainAdjustMaxDescentRateName])
 {
-    _terrainPolyPathQueryTimer.setInterval(qgcApp()->runningUnitTests() ? 10 : _terrainQueryTimeoutMsecs);
+    _terrainPolyPathQueryTimer.setInterval(QGC::runningUnitTests() ? 10 : _terrainQueryTimeoutMsecs);
     _terrainPolyPathQueryTimer.setSingleShot(true);
     connect(&_terrainPolyPathQueryTimer, &QTimer::timeout, this, &TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo);
 
@@ -346,7 +346,7 @@ double TransectStyleComplexItem::greatestDistanceTo(const QGeoCoordinate &other)
     return greatestDistance;
 }
 
-void TransectStyleComplexItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
+void TransectStyleComplexItem::setMissionFlightStatus(MissionFlightStatus_t& missionFlightStatus)
 {
     ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);
     if (!QGC::fuzzyCompare(_vehicleSpeed, missionFlightStatus.vehicleSpeed)) {

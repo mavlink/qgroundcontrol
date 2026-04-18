@@ -7,7 +7,6 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
 
 static QList<QBluetoothHostInfo> _localAdaptersOrSkip()
 {

@@ -1,8 +1,8 @@
 #include "QmlObjectListModelTest.h"
+#include <QtTest/QSignalSpy>
 
 #include "TestDirtyObject.h"
 
-#include <QtTest/QSignalSpy>
 
 namespace {
 
@@ -112,5 +112,3 @@ void QmlObjectListModelTest::_appendObjectWithoutDirtySignal()
 }
 
 UT_REGISTER_TEST(QmlObjectListModelTest, TestLabel::Unit)
-
-#include "QmlObjectListModelTest.moc"

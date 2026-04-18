@@ -1,4 +1,8 @@
 #include "BluetoothClassicWorker.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(BluetoothClassicWorkerLog, "Comms.Bluetooth.BluetoothClassicWorker")
+QGC_LOGGING_CATEGORY(BluetoothClassicWorkerVerboseLog, "Comms.Bluetooth.BluetoothClassicWorker.Verbose")
 
 BluetoothClassicWorker::BluetoothClassicWorker(const BluetoothConfiguration *config, QObject *parent)
     : BluetoothWorker(config, parent)
@@ -12,7 +16,7 @@ void BluetoothClassicWorker::onSetupConnection()
 
 void BluetoothClassicWorker::onConnectLink()
 {
-    qCDebug(BluetoothLinkLog) << "Attempting to connect to" << _device.name() << "Mode: Classic";
+    qCDebug(BluetoothClassicWorkerLog) << "Attempting to connect to" << _device.name() << "Mode: Classic";
 
     // Destroy stale socket — QBluetoothSocket must be recreated after errors
     if (_socket) {
@@ -86,12 +90,12 @@ void BluetoothClassicWorker::_setupClassicSocket()
     (void) connect(_socket.data(), &QBluetoothSocket::readyRead, this, &BluetoothClassicWorker::_onSocketReadyRead);
     (void) connect(_socket.data(), &QBluetoothSocket::errorOccurred, this, &BluetoothClassicWorker::_onSocketErrorOccurred);
 
-    if (BluetoothLinkLog().isDebugEnabled()) {
+    if (BluetoothClassicWorkerLog().isDebugEnabled()) {
         (void) connect(_socket.data(), &QBluetoothSocket::bytesWritten, this, &BluetoothClassicWorker::_onSocketBytesWritten);
 
         (void) connect(_socket.data(), &QBluetoothSocket::stateChanged, this,
                       [](QBluetoothSocket::SocketState state) {
-            qCDebug(BluetoothLinkLog) << "Bluetooth Socket State Changed:" << state;
+            qCDebug(BluetoothClassicWorkerLog) << "Bluetooth Socket State Changed:" << state;
         });
     }
 }
@@ -122,9 +126,9 @@ void BluetoothClassicWorker::_writeClassicData(const QByteArray &data)
 
 void BluetoothClassicWorker::_onSocketConnected()
 {
-    qCDebug(BluetoothLinkLog) << "=== Classic Bluetooth Connection Established ===" << _device.name();
-    qCDebug(BluetoothLinkLog) << "  Address:" << _device.address().toString();
-    qCDebug(BluetoothLinkLog) << "  Protocol: RFCOMM (SPP)";
+    qCDebug(BluetoothClassicWorkerLog) << "=== Classic Bluetooth Connection Established ===" << _device.name();
+    qCDebug(BluetoothClassicWorkerLog) << "  Address:" << _device.address().toString();
+    qCDebug(BluetoothClassicWorkerLog) << "  Protocol: RFCOMM (SPP)";
 
     _connected = true;
     _reconnectAttempts = 0;
@@ -134,12 +138,12 @@ void BluetoothClassicWorker::_onSocketConnected()
 
 void BluetoothClassicWorker::_onSocketDisconnected()
 {
-    qCDebug(BluetoothLinkLog) << "Socket disconnected from device:" << _device.name();
+    qCDebug(BluetoothClassicWorkerLog) << "Socket disconnected from device:" << _device.name();
     _connected = false;
     emit disconnected();
 
     if (!_intentionalDisconnect.load() && _socket && _reconnectTimer) {
-        qCDebug(BluetoothLinkLog) << "Starting reconnect timer";
+        qCDebug(BluetoothClassicWorkerLog) << "Starting reconnect timer";
         _reconnectTimer->start();
     }
 }
@@ -152,14 +156,14 @@ void BluetoothClassicWorker::_onSocketReadyRead()
 
     const QByteArray data = _socket->readAll();
     if (!data.isEmpty()) {
-        qCDebug(BluetoothLinkVerboseLog) << _device.name() << "Received" << data.size() << "bytes";
+        qCDebug(BluetoothClassicWorkerVerboseLog) << _device.name() << "Received" << data.size() << "bytes";
         emit dataReceived(data);
     }
 }
 
 void BluetoothClassicWorker::_onSocketBytesWritten(qint64 bytes)
 {
-    qCDebug(BluetoothLinkVerboseLog) << _device.name() << "Wrote" << bytes << "bytes";
+    qCDebug(BluetoothClassicWorkerVerboseLog) << _device.name() << "Wrote" << bytes << "bytes";
 }
 
 void BluetoothClassicWorker::_onSocketErrorOccurred(QBluetoothSocket::SocketError socketError)
@@ -171,21 +175,21 @@ void BluetoothClassicWorker::_onSocketErrorOccurred(QBluetoothSocket::SocketErro
         errorString = tr("Socket error: Null Socket");
     }
 
-    qCWarning(BluetoothLinkLog) << "Socket error:" << socketError << errorString;
+    qCWarning(BluetoothClassicWorkerLog) << "Socket error:" << socketError << errorString;
     emit errorOccurred(errorString);
 
     _consecutiveFailures++;
 
     // If we never successfully connected, emit disconnected to reset UI state
     if (!_connected.load()) {
-        qCDebug(BluetoothLinkLog) << "Connection attempt failed, emitting disconnected signal";
+        qCDebug(BluetoothClassicWorkerLog) << "Connection attempt failed, emitting disconnected signal";
         emit disconnected();
     }
 
     // Attempt service discovery for service-related errors only
     if ((socketError == QBluetoothSocket::SocketError::ServiceNotFoundError) ||
         (socketError == QBluetoothSocket::SocketError::UnsupportedProtocolError)) {
-        qCDebug(BluetoothLinkLog) << "Service-related error, attempting fallback discovery";
+        qCDebug(BluetoothClassicWorkerLog) << "Service-related error, attempting fallback discovery";
         _startClassicServiceDiscovery();
     }
 }
@@ -208,7 +212,7 @@ void BluetoothClassicWorker::_startClassicServiceDiscovery()
                        this, &BluetoothClassicWorker::_onClassicServiceDiscoveryError);
     }
 
-    qCDebug(BluetoothLinkLog) << "Starting classic service discovery on" << _device.name();
+    qCDebug(BluetoothClassicWorkerLog) << "Starting classic service discovery on" << _device.name();
     _classicDiscoveredService = QBluetoothServiceInfo();
     _classicDiscovery->start(QBluetoothServiceDiscoveryAgent::FullDiscovery);
 
@@ -220,7 +224,7 @@ void BluetoothClassicWorker::_startClassicServiceDiscovery()
 
 void BluetoothClassicWorker::_onClassicServiceDiscovered(const QBluetoothServiceInfo &serviceInfo)
 {
-    qCDebug(BluetoothLinkLog) << "Classic service discovered: UUIDs=" << serviceInfo.serviceClassUuids()
+    qCDebug(BluetoothClassicWorkerLog) << "Classic service discovered: UUIDs=" << serviceInfo.serviceClassUuids()
                               << "RFCOMM channel=" << serviceInfo.serverChannel()
                               << "L2CAP PSM=" << serviceInfo.protocolServiceMultiplexer();
 
@@ -240,7 +244,7 @@ void BluetoothClassicWorker::_onClassicServiceDiscoveryFinished()
     }
 
     if (!_classicDiscoveredService.isValid()) {
-        qCWarning(BluetoothLinkLog) << "No suitable classic service found";
+        qCWarning(BluetoothClassicWorkerLog) << "No suitable classic service found";
         return;
     }
 
@@ -248,7 +252,7 @@ void BluetoothClassicWorker::_onClassicServiceDiscoveryFinished()
         _setupClassicSocket();
     }
 
-    qCDebug(BluetoothLinkLog) << "Connecting using discovered service";
+    qCDebug(BluetoothClassicWorkerLog) << "Connecting using discovered service";
     _socket->connectToService(_classicDiscoveredService);
 }
 
@@ -258,7 +262,7 @@ void BluetoothClassicWorker::_onClassicServiceDiscoveryCanceled()
         _serviceDiscoveryTimer->stop();
     }
 
-    qCDebug(BluetoothLinkLog) << "Classic service discovery canceled";
+    qCDebug(BluetoothClassicWorkerLog) << "Classic service discovery canceled";
 }
 
 void BluetoothClassicWorker::_onClassicServiceDiscoveryError(QBluetoothServiceDiscoveryAgent::Error error)
@@ -268,6 +272,6 @@ void BluetoothClassicWorker::_onClassicServiceDiscoveryError(QBluetoothServiceDi
     }
 
     const QString e = _classicDiscovery ? _classicDiscovery->errorString() : tr("Service discovery error: %1").arg(error);
-    qCWarning(BluetoothLinkLog) << e;
+    qCWarning(BluetoothClassicWorkerLog) << e;
     emit errorOccurred(e);
 }

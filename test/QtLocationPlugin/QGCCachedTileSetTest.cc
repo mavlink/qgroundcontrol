@@ -1,6 +1,6 @@
 #include "QGCCachedTileSetTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "QGCCachedTileSet.h"
 

@@ -5,6 +5,7 @@
 #include <QtCore/QFile>
 
 #include "MultiSignalSpy.h"
+#include "UnitTestCoords.h"
 #include "QGCMapPolyline.h"
 #include "QGCQGeoCoordinate.h"
 #include "QmlObjectListModel.h"

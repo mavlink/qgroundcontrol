@@ -47,7 +47,10 @@ endif()
 cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "_QGC_DEBUG_BUILD" OFF)
 cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "_QGC_DEBUG_BUILD" OFF)
 cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "_QGC_DEBUG_BUILD" OFF)
+cmake_dependent_option(QT_QML_NO_CACHEGEN "Skip qmlcachegen (faster Debug builds, slower QML startup)" ON "_QGC_DEBUG_BUILD" OFF)
 option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)
+option(QGC_TIME_TRACE "Emit per-TU Clang -ftime-trace JSON for build profiling (Clang only)" OFF)
+option(QGC_SPLIT_DWARF "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux/Android ELF only; marginal win with mold)" OFF)
 
 # Git options
 option(GIT_SUBMODULE "Update submodules during configuration" OFF)
@@ -171,6 +174,7 @@ option(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING "Silence missing dependency 
 option(QT_ENABLE_VERBOSE_DEPLOYMENT "Enable verbose deployment output" OFF)
 option(QT_DEBUG_FIND_PACKAGE "Print search paths when package not found" ON)
 option(QT_QML_GENERATE_QMLLS_INI "Generate qmlls.ini for QML language server" ON)
+option(QT_QMLLINT_CONTEXT_PROPERTY_DUMP "Emit qmllint context property data (Qt 6.11+; no-op on older)" ON)
 option(QGC_ENABLE_QMLLINT "Enable automatic QML linting during build" OFF)
 
 set(QGC_QT_DISABLE_DEPRECATED_UP_TO "0x061000" CACHE STRING "Disable Qt APIs deprecated before this version")

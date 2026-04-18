@@ -1,4 +1,5 @@
 #include "WaitForMavlinkMessageStateTest.h"
+#include "MAVLinkLib.h"
 #include "StateTestCommon.h"
 
 #include "WaitForMavlinkMessageState.h"

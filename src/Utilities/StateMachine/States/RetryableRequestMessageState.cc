@@ -2,10 +2,10 @@
 #include "QGCStateMachine.h"
 #include "Vehicle.h"
 
-#include <QtCore/QLoggingCategory>
+#include "QGCLoggingCategory.h"
 #include <QtCore/QMetaObject>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
+QGC_LOGGING_CATEGORY(RetryableRequestMessageStateLog, "Utilities.StateMachine.RetryableRequestMessageState")
 
 RetryableRequestMessageState::RetryableRequestMessageState(
     const QString& stateName,
@@ -30,7 +30,7 @@ void RetryableRequestMessageState::onWaitEntered()
 
     // Check skip predicate
     if (_skipPredicate && _skipPredicate()) {
-        qCDebug(QGCStateMachineLog) << stateName() << "Skipping request (skip predicate returned true)";
+        qCDebug(RetryableRequestMessageStateLog) << stateName() << "Skipping request (skip predicate returned true)";
         waitComplete();
         return;
     }
@@ -48,12 +48,12 @@ void RetryableRequestMessageState::_sendRequest()
 {
     Vehicle* v = vehicle();
     if (!v) {
-        qCWarning(QGCStateMachineLog) << stateName() << "No vehicle available";
+        qCWarning(RetryableRequestMessageStateLog) << stateName() << "No vehicle available";
         waitFailed();
         return;
     }
 
-    qCDebug(QGCStateMachineLog) << stateName() << "Requesting message" << _messageId
+    qCDebug(RetryableRequestMessageStateLog) << stateName() << "Requesting message" << _messageId
                                  << "attempt" << (_retryCount + 1) << "of" << (_maxRetries + 1);
 
     _requestActive = true;
@@ -103,7 +103,7 @@ void RetryableRequestMessageState::_handleResult(
 
     if (effectiveFailureCode == VehicleTypes::RequestMessageNoFailure) {
         // Success
-        qCDebug(QGCStateMachineLog) << stateName() << "Message received successfully";
+        qCDebug(RetryableRequestMessageStateLog) << stateName() << "Message received successfully";
 
         if (_messageHandler) {
             _messageHandler(vehicle(), message);
@@ -114,15 +114,15 @@ void RetryableRequestMessageState::_handleResult(
     }
 
     // Failure - check if we should retry
-    qCDebug(QGCStateMachineLog) << stateName() << "Request failed, failureCode:" << effectiveFailureCode;
+    qCDebug(RetryableRequestMessageStateLog) << stateName() << "Request failed, failureCode:" << effectiveFailureCode;
 
     if (_retryCount < _maxRetries) {
         _retryCount++;
-        qCDebug(QGCStateMachineLog) << stateName() << "Retrying, attempt" << (_retryCount + 1);
+        qCDebug(RetryableRequestMessageStateLog) << stateName() << "Retrying, attempt" << (_retryCount + 1);
         _queueRetry();
     } else {
         // Max retries exhausted
-        qCWarning(QGCStateMachineLog) << stateName() << "Max retries exhausted";
+        qCWarning(RetryableRequestMessageStateLog) << stateName() << "Max retries exhausted";
 
         if (_failureHandler) {
             _failureHandler(effectiveFailureCode, result);
@@ -139,16 +139,16 @@ void RetryableRequestMessageState::_handleResult(
 
 void RetryableRequestMessageState::onWaitTimeout()
 {
-    qCDebug(QGCStateMachineLog) << stateName() << "Timeout waiting for message";
+    qCDebug(RetryableRequestMessageStateLog) << stateName() << "Timeout waiting for message";
 
     _lastFailureCode = VehicleTypes::RequestMessageFailureMessageNotReceived;
 
     if (_retryCount < _maxRetries) {
         _retryCount++;
-        qCDebug(QGCStateMachineLog) << stateName() << "Retrying after timeout, attempt" << (_retryCount + 1);
+        qCDebug(RetryableRequestMessageStateLog) << stateName() << "Retrying after timeout, attempt" << (_retryCount + 1);
         _queueRetry();
     } else {
-        qCWarning(QGCStateMachineLog) << stateName() << "Max retries exhausted after timeout";
+        qCWarning(RetryableRequestMessageStateLog) << stateName() << "Max retries exhausted after timeout";
 
         if (_failureHandler) {
             _failureHandler(_lastFailureCode, _lastResult);

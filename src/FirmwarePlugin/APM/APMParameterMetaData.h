@@ -2,12 +2,7 @@
 
 #include <QtCore/QHash>
 #include <QtCore/QJsonObject>
-#include <QtCore/QLoggingCategory>
-
 #include "ParameterMetaData.h"
-
-Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
-Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog)
 
 class APMParameterMetaData : public ParameterMetaData
 {

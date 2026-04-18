@@ -4,6 +4,7 @@
 #include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "QmlObjectListModel.h"
 #include "FactPanelController.h"
 
 /// MVC Controller for AirframeComponent.qml.

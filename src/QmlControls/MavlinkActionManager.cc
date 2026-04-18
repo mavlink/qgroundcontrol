@@ -2,7 +2,7 @@
 #include "MavlinkAction.h"
 #include "Fact.h"
 #include "JsonHelper.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QGCLoggingCategory.h"
@@ -70,7 +70,7 @@ void MavlinkActionManager::_loadActionsFile()
     int version;
     const QJsonObject jsonObject = JsonHelper::openInternalQGCJsonFile(fullPath, kQgcFileType, 1, 1, version, errorString);
     if (!errorString.isEmpty()) {
-        qgcApp()->showAppMessage(tr("Failed to load custom actions file: `%1` error: `%2`").arg(fullPath, errorString));
+        QGC::showAppMessage(tr("Failed to load custom actions file: `%1` error: `%2`").arg(fullPath, errorString));
         return;
     }
 
@@ -78,14 +78,14 @@ void MavlinkActionManager::_loadActionsFile()
         { kActionListKey, QJsonValue::Array, /* required= */ true },
     };
     if (!JsonHelper::validateKeys(jsonObject, keyInfoList, errorString)) {
-        qgcApp()->showAppMessage(tr("Custom actions file - incorrect format: %1").arg(errorString));
+        QGC::showAppMessage(tr("Custom actions file - incorrect format: %1").arg(errorString));
         return;
     }
 
     const QJsonArray actionList = jsonObject[kActionListKey].toArray();
     for (const auto &actionJson: actionList) {
         if (!actionJson.isObject()) {
-            qgcApp()->showAppMessage(tr("Custom actions file - incorrect format: JsonValue not an object"));
+            QGC::showAppMessage(tr("Custom actions file - incorrect format: JsonValue not an object"));
             _actions->clearAndDeleteContents();
             return;
         }
@@ -107,7 +107,7 @@ void MavlinkActionManager::_loadActionsFile()
 
         const auto actionObj = actionJson.toObject();
         if (!JsonHelper::validateKeys(actionObj, actionKeyInfoList, errorString)) {
-            qgcApp()->showAppMessage(tr("Custom actions file - incorrect format: %1").arg(errorString));
+            QGC::showAppMessage(tr("Custom actions file - incorrect format: %1").arg(errorString));
             _actions->clearAndDeleteContents();
             return;
         }

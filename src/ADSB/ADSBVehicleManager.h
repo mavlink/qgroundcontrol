@@ -1,12 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 #include "ADSB.h"
 #include "MAVLinkMessageType.h"
-
-Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleManagerLog)
 
 class ADSBTCPLink;
 class ADSBVehicle;

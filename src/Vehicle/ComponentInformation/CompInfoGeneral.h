@@ -2,15 +2,12 @@
 
 #include "CompInfo.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QMap>
 
 class FactMetaData;
 class Vehicle;
 class FirmwarePlugin;
-
-Q_DECLARE_LOGGING_CATEGORY(CompInfoGeneralLog)
 
 class CompInfoGeneral : public CompInfo
 {

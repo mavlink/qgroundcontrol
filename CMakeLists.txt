@@ -256,8 +256,9 @@ qt_policy(
     SET QTP0005 NEW  # Enhanced deployment handling
 )
 
-# Disable QML cache generation in Debug builds across all targets.
-add_compile_definitions($<$<CONFIG:Debug>:QT_QML_NO_CACHEGEN>)
+if(QT_QML_NO_CACHEGEN)
+    add_compile_definitions(QT_QML_NO_CACHEGEN)
+endif()
 
 # ============================================================================
 # Custom Build Subdirectory
@@ -271,8 +272,9 @@ endif()
 # QGroundControl Resources
 # ============================================================================
 
-# Note: Resources added to executable (not library) to avoid needing Q_INIT_RESOURCE()
-
+# Resources go on the executable (not a library) to avoid Q_INIT_RESOURCE().
+# Don't route the big .qrcs through qt_add_big_resources — its pass2 object-file
+# output fails on MSVC ("No data signature found") when large data sections are elided.
 list(APPEND QGC_RESOURCES
     "${CMAKE_SOURCE_DIR}/qgcimages.qrc"
     "${CMAKE_SOURCE_DIR}/qgcresources.qrc"

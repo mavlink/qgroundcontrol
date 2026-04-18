@@ -1,7 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
 #include <gst/gst.h>
 
 namespace GStreamer

@@ -1,11 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 #include <gst/gst.h>
-
-Q_DECLARE_LOGGING_CATEGORY(GstAppSinkAdapterLog)
 
 class QVideoSink;
 

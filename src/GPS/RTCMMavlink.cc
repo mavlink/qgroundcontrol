@@ -1,8 +1,10 @@
+#include "QmlObjectListModel.h"
 #include "RTCMMavlink.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "GPS.RTCMMavlink")
 

@@ -1,10 +1,6 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(SectionLog)
-
 class PlanMasterController;
 class QmlObjectListModel;
 class MissionItem;

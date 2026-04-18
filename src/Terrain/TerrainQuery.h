@@ -1,18 +1,15 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QQueue>
 #include <QtCore/QVariant>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "TerrainPathHeightInfo.h"
 #include "TerrainQueryInterface.h"
 
 class QTimer;
-
-Q_DECLARE_LOGGING_CATEGORY(TerrainQueryLog)
-Q_DECLARE_LOGGING_CATEGORY(TerrainQueryVerboseLog)
 
 // IMPORTANT NOTE: The terrain query objects below must continue to live until the the terrain system signals data back through them.
 // Because of that it makes object lifetime tricky. Normally you would use autoDelete = true such they delete themselves when they
@@ -115,11 +112,7 @@ public:
     ///     @param coordinates to query
     void requestData(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord);
 
-    struct PathHeightInfo_t {
-        double distanceBetween;        ///< Distance between each height value
-        double finalDistanceBetween;   ///< Distance between final two height values
-        QList<double> heights;                ///< Terrain heights along path
-    };
+    using PathHeightInfo_t = TerrainPathHeightInfo;
 
 signals:
     /// Signalled when terrain data comes back from server
@@ -132,8 +125,6 @@ private:
     bool _autoDelete = false;
     TerrainQueryInterface *_terrainQuery = nullptr;
 };
-Q_DECLARE_METATYPE(TerrainPathQuery::PathHeightInfo_t)
-Q_DECLARE_METATYPE(QList<TerrainPathQuery::PathHeightInfo_t>)
 
 /*===========================================================================*/
 

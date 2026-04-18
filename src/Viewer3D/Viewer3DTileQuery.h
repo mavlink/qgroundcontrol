@@ -1,13 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtGui/QImage>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "Viewer3DTileReply.h"
-
-Q_DECLARE_LOGGING_CATEGORY(Viewer3DTileQueryLog)
 
 class Viewer3DTileQuery : public QObject
 {

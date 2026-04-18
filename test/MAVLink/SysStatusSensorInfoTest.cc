@@ -1,6 +1,6 @@
 #include "SysStatusSensorInfoTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "QGCMAVLink.h"
 #include "SysStatusSensorInfo.h"

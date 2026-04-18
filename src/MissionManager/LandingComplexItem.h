@@ -1,10 +1,6 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
 #include "ComplexMissionItem.h"
-
-Q_DECLARE_LOGGING_CATEGORY(LandingComplexItemLog)
 
 class PlanMasterController;
 class LandingComplexItemTest;

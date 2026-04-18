@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtCore/QJsonObject>
@@ -29,8 +28,6 @@ class Viewer3DSettings;
 class MavlinkSettings;
 class FactMetaData;
 class JoystickManagerSettings;
-
-Q_DECLARE_LOGGING_CATEGORY(SettingsManagerLog)
 
 /// Provides access to all app settings
 class SettingsManager : public QObject
@@ -91,7 +88,6 @@ public:
     ~SettingsManager();
 
     static SettingsManager *instance();
-    static void registerQmlTypes();
 
     void init();
 

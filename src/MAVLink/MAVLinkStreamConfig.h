@@ -1,10 +1,6 @@
 #pragma once
 
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkStreamConfigLog)
-
 /// Allows to configure a set of mavlink streams to a specific rate,
 /// and restore back to default.
 /// Note that only one set is active at a time.

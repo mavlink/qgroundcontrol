@@ -1,7 +1,9 @@
 #pragma once
 
 #include "VehicleTypes.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
+#include "MAVLinkEnums.h"
+#include "QGCMAVLinkTypes.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QString>

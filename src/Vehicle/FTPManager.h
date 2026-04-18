@@ -6,10 +6,6 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QTimer>
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(FTPManagerLog)
-
 class Vehicle;
 
 class FTPManager : public QObject

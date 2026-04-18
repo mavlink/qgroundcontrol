@@ -11,10 +11,7 @@
 
 #include "ObjectItemModelBase.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(QmlObjectTreeModelLog)
 
 /// A tree model for QObject* items, usable from both C++ and QML.
 /// Works like QmlObjectListModel but supports hierarchical parent/child relationships.

@@ -1,5 +1,5 @@
 #include "ArduRoverFirmwarePlugin.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "Vehicle.h"
 
 bool ArduRoverFirmwarePlugin::_remapParamNameIntialized = false;
@@ -72,7 +72,7 @@ int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVer
 
 void ArduRoverFirmwarePlugin::guidedModeChangeAltitude(Vehicle* /*vehicle*/, double /*altitudeChange*/, bool /*pauseVehicle*/)
 {
-    qgcApp()->showAppMessage(QStringLiteral("Change altitude not supported."));
+    QGC::showAppMessage(QStringLiteral("Change altitude not supported."));
 }
 
 QString ArduRoverFirmwarePlugin::stabilizedFlightMode() const

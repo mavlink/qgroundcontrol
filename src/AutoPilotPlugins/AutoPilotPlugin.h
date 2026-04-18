@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
@@ -9,8 +8,6 @@
 class FirmwarePlugin;
 class Vehicle;
 class VehicleComponent;
-
-Q_DECLARE_LOGGING_CATEGORY(AutoPilotPluginLog)
 
 /// The AutoPilotPlugin class is an abstract base class which represent the methods and objects
 /// which are specific to a certain AutoPilot. This is the only place where AutoPilot specific

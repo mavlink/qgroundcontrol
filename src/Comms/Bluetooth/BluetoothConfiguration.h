@@ -9,14 +9,10 @@
 #include <QtBluetooth/QBluetoothLocalDevice>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(BluetoothLinkLog)
-Q_DECLARE_LOGGING_CATEGORY(BluetoothLinkVerboseLog)
 
 /*===========================================================================*/
 

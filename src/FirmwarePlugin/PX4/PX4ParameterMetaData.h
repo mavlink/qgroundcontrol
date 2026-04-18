@@ -1,10 +1,6 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
 #include "ParameterMetaData.h"
-
-Q_DECLARE_LOGGING_CATEGORY(PX4ParameterMetaDataLog)
 
 class PX4ParameterMetaData : public ParameterMetaData
 {

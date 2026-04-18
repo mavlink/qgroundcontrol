@@ -1,6 +1,5 @@
 #include "ULogUtilityTest.h"
 
-#include <QtTest/QTest>
 
 #include <cstring>
 

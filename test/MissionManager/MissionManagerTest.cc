@@ -4,6 +4,7 @@
 #include <iterator>
 
 #include "MissionManager.h"
+#include "UnitTestCoords.h"
 #include "MultiSignalSpy.h"
 const MissionManagerTest::TestCase_t MissionManagerTest::_rgTestCases[] = {
     {"0\t0\t3\t16\t10\t20\t30\t40\t-10\t-20\t-30\t1\r\n",

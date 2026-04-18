@@ -1,7 +1,7 @@
 #include "QGCMAVLinkTest.h"
 
 #include "QGCMAVLink.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 
 // ---------------------------------------------------------------------------
 // Firmware class

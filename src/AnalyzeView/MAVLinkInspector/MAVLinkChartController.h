@@ -1,12 +1,9 @@
 #pragma once
 
 #include <QtCore/QDateTime>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkChartControllerLog)
 
 class MAVLinkInspectorController;
 class QAbstractSeries;
@@ -30,7 +27,6 @@ class MAVLinkChartController : public QObject
     Q_PROPERTY(qreal        rangeYMax   READ rangeYMax                              NOTIFY rangeYMaxChanged)
     Q_PROPERTY(quint32      rangeYIndex READ rangeYIndex    WRITE setRangeYIndex    NOTIFY rangeYIndexChanged)
     Q_PROPERTY(quint32      rangeXIndex READ rangeXIndex    WRITE setRangeXIndex    NOTIFY rangeXIndexChanged)
-
 
 public:
     explicit MAVLinkChartController(QObject *parent = nullptr);

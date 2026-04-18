@@ -15,7 +15,8 @@ Item {
     property bool showIndicator: _hasTelemetry
 
     property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
-    property bool _hasTelemetry:    _activeVehicle.telemetryLRSSI !== 0
+    property var  _radioStatus:     _activeVehicle.radioStatus
+    property bool _hasTelemetry:    _radioStatus.lrssi.rawValue !== 0
 
     QGCColoredImage {
         id:                 telemIcon
@@ -44,37 +45,37 @@ Item {
 
                 LabelledLabel {
                     label:      qsTr("Local RSSI:")
-                    labelText:  _activeVehicle.telemetryLRSSI + " " + qsTr("dBm")
+                    labelText:  _radioStatus.lrssi.rawValue + " " + qsTr("dBm")
                 }
 
                 LabelledLabel {
                     label:      qsTr("Remote RSSI:")
-                    labelText:  _activeVehicle.telemetryRRSSI + " " + qsTr("dBm")
+                    labelText:  _radioStatus.rrssi.rawValue + " " + qsTr("dBm")
                 }
 
                 LabelledLabel {
                     label:      qsTr("RX Errors:")
-                    labelText:  _activeVehicle.telemetryRXErrors
+                    labelText:  _radioStatus.rxErrors.rawValue
                 }
 
                 LabelledLabel {
                     label:      qsTr("Errors Fixed:")
-                    labelText:  _activeVehicle.telemetryFixed
+                    labelText:  _radioStatus.fixed.rawValue
                 }
 
                 LabelledLabel {
                     label:      qsTr("TX Buffer:")
-                    labelText:  _activeVehicle.telemetryTXBuffer
+                    labelText:  _radioStatus.txBuffer.rawValue
                 }
 
                 LabelledLabel {
                     label:      qsTr("Local Noise:")
-                    labelText:  _activeVehicle.telemetryLNoise
+                    labelText:  _radioStatus.lNoise.rawValue
                 }
 
                 LabelledLabel {
                     label:      qsTr("Remote Noise:")
-                    labelText:  _activeVehicle.telemetryRNoise
+                    labelText:  _radioStatus.rNoise.rawValue
                 }
             }
         }

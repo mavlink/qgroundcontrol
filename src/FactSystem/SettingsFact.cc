@@ -1,5 +1,5 @@
 #include "SettingsFact.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
@@ -33,7 +33,7 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
         const QVariant rawDefaultValue = metaData->rawDefaultValue();
         QVariant resolvedValue;
 
-        if (qgcApp()->runningUnitTests()) {
+        if (QGC::runningUnitTests()) {
             // Don't use saved settings
             resolvedValue = rawDefaultValue;
         } else if (_userVisible) {

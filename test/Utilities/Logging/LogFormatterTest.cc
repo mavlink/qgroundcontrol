@@ -7,7 +7,6 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
-#include <QtTest/QTest>
 
 using LogTestHelpers::makeEntry;
 

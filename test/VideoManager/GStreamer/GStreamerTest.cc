@@ -1,4 +1,7 @@
 #include "GStreamerTest.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(GStreamerTestLog, "VideoManager.GStreamer.GStreamerTest")
 
 #ifdef QGC_GST_STREAMING
 
@@ -99,7 +102,7 @@ void GStreamerTest::_testIsHardwareDecoderFactory()
         ++total;
     }
 
-    qCDebug(GStreamerLog) << "Decoder factory classification:" << total << "total,"
+    qCDebug(GStreamerTestLog) << "Decoder factory classification:" << total << "total,"
                           << hwCount << "hardware," << swCount << "software";
 
     QVERIFY(total > 0);
@@ -340,7 +343,7 @@ void GStreamerTest::_testRuntimeVersionCheck()
 
 #ifdef QGC_GST_BUILD_VERSION_MAJOR
     if (major != QGC_GST_BUILD_VERSION_MAJOR || minor != QGC_GST_BUILD_VERSION_MINOR) {
-        qCWarning(GStreamerLog) << "GStreamer version mismatch: built against"
+        qCWarning(GStreamerTestLog) << "GStreamer version mismatch: built against"
             << QGC_GST_BUILD_VERSION_MAJOR << "." << QGC_GST_BUILD_VERSION_MINOR
             << "but runtime is" << major << "." << minor;
     }

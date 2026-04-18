@@ -1,6 +1,6 @@
 #include "Viewer3DManagerTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "Viewer3DManager.h"
 

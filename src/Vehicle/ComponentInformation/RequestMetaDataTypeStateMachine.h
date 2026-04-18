@@ -6,10 +6,6 @@
 #include "VehicleTypes.h"
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(RequestMetaDataTypeStateMachineLog)
-
 class Vehicle;
 class ComponentInformationManager;
 class CompInfo;

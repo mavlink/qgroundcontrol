@@ -1,3 +1,4 @@
+#include "QmlObjectListModel.h"
 #include "VehicleLinkManagerTest.h"
 
 #include <QtTest/QSignalSpy>
@@ -7,6 +8,7 @@
 #include "MultiVehicleManager.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 void VehicleLinkManagerTest::_simpleLinkTest()
 {

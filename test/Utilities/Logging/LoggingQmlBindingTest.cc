@@ -4,8 +4,6 @@
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
-#include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
 
 #include "LogEntry.h"
 #include "LogManager.h"

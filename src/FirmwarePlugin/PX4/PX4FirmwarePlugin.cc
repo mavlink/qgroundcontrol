@@ -1,7 +1,7 @@
 #include "PX4FirmwarePlugin.h"
 #include "ParameterMetaData.h"
 #include "PX4ParameterMetaData.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "PX4AutoPilotPlugin.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
@@ -305,7 +305,7 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel
 {
     double vehicleAltitudeAMSL = vehicle->altitudeAMSL()->rawValue().toDouble();
     if (qIsNaN(vehicleAltitudeAMSL)) {
-        qgcApp()->showAppMessage(tr("Unable to takeoff, vehicle position not known."));
+        QGC::showAppMessage(tr("Unable to takeoff, vehicle position not known."));
         return;
     }
 
@@ -373,7 +373,7 @@ bool PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
     Q_UNUSED(forwardFlightLoiterRadius)
 
     if (qIsNaN(vehicle->altitudeAMSL()->rawValue().toDouble())) {
-        qgcApp()->showAppMessage(tr("Unable to go to location, vehicle position not known."));
+        QGC::showAppMessage(tr("Unable to go to location, vehicle position not known."));
         return false;
     }
 
@@ -446,7 +446,7 @@ void PX4FirmwarePlugin::_changeAltAfterPause(void* resultHandlerData, bool pause
                     qQNaN(), qQNaN(), qQNaN(),              // No change to yaw, lat, lon
                     static_cast<float>(pData->newAMSLAlt));
     } else {
-        qgcApp()->showAppMessage(tr("Unable to pause vehicle."));
+        QGC::showAppMessage(tr("Unable to pause vehicle."));
     }
 
     delete pData;
@@ -455,11 +455,11 @@ void PX4FirmwarePlugin::_changeAltAfterPause(void* resultHandlerData, bool pause
 void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange, bool pauseVehicle)
 {
     if (!vehicle->homePosition().isValid()) {
-        qgcApp()->showAppMessage(tr("Unable to change altitude, home position unknown."));
+        QGC::showAppMessage(tr("Unable to change altitude, home position unknown."));
         return;
     }
     if (qIsNaN(vehicle->homePosition().altitude())) {
-        qgcApp()->showAppMessage(tr("Unable to change altitude, home position altitude unknown."));
+        QGC::showAppMessage(tr("Unable to change altitude, home position altitude unknown."));
         return;
     }
 
@@ -520,7 +520,7 @@ void PX4FirmwarePlugin::guidedModeChangeEquivalentAirspeedMetersSecond(Vehicle* 
 void PX4FirmwarePlugin::guidedModeChangeHeading(Vehicle* vehicle, const QGeoCoordinate &headingCoord) const
 {
     if (!isCapable(vehicle, FirmwarePlugin::ChangeHeadingCapability)) {
-        qgcApp()->showAppMessage(tr("Vehicle does not support guided rotate"));
+        QGC::showAppMessage(tr("Vehicle does not support guided rotate"));
         return;
     }
 
@@ -542,11 +542,11 @@ void PX4FirmwarePlugin::startTakeoff(Vehicle* vehicle) const
 {
     if (_setFlightModeAndValidate(vehicle, takeOffFlightMode())) {
         if (!_armVehicleAndValidate(vehicle)) {
-            qgcApp()->showAppMessage(tr("Unable to start takeoff: Vehicle rejected arming."));
+            QGC::showAppMessage(tr("Unable to start takeoff: Vehicle rejected arming."));
             return;
         }
     } else {
-        qgcApp()->showAppMessage(tr("Unable to start takeoff: Vehicle not changing to %1 flight mode.").arg(takeOffFlightMode()));
+        QGC::showAppMessage(tr("Unable to start takeoff: Vehicle not changing to %1 flight mode.").arg(takeOffFlightMode()));
     }
 }
 
@@ -554,11 +554,11 @@ void PX4FirmwarePlugin::startMission(Vehicle* vehicle) const
 {
     if (_setFlightModeAndValidate(vehicle, missionFlightMode())) {
         if (!_armVehicleAndValidate(vehicle)) {
-            qgcApp()->showAppMessage(tr("Unable to start mission: Vehicle rejected arming."));
+            QGC::showAppMessage(tr("Unable to start mission: Vehicle rejected arming."));
             return;
         }
     } else {
-        qgcApp()->showAppMessage(tr("Unable to start mission: Vehicle not changing to %1 flight mode.").arg(missionFlightMode()));
+        QGC::showAppMessage(tr("Unable to start mission: Vehicle not changing to %1 flight mode.").arg(missionFlightMode()));
     }
 }
 
@@ -674,7 +674,7 @@ void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_messag
 
         if (notifyUser) {
             instanceData->versionNotified = true;
-            qgcApp()->showAppMessage(tr("QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.").arg(supportedMajorVersion).arg(supportedMinorVersion).arg(supportedPatchVersion));
+            QGC::showAppMessage(tr("QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.").arg(supportedMajorVersion).arg(supportedMinorVersion).arg(supportedPatchVersion));
         }
     }
 }
@@ -715,14 +715,14 @@ QString PX4FirmwarePlugin::getHobbsMeter(Vehicle* vehicle) const
         Fact* factHi = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, HOOBS_HI);
         Fact* factLo = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, HOOBS_LO);
         hobbsTimeSeconds = ((uint64_t)factHi->rawValue().toUInt() << 32 | (uint64_t)factLo->rawValue().toUInt()) / 1000000;
-        qCDebug(VehicleLog) << "Hobbs Meter raw PX4:" << "(" << factHi->rawValue().toUInt() << factLo->rawValue().toUInt() << ")";
+        qCDebug(PX4FirmwarePluginLog) << "Hobbs Meter raw PX4:" << "(" << factHi->rawValue().toUInt() << factLo->rawValue().toUInt() << ")";
     }
 
     int hours   = hobbsTimeSeconds / 3600;
     int minutes = (hobbsTimeSeconds % 3600) / 60;
     int seconds = hobbsTimeSeconds % 60;
     QString timeStr = QString::asprintf("%04d:%02d:%02d", hours, minutes, seconds);
-    qCDebug(VehicleLog) << "Hobbs Meter string:" << timeStr;
+    qCDebug(PX4FirmwarePluginLog) << "Hobbs Meter string:" << timeStr;
     return timeStr;
 }
 

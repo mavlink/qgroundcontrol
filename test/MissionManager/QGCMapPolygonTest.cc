@@ -1,9 +1,9 @@
 #include "QGCMapPolygonTest.h"
 
 #include <QtCore/QCoreApplication>
-#include <QtTest/QSignalSpy>
 
 #include "CoordFixtures.h"
+#include "UnitTestCoords.h"
 #include "MultiSignalSpy.h"
 #include "QGCMapPolygon.h"
 #include "QGCQGeoCoordinate.h"

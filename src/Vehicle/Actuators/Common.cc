@@ -2,7 +2,7 @@
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(ActuatorsConfigLog, "Vehicle.ActuatorsConfig")
+QGC_LOGGING_CATEGORY(CommonLog, "Vehicle.Actuators.Common")
 
 
 void Parameter::parse(const QJsonValue& jsonValue)
@@ -16,7 +16,7 @@ void Parameter::parse(const QJsonValue& jsonValue)
     } else if (displayOptionStr == "bitset") {
         displayOption = DisplayOption::Bitset;
     } else if (displayOptionStr != "") {
-        qCDebug(ActuatorsConfigLog) << "Unknown param display option (show-as):" << displayOptionStr;
+        qCDebug(CommonLog) << "Unknown param display option (show-as):" << displayOptionStr;
     }
     advanced = jsonValue["advanced"].toBool(false);
 }
@@ -99,7 +99,7 @@ Condition::Condition(const QString &condition, ParameterManager* parameterManage
 {
     _label = label;
 
-    const bool debugEnabled = ActuatorsConfigLog().isDebugEnabled();
+    const bool debugEnabled = CommonLog().isDebugEnabled();
     QString logPrefix;
     if (debugEnabled) {
         logPrefix = QStringLiteral("Condition");
@@ -114,18 +114,18 @@ Condition::Condition(const QString &condition, ParameterManager* parameterManage
         _operation = Operation::AlwaysTrue;
         _alwaysTrueReason = QStringLiteral("empty/default");
         if (debugEnabled) {
-            qCDebug(ActuatorsConfigLog) << logPrefix + ": <empty> (defaults to true)";
+            qCDebug(CommonLog) << logPrefix + ": <empty> (defaults to true)";
         }
     } else if (condition == "true") {
         _operation = Operation::AlwaysTrue;
         _alwaysTrueReason = QStringLiteral("literal true");
         if (debugEnabled) {
-            qCDebug(ActuatorsConfigLog) << logPrefix + ": true";
+            qCDebug(CommonLog) << logPrefix + ": true";
         }
     } else if (condition == "false") {
         _operation = Operation::AlwaysFalse;
         if (debugEnabled) {
-            qCDebug(ActuatorsConfigLog) << logPrefix + ": false";
+            qCDebug(CommonLog) << logPrefix + ": false";
         }
     } else if (match.hasMatch()) {
         _parameter = match.captured(1);
@@ -145,12 +145,12 @@ Condition::Condition(const QString &condition, ParameterManager* parameterManage
         } else {
             _operation = Operation::AlwaysTrue;
             _alwaysTrueReason = QStringLiteral("unknown operator '%1'").arg(operation);
-            qCWarning(ActuatorsConfigLog) << "Unknown condition operation: " << operation;
+            qCWarning(CommonLog) << "Unknown condition operation: " << operation;
         }
         _value = match.captured(3).toInt();
 
         if (debugEnabled) {
-            qCDebug(ActuatorsConfigLog) << logPrefix + QStringLiteral(": Param:%1 op:%2 value:%3").arg(_parameter, operation).arg(_value);
+            qCDebug(CommonLog) << logPrefix + QStringLiteral(": Param:%1 op:%2 value:%3").arg(_parameter, operation).arg(_value);
         }
 
         if (parameterManager->parameterExists(ParameterManager::defaultComponentId, _parameter)) {
@@ -159,14 +159,14 @@ Condition::Condition(const QString &condition, ParameterManager* parameterManage
                     param->type() == FactMetaData::ValueType_t::valueTypeInt32) {
                 _fact = param;
             } else if (debugEnabled) {
-                qCDebug(ActuatorsConfigLog) << logPrefix + QStringLiteral(": Unsupported param type:%1").arg((int)param->type());
+                qCDebug(CommonLog) << logPrefix + QStringLiteral(": Unsupported param type:%1").arg((int)param->type());
             }
         } else if (debugEnabled) {
-            qCDebug(ActuatorsConfigLog) << logPrefix + QStringLiteral(": Param does not exist:%1").arg(_parameter);
+            qCDebug(CommonLog) << logPrefix + QStringLiteral(": Param does not exist:%1").arg(_parameter);
         }
     } else {
         _alwaysTrueReason = QStringLiteral("unrecognized '%1'").arg(condition);
-        qCWarning(ActuatorsConfigLog) << "Condition"
+        qCWarning(CommonLog) << "Condition"
             << (label.isEmpty() ? QString() : QStringLiteral(" [%1]").arg(label))
             << QStringLiteral(": Unrecognized condition string '%1', defaulting to true").arg(condition);
     }
@@ -176,25 +176,25 @@ Condition::Condition(const QString &condition, ParameterManager* parameterManage
 bool Condition::evaluate() const
 {
     if (_operation == Operation::AlwaysTrue) {
-        if (ActuatorsConfigLog().isDebugEnabled()) {
+        if (CommonLog().isDebugEnabled()) {
             QString logPrefix = _label.isEmpty() ? QStringLiteral("Evaluating condition") : QStringLiteral("Evaluating [%1]").arg(_label);
-            qCDebug(ActuatorsConfigLog) << logPrefix << "-> true (" << _alwaysTrueReason << ")";
+            qCDebug(CommonLog) << logPrefix << "-> true (" << _alwaysTrueReason << ")";
         }
         return true;
     }
 
     if (_operation == Operation::AlwaysFalse) {
-        if (ActuatorsConfigLog().isDebugEnabled()) {
+        if (CommonLog().isDebugEnabled()) {
             QString logPrefix = _label.isEmpty() ? QStringLiteral("Evaluating condition") : QStringLiteral("Evaluating [%1]").arg(_label);
-            qCDebug(ActuatorsConfigLog) << logPrefix << "-> false (literal false)";
+            qCDebug(CommonLog) << logPrefix << "-> false (literal false)";
         }
         return false;
     }
 
     if (!_fact) {
-        if (ActuatorsConfigLog().isDebugEnabled()) {
+        if (CommonLog().isDebugEnabled()) {
             QString logPrefix = _label.isEmpty() ? QStringLiteral("Evaluating condition") : QStringLiteral("Evaluating [%1]").arg(_label);
-            qCDebug(ActuatorsConfigLog) << logPrefix << "-> false (parameter" << _parameter << "unavailable for evaluation)";
+            qCDebug(CommonLog) << logPrefix << "-> false (parameter" << _parameter << "unavailable for evaluation)";
         }
         return false;
     }
@@ -229,13 +229,13 @@ bool Condition::evaluate() const
             operation = "<=";
             break;
         default:
-            qCWarning(ActuatorsConfigLog) << "Unexpected operation type in condition evaluation";
+            qCWarning(CommonLog) << "Unexpected operation type in condition evaluation";
             break;
     }
 
-    if (ActuatorsConfigLog().isDebugEnabled()) {
+    if (CommonLog().isDebugEnabled()) {
         QString logPrefix = _label.isEmpty() ? QStringLiteral("Evaluating condition") : QStringLiteral("Evaluating [%1]").arg(_label);
-        qCDebug(ActuatorsConfigLog) << logPrefix << "->" << (result ? "true" : "false")
+        qCDebug(CommonLog) << logPrefix << "->" << (result ? "true" : "false")
                                      << "(" << _parameter << "=" << paramValue << operation << _value << ")";
     }
     return result;

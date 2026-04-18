@@ -449,7 +449,7 @@ int StructureScanComplexItem::cameraShots(void) const
     return _cameraShots;
 }
 
-void StructureScanComplexItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
+void StructureScanComplexItem::setMissionFlightStatus(MissionFlightStatus_t& missionFlightStatus)
 {
     ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);
     if (!QGC::fuzzyCompare(_vehicleSpeed, missionFlightStatus.vehicleSpeed)) {

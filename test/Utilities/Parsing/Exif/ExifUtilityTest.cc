@@ -1,7 +1,6 @@
 #include "ExifUtilityTest.h"
 
 #include <QtCore/QFile>
-#include <QtTest/QTest>
 
 #include "ExifUtility.h"
 

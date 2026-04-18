@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "BaseClasses/VehicleTest.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 #include "MultiSignalSpy.h"
 
 class MockLink;

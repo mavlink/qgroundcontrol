@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
 #include <QtCore/QThread>
@@ -12,8 +11,6 @@
 #include <gst/gstpad.h>
 
 #include "VideoReceiver.h"
-
-Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 
 typedef std::function<void()> Task;
 

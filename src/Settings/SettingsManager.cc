@@ -1,4 +1,5 @@
 #include "SettingsManager.h"
+#include "QGC.h"
 #include "QGCLoggingCategory.h"
 #include "ADSBVehicleManagerSettings.h"
 #ifndef QGC_NO_ARDUPILOT_DIALECT
@@ -27,10 +28,8 @@
 #include "JsonHelper.h"
 #include "JsonParsing.h"
 #include "QGCCorePlugin.h"
-#include "QGCApplication.h"
 
 #include <QtCore/QApplicationStatic>
-#include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(SettingsManagerLog, "Utilities.SettingsManager")
 
@@ -50,13 +49,6 @@ SettingsManager::~SettingsManager()
 SettingsManager *SettingsManager::instance()
 {
     return _settingsManagerInstance();
-}
-
-void SettingsManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<SettingsManager>("QGroundControl.SettingsManager", 1, 0, "SettingsManager", "Reference only");
-    (void) qmlRegisterUncreatableType<NTRIPSettings>("QGroundControl", 1, 0, "NTRIPSettings", "Reference only");
-
 }
 
 void SettingsManager::init()
@@ -216,7 +208,7 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
         return;
     }
 
-    if (!qgcApp()->runningUnitTests()) {
+    if (!QGC::runningUnitTests()) {
         // Apply settings file overrides
         const auto &groupOverrides = settingsManager->_settingsFileOverrides;
         if (groupOverrides.contains(settingsGroup) && groupOverrides[settingsGroup].contains(metaData.name())) {

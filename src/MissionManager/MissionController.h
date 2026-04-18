@@ -2,7 +2,6 @@
 
 #include <QtCore/QHash>
 #include <QtCore/QFile>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QPersistentModelIndex>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -15,8 +14,6 @@
 #include "QGCMAVLink.h"
 #include "MissionFlightStatus.h"
 #include "MissionFlightStatusCalculator.h"
-
-Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
 
 class FlightPathSegment;
 class VisualMissionItem;

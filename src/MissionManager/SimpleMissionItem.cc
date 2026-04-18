@@ -1040,7 +1040,7 @@ void SimpleMissionItem::applyNewAltitude(double newAltitude)
     }
 }
 
-void SimpleMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
+void SimpleMissionItem::setMissionFlightStatus(MissionFlightStatus_t& missionFlightStatus)
 {
     VisualMissionItem::setMissionFlightStatus(missionFlightStatus);
 

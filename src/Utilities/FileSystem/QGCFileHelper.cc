@@ -2,20 +2,19 @@
 
 #include "QGCCompression.h"
 #include "QGCDecompressDevice.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QSaveFile>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QStorageInfo>
 #include <QtCore/QTemporaryFile>
 #include <QtCore/QUrl>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCFileHelperLog)
-Q_LOGGING_CATEGORY(QGCFileHelperLog, "Utilities.QGCFileHelper")
+QGC_LOGGING_CATEGORY(QGCFileHelperLog, "Utilities.QGCFileHelper")
 
 namespace QGCFileHelper {
 

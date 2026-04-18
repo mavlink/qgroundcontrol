@@ -1,11 +1,7 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
 #include "LandingComplexItem.h"
 #include "Fact.h"
-
-Q_DECLARE_LOGGING_CATEGORY(FixedWingLandingComplexItemLog)
 
 class FWLandingPatternTest;
 class PlanMasterController;

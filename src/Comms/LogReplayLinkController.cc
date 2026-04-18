@@ -1,4 +1,6 @@
 #include "LogReplayLinkController.h"
+
+#include "LogReplayLink.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(LogReplayLinkControllerLog, "Comms.LogReplayLinkController")

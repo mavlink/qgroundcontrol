@@ -2,7 +2,9 @@
 
 #include <QtCore/QMetaMethod>
 
-Q_LOGGING_CATEGORY(MultiSignalSpyLog, "Test.MultiSignalSpy")
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(MultiSignalSpyLog, "Test.MultiSignalSpy")
 
 namespace {
 // Strip legacy SIGNAL() prefix and parameter list to yield a plain method name.

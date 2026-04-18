@@ -2,7 +2,6 @@
 
 #include "QGCMAVLink.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QThread>
 #include <QtCore/QVariantMap>
@@ -10,11 +9,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "RemoteControlCalibrationController.h"
-#include "Fact.h"
 #include "JoystickSettings.h"
-
-Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
-Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
 class MavlinkActionManager;
 class QmlObjectListModel;
@@ -354,7 +349,7 @@ signals:
     void setVtolInFwdFlight(bool set);
     void setFlightMode(const QString &flightMode);
     void emergencyStop();
-    void gripperAction(QGCMAVLink::GripperActions gripperAction);
+    void gripperAction(GRIPPER_ACTIONS gripperAction);
     void landingGearDeploy();
     void landingGearRetract();
     void motorInterlock(bool enable);

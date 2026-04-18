@@ -7,8 +7,7 @@
 #include <atomic>
 #include <memory>
 
-QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer")
-QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamerDecoderRanks")
+QGC_LOGGING_CATEGORY(GStreamerLoggingLog, "VideoManager.GStreamer.GStreamerLogging")
 QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamerAPI")
 
 namespace {
@@ -17,12 +16,12 @@ std::atomic_bool g_externalPluginLoaderFailed {false};
 
 void glib_print_handler(const gchar *string)
 {
-    qCInfo(GStreamerLog) << string;
+    qCInfo(GStreamerLoggingLog) << string;
 }
 
 void glib_printerr_handler(const gchar *string)
 {
-    qCWarning(GStreamerLog) << string;
+    qCWarning(GStreamerLoggingLog) << string;
 }
 
 void glib_log_handler(const gchar *log_domain, GLogLevelFlags log_level,
@@ -37,25 +36,25 @@ void glib_log_handler(const gchar *log_domain, GLogLevelFlags log_level,
     }
 
     if (msg.contains(QStringLiteral("pygobject initialization failed"), Qt::CaseInsensitive)) {
-        qCDebug(GStreamerLog) << domain << msg;
+        qCDebug(GStreamerLoggingLog) << domain << msg;
         return;
     }
 
     switch (log_level & G_LOG_LEVEL_MASK) {
     case G_LOG_LEVEL_ERROR:
     case G_LOG_LEVEL_CRITICAL:
-        qCCritical(GStreamerLog) << domain << msg;
+        qCCritical(GStreamerLoggingLog) << domain << msg;
         break;
     case G_LOG_LEVEL_WARNING:
-        qCWarning(GStreamerLog) << domain << msg;
+        qCWarning(GStreamerLoggingLog) << domain << msg;
         break;
     case G_LOG_LEVEL_MESSAGE:
     case G_LOG_LEVEL_INFO:
-        qCInfo(GStreamerLog) << domain << msg;
+        qCInfo(GStreamerLoggingLog) << domain << msg;
         break;
     case G_LOG_LEVEL_DEBUG:
     default:
-        qCDebug(GStreamerLog) << domain << msg;
+        qCDebug(GStreamerLoggingLog) << domain << msg;
         break;
     }
 }

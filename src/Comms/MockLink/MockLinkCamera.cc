@@ -1,4 +1,5 @@
 #include "MockLinkCamera.h"
+#include "MAVLinkLib.h"
 #include "MockLink.h"
 #include "MissionManager/MissionCommandTree.h"
 #include "QGCLoggingCategory.h"

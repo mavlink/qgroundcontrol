@@ -1,10 +1,7 @@
 #pragma once
 
 #include <QtCore/QDateTime>
-#include <QtCore/QHash>
-#include <QtCore/QMetaType>
 #include <QtCore/QString>
-#include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 struct LogEntry

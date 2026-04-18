@@ -1,3 +1,4 @@
+#include "QmlObjectListModel.h"
 #include "CommsTest.h"
 
 #include <QtCore/QElapsedTimer>

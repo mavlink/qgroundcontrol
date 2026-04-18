@@ -19,6 +19,8 @@ qt_add_library(QGCLogging STATIC
     LogManager.h
     QGCLoggingCategory.cc
     QGCLoggingCategory.h
+    QGCLoggingCategoryManager.cc
+    QGCLoggingCategoryManager.h
 )
 
 qt_add_qml_module(QGCLogging

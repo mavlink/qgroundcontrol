@@ -1,11 +1,27 @@
 #include "HealthAndArmingCheckReportTest.h"
 
+#include "EventHandler.h"
 #include "HealthAndArmingCheckReport.h"
 #include "QmlObjectListModel.h"
 
+#include "LibEvents.h"
+
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
+
+namespace {
+/// Stub EventHandler for update() early-return tests (callbacks are never invoked).
+EventHandler makeStubEventHandler()
+{
+    return EventHandler(
+        /*parent*/ nullptr,
+        /*profile*/ QString(),
+        /*handleEventCB*/ [](auto) {},
+        /*sendRequestCB*/ [](auto&) {},
+        /*ourSystemId*/ 1, /*ourComponentId*/ 1,
+        /*systemId*/ 1, /*componentId*/ 1);
+}
+} // namespace
 
 // ---------------------------------------------------------------------------
 // HealthAndArmingCheckReport
@@ -40,11 +56,11 @@ void HealthAndArmingCheckReportTest::_testUpdateSkipsNonAutopilotCompId()
 
     QSignalSpy updatedSpy(&report, &HealthAndArmingCheckReport::updated);
 
-    // Passing an empty Results object is fine here because the compid guard
-    // short-circuits before the results are touched. Using MAV_COMP_ID_CAMERA
-    // (100) proves we only accept AUTOPILOT1.
-    events::HealthAndArmingChecks::Results results{};
-    report.update(/*compid*/ 100, results, /*flightModeGroup*/ 0);
+    // The compid guard short-circuits before the handler is dereferenced, so a
+    // stub EventHandler is fine. Using MAV_COMP_ID_CAMERA (100) proves we only
+    // accept AUTOPILOT1.
+    EventHandler stubHandler = makeStubEventHandler();
+    report.update(/*compid*/ 100, stubHandler, /*flightModeGroup*/ 0);
 
     QCOMPARE(updatedSpy.count(), 0);
     QVERIFY(!report.supported());
@@ -62,8 +78,8 @@ void HealthAndArmingCheckReportTest::_testUpdateSkipsUninitializedFlightModeGrou
     // "uncategorized log messages" lint in the QGC test harness passes.
     expectLogMessage(QtWarningMsg,
                      QRegularExpression(QStringLiteral("Flight mode group not set")));
-    events::HealthAndArmingChecks::Results results{};
-    report.update(MAV_COMP_ID_AUTOPILOT1, results, /*flightModeGroup*/ -1);
+    EventHandler stubHandler = makeStubEventHandler();
+    report.update(MAV_COMP_ID_AUTOPILOT1, stubHandler, /*flightModeGroup*/ -1);
 
     QCOMPARE(updatedSpy.count(), 0);
     QVERIFY(!report.supported());

@@ -1,20 +1,17 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QmlObjectListModel.h"
-
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkSystemLog)
-
 class QGCMAVLinkMessage;
+class QmlObjectListModel;
 
 class QGCMAVLinkSystem : public QObject
 {
     Q_OBJECT
     // QML_ELEMENT
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(quint8               id          READ id                             CONSTANT)
     Q_PROPERTY(QmlObjectListModel   *messages   READ messages                       CONSTANT)
     Q_PROPERTY(QList<int>           compIDs     READ compIDs                        NOTIFY compIDsChanged)

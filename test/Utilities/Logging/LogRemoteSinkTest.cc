@@ -4,7 +4,6 @@
 #include <QtCore/QJsonObject>
 #include <QtNetwork/QUdpSocket>
 #include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
 
 #include "LogEntry.h"
 #include "LogRemoteSink.h"

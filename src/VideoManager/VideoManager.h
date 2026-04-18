@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QFuture>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QPromise>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
@@ -9,8 +8,6 @@
 
 #include <functional>
 #include <memory>
-
-Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
 class QQuickWindow;
 class SubtitleWriter;

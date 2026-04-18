@@ -1,13 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtGui/QVector2D>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DGeometry>
-
-Q_DECLARE_LOGGING_CATEGORY(Viewer3DTerrainGeometryLog)
 
 class Viewer3DTerrainGeometry : public QQuick3DGeometry
 {

@@ -3,10 +3,10 @@
 #include "ComponentInformationTranslation.h"
 #include "ComponentInformationCache.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 #include "FTPManager.h"
 #include "QGCCompression.h"
 #include "CompInfoGeneral.h"
-#include "QGCApplication.h"
 #include "QGCCachedFileDownload.h"
 #include "QGCLoggingCategory.h"
 
@@ -338,7 +338,7 @@ void RequestMetaDataTypeStateMachine::_requestMetaDataJson()
     const QString uri = compInfo->uriMetaData();
     _jsonMetadataCrcValid = compInfo->crcMetaDataValid();
 
-    qCDebug(ComponentInformationManagerLog) << typeToString() << ": requesting metadata (primary) from" << uri;
+    qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": requesting metadata (primary) from" << uri;
 
     _activeAsyncState = _stateRequestMetaDataJson;
     _activeSkippableState = nullptr;
@@ -347,7 +347,7 @@ void RequestMetaDataTypeStateMachine::_requestMetaDataJson()
 
 void RequestMetaDataTypeStateMachine::_requestMetaDataJsonFallback()
 {
-    qCDebug(ComponentInformationManagerLog) << typeToString() << ": primary failed, requesting metadata (fallback) from" << _compInfo->uriMetaDataFallback();
+    qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": primary failed, requesting metadata (fallback) from" << _compInfo->uriMetaDataFallback();
     _metadataIsFallback = true;
 
     CompInfo* compInfo = _compInfo;
@@ -429,14 +429,14 @@ void RequestMetaDataTypeStateMachine::_completeRequest()
     const char* sourceLabel = _metadataIsFallback ? "(fallback)" : "(primary)";
     if (success) {
         if (translated) {
-            qCDebug(ComponentInformationManagerLog) << typeToString() << ":" << _metadataSourceToString(_metadataSource)
+            qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ":" << _metadataSourceToString(_metadataSource)
                                                     << sourceLabel << "(translated)" << _metadataUri;
         } else {
-            qCDebug(ComponentInformationManagerLog) << typeToString() << ":" << _metadataSourceToString(_metadataSource)
+            qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ":" << _metadataSourceToString(_metadataSource)
                                                     << sourceLabel << _metadataUri;
         }
     } else {
-        qCWarning(ComponentInformationManagerLog) << typeToString() << ": failed to load metadata (primary and fallback)"
+        qCWarning(RequestMetaDataTypeStateMachineLog) << typeToString() << ": failed to load metadata (primary and fallback)"
                                                   << (_metadataUri.isEmpty() ? _compInfo->uriMetaData() : _metadataUri);
     }
 }
@@ -469,7 +469,7 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
     };
 
     if (!_compInfo->available() || uri.isEmpty()) {
-        qCDebug(ComponentInformationManagerLog) << typeToString() << ": metadata not available, skipping download";
+        qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": metadata not available, skipping download";
         completeCurrentState();
         return;
     }
@@ -554,7 +554,7 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadComplete(const QString& fileNa
             *_currentFileName = _downloadCompleteJsonWorker(fileName);
         }
     } else {
-        qCDebug(ComponentInformationManagerLog) << typeToString() << ": FTP download failed:" << errorMsg;
+        qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": FTP download failed:" << errorMsg;
     }
 
     if (_activeAsyncState) {
@@ -590,7 +590,7 @@ void RequestMetaDataTypeStateMachine::_httpDownloadComplete(bool success, const 
             *_currentFileName = _downloadCompleteJsonWorker(localFile);
         }
     } else {
-        qCDebug(ComponentInformationManagerLog) << typeToString() << ": HTTP download failed:" << errorMsg;
+        qCDebug(RequestMetaDataTypeStateMachineLog) << typeToString() << ": HTTP download failed:" << errorMsg;
     }
 
     if (_activeAsyncState) {

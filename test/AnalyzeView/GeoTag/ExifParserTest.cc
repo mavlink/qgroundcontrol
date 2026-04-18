@@ -1,7 +1,6 @@
 #include "ExifParserTest.h"
 
 #include <QtCore/QFile>
-#include <QtTest/QTest>
 
 #include "ExifParser.h"
 #include "ExifUtility.h"

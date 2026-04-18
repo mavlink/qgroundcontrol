@@ -1,15 +1,12 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QtNumeric>
 #include <QtCore/QObject>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "ADSB.h"
-
-Q_DECLARE_LOGGING_CATEGORY(ADSBVehicleLog)
 
 class ADSBVehicle : public QObject
 {

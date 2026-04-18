@@ -1,6 +1,10 @@
 #include "BluetoothBleWorker.h"
+#include "QGCLoggingCategory.h"
 
 #include <QtBluetooth/QLowEnergyConnectionParameters>
+
+QGC_LOGGING_CATEGORY(BluetoothBleWorkerLog, "Comms.Bluetooth.BluetoothBleWorker")
+QGC_LOGGING_CATEGORY(BluetoothBleWorkerVerboseLog, "Comms.Bluetooth.BluetoothBleWorker.Verbose")
 
 static QString characteristicPropertiesToString(QLowEnergyCharacteristic::PropertyTypes props)
 {
@@ -58,7 +62,7 @@ void BluetoothBleWorker::onSetupConnection()
 
 void BluetoothBleWorker::onConnectLink()
 {
-    qCDebug(BluetoothLinkLog) << "Attempting to connect to" << _device.name() << "Mode: BLE";
+    qCDebug(BluetoothBleWorkerLog) << "Attempting to connect to" << _device.name() << "Mode: BLE";
 
     if (!_controller) {
         _setupBleController();
@@ -107,14 +111,14 @@ void BluetoothBleWorker::onServiceDiscoveryTimeout()
 
 void BluetoothBleWorker::onResetAfterConsecutiveFailures()
 {
-    qCDebug(BluetoothLinkLog) << "Recreating BLE controller after" << _consecutiveFailures << "consecutive failures";
+    qCDebug(BluetoothBleWorkerLog) << "Recreating BLE controller after" << _consecutiveFailures << "consecutive failures";
     _recreateBleController();
 }
 
 void BluetoothBleWorker::_setupBleController()
 {
     if (_controller) {
-        qCWarning(BluetoothLinkLog) << "BLE controller already exists, skipping setup";
+        qCWarning(BluetoothBleWorkerLog) << "BLE controller already exists, skipping setup";
         return;
     }
 
@@ -126,7 +130,7 @@ void BluetoothBleWorker::_setupBleController()
     }
 
     if (_forceRandomAddressType) {
-        qCDebug(BluetoothLinkLog) << "Using BLE RandomAddress fallback for" << _device.name();
+        qCDebug(BluetoothBleWorkerLog) << "Using BLE RandomAddress fallback for" << _device.name();
         _controller->setRemoteAddressType(QLowEnergyController::RandomAddress);
     }
 
@@ -139,7 +143,7 @@ void BluetoothBleWorker::_setupBleController()
     (void) connect(_controller.data(), &QLowEnergyController::mtuChanged, this,
                   [this](int mtu) {
                       _mtu = mtu;
-                      qCDebug(BluetoothLinkLog) << "MTU changed to:" << mtu;
+                      qCDebug(BluetoothBleWorkerLog) << "MTU changed to:" << mtu;
                   });
     (void) connect(_controller.data(), &QLowEnergyController::rssiRead, this,
                   [this](qint16 rssi) {
@@ -147,15 +151,15 @@ void BluetoothBleWorker::_setupBleController()
                       emit rssiUpdated(rssi);
                   });
 
-    if (BluetoothLinkLog().isDebugEnabled()) {
+    if (BluetoothBleWorkerLog().isDebugEnabled()) {
         (void) connect(_controller.data(), &QLowEnergyController::stateChanged, this,
                       [](QLowEnergyController::ControllerState state) {
-            qCDebug(BluetoothLinkLog) << "BLE Controller State Changed:" << state;
+            qCDebug(BluetoothBleWorkerLog) << "BLE Controller State Changed:" << state;
         });
 
         (void) connect(_controller.data(), &QLowEnergyController::connectionUpdated, this,
                   [](const QLowEnergyConnectionParameters &params) {
-            qCDebug(BluetoothLinkLog) << "BLE connection updated: min(ms)" << params.minimumInterval()
+            qCDebug(BluetoothBleWorkerLog) << "BLE connection updated: min(ms)" << params.minimumInterval()
                                       << "max(ms)" << params.maximumInterval()
                                       << "latency" << params.latency()
                                       << "supervision(ms)" << params.supervisionTimeout();
@@ -165,7 +169,7 @@ void BluetoothBleWorker::_setupBleController()
 
 void BluetoothBleWorker::_recreateBleController()
 {
-    qCDebug(BluetoothLinkLog) << "Recreating BLE controller";
+    qCDebug(BluetoothBleWorkerLog) << "Recreating BLE controller";
 
     if (_service) {
         _service->disconnect();
@@ -209,14 +213,14 @@ void BluetoothBleWorker::_writeBleData(const QByteArray &data)
     const bool useWriteWithoutResponse = (_writeCharacteristic.properties() & QLowEnergyCharacteristic::WriteNoResponse);
     const int numChunks = (data.size() + packetSize - 1) / packetSize;
 
-    qCDebug(BluetoothLinkLog) << _device.name() << "BLE Write:" << data.size() << "bytes,"
+    qCDebug(BluetoothBleWorkerLog) << _device.name() << "BLE Write:" << data.size() << "bytes,"
                               << numChunks << "chunks (MTU:" << _mtu << ", packet:" << packetSize << ")"
                               << (useWriteWithoutResponse ? "WriteNoResponse" : "WriteWithResponse");
 
     // Queue all chunks and pace writes through _processNextBleWrite
     const int chunksNeeded = (data.size() + packetSize - 1) / packetSize;
     if (_bleWriteQueue.size() + chunksNeeded > MAX_BLE_QUEUE_SIZE) {
-        qCWarning(BluetoothLinkLog) << "BLE write queue full:" << _bleWriteQueue.size() << "chunks queued";
+        qCWarning(BluetoothBleWorkerLog) << "BLE write queue full:" << _bleWriteQueue.size() << "chunks queued";
         emit errorOccurred(tr("Write queue full, dropping data"));
         return;
     }
@@ -270,7 +274,7 @@ void BluetoothBleWorker::_clearBleWriteQueue()
 
 void BluetoothBleWorker::_onControllerConnected()
 {
-    qCDebug(BluetoothLinkLog) << "BLE Controller connected to device:" << _device.name();
+    qCDebug(BluetoothBleWorkerLog) << "BLE Controller connected to device:" << _device.name();
 
     if (_controller) {
         if (_serviceDiscoveryTimer) {
@@ -285,7 +289,7 @@ void BluetoothBleWorker::_onControllerConnected()
 
 void BluetoothBleWorker::_onControllerDisconnected()
 {
-    qCDebug(BluetoothLinkLog) << "BLE Controller disconnected from device:" << _device.name();
+    qCDebug(BluetoothBleWorkerLog) << "BLE Controller disconnected from device:" << _device.name();
 
     if (_rssiTimer) {
         _rssiTimer->stop();
@@ -307,7 +311,7 @@ void BluetoothBleWorker::_onControllerDisconnected()
     emit disconnected();
 
     if (!_intentionalDisconnect.load() && _controller && _reconnectTimer) {
-        qCDebug(BluetoothLinkLog) << "Starting reconnect timer";
+        qCDebug(BluetoothBleWorkerLog) << "Starting reconnect timer";
         _reconnectTimer->start();
     }
 }
@@ -326,11 +330,11 @@ void BluetoothBleWorker::_onControllerErrorOccurred(QLowEnergyController::Error 
         ((error == QLowEnergyController::UnknownRemoteDeviceError) ||
          (error == QLowEnergyController::ConnectionError) ||
          (error == QLowEnergyController::NetworkError))) {
-        qCDebug(BluetoothLinkLog) << "BLE connect failed; retrying with RandomAddress fallback:" << error;
+        qCDebug(BluetoothBleWorkerLog) << "BLE connect failed; retrying with RandomAddress fallback:" << error;
         _forceRandomAddressType = true;
         _recreateBleController();
         if (_controller) {
-            qCDebug(BluetoothLinkLog) << "Issuing BLE reconnect using RandomAddress fallback";
+            qCDebug(BluetoothBleWorkerLog) << "Issuing BLE reconnect using RandomAddress fallback";
             _controller->connectToDevice();
             return;
         }
@@ -343,18 +347,18 @@ void BluetoothBleWorker::_onControllerErrorOccurred(QLowEnergyController::Error 
         errorString = tr("Controller error: %1").arg(error);
     }
 
-    qCWarning(BluetoothLinkLog) << "BLE Controller error:" << error << errorString;
+    qCWarning(BluetoothBleWorkerLog) << "BLE Controller error:" << error << errorString;
     emit errorOccurred(errorString);
 
     if (!_connected.load()) {
-        qCDebug(BluetoothLinkLog) << "Connection attempt failed, emitting disconnected signal";
+        qCDebug(BluetoothBleWorkerLog) << "Connection attempt failed, emitting disconnected signal";
         emit disconnected();
     }
 }
 
 void BluetoothBleWorker::_onServiceDiscovered(const QBluetoothUuid &uuid)
 {
-    qCDebug(BluetoothLinkLog) << "Service discovered:" << uuid.toString();
+    qCDebug(BluetoothBleWorkerLog) << "Service discovered:" << uuid.toString();
 
     // Only auto-select during discovery if user specified a target UUID
     if (!_serviceUuid.isNull() && uuid == _serviceUuid) {
@@ -367,7 +371,7 @@ void BluetoothBleWorker::_onServiceDiscovered(const QBluetoothUuid &uuid)
 
 void BluetoothBleWorker::_onServiceDiscoveryFinished()
 {
-    qCDebug(BluetoothLinkLog) << "Service discovery finished";
+    qCDebug(BluetoothBleWorkerLog) << "Service discovery finished";
 
     if (_serviceDiscoveryTimer) {
         _serviceDiscoveryTimer->stop();
@@ -376,7 +380,7 @@ void BluetoothBleWorker::_onServiceDiscoveryFinished()
     if (!_service && _controller) {
         const QList<QBluetoothUuid> services = _controller->services();
         if (!services.isEmpty()) {
-            qCDebug(BluetoothLinkLog) << "Using first available service";
+            qCDebug(BluetoothBleWorkerLog) << "Using first available service";
             _setupBleService();
         } else {
             _consecutiveFailures++;
@@ -403,13 +407,13 @@ void BluetoothBleWorker::_setupBleService()
 
         if (services.contains(BluetoothConfiguration::NORDIC_UART_SERVICE)) {
             serviceUuid = BluetoothConfiguration::NORDIC_UART_SERVICE;
-            qCDebug(BluetoothLinkLog) << "Auto-selected Nordic UART service";
+            qCDebug(BluetoothBleWorkerLog) << "Auto-selected Nordic UART service";
         } else if (services.contains(BluetoothConfiguration::TI_SENSORTAG_SERVICE)) {
             serviceUuid = BluetoothConfiguration::TI_SENSORTAG_SERVICE;
-            qCDebug(BluetoothLinkLog) << "Auto-selected TI SensorTag service";
+            qCDebug(BluetoothBleWorkerLog) << "Auto-selected TI SensorTag service";
         } else {
             serviceUuid = services.first();
-            qCDebug(BluetoothLinkLog) << "Auto-selected first available service:" << serviceUuid.toString();
+            qCDebug(BluetoothBleWorkerLog) << "Auto-selected first available service:" << serviceUuid.toString();
         }
     }
 
@@ -437,7 +441,7 @@ void BluetoothBleWorker::_discoverServiceDetails()
         return;
     }
 
-    qCDebug(BluetoothLinkLog) << "Discovering service details";
+    qCDebug(BluetoothBleWorkerLog) << "Discovering service details";
     _service->discoverDetails();
 }
 
@@ -448,10 +452,10 @@ void BluetoothBleWorker::_findCharacteristics()
     }
 
     const QList<QLowEnergyCharacteristic> characteristics = _service->characteristics();
-    qCDebug(BluetoothLinkLog) << "Service has" << characteristics.size() << "characteristics";
+    qCDebug(BluetoothBleWorkerLog) << "Service has" << characteristics.size() << "characteristics";
 
     for (const QLowEnergyCharacteristic &c : characteristics) {
-        qCDebug(BluetoothLinkLog) << "  Characteristic:" << c.uuid().toString()
+        qCDebug(BluetoothBleWorkerLog) << "  Characteristic:" << c.uuid().toString()
                                   << "Properties:" << characteristicPropertiesToString(c.properties());
     }
 
@@ -461,11 +465,11 @@ void BluetoothBleWorker::_findCharacteristics()
     for (const QLowEnergyCharacteristic &c : characteristics) {
         if (!readUuid.isNull() && (c.uuid() == readUuid)) {
             _readCharacteristic = c;
-            qCDebug(BluetoothLinkLog) << "Read characteristic found by UUID:" << c.uuid().toString();
+            qCDebug(BluetoothBleWorkerLog) << "Read characteristic found by UUID:" << c.uuid().toString();
         }
         if (!writeUuid.isNull() && (c.uuid() == writeUuid)) {
             _writeCharacteristic = c;
-            qCDebug(BluetoothLinkLog) << "Write characteristic found by UUID:" << c.uuid().toString();
+            qCDebug(BluetoothBleWorkerLog) << "Write characteristic found by UUID:" << c.uuid().toString();
         }
     }
 
@@ -474,36 +478,36 @@ void BluetoothBleWorker::_findCharacteristics()
             if (!_readCharacteristic.isValid() &&
                 (c.properties() & (QLowEnergyCharacteristic::Read | QLowEnergyCharacteristic::Notify))) {
                 _readCharacteristic = c;
-                qCDebug(BluetoothLinkLog) << "Read characteristic auto-detected:" << c.uuid().toString();
+                qCDebug(BluetoothBleWorkerLog) << "Read characteristic auto-detected:" << c.uuid().toString();
             }
 
             if (!_writeCharacteristic.isValid() &&
                 (c.properties() & (QLowEnergyCharacteristic::Write | QLowEnergyCharacteristic::WriteNoResponse))) {
                 _writeCharacteristic = c;
-                qCDebug(BluetoothLinkLog) << "Write characteristic auto-detected:" << c.uuid().toString();
+                qCDebug(BluetoothBleWorkerLog) << "Write characteristic auto-detected:" << c.uuid().toString();
             }
         }
     }
 
     // Summary of what we found
     if (_readCharacteristic.isValid()) {
-        qCDebug(BluetoothLinkLog) << "Using read characteristic:" << _readCharacteristic.uuid().toString()
+        qCDebug(BluetoothBleWorkerLog) << "Using read characteristic:" << _readCharacteristic.uuid().toString()
                                   << "Properties:" << characteristicPropertiesToString(_readCharacteristic.properties());
     } else {
-        qCDebug(BluetoothLinkLog) << "No read characteristic found";
+        qCDebug(BluetoothBleWorkerLog) << "No read characteristic found";
     }
 
     if (_writeCharacteristic.isValid()) {
-        qCDebug(BluetoothLinkLog) << "Using write characteristic:" << _writeCharacteristic.uuid().toString()
+        qCDebug(BluetoothBleWorkerLog) << "Using write characteristic:" << _writeCharacteristic.uuid().toString()
                                   << "Properties:" << characteristicPropertiesToString(_writeCharacteristic.properties());
     } else {
-        qCDebug(BluetoothLinkLog) << "No write characteristic found";
+        qCDebug(BluetoothBleWorkerLog) << "No write characteristic found";
     }
 
     // Warn if read and write resolved to the same characteristic
     if (_readCharacteristic.isValid() && _writeCharacteristic.isValid() &&
         _readCharacteristic.uuid() == _writeCharacteristic.uuid()) {
-        qCWarning(BluetoothLinkLog) << "Read and write characteristics resolved to the same UUID:"
+        qCWarning(BluetoothBleWorkerLog) << "Read and write characteristics resolved to the same UUID:"
                                     << _readCharacteristic.uuid().toString()
                                     << "- bidirectional communication may not work as intended";
     }
@@ -511,7 +515,7 @@ void BluetoothBleWorker::_findCharacteristics()
 
 void BluetoothBleWorker::_onServiceStateChanged(QLowEnergyService::ServiceState state)
 {
-    qCDebug(BluetoothLinkLog) << "Service state changed:" << state;
+    qCDebug(BluetoothBleWorkerLog) << "Service state changed:" << state;
 
     if (state == QLowEnergyService::RemoteServiceDiscovered) {
         if (!_service) {
@@ -544,11 +548,11 @@ void BluetoothBleWorker::_onServiceStateChanged(QLowEnergyService::ServiceState 
         _reconnectAttempts = 0;
         _consecutiveFailures = 0;
 
-        qCDebug(BluetoothLinkLog) << "=== BLE Connection Established ===" << _device.name();
-        qCDebug(BluetoothLinkLog) << "  Service:" << _service->serviceUuid().toString();
-        qCDebug(BluetoothLinkLog) << "  MTU:" << _mtu;
-        qCDebug(BluetoothLinkLog) << "  Read:" << (_readCharacteristic.isValid() ? _readCharacteristic.uuid().toString() : "N/A");
-        qCDebug(BluetoothLinkLog) << "  Write:" << (_writeCharacteristic.isValid() ? _writeCharacteristic.uuid().toString() : "N/A");
+        qCDebug(BluetoothBleWorkerLog) << "=== BLE Connection Established ===" << _device.name();
+        qCDebug(BluetoothBleWorkerLog) << "  Service:" << _service->serviceUuid().toString();
+        qCDebug(BluetoothBleWorkerLog) << "  MTU:" << _mtu;
+        qCDebug(BluetoothBleWorkerLog) << "  Read:" << (_readCharacteristic.isValid() ? _readCharacteristic.uuid().toString() : "N/A");
+        qCDebug(BluetoothBleWorkerLog) << "  Write:" << (_writeCharacteristic.isValid() ? _writeCharacteristic.uuid().toString() : "N/A");
 
         emit connected();
     }
@@ -564,17 +568,17 @@ void BluetoothBleWorker::_enableNotifications()
         QBluetoothUuid::DescriptorType::ClientCharacteristicConfiguration);
 
     if (!notificationDescriptor.isValid()) {
-        qCWarning(BluetoothLinkLog) << "CCCD descriptor missing on read characteristic — notifications will not work";
+        qCWarning(BluetoothBleWorkerLog) << "CCCD descriptor missing on read characteristic — notifications will not work";
         return;
     }
 
     QByteArray value;
     if (_readCharacteristic.properties() & QLowEnergyCharacteristic::Notify) {
         value = QLowEnergyCharacteristic::CCCDEnableNotification;
-        qCDebug(BluetoothLinkLog) << "Enabling notifications for read characteristic";
+        qCDebug(BluetoothBleWorkerLog) << "Enabling notifications for read characteristic";
     } else if (_readCharacteristic.properties() & QLowEnergyCharacteristic::Indicate) {
         value = QLowEnergyCharacteristic::CCCDEnableIndication;
-        qCDebug(BluetoothLinkLog) << "Enabling indications for read characteristic";
+        qCDebug(BluetoothBleWorkerLog) << "Enabling indications for read characteristic";
     }
 
     if (!value.isEmpty()) {
@@ -586,7 +590,7 @@ void BluetoothBleWorker::_onCharacteristicChanged(const QLowEnergyCharacteristic
                                                    const QByteArray &value)
 {
     if ((characteristic.uuid() == _readCharacteristic.uuid()) && !value.isEmpty()) {
-        qCDebug(BluetoothLinkLog) << _device.name() << "BLE Received" << value.size() << "bytes";
+        qCDebug(BluetoothBleWorkerLog) << _device.name() << "BLE Received" << value.size() << "bytes";
         emit dataReceived(value);
     }
 }
@@ -594,7 +598,7 @@ void BluetoothBleWorker::_onCharacteristicChanged(const QLowEnergyCharacteristic
 void BluetoothBleWorker::_onCharacteristicRead(const QLowEnergyCharacteristic &characteristic,
                                                 const QByteArray &value)
 {
-    qCDebug(BluetoothLinkVerboseLog) << "Characteristic read:" << characteristic.uuid().toString()
+    qCDebug(BluetoothBleWorkerVerboseLog) << "Characteristic read:" << characteristic.uuid().toString()
                                      << "Value length:" << value.size();
 }
 
@@ -611,21 +615,21 @@ void BluetoothBleWorker::_onCharacteristicWritten(const QLowEnergyCharacteristic
 void BluetoothBleWorker::_onDescriptorRead(const QLowEnergyDescriptor &descriptor,
                                             const QByteArray &value)
 {
-    qCDebug(BluetoothLinkVerboseLog) << "Descriptor read:" << descriptor.uuid().toString()
+    qCDebug(BluetoothBleWorkerVerboseLog) << "Descriptor read:" << descriptor.uuid().toString()
                                      << "Value:" << value.toHex();
 }
 
 void BluetoothBleWorker::_onDescriptorWritten(const QLowEnergyDescriptor &descriptor,
                                                const QByteArray &value)
 {
-    qCDebug(BluetoothLinkLog) << "Descriptor written:" << descriptor.uuid().toString()
+    qCDebug(BluetoothBleWorkerLog) << "Descriptor written:" << descriptor.uuid().toString()
                               << "Value:" << value.toHex();
 }
 
 void BluetoothBleWorker::_onServiceError(QLowEnergyService::ServiceError error)
 {
     const QString errorString = tr("Service error: %1").arg(error);
-    qCWarning(BluetoothLinkLog) << "BLE Service error:" << error;
+    qCWarning(BluetoothBleWorkerLog) << "BLE Service error:" << error;
     emit errorOccurred(errorString);
 
     _clearBleWriteQueue();
@@ -640,7 +644,7 @@ void BluetoothBleWorker::_onServiceError(QLowEnergyService::ServiceError error)
 
     const bool wasConnected = _connected.exchange(false);
     if (!wasConnected) {
-        qCDebug(BluetoothLinkLog) << "Connection attempt failed, emitting disconnected signal";
+        qCDebug(BluetoothBleWorkerLog) << "Connection attempt failed, emitting disconnected signal";
     }
     emit disconnected();
 

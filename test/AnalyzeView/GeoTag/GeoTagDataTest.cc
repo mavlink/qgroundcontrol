@@ -1,6 +1,5 @@
 #include "GeoTagDataTest.h"
 
-#include <QtTest/QTest>
 
 #include "GeoTagData.h"
 

@@ -3,10 +3,7 @@
 #include <optional>
 
 #include <QtCore/QCommandLineParser>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QStringList>
-
-Q_DECLARE_LOGGING_CATEGORY(QGCCommandLineParserLog)
 
 namespace QGCCommandLineParser {
 

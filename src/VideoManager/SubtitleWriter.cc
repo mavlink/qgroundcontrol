@@ -1,10 +1,12 @@
 #include "SubtitleWriter.h"
+
 #include "Fact.h"
 #include "FactValueGrid.h"
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 
 #include <QtCore/QDateTime>
 #include <QtCore/QFileInfo>

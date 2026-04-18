@@ -1,6 +1,6 @@
 #include "Viewer3DMapProviderTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "OsmParser.h"
 #include "Viewer3DMapProvider.h"

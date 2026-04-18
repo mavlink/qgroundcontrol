@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include "AutoPilotPlugin.h"
 
 class APMAirframeComponent;
@@ -26,8 +25,6 @@ class APMFollowComponent;
 class JoystickComponent;
 class ScriptingComponent;
 class Vehicle;
-
-Q_DECLARE_LOGGING_CATEGORY(APMAutoPilotPluginLog)
 
 /// This is the AutoPilotPlugin implementation for the MAV_AUTOPILOT_ARDUPILOT type.
 class APMAutoPilotPlugin : public AutoPilotPlugin

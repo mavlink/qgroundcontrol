@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QSet>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -8,8 +7,6 @@
 #include "FactPanelController.h"
 #include "QmlObjectListModel.h"
 #include "FactMetaData.h"
-
-Q_DECLARE_LOGGING_CATEGORY(ParameterEditorControllerLog)
 
 class ParameterManager;
 

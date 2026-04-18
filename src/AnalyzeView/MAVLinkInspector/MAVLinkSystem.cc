@@ -1,6 +1,8 @@
 #include "MAVLinkSystem.h"
+
 #include "MAVLinkMessage.h"
 #include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 
 QGC_LOGGING_CATEGORY(MAVLinkSystemLog, "AnalyzeView.MAVLinkSystem")
 

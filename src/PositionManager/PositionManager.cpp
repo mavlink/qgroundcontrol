@@ -1,5 +1,5 @@
 #include "PositionManager.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "QGCCorePlugin.h"
 #include "SimulatedPosition.h"
 // #include "DeviceInfo.h"
@@ -31,7 +31,7 @@ QGCPositionManager *QGCPositionManager::instance()
 
 void QGCPositionManager::init()
 {
-    if (qgcApp()->runningUnitTests()) {
+    if (QGC::runningUnitTests()) {
         _simulatedSource = new SimulatedPosition(this);
         _setPositionSource(QGCPositionSource::Simulated);
     } else {

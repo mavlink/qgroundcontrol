@@ -1,6 +1,6 @@
 #include "MAVLinkChartControllerTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "MAVLinkChartController.h"
 #include "MAVLinkInspectorController.h"

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtPositioning/QGeoCoordinate>
+
 #include "UnitTest.h"
 
 /// Unit tests for RallyPoint — the small value object that wraps a

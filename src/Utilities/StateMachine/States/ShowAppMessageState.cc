@@ -1,5 +1,5 @@
 #include "ShowAppMessageState.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 
 ShowAppMessageState::ShowAppMessageState(QState* parentState, const QString& appMessage)
     : QGCState("ShowAppMessageState", parentState)
@@ -7,7 +7,7 @@ ShowAppMessageState::ShowAppMessageState(QState* parentState, const QString& app
 {
     connect(this, &QState::entered, this, [this] () {
         qCDebug(QGCStateMachineLog) << _appMessage << stateName();
-        qgcApp()->showAppMessage(_appMessage);
+        QGC::showAppMessage(_appMessage);
         emit advance();
     });
 }

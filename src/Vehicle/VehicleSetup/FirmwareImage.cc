@@ -7,6 +7,9 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QDir>
+
+QGC_LOGGING_CATEGORY(FirmwareImageLog, "Vehicle.VehicleSetup.FirmwareImage")
+QGC_LOGGING_CATEGORY(FirmwareImageVerboseLog, "Vehicle.VehicleSetup.FirmwareImage.Verbose")
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
@@ -144,7 +147,7 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
             if (appendToLastBlock) {
                 _ihxBlocks[_ihxBlocks.length() - 1].bytes += bytes;
                 // Too noisy even for verbose
-                //qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+                //qCDebug(FirmwareImageVerboseLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
             } else {
                 IntelHexBlock_t block;
 
@@ -152,13 +155,13 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
                 block.bytes = bytes;
 
                 _ihxBlocks += block;
-                qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - new block - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+                qCDebug(FirmwareImageVerboseLog) << QString("_ihxLoad - new block - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
             }
 
             _imageSize += blockByteCount;
         } else if (recordType == 1) {
             // EOF
-            qCDebug(FirmwareUpgradeLog) << QString("_ihxLoad - EOF");
+            qCDebug(FirmwareImageLog) << QString("_ihxLoad - EOF");
             break;
         }
 

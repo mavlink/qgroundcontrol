@@ -7,6 +7,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 #include <cmath>
 #include "Gimbal.h"
 #include "QGCCameraManager.h"

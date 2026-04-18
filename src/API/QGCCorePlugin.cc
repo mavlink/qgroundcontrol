@@ -9,7 +9,7 @@
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 #include "QGCLoggingCategory.h"
 #include "QGCOptions.h"
 #include "QmlComponentInfo.h"
@@ -26,7 +26,6 @@
 
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QFile>
-#include <QtQml/qqml.h>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>

@@ -1,6 +1,8 @@
+#include "QmlObjectListModel.h"
 #include "MissionControllerTest.h"
 
 #include "AppSettings.h"
+#include "UnitTestCoords.h"
 #include "MissionController.h"
 #include "MissionSettingsItem.h"
 #include "PlanMasterController.h"

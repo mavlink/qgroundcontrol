@@ -1,14 +1,12 @@
 #pragma once
 
 #include "GeoTagData.h"
-#include "GeoTagImageModel.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFileInfo>
 #include <QtCore/QFileInfoList>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QHash>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
@@ -18,7 +16,7 @@
 
 #include <atomic>
 
-Q_DECLARE_LOGGING_CATEGORY(GeoTagControllerLog)
+class GeoTagImageModel;
 
 /// Result of timestamp-based calibration/matching
 struct CalibrationResult {
@@ -50,6 +48,7 @@ class GeoTagController : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
+    Q_MOC_INCLUDE("GeoTagImageModel.h")
 
     Q_PROPERTY(QString           logFile         READ logFile        WRITE setLogFile        NOTIFY logFileChanged)
     Q_PROPERTY(QString           imageDirectory  READ imageDirectory WRITE setImageDirectory NOTIFY imageDirectoryChanged)

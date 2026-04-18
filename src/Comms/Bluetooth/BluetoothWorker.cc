@@ -1,6 +1,9 @@
 #include "BluetoothWorker.h"
 #include "BluetoothBleWorker.h"
 #include "BluetoothClassicWorker.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(BluetoothWorkerLog, "Comms.Bluetooth.BluetoothWorker")
 
 BluetoothWorker::BluetoothWorker(const BluetoothConfiguration *config, QObject *parent)
     : QObject(parent)
@@ -11,7 +14,7 @@ BluetoothWorker::BluetoothWorker(const BluetoothConfiguration *config, QObject *
     , _reconnectTimer(new QTimer(this))
     , _serviceDiscoveryTimer(new QTimer(this))
 {
-    qCDebug(BluetoothLinkLog) << this;
+    qCDebug(BluetoothWorkerLog) << this;
 
     _reconnectTimer->setInterval(RECONNECT_BASE_INTERVAL_MS);
     _reconnectTimer->setSingleShot(true);
@@ -38,7 +41,7 @@ BluetoothWorker::~BluetoothWorker()
         _serviceDiscoveryTimer->stop();
     }
 
-    qCDebug(BluetoothLinkLog) << this;
+    qCDebug(BluetoothWorkerLog) << this;
 }
 
 bool BluetoothWorker::isConnected() const
@@ -64,7 +67,7 @@ void BluetoothWorker::connectLink()
     _intentionalDisconnect = false;
 
     if (isConnected()) {
-        qCWarning(BluetoothLinkLog) << "Already connected to" << _device.name();
+        qCWarning(BluetoothWorkerLog) << "Already connected to" << _device.name();
         return;
     }
 
@@ -90,7 +93,7 @@ void BluetoothWorker::disconnectLink()
 void BluetoothWorker::writeData(const QByteArray &data)
 {
     if (data.isEmpty()) {
-        qCWarning(BluetoothLinkLog) << "Write called with empty data";
+        qCWarning(BluetoothWorkerLog) << "Write called with empty data";
         return;
     }
 
@@ -109,13 +112,13 @@ void BluetoothWorker::_reconnectTimeout()
     }
 
     if (_reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-        qCWarning(BluetoothLinkLog) << "Max reconnection attempts (" << MAX_RECONNECT_ATTEMPTS << ") reached. Giving up.";
+        qCWarning(BluetoothWorkerLog) << "Max reconnection attempts (" << MAX_RECONNECT_ATTEMPTS << ") reached. Giving up.";
         emit errorOccurred(tr("Max reconnection attempts reached"));
         return;
     }
 
     _reconnectAttempts++;
-    qCDebug(BluetoothLinkLog) << "Attempting to reconnect (attempt" << _reconnectAttempts << "of" << MAX_RECONNECT_ATTEMPTS << ")";
+    qCDebug(BluetoothWorkerLog) << "Attempting to reconnect (attempt" << _reconnectAttempts << "of" << MAX_RECONNECT_ATTEMPTS << ")";
 
     const int nextInterval = qMin(RECONNECT_BASE_INTERVAL_MS * (1 << (_reconnectAttempts - 1)), MAX_RECONNECT_INTERVAL_MS);
     if (_reconnectTimer) {
@@ -132,7 +135,7 @@ void BluetoothWorker::_reconnectTimeout()
 
 void BluetoothWorker::_serviceDiscoveryTimeout()
 {
-    qCWarning(BluetoothLinkLog) << "Service discovery timed out after" << SERVICE_DISCOVERY_TIMEOUT_MS << "ms";
+    qCWarning(BluetoothWorkerLog) << "Service discovery timed out after" << SERVICE_DISCOVERY_TIMEOUT_MS << "ms";
     _consecutiveFailures++;
 
     onServiceDiscoveryTimeout();

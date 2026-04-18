@@ -10,7 +10,6 @@
 #include <QtCore/QRegularExpression>
 #include <QtGui/QImage>
 #include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
 
 namespace {
 

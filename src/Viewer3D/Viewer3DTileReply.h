@@ -1,11 +1,8 @@
 #pragma once
 
 #include <QtCore/QByteArray>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
-
-Q_DECLARE_LOGGING_CATEGORY(Viewer3DTileReplyLog)
 
 struct QGCCacheTile;
 class QNetworkAccessManager;

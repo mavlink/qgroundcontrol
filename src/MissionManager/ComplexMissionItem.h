@@ -1,9 +1,12 @@
 #pragma once
 
+#include <QtCore/QMap>
+
 #include "VisualMissionItem.h"
 #include "QmlObjectListModel.h"
 #include "FlightPathSegment.h"
 
+class FactMetaData;
 class PlanMasterController;
 class MissionController;
 class KMLPlanDomDocument;

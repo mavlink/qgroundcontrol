@@ -1,10 +1,14 @@
 #include "MAVLinkSigning.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkSigningKeys.h"
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QDateTime>
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(MAVLinkSigningLog, "MAVLink.MAVLinkSigning")
 
 namespace
 {
@@ -109,7 +113,7 @@ bool checkSigningLinkId(mavlink_channel_t channel, const mavlink_message_t &mess
 {
     const mavlink_signing_t* const signing = _getChannelSigning(channel);
     if (!signing) {
-        qCWarning(QGCMAVLinkLog) << Q_FUNC_INFO << "Invalid Signing Pointer for Channel:" << channel;
+        qCWarning(MAVLinkSigningLog) << Q_FUNC_INFO << "Invalid Signing Pointer for Channel:" << channel;
         return false;
     }
 
@@ -199,7 +203,7 @@ QString tryDetectKey(mavlink_channel_t channel, const mavlink_message_t &message
         const QByteArray keyBytes = signingKeys->keyBytesByName(hintName);
         if (!keyBytes.isEmpty() && verifySignature(keyBytes, message)) {
             if (initSigning(channel, keyBytes, insecureConnectionAcceptUnsignedCallback)) {
-                qCInfo(QGCMAVLinkLog) << "Auto-detected signing key" << hintName << "on channel" << channel << "(cached hint)";
+                qCInfo(MAVLinkSigningLog) << "Auto-detected signing key" << hintName << "on channel" << channel << "(cached hint)";
                 return hintName;
             }
         }
@@ -215,7 +219,7 @@ QString tryDetectKey(mavlink_channel_t channel, const mavlink_message_t &message
         if (verifySignature(keyBytes, message)) {
             if (initSigning(channel, keyBytes, insecureConnectionAcceptUnsignedCallback)) {
                 s_channelKeyHint[channel] = name;
-                qCInfo(QGCMAVLinkLog) << "Auto-detected signing key" << name << "on channel" << channel;
+                qCInfo(MAVLinkSigningLog) << "Auto-detected signing key" << name << "on channel" << channel;
                 return name;
             }
         }

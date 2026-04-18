@@ -1,12 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(MAVLinkMessageFieldLog)
 
 class QGCMAVLinkMessage;
 class MAVLinkChartController;

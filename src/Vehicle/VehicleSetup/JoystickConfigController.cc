@@ -1,7 +1,8 @@
 #include "JoystickConfigController.h"
+
 #include "Fact.h"
+#include "Joystick.h"
 #include "ParameterManager.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 

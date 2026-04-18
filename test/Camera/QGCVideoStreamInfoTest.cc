@@ -1,6 +1,6 @@
 #include "QGCVideoStreamInfoTest.h"
-
 #include <QtTest/QSignalSpy>
+
 
 #include "QGCVideoStreamInfo.h"
 

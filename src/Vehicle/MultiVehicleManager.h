@@ -1,15 +1,12 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class LinkInterface;
 class Vehicle;
 class QmlObjectListModel;
 class QTimer;
-
-Q_DECLARE_LOGGING_CATEGORY(MultiVehicleManagerLog)
 
 class MultiVehicleManager : public QObject
 {
@@ -31,7 +28,6 @@ public:
     ~MultiVehicleManager();
 
     static MultiVehicleManager *instance();
-    static void registerQmlTypes();
 
     void init();
     Q_INVOKABLE Vehicle *getVehicleById(int vehicleId) const;

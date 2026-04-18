@@ -2,14 +2,11 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QDateTime>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "MAVLinkMessageType.h"
-
-Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
 
 class RemoteIDSettings;
 class Vehicle;
@@ -31,7 +28,6 @@ public:
     Q_PROPERTY(bool    basicIDGood          READ basicIDGood        NOTIFY basicIDGoodChanged)
     Q_PROPERTY(bool    emergencyDeclared    READ emergencyDeclared  NOTIFY emergencyDeclaredChanged)
     Q_PROPERTY(bool    operatorIDGood       READ operatorIDGood     NOTIFY operatorIDGoodChanged)
-
 
     Q_INVOKABLE void checkOperatorID(const QString& operatorID);
     Q_INVOKABLE void setOperatorID();

@@ -1,6 +1,7 @@
 #include "AppSettings.h"
 #include "QGCFileHelper.h"
 #include "QGCPalette.h"
+#include "QGC.h"
 #include "QGCApplication.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
@@ -85,7 +86,7 @@ DECLARE_SETTINGGROUP(App, "")
                     qDebug() << "Save to SD card specified for application data. But no SD card present or permissions not granted. Using internal storage.";
                 } else if (!QFileInfo(rootDirPath).isWritable()) {
                     rootDirPath.clear();
-                    qgcApp()->showAppMessage(AppSettings::tr("Save to SD card specified for application data. But SD card is write protected. Using internal storage."));
+                    QGC::showAppMessage(AppSettings::tr("Save to SD card specified for application data. But SD card is write protected. Using internal storage."));
                 }
             }
         #endif
@@ -97,7 +98,7 @@ DECLARE_SETTINGGROUP(App, "")
     savePathFact->setUserVisible(false);
 #else
         QDir rootDir;
-        if (qgcApp()->runningUnitTests() || qgcApp()->simpleBootTest()) {
+        if (QGC::runningUnitTests() || qgcApp()->simpleBootTest()) {
             rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
         } else {
             rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));

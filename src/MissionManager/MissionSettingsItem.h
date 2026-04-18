@@ -5,10 +5,6 @@
 #include "CameraSection.h"
 #include "SpeedSection.h"
 
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(MissionSettingsItemLog)
-
 class PlanMasterController;
 class MissionItem;
 class Vehicle;

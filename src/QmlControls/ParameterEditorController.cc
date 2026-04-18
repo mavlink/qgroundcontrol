@@ -1,5 +1,6 @@
+#include "QmlObjectListModel.h"
 #include "ParameterEditorController.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "ParameterManager.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"
@@ -331,7 +332,7 @@ void ParameterEditorController::saveToFile(const QString& filename)
         QFile file(parameterFilename);
 
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            qgcApp()->showAppMessage(tr("Unable to create file: %1").arg(parameterFilename));
+            QGC::showAppMessage(tr("Unable to create file: %1").arg(parameterFilename));
             return;
         }
 
@@ -372,7 +373,7 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
     QFile file(filename);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qgcApp()->showAppMessage(tr("Unable to open file: %1").arg(filename));
+        QGC::showAppMessage(tr("Unable to open file: %1").arg(filename));
         return false;
     }
 

@@ -1,10 +1,10 @@
 #include "RallyPointTest.h"
 
 #include "RallyPoint.h"
+#include "UnitTestCoords.h"
 
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
 
 namespace {
 

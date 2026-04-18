@@ -133,9 +133,18 @@ function(add_qgc_test test_name)
         set(_timeout ${QGC_TEST_TIMEOUT_DEFAULT})
     endif()
 
+    set(_test_env "QT_QPA_PLATFORM=offscreen" "QT_LOGGING_RULES=*.debug=false")
+
+    # LSan's tracer process needs ptrace, which Yama (ptrace_scope>=1) blocks on
+    # most dev/CI hosts — disable leak detection under ASan to avoid spurious
+    # "Tracer caught signal 11" failures at process exit.
+    if(QGC_ENABLE_ASAN)
+        list(APPEND _test_env "ASAN_OPTIONS=detect_leaks=0")
+    endif()
+
     set_tests_properties(${test_name} PROPERTIES
         TIMEOUT ${_timeout}
-        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_LOGGING_RULES=*.debug=false"
+        ENVIRONMENT "${_test_env}"
         FAIL_REGULAR_EXPRESSION "FAIL!;Segmentation fault;ASSERT"
     )
 

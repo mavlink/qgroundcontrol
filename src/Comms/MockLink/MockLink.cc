@@ -1,11 +1,11 @@
 #include "MockLink.h"
+#include "MAVLinkLib.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MockLinkCamera.h"
 #include "MockLinkFTP.h"
 #include "MockLinkGimbal.h"
 #include "MockLinkWorker.h"
-#include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "FirmwarePlugin.h"
 #include "FactMetaData.h"
@@ -203,7 +203,7 @@ void MockLink::run1HzTasks()
         _mockLinkCamera->sendCameraHeartbeats();
     }
 
-    if (!qgcApp()->runningUnitTests()) {
+    if (!QGC::runningUnitTests()) {
         // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
         _sendRCChannels();
     }

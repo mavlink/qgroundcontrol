@@ -1,9 +1,10 @@
 #include "MAVLinkProtocol.h"
 #include "AppSettings.h"
 #include "LinkManager.h"
+#include "MAVLinkLib.h"
 #include "MavlinkSettings.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
@@ -79,7 +80,7 @@ void MAVLinkProtocol::logSentBytes(const LinkInterface *link, const QByteArray &
     (void) logData.prepend(timeData);
     if (_tempLogFile->write(logData) != logData.length()) {
         const QString message = QStringLiteral("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile->fileName());
-        qgcApp()->showAppMessage(message, getName());
+        QGC::showAppMessage(message, getName());
         _stopLogging();
         _logSuspendError = true;
     }
@@ -204,7 +205,7 @@ void MAVLinkProtocol::_logData(LinkInterface *link, const mavlink_message_t &mes
         const QByteArray log_data(reinterpret_cast<const char*>(buf), len);
         if (_tempLogFile->write(log_data) != len) {
             const QString logErrorMessage = QStringLiteral("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile->fileName());
-            qgcApp()->showAppMessage(logErrorMessage, getName());
+            QGC::showAppMessage(logErrorMessage, getName());
             _stopLogging();
             _logSuspendError = true;
         }
@@ -278,7 +279,7 @@ bool MAVLinkProtocol::_closeLogFile()
 
 void MAVLinkProtocol::_startLogging()
 {
-    if (qgcApp()->runningUnitTests()) {
+    if (QGC::runningUnitTests()) {
         return;
     }
 
@@ -315,7 +316,7 @@ void MAVLinkProtocol::_startLogging()
         const QString message = QStringLiteral("Opening Flight Data file for writing failed. "
             "Unable to write to %1. Please choose a different file location.")
             .arg(_tempLogFile->fileName());
-        qgcApp()->showAppMessage(message, getName());
+        QGC::showAppMessage(message, getName());
         _closeLogFile();
         _logSuspendError = true;
         return;
@@ -397,7 +398,7 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString &tempLogfile)
         QFile in(tempLogfile);
         if (!in.open(QIODevice::ReadOnly)) {
             const QString error = tr("Unable to save telemetry log. Error opening source '%1': '%2'.").arg(tempLogfile, in.errorString());
-            qgcApp()->showAppMessage(error);
+            QGC::showAppMessage(error);
             (void) QFile::remove(tempLogfile);
             return;
         }
@@ -407,7 +408,7 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString &tempLogfile)
 
         if (!out.open(QIODevice::WriteOnly)) {
             const QString error = tr("Unable to save telemetry log. Error opening destination '%1': '%2'.").arg(saveFilePath, out.errorString());
-            qgcApp()->showAppMessage(error);
+            QGC::showAppMessage(error);
             (void) QFile::remove(tempLogfile);
             return;
         }
@@ -423,14 +424,14 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString &tempLogfile)
             }
             if (n < 0) {
                 const QString error = tr("Unable to save telemetry log. Error reading source '%1': '%2'.").arg(tempLogfile, in.errorString());
-                qgcApp()->showAppMessage(error);
+                QGC::showAppMessage(error);
                 out.cancelWriting();
                 (void) QFile::remove(tempLogfile);
                 return;
             }
             if (out.write(buffer.constData(), n) != n) {
                 const QString error = tr("Unable to save telemetry log. Error writing destination '%1': '%2'.").arg(saveFilePath, out.errorString());
-                qgcApp()->showAppMessage(error);
+                QGC::showAppMessage(error);
                 out.cancelWriting();
                 (void) QFile::remove(tempLogfile);
                 return;
@@ -439,7 +440,7 @@ void MAVLinkProtocol::_saveTelemetryLog(const QString &tempLogfile)
 
         if (!out.commit()) {
             const QString error = tr("Unable to finalize telemetry log '%1': '%2'.").arg(saveFilePath, out.errorString());
-            qgcApp()->showAppMessage(error);
+            QGC::showAppMessage(error);
             (void) QFile::remove(tempLogfile);
             return;
         }
@@ -459,14 +460,14 @@ bool MAVLinkProtocol::_checkTelemetrySavePath()
     const QString saveDirPath = SettingsManager::instance()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         const QString error = tr("Unable to save telemetry log. Application save directory is not set.");
-        qgcApp()->showAppMessage(error);
+        QGC::showAppMessage(error);
         return false;
     }
 
     const QDir saveDir(saveDirPath);
     if (!saveDir.exists()) {
         const QString error = tr("Unable to save telemetry log. Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
-        qgcApp()->showAppMessage(error);
+        QGC::showAppMessage(error);
         return false;
     }
 

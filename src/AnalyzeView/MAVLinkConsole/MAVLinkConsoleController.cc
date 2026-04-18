@@ -4,6 +4,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QClipboard>

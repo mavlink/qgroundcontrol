@@ -1,22 +1,18 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QRectF>
 #include <QtCore/QSizeF>
 
 #include "FactGroup.h"
-#include "QGCVideoStreamInfo.h"
-#include "QmlObjectListModel.h"
 
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QGCCameraParamIO;
+class QGCVideoStreamInfo;
+class QmlObjectListModel;
 class Vehicle;
-
-Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
-Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 
 /// Abstract base class for all camera controls: real and simulated
 class MavlinkCameraControlInterface : public FactGroup
@@ -24,6 +20,8 @@ class MavlinkCameraControlInterface : public FactGroup
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_MOC_INCLUDE("QGCVideoStreamInfo.h")
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(Fact*                exposureMode            READ exposureMode                                       NOTIFY parametersReady)
     Q_PROPERTY(Fact*                ev                      READ ev                                                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*                iso                     READ iso                                                NOTIFY parametersReady)

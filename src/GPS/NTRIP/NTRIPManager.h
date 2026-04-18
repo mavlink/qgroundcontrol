@@ -2,15 +2,12 @@
 
 #include "NTRIPHttpTransport.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QUdpSocket>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(NTRIPManagerLog)
 
 class RTCMMavlink;
 class NTRIPSettings;

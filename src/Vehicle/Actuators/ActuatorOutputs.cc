@@ -1,5 +1,9 @@
 #include "ActuatorOutputs.h"
+#include "MAVLinkLib.h"
 #include "ParameterManager.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(ActuatorOutputsLog, "Vehicle.Actuators.ActuatorOutputs")
 
 using namespace ActuatorOutputs;
 
@@ -28,7 +32,7 @@ ActuatorOutputChannel::ActuatorOutputChannel(QObject *parent, const QString &lab
             }
             factAddedCb(fact);
         } else {
-            qCDebug(ActuatorsConfigLog) << "ActuatorOutputChannel: Param does not exist:" << param;
+            qCDebug(ActuatorOutputsLog) << "ActuatorOutputChannel: Param does not exist:" << param;
         }
 
         ChannelConfigInstance *instance = new ChannelConfigInstance(this, fact, *channelConfig);

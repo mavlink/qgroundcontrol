@@ -4,7 +4,6 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
 
 void LogModelTest::_appendAndRowCount()
 {

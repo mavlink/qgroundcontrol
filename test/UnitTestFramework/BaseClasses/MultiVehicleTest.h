@@ -2,7 +2,7 @@
 
 #include <QtCore/QPointer>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
 #include "MockLink.h"
 #include "UnitTest.h"
 

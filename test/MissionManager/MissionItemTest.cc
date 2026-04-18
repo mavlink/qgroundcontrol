@@ -5,6 +5,7 @@
 
 #include "MissionItem.h"
 #include "Fact.h"
+#include "UnitTestCoords.h"
 #include "PlanMasterController.h"
 #include "SimpleMissionItem.h"
 #include "TestFixtures.h"

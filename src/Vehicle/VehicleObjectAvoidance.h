@@ -5,7 +5,8 @@
 #include <QtCore/QPointF>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkMessageType.h"
+#include "QGCMAVLinkTypes.h"
 
 class Vehicle;
 

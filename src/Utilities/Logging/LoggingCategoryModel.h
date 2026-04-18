@@ -5,7 +5,7 @@
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QString>
-#include <QtQml/qqml.h>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 class QGCLoggingCategoryItem : public QObject
 {

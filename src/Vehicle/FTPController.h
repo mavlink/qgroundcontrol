@@ -9,8 +9,6 @@
 #include "MAVLink/MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 
-Q_DECLARE_LOGGING_CATEGORY(FTPControllerLog)
-
 class FTPManager;
 class Vehicle;
 class QGCArchiveModel;

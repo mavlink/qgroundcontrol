@@ -2,9 +2,9 @@
 #include "QGCState.h"
 #include "WaitStateBase.h"
 
-#include <QtCore/QLoggingCategory>
+#include "QGCLoggingCategory.h"
 
-Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
+QGC_LOGGING_CATEGORY(RetryTransitionLog, "Utilities.StateMachine.RetryTransition")
 
 bool RetryTransition::eventTest(QEvent* event)
 {
@@ -20,7 +20,7 @@ bool RetryTransition::eventTest(QEvent* event)
 
     if (_retryCount < _maxRetries) {
         _retryCount++;
-        qCDebug(QGCStateMachineLog) << stateName << "timeout, retry" << _retryCount << "of" << _maxRetries;
+        qCDebug(RetryTransitionLog) << stateName << "timeout, retry" << _retryCount << "of" << _maxRetries;
 
         if (auto* waitState = qobject_cast<WaitStateBase*>(sourceState())) {
             waitState->restartWait();
@@ -35,7 +35,7 @@ bool RetryTransition::eventTest(QEvent* event)
     }
 
     // Max retries exhausted - allow transition
-    qCWarning(QGCStateMachineLog) << stateName << "timeout after" << _maxRetries << "retries, advancing";
+    qCWarning(RetryTransitionLog) << stateName << "timeout after" << _maxRetries << "retries, advancing";
     return true;
 }
 

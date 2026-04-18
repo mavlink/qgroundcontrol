@@ -6,8 +6,6 @@
 
 #include <functional>
 
-Q_DECLARE_LOGGING_CATEGORY(AndroidInterfaceLog)
-
 namespace AndroidInterface {
 void setNativeMethods();
 bool checkStoragePermissions();

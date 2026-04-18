@@ -3,7 +3,7 @@
 #include "QGCNetworkHelper.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
+#include "QGC.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
@@ -65,7 +65,7 @@ void LinkManager::init()
 {
     _autoConnectSettings = SettingsManager::instance()->autoConnectSettings();
 
-    if (!qgcApp()->runningUnitTests()) {
+    if (!QGC::runningUnitTests()) {
         (void) connect(_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
         _portListTimer->start(_autoconnectUpdateTimerMSecs); // timeout must be long enough to get past bootloader on second pass
     }
@@ -162,7 +162,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
 
 void LinkManager::_communicationError(const QString &title, const QString &error)
 {
-    qgcApp()->showAppMessage(error, title);
+    QGC::showAppMessage(error, title);
 }
 
 SharedLinkInterfacePtr LinkManager::mavlinkForwardingLink()
@@ -267,7 +267,7 @@ SharedLinkInterfacePtr LinkManager::sharedLinkInterfacePointerForLink(const Link
 bool LinkManager::_connectionsSuspendedMsg() const
 {
     if (_connectionsSuspended) {
-        qgcApp()->showAppMessage(tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
+        QGC::showAppMessage(tr("Connect not allowed: %1").arg(_connectionsSuspendedReason));
         return true;
     }
 

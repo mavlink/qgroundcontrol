@@ -1,6 +1,5 @@
 #include "LogEntryTest.h"
 
-#include <QtTest/QTest>
 
 #include "LogEntry.h"
 #include "UnitTestList.h"
