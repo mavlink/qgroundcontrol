@@ -34,7 +34,7 @@ jobs:
 
       - name: Get PR number
         id: pr
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const run = context.payload.workflow_run;
@@ -59,7 +59,7 @@ jobs:
       - name: Check if all platform workflows are complete
         id: gate
         if: steps.pr.outputs.result != 'null'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PLATFORM_WORKFLOWS: ${{ env.PLATFORM_WORKFLOWS }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -213,7 +213,7 @@ jobs:
 
       - name: Deduplicate prior build-results comments
         if: steps.pr.outputs.result != 'null' && steps.gate.outputs.ready == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.pr.outputs.result }}
         with:
@@ -276,7 +276,7 @@ jobs:
 
       - name: Check if all platform workflows succeeded
         id: gate
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PLATFORM_WORKFLOWS: ${{ env.PLATFORM_WORKFLOWS }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}

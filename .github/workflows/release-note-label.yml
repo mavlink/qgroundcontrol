@@ -46,7 +46,7 @@ jobs:
 
       - name: Classify PR and apply label
         if: steps.existing.outputs.has_label == 'false'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
