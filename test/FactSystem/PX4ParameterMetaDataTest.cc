@@ -426,11 +426,12 @@ void PX4ParameterMetaDataTest::_loadBundledPX4MetaData()
     PX4ParameterMetaData meta;
     meta.loadParameterFactMetaDataFile(file);
 
-    // Bundled PX4 JSON carries parameter_version_major/minor so the
-    // cache comparison path can function.
+    // PX4's upstream parameters.json only stamps the schema "version" key,
+    // which versionFromJsonData intentionally ignores. The bundled file
+    // therefore yields a null parameter-set version — the cache layer
+    // must tolerate this and is exercised separately.
     const QVersionNumber version = ParameterMetaData::versionFromMetaDataFile(file);
-    QVERIFY(!version.isNull());
-    QVERIFY(version.majorVersion() >= 1);
+    QVERIFY(version.isNull());
 
     // Spot-check well-known PX4 parameters
     FactMetaData *adsb = meta.getMetaDataForFact("ADSB_CALLSIGN_1", FactMetaData::valueTypeInt32);

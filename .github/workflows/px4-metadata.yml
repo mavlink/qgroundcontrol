@@ -30,6 +30,17 @@ jobs:
       - name: Download PX4 airframe metadata
         run: curl -fsSL https://artifacts.px4.io/Firmware/_general/airframes.xml -o src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
 
+      # PX4's upstream parameters.json only carries the schema "version": 1
+      # marker, not parameter_version_major/_minor. As a result
+      # ParameterMetaData::versionFromMetaDataFile() returns a null version
+      # for this bundled file, which forces FirmwarePlugin::_cachedParameterMetaDataFile()
+      # to short-circuit to the bundled internal file and skip the cache
+      # lookup entirely (FirmwarePlugin.cc, "Without a known internal version"
+      # guard). That is intentional today — without a real version we cannot
+      # safely pick between bundle and cache. If we ever want PX4 to benefit
+      # from cached metadata, stamp parameter_version_major/_minor here using
+      # the PX4 release tag (e.g. via jq) before writing the file, so both
+      # read and write paths have a meaningful comparison.
       - name: Download PX4 parameter metadata
         run: curl -fsSL https://artifacts.px4.io/Firmware/_general/parameters.json.xz | xz -d > src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.json
 
