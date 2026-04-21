@@ -39,6 +39,12 @@ Rectangle {
 
     property bool _linkOk: _linkActiveFact ? Number(_linkActiveFact.value) === 1 : false
     property int payloadStatus: _statusFact ? Number(_statusFact.value) : SDTokens.StatusIdle
+    // 只有在活跃工作状态时才向曲线追加数据点，避免非采样时持续累积导致内存增长和 heap 904
+    property bool _shouldChart: payloadStatus === SDTokens.StatusSampling
+                                || payloadStatus === SDTokens.StatusDetecting
+                                || payloadStatus === SDTokens.StatusCalibrating
+                                || payloadStatus === SDTokens.StatusWaitingStable
+
     property bool _chartPaused: false
     property int _sampleIndex: 0
 
@@ -769,7 +775,7 @@ Rectangle {
         id: sampleTimer
         interval: SDTokens.Tokens.chart.sampleIntervalMs
         repeat: true
-        running: root._hasPayloadGroup && !root._chartPaused
+        running: root._hasPayloadGroup && !root._chartPaused && root._shouldChart
         onTriggered: {
             if (!root._hasPayloadGroup) {
                 return
