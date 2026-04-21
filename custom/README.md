@@ -166,6 +166,14 @@ import QGroundControl.Controls
 - 横滚 > 25° 或俯仰 > 20° 时顶部闪烁红色警告
 - 实时显示当前姿态角度
 
+### 9. 采样数据独立页面 (USVSamplingDataView)
+- 与航行/规划/配置/分析同级的独立顶层页面
+- 实时电压/吸光度双Y轴滚动曲线（60秒窗口，2Hz刷新）
+- 采样任务概览：连接状态、采样步骤进度、已采集样本数、包计数、采样时长
+- 泵组状态详情：四路步进泵角度实时显示、PID模式/误差值、链路状态
+- 统计分析：电压与吸光度的最小/最大/平均/标准差（增量在线算法）
+- 新增 MAVLink 遥测字段：USV_STEP, USV_STOT, USV_SCNT, USV_PERR, USV_PMOD
+
 ## 飞行模式对照
 
 ### ArduPilot (ArduRover)

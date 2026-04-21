@@ -66,6 +66,19 @@ ToolIndicatorPage {
             }
 
             SubMenuButton {
+                implicitHeight: root._toolButtonHeight
+                Layout.fillWidth: true
+                text: qsTr(" 数据 ")
+                imageResource: "/qmlimages/Analyze.svg"
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.closeIndicatorDrawer()
+                        mainWindow.showTool(qsTr("采样数据"), "qrc:/qml/USV/res/USVSamplingDataView.qml", "/qmlimages/Analyze.svg")
+                    }
+                }
+            }
+
+            SubMenuButton {
                 id: setupButton
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true

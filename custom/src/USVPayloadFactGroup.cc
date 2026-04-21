@@ -24,6 +24,11 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     , _statusFact     (0, QStringLiteral("status"),      FactMetaData::valueTypeUint32)
     , _linkActiveFact (0, QStringLiteral("linkActive"),  FactMetaData::valueTypeUint32)
     , _packetCountFact(0, QStringLiteral("packetCount"), FactMetaData::valueTypeFloat)
+    , _stepCurrentFact(0, QStringLiteral("stepCurrent"), FactMetaData::valueTypeFloat)
+    , _stepTotalFact  (0, QStringLiteral("stepTotal"),   FactMetaData::valueTypeFloat)
+    , _sampleCountFact(0, QStringLiteral("sampleCount"), FactMetaData::valueTypeFloat)
+    , _pidErrorFact   (0, QStringLiteral("pidError"),    FactMetaData::valueTypeFloat)
+    , _pidModeFact    (0, QStringLiteral("pidMode"),     FactMetaData::valueTypeUint32)
 {
     _addFact(&_voltageFact);
     _addFact(&_absorbanceFact);
@@ -34,6 +39,11 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     _addFact(&_statusFact);
     _addFact(&_linkActiveFact);
     _addFact(&_packetCountFact);
+    _addFact(&_stepCurrentFact, _stepCurrentName);
+    _addFact(&_stepTotalFact,   _stepTotalName);
+    _addFact(&_sampleCountFact, _sampleCountName);
+    _addFact(&_pidErrorFact,    _pidErrorName);
+    _addFact(&_pidModeFact,     _pidModeName);
 
     _timeoutTimer.setSingleShot(true);
     _timeoutTimer.setInterval(_timeoutMsecs);
@@ -112,6 +122,16 @@ void USVPayloadFactGroup::_handleNamedValueFloat(const mavlink_message_t &messag
         status()->setRawValue(static_cast<uint32_t>(namedValue.value)); handled = true;
     } else if (name == QLatin1String("USV_PKT")) {
         packetCount()->setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_STEP")) {
+        _stepCurrentFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_STOT")) {
+        _stepTotalFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_SCNT")) {
+        _sampleCountFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_PERR")) {
+        _pidErrorFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_PMOD")) {
+        _pidModeFact.setRawValue(QVariant::fromValue(static_cast<uint32_t>(namedValue.value))); handled = true;
     }
 
     if (handled) {

@@ -73,6 +73,42 @@
     "type":             "float",
     "decimalPlaces":    0,
     "default":          0
+},
+{
+    "name":             "stepCurrent",
+    "shortDesc":        "当前步骤",
+    "type":             "float",
+    "decimalPlaces":    0,
+    "default":          0
+},
+{
+    "name":             "stepTotal",
+    "shortDesc":        "总步骤数",
+    "type":             "float",
+    "decimalPlaces":    0,
+    "default":          0
+},
+{
+    "name":             "sampleCount",
+    "shortDesc":        "采样计数",
+    "type":             "float",
+    "decimalPlaces":    0,
+    "default":          0
+},
+{
+    "name":             "pidError",
+    "shortDesc":        "PID误差",
+    "type":             "float",
+    "decimalPlaces":    3,
+    "default":          0
+},
+{
+    "name":             "pidMode",
+    "shortDesc":        "PID模式",
+    "type":             "uint32",
+    "enumStrings":      "空闲,运行中,已完成,错误",
+    "enumValues":       "0,1,2,3",
+    "default":          0
 }
 ]
 }

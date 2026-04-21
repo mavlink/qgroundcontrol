@@ -25,6 +25,11 @@ class USVPayloadFactGroup : public FactGroup
     Q_PROPERTY(Fact *status     READ status     CONSTANT)
     Q_PROPERTY(Fact *linkActive   READ linkActive   CONSTANT)
     Q_PROPERTY(Fact *packetCount  READ packetCount  CONSTANT)
+    Q_PROPERTY(Fact *stepCurrent  READ stepCurrent  CONSTANT)
+    Q_PROPERTY(Fact *stepTotal    READ stepTotal    CONSTANT)
+    Q_PROPERTY(Fact *sampleCount  READ sampleCount  CONSTANT)
+    Q_PROPERTY(Fact *pidError     READ pidError     CONSTANT)
+    Q_PROPERTY(Fact *pidMode      READ pidMode      CONSTANT)
 
     // 通信诊断属性
     Q_PROPERTY(int rxMsgTotal     READ rxMsgTotal     NOTIFY diagnosticsChanged)
@@ -47,6 +52,11 @@ public:
     Fact *status()     { return &_statusFact; }
     Fact *linkActive()   { return &_linkActiveFact; }
     Fact *packetCount()  { return &_packetCountFact; }
+    Fact *stepCurrent()  { return &_stepCurrentFact; }
+    Fact *stepTotal()    { return &_stepTotalFact; }
+    Fact *sampleCount()  { return &_sampleCountFact; }
+    Fact *pidError()     { return &_pidErrorFact; }
+    Fact *pidMode()      { return &_pidModeFact; }
 
     // 诊断 getters
     int rxMsgTotal()   const { return _rxMsgTotal; }
@@ -80,8 +90,19 @@ private:
     Fact _statusFact;
     Fact _linkActiveFact;
     Fact _packetCountFact;
+    Fact _stepCurrentFact;
+    Fact _stepTotalFact;
+    Fact _sampleCountFact;
+    Fact _pidErrorFact;
+    Fact _pidModeFact;
     QTimer _timeoutTimer;
     static constexpr int _timeoutMsecs = 5000;
+
+    static constexpr const char *_stepCurrentName  = "stepCurrent";
+    static constexpr const char *_stepTotalName    = "stepTotal";
+    static constexpr const char *_sampleCountName  = "sampleCount";
+    static constexpr const char *_pidErrorName     = "pidError";
+    static constexpr const char *_pidModeName      = "pidMode";
 
     // 通信诊断计数
     int _rxMsgTotal  = 0;

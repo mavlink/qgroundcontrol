@@ -142,47 +142,6 @@ Item {
         z: 998
     }
 
-    // 3.5 采样数据图表面板（点击详情面板切换）
-    USVSamplingChartPanel {
-        id: chartPanel
-        anchors.top: summaryStrip.bottom
-        anchors.right: detailDrawer.isExpanded ? detailDrawer.left : parent.right
-        anchors.topMargin: _toolsMargin * 0.5
-        anchors.rightMargin: _toolsMargin * 0.5
-        vehicle: activeVehicle
-        z: 997
-    }
-
-    // 图表开关按钮（在摘要条下方、详情面板左侧）
-    Rectangle {
-        id: chartToggleBtn
-        anchors.right: detailDrawer.isExpanded ? detailDrawer.left : parent.right
-        anchors.top: summaryStrip.bottom
-        anchors.topMargin: _toolsMargin * 0.5
-        anchors.rightMargin: _toolsMargin * 0.5
-        width: _toolsMargin * 6
-        height: _toolsMargin * 3
-        radius: _toolsMargin * 0.5
-        color: chartPanel.isExpanded
-               ? Qt.rgba(qgcPal.colorBlue.r, qgcPal.colorBlue.g, qgcPal.colorBlue.b, 0.2)
-               : Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.8)
-        border.width: 1
-        border.color: Qt.rgba(qgcPal.windowShade.r, qgcPal.windowShade.g, qgcPal.windowShade.b, 0.3)
-        visible: !!activeVehicle && _hasCapsulePayload
-        z: 999
-
-        QGCLabel {
-            anchors.centerIn: parent
-            text: chartPanel.isExpanded ? qsTr("▼ 曲线") : qsTr("▶ 曲线")
-            font.pointSize: ScreenTools.smallFontPointSize
-            font.bold: true
-        }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: chartPanel.isExpanded = !chartPanel.isExpanded
-        }
-    }
-
     // 4. 右下角：航行仪表 (解除隐式拦截，显式重构)
     USVInstrumentPanel {
         id: instrumentPanel
