@@ -26,6 +26,14 @@ Rectangle {
     readonly property int _stDetecting: USVLayout.StatusDetecting
     readonly property int _stFault: USVLayout.StatusFault
     readonly property int _stCalibrating: USVLayout.StatusCalibrating
+    readonly property int _stNavigating: USVLayout.StatusNavigating
+    readonly property int _stHolding: USVLayout.StatusHolding
+    readonly property int _stWaitingStable: USVLayout.StatusWaitingStable
+    readonly property int _stSamplingDone: USVLayout.StatusSamplingDone
+    readonly property int _stResumingAuto: USVLayout.StatusResumingAuto
+    readonly property int _stPaused: USVLayout.StatusPaused
+    readonly property int _stAborted: USVLayout.StatusAborted
+    readonly property int _stHoldNoMission: USVLayout.StatusHoldNoMission
 
     readonly property int _cmdStart: 31010
     readonly property int _cmdStop: 31011
@@ -52,6 +60,8 @@ Rectangle {
 
     property int payloadStatus: _statusFact ? _statusFact.value : _stIdle
     property bool _isWorking: payloadStatus === _stSampling || payloadStatus === _stDetecting || payloadStatus === _stCalibrating
+                              || payloadStatus === _stNavigating || payloadStatus === _stHolding
+                              || payloadStatus === _stWaitingStable || payloadStatus === _stResumingAuto
     property bool _linkOk: _linkActiveFact ? _linkActiveFact.value === 1 : !_hasPayloadGroup
     property var _panelState: USVLayout.payloadState(!!vehicle, payloadStatus, _linkOk, _expanded)
 
@@ -62,16 +72,35 @@ Rectangle {
         case _stDetecting: return qsTr("检测中")
         case _stFault: return qsTr("故障")
         case _stCalibrating: return qsTr("校准中")
+        case _stNavigating: return qsTr("航行中")
+        case _stHolding: return qsTr("保持")
+        case _stWaitingStable: return qsTr("稳定等待")
+        case _stSamplingDone: return qsTr("采样完成")
+        case _stResumingAuto: return qsTr("恢复航行")
+        case _stPaused: return qsTr("已暂停")
+        case _stAborted: return qsTr("已中止")
+        case _stHoldNoMission: return qsTr("无任务")
         default: return qsTr("未知")
         }
     }
 
     function statusColor(st) {
         switch (st) {
-        case _stSampling: return qgcPal.colorGreen
-        case _stDetecting: return qgcPal.brandingBlue
-        case _stFault: return qgcPal.colorRed
-        case _stCalibrating: return qgcPal.colorOrange
+        case _stSampling:
+        case _stSamplingDone:
+            return qgcPal.colorGreen
+        case _stDetecting:
+        case _stNavigating:
+        case _stResumingAuto:
+            return qgcPal.brandingBlue
+        case _stFault:
+        case _stAborted:
+            return qgcPal.colorRed
+        case _stCalibrating:
+        case _stHolding:
+        case _stWaitingStable:
+        case _stPaused:
+            return qgcPal.colorOrange
         default: return qgcPal.text
         }
     }

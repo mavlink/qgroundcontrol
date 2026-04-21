@@ -1,10 +1,20 @@
 .pragma library
 
+// Status constants — extended for auto-sampling mission stages
 var StatusIdle = 0
 var StatusSampling = 1
 var StatusDetecting = 2
 var StatusFault = 3
 var StatusCalibrating = 4
+var StatusNavigating = 5
+var StatusWaypointReached = 6
+var StatusHolding = 7
+var StatusWaitingStable = 8
+var StatusSamplingDone = 9
+var StatusResumingAuto = 10
+var StatusPaused = 11
+var StatusAborted = 12
+var StatusHoldNoMission = 13
 
 var Tokens = {
     opacity: {
@@ -35,7 +45,12 @@ function payloadState(hasVehicle, payloadStatus, linkOk, expanded) {
     const isWorking = payloadStatus === StatusSampling
             || payloadStatus === StatusDetecting
             || payloadStatus === StatusCalibrating
+            || payloadStatus === StatusNavigating
+            || payloadStatus === StatusHolding
+            || payloadStatus === StatusWaitingStable
+            || payloadStatus === StatusResumingAuto
     const isFault = payloadStatus === StatusFault
+            || payloadStatus === StatusAborted
     const isOffline = hasVehicle && !linkOk
     const forcedDetail = isWorking || isFault || isOffline
 
