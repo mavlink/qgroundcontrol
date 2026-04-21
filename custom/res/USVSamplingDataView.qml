@@ -246,6 +246,15 @@ Rectangle {
         }
     }
 
+    Component.onDestruction: {
+        // 销毁前清空 LineSeries 数据，防止 Qt Charts 内部
+        // 释放动态分配的数据点时触发 heap 904 断言
+        sampleTimer.stop()
+        durationTimer.stop()
+        voltageSeries.clear()
+        absorbanceSeries.clear()
+    }
+
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     DeadMouseArea { anchors.fill: parent }
