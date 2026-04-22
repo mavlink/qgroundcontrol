@@ -4,5 +4,68 @@
     "fileType":  "MavCmdInfo",
 
     "mavCmdInfo": [
+        {
+            "id":                   31010,
+            "rawName":              "MAV_CMD_USV_SAMPLE",
+            "friendlyName":         "定点采样",
+            "description":          "到达航点后暂停导航，执行水质采样序列，完成后继续任务。",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "USV",
+            "param1": {
+                "label":            "采样轮次",
+                "default":          1,
+                "decimalPlaces":    0,
+                "min":              1,
+                "max":              99
+            },
+            "param2": {
+                "label":            "稳定等待",
+                "units":            "secs",
+                "default":          3,
+                "decimalPlaces":    1,
+                "min":              0,
+                "max":              60
+            },
+            "param3": {
+                "label":            "超时保护",
+                "units":            "secs",
+                "default":          300,
+                "decimalPlaces":    0,
+                "min":              0
+            },
+            "param4": {
+                "label":            "失败策略",
+                "enumStrings":      "保持,跳过,终止",
+                "enumValues":       "0,1,2",
+                "default":          0
+            }
+        },
+        {
+            "id":                   31015,
+            "rawName":              "MAV_CMD_USV_START_SURVEY",
+            "friendlyName":         "开始走航检测",
+            "description":          "开始沿航线连续采样检测，不暂停导航。",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "USV",
+            "param1": {
+                "label":            "采样间隔",
+                "units":            "secs",
+                "default":          5,
+                "decimalPlaces":    0,
+                "min":              1,
+                "max":              300
+            }
+        },
+        {
+            "id":                   31016,
+            "rawName":              "MAV_CMD_USV_STOP_SURVEY",
+            "friendlyName":         "停止走航检测",
+            "description":          "停止沿航线连续采样检测。",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "USV"
+        }
     ]
 }
