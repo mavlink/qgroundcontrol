@@ -97,6 +97,9 @@ protected slots:
     void _stepZoom(int direction);
     void _startZoom(int direction);
     void _stopZoom();
+    void _stepFocus(int direction);
+    void _startFocus(int direction);
+    void _stopFocus();
     void _stepCamera(int direction);
     void _stepStream(int direction);
     void _checkForLostCameras();
@@ -135,6 +138,7 @@ private:
     QStringList _cameraLabels;
     int _currentCameraIndex = 0;
     QElapsedTimer _lastZoomChange;
+    QElapsedTimer _lastFocusChange;
     QElapsedTimer _lastCameraChange;
     QTimer _camerasLostHeartbeatTimer;
     QMap<QString, CameraStruct*> _cameraInfoRequest;

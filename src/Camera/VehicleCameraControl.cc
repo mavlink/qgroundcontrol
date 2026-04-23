@@ -669,6 +669,45 @@ void VehicleCameraControl::stopZoom()
     }
 }
 
+void VehicleCameraControl::stepFocus(int direction)
+{
+    qCDebug(VehicleCameraControlLog) << "Camera step focus" << direction;
+    if(_vehicle && hasFocus()) {
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_SET_CAMERA_FOCUS,               // Command id
+            false,                                  // ShowError
+            FOCUS_TYPE_STEP,                        // Focus type
+            direction);                             // Direction (-1 in, 1 out)
+    }
+}
+
+void VehicleCameraControl::startFocus(int direction)
+{
+    qCDebug(VehicleCameraControlLog) << "Camera start focus" << direction;
+    if(_vehicle && hasFocus()) {
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_SET_CAMERA_FOCUS,               // Command id
+            false,                                  // ShowError
+            FOCUS_TYPE_CONTINUOUS,                  // Focus type
+            direction);                             // Direction (-1 in, 1 out)
+    }
+}
+
+void VehicleCameraControl::stopFocus()
+{
+    qCDebug(VehicleCameraControlLog) << "Camera stop focus";
+    if(_vehicle && hasFocus()) {
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_SET_CAMERA_FOCUS,               // Command id
+            false,                                  // ShowError
+            FOCUS_TYPE_CONTINUOUS,                  // Focus type
+            0);                                     // Direction (-1 in, 1 out)
+    }
+}
+
 void VehicleCameraControl::_requestCaptureStatus()
 {
     qCDebug(VehicleCameraControlLog) << "Camera request capture status - retries:" << _cameraCaptureStatusRetries;

@@ -32,6 +32,9 @@ public:
     void stepZoom(int /*direction*/) override {}
     void startZoom(int /*direction*/) override {}
     void stopZoom() override {}
+    void stepFocus(int /*direction*/) override {}
+    void startFocus(int /*direction*/) override {}
+    void stopFocus() override {}
     void stopStream() override {}
     bool stopTakePhoto() override { return false;}
     void resumeStream() override {}

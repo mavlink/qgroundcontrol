@@ -90,6 +90,7 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 
     _camerasLostHeartbeatTimer.setSingleShot(false);
     _lastZoomChange.start();
+    _lastFocusChange.start();
     _lastCameraChange.start();
     _camerasLostHeartbeatTimer.start(kHeartbeatTickMs);
 }
@@ -614,9 +615,12 @@ void QGCCameraManager::_activeJoystickChanged(Joystick *joystick)
 {
     qCDebug(CameraManagerLog) << "Joystick changed";
     if (_activeJoystick) {
-        (void) disconnect(_activeJoystick, &Joystick::stepZoom,            this, &QGCCameraManager::_stepZoom);
-        (void) disconnect(_activeJoystick, &Joystick::startContinuousZoom, this, &QGCCameraManager::_startZoom);
-        (void) disconnect(_activeJoystick, &Joystick::stopContinuousZoom,  this, &QGCCameraManager::_stopZoom);
+        (void) disconnect(_activeJoystick, &Joystick::stepZoom,             this, &QGCCameraManager::_stepZoom);
+        (void) disconnect(_activeJoystick, &Joystick::startContinuousZoom,  this, &QGCCameraManager::_startZoom);
+        (void) disconnect(_activeJoystick, &Joystick::stopContinuousZoom,   this, &QGCCameraManager::_stopZoom);
+        (void) disconnect(_activeJoystick, &Joystick::stepFocus,            this, &QGCCameraManager::_stepFocus);
+        (void) disconnect(_activeJoystick, &Joystick::startContinuousFocus, this, &QGCCameraManager::_startFocus);
+        (void) disconnect(_activeJoystick, &Joystick::stopContinuousFocus,  this, &QGCCameraManager::_stopFocus);
         (void) disconnect(_activeJoystick, &Joystick::stepCamera,          this, &QGCCameraManager::_stepCamera);
         (void) disconnect(_activeJoystick, &Joystick::stepStream,          this, &QGCCameraManager::_stepStream);
         (void) disconnect(_activeJoystick, &Joystick::triggerCamera,       this, &QGCCameraManager::_triggerCamera);
@@ -628,9 +632,12 @@ void QGCCameraManager::_activeJoystickChanged(Joystick *joystick)
     _activeJoystick = joystick;
 
     if (_activeJoystick) {
-        (void) connect(_activeJoystick, &Joystick::stepZoom,            this, &QGCCameraManager::_stepZoom, Qt::UniqueConnection);
-        (void) connect(_activeJoystick, &Joystick::startContinuousZoom, this, &QGCCameraManager::_startZoom, Qt::UniqueConnection);
-        (void) connect(_activeJoystick, &Joystick::stopContinuousZoom,  this, &QGCCameraManager::_stopZoom, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::stepZoom,             this, &QGCCameraManager::_stepZoom, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::startContinuousZoom,  this, &QGCCameraManager::_startZoom, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::stopContinuousZoom,   this, &QGCCameraManager::_stopZoom, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::stepFocus,            this, &QGCCameraManager::_stepFocus, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::startContinuousFocus, this, &QGCCameraManager::_startFocus, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::stopContinuousFocus,  this, &QGCCameraManager::_stopFocus, Qt::UniqueConnection);
         (void) connect(_activeJoystick, &Joystick::stepCamera,          this, &QGCCameraManager::_stepCamera, Qt::UniqueConnection);
         (void) connect(_activeJoystick, &Joystick::stepStream,          this, &QGCCameraManager::_stepStream, Qt::UniqueConnection);
         (void) connect(_activeJoystick, &Joystick::triggerCamera,       this, &QGCCameraManager::_triggerCamera, Qt::UniqueConnection);
@@ -699,6 +706,36 @@ void QGCCameraManager::_stopZoom()
     MavlinkCameraControlInterface *pCamera = currentCameraInstance();
     if (pCamera) {
         pCamera->stopZoom();
+    }
+}
+
+void QGCCameraManager::_stepFocus(int direction)
+{
+    if (_lastFocusChange.elapsed() > 40) {
+        _lastFocusChange.start();
+        qCDebug(CameraManagerLog) << "Step Camera Focus" << direction;
+        MavlinkCameraControlInterface *pCamera = currentCameraInstance();
+        if (pCamera) {
+            pCamera->stepFocus(direction);
+        }
+    }
+}
+
+void QGCCameraManager::_startFocus(int direction)
+{
+    qCDebug(CameraManagerLog) << "Start Camera Focus" << direction;
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
+    if (pCamera) {
+        pCamera->startFocus(direction);
+    }
+}
+
+void QGCCameraManager::_stopFocus()
+{
+    qCDebug(CameraManagerLog) << "Stop Camera Focus";
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
+    if (pCamera) {
+        pCamera->stopFocus();
     }
 }
 

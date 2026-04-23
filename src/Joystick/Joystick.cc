@@ -1442,6 +1442,14 @@ void Joystick::_executeButtonAction(const QString &action, const ButtonEvent_t b
         { _buttonActionStepZoomIn,              ButtonEventRepeat,          [this]() { emit stepZoom(1); } },
         { _buttonActionStepZoomOut,             ButtonEventDownTransition,  [this]() { emit stepZoom(-1); } },
         { _buttonActionStepZoomOut,             ButtonEventRepeat,          [this]() { emit stepZoom(-1); } },
+        { _buttonActionContinuousFocusIn,       ButtonEventDownTransition,  [this]() { emit startContinuousFocus(1); } },
+        { _buttonActionContinuousFocusIn,       ButtonEventRepeat,          [this]() { emit startContinuousFocus(1); } },
+        { _buttonActionContinuousFocusOut,      ButtonEventDownTransition,  [this]() { emit startContinuousFocus(-1); } },
+        { _buttonActionContinuousFocusOut,      ButtonEventRepeat,          [this]() { emit startContinuousFocus(-1); } },
+        { _buttonActionStepFocusIn,             ButtonEventDownTransition,  [this]() { emit stepFocus(1); } },
+        { _buttonActionStepFocusIn,             ButtonEventRepeat,          [this]() { emit stepFocus(1); } },
+        { _buttonActionStepFocusOut,            ButtonEventDownTransition,  [this]() { emit stepFocus(-1); } },
+        { _buttonActionStepFocusOut,            ButtonEventRepeat,          [this]() { emit stepFocus(-1); } },
         { _buttonActionNextStream,              ButtonEventDownTransition,  [this]() { emit stepStream(1); } },
         { _buttonActionPreviousStream,          ButtonEventDownTransition,  [this]() { emit stepStream(-1); } },
         { _buttonActionNextCamera,              ButtonEventDownTransition,  [this]() { emit stepCamera(1); } },
@@ -1556,6 +1564,10 @@ void Joystick::_buildAvailableButtonsActionList(Vehicle *vehicle)
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionContinuousZoomOut, true));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionStepZoomIn, true));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionStepZoomOut, true));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionContinuousFocusIn, true));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionContinuousFocusOut, true));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionStepFocusIn, true));
+    _availableButtonActions->append(new AvailableButtonAction(_buttonActionStepFocusOut, true));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionNextStream, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionPreviousStream, false));
     _availableButtonActions->append(new AvailableButtonAction(_buttonActionNextCamera, false));
