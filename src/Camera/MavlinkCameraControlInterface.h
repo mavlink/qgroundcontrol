@@ -159,6 +159,9 @@ public:
     Q_INVOKABLE virtual void stepZoom(int direction) = 0;
     Q_INVOKABLE virtual void startZoom(int direction) = 0;
     Q_INVOKABLE virtual void stopZoom() = 0;
+    Q_INVOKABLE virtual void stepFocus(int direction) = 0;
+    Q_INVOKABLE virtual void startFocus(int direction) = 0;
+    Q_INVOKABLE virtual void stopFocus() = 0;
     Q_INVOKABLE virtual void stopStream() = 0;
     Q_INVOKABLE virtual void resumeStream() = 0;
     Q_INVOKABLE virtual void startTrackingRect(QRectF rec) = 0;

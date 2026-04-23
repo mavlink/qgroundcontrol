@@ -333,6 +333,9 @@ signals:
     void startContinuousZoom(int direction);
     void stopContinuousZoom();
     void stepZoom(int direction);
+    void startContinuousFocus(int direction);
+    void stopContinuousFocus();
+    void stepFocus(int direction);
     void stepCamera(int direction);
     void stepStream(int direction);
     void triggerCamera();
@@ -472,6 +475,10 @@ private:
     static constexpr const char *_buttonActionContinuousZoomOut =  QT_TR_NOOP("Continuous Zoom Out");
     static constexpr const char *_buttonActionStepZoomIn =         QT_TR_NOOP("Step Zoom In");
     static constexpr const char *_buttonActionStepZoomOut =        QT_TR_NOOP("Step Zoom Out");
+    static constexpr const char *_buttonActionContinuousFocusIn =  QT_TR_NOOP("Continuous Focus In");
+    static constexpr const char *_buttonActionContinuousFocusOut = QT_TR_NOOP("Continuous Focus Out");
+    static constexpr const char *_buttonActionStepFocusIn =        QT_TR_NOOP("Step Focus In");
+    static constexpr const char *_buttonActionStepFocusOut =       QT_TR_NOOP("Step Focus Out");
     static constexpr const char *_buttonActionNextStream =         QT_TR_NOOP("Next Video Stream");
     static constexpr const char *_buttonActionPreviousStream =     QT_TR_NOOP("Previous Video Stream");
     static constexpr const char *_buttonActionNextCamera =         QT_TR_NOOP("Next Camera");
