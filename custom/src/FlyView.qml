@@ -110,8 +110,9 @@ Item {
         PipView {
             id:                     _pipView
             anchors.left:           parent.left
+            anchors.leftMargin:     260 + _toolsMargin
             anchors.bottom:         parent.bottom
-            anchors.margins:        _toolsMargin
+            anchors.bottomMargin:   56 + _toolsMargin
             item1IsFullSettingsKey: "MainFlyWindowIsMap"
             item1:                  mapControl
             item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
@@ -130,7 +131,7 @@ Item {
             anchors.left:           parent.left
             anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
             z:                      _fullItemZorder + 2 // we need to add one extra layer for map 3d viewer (normally was 1)
-            parentToolInsets:       _toolInsets
+            parentToolInsets:       customOverlay.totalToolInsets
             mapControl:             _mapControl
             visible:                !QGroundControl.videoManager.fullScreen
             utmspActTrigger:        utmspSendActTrigger

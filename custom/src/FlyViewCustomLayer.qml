@@ -37,6 +37,13 @@ Item {
     // ─────────────────────────────────────────────────────────────────────
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
+    property var _planMasterController: globals.planMasterControllerFlyView
+    property var _missionController:    _planMasterController ? _planMasterController.missionController : null
+    property int _currentWpIndex:       _missionController ? _missionController.currentMissionIndex    : 0
+    property int _totalWpCount:         _missionController ? _missionController.missionItemCount       : 0
+    property var _activeWpItem:         (_missionController && _missionController.visualItems && _currentWpIndex < _missionController.visualItems.count)
+                                        ? _missionController.visualItems.get(_currentWpIndex) : null
+
     readonly property real _topBarHeight:    44
     readonly property real _leftPanelWidth:  260
     readonly property real _rightPanelWidth: 260
@@ -68,6 +75,9 @@ Item {
     readonly property string _telAltitude: _activeVehicle ? _activeVehicle.vehicle.altitudeRelative.value.toFixed(1) : "—"
     readonly property string _telLat:      _activeVehicle ? _activeVehicle.coordinate.latitude.toFixed(6)      : "—"
     readonly property string _telLon:      _activeVehicle ? _activeVehicle.coordinate.longitude.toFixed(6)     : "—"
+
+    readonly property string _unitSpeed:    _activeVehicle ? _activeVehicle.vehicle.groundSpeed.units    : "m/s"
+    readonly property string _unitAltitude: _activeVehicle ? _activeVehicle.vehicle.altitudeRelative.units : "m"
 
     // Battery: first battery in the vehicle's battery list
     property var  _battery:     _activeVehicle && _activeVehicle.batteries.count > 0
@@ -604,7 +614,7 @@ Item {
                 Item { width: 8 }
                 Rectangle {
                     color: _clrCard; radius: 4; width: wpBadge.width + 10; height: 20
-                    Text { id: wpBadge; anchors.centerIn: parent; text: "2 / 6"; color: _clrMuted; font.pixelSize: 11 }
+                    Text { id: wpBadge; anchors.centerIn: parent; text: (_currentWpIndex + 1) + " / " + _totalWpCount; color: _clrMuted; font.pixelSize: 11 }
                 }
             }
 
@@ -613,32 +623,34 @@ Item {
                 Column {
                     id: actionCol; anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 8; spacing: 4
                     Text { text: "CURRENT ACTION"; color: _clrAmber; font.pixelSize: 10; font.bold: true }
-                    Text { text: "Continue the mission from the current waypoint"; color: "white"; font.pixelSize: 11; wrapMode: Text.WordWrap; width: parent.width }
+                    Text { text: _activeWpItem ? _activeWpItem.commandName : "No active mission item"; color: "white"; font.pixelSize: 11; wrapMode: Text.WordWrap; width: parent.width }
                     Text { text: "Slide or hold spacebar to confirm"; color: _clrMuted; font.pixelSize: 10 }
                 }
             }
 
             ListView {
                 id: waypointList; Layout.fillWidth: true; Layout.fillHeight: true; clip: true; spacing: 4
-                model: ListModel {
-                    ListElement { name: "Takeoff";    distance: "0 m";  status: "done"    }
-                    ListElement { name: "Waypoint 1"; distance: "50 m"; status: "done"    }
-                    ListElement { name: "Waypoint 2"; distance: "50 m"; status: "active"  }
-                    ListElement { name: "Waypoint 3"; distance: "50 m"; status: "pending" }
-                    ListElement { name: "Return";     distance: "30 m"; status: "pending" }
-                }
+                model: _missionController ? _missionController.visualItems : null
                 delegate: Rectangle {
-                    width: waypointList.width; height: 36; color: status === "active" ? "#1a3a5c" : "transparent"; radius: 4
+                    property string _status: index < _currentWpIndex  ? "done"
+                                           : index === _currentWpIndex ? "active"
+                                           :                             "pending"
+                    width: waypointList.width; height: 36
+                    color: _status === "active" ? "#1a3a5c" : "transparent"; radius: 4
                     Row {
                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8; spacing: 8
                         Rectangle {
                             width: 18; height: 18; radius: 9; anchors.verticalCenter: parent.verticalCenter
-                            color: status === "done" ? _clrGreen : status === "active" ? _clrBlue : "transparent"
-                            border.color: status === "pending" ? _clrMuted : "transparent"; border.width: 1
-                            Text { anchors.centerIn: parent; text: status === "done" ? "✓" : ""; color: "white"; font.pixelSize: 10 }
+                            color: _status === "done" ? _clrGreen : _status === "active" ? _clrBlue : "transparent"
+                            border.color: _status === "pending" ? _clrMuted : "transparent"; border.width: 1
+                            Text { anchors.centerIn: parent; text: _status === "done" ? "✓" : ""; color: "white"; font.pixelSize: 10 }
                         }
-                        Text { text: name; color: status === "active" ? "white" : _clrMuted; font.pixelSize: 12; font.bold: status === "active"; anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: distance; color: _clrMuted; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter }
+                        Text {
+                            text: object.commandName
+                            color: _status === "active" ? "white" : _clrMuted
+                            font.pixelSize: 12; font.bold: _status === "active"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
                     }
                 }
             }
@@ -652,12 +664,18 @@ Item {
                         Text { text: "▶"; color: "white"; font.pixelSize: 14; anchors.verticalCenter: parent.verticalCenter }
                         Text { text: "Continue Mission"; color: "white"; font.pixelSize: 13; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
                     }
-                    MouseArea { anchors.fill: parent; onClicked: console.log("Continue Mission") }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { if (_activeVehicle) _activeVehicle.flightMode = "Mission" }
+                    }
                 }
                 Rectangle {
                     width: 236; height: 36; color: "transparent"; radius: 6; border.color: _clrMuted; border.width: 1
                     Text { anchors.centerIn: parent; text: "Pause Mission"; color: _clrMuted; font.pixelSize: 13 }
-                    MouseArea { anchors.fill: parent; onClicked: console.log("Pause Mission") }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: { if (_activeVehicle) _activeVehicle.flightMode = "Hold" }
+                    }
                 }
             }
         }
@@ -690,7 +708,7 @@ Item {
                     Column {
                         anchors.verticalCenter: parent.verticalCenter; spacing: 2
                         Text { text: "SPEED"; color: _clrMuted; font.pixelSize: 10 }
-                        Text { text: root._telSpeed + " m/s"; color: "white"; font.pixelSize: 18; font.bold: true }
+                        Text { text: root._telSpeed + " " + root._unitSpeed; color: "white"; font.pixelSize: 18; font.bold: true }
                     }
                 }
             }
@@ -718,7 +736,7 @@ Item {
                         Text { text: "ALTITUDE"; color: _clrMuted; font.pixelSize: 10 }
                         Row {
                             spacing: 6
-                            Text { text: root._telAltitude + " m"; color: "white"; font.pixelSize: 18; font.bold: true }
+                            Text { text: root._telAltitude + " " + root._unitAltitude; color: "white"; font.pixelSize: 18; font.bold: true }
                             Text { text: "AGL"; color: _clrGreen; font.pixelSize: 10; anchors.verticalCenter: parent.verticalCenter }
                         }
                     }
@@ -804,7 +822,7 @@ Item {
     // COMMAND STRIP  (bottom bar)
     // Left:   ARM | armed status (live) | Flight Mode dropdown (Position/Mission/Hold)
     // Center: Complete Demo
-    // Right:  Return to Home (RTL) | Land Now | Retrieval Mech | Settings | AI/ML
+    // Right:  Return to Home (RTH) | Kill Switch | Retrieval Mech | Settings | AI/ML
     // =========================================================================
     Rectangle {
         id:             bottomBar
@@ -940,13 +958,13 @@ Item {
                 }
             }
 
-            // Land Now — commands guidedModeLand (controlled descent at current position)
+            // Kill Switch — commands guidedModeLand (controlled descent at current position)
             Rectangle {
                 width: landLbl.width + 24; height: 34; color: _clrKill; radius: 6
                 Row {
                     anchors.centerIn: parent; spacing: 6
                     Text { text: "↓"; color: "white"; font.pixelSize: 14; anchors.verticalCenter: parent.verticalCenter }
-                    Text { id: landLbl; text: "LAND NOW"; color: "white"; font.pixelSize: 12; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                    Text { id: landLbl; text: "KILL SWITCH"; color: "white"; font.pixelSize: 12; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
                 }
                 MouseArea {
                     anchors.fill: parent
