@@ -3,6 +3,7 @@
 #include "QGCLoggingCategory.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
+#include "Viewer3DTileReply.h"
 
 #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
@@ -164,7 +165,7 @@ void Viewer3DTileQuery::_cleanupReply(Viewer3DTileReply *reply)
     reply->deleteLater();
 }
 
-void Viewer3DTileQuery::_tileDone(Viewer3DTileReply::TileInfo_t tileData)
+void Viewer3DTileQuery::_tileDone(Viewer3DTileInfo tileData)
 {
     auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
 
@@ -188,7 +189,7 @@ void Viewer3DTileQuery::_tileDone(Viewer3DTileReply::TileInfo_t tileData)
     _cleanupReply(reply);
 }
 
-void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileReply::TileInfo_t tileData)
+void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileInfo tileData)
 {
     auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
     _cleanupReply(reply);
@@ -204,7 +205,7 @@ void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileReply::TileInfo_t tileData)
     }
 }
 
-void Viewer3DTileQuery::_tileEmpty(Viewer3DTileReply::TileInfo_t tileData)
+void Viewer3DTileQuery::_tileEmpty(Viewer3DTileInfo tileData)
 {
     auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
     _cleanupReply(reply);

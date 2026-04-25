@@ -1,5 +1,5 @@
 #include "PX4AirframeLoader.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "AirframeComponentAirframes.h"
 #include "AutoPilotPlugin.h"

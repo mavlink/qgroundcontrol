@@ -2,7 +2,7 @@
 #include "MAVLinkLib.h"
 #include "Vehicle.h"
 #include "LinkManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "AudioOutput.h"
 #ifndef QGC_NO_SERIAL_LINK
     #include "SerialLink.h"

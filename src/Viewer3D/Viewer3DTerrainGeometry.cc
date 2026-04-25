@@ -1,9 +1,12 @@
 #include "Viewer3DTerrainGeometry.h"
 
+#include "Fact.h"
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
+
+#include <QtCore/QByteArray>
 
 #include <cmath>
 

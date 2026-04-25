@@ -2,6 +2,7 @@
 
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCTileSet.h"
 
 static const QString kBingRoad = QStringLiteral("Bing Road");
 static const QString kBingSatellite = QStringLiteral("Bing Satellite");

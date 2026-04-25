@@ -1,7 +1,7 @@
 #include "APMFirmwarePlugin.h"
 #include "APMAutoPilotPlugin.h"
 #include "QGCMAVLink.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
@@ -21,7 +21,7 @@
 #include "StatusTextHandler.h"
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
-#include "DeviceInfo.h"
+#include "QGCSensors.h"
 
 #include <QtNetwork/QTcpSocket>
 
@@ -1331,7 +1331,7 @@ qreal APMFirmwarePlugin::calcAltOffsetP(uint32_t atmospheric1, uint32_t atmosphe
 QPair<QMetaObject::Connection,QMetaObject::Connection> APMFirmwarePlugin::startCompensatingBaro(Vehicle *vehicle)
 {
     // TODO: Running Average?
-    const QMetaObject::Connection baroPressureUpdater = QObject::connect(QGCDeviceInfo::QGCPressure::instance(), &QGCDeviceInfo::QGCPressure::pressureUpdated, vehicle, [vehicle](qreal pressure, qreal temperature){
+    const QMetaObject::Connection baroPressureUpdater = QObject::connect(QGCSensors::QGCPressure::instance(), &QGCSensors::QGCPressure::pressureUpdated, vehicle, [vehicle](qreal pressure, qreal temperature){
         if (!vehicle || !vehicle->flying()) {
             return;
         }
@@ -1357,7 +1357,7 @@ QPair<QMetaObject::Connection,QMetaObject::Connection> APMFirmwarePlugin::startC
         APMFirmwarePlugin::_setBaroAltOffset(vehicle, offset);
     });
 
-    const QMetaObject::Connection baroTempUpdater = connect(QGCDeviceInfo::QGCAmbientTemperature::instance(), &QGCDeviceInfo::QGCAmbientTemperature::temperatureUpdated, vehicle, [vehicle](qreal temperature){
+    const QMetaObject::Connection baroTempUpdater = connect(QGCSensors::QGCAmbientTemperature::instance(), &QGCSensors::QGCAmbientTemperature::temperatureUpdated, vehicle, [vehicle](qreal temperature){
         if (!vehicle || !vehicle->flying()) {
            return;
         }

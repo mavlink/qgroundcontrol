@@ -31,6 +31,7 @@ qt_add_plugin(QGCLocation
     QGCMapEngineManager.cc
     QGCMapEngineManager.h
     QGCMapTaskBase.h
+    QGCMapTasks.cpp
     QGCMapTasks.h
     QGCMapUrlEngine.cpp
     QGCMapUrlEngine.h
@@ -55,21 +56,19 @@ qt_add_plugin(QGCLocation
     QGeoTileFetcherQGC.h
 )
 
-# ----------------------------------------------------------------------------
-# Platform-Specific Configuration
-# ----------------------------------------------------------------------------
-# Google Maps not available on iOS
 if(IOS)
     target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
 endif()
 
-# ----------------------------------------------------------------------------
-# Dependencies
-# ----------------------------------------------------------------------------
 target_link_libraries(QGCLocation
     PRIVATE
         Qt6::Positioning
-        Qt6::Sql
+        QGCCompression
+        QGCDatabase
+        QGCFileSystem
+        QGCFormat
+        QGCLogging
+        QGCNetwork
     PUBLIC
         Qt6::Core
         Qt6::Location
@@ -80,6 +79,8 @@ target_link_libraries(QGCLocation
 target_include_directories(QGCLocation
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Providers
+    PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         ${CMAKE_CURRENT_SOURCE_DIR}/../FactSystem
         ${CMAKE_CURRENT_SOURCE_DIR}/../QmlControls
@@ -87,11 +88,13 @@ target_include_directories(QGCLocation
         ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain/Providers
         ${CMAKE_CURRENT_SOURCE_DIR}/../Settings
         ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/Compression
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/FileSystem
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/Logging
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/Network
-        Providers
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLocation)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} qtlocationplugin_resources
+    PREFIX "/res"
+    BASE "${CMAKE_SOURCE_DIR}/resources"
+    FILES
+        "${CMAKE_SOURCE_DIR}/resources/notile.png"
+)

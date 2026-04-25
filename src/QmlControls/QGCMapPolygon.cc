@@ -1,9 +1,9 @@
 #include "QGCMapPolygon.h"
 #include "QGCGeo.h"
-#include "JsonHelper.h"
+#include "GeoJsonHelper.h"
 #include "JsonParsing.h"
 #include "QGCQGeoCoordinate.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "ShapeFileHelper.h"
@@ -209,7 +209,7 @@ void QGCMapPolygon::saveToJson(QJsonObject& json)
 {
     QJsonValue jsonValue;
 
-    JsonHelper::saveGeoCoordinateArray(_polygonPath, false /* writeAltitude*/, jsonValue);
+    GeoJsonHelper::saveGeoCoordinateArray(_polygonPath, false /* writeAltitude*/, jsonValue);
     json.insert(jsonPolygonKey, jsonValue);
     setDirty(false);
 }
@@ -227,7 +227,7 @@ bool QGCMapPolygon::loadFromJson(const QJsonObject& json, bool required, QString
         return true;
     }
 
-    if (!JsonHelper::loadGeoCoordinateArray(json[jsonPolygonKey], false /* altitudeRequired */, _polygonPath, errorString)) {
+    if (!GeoJsonHelper::loadGeoCoordinateArray(json[jsonPolygonKey], false /* altitudeRequired */, _polygonPath, errorString)) {
         return false;
     }
 

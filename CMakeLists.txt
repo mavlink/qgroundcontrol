@@ -276,9 +276,7 @@ endif()
 # Don't route the big .qrcs through qt_add_big_resources — its pass2 object-file
 # output fails on MSVC ("No data signature found") when large data sections are elided.
 list(APPEND QGC_RESOURCES
-    "${CMAKE_SOURCE_DIR}/qgcimages.qrc"
     "${CMAKE_SOURCE_DIR}/qgcresources.qrc"
-    "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc"
 )
 
 # ============================================================================

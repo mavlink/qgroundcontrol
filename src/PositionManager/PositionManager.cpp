@@ -1,8 +1,8 @@
 #include "PositionManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "SimulatedPosition.h"
-// #include "DeviceInfo.h"
+// #include "QGCSensors.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QApplicationStatic>

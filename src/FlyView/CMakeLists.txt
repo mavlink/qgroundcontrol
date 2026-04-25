@@ -76,3 +76,20 @@ qt_add_qml_module(FlyViewModule
         VTOLChecklist.qml
     NO_PLUGIN
 )
+
+qt_add_resources(${CMAKE_PROJECT_NAME} flyview_resources
+    PREFIX "/res"
+    BASE "${CMAKE_SOURCE_DIR}/resources"
+    FILES
+        "${CMAKE_SOURCE_DIR}/resources/Gripper.svg"
+        "${CMAKE_SOURCE_DIR}/resources/land.svg"
+        "${CMAKE_SOURCE_DIR}/resources/NoVideoBackground.jpg"
+        "${CMAKE_SOURCE_DIR}/resources/pause-mission.svg"
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} flyview_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_SOURCE_DIR}/resources"
+    FILES
+        "${CMAKE_SOURCE_DIR}/resources/check.svg"
+)

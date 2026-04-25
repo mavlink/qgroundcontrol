@@ -1,6 +1,8 @@
 #include "MapProvider.h"
 #include <QGCLoggingCategory.h>
 
+#include "QGCTileSet.h"
+
 #include <QtCore/QLocale>
 #include <QtCore/QUrl>
 #include <QtLocation/private/qgeomaptype_p.h>

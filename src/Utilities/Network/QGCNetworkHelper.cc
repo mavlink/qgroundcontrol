@@ -919,32 +919,4 @@ void configureProxy(QNetworkAccessManager* manager)
 #endif
 }
 
-// ============================================================================
-// Compressed Data Helpers
-// ============================================================================
-
-bool looksLikeCompressedData(const QByteArray& data)
-{
-    return QGCCompression::isCompressionFormat(QGCCompression::detectFormatFromData(data));
-}
-
-QJsonDocument parseCompressedJson(const QByteArray& data, QJsonParseError* error)
-{
-    QByteArray jsonData = data;
-
-    // Decompress if needed
-    if (looksLikeCompressedData(data)) {
-        jsonData = QGCCompression::decompressData(data);
-        if (jsonData.isEmpty()) {
-            if (error) {
-                error->error = QJsonParseError::IllegalValue;
-                error->offset = 0;
-            }
-            return {};
-        }
-    }
-
-    return QJsonDocument::fromJson(jsonData, error);
-}
-
 }  // namespace QGCNetworkHelper

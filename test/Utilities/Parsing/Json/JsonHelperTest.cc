@@ -4,20 +4,21 @@
 #include <QtCore/QJsonObject>
 #include <QtPositioning/QGeoCoordinate>
 
-#include "JsonHelper.h"
+#include "GeoJsonHelper.h"
+#include "JsonParsing.h"
 
 void JsonHelperTest::_saveAndValidateExternalHeader_test()
 {
     QJsonObject obj;
-    JsonHelper::saveQGCJsonFileHeader(obj, "TestFile", 2);
+    JsonParsing::saveQGCJsonFileHeader(obj, "TestFile", 2);
 
-    QCOMPARE(obj[JsonHelper::jsonFileTypeKey].toString(), QStringLiteral("TestFile"));
-    QCOMPARE(obj[JsonHelper::jsonVersionKey].toInt(), 2);
+    QCOMPARE(obj[JsonParsing::jsonFileTypeKey].toString(), QStringLiteral("TestFile"));
+    QCOMPARE(obj[JsonParsing::jsonVersionKey].toInt(), 2);
     QVERIFY(obj.contains("groundStation"));
 
     int version = 0;
     QString errorString;
-    QVERIFY(JsonHelper::validateExternalQGCJsonFile(obj, "TestFile", 1, 3, version, errorString));
+    QVERIFY(JsonParsing::validateExternalQGCJsonFile(obj, "TestFile", 1, 3, version, errorString));
     QCOMPARE(version, 2);
     QVERIFY(errorString.isEmpty());
 }
@@ -25,12 +26,12 @@ void JsonHelperTest::_saveAndValidateExternalHeader_test()
 void JsonHelperTest::_validateInternalQGCJsonFile_test()
 {
     QJsonObject obj;
-    obj[JsonHelper::jsonFileTypeKey] = "TestType";
-    obj[JsonHelper::jsonVersionKey] = 2;
+    obj[JsonParsing::jsonFileTypeKey] = "TestType";
+    obj[JsonParsing::jsonVersionKey] = 2;
 
     int version = 0;
     QString errorString;
-    QVERIFY(JsonHelper::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
+    QVERIFY(JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
     QCOMPARE(version, 2);
     QVERIFY(errorString.isEmpty());
 }
@@ -38,36 +39,36 @@ void JsonHelperTest::_validateInternalQGCJsonFile_test()
 void JsonHelperTest::_validateInternalVersionTooOld_test()
 {
     QJsonObject obj;
-    obj[JsonHelper::jsonFileTypeKey] = "TestType";
-    obj[JsonHelper::jsonVersionKey] = 1;
+    obj[JsonParsing::jsonFileTypeKey] = "TestType";
+    obj[JsonParsing::jsonVersionKey] = 1;
 
     int version = 0;
     QString errorString;
-    QVERIFY(!JsonHelper::validateInternalQGCJsonFile(obj, "TestType", 2, 3, version, errorString));
+    QVERIFY(!JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 2, 3, version, errorString));
     QVERIFY(!errorString.isEmpty());
 }
 
 void JsonHelperTest::_validateInternalVersionTooNew_test()
 {
     QJsonObject obj;
-    obj[JsonHelper::jsonFileTypeKey] = "TestType";
-    obj[JsonHelper::jsonVersionKey] = 5;
+    obj[JsonParsing::jsonFileTypeKey] = "TestType";
+    obj[JsonParsing::jsonVersionKey] = 5;
 
     int version = 0;
     QString errorString;
-    QVERIFY(!JsonHelper::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
+    QVERIFY(!JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
     QVERIFY(!errorString.isEmpty());
 }
 
 void JsonHelperTest::_validateInternalWrongFileType_test()
 {
     QJsonObject obj;
-    obj[JsonHelper::jsonFileTypeKey] = "WrongType";
-    obj[JsonHelper::jsonVersionKey] = 2;
+    obj[JsonParsing::jsonFileTypeKey] = "WrongType";
+    obj[JsonParsing::jsonVersionKey] = 2;
 
     int version = 0;
     QString errorString;
-    QVERIFY(!JsonHelper::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
+    QVERIFY(!JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
     QVERIFY(errorString.contains("Incorrect file type"));
 }
 
@@ -78,7 +79,7 @@ void JsonHelperTest::_validateInternalMissingKeys_test()
 
     int version = 0;
     QString errorString;
-    QVERIFY(!JsonHelper::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
+    QVERIFY(!JsonParsing::validateInternalQGCJsonFile(obj, "TestType", 1, 3, version, errorString));
     QVERIFY(!errorString.isEmpty());
 }
 
@@ -89,13 +90,13 @@ void JsonHelperTest::_validateKeysRequired_test()
         {"count", 42},
     };
 
-    const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
         {"name", QJsonValue::String, true},
         {"count", QJsonValue::Double, true},
     };
 
     QString errorString;
-    QVERIFY(JsonHelper::validateKeys(obj, keyInfo, errorString));
+    QVERIFY(JsonParsing::validateKeys(obj, keyInfo, errorString));
     QVERIFY(errorString.isEmpty());
 }
 
@@ -105,13 +106,13 @@ void JsonHelperTest::_validateKeysOptional_test()
         {"name", "test"},
     };
 
-    const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
         {"name", QJsonValue::String, true},
         {"optional", QJsonValue::Double, false},
     };
 
     QString errorString;
-    QVERIFY(JsonHelper::validateKeys(obj, keyInfo, errorString));
+    QVERIFY(JsonParsing::validateKeys(obj, keyInfo, errorString));
     QVERIFY(errorString.isEmpty());
 }
 
@@ -121,12 +122,12 @@ void JsonHelperTest::_validateKeysWrongType_test()
         {"name", 123},
     };
 
-    const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
         {"name", QJsonValue::String, true},
     };
 
     QString errorString;
-    QVERIFY(!JsonHelper::validateKeys(obj, keyInfo, errorString));
+    QVERIFY(!JsonParsing::validateKeys(obj, keyInfo, errorString));
     QVERIFY(!errorString.isEmpty());
 }
 
@@ -137,13 +138,13 @@ void JsonHelperTest::_validateKeysStrictValid_test()
         {"count", 42},
     };
 
-    const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
         {"name", QJsonValue::String, true},
         {"count", QJsonValue::Double, true},
     };
 
     QString errorString;
-    QVERIFY(JsonHelper::validateKeysStrict(obj, keyInfo, errorString));
+    QVERIFY(JsonParsing::validateKeysStrict(obj, keyInfo, errorString));
     QVERIFY(errorString.isEmpty());
 }
 
@@ -155,13 +156,13 @@ void JsonHelperTest::_validateKeysStrictUnknownKey_test()
         {"extra", true},
     };
 
-    const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
         {"name", QJsonValue::String, true},
         {"count", QJsonValue::Double, true},
     };
 
     QString errorString;
-    QVERIFY(!JsonHelper::validateKeysStrict(obj, keyInfo, errorString));
+    QVERIFY(!JsonParsing::validateKeysStrict(obj, keyInfo, errorString));
     QVERIFY(errorString.contains("Unknown key"));
     QVERIFY(errorString.contains("extra"));
 }
@@ -172,13 +173,13 @@ void JsonHelperTest::_validateKeysStrictMissingRequired_test()
         {"name", "test"},
     };
 
-    const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+    const QList<JsonParsing::KeyValidateInfo> keyInfo = {
         {"name", QJsonValue::String, true},
         {"count", QJsonValue::Double, true},
     };
 
     QString errorString;
-    QVERIFY(!JsonHelper::validateKeysStrict(obj, keyInfo, errorString));
+    QVERIFY(!JsonParsing::validateKeysStrict(obj, keyInfo, errorString));
     QVERIFY(!errorString.isEmpty());
 }
 
@@ -187,12 +188,12 @@ void JsonHelperTest::_loadSaveGeoCoordinate_test()
     const QGeoCoordinate original(47.3764, 8.5481);
 
     QJsonValue jsonValue;
-    JsonHelper::saveGeoCoordinate(original, false, jsonValue);
+    GeoJsonHelper::saveGeoCoordinate(original, false, jsonValue);
     QVERIFY(jsonValue.isArray());
 
     QGeoCoordinate loaded;
     QString errorString;
-    QVERIFY(JsonHelper::loadGeoCoordinate(jsonValue, false, loaded, errorString));
+    QVERIFY(GeoJsonHelper::loadGeoCoordinate(jsonValue, false, loaded, errorString));
     QVERIFY(errorString.isEmpty());
     QCOMPARE_FUZZY(loaded.latitude(), original.latitude(), 1e-7);
     QCOMPARE_FUZZY(loaded.longitude(), original.longitude(), 1e-7);
@@ -203,37 +204,15 @@ void JsonHelperTest::_loadSaveGeoCoordinateWithAltitude_test()
     const QGeoCoordinate original(47.3764, 8.5481, 500.0);
 
     QJsonValue jsonValue;
-    JsonHelper::saveGeoCoordinate(original, true, jsonValue);
+    GeoJsonHelper::saveGeoCoordinate(original, true, jsonValue);
 
     QGeoCoordinate loaded;
     QString errorString;
-    QVERIFY(JsonHelper::loadGeoCoordinate(jsonValue, true, loaded, errorString));
+    QVERIFY(GeoJsonHelper::loadGeoCoordinate(jsonValue, true, loaded, errorString));
     QVERIFY(errorString.isEmpty());
     QCOMPARE_FUZZY(loaded.latitude(), original.latitude(), 1e-7);
     QCOMPARE_FUZZY(loaded.longitude(), original.longitude(), 1e-7);
     QCOMPARE_FUZZY(loaded.altitude(), original.altitude(), 1e-7);
-}
-
-void JsonHelperTest::_loadSaveGeoCoordinateGeoJson_test()
-{
-    const QGeoCoordinate original(47.3764, 8.5481);
-
-    QJsonValue jsonValue;
-    JsonHelper::saveGeoCoordinate(original, false, jsonValue, true);
-    QVERIFY(jsonValue.isArray());
-
-    // GeoJSON format: [lon, lat]
-    const QJsonArray arr = jsonValue.toArray();
-    QCOMPARE(arr.count(), 2);
-    QCOMPARE_FUZZY(arr[0].toDouble(), original.longitude(), 1e-7);
-    QCOMPARE_FUZZY(arr[1].toDouble(), original.latitude(), 1e-7);
-
-    QGeoCoordinate loaded;
-    QString errorString;
-    QVERIFY(JsonHelper::loadGeoCoordinate(jsonValue, false, loaded, errorString, true));
-    QVERIFY(errorString.isEmpty());
-    QCOMPARE_FUZZY(loaded.latitude(), original.latitude(), 1e-7);
-    QCOMPARE_FUZZY(loaded.longitude(), original.longitude(), 1e-7);
 }
 
 void JsonHelperTest::_loadGeoCoordinateInvalidArray_test()
@@ -242,14 +221,14 @@ void JsonHelperTest::_loadGeoCoordinateInvalidArray_test()
     QString errorString;
 
     // Not an array
-    QVERIFY(!JsonHelper::loadGeoCoordinate(QJsonValue("not array"), false, loaded, errorString));
+    QVERIFY(!GeoJsonHelper::loadGeoCoordinate(QJsonValue("not array"), false, loaded, errorString));
     QVERIFY(!errorString.isEmpty());
 
     // Wrong count (3 values when altitude not required = expects 2)
     errorString.clear();
     QJsonArray arr;
     arr << 1.0 << 2.0 << 3.0;
-    QVERIFY(!JsonHelper::loadGeoCoordinate(QJsonValue(arr), false, loaded, errorString));
+    QVERIFY(!GeoJsonHelper::loadGeoCoordinate(QJsonValue(arr), false, loaded, errorString));
     QVERIFY(!errorString.isEmpty());
 }
 
@@ -267,12 +246,12 @@ void JsonHelperTest::_loadSaveGeoCoordinateArray_test()
     }
 
     QJsonValue jsonValue;
-    JsonHelper::saveGeoCoordinateArray(varPoints, true, jsonValue);
+    GeoJsonHelper::saveGeoCoordinateArray(varPoints, true, jsonValue);
     QVERIFY(jsonValue.isArray());
 
     QVariantList loadedVarPoints;
     QString errorString;
-    QVERIFY(JsonHelper::loadGeoCoordinateArray(jsonValue, true, loadedVarPoints, errorString));
+    QVERIFY(GeoJsonHelper::loadGeoCoordinateArray(jsonValue, true, loadedVarPoints, errorString));
     QVERIFY(errorString.isEmpty());
     QCOMPARE(loadedVarPoints.count(), originals.count());
 
@@ -292,12 +271,12 @@ void JsonHelperTest::_loadSaveGeoCoordinateArrayQList_test()
     };
 
     QJsonValue jsonValue;
-    JsonHelper::saveGeoCoordinateArray(originals, false, jsonValue);
+    GeoJsonHelper::saveGeoCoordinateArray(originals, false, jsonValue);
     QVERIFY(jsonValue.isArray());
 
     QList<QGeoCoordinate> loadedPoints;
     QString errorString;
-    QVERIFY(JsonHelper::loadGeoCoordinateArray(jsonValue, false, loadedPoints, errorString));
+    QVERIFY(GeoJsonHelper::loadGeoCoordinateArray(jsonValue, false, loadedPoints, errorString));
     QVERIFY(errorString.isEmpty());
     QCOMPARE(loadedPoints.count(), originals.count());
 

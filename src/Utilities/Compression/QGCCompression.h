@@ -3,7 +3,10 @@
 #include "QGCCompressionTypes.h"
 
 #include <QtCore/QByteArray>
+#include <QtCore/QCryptographicHash>
 #include <QtCore/QIODevice>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonParseError>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
@@ -347,5 +350,24 @@ bool isDataCompressed(const QByteArray &data);
 
 /// Compression ratio from the last compressData() call (thread-local, percentage of original size).
 int lastCompressionRatio();
+
+/// Read file contents, transparently decompressing .gz/.xz/.zst/.bz2/.lz4 files.
+QByteArray readFile(const QString &filePath, QString *errorString = nullptr,
+                    qint64 maxBytes = 0);
+
+/// Hash file contents post-decompression.
+QString computeFileHash(const QString &filePath,
+                        QCryptographicHash::Algorithm algorithm = QCryptographicHash::Sha256);
+
+// ============================================================================
+// Compressed JSON Helpers
+// ============================================================================
+
+/// Quick check whether `data` begins with a recognized compression magic
+/// (gzip / xz / zstd / bzip2 / lz4). Wraps detectFormatFromData + isCompressionFormat.
+bool looksLikeCompressedData(const QByteArray &data);
+
+/// Parse JSON from data that may be compressed. Auto-detects gzip/xz/zstd/bzip2/lz4.
+QJsonDocument parseCompressedJson(const QByteArray &data, QJsonParseError *error = nullptr);
 
 } // namespace QGCCompression

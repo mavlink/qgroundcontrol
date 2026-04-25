@@ -1,35 +1,34 @@
 # ============================================================================
 # Decompression Subsystem
-# Unified decompression using libarchive (decompression-only)
 # Core formats: ZIP, GZIP, XZ/LZMA, ZSTD (always enabled)
 # Optional formats: LZ4, BZip2 (controlled by QGC_ENABLE_LZ4, QGC_ENABLE_BZIP2)
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        # Unified decompression interface
-        QGCCompression.cc
-        QGCCompression.h
-        QGCCompressionTypes.h
-        # Async job wrapper (QObject with signals)
-        QGCCompressionJob.cc
-        QGCCompressionJob.h
-        # QML model for archive contents
-        QGCArchiveModel.cc
-        QGCArchiveModel.h
-        # libarchive-based implementation (private)
-        QGClibarchive.cc
-        QGClibarchive.h
-        # QIODevice streaming wrappers
-        QGCArchiveDeviceBase.cc
-        QGCArchiveDeviceBase.h
-        QGCDecompressDevice.cc
-        QGCDecompressDevice.h
-        QGCArchiveFile.cc
-        QGCArchiveFile.h
+qt_add_library(QGCCompression STATIC
+    QGCCompression.cc
+    QGCCompression.h
+    QGCCompressionTypes.h
+    QGCCompressionJob.cc
+    QGCCompressionJob.h
+    QGCArchiveWatcher.cc
+    QGCArchiveWatcher.h
+    QGCArchiveModel.cc
+    QGCArchiveModel.h
+    QGClibarchive.cc
+    QGClibarchive.h
+    QGCArchiveDeviceBase.cc
+    QGCArchiveDeviceBase.h
+    QGCDecompressDevice.cc
+    QGCDecompressDevice.h
+    QGCArchiveFile.cc
+    QGCArchiveFile.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+qt_add_qml_module(QGCCompression
+    URI QGroundControl.Compression
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+)
 
 # ============================================================================
 # zlib Integration
@@ -61,8 +60,6 @@ CPMAddPackage(
 if(zlib_ADDED)
     qgc_disable_dependency_warnings(zlibstatic)
 endif()
-
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ZLIB::ZLIBSTATIC)
 
 # Export ZLIB paths for libarchive to find
 set(ZLIB_INCLUDE_DIR "${zlib_SOURCE_DIR};${zlib_BINARY_DIR}" CACHE PATH "" FORCE)
@@ -310,19 +307,47 @@ CPMAddPackage(
         "ENABLE_LZ4 ${_LIBARCHIVE_LZ4}"
 )
 
-if(TARGET archive_static)
-    qgc_disable_dependency_warnings(archive_static)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE archive_static)
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE LIBARCHIVE_STATIC)
-    if(QGC_ENABLE_BZIP2)
-        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ENABLE_BZIP2)
-    endif()
-    if(QGC_ENABLE_LZ4)
-        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ENABLE_LZ4)
-    endif()
-    message(STATUS "libarchive support enabled")
-else()
+if(NOT TARGET archive_static)
     message(FATAL_ERROR "libarchive target not found")
 endif()
+qgc_disable_dependency_warnings(archive_static)
+message(STATUS "libarchive support enabled")
 
+target_link_libraries(QGCCompression
+    PUBLIC
+        Qt6::Core
+        Qt6::Qml
+        Qt6::QmlIntegration
+        QGCFileSystem  # QGCArchiveWatcher.h inherits QGCFileWatcher
+    PRIVATE
+        Qt6::Concurrent
+        archive_static
+        ZLIB::ZLIBSTATIC
+        LibLZMA::LibLZMA
+        Zstd::Zstd
+        QGCLogging
+)
 
+target_include_directories(QGCCompression
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_compile_definitions(QGCCompression PRIVATE LIBARCHIVE_STATIC)
+if(QGC_ENABLE_BZIP2)
+    target_compile_definitions(QGCCompression PUBLIC QGC_ENABLE_BZIP2)
+endif()
+if(QGC_ENABLE_LZ4)
+    target_compile_definitions(QGCCompression PUBLIC QGC_ENABLE_LZ4)
+endif()
+
+target_precompile_headers(QGCCompression PRIVATE
+    <QtCore/QObject>
+    <QtCore/QString>
+    <QtCore/QByteArray>
+    <QtCore/QFile>
+    <QtCore/QIODevice>
+    <QtQmlIntegration/QtQmlIntegration>
+)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCCompression)

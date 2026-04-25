@@ -2,6 +2,7 @@
 #include "DataFlashParser.h"
 #include "ExifParser.h"
 #include "GeoTagImageModel.h"
+#include "QGCCompression.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "ULogParser.h"
@@ -1004,7 +1005,7 @@ QByteArray GeoTagController::_readImageCached(const QString &path, QString *erro
 
     // Read from disk (outside lock to allow parallel reads)
     QString error;
-    QByteArray data = QGCFileHelper::readFile(path, &error);
+    QByteArray data = QGCCompression::readFile(path, &error);
 
     if (data.isEmpty()) {
         if (errorString) {

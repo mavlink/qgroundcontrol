@@ -1,10 +1,10 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QVariant>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+class QVariant;
 class Vehicle;
 class Viewer3DMapProvider;
 

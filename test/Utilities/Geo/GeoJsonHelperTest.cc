@@ -2,6 +2,9 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonValue>
+#include <QtPositioning/QGeoCoordinate>
 
 #include "GeoJsonHelper.h"
 
@@ -287,6 +290,43 @@ void GeoJsonHelperTest::_loadPolylineFromPolygonFails_test()
     QVERIFY(coords.isEmpty());
     QVERIFY(!error.isEmpty());
     QVERIFY(error.contains("No polyline"));
+}
+
+void GeoJsonHelperTest::_loadSaveGeoJsonCoordinate_test()
+{
+    const QGeoCoordinate original(47.3764, 8.5481);
+
+    QJsonValue jsonValue;
+    GeoJsonHelper::saveGeoJsonCoordinate(original, false, jsonValue);
+    QVERIFY(jsonValue.isArray());
+
+    // GeoJSON ordering is [lon, lat] (RFC 7946).
+    const QJsonArray arr = jsonValue.toArray();
+    QCOMPARE(arr.count(), 2);
+    QCOMPARE_FUZZY(arr[0].toDouble(), original.longitude(), 1e-7);
+    QCOMPARE_FUZZY(arr[1].toDouble(), original.latitude(), 1e-7);
+
+    QGeoCoordinate loaded;
+    QString errorString;
+    QVERIFY(GeoJsonHelper::loadGeoJsonCoordinate(jsonValue, false, loaded, errorString));
+    QVERIFY(errorString.isEmpty());
+    QCOMPARE_FUZZY(loaded.latitude(), original.latitude(), 1e-7);
+    QCOMPARE_FUZZY(loaded.longitude(), original.longitude(), 1e-7);
+}
+
+void GeoJsonHelperTest::_loadSaveGeoJsonCoordinateWithAltitude_test()
+{
+    const QGeoCoordinate original(47.3764, 8.5481, 500.0);
+
+    QJsonValue jsonValue;
+    GeoJsonHelper::saveGeoJsonCoordinate(original, true, jsonValue);
+
+    QGeoCoordinate loaded;
+    QString errorString;
+    QVERIFY(GeoJsonHelper::loadGeoJsonCoordinate(jsonValue, true, loaded, errorString));
+    QVERIFY(errorString.isEmpty());
+    QCOMPARE_FUZZY(loaded.latitude(), original.latitude(), 1e-7);
+    QCOMPARE_FUZZY(loaded.longitude(), original.longitude(), 1e-7);
 }
 
 UT_REGISTER_TEST(GeoJsonHelperTest, TestLabel::Unit, TestLabel::Utilities)

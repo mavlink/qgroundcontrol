@@ -1,5 +1,5 @@
 #include "ArduRoverFirmwarePlugin.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "Vehicle.h"
 
 bool ArduRoverFirmwarePlugin::_remapParamNameIntialized = false;

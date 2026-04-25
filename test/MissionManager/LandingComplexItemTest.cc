@@ -1,13 +1,13 @@
+#include "JsonParsing.h"
 #include "QmlObjectListModel.h"
 #include "LandingComplexItemTest.h"
 
 #include "CameraSection.h"
 #include "CameraSectionTest.h"
 #include "Fixtures/TestFixtures.h"
-#include "JsonHelper.h"
 #include "MultiSignalSpy.h"
 #include "PlanMasterController.h"
-#include "QGC.h"
+#include "QGCMath.h"
 #include "SimpleMissionItem.h"
 
 using namespace TestFixtures;
@@ -233,7 +233,7 @@ void LandingComplexItemTest::_testSaveLoad()
 {
     QString errorString;
     QJsonObject saveObject = _item->_save();
-    saveObject[JsonHelper::jsonVersionKey] = 1;
+    saveObject[JsonParsing::jsonVersionKey] = 1;
     saveObject[VisualMissionItem::jsonTypeKey] = VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] = SimpleLandingComplexItem::jsonComplexItemTypeValue;
     // Test useDeprecatedRelAltKeys = false
@@ -265,7 +265,7 @@ void LandingComplexItemTest::_testSaveLoad()
     newItem->deleteLater();
     // Test for _jsonDeprecatedLoiterCoordinateKey support
     saveObject = _item->_save();
-    saveObject[JsonHelper::jsonVersionKey] = 1;
+    saveObject[JsonParsing::jsonVersionKey] = 1;
     saveObject[VisualMissionItem::jsonTypeKey] = VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] = SimpleLandingComplexItem::jsonComplexItemTypeValue;
     saveObject[LandingComplexItem::_jsonDeprecatedLoiterCoordinateKey] =

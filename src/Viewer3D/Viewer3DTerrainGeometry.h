@@ -6,6 +6,8 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DGeometry>
 
+#include <vector>
+
 class Viewer3DTerrainGeometry : public QQuick3DGeometry
 {
     Q_OBJECT

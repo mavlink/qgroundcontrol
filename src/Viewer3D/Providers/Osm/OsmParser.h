@@ -1,13 +1,17 @@
 #pragma once
 
-#include <QtCore/QVariant>
+#include <QtCore/QByteArray>
+#include <QtCore/QString>
 #include <QtGui/QVector2D>
 #include <QtGui/QVector3D>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <vector>
+
 #include "Viewer3DMapProvider.h"
 
 class OsmParserThread;
+class QVariant;
 
 class OsmParser : public Viewer3DMapProvider
 {

@@ -12,7 +12,7 @@
 #include "ElevationMapProvider.h"
 #include "FlightMapSettings.h"
 #include "QGCCachedTileSet.h"
-#include "QGC.h"
+#include "QGCFormat.h"
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
 #include "QGCLoggingCategory.h"

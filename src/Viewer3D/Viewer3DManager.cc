@@ -9,6 +9,8 @@
 #include "Viewer3DMapProvider.h"
 #include "Viewer3DSettings.h"
 
+#include <QtCore/QVariant>
+
 QGC_LOGGING_CATEGORY(Viewer3DManagerLog, "Viewer3d.Viewer3DManager")
 
 Viewer3DManager::Viewer3DManager(QObject *parent)

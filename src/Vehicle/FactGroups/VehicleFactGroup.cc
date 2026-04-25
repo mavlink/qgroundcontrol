@@ -1,6 +1,6 @@
 #include "VehicleFactGroup.h"
 #include "Vehicle.h"
-#include "QGC.h"
+#include "QGCMath.h"
 
 #include <cmath>
 

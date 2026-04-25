@@ -6,7 +6,7 @@
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "MissionCommandTree.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"

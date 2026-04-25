@@ -7,6 +7,7 @@ This directory contains development tools, scripts, and configuration files for 
 ```
 tools/
 ├── analyze.py               # Static analysis and formatting (clang-format, clang-tidy, cppcheck, clazy)
+├── build_profile.py         # Summarize Ninja and Clang time-trace build hotspots
 ├── check_deps.py            # Check for outdated dependencies
 ├── clean.sh                 # Clean build artifacts and caches
 ├── configure.py             # CMake configuration wrapper
@@ -76,6 +77,9 @@ Both read configuration from `.github/build-config.json` for consistent versioni
 # Run static analysis
 ./tools/analyze.py
 
+# Report build hotspots
+python3 ./tools/build_profile.py -B build
+
 # Clean build
 ./tools/clean.sh
 ```
@@ -105,6 +109,20 @@ Clean build artifacts and caches.
 ./tools/clean.sh --cache      # Clean only caches
 ./tools/clean.sh --dry-run    # Show what would be removed
 ```
+
+### build_profile.py
+
+Summarize build-time hotspots from Ninja logs and optional Clang time traces.
+
+```bash
+python3 ./tools/build_profile.py -B build                 # Report slowest Ninja edges and rebuild churn
+python3 ./tools/build_profile.py -B build --limit 25      # Show more rows per section
+python3 ./tools/build_profile.py -B build --json          # Machine-readable output
+```
+
+For per-translation-unit trace details, configure with `-DQGC_TIME_TRACE=ON`,
+rebuild, then run the same report. The script scans the build directory for
+Clang `-ftime-trace` JSON files and highlights the slowest traces and events.
 
 ### coverage.py
 

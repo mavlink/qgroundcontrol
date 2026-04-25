@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QByteArray>
+#include <QtCore/QList>
 #include <QtGui/QColor>
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>

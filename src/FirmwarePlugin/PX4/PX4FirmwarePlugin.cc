@@ -1,7 +1,7 @@
 #include "PX4FirmwarePlugin.h"
 #include "ParameterMetaData.h"
 #include "PX4ParameterMetaData.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "PX4AutoPilotPlugin.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"

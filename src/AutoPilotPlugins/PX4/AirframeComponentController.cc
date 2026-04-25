@@ -3,7 +3,7 @@
 #include <QtGui/QGuiApplication>
 #include "AirframeComponentAirframes.h"
 #include "MultiVehicleManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "LinkManager.h"
 #include "Fact.h"
 #include "Vehicle.h"

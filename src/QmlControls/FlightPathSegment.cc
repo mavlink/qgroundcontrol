@@ -1,5 +1,5 @@
 #include "FlightPathSegment.h"
-#include "QGC.h"
+#include "QGCMath.h"
 #include "QGCLoggingCategory.h"
 #include "TerrainQuery.h"
 

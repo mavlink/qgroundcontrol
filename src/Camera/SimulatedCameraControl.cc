@@ -1,6 +1,6 @@
 #include "SimulatedCameraControl.h"
 #include "FlyViewSettings.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"

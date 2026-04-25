@@ -6,7 +6,8 @@
 
 #include "AppSettings.h"
 #include "MapsSettings.h"
-#include "QGC.h"
+#include "AppMessages.h"
+#include "QGCCacheTile.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"

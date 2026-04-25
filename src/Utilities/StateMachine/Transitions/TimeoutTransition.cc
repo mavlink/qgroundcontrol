@@ -4,9 +4,14 @@
 #include <QtStateMachine/QStateMachine>
 
 TimeoutTransition::TimeoutTransition(int timeoutMsecs, QAbstractState* target)
-    : QGCSignalTransition(this, SIGNAL(timeout()))
-    , _timeoutMsecs(timeoutMsecs)
+    : _timeoutMsecs(timeoutMsecs)
 {
+    // Wire the QSignalTransition sender/signal after the base ctor returns.
+    // Passing `this` to the base ctor while members are still uninitialized
+    // trips GCC's `-Wmaybe-uninitialized` analyzer (false positive).
+    setSenderObject(this);
+    setSignal(SIGNAL(timeout()));
+
     if (target) {
         setTargetState(target);
     }

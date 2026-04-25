@@ -3,7 +3,12 @@
 #include <QtCore/QString>
 #include <QtCore/QVariantMap>
 
-#include <SDL3/SDL.h>
+#include <functional>
+
+// Forward-declare SDL types so consumers don't pull <SDL3/SDL.h> through
+// this header. Both are typedef'd from struct tags of the same name.
+struct SDL_Gamepad;
+struct SDL_GamepadBinding;
 
 /**
  * SDL joystick/gamepad utilities
@@ -171,37 +176,9 @@ bool isVirtualJoystick(int instanceId);
 /// Populate a QVariantMap with binding information from SDL_GamepadBinding
 void populateBindingResult(QVariantMap &result, const SDL_GamepadBinding *binding);
 
-/// Find a gamepad binding matching the given predicate
-/// @param gamepad The SDL gamepad to query
-/// @param matchFunc A callable that takes (const SDL_GamepadBinding*) and returns bool
-/// @return QVariantMap with binding info if found, or {"valid": false} if not
-template<typename MatchFunc>
-inline QVariantMap findBinding(SDL_Gamepad *gamepad, MatchFunc matchFunc)
-{
-    QVariantMap result;
-    result[QStringLiteral("valid")] = false;
-
-    if (!gamepad) {
-        return result;
-    }
-
-    int bindingCount = 0;
-    SDL_GamepadBinding **bindings = SDL_GetGamepadBindings(gamepad, &bindingCount);
-    if (!bindings) {
-        return result;
-    }
-
-    for (int i = 0; i < bindingCount; ++i) {
-        SDL_GamepadBinding *binding = bindings[i];
-        if (binding && matchFunc(binding)) {
-            populateBindingResult(result, binding);
-            SDL_free(bindings);
-            return result;
-        }
-    }
-
-    SDL_free(bindings);
-    return result;
-}
+/// Find a gamepad binding matching the given predicate.
+/// @return QVariantMap with binding info if found, or {"valid": false} if not.
+QVariantMap findBinding(SDL_Gamepad *gamepad,
+                        const std::function<bool(const SDL_GamepadBinding *)> &matchFunc);
 
 } // namespace SDLJoystick

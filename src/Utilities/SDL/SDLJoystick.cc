@@ -632,4 +632,33 @@ void populateBindingResult(QVariantMap &result, const SDL_GamepadBinding *bindin
     }
 }
 
+QVariantMap findBinding(SDL_Gamepad *gamepad,
+                        const std::function<bool(const SDL_GamepadBinding *)> &matchFunc)
+{
+    QVariantMap result;
+    result[QStringLiteral("valid")] = false;
+
+    if (!gamepad) {
+        return result;
+    }
+
+    int bindingCount = 0;
+    SDL_GamepadBinding **bindings = SDL_GetGamepadBindings(gamepad, &bindingCount);
+    if (!bindings) {
+        return result;
+    }
+
+    for (int i = 0; i < bindingCount; ++i) {
+        SDL_GamepadBinding *binding = bindings[i];
+        if (binding && matchFunc(binding)) {
+            populateBindingResult(result, binding);
+            SDL_free(bindings);
+            return result;
+        }
+    }
+
+    SDL_free(bindings);
+    return result;
+}
+
 } // namespace SDLJoystick

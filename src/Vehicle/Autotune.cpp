@@ -1,6 +1,6 @@
 #include "Autotune.h"
 #include "MAVLinkLib.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "Vehicle.h"
 
 //-----------------------------------------------------------------------------

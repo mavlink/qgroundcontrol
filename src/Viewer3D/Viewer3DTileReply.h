@@ -1,8 +1,9 @@
 #pragma once
 
-#include <QtCore/QByteArray>
 #include <QtCore/QObject>
-#include <QtCore/QString>
+#include <QtCore/qcontainerfwd.h>
+
+#include "Viewer3DTileInfo.h"
 
 struct QGCCacheTile;
 class QNetworkAccessManager;
@@ -14,13 +15,7 @@ class Viewer3DTileReply : public QObject
     Q_OBJECT
 
 public:
-    struct TileInfo_t {
-        QByteArray data;
-        int x = 0;
-        int y = 0;
-        int zoomLevel = 0;
-        int mapId = 0;
-    };
+    using TileInfo_t = Viewer3DTileInfo;
 
     explicit Viewer3DTileReply(int zoomLevel, int tileX, int tileY, int mapId, const QString &mapType, QNetworkAccessManager *networkManager, QObject *parent = nullptr);
     ~Viewer3DTileReply();

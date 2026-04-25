@@ -54,3 +54,75 @@ qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_common_resource
     PREFIX "/json"
     FILES PowerModulePresets.json
 )
+
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_common_images
+    PREFIX "/res"
+    BASE "${CMAKE_SOURCE_DIR}/resources"
+    FILES
+        "${CMAKE_SOURCE_DIR}/resources/Download.svg"
+        "${CMAKE_SOURCE_DIR}/resources/Upload.svg"
+)
+
+# Airframe icons. URL form: /qmlimages/Airframe/<name>.svg, populated dynamically
+# from PX4 AirframeFactMetaData.xml image="..." values and APM frame-class lookups.
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_common_airframes
+    PREFIX "/qmlimages/Airframe"
+    BASE "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images"
+    FILES
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/AirframeSimulation.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/AirframeUnknown.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/Airship.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/Autogyro.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/Boat.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/FlyingWing.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/FreeFlyer.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/Helicopter.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/HelicopterCoaxial.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/HexaRotorPlus.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/HexaRotorX.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/OctoRotorPlus.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/OctoRotorPlusCoaxial.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/OctoRotorX.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/OctoRotorXCoaxial.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/Plane.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/PlaneATail.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/PlaneVTail.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/QuadRotorATail.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/QuadRotorH.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/QuadRotorPlus.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/QuadRotorVTail.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/QuadRotorWide.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/QuadRotorX.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/Rover.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/Vectored6DofUUV.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/VTOLDuoRotorTailSitter.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/VTOLPlane.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/VTOLPlaneOcto.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/VTOLQuadRotorTailSitter.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/VTOLTiltRotor.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/Y6A.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/Y6B.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/YMinus.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/YPlus.svg"
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_common_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images"
+    FILES
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/AirframeComponentIcon.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/APMode.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/ArrowCCW.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/ArrowCW.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/ArrowDirection.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/CameraComponentIcon.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/FlightModesComponentIcon.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/MotorComponentIcon.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/PowerComponentIcon.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/RadioComponentIcon.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/SafetyComponentIcon.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/SensorsComponentIcon.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/StationMode.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/TuningComponentIcon.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/Common/Images/wifi.svg"
+)

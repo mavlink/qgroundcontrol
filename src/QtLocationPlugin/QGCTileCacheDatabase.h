@@ -1,8 +1,8 @@
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QList>
 #include <QtCore/QString>
-#include <QtSql/QSqlDatabase>
 
 #include <memory>
 #include <optional>
@@ -11,6 +11,7 @@
 #include "QGCTile.h"
 
 struct QGCCacheTile;
+class QSqlDatabase;
 
 class QGCTileCacheDatabase
 {

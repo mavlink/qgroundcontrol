@@ -10,7 +10,8 @@
 #include "FirmwarePlugin.h"
 #include "FactMetaData.h"
 #include "ParameterManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
+#include "QGCMath.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QMutexLocker>

@@ -1,7 +1,7 @@
 #include "AppSettings.h"
 #include "QGCFileHelper.h"
 #include "QGCPalette.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"

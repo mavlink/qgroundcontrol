@@ -1,5 +1,5 @@
 #include "FixedWingLandingComplexItem.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "MissionController.h"
 #include "MissionItem.h"
 #include "PlanMasterController.h"
@@ -57,7 +57,7 @@ void FixedWingLandingComplexItem::save(QJsonArray&  missionItems)
 {
     QJsonObject saveObject = _save();
 
-    saveObject[JsonHelper::jsonVersionKey]                  = 2;
+    saveObject[JsonParsing::jsonVersionKey]                  = 2;
     saveObject[VisualMissionItem::jsonTypeKey]              = VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey]  = jsonComplexItemTypeValue;
     saveObject[_jsonValueSetIsDistanceKey]                  = _valueSetIsDistanceFact.rawValue().toBool();
@@ -67,21 +67,21 @@ void FixedWingLandingComplexItem::save(QJsonArray&  missionItems)
 
 bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
 {
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey, QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
+        { JsonParsing::jsonVersionKey, QJsonValue::Double, true },
     };
-    if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
     }
 
-    int version = complexObject[JsonHelper::jsonVersionKey].toInt();
+    int version = complexObject[JsonParsing::jsonVersionKey].toInt();
     if (version == 1) {
         _valueSetIsDistanceFact.setRawValue(true);
     } else if (version == 2) {
-        QList<JsonHelper::KeyValidateInfo> v2KeyInfoList = {
+        QList<JsonParsing::KeyValidateInfo> v2KeyInfoList = {
             { _jsonValueSetIsDistanceKey,   QJsonValue::Bool,  true },
         };
-        if (!JsonHelper::validateKeys(complexObject, v2KeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(complexObject, v2KeyInfoList, errorString)) {
             _ignoreRecalcSignals = false;
             return false;
         }

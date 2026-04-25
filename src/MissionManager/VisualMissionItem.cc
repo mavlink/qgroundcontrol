@@ -2,7 +2,7 @@
 #include "TerrainQuery.h"
 #include "PlanMasterController.h"
 #include "Vehicle.h"
-#include "QGC.h"
+#include "QGCMath.h"
 
 // All VisualMissionItem derived classes are parented to masterController in order to tie their lifecycles together.
 

@@ -1,5 +1,7 @@
 #include "QGCMapUrlEngine.h"
 
+#include "QGCTileSet.h"
+
 #include <QtCore/QtMinMax>
 #include <QtCore/QUrl>
 

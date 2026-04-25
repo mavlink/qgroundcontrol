@@ -4,7 +4,7 @@
 #include "ArduRoverFirmwarePlugin.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"

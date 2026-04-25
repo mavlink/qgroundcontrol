@@ -1,6 +1,6 @@
 #include "AutoPilotPlugin.h"
 #include "FirmwarePlugin.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"

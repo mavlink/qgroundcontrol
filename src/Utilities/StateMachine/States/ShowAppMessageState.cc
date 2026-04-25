@@ -1,5 +1,5 @@
 #include "ShowAppMessageState.h"
-#include "QGC.h"
+#include "AppMessages.h"
 
 ShowAppMessageState::ShowAppMessageState(QState* parentState, const QString& appMessage)
     : QGCState("ShowAppMessageState", parentState)

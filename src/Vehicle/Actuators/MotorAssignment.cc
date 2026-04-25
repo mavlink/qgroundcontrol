@@ -1,6 +1,6 @@
 #include "MotorAssignment.h"
 #include "MAVLinkLib.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "ActuatorOutputs.h"
 #include "QmlObjectListModel.h"
 #include "Vehicle.h"

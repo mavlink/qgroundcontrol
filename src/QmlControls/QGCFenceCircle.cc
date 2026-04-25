@@ -1,5 +1,5 @@
 #include "QGCFenceCircle.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 
 QGCFenceCircle::QGCFenceCircle(QObject* parent)
     : QGCMapCircle  (parent)
@@ -43,7 +43,7 @@ void QGCFenceCircle::_setDirty(void)
 
 void QGCFenceCircle::saveToJson(QJsonObject& json)
 {
-    json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;
+    json[JsonParsing::jsonVersionKey] = _jsonCurrentVersion;
     json[_jsonInclusionKey] = _inclusion;
     QGCMapCircle::saveToJson(json);
 }
@@ -52,15 +52,15 @@ bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
 {
     errorString.clear();
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
+        { JsonParsing::jsonVersionKey,   QJsonValue::Double, true },
         { _jsonInclusionKey,            QJsonValue::Bool,   true },
     };
-    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
-    if (json[JsonHelper::jsonVersionKey].toInt() != _jsonCurrentVersion) {
+    if (json[JsonParsing::jsonVersionKey].toInt() != _jsonCurrentVersion) {
         errorString = tr("GeoFence Circle only supports version %1").arg(_jsonCurrentVersion);
         return false;
     }
