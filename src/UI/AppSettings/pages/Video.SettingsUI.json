@@ -46,7 +46,7 @@
         },
         {
             "heading": "Settings",
-            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed"],
+            "keywords": ["aspect ratio", "low latency", "disable when disarmed"],
             "showWhen": "!sourceDisabled && isStreamSource",
             "controls": [
                 {
@@ -60,9 +60,6 @@
                 {
                     "setting": "videoSettings.lowLatencyMode",
                     "showWhen": "!autoStreamConfig && isStreamSource && isGST"
-                },
-                {
-                    "setting": "videoSettings.forceVideoDecoder"
                 }
             ]
         },

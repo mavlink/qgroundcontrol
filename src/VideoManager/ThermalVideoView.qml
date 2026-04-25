@@ -22,7 +22,6 @@ Item {
     // binding on activeStreamChanged. Mirror the lookup into a plain property
     // and refresh it via the Connections block below.
     property var _thermalStream: null
-    readonly property var _thermalInfo: _thermalStream ? _thermalStream.videoStreamInfo : null
 
     function _refreshThermalStream() {
         const m = QGroundControl.videoManager.streamModel
@@ -39,12 +38,12 @@ Item {
         }
     }
 
-    width:  height * (_thermalInfo ? _thermalInfo.aspectRatio : 1.0)
+    width:  height * (_thermalStream ? _thermalStream.sourceAspectRatio : 1.0)
     // Default height for BLEND mode; overridden in states for FULL and PIP.
     height: camera ? parent.height * thermalHeightFactor : 0
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.verticalCenter:   parent.verticalCenter
-    visible: (_thermalInfo ? _thermalInfo.isThermal : false)
+    visible: (_thermalStream ? _thermalStream.sourceIsThermal : false)
              && camera
              && camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
 

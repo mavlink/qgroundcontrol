@@ -26,12 +26,35 @@ private slots:
     void _testAutoReconnectWhenWantRunningAfterStopCompleted();
     void _testNoAutoReconnectAfterExplicitStop();
 
-    // Backend switching
+    // Receiver/source routing
+    void _testVideoSourceCatalogOwnsSettingsClassification();
+    void _testVideoSourceAvailabilityOwnsRuntimeEnumeration();
     void _testSourceDescriptorCarriesPolicy();
-    void _testBackendRegistryDescriptorsAdvertiseCapabilities();
-    void _testFrameDeliveryAliasMatchesBridge();
-    void _testBackendSwitchDestroysReceiver();
-    void _testSinkPreservedAcrossBackendSwitch();
+    void _testVideoSourceResolverPrefersAutoStreamAndLimitsWriteback();
+    void _testVideoSourceControllerOwnsResolutionAndWriteback();
+    void _testVideoStreamUsesSourceMetadataSnapshot();
+    void _testVideoStreamExposesSnapshotMetadataForQml();
+    void _testGStreamerIngestSourcesUseQtDisplayReceiver();
+    void _testLocalCameraSourcesUseQtDisplayReceiver();
+    void _testGStreamerIngestPlaybackDeviceIsReceiverOnly();
+    void _testQtFfmpegRuntimePolicyAppliesDefaults();
+    void _testQtFfmpegRuntimePolicyPreservesExistingEnvironment();
+    void _testQtPlaybackTrackPolicyDisablesUnusedTracksForPlayback();
+    void _testVideoPlaybackRuntimeAppliesResolvedInput();
+    void _testStartRefreshesIngestPlaybackInput();
+    void _testReconnectRefreshesIngestPlaybackInput();
+    void _testVideoIngestControllerRefreshesIngestInput();
+    void _testVideoIngestControllerMarksTransportKind();
+    void _testVideoStreamAggregateMonitorTracksNonThermalStreams();
+    void _testVideoUvcControllerActivatesAndDeactivatesUvcStream();
+    void _testVideoStatsMovedOffStreamMetaObject();
+    void _testVideoStreamDoesNotOwnSettingsResolutionApi();
+    void _testLifecycleControllerOwnsFsmSignals();
+    void _testVideoStreamSessionOwnsLifecycleResources();
+    void _testFrameDeliveryAccessorIsAvailable();
+    void _testSourceModeSwitchPreservesReceiver();
+    void _testSinkPreservedAcrossSourceModeSwitch();
+    void _testSinkChangeRestartIsReceiverOwned();
 
     // Pending sink
     void _testRegisterSinkBeforeReceiverDeferred();
@@ -48,6 +71,7 @@ private slots:
     void _testNoReceiverMeansAccessorsReturnFalse();
 
     // Formal SessionState FSM
+    void _testLifecyclePolicyMapsRolesAndStates();
     void _testSessionStateChangedSignalEmitted();
     void _testSelfLoopDoesNotEmitSignal();
     void _testIsLegalTransitionTable();
@@ -55,14 +79,13 @@ private slots:
 
     // Recording integration (mock recorder injected via setRecorderForTest)
     void _testRecordingEmitsStartedStoppedSignals();
-    void _testRecordingFailsWithoutBridge();
+    void _testRecordingFailsWithoutFrameDelivery();
     void _testRecordingIdempotentStop();
-    void _testRecordingRejectsUnsupportedFormat();
 
     // Second-pass review new tests
     void _testReconnectBackoffDoubles();          ///< #13 exponential backoff
     void _testStreamInfoSwapReconnectsSignal();   ///< #2 stale infoChanged fix
-    void _testBackendSwitchPreservesSink();       ///< #12 async destroy + sink preservation
+    void _testSourceModeSwitchPreservesSink();    ///< #12 sink preservation
 
     // Shadow FSM integration (PR #5)
     /// Drives a full start → run → stop lifecycle and verifies the FSM

@@ -85,9 +85,6 @@ void SubtitleWriter::startCapturingTelemetry(const QString& videoFile, QSize siz
                   .arg(_size.height())
                   .arg(scaledFontSize);
 
-    // TODO: Find a good way to input title
-    // stream << QStringLiteral("Dialogue: 0,0:00:00.00,999:00:00.00,Default,,0,0,0,,{\\pos(5,35)}%1\n");
-
     _timer.start(1000 / _kSampleRate);
 }
 
@@ -96,8 +93,8 @@ void SubtitleWriter::setLiveVideoSink(QVideoSink* sink)
     _liveSink = sink;
 
     if (sink) {
-        // Always refresh — the bridge swap that triggered this call usually
-        // means the displayed video changed (backend switch or vehicle swap),
+        // Always refresh; the frame-delivery swap that triggered this call usually
+        // means the displayed video changed (receiver rebuild or vehicle swap),
         // and the OSD must follow what the user sees.
         _liveFacts = _gatherFacts();
         if (!_timer.isActive())

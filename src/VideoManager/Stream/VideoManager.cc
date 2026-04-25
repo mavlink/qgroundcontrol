@@ -2,26 +2,17 @@
 
 #include "AppSettings.h"
 #include "CameraControlBridge.h"
-#include "VideoBackendRegistry.h"
 #include "MultiVehicleManager.h"
-#include "QGC.h"
-#include "QGCApplication.h"
 #include "QGCCameraManager.h"
-#include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
-#include "QGCVideoStreamInfo.h"
 #include "QtFutureHelpers.h"
-#include "QtMultimediaReceiver.h"
 #include "SettingsManager.h"
-#include "RecordingCoordinator.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include "VideoFrameDelivery.h"
-#include "VideoReceiver.h"
-#include "VideoRecorder.h"
+#include "VideoBackendBootstrap.h"
+#include "VideoCameraBinder.h"
+#include "VideoMediaServices.h"
 #include "VideoSettings.h"
-#include "VideoFileNaming.h"
-#include "VideoStorageCleaner.h"
 #include "VideoStream.h"
 #include "VideoStreamModel.h"
 #include "VideoStreamOrchestrator.h"
@@ -29,15 +20,10 @@
 #include "GStreamer.h"
 #endif
 #include <QtCore/QApplicationStatic>
-#include <QtCore/QDir>
 #include <QtCore/QFuture>
 #include <QtCore/QPointer>
 #include <QtCore/QRunnable>
-#include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
-#include <QtCore/QTimer>
-#include <QtMultimedia/QMediaFormat>
-#include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickWindow>
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
@@ -49,24 +35,21 @@ Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);
 // Construction / singleton
 // ═══════════════════════════════════════════════════════════════════════════
 
-bool VideoManager::_shouldSkipBackendForUnitTests()
-{
-    return VideoBackendRegistry::instance().isAvailable(VideoReceiver::BackendKind::GStreamer) && qgcApp()
-           && QGC::runningUnitTests() && !qEnvironmentVariableIsSet("QGC_TEST_ENABLE_GSTREAMER");
-}
-
 VideoManager::VideoManager(QObject* parent)
     : QObject(parent),
       _videoSettings(SettingsManager::instance()->videoSettings()),
       _streamOrchestrator(new VideoStreamOrchestrator(_videoSettings, this)),
-      _recordingCoordinator(new RecordingCoordinator(this)),
+      _mediaServices(new VideoMediaServices(this)),
       _cameraBridge(new CameraControlBridge(
           [this]() {
               return CameraControlBridge::State{hasVideo(), decoding(), recording()};
           },
-          this))
+          this)),
+      _cameraBinder(new VideoCameraBinder(_streamOrchestrator, _cameraBridge, this))
 {
     qCDebug(VideoManagerLog) << this;
+
+    _mediaServices->bindStreamOrchestrator(_streamOrchestrator);
 
     // Camera → facade verbs. Bridge filters the MAVLink camera-control protocol.
     (void)connect(_cameraBridge, &CameraControlBridge::localRecordingRequested, this,
@@ -76,31 +59,16 @@ VideoManager::VideoManager(QObject* parent)
     (void)connect(_cameraBridge, &CameraControlBridge::localImageCaptureRequested, this,
                   [this](const QString& path) { grabImage(path); });
 
-    // Aggregate state transitions coalesce through _cameraStateDirty; one
-    // connection is enough for the bridge to keep the camera in sync.
     (void)connect(this, &VideoManager::_cameraStateDirty, _cameraBridge,
                   &CameraControlBridge::pushState);
 
-    // Orchestrator aggregate transitions → coalesced camera-state push.
-    // QML no longer binds the per-stream aggregates here; per-stream Q_PROPERTYs
-    // on VideoStream serve QML directly via streamModel.
     (void)connect(_streamOrchestrator, &VideoStreamOrchestrator::decodingChanged, this,
                   &VideoManager::_cameraStateDirty);
+    (void)connect(_streamOrchestrator, &VideoStreamOrchestrator::recordingChanged,
+                  _cameraBinder, &VideoCameraBinder::setRecording);
     (void)connect(_streamOrchestrator, &VideoStreamOrchestrator::recordingChanged, this,
                   [this](bool recording) {
-                      if (!recording) {
-                          _recordingCoordinator->stopSubtitleTelemetry();
-                          // Drain any vehicle-swap deferred during recording. Doing this
-                          // mid-recording would tear down the receiver, restart against
-                          // the new vehicle's URI, and corrupt the recording file with
-                          // mixed sources.
-                          if (_hasPendingCameraSwap) {
-                              _hasPendingCameraSwap = false;
-                              QGCCameraManager* cm = _pendingCameraManager.data();
-                              _pendingCameraManager.clear();
-                              _applyCameraManager(cm);
-                          }
-                      }
+                      Q_UNUSED(recording)
                       emit _cameraStateDirty();
                   });
     (void)connect(_streamOrchestrator, &VideoStreamOrchestrator::hasVideoChanged, this, [this]() {
@@ -110,28 +78,12 @@ VideoManager::VideoManager(QObject* parent)
     (void)connect(_streamOrchestrator, &VideoStreamOrchestrator::isStreamSourceChanged,
                   this, &VideoManager::isStreamSourceChanged);
 
-    // Primary bridge swap → tell coordinator about the new sink for subtitle overlay.
-    (void)connect(_streamOrchestrator, &VideoStreamOrchestrator::primaryBridgeChanged, this, [this]() {
-        auto* primary = _streamOrchestrator->primaryStream();
-        auto* bridge = primary ? primary->bridge() : nullptr;
-        _recordingCoordinator->setLiveSubtitleSink(bridge ? bridge->videoSink() : nullptr);
-    });
-
-    // Per-stream recording error → toast.
-    (void)connect(_streamOrchestrator, &VideoStreamOrchestrator::recordingError, this,
-                  [](const QString& msg) {
-                      qCWarning(VideoManagerLog) << "Recording error:" << msg;
-                      qgcApp()->showAppMessage(tr("Video recording error: %1").arg(msg));
-                  });
-
-    // Coordinator session transitions. Aggregate `recording` state is driven by
-    // the orchestrator's per-stream signal — no synthetic recordingChanged here.
-    (void)connect(_recordingCoordinator, &RecordingCoordinator::recordingStarted, this,
+    (void)connect(_mediaServices, &VideoMediaServices::recordingStarted, this,
                   &VideoManager::recordingStarted);
-    (void)connect(_recordingCoordinator, &RecordingCoordinator::imageFileChanged, this,
+    (void)connect(_mediaServices, &VideoMediaServices::imageFileChanged, this,
                   &VideoManager::imageFileChanged);
 
-    _backendDisabledForUnitTests = _shouldSkipBackendForUnitTests();
+    _backendDisabledForUnitTests = VideoBackendBootstrap::shouldSkipForUnitTests();
     if (_backendDisabledForUnitTests) {
         qCInfo(VideoManagerLog) << "Skipping backend initialization for unit tests";
     }
@@ -168,25 +120,11 @@ void VideoManager::startBackendInit()
         return;
     }
 
-    // Unit-test skip path and no-GStreamer build: synthesize a ready-true
-    // future so the rest of the pipeline doesn't need to branch on validity.
     if (_backendDisabledForUnitTests) {
         qCInfo(VideoManagerLog) << "Backend initialization disabled for unit tests";
-        _backendInitFuture = QtFuture::makeReadyValueFuture(true);
-        return;
     }
 
-    // The offscreen platform (CI boot tests) needs an explicit graphics API
-    if (qApp->platformName() == QLatin1String("offscreen")) {
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-    }
-
-#ifdef QGC_GST_STREAMING
-    const int decoderOption = _videoSettings->forceVideoDecoder()->rawValue().toInt();
-    _backendInitFuture = GStreamer::initAsync(decoderOption);
-#else
-    _backendInitFuture = QtFuture::makeReadyValueFuture(true);
-#endif
+    _backendInitFuture = VideoBackendBootstrap::start(_backendDisabledForUnitTests);
 }
 
 bool VideoManager::waitForBackendInit(int timeoutMs)
@@ -224,7 +162,7 @@ void VideoManager::init(QQuickWindow* mainWindow)
                                      if (!selfPtr)
                                          return;
 #ifdef QGC_GST_STREAMING
-                                     if (VideoBackendRegistry::instance().isAvailable(VideoReceiver::BackendKind::GStreamer))
+                                     if (GStreamer::isAvailable())
                                          GStreamer::setDebugLevel(value.toInt());
 #else
         Q_UNUSED(value);
@@ -232,9 +170,6 @@ void VideoManager::init(QQuickWindow* mainWindow)
                                  });
     (void)connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this,
                   &VideoManager::_setActiveVehicle);
-    (void)connect(this, &VideoManager::autoStreamConfiguredChanged, _streamOrchestrator,
-                  &VideoStreamOrchestrator::refreshFromSettings);
-
     if (!_backendInitFuture.isValid())
         startBackendInit();
 
@@ -271,28 +206,10 @@ void VideoManager::init(QQuickWindow* mainWindow)
 
     _initialized = true;
 
-    // Recover any sessions left behind by a prior crash. Deferred inside the
-    // coordinator to keep init() off the 3-second per-orphan probe path.
-    _recordingCoordinator->scheduleOrphanScan(
+    // Recover any sessions left behind by a prior crash. Deferred to keep
+    // init() off the 3-second per-orphan probe path.
+    _mediaServices->scheduleOrphanScan(
         QStandardPaths::writableLocation(QStandardPaths::MoviesLocation));
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Storage cleanup
-// ═══════════════════════════════════════════════════════════════════════════
-
-void VideoManager::_cleanupOldVideos()
-{
-    auto* videoSettings = SettingsManager::instance()->videoSettings();
-    if (!videoSettings->enableStorageLimit()->rawValue().toBool())
-        return;
-
-    const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
-    // Must match the containers listed in VideoRecorder::Capabilities.
-    static const QStringList nameFilters{QStringLiteral("*.mkv"), QStringLiteral("*.mov"), QStringLiteral("*.mp4")};
-
-    const uint64_t maxSize = videoSettings->maxVideoSize()->rawValue().toUInt() * qPow(1024, 2);
-    VideoStorageCleaner::pruneToLimit(savePath, nameFilters, maxSize);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -301,36 +218,18 @@ void VideoManager::_cleanupOldVideos()
 
 void VideoManager::startRecording(const QString& videoFile)
 {
-    const int rawFormat = _videoSettings->recordingFormat()->rawValue().toInt();
-    const auto fileFormat = static_cast<QMediaFormat::FileFormat>(rawFormat);
-
-    if (fileFormat != QMediaFormat::Matroska && fileFormat != QMediaFormat::QuickTime
-        && fileFormat != QMediaFormat::MPEG4) {
-        qgcApp()->showAppMessage(tr("Invalid video format defined."));
-        return;
-    }
-
-    const QString savePath = SettingsManager::instance()->appSettings()->videoSavePath();
-    if (savePath.isEmpty()) {
-        qgcApp()->showAppMessage(
-            tr("Unabled to record video. Video save path must be specified in Settings."));
-        return;
-    }
-
-    _cleanupOldVideos();
-
-    QList<VideoStream*> recordable;
-    _streamOrchestrator->forEachRecordableStream([&](VideoStream* s) { recordable.append(s); });
-
-    // Aggregate `recording` flips when the per-stream recorder reports
-    // recording=true; no synthetic emit needed here.
-    (void)_recordingCoordinator->startRecording(videoFile, recordable, _activeVehicle,
-                                                videoSize(), fileFormat, savePath);
+    (void)_mediaServices->startRecording(
+        videoFile,
+        _streamOrchestrator,
+        _activeVehicle,
+        videoSize(),
+        _videoSettings,
+        SettingsManager::instance()->appSettings()->videoSavePath());
 }
 
 void VideoManager::stopRecording()
 {
-    _recordingCoordinator->stopRecording();
+    _mediaServices->stopRecording();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -339,7 +238,7 @@ void VideoManager::stopRecording()
 
 void VideoManager::grabImage(const QString& imageFile)
 {
-    _recordingCoordinator->grabImage(
+    _mediaServices->grabImage(
         imageFile,
         _streamOrchestrator->primaryStream(),
         SettingsManager::instance()->appSettings()->photoSavePath());
@@ -356,11 +255,6 @@ bool VideoManager::decoding() const   { return _streamOrchestrator->decoding(); 
 bool VideoManager::recording() const  { return _streamOrchestrator->recording(); }
 bool VideoManager::hasVideo() const   { return _streamOrchestrator->hasVideo(); }
 
-bool VideoManager::isBackendAvailable(VideoReceiver::BackendKind kind)
-{
-    return VideoBackendRegistry::instance().isAvailable(kind);
-}
-
 void VideoManager::setfullScreen(bool on)
 {
     if (on) {
@@ -375,7 +269,7 @@ void VideoManager::setfullScreen(bool on)
 
 QString VideoManager::imageFile() const
 {
-    return _recordingCoordinator->imageFile();
+    return _mediaServices->imageFile();
 }
 
 bool VideoManager::isStreamSource() const
@@ -394,9 +288,7 @@ bool VideoManager::isStreamSource() const
 
 bool VideoManager::autoStreamConfigured() const
 {
-    auto* s = _streamOrchestrator->primaryStream();
-    auto* info = s ? s->videoStreamInfo() : nullptr;
-    return info && !info->isThermal() && !info->uri().isEmpty();
+    return _streamOrchestrator->autoStreamConfigured();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -443,28 +335,5 @@ void VideoManager::_setActiveVehicle(Vehicle* vehicle)
     }
 
     QGCCameraManager* newCameraManager = vehicle ? vehicle->cameraManager() : nullptr;
-
-    // Defer the camera/stream rebind while recording. Switching `videoStreamInfo`
-    // mid-recording triggers `updateFromSettings` → URI change → restart, which
-    // tears down the recorder and restarts it against the new vehicle's stream
-    // — the recording file ends up with mixed A+gap+B data. The deferred swap
-    // fires from the orchestrator's `recordingChanged(false)` handler above.
-    if (recording()) {
-        qCInfo(VideoManagerLog)
-            << "Recording in progress — deferring camera/stream swap until stop";
-        _pendingCameraManager = newCameraManager;
-        _hasPendingCameraSwap = true;
-        return;
-    }
-
-    _applyCameraManager(newCameraManager);
+    _cameraBinder->setCameraManager(newCameraManager);
 }
-
-void VideoManager::_applyCameraManager(QGCCameraManager* cm)
-{
-    _streamOrchestrator->setCameraManager(cm);
-    // Bridge handles stream stop/resume on the old/new camera and all
-    // camera-control signal (dis)connection.
-    _cameraBridge->setCamera(cm ? cm->currentCameraInstance() : nullptr);
-}
-

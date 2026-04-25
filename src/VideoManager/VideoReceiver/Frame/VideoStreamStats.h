@@ -21,6 +21,11 @@ class VideoStreamStats : public QObject
     QML_UNCREATABLE("")
     Q_DISABLE_COPY_MOVE(VideoStreamStats)
 
+    Q_PROPERTY(float fps READ fps NOTIFY fpsChanged)
+    Q_PROPERTY(Health streamHealth READ streamHealth NOTIFY streamHealthChanged)
+    Q_PROPERTY(float latencyMs READ latencyMs NOTIFY latencyChanged)
+    Q_PROPERTY(quint64 droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
+
 public:
     explicit VideoStreamStats(QObject* parent = nullptr);
 
@@ -39,6 +44,8 @@ public:
     [[nodiscard]] float fps() const;
 
     [[nodiscard]] Health streamHealth() const { return _streamHealth; }
+    [[nodiscard]] float latencyMs() const;
+    [[nodiscard]] quint64 droppedFrames() const;
 
     /// Reset all stats (on stream restart).
     void reset();
@@ -47,6 +54,7 @@ signals:
     void fpsChanged(float fps);
     void latencyChanged(float latencyMs);
     void streamHealthChanged(Health health);
+    void droppedFramesChanged(quint64 droppedFrames);
 
 private:
     void _onFrameArrived();
@@ -67,6 +75,7 @@ private:
     quint64 _lastUpdateFrameCount = 0;  ///< Frame count at previous _update() tick (idle gate)
     float _lastEmittedFps = 0.0f;
     float _lastEmittedLatency = -1.0f;
+    quint64 _lastEmittedDroppedFrames = 0;
     qint64 _lastFpsEmitMs = 0;      ///< Elapsed ms since last fpsChanged emission
     qint64 _lastLatencyEmitMs = 0;  ///< Elapsed ms since last latencyChanged emission
     Health _streamHealth = Health::Good;

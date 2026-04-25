@@ -3,7 +3,6 @@
 #include <QtCore/QObject>
 #include <QtCore/qmetatype.h>
 #include <QtQmlIntegration/QtQmlIntegration>
-#include <cstdint>
 
 /// Lightweight header exposing just the FSM's state enum.
 ///
@@ -18,7 +17,7 @@ namespace VideoStreamFsm {
 Q_NAMESPACE
 QML_ELEMENT
 
-enum class State : std::uint8_t
+enum class State : quint8
 {
     Idle,
     Starting,

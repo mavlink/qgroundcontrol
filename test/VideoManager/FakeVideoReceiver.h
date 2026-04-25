@@ -35,12 +35,7 @@ class FakeVideoReceiver : public VideoReceiver
 public:
     explicit FakeVideoReceiver(QObject* parent = nullptr);
 
-    /// Convenience constructor — sets CapStreaming and (optionally) BackendKind::GStreamer.
-    explicit FakeVideoReceiver(bool gstreamer, QObject* parent = nullptr);
-
     [[nodiscard]] Capabilities capabilities() const override { return _capabilities; }
-
-    [[nodiscard]] BackendKind kind() const override { return _backendKind; }
 
     [[nodiscard]] bool isStreaming() const override { return _streamingActive; }
 
@@ -50,9 +45,6 @@ public:
 
     /// Override capabilities. Defaults to CapStreaming for the parameterless ctor.
     void setCapabilities(Capabilities caps) { _capabilities = caps; }
-
-    /// Override backend kind. Defaults to BackendKind::QtMultimedia.
-    void setBackendKind(BackendKind k) { _backendKind = k; }
 
     /// Defer *Completed signals by this many ms via QTimer::singleShot.
     /// 0 = synchronous (signals fire on the calling stack).
@@ -70,6 +62,9 @@ public:
     int stopCallCount = 0;
     int startDecodingCallCount = 0;
     int stopDecodingCallCount = 0;
+    int sinkAboutToChangeCallCount = 0;
+    int sinkChangedCallCount = 0;
+    SinkChangeAction sinkChangeAction = SinkChangeAction::NoAction;
 
     // ── Test-side drivers ───────────────────────────────────────────────
 
@@ -110,21 +105,21 @@ public:
                                           QVideoFrameFormat::PixelFormat fmt = QVideoFrameFormat::Format_RGBA8888,
                                           QColor fill = Qt::black);
 
-    /// Announce a frame format on the owning VideoStream's bridge. Lets tests
-    /// exercise the pre-first-frame videoSize path (`announceFormat` updates
-    /// `bridge->videoSize()` without any frame having been delivered).
+    /// Announce a frame format on the owning VideoStream's frame delivery. Lets tests
+    /// exercise the pre-first-frame videoSize path (`frameDelivery()->videoSize()`
+    /// updates without any frame having been delivered).
     /// No-op if frame delivery hasn't been wired yet.
     void announceFormat(QSize size,
                         QVideoFrameFormat::PixelFormat fmt = QVideoFrameFormat::Format_RGBA8888);
 
-    /// Synthesize and push one frame through `frameDelivery()->deliverFrame()`.
+    /// Synthesize and push one frame through `frameDelivery()->forwardFrameToSink()`.
     /// Returns true if delivery accepted the frame (delivery wired + frame
     /// valid), false otherwise.
     bool deliverSyntheticFrame(QSize size = QSize(1280, 720));
 
     /// Burst-deliver `count` frames back-to-back from the current thread.
     /// Useful for exercising delivery backpressure / drop semantics. Returns
-    /// the number of `deliverFrame` calls issued (not the number that
+    /// the number of `forwardFrameToSink` calls issued (not the number that
     /// survived the backpressure gate).
     int deliverSyntheticFrames(int count, QSize size = QSize(1280, 720));
 
@@ -136,6 +131,10 @@ public slots:
     void pause() override;
     void resume() override;
 
+protected:
+    void onSinkAboutToChange() override;
+    [[nodiscard]] SinkChangeAction onSinkChanged(QVideoSink* newSink) override;
+
 private:
     /// Emit a *Completed signal — synchronously if asyncDelayMs == 0,
     /// otherwise via QTimer::singleShot.
@@ -146,7 +145,6 @@ private:
     static bool _consumeFlag(bool& flag);
 
     Capabilities _capabilities;
-    BackendKind _backendKind = BackendKind::QtMultimedia;
     int _asyncDelayMs = 0;
     bool _streamingActive = false;
     bool _decoderActive = false;
@@ -164,12 +162,12 @@ namespace FakeReceiverHelpers {
 ///
 /// configurer: optional callback invoked on each new receiver before it is
 /// returned, so tests can preset asyncDelayMs / failure flags / capabilities.
-inline VideoStream::ReceiverFactory makeFactory(FakeVideoReceiver** outReceiver = nullptr, bool gstreamer = false,
+inline VideoStream::ReceiverFactory makeFactory(FakeVideoReceiver** outReceiver = nullptr,
                                                 std::function<void(FakeVideoReceiver*)> configurer = {})
 {
-    return [outReceiver, gstreamer, configurer = std::move(configurer)](
+    return [outReceiver, configurer = std::move(configurer)](
                const VideoSourceResolver::VideoSource& /*source*/, bool /*thermal*/, QObject* parent) -> VideoReceiver* {
-        auto* r = new FakeVideoReceiver(gstreamer, parent);
+        auto* r = new FakeVideoReceiver(parent);
         if (configurer)
             configurer(r);
         if (outReceiver)

@@ -22,8 +22,8 @@
 /// `destroyed` is passed by shared_ptr so the queued lambda's copy keeps the
 /// flag alive even after the owning object is destroyed and releases its copy.
 ///
-/// Pass ref-owning RAII wrappers (e.g. GstNonFloatingPtr, GstMessagePtr) as
-/// lambda captures by-move to transfer ownership safely across the thread hop.
+/// Pass ref-owning values as lambda captures by-move to transfer ownership
+/// safely across the thread hop.
 namespace GstCallbackDispatch {
 
 template <typename Target, typename Fn>

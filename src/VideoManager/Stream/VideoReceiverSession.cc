@@ -5,33 +5,40 @@
 
 #include "QGCLoggingCategory.h"
 #include "VideoFrameDelivery.h"
-#include "VideoRecorderSessionController.h"
+#include "VideoRecordingService.h"
 #include "VideoRecorder.h"
 #include "VideoSinkRouter.h"
 #include "VideoStream.h"
 
-#ifdef QGC_GST_STREAMING
-#include "GstVideoReceiver.h"
-#endif
-
 QGC_LOGGING_CATEGORY(VideoReceiverSessionLog, "Video.ReceiverSession")
 
-VideoReceiverSession::VideoReceiverSession(QString name, bool thermal, ReceiverFactory factory, VideoStream* owner)
-    : QObject(owner)
+namespace {
+
+static constexpr int kMaxDrainingReceivers = 3;
+static constexpr int kDrainSafetyTimeoutMs = 3000;
+
+}  // namespace
+
+VideoReceiverSession::VideoReceiverSession(QString name,
+                                           bool thermal,
+                                           ReceiverFactory factory,
+                                           VideoStream* owner,
+                                           QObject* parent)
+    : QObject(parent ? parent : owner)
     , _name(std::move(name))
     , _thermal(thermal)
     , _factory(std::move(factory))
     , _owner(owner)
     , _sinkRouter(new VideoSinkRouter(_name, this))
-    , _recorderController(new VideoRecorderSessionController(owner, this))
+    , _recorderController(new VideoRecordingService(owner, this))
 {
-    connect(_recorderController, &VideoRecorderSessionController::recordingStarted,
+    connect(_recorderController, &VideoRecordingService::recordingStarted,
             this, &VideoReceiverSession::recordingStarted);
-    connect(_recorderController, &VideoRecorderSessionController::recordingChanged,
+    connect(_recorderController, &VideoRecordingService::recordingChanged,
             this, &VideoReceiverSession::recordingChanged);
-    connect(_recorderController, &VideoRecorderSessionController::recordingError,
+    connect(_recorderController, &VideoRecordingService::recordingError,
             this, &VideoReceiverSession::recordingError);
-    connect(_recorderController, &VideoRecorderSessionController::recorderChanged,
+    connect(_recorderController, &VideoRecordingService::recorderChanged,
             this, &VideoReceiverSession::recorderChanged);
 }
 
@@ -45,9 +52,9 @@ QVideoSink* VideoReceiverSession::videoSink() const
     return _sinkRouter ? _sinkRouter->videoSink() : nullptr;
 }
 
-VideoFrameDelivery* VideoReceiverSession::bridge() const
+VideoFrameDelivery* VideoReceiverSession::frameDelivery() const
 {
-    return _sinkRouter ? _sinkRouter->delivery() : nullptr;
+    return _sinkRouter ? _sinkRouter->frameDelivery() : nullptr;
 }
 
 VideoRecorder* VideoReceiverSession::recorder() const
@@ -59,9 +66,7 @@ bool VideoReceiverSession::requiresReceiverRecreate(const VideoSourceResolver::V
 {
     if (!_receiver)
         return false;
-    if (!source.isValid())
-        return true;
-    return _receiver->kind() != source.backend();
+    return !source.isValid();
 }
 
 VideoReceiverSession::EnsureResult VideoReceiverSession::ensureReceiver(const VideoSourceResolver::VideoSource& source)
@@ -79,8 +84,7 @@ VideoReceiverSession::EnsureResult VideoReceiverSession::ensureReceiver(const Vi
 
     result.created = true;
 
-    _receiver->setName(_name);
-    _receiver->setThermal(_thermal);
+    _receiver->configureSource(_source);
     result.hadPendingSink = _sinkRouter->attachReceiver(_receiver,
         [this](const std::function<void()>& fn) { _invokeOnReceiverThread(fn); });
 
@@ -96,11 +100,10 @@ bool VideoReceiverSession::destroyReceiver()
     if (!_receiver)
         return false;
 
-    _detachReceiverBridge();
+    _detachReceiverFrameDelivery();
     _disconnectReceiver();
 
     if (_receiver->started()) {
-        constexpr int kMaxDrainingReceivers = 3;
         while (_drainingReceivers.size() >= kMaxDrainingReceivers) {
             VideoReceiver* oldest = _drainingReceivers.takeFirst();
             qCWarning(VideoReceiverSessionLog) << _name
@@ -126,7 +129,7 @@ bool VideoReceiverSession::destroyReceiver()
             qCWarning(VideoReceiverSessionLog) << _name << "safety timeout: force-removing draining receiver";
             cleanup();
         });
-        safetyTimer->start(3000);
+        safetyTimer->start(kDrainSafetyTimeoutMs);
         draining->stop();
     } else {
         _receiver->deleteLater();
@@ -143,11 +146,11 @@ VideoReceiverSession::SinkResult VideoReceiverSession::registerVideoSink(QVideoS
         return {};
 
     const VideoSinkRouter::SinkResult result = _sinkRouter->registerVideoSink(
-        _receiver, _source, sink, [this](const std::function<void()>& fn) { _invokeOnReceiverThread(fn); });
-    return {result.bridgeChanged, result.restartRequested};
+        _receiver, sink, [this](const std::function<void()>& fn) { _invokeOnReceiverThread(fn); });
+    return {result.frameDeliveryChanged, result.restartRequested};
 }
 
-void VideoReceiverSession::createRecorder()
+void VideoReceiverSession::createRecorder(std::unique_ptr<VideoRecorder> preferredRecorder)
 {
     destroyRecorder();
 
@@ -155,7 +158,7 @@ void VideoReceiverSession::createRecorder()
         return;
 
     if (_recorderController)
-        _recorderController->create(_source, _receiver, bridge());
+        _recorderController->create(_source, _receiver, frameDelivery(), std::move(preferredRecorder));
 }
 
 void VideoReceiverSession::destroyRecorder()
@@ -194,13 +197,6 @@ void VideoReceiverSession::_wireReceiverSignals()
                               this, &VideoReceiverSession::receiverError);
     _receiverConns << connect(_receiver, &VideoReceiver::timeout,
                               this, &VideoReceiverSession::timeout);
-
-#ifdef QGC_GST_STREAMING
-    if (auto* gst = qobject_cast<GstVideoReceiver*>(_receiver)) {
-        _receiverConns << connect(gst, &GstVideoReceiver::sinkAttachedToLivePipeline,
-                                  this, &VideoReceiverSession::lateSinkRestartRequested);
-    }
-#endif
 }
 
 void VideoReceiverSession::_disconnectReceiver()
@@ -210,7 +206,7 @@ void VideoReceiverSession::_disconnectReceiver()
     _receiverConns.clear();
 }
 
-void VideoReceiverSession::_detachReceiverBridge()
+void VideoReceiverSession::_detachReceiverFrameDelivery()
 {
     if (!_receiver)
         return;

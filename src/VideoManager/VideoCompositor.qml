@@ -25,7 +25,6 @@ Item {
     // VideoStreamModel::activeStreamChanged(Primary) so downstream bindings
     // (decoding → _showVideo, videoSize → _sizeCalc) actually update.
     property var _primaryStream: null
-    readonly property var _primaryInfo:   _primaryStream ? _primaryStream.videoStreamInfo : null
     readonly property var _primarySize:   _primaryStream ? _primaryStream.videoSize : Qt.size(0, 0)
 
     property bool _showVideo: _primaryStream ? _primaryStream.decoding : false
@@ -51,7 +50,7 @@ Item {
         containerHeight: root.height
         aspectRatio:     root._primarySize.height > 0
                              ? root._primarySize.width / root._primarySize.height
-                             : (root._primaryInfo ? root._primaryInfo.aspectRatio : 0)
+                             : (root._primaryStream ? root._primaryStream.sourceAspectRatio : 0)
         fitMode:         QGroundControl.settingsManager.videoSettings.videoFit.rawValue
     }
 

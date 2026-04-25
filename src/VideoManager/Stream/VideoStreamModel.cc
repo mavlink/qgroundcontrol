@@ -41,8 +41,8 @@ QVariant VideoStreamModel::data(const QModelIndex& index, int role) const
             return s->isThermal();
         case IsActiveRole:
             return s->started();
-        case BridgeRole:
-            return QVariant::fromValue(s->bridge());
+        case FrameDeliveryRole:
+            return QVariant::fromValue(s->frameDelivery());
         case LastErrorRole:
             return s->lastError();
         case StreamRole:
@@ -56,7 +56,7 @@ QHash<int, QByteArray> VideoStreamModel::roleNames() const
 {
     return {
         {NameRole, "streamName"},   {UriRole, "streamUri"}, {IsThermalRole, "isThermal"},
-        {IsActiveRole, "isActive"}, {BridgeRole, "bridge"}, {LastErrorRole, "streamLastError"},
+        {IsActiveRole, "isActive"}, {FrameDeliveryRole, "frameDelivery"}, {LastErrorRole, "streamLastError"},
         {StreamRole, "stream"},
     };
 }
@@ -79,8 +79,8 @@ void VideoStreamModel::addStream(VideoStream* stream)
                   [this, stream]() { _onStreamChanged(stream, {IsActiveRole}); });
     (void)connect(stream, &VideoStream::streamingChanged, this,
                   [this, stream]() { _onStreamChanged(stream, {IsActiveRole}); });
-    (void)connect(stream, &VideoStream::bridgeChanged, this,
-                  [this, stream]() { _onStreamChanged(stream, {BridgeRole}); });
+    (void)connect(stream, &VideoStream::frameDeliveryChanged, this,
+                  [this, stream]() { _onStreamChanged(stream, {FrameDeliveryRole}); });
     (void)connect(stream, &VideoStream::lastErrorChanged, this,
                   [this, stream](const QString&) { _onStreamChanged(stream, {LastErrorRole}); });
 
@@ -89,7 +89,7 @@ void VideoStreamModel::addStream(VideoStream* stream)
     // streams were created (streamForRole returned null then); it relies on
     // activeStreamChanged to retry sink registration. Without this emission,
     // boot-at-RTSP leaves the sink unregistered on the videoContent stream
-    // and frames flow into a detached bridge.
+    // and frames flow into a detached frame delivery.
     emit activeStreamChanged(static_cast<int>(stream->role()));
 }
 

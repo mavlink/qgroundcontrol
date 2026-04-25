@@ -8,7 +8,10 @@
 #include "VideoFileNaming.h"
 #include "VideoFrameDelivery.h"
 #include "VideoRecorder.h"
+#include "VideoRecordingPolicy.h"
 #include "VideoStream.h"
+#include "VideoSettings.h"
+#include "VideoStorageCleaner.h"
 
 #include <QtCore/QList>
 #include <QtCore/QTimer>
@@ -33,6 +36,40 @@ RecordingCoordinator::RecordingCoordinator(QObject* parent)
 }
 
 RecordingCoordinator::~RecordingCoordinator() = default;
+
+bool RecordingCoordinator::startRecordingFromSettings(const QString& videoFile,
+                                                      const QList<VideoStream*>& recordable,
+                                                      const Vehicle* activeVehicle,
+                                                      QSize videoSize,
+                                                      VideoSettings* videoSettings,
+                                                      const QString& savePath)
+{
+    if (!videoSettings)
+        return false;
+
+    const int rawFormat = videoSettings->recordingFormat()->rawValue().toInt();
+    const auto fileFormat = static_cast<QMediaFormat::FileFormat>(rawFormat);
+
+    if (!VideoRecordingPolicy::isSupportedFileFormat(fileFormat)) {
+        qgcApp()->showAppMessage(tr("Invalid video format defined."));
+        return false;
+    }
+
+    if (savePath.isEmpty()) {
+        qgcApp()->showAppMessage(
+            tr("Unabled to record video. Video save path must be specified in Settings."));
+        return false;
+    }
+
+    if (videoSettings->enableStorageLimit()->rawValue().toBool()) {
+        VideoStorageCleaner::pruneToLimit(
+            savePath,
+            VideoRecordingPolicy::videoNameFilters(),
+            VideoRecordingPolicy::storageLimitBytes(videoSettings->maxVideoSize()->rawValue().toUInt()));
+    }
+
+    return startRecording(videoFile, recordable, activeVehicle, videoSize, fileFormat, savePath);
+}
 
 bool RecordingCoordinator::startRecording(const QString& videoFile,
                                           const QList<VideoStream*>& recordable,
@@ -106,23 +143,23 @@ void RecordingCoordinator::grabImage(const QString& imageFile,
     else
         _imageFile = imageFile;
 
-    // Async grab via the primary bridge; on empty result the signal-driven
+    // Async grab via the primary frame delivery; on empty result the signal-driven
     // QML grabToImage fallback below handles the save.
-    if (primaryStream && primaryStream->bridge()) {
+    if (primaryStream && primaryStream->frameDelivery()) {
         const QString target = _imageFile;
-        primaryStream->bridge()->grabFrame().then(this, [this, target](const QImage& image) {
+        primaryStream->frameDelivery()->grabFrame().then(this, [this, target](const QImage& image) {
             if (!image.isNull() && image.save(target)) {
                 qCDebug(RecordingCoordinatorLog) << "Grabbed frame to" << target;
                 emit imageFileChanged(target);
                 return;
             }
-            qCDebug(RecordingCoordinatorLog) << "Bridge grab unavailable, falling back to QML grabToImage";
+            qCDebug(RecordingCoordinatorLog) << "Frame delivery grab unavailable, falling back to QML grabToImage";
             emit imageFileChanged(target);
         });
         return;
     }
 
-    qCDebug(RecordingCoordinatorLog) << "Bridge grab unavailable, falling back to QML grabToImage";
+    qCDebug(RecordingCoordinatorLog) << "Frame delivery grab unavailable, falling back to QML grabToImage";
     emit imageFileChanged(_imageFile);
 }
 

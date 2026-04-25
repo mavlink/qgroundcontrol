@@ -158,7 +158,7 @@ void RecordingSession::stop()
     // alive until _onRecorderStopped decrements _activeRecorders to zero and
     // _finalizeAndCleanup() clears the list (which destroys the unique_ptrs).
 
-    // If recorder stops were synchronous (StubRecorder in tests, or BridgeRecorder
+    // If recorder stops were synchronous (StubRecorder in tests, or FrameDeliveryRecorder
     // during teardown with no pending frames), _onRecorderStopped already ran
     // _finalizeAndCleanup which cleared _manifestPath. isActive() checks that path,
     // so this guards against double-finalize.

@@ -5,42 +5,14 @@
 #include <QtCore/QVariantList>
 #include <QtMultimedia/QMediaFormat>
 
-#include "UVCReceiver.h"
-#include "VideoBackendRegistry.h"
-#include "VideoManager.h"
+#include "VideoSourceAvailability.h"
 
 QGC_LOGGING_CATEGORY(VideoSettingsLog, "Settings.VideoSettings")
-
-#ifdef QGC_GST_STREAMING
-#include "GStreamer.h"
-#endif
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
     // Setup enum values for videoSource settings into meta data
-    QVariantList videoSourceList;
-
-    // Network stream sources — always available via QtMultimedia (FFmpeg backend)
-    videoSourceList.append(videoSourceRTSP);
-    videoSourceList.append(videoSourceUDPH264);
-    videoSourceList.append(videoSourceUDPH265);
-    videoSourceList.append(videoSourceTCP);
-    videoSourceList.append(videoSourceMPEGTS);
-    videoSourceList.append(videoSource3DRSolo);
-    videoSourceList.append(videoSourceParrotDiscovery);
-    videoSourceList.append(videoSourceYuneecMantisG);
-    if (VideoManager::gstreamerEnabled())
-        videoSourceList.append(videoSourceGstPipeline);
-
-    videoSourceList.append(videoSourceHerelinkAirUnit);
-    videoSourceList.append(videoSourceHerelinkHotspot);
-
-    if (VideoBackendRegistry::instance().isAvailable(VideoReceiver::BackendKind::UVC)) {
-        const QStringList uvcDevices = UVCReceiver::getDeviceNameList();
-        for (const QString& device : uvcDevices) {
-            videoSourceList.append(device);
-        }
-    }
+    QVariantList videoSourceList = VideoSourceAvailability::availableSourceNames();
     if (videoSourceList.count() == 0) {
         _noVideo = true;
         videoSourceList.append(videoSourceNoVideo);
@@ -83,8 +55,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
         }
     }
 
-    _setForceVideoDecodeList();
-
     // Set default value for videoSource
     _setDefaults();
 }
@@ -125,18 +95,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
         connect(_videoSourceFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _videoSourceFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
-{
-    if (!_forceVideoDecoderFact) {
-        _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
-
-        _forceVideoDecoderFact->setUserVisible(VideoManager::gstreamerEnabled());
-
-        connect(_forceVideoDecoderFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
-    }
-    return _forceVideoDecoderFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, lowLatencyMode)
@@ -194,7 +152,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, gstPipelineUrl)
 {
     if (!_gstPipelineUrlFact) {
         _gstPipelineUrlFact = _createSettingsFact(gstPipelineUrlName);
-        _gstPipelineUrlFact->setUserVisible(VideoManager::gstreamerEnabled());
         connect(_gstPipelineUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _gstPipelineUrlFact;
@@ -202,37 +159,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, gstPipelineUrl)
 
 VideoSettings::SourceType VideoSettings::sourceTypeFromString(const QString& s)
 {
-    // Ordered by frequency of use in practice
-    static const struct
-    {
-        const char* str;
-        SourceType type;
-    } kMap[] = {
-        {videoDisabled, SourceType::Disabled},
-        {videoSourceNoVideo, SourceType::NoVideo},
-        {videoSourceRTSP, SourceType::RTSP},
-        {videoSourceUDPH264, SourceType::UDPH264},
-        {videoSourceUDPH265, SourceType::UDPH265},
-        {videoSourceTCP, SourceType::TCP},
-        {videoSourceMPEGTS, SourceType::MPEGTS},
-        {videoSourceGstPipeline, SourceType::GstPipeline},
-        {videoSource3DRSolo, SourceType::Solo3DR},
-        {videoSourceParrotDiscovery, SourceType::ParrotDiscovery},
-        {videoSourceYuneecMantisG, SourceType::YuneecMantisG},
-        {videoSourceHerelinkAirUnit, SourceType::HerelinkAirUnit},
-        {videoSourceHerelinkHotspot, SourceType::HerelinkHotspot},
-    };
-
-    for (const auto& entry : kMap) {
-        if (s == entry.str)
-            return entry.type;
-    }
-
-    // UVC devices are dynamic names not in the table
-    if (VideoBackendRegistry::instance().isAvailable(VideoReceiver::BackendKind::UVC) && UVCReceiver::deviceExists(s))
-        return SourceType::UVC;
-
-    return SourceType::Unknown;
+    return VideoSourceAvailability::sourceTypeFromString(s);
 }
 
 VideoSettings::SourceType VideoSettings::currentSourceType()
@@ -242,75 +169,14 @@ VideoSettings::SourceType VideoSettings::currentSourceType()
 
 bool VideoSettings::streamConfigured()
 {
-    if (VideoManager::instance()->autoStreamConfigured())
-        return true;
-
-    switch (currentSourceType()) {
-        case SourceType::NoVideo:
-        case SourceType::Disabled:
-        case SourceType::Unknown:
-            return false;
-
-        case SourceType::UDPH264:
-        case SourceType::UDPH265:
-        case SourceType::MPEGTS:
-            return !udpUrl()->rawValue().toString().isEmpty();
-
-        case SourceType::RTSP:
-            return !rtspUrl()->rawValue().toString().isEmpty();
-
-        case SourceType::TCP:
-            return !tcpUrl()->rawValue().toString().isEmpty();
-
-        case SourceType::GstPipeline:
-            return !gstPipelineUrl()->rawValue().toString().isEmpty();
-
-        case SourceType::Solo3DR:
-        case SourceType::ParrotDiscovery:
-        case SourceType::YuneecMantisG:
-        case SourceType::HerelinkAirUnit:
-        case SourceType::HerelinkHotspot:
-        case SourceType::UVC:
-            return true;
-    }
-
-    return false;
+    return VideoSourceAvailability::manualSourceConfigured(currentSourceType(),
+                                                          rtspUrl()->rawValue().toString(),
+                                                          udpUrl()->rawValue().toString(),
+                                                          tcpUrl()->rawValue().toString(),
+                                                          gstPipelineUrl()->rawValue().toString());
 }
 
 void VideoSettings::_configChanged(QVariant)
 {
     emit streamConfiguredChanged(streamConfigured());
-}
-
-void VideoSettings::_setForceVideoDecodeList()
-{
-#ifdef QGC_GST_STREAMING
-    static const QList<GStreamer::VideoDecoderOptions> removeForceVideoDecodeList{
-#if defined(Q_OS_ANDROID)
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderIntel,
-#elif defined(Q_OS_LINUX)
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-#elif defined(Q_OS_WIN)
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVulkan,
-#elif defined(Q_OS_MACOS)
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
-#elif defined(Q_OS_IOS)
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderIntel,
-#endif
-    };
-
-    for (const auto& value : removeForceVideoDecodeList) {
-        _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(value);
-    }
-#endif
 }

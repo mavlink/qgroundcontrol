@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QFuture>
-#include <QtCore/QHash>
 #include <QtCore/QPromise>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
@@ -9,22 +8,17 @@
 #include <QtCore/QSize>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <functional>
-#include <memory>
 
-#include "VideoBackendRegistry.h"
-#include "VideoReceiver.h"  // BackendKind (enum class, must be complete for Q_PROPERTY-adjacent uses)
 #include "VideoStreamModel.h"
 #include "VideoStreamOrchestrator.h"
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
 class CameraControlBridge;
-class QGCCameraManager;
 class QQuickWindow;
-class RecordingCoordinator;
 class Vehicle;
-class VideoFrameDelivery;
-class VideoReceiver;
+class VideoCameraBinder;
+class VideoMediaServices;
 class VideoSettings;
 
 class VideoManager : public QObject
@@ -34,16 +28,12 @@ class VideoManager : public QObject
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Vehicle.h")
 
-    Q_PROPERTY(bool gstreamerEnabled READ gstreamerEnabled CONSTANT)
-    Q_PROPERTY(bool qtmultimediaEnabled READ qtmultimediaEnabled CONSTANT)
     Q_PROPERTY(bool autoStreamConfigured READ autoStreamConfigured NOTIFY autoStreamConfiguredChanged)
     Q_PROPERTY(bool fullScreen READ fullScreen WRITE setfullScreen NOTIFY fullScreenChanged)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(bool isStreamSource READ isStreamSource NOTIFY isStreamSourceChanged)
     Q_PROPERTY(QString imageFile READ imageFile NOTIFY imageFileChanged)
     Q_PROPERTY(VideoStreamModel* streamModel READ streamModel CONSTANT)
-
-    friend class VideoManagerIntegrationTest;
 
 public:
     explicit VideoManager(QObject* parent = nullptr);
@@ -78,23 +68,12 @@ public:
 
     void setfullScreen(bool on);
 
-    /// Backend-agnostic availability check. Prefer this in new code; the
-    /// per-backend wrappers below stay because they're exposed as QML
-    /// Q_PROPERTY bindings (gstreamerEnabled / qtmultimediaEnabled) and
-    /// callers outside this module.
-    static bool isBackendAvailable(VideoReceiver::BackendKind kind);
-
-    static bool gstreamerEnabled() { return isBackendAvailable(VideoReceiver::BackendKind::GStreamer); }
-
-    static bool qtmultimediaEnabled() { return isBackendAvailable(VideoReceiver::BackendKind::QtMultimedia); }
-
-    static bool uvcEnabled() { return isBackendAvailable(VideoReceiver::BackendKind::UVC); }
-
     /// Exposes the stream orchestrator for test harnesses that need to
     /// drive stream lifecycle directly. Production QML code should use the
     /// Q_PROPERTY `streamModel`.
     VideoStreamOrchestrator* streamOrchestrator() const { return _streamOrchestrator; }
 
+#ifdef QGC_UNITTEST_BUILD
     /// Test hook — replaces the default production stream factory so unit
     /// tests can substitute stubbed streams. Forwards to the orchestrator.
     void setCreateVideoStreamsForTest(std::function<void()> fn)
@@ -105,6 +84,7 @@ public:
     /// Test hook — lets a test-owned QQuickWindow stand in for the real
     /// app window without driving the full startup path.
     void setMainWindowForTest(QQuickWindow* window) { _mainWindow = window; }
+#endif
 
 signals:
     void autoStreamConfiguredChanged();
@@ -112,7 +92,6 @@ signals:
     void hasVideoChanged();
     void imageFileChanged(const QString& filename);
     void isStreamSourceChanged();
-    void recordingChanged(bool recording);
     void recordingStarted(const QString& filename);
 
     /// Coalesced notifier for hasVideo/decoding/recording; the active camera
@@ -122,21 +101,14 @@ signals:
 private slots:
     void _setActiveVehicle(Vehicle* vehicle);
 
-    void _applyCameraManager(QGCCameraManager* cm);
-
 private:
-    static bool _shouldSkipBackendForUnitTests();
-    static void _cleanupOldVideos();
-
-
     QPointer<VideoSettings> _videoSettings;
     VideoStreamOrchestrator* _streamOrchestrator = nullptr;
-    RecordingCoordinator* _recordingCoordinator = nullptr;
+    VideoMediaServices* _mediaServices = nullptr;
     CameraControlBridge* _cameraBridge = nullptr;
+    VideoCameraBinder* _cameraBinder = nullptr;
     QQuickWindow* _mainWindow = nullptr;
     Vehicle* _activeVehicle = nullptr;
-    QPointer<QGCCameraManager> _pendingCameraManager;
-    bool _hasPendingCameraSwap = false;
 
     QFuture<bool> _backendInitFuture;
     bool _initialized = false;

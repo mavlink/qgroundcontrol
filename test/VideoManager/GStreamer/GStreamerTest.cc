@@ -7,18 +7,35 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "VideoManager.GStreamer.GStreamerTest")
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QTemporaryDir>
+#include <QtConcurrent/QtConcurrentRun>
+#include <QtTest/QSignalSpy>
 #include <gst/gst.h>
 
 #include "GStreamer.h"
-#include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
-#include "GstFormatTable.h"
-#include "GstVideoReceiver.h"
+#include "GstNativeRecorder.h"
+#include "GstRemuxPipeline.h"
+#include "GstIngestSession.h"
+#include "GstStreamDevice.h"
+#include "VideoManager/FakeVideoReceiver.h"
+#include "VideoFrameDelivery.h"
+#include "VideoReceiver.h"
+#include "VideoRecorder.h"
+#include "VideoRecordingPolicy.h"
 
-#ifdef Q_OS_MACOS
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
-#endif
+namespace {
+
+bool factoryAvailable(const char* factoryName)
+{
+    GstElementFactory* factory = gst_element_factory_find(factoryName);
+    if (!factory)
+        return false;
+    gst_object_unref(factory);
+    return true;
+}
+
+}  // namespace
 
 void GStreamerTest::init()
 {
@@ -50,126 +67,6 @@ void GStreamerTest::init()
     }
 }
 
-void GStreamerTest::_testIsValidRtspUri()
-{
-    QVERIFY(GStreamer::isValidRtspUri("rtsp://127.0.0.1:8554/test"));
-    QVERIFY(GStreamer::isValidRtspUri("rtsp://user:pass@10.0.0.1/stream"));
-    QVERIFY(GStreamer::isValidRtspUri("rtspu://192.168.1.1:554/video"));
-    QVERIFY(GStreamer::isValidRtspUri("rtspt://example.com/live"));
-
-    QVERIFY(!GStreamer::isValidRtspUri(nullptr));
-    QVERIFY(!GStreamer::isValidRtspUri(""));
-    QVERIFY(!GStreamer::isValidRtspUri("not-a-uri"));
-    QVERIFY(!GStreamer::isValidRtspUri("http://example.com"));
-    QVERIFY(!GStreamer::isValidRtspUri("udp://127.0.0.1:5600"));
-    QVERIFY(!GStreamer::isValidRtspUri("rtsp://"));
-}
-
-void GStreamerTest::_testIsHardwareDecoderFactory()
-{
-    GList* factories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-
-    if (!factories) {
-        QSKIP("No video decoder factories available on this system");
-    }
-
-    int total = 0;
-    int hwCount = 0;
-    int swCount = 0;
-
-    for (GList* node = factories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        QVERIFY(factory != nullptr);
-
-        const gchar* name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
-        QVERIFY(name != nullptr);
-
-        if (GStreamer::isHardwareDecoderFactory(factory)) {
-            ++hwCount;
-        } else {
-            ++swCount;
-        }
-        ++total;
-    }
-
-    qCDebug(GStreamerTestLog) << "Decoder factory classification:" << total << "total," << hwCount << "hardware," << swCount
-                              << "software";
-
-    QVERIFY(total > 0);
-    QVERIFY(swCount > 0);
-    QVERIFY(!GStreamer::isHardwareDecoderFactory(nullptr));
-
-    gst_plugin_feature_list_free(factories);
-}
-
-void GStreamerTest::_testSetCodecPrioritiesDefault()
-{
-    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
-
-    GstRegistry* registry = gst_registry_get();
-    QVERIFY(registry != nullptr);
-}
-
-void GStreamerTest::_testSetCodecPrioritiesSoftware()
-{
-    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
-
-    GList* factories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-
-    if (!factories) {
-        QSKIP("No video decoder factories available on this system");
-    }
-
-    bool foundPrioritizedSoftware = false;
-    for (GList* node = factories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        if (!factory)
-            continue;
-
-        if (!GStreamer::isHardwareDecoderFactory(factory)) {
-            const guint rank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(factory));
-            if (rank > GST_RANK_MARGINAL) {
-                foundPrioritizedSoftware = true;
-                break;
-            }
-        }
-    }
-
-    QVERIFY(foundPrioritizedSoftware);
-
-    gst_plugin_feature_list_free(factories);
-}
-
-void GStreamerTest::_testSetCodecPrioritiesHardware()
-{
-    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderHardware);
-
-    GList* factories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-
-    if (!factories) {
-        QSKIP("No video decoder factories available on this system");
-    }
-
-    for (GList* node = factories; node != nullptr; node = node->next) {
-        GstElementFactory* factory = GST_ELEMENT_FACTORY(node->data);
-        if (!factory)
-            continue;
-
-        if (!GStreamer::isHardwareDecoderFactory(factory)) {
-            const guint rank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(factory));
-            QCOMPARE(rank, static_cast<guint>(GST_RANK_NONE));
-        }
-    }
-
-    gst_plugin_feature_list_free(factories);
-}
-
 void GStreamerTest::_testRedirectGLibLogging()
 {
     GStreamer::redirectGLibLogging();
@@ -192,15 +89,17 @@ void GStreamerTest::_testVerifyRequiredPlugins()
     // qml6 and qgc are QGC-built static plugins only registered by
     // _registerPlugins() during GStreamer::completeInit(). They aren't in the
     // registry from a bare gst_init_check(), so just verify the registry
-    // loaded *some* plugins and that playbin is available (from system GStreamer).
+    // loaded *some* plugins and that the ingest-session factories are available.
     GList* plugins = gst_registry_get_plugin_list(registry);
     const int pluginCount = g_list_length(plugins);
     gst_plugin_list_free(plugins);
     QVERIFY2(pluginCount > 0, "GStreamer registry contains no plugins at all");
 
-    GstElementFactory* playbinFactory = gst_element_factory_find("playbin");
-    QVERIFY2(playbinFactory, "Required factory not found: playbin");
-    gst_object_unref(playbinFactory);
+    for (const char* factoryName : {"parsebin", "queue", "h264parse", "h265parse", "mpegtsmux", "appsink"}) {
+        GstElementFactory* factory = gst_element_factory_find(factoryName);
+        QVERIFY2(factory, qPrintable(QStringLiteral("Required factory not found: %1").arg(factoryName)));
+        gst_object_unref(factory);
+    }
 }
 
 void GStreamerTest::_testEnvironmentSetup()
@@ -286,23 +185,243 @@ void GStreamerTest::_testCompleteInit()
     GstRegistry* registry = gst_registry_get();
     QVERIFY(registry);
 
-    // The current renderer is QGC-owned appsink -> QVideoFrame delivery, not
-    // the old qgc/qgcvideosinkbin static plugin path.
-    GstElementFactory* appsinkFactory = gst_element_factory_find("appsink");
-    QVERIFY2(appsinkFactory, "Factory 'appsink' not found after completeInit()");
-    gst_object_unref(appsinkFactory);
-
-    GstElementFactory* playbinFactory = gst_element_factory_find("playbin");
-    QVERIFY2(playbinFactory, "Factory 'playbin' not found after completeInit()");
-    gst_object_unref(playbinFactory);
+    for (const char* factoryName : {"parsebin", "queue", "h264parse", "h265parse", "mpegtsmux", "appsink"}) {
+        GstElementFactory* factory = gst_element_factory_find(factoryName);
+        QVERIFY2(factory, qPrintable(QStringLiteral("Factory not found after completeInit(): %1").arg(factoryName)));
+        gst_object_unref(factory);
+    }
+    QVERIFY(GStreamer::isAvailable());
 }
 
-void GStreamerTest::_testCreateVideoReceiver()
+void GStreamerTest::_testStreamDeviceFeedsSequentialBytes()
 {
-    VideoReceiver* receiver = GStreamer::createVideoReceiver(nullptr);
-    QVERIFY2(receiver, "GStreamer::createVideoReceiver() returned nullptr");
-    QVERIFY(qobject_cast<GstVideoReceiver*>(receiver));
-    delete receiver;
+    GstStreamDevice device;
+    QVERIFY(device.isOpen());
+    QVERIFY(device.isSequential());
+    QVERIFY(!device.atEnd());
+
+    const QByteArray payload("abcdef");
+    QVERIFY(device.append(payload.constData(), payload.size()));
+    QCOMPARE(device.bytesAvailable(), payload.size());
+    QCOMPARE(device.read(3), QByteArray("abc"));
+    QVERIFY(!device.atEnd());
+
+    device.finishStream();
+    QCOMPARE(device.readAll(), QByteArray("def"));
+    QVERIFY(device.atEnd());
+}
+
+void GStreamerTest::_testStreamDeviceMatchesSequentialMediaPlayerContract()
+{
+    GstStreamDevice device;
+    QVERIFY(device.isOpen());
+    QVERIFY(device.isSequential());
+    QVERIFY(!device.isWritable());
+    QVERIFY(device.isReadable());
+    expectLogMessage(QtWarningMsg, QRegularExpression(QStringLiteral("Cannot call seek on a sequential device")));
+    QVERIFY(!device.seek(0));
+    QVERIFY(!device.atEnd());
+
+    QFuture<QByteArray> readFuture = QtConcurrent::run([&device]() {
+        return device.read(1);
+    });
+    QTest::qWait(50);
+    QVERIFY(!readFuture.isFinished());
+
+    device.close();
+    QTRY_VERIFY_WITH_TIMEOUT(readFuture.isFinished(), 1000);
+    QCOMPARE(readFuture.result(), QByteArray());
+    QVERIFY(device.atEnd());
+}
+
+void GStreamerTest::_testIngestSessionReportsBusError()
+{
+    GstIngestSession session;
+    QSignalSpy errorSpy(&session, &GstIngestSession::errorOccurred);
+
+    GError* error = g_error_new_literal(GST_CORE_ERROR, GST_CORE_ERROR_FAILED, "synthetic session error");
+    GstMessage* message = gst_message_new_error(nullptr, error, "synthetic debug detail");
+    g_clear_error(&error);
+
+    session.handleBusMessageForTest(message);
+    gst_message_unref(message);
+
+    QCOMPARE(errorSpy.count(), 1);
+    const QList<QVariant> args = errorSpy.takeFirst();
+    QCOMPARE(args.at(0).value<VideoReceiver::ErrorCategory>(), VideoReceiver::ErrorCategory::Fatal);
+    QVERIFY(args.at(1).toString().contains(QStringLiteral("synthetic session error")));
+}
+
+void GStreamerTest::_testRemuxPipelineReportsMissingPluginMessage()
+{
+    GstRemuxPipeline pipeline(QStringLiteral("test-remux"));
+    QSignalSpy errorSpy(&pipeline, &GstRemuxPipeline::errorOccurred);
+
+    GstStructure* structure = gst_structure_new_empty("missing-plugin");
+    gst_structure_set(structure, "type", G_TYPE_STRING, "decoder", nullptr);
+    gst_structure_set(structure, "detail", GST_TYPE_CAPS, gst_caps_new_empty_simple("video/x-h999"), nullptr);
+    gst_structure_set(structure, "name", G_TYPE_STRING, "Synthetic decoder", nullptr);
+    GstMessage* message = gst_message_new_element(nullptr, structure);
+
+    pipeline.handleBusMessageForTest(message);
+    gst_message_unref(message);
+
+    QCOMPARE(errorSpy.count(), 1);
+    const QList<QVariant> args = errorSpy.takeFirst();
+    QCOMPARE(args.at(0).value<VideoReceiver::ErrorCategory>(), VideoReceiver::ErrorCategory::MissingPlugin);
+    QVERIFY(args.at(1).toString().contains(QStringLiteral("Missing GStreamer plugin")));
+}
+
+void GStreamerTest::_testNativeRecorderSelectedForIngestSources()
+{
+    const VideoSourceResolver::SourceDescriptor source =
+        VideoSourceResolver::describeUri(QStringLiteral("rtsp://127.0.0.1:8554/test"));
+    QVERIFY(source.needsIngestSession());
+
+    FakeVideoReceiver receiver;
+    VideoFrameDelivery delivery;
+    std::unique_ptr<VideoRecorder> recorder =
+        VideoRecordingPolicy::createRecorder(source, &receiver, &delivery, nullptr, nullptr, {});
+
+    QVERIFY(recorder);
+    const VideoRecorder::Capabilities capabilities = recorder->capabilities();
+    QVERIFY(capabilities.lossless);
+    QVERIFY(capabilities.description.contains(QStringLiteral("GStreamer")));
+    QVERIFY(!capabilities.formats.isEmpty());
+}
+
+void GStreamerTest::_testRecordingPolicyReportsSelectedBackend()
+{
+    FakeVideoReceiver receiver;
+    VideoFrameDelivery delivery;
+
+    const VideoSourceResolver::SourceDescriptor ingested =
+        VideoSourceResolver::describeUri(QStringLiteral("rtsp://127.0.0.1:8554/test"));
+    QCOMPARE(VideoRecordingPolicy::selectBackend(ingested, &receiver, &delivery, {}),
+             VideoRecordingPolicy::RecorderBackend::GStreamerNative);
+
+    const VideoSourceResolver::SourceDescriptor direct =
+        VideoSourceResolver::describeUri(QStringLiteral("hls://example.test/stream.m3u8"));
+    QCOMPARE(VideoRecordingPolicy::selectBackend(direct, &receiver, &delivery, {}),
+             VideoRecordingPolicy::RecorderBackend::FrameDelivery);
+}
+
+void GStreamerTest::_testNativeRecorderWritesFinitePipeline()
+{
+    if (!factoryAvailable("x264enc"))
+        QSKIP("x264enc unavailable");
+    if (!factoryAvailable("matroskamux"))
+        QSKIP("matroskamux unavailable");
+
+    const QString pipeline = QStringLiteral(
+        "gstreamer-pipeline:videotestsrc num-buffers=5 is-live=false "
+        "! video/x-raw,width=160,height=120,framerate=5/1 "
+        "! x264enc tune=zerolatency key-int-max=5 "
+        "! h264parse");
+    const VideoSourceResolver::SourceDescriptor source = VideoSourceResolver::describeUri(pipeline);
+    QVERIFY(source.needsIngestSession());
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("native-recording.mkv"));
+
+    GstNativeRecorder recorder(source);
+    QSignalSpy startedSpy(&recorder, &VideoRecorder::started);
+    QSignalSpy stoppedSpy(&recorder, &VideoRecorder::stopped);
+    QSignalSpy errorSpy(&recorder, &VideoRecorder::error);
+
+    QVERIFY(recorder.start(path, QMediaFormat::Matroska));
+    QCOMPARE(startedSpy.count(), 1);
+    QTRY_COMPARE_WITH_TIMEOUT(stoppedSpy.count(), 1, 5000);
+    QCOMPARE(errorSpy.count(), 0);
+    QVERIFY(QFileInfo(path).exists());
+    QVERIFY(QFileInfo(path).size() > 0);
+    QCOMPARE(recorder.state(), VideoRecorder::State::Idle);
+}
+
+void GStreamerTest::_testNativeRecorderRejectsPipelineWithoutVideoPad()
+{
+    if (!factoryAvailable("matroskamux"))
+        QSKIP("matroskamux unavailable");
+
+    const VideoSourceResolver::SourceDescriptor source =
+        VideoSourceResolver::describeUri(QStringLiteral("gstreamer-pipeline:audiotestsrc num-buffers=1 ! audioconvert"));
+    QVERIFY(source.needsIngestSession());
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("no-video.mkv"));
+
+    GstNativeRecorder recorder(source);
+    QSignalSpy startedSpy(&recorder, &VideoRecorder::started);
+    QSignalSpy stoppedSpy(&recorder, &VideoRecorder::stopped);
+    QSignalSpy errorSpy(&recorder, &VideoRecorder::error);
+
+    QVERIFY(recorder.start(path, QMediaFormat::Matroska));
+    QTRY_COMPARE_WITH_TIMEOUT(errorSpy.count(), 1, 5000);
+    QCOMPARE(startedSpy.count(), 0);
+    QCOMPARE(stoppedSpy.count(), 0);
+    QVERIFY(!QFileInfo(path).exists() || QFileInfo(path).size() == 0);
+    QCOMPARE(recorder.state(), VideoRecorder::State::Idle);
+}
+
+void GStreamerTest::_testNativeRecorderReportsMissingPluginMessage()
+{
+    const VideoSourceResolver::SourceDescriptor source =
+        VideoSourceResolver::describeUri(QStringLiteral("rtsp://127.0.0.1:8554/test"));
+    GstNativeRecorder recorder(source);
+    QSignalSpy errorSpy(&recorder, &VideoRecorder::error);
+    QSignalSpy stoppedSpy(&recorder, &VideoRecorder::stopped);
+
+    GstStructure* structure = gst_structure_new_empty("missing-plugin");
+    gst_structure_set(structure, "type", G_TYPE_STRING, "decoder", nullptr);
+    gst_structure_set(structure, "detail", GST_TYPE_CAPS, gst_caps_new_empty_simple("video/x-h999"), nullptr);
+    gst_structure_set(structure, "name", G_TYPE_STRING, "Synthetic decoder", nullptr);
+    GstMessage* message = gst_message_new_element(nullptr, structure);
+
+    recorder.handleBusMessageForTest(message);
+    gst_message_unref(message);
+
+    QCOMPARE(errorSpy.count(), 1);
+    QCOMPARE(stoppedSpy.count(), 0);
+    QVERIFY(errorSpy.takeFirst().at(0).toString().contains(QStringLiteral("Missing GStreamer plugin")));
+}
+
+void GStreamerTest::_testIngestSessionCanRecordSharedIngest()
+{
+    if (!factoryAvailable("x264enc"))
+        QSKIP("x264enc unavailable");
+    if (!factoryAvailable("matroskamux"))
+        QSKIP("matroskamux unavailable");
+
+    const QString pipeline = QStringLiteral(
+        "gstreamer-pipeline:videotestsrc num-buffers=10 is-live=false "
+        "! video/x-raw,width=160,height=120,framerate=5/1 "
+        "! x264enc tune=zerolatency key-int-max=5 "
+        "! h264parse");
+    const VideoSourceResolver::SourceDescriptor source = VideoSourceResolver::describeUri(pipeline);
+    QVERIFY(source.needsIngestSession());
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath(QStringLiteral("shared-ingest-recording.mkv"));
+
+    GstIngestSession session;
+    QSignalSpy eosSpy(&session, &GstIngestSession::endOfStream);
+    QSignalSpy errorSpy(&session, &GstIngestSession::errorOccurred);
+
+    QVERIFY(session.start(source, false));
+    QVERIFY(session.running());
+    QVERIFY(session.startRecording(path, QMediaFormat::Matroska));
+    QVERIFY(session.isRecording());
+
+    QTRY_VERIFY_WITH_TIMEOUT(eosSpy.count() > 0 || errorSpy.count() > 0, 5000);
+    QCOMPARE(errorSpy.count(), 0);
+
+    session.stopRecording();
+    QVERIFY(!session.isRecording());
+    QVERIFY(QFileInfo(path).exists());
+    QVERIFY(QFileInfo(path).size() > 0);
 }
 
 void GStreamerTest::_testPipelineSmokeTest()
@@ -359,46 +478,6 @@ void GStreamerTest::_testRuntimeVersionCheck()
 #endif
 }
 
-void GStreamerTest::_testAppsinkFrameDelivery()
-{
-    // Superseded by VideoManagerIntegrationTest::_testFrameDeliveryReachesSinkAndBridge
-    // after the GstAppSinkAdapter → GstAppsinkBridge refactor. The new test
-    // exercises the full appsink → bridge → QVideoSink path end-to-end via
-    // FakeVideoReceiver, without requiring a real GStreamer pipeline.
-    QSKIP("Superseded by VideoManagerIntegrationTest::_testFrameDeliveryReachesSinkAndBridge");
-}
-
-void GStreamerTest::_testGray8FormatMapping()
-{
-    // Verify GRAY8 → Y8 mapping in format table
-    const auto qtFmt = GstFormatTable::gstFormatToQt(GST_VIDEO_FORMAT_GRAY8);
-    QCOMPARE(qtFmt, QVideoFrameFormat::Format_Y8);
-
-    // Reverse mapping
-    const auto gstFmt = GstFormatTable::qtFormatToGst(QVideoFrameFormat::Format_Y8);
-    QCOMPARE(gstFmt, GST_VIDEO_FORMAT_GRAY8);
-
-    // Verify GRAY8 appears in CPU caps
-    const QByteArray cpuCaps = GstFormatTable::cpuCapsFormats();
-    QVERIFY2(cpuCaps.contains("GRAY8"), "GRAY8 not in CPU caps");
-}
-
-void GStreamerTest::_testGray16FormatMapping()
-{
-    // Verify GRAY16 → Y16 mapping (endian-dependent)
-#if G_BYTE_ORDER == G_LITTLE_ENDIAN
-    const auto qtFmt = GstFormatTable::gstFormatToQt(GST_VIDEO_FORMAT_GRAY16_LE);
-    QCOMPARE(qtFmt, QVideoFrameFormat::Format_Y16);
-#else
-    const auto qtFmt = GstFormatTable::gstFormatToQt(GST_VIDEO_FORMAT_GRAY16_BE);
-    QCOMPARE(qtFmt, QVideoFrameFormat::Format_Y16);
-#endif
-
-    // Reverse mapping
-    const auto gstFmt = GstFormatTable::qtFormatToGst(QVideoFrameFormat::Format_Y16);
-    QVERIFY2(gstFmt != GST_VIDEO_FORMAT_UNKNOWN, "Y16 has no GStreamer reverse mapping");
-}
-
 void GStreamerTest::_testGray8PipelineEndToEnd()
 {
     // End-to-end: videotestsrc → GRAY8 → fakesink verifies the format
@@ -434,69 +513,11 @@ void GStreamerTest::_testGray8PipelineEndToEnd()
     gst_object_unref(pipeline);
 }
 
-void GStreamerTest::_testDmaBufDrmCapsWellFormed()
-{
-#ifndef QGC_GST_DMABUF
-    QSKIP("DMA-BUF support not compiled in (QGC_GST_DMABUF undefined)");
-#else
-    // The GStreamer 1.24+ DRM caps form (format=DMA_DRM + drm-format=<fmt>:<modifier>)
-    // must parse cleanly and restrict modifier to 0 (linear). Non-linear modifiers
-    // mean GPU-tiled memory which the CPU-mmap path in GstDmaBufVideoBuffer can't
-    // handle — verify our caps advertise modifier 0 explicitly so tiled decoders
-    // are forced to downgrade to legacy DMABuf / CPU caps.
-    const QByteArray drmCaps = GstFormatTable::dmaBufDrmCapsFormats();
-    QVERIFY2(drmCaps.contains("format=DMA_DRM"), "DMA_DRM format tag missing");
-    QVERIFY2(drmCaps.contains("drm-format"), "drm-format field missing");
-    QVERIFY2(drmCaps.contains(":0"), "modifier 0 (linear) missing — non-linear modifier leaked");
-    QVERIFY2(!drmCaps.contains(":0x"), "unexpected non-linear modifier in caps");
-
-    GstCaps* caps = gst_caps_from_string(drmCaps.constData());
-    QVERIFY2(caps != nullptr, "gst_caps_from_string failed on dmaBufDrmCapsFormats()");
-    QVERIFY2(gst_caps_get_size(caps) >= 1, "DMA_DRM caps has no structures");
-    gst_caps_unref(caps);
-
-    // Sanity: the full appsink caps advertisement (DRM + legacy + CPU) parses too.
-    const QByteArray fullCaps =
-        GstFormatTable::dmaBufDrmCapsFormats() + ';' +
-        GstFormatTable::dmaBufCapsFormats() + ';' +
-        GstFormatTable::cpuCapsFormats();
-    GstCaps* full = gst_caps_from_string(fullCaps.constData());
-    QVERIFY2(full != nullptr, "gst_caps_from_string failed on composed caps");
-    QVERIFY2(gst_caps_get_size(full) >= 3, "composed caps missing structures (DRM + legacy + CPU)");
-    gst_caps_unref(full);
-#endif
-}
-
 #else
 
 void GStreamerTest::init()
 {
     UnitTest::init();
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testIsValidRtspUri()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testIsHardwareDecoderFactory()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testSetCodecPrioritiesDefault()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testSetCodecPrioritiesSoftware()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testSetCodecPrioritiesHardware()
-{
     QSKIP("GStreamer not enabled");
 }
 
@@ -520,7 +541,42 @@ void GStreamerTest::_testCompleteInit()
     QSKIP("GStreamer not enabled");
 }
 
-void GStreamerTest::_testCreateVideoReceiver()
+void GStreamerTest::_testIngestSessionReportsBusError()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testRemuxPipelineReportsMissingPluginMessage()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testNativeRecorderSelectedForIngestSources()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testRecordingPolicyReportsSelectedBackend()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testNativeRecorderWritesFinitePipeline()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testNativeRecorderRejectsPipelineWithoutVideoPad()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testNativeRecorderReportsMissingPluginMessage()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testIngestSessionCanRecordSharedIngest()
 {
     QSKIP("GStreamer not enabled");
 }
@@ -531,21 +587,6 @@ void GStreamerTest::_testPipelineSmokeTest()
 }
 
 void GStreamerTest::_testRuntimeVersionCheck()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testAppsinkFrameDelivery()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testGray8FormatMapping()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerTest::_testGray16FormatMapping()
 {
     QSKIP("GStreamer not enabled");
 }

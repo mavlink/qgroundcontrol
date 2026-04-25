@@ -12,6 +12,7 @@ class QVideoSink;
 class RecordingSession;
 class SubtitleWriter;
 class Vehicle;
+class VideoSettings;
 class VideoStream;
 template <typename T> class QList;
 
@@ -49,11 +50,21 @@ public:
                         QMediaFormat::FileFormat fileFormat,
                         const QString& savePath);
 
+    /// User-facing recording entry point. Owns the settings-derived policy:
+    /// file-format validation, save-path validation, and storage pruning before
+    /// constructing a RecordingSession.
+    bool startRecordingFromSettings(const QString& videoFile,
+                                    const QList<VideoStream*>& recordable,
+                                    const Vehicle* activeVehicle,
+                                    QSize videoSize,
+                                    VideoSettings* videoSettings,
+                                    const QString& savePath);
+
     void stopRecording();
 
-    /// Async grab via the primary stream's bridge. Falls back to emitting
+    /// Async grab via the primary stream frame delivery. Falls back to emitting
     /// `imageFileChanged` with the target path so QML's `grabToImage` can
-    /// take over when no bridge is available.
+    /// take over when no frame delivery is available.
     void grabImage(const QString& imageFile,
                    VideoStream* primaryStream,
                    const QString& photoSavePath);
@@ -63,7 +74,7 @@ public:
     void stopSubtitleTelemetry();
 
     /// Updates the live-sink binding on the subtitle writer. Called when the
-    /// primary stream's bridge is recreated (backend switch / receiver rebuild).
+    /// primary stream frame delivery is recreated (receiver rebuild / stream swap).
     void setLiveSubtitleSink(QVideoSink* sink);
 
     /// Schedules orphan-session recovery for the next event-loop iteration.
@@ -72,12 +83,10 @@ public:
     void scheduleOrphanScan(const QString& moviesDir);
 
 signals:
-    /// Re-emit of `RecordingSession::started` — VideoManager uses it to
-    /// trigger `_recomputeAggregate()`.
+    /// Re-emit of `RecordingSession::started`.
     void sessionStarted();
 
-    /// Re-emit of `RecordingSession::stopped` — VideoManager uses it to
-    /// trigger `_recomputeAggregate()` and emit `recordingChanged(false)`.
+    /// Re-emit of `RecordingSession::stopped`.
     void sessionStopped();
 
     void recordingStarted(const QString& filename);

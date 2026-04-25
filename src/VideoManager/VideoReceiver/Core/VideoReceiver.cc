@@ -1,33 +1,30 @@
 #include "VideoReceiver.h"
 
-#include "BridgeRecorder.h"
+#include "VideoSourceResolver.h"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Frame delivery helpers
 //
 // The frame watchdog lives on VideoFrameDelivery and is wired at the VideoStream
 // level (watchdogTimeout -> VideoStream::_onReceiverTimeout). Receiver
-// backends that want watchdog coverage arm delivery via armWatchdog().
+// receivers that want watchdog coverage arm delivery via armWatchdog().
 // ─────────────────────────────────────────────────────────────────────────────
 
-void VideoReceiver::resetBridgeStats()
+void VideoReceiver::resetFrameDeliveryStats()
 {
     if (_delivery)
         _delivery->resetStats();
 }
 
-bool VideoReceiver::validateBridgeForDecoding()
+bool VideoReceiver::validateFrameDeliveryForDecoding()
 {
-    resetBridgeStats();
+    resetFrameDeliveryStats();
     if (!_delivery || !_delivery->videoSink())
         return false;
     return true;
 }
 
-VideoRecorder* VideoReceiver::createRecorder(VideoFrameDelivery* delivery, QObject* parent)
+void VideoReceiver::configureSource(const VideoSourceResolver::VideoSource& source)
 {
-    if (!delivery)
-        return nullptr;
-
-    return new BridgeRecorder(delivery, parent);
+    Q_UNUSED(source);
 }

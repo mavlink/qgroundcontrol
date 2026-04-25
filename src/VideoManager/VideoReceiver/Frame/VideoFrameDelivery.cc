@@ -16,6 +16,21 @@
 
 QGC_LOGGING_CATEGORY(VideoFrameDeliveryLog, "Video.VideoFrameDelivery")
 
+namespace {
+
+QString handleTypeName(QVideoFrame::HandleType handleType)
+{
+    switch (handleType) {
+        case QVideoFrame::NoHandle:
+            return QStringLiteral("NoHandle");
+        case QVideoFrame::RhiTextureHandle:
+            return QStringLiteral("RhiTextureHandle");
+    }
+    return QStringLiteral("UnknownHandle");
+}
+
+}  // namespace
+
 VideoFrameDelivery::VideoFrameDelivery(QObject* parent) : QObject(parent)
 {
     _watchdogClock.start();
@@ -169,37 +184,12 @@ void VideoFrameDelivery::_applyAnnounceFormat(QVideoFrameFormat format)
     }
 }
 
-void VideoFrameDelivery::deliverFrame(QVideoFrame frame)
+void VideoFrameDelivery::forwardFrameToSink(QVideoFrame frame)
 {
     if (!frame.isValid())
         return;
 
-    // Watchdog: stamp monotonic time of last valid frame (any thread - relaxed
-    // store is sufficient since the tick reader only needs eventual visibility
-    // and is rate-limited to 500 ms).
-    _lastFrameMs.store(_watchdogClock.elapsed(), std::memory_order_relaxed);
-    if (!_firstFrameReady.exchange(true, std::memory_order_acq_rel))
-        emit firstFrameReadyChanged(true);
-
-    // Seqlock write: mark odd (writing), store frame, mark even (done).
-    // Single writer - no compare-exchange needed.
-    unsigned seq = _lastFrameSeq.load(std::memory_order_relaxed);
-    _lastFrameSeq.store(seq | 1u, std::memory_order_release);
-    _lastRawFrame = frame;
-    _lastFrameSeq.store(seq + 2u, std::memory_order_release);
-
-    // Decide size change under the lock, emit outside - avoid re-entrancy deadlock.
-    const QSize size = frame.size();
-    bool sizeChanged = false;
-    {
-        QMutexLocker lock(&_sizeMutex);
-        if (size != _videoSize) {
-            _videoSize = size;
-            sizeChanged = true;
-        }
-    }
-    if (sizeChanged)
-        emit videoSizeChanged(size);
+    _storeFrameSnapshot(frame);
 
     QVideoSink* sink = _sink.loadAcquire();
     if (!sink) {
@@ -239,16 +229,86 @@ void VideoFrameDelivery::deliverFrame(QVideoFrame frame)
         Qt::QueuedConnection);
 }
 
+void VideoFrameDelivery::observeSinkFrame(QVideoFrame frame)
+{
+    if (!frame.isValid())
+        return;
+
+    _storeFrameSnapshot(std::move(frame));
+    _frameCount.fetchAndAddRelaxed(1);
+    emit frameArrived();
+}
+
+void VideoFrameDelivery::_storeFrameSnapshot(QVideoFrame frame)
+{
+    _updateFrameDiagnostics(frame);
+
+    // Watchdog: stamp monotonic time of last valid frame (any thread - relaxed
+    // store is sufficient since the tick reader only needs eventual visibility
+    // and is rate-limited to 500 ms).
+    _lastFrameMs.store(_watchdogClock.elapsed(), std::memory_order_relaxed);
+    if (!_firstFrameReady.exchange(true, std::memory_order_acq_rel))
+        emit firstFrameReadyChanged(true);
+
+    // Seqlock write: mark odd (writing), store frame, mark even (done).
+    // Single writer - no compare-exchange needed.
+    unsigned seq = _lastFrameSeq.load(std::memory_order_relaxed);
+    _lastFrameSeq.store(seq | 1u, std::memory_order_release);
+    _lastRawFrame = std::move(frame);
+    _lastFrameSeq.store(seq + 2u, std::memory_order_release);
+
+    // Decide size change under the lock, emit outside - avoid re-entrancy deadlock.
+    const QSize size = _lastRawFrame.size();
+    bool sizeChanged = false;
+    {
+        QMutexLocker lock(&_sizeMutex);
+        if (size != _videoSize) {
+            _videoSize = size;
+            sizeChanged = true;
+        }
+    }
+    if (sizeChanged)
+        emit videoSizeChanged(size);
+}
+
+void VideoFrameDelivery::_updateFrameDiagnostics(const QVideoFrame& frame)
+{
+    const QString nextHandleType = handleTypeName(frame.handleType());
+    const QString nextPixelFormat = QVideoFrameFormat::pixelFormatToString(frame.surfaceFormat().pixelFormat());
+    const bool nextUsesHardwareHandle = frame.handleType() != QVideoFrame::NoHandle;
+
+    bool changed = false;
+    {
+        QMutexLocker lock(&_frameDiagnosticsMutex);
+        changed = _lastFrameHandleTypeName != nextHandleType ||
+                  _lastFramePixelFormatName != nextPixelFormat ||
+                  _lastFrameUsesHardwareHandle != nextUsesHardwareHandle;
+        if (!changed)
+            return;
+        _lastFrameHandleTypeName = nextHandleType;
+        _lastFramePixelFormatName = nextPixelFormat;
+        _lastFrameUsesHardwareHandle = nextUsesHardwareHandle;
+    }
+
+    emit frameDiagnosticsChanged();
+}
+
 QVideoFrame VideoFrameDelivery::lastRawFrame() const
 {
+    return lastRawFrameSnapshot().frame;
+}
+
+VideoFrameDelivery::FrameSnapshot VideoFrameDelivery::lastRawFrameSnapshot() const
+{
     // Seqlock read: retry while seq is odd (writer active) or changes mid-copy.
-    QVideoFrame result;
+    FrameSnapshot result;
     unsigned seq;
     do {
         seq = _lastFrameSeq.load(std::memory_order_acquire);
         if (seq & 1u)
             continue;  // writer active - spin
-        result = _lastRawFrame;  // QVideoFrame copy = refcount increment (cheap)
+        result.frame = _lastRawFrame;  // QVideoFrame copy = refcount increment (cheap)
+        result.sequence = seq / 2u;
     } while (_lastFrameSeq.load(std::memory_order_acquire) != seq);
     return result;
 }
@@ -257,6 +317,24 @@ QSize VideoFrameDelivery::videoSize() const
 {
     QMutexLocker lock(&_sizeMutex);
     return _videoSize;
+}
+
+QString VideoFrameDelivery::lastFrameHandleTypeName() const
+{
+    QMutexLocker lock(&_frameDiagnosticsMutex);
+    return _lastFrameHandleTypeName;
+}
+
+QString VideoFrameDelivery::lastFramePixelFormatName() const
+{
+    QMutexLocker lock(&_frameDiagnosticsMutex);
+    return _lastFramePixelFormatName;
+}
+
+bool VideoFrameDelivery::lastFrameUsesHardwareHandle() const
+{
+    QMutexLocker lock(&_frameDiagnosticsMutex);
+    return _lastFrameUsesHardwareHandle;
 }
 
 float VideoFrameDelivery::latencyMs() const
@@ -294,10 +372,22 @@ void VideoFrameDelivery::_applyResetStats()
     _lastFrameSeq.store(seq | 1u, std::memory_order_release);
     _lastRawFrame = QVideoFrame{};
     _lastFrameSeq.store(seq + 2u, std::memory_order_release);
+    bool diagnosticsChanged = false;
+    {
+        QMutexLocker lock(&_frameDiagnosticsMutex);
+        diagnosticsChanged = !_lastFrameHandleTypeName.isEmpty() ||
+                             !_lastFramePixelFormatName.isEmpty() ||
+                             _lastFrameUsesHardwareHandle;
+        _lastFrameHandleTypeName.clear();
+        _lastFramePixelFormatName.clear();
+        _lastFrameUsesHardwareHandle = false;
+    }
     _lastFrameMs.store(-1, std::memory_order_relaxed);
     _watchdogFired = false;
     if (wasReady)
         emit firstFrameReadyChanged(false);
+    if (diagnosticsChanged)
+        emit frameDiagnosticsChanged();
 }
 
 void VideoFrameDelivery::armWatchdog(std::chrono::milliseconds timeout)
@@ -316,11 +406,10 @@ void VideoFrameDelivery::_applyArmWatchdog(std::chrono::milliseconds timeout)
     _watchdogFired = false;
     if (_watchdogTimeoutMs > 0) {
         // Leave `_lastFrameMs` alone. Production code calls resetStats()
-        // (via validateBridgeForDecoding) before arming, so it's already -1 -
+        // (via validateFrameDeliveryForDecoding) before arming, so it's already -1 -
         // and `_onWatchdogTick` treats -1 as "no frame yet" and returns.
         // Previously this function primed `_lastFrameMs = now`, which fired
-        // spurious timeouts on HW decoders (vah264dec/vah265dec/v4l2h264dec)
-        // that spend 1-3 s on caps/DMA negotiation before the first sample.
+        // spurious timeouts while decoders prepared the first sample.
         // Tests that exercise stall-after-activity (deliver frame -> arm ->
         // expect silence to fire) rely on us preserving the pre-arm stamp.
         if (!_watchdogTick.isActive())

@@ -2,56 +2,108 @@
 
 #include <QtCore/QLatin1String>
 #include <QtCore/QLatin1StringView>
-#include <QtCore/QList>
 #include <QtCore/QStringLiteral>
 #include <QtCore/QUrl>
 #include <QtCore/QUrlQuery>
 #include <gst/gst.h>
+#include <gst/rtsp/gstrtspurl.h>
 #include <gst/rtsp/gstrtsptransport.h>
 
-#include "GStreamerHelpers.h"
 #include "QGCLoggingCategory.h"
 #include "VideoSourceResolver.h"
 
-Q_DECLARE_LOGGING_CATEGORY(GstPipelineFactoryLog)
+QGC_LOGGING_CATEGORY(GstSourceFactoryLog, "VideoManager.GStreamer.SourceFactory")
 
 namespace GstSourceFactory {
 
 namespace {
+
+gboolean isValidRtspUri(const gchar* uriStr)
+{
+    if (!uriStr || !gst_uri_is_valid(uriStr))
+        return FALSE;
+
+    GstRTSPUrl* url = nullptr;
+    const GstRTSPResult result = gst_rtsp_url_parse(uriStr, &url);
+    if (result != GST_RTSP_OK || !url) {
+        if (url)
+            gst_rtsp_url_free(url);
+        return FALSE;
+    }
+
+    const gboolean hasHost = url->host && url->host[0] != '\0';
+    gst_rtsp_url_free(url);
+    return hasHost;
+}
+
+bool padCarriesVideo(GstPad* pad)
+{
+    GstCaps* caps = gst_pad_get_current_caps(pad);
+    if (!caps)
+        caps = gst_pad_query_caps(pad, nullptr);
+    if (!caps)
+        return true;
+
+    bool isVideo = false;
+    for (guint i = 0; i < gst_caps_get_size(caps); ++i) {
+        const GstStructure* structure = gst_caps_get_structure(caps, i);
+        if (!structure)
+            continue;
+
+        const char* name = gst_structure_get_name(structure);
+        if (name && g_str_has_prefix(name, "video/")) {
+            isVideo = true;
+            break;
+        }
+        if (name && g_str_equal(name, "application/x-rtp")) {
+            const char* media = gst_structure_get_string(structure, "media");
+            if (!media || g_str_equal(media, "video")) {
+                isVideo = true;
+                break;
+            }
+        }
+    }
+
+    gst_clear_caps(&caps);
+    return isVideo;
+}
 
 /// Ghost-pad a newly-added parsebin src pad onto the parent bin.
 void wrapWithGhostPad(GstElement* element, GstPad* pad, gpointer /*data*/)
 {
     gchar* name = gst_pad_get_name(pad);
     if (!name) {
-        qCCritical(GstPipelineFactoryLog) << "gst_pad_get_name() failed";
+        qCCritical(GstSourceFactoryLog) << "gst_pad_get_name() failed";
         return;
     }
 
     GstPad* ghostpad = gst_ghost_pad_new(name, pad);
     g_clear_pointer(&name, g_free);
     if (!ghostpad) {
-        qCCritical(GstPipelineFactoryLog) << "gst_ghost_pad_new() failed";
+        qCCritical(GstSourceFactoryLog) << "gst_ghost_pad_new() failed";
         return;
     }
 
     (void)gst_pad_set_active(ghostpad, TRUE);
     if (!gst_element_add_pad(GST_ELEMENT_PARENT(element), ghostpad)) {
-        qCCritical(GstPipelineFactoryLog) << "gst_element_add_pad() failed";
+        qCCritical(GstSourceFactoryLog) << "gst_element_add_pad() failed";
     }
 }
 
 /// Link a dynamically-added pad to the target element's sink pad.
 void linkPadToSink(GstElement* element, GstPad* pad, gpointer data)
 {
+    if (!padCarriesVideo(pad))
+        return;
+
     gchar* name = gst_pad_get_name(pad);
     if (!name) {
-        qCCritical(GstPipelineFactoryLog) << "gst_pad_get_name() failed";
+        qCCritical(GstSourceFactoryLog) << "gst_pad_get_name() failed";
         return;
     }
 
     if (!gst_element_link_pads(element, name, GST_ELEMENT(data), "sink")) {
-        qCCritical(GstPipelineFactoryLog) << "gst_element_link_pads() failed";
+        qCCritical(GstSourceFactoryLog) << "gst_element_link_pads() failed";
     }
     g_clear_pointer(&name, g_free);
 }
@@ -141,7 +193,7 @@ GstElement* buildSourceBin(GstElement* source, bool needsTsdemux, int bufferMs)
     GstElement* tsdemux = nullptr;
 
     if (!bin || !parser) {
-        qCCritical(GstPipelineFactoryLog) << "Failed to create sourcebin or parsebin";
+        qCCritical(GstSourceFactoryLog) << "Failed to create sourcebin or parsebin";
         gst_clear_object(&bin);
         gst_clear_object(&parser);
         return nullptr;
@@ -155,13 +207,13 @@ GstElement* buildSourceBin(GstElement* source, bool needsTsdemux, int bufferMs)
     if (needsTsdemux) {
         tsdemux = gst_element_factory_make("tsdemux", nullptr);
         if (!tsdemux) {
-            qCCritical(GstPipelineFactoryLog) << "Failed to create tsdemux";
+            qCCritical(GstSourceFactoryLog) << "Failed to create tsdemux";
             gst_clear_object(&bin);
             return nullptr;
         }
         gst_bin_add(GST_BIN(bin), tsdemux);
         if (!gst_element_link(source, tsdemux)) {
-            qCCritical(GstPipelineFactoryLog) << "Failed to link source → tsdemux";
+            qCCritical(GstSourceFactoryLog) << "Failed to link source → tsdemux";
             gst_clear_object(&bin);
             return nullptr;
         }
@@ -175,7 +227,7 @@ GstElement* buildSourceBin(GstElement* source, bool needsTsdemux, int bufferMs)
         if (isRtp && bufferMs >= 0) {
             GstElement* jitterBuf = gst_element_factory_make("rtpjitterbuffer", nullptr);
             if (!jitterBuf) {
-                qCCritical(GstPipelineFactoryLog) << "Failed to create rtpjitterbuffer";
+                qCCritical(GstSourceFactoryLog) << "Failed to create rtpjitterbuffer";
                 gst_clear_object(&bin);
                 return nullptr;
             }
@@ -193,13 +245,13 @@ GstElement* buildSourceBin(GstElement* source, bool needsTsdemux, int bufferMs)
                          nullptr);
             gst_bin_add(GST_BIN(bin), jitterBuf);
             if (!gst_element_link_many(linkFrom, jitterBuf, parser, nullptr)) {
-                qCCritical(GstPipelineFactoryLog) << "Failed to link source → jitterbuffer → parser";
+                qCCritical(GstSourceFactoryLog) << "Failed to link source → jitterbuffer → parser";
                 gst_clear_object(&bin);
                 return nullptr;
             }
         } else {
             if (!gst_element_link(linkFrom, parser)) {
-                qCCritical(GstPipelineFactoryLog) << "Failed to link source → parser";
+                qCCritical(GstSourceFactoryLog) << "Failed to link source → parser";
                 gst_clear_object(&bin);
                 return nullptr;
             }
@@ -217,14 +269,14 @@ GstElement* buildSourceBin(GstElement* source, bool needsTsdemux, int bufferMs)
 
 GstElement* createRtspSource(const QString& uri)
 {
-    if (!GStreamer::isValidRtspUri(uri.toUtf8().constData())) {
-        qCCritical(GstPipelineFactoryLog) << "Invalid RTSP URI:" << uri;
+    if (!isValidRtspUri(uri.toUtf8().constData())) {
+        qCCritical(GstSourceFactoryLog) << "Invalid RTSP URI:" << uri;
         return nullptr;
     }
 
     GstElement* source = gst_element_factory_make("rtspsrc", "source");
     if (!source) {
-        qCCritical(GstPipelineFactoryLog) << "Failed to create rtspsrc";
+        qCCritical(GstSourceFactoryLog) << "Failed to create rtspsrc";
         return nullptr;
     }
 
@@ -244,7 +296,7 @@ GstElement* createTcpMpegtsSource(const QString& host, quint16 port)
 {
     GstElement* source = gst_element_factory_make("tcpclientsrc", "source");
     if (!source) {
-        qCCritical(GstPipelineFactoryLog) << "Failed to create tcpclientsrc";
+        qCCritical(GstSourceFactoryLog) << "Failed to create tcpclientsrc";
         return nullptr;
     }
     g_object_set(source, "host", host.toUtf8().constData(), "port", port, nullptr);
@@ -255,7 +307,7 @@ GstElement* createUdpSource(const QString& host, quint16 port, const char* rtpCa
 {
     GstElement* source = gst_element_factory_make("udpsrc", "source");
     if (!source) {
-        qCCritical(GstPipelineFactoryLog) << "Failed to create udpsrc";
+        qCCritical(GstSourceFactoryLog) << "Failed to create udpsrc";
         return nullptr;
     }
 
@@ -276,7 +328,7 @@ GstElement* createWhepSource(const QString& uri)
 {
     GstElementFactory* factory = gst_element_factory_find("whepsrc");
     if (!factory) {
-        qCWarning(GstPipelineFactoryLog) << "whepsrc not found — requires GStreamer 1.24+";
+        qCWarning(GstSourceFactoryLog) << "whepsrc not found — requires GStreamer 1.24+";
         return nullptr;
     }
     gst_object_unref(factory);
@@ -290,16 +342,16 @@ GstElement* createWhepSource(const QString& uri)
 
     GstElement* source = gst_element_factory_make("whepsrc", "source");
     if (!source) {
-        qCCritical(GstPipelineFactoryLog) << "Failed to create whepsrc";
+        qCCritical(GstSourceFactoryLog) << "Failed to create whepsrc";
         return nullptr;
     }
     g_object_set(source, "whep-endpoint", endpointUrl.toUtf8().constData(), nullptr);
-    qCDebug(GstPipelineFactoryLog) << "Created WHEP source:" << endpointUrl;
+    qCDebug(GstSourceFactoryLog) << "Created WHEP source:" << endpointUrl;
 
     GstElement* bin = gst_bin_new("whep-source");
     GstElement* parser = gst_element_factory_make("parsebin", "parser");
     if (!bin || !parser) {
-        qCCritical(GstPipelineFactoryLog) << "Failed to create WHEP source bin";
+        qCCritical(GstSourceFactoryLog) << "Failed to create WHEP source bin";
         gst_clear_object(&bin);
         gst_clear_object(&parser);
         gst_clear_object(&source);
@@ -316,7 +368,7 @@ GstElement* createSrtSource(const QString& uri)
 {
     GstElement* source = gst_element_factory_make("srtsrc", "source");
     if (!source) {
-        qCCritical(GstPipelineFactoryLog) << "Failed to create srtsrc — is gst-plugins-bad (srt) installed?";
+        qCCritical(GstSourceFactoryLog) << "Failed to create srtsrc — is gst-plugins-bad (srt) installed?";
         return nullptr;
     }
 
@@ -326,34 +378,7 @@ GstElement* createSrtSource(const QString& uri)
                             : 125;
 
     g_object_set(source, "uri", uri.toUtf8().constData(), "latency", latency, "wait-for-connection", FALSE, nullptr);
-    qCDebug(GstPipelineFactoryLog) << "Created SRT source:" << uri << "latency:" << latency << "ms";
-    return source;
-}
-
-GstElement* createAdaptiveSource(const QString& uri, bool forceSwDecoders)
-{
-    QString httpUrl(uri);
-    if (httpUrl.startsWith(QLatin1String("hlss://"), Qt::CaseInsensitive) ||
-        httpUrl.startsWith(QLatin1String("dashs://"), Qt::CaseInsensitive)) {
-        const int colonIdx = httpUrl.indexOf(QLatin1String("://"));
-        httpUrl.replace(0, colonIdx, QStringLiteral("https"));
-    } else {
-        const int colonIdx = httpUrl.indexOf(QLatin1String("://"));
-        httpUrl.replace(0, colonIdx, QStringLiteral("http"));
-    }
-
-    const bool isHls = uri.startsWith(QLatin1String("hls"), Qt::CaseInsensitive);
-
-    GstElement* source = gst_element_factory_make("uridecodebin3", "source");
-    if (!source) {
-        qCCritical(GstPipelineFactoryLog) << "Failed to create uridecodebin3";
-        return nullptr;
-    }
-    g_object_set(source, "uri", httpUrl.toUtf8().constData(), nullptr);
-    if (forceSwDecoders)
-        g_object_set(source, "force-sw-decoders", TRUE, nullptr);
-    qCDebug(GstPipelineFactoryLog) << "Created adaptive" << (isHls ? "HLS" : "DASH")
-                                   << "source:" << httpUrl << (forceSwDecoders ? "(SW-only)" : "");
+    qCDebug(GstSourceFactoryLog) << "Created SRT source:" << uri << "latency:" << latency << "ms";
     return source;
 }
 
@@ -364,92 +389,25 @@ GstElement* createAdaptiveSource(const QString& uri, bool forceSwDecoders)
 GstElement* createFromPipelineDescription(const QString& description)
 {
     if (description.isEmpty()) {
-        qCCritical(GstPipelineFactoryLog) << "Empty pipeline description";
+        qCCritical(GstSourceFactoryLog) << "Empty pipeline description";
         return nullptr;
     }
 
-    qCDebug(GstPipelineFactoryLog) << "Parsing custom pipeline:" << description;
+    qCDebug(GstSourceFactoryLog) << "Parsing custom pipeline:" << description;
 
     GError* error = nullptr;
-    GstElement* parsed = gst_parse_launch(description.toUtf8().constData(), &error);
+    GstElement* parsed = gst_parse_bin_from_description(description.toUtf8().constData(), TRUE, &error);
 
     if (error) {
-        qCCritical(GstPipelineFactoryLog) << "Pipeline parse error:" << error->message;
+        qCCritical(GstSourceFactoryLog) << "Pipeline parse error:" << error->message;
         g_clear_error(&error);
         gst_clear_object(&parsed);
         return nullptr;
     }
 
     if (!parsed) {
-        qCCritical(GstPipelineFactoryLog) << "gst_parse_launch returned null";
+        qCCritical(GstSourceFactoryLog) << "gst_parse_bin_from_description returned null";
         return nullptr;
-    }
-
-    if (GST_IS_PIPELINE(parsed)) {
-        // Ensure parsed pipeline is in NULL before moving its children to a new
-        // bin, so internal pad/segment state is consistent at reparent time.
-        (void)gst_element_set_state(parsed, GST_STATE_NULL);
-        (void)gst_element_get_state(parsed, nullptr, nullptr, GST_CLOCK_TIME_NONE);
-
-        GstElement* wrapper = gst_bin_new("custom-source-bin");
-        GstBin* parsedBin = GST_BIN(parsed);
-
-        GstIterator* it = gst_bin_iterate_elements(parsedBin);
-        GValue velem = G_VALUE_INIT;
-        QList<GstElement*> children;
-        GstIteratorResult res;
-
-        gboolean done = FALSE;
-        while (!done) {
-            res = gst_iterator_next(it, &velem);
-            switch (res) {
-                case GST_ITERATOR_OK:
-                    children.append(GST_ELEMENT(g_value_get_object(&velem)));
-                    g_value_reset(&velem);
-                    break;
-                case GST_ITERATOR_RESYNC:
-                    children.clear();
-                    gst_iterator_resync(it);
-                    break;
-                default:
-                    done = TRUE;
-                    break;
-            }
-        }
-        g_value_unset(&velem);
-        gst_iterator_free(it);
-
-        for (GstElement* child : children) {
-            gst_object_ref(child);
-            gst_bin_remove(parsedBin, child);
-            gst_bin_add(GST_BIN(wrapper), child);
-            gst_object_unref(child);
-        }
-
-        gst_object_unref(parsed);
-
-        if (!children.isEmpty()) {
-            GstElement* last = children.last();
-            gst_element_foreach_src_pad(
-                last,
-                [](GstElement*, GstPad* pad, gpointer data) -> gboolean {
-                    auto* bin = static_cast<GstElement*>(data);
-                    GstPad* peer = gst_pad_get_peer(pad);
-                    if (!peer) {
-                        gchar* name = gst_pad_get_name(pad);
-                        GstPad* ghost = gst_ghost_pad_new(name, pad);
-                        gst_pad_set_active(ghost, TRUE);
-                        gst_element_add_pad(bin, ghost);
-                        g_clear_pointer(&name, g_free);
-                    } else {
-                        gst_object_unref(peer);
-                    }
-                    return TRUE;
-                },
-                wrapper);
-        }
-
-        return wrapper;
     }
 
     return parsed;
@@ -460,18 +418,16 @@ constexpr QLatin1StringView kPipelinePrefix("gstreamer-pipeline:");
 
 }  // anonymous namespace
 
-GstElement* createFromUri(const QString& uri, int bufferMs, bool forceSwDecoders)
+GstElement* createFromUri(const QString& uri, int bufferMs)
 {
-    return createFromSource(VideoSourceResolver::describeUri(uri), bufferMs, forceSwDecoders);
+    return createFromSource(VideoSourceResolver::describeUri(uri), bufferMs);
 }
 
-GstElement* createFromSource(const VideoSourceResolver::SourceDescriptor& sourceDescriptor,
-                             int bufferMs,
-                             bool forceSwDecoders)
+GstElement* createFromSource(const VideoSourceResolver::SourceDescriptor& sourceDescriptor, int bufferMs)
 {
     const QString& uri = sourceDescriptor.uri;
     if (uri.isEmpty()) {
-        qCCritical(GstPipelineFactoryLog) << "Empty URI";
+        qCCritical(GstSourceFactoryLog) << "Empty URI";
         return nullptr;
     }
 
@@ -480,15 +436,10 @@ GstElement* createFromSource(const VideoSourceResolver::SourceDescriptor& source
 
     if (transport == T::Pipeline) {
         QString desc = uri.mid(kPipelinePrefix.size());
-        if (desc.startsWith(QLatin1String("//")))
-            desc.remove(0, 2);
         return createFromPipelineDescription(desc);
     }
     if (transport == T::WHEP)
         return createWhepSource(uri);
-    if (transport == T::HLS || transport == T::DASH)
-        return createAdaptiveSource(uri, forceSwDecoders);
-
     const QUrl url(uri);
     GstElement* source = nullptr;
     bool isMPEGTS = false;
@@ -521,9 +472,8 @@ GstElement* createFromSource(const VideoSourceResolver::SourceDescriptor& source
         case T::WHEP:
         case T::HLS:
         case T::DASH:
-            Q_UNREACHABLE();
         case T::Unknown:
-            qCWarning(GstPipelineFactoryLog) << "Unrecognized URI scheme in" << uri;
+            qCWarning(GstSourceFactoryLog) << "Unrecognized URI scheme in" << uri;
             return nullptr;
     }
 

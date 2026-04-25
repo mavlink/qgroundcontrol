@@ -27,7 +27,9 @@ bool VideoSinkRouter::attachReceiver(VideoReceiver* receiver, const ReceiverInvo
     const bool hadPendingSink = _delivery && _delivery->videoSink();
     if (hadPendingSink) {
         QVideoSink* sink = _delivery->videoSink();
-        invokeOnReceiverThread([receiver, sink]() { receiver->onSinkChanged(sink); });
+        invokeOnReceiverThread([receiver, sink]() {
+            [[maybe_unused]] const VideoReceiver::SinkChangeAction action = receiver->onSinkChanged(sink);
+        });
     }
     return hadPendingSink;
 }
@@ -42,7 +44,6 @@ void VideoSinkRouter::detachReceiver(VideoReceiver* receiver, const ReceiverInvo
 }
 
 VideoSinkRouter::SinkResult VideoSinkRouter::registerVideoSink(VideoReceiver* receiver,
-                                                               const VideoSourceResolver::VideoSource& source,
                                                                QVideoSink* sink,
                                                                const ReceiverInvoker& invokeOnReceiverThread)
 {
@@ -54,8 +55,8 @@ VideoSinkRouter::SinkResult VideoSinkRouter::registerVideoSink(VideoReceiver* re
         return result;
 
     const SinkChange change = _prepareSinkChange(receiver, sink);
-    _commitSinkChange(receiver, change, invokeOnReceiverThread);
-    return _finishSinkChange(receiver, source, change, invokeOnReceiverThread);
+    const VideoReceiver::SinkChangeAction action = _commitSinkChange(receiver, change, invokeOnReceiverThread);
+    return _finishSinkChange(receiver, change, action, invokeOnReceiverThread);
 }
 
 VideoSinkRouter::SinkChange VideoSinkRouter::_prepareSinkChange(VideoReceiver* receiver, QVideoSink* sink) const
@@ -68,41 +69,41 @@ VideoSinkRouter::SinkChange VideoSinkRouter::_prepareSinkChange(VideoReceiver* r
     return change;
 }
 
-void VideoSinkRouter::_commitSinkChange(VideoReceiver* receiver,
-                                        const SinkChange& change,
-                                        const ReceiverInvoker& invokeOnReceiverThread)
+VideoReceiver::SinkChangeAction VideoSinkRouter::_commitSinkChange(VideoReceiver* receiver,
+                                                                   const SinkChange& change,
+                                                                   const ReceiverInvoker& invokeOnReceiverThread)
 {
     if (change.replacingLiveSink) {
         qCWarning(VideoReceiverSessionLog) << _streamName << "replacing live QVideoSink (" << change.oldSink << "->"
                                            << change.newSink << ") - check for QML binding leaks";
     }
 
+    VideoReceiver::SinkChangeAction action = VideoReceiver::SinkChangeAction::NoAction;
     if (receiver)
         invokeOnReceiverThread([receiver]() { receiver->onSinkAboutToChange(); });
     _delivery->setVideoSink(change.newSink);
     if (receiver) {
         QVideoSink* sink = change.newSink;
-        invokeOnReceiverThread([receiver, sink]() { receiver->onSinkChanged(sink); });
+        invokeOnReceiverThread([receiver, sink, &action]() { action = receiver->onSinkChanged(sink); });
     }
+    return action;
 }
 
 VideoSinkRouter::SinkResult VideoSinkRouter::_finishSinkChange(VideoReceiver* receiver,
-                                                               const VideoSourceResolver::VideoSource& source,
                                                                const SinkChange& change,
+                                                               VideoReceiver::SinkChangeAction action,
                                                                const ReceiverInvoker& invokeOnReceiverThread)
 {
     SinkResult result;
     if (!change.hasReceiver || !receiver)
         return result;
 
-    if (change.newSink && receiver->started() && !receiver->isDecoding()) {
-        if (source.usesGStreamer() && receiver->isStreaming()) {
-            result.restartRequested = true;
-        } else {
-            invokeOnReceiverThread([receiver]() { receiver->startDecoding(); });
-        }
+    if (action == VideoReceiver::SinkChangeAction::RestartRequired) {
+        result.restartRequested = true;
+    } else if (change.newSink && receiver->started() && !receiver->isDecoding()) {
+        invokeOnReceiverThread([receiver]() { receiver->startDecoding(); });
     }
 
-    result.bridgeChanged = true;
+    result.frameDeliveryChanged = true;
     return result;
 }

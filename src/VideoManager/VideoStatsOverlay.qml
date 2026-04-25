@@ -26,6 +26,7 @@ Item {
         root._tick; // binding dependency — do not remove
         return QGroundControl.videoManager.streamModel.activeStreamForRole(VideoStream.Primary)
     }
+    readonly property var _stats: _primary ? _primary.stats : null
 
     Connections {
         target: QGroundControl.videoManager.streamModel
@@ -58,7 +59,7 @@ Item {
                 spacing: 2
 
                 Text {
-                    text: "FPS: " + (root._primary ? root._primary.fps.toFixed(1) : "0.0")
+                    text: "FPS: " + (root._stats ? root._stats.fps.toFixed(1) : "0.0")
                     color: "white"
                     font.pointSize: root._fontPointSize
                     font.family: "monospace"
@@ -71,7 +72,7 @@ Item {
                     font.family: "monospace"
                 }
                 Text {
-                    property real latMs: root._primary ? root._primary.latencyMs : -1
+                    property real latMs: root._stats ? root._stats.latencyMs : -1
                     visible: root._primary ? root._primary.latencySupported : true
                     text: "Lat: " + (latMs >= 0 ? latMs.toFixed(1) + " ms" : "—")
                     color: latMs > 100 ? "#ff6666" : latMs > 50 ? "#ffcc00" : "white"
@@ -79,14 +80,14 @@ Item {
                     font.family: "monospace"
                 }
                 Text {
-                    readonly property int dropped: root._primary ? root._primary.droppedFrames : 0
+                    readonly property int dropped: root._stats ? root._stats.droppedFrames : 0
                     text: "Drop: " + dropped
                     color: dropped > 0 ? "#ffcc00" : "white"
                     font.pointSize: root._fontPointSize
                     font.family: "monospace"
                 }
                 Text {
-                    property int health: root._primary ? root._primary.streamHealth : VideoStreamStats.Good
+                    property int health: root._stats ? root._stats.streamHealth : VideoStreamStats.Good
                     text: "Health: " + (health === VideoStreamStats.Good ? "Good"
                                       : health === VideoStreamStats.Degraded ? "Degraded"
                                       : "Critical")

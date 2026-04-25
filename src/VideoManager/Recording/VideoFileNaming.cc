@@ -28,9 +28,6 @@ QString buildRecordingTemplate(const QString& savePath,
 
 QString subtitleSiblingPath(const QString& videoPath)
 {
-    // Matches the pre-refactor behavior: a path with no extension collapses to
-    // just ".srt". In practice recording paths always carry an extension, so
-    // the edge case is unreachable — preserved to avoid behavioral drift.
     const qsizetype dot = videoPath.lastIndexOf(QLatin1Char('.'));
     return (dot < 0 ? QString() : videoPath.left(dot)) + QStringLiteral(".srt");
 }

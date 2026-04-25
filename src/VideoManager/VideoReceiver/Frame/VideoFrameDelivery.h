@@ -22,9 +22,10 @@ class QVideoSink;
 
 /// Thread-safe frame delivery endpoint between video receivers and QVideoSink.
 ///
-/// All receiver backends (GStreamer, QtMultimedia, UVC) deliver frames through
-/// deliverFrame(). The delivery endpoint forwards each frame to the registered QVideoSink,
-/// counts frames, emits frameArrived(), and tracks video size.
+/// Display receivers use forwardFrameToSink() when this endpoint should push
+/// frames to the registered QVideoSink, and observeSinkFrame() when Qt has
+/// already pushed frames directly to that sink. Both paths update recording
+/// snapshots, stats, watchdog state, and video size.
 ///
 /// Threading model:
 ///   * The delivery endpoint is a plain QObject that lives on its parent's thread -
@@ -36,7 +37,7 @@ class QVideoSink;
 ///     dispatch onto the delivery thread via QMetaObject::invokeMethod when
 ///     called from another thread, so per-mutator ad-hoc thread checks
 ///     collapse into a single funnel.
-///   * deliverFrame() remains callable from any thread and keeps its
+///   * forwardFrameToSink() remains callable from any thread and keeps its
 ///     mutex+atomic fast path - it must not add a queue hop on the hot path.
 ///   * Readers (videoSize, lastRawFrame, frameCount, droppedFrames, latencyMs,
 ///     videoSink, grabFrame) are thread-safe via atomics/seqlock/mutex.
@@ -47,6 +48,10 @@ class VideoFrameDelivery : public QObject
 {
     Q_OBJECT
     Q_DISABLE_COPY_MOVE(VideoFrameDelivery)
+
+    Q_PROPERTY(QString lastFrameHandleTypeName READ lastFrameHandleTypeName NOTIFY frameDiagnosticsChanged)
+    Q_PROPERTY(QString lastFramePixelFormatName READ lastFramePixelFormatName NOTIFY frameDiagnosticsChanged)
+    Q_PROPERTY(bool lastFrameUsesHardwareHandle READ lastFrameUsesHardwareHandle NOTIFY frameDiagnosticsChanged)
 
 public:
     /// Parent the delivery endpoint to its owner. The endpoint shares the
@@ -60,10 +65,15 @@ public:
 
     [[nodiscard]] QVideoSink* videoSink() const { return _sink.loadRelaxed(); }
 
-    /// Thread-safe frame delivery - direct execution on the caller's thread
+    /// Thread-safe forwarding path - direct execution on the caller's thread
     /// (typically the streaming thread). Updates counters + seqlock + posts
     /// the frame to the sink's thread via invokeMethod.
-    void deliverFrame(QVideoFrame frame);
+    void forwardFrameToSink(QVideoFrame frame);
+
+    /// Observe a frame that was already delivered directly to a QVideoSink by
+    /// another producer, such as QMediaPlayer. Updates counters, cached frame,
+    /// size, and recording/stat signals without forwarding the frame again.
+    void observeSinkFrame(QVideoFrame frame);
 
     /// Announce the negotiated video format *before* the first buffer arrives.
     /// Dispatches to the delivery thread if called from another thread.
@@ -76,12 +86,27 @@ public:
     /// a replacement sink attached mid-stream receives the same announcement.
     void announceFormat(const QVideoFrameFormat& format);
 
-    /// Returns the last QVideoFrame passed to deliverFrame().
-    /// Protected by a seqlock: single writer (streaming thread), multiple readers.
-    /// Returns a default-constructed (invalid) frame if no frame has been delivered.
+    /// Returns the last frame seen by either forwarding or observation.
+    /// Protected by a seqlock: producer-side writers, multiple readers.
+    /// Returns a default-constructed (invalid) frame if no frame has been seen.
     [[nodiscard]] QVideoFrame lastRawFrame() const;
 
+    struct FrameSnapshot
+    {
+        QVideoFrame frame;
+        quint64 sequence = 0;
+    };
+
+    /// Returns the last raw frame and its monotonically increasing sequence.
+    /// Consumers that pull from the cached frame, such as FrameDeliveryRecorder, use
+    /// this to avoid resubmitting the same frame on repeated ready signals.
+    [[nodiscard]] FrameSnapshot lastRawFrameSnapshot() const;
+
     [[nodiscard]] QSize videoSize() const;
+
+    [[nodiscard]] QString lastFrameHandleTypeName() const;
+    [[nodiscard]] QString lastFramePixelFormatName() const;
+    [[nodiscard]] bool lastFrameUsesHardwareHandle() const;
 
     [[nodiscard]] quint64 frameCount() const { return _frameCount.loadRelaxed(); }
 
@@ -91,7 +116,7 @@ public:
 
     void noteDroppedFrame() { _droppedFrames.fetchAndAddRelaxed(1); }
 
-    /// Record a latency sample (called from GstAppsinkBridge::handleSample).
+    /// Record a latency sample supplied by a receiver.
     void noteLatencySample(float ms);
     [[nodiscard]] float latencyMs() const;
 
@@ -118,6 +143,7 @@ signals:
     /// Fires when the first decoded frame arrives, and when resetStats() clears
     /// the stream for a fresh decode session.
     void firstFrameReadyChanged(bool ready);
+    void frameDiagnosticsChanged();
     /// Fires when the backpressure gate drops a frame.
     void frameDropped();
     /// Fires once when no frames have arrived for the armed timeout window.
@@ -135,6 +161,8 @@ private:
     void _applyResetStats();
     void _applyArmWatchdog(std::chrono::milliseconds timeout);
     void _onWatchdogTick();
+    void _storeFrameSnapshot(QVideoFrame frame);
+    void _updateFrameDiagnostics(const QVideoFrame& frame);
 
     QAtomicPointer<QVideoSink> _sink = nullptr;
     QSize _videoSize;
@@ -142,6 +170,10 @@ private:
     /// a late-bound QVideoSink gets AR info without waiting for the next frame.
     QVideoFrameFormat _announcedFormat;
     mutable QMutex _sizeMutex;
+    mutable QMutex _frameDiagnosticsMutex;
+    QString _lastFrameHandleTypeName;
+    QString _lastFramePixelFormatName;
+    bool _lastFrameUsesHardwareHandle = false;
     QAtomicInteger<quint64> _frameCount{0};
     QAtomicInteger<quint64> _droppedFrames{0};
     QAtomicInteger<int> _pendingDelivery{0};
@@ -150,7 +182,7 @@ private:
     QMetaObject::Connection _destroyedConn;
 
     // Frame watchdog.
-    // _lastFrameMs is written by deliverFrame (any thread) via relaxed store;
+    // _lastFrameMs is written by frame producers via relaxed store;
     // the tick handler on the delivery thread reads it and compares against
     // the configured timeout. Using a monotonic QElapsedTimer-derived stamp
     // avoids wall-clock jumps and is cheaper than restarting a QTimer per
@@ -162,8 +194,8 @@ private:
     bool _watchdogFired = false;    ///< edge-trigger: cleared when a new frame arrives
 
     // Last raw frame - protected by a seqlock.
-    // Writer (deliverFrame, single streaming thread): store odd seq, write frame, store even seq.
-    // Readers (lastRawFrame, grabFrame): load seq, copy frame, load seq again - retry if odd or changed.
+    // Writers: store odd seq, write frame, store even seq.
+    // Readers (lastRawFrameSnapshot, grabFrame): load seq, copy frame, load seq again - retry if odd or changed.
     // QVideoFrame is implicitly shared (one pointer internally); copy is a refcount increment.
     mutable std::atomic<unsigned> _lastFrameSeq{0};
     QVideoFrame _lastRawFrame;

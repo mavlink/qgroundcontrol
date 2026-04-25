@@ -29,7 +29,6 @@ public:
     DEFINE_SETTINGFACT(streamEnabled)
     DEFINE_SETTINGFACT(disableWhenDisarmed)
     DEFINE_SETTINGFACT(lowLatencyMode)
-    DEFINE_SETTINGFACT(forceVideoDecoder)
     DEFINE_SETTINGFACT(videoSavePath)
 
     Q_PROPERTY(bool streamConfigured READ streamConfigured NOTIFY streamConfiguredChanged)
@@ -110,7 +109,6 @@ private slots:
 
 private:
     void _setDefaults();
-    void _setForceVideoDecodeList();
 
 private:
     bool _noVideo = false;

@@ -7,19 +7,6 @@
 
 FakeVideoReceiver::FakeVideoReceiver(QObject* parent) : VideoReceiver(parent), _capabilities(CapStreaming | CapRecording) {}
 
-FakeVideoReceiver::FakeVideoReceiver(bool gstreamer, QObject* parent)
-    : VideoReceiver(parent), _capabilities(CapStreaming | CapRecording)
-{
-    // GStreamer fakes advertise lossless recording so recording policy tests
-    // see the same capability shape as the real backend.
-    if (gstreamer) {
-        _capabilities |= CapRecordingLossless;
-        _backendKind = BackendKind::GStreamer;
-    } else {
-        _backendKind = BackendKind::QtMultimedia;
-    }
-}
-
 bool FakeVideoReceiver::_consumeFlag(bool& flag)
 {
     if (flag) {
@@ -42,13 +29,13 @@ void FakeVideoReceiver::_emitMaybeAsync(Emitter&& emitter)
 void FakeVideoReceiver::start(uint32_t /*timeout*/)
 {
     ++startCallCount;
-    const STATUS s = _consumeFlag(failNextStart) ? STATUS_FAIL : STATUS_OK;
-    _emitMaybeAsync([this, s] {
-        if (s == STATUS_OK) {
+    const bool fail = _consumeFlag(failNextStart);
+    _emitMaybeAsync([this, fail] {
+        if (!fail) {
             setStarted(true);
             emit receiverStarted();
         } else {
-            // Real backends route start failures through the unified error
+            // Real receivers route start failures through the unified error
             // channel so the FSM can route to Reconnecting/Failed. The FSM no
             // longer consumes startCompleted(FAIL).
             emit receiverError(ErrorCategory::Fatal, QStringLiteral("fake: failNextStart"));
@@ -59,7 +46,7 @@ void FakeVideoReceiver::start(uint32_t /*timeout*/)
 void FakeVideoReceiver::stop()
 {
     ++stopCallCount;
-    // Mirrors the idempotent-stop contract: if already stopped, emit STATUS_OK.
+    // Mirrors the idempotent-stop contract: if already stopped, emit stopped.
     // Also emit receiverStopped so the FSM (if in Stopping) can transition to
     // Idle even when the receiver never became "started".
     if (!started()) {
@@ -67,12 +54,12 @@ void FakeVideoReceiver::stop()
         return;
     }
 
-    const STATUS s = _consumeFlag(failNextStop) ? STATUS_FAIL : STATUS_OK;
-    _emitMaybeAsync([this, s] {
+    const bool fail = _consumeFlag(failNextStop);
+    _emitMaybeAsync([this, fail] {
         setStarted(false);
         forceDecoding(false);
         forceStreaming(false);
-        if (s == STATUS_OK)
+        if (!fail)
             emit receiverStopped();
         else
             emit receiverError(ErrorCategory::Fatal, QStringLiteral("fake: failNextStop"));
@@ -92,9 +79,9 @@ void FakeVideoReceiver::resume()
 void FakeVideoReceiver::startDecoding()
 {
     ++startDecodingCallCount;
-    const STATUS s = _consumeFlag(failNextStartDecoding) ? STATUS_FAIL : STATUS_OK;
-    _emitMaybeAsync([this, s] {
-        if (s == STATUS_OK)
+    const bool fail = _consumeFlag(failNextStartDecoding);
+    _emitMaybeAsync([this, fail] {
+        if (!fail)
             forceDecoding(true);
         else
             emit receiverError(ErrorCategory::Fatal, QStringLiteral("fake: failNextStartDecoding"));
@@ -104,13 +91,24 @@ void FakeVideoReceiver::startDecoding()
 void FakeVideoReceiver::stopDecoding()
 {
     ++stopDecodingCallCount;
-    const STATUS s = _consumeFlag(failNextStopDecoding) ? STATUS_FAIL : STATUS_OK;
-    _emitMaybeAsync([this, s] {
-        if (s == STATUS_OK)
+    const bool fail = _consumeFlag(failNextStopDecoding);
+    _emitMaybeAsync([this, fail] {
+        if (!fail)
             forceDecoding(false);
         else
             emit receiverError(ErrorCategory::Fatal, QStringLiteral("fake: failNextStopDecoding"));
     });
+}
+
+void FakeVideoReceiver::onSinkAboutToChange()
+{
+    ++sinkAboutToChangeCallCount;
+}
+
+VideoReceiver::SinkChangeAction FakeVideoReceiver::onSinkChanged(QVideoSink* /*newSink*/)
+{
+    ++sinkChangedCallCount;
+    return sinkChangeAction;
 }
 
 void FakeVideoReceiver::emitReceiverError(ErrorCategory category, const QString& message)
@@ -154,7 +152,7 @@ bool FakeVideoReceiver::deliverSyntheticFrame(QSize size)
     QVideoFrame frame = makeSyntheticFrame(size);
     if (!frame.isValid())
         return false;
-    delivery->deliverFrame(std::move(frame));
+    delivery->forwardFrameToSink(std::move(frame));
     return true;
 }
 
@@ -168,7 +166,7 @@ int FakeVideoReceiver::deliverSyntheticFrames(int count, QSize size)
         QVideoFrame frame = makeSyntheticFrame(size);
         if (!frame.isValid())
             break;
-        delivery->deliverFrame(std::move(frame));
+        delivery->forwardFrameToSink(std::move(frame));
         ++delivered;
     }
     return delivered;

@@ -7,9 +7,7 @@
 
 /// Per-stream diagnostics model.
 ///
-/// Keeps user-visible error state and backend/restart counters out of
-/// VideoStream while preserving the legacy VideoStream properties that QML
-/// already binds to.
+/// Keeps user-visible error state and restart counters out of VideoStream.
 class VideoDiagnostics : public QObject
 {
     Q_OBJECT

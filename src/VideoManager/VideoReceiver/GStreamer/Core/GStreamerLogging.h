@@ -21,7 +21,4 @@ namespace GStreamer
     /// setting. Skips threshold override when GST_DEBUG is set externally.
     void configureDebugLogging();
 
-    /// Enumerate registered video-decoder factories and log them (sorted by
-    /// rank) to `GStreamerDecoderRanksLog`, annotated HW/SW.
-    void logDecoderRanks();
 }

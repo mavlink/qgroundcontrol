@@ -264,10 +264,8 @@ void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
 {
     Q_UNUSED(parent);
-    // Default: nullptr — the VideoReceiverFactory routes receivers through
-    // VideoBackendRegistry (backends self-register at startup). Custom builds
-    // may still override this to inject a proprietary receiver; a non-null
-    // return short-circuits the QtMultimedia fallback path.
+    // Default: nullptr — VideoStreamOrchestrator uses QtMultimedia unless a
+    // custom build overrides this to inject a proprietary receiver.
     return nullptr;
 }
 

@@ -1,34 +1,75 @@
 #include "VideoStreamOrchestrator.h"
 
-#include "MavlinkCameraControlInterface.h"
-#include "QGCApplication.h"
-#include "QGCCameraManager.h"
+#include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
-#include "QGCVideoStreamInfo.h"
-#include "QmlObjectListModel.h"
-#include "UVCReceiver.h"
-#include "VideoBackendRegistry.h"
-#include "VideoFrameDelivery.h"
-#include "VideoReceiverFactory.h"
-#include "VideoSettings.h"
+#include "QtMultimediaReceiver.h"
 #include "VideoSettingsBridge.h"
+#include "VideoSourceController.h"
 #include "VideoStream.h"
+#include "VideoStreamAggregateMonitor.h"
 #include "VideoStreamModel.h"
+#include "VideoUvcController.h"
+
+#include <QtMultimedia/QMediaDevices>
+#include <utility>
 
 QGC_LOGGING_CATEGORY(VideoStreamOrchestratorLog, "Video.VideoStreamOrchestrator")
 
+namespace {
+
+VideoReceiver* createDisplayReceiver(const VideoSourceResolver::VideoSource& source,
+                                     [[maybe_unused]] bool thermal,
+                                     QObject* parent)
+{
+    Q_UNUSED(source);
+
+    if (auto* core = QGCCorePlugin::instance()) {
+        if (auto* override = core->createVideoReceiver(parent))
+            return override;
+    }
+
+    return new QtMultimediaReceiver(parent);
+}
+
+}  // namespace
+
 VideoStreamOrchestrator::VideoStreamOrchestrator(VideoSettings* settings, QObject* parent)
     : QObject(parent),
-      _settings(settings),
       _settingsBridge(new VideoSettingsBridge(settings, this)),
+      _sourceController(new VideoSourceController(settings, this)),
+      _mediaDevices(new QMediaDevices(this)),
       _streamModel(new VideoStreamModel(this)),
-      _dynamicFactory(VideoReceiverFactory::gstOrQtMultimedia)
+      _aggregateMonitor(new VideoStreamAggregateMonitor(this)),
+      _uvcController(new VideoUvcController(_streamModel, this)),
+      _dynamicFactory(createDisplayReceiver)
 {
-    // Bridge signals wire now; nothing fires until bindToSettings() → subscribe().
+    _uvcController->setLocalCameraAvailable(QtMultimediaReceiver::localCameraAvailable);
+
     (void)connect(_settingsBridge, &VideoSettingsBridge::sourceChanged, this,
                   &VideoStreamOrchestrator::_onSourceChanged);
+    (void)connect(_sourceController, &VideoSourceController::sourceChanged, this,
+                  &VideoStreamOrchestrator::_onSourceChanged);
     (void)connect(_settingsBridge, &VideoSettingsBridge::lowLatencyChanged, this, [this]() {
-        forEachStream([](VideoStream* s) { s->restart(); });
+        forEachStream([this](VideoStream* s) {
+            (void)_sourceController->applyLowLatency(s);
+            s->restart();
+        });
+    });
+    (void)connect(_aggregateMonitor, &VideoStreamAggregateMonitor::decodingChanged, this,
+                  &VideoStreamOrchestrator::decodingChanged);
+    (void)connect(_aggregateMonitor, &VideoStreamAggregateMonitor::recordingChanged, this,
+                  &VideoStreamOrchestrator::recordingChanged);
+    (void)connect(_mediaDevices, &QMediaDevices::videoInputsChanged, this, [this]() {
+        if (!_isUvcSource())
+            return;
+
+        if (_uvcController->localCameraAvailable())
+            _activateUvcStream();
+        else
+            _deactivateUvcStream();
+
+        emit hasVideoChanged();
+        emit isStreamSourceChanged();
     });
 }
 
@@ -64,40 +105,23 @@ void VideoStreamOrchestrator::createStreams()
     };
 
     const QList<StreamDef> defs = {
-        {VideoStream::Role::Primary, VideoReceiverFactory::gstOrQtMultimedia},
-        {VideoStream::Role::Thermal, VideoReceiverFactory::gstOrQtMultimedia},
+        {VideoStream::Role::Primary, createDisplayReceiver},
+        {VideoStream::Role::Thermal, createDisplayReceiver},
     };
 
     for (const auto& def : defs) {
-        auto* stream = new VideoStream(def.role, def.factory, this);
-        _streams.append(stream);
+        auto* stream = _createStream(def.role, def.factory);
+        (void) _applyResolvedSource(stream);
 
-        _wireStreamSignals(stream);
-        stream->updateFromSettings(_settings);
-
-        // Non-empty URI with no receiver ⇒ no backend can serve the scheme.
+        // Non-empty URI with no receiver means no receiver can serve the source.
         const QString uri = stream->uri();
         if (!uri.isEmpty() && stream->receiver() == nullptr) {
             qCWarning(VideoStreamOrchestratorLog)
-                << "No receiver for URI:" << uri << "— backend may be unavailable";
+                << "No receiver for URI:" << uri;
         }
-
-        // Stable row per stream — survives backend switches.
-        _streamModel->addStream(stream);
 
         if (hasVideo())
             stream->restart();
-    }
-
-    // Local camera stream (UVC on desktop, built-in camera on Android/iOS)
-    if (VideoBackendRegistry::instance().isAvailable(VideoReceiver::BackendKind::UVC)) {
-        auto* uvcStream = new VideoStream(VideoStream::Role::UVC, VideoReceiverFactory::uvc, this);
-        _streams.append(uvcStream);
-
-        _wireStreamSignals(uvcStream);
-        _streamModel->addStream(uvcStream);
-
-        qCDebug(VideoStreamOrchestratorLog) << "UVC stream created";
     }
 
     if (_isUvcSource())
@@ -108,6 +132,24 @@ void VideoStreamOrchestrator::createStreams()
     emit streamsCreated();
 }
 
+#ifdef QGC_UNITTEST_BUILD
+void VideoStreamOrchestrator::setLocalCameraAvailableForTest(LocalCameraAvailableFn fn)
+{
+    _uvcController->setLocalCameraAvailable(std::move(fn));
+}
+
+void VideoStreamOrchestrator::registerStreamForTest(VideoStream* stream)
+{
+    _addStream(stream);
+}
+
+bool VideoStreamOrchestrator::reconcileDynamicStreamsForTest(
+    const QHash<quint8, VideoSourceResolver::StreamInfo>& expected)
+{
+    return _reconcileDynamicStreams(expected);
+}
+#endif
+
 void VideoStreamOrchestrator::cleanup()
 {
     for (auto* stream : std::as_const(_streams))
@@ -115,8 +157,10 @@ void VideoStreamOrchestrator::cleanup()
 
     // Empty the model before destroying streams so QML delegates don't
     // dereference dangling pointers during teardown.
-    for (auto* stream : std::as_const(_streams))
+    for (auto* stream : std::as_const(_streams)) {
+        _aggregateMonitor->unwatch(stream);
         _streamModel->removeStream(stream);
+    }
 
     qDeleteAll(_streams);
     _streams.clear();
@@ -124,35 +168,9 @@ void VideoStreamOrchestrator::cleanup()
 
 void VideoStreamOrchestrator::setCameraManager(QGCCameraManager* cameraManager)
 {
-    if (_cameraManager) {
-        disconnect(_cameraManagerConn);
-        _cameraManagerConn = {};
-        forEachNetworkStream([](VideoStream* s) { s->setVideoStreamInfo(nullptr); });
-    }
+    _sourceController->setCameraManager(cameraManager);
+    _onSourceChanged();
 
-    _cameraManager = cameraManager;
-
-    if (_cameraManager) {
-        _cameraManagerConn = connect(_cameraManager, &QGCCameraManager::streamChanged, this,
-                                     &VideoStreamOrchestrator::_onSourceChanged);
-
-        forEachNetworkStream([this](VideoStream* stream) {
-            if (stream->role() == VideoStream::Role::Primary)
-                stream->setVideoStreamInfo(_cameraManager->currentStreamInstance());
-            else if (stream->role() == VideoStream::Role::Thermal)
-                stream->setVideoStreamInfo(_cameraManager->thermalStreamInstance());
-            // Dynamic streams: reconciled below.
-        });
-
-        _reconcileDynamicStreams();
-    } else {
-        forEachNetworkStream([](VideoStream* s) { s->setVideoStreamInfo(nullptr); });
-        // No camera manager ⇒ no MAVLink stream list ⇒ tear down all Dynamic streams.
-        _reconcileDynamicStreams();
-    }
-
-    // hasThermal no longer aggregated at the facade — QML binds directly
-    // to `streamModel.activeStreamForRole(Thermal).videoStreamInfo.isThermal`.
 }
 
 void VideoStreamOrchestrator::startVideo()
@@ -174,36 +192,29 @@ void VideoStreamOrchestrator::stopVideo()
     forEachStream([](VideoStream* s) { s->stop(); });
 }
 
-bool VideoStreamOrchestrator::streaming() const
-{
-    for (const auto* s : _streams) {
-        if (!s->isThermal() && s->streaming())
-            return true;
-    }
-    return false;
-}
-
 bool VideoStreamOrchestrator::decoding() const
 {
-    for (const auto* s : _streams) {
-        if (!s->isThermal() && s->decoding())
-            return true;
-    }
-    return false;
+    return _aggregateMonitor->decoding();
 }
 
 bool VideoStreamOrchestrator::recording() const
 {
-    for (const auto* s : _streams) {
-        if (!s->isThermal() && s->recording())
-            return true;
-    }
-    return false;
+    return _aggregateMonitor->recording();
 }
 
 bool VideoStreamOrchestrator::hasVideo() const
 {
-    return _settings->streamEnabled()->rawValue().toBool() && _settings->streamConfigured();
+    return _sourceController->hasVideo(primaryStream());
+}
+
+bool VideoStreamOrchestrator::autoStreamConfigured() const
+{
+    return _sourceController->autoStreamConfigured(primaryStream());
+}
+
+bool VideoStreamOrchestrator::isAutoStreamConfigured(const std::optional<VideoSourceResolver::StreamInfo>& metadata)
+{
+    return metadata && !metadata->thermal && !metadata->uri.isEmpty();
 }
 
 VideoStream* VideoStreamOrchestrator::streamByRole(VideoStream::Role role) const
@@ -227,46 +238,20 @@ QList<VideoStream*> VideoStreamOrchestrator::dynamicStreams() const
 
 bool VideoStreamOrchestrator::_reconcileDynamicStreams()
 {
-    // Build the expected {streamID → info} map from the camera's reported list,
-    // excluding streams already bound to Primary/Thermal slots.
-    QHash<quint8, QGCVideoStreamInfo*> expected;
-    if (_cameraManager) {
-        auto* currentCamera = _cameraManager->currentCameraInstance();
-        auto* currentInfo = _cameraManager->currentStreamInstance();
-        auto* thermalInfo = _cameraManager->thermalStreamInstance();
-        if (currentCamera && currentCamera->streams()) {
-            auto* list = currentCamera->streams();
-            for (int i = 0; i < list->count(); ++i) {
-                auto* info = qobject_cast<QGCVideoStreamInfo*>(list->get(i));
-                if (!info)
-                    continue;
-                // Skip the streams already consumed by Primary/Thermal — comparison
-                // by QGCVideoStreamInfo pointer identity (stable across infoChanged).
-                if (info == currentInfo || info == thermalInfo)
-                    continue;
-                expected.insert(info->streamID(), info);
-            }
-        }
-    }
-    return _reconcileDynamicStreams(expected);
+    return _reconcileDynamicStreams(_sourceController->expectedDynamicStreams());
 }
 
-bool VideoStreamOrchestrator::_reconcileDynamicStreams(const QHash<quint8, QGCVideoStreamInfo*>& expected)
+bool VideoStreamOrchestrator::_reconcileDynamicStreams(const QHash<quint8, VideoSourceResolver::StreamInfo>& expected)
 {
-    // Build a lookup of existing Dynamic streams keyed by the stream ID embedded
-    // in the stream's name (`dynamicVideo.<id>`).
+    // Build a lookup of existing Dynamic streams keyed by MAVLink stream ID.
     QHash<quint8, VideoStream*> existing;
     for (auto* s : _streams) {
         if (!s || s->role() != VideoStream::Role::Dynamic)
             continue;
-        const QString name = s->name();
-        const int dot = name.lastIndexOf(QLatin1Char('.'));
-        if (dot < 0)
+        const std::optional<quint8> streamId = s->metadataStreamId();
+        if (!streamId)
             continue;
-        bool ok = false;
-        const uint id = name.mid(dot + 1).toUInt(&ok);
-        if (ok && id <= 0xFF)
-            existing.insert(static_cast<quint8>(id), s);
+        existing.insert(*streamId, s);
     }
 
     bool changed = false;
@@ -276,8 +261,7 @@ bool VideoStreamOrchestrator::_reconcileDynamicStreams(const QHash<quint8, QGCVi
         if (!expected.contains(it.key())) {
             VideoStream* s = it.value();
             s->stop();
-            _streamModel->removeStream(s);
-            _streams.removeAll(s);
+            _removeStream(s);
             s->deleteLater();
             changed = true;
             qCDebug(VideoStreamOrchestratorLog) << "Removed Dynamic stream for vanished ID" << it.key();
@@ -289,21 +273,13 @@ bool VideoStreamOrchestrator::_reconcileDynamicStreams(const QHash<quint8, QGCVi
         if (existing.contains(it.key()))
             continue;
         const quint8 id = it.key();
-        QGCVideoStreamInfo* info = it.value();
+        VideoSourceResolver::StreamInfo info = it.value();
+        info.streamID = id;
         const QString name = QStringLiteral("dynamicVideo.%1").arg(id);
 
-        // Dynamic streams route MAVLink URIs through the GStreamer/QtMM table —
-        // same factory as Primary. UVC is hardware-only and never dynamic.
-        // Factory pulled from `_dynamicFactory` so tests can inject FakeVideoReceiver.
-        auto* stream = new VideoStream(VideoStream::Role::Dynamic, name,
-                                        _dynamicFactory, this);
-        _streams.append(stream);
-        _wireStreamSignals(stream);
-        _streamModel->addStream(stream);
-
-        // setVideoStreamInfo triggers _updateAutoStream() for Role::Dynamic,
-        // so the URI is resolved immediately — no separate updateFromSettings.
-        stream->setVideoStreamInfo(info);
+        auto* stream = _createStream(VideoStream::Role::Dynamic, name, _dynamicFactory);
+        stream->setSourceMetadata(info);
+        (void) _applyResolvedSource(stream);
 
         changed = true;
         qCDebug(VideoStreamOrchestratorLog) << "Added Dynamic stream for ID" << id << "uri=" << stream->uri();
@@ -312,26 +288,31 @@ bool VideoStreamOrchestrator::_reconcileDynamicStreams(const QHash<quint8, QGCVi
     return changed;
 }
 
+bool VideoStreamOrchestrator::_applyResolvedSource(VideoStream* stream)
+{
+    return _sourceController->applyResolvedSource(stream);
+}
+
 bool VideoStreamOrchestrator::_isUvcSource() const
 {
-    return _settings->currentSourceType() == VideoSettings::SourceType::UVC;
+    return _sourceController->isUvcSource();
+}
+
+VideoStream* VideoStreamOrchestrator::_ensureUvcStream()
+{
+    if (auto* existing = uvcStream())
+        return existing;
+
+    auto* uvc = _createStream(VideoStream::Role::UVC, createDisplayReceiver);
+    qCDebug(VideoStreamOrchestratorLog) << "Created UVC stream for active local camera source";
+    return uvc;
 }
 
 void VideoStreamOrchestrator::_activateUvcStream()
 {
-    auto* uvc = uvcStream();
-    if (!uvc)
+    if (!_uvcController->activate(primaryStream(), [this]() { return _ensureUvcStream(); }))
         return;
 
-    // UVC takes over the video display — stop the network primary first.
-    if (auto* primary = primaryStream())
-        primary->stop();
-
-    uvc->setUri(QStringLiteral("uvc://local"));
-    uvc->restart();
-
-    // activeStreamChanged(Primary) lets QML re-bind sinks declaratively.
-    _streamModel->setUvcActive(true);
     qCDebug(VideoStreamOrchestratorLog) << "Activated UVC stream";
 }
 
@@ -341,16 +322,15 @@ void VideoStreamOrchestrator::_deactivateUvcStream()
     if (!uvc)
         return;
 
-    uvc->stop();
-    uvc->setUri(QString());
-
-    _streamModel->setUvcActive(false);
+    if (!_uvcController->deactivate(uvc, [this, uvc]() { _removeStream(uvc); }))
+        return;
+    uvc->deleteLater();
     qCDebug(VideoStreamOrchestratorLog) << "Deactivated UVC stream";
 }
 
 void VideoStreamOrchestrator::_onSourceChanged()
 {
-    // No re-entrancy guard needed: VideoStream::updateFromSettings uses
+    // No re-entrancy guard needed: source writeback uses
     // QSignalBlocker to suppress the rawValueChanged re-fire during writeback.
     const bool uvcSelected = _isUvcSource();
     const bool wasUvc = uvcStream() && uvcStream()->started();
@@ -368,15 +348,10 @@ void VideoStreamOrchestrator::_onSourceChanged()
         }
 
         forEachNetworkStream([this, &changed](VideoStream* stream) {
-            QGCVideoStreamInfo* info = nullptr;
-            if (stream->role() == VideoStream::Role::Primary)
-                info = _cameraManager ? _cameraManager->currentStreamInstance() : nullptr;
-            else if (stream->role() == VideoStream::Role::Thermal)
-                info = _cameraManager ? _cameraManager->thermalStreamInstance() : nullptr;
-            else
+            if (stream->role() == VideoStream::Role::Dynamic)
                 return;  // Dynamic streams: handled by _reconcileDynamicStreams().
-            stream->setVideoStreamInfo(info);
-            changed |= stream->updateFromSettings(_settings);
+            _sourceController->bindCameraMetadata(stream);
+            changed |= _applyResolvedSource(stream);
         });
 
         // Primary/Thermal rebind finished — now reconcile the Dynamic set
@@ -395,61 +370,65 @@ void VideoStreamOrchestrator::_onSourceChanged()
                 stopVideo();
         }
 
-        qCDebug(VideoStreamOrchestratorLog)
-            << "New Video Source:" << _settings->videoSource()->rawValue().toString();
-    }
-}
-
-void VideoStreamOrchestrator::_recomputeAggregate()
-{
-    const bool nowStreaming = streaming();
-    const bool nowDecoding = decoding();
-    const bool nowRecording = recording();
-
-    if (nowStreaming != _agg.streaming) {
-        _agg.streaming = nowStreaming;
-        emit streamingChanged();
-    }
-    if (nowDecoding != _agg.decoding) {
-        _agg.decoding = nowDecoding;
-        emit decodingChanged();
-    }
-    if (nowRecording != _agg.recording) {
-        _agg.recording = nowRecording;
-        emit recordingChanged(nowRecording);
+        qCDebug(VideoStreamOrchestratorLog) << "Video source changed";
     }
 }
 
 void VideoStreamOrchestrator::_wireStreamSignals(VideoStream* stream)
 {
-    // Funnel per-stream changes into _recomputeAggregate so NOTIFY signals
-    // fire only on true aggregate transitions, not per-stream churn.
-    (void)connect(stream, &VideoStream::streamingChanged, this,
-                  &VideoStreamOrchestrator::_recomputeAggregate);
-    (void)connect(stream, &VideoStream::decodingChanged, this,
-                  &VideoStreamOrchestrator::_recomputeAggregate);
-    (void)connect(stream, &VideoStream::recordingChanged, this,
-                  &VideoStreamOrchestrator::_recomputeAggregate);
-
     (void)connect(stream, &VideoStream::recordingError, this,
                   &VideoStreamOrchestrator::recordingError);
 
-    // Primary stream's resolution still tracked here; `videoSize()` is read
-    // from `RecordingCoordinator::startRecording` for subtitle sizing.
     (void)connect(stream, &VideoStream::videoSizeChanged, this, [this, stream](QSize size) {
         if (!stream->isThermal())
             _videoSize = size;
     });
 
-    // Settings re-sync on stream-info changes — URI/lowLatency may need to
-    // pick up auto-stream values from the new info.
     (void)connect(stream, &VideoStream::videoStreamInfoChanged, this, [this, stream]() {
-        stream->updateFromSettings(_settings);
+        (void) _applyResolvedSource(stream);
     });
 
-    // Primary bridge changes — facade re-binds subtitle overlay sink.
-    (void)connect(stream, &VideoStream::bridgeChanged, this, [this, stream]() {
+    (void)connect(stream, &VideoStream::frameDeliveryChanged, this, [this, stream]() {
         if (stream->role() == VideoStream::Role::Primary)
-            emit primaryBridgeChanged();
+            emit primaryFrameDeliveryChanged();
     });
+}
+
+VideoStream* VideoStreamOrchestrator::_createStream(VideoStream::Role role,
+                                                    VideoStream::ReceiverFactory factory)
+{
+    auto* stream = new VideoStream(role, std::move(factory), this);
+    _addStream(stream);
+    return stream;
+}
+
+VideoStream* VideoStreamOrchestrator::_createStream(VideoStream::Role role,
+                                                    const QString& name,
+                                                    VideoStream::ReceiverFactory factory)
+{
+    auto* stream = new VideoStream(role, name, std::move(factory), this);
+    _addStream(stream);
+    return stream;
+}
+
+void VideoStreamOrchestrator::_addStream(VideoStream* stream)
+{
+    if (!stream || _streams.contains(stream))
+        return;
+
+    _streams.append(stream);
+    _wireStreamSignals(stream);
+    _aggregateMonitor->watch(stream);
+    _streamModel->addStream(stream);
+}
+
+void VideoStreamOrchestrator::_removeStream(VideoStream* stream)
+{
+    if (!stream || !_streams.contains(stream))
+        return;
+
+    _streamModel->removeStream(stream);
+    _aggregateMonitor->unwatch(stream);
+    _streams.removeAll(stream);
+    disconnect(stream, nullptr, this, nullptr);
 }

@@ -203,7 +203,7 @@ bool VideoStreamStateMachine::bind(VideoReceiver* receiver)
     _receiverConns << connect(receiver, &VideoReceiver::receiverFirstFrame, this,
                               &VideoStreamStateMachine::_receiverFirstFrameProxy);
     _receiverConns << connect(receiver, &VideoReceiver::receiverError, this,
-                              &VideoStreamStateMachine::_forwardReceiverError);
+                              &VideoStreamStateMachine::handleReceiverError);
     return true;
 }
 
@@ -245,11 +245,11 @@ void VideoStreamStateMachine::requestResume()
     QMetaObject::invokeMethod(this, [this]() { emit _resumeRequested(); }, Qt::QueuedConnection);
 }
 
-void VideoStreamStateMachine::_forwardReceiverError(VideoReceiver::ErrorCategory category, const QString& message)
+void VideoStreamStateMachine::handleReceiverError(VideoReceiver::ErrorCategory category, const QString& message)
 {
     Q_UNUSED(message)
-    // Only Fatal counts as a failure for FSM purposes — Transient / MissingPlugin /
-    // HardwareFallback are informational and do not tear down the stream.
+    // Only Fatal counts as a failure for FSM purposes; transient and missing-plugin
+    // notices are informational and do not tear down the stream.
     if (category != VideoReceiver::ErrorCategory::Fatal)
         return;
 

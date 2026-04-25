@@ -5,10 +5,9 @@
 #include <QtMultimedia/QVideoSink>
 #include <functional>
 
-#include "VideoSourceResolver.h"
+#include "VideoReceiver.h"
 
 class VideoFrameDelivery;
-class VideoReceiver;
 
 /// Owns stream sink routing and the stable frame-delivery endpoint.
 class VideoSinkRouter : public QObject
@@ -21,20 +20,19 @@ public:
 
     struct SinkResult
     {
-        bool bridgeChanged = false;
+        bool frameDeliveryChanged = false;
         bool restartRequested = false;
     };
 
     explicit VideoSinkRouter(QString streamName, QObject* parent = nullptr);
 
-    [[nodiscard]] VideoFrameDelivery* delivery() const { return _delivery; }
+    [[nodiscard]] VideoFrameDelivery* frameDelivery() const { return _delivery; }
     [[nodiscard]] QVideoSink* videoSink() const;
 
     [[nodiscard]] bool attachReceiver(VideoReceiver* receiver, const ReceiverInvoker& invokeOnReceiverThread);
     void detachReceiver(VideoReceiver* receiver, const ReceiverInvoker& invokeOnReceiverThread);
 
     [[nodiscard]] SinkResult registerVideoSink(VideoReceiver* receiver,
-                                               const VideoSourceResolver::VideoSource& source,
                                                QVideoSink* sink,
                                                const ReceiverInvoker& invokeOnReceiverThread);
 
@@ -48,10 +46,12 @@ private:
     };
 
     [[nodiscard]] SinkChange _prepareSinkChange(VideoReceiver* receiver, QVideoSink* sink) const;
-    void _commitSinkChange(VideoReceiver* receiver, const SinkChange& change, const ReceiverInvoker& invokeOnReceiverThread);
+    [[nodiscard]] VideoReceiver::SinkChangeAction _commitSinkChange(VideoReceiver* receiver,
+                                                                    const SinkChange& change,
+                                                                    const ReceiverInvoker& invokeOnReceiverThread);
     [[nodiscard]] SinkResult _finishSinkChange(VideoReceiver* receiver,
-                                               const VideoSourceResolver::VideoSource& source,
                                                const SinkChange& change,
+                                               VideoReceiver::SinkChangeAction action,
                                                const ReceiverInvoker& invokeOnReceiverThread);
 
     QString _streamName;

@@ -62,6 +62,16 @@ float VideoStreamStats::fps() const
     return static_cast<float>(_frameTimeCount - 1) * 1000.0F / static_cast<float>(span);
 }
 
+float VideoStreamStats::latencyMs() const
+{
+    return _delivery ? _delivery->latencyMs() : -1.0F;
+}
+
+quint64 VideoStreamStats::droppedFrames() const
+{
+    return _delivery ? _delivery->droppedFrames() : 0;
+}
+
 void VideoStreamStats::reset()
 {
     {
@@ -72,6 +82,7 @@ void VideoStreamStats::reset()
     }
     _lastEmittedFps = 0.0F;
     _lastEmittedLatency = -1.0F;
+    _lastEmittedDroppedFrames = 0;
     _lastFpsEmitMs = 0;
     _lastLatencyEmitMs = 0;
     _streamHealth = Health::Good;
@@ -83,6 +94,7 @@ void VideoStreamStats::reset()
     emit fpsChanged(0.0F);
     emit latencyChanged(-1.0F);
     emit streamHealthChanged(Health::Good);
+    emit droppedFramesChanged(0);
 }
 
 void VideoStreamStats::_onFrameArrived()
@@ -156,6 +168,12 @@ void VideoStreamStats::_update()
     if (health != _streamHealth) {
         _streamHealth = health;
         emit streamHealthChanged(_streamHealth);
+    }
+
+    const quint64 currentDroppedFrames = droppedFrames();
+    if (currentDroppedFrames != _lastEmittedDroppedFrames) {
+        _lastEmittedDroppedFrames = currentDroppedFrames;
+        emit droppedFramesChanged(currentDroppedFrames);
     }
 
     // Latency — emit on delta OR when 500 ms elapsed (mirrors FPS debounce #21).

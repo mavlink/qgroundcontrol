@@ -162,23 +162,11 @@
         {
             "name": "lowLatencyMode",
             "shortDesc": "Reduce video latency by approximately 200ms using optimized streaming settings.",
-            "longDesc": "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
+            "longDesc": "If this option is enabled, QGroundControl requests low-latency playback options for streaming sources.",
             "type": "bool",
             "default": false,
             "label": "Low Latency Mode",
             "keywords": "low latency"
-        },
-        {
-            "name": "forceVideoDecoder",
-            "shortDesc": "Override automatic video decoder selection to force a specific decoding method.",
-            "longDesc": "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
-            "type": "uint32",
-            "enumStrings": "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
-            "enumValues": "0,1,8,2,3,4,5,6,7",
-            "default": 0,
-            "qgcRebootRequired": true,
-            "label": "Force video decoder priority",
-            "keywords": "decoder,hardware decode"
         }
     ]
 }

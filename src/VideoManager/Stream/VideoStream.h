@@ -2,6 +2,7 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QSize>
 #include <QtMultimedia/QVideoSink>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -9,7 +10,6 @@
 #include <memory>
 #include <optional>
 
-#include "VideoRestartPolicy.h"
 #include "VideoDiagnostics.h"
 #include "VideoRecorder.h"
 #include "VideoSourceResolver.h"
@@ -20,14 +20,13 @@ Q_DECLARE_LOGGING_CATEGORY(VideoStreamLog)
 
 class QGCVideoStreamInfo;
 class VideoFrameDelivery;
-class VideoReceiverSession;
-class VideoSettings;
+class VideoStreamSession;
+class VideoStreamLifecycleController;
 class VideoStreamStateMachine;
 #include "VideoReceiver.h"
+#include "VideoPlaybackInput.h"
 
-/// Per-stream coordinator owning receiver lifecycle, URI resolution,
-/// settings binding, and restart logic. VideoManager orchestrates a
-/// list of these; each stream is independently testable.
+/// QML-facing identity and control surface for one video stream.
 class VideoStream : public QObject
 {
     Q_OBJECT
@@ -39,8 +38,7 @@ class VideoStream : public QObject
     Q_PROPERTY(VideoDiagnostics* diagnostics READ diagnostics CONSTANT)
     Q_PROPERTY(SessionState sessionState READ sessionState NOTIFY sessionStateChanged)
     Q_PROPERTY(VideoStreamFsm::State fsmState READ fsmState NOTIFY fsmStateChanged)
-    Q_PROPERTY(QObject* bridge READ bridgeAsObject NOTIFY bridgeChanged)
-    Q_PROPERTY(QObject* frameDelivery READ frameDeliveryAsObject NOTIFY bridgeChanged)
+    Q_PROPERTY(QObject* frameDelivery READ frameDeliveryAsObject NOTIFY frameDeliveryChanged)
     Q_PROPERTY(VideoStreamStats* stats READ stats NOTIFY statsChanged)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
     Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
@@ -48,12 +46,11 @@ class VideoStream : public QObject
     Q_PROPERTY(bool firstFrameReady READ firstFrameReady NOTIFY firstFrameReadyChanged)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
     Q_PROPERTY(QGCVideoStreamInfo* videoStreamInfo READ videoStreamInfo NOTIFY videoStreamInfoChanged)
+    Q_PROPERTY(qreal sourceAspectRatio READ sourceAspectRatio NOTIFY streamInfoUpdated)
+    Q_PROPERTY(bool sourceIsThermal READ sourceIsThermal NOTIFY streamInfoUpdated)
+    Q_PROPERTY(quint16 sourceHfov READ sourceHfov NOTIFY streamInfoUpdated)
     Q_PROPERTY(bool hwDecoding READ hwDecoding NOTIFY hwDecodingChanged)
     Q_PROPERTY(QString activeDecoderName READ activeDecoderName NOTIFY activeDecoderNameChanged)
-    Q_PROPERTY(float fps READ fps NOTIFY fpsChanged)
-    Q_PROPERTY(int streamHealth READ streamHealth NOTIFY streamHealthChanged)
-    Q_PROPERTY(float latencyMs READ latencyMs NOTIFY latencyMsChanged)
-    Q_PROPERTY(quint64 droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
     Q_PROPERTY(VideoRecorder* recorder READ recorder NOTIFY recorderChanged)
     Q_PROPERTY(bool latencySupported READ latencySupported NOTIFY receiverChanged)
     QML_UNCREATABLE("")
@@ -88,6 +85,15 @@ public:
 
     [[nodiscard]] QString name() const { return _name; }
 
+    [[nodiscard]] std::optional<quint8> metadataStreamId() const { return _metadataStreamId; }
+    void setMetadataStreamId(std::optional<quint8> streamId);
+    [[nodiscard]] std::optional<VideoSourceResolver::StreamInfo> sourceMetadata() const { return _sourceMetadata; }
+    void setSourceMetadata(const VideoSourceResolver::StreamInfo& metadata);
+    void clearSourceMetadata();
+    [[nodiscard]] qreal sourceAspectRatio() const;
+    [[nodiscard]] bool sourceIsThermal() const;
+    [[nodiscard]] quint16 sourceHfov() const;
+
     [[nodiscard]] bool isThermal() const { return _role == Role::Thermal; }
 
     Q_INVOKABLE static QString nameForRole(Role role);
@@ -95,23 +101,21 @@ public:
 
     static constexpr int roleCount() { return static_cast<int>(RoleCount); }
 
+    [[nodiscard]] VideoStreamSession* session() const { return _session; }
+    [[nodiscard]] VideoStreamLifecycleController* lifecycle() const;
+
     // ── Receiver access ──────────────────────────────────────────────
     [[nodiscard]] VideoReceiver* receiver() const;
 
     // ── Recorder access ──────────────────────────────────────────────
     [[nodiscard]] VideoRecorder* recorder() const;
 
-    /// Transfer ownership of the current recorder out of this stream. The
-    /// stream immediately rebuilds a fresh recorder so `recorder()` stays
-    /// non-null for QML bindings. Used by RecordingCoordinator to hand
-    /// recorders to RecordingSession; the session destroys them at clean
-    /// stop, so each recording cycle gets fresh state. Does not touch any
-    /// recording intent — the coordinator owns recording policy.
+    /// Transfer ownership of the current recorder out of this stream and
+    /// immediately rebuild a fresh recorder so `recorder()` stays non-null
+    /// for QML bindings.
     [[nodiscard]] std::unique_ptr<VideoRecorder> releaseRecorder();
 
-    [[nodiscard]] VideoFrameDelivery* bridge() const;
-    [[nodiscard]] VideoFrameDelivery* frameDelivery() const { return bridge(); }
-    [[nodiscard]] QObject* bridgeAsObject() const;
+    [[nodiscard]] VideoFrameDelivery* frameDelivery() const;
     [[nodiscard]] QObject* frameDeliveryAsObject() const;
 
     // ── State queries ────────────────────────────────────────────────
@@ -132,7 +136,7 @@ public:
     [[nodiscard]] VideoStreamFsm::State fsmState() const;
 
     /// Raw FSM accessor (for tests).
-    [[nodiscard]] VideoStreamStateMachine* fsm() const { return _fsm.get(); }
+    [[nodiscard]] VideoStreamStateMachine* fsm() const;
 
     [[nodiscard]] bool started() const;
     [[nodiscard]] bool streaming() const;
@@ -142,28 +146,25 @@ public:
 
     [[nodiscard]] bool latencySupported() const;
 
-    [[nodiscard]] QString uri() const { return _uri; }
-    [[nodiscard]] const VideoSourceResolver::VideoSource& sourceDescriptor() const { return _source; }
+    [[nodiscard]] QString uri() const;
+    [[nodiscard]] const VideoSourceResolver::VideoSource& sourceDescriptor() const;
 
-    [[nodiscard]] QSize videoSize() const { return _videoSize; }
+    [[nodiscard]] QSize videoSize() const;
 
     // ── Stream info (MAVLink auto-stream) ────────────────────────────
-    [[nodiscard]] QGCVideoStreamInfo* videoStreamInfo() const { return _streamInfo; }
+    [[nodiscard]] QGCVideoStreamInfo* videoStreamInfo() const;
 
     void setVideoStreamInfo(QGCVideoStreamInfo* info);
 
     // ── Sink management ──────────────────────────────────────────────
-    /// Q_INVOKABLE so QGCVideoOutput.qml can call this directly to register
-    /// its QVideoSink when the QML item is created / reparented.
+    /// Q_INVOKABLE for tests and QML helpers that own sink binding lifecycle.
     Q_INVOKABLE void registerVideoSink(QVideoSink* sink);
-    /// Returns the QVideoSink currently registered on the stream's bridge,
-    /// or nullptr if no sink has been registered yet. Preserved for test API.
-    [[nodiscard]] QVideoSink* pendingSink() const;
+    [[nodiscard]] QVideoSink* videoSink() const;
 
     // ── URI + settings ───────────────────────────────────────────────
-    bool updateFromSettings(VideoSettings* settings);
     bool setUri(const QString& uri);
     bool setSourceDescriptor(const VideoSourceResolver::VideoSource& source);
+    bool setLowLatency(bool lowLatency);
 
     // ── Lifecycle ────────────────────────────────────────────────────
     void start(uint32_t timeout);
@@ -176,25 +177,25 @@ public:
     using RecorderFactory = std::function<VideoRecorder*(VideoStream*)>;
     void setRecorderFactoryForTest(RecorderFactory factory);
 
-    // ── Stats ─────────────────────────────────────────────────────────
-    [[nodiscard]] VideoStreamStats* stats() const { return _stats; }
+    using PlaybackInput = VideoPlaybackInput;
 
-    [[nodiscard]] float fps() const;
-    [[nodiscard]] int streamHealth() const;
-    [[nodiscard]] float latencyMs() const;
-    [[nodiscard]] quint64 droppedFrames() const;
+    using PlaybackInputResolver = std::function<PlaybackInput(const VideoSourceResolver::VideoSource& source)>;
+    void setPlaybackInputResolverForTest(PlaybackInputResolver resolver);
+
+    // ── Stats ─────────────────────────────────────────────────────────
+    [[nodiscard]] VideoStreamStats* stats() const;
+
     [[nodiscard]] bool hwDecoding() const;
     [[nodiscard]] QString activeDecoderName() const;
 
     // ── Error reporting ──────────────────────────────────────────────
     [[nodiscard]] QString lastError() const;
     [[nodiscard]] VideoReceiver::ErrorCategory lastErrorCategory() const;
-    [[nodiscard]] VideoDiagnostics* diagnostics() const { return _diagnostics; }
+    [[nodiscard]] VideoDiagnostics* diagnostics() const;
 
 signals:
     void sessionStateChanged(SessionState newState);
-    /// Fired whenever the FSM transitions. Bound to
-    /// VideoStreamStateMachine::stateChanged in `_ensureReceiver()`.
+    /// Fired whenever the stream lifecycle FSM transitions.
     void fsmStateChanged(VideoStreamFsm::State newState);
     void streamingChanged(bool active);
     void decodingChanged(bool active);
@@ -206,61 +207,25 @@ signals:
     void videoStreamInfoChanged();
     void streamInfoUpdated();
     void uriChanged(const QString& uri);
-    void bridgeChanged();
+    void frameDeliveryChanged();
     void recorderChanged();
     void receiverChanged();
-    void fpsChanged(float fps);
-    void streamHealthChanged(int health);
-    void latencyMsChanged(float latencyMs);
-    void droppedFramesChanged(quint64 dropped);
     void lastErrorChanged(const QString& lastError);
     void statsChanged();
     void hwDecodingChanged();
     void activeDecoderNameChanged();
 
 private:
-    uint32_t _timeoutForUri() const;
-    void _ensureReceiver();
-    void _destroyReceiver();
-    void _createRecorder();
-    void _destroyRecorder();
-    void _stopReceiverIfStarted();
-
-    /// Called when the receiver emits timeout(). Decides whether to do a
-    /// RTSP PAUSED→PLAYING reconnect or a full restart, then delegates.
-    void _onReceiverTimeout();
-
-    bool _updateAutoStream(QString* outSource = nullptr);
-
-    /// Map an FSM state to the coarser SessionState vocabulary.
-    static SessionState _mapFsmState(VideoStreamFsm::State fsmState);
-
-    void _connectStats(VideoFrameDelivery* delivery);
+    void _initSession();
     void _wireSessionSignals();
 
     Role _role;
     QString _name;
+    std::optional<quint8> _metadataStreamId;
     ReceiverFactory _factory;
 
-    QGCVideoStreamInfo* _streamInfo = nullptr;
-    VideoReceiverSession* _session = nullptr;
-    VideoDiagnostics* _diagnostics = nullptr;
-
-    VideoStreamStats* _stats = nullptr;
-
-    QString _uri;
-    VideoSourceResolver::VideoSource _source;
-    QSize _videoSize;
-
-    /// Reconnect/restart intent, backoff, and stale-callback filtering.
-    VideoRestartPolicy _restartPolicy{this};
-
-    /// Authoritative FSM. One-per-receiver lifetime: created in `_ensureReceiver()`,
-    /// destroyed in `_destroyReceiver()`. `sessionState()` derives from its state.
-    std::unique_ptr<VideoStreamStateMachine> _fsm;
-
-    /// Last FSM-mapped session state — used to suppress duplicate sessionStateChanged
-    /// emissions when the FSM transitions between states that map to the same
-    /// SessionState (e.g. Connected → Streaming both map to Running).
-    mutable SessionState _lastMappedState = SessionState::Stopped;
+    QPointer<QGCVideoStreamInfo> _videoStreamInfo;
+    QMetaObject::Connection _videoStreamInfoConnection;
+    std::optional<VideoSourceResolver::StreamInfo> _sourceMetadata;
+    VideoStreamSession* _session = nullptr;
 };

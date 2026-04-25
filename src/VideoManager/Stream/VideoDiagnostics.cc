@@ -50,9 +50,6 @@ QString VideoDiagnostics::_formatError(VideoReceiver::ErrorCategory category, co
         case VideoReceiver::ErrorCategory::MissingPlugin:
             tag = "[codec] ";
             break;
-        case VideoReceiver::ErrorCategory::HardwareFallback:
-            tag = "[hw->sw] ";
-            break;
     }
 
     return QLatin1String(tag) + message;

@@ -7,7 +7,7 @@
 ///
 /// All tests use FakeVideoReceiver so the FSM exercises the same
 /// `receiverStarted/Stopped/Paused/Resumed/FirstFrame/Error` primitives that
-/// GstVideoReceiver / QtMultimediaReceiver / UVCReceiver emit in production.
+/// QtMultimediaReceiver emits in production.
 class VideoStreamStateMachineTest : public StateMachineTest
 {
     Q_OBJECT

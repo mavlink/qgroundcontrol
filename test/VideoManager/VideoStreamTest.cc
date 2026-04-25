@@ -2,23 +2,59 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QBuffer>
+#include <QtCore/QByteArray>
 #include <QtCore/QTimer>
+#include <QtCore/QUrl>
 #include <QtMultimedia/QMediaFormat>
 #include <QtMultimedia/QVideoSink>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include <type_traits>
+
 #include "FakeVideoReceiver.h"
-#include "VideoBackendRegistry.h"
+#include "QGCVideoStreamInfo.h"
+#include "VideoIngestController.h"
+#include "QtFfmpegRuntimePolicy.h"
+#include "QtMultimediaReceiver.h"
+#include "QtPlaybackTrackPolicy.h"
 #include "VideoFrameDelivery.h"
+#include "VideoPlaybackRuntime.h"
 #include "VideoRecorder.h"
+#include "VideoSourceAvailability.h"
+#include "VideoSourceCatalog.h"
+#include "VideoSourceController.h"
 #include "VideoSourceResolver.h"
+#include "VideoStreamAggregateMonitor.h"
+#include "VideoStreamLifecycleController.h"
 #include "VideoStream.h"
+#include "VideoStreamSession.h"
+#include "VideoStreamLifecyclePolicy.h"
+#include "VideoStreamModel.h"
 #include "VideoStreamStateMachine.h"
+#include "VideoUvcController.h"
+
+#include <cstdio>
 
 // FakeVideoReceiver and the makeFactory helper are now in test/VideoManager/FakeVideoReceiver.{h,cc}
 // for reuse across tests. Keep the local using-alias for terse call sites.
 using FakeReceiverHelpers::makeFactory;
+
+namespace {
+
+template <typename T, typename = void>
+struct HasSettingsResolutionApi : std::false_type
+{
+};
+
+template <typename T>
+struct HasSettingsResolutionApi<T, std::void_t<decltype(&T::updateFromSettings)>>
+    : std::true_type
+{
+};
+
+}  // namespace
 
 // Process the event loop long enough for QTimer::singleShot(1000, ...) to fire.
 // We flush any already-queued events first (covers the synchronous-signal path)
@@ -30,7 +66,59 @@ static void processEvents(int extraMs = 0)
         QTest::qWait(extraMs);
 }
 
+static FakeVideoReceiver* makeFakeForDisplayReceiver(const VideoSourceResolver::VideoSource& source, QObject* parent)
+{
+    Q_UNUSED(source);
+    auto* receiver = new FakeVideoReceiver(parent);
+    return receiver;
+}
+
+static QString gstPipelineUri()
+{
+    return QStringLiteral("gstreamer-pipeline:videotestsrc ! fakesink");
+}
+
+static QString uvcUri()
+{
+    return QStringLiteral("uvc://local");
+}
+
+static QGCVideoStreamInfo* makeStreamInfo(quint8 id, const char* uri, bool thermal, QObject* parent)
+{
+    mavlink_video_stream_information_t info{};
+    info.stream_id = id;
+    info.flags = thermal ? VIDEO_STREAM_STATUS_FLAGS_THERMAL : 0;
+    std::snprintf(info.uri, sizeof(info.uri), "%s", uri);
+    std::snprintf(info.name, sizeof(info.name), "stream%u", id);
+    return new QGCVideoStreamInfo(info, parent);
+}
+
 using State = VideoStream::SessionState;
+
+class ScopedEnvironmentVariable
+{
+public:
+    explicit ScopedEnvironmentVariable(const char* name)
+        : _name(name),
+          _wasSet(qEnvironmentVariableIsSet(name)),
+          _oldValue(qgetenv(name))
+    {
+        qunsetenv(name);
+    }
+
+    ~ScopedEnvironmentVariable()
+    {
+        if (_wasSet)
+            qputenv(_name, _oldValue);
+        else
+            qunsetenv(_name);
+    }
+
+private:
+    const char* _name = nullptr;
+    bool _wasSet = false;
+    QByteArray _oldValue;
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test body
@@ -46,7 +134,7 @@ void VideoStreamTest::init()
 void VideoStreamTest::_testStartTransitionsToStarting()
 {
     FakeVideoReceiver* fake = nullptr;
-    VideoStream stream(VideoStream::Role::Primary, makeFactory(&fake, true), nullptr);
+    VideoStream stream(VideoStream::Role::Primary, makeFactory(&fake), nullptr);
     stream.setUri(QStringLiteral("rtsp://192.168.1.1/stream"));
     processEvents();  // let _ensureReceiver run
 
@@ -87,8 +175,7 @@ void VideoStreamTest::_testStopFromStartingTransitionsToStopping()
     // before receiverStarted fires. Tests the Starting → Stopping → Stopped
     // path that was previously unreachable in synchronous tests.
     FakeVideoReceiver* fake = nullptr;
-    auto factory = FakeReceiverHelpers::makeFactory(&fake, /*gstreamer=*/false,
-                                                    [](FakeVideoReceiver* r) { r->setAsyncDelayMs(50); });
+    auto factory = FakeReceiverHelpers::makeFactory(&fake, [](FakeVideoReceiver* r) { r->setAsyncDelayMs(50); });
     VideoStream stream(VideoStream::Role::Primary, factory, nullptr);
     stream.setUri(QStringLiteral("udp://0.0.0.0:5600"));
     processEvents();
@@ -316,64 +403,527 @@ void VideoStreamTest::_testNoAutoReconnectAfterExplicitStop()
     QCOMPARE(stream.sessionState(), State::Stopped);
 }
 
-// ─── Backend switching ────────────────────────────────────────────────────────
+// ─── Source routing ───────────────────────────────────────────────────────────
+
+void VideoStreamTest::_testVideoSourceCatalogOwnsSettingsClassification()
+{
+    QCOMPARE(VideoSourceCatalog::sourceTypeFromString(QString::fromLatin1(VideoSettings::videoSourceRTSP)),
+             VideoSettings::SourceType::RTSP);
+    QCOMPARE(VideoSourceCatalog::sourceTypeFromString(QString::fromLatin1(VideoSettings::videoSourceGstPipeline)),
+             VideoSettings::SourceType::GstPipeline);
+    QCOMPARE(VideoSourceCatalog::sourceTypeFromString(QStringLiteral("Unknown Camera")),
+             VideoSettings::SourceType::Unknown);
+    QCOMPARE(VideoSourceCatalog::sourceNameForType(VideoSettings::SourceType::RTSP),
+             QLatin1String(VideoSettings::videoSourceRTSP));
+    QVERIFY(VideoSourceCatalog::isKnownSourceName(QString::fromLatin1(VideoSettings::videoSourceRTSP)));
+    QVERIFY(VideoSourceCatalog::isNetworkSourceName(QString::fromLatin1(VideoSettings::videoSourceRTSP)));
+    QVERIFY(VideoSourceCatalog::isNetworkSourceName(QString::fromLatin1(VideoSettings::videoSource3DRSolo)));
+    QVERIFY(!VideoSourceCatalog::isNetworkSourceName(QString::fromLatin1(VideoSettings::videoSourceNoVideo)));
+}
+
+void VideoStreamTest::_testVideoSourceAvailabilityOwnsRuntimeEnumeration()
+{
+    QVERIFY(VideoSourceAvailability::sourceTypeFromString(QString::fromLatin1(VideoSettings::videoSourceRTSP))
+            == VideoSettings::SourceType::RTSP);
+    QVERIFY(VideoSourceAvailability::manualSourceConfigured(VideoSettings::SourceType::UVC,
+                                                           QString(),
+                                                           QString(),
+                                                           QString(),
+                                                           QString()));
+    QVERIFY(VideoSourceAvailability::availableSourceNames().contains(
+        QString::fromLatin1(VideoSettings::videoSourceRTSP)));
+}
 
 void VideoStreamTest::_testSourceDescriptorCarriesPolicy()
 {
     const auto rtsp = VideoSourceResolver::describeUri(QStringLiteral("rtsp://192.168.1.1/stream"));
     QCOMPARE(rtsp.transport, VideoSourceResolver::Transport::RTSP);
-    QCOMPARE(rtsp.preferredBackend, VideoReceiver::BackendKind::GStreamer);
-    QVERIFY(rtsp.requiresGStreamer);
+    QVERIFY(rtsp.requiresIngestSession);
     QVERIFY(rtsp.isNetwork);
     QVERIFY(rtsp.lowLatencyRecommended);
-    QVERIFY(rtsp.supportsLosslessRecording);
-    QCOMPARE(rtsp.frameMemoryPreference, VideoSourceResolver::FrameMemoryPreference::Platform);
+    QVERIFY(rtsp.playbackPolicy.lowLatencyStreaming);
+    QCOMPARE(rtsp.playbackPolicy.probeSizeBytes, 32768);
     QCOMPARE(rtsp.startupTimeoutS, 8);
 
+    const auto pipeline = VideoSourceResolver::describeUri(gstPipelineUri());
+    QCOMPARE(pipeline.transport, VideoSourceResolver::Transport::Pipeline);
+    QVERIFY(pipeline.needsIngestSession());
+    QVERIFY(pipeline.playbackPolicy.lowLatencyStreaming);
+    QCOMPARE(VideoSourceResolver::classify(QStringLiteral("gstreamer-pipeline://videotestsrc ! fakesink")),
+             VideoSourceResolver::Transport::Unknown);
+
+    const auto hls = VideoSourceResolver::describeUri(QStringLiteral("hls://example.test/live.m3u8"));
+    QVERIFY(!hls.needsIngestSession());
+    QVERIFY(!hls.playbackPolicy.lowLatencyStreaming);
+    QCOMPARE(hls.playbackPolicy.probeSizeBytes, 32768);
+
     const auto localCamera = VideoSourceResolver::describeUri(QStringLiteral("uvc://local"));
-    QCOMPARE(localCamera.preferredBackend, VideoReceiver::BackendKind::UVC);
     QVERIFY(localCamera.isLocalCamera);
-    QVERIFY(!localCamera.requiresGStreamer);
-    QCOMPARE(localCamera.frameMemoryPreference, VideoSourceResolver::FrameMemoryPreference::Cpu);
+    QVERIFY(!localCamera.requiresIngestSession);
+    QCOMPARE(localCamera.playbackPolicy.probeSizeBytes, 0);
+
+    const auto selectedCamera = VideoSourceResolver::describeUri(QStringLiteral("uvc://USB%20Camera"));
+    QVERIFY(selectedCamera.isLocalCamera);
+    QCOMPARE(selectedCamera.localCameraId, QStringLiteral("USB Camera"));
 
     VideoStream stream(VideoStream::Role::Primary, FakeReceiverHelpers::makeFactory(), nullptr);
     stream.setUri(QStringLiteral("udp://0.0.0.0:5600"));
     QCOMPARE(stream.sourceDescriptor().transport, VideoSourceResolver::Transport::UDP_H264);
-    QVERIFY(stream.sourceDescriptor().supportsLosslessRecording);
 }
 
-void VideoStreamTest::_testBackendRegistryDescriptorsAdvertiseCapabilities()
+void VideoStreamTest::_testVideoSourceResolverPrefersAutoStreamAndLimitsWriteback()
 {
-    const auto& registry = VideoBackendRegistry::instance();
+    QObject owner;
+    auto* primaryInfo = makeStreamInfo(1, "rtsp://vehicle/primary", false, &owner);
+    auto* thermalInfo = makeStreamInfo(2, "rtsp://vehicle/thermal", true, &owner);
 
-    const auto gst = registry.descriptor(VideoReceiver::BackendKind::GStreamer);
-    QCOMPARE(gst.kind, VideoReceiver::BackendKind::GStreamer);
-    QVERIFY(gst.supportsGStreamerSources);
-    QVERIFY(gst.supportsLosslessRecording);
-    QVERIFY(gst.supportsPlatformFrames);
-    QVERIFY(gst.supportsLatency);
+    const auto primary =
+        VideoSourceResolver::resolveEffectiveSource(false, nullptr, VideoSourceResolver::streamInfoFrom(primaryInfo));
+    QVERIFY(primary.hasSource);
+    QCOMPARE(primary.source.uri, QStringLiteral("rtsp://vehicle/primary"));
+    QCOMPARE(primary.writeBackSourceName, QString::fromLatin1(VideoSettings::videoSourceRTSP));
+    QCOMPARE(primary.writeBackRtspUrl, QStringLiteral("rtsp://vehicle/primary"));
 
-    const auto qt = registry.descriptor(VideoReceiver::BackendKind::QtMultimedia);
-    QCOMPARE(qt.kind, VideoReceiver::BackendKind::QtMultimedia);
-    QVERIFY(qt.supportsQtSources);
-    QVERIFY(!qt.supportsGStreamerSources);
-    QVERIFY(!qt.supportsLocalCamera);
-
-    const auto uvc = registry.descriptor(VideoReceiver::BackendKind::UVC);
-    QCOMPARE(uvc.kind, VideoReceiver::BackendKind::UVC);
-    QVERIFY(uvc.supportsLocalCamera);
-    QVERIFY(!uvc.supportsGStreamerSources);
+    const auto thermal =
+        VideoSourceResolver::resolveEffectiveSource(true, nullptr, VideoSourceResolver::streamInfoFrom(thermalInfo));
+    QVERIFY(thermal.hasSource);
+    QCOMPARE(thermal.source.uri, QStringLiteral("rtsp://vehicle/thermal"));
+    QVERIFY(thermal.writeBackSourceName.isEmpty());
+    QVERIFY(thermal.writeBackRtspUrl.isEmpty());
 }
 
-void VideoStreamTest::_testFrameDeliveryAliasMatchesBridge()
+void VideoStreamTest::_testVideoSourceControllerOwnsResolutionAndWriteback()
+{
+    QObject owner;
+    auto* primaryInfo = makeStreamInfo(1, "rtsp://vehicle/primary", false, &owner);
+    auto* thermalInfo = makeStreamInfo(2, "rtsp://vehicle/thermal", true, &owner);
+
+    VideoStream primary(VideoStream::Role::Primary, FakeReceiverHelpers::makeFactory(), nullptr);
+    VideoStream thermal(VideoStream::Role::Thermal, FakeReceiverHelpers::makeFactory(), nullptr);
+    primary.setVideoStreamInfo(primaryInfo);
+    thermal.setVideoStreamInfo(thermalInfo);
+
+    VideoSourceController controller(nullptr);
+
+    QVERIFY(controller.applyResolvedSource(&primary));
+    QCOMPARE(primary.uri(), QStringLiteral("rtsp://vehicle/primary"));
+
+    QVERIFY(controller.applyResolvedSource(&thermal));
+    QCOMPARE(thermal.uri(), QStringLiteral("rtsp://vehicle/thermal"));
+
+    const auto primaryResolution = controller.resolveStreamSource(&primary);
+    QCOMPARE(primaryResolution.writeBackSourceName, QString::fromLatin1(VideoSettings::videoSourceRTSP));
+    QCOMPARE(primaryResolution.writeBackRtspUrl, QStringLiteral("rtsp://vehicle/primary"));
+
+    const auto thermalResolution = controller.resolveStreamSource(&thermal);
+    QVERIFY(thermalResolution.writeBackSourceName.isEmpty());
+    QVERIFY(thermalResolution.writeBackRtspUrl.isEmpty());
+}
+
+void VideoStreamTest::_testVideoStreamUsesSourceMetadataSnapshot()
+{
+    QObject owner;
+    auto* info = makeStreamInfo(7, "rtsp://vehicle/snapshot", false, &owner);
+
+    VideoStream stream(VideoStream::Role::Primary, FakeReceiverHelpers::makeFactory(), nullptr);
+    stream.setVideoStreamInfo(info);
+
+    const auto snapshot = stream.sourceMetadata();
+    QVERIFY(snapshot.has_value());
+    QCOMPARE(snapshot->streamID, static_cast<quint8>(7));
+    QCOMPARE(snapshot->uri, QStringLiteral("rtsp://vehicle/snapshot"));
+
+    delete info;
+    QCOMPARE(stream.videoStreamInfo(), nullptr);
+    const auto retainedSnapshot = stream.sourceMetadata();
+    QVERIFY(retainedSnapshot.has_value());
+    QCOMPARE(retainedSnapshot->uri, QStringLiteral("rtsp://vehicle/snapshot"));
+}
+
+void VideoStreamTest::_testVideoStreamExposesSnapshotMetadataForQml()
+{
+    VideoSourceResolver::StreamInfo metadata;
+    metadata.uri = QStringLiteral("rtsp://vehicle/thermal");
+    metadata.streamID = static_cast<quint8>(9);
+    metadata.thermal = true;
+    metadata.resolution = QSize(640, 512);
+    metadata.hfov = 42;
+
+    VideoStream stream(VideoStream::Role::Thermal, FakeReceiverHelpers::makeFactory(), nullptr);
+    stream.setSourceMetadata(metadata);
+
+    QVERIFY(stream.sourceIsThermal());
+    QCOMPARE(stream.sourceAspectRatio(), 1.25);
+    QCOMPARE(stream.sourceHfov(), static_cast<quint16>(42));
+    QCOMPARE(stream.videoStreamInfo(), nullptr);
+}
+
+void VideoStreamTest::_testGStreamerIngestSourcesUseQtDisplayReceiver()
+{
+    const auto rtsp = VideoSourceResolver::describeUri(QStringLiteral("rtsp://192.168.1.1/stream"));
+    QVERIFY(rtsp.requiresIngestSession);
+
+    std::unique_ptr<VideoReceiver> receiver(new QtMultimediaReceiver(nullptr));
+    QVERIFY(receiver != nullptr);
+}
+
+void VideoStreamTest::_testLocalCameraSourcesUseQtDisplayReceiver()
+{
+    const auto localCamera = VideoSourceResolver::describeUri(QStringLiteral("uvc://local"));
+    QVERIFY(localCamera.isLocalCamera);
+
+    std::unique_ptr<VideoReceiver> receiver(new QtMultimediaReceiver(nullptr));
+    QVERIFY(receiver != nullptr);
+    QVERIFY(receiver->capabilities().testFlag(VideoReceiver::CapLocalCamera));
+}
+
+void VideoStreamTest::_testGStreamerIngestPlaybackDeviceIsReceiverOnly()
+{
+    FakeVideoReceiver* fake = nullptr;
+    QBuffer playbackDevice;
+    VideoStream stream(VideoStream::Role::Primary, makeFactory(&fake), nullptr);
+    stream.setPlaybackInputResolverForTest([&playbackDevice](const VideoSourceResolver::VideoSource& source) {
+        VideoStream::PlaybackInput input;
+        input.uri = source.uri;
+        if (source.needsIngestSession()) {
+            input.device = &playbackDevice;
+            input.deviceUrl = QUrl(QStringLiteral("qgc-gstreamer-session.ts"));
+        }
+        return input;
+    });
+
+    stream.setUri(QStringLiteral("rtsp://192.168.1.1/stream"));
+    processEvents();
+
+    QCOMPARE(stream.uri(), QStringLiteral("rtsp://192.168.1.1/stream"));
+    QVERIFY(fake != nullptr);
+    QCOMPARE(fake->uri(), QStringLiteral("rtsp://192.168.1.1/stream"));
+    QCOMPARE(fake->sourceDevice(), &playbackDevice);
+    QCOMPARE(fake->sourceDeviceUrl(), QUrl(QStringLiteral("qgc-gstreamer-session.ts")));
+    QVERIFY(fake->playbackPolicy().lowLatencyStreaming);
+    QCOMPARE(fake->playbackPolicy().probeSizeBytes, 32768);
+}
+
+void VideoStreamTest::_testQtFfmpegRuntimePolicyAppliesDefaults()
+{
+    ScopedEnvironmentVariable mediaBackend("QT_MEDIA_BACKEND");
+    ScopedEnvironmentVariable decodeDevices("QT_FFMPEG_DECODING_HW_DEVICE_TYPES");
+    ScopedEnvironmentVariable xcbIntegration("QT_XCB_GL_INTEGRATION");
+
+    QtFfmpegRuntimePolicy::applyDefaults();
+
+    QCOMPARE(qgetenv("QT_MEDIA_BACKEND"), QByteArray("ffmpeg"));
+    QVERIFY(!qgetenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES").isEmpty());
+#if defined(Q_OS_LINUX)
+    QCOMPARE(qgetenv("QT_XCB_GL_INTEGRATION"), QByteArray("xcb_egl"));
+#endif
+}
+
+void VideoStreamTest::_testQtFfmpegRuntimePolicyPreservesExistingEnvironment()
+{
+    ScopedEnvironmentVariable mediaBackend("QT_MEDIA_BACKEND");
+    ScopedEnvironmentVariable decodeDevices("QT_FFMPEG_DECODING_HW_DEVICE_TYPES");
+
+    qputenv("QT_MEDIA_BACKEND", QByteArray("custom"));
+    qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES", QByteArray("vaapi"));
+
+    QtFfmpegRuntimePolicy::applyDefaults();
+
+    QCOMPARE(qgetenv("QT_MEDIA_BACKEND"), QByteArray("custom"));
+    QCOMPARE(qgetenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES"), QByteArray("vaapi"));
+}
+
+void VideoStreamTest::_testQtPlaybackTrackPolicyDisablesUnusedTracksForPlayback()
+{
+    const auto playbackDecision = QtPlaybackTrackPolicy::decisionFor(true, 1, 1);
+    QVERIFY(playbackDecision.disableAudio);
+    QVERIFY(playbackDecision.disableSubtitles);
+
+    const auto cameraDecision = QtPlaybackTrackPolicy::decisionFor(false, 1, 1);
+    QVERIFY(!cameraDecision.disableAudio);
+    QVERIFY(!cameraDecision.disableSubtitles);
+}
+
+void VideoStreamTest::_testVideoPlaybackRuntimeAppliesResolvedInput()
+{
+    QBuffer playbackDevice;
+    VideoPlaybackRuntime runtime(QStringLiteral("primary"), this);
+    runtime.setResolverForTest([&playbackDevice](const VideoSourceResolver::VideoSource& source) {
+        VideoStream::PlaybackInput input;
+        input.uri = QStringLiteral("gst-proxy://primary");
+        input.device = &playbackDevice;
+        input.deviceUrl = QUrl(QStringLiteral("qgc-gstreamer-session.ts"));
+        input.playbackPolicy = source.playbackPolicy;
+        return input;
+    });
+
+    const VideoSourceResolver::VideoSource source =
+        VideoSourceResolver::describeUri(QStringLiteral("rtsp://192.168.1.1/stream"));
+    runtime.setSource(source);
+    QVERIFY(runtime.refreshForStart());
+
+    FakeVideoReceiver receiver;
+    runtime.applyToReceiver(&receiver);
+
+    QCOMPARE(receiver.uri(), QStringLiteral("gst-proxy://primary"));
+    QCOMPARE(receiver.sourceDevice(), &playbackDevice);
+    QCOMPARE(receiver.sourceDeviceUrl(), QUrl(QStringLiteral("qgc-gstreamer-session.ts")));
+    QVERIFY(receiver.playbackPolicy().lowLatencyStreaming);
+    QCOMPARE(receiver.playbackPolicy().probeSizeBytes, 32768);
+}
+
+void VideoStreamTest::_testStartRefreshesIngestPlaybackInput()
+{
+    FakeVideoReceiver* fake = nullptr;
+    QBuffer firstDevice;
+    QBuffer secondDevice;
+    QBuffer thirdDevice;
+    QList<QBuffer*> devices = {&firstDevice, &secondDevice, &thirdDevice};
+    VideoStream stream(VideoStream::Role::Primary, makeFactory(&fake), nullptr);
+    int resolveCount = 0;
+    stream.setPlaybackInputResolverForTest([&resolveCount, &devices](const VideoSourceResolver::VideoSource& source) {
+        VideoStream::PlaybackInput input;
+        input.uri = source.uri;
+        if (source.needsIngestSession()) {
+            input.device = devices.at(resolveCount++);
+            input.deviceUrl = QUrl(QStringLiteral("qgc-gstreamer-session.ts"));
+        }
+        return input;
+    });
+
+    stream.setUri(QStringLiteral("rtsp://192.168.1.1/stream"));
+    processEvents();
+
+    QVERIFY(fake != nullptr);
+    QCOMPARE(fake->uri(), QStringLiteral("rtsp://192.168.1.1/stream"));
+    QCOMPARE(fake->sourceDevice(), &firstDevice);
+
+    stream.start(3);
+    processEvents();
+    QCOMPARE(fake->uri(), QStringLiteral("rtsp://192.168.1.1/stream"));
+    QCOMPARE(fake->sourceDevice(), &secondDevice);
+    QCOMPARE(fake->startCallCount, 1);
+
+    stream.stop();
+    processEvents();
+    stream.start(3);
+    processEvents();
+
+    QCOMPARE(fake->uri(), QStringLiteral("rtsp://192.168.1.1/stream"));
+    QCOMPARE(fake->sourceDevice(), &thirdDevice);
+    QCOMPARE(fake->startCallCount, 2);
+}
+
+void VideoStreamTest::_testReconnectRefreshesIngestPlaybackInput()
+{
+    FakeVideoReceiver* fake = nullptr;
+    QBuffer firstDevice;
+    QBuffer secondDevice;
+    QBuffer thirdDevice;
+    QList<QBuffer*> devices = {&firstDevice, &secondDevice, &thirdDevice};
+    VideoStream stream(VideoStream::Role::Primary, makeFactory(&fake), nullptr);
+    int resolveCount = 0;
+    stream.setPlaybackInputResolverForTest([&resolveCount, &devices](const VideoSourceResolver::VideoSource& source) {
+        VideoStream::PlaybackInput input;
+        input.uri = source.uri;
+        if (source.needsIngestSession()) {
+            input.device = devices.at(resolveCount++);
+            input.deviceUrl = QUrl(QStringLiteral("qgc-gstreamer-session.ts"));
+        }
+        return input;
+    });
+
+    stream.setUri(QStringLiteral("rtsp://192.168.1.1/stream"));
+    processEvents();
+    QCOMPARE(fake->sourceDevice(), &firstDevice);
+
+    stream.start(3);
+    processEvents();
+    QCOMPARE(fake->sourceDevice(), &secondDevice);
+
+    fake->emitReceiverError(VideoReceiver::ErrorCategory::Fatal, QStringLiteral("ingest pipeline failed"));
+    QTest::qWait(1500);
+    processEvents();
+
+    QCOMPARE(fake->startCallCount, 2);
+    QCOMPARE(fake->sourceDevice(), &thirdDevice);
+}
+
+void VideoStreamTest::_testVideoIngestControllerRefreshesIngestInput()
+{
+    QBuffer firstDevice;
+    QBuffer secondDevice;
+    QBuffer thirdDevice;
+    QList<QBuffer*> devices = {&firstDevice, &secondDevice, &thirdDevice};
+    int resolveCount = 0;
+
+    VideoIngestController controller(QStringLiteral("testStream"));
+    controller.setResolverForTest([&resolveCount, &devices](const VideoSourceResolver::VideoSource& source) {
+        VideoPlaybackInput input;
+        input.uri = source.uri;
+        if (source.needsIngestSession()) {
+            input.device = devices.at(resolveCount++);
+            input.deviceUrl = QUrl(QStringLiteral("qgc-gstreamer-session.ts"));
+        }
+        return input;
+    });
+
+    controller.setSource(VideoSourceResolver::describeUri(QStringLiteral("rtsp://192.168.1.1/stream")));
+    QCOMPARE(controller.input().device, &firstDevice);
+
+    QVERIFY(controller.refreshForStart());
+    QCOMPARE(controller.input().device, &secondDevice);
+
+    controller.markRefreshNeeded();
+    QVERIFY(controller.refreshForStart());
+    QCOMPARE(controller.input().device, &thirdDevice);
+}
+
+void VideoStreamTest::_testVideoIngestControllerMarksTransportKind()
+{
+    QBuffer device;
+    VideoIngestController controller(QStringLiteral("testStream"));
+    controller.setResolverForTest([&device](const VideoSourceResolver::VideoSource& source) {
+        VideoPlaybackInput input;
+        input.uri = source.uri;
+        if (source.needsIngestSession()) {
+            input.kind = VideoPlaybackInput::Kind::StreamDevice;
+            input.device = &device;
+            input.deviceUrl = QUrl(QStringLiteral("qgc-gstreamer-session.ts"));
+        }
+        return input;
+    });
+
+    controller.setSource(VideoSourceResolver::describeUri(QStringLiteral("rtsp://192.168.1.1/stream")));
+    QCOMPARE(controller.input().kind, VideoPlaybackInput::Kind::StreamDevice);
+    QCOMPARE(controller.input().device, &device);
+
+    controller.setSource(VideoSourceResolver::describeUri(QStringLiteral("hls://example.test/stream.m3u8")));
+    QCOMPARE(controller.input().kind, VideoPlaybackInput::Kind::DirectUrl);
+    QCOMPARE(controller.input().device, nullptr);
+}
+
+void VideoStreamTest::_testVideoStreamAggregateMonitorTracksNonThermalStreams()
+{
+    FakeVideoReceiver* primaryFake = nullptr;
+    VideoStream primary(VideoStream::Role::Primary, FakeReceiverHelpers::makeFactory(&primaryFake), nullptr);
+    primary.setUri(QStringLiteral("udp://0.0.0.0:5600"));
+
+    FakeVideoReceiver* thermalFake = nullptr;
+    VideoStream thermal(VideoStream::Role::Thermal, FakeReceiverHelpers::makeFactory(&thermalFake), nullptr);
+    thermal.setUri(QStringLiteral("rtsp://vehicle/thermal"));
+
+    VideoStreamAggregateMonitor monitor;
+    QSignalSpy decodingSpy(&monitor, &VideoStreamAggregateMonitor::decodingChanged);
+    monitor.watch(&primary);
+    monitor.watch(&thermal);
+
+    QVERIFY(primaryFake != nullptr);
+    QVERIFY(thermalFake != nullptr);
+    thermalFake->forceDecoding(true);
+    processEvents();
+    QVERIFY(!monitor.decoding());
+    QCOMPARE(decodingSpy.count(), 0);
+
+    primaryFake->forceDecoding(true);
+    processEvents();
+    QVERIFY(monitor.decoding());
+    QCOMPARE(decodingSpy.count(), 1);
+}
+
+void VideoStreamTest::_testVideoUvcControllerActivatesAndDeactivatesUvcStream()
+{
+    VideoStreamModel model;
+    VideoUvcController controller(&model);
+
+    FakeVideoReceiver* primaryFake = nullptr;
+    auto* primary = new VideoStream(VideoStream::Role::Primary, FakeReceiverHelpers::makeFactory(&primaryFake), &model);
+    primary->setUri(QStringLiteral("udp://0.0.0.0:5600"));
+    model.addStream(primary);
+
+    FakeVideoReceiver* uvcFake = nullptr;
+    auto* uvc = new VideoStream(VideoStream::Role::UVC, FakeReceiverHelpers::makeFactory(&uvcFake), &model);
+    model.addStream(uvc);
+
+    bool removed = false;
+    QVERIFY(controller.activate(primary, [&uvc]() { return uvc; }));
+    QCOMPARE(model.activeStreamForRole(static_cast<int>(VideoStream::Role::Primary)), uvc);
+    QCOMPARE(uvc->uri(), QStringLiteral("uvc://local"));
+    QVERIFY(uvcFake != nullptr);
+
+    QVERIFY(controller.deactivate(uvc, [&removed, &model, uvc]() {
+        removed = true;
+        model.removeStream(uvc);
+    }));
+    QVERIFY(removed);
+    QCOMPARE(model.activeStreamForRole(static_cast<int>(VideoStream::Role::Primary)), primary);
+    QCOMPARE(uvc->uri(), QString());
+}
+
+void VideoStreamTest::_testVideoStatsMovedOffStreamMetaObject()
+{
+    const QMetaObject& streamMeta = VideoStream::staticMetaObject;
+    QVERIFY(streamMeta.indexOfProperty("fps") < 0);
+    QVERIFY(streamMeta.indexOfProperty("streamHealth") < 0);
+    QVERIFY(streamMeta.indexOfProperty("latencyMs") < 0);
+    QVERIFY(streamMeta.indexOfProperty("droppedFrames") < 0);
+
+    const QMetaObject& statsMeta = VideoStreamStats::staticMetaObject;
+    QVERIFY(statsMeta.indexOfProperty("fps") >= 0);
+    QVERIFY(statsMeta.indexOfProperty("streamHealth") >= 0);
+    QVERIFY(statsMeta.indexOfProperty("latencyMs") >= 0);
+    QVERIFY(statsMeta.indexOfProperty("droppedFrames") >= 0);
+}
+
+void VideoStreamTest::_testVideoStreamDoesNotOwnSettingsResolutionApi()
+{
+    QVERIFY(!HasSettingsResolutionApi<VideoStream>::value);
+}
+
+void VideoStreamTest::_testLifecycleControllerOwnsFsmSignals()
+{
+    FakeVideoReceiver receiver;
+    VideoStreamLifecycleController lifecycle(QStringLiteral("testStream"),
+                                             VideoStreamLifecyclePolicy::policyForRole(VideoStream::Role::Primary));
+    QSignalSpy fsmSpy(&lifecycle, &VideoStreamLifecycleController::fsmStateChanged);
+    QSignalSpy sessionSpy(&lifecycle, &VideoStreamLifecycleController::sessionStateChanged);
+
+    QVERIFY(lifecycle.bind(&receiver));
+    QVERIFY(lifecycle.fsm() != nullptr);
+    QCOMPARE(lifecycle.sessionState(), VideoReceiver::ReceiverState::Stopped);
+
+    lifecycle.requestStart(3);
+    processEvents();
+    QCOMPARE(lifecycle.sessionState(), VideoReceiver::ReceiverState::Running);
+    QVERIFY(!fsmSpy.isEmpty());
+    QVERIFY(!sessionSpy.isEmpty());
+
+    lifecycle.destroy();
+    QCOMPARE(lifecycle.fsm(), nullptr);
+    QCOMPARE(lifecycle.fsmState(), VideoStreamFsm::State::Idle);
+    QCOMPARE(lifecycle.sessionState(), VideoReceiver::ReceiverState::Stopped);
+}
+
+void VideoStreamTest::_testVideoStreamSessionOwnsLifecycleResources()
 {
     VideoStream stream(VideoStream::Role::Primary, FakeReceiverHelpers::makeFactory(), nullptr);
-    QVERIFY(stream.bridge() != nullptr);
-    QCOMPARE(stream.frameDelivery(), stream.bridge());
-    QCOMPARE(stream.frameDeliveryAsObject(), stream.bridgeAsObject());
+
+    QVERIFY(stream.session() != nullptr);
+    QCOMPARE(stream.session()->diagnostics(), stream.diagnostics());
+    QCOMPARE(stream.session()->frameDelivery(), stream.frameDelivery());
+    QCOMPARE(stream.session()->lifecycle(), stream.lifecycle());
+    QCOMPARE(stream.session()->receiverResources()->recorder(), stream.recorder());
 }
 
-void VideoStreamTest::_testBackendSwitchDestroysReceiver()
+void VideoStreamTest::_testFrameDeliveryAccessorIsAvailable()
+{
+    VideoStream stream(VideoStream::Role::Primary, FakeReceiverHelpers::makeFactory(), nullptr);
+    QVERIFY(stream.frameDelivery() != nullptr);
+    QCOMPARE(stream.frameDeliveryAsObject(), static_cast<QObject*>(stream.frameDelivery()));
+    QCOMPARE(stream.videoSink(), nullptr);
+}
+
+void VideoStreamTest::_testSourceModeSwitchPreservesReceiver()
 {
     // Track which URIs the factory is called with.
     QStringList createdForUris;
@@ -384,14 +934,12 @@ void VideoStreamTest::_testBackendSwitchDestroysReceiver()
                                                        bool /*thermal*/, QObject* parent) {
         createdForUris << source.uri;
         ++factoryCallCount;
-        // Return a GStreamer receiver for rtsp://, plain for others.
-        const bool gst = source.usesGStreamer();
-        return new FakeVideoReceiver(gst, parent);
+        return makeFakeForDisplayReceiver(source, parent);
     };
 
     VideoStream stream(VideoStream::Role::Primary, trackingFactory, nullptr);
 
-    // First URI: GStreamer backend.
+    // First URI: QtMultimedia input with optional GStreamer ingest.
     stream.setUri(QStringLiteral("rtsp://192.168.1.1/stream"));
     processEvents();
     QCOMPARE(factoryCallCount, 1);
@@ -399,24 +947,23 @@ void VideoStreamTest::_testBackendSwitchDestroysReceiver()
     VideoReceiver* firstReceiver = stream.receiver();
     QVERIFY(firstReceiver != nullptr);
 
-    // Switch to a non-GStreamer URI — backend mismatch forces receiver recreation.
-    stream.setUri(QStringLiteral("http://192.168.1.1/stream"));
+    // Local cameras are now another QtMultimedia source mode, so switching
+    // from network playback to camera capture should reuse the receiver.
+    stream.setUri(uvcUri());
     processEvents();
-    QCOMPARE(factoryCallCount, 2);
+    QCOMPARE(factoryCallCount, 1);
 
-    // New receiver must be a different object.
-    QVERIFY(stream.receiver() != firstReceiver);
+    QCOMPARE(stream.receiver(), firstReceiver);
 }
 
-void VideoStreamTest::_testSinkPreservedAcrossBackendSwitch()
+void VideoStreamTest::_testSinkPreservedAcrossSourceModeSwitch()
 {
     FakeVideoReceiver* lastReceiver = nullptr;
 
     VideoStream::ReceiverFactory trackingFactory = [&lastReceiver](
                                                        const VideoSourceResolver::VideoSource& source,
                                                        bool /*thermal*/, QObject* parent) {
-        const bool gst = source.usesGStreamer();
-        auto* r = new FakeVideoReceiver(gst, parent);
+        auto* r = makeFakeForDisplayReceiver(source, parent);
         lastReceiver = r;
         return r;
     };
@@ -429,18 +976,38 @@ void VideoStreamTest::_testSinkPreservedAcrossBackendSwitch()
     QVideoSink sink;
     stream.registerVideoSink(&sink);
 
-    // Switch backend.
-    stream.setUri(QStringLiteral("http://192.168.1.1/stream"));
+    // Switch input source mode.
+    stream.setUri(uvcUri());
     processEvents();
 
-    // The new receiver should have received the sink via _pendingSink flush.
-    // We verify indirectly: bridge() is non-null only if registerVideoSink was
-    // called on the new receiver. After _ensureReceiver the pending sink is flushed.
     QVERIFY(stream.receiver() != nullptr);
-    // The bridge is set up via registerVideoSink on the new receiver, meaning
-    // bridge()->videoSink() == &sink.
-    QVERIFY(stream.bridge() != nullptr);
-    QCOMPARE(stream.bridge()->videoSink(), &sink);
+    QVERIFY(stream.frameDelivery() != nullptr);
+    QCOMPARE(stream.frameDelivery()->videoSink(), &sink);
+}
+
+void VideoStreamTest::_testSinkChangeRestartIsReceiverOwned()
+{
+    FakeVideoReceiver* fake = nullptr;
+    auto factory = FakeReceiverHelpers::makeFactory(&fake, [](FakeVideoReceiver* r) {
+        r->sinkChangeAction = VideoReceiver::SinkChangeAction::RestartRequired;
+    });
+
+    VideoStream stream(VideoStream::Role::Primary, factory, nullptr);
+    stream.setUri(QStringLiteral("udp://0.0.0.0:5600"));
+    stream.start(3);
+    processEvents();
+
+    QVideoSink sink;
+    stream.registerVideoSink(&sink);
+    processEvents();
+
+    QCOMPARE(fake->sinkAboutToChangeCallCount, 1);
+    QCOMPARE(fake->sinkChangedCallCount, 1);
+    QCOMPARE(fake->stopCallCount, 1);
+
+    QTest::qWait(1100);
+    processEvents();
+    QCOMPARE(fake->startCallCount, 2);
 }
 
 // ─── Pending sink ─────────────────────────────────────────────────────────────
@@ -452,13 +1019,13 @@ void VideoStreamTest::_testRegisterSinkBeforeReceiverDeferred()
     VideoStream stream(VideoStream::Role::Primary, makeFactory(&fake), nullptr);
 
     QVideoSink sink;
-    QSignalSpy bridgeSpy(&stream, &VideoStream::bridgeChanged);
+    QSignalSpy frameDeliverySpy(&stream, &VideoStream::frameDeliveryChanged);
 
     stream.registerVideoSink(&sink);
 
-    // No receiver yet — bridgeChanged should NOT have been emitted.
+    // No receiver yet — frameDeliveryChanged should NOT have been emitted.
     processEvents();
-    QCOMPARE(bridgeSpy.count(), 0);
+    QCOMPARE(frameDeliverySpy.count(), 0);
     QVERIFY(stream.receiver() == nullptr);
 }
 
@@ -473,17 +1040,17 @@ void VideoStreamTest::_testDeferredSinkFlushedOnReceiverCreate()
     QVERIFY(stream.receiver() == nullptr);
 
     // Now give the stream a URI — this triggers _ensureReceiver, which should
-    // flush _pendingSink onto the new receiver.
-    QSignalSpy bridgeSpy(&stream, &VideoStream::bridgeChanged);
+    // flush videoSink onto the new receiver.
+    QSignalSpy frameDeliverySpy(&stream, &VideoStream::frameDeliveryChanged);
     stream.setUri(QStringLiteral("udp://0.0.0.0:5600"));
     processEvents();
 
     QVERIFY(stream.receiver() != nullptr);
-    // bridgeChanged emitted when the deferred sink was flushed.
-    QVERIFY(bridgeSpy.count() >= 1);
-    // The bridge's sink pointer matches what we registered.
-    QVERIFY(stream.bridge() != nullptr);
-    QCOMPARE(stream.bridge()->videoSink(), &sink);
+    // frameDeliveryChanged emitted when the deferred sink was flushed.
+    QVERIFY(frameDeliverySpy.count() >= 1);
+    // The frameDelivery's sink pointer matches what we registered.
+    QVERIFY(stream.frameDelivery() != nullptr);
+    QCOMPARE(stream.frameDelivery()->videoSink(), &sink);
 }
 
 // ─── Phase 1 invariants: stop drain, idempotent stop, error surfacing ────────
@@ -494,19 +1061,24 @@ void VideoStreamTest::_testStopDrainsAsyncReceiverBeforeDestroy()
     // _drainingReceivers and deleteLater'd once receiverStopped fires. setUri()
     // returns immediately; we wait for receiverStopped asynchronously.
     FakeVideoReceiver* fake = nullptr;
-    auto factory = FakeReceiverHelpers::makeFactory(&fake, /*gstreamer=*/true,
-                                                    [](FakeVideoReceiver* r) { r->setAsyncDelayMs(60); });
+    auto factory = [&fake](const VideoSourceResolver::VideoSource& source,
+                           bool /*thermal*/, QObject* parent) -> VideoReceiver* {
+        auto* receiver = makeFakeForDisplayReceiver(source, parent);
+        receiver->setAsyncDelayMs(60);
+        fake = receiver;
+        return receiver;
+    };
 
     auto* stream = new VideoStream(VideoStream::Role::Primary, factory, nullptr);
-    stream->setUri(QStringLiteral("rtsp://192.168.1.1/stream"));
+    stream->setUri(uvcUri());
     stream->start(3);
     QTest::qWait(150);  // let async start complete
     QCOMPARE(stream->sessionState(), State::Running);
 
     QSignalSpy stopSpy(fake, &VideoReceiver::receiverStopped);
 
-    // Switch URIs — triggers async _destroyReceiver on the old receiver.
-    stream->setUri(QStringLiteral("http://192.168.1.1/stream"));
+    // Clearing the source triggers async _destroyReceiver on the old receiver.
+    stream->setUri(QString());
 
     // setUri returns immediately (async drain). Wait for receiverStopped to
     // arrive from the draining receiver within a generous timeout.
@@ -523,10 +1095,15 @@ void VideoStreamTest::_testStopDrainTimeoutDoesNotHang()
     // asyncDelayMs on the live receiver so its eventual stop() won't emit
     // receiverStopped within the safety window.
     FakeVideoReceiver* fake = nullptr;
-    auto factory = FakeReceiverHelpers::makeFactory(&fake, /*gstreamer=*/true);
+    auto factory = [&fake](const VideoSourceResolver::VideoSource& source,
+                           bool /*thermal*/, QObject* parent) -> VideoReceiver* {
+        auto* receiver = makeFakeForDisplayReceiver(source, parent);
+        fake = receiver;
+        return receiver;
+    };
 
     auto* stream = new VideoStream(VideoStream::Role::Primary, factory, nullptr);
-    stream->setUri(QStringLiteral("rtsp://192.168.1.1/stream"));
+    stream->setUri(uvcUri());
     stream->start(3);
     processEvents();
     QCOMPARE(stream->sessionState(), State::Running);
@@ -537,8 +1114,8 @@ void VideoStreamTest::_testStopDrainTimeoutDoesNotHang()
 
     QElapsedTimer t;
     t.start();
-    // Force backend switch — _destroyReceiver is now async, so this returns fast.
-    stream->setUri(QStringLiteral("http://192.168.1.1/stream"));
+    // Force receiver destruction by clearing the source.
+    stream->setUri(QString());
     const qint64 elapsed = t.elapsed();
 
     // With async drain, setUri() must return almost immediately (well under 500ms).
@@ -592,8 +1169,7 @@ void VideoStreamTest::_testStartingStateObservableUnderAsync()
     // With an async fake, after start() returns the state should be
     // Starting (not yet Running) until the deferred receiverStarted fires.
     FakeVideoReceiver* fake = nullptr;
-    auto factory = FakeReceiverHelpers::makeFactory(&fake, /*gstreamer=*/false,
-                                                    [](FakeVideoReceiver* r) { r->setAsyncDelayMs(50); });
+    auto factory = FakeReceiverHelpers::makeFactory(&fake, [](FakeVideoReceiver* r) { r->setAsyncDelayMs(50); });
     VideoStream stream(VideoStream::Role::Primary, factory, nullptr);
     stream.setUri(QStringLiteral("udp://0.0.0.0:5600"));
     processEvents();
@@ -663,6 +1239,27 @@ void VideoStreamTest::_testNoReceiverMeansAccessorsReturnFalse()
 
 // ─── Formal SessionState FSM ─────────────────────────────────────────────────
 
+void VideoStreamTest::_testLifecyclePolicyMapsRolesAndStates()
+{
+    const auto primaryPolicy = VideoStreamLifecyclePolicy::policyForRole(VideoStream::Role::Primary);
+    QVERIFY(primaryPolicy.allowSoftReconnect);
+    QCOMPARE(primaryPolicy.circuitFailureThreshold, 3);
+
+    const auto dynamicPolicy = VideoStreamLifecyclePolicy::policyForRole(VideoStream::Role::Dynamic);
+    QVERIFY(!dynamicPolicy.allowSoftReconnect);
+    QCOMPARE(dynamicPolicy.circuitFailureThreshold, 1);
+    QCOMPARE(dynamicPolicy.circuitResetTimeoutMs, 30000);
+
+    QCOMPARE(VideoStreamLifecyclePolicy::mapFsmState(VideoStreamFsm::State::Idle),
+             VideoStream::SessionState::Stopped);
+    QCOMPARE(VideoStreamLifecyclePolicy::mapFsmState(VideoStreamFsm::State::Starting),
+             VideoStream::SessionState::Starting);
+    QCOMPARE(VideoStreamLifecyclePolicy::mapFsmState(VideoStreamFsm::State::Streaming),
+             VideoStream::SessionState::Running);
+    QCOMPARE(VideoStreamLifecyclePolicy::mapFsmState(VideoStreamFsm::State::Stopping),
+             VideoStream::SessionState::Stopping);
+}
+
 void VideoStreamTest::_testSessionStateChangedSignalEmitted()
 {
     FakeVideoReceiver* fake = nullptr;
@@ -727,8 +1324,7 @@ void VideoStreamTest::_testIsLegalTransitionTable()
     // Drive a real stream through the canonical happy path — every observed
     // transition must be one we declared legal.
     FakeVideoReceiver* fake = nullptr;
-    auto factory = FakeReceiverHelpers::makeFactory(&fake, /*gstreamer=*/false,
-                                                    [](FakeVideoReceiver* r) { r->setAsyncDelayMs(20); });
+    auto factory = FakeReceiverHelpers::makeFactory(&fake, [](FakeVideoReceiver* r) { r->setAsyncDelayMs(20); });
     VideoStream stream(VideoStream::Role::Primary, factory, nullptr);
     stream.setUri(QStringLiteral("udp://0.0.0.0:5600"));
     processEvents();
@@ -785,9 +1381,9 @@ void VideoStreamTest::_testFullLifecycleSignalSequence()
 // MockVideoRecorder below controls start/stop/error entirely from the test side.
 //
 // NOTE: QtMediaRecorder in a real receiver path requires a live QMediaRecorder
-// backend (FFmpeg/GStreamer) and a running encoder — not available in CI without
-// a display or GPU.  The mock approach below tests all wiring at the VideoStream
-// level without depending on the real backend.
+// implementation (FFmpeg/GStreamer) and a running encoder — not available in CI without
+// an input or GPU.  The mock approach below tests all wiring at the VideoStream
+// level without depending on the real receiver.
 
 class MockVideoRecorder : public VideoRecorder
 {
@@ -909,7 +1505,7 @@ void VideoStreamTest::_testRecordingEmitsStartedStoppedSignals()
     QVERIFY(!f.stream->recording());
 }
 
-void VideoStreamTest::_testRecordingFailsWithoutBridge()
+void VideoStreamTest::_testRecordingFailsWithoutFrameDelivery()
 {
     // Goal: a recorder that fails its start emits error → forwarded as
     //       stream.recordingError, and stream.recording() stays false.
@@ -945,27 +1541,6 @@ void VideoStreamTest::_testRecordingIdempotentStop()
     QVERIFY(errorSpy.isEmpty());
     QVERIFY(changedSpy.isEmpty());
     QCOMPARE(f.mock->state(), VideoRecorder::State::Idle);
-}
-
-void VideoStreamTest::_testRecordingRejectsUnsupportedFormat()
-{
-    // Goal: passing a format not in capabilities().formats triggers the
-    //       recorder's error path, forwarded as stream.recordingError.
-    RecordingFixture f;
-
-    f.mock->allowedFormats = {QMediaFormat::Matroska};
-
-    QSignalSpy errorSpy(f.stream.get(), &VideoStream::recordingError);
-    QSignalSpy changedSpy(f.stream.get(), &VideoStream::recordingChanged);
-
-    QVERIFY(!f.mock->start(QStringLiteral("/tmp/test.mp4"), QMediaFormat::MPEG4));
-    QCoreApplication::processEvents();
-
-    QCOMPARE(errorSpy.count(), 1);
-    QVERIFY(!f.stream->recording());
-    QCOMPARE(f.mock->state(), VideoRecorder::State::Idle);
-    for (const QList<QVariant>& args : std::as_const(changedSpy))
-        QVERIFY2(!args.first().toBool(), "recordingChanged(true) must not fire for unsupported format");
 }
 
 // ─── New tests from second-pass review ───────────────────────────────────────
@@ -1045,32 +1620,31 @@ void VideoStreamTest::_testStreamInfoSwapReconnectsSignal()
     QCOMPARE(changedSpy.count(), 0);
 }
 
-void VideoStreamTest::_testBackendSwitchPreservesSink()
+void VideoStreamTest::_testSourceModeSwitchPreservesSink()
 {
     // #12 bonus: start with QtMultimedia URI, register sink, then switch to
-    // GStreamer URI — sink must survive in the new receiver's bridge.
+    // local camera source mode — sink must survive on the receiver frameDelivery.
     VideoStream::ReceiverFactory trackingFactory = [](const VideoSourceResolver::VideoSource& source,
                                                       bool /*thermal*/, QObject* parent) {
-        const bool gst = source.usesGStreamer();
-        return new FakeVideoReceiver(gst, parent);
+        return makeFakeForDisplayReceiver(source, parent);
     };
 
     VideoStream stream(VideoStream::Role::Primary, trackingFactory, nullptr);
-    stream.setUri(QStringLiteral("udp://0.0.0.0:5600"));  // QtMultimedia
+    stream.setUri(QStringLiteral("rtsp://192.168.1.1/stream"));  // QtMultimedia input
     processEvents();
 
     QVideoSink sink;
     stream.registerVideoSink(&sink);
-    QVERIFY(stream.bridge() != nullptr);
-    QCOMPARE(stream.bridge()->videoSink(), &sink);
+    QVERIFY(stream.frameDelivery() != nullptr);
+    QCOMPARE(stream.frameDelivery()->videoSink(), &sink);
 
-    // Switch to GStreamer URI — triggers _destroyReceiver (async) + _ensureReceiver.
-    stream.setUri(QStringLiteral("rtsp://192.168.1.1/stream"));
+    // Switch input source mode.
+    stream.setUri(uvcUri());
     processEvents();
 
-    // New bridge must have the same sink (preserved via _pendingSink).
-    QVERIFY(stream.bridge() != nullptr);
-    QCOMPARE(stream.bridge()->videoSink(), &sink);
+    // New frameDelivery must keep the registered sink.
+    QVERIFY(stream.frameDelivery() != nullptr);
+    QCOMPARE(stream.frameDelivery()->videoSink(), &sink);
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1112,7 +1686,7 @@ void VideoStreamTest::_testShadowFsmTracksSessionStateLifecycle()
     QCOMPARE(stream.sessionState(), State::Stopped);
     // stop() drives the FSM through Stopping → Idle but does NOT destroy the
     // FSM; the machine survives for future restart. Teardown of the FSM only
-    // happens in `_destroyReceiver()` (backend switch, stream destructor).
+    // happens in `_destroyReceiver()` (source clear, stream destructor).
     QVERIFY(stream.fsm() != nullptr);
     QCOMPARE(stream.fsmState(), FsmState::Idle);
 
@@ -1133,11 +1707,8 @@ void VideoStreamTest::_testShadowFsmEmitsIdleOnTeardown()
     processEvents(20);
     QCOMPARE(stream.fsmState(), FsmState::Streaming);
 
-    // Force a backend switch by changing the URI to something that must
-    // rebuild the receiver. setUri with the same scheme re-runs _ensureReceiver
-    // if the URI actually changed — the simpler way to trigger _destroyReceiver
-    // is an explicit stop + start cycle, which also goes through
-    // _destroyReceiver on certain paths. Simplest reliable trigger: destructor.
+    // The simplest reliable teardown trigger here is an explicit stop; stream
+    // destruction covers the receiver-destroy path.
     QSignalSpy fsmSpy(&stream, &VideoStream::fsmStateChanged);
     stream.stop();
     processEvents(20);

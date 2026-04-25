@@ -10,4 +10,5 @@ private slots:
     void _testStartCreatesManifest();
     void _testStopCleansUpManifest();
     void _testScanForOrphansFindsIncomplete();
+    void _testRecordingPolicyOwnsFormatAndStorageRules();
 };

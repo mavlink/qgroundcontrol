@@ -1,7 +1,10 @@
 #include "VideoSourceResolver.h"
 
 #include "QGCVideoStreamInfo.h"
+#include "VideoSourceCatalog.h"
 #include "VideoSettings.h"
+
+#include <QtCore/QUrl>
 
 using ST = VideoSettings::SourceType;
 
@@ -12,27 +15,26 @@ using ST = VideoSettings::SourceType;
 struct SettingsSourceEntry
 {
     ST type;
-    const char* sourceName;
     const char* uriTemplate;                // %1 → setting value, or literal
     Fact* (VideoSettings::*settingFact)();  // Fact providing %1 (nullptr → literal)
 };
 
 static constexpr SettingsSourceEntry kSettingsSources[] = {
-    {ST::UDPH264, VideoSettings::videoSourceUDPH264, "udp://%1", &VideoSettings::udpUrl},
-    {ST::UDPH265, VideoSettings::videoSourceUDPH265, "udp265://%1", &VideoSettings::udpUrl},
-    {ST::MPEGTS, VideoSettings::videoSourceMPEGTS, "mpegts://%1", &VideoSettings::udpUrl},
-    {ST::RTSP, VideoSettings::videoSourceRTSP, "%1", &VideoSettings::rtspUrl},
-    {ST::TCP, VideoSettings::videoSourceTCP, "tcp://%1", &VideoSettings::tcpUrl},
-    {ST::Solo3DR, VideoSettings::videoSource3DRSolo, "udp://0.0.0.0:5600", nullptr},
-    {ST::ParrotDiscovery, VideoSettings::videoSourceParrotDiscovery, "udp://0.0.0.0:8888", nullptr},
-    {ST::YuneecMantisG, VideoSettings::videoSourceYuneecMantisG, "rtsp://192.168.42.1:554/live", nullptr},
-    {ST::HerelinkAirUnit, VideoSettings::videoSourceHerelinkAirUnit, "rtsp://192.168.0.10:8554/H264Video", nullptr},
-    {ST::HerelinkHotspot, VideoSettings::videoSourceHerelinkHotspot, "rtsp://192.168.43.1:8554/fpv_stream", nullptr},
+    {ST::UDPH264, "udp://%1", &VideoSettings::udpUrl},
+    {ST::UDPH265, "udp265://%1", &VideoSettings::udpUrl},
+    {ST::MPEGTS, "mpegts://%1", &VideoSettings::udpUrl},
+    {ST::RTSP, "%1", &VideoSettings::rtspUrl},
+    {ST::TCP, "tcp://%1", &VideoSettings::tcpUrl},
+    {ST::Solo3DR, "udp://0.0.0.0:5600", nullptr},
+    {ST::ParrotDiscovery, "udp://0.0.0.0:8888", nullptr},
+    {ST::YuneecMantisG, "rtsp://192.168.42.1:554/live", nullptr},
+    {ST::HerelinkAirUnit, "rtsp://192.168.0.10:8554/H264Video", nullptr},
+    {ST::HerelinkHotspot, "rtsp://192.168.43.1:8554/fpv_stream", nullptr},
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAVLink auto-stream table — maps (streamType, encoding) → SourceType + URI prefix
-// Unifies the old _updateAutoStream switch statement with the settings table.
+// Unifies MAVLink auto-stream classification with the settings source table.
 // ═══════════════════════════════════════════════════════════════════════════
 
 struct AutoStreamEntry
@@ -81,12 +83,34 @@ static constexpr TransportPrefix kTransportPrefixes[] = {
     {"dash://", VideoSourceResolver::Transport::DASH},
 };
 
+QString encodeLocalCameraId(const QString& cameraId)
+{
+    return QString::fromLatin1(QUrl::toPercentEncoding(cameraId));
+}
+
+QString localCameraIdFromUri(const QString& uri)
+{
+    static constexpr auto kPrefix = "uvc://";
+    if (!uri.startsWith(QLatin1String(kPrefix), Qt::CaseInsensitive))
+        return {};
+
+    QString encoded = uri.mid(6);
+    while (encoded.startsWith(QLatin1Char('/')))
+        encoded.remove(0, 1);
+
+    const QString cameraId = QUrl::fromPercentEncoding(encoded.toUtf8());
+    return cameraId == QLatin1String("local") ? QString() : cameraId;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Implementation
 // ═══════════════════════════════════════════════════════════════════════════
 
 VideoSourceResolver::Transport VideoSourceResolver::classify(const QString& uri)
 {
+    if (uri.startsWith(QLatin1String("gstreamer-pipeline://"), Qt::CaseInsensitive))
+        return Transport::Unknown;
+
     for (const auto& entry : kTransportPrefixes) {
         if (uri.startsWith(QLatin1String(entry.prefix), Qt::CaseInsensitive))
             return entry.transport;
@@ -100,26 +124,22 @@ VideoSourceResolver::SourceDescriptor VideoSourceResolver::describeUri(const QSt
 {
     const Transport transport = classify(uri);
     const bool isLocalCamera = uri.startsWith(QLatin1String("uvc://"), Qt::CaseInsensitive);
-    const VideoReceiver::BackendKind backend = isLocalCamera
-                                                   ? VideoReceiver::BackendKind::UVC
-                                                   : ((transport != Transport::Unknown)
-                                                          ? VideoReceiver::BackendKind::GStreamer
-                                                          : VideoReceiver::BackendKind::QtMultimedia);
-    const bool requiresGStreamer = backend == VideoReceiver::BackendKind::GStreamer;
-    const bool isNetwork = transport != Transport::Unknown && transport != Transport::Pipeline;
     const bool isPipeline = transport == Transport::Pipeline;
+    const bool qtCanOpenDirectly = transport == Transport::HLS || transport == Transport::DASH;
+    const bool requiresIngestSession = transport != Transport::Unknown && !qtCanOpenDirectly;
+    const bool isNetwork = transport != Transport::Unknown && transport != Transport::Pipeline;
     SourceDescriptor source;
     source.uri = uri;
     source.sourceName = sourceName;
     source.transport = transport;
-    source.preferredBackend = backend;
-    source.requiresGStreamer = requiresGStreamer;
+    source.requiresIngestSession = requiresIngestSession;
     source.isLocalCamera = isLocalCamera;
+    source.localCameraId = localCameraIdFromUri(uri);
     source.isNetwork = isNetwork;
     source.isPipeline = isPipeline;
-    source.lowLatencyRecommended = requiresGStreamer;
-    source.supportsLosslessRecording = requiresGStreamer;
-    source.frameMemoryPreference = requiresGStreamer ? FrameMemoryPreference::Platform : FrameMemoryPreference::Cpu;
+    source.lowLatencyRecommended = requiresIngestSession;
+    source.playbackPolicy.lowLatencyStreaming = requiresIngestSession;
+    source.playbackPolicy.probeSizeBytes = isNetwork ? 32768 : 0;
     source.startupTimeoutS = transport == Transport::RTSP ? 8 : 3;
     source.changed = changed;
     return source;
@@ -136,7 +156,7 @@ VideoSourceResolver::SourceDescriptor VideoSourceResolver::fromSettings(VideoSet
                 entry.settingFact
                     ? QString(entry.uriTemplate).arg((settings->*entry.settingFact)()->rawValue().toString())
                     : QString::fromLatin1(entry.uriTemplate);
-            return describeUri(uri, QString::fromLatin1(entry.sourceName), true);
+            return describeUri(uri, VideoSourceCatalog::sourceNameForType(entry.type), true);
         }
     }
 
@@ -144,15 +164,17 @@ VideoSourceResolver::SourceDescriptor VideoSourceResolver::fromSettings(VideoSet
     switch (sourceType) {
         case ST::GstPipeline: {
             const QString pipeline = settings->gstPipelineUrl()->rawValue().toString();
-            const QString uri = pipeline.isEmpty() ? QString() : QStringLiteral("gstreamer-pipeline://") + pipeline;
-            return describeUri(uri, QString::fromLatin1(VideoSettings::videoSourceGstPipeline), true);
+            const QString uri = pipeline.isEmpty() ? QString() : QStringLiteral("gstreamer-pipeline:") + pipeline;
+            return describeUri(uri, VideoSourceCatalog::sourceNameForType(ST::GstPipeline), true);
         }
         case ST::UVC: {
-            SourceDescriptor source = describeUri(QString(), QString(), true);
-            source.preferredBackend = VideoReceiver::BackendKind::UVC;
+            const QString cameraId = settings->videoSource()->rawValue().toString();
+            const QString uri = cameraId.isEmpty()
+                                    ? QStringLiteral("uvc://local")
+                                    : QStringLiteral("uvc://") + encodeLocalCameraId(cameraId);
+            SourceDescriptor source = describeUri(uri, QString(), true);
             source.isLocalCamera = true;
-            source.supportsLosslessRecording = false;
-            source.frameMemoryPreference = FrameMemoryPreference::Cpu;
+            source.localCameraId = cameraId;
             return source;
         }
         case ST::Disabled:
@@ -163,46 +185,83 @@ VideoSourceResolver::SourceDescriptor VideoSourceResolver::fromSettings(VideoSet
     }
 }
 
-VideoSourceResolver::SourceDescriptor VideoSourceResolver::fromStreamInfo(const QGCVideoStreamInfo* info)
+std::optional<VideoSourceResolver::StreamInfo> VideoSourceResolver::streamInfoFrom(const QGCVideoStreamInfo* info)
 {
-    if (!info || info->uri().isEmpty())
+    if (!info)
+        return std::nullopt;
+
+    StreamInfo snapshot;
+    snapshot.uri = info->uri();
+    snapshot.name = info->name();
+    snapshot.streamID = info->streamID();
+    snapshot.type = info->type();
+    snapshot.encoding = info->encoding();
+    snapshot.thermal = info->isThermal();
+    snapshot.active = info->isActive();
+    snapshot.resolution = info->resolution();
+    snapshot.hfov = info->hfov();
+    snapshot.rotation = info->rotation();
+    snapshot.bitrate = info->bitrate();
+    snapshot.framerate = info->framerate();
+    return snapshot;
+}
+
+VideoSourceResolver::SourceDescriptor VideoSourceResolver::fromStreamInfo(const StreamInfo& info)
+{
+    if (info.uri.isEmpty())
         return {};
 
     for (const auto& entry : kAutoStreamSources) {
-        if (info->type() != entry.streamType)
+        if (info.type != entry.streamType)
             continue;
-        if (entry.encoding >= 0 && info->encoding() != entry.encoding)
+        if (entry.encoding >= 0 && info.encoding != entry.encoding)
             continue;
 
         // Find the settings source name for this source type
-        const char* sourceName = nullptr;
-        for (const auto& se : kSettingsSources) {
-            if (se.type == entry.sourceType) {
-                sourceName = se.sourceName;
-                break;
-            }
-        }
+        const QLatin1String sourceName = VideoSourceCatalog::sourceNameForType(entry.sourceType);
 
         // Build URI: if the auto-stream info already has a full URI, use it.
         // Otherwise prepend scheme + default host.
-        QString uri = info->uri();
+        QString uri = info.uri;
         if (entry.scheme && !uri.contains(QLatin1String(entry.scheme), Qt::CaseInsensitive)) {
-            uri = QStringLiteral("%1%2:%3").arg(QLatin1String(entry.scheme), QStringLiteral("0.0.0.0"), info->uri());
+            uri = QStringLiteral("%1%2:%3").arg(QLatin1String(entry.scheme), QStringLiteral("0.0.0.0"), info.uri);
         }
 
-        return describeUri(uri, sourceName ? QString::fromLatin1(sourceName) : QString(), true);
+        return describeUri(uri, sourceName, true);
     }
 
     // Unknown stream type — return raw URI with no source name
-    const QString uri = info->uri();
-    return describeUri(uri, QString::fromLatin1(VideoSettings::videoSourceNoVideo), true);
+    const QString uri = info.uri;
+    return describeUri(uri, VideoSourceCatalog::sourceNameForType(ST::NoVideo), true);
+}
+
+VideoSourceResolver::EffectiveSource
+VideoSourceResolver::resolveEffectiveSource(bool thermal,
+                                            VideoSettings* settings,
+                                            const std::optional<StreamInfo>& streamInfo)
+{
+    EffectiveSource resolution;
+
+    if (streamInfo) {
+        resolution.source = fromStreamInfo(*streamInfo);
+        resolution.hasSource = true;
+        if (!thermal) {
+            resolution.writeBackSourceName = resolution.source.sourceName;
+            if (resolution.source.sourceName == QLatin1String(VideoSettings::videoSourceRTSP))
+                resolution.writeBackRtspUrl = resolution.source.uri;
+        }
+        return resolution;
+    }
+
+    if (!thermal && settings) {
+        resolution.source = fromSettings(settings);
+        resolution.hasSource = true;
+    }
+
+    return resolution;
 }
 
 bool VideoSourceResolver::isKnownNetworkSource(const QString& sourceName)
 {
-    for (const auto& entry : kSettingsSources) {
-        if (sourceName == QLatin1String(entry.sourceName))
-            return true;
-    }
-    return false;
+    return VideoSourceCatalog::isNetworkSourceName(sourceName);
 }

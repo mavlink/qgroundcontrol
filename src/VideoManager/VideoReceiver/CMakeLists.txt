@@ -1,6 +1,6 @@
 # ============================================================================
 # Video Receiver Subsystem
-# Video streaming backends (GStreamer and Qt Multimedia)
+# Video streaming receivers and optional GStreamer ingest session.
 # ============================================================================
 
 target_sources(${CMAKE_PROJECT_NAME}
@@ -21,7 +21,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # ----------------------------------------------------------------------------
-# Video Backend Implementations
+# Video Receiver Implementations
 # ----------------------------------------------------------------------------
 add_subdirectory(GStreamer)
 add_subdirectory(QtMultimedia)

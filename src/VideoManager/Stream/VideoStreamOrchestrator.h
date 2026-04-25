@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
@@ -7,34 +8,32 @@
 #include <QtCore/QSize>
 
 #include <functional>
+#include <optional>
 
 #include "VideoStream.h"  // Role enum required for templated iterators
+#include "VideoSourceResolver.h"
 
 Q_DECLARE_LOGGING_CATEGORY(VideoStreamOrchestratorLog)
 
 class QGCCameraManager;
+class QMediaDevices;
+class VideoSourceController;
 class VideoSettings;
 class VideoSettingsBridge;
+class VideoStreamAggregateMonitor;
 class VideoStreamModel;
-class VideoManagerIntegrationTest;
+class VideoUvcController;
 
-/// Owns the video stream collection extracted from VideoManager. Responsible
-/// for stream creation/teardown, UVC activation, settings→stream propagation,
-/// aggregate lifecycle state, and per-role lookup.
-///
-/// Consumers (VideoManager as the QML facade; tests) interact via this
-/// object's public verbs and observe transitions through the emitted signals.
-/// `_onStreamInfoUpdated` geometry caching stays in the facade because its
-/// shape is dictated by VideoManager's Q_PROPERTY layout; the orchestrator
-/// emits a single coarse `streamInfoUpdated()` signal for that purpose.
+/// Owns the video stream collection: stream creation/teardown, UVC
+/// activation, settings-to-stream propagation, aggregate state, and per-role
+/// lookup.
 class VideoStreamOrchestrator : public QObject
 {
     Q_OBJECT
 
-    friend class VideoManagerIntegrationTest;
-
 public:
     using StreamCreationHook = std::function<void()>;
+    using LocalCameraAvailableFn = std::function<bool()>;
 
     /// `settings` must outlive this object. `bindToSettings()` wires the
     /// Fact signal subscriptions after construction.
@@ -45,17 +44,16 @@ public:
 
     void createStreams();
 
-    /// Test hook — when set, `createStreams()` calls it instead of building
-    /// the production stream list. Production code never sets this.
+#ifdef QGC_UNITTEST_BUILD
     void setCreateStreamsForTest(StreamCreationHook hook) { _createStreamsForTest = std::move(hook); }
+    void setLocalCameraAvailableForTest(LocalCameraAvailableFn fn);
+    void registerStreamForTest(VideoStream* stream);
+    bool reconcileDynamicStreamsForTest(const QHash<quint8, VideoSourceResolver::StreamInfo>& expected);
 
-    /// Override the factory used by `_reconcileDynamicStreams` when spawning
-    /// new `Role::Dynamic` VideoStreams. Defaults to
-    /// `VideoReceiverFactory::gstOrQtMultimedia` in production. Tests inject a
-    /// FakeVideoReceiver factory here to keep reconcile hermetic.
     void setDynamicReceiverFactoryForTest(VideoStream::ReceiverFactory factory) {
         _dynamicFactory = std::move(factory);
     }
+#endif
 
     void cleanup();
 
@@ -70,16 +68,15 @@ public:
     void startVideo();
     void stopVideo();
 
-    /// Forwarder used by facades that want to re-trigger source resolution
-    /// outside of Fact signal deliveries (e.g. after `autoStreamConfigured`
-    /// changes). Equivalent to an internal source-change notification.
+    /// Re-trigger source resolution outside of Fact signal deliveries.
     void refreshFromSettings();
 
-    [[nodiscard]] bool streaming() const;
     [[nodiscard]] bool decoding() const;
     [[nodiscard]] bool recording() const;
 
     [[nodiscard]] bool hasVideo() const;
+    [[nodiscard]] bool autoStreamConfigured() const;
+    [[nodiscard]] static bool isAutoStreamConfigured(const std::optional<VideoSourceResolver::StreamInfo>& metadata);
     [[nodiscard]] QSize videoSize() const { return _videoSize; }
 
     [[nodiscard]] VideoStream* streamByRole(VideoStream::Role role) const;
@@ -124,11 +121,7 @@ public:
     }
 
 signals:
-    /// Aggregate transitions — emitted only when the computed aggregate
-    /// actually flips, not on every per-stream signal. Used by the facade
-    /// to coalesce camera-state pushes; QML reads per-stream state via
-    /// `streamModel`, not these signals.
-    void streamingChanged();
+    /// Aggregate transitions — emitted only when the computed aggregate flips.
     void decodingChanged();
     void recordingChanged(bool recording);
 
@@ -136,9 +129,8 @@ signals:
     void hasVideoChanged();
     void isStreamSourceChanged();
 
-    /// The primary stream's bridge pointer changed (receiver recreated).
-    /// Facade queries `primaryStream()->bridge()` to extract the new sink.
-    void primaryBridgeChanged();
+    /// The primary stream's frame-delivery pointer changed.
+    void primaryFrameDeliveryChanged();
 
     /// Per-stream recording error (already formatted user-facing message).
     void recordingError(const QString& errorMsg);
@@ -148,13 +140,18 @@ signals:
 
 private slots:
     void _onSourceChanged();
-    void _recomputeAggregate();
 
 private:
     void _wireStreamSignals(VideoStream* stream);
+    VideoStream* _createStream(VideoStream::Role role, VideoStream::ReceiverFactory factory);
+    VideoStream* _createStream(VideoStream::Role role, const QString& name, VideoStream::ReceiverFactory factory);
+    void _addStream(VideoStream* stream);
+    void _removeStream(VideoStream* stream);
     void _activateUvcStream();
     void _deactivateUvcStream();
+    [[nodiscard]] VideoStream* _ensureUvcStream();
     [[nodiscard]] bool _isUvcSource() const;
+    [[nodiscard]] bool _applyResolvedSource(VideoStream* stream);
 
     /// Reconcile `Role::Dynamic` streams against the active camera's MAVLink
     /// stream list. Adds streams for newly reported stream IDs, destroys
@@ -163,36 +160,20 @@ private:
     /// Returns true if the dynamic set changed.
     bool _reconcileDynamicStreams();
 
-    /// Test seam: reconcile against an explicitly provided set of
-    /// `{streamID → QGCVideoStreamInfo*}`. Production uses the arg-less
-    /// overload which pulls from `_cameraManager`. Exposed to
-    /// `VideoManagerIntegrationTest` via friend access.
-    bool _reconcileDynamicStreams(const QHash<quint8, class QGCVideoStreamInfo*>& expected);
+    /// Reconcile against an explicitly provided set of `{streamID -> StreamInfo}` snapshots.
+    bool _reconcileDynamicStreams(const QHash<quint8, VideoSourceResolver::StreamInfo>& expected);
 
-    VideoSettings* _settings = nullptr;
     VideoSettingsBridge* _settingsBridge = nullptr;
-    QPointer<QGCCameraManager> _cameraManager;
-    QMetaObject::Connection _cameraManagerConn;
+    VideoSourceController* _sourceController = nullptr;
+    QMediaDevices* _mediaDevices = nullptr;
+    VideoStreamModel* _streamModel = nullptr;
+    VideoStreamAggregateMonitor* _aggregateMonitor = nullptr;
+    VideoUvcController* _uvcController = nullptr;
 
     QList<VideoStream*> _streams;
-    VideoStreamModel* _streamModel = nullptr;
     StreamCreationHook _createStreamsForTest;
 
-    /// Factory for Role::Dynamic receivers. Defaults to
-    /// `VideoReceiverFactory::gstOrQtMultimedia`; tests override via
-    /// `setDynamicReceiverFactoryForTest`.
     VideoStream::ReceiverFactory _dynamicFactory;
-
-    /// Previous aggregate values — used to detect real transitions before
-    /// emitting NOTIFY signals in `_recomputeAggregate()`.
-    struct AggregateState
-    {
-        bool streaming = false;
-        bool decoding = false;
-        bool recording = false;
-    };
-
-    AggregateState _agg;
 
     QSize _videoSize;
 };

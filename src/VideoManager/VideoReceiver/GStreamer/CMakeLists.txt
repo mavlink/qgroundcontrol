@@ -1,28 +1,38 @@
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Ingest
     ${CMAKE_CURRENT_SOURCE_DIR}/Core
     ${CMAKE_CURRENT_SOURCE_DIR}/Pipeline
-    ${CMAKE_CURRENT_SOURCE_DIR}/FrameDelivery
-    ${CMAKE_CURRENT_SOURCE_DIR}/Health
     ${CMAKE_CURRENT_SOURCE_DIR}/Recording
 )
 
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
+    set(GSTREAMER_PLUGINS
+        coreelements
+        app
+        isomp4
+        matroska
+        mpegtsdemux
+        mpegtsmux
+        rtp
+        rtpmanager
+        rtsp
+        sdpelem
+        tcp
+        typefindfunctions
+        udp
+        videoparsersbad
+    )
+
     find_package(QGCGStreamer
         REQUIRED
         COMPONENTS Core Base Video Rtsp App Pbutils
         OPTIONAL_COMPONENTS Allocators
     )
-    if(LINUX)
-        find_package(OpenGL REQUIRED COMPONENTS EGL)
-    endif()
-
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             Core/GStreamer.cc
             Core/GStreamer.h
-            Core/GStreamerHelpers.cc
-            Core/GStreamerHelpers.h
             Core/GStreamerLogging.cc
             Core/GStreamerLogging.h
             Core/GstCallbackDispatch.h
@@ -31,72 +41,31 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
             Core/GstObjectPtr.h
             Core/GstPluginRegistry.cc
             Core/GstPluginRegistry.h
-            Core/GstVideoReceiver.cc
-            Core/GstVideoReceiver.h
-            Core/GstVideoReceiverCallbacks.cc
-            # --- Pipeline: topology + element construction ---
-            Pipeline/GstPipelineController.cc
-            Pipeline/GstPipelineController.h
-            Pipeline/GstPipelineFactory.cc
-            Pipeline/GstPipelineFactory.h
+            # --- Ingest: GStreamer ingest/proxy, QtMultimedia display ---
+            Ingest/GstStreamDevice.cc
+            Ingest/GstStreamDevice.h
+            Ingest/GstIngestSession.cc
+            Ingest/GstIngestSession.h
+            # --- Pipeline: source element construction ---
+            Pipeline/GstRemuxPipeline.cc
+            Pipeline/GstRemuxPipeline.h
             Pipeline/GstSourceFactory.cc
             Pipeline/GstSourceFactory.h
-            Pipeline/GstTeeBranch.h
-            Pipeline/GstDecodingBranch.cc
-            Pipeline/GstDecodingBranch.h
-            Pipeline/GstRecordingBranch.cc
-            Pipeline/GstRecordingBranch.h
-            # --- FrameDelivery: appsink → QVideoFrame ---
-            FrameDelivery/GstAppsinkBridge.cc
-            FrameDelivery/GstAppsinkBridge.h
-            FrameDelivery/GstCpuVideoBuffer.cc
-            FrameDelivery/GstCpuVideoBuffer.h
-            FrameDelivery/GstDmaBufRhiVideoBuffer.cc
-            FrameDelivery/GstDmaBufRhiVideoBuffer.h
-            FrameDelivery/GstDmaBufVideoBuffer.cc
-            FrameDelivery/GstDmaBufVideoBuffer.h
-            FrameDelivery/GstFrameFormatNegotiator.cc
-            FrameDelivery/GstFrameFormatNegotiator.h
-            FrameDelivery/GstFrameImportStrategy.cc
-            FrameDelivery/GstFrameImportStrategy.h
-            FrameDelivery/GstFormatTable.cc
-            FrameDelivery/GstFormatTable.h
-            FrameDelivery/GstLatencyTracker.cc
-            FrameDelivery/GstLatencyTracker.h
-            FrameDelivery/GstVideoBufferFactory.cc
-            FrameDelivery/GstVideoBufferFactory.h
-            FrameDelivery/GstSampleFrameConverter.cc
-            FrameDelivery/GstSampleFrameConverter.h
-            FrameDelivery/GstCapsToMediaMetaData.cc
-            FrameDelivery/GstCapsToMediaMetaData.h
-            # --- Health: watchdog + decoder fallback ---
-            Health/StreamHealthMonitor.cc
-            Health/StreamHealthMonitor.h
-            Health/GstDecoderFallbackController.cc
-            Health/GstDecoderFallbackController.h
-            # --- Recording: GStreamer-native tee recorder ---
-            Recording/GstTeeRecorder.cc
-            Recording/GstTeeRecorder.h
+            # --- Recording: native remux service for ingested streams ---
+            Recording/GstNativeRecorder.cc
+            Recording/GstNativeRecorder.h
+            Recording/GstIngestRecorder.cc
+            Recording/GstIngestRecorder.h
     )
 
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_STREAMING)
 
-    # DMA-BUF support is auto-detected inside FindQGCGStreamer when the
-    # Allocators component is available. It adds QGC_GST_DMABUF + the libdrm
-    # include path as INTERFACE properties on GStreamer::GStreamer; consumers
-    # pick them up transitively through the link below.
-
     target_link_libraries(${CMAKE_PROJECT_NAME}
         PRIVATE
             Qt6::Concurrent
-            Qt6::MultimediaPrivate
             Qt6::Multimedia
             GStreamer::GStreamer
     )
-
-    if(LINUX)
-        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenGL::EGL)
-    endif()
 
 endif()
 
@@ -287,7 +256,7 @@ elseif(LINUX)
 endif()
 
 if(_gst_verify_dest)
-    set(_gst_required_plugins coreelements playback rtsp rtp rtpmanager tcp udp)
+    set(_gst_required_plugins app coreelements mpegtsdemux mpegtsmux rtsp rtp rtpmanager tcp typefindfunctions udp videoparsersbad)
     set(_gst_required_check "")
     foreach(_p IN LISTS _gst_required_plugins)
         list(APPEND _gst_required_check "${_gst_verify_prefix}${_p}.${_gst_verify_ext}")

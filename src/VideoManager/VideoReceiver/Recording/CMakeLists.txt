@@ -4,8 +4,8 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
-        BridgeRecorder.cc
-        BridgeRecorder.h
+        FrameDeliveryRecorder.cc
+        FrameDeliveryRecorder.h
         VideoRecorder.cc
         VideoRecorder.h
         RecordingOrphanScanner.cc

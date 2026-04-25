@@ -5,20 +5,17 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QStringList>
 #include <QtCore/QVarLengthArray>
+#include <atomic>
 #include <mutex>
 
-#include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
 #include "GstEnvironment.h"
 #include "GstPluginRegistry.h"
-#include "GstVideoReceiver.h"
 #include "QGCLoggingCategory.h"
-#include "VideoBackendRegistry.h"
 
 #include <gst/gst.h>
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "VideoManager.GStreamer.GStreamer")
-QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "VideoManager.GStreamer.GStreamer.DecoderRanks")
 
 #ifdef Q_OS_IOS
 extern "C" {
@@ -29,6 +26,11 @@ void gst_ios_post_init(void);
 
 namespace GStreamer {
 
+namespace {
+
+std::atomic_bool s_available = false;
+
+}  // namespace
 
 void setDebugLevel(int level)
 {
@@ -115,23 +117,22 @@ bool completeInit()
         return false;
     }
 
-    GStreamer::logDecoderRanks();
-
-    GstElementFactory* appsinkFactory = gst_element_factory_find("appsink");
-    if (appsinkFactory) {
-        qCDebug(GStreamerLog) << "appsink factory available";
-        gst_object_unref(appsinkFactory);
-    } else {
-        qCCritical(GStreamerLog) << "appsink factory not found — video rendering will not work";
-        return false;
+    static constexpr const char* kRequiredFactories[] = {
+        "parsebin",
+        "queue",
+        "h264parse",
+        "h265parse",
+        "mpegtsmux",
+        "appsink",
+    };
+    for (const char* factoryName : kRequiredFactories) {
+        GstElementFactory* factory = gst_element_factory_find(factoryName);
+        if (!factory) {
+            qCCritical(GStreamerLog) << "Required ingest-session factory not found:" << factoryName;
+            return false;
+        }
+        gst_object_unref(factory);
     }
-
-    GstElementFactory* playbinFactory = gst_element_factory_find("playbin");
-    if (!playbinFactory) {
-        qCCritical(GStreamerLog) << "playbin factory not found";
-        return false;
-    }
-    gst_object_unref(playbinFactory);
 
     if (GStreamer::didExternalPluginLoaderFail()) {
         qCCritical(GStreamerLog)
@@ -139,6 +140,7 @@ bool completeInit()
         return false;
     }
 
+    s_available.store(true, std::memory_order_release);
     return true;
 }
 
@@ -156,23 +158,21 @@ bool initialize()
     return completeInit();
 }
 
-QFuture<bool> initAsync(int decoderOption)
+QFuture<bool> initAsync()
 {
     // Guard against double-init — qputenv in prepareEnvironment is not thread-safe,
     // and gst_init must only be called once per process.
     static std::once_flag s_initOnce;
     static QFuture<bool> s_initFuture;
 
-    std::call_once(s_initOnce, [decoderOption]() {
+    std::call_once(s_initOnce, []() {
         prepareEnvironment();
 
-        s_initFuture = QtConcurrent::run([decoderOption]() -> bool {
+        s_initFuture = QtConcurrent::run([]() -> bool {
             if (!initialize()) {
+                s_available.store(false, std::memory_order_release);
                 return false;
             }
-            setCodecPriorities(static_cast<VideoDecoderOptions>(decoderOption));
-            VideoBackendRegistry::instance().registerBackend(VideoReceiver::BackendKind::GStreamer,
-                                                             &createVideoReceiver);
             return true;
         });
     });
@@ -180,9 +180,9 @@ QFuture<bool> initAsync(int decoderOption)
     return s_initFuture;
 }
 
-VideoReceiver* createVideoReceiver(QObject* parent)
+bool isAvailable()
 {
-    return new GstVideoReceiver(parent);
+    return s_available.load(std::memory_order_acquire);
 }
 
 }  // namespace GStreamer

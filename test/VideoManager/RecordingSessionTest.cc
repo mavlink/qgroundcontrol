@@ -11,6 +11,7 @@
 #include <QtTest/QTest>
 
 #include "RecordingSession.h"
+#include "VideoRecordingPolicy.h"
 #include "VideoRecorder.h"
 
 // ─── Stub Recorder ────────────────────────────────────────────────────────────
@@ -156,6 +157,21 @@ void RecordingSessionTest::_testScanForOrphansFindsIncomplete()
     // its original path.
     QVERIFY2(!QFile::exists(manifestPath),
              "Original manifest path should no longer exist after scanForOrphans");
+}
+
+void RecordingSessionTest::_testRecordingPolicyOwnsFormatAndStorageRules()
+{
+    QVERIFY(VideoRecordingPolicy::isSupportedFileFormat(QMediaFormat::Matroska));
+    QVERIFY(VideoRecordingPolicy::isSupportedFileFormat(QMediaFormat::QuickTime));
+    QVERIFY(VideoRecordingPolicy::isSupportedFileFormat(QMediaFormat::MPEG4));
+    QVERIFY(!VideoRecordingPolicy::isSupportedFileFormat(QMediaFormat::UnspecifiedFormat));
+
+    const QStringList filters = VideoRecordingPolicy::videoNameFilters();
+    QVERIFY(filters.contains(QStringLiteral("*.mkv")));
+    QVERIFY(filters.contains(QStringLiteral("*.mov")));
+    QVERIFY(filters.contains(QStringLiteral("*.mp4")));
+
+    QCOMPARE(VideoRecordingPolicy::storageLimitBytes(2), 2ULL * 1024ULL * 1024ULL);
 }
 
 UT_REGISTER_TEST(RecordingSessionTest, TestLabel::Unit)

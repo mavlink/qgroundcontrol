@@ -12,9 +12,9 @@
 /// List model exposing active video streams to QML.
 ///
 /// Each row represents a VideoStream (stable for its lifetime) with roles
-/// for name, URI, thermal flag, bridge, and active status. This eliminates
+/// for name, URI, thermal flag, frame delivery, and active status. This eliminates
 /// the dangling-pointer bug from the old VideoReceiver*-based model — receivers
-/// are created and destroyed underneath the stream during backend switches,
+/// are created and destroyed underneath the stream during receiver rebuilds,
 /// but the model row is always valid.
 class VideoStreamModel : public QAbstractListModel
 {
@@ -29,7 +29,7 @@ public:
         UriRole,
         IsThermalRole,
         IsActiveRole,
-        BridgeRole,
+        FrameDeliveryRole,
         LastErrorRole,  ///< Per-stream error string (empty on success).
         StreamRole,     ///< The VideoStream * itself, for QML direct-binding.
     };
@@ -58,13 +58,9 @@ public:
 
     /// Find a stream by role. Preferred over stream(QString) — avoids
     /// string-typed role lookups and gives QML a direct handle to bind to
-    /// `VideoStream.bridge` / `VideoStream.lastError` etc.
-    /// Exposed via Q_INVOKABLE so QML can do:
-    ///    videoSink: VideoManager.streamModel.streamForRole(VideoStream.Primary)
-    ///                ?.bridge?.videoSink
-    /// Declarative sink attachment (replacing VideoManager.registerVideoSink
-    /// calls) is tracked as follow-up — requires a QML attached property
-    /// and migration across all VideoOutput consumers.
+    /// `VideoStream.frameDelivery` / `VideoStream.lastError` etc.
+    /// Exposed via Q_INVOKABLE so QML can bind a VideoSinkBinder to the
+    /// stream object and let C++ own sink registration teardown.
     Q_INVOKABLE VideoStream* streamForRole(int role) const;
 
     /// Returns the stream currently playing the given logical role.

@@ -1,14 +1,21 @@
 #pragma once
 
+#include <QtCore/QPermission>
 #include <QtCore/QMetaObject>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
+#include <QtMultimedia/QCameraDevice>
+#include <QtMultimedia/QMediaPlayer>
 #include <chrono>
+#include <memory>
 
 #include "VideoReceiver.h"
 
-class QMediaPlayer;
-class QVideoSink;
+class QCamera;
+class QImageCapture;
+class QMediaCaptureSession;
+class QMediaDevices;
+class QtVideoSinkRouter;
 
 class QtMultimediaReceiver : public VideoReceiver
 {
@@ -18,11 +25,7 @@ public:
     explicit QtMultimediaReceiver(QObject* parent = nullptr);
     virtual ~QtMultimediaReceiver();
 
-    static VideoReceiver* createVideoReceiver(QObject* parent);
-
-    [[nodiscard]] Capabilities capabilities() const override { return CapStreaming | CapRecording; }
-
-    [[nodiscard]] BackendKind kind() const override { return BackendKind::QtMultimedia; }
+    [[nodiscard]] Capabilities capabilities() const override { return CapStreaming | CapRecording | CapLocalCamera; }
 
     [[nodiscard]] bool isStreaming() const override { return _streamingActive; }
 
@@ -30,6 +33,14 @@ public:
 
     /// Qt Multimedia (FFmpeg backend) provides no per-frame PTS-vs-clock measurement.
     [[nodiscard]] bool latencySupported() const override { return false; }
+
+    void configureSource(const VideoSourceResolver::VideoSource& source) override;
+
+    static QCameraDevice findLocalCameraDevice(const QString& cameraId);
+    static QString defaultLocalCameraId();
+    static bool localCameraAvailable();
+    static bool localCameraDeviceExists(const QString& device);
+    static QStringList localCameraDeviceNameList();
 
 public slots:
     void start(uint32_t timeout) override;
@@ -41,22 +52,28 @@ public slots:
 
 protected:
     void onSinkAboutToChange() override;
-    void onSinkChanged(QVideoSink* newSink) override;
+    [[nodiscard]] SinkChangeAction onSinkChanged(QVideoSink* newSink) override;
 
     /// Read the current codec/decoder info from the media player's metadata
     /// and update the base-class decoder fields. Called from hasVideoChanged
-    /// and metaDataChanged to give QML parity with GstVideoReceiver on the
+    /// and metaDataChanged to expose the decoder-name readout from Qt's
     /// decoder-name readout (HW decode status is not exposed by Qt's FFmpeg
     /// backend, so hwDecoding stays false).
     void _pullDecoderInfoFromMetadata();
 
-    QMediaPlayer* _mediaPlayer = nullptr;
+    enum class SourceMode : quint8
+    {
+        Playback,
+        LocalCamera,
+    };
 
-    /// Internal sink that QMediaPlayer writes to. Its videoFrameChanged signal
-    /// is connected to VideoFrameDelivery::deliverFrame so all frames are pushed
-    /// through the delivery endpoint symmetrically with the GStreamer path.
-    QVideoSink* _internalSink = nullptr;
-    QMetaObject::Connection _internalFrameConn;
+    QMediaPlayer* _mediaPlayer = nullptr;
+    QCamera* _camera = nullptr;
+    QImageCapture* _imageCapture = nullptr;
+    QMediaCaptureSession* _captureSession = nullptr;
+    QMediaDevices* _mediaDevices = nullptr;
+
+    std::unique_ptr<QtVideoSinkRouter> _sinkRouter;
 
     /// Per-frame watchdog interval, stashed in start() and applied to the
     /// delivery watchdog in startDecoding(). The delivery endpoint owns the timer.
@@ -71,11 +88,26 @@ protected:
     QTimer _startTimeoutTimer;
 
     void _clearStartHandlers();
-    void _rewireInternalSink();
+    bool _ensureCameraObjects();
+    void _checkCameraPermission();
+    void _startPlayback(uint32_t timeout);
+    void _stopPlayback();
+    void _startCamera(uint32_t timeout);
+    void _stopCamera();
+    void _openCamera();
+    void _closeCamera();
+    void _announceCameraFormat();
+    void _setSinkTargetForMode(SourceMode mode);
+    void _handleMediaStatusChanged(QMediaPlayer::MediaStatus status);
+    void _applyPlaybackTrackPolicy();
 
     void _setStreamingActive(bool active);
     void _setDecoderActive(bool active);
 
+    SourceMode _sourceMode = SourceMode::Playback;
+    SourceMode _activeMode = SourceMode::Playback;
     bool _streamingActive = false;
     bool _decoderActive = false;
+    Qt::PermissionStatus _cameraPermissionStatus = Qt::PermissionStatus::Undetermined;
+    QString _cameraId;
 };

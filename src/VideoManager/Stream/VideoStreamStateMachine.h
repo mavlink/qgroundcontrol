@@ -15,7 +15,7 @@ Q_DECLARE_LOGGING_CATEGORY(VideoStreamStateMachineLog)
 /// Owning state machine for a single video stream.
 ///
 /// Drives transitions from the primitive lifecycle signals emitted by every
-/// VideoReceiver backend (GStreamer, QtMultimedia, UVC, FakeVideoReceiver):
+/// VideoReceiver implementation:
 ///
 ///   receiverStarted / receiverStopped / receiverPaused / receiverResumed /
 ///   receiverFirstFrame / receiverError(ErrorCategory, QString)
@@ -79,6 +79,11 @@ public:
     /// is not Idle.
     bool unbind();
 
+    /// Route a receiver-equivalent error into the FSM. This is used both for
+    /// concrete VideoReceiver errors and sidecar ingest errors that affect the
+    /// same stream lifecycle.
+    void handleReceiverError(VideoReceiver::ErrorCategory category, const QString& message);
+
 public slots:
     /// External entry points. These fan out to the FSM via proxy signals so
     /// that `QSignalTransition`s keep a stable sender (`this`) across
@@ -126,8 +131,6 @@ private:
     void _createStates();
     void _wireTransitions();
     void _setCurrentState(State newState);
-    void _forwardReceiverError(VideoReceiver::ErrorCategory category, const QString& message);
-
     Policy _policy;
     QPointer<VideoReceiver> _receiver;
     State _currentState = State::Idle;
