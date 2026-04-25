@@ -7,10 +7,12 @@
 #include <QtCore/QLocale>
 #include <QtCore/QMimeDatabase>
 #include <QtCore/QMimeType>
+#include <QtCore/QtEndian>
 
 #include <algorithm>
 #include <cstring>
 
+#include "QGCDecompressDevice.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QGClibarchive.h"
@@ -997,6 +999,88 @@ bool isDataCompressed(const QByteArray &data)
 int lastCompressionRatio()
 {
     return s_lastCompressionRatio;
+}
+
+QByteArray readFile(const QString &filePath, QString *errorString, qint64 maxBytes)
+{
+    if (!isCompressedFile(filePath)) {
+        return QGCFileHelper::readFile(filePath, errorString, maxBytes);
+    }
+
+    QGCDecompressDevice decompressor(filePath);
+    if (!decompressor.open(QIODevice::ReadOnly)) {
+        if (errorString != nullptr) {
+            *errorString = QObject::tr("Failed to open compressed file: %1").arg(filePath);
+        }
+        return {};
+    }
+
+    const QByteArray data = (maxBytes > 0) ? decompressor.read(maxBytes) : decompressor.readAll();
+    decompressor.close();
+    return data;
+}
+
+QString computeFileHash(const QString &filePath, QCryptographicHash::Algorithm algorithm)
+{
+    if (filePath.isEmpty()) {
+        qCWarning(QGCCompressionLog) << "computeFileHash: empty file path";
+        return {};
+    }
+
+    if (!isCompressedFile(filePath)) {
+        return QGCFileHelper::computeFileHash(filePath, algorithm);
+    }
+
+    QGCDecompressDevice decompressor(filePath);
+    if (!decompressor.open(QIODevice::ReadOnly)) {
+        qCWarning(QGCCompressionLog) << "computeFileHash: failed to open:" << filePath;
+        return {};
+    }
+
+    QCryptographicHash hash(algorithm);
+    constexpr qint64 chunkSize = 65536;
+    while (true) {
+        const QByteArray buffer = decompressor.read(chunkSize);
+        if (buffer.isEmpty()) {
+            if (decompressor.atEnd()) {
+                break;
+            }
+            qCWarning(QGCCompressionLog) << "computeFileHash: read error";
+            decompressor.close();
+            return {};
+        }
+        hash.addData(buffer);
+    }
+
+    decompressor.close();
+    return QString::fromLatin1(hash.result().toHex());
+}
+
+// ============================================================================
+// Compressed JSON Helpers
+// ============================================================================
+
+bool looksLikeCompressedData(const QByteArray &data)
+{
+    return isCompressionFormat(detectFormatFromData(data));
+}
+
+QJsonDocument parseCompressedJson(const QByteArray &data, QJsonParseError *error)
+{
+    QByteArray jsonData = data;
+
+    if (looksLikeCompressedData(data)) {
+        jsonData = decompressData(data);
+        if (jsonData.isEmpty()) {
+            if (error != nullptr) {
+                error->error = QJsonParseError::IllegalValue;
+                error->offset = 0;
+            }
+            return {};
+        }
+    }
+
+    return QJsonDocument::fromJson(jsonData, error);
 }
 
 }  // namespace QGCCompression

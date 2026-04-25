@@ -1,6 +1,5 @@
 #include "CompInfoGeneral.h"
 #include "ComponentInformationManager.h"
-#include "JsonHelper.h"
 #include "JsonParsing.h"
 #include "QGCLoggingCategory.h"
 
@@ -40,16 +39,16 @@ void CompInfoGeneral::setJson(const QString& metadataJsonFileName)
     }
     QJsonObject jsonObj = jsonDoc.object();
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,           QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
+        { JsonParsing::jsonVersionKey,           QJsonValue::Double, true },
         { _jsonMetadataTypesKey,   QJsonValue::Array,  true },
     };
-    if (!JsonHelper::validateKeys(jsonObj, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(jsonObj, keyInfoList, errorString)) {
         qCWarning(CompInfoGeneralLog) << "Metadata json validation failed: compid:" << compId << errorString;
         return;
     }
 
-    int version = jsonObj[JsonHelper::jsonVersionKey].toInt();
+    int version = jsonObj[JsonParsing::jsonVersionKey].toInt();
     if (version != 1) {
         qCWarning(CompInfoGeneralLog) << "Metadata json unsupported version" << version;
         return;

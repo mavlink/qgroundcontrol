@@ -200,3 +200,40 @@ qt_add_resources(${CMAKE_PROJECT_NAME} json_controls
     PREFIX "/json"
     FILES ${JSON_FILES}
 )
+
+qt_add_resources(${CMAKE_PROJECT_NAME} qmlcontrols_resources
+    PREFIX "/res"
+    BASE "${CMAKE_SOURCE_DIR}/resources"
+    FILES
+        "${CMAKE_SOURCE_DIR}/resources/ArrowRight.svg"
+        "${CMAKE_SOURCE_DIR}/resources/buttonRight.svg"
+        "${CMAKE_SOURCE_DIR}/resources/chevron-down.svg"
+        "${CMAKE_SOURCE_DIR}/resources/chevron-up.svg"
+        "${CMAKE_SOURCE_DIR}/resources/clockwise-arrow.svg"
+        "${CMAKE_SOURCE_DIR}/resources/counter-clockwise-arrow.svg"
+        "${CMAKE_SOURCE_DIR}/resources/JoystickBezelLight.png"
+)
+
+# subMenuButtonImage.png aliases the shared CogWheels.png at the repo root.
+set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/CogWheels.png"
+    PROPERTIES QT_RESOURCE_ALIAS "subMenuButtonImage.png")
+
+qt_add_resources(${CMAKE_PROJECT_NAME} qmlcontrols_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/arrow-down.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/checkbox-check.svg"
+        "${CMAKE_SOURCE_DIR}/resources/CogWheels.png"
+)
+
+# Globbed because FactValueGrid enumerates :/InstrumentValueIcons/ at runtime
+# to build the icon picker — every SVG in the directory must be embedded.
+file(GLOB INSTRUMENT_VALUE_ICONS CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/*.svg"
+)
+qt_add_resources(${CMAKE_PROJECT_NAME} instrument_value_icons
+    PREFIX "/InstrumentValueIcons"
+    BASE "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons"
+    FILES ${INSTRUMENT_VALUE_ICONS}
+)

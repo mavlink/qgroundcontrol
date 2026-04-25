@@ -4,11 +4,12 @@
 #include <QtCore/QQueue>
 #include <QtCore/QString>
 
-#include "QGCCacheTile.h"
-#include "QGCCachedTileSet.h"
 #include "QGCMapTaskBase.h"
 #include "QGCTileCacheTypes.h"
 #include "QGCTile.h"
+
+struct QGCCacheTile;
+class QGCCachedTileSet;
 
 //-----------------------------------------------------------------------------
 
@@ -43,12 +44,7 @@ public:
         , m_tileSet(tileSet)
         , m_saved(false)
     {}
-    ~QGCCreateTileSetTask()
-    {
-        if (!m_saved) {
-            delete m_tileSet;
-        }
-    }
+    ~QGCCreateTileSetTask();
 
     QGCCachedTileSet *tileSet() { return m_tileSet; }
 
@@ -104,10 +100,7 @@ public:
         : QGCMapTask(TaskType::taskCacheTile, parent)
         , m_tile(tile)
     {}
-    ~QGCSaveTileTask()
-    {
-        delete m_tile;
-    }
+    ~QGCSaveTileTask();
 
     const QGCCacheTile *tile() const { return m_tile; }
     QGCCacheTile *tile() { return m_tile; }

@@ -1,5 +1,5 @@
 #include "FactMetaData.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "MAVLinkLib.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
@@ -1172,7 +1172,7 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
 {
     QString errorString;
 
-    static const QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         { _nameJsonKey,                 QJsonValue::String, true },
         { _labelJsonKey,                QJsonValue::String, false },
         { _typeJsonKey,                 QJsonValue::String, true },
@@ -1197,7 +1197,7 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
         { _enumStringsJsonKey,          QJsonValue::String, false },
     };
 
-    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(json, keyInfoList, errorString)) {
         qWarning(FactMetaDataLog) << errorString;
         return new FactMetaData(valueTypeUint32, metaDataParent);
     }
@@ -1422,17 +1422,20 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonFile(const QString &
 
     QString errorString;
     int version;
-    const QJsonObject jsonObject = JsonHelper::openInternalQGCJsonFile(jsonFilename, qgcFileType, 1, 1, version, errorString);
+    const QJsonObject jsonObject = JsonParsing::openInternalQGCJsonFile(
+        jsonFilename, qgcFileType, 1, 1, version, errorString,
+        QStringList{"shortDesc", "longDesc", "enumStrings"},
+        QStringList{"name"});
     if (!errorString.isEmpty()) {
         qWarning(FactMetaDataLog) << "Internal Error:" << errorString;
         return metaDataMap;
     }
 
-    static const QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         { FactMetaData::_jsonMetaDataDefinesName, QJsonValue::Object, false },
         { FactMetaData::_jsonMetaDataFactsName, QJsonValue::Array, true },
     };
-    if (!JsonHelper::validateKeys(jsonObject, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(jsonObject, keyInfoList, errorString)) {
         qWarning(FactMetaDataLog) << "Json document incorrect format:" << errorString;
         return metaDataMap;
     }
@@ -1532,7 +1535,7 @@ bool FactMetaData::_parseValuesArray(const QJsonObject &jsonObject, QStringList 
         return true;
     }
 
-    static const QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         { _enumValuesArrayDescriptionJsonKey, QJsonValue::String, true },
         { _enumValuesArrayValueJsonKey, QJsonValue::Double, true },
     };
@@ -1545,7 +1548,7 @@ bool FactMetaData::_parseValuesArray(const QJsonObject &jsonObject, QStringList 
         }
 
         const QJsonObject &valueDescriptionObject = jsonValue.toObject();
-        if (!JsonHelper::validateKeys(valueDescriptionObject, keyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(valueDescriptionObject, keyInfoList, errorString)) {
             errorString = QStringLiteral("Object in \"values\" array failed validation '%2'.").arg(errorString);
             return false;
         }
@@ -1567,7 +1570,7 @@ bool FactMetaData::_parseBitmaskArray(const QJsonObject &jsonObject, QStringList
         return true;
     }
 
-    static const QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         { _enumBitmaskArrayDescriptionJsonKey, QJsonValue::String, true },
         { _enumBitmaskArrayIndexJsonKey, QJsonValue::Double, true },
     };
@@ -1580,7 +1583,7 @@ bool FactMetaData::_parseBitmaskArray(const QJsonObject &jsonObject, QStringList
         }
 
         const QJsonObject &valueDescriptionObject = jsonValue.toObject();
-        if (!JsonHelper::validateKeys(valueDescriptionObject, keyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(valueDescriptionObject, keyInfoList, errorString)) {
             errorString = QStringLiteral("Object in \"values\" array failed validation '%2'.").arg(errorString);
             return false;
         }

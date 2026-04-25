@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "TerrainQuery.h"
 #include "Vehicle.h"

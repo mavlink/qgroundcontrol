@@ -4,7 +4,7 @@
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
 #include "ParameterManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"

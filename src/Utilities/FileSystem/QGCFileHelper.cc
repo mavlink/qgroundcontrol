@@ -1,7 +1,5 @@
 #include "QGCFileHelper.h"
 
-#include "QGCCompression.h"
-#include "QGCDecompressDevice.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QCryptographicHash>
@@ -25,25 +23,6 @@ QByteArray readFile(const QString &filePath, QString *errorString, qint64 maxByt
             *errorString = QObject::tr("File path is empty");
         }
         return {};
-    }
-
-    if (QGCCompression::isCompressedFile(filePath)) {
-        QGCDecompressDevice decompressor(filePath);
-        if (!decompressor.open(QIODevice::ReadOnly)) {
-            if (errorString != nullptr) {
-                *errorString = QObject::tr("Failed to open compressed file: %1").arg(filePath);
-            }
-            return {};
-        }
-
-        QByteArray data;
-        if (maxBytes > 0) {
-            data = decompressor.read(maxBytes);
-        } else {
-            data = decompressor.readAll();
-        }
-        decompressor.close();
-        return data;
     }
 
     QFile file(filePath);
@@ -403,46 +382,6 @@ QString computeFileHash(const QString &filePath, QCryptographicHash::Algorithm a
         return QString();
     }
 
-    return QString::fromLatin1(hash.result().toHex());
-}
-
-QString computeDecompressedFileHash(const QString &filePath, QCryptographicHash::Algorithm algorithm)
-{
-    if (filePath.isEmpty()) {
-        qCWarning(QGCFileHelperLog) << "computeDecompressedFileHash: empty file path";
-        return {};
-    }
-
-    if (!QGCCompression::isCompressedFile(filePath)) {
-        return computeFileHash(filePath, algorithm);
-    }
-
-    QGCDecompressDevice decompressor(filePath);
-    if (!decompressor.open(QIODevice::ReadOnly)) {
-        qCWarning(QGCFileHelperLog) << "computeDecompressedFileHash: failed to open:" << filePath;
-        return {};
-    }
-
-    QCryptographicHash hash(algorithm);
-    constexpr qint64 chunkSize = 65536;
-    QByteArray buffer;
-
-    while (true) {
-        buffer = decompressor.read(chunkSize);
-        if (buffer.isEmpty()) {
-            if (decompressor.atEnd()) {
-                break;
-            }
-
-            qCWarning(QGCFileHelperLog) << "computeDecompressedFileHash: read error";
-            decompressor.close();
-            return {};
-        }
-
-        hash.addData(buffer);
-    }
-
-    decompressor.close();
     return QString::fromLatin1(hash.result().toHex());
 }
 

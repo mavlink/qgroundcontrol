@@ -1,3 +1,4 @@
+#include "JsonParsing.h"
 #include "CameraSpecTest.h"
 
 #include "CameraSpec.h"
@@ -166,7 +167,7 @@ void CameraSpecTest::_testLoadWrongTypeFails()
 
     QJsonObject source = makeValidJson();
     // Boolean field supplied as a string — should be rejected by
-    // JsonHelper::validateKeys before any setRawValue call.
+    // JsonParsing::validateKeys before any setRawValue call.
     source["Landscape"] = QStringLiteral("not-a-bool");
 
     QString errorString;

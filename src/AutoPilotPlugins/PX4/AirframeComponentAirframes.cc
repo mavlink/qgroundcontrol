@@ -11,7 +11,7 @@ QMap<QString, AirframeComponentAirframes::AirframeType_t*>& AirframeComponentAir
         // Standard planes
         AirframeType_t *standardPlane = new AirframeType_t;
         standardPlane->name = "Standard Airplane";
-        standardPlane->imageResource = "qrc:/qmlimages/AirframeStandardPlane.svg";
+        standardPlane->imageResource = "qrc:/qmlimages/Airframe/Plane.svg";
         AirframeInfo_t *easystar = new AirframeInfo_t;
         easystar->name = "Multiplex Easystar 1/2";
         easystar->autostartId = 2100;

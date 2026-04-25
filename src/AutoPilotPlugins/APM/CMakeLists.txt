@@ -184,3 +184,47 @@ qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_resource
     PREFIX "/json"
     FILES APMFollowComponent.FactMetaData.json
 )
+
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_images
+    PREFIX "/res"
+    BASE "${CMAKE_SOURCE_DIR}/resources"
+    FILES
+        "${CMAKE_SOURCE_DIR}/resources/helicoptericon.svg"
+)
+
+# Sub frame images: registered under URL /qmlimages/Frames/<NiceName>.png with
+# on-disk filenames mapped via QT_RESOURCE_ALIAS.
+set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/bluerov-frame.png"
+    PROPERTIES QT_RESOURCE_ALIAS "BlueROV1.png")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple3-frame.png"
+    PROPERTIES QT_RESOURCE_ALIAS "SimpleROV-3.png")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple4-frame.png"
+    PROPERTIES QT_RESOURCE_ALIAS "SimpleROV-4.png")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple5-frame.png"
+    PROPERTIES QT_RESOURCE_ALIAS "SimpleROV-5.png")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/vectored-frame.png"
+    PROPERTIES QT_RESOURCE_ALIAS "Vectored.png")
+set_source_files_properties("${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/vectored6dof-frame.png"
+    PROPERTIES QT_RESOURCE_ALIAS "Vectored6DOF.png")
+
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_frames
+    PREFIX "/qmlimages/Frames"
+    BASE "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images"
+    FILES
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/bluerov-frame.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple3-frame.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple4-frame.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/simple5-frame.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/vectored-frame.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/vectored6dof-frame.png"
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} autopilot_plugin_apm_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images"
+    FILES
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/ForwardingSupportIcon.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/ForwardingSupportIconGreen.svg"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/LightsComponentIcon.png"
+        "${CMAKE_SOURCE_DIR}/src/AutoPilotPlugins/APM/Images/SubFrameComponentIcon.png"
+)

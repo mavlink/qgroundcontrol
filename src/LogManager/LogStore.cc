@@ -427,19 +427,21 @@ void LogStore::_workerLoop()
                 continue;
             }
 
-            db.transaction();
-            bool batchOk = true;
+            QGCSqlHelper::Transaction txn(db);
+            bool batchOk = txn.ok();
             for (const auto& entry : batch) {
+                if (!batchOk) {
+                    break;
+                }
                 _bindAndExec(insertQuery, _sessionId, entry);
                 if (insertQuery.lastError().isValid()) {
                     batchOk = false;
-                    break;
                 }
             }
             if (batchOk) {
-                db.commit();
+                txn.commit();
             } else {
-                db.rollback();
+                // Transaction destructor rolls back if commit() wasn't called.
                 QMetaObject::invokeMethod(
                     this,
                     [this, err = insertQuery.lastError().text()]() { emit errorOccurred(err); },
@@ -454,11 +456,11 @@ void LogStore::_workerLoop()
         {
             const QMutexLocker locker(&_mutex);
             if (!_pendingWrites.empty()) {
-                db.transaction();
+                QGCSqlHelper::Transaction txn(db);
                 for (const auto& entry : _pendingWrites) {
                     _bindAndExec(insertQuery, _sessionId, entry);
                 }
-                db.commit();
+                txn.commit();
                 _pendingWrites.clear();
             }
         }

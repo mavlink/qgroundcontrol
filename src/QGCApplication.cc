@@ -1,3 +1,4 @@
+#include "JsonParsing.h"
 #include "QGCApplication.h"
 #include "qgc_version.h"
 
@@ -24,7 +25,6 @@
 #include "AudioOutput.h"
 #include "FollowMe.h"
 #include "JoystickManager.h"
-#include "JsonHelper.h"
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
@@ -184,7 +184,7 @@ void QGCApplication::setLanguage()
         }
     }
     qCDebug(QGCApplicationLog) << "Loading localizations for" << _locale.name();
-    removeTranslator(JsonHelper::translator());
+    removeTranslator(JsonParsing::translator());
     removeTranslator(&_qgcTranslatorSourceCode);
     removeTranslator(&_qgcTranslatorQtLibs);
     if (_locale.name() != "en_US") {
@@ -199,8 +199,8 @@ void QGCApplication::setLanguage()
         } else {
             qCWarning(QGCApplicationLog) << "Error loading source localization for" << _locale.name();
         }
-        if (JsonHelper::translator()->load(_locale, QLatin1String("qgc_json_"), "", ":/i18n")) {
-            installTranslator(JsonHelper::translator());
+        if (JsonParsing::translator()->load(_locale, QLatin1String("qgc_json_"), "", ":/i18n")) {
+            installTranslator(JsonParsing::translator());
         } else {
             qCWarning(QGCApplicationLog) << "Error loading json localization for" << _locale.name();
         }

@@ -54,3 +54,11 @@ qt_add_qml_module(VehicleSetupModule
         VehicleSummary.qml
     NO_PLUGIN
 )
+
+qt_add_resources(${CMAKE_PROJECT_NAME} vehiclesetup_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/FirmwareUpgradeIcon.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/VehicleSummaryIcon.png"
+)

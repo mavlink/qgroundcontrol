@@ -1,6 +1,6 @@
 #include "PX4AutoPilotPlugin.h"
 #include "PX4AirframeLoader.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "FlightModesComponent.h"
 #include "PX4RadioComponent.h"
 #include "PX4TuningComponent.h"

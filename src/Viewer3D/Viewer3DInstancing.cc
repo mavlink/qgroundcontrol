@@ -2,8 +2,6 @@
 
 #include "QGCLoggingCategory.h"
 
-#include <cmath>
-
 QGC_LOGGING_CATEGORY(Viewer3DInstancingLog, "Viewer3d.Viewer3DInstancing")
 
 Viewer3DInstancing::Viewer3DInstancing(QQuick3DObject *parent)

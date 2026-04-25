@@ -11,6 +11,7 @@ import QGroundControl.FlightMap
 import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.FlyView
+import QGroundControl.Geo
 import QGroundControl.Toolbar
 
 Item {

@@ -1,10 +1,15 @@
 #pragma once
 
-#include "QGCTileSet.h"
-
-#include <QtCore/QObject>
 #include <QtCore/QByteArrayView>
+#include <QtCore/QList>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/QStringView>
+#include <QtCore/QUrl>
+
+#include <memory>
+
+#include "QGCTileSet.h"
 
 class MapProvider;
 class ElevationProvider;

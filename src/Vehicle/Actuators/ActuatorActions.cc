@@ -1,6 +1,6 @@
 #include "ActuatorActions.h"
 #include "MAVLinkLib.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 

@@ -2,7 +2,7 @@
 #include "AppSettings.h"
 #include "MavlinkCameraControlInterface.h"
 #include "MultiVehicleManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"

@@ -1,5 +1,5 @@
 #include "SettingsManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "ADSBVehicleManagerSettings.h"
 #ifndef QGC_NO_ARDUPILOT_DIALECT
@@ -25,7 +25,6 @@
 #include "MavlinkSettings.h"
 #include "JoystickManagerSettings.h"
 #include "Viewer3DSettings.h"
-#include "JsonHelper.h"
 #include "JsonParsing.h"
 #include "QGCCorePlugin.h"
 
@@ -153,7 +152,7 @@ void SettingsManager::_loadSettingsFiles()
 
         // Validate the settings file
         int version;
-        if (!JsonHelper::validateInternalQGCJsonFile(jsonObject, "Settings", 1, 1, version, errorString)) {
+        if (!JsonParsing::validateInternalQGCJsonFile(jsonObject, "Settings", 1, 1, version, errorString)) {
             qCWarning(SettingsManagerLog) << "Settings file failed validation:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }
@@ -161,10 +160,10 @@ void SettingsManager::_loadSettingsFiles()
         // Validate the remainder of the file
 
         // groups key is an object
-        static const QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        static const QList<JsonParsing::KeyValidateInfo> keyInfoList = {
             { kJsonGroupsObjectKey, QJsonValue::Object, true },
         };
-        if (!JsonHelper::validateKeys(jsonObject, keyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(jsonObject, keyInfoList, errorString)) {
             qCWarning(SettingsManagerLog) << "Settings file incorrect format:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }

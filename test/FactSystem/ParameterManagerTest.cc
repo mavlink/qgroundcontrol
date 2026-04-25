@@ -9,7 +9,7 @@
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
-#include "QGC.h"
+#include "QGCMath.h"
 #include "Vehicle.h"
 
 void ParameterManagerTest::cleanup()

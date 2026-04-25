@@ -388,21 +388,4 @@ QNetworkAccessManager* createNetworkManager(QObject* parent = nullptr);
 /// Set up default proxy configuration on a network manager
 void configureProxy(QNetworkAccessManager* manager);
 
-// ============================================================================
-// Compressed Data Helpers
-// ============================================================================
-
-/// Check if data appears to be compressed based on magic bytes
-/// Detects: gzip, xz, zstd, bzip2, lz4
-/// @param data Data to check (needs at least 4 bytes)
-/// @return true if data has a recognized compression magic signature
-bool looksLikeCompressedData(const QByteArray& data);
-
-/// Parse JSON that may be compressed
-/// Automatically detects and decompresses gzip, xz, zstd, bzip2, lz4 data
-/// @param data Raw data (compressed or uncompressed JSON)
-/// @param error Optional pointer to receive parse error details
-/// @return Parsed JSON document (null if parsing failed)
-QJsonDocument parseCompressedJson(const QByteArray& data, QJsonParseError* error = nullptr);
-
 }  // namespace QGCNetworkHelper

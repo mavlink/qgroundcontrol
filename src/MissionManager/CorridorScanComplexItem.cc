@@ -1,9 +1,9 @@
 #include "CorridorScanComplexItem.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "PlanMasterController.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
@@ -64,7 +64,7 @@ void CorridorScanComplexItem::_saveCommon(QJsonObject& saveObject)
 {
     TransectStyleComplexItem::_save(saveObject);
 
-    saveObject[JsonHelper::jsonVersionKey] =                    2;
+    saveObject[JsonParsing::jsonVersionKey] =                    2;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
     saveObject[corridorWidthName] =                             _corridorWidthFact.rawValue().toDouble();
@@ -88,15 +88,15 @@ bool CorridorScanComplexItem::_loadWorker(const QJsonObject& complexObject, int 
 {
     _ignoreRecalc = !forPresets;
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,                   QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
+        { JsonParsing::jsonVersionKey,                   QJsonValue::Double, true },
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
         { corridorWidthName,                            QJsonValue::Double, true },
         { _jsonEntryPointKey,                           QJsonValue::Double, true },
         { QGCMapPolyline::jsonPolylineKey,              QJsonValue::Array,  true },
     };
-    if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(complexObject, keyInfoList, errorString)) {
         _ignoreRecalc = false;
         return false;
     }
@@ -109,7 +109,7 @@ bool CorridorScanComplexItem::_loadWorker(const QJsonObject& complexObject, int 
         return false;
     }
 
-    int version = complexObject[JsonHelper::jsonVersionKey].toInt();
+    int version = complexObject[JsonParsing::jsonVersionKey].toInt();
     if (version != 2) {
         errorString = tr("%1 complex item version %2 not supported").arg(jsonComplexItemTypeValue).arg(version);
         _ignoreRecalc = false;

@@ -1,5 +1,5 @@
 #include "UVCReceiver.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"

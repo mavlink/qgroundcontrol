@@ -9,7 +9,7 @@
 #include "MissionItem.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
-#include "QGC.h"
+#include "QGCMath.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 

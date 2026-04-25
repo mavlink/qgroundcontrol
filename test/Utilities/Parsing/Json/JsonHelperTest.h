@@ -21,7 +21,6 @@ private slots:
     void _validateKeysStrictMissingRequired_test();
     void _loadSaveGeoCoordinate_test();
     void _loadSaveGeoCoordinateWithAltitude_test();
-    void _loadSaveGeoCoordinateGeoJson_test();
     void _loadGeoCoordinateInvalidArray_test();
     void _loadSaveGeoCoordinateArray_test();
     void _loadSaveGeoCoordinateArrayQList_test();

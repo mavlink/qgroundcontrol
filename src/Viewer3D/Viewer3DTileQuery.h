@@ -1,10 +1,19 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QObject>
+#include <QtCore/QPoint>
+#include <QtCore/QSize>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtGui/QImage>
 #include <QtPositioning/QGeoCoordinate>
 
-#include "Viewer3DTileReply.h"
+#include "Viewer3DTileInfo.h"
+#include "Viewer3DTileStatistics.h"
+
+class Viewer3DTileReply;
+class QNetworkAccessManager;
 
 class Viewer3DTileQuery : public QObject
 {
@@ -13,12 +22,7 @@ class Viewer3DTileQuery : public QObject
     friend class Viewer3DTileQueryTest;
 
 public:
-    struct TileStatistics_t {
-        QGeoCoordinate coordinateMin;
-        QGeoCoordinate coordinateMax;
-        QSize tileCounts;
-        int zoomLevel = 0;
-    };
+    using TileStatistics_t = Viewer3DTileStatistics;
 
     explicit Viewer3DTileQuery(QObject *parent = nullptr);
 
@@ -35,9 +39,9 @@ signals:
 private:
     void _loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint tileMaxIndex);
     TileStatistics_t _findAndLoadMapTiles(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax);
-    void _tileDone(Viewer3DTileReply::TileInfo_t tileData);
-    void _tileGiveUp(Viewer3DTileReply::TileInfo_t tileData);
-    void _tileEmpty(Viewer3DTileReply::TileInfo_t tileData);
+    void _tileDone(Viewer3DTileInfo tileData);
+    void _tileGiveUp(Viewer3DTileInfo tileData);
+    void _tileEmpty(Viewer3DTileInfo tileData);
     void _cleanupReply(Viewer3DTileReply *reply);
     static QString _tileKey(int mapId, int x, int y, int zoomLevel);
 
@@ -73,5 +77,3 @@ private:
     int _mapId = 0;
     int _zoomLevel = 0;
 };
-
-Q_DECLARE_METATYPE(Viewer3DTileQuery::TileStatistics_t)

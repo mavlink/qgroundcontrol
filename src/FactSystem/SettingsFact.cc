@@ -1,5 +1,5 @@
 #include "SettingsFact.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"

@@ -5,7 +5,7 @@
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
-#include <QtQml/QQmlEngine>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 /// List model for archive contents, suitable for QML ListView binding.
 /// Provides natural sorting, filtering by type, and lazy loading support.

@@ -12,7 +12,8 @@
 #include "VTOLLandingComplexItem.h"
 #include "StructureScanComplexItem.h"
 #include "CorridorScanComplexItem.h"
-#include "JsonHelper.h"
+#include "GeoJsonHelper.h"
+#include "JsonParsing.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
@@ -23,7 +24,7 @@
 #include "TakeoffMissionItem.h"
 #include "PlanViewSettings.h"
 #include "MissionCommandTree.h"
-#include "QGC.h"
+#include "QGCMath.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonArray>
@@ -607,7 +608,7 @@ void MissionController::removeAll(void)
 bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString)
 {
     // Validate root object keys
-    QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
+    QList<JsonParsing::KeyValidateInfo> rootKeyInfoList = {
         { _jsonPlannedHomePositionKey,      QJsonValue::Array,  true },
         { _jsonItemsKey,                    QJsonValue::Array,  true },
         { _jsonFirmwareTypeKey,             QJsonValue::Double, true },
@@ -616,7 +617,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
         { _jsonHoverSpeedKey,               QJsonValue::Double, false },
         { _jsonGlobalPlanAltitudeModeKey,   QJsonValue::Double, false },
     };
-    if (!JsonHelper::validateKeys(json, rootKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(json, rootKeyInfoList, errorString)) {
         return false;
     }
 
@@ -657,7 +658,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     }
 
     QGeoCoordinate homeCoordinate;
-    if (!JsonHelper::loadGeoCoordinate(json[_jsonPlannedHomePositionKey], true /* altitudeRequired */, homeCoordinate, errorString)) {
+    if (!GeoJsonHelper::loadGeoCoordinate(json[_jsonPlannedHomePositionKey], true /* altitudeRequired */, homeCoordinate, errorString)) {
         return false;
     }
     MissionSettingsItem* settingsItem = new MissionSettingsItem(_masterController, _flyView);
@@ -680,10 +681,10 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
         // Load item based on type
 
-        QList<JsonHelper::KeyValidateInfo> itemKeyInfoList = {
+        QList<JsonParsing::KeyValidateInfo> itemKeyInfoList = {
             { VisualMissionItem::jsonTypeKey,  QJsonValue::String, true },
         };
-        if (!JsonHelper::validateKeys(itemObject, itemKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(itemObject, itemKeyInfoList, errorString)) {
             return false;
         }
         QString itemType = itemObject[VisualMissionItem::jsonTypeKey].toString();
@@ -705,10 +706,10 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
                 return false;
             }
         } else if (itemType == VisualMissionItem::jsonTypeComplexItemValue) {
-            QList<JsonHelper::KeyValidateInfo> complexItemKeyInfoList = {
+            QList<JsonParsing::KeyValidateInfo> complexItemKeyInfoList = {
                 { ComplexMissionItem::jsonComplexItemTypeKey,  QJsonValue::String, true },
             };
-            if (!JsonHelper::validateKeys(itemObject, complexItemKeyInfoList, errorString)) {
+            if (!JsonParsing::validateKeys(itemObject, complexItemKeyInfoList, errorString)) {
                 return false;
             }
             QString complexItemType = itemObject[ComplexMissionItem::jsonComplexItemTypeKey].toString();
@@ -921,7 +922,7 @@ int MissionController::readyForSaveState(void) const
 
 void MissionController::save(QJsonObject& json)
 {
-    json[JsonHelper::jsonVersionKey] = _missionFileVersion;
+    json[JsonParsing::jsonVersionKey] = _missionFileVersion;
 
     // Mission settings
 
@@ -931,7 +932,7 @@ void MissionController::save(QJsonObject& json)
         return;
     }
     QJsonValue coordinateValue;
-    JsonHelper::saveGeoCoordinate(settingsItem->coordinate(), true /* writeAltitude */, coordinateValue);
+    GeoJsonHelper::saveGeoCoordinate(settingsItem->coordinate(), true /* writeAltitude */, coordinateValue);
     json[_jsonPlannedHomePositionKey]       = coordinateValue;
     json[_jsonFirmwareTypeKey]              = _controllerVehicle->firmwareType();
     json[_jsonVehicleTypeKey]               = _controllerVehicle->vehicleType();

@@ -3,6 +3,7 @@
 #include <QtCore/QtMath>
 
 #include "MapProvider.h"
+#include "QGCTileSet.h"
 
 class TestableMapProvider : public MapProvider
 {

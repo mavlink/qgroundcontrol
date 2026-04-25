@@ -19,6 +19,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         Viewer3DTerrainTexture.h
         Viewer3DTileQuery.cc
         Viewer3DTileQuery.h
+        Viewer3DTileInfo.h
+        Viewer3DTileStatistics.h
         Viewer3DTileReply.cc
         Viewer3DTileReply.h
 )

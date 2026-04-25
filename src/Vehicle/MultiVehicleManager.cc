@@ -1,6 +1,6 @@
 #include "MultiVehicleManager.h"
 #include "MAVLinkProtocol.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
 #include "MavlinkSettings.h"

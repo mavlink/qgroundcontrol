@@ -1,7 +1,8 @@
 #include "RallyPointController.h"
 #include "RallyPoint.h"
 #include "Vehicle.h"
-#include "JsonHelper.h"
+#include "GeoJsonHelper.h"
+#include "JsonParsing.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "PlanMasterController.h"
@@ -71,29 +72,29 @@ bool RallyPointController::load(const QJsonObject& json, QString& errorString)
 
     errorString.clear();
 
-    if (json.contains(JsonHelper::jsonVersionKey) && json[JsonHelper::jsonVersionKey].toInt() == 1) {
+    if (json.contains(JsonParsing::jsonVersionKey) && json[JsonParsing::jsonVersionKey].toInt() == 1) {
         // We just ignore old version 1 data
         return true;
     }
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
+        { JsonParsing::jsonVersionKey,   QJsonValue::Double, true },
         { _jsonPointsKey,               QJsonValue::Array,  true },
     };
-    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
     QString errorStr;
     QString errorMessage = tr("Rally: %1");
 
-    if (json[JsonHelper::jsonVersionKey].toInt() != _jsonCurrentVersion) {
+    if (json[JsonParsing::jsonVersionKey].toInt() != _jsonCurrentVersion) {
         errorString = tr("Rally Points supports version %1").arg(_jsonCurrentVersion);
         return false;
     }
 
     QList<QGeoCoordinate> rgPoints;
-    if (!JsonHelper::loadGeoCoordinateArray(json[_jsonPointsKey], true /* altitudeRequired */, rgPoints, errorStr)) {
+    if (!GeoJsonHelper::loadGeoCoordinateArray(json[_jsonPointsKey], true /* altitudeRequired */, rgPoints, errorStr)) {
         errorString = errorMessage.arg(errorStr);
         return false;
     }
@@ -112,12 +113,12 @@ bool RallyPointController::load(const QJsonObject& json, QString& errorString)
 
 void RallyPointController::save(QJsonObject& json)
 {
-    json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;
+    json[JsonParsing::jsonVersionKey] = _jsonCurrentVersion;
 
     QJsonArray rgPoints;
     QJsonValue jsonPoint;
     for (int i=0; i<_points.count(); i++) {
-        JsonHelper::saveGeoCoordinate(qobject_cast<RallyPoint*>(_points[i])->coordinate(), true /* writeAltitude */, jsonPoint);
+        GeoJsonHelper::saveGeoCoordinate(qobject_cast<RallyPoint*>(_points[i])->coordinate(), true /* writeAltitude */, jsonPoint);
         rgPoints.append(jsonPoint);
     }
     json[_jsonPointsKey] = QJsonValue(rgPoints);

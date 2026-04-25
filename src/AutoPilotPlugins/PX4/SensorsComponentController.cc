@@ -1,5 +1,5 @@
 #include "SensorsComponentController.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
