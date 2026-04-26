@@ -5,6 +5,8 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        ColoredSvgImageProvider.cc
+        ColoredSvgImageProvider.h
         FactValueGrid.cc
         FactValueGrid.h
         FlightPathSegment.cc
@@ -163,6 +165,7 @@ qt_add_qml_module(QGroundControlControlsModule
         QGCTextField.qml
         QGCToolBarButton.qml
         QGCToolInsets.qml
+        QGCVectorImage.qml
         RCChannelMonitor.qml
         RCToParamDialog.qml
         SectionHeader.qml

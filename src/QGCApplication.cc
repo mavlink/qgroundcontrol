@@ -33,6 +33,7 @@
 #include "QGCCommandLineParser.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
+#include "ColoredSvgImageProvider.h"
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
 #include "QGCLoggingCategoryManager.h"
@@ -347,6 +348,11 @@ void QGCApplication::_initForNormalAppBoot()
     MultiVehicleManager::instance()->init();
     _qmlAppEngine = QGCCorePlugin::instance()->createQmlApplicationEngine(this);
     QObject::connect(_qmlAppEngine, &QQmlApplicationEngine::objectCreationFailed, this, QCoreApplication::quit, Qt::QueuedConnection);
+
+    // Must register before createRootWindow — root QML references QGCColoredImage which resolves image://coloredsvg/... at load time.
+    _qmlAppEngine->addImageProvider(_qgcImageProviderId, new QGCImageProvider());
+    _qmlAppEngine->addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
+
     QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
 
     AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioVolume(), SettingsManager::instance()->appSettings()->audioMuted());
@@ -354,9 +360,6 @@ void QGCApplication::_initForNormalAppBoot()
     QGCPositionManager::instance()->init();
     LinkManager::instance()->init();
     VideoManager::instance()->init(mainRootWindow());
-
-    // Image provider for Optical Flow
-    _qmlAppEngine->addImageProvider(_qgcImageProviderId, new QGCImageProvider());
 
     // Set the window icon now that custom plugin has a chance to override it
 #ifdef Q_OS_LINUX
@@ -794,4 +797,3 @@ void QGCApplication::shutdown()
     // This is bad, but currently qobject inheritances are incorrect and cause crashes on exit without
     delete _qmlAppEngine;
 }
-

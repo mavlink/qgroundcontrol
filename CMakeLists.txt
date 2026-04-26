@@ -195,7 +195,6 @@ find_package(Qt6
         Charts
         Concurrent
         Core
-        Core5Compat
         Gui
         HttpServer
         LinguistTools
@@ -208,6 +207,7 @@ find_package(Qt6
         QmlIntegration
         Quick
         QuickControls2
+        QuickVectorImage
         QuickWidgets
         Sensors
         Sql
