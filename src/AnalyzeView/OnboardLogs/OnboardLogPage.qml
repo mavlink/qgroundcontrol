@@ -163,13 +163,6 @@ AnalyzePage {
 
                 QGCButton {
                     Layout.fillWidth: true
-                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 0)
-                    text: qsTr("Invert Selection")
-                    onClicked: OnboardLogController.invertSelection()
-                }
-
-                QGCButton {
-                    Layout.fillWidth: true
                     enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 1)
                     text: OnboardLogController.sortAscending ? qsTr("Sort: Oldest First") : qsTr("Sort: Newest First")
                     onClicked: OnboardLogController.toggleSortByDate()

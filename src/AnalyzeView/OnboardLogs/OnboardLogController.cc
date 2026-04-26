@@ -614,14 +614,20 @@ void OnboardLogController::_sortEntriesByTimestamp()
         const bool lhsHasTime = lhs->received() && (lhs->time().toSecsSinceEpoch() > 0);
         const bool rhsHasTime = rhs->received() && (rhs->time().toSecsSinceEpoch() > 0);
         if (lhsHasTime != rhsHasTime) {
+            // Keep entries with valid timestamps grouped first.
             return lhsHasTime;
         }
 
-        if (lhs->time() == rhs->time()) {
-            return lhs->id() < rhs->id();
+        if (lhsHasTime && rhsHasTime) {
+            if (lhs->time() == rhs->time()) {
+                return _sortAscending ? (lhs->id() < rhs->id()) : (lhs->id() > rhs->id());
+            }
+
+            return _sortAscending ? (lhs->time() < rhs->time()) : (lhs->time() > rhs->time());
         }
 
-        return _sortAscending ? (lhs->time() < rhs->time()) : (lhs->time() > rhs->time());
+        // Fallback for entries with missing/invalid time.
+        return _sortAscending ? (lhs->id() < rhs->id()) : (lhs->id() > rhs->id());
     });
 
     (void) _logEntriesModel->swapObjectList(sortedEntries);

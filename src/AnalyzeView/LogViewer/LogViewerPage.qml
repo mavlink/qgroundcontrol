@@ -146,7 +146,23 @@ AnalyzePage {
                 cursorEventRows = events
             }
 
+            function clearLoadedLogState(clearControllerState) {
+                replayController.link = null
+                dataFlashParser.clear()
+                logViewerController.setPlottableSignals([])
+                logViewerController.clearSelection()
+                cursorEventRows = []
+                refreshBinChart()
+                if (clearControllerState) {
+                    logViewerController.clear()
+                }
+            }
+
             function loadBinFile(file) {
+                if (logViewerController.hasLoadedLog) {
+                    // Match explicit "Clear" behavior before loading replacement .bin file.
+                    clearLoadedLogState(true)
+                }
                 pendingBinFile = file
                 binLoading = true
                 parseStartTimer.start()
@@ -329,13 +345,7 @@ AnalyzePage {
                     text: qsTr("Clear")
                     enabled: logViewerController.hasLoadedLog
                     onClicked: {
-                        replayController.link = null
-                        dataFlashParser.clear()
-                        logViewerController.setPlottableSignals([])
-                        logViewerController.clearSelection()
-                        cursorEventRows = []
-                        refreshBinChart()
-                        logViewerController.clear()
+                        clearLoadedLogState(true)
                     }
                 }
 
@@ -920,15 +930,12 @@ AnalyzePage {
                 onAcceptedForLoad: (file) => {
                     const fileLower = file.toLowerCase()
                     if (fileLower.endsWith(".tlog")) {
+                        if (logViewerController.hasLoadedLog) {
+                            clearLoadedLogState(true)
+                        }
                         replayController.link = QGroundControl.linkManager.startLogReplay(file)
-                        dataFlashParser.clear()
-                        logViewerController.setPlottableSignals([])
-                        logViewerController.clearSelection()
-                        cursorEventRows = []
-                        refreshBinChart()
                         logViewerController.openTLog(file)
                     } else {
-                        replayController.link = null
                         loadBinFile(file)
                     }
                     close()
