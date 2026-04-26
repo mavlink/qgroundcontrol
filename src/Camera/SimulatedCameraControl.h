@@ -133,8 +133,14 @@ public:
 protected slots:
     void _paramDone() override {};
 
+public:
+    void setVideoState(bool hasVideo, bool decoding, bool recording) override;
+
 private:
     void _setCameraMode(CameraMode mode);
 
     QElapsedTimer _videoRecordTimeElapsedTimer;
+    bool _hasVideo = false;
+    bool _decoding = false;
+    bool _localRecording = false;
 };

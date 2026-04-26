@@ -7,7 +7,8 @@ import QGroundControl.Controls
 Item {
     id:         _root
     width:      _pipSize
-    height:     _pipSize * (9/16)
+    property real pipAspectRatio: 9/16  // Override from caller for video-AR-aware sizing
+    height:     _pipSize * pipAspectRatio
     visible:    item2 && item2.pipState !== item2.pipState.window && show
 
     property var    item1:                  null    // Required

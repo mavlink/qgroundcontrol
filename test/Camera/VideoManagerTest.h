@@ -7,6 +7,5 @@ class VideoManagerTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _gstQt6VideoItemQmlTypeAvailableInUnitTestMode_test();
+    void _videoOutputQmlTypeAvailable_test();
 };
-

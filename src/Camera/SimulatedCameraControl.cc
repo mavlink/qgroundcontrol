@@ -4,7 +4,6 @@
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
-#include "VideoManager.h"
 
 QGC_LOGGING_CATEGORY(SimulatedCameraControlLog, "Camera.SimulatedCameraControl")
 
@@ -13,19 +12,8 @@ SimulatedCameraControl::SimulatedCameraControl(Vehicle *vehicle, QObject *parent
 {
     qCDebug(SimulatedCameraControlLog) << this;
 
-    auto videoManager = VideoManager::instance();
-    (void) connect(videoManager, &VideoManager::recordingChanged, this, [this](bool recording) {
-        _videoCaptureStatusValue = recording ? VIDEO_CAPTURE_STATUS_RUNNING : VIDEO_CAPTURE_STATUS_STOPPED;
-        emit videoCaptureStatusChanged();
-    });
-
-    (void) connect(videoManager, &VideoManager::hasVideoChanged, this, &SimulatedCameraControl::infoChanged);
-    (void) connect(videoManager, &VideoManager::decodingChanged, this, &SimulatedCameraControl::infoChanged);
-
-    (void) connect(videoManager, &VideoManager::hasVideoChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
-    (void) connect(videoManager, &VideoManager::decodingChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
-
-    (void) connect(videoManager, &VideoManager::recordingChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
+    // Recording/video state connections are set up by VideoManager in _setActiveVehicle
+    // to avoid direct singleton coupling. Video state reaches us via setVideoState().
     (void) connect(this, &SimulatedCameraControl::videoCaptureStatusChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
     (void) connect(this, &SimulatedCameraControl::photoCaptureStatusChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
     (void) connect(this, &SimulatedCameraControl::cameraModeChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
@@ -174,7 +162,7 @@ bool SimulatedCameraControl::startVideoRecording()
 
     _videoRecordTimeUpdateTimer.start();
     _videoRecordTimeElapsedTimer.start();
-    VideoManager::instance()->startRecording();
+    emit localRecordingRequested();
     return true;
 }
 
@@ -186,7 +174,7 @@ bool SimulatedCameraControl::stopVideoRecording()
     }
 
     _videoRecordTimeUpdateTimer.stop();
-    VideoManager::instance()->stopRecording();
+    emit localRecordingStopRequested();
     return true;
 }
 
@@ -197,7 +185,7 @@ quint32 SimulatedCameraControl::recordTime() const
 
 bool SimulatedCameraControl::capturesVideo() const
 {
-    return VideoManager::instance()->hasVideo();
+    return _hasVideo;
 }
 
 bool SimulatedCameraControl::capturesPhotos() const
@@ -213,7 +201,7 @@ bool SimulatedCameraControl::hasModes() const
 
 bool SimulatedCameraControl::hasVideoStream() const
 {
-    return VideoManager::instance()->decoding();
+    return _decoding;
 }
 
 MavlinkCameraControlInterface::CaptureVideoState SimulatedCameraControl::captureVideoState() const
@@ -221,7 +209,7 @@ MavlinkCameraControlInterface::CaptureVideoState SimulatedCameraControl::capture
     if (!capturesVideo()) {
         return CaptureVideoStateDisabled;
     }
-    if (_videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING || VideoManager::instance()->recording()) {
+    if (_videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING || _localRecording) {
         return CaptureVideoStateCapturing;
     }
     if (_photoCaptureStatus() != PHOTO_CAPTURE_IDLE) {
@@ -250,5 +238,31 @@ void SimulatedCameraControl::setPhotoCaptureMode(MavlinkCameraControlInterface::
     if (_photoCaptureMode != photoCaptureMode) {
         _photoCaptureMode = photoCaptureMode;
         emit photoCaptureModeChanged();
+    }
+}
+
+void SimulatedCameraControl::setVideoState(bool hasVideo, bool decoding, bool recording)
+{
+    bool changed = false;
+
+    if (_hasVideo != hasVideo) {
+        _hasVideo = hasVideo;
+        changed = true;
+    }
+    if (_decoding != decoding) {
+        _decoding = decoding;
+        changed = true;
+    }
+
+    if (_localRecording != recording) {
+        _localRecording = recording;
+        _videoCaptureStatusValue = recording ? VIDEO_CAPTURE_STATUS_RUNNING : VIDEO_CAPTURE_STATUS_STOPPED;
+        emit videoCaptureStatusChanged();
+        changed = true;
+    }
+
+    if (changed) {
+        emit infoChanged();
+        emit captureVideoStateChanged();
     }
 }

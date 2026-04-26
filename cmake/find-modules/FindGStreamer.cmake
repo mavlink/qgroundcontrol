@@ -137,8 +137,8 @@ endif()
 # _gst_IGNORED_SYSTEM_LIBRARIES and _gst_SRT_REGEX_PATCH are defined in GStreamerHelpers.cmake
 
 if(PC_GStreamer_FOUND AND (NOT TARGET GStreamer::GStreamer))
-    add_library(GStreamer::GStreamer INTERFACE IMPORTED)
-    add_library(GStreamer::deps INTERFACE IMPORTED)
+    add_library(GStreamer::GStreamer INTERFACE IMPORTED GLOBAL)
+    add_library(GStreamer::deps INTERFACE IMPORTED GLOBAL)
 
     if (GStreamer_USE_STATIC_LIBS)
         _gst_filter_missing_directories(PC_GStreamer_STATIC_INCLUDE_DIRS)

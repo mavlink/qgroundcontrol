@@ -260,6 +260,15 @@ public:
     virtual void handleVideoStreamInformation(const mavlink_video_stream_information_t &videoStreamInformation) = 0;
     virtual void handleVideoStreamStatus(const mavlink_video_stream_status_t &videoStreamStatus) = 0;
 
+    /// Called by VideoManager to push local video state (eliminates dynamic_cast dispatch).
+    /// Default does nothing — subclasses that track local recording state should override.
+    virtual void setVideoState(bool hasVideo, bool decoding, bool recording)
+    {
+        Q_UNUSED(hasVideo);
+        Q_UNUSED(decoding);
+        Q_UNUSED(recording);
+    }
+
     QString cameraModeToStr(CameraMode mode);
     QString captureImageStatusToStr(uint8_t image_status);
     QString captureVideoStatusToStr(uint8_t video_status);
@@ -298,6 +307,12 @@ signals:
     void storageStatusChanged();
     void captureVideoStateChanged();
     void capturePhotosStateChanged();
+
+    /// Requests to VideoManager — decouples camera layer from video singleton.
+    /// VideoManager connects to these via the camera manager.
+    void localRecordingRequested();
+    void localRecordingStopRequested();
+    void localImageCaptureRequested(const QString &path);
 
 protected slots:
     virtual void _paramDone() = 0;

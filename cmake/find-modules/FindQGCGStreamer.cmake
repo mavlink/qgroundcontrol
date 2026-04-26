@@ -590,11 +590,13 @@ endfunction()
 
 set(GSTREAMER_APIS
     api_base
-    api_gl
-    api_gl_prototypes
     api_rtsp
     api_video
 )
+# GL API libs (api_gl, api_gl_prototypes) intentionally omitted. The receiver
+# uses appsink + CPU-memory caps only (see GstFormatTable::cpuCapsFormats);
+# no code links gst_gl_* API. If a future path needs GL context sharing,
+# re-add via find_package(QGCGStreamer COMPONENTS Gl GlPrototypes ...).
 # Map QGCGStreamer components to api_ names, skipping Core (already covered
 # by the main gstreamer-1.0 pkg-config query — there is no gstreamer-core-1.0.pc).
 foreach(_comp IN LISTS QGCGStreamer_FIND_COMPONENTS)
@@ -634,7 +636,6 @@ if(NOT DEFINED GSTREAMER_PLUGINS)
         libav
         matroska
         mpegtsdemux
-        opengl
         openh264
         playback
         rtp
@@ -663,6 +664,30 @@ if(NOT DEFINED GSTREAMER_PLUGINS)
         list(APPEND GSTREAMER_PLUGINS d3d d3d11 d3d12 dav1d dxva nvcodec)
     elseif(LINUX)
         list(APPEND GSTREAMER_PLUGINS dav1d nvcodec qsv va vulkan)
+    endif()
+
+    # Optional streaming-source plugins — append only when the plugin binary
+    # is actually present in the SDK plugin dir. This keeps static builds from
+    # failing pkg-config resolution on SDKs that don't ship them, while letting
+    # shared builds and SDKs that do ship them (e.g. gst-plugins-bad for srt,
+    # gst-plugins-rs for rswebrtc, adaptivedemux2 from 1.22+) register for URI
+    # classification (srt://, whep://, hls://, dash://).
+    if(EXISTS "${GSTREAMER_PLUGIN_PATH}")
+        if(WIN32)
+            set(_qgc_gst_opt_prefix "gst")
+            set(_qgc_gst_opt_ext "dll")
+        elseif(APPLE)
+            set(_qgc_gst_opt_prefix "libgst")
+            set(_qgc_gst_opt_ext "dylib")
+        else()
+            set(_qgc_gst_opt_prefix "libgst")
+            set(_qgc_gst_opt_ext "so")
+        endif()
+        foreach(_qgc_opt_plugin IN ITEMS srt rswebrtc hls dash adaptivedemux2)
+            if(EXISTS "${GSTREAMER_PLUGIN_PATH}/${_qgc_gst_opt_prefix}${_qgc_opt_plugin}.${_qgc_gst_opt_ext}")
+                list(APPEND GSTREAMER_PLUGINS "${_qgc_opt_plugin}")
+            endif()
+        endforeach()
     endif()
 endif()
 
@@ -760,7 +785,7 @@ if(ANDROID OR IOS)
     find_package(GStreamerMobile REQUIRED COMPONENTS ${_mobile_components})
 endif()
 
-foreach(_comp IN ITEMS Core Base Video Gl GlPrototypes Rtsp)
+foreach(_comp IN ITEMS Core Base Video Rtsp)
     set(QGCGStreamer_${_comp}_FOUND TRUE)
     set(GStreamer_${_comp}_FOUND TRUE)
 endforeach()
@@ -779,6 +804,36 @@ if(GStreamer_USE_STATIC_LIBS)
         # relocations against global symbols. -Bsymbolic guarantees no symbol
         # interposition, making those relocations valid in the final .so.
         target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-Bsymbolic")
+    endif()
+endif()
+
+# ─── DMA-BUF import path (Linux) ──────────────────────────────────────────────
+# Hardware decoders (vah264dec, v4l2h264dec, nvmm-fallback-to-dmabuf) can output
+# `memory:DMABuf` directly. Accepting DMA-BUF caps at our appsink skips the
+# software `videoconvert` that decodebin would otherwise insert to copy the
+# decoded frame into system memory — one full-frame memcpy per frame avoided.
+#
+# Requirements:
+#   - GStreamer::api_allocators      (from find_package COMPONENTS Allocators)
+#   - libdrm headers (drm_fourcc.h)  (typical path /usr/include/{drm,libdrm})
+#
+# When both are present, defines QGC_GST_DMABUF on GStreamer::GStreamer so every
+# consumer picks up the compile guard + drm_fourcc include path transitively.
+set(QGCGStreamer_DMABUF_FOUND FALSE CACHE INTERNAL "GStreamer DMA-BUF import available")
+if(LINUX AND NOT ANDROID AND TARGET GStreamer::api_allocators)
+    find_path(_qgc_drm_fourcc_include
+        NAMES drm_fourcc.h
+        PATH_SUFFIXES drm libdrm
+    )
+    if(_qgc_drm_fourcc_include)
+        set(QGCGStreamer_DMABUF_FOUND TRUE CACHE INTERNAL "" FORCE)
+        target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_DMABUF)
+        target_include_directories(GStreamer::GStreamer INTERFACE ${_qgc_drm_fourcc_include})
+        message(STATUS "GStreamer DMA-BUF import enabled "
+            "(api_allocators + ${_qgc_drm_fourcc_include})")
+    else()
+        message(STATUS "GStreamer DMA-BUF import disabled — drm_fourcc.h not found "
+            "(install libdrm-dev / libdrm headers)")
     endif()
 endif()
 

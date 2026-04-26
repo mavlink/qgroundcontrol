@@ -332,8 +332,8 @@ bool QGCApplication::_initVideo()
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
     VideoManager *videoManager = VideoManager::instance();
-    videoManager->startGStreamerInit();
-    const bool initSucceeded = !_simpleBootTest || videoManager->waitForGStreamerInit();
+    videoManager->startBackendInit();
+    const bool initSucceeded = !_simpleBootTest || videoManager->waitForBackendInit();
     _videoManagerInitialized = true;
     return initSucceeded;
 }

@@ -1,46 +1,75 @@
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE VideoItemStub.h)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/Ingest
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core
+    ${CMAKE_CURRENT_SOURCE_DIR}/Pipeline
+    ${CMAKE_CURRENT_SOURCE_DIR}/Recording
+)
 
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
-    set(_gst_required_components Core Base Video Gl GlPrototypes Rtsp)
-    if(APPLE)
-        list(APPEND _gst_required_components App)
-    endif()
+    set(GSTREAMER_PLUGINS
+        coreelements
+        app
+        isomp4
+        matroska
+        mpegtsdemux
+        mpegtsmux
+        rtp
+        rtpmanager
+        rtsp
+        sdpelem
+        tcp
+        typefindfunctions
+        udp
+        videoparsersbad
+    )
+
     find_package(QGCGStreamer
         REQUIRED
-        COMPONENTS ${_gst_required_components}
-        OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
+        COMPONENTS Core Base Video Rtsp App Pbutils
+        OPTIONAL_COMPONENTS Allocators
     )
-
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
-            GStreamer.cc
-            GStreamer.h
-            GStreamerHelpers.cc
-            GStreamerHelpers.h
-            GStreamerLogging.cc
-            GStreamerLogging.h
-            GstVideoReceiver.cc
-            GstVideoReceiver.h
+            Core/GStreamer.cc
+            Core/GStreamer.h
+            Core/GStreamerLogging.cc
+            Core/GStreamerLogging.h
+            Core/GstCallbackDispatch.h
+            Core/GstEnvironment.cc
+            Core/GstEnvironment.h
+            Core/GstObjectPtr.h
+            Core/GstPluginRegistry.cc
+            Core/GstPluginRegistry.h
+            # --- Ingest: GStreamer ingest/proxy, QtMultimedia display ---
+            Ingest/GstStreamDevice.cc
+            Ingest/GstStreamDevice.h
+            Ingest/GstIngestSession.cc
+            Ingest/GstIngestSession.h
+            # --- Pipeline: source element construction ---
+            Pipeline/GstRemuxPipeline.cc
+            Pipeline/GstRemuxPipeline.h
+            Pipeline/GstSourceFactory.cc
+            Pipeline/GstSourceFactory.h
+            # --- Recording: native remux service for ingested streams ---
+            Recording/GstNativeRecorder.cc
+            Recording/GstNativeRecorder.h
+            Recording/GstIngestRecorder.cc
+            Recording/GstIngestRecorder.h
     )
 
-    if(APPLE)
-        target_sources(${CMAKE_PROJECT_NAME}
-            PRIVATE
-                GstAppSinkAdapter.cc
-                GstAppSinkAdapter.h
-        )
-        target_link_libraries(${CMAKE_PROJECT_NAME}
-            PRIVATE
-                Qt6::Multimedia
-                Qt6::MultimediaQuickPrivate
-        )
-    endif()
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_GST_STREAMING)
 
-    add_subdirectory(gstqgc)
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            Qt6::Concurrent
+            Qt6::Multimedia
+            GStreamer::GStreamer
+    )
+
 endif()
 
-if(NOT QGC_ENABLE_GST_VIDEOSTREAMING OR NOT TARGET gstqml6gl)
+if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
     return()
 endif()
 
@@ -67,27 +96,7 @@ if(LINUX)
         DEST_DIR "lib/gio/modules"
         EXTENSION "so"
     )
-    # Helper binary path varies by distro: Debian lib/<multiarch>/gstreamer1.0/,
-    # Fedora libexec/gstreamer-1.0/, Arch lib/gstreamer-1.0/.
-    set(_gst_helper_search_paths
-        "${GSTREAMER_LIB_PATH}/gstreamer1.0/gstreamer-1.0"
-        "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0"
-        "${GSTREAMER_PLUGIN_PATH}"
-    )
-    find_program(_GST_PLUGIN_SCANNER gst-plugin-scanner
-        PATHS ${_gst_helper_search_paths} NO_DEFAULT_PATH)
-    find_program(_GST_PTP_HELPER gst-ptp-helper
-        PATHS ${_gst_helper_search_paths} NO_DEFAULT_PATH)
-    if(_GST_PLUGIN_SCANNER)
-        install(PROGRAMS "${_GST_PLUGIN_SCANNER}"
-            DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
-    else()
-        message(WARNING "gst-plugin-scanner not found; AppImage video may not work")
-    endif()
-    if(_GST_PTP_HELPER)
-        install(PROGRAMS "${_GST_PTP_HELPER}"
-            DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
-    endif()
+    # GST_REGISTRY_FORK=no — scanner/PTP helpers are not used (in-process scanning)
 
 elseif(WIN32)
     gstreamer_install_libs(
@@ -106,16 +115,7 @@ elseif(WIN32)
         EXTENSION "dll"
         PREFIX "gst"
     )
-    install(
-        DIRECTORY "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0/"
-        DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0"
-        FILE_PERMISSIONS
-            OWNER_READ OWNER_WRITE OWNER_EXECUTE
-            GROUP_READ             GROUP_EXECUTE
-            WORLD_READ             WORLD_EXECUTE
-        FILES_MATCHING
-            PATTERN "*.exe"
-    )
+    # GST_REGISTRY_FORK=no — scanner/PTP helpers are not used (in-process scanning)
 
 elseif(MACOS)
     if(GSTREAMER_FRAMEWORK)
@@ -233,19 +233,7 @@ elseif(MACOS)
             ")
         endforeach()
 
-        if(EXISTS "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0")
-            install(
-                DIRECTORY "${GStreamer_ROOT_DIR}/libexec/gstreamer-1.0/"
-                DESTINATION "${_mac_libexec_dest}"
-                FILE_PERMISSIONS
-                    OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                    GROUP_READ             GROUP_EXECUTE
-                    WORLD_READ             WORLD_EXECUTE
-                FILES_MATCHING
-                    PATTERN "gst-plugin-scanner"
-                    PATTERN "gst-ptp-helper"
-            )
-        endif()
+        # GST_REGISTRY_FORK=no — scanner/PTP helpers are not used (in-process scanning)
     endif()
 endif()
 
@@ -268,7 +256,7 @@ elseif(LINUX)
 endif()
 
 if(_gst_verify_dest)
-    set(_gst_required_plugins coreelements playback rtsp rtp rtpmanager tcp udp)
+    set(_gst_required_plugins app coreelements mpegtsdemux mpegtsmux rtsp rtp rtpmanager tcp typefindfunctions udp videoparsersbad)
     set(_gst_required_check "")
     foreach(_p IN LISTS _gst_required_plugins)
         list(APPEND _gst_required_check "${_gst_verify_prefix}${_p}.${_gst_verify_ext}")

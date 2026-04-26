@@ -3,9 +3,6 @@
 #include "MavlinkSettings.h"
 #include "FactMetaData.h"
 #include "QGCMAVLink.h"
-#ifdef QGC_GST_STREAMING
-#include "GStreamer.h"
-#endif
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
@@ -14,9 +11,6 @@
 #include "QGCOptions.h"
 #include "QmlComponentInfo.h"
 #include "QmlObjectListModel.h"
-#ifdef QGC_QT_STREAMING
-#include "QtMultimediaReceiver.h"
-#endif
 #include "SettingsManager.h"
 #include "VideoReceiver.h"
 
@@ -274,35 +268,10 @@ void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
 {
-#ifdef QGC_GST_STREAMING
-    return GStreamer::createVideoReceiver(parent);
-#elif defined(QGC_QT_STREAMING)
-    return QtMultimediaReceiver::createVideoReceiver(parent);
-#else
+    Q_UNUSED(parent);
+    // Default: nullptr — VideoStreamOrchestrator uses QtMultimedia unless a
+    // custom build overrides this to inject a proprietary receiver.
     return nullptr;
-#endif
-}
-
-void *QGCCorePlugin::createVideoSink(QQuickItem *widget, QObject *parent)
-{
-#ifdef QGC_GST_STREAMING
-    return GStreamer::createVideoSink(widget, parent);
-#elif defined(QGC_QT_STREAMING)
-    return QtMultimediaReceiver::createVideoSink(widget, parent);
-#else
-    Q_UNUSED(widget); Q_UNUSED(parent);
-    return nullptr;
-#endif
-}
-void QGCCorePlugin::releaseVideoSink(void *sink)
-{
-#ifdef QGC_GST_STREAMING
-    GStreamer::releaseVideoSink(sink);
-#elif defined(QGC_QT_STREAMING)
-    QtMultimediaReceiver::releaseVideoSink(sink);
-#else
-    Q_UNUSED(sink);
-#endif
 }
 
 const QVariantList &QGCCorePlugin::toolBarIndicators()

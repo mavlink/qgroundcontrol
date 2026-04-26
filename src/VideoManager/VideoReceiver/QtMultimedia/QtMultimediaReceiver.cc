@@ -1,322 +1,538 @@
 #include "QtMultimediaReceiver.h"
-#include "QGCLoggingCategory.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QDir>
+#include <QtCore/QPermissions>
+#include <QtMultimedia/QCamera>
+#include <QtMultimedia/QCameraDevice>
+#include <QtMultimedia/QCameraFormat>
+#include <QtMultimedia/QImageCapture>
 #include <QtMultimedia/QMediaCaptureSession>
+#include <QtMultimedia/QMediaDevices>
 #include <QtMultimedia/QMediaFormat>
 #include <QtMultimedia/QMediaMetaData>
 #include <QtMultimedia/QMediaPlayer>
-#include <QtMultimedia/QMediaRecorder>
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
-#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
-#include <QtQuick/QQuickItem>
-#include <QtQuick/QQuickItemGrabResult>
+#include <QtMultimedia/QPlaybackOptions>
+#include <QtMultimedia/QVideoFrameFormat>
+
+#include "QGCApplication.h"
+#include "QGCLoggingCategory.h"
+#include "QtFfmpegRuntimePolicy.h"
+#include "QtCameraDeviceDiscovery.h"
+#include "QtVideoSinkRouter.h"
+#include "QtPlaybackTrackPolicy.h"
+#include "VideoFrameDelivery.h"
+#include "VideoSourceResolver.h"
 
 QGC_LOGGING_CATEGORY(QtMultimediaReceiverLog, "Video.QtMultimediaReceiver")
 
-QtMultimediaReceiver::QtMultimediaReceiver(QObject *parent)
-    : VideoReceiver(parent)
-    , _mediaPlayer(new QMediaPlayer(this))
-    , _captureSession(new QMediaCaptureSession(this))
-    , _mediaRecorder(new QMediaRecorder(this))
+namespace {
+
+QMediaPlayer* createMediaPlayer(QObject* parent)
 {
-    // qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << this;
+    QtFfmpegRuntimePolicy::applyDefaults();
+    return new QMediaPlayer(parent);
+}
 
-    _captureSession->setRecorder(_mediaRecorder);
+QString decodeDescription(const QString& codecName)
+{
+    const QString hwCandidates = QString::fromLocal8Bit(qgetenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES"));
+    if (hwCandidates.isEmpty())
+        return QStringLiteral("%1 (Qt FFmpeg)").arg(codecName);
+    return QStringLiteral("%1 (Qt FFmpeg, HW candidates: %2)").arg(codecName, hwCandidates);
+}
 
-    (void) connect(_mediaPlayer, &QMediaPlayer::playingChanged, this, &QtMultimediaReceiver::streamingChanged);
-    (void) connect(_mediaPlayer, &QMediaPlayer::hasVideoChanged, this, &QtMultimediaReceiver::decodingChanged);
-    (void) connect(_mediaPlayer, &QMediaPlayer::playbackStateChanged, this, [this](QMediaPlayer::PlaybackState newState) {
-        if (newState == QMediaPlayer::PlaybackState::PlayingState) {
-            _frameTimer.start();
-        } else if (newState == QMediaPlayer::PlaybackState::StoppedState) {
-            _frameTimer.stop();
-        }
+QUrl ingestPlaybackUrl()
+{
+    return QUrl::fromLocalFile(QDir::temp().absoluteFilePath(QStringLiteral("qgc-gstreamer-session.ts")));
+}
+
+}  // namespace
+
+QtMultimediaReceiver::QtMultimediaReceiver(QObject* parent)
+    : VideoReceiver(parent),
+      _mediaPlayer(createMediaPlayer(this)),
+      _sinkRouter(std::make_unique<QtVideoSinkRouter>(this))
+{
+    _startTimeoutTimer.setSingleShot(true);
+
+    _sinkRouter->setSinkApplier([this](QVideoSink* sink) { _mediaPlayer->setVideoSink(sink); });
+    _sinkRouter->routeTo(nullptr);
+
+    (void)connect(_mediaPlayer, &QMediaPlayer::playingChanged, this, [this](bool playing) { _setStreamingActive(playing); });
+    (void)connect(_mediaPlayer, &QMediaPlayer::hasVideoChanged, this, [this](bool has) {
+        if (has)
+            _pullDecoderInfoFromMetadata();
+        _setDecoderActive(has);
     });
-    (void) connect(_mediaPlayer, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
-        switch (status) {
-        case QMediaPlayer::MediaStatus::LoadingMedia:
-            _streamDevice = _mediaPlayer->sourceDevice();
-            break;
-        default:
-            break;
-        }
-    });
-    (void) connect(_mediaPlayer, &QMediaPlayer::metaDataChanged, this, []() {
-        /*const QMediaMetaData metaData = _mediaPlayer->metaData();
-        const QVariant resolution = metaData.value(QMediaMetaData::Key::Resolution);
-        const QSize videoSize = resolution.toSize();*/
-    });
-    (void) connect(_mediaPlayer, &QMediaPlayer::bufferProgressChanged, this, [](float filled) {
+    (void)connect(_mediaPlayer, &QMediaPlayer::bufferProgressChanged, this, [](float filled) {
         qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << "Buffer Progress:" << filled;
     });
-    (void) connect(_mediaPlayer, &QMediaPlayer::errorOccurred, this, [](QMediaPlayer::Error error, const QString &errorString) {
-        switch (error) {
-        case QMediaPlayer::Error::NetworkError:
-            break;
-        default:
-            break;
-        }
+    (void)connect(_mediaPlayer, &QMediaPlayer::metaDataChanged, this,
+                  &QtMultimediaReceiver::_pullDecoderInfoFromMetadata);
+    (void)connect(_mediaPlayer, &QMediaPlayer::tracksChanged, this,
+                  &QtMultimediaReceiver::_applyPlaybackTrackPolicy);
+    (void)connect(_mediaPlayer, &QMediaPlayer::mediaStatusChanged, this,
+                  &QtMultimediaReceiver::_handleMediaStatusChanged);
+    (void)connect(_mediaPlayer, &QMediaPlayer::errorOccurred, this,
+                  [this](QMediaPlayer::Error error, const QString& errorString) {
+                      qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << errorString;
+                      const auto category = (error == QMediaPlayer::FormatError)
+                                                ? VideoReceiver::ErrorCategory::MissingPlugin
+                                                : VideoReceiver::ErrorCategory::Fatal;
+                      emit receiverError(category, errorString);
+                  });
+}
 
-        qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << errorString;
-    });
+void QtMultimediaReceiver::_setStreamingActive(bool active)
+{
+    if (_streamingActive == active)
+        return;
+    _streamingActive = active;
+    emit streamingChanged(active);
+}
 
-    // _mediaRecorder->setEncodingMode(QMediaRecorder::EncodingMode::AverageBitRateEncoding);
-    // _mediaRecorder->setQuality(QMediaRecorder::Quality::HighQuality);
-    // _mediaRecorder->setVideoBitRate()
-    _mediaRecorder->setVideoFrameRate(0);
-    _mediaRecorder->setVideoResolution(QSize());
-    (void) connect(_mediaRecorder, &QMediaRecorder::recorderStateChanged, this, [this](QMediaRecorder::RecorderState state) {
-        if (state == QMediaRecorder::RecorderState::RecordingState) {
-            emit recordingStarted(_mediaRecorder->actualLocation().toString());
-        }
-        emit recordingChanged(_mediaRecorder->recorderState() == QMediaRecorder::RecorderState::RecordingState);
-    });
-    (void) connect(_mediaRecorder, &QMediaRecorder::errorOccurred, this, [](QMediaRecorder::Error error, const QString &errorString) {
-        switch (error) {
-        case QMediaRecorder::Error::OutOfSpaceError:
-            break;
-        default:
-            break;
-        }
-
-        qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << errorString;
-    });
-
-    _frameTimer.setSingleShot(true);
-    _frameTimer.setTimerType(Qt::PreciseTimer);
-    (void) connect(&_frameTimer, &QTimer::timeout, this, &QtMultimediaReceiver::timeout);
+void QtMultimediaReceiver::_setDecoderActive(bool active)
+{
+    if (_decoderActive == active)
+        return;
+    _decoderActive = active;
+    emit decodingChanged(active);
 }
 
 QtMultimediaReceiver::~QtMultimediaReceiver()
 {
-    qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << this;
+    _closeCamera();
+    qCDebug(QtMultimediaReceiverLog) << this;
 }
 
-bool QtMultimediaReceiver::enabled()
+void QtMultimediaReceiver::_pullDecoderInfoFromMetadata()
 {
-#ifdef QGC_QT_STREAMING
-    return true;
-#else
-    return false;
-#endif
-}
-
-void *QtMultimediaReceiver::createVideoSink(QQuickItem *widget, QObject *parent)
-{
-    Q_UNUSED(parent);
-
-    QVideoSink *videoSink = nullptr;
-    if (widget) {
-        QQuickVideoOutput *const videoOutput = reinterpret_cast<QQuickVideoOutput*>(widget);
-        videoSink = videoOutput->videoSink();
-    }
-
-    return videoSink;
-}
-
-void QtMultimediaReceiver::releaseVideoSink(void * /*sink*/)
-{
-    /*if (!sink) {
+    const QMediaMetaData md = _mediaPlayer->metaData();
+    const QVariant codec = md.value(QMediaMetaData::VideoCodec);
+    if (!codec.isValid())
         return;
-    }
 
-    QVideoSink* const videoSink = reinterpret_cast<QVideoSink*>(sink);
-    videoSink->deleteLater();*/
+    QString codecName;
+    if (codec.canConvert<QMediaFormat::VideoCodec>()) {
+        codecName = QMediaFormat::videoCodecName(codec.value<QMediaFormat::VideoCodec>());
+    } else {
+        codecName = codec.toString();
+    }
+    const QString description = decodeDescription(codecName);
+    if (codecName.isEmpty() || description == activeDecoderName())
+        return;
+
+    setDecoderInfo(false, description, md);
+    qCDebug(QtMultimediaReceiverLog)
+        << "Decoder info: codec =" << codecName
+        << "backend = Qt FFmpeg"
+        << "hardware candidates =" << qgetenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES")
+        << "actual hardware decode exposed = false";
 }
 
-VideoReceiver *QtMultimediaReceiver::createVideoReceiver(QObject *parent)
+void QtMultimediaReceiver::_handleMediaStatusChanged(QMediaPlayer::MediaStatus status)
 {
-    Q_UNUSED(parent);
-    return new QtMultimediaReceiver(nullptr);
+    qCDebug(QtMultimediaReceiverLog) << "Media status changed:" << status
+                                     << "audio tracks:" << _mediaPlayer->audioTracks().size()
+                                     << "subtitle tracks:" << _mediaPlayer->subtitleTracks().size()
+                                     << "video tracks:" << _mediaPlayer->videoTracks().size();
+
+    switch (status) {
+        case QMediaPlayer::LoadedMedia:
+        case QMediaPlayer::BufferedMedia:
+            _pullDecoderInfoFromMetadata();
+            _applyPlaybackTrackPolicy();
+            break;
+        case QMediaPlayer::InvalidMedia:
+            qCWarning(QtMultimediaReceiverLog) << "Invalid Qt media:" << _mediaPlayer->errorString();
+            break;
+        default:
+            break;
+    }
+}
+
+void QtMultimediaReceiver::_applyPlaybackTrackPolicy()
+{
+    const auto decision = QtPlaybackTrackPolicy::apply(_mediaPlayer, _activeMode == SourceMode::Playback);
+    if (decision.disableAudio || decision.disableSubtitles) {
+        qCDebug(QtMultimediaReceiverLog) << "Disabled unused playback tracks:"
+                                         << "audio" << decision.disableAudio
+                                         << "subtitles" << decision.disableSubtitles;
+    }
+}
+
+void QtMultimediaReceiver::configureSource(const VideoSourceResolver::VideoSource& source)
+{
+    _sourceMode = source.isLocalCamera ? SourceMode::LocalCamera : SourceMode::Playback;
+    _cameraId = source.localCameraId;
+}
+
+QCameraDevice QtMultimediaReceiver::findLocalCameraDevice(const QString& cameraId)
+{
+    return QtCameraDeviceDiscovery::find(cameraId);
+}
+
+QString QtMultimediaReceiver::defaultLocalCameraId()
+{
+    return QtCameraDeviceDiscovery::defaultId();
+}
+
+bool QtMultimediaReceiver::localCameraAvailable()
+{
+    return QtCameraDeviceDiscovery::available();
+}
+
+bool QtMultimediaReceiver::localCameraDeviceExists(const QString& device)
+{
+    return QtCameraDeviceDiscovery::exists(device);
+}
+
+QStringList QtMultimediaReceiver::localCameraDeviceNameList()
+{
+    return QtCameraDeviceDiscovery::nameList();
+}
+
+void QtMultimediaReceiver::onSinkAboutToChange()
+{
+    _sinkRouter->detachObserver();
+}
+
+VideoReceiver::SinkChangeAction QtMultimediaReceiver::onSinkChanged(QVideoSink* newSink)
+{
+    _setSinkTargetForMode(_sourceMode);
+    _sinkRouter->routeTo(newSink);
+    return SinkChangeAction::NoAction;
+}
+
+void QtMultimediaReceiver::_clearStartHandlers()
+{
+    disconnect(_startPlayingConn);
+    disconnect(_startBufferConn);
+    disconnect(_startTimeoutConn);
+    _startTimeoutTimer.stop();
 }
 
 void QtMultimediaReceiver::start(uint32_t timeout)
 {
-    qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
+    _activeMode = _sourceMode;
+    if (_activeMode == SourceMode::LocalCamera) {
+        _startCamera(timeout);
+        return;
+    }
 
+    _startPlayback(timeout);
+}
+
+void QtMultimediaReceiver::_startPlayback(uint32_t timeout)
+{
     if (_mediaPlayer->isPlaying()) {
         qCDebug(QtMultimediaReceiverLog) << "Already running!";
-        emit onStartComplete(STATUS_INVALID_STATE);
         return;
     }
 
-    if (_uri.isEmpty()) {
-        qCDebug(QtMultimediaReceiverLog) << "Failed because URI is not specified";
-        emit onStartComplete(STATUS_INVALID_URL);
+    if (_uri.isEmpty() && !_sourceDevice) {
+        qCDebug(QtMultimediaReceiverLog) << "Failed because source is not specified";
+        emit receiverError(VideoReceiver::ErrorCategory::Fatal, QStringLiteral("Empty source"));
         return;
     }
-    _mediaPlayer->setSource(QUrl::fromUserInput(_uri));
 
-    _frameTimer.setInterval(timeout);
+    _clearStartHandlers();
 
-    // QAbstractVideoBuffer *buffer = _videoSink->videoFrame()->videoBuffer();
+    const std::chrono::milliseconds timeoutMs(static_cast<qint64>(timeout) * 1000);
 
-    /*if (!_mediaPlayer->hasVideo()) {
-        emit onStartComplete(STATUS_FAIL);
-    }*/
+    if (_lowLatency || _playbackPolicy.lowLatencyStreaming) {
+        QPlaybackOptions opts;
+        opts.setPlaybackIntent(QPlaybackOptions::PlaybackIntent::LowLatencyStreaming);
+        if (_playbackPolicy.probeSizeBytes > 0)
+            opts.setProbeSize(_playbackPolicy.probeSizeBytes);
+        opts.setNetworkTimeout(timeoutMs);
+        _mediaPlayer->setPlaybackOptions(opts);
+        qCDebug(QtMultimediaReceiverLog) << "Low-latency streaming enabled";
+    } else {
+        _mediaPlayer->resetPlaybackOptions();
+    }
+
+    if (_sourceDevice) {
+        const QUrl sourceUrl = _sourceDeviceUrl.isEmpty()
+                                   ? ingestPlaybackUrl()
+                                   : _sourceDeviceUrl;
+        _mediaPlayer->setSourceDevice(_sourceDevice, sourceUrl);
+    } else {
+        _mediaPlayer->setSource(QUrl::fromUserInput(_uri));
+    }
+    _applyPlaybackTrackPolicy();
+    // Stash the per-frame watchdog interval for startDecoding() to arm the
+    // frame delivery with once decoding actually begins.
+    _watchdogInterval = timeoutMs;
+
+    _startPlayingConn = connect(_mediaPlayer, &QMediaPlayer::playingChanged, this, [this](bool playing) {
+        if (!playing)
+            return;
+        qCDebug(QtMultimediaReceiverLog) << "playingChanged(true) — receiver started";
+        _clearStartHandlers();
+        emit receiverStarted();
+    });
+
+    _startTimeoutTimer.setInterval(timeoutMs);
+    _startTimeoutConn = connect(&_startTimeoutTimer, &QTimer::timeout, this, [this]() {
+        qCWarning(QtMultimediaReceiverLog) << "start() timed out";
+        _clearStartHandlers();
+        emit receiverError(VideoReceiver::ErrorCategory::Fatal, QStringLiteral("QMediaPlayer start timed out"));
+    });
 
     _mediaPlayer->play();
+    _startTimeoutTimer.start();
 
-    qCDebug(QtMultimediaReceiverLog) << "Starting";
-
-    emit onStartComplete(STATUS_OK);
+    qCDebug(QtMultimediaReceiverLog) << "Starting (async receiverStarted pending)";
 }
 
 void QtMultimediaReceiver::stop()
 {
-    qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
-
-    if (!_mediaPlayer->isPlaying()) {
-        qCDebug(QtMultimediaReceiverLog) << "Already stopped!";
-        emit onStopComplete(STATUS_INVALID_STATE);
+    if (_activeMode == SourceMode::LocalCamera || (_camera && _camera->isActive())) {
+        _stopCamera();
         return;
     }
 
-    if (_mediaPlayer->source().isEmpty()) {
-        qCWarning(QtMultimediaReceiverLog) << "Stop called on empty URI";
-        emit onStopComplete(STATUS_FAIL);
+    _stopPlayback();
+}
+
+void QtMultimediaReceiver::_stopPlayback()
+{
+    _clearStartHandlers();
+
+    if (_mediaPlayer->playbackState() == QMediaPlayer::StoppedState) {
+        qCDebug(QtMultimediaReceiverLog) << "Already stopped — no-op";
+        return;
+    }
+
+    if (_mediaPlayer->source().isEmpty() && !_sourceDevice) {
+        qCWarning(QtMultimediaReceiverLog) << "Stop called on empty source";
+        emit receiverError(VideoReceiver::ErrorCategory::Fatal, QStringLiteral("Stop called on empty source"));
         return;
     }
 
     _mediaPlayer->stop();
-
+    _mediaPlayer->setSourceDevice(nullptr);
     qCDebug(QtMultimediaReceiverLog) << "Stopped";
-
-    emit onStopComplete(STATUS_OK);
+    emit receiverStopped();
 }
 
-void QtMultimediaReceiver::startDecoding(void *sink)
+bool QtMultimediaReceiver::_ensureCameraObjects()
 {
-    qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
+    if (_camera)
+        return true;
 
-    if (!sink) {
-        qCCritical(QtMultimediaReceiverLog) << "VideoSink is NULL";
-        emit onStartDecodingComplete(STATUS_FAIL);
+    _camera = new QCamera(this);
+    _imageCapture = new QImageCapture(this);
+    _captureSession = new QMediaCaptureSession(this);
+    _mediaDevices = new QMediaDevices(this);
+
+    _captureSession->setCamera(_camera);
+    _captureSession->setImageCapture(_imageCapture);
+
+    (void)connect(_mediaDevices, &QMediaDevices::videoInputsChanged, this, [this]() {
+        if (!started())
+            return;
+        if (QMediaDevices::videoInputs().isEmpty()) {
+            qCWarning(QtMultimediaReceiverLog) << "All local camera devices gone — closing camera";
+            _closeCamera();
+        } else {
+            qCDebug(QtMultimediaReceiverLog) << "Local camera device list changed — re-opening camera";
+            _closeCamera();
+            _openCamera();
+        }
+    });
+
+    (void)connect(_camera, &QCamera::errorOccurred, this, [this](QCamera::Error err, const QString& desc) {
+        if (err == QCamera::NoError)
+            return;
+        qCWarning(QtMultimediaReceiverLog) << "QCamera error:" << err << desc;
+        emit receiverError(VideoReceiver::ErrorCategory::Fatal, desc);
+    });
+
+    return true;
+}
+
+void QtMultimediaReceiver::_setSinkTargetForMode(SourceMode mode)
+{
+    if (mode == SourceMode::LocalCamera) {
+        if (_ensureCameraObjects())
+            _sinkRouter->setSinkApplier([this](QVideoSink* sink) { _captureSession->setVideoSink(sink); });
         return;
     }
 
-    if (_videoSink) {
-        qCWarning(QtMultimediaReceiverLog) << "VideoSink is already set";
+    _sinkRouter->setSinkApplier([this](QVideoSink* sink) { _mediaPlayer->setVideoSink(sink); });
+}
+
+void QtMultimediaReceiver::_checkCameraPermission()
+{
+    const QCameraPermission cameraPermission;
+    _cameraPermissionStatus = qApp->checkPermission(cameraPermission);
+    if (_cameraPermissionStatus == Qt::PermissionStatus::Undetermined) {
+        qApp->requestPermission(cameraPermission, this, [this](const QPermission& permission) {
+            _cameraPermissionStatus = permission.status();
+            if (_cameraPermissionStatus != Qt::PermissionStatus::Granted)
+                qgcApp()->showAppMessage(QStringLiteral("Failed to get camera permission"));
+        });
+    }
+}
+
+void QtMultimediaReceiver::_startCamera(uint32_t timeout)
+{
+    qCDebug(QtMultimediaReceiverLog) << "start camera" << timeout;
+
+    if (started())
+        return;
+
+    if (!_ensureCameraObjects())
+        return;
+
+    _checkCameraPermission();
+    if (_cameraPermissionStatus != Qt::PermissionStatus::Granted) {
+        const QString msg = (_cameraPermissionStatus == Qt::PermissionStatus::Denied)
+                                ? QStringLiteral("Camera permission denied")
+                                : QStringLiteral("Camera permission pending — try again once granted");
+        qCWarning(QtMultimediaReceiverLog) << msg;
+        emit receiverError(VideoReceiver::ErrorCategory::Fatal, msg);
+        return;
     }
 
-    if (_videoSizeUpdater) {
-        qCWarning(QtMultimediaReceiverLog) << "VideoSizeConnection is already set";
+    _watchdogInterval = std::chrono::milliseconds(static_cast<qint64>(timeout) * 1000);
+    _openCamera();
+
+    setStarted(true);
+    _setStreamingActive(true);
+    emit receiverStarted();
+}
+
+void QtMultimediaReceiver::_stopCamera()
+{
+    qCDebug(QtMultimediaReceiverLog) << "stop camera";
+
+    if (!started() && (!_camera || !_camera->isActive()))
+        return;
+
+    _closeCamera();
+
+    setStarted(false);
+    _setStreamingActive(false);
+    _setDecoderActive(false);
+    emit receiverStopped();
+}
+
+void QtMultimediaReceiver::_openCamera()
+{
+    if (!_ensureCameraObjects())
+        return;
+
+    const QString sourceId = _cameraId.isEmpty() ? defaultLocalCameraId() : _cameraId;
+    if (sourceId.isEmpty()) {
+        qCWarning(QtMultimediaReceiverLog) << "No local camera found";
+        return;
     }
 
-    _videoSink = reinterpret_cast<QVideoSink*>(sink);
-    _videoSizeUpdater = connect(_videoSink, &QVideoSink::videoSizeChanged, this, [this]() {
-        emit videoSizeChanged(_videoSink->videoSize());
-    });
-    _videoFrameUpdater = connect(_videoSink, &QVideoSink::videoFrameChanged, this, [this](const QVideoFrame &frame) {
-        if (frame.isValid()) {
-            _frameTimer.start();
-        }
-    });
-    _rhi = _videoSink->rhi();
-    _videoSink->setSubtitleText("");
+    const QCameraDevice device = findLocalCameraDevice(sourceId);
+    if (device.isNull()) {
+        qCWarning(QtMultimediaReceiverLog) << "Configured local camera not found:" << sourceId;
+        return;
+    }
 
-    _mediaPlayer->setVideoSink(_videoSink);
+    _camera->setCameraDevice(device);
+    const QCameraFormat format = QtCameraDeviceDiscovery::bestFormat(device);
+    if (!format.isNull())
+        _camera->setCameraFormat(format);
 
+    _announceCameraFormat();
+    _camera->setActive(true);
+    qCDebug(QtMultimediaReceiverLog) << "Camera opened:" << _camera->cameraDevice().description()
+                                     << "id:" << QtCameraDeviceDiscovery::stableId(_camera->cameraDevice())
+                                     << "format:" << _camera->cameraFormat().resolution()
+                                     << _camera->cameraFormat().maxFrameRate();
+}
+
+void QtMultimediaReceiver::_closeCamera()
+{
+    if (!_camera)
+        return;
+    if (_delivery)
+        _delivery->disarmWatchdog();
+    _camera->setActive(false);
+    qCDebug(QtMultimediaReceiverLog) << "Camera closed";
+}
+
+void QtMultimediaReceiver::_announceCameraFormat()
+{
+    if (!_delivery || !_camera)
+        return;
+
+    const QCameraFormat format = _camera->cameraFormat();
+    if (format.isNull())
+        return;
+
+    QVideoFrameFormat videoFormat(format.resolution(), format.pixelFormat());
+    _delivery->announceFormat(videoFormat);
+}
+
+void QtMultimediaReceiver::startDecoding()
+{
+    if (!validateFrameDeliveryForDecoding())
+        return;
+
+    // Prefer Qt's direct QMediaPlayer -> QVideoSink path. The delivery endpoint
+    // observes that sink for stats/recording instead of redisplaying frames.
+    _setSinkTargetForMode(_activeMode);
+    _sinkRouter->setFrameDelivery(_delivery);
+    _sinkRouter->routeTo(_delivery->videoSink());
+    qCDebug(QtMultimediaReceiverLog) << "Qt video sink state:"
+                                     << "fallback" << _sinkRouter->activeSinkIsFallback()
+                                     << "rhi" << _sinkRouter->activeSinkHasRhi();
+    if (_activeMode == SourceMode::LocalCamera)
+        _announceCameraFormat();
+
+    // Frame watchdog lives on delivery (centralized across receivers). It
+    // observes sink frames directly, so no extra forwarding connection is needed here.
+    if (_watchdogInterval.count() > 0)
+        _delivery->armWatchdog(_watchdogInterval);
+
+    _setDecoderActive(true);
     qCDebug(QtMultimediaReceiverLog) << "Decoding";
-
-    emit onStartDecodingComplete(STATUS_OK);
 }
 
 void QtMultimediaReceiver::stopDecoding()
 {
-    qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
-
-    if (!_videoSink) {
-        qCWarning(QtMultimediaReceiverLog) << "VideoSink is NULL";
-        emit onStartDecodingComplete(STATUS_INVALID_STATE);
+    // Reject only when we're not actually decoding. Proceed even when the sink has been detached so the
+    // decode state tears down cleanly — otherwise a sink-detach + reconnect
+    // leaves _decoderActive stuck true and _internalFrameConn dangling.
+    if (!_decoderActive) {
+        qCWarning(QtMultimediaReceiverLog) << "Not decoding — ignoring stopDecoding";
         return;
     }
 
-    (void) disconnect(_videoSizeUpdater);
-    _mediaPlayer->setVideoSink(nullptr);
-    _videoSink = nullptr;
+    if (_delivery) {
+        _delivery->disarmWatchdog();
+    }
+    _sinkRouter->detachObserver();
+    _sinkRouter->routeTo(nullptr);
 
+    _setDecoderActive(false);
     qCDebug(QtMultimediaReceiverLog) << "Stopped Decoding";
-
-    emit onStopDecodingComplete(STATUS_OK);
 }
 
-void QtMultimediaReceiver::startRecording(const QString &videoFile, FILE_FORMAT format)
+void QtMultimediaReceiver::pause()
 {
-    qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
-
-    if (!_mediaRecorder->isAvailable()) {
-        qCWarning(QtMultimediaReceiverLog) << "Recording Unavailable";
-        emit onStartRecordingComplete(STATUS_FAIL);
-        return;
+    if (_mediaPlayer && _mediaPlayer->isPlaying()) {
+        qCDebug(QtMultimediaReceiverLog) << "Pausing QMediaPlayer for reconnect";
+        _mediaPlayer->pause();
+        emit receiverPaused();
     }
-
-    switch (format) {
-    case FILE_FORMAT_MKV:
-        _mediaRecorder->setMediaFormat(QMediaFormat::FileFormat::Matroska);
-        break;
-    case FILE_FORMAT_MOV:
-        _mediaRecorder->setMediaFormat(QMediaFormat::FileFormat::QuickTime);
-        break;
-    case FILE_FORMAT_MP4:
-        _mediaRecorder->setMediaFormat(QMediaFormat::FileFormat::MPEG4);
-        break;
-    default:
-        // QMediaFormat::AVI, WMV, Ogg, WebM
-        _mediaRecorder->setMediaFormat(QMediaFormat::FileFormat::UnspecifiedFormat);
-        break;
-    }
-
-    _mediaRecorder->setOutputLocation(QUrl::fromLocalFile(videoFile));
-    _recordingOutput = _mediaRecorder->outputLocation().toLocalFile();
-    _mediaRecorder->record();
-
-    qCDebug(QtMultimediaReceiverLog) << "Recording";
-
-    emit onStartRecordingComplete(STATUS_OK);
 }
 
-void QtMultimediaReceiver::stopRecording()
+void QtMultimediaReceiver::resume()
 {
-    qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
-
-    _mediaRecorder->stop();
-
-    qCDebug(QtMultimediaReceiverLog) << "Stopped Recording";
-
-    emit onStopRecordingComplete(STATUS_OK);
-}
-
-void QtMultimediaReceiver::takeScreenshot(const QString &imageFile)
-{
-    qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO;
-
-    if (!_videoSink) {
-        qCWarning(QtMultimediaReceiverLog) << "Video Sink is NULL";
-        emit onTakeScreenshotComplete(STATUS_FAIL);
-        return;
+    if (_mediaPlayer && _mediaPlayer->playbackState() == QMediaPlayer::PausedState) {
+        qCDebug(QtMultimediaReceiverLog) << "Resuming QMediaPlayer";
+        _mediaPlayer->play();
+        emit receiverResumed();
     }
-
-    const QVideoFrame frame = _videoSink->videoFrame();
-    if (!frame.isValid() || !frame.isReadable()) {
-        qCWarning(QtMultimediaReceiverLog) << "Screenshot Frame is Invalid";
-        emit onTakeScreenshotComplete(STATUS_FAIL);
-        return;
-    }
-
-    // const QVideoFrameFormat frameFormat = frame.surfaceFormat();
-    // const QImage frameImage = frame.toImage();
-
-    _videoOutput = reinterpret_cast<QQuickVideoOutput*>(_mediaPlayer->videoOutput());
-    const QSize targetSize = _mediaRecorder->videoResolution();
-    QSharedPointer<QQuickItemGrabResult> screenshot = _videoOutput->grabToImage(targetSize);
-    // (void) connect(&screenshot, &QQuickItemGrabResult::ready, this, [screenshot, imageFile]() {
-        // screenshot->saveToFile(imageFile);
-    // }
-    screenshot->saveToFile(imageFile);
-
-    qCDebug(QtMultimediaReceiverLog) << "Screenshot";
-
-    emit onTakeScreenshotComplete(STATUS_NOT_IMPLEMENTED);
 }

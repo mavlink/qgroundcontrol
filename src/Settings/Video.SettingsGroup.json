@@ -39,6 +39,15 @@
             "keywords": "tcp,video url,stream url"
         },
         {
+            "name": "gstPipelineUrl",
+            "shortDesc": "GStreamer pipeline description (gst-launch syntax).",
+            "longDesc": "Raw GStreamer pipeline description using gst-launch syntax. The pipeline must produce a video src pad. Example: videotestsrc ! videoconvert",
+            "type": "string",
+            "default": "",
+            "label": "Pipeline",
+            "keywords": "gstreamer,pipeline,custom,gst-launch"
+        },
+        {
             "name": "videoSavePath",
             "shortDesc": "Video save directory",
             "longDesc": "Directory to save videos to.",
@@ -65,6 +74,14 @@
             "label": "Video Grid Lines"
         },
         {
+            "name": "showVideoStats",
+            "shortDesc": "Video Stats Overlay",
+            "longDesc": "Displays FPS and resolution overlay on the video view.",
+            "type": "bool",
+            "default": false,
+            "label": "Video Stats Overlay"
+        },
+        {
             "name": "videoFit",
             "shortDesc": "Video Display Fit",
             "longDesc": "Handle Video Aspect Ratio.",
@@ -85,10 +102,10 @@
         {
             "name": "recordingFormat",
             "shortDesc": "File format for saved video recordings.",
-            "longDesc": "Video recording file format.",
+            "longDesc": "Video recording file format. Values match QMediaFormat::FileFormat: Matroska=2, MPEG4=3, QuickTime=5.",
             "type": "uint32",
-            "enumStrings": "mp4,mov,mkv",
-            "enumValues": "2,1,0",
+            "enumStrings": "mkv,mp4,mov",
+            "enumValues": "2,3,5",
             "default": 2,
             "label": "Record File Format",
             "keywords": "record,recording format,mp4,mkv"
@@ -145,23 +162,11 @@
         {
             "name": "lowLatencyMode",
             "shortDesc": "Reduce video latency by approximately 200ms using optimized streaming settings.",
-            "longDesc": "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
+            "longDesc": "If this option is enabled, QGroundControl requests low-latency playback options for streaming sources.",
             "type": "bool",
             "default": false,
             "label": "Low Latency Mode",
             "keywords": "low latency"
-        },
-        {
-            "name": "forceVideoDecoder",
-            "shortDesc": "Override automatic video decoder selection to force a specific decoding method.",
-            "longDesc": "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
-            "type": "uint32",
-            "enumStrings": "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
-            "enumValues": "0,1,8,2,3,4,5,6,7",
-            "default": 0,
-            "qgcRebootRequired": true,
-            "label": "Force video decoder priority",
-            "keywords": "decoder,hardware decode"
         }
     ]
 }
