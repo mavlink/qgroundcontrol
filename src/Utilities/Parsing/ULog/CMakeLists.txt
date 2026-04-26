@@ -16,6 +16,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # PX4 ULog parsing library
 # ============================================================================
 
+if(NOT USE_SYSTEM_ULOG_CPP)
 CPMAddPackage(
     NAME ulog_cpp
     GITHUB_REPOSITORY PX4/ulog_cpp
@@ -28,3 +29,7 @@ qgc_disable_dependency_warnings(ulog_cpp)
 target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PRIVATE ${ulog_cpp_SOURCE_DIR})
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ulog_cpp::ulog_cpp)
+else()
+find_package(ulog_cpp REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ulog_cpp)
+endif()

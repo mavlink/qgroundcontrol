@@ -34,6 +34,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "kml_schema"
 # GeographicLib Integration
 # ============================================================================
 
+if(NOT USE_SYSTEM_GEOGRAPHICLIB)
 CPMAddPackage(
     NAME geographiclib
     VERSION 2.7
@@ -62,11 +63,16 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeographicLib::GeographicLib
 if(geographiclib_ADDED)
     qgc_disable_dependency_warnings(GeographicLib_STATIC)
 endif()
+else()
+find_package(GeographicLib REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeographicLib)
+endif()
 
 # ============================================================================
 # Shapelib Integration
 # ============================================================================
 
+if(NOT USE_SYSTEM_SHAPE)
 CPMAddPackage(
     NAME Shapelib
     VERSION 1.6.3
@@ -77,6 +83,8 @@ CPMAddPackage(
         "BUILD_APPS OFF"
         "BUILD_TESTING OFF"
 )
+
+endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shp)
 if(Shapelib_ADDED)

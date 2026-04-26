@@ -59,6 +59,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE expat)
 # protozero — required by libosmium headers
 # ----------------------------------------------------------------------------
 
+if(NOT USE_SYSTEM_PROTOZERO)
 CPMAddPackage(
     NAME protozero
     GITHUB_REPOSITORY mapbox/protozero
@@ -66,16 +67,24 @@ CPMAddPackage(
     DOWNLOAD_ONLY YES
 )
 
+else()
+    set(protozero_SOURCE_DIR /usr/src/protozero)
+endif()
 # ----------------------------------------------------------------------------
 # libosmium — OSM data parsing
 # ----------------------------------------------------------------------------
 
+if(NOT USE_SYSTEM_LIBOSMIUM)
 CPMAddPackage(
     NAME libosmium
     GITHUB_REPOSITORY osmcode/libosmium
     GIT_TAG v2.23.0
     DOWNLOAD_ONLY YES
 )
+
+else()
+    set(libosmium_SOURCE_DIR /usr/src/libosmium)
+endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME}
     SYSTEM

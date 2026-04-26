@@ -16,6 +16,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # libexif uses autotools, so we build it directly from source files
 # ============================================================================
 
+if(NOT USE_SYSTEM_LIBEXIF)
 CPMAddPackage(
     NAME libexif
     VERSION 0.6.25
@@ -103,5 +104,5 @@ typedef SSIZE_T ssize_t;
     # Suppress warnings in third-party code
     qgc_disable_dependency_warnings(exif)
 endif()
-
+endif()
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE exif)
