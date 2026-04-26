@@ -32,25 +32,20 @@ inputs:
     required: false
     default: Release
   ndk-full-version:
-    description: Android NDK full version (use build-config.outputs.ndk_full_version)
-    required: false
-    default: '27.2.12479018'
+    description: Android NDK full version (pass build-config.outputs.ndk_full_version)
+    required: true
   java-version:
-    description: Java version (use build-config.outputs.java_version)
-    required: false
-    default: '17'
+    description: Java version (pass build-config.outputs.java_version)
+    required: true
   android-platform:
-    description: Android platform/API level (use build-config.outputs.android_platform)
-    required: false
-    default: '35'
+    description: Android platform/API level (pass build-config.outputs.android_platform)
+    required: true
   android-cmdline-tools:
-    description: Android cmdline-tools version (use build-config.outputs.android_cmdline_tools)
-    required: false
-    default: '13114758'
+    description: Android cmdline-tools version (pass build-config.outputs.android_cmdline_tools)
+    required: true
   android-build-tools:
-    description: Android build-tools version (use build-config.outputs.android_build_tools)
-    required: false
-    default: '35.0.0'
+    description: Android build-tools version (pass build-config.outputs.android_build_tools)
+    required: true
   save-cache:
     description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false

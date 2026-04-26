@@ -108,6 +108,15 @@ repos:
     hooks:
       - id: yamllint
 
+  # JSON Schema validation for build-config.json
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.33.3
+    hooks:
+      - id: check-jsonschema
+        name: Validate .github/build-config.json
+        files: ^\.github/build-config\.json$
+        args: ['--schemafile', '.github/build-config.schema.json']
+
   # Markdown linting (report-only, doesn't auto-fix)
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.47.0

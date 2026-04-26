@@ -3,9 +3,12 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Copy build config and setup scripts
+# install_dependencies.py imports tools/common/build_config via parents[1] →
+# `/tmp/qt/..` must contain `common/`, so mirror tools/ layout under /tmp/.
 COPY .github/build-config.json /tmp/qt/
 COPY tools/setup/install_dependencies.py /tmp/qt/
 COPY tools/setup/read_config.py /tmp/qt/
+COPY tools/common/ /tmp/common/
 
 # Install system packages, project dependencies, and read all config in one layer
 RUN apt-get update && \
@@ -15,7 +18,8 @@ RUN apt-get update && \
     chmod +x /etc/profile.d/qgc.sh && \
     . /etc/profile.d/qgc.sh && \
     apt-get install -y openjdk-${JAVA_VERSION}-jdk && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /tmp/common
 
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT

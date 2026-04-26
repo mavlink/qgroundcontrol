@@ -463,16 +463,26 @@ macro(_qgc_discover_ios_sdk)
         gstreamer_download_sdk(ios ${GStreamer_FIND_VERSION}
             "gstreamer-ios.pkg" "${_gst_ios_cache_dir}" _gst_ios_pkg)
 
+        # Multiple anchor files — Info.plist is a symlink in the iOS framework
+        # and pkgutil --expand-full doesn't always preserve it intact. gst.h
+        # and the framework binary are real files inside Payload trees.
+        set(_gst_ios_anchor_globs
+            "${_gst_ios_expanded}/*/GStreamer.framework/Headers/gst/gst.h"
+            "${_gst_ios_expanded}/*/GStreamer.framework/Versions/1.0/Headers/gst/gst.h"
+            "${_gst_ios_expanded}/*/GStreamer.framework/GStreamer"
+            "${_gst_ios_expanded}/*/GStreamer.framework/Versions/1.0/GStreamer"
+            "${_gst_ios_expanded}/*/GStreamer.framework/Info.plist"
+        )
+
         if(EXISTS "${_gst_ios_expanded}")
-            set(_gst_ios_complete FALSE)
-            file(GLOB _existing_pkg_dirs "${_gst_ios_expanded}/*.pkg")
-            foreach(_dir IN LISTS _existing_pkg_dirs)
-                if(EXISTS "${_dir}/Payload/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
-                    set(_gst_ios_complete TRUE)
+            set(_cached_anchor "")
+            foreach(_glob IN LISTS _gst_ios_anchor_globs)
+                file(GLOB_RECURSE _cached_anchor "${_glob}")
+                if(_cached_anchor)
                     break()
                 endif()
             endforeach()
-            if(NOT _gst_ios_complete)
+            if(NOT _cached_anchor)
                 message(STATUS "GStreamer: cached iOS expansion is incomplete; re-expanding")
                 file(REMOVE_RECURSE "${_gst_ios_expanded}")
             endif()
@@ -492,16 +502,44 @@ macro(_qgc_discover_ios_sdk)
             _qgc_validate_expanded_pkg("${_gst_ios_expanded}" "iOS")
         endif()
 
-        file(GLOB _pkg_dirs "${_gst_ios_expanded}/*.pkg")
-        foreach(_pkg_dir IN LISTS _pkg_dirs)
-            if(EXISTS "${_pkg_dir}/Payload/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
-                set(GSTREAMER_FRAMEWORK_PATH "${_pkg_dir}/Payload/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
+        # iOS pkg internal layout has shifted across releases; try several anchors.
+        set(_anchor_hit "")
+        foreach(_glob IN LISTS _gst_ios_anchor_globs)
+            file(GLOB_RECURSE _anchor_hit "${_glob}")
+            if(_anchor_hit)
                 break()
             endif()
         endforeach()
 
+        if(_anchor_hit)
+            list(GET _anchor_hit 0 _anchor_first)
+            # Walk parents up to the .framework directory.
+            set(_walk "${_anchor_first}")
+            while(_walk AND NOT _walk MATCHES "GStreamer\\.framework$")
+                cmake_path(GET _walk PARENT_PATH _walk)
+                if(_walk STREQUAL "/" OR _walk STREQUAL "")
+                    break()
+                endif()
+            endwhile()
+            if(_walk MATCHES "GStreamer\\.framework$")
+                set(GSTREAMER_FRAMEWORK_PATH "${_walk}")
+            endif()
+        endif()
+
         if(NOT GSTREAMER_FRAMEWORK_PATH)
-            message(FATAL_ERROR "Could not locate GStreamer.framework in downloaded iOS SDK")
+            file(GLOB _top_entries LIST_DIRECTORIES true "${_gst_ios_expanded}/*")
+            file(GLOB_RECURSE _all_frameworks LIST_DIRECTORIES true
+                "${_gst_ios_expanded}/*.framework")
+            file(GLOB_RECURSE _all_in_expanded "${_gst_ios_expanded}/*")
+            list(LENGTH _all_in_expanded _n)
+            string(REPLACE ";" "\n  " _top_entries_str "${_top_entries}")
+            string(REPLACE ";" "\n  " _all_frameworks_str "${_all_frameworks}")
+            message(FATAL_ERROR
+                "Could not locate GStreamer.framework in expanded iOS SDK at"
+                " '${_gst_ios_expanded}' (${_n} entries). The .pkg layout may"
+                " have changed; check the pkgutil --expand-full output.\n"
+                "Top-level entries:\n  ${_top_entries_str}\n"
+                "All *.framework directories:\n  ${_all_frameworks_str}")
         endif()
 
         set(GStreamer_ROOT_DIR "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0")

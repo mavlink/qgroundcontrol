@@ -14,7 +14,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import shlex
@@ -24,6 +23,12 @@ import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+_tools_dir = Path(__file__).resolve().parents[1]
+if str(_tools_dir) not in sys.path:
+    sys.path.insert(0, str(_tools_dir))
+
+from common.build_config import get_build_config_value  # noqa: E402
 
 # Package categories for Debian/Ubuntu
 DEBIAN_PACKAGES: dict[str, list[str]] = {
@@ -159,33 +164,10 @@ APT_BASE_OPTIONS: list[str] = [
 PACKAGE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.+-]*$")
 
 
-def get_repo_root() -> Path:
-    """Find repository root directory."""
-    current = Path(__file__).resolve()
-    for parent in [current] + list(current.parents):
-        if (parent / ".git").exists():
-            return parent
-    return Path.cwd()
-
-
-def load_build_config() -> dict:
-    """Load build configuration from .github/build-config.json."""
-    config_path = get_repo_root() / ".github" / "build-config.json"
-    if config_path.exists():
-        try:
-            with open(config_path) as f:
-                return json.load(f)
-        except json.JSONDecodeError as e:
-            print(f"Error: invalid JSON in {config_path}: {e}", file=sys.stderr)
-            return {}
-    return {}
-
-
 def get_config_value(key: str) -> str | None:
-    """Get a top-level value from build config by key name."""
-    config = load_build_config()
-    value = config.get(key)
-    return value if isinstance(value, str) else None
+    """Get a top-level string value from build config by key name."""
+    value = get_build_config_value(key)
+    return value or None
 
 
 def detect_platform() -> str | None:
@@ -518,8 +500,9 @@ def install_macos(dry_run: bool = False) -> bool:
                 print("Failed to install Homebrew", file=sys.stderr)
                 return False
 
-    # Update Homebrew
-    run_command(["brew", "update"], dry_run)
+    # CI runner images are refreshed weekly; `brew update` adds 30-60s for nothing.
+    if os.environ.get("HOMEBREW_NO_UPDATE") != "1" and not os.environ.get("CI"):
+        run_command(["brew", "update"], dry_run)
 
     # Install packages
     packages = get_macos_packages()
@@ -529,9 +512,14 @@ def install_macos(dry_run: bool = False) -> bool:
 
     # Install GStreamer
     gst_version = get_config_value("gstreamer_macos_version")
+    macos_gst_root = Path("/Library/Frameworks/GStreamer.framework")
     if not gst_version:
         print("\nWarning: GSTREAMER_MACOS_VERSION not found in build-config.json")
         print("Skipping GStreamer installation")
+    elif macos_gst_root.exists():
+        # Cache restore (actions/cache wrapping this script) puts the framework
+        # back; skip the .pkg download+installer round-trip.
+        print(f"GStreamer already installed at {macos_gst_root}; skipping")
     else:
         print(f"\nInstalling GStreamer {gst_version}...")
         runtime_url, devel_url = get_gstreamer_macos_urls(gst_version)
@@ -579,6 +567,16 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
     arch = os.environ.get("PROCESSOR_ARCHITECTURE", "")
     if arch != "AMD64":
         print(f"Skipping GStreamer: only supported on AMD64 (detected: {arch or 'unknown'})")
+        return True
+
+    prefix = WINDOWS_GSTREAMER_PREFIX
+    # Cache restore (actions/cache wrapping this script) leaves the install tree
+    # intact; skip download+msiexec but still publish env vars so the build sees it.
+    if Path(prefix, "bin", "gst-launch-1.0.exe").exists():
+        print(f"GStreamer already installed at {prefix}; skipping download+install")
+        set_env_var("GSTREAMER_1_0_ROOT_MSVC_X86_64", prefix)
+        set_env_var("GSTREAMER_1_0_ROOT_X86_64", prefix)
+        add_to_path(f"{prefix}\\bin")
         return True
 
     base_url = f"{WINDOWS_GSTREAMER_BASE_URL}/{version}"

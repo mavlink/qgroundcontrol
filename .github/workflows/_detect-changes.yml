@@ -25,8 +25,10 @@ on:
         value: ${{ jobs.detect.outputs.android }}
 
 concurrency:
-  group: detect-changes-${{ github.ref }}
-  cancel-in-progress: false
+  # Scope per caller+platform: multiple platform workflows call this in parallel
+  # for the same ref; a shared group would let GitHub cancel all but one.
+  group: detect-changes-${{ inputs.platform }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 permissions:
   contents: read
