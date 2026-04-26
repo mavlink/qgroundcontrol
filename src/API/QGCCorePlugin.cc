@@ -62,6 +62,15 @@ const QVariantList &QGCCorePlugin::analyzePages()
 {
     static const QVariantList analyzeList = {
         QVariant::fromValue(new QmlComponentInfo(
+            tr("Log Viewer"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/LogViewer/LogViewerPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")))),
+        QVariant::fromValue(new QmlComponentInfo(
+            tr("Log Setup"),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/LogViewer/LoggingSetupPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/OnboardLogIcon.svg")),
+            nullptr, true /* requiresVehicle */)),
+        QVariant::fromValue(new QmlComponentInfo(
             tr("Onboard Logs"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/OnboardLogs/OnboardLogPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/OnboardLogIcon.svg")),

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/Qt>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 struct OnboardLogDownloadData;
@@ -21,6 +22,8 @@ class OnboardLogController : public QObject
     Q_PROPERTY(QmlObjectListModel *model          READ _getModel            CONSTANT)
     Q_PROPERTY(bool               requestingList  READ _getRequestingList   NOTIFY requestingListChanged)
     Q_PROPERTY(bool               downloadingLogs READ _getDownloadingLogs  NOTIFY downloadingLogsChanged)
+    Q_PROPERTY(Qt::CheckState     selectionCheckState READ selectionCheckState NOTIFY selectionChanged)
+    Q_PROPERTY(bool               sortAscending READ sortAscending WRITE setSortAscending NOTIFY sortAscendingChanged)
     Q_PROPERTY(bool               compressLogs    READ compressLogs         WRITE setCompressLogs NOTIFY compressLogsChanged)
     Q_PROPERTY(bool               compressing     READ compressing          NOTIFY compressingChanged)
     Q_PROPERTY(float              compressionProgress READ compressionProgress NOTIFY compressionProgressChanged)
@@ -35,11 +38,18 @@ public:
     Q_INVOKABLE void download(const QString &path = QString());
     Q_INVOKABLE void eraseAll();
     Q_INVOKABLE void cancel();
+    Q_INVOKABLE void selectAll(bool select);
+    Q_INVOKABLE void invertSelection();
+    Q_INVOKABLE int selectedCount() const;
+    Q_INVOKABLE void toggleSortByDate();
 
     bool compressLogs() const { return _compressLogs; }
     void setCompressLogs(bool compress);
     bool compressing() const { return _compressing; }
     float compressionProgress() const { return _compressionProgress; }
+    Qt::CheckState selectionCheckState() const;
+    bool sortAscending() const { return _sortAscending; }
+    void setSortAscending(bool ascending);
 
     /// Compress a single log file
     Q_INVOKABLE bool compressLogFile(const QString &logPath);
@@ -52,6 +62,7 @@ signals:
     void downloadingLogsChanged();
     void selectionChanged();
     void compressLogsChanged();
+    void sortAscendingChanged();
     void compressingChanged();
     void compressionProgressChanged();
     void compressionComplete(const QString &outputPath, const QString &error);
@@ -85,6 +96,7 @@ private:
     void _setDownloading(bool active);
     void _setListing(bool active);
     void _updateDataRate();
+    void _sortEntriesByTimestamp();
 
     QGCOnboardLogEntry *_getNextSelected() const;
 
@@ -101,6 +113,7 @@ private:
     bool _compressLogs = false;
     bool _compressing = false;
     float _compressionProgress = 0.0F;
+    bool _sortAscending = false;
 
     static constexpr uint32_t kTimeOutMs = 500;
     static constexpr uint32_t kGUIRateMs = 500; ///< Update download rate twice per second
