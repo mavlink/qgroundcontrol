@@ -87,6 +87,5 @@ runs:
       shell: bash
       run: |
         if command -v ccache >/dev/null 2>&1; then
-          ccache -c
           python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" summary
         fi

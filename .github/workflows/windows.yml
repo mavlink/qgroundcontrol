@@ -33,22 +33,15 @@ permissions:
   actions: read
   security-events: write
 
+env:
+  IS_STABLE_BUILD: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+
 jobs:
   changes:
-    name: Detect Changes
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      should_build: ${{ steps.detect.outputs.any }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-      - id: detect
-        uses: ./.github/actions/detect-changes
-        with:
-          platform: windows
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: windows
 
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
@@ -99,7 +92,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
-          fetch-tags: ${{ github.event_name != 'pull_request' }}
 
       - name: Build Setup
         id: build-setup
@@ -144,7 +136,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
-          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          stable: ${{ env.IS_STABLE_BUILD }}
           extra-args: >-
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && 'ON' || 'OFF' }}
             ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.qt-host.outputs.qt_root_dir) || '' }}

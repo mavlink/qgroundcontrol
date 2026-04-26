@@ -1,12 +1,14 @@
 #include "TransectStyleComplexItem.h"
-#include "JsonHelper.h"
+#include "GeoJsonHelper.h"
+#include "JsonParsing.h"
 #include "MissionController.h"
 #include "QGCApplication.h"
 #include "PlanMasterController.h"
 #include "FlightPathSegment.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
-#include "QGC.h"
+#include "AppMessages.h"
+#include "QGCMath.h"
 #include "FirmwarePlugin.h"
 #include "KMLPlanDomDocument.h"
 #include "Vehicle.h"
@@ -143,7 +145,7 @@ void TransectStyleComplexItem::_save(QJsonObject& complexObject)
 {
     QJsonObject innerObject;
 
-    innerObject[JsonHelper::jsonVersionKey] =       2;
+    innerObject[JsonParsing::jsonVersionKey] =       2;
     innerObject[turnAroundDistanceName] =           _turnAroundDistanceFact.rawValue().toDouble();
     innerObject[cameraTriggerInTurnAroundName] =    _cameraTriggerInTurnAroundFact.rawValue().toBool();
     innerObject[hoverAndCaptureName] =              _hoverAndCaptureFact.rawValue().toBool();
@@ -164,7 +166,7 @@ void TransectStyleComplexItem::_save(QJsonObject& complexObject)
     QJsonValue  transectPointsJson;
 
     // Save transects polyline
-    JsonHelper::saveGeoCoordinateArray(_visualTransectPoints, false /* writeAltitude */, transectPointsJson);
+    GeoJsonHelper::saveGeoCoordinateArray(_visualTransectPoints, false /* writeAltitude */, transectPointsJson);
     innerObject[_jsonVisualTransectPointsKey] = transectPointsJson;
 
     // Save the interal mission items
@@ -194,10 +196,10 @@ void TransectStyleComplexItem::setSequenceNumber(int sequenceNumber)
 
 bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forPresets, QString& errorString)
 {
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         { _jsonTransectStyleComplexItemKey, QJsonValue::Object, true },
     };
-    if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
     }
 
@@ -206,8 +208,8 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
 
     int version = 0;
     bool v1FollowTerrain = false;
-    if (innerObject.contains(JsonHelper::jsonVersionKey)) {
-        version = innerObject[JsonHelper::jsonVersionKey].toInt();
+    if (innerObject.contains(JsonParsing::jsonVersionKey)) {
+        version = innerObject[JsonParsing::jsonVersionKey].toInt();
     }
     if (version == 0) {
         // There are really old versions without version stamp
@@ -229,8 +231,8 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         return false;
     }
 
-    QList<JsonHelper::KeyValidateInfo> innerKeyInfoList = {
-        { JsonHelper::jsonVersionKey,       QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> innerKeyInfoList = {
+        { JsonParsing::jsonVersionKey,       QJsonValue::Double, true },
         { turnAroundDistanceName,           QJsonValue::Double, true },
         { cameraTriggerInTurnAroundName,    QJsonValue::Bool,   true },
         { hoverAndCaptureName,              QJsonValue::Bool,   true },
@@ -240,13 +242,13 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         { _jsonItemsKey,                    QJsonValue::Array,  !forPresets },
         { _jsonCameraShotsKey,              QJsonValue::Double, true },
     };
-    if (!JsonHelper::validateKeys(innerObject, innerKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(innerObject, innerKeyInfoList, errorString)) {
         return false;
     }
 
     if (!forPresets) {
         // Load visual transect points
-        if (!JsonHelper::loadGeoCoordinateArray(innerObject[_jsonVisualTransectPointsKey], false /* altitudeRequired */, _visualTransectPoints, errorString)) {
+        if (!GeoJsonHelper::loadGeoCoordinateArray(innerObject[_jsonVisualTransectPointsKey], false /* altitudeRequired */, _visualTransectPoints, errorString)) {
             return false;
         }
         _entryCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
@@ -285,13 +287,13 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
     }
 
     if (_cameraCalc.distanceMode() == QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain) {
-        QList<JsonHelper::KeyValidateInfo> followTerrainKeyInfoList = {
+        QList<JsonParsing::KeyValidateInfo> followTerrainKeyInfoList = {
             { terrainAdjustToleranceName,       QJsonValue::Double, true },
             { terrainAdjustMaxClimbRateName,    QJsonValue::Double, true },
             { terrainAdjustMaxDescentRateName,  QJsonValue::Double, true },
             { _jsonTerrainFlightSpeed,          QJsonValue::Double, false },        // Not required since it was missing from initial implementation
         };
-        if (!JsonHelper::validateKeys(innerObject, followTerrainKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(innerObject, followTerrainKeyInfoList, errorString)) {
             return false;
         }
 

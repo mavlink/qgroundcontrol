@@ -1,5 +1,5 @@
 #include "MavlinkActionsSettings.h"
-#include "QGC.h"
+#include "AppMessages.h"
 
 #include <QtCore/QFile>
 #include <QtCore/QSettings>

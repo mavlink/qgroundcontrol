@@ -25,14 +25,6 @@ inputs:
     description: Number of parallel CTest jobs, or 'auto'
     required: false
     default: auto
-  shard-index:
-    description: 'Current shard index (1-based). Leave empty to run all tests.'
-    required: false
-    default: ''
-  shard-count:
-    description: 'Total number of shards. Leave empty to run all tests.'
-    required: false
-    default: ''
 
 runs:
   using: composite
@@ -47,20 +39,10 @@ runs:
     - name: Run CTest
       shell: bash
       working-directory: ${{ inputs.build-dir }}
-      env:
-        SHARD_INDEX: ${{ inputs.shard-index }}
-        SHARD_COUNT: ${{ inputs.shard-count }}
       run: |
-        shard_args=""
-        if [[ -n "$SHARD_INDEX" && -n "$SHARD_COUNT" ]]; then
-          [[ "$SHARD_INDEX" =~ ^[0-9]+$ ]] || { echo "::error::shard-index must be numeric"; exit 1; }
-          [[ "$SHARD_COUNT" =~ ^[0-9]+$ ]] || { echo "::error::shard-count must be numeric"; exit 1; }
-          shard_args="--shard-index $SHARD_INDEX --shard-count $SHARD_COUNT"
-        fi
         python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" ctest \
           --junit-output "${{ inputs.junit-output }}" \
           --ctest-output "${{ inputs.ctest-output }}" \
           --jobs "${{ steps.jobs.outputs.jobs }}" \
           --include-labels "${{ inputs.include-labels }}" \
-          --exclude-labels "${{ inputs.exclude-labels }}" \
-          $shard_args
+          --exclude-labels "${{ inputs.exclude-labels }}"

@@ -15,50 +15,11 @@
 #include "QGCCacheTile.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCSqlHelper.h"
 #include "QGCTile.h"
+#include "QGCTileSet.h"
 
 QGC_LOGGING_CATEGORY(QGCTileCacheDatabaseLog, "QtLocationPlugin.QGCTileCacheDatabase")
-
-class TransactionGuard {
-public:
-    explicit TransactionGuard(QSqlDatabase db) : _db(std::move(db)) {}
-    ~TransactionGuard() { if (_active && !_committed) _db.rollback(); }
-    TransactionGuard(const TransactionGuard &) = delete;
-    TransactionGuard &operator=(const TransactionGuard &) = delete;
-    bool begin() { _active = _db.transaction(); return _active; }
-    bool commit() { if (_active) { _committed = _db.commit(); return _committed; } return false; }
-private:
-    QSqlDatabase _db;
-    bool _committed = false;
-    bool _active = false;
-};
-
-static std::atomic<int> s_exportSessionCounter{0};
-
-struct ScopedExportDB {
-    std::unique_ptr<QSqlDatabase> db;
-    QString session;
-    ScopedExportDB(const QString &path) {
-        session = QStringLiteral("QGeoTileExportSession_%1").arg(s_exportSessionCounter.fetch_add(1));
-        db.reset(new QSqlDatabase(QSqlDatabase::addDatabase("QSQLITE", session)));
-        db->setDatabaseName(path);
-    }
-    ~ScopedExportDB() { db.reset(); QSqlDatabase::removeDatabase(session); }
-    ScopedExportDB(const ScopedExportDB &) = delete;
-    ScopedExportDB &operator=(const ScopedExportDB &) = delete;
-    bool open() { return db->open(); }
-};
-
-static QString placeholders(int n)
-{
-    QString result;
-    result.reserve(n * 2);
-    for (int i = 0; i < n; i++) {
-        if (i > 0) result += QChar(',');
-        result += QChar('?');
-    }
-    return result;
-}
 
 static std::atomic<quint64> s_connectionCounter{0};
 
@@ -94,16 +55,19 @@ bool QGCTileCacheDatabase::_ensureConnected() const
 
 bool QGCTileCacheDatabase::_checkSchemaVersion()
 {
-    QSqlQuery query(_database());
-    if (!query.exec("PRAGMA user_version") || !query.next()) {
+    QSqlDatabase db = _database();
+    const auto current = QGCSqlHelper::userVersion(db);
+    if (!current) {
         qCWarning(QGCTileCacheDatabaseLog) << "Failed to read schema version";
         return false;
     }
 
-    const int version = query.value(0).toInt();
+    const int version = *current;
     if (version == kSchemaVersion) {
         return true;
     }
+
+    QSqlQuery query(db);
 
     if (version == 0) {
         // Either a fresh database or a legacy database created before versioning.
@@ -168,13 +132,7 @@ bool QGCTileCacheDatabase::connectDB()
     db.setDatabaseName(_databasePath);
     _valid = db.open();
     if (_valid) {
-        QSqlQuery pragma(db);
-        if (!pragma.exec("PRAGMA journal_mode=WAL")) {
-            qCWarning(QGCTileCacheDatabaseLog) << "Failed to set WAL journal mode:" << pragma.lastError().text();
-        }
-        if (!pragma.exec("PRAGMA foreign_keys = ON")) {
-            qCWarning(QGCTileCacheDatabaseLog) << "Failed to enable foreign keys:" << pragma.lastError().text();
-        }
+        QGCSqlHelper::applySqlitePragmas(db);
         _connected = true;
     } else {
         qCCritical(QGCTileCacheDatabaseLog) << "Map Cache SQL error (open db):" << db.lastError();
@@ -209,8 +167,8 @@ bool QGCTileCacheDatabase::saveTile(const QString &hash, const QString &format, 
         return false;
     }
 
-    TransactionGuard txn(_database());
-    if (!txn.begin()) {
+    QGCSqlHelper::Transaction txn(_database());
+    if (!txn.ok()) {
         qCWarning(QGCTileCacheDatabaseLog) << "Failed to start transaction for saveTile";
         return false;
     }
@@ -353,8 +311,8 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
         return std::nullopt;
     }
 
-    TransactionGuard txn(_database());
-    if (!txn.begin()) {
+    QGCSqlHelper::Transaction txn(_database());
+    if (!txn.ok()) {
         qCWarning(QGCTileCacheDatabaseLog) << "Failed to start transaction for createTileSet";
         return std::nullopt;
     }
@@ -394,7 +352,7 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
         QHash<QString, quint64> existingTiles;
         QSqlQuery lookup(_database());
         lookup.setForwardOnly(true);
-        if (lookup.prepare(QStringLiteral("SELECT hash, tileID FROM Tiles WHERE hash IN (%1)").arg(placeholders(tiles.size())))) {
+        if (lookup.prepare(QStringLiteral("SELECT hash, tileID FROM Tiles WHERE hash IN (%1)").arg(QGCSqlHelper::placeholders(tiles.size())))) {
             for (const auto &tc : tiles) {
                 lookup.addBindValue(tc.hash);
             }
@@ -473,8 +431,8 @@ bool QGCTileCacheDatabase::deleteTileSet(quint64 id)
         return false;
     }
 
-    TransactionGuard txn(_database());
-    if (!txn.begin()) {
+    QGCSqlHelper::Transaction txn(_database());
+    if (!txn.ok()) {
         qCWarning(QGCTileCacheDatabaseLog) << "Failed to start transaction for deleteTileSet";
         return false;
     }
@@ -515,7 +473,7 @@ bool QGCTileCacheDatabase::deleteTileSet(quint64 id)
 
     // Delete unique tiles (no longer referenced by any set)
     if (!uniqueTileIDs.isEmpty()) {
-        if (query.prepare(QStringLiteral("DELETE FROM Tiles WHERE tileID IN (%1)").arg(placeholders(uniqueTileIDs.size())))) {
+        if (query.prepare(QStringLiteral("DELETE FROM Tiles WHERE tileID IN (%1)").arg(QGCSqlHelper::placeholders(uniqueTileIDs.size())))) {
             for (const quint64 tileID : uniqueTileIDs) {
                 query.addBindValue(tileID);
             }
@@ -584,8 +542,8 @@ bool QGCTileCacheDatabase::resetDatabase()
 
     _defaultSet = kInvalidTileSet;
 
-    TransactionGuard txn(_database());
-    if (!txn.begin()) {
+    QGCSqlHelper::Transaction txn(_database());
+    if (!txn.ok()) {
         qCWarning(QGCTileCacheDatabaseLog) << "Failed to start transaction for resetDatabase";
         return false;
     }
@@ -612,8 +570,8 @@ QList<QGCTile> QGCTileCacheDatabase::getTileDownloadList(quint64 setID, int coun
         return tiles;
     }
 
-    TransactionGuard txn(_database());
-    if (!txn.begin()) {
+    QGCSqlHelper::Transaction txn(_database());
+    if (!txn.ok()) {
         qCWarning(QGCTileCacheDatabaseLog) << "Failed to start transaction for getTileDownloadList";
         return tiles;
     }
@@ -641,7 +599,7 @@ QList<QGCTile> QGCTileCacheDatabase::getTileDownloadList(quint64 setID, int coun
     }
 
     if (!tiles.isEmpty()) {
-        if (query.prepare(QStringLiteral("UPDATE TilesDownload SET state = ? WHERE setID = ? AND hash IN (%1)").arg(placeholders(tiles.size())))) {
+        if (query.prepare(QStringLiteral("UPDATE TilesDownload SET state = ? WHERE setID = ? AND hash IN (%1)").arg(QGCSqlHelper::placeholders(tiles.size())))) {
             query.addBindValue(static_cast<int>(QGCTile::StateDownloading));
             query.addBindValue(setID);
             for (qsizetype i = 0; i < tiles.size(); i++) {
@@ -746,8 +704,8 @@ bool QGCTileCacheDatabase::pruneCache(quint64 amount)
             break;
         }
 
-        TransactionGuard txn(_database());
-        if (!txn.begin()) {
+        QGCSqlHelper::Transaction txn(_database());
+        if (!txn.ok()) {
             return false;
         }
 
@@ -807,8 +765,8 @@ void QGCTileCacheDatabase::deleteBingNoTileTiles()
         return;
     }
 
-    TransactionGuard txn(_database());
-    if (!txn.begin()) {
+    QGCSqlHelper::Transaction txn(_database());
+    if (!txn.ok()) {
         return;
     }
 
@@ -973,13 +931,14 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString &path, Progre
         return result;
     }
 
-    ScopedExportDB importDB(path);
-    if (!importDB.open()) {
+    QGCSqlHelper::ScopedConnection importDB(path, /*readOnly=*/true,
+                                            QStringLiteral("QGeoTileImportSession"));
+    if (!importDB.isValid()) {
         result.errorString = "Error opening import database";
         return result;
     }
 
-    QSqlQuery query(*importDB.db);
+    QSqlQuery query(importDB.database());
     quint64 tileCount = 0;
     int lastProgress = -1;
     if (query.exec("SELECT COUNT(tileID) FROM Tiles") && query.next()) {
@@ -1007,8 +966,8 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString &path, Progre
                 quint64 insertSetID = _getDefaultTileSet();
 
                 // Wrap each set creation + tile copy in a single transaction
-                TransactionGuard txn(_database());
-                if (!txn.begin()) {
+                QGCSqlHelper::Transaction txn(_database());
+                if (!txn.ok()) {
                     result.errorString = "Failed to start transaction for import set";
                     break;
                 }
@@ -1042,7 +1001,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString &path, Progre
                 }
 
                 quint64 tilesIterated = 0;
-                const quint64 tilesSaved = _copyTilesForSet(*importDB.db, setID, insertSetID,
+                const quint64 tilesSaved = _copyTilesForSet(importDB.database(), setID, insertSetID,
                                                              currentCount, tileCount,
                                                              lastProgress, progressCb,
                                                              &tilesIterated, false);
@@ -1102,14 +1061,15 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
     }
 
     (void) QFile::remove(path);
-    ScopedExportDB exportDB(path);
-    if (!exportDB.open()) {
-        qCCritical(QGCTileCacheDatabaseLog) << "Map Cache SQL error (create export database):" << exportDB.db->lastError();
+    QGCSqlHelper::ScopedConnection exportDB(path, /*readOnly=*/false,
+                                            QStringLiteral("QGeoTileExportSession"));
+    if (!exportDB.isValid()) {
+        qCCritical(QGCTileCacheDatabaseLog) << "Map Cache SQL error (create export database):" << exportDB.database().lastError();
         result.errorString = "Error opening export database";
         return result;
     }
 
-    if (!_createDB(*exportDB.db, false)) {
+    if (!_createDB(exportDB.database(), false)) {
         result.errorString = "Error creating export database";
         return result;
     }
@@ -1147,14 +1107,14 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
             continue;
         }
 
-        TransactionGuard txn(*exportDB.db);
-        if (!txn.begin()) {
+        QGCSqlHelper::Transaction txn(exportDB.database());
+        if (!txn.ok()) {
             qCWarning(QGCTileCacheDatabaseLog) << "Failed to start transaction for export set" << set.name;
             result.errorString = "Failed to start export transaction";
             break;
         }
 
-        QSqlQuery exportQuery(*exportDB.db);
+        QSqlQuery exportQuery(exportDB.database());
         if (!exportQuery.prepare("INSERT INTO TileSets("
             "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, numTiles, defaultSet, date"
             ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -1203,7 +1163,7 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
             if (exportQuery.exec()) {
                 exportTileID = exportQuery.lastInsertId().toULongLong();
             } else {
-                QSqlQuery lookup(*exportDB.db);
+                QSqlQuery lookup(exportDB.database());
                 if (lookup.prepare("SELECT tileID FROM Tiles WHERE hash = ?")) {
                     lookup.addBindValue(hash);
                     if (lookup.exec() && lookup.next()) {
@@ -1246,8 +1206,9 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
 
 bool QGCTileCacheDatabase::_createDB(QSqlDatabase db, bool createDefault)
 {
+    // applySqlitePragmas (in connectDB / ScopedConnection ctor) already
+    // enabled foreign_keys; nothing to redo here.
     QSqlQuery query(db);
-    (void) query.exec("PRAGMA foreign_keys = ON");
 
     if (!query.exec(
         "CREATE TABLE IF NOT EXISTS Tiles ("
@@ -1320,8 +1281,8 @@ bool QGCTileCacheDatabase::_createDB(QSqlDatabase db, bool createDefault)
         }
     }
 
-    if (!query.exec(QStringLiteral("PRAGMA user_version = %1").arg(kSchemaVersion))) {
-        qCWarning(QGCTileCacheDatabaseLog) << "Failed to set schema version:" << query.lastError().text();
+    if (!QGCSqlHelper::setUserVersion(db, kSchemaVersion)) {
+        qCWarning(QGCTileCacheDatabaseLog) << "Failed to set schema version";
     }
 
     if (!createDefault) {
@@ -1383,7 +1344,7 @@ bool QGCTileCacheDatabase::_deleteTilesByIDs(const QList<quint64> &ids)
     }
 
     QSqlQuery query(_database());
-    if (!query.prepare(QStringLiteral("DELETE FROM Tiles WHERE tileID IN (%1)").arg(placeholders(ids.size())))) {
+    if (!query.prepare(QStringLiteral("DELETE FROM Tiles WHERE tileID IN (%1)").arg(QGCSqlHelper::placeholders(ids.size())))) {
         return false;
     }
     for (const quint64 id : ids) {
@@ -1445,10 +1406,10 @@ quint64 QGCTileCacheDatabase::_copyTilesForSet(QSqlDatabase srcDB, quint64 srcSe
     quint64 tilesFound = 0;
     quint64 tilesLinked = 0;
 
-    std::unique_ptr<TransactionGuard> txn;
+    std::unique_ptr<QGCSqlHelper::Transaction> txn;
     if (useTransaction) {
-        txn = std::make_unique<TransactionGuard>(_database());
-        if (!txn->begin()) {
+        txn = std::make_unique<QGCSqlHelper::Transaction>(_database());
+        if (!txn->ok()) {
             qCWarning(QGCTileCacheDatabaseLog) << "Failed to start transaction for merge import";
             if (tilesIteratedOut) *tilesIteratedOut = 0;
             return 0;

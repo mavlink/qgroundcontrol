@@ -4,7 +4,7 @@
 #include "MAVLinkLib.h"
 #include "MavlinkSettings.h"
 #include "MultiVehicleManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"

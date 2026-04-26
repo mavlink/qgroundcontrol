@@ -1,6 +1,6 @@
 #include "InstrumentValueData.h"
 #include "FactValueGrid.h"
-#include "QGC.h"
+#include "QGCMath.h"
 #include "QmlObjectListModel.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"

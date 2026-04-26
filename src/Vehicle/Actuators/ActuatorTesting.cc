@@ -1,7 +1,7 @@
 #include "ActuatorTesting.h"
 #include "MAVLinkLib.h"
 #include "Common.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 

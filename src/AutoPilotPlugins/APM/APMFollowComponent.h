@@ -11,7 +11,7 @@ public:
 
     QString name() const final { return _name; }
     QString description() const final { return tr("Configure the vehicle to track the ground station position."); }
-    QString iconResource() const final { return QStringLiteral("/qmlimages/FollowComponentIcon.png"); }
+    QString iconResource() const final { return QStringLiteral("/qmlimages/FlightModesComponentIcon.png"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }
     QUrl setupSource() const final { return QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMFollowComponent.qml")); }

@@ -3,12 +3,13 @@
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
-#include <QtCore/QThread>
 #include <QtGui/QVector2D>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
 
 #include <vector>
+
+class QThread;
 
 class OsmParserThread : public QObject
 {

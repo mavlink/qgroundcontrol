@@ -24,7 +24,7 @@
 #include "LogEntry.h"
 #include "MissionItem.h"
 #include "MultiVehicleManager.h"
-#include "QGC.h"
+#include "QGCMath.h"
 #include "QGCApplication.h"
 #include "LogManager.h"
 #include "QGCLoggingCategory.h"

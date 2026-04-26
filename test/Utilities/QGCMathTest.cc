@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-#include "QGC.h"
+#include "QGCMath.h"
 
 void QGCMathTest::_fuzzyCompareDoubleEqual_test()
 {

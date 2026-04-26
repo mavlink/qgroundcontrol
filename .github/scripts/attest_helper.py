@@ -4,14 +4,14 @@
 from __future__ import annotations
 
 import argparse
-import sys
+import os
 from pathlib import Path
 
 from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import is_fork_pr, write_github_output  # noqa: E402
+from common.gh_actions import write_github_output  # noqa: E402
 
 
 def main() -> None:
@@ -25,8 +25,9 @@ def main() -> None:
 
     subject = Path(args.subject_path)
 
-    if is_fork_pr():
-        print("Skipping attestation for external PR")
+    # PR builds aren't released; skip the SBOM scan + Sigstore signing entirely.
+    if os.environ.get("GITHUB_EVENT_NAME") == "pull_request":
+        print("Skipping attestation for pull_request build")
         write_github_output({"skip": "true"})
         return
 

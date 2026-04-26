@@ -1,5 +1,5 @@
 #include "CameraCalc.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "Vehicle.h"
 #include "CameraMetaData.h"
 #include "PlanMasterController.h"
@@ -161,7 +161,7 @@ void CameraCalc::_recalcTriggerDistance(void)
 
 void CameraCalc::save(QJsonObject& json) const
 {
-    json[JsonHelper::jsonVersionKey]    = 2;
+    json[JsonParsing::jsonVersionKey]    = 2;
     json[adjustedFootprintSideName]     = _adjustedFootprintSideFact.rawValue().toDouble();
     json[adjustedFootprintFrontalName]  = _adjustedFootprintFrontalFact.rawValue().toDouble();
     json[distanceToSurfaceName]         = _distanceToSurfaceFact.rawValue().toDouble();
@@ -182,13 +182,13 @@ bool CameraCalc::load(const QJsonObject& originalJson, bool deprecatedFollowTerr
     QJsonObject json = originalJson;
 
     int version = 0;
-    if (json.contains(JsonHelper::jsonVersionKey)) {
-        version = json[JsonHelper::jsonVersionKey].toInt();
+    if (json.contains(JsonParsing::jsonVersionKey)) {
+        version = json[JsonParsing::jsonVersionKey].toInt();
     }
 
     if (version == 0) {
         // Version 0->1 differences:
-        //  - JsonHelper::jsonVersionKey not stored
+        //  - JsonParsing::jsonVersionKey not stored
         //  - _jsonCameraSpecTypeKeyDeprecated is only in v0 files and stores CameraSpecType. V2 files store same info in cameraNameName.
         //  - _jsonCameraNameKey only set if CameraSpecKnown
         int cameraSpec = json[_jsonCameraSpecTypeKeyDeprecated].toInt(CameraSpecNone);
@@ -217,14 +217,14 @@ bool CameraCalc::load(const QJsonObject& originalJson, bool deprecatedFollowTerr
         return false;
     }
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList1 = {
+    QList<JsonParsing::KeyValidateInfo> keyInfoList1 = {
         { cameraNameName,                   QJsonValue::String, true },
         { adjustedFootprintSideName,        QJsonValue::Double, true },
         { adjustedFootprintFrontalName,     QJsonValue::Double, true },
         { distanceToSurfaceName,            QJsonValue::Double, true },
         { distanceModeName,                 QJsonValue::Double, true },
     };
-    if (!JsonHelper::validateKeys(json, keyInfoList1, errorString)) {
+    if (!JsonParsing::validateKeys(json, keyInfoList1, errorString)) {
         return false;
     }
 
@@ -242,13 +242,13 @@ bool CameraCalc::load(const QJsonObject& originalJson, bool deprecatedFollowTerr
     _distanceToSurfaceFact.setRawValue          (json[distanceToSurfaceName].toDouble());
 
     if (!isManualCamera()) {
-        QList<JsonHelper::KeyValidateInfo> keyInfoList2 = {
+        QList<JsonParsing::KeyValidateInfo> keyInfoList2 = {
             { valueSetIsDistanceName,   QJsonValue::Bool,   true },
             { imageDensityName,         QJsonValue::Double, true },
             { frontalOverlapName,       QJsonValue::Double, true },
             { sideOverlapName,          QJsonValue::Double, true },
         };
-        if (!JsonHelper::validateKeys(json, keyInfoList2, errorString)) {
+        if (!JsonParsing::validateKeys(json, keyInfoList2, errorString)) {
             _disableRecalc = false;
             return false;
         }

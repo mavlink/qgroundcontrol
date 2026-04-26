@@ -1,6 +1,6 @@
 #include "AudioOutput.h"
 #include "Fact.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QRegularExpression>

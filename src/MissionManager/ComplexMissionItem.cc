@@ -1,5 +1,5 @@
 #include "ComplexMissionItem.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "PlanMasterController.h"

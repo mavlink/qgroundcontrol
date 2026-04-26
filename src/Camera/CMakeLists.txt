@@ -30,3 +30,11 @@ qt_add_resources(${CMAKE_PROJECT_NAME} json_mavlink_camera
     PREFIX "/json"
     FILES CameraMetaData.json
 )
+
+qt_add_resources(${CMAKE_PROJECT_NAME} camera_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}/images"
+    FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/images/camera_photo.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/images/camera_video.svg"
+)

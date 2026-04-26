@@ -3,7 +3,7 @@
 #include "VehicleLinkManager.h"
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "QGCLoggingCategory.h"

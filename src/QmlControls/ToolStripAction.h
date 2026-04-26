@@ -1,13 +1,15 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtQml/QQmlComponent>
 #include <QtQmlIntegration/QtQmlIntegration>
+
+class QQmlComponent;
 
 class ToolStripAction : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
+    Q_MOC_INCLUDE("QtQml/QQmlComponent")
 
 public:
     ToolStripAction(QObject* parent = nullptr);

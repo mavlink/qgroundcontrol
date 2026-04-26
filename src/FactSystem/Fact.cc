@@ -1,6 +1,6 @@
 #include "Fact.h"
 #include "FactValueSliderListModel.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"

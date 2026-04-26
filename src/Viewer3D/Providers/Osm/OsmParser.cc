@@ -1,9 +1,12 @@
 #include "OsmParser.h"
 
+#include "Fact.h"
 #include "OsmParserThread.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
+
+#include <QtCore/QThread>
 
 #include <mapbox/earcut.hpp>
 

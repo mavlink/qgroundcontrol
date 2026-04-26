@@ -1,5 +1,5 @@
 name: Attest and Upload
-description: Generate SBOM attestation and upload build artifact
+description: Generate SBOM attestation and upload build artifact (GitHub + optional AWS)
 
 inputs:
   artifact-name:
@@ -17,7 +17,7 @@ inputs:
     required: false
     default: ''
   aws-role-arn:
-    description: 'AWS IAM role ARN for OIDC authentication'
+    description: 'AWS IAM role ARN for OIDC authentication (preferred)'
     required: false
     default: ''
   aws-key-id:
@@ -36,6 +36,14 @@ inputs:
     description: 'Upload artifact to AWS'
     required: false
     default: 'true'
+  retention-days:
+    description: 'Days to retain GitHub artifact (default 7 for PRs, 30 for pushes)'
+    required: false
+    default: ''
+  compression-level:
+    description: 'GitHub artifact compression level 0-9 (0=none, best for pre-compressed binaries)'
+    required: false
+    default: '0'
 
 runs:
   using: composite
@@ -47,13 +55,25 @@ runs:
         subject-name: ${{ inputs.subject-name || inputs.package-name }}
         scan-path: ${{ inputs.scan-path || format('{0}/build', runner.temp) }}
 
-    - name: Upload Build File
-      uses: ./.github/actions/upload
+    - name: Save artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.package-name }}
+        path: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
+        retention-days: ${{ inputs.retention-days != '' && inputs.retention-days || (github.event_name == 'pull_request' && '7' || '30') }}
+        compression-level: ${{ inputs.compression-level }}
+
+    - name: Upload to AWS
+      if: >-
+        fromJSON(inputs.upload-aws) &&
+        github.event_name == 'push' &&
+        github.repository_owner == 'mavlink' &&
+        (inputs.aws-role-arn != '' || (inputs.aws-key-id != '' && inputs.aws-secret-access-key != ''))
+      uses: ./.github/actions/aws-upload
       with:
         artifact-name: ${{ inputs.artifact-name }}
-        package-name: ${{ inputs.package-name }}
+        artifact-path: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
         aws-role-arn: ${{ inputs.aws-role-arn }}
         aws-key-id: ${{ inputs.aws-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-distribution-id: ${{ inputs.aws-distribution-id }}
-        upload-aws: ${{ inputs.upload-aws }}

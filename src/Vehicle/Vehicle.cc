@@ -46,7 +46,8 @@
 #include "ParameterManager.h"
 #include "PlanMasterController.h"
 #include "PositionManager.h"
-#include "QGC.h"
+#include "AppMessages.h"
+#include "QGCMath.h"
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
 #include "QGCCorePlugin.h"
@@ -71,7 +72,7 @@
 #include "VehicleObjectAvoidance.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
-#include "DeviceInfo.h"
+#include "QGCSensors.h"
 #include "StatusTextHandler.h"
 #include "MAVLinkSigning.h"
 #include "MAVLinkSigningKeys.h"
@@ -127,8 +128,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(this, &Vehicle::armedChanged,               this, &Vehicle::_announceArmedChanged);
     connect(this, &Vehicle::flyingChanged, this, [this](bool flying){
         if (flying) {
-            setInitialGCSPressure(QGCDeviceInfo::QGCPressure::instance()->pressure());
-            setInitialGCSTemperature(QGCDeviceInfo::QGCPressure::instance()->temperature());
+            setInitialGCSPressure(QGCSensors::QGCPressure::instance()->pressure());
+            setInitialGCSTemperature(QGCSensors::QGCPressure::instance()->temperature());
         }
     });
 

@@ -19,6 +19,9 @@ Item {
     /// Subclasses must set this to their indicator Component
     property Component indicatorComponent
 
+    /// Exposed so subclasses can drive additional visual loaders alongside the base.
+    property alias _itemVisualLoader: itemVisualLoader
+
     property var _missionItem: object
     property bool _itemVisualShowing: false
     property bool _dragAreaShowing: false

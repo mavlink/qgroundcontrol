@@ -1,8 +1,8 @@
 #include "MavlinkActionManager.h"
 #include "MavlinkAction.h"
 #include "Fact.h"
-#include "JsonHelper.h"
-#include "QGC.h"
+#include "JsonParsing.h"
+#include "AppMessages.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QGCLoggingCategory.h"
@@ -68,16 +68,16 @@ void MavlinkActionManager::_loadActionsFile()
 
     QString errorString;
     int version;
-    const QJsonObject jsonObject = JsonHelper::openInternalQGCJsonFile(fullPath, kQgcFileType, 1, 1, version, errorString);
+    const QJsonObject jsonObject = JsonParsing::openInternalQGCJsonFile(fullPath, kQgcFileType, 1, 1, version, errorString);
     if (!errorString.isEmpty()) {
         QGC::showAppMessage(tr("Failed to load custom actions file: `%1` error: `%2`").arg(fullPath, errorString));
         return;
     }
 
-    const QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+    const QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         { kActionListKey, QJsonValue::Array, /* required= */ true },
     };
-    if (!JsonHelper::validateKeys(jsonObject, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(jsonObject, keyInfoList, errorString)) {
         QGC::showAppMessage(tr("Custom actions file - incorrect format: %1").arg(errorString));
         return;
     }
@@ -90,7 +90,7 @@ void MavlinkActionManager::_loadActionsFile()
             return;
         }
 
-        const QList<JsonHelper::KeyValidateInfo> actionKeyInfoList = {
+        const QList<JsonParsing::KeyValidateInfo> actionKeyInfoList = {
             { "label",          QJsonValue::String, /* required= */ true },
             { "description",    QJsonValue::String, /* required= */ true },
             { "mavCmd",         QJsonValue::Double, /* required= */ true },
@@ -106,7 +106,7 @@ void MavlinkActionManager::_loadActionsFile()
         };
 
         const auto actionObj = actionJson.toObject();
-        if (!JsonHelper::validateKeys(actionObj, actionKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(actionObj, actionKeyInfoList, errorString)) {
             QGC::showAppMessage(tr("Custom actions file - incorrect format: %1").arg(errorString));
             _actions->clearAndDeleteContents();
             return;

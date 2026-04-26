@@ -1,17 +1,19 @@
 name: Build Setup
-description: Common setup steps for platform builds
+description: Common setup steps for platform builds (desktop, android, ios)
 
 inputs:
-  restore-timestamps:
-    description: Restore file timestamps from git (requires fetch-depth 0)
+  mode:
+    description: "Setup mode: desktop, android, or ios"
     required: false
-    default: "false"
+    default: desktop
   qt-host:
-    description: Qt host platform (linux, linux_arm64, windows, windows_arm64, mac)
-    required: true
+    description: "Qt host platform (linux/linux_arm64/windows/windows_arm64/mac). Required for desktop and android modes; ignored for ios."
+    required: false
+    default: ""
   qt-arch:
-    description: Qt target architecture
-    required: true
+    description: "Qt target architecture. Required for desktop and android modes; ignored for ios."
+    required: false
+    default: ""
   qt-modules:
     description: Qt modules to install (overrides build-config)
     required: false
@@ -25,55 +27,172 @@ inputs:
     required: false
     default: "Release"
   save-cache:
-    description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
+    description: "Whether to save cache (auto = save for pushes/schedule/dispatch, skip for PRs)"
     required: false
     default: "auto"
+  cache-variant:
+    description: Optional ccache key discriminator for compile-flag-distinct builds (e.g. coverage|asan).
+    required: false
+    default: ""
+  cpm-modules:
+    description: CPM cache path (mobile modes; desktop derives this internally)
+    required: false
+    default: ""
+  abis:
+    description: "Android ABIs (e.g., 'arm64-v8a;armeabi-v7a'). android mode only."
+    required: false
+    default: "arm64-v8a;armeabi-v7a"
+  ios-modules:
+    description: Qt modules for iOS target (defaults to build-config qt_modules_ios)
+    required: false
+    default: ""
 
 outputs:
-  gstreamer_windows_version:
-    description: GStreamer version for Windows
-    value: ${{ steps.config.outputs.gstreamer_windows_version }}
   qt_modules:
     description: Qt modules used for this build
     value: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}
-  qt_root_dir:
-    description: Installed Qt root directory
-    value: ${{ steps.qt.outputs.qt_root_dir }}
+  qt_modules_ios:
+    description: Qt modules for iOS target
+    value: ${{ inputs.ios-modules || steps.config.outputs.qt_modules_ios }}
   qt_version:
     description: Resolved Qt version for this build
     value: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
+  gstreamer_version:
+    description: GStreamer version (generic/minimum)
+    value: ${{ steps.config.outputs.gstreamer_version }}
+  gstreamer_macos_version:
+    description: GStreamer version for macOS
+    value: ${{ steps.config.outputs.gstreamer_macos_version }}
+  gstreamer_android_version:
+    description: GStreamer version for Android
+    value: ${{ steps.config.outputs.gstreamer_android_version }}
+  gstreamer_windows_version:
+    description: GStreamer version for Windows
+    value: ${{ steps.config.outputs.gstreamer_windows_version }}
   xcode_version:
     description: Xcode version for macOS
     value: ${{ steps.config.outputs.xcode_version }}
+  xcode_ios_version:
+    description: Xcode version for iOS
+    value: ${{ steps.config.outputs.xcode_ios_version }}
+  ndk_full_version:
+    description: Android NDK full version
+    value: ${{ steps.config.outputs.ndk_full_version }}
+  java_version:
+    description: Java version
+    value: ${{ steps.config.outputs.java_version }}
+  android_platform:
+    description: Android platform/API level
+    value: ${{ steps.config.outputs.android_platform }}
+  android_build_tools:
+    description: Android build-tools version
+    value: ${{ steps.config.outputs.android_build_tools }}
+  android_cmdline_tools:
+    description: Android cmdline-tools version
+    value: ${{ steps.config.outputs.android_cmdline_tools }}
+  qt_root_dir:
+    description: Installed Qt root directory (desktop mode)
+    value: ${{ steps.qt-desktop.outputs.qt_root_dir }}
+  host_qt_root_dir:
+    description: Host Qt root directory (mobile modes)
+    value: ${{ steps.qt-android.outputs.host_qt_root_dir || steps.qt-ios.outputs.host_qt_root_dir }}
+  target_qt_root_dir:
+    description: Target Qt root directory (mobile modes)
+    value: ${{ steps.qt-android.outputs.target_qt_root_dir || steps.qt-ios.outputs.target_qt_root_dir }}
 
 runs:
   using: composite
   steps:
-    - name: Restore file timestamps
-      if: inputs.restore-timestamps == 'true'
-      uses: chetan/git-restore-mtime-action@v2
+    - name: Validate inputs
+      shell: bash
+      run: |
+        if [[ "${{ inputs.mode }}" == "desktop" || "${{ inputs.mode }}" == "android" ]]; then
+          missing=()
+          [[ -z "${{ inputs.qt-host }}" ]] && missing+=(qt-host)
+          [[ -z "${{ inputs.qt-arch }}" ]] && missing+=(qt-arch)
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::build-setup mode=${{ inputs.mode }} requires inputs: ${missing[*]}"
+            exit 1
+          fi
+        fi
 
     - name: Get build config
       id: config
       uses: ./.github/actions/build-config
 
-    - name: Initial Setup
-      uses: ./.github/actions/common
+    - name: Free disk space (Linux)
+      # Only instrumented Debug builds (coverage/ASan) need this; Release fits in the runner's default ~14GB free.
+      if: runner.os == 'Linux' && inputs.build-type == 'Debug'
+      uses: endersonmenezes/free-disk-space@v3
+      with:
+        remove_android: false
+        remove_dotnet: true
+        remove_haskell: true
+        remove_tool_cache: false
+        remove_packages: azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
+        remove_packages_one_command: true
+        rm_cmd: rmz
 
-    - name: Setup Caching
+    - uses: lukka/get-cmake@v4.2.3
+
+    - uses: ./.github/actions/setup-python
+      with:
+        python-version: '3.12'
+        groups: scripts
+
+    - name: Create build directory
+      shell: bash
+      run: mkdir -p "$RUNNER_TEMP/build"
+
+    - name: Setup caching (desktop)
+      if: inputs.mode == 'desktop'
       uses: ./.github/actions/cache
       with:
         host: ${{ inputs.qt-host }}
         target: ${{ inputs.qt-arch }}
         build-type: ${{ inputs.build-type }}
+        variant: ${{ inputs.cache-variant }}
         cpm-modules: ${{ runner.temp }}/build/cpm_modules
         save-cache: ${{ inputs.save-cache }}
 
-    - name: Install Qt
-      id: qt
+    - name: Install Qt (desktop)
+      if: inputs.mode == 'desktop'
+      id: qt-desktop
       uses: ./.github/actions/qt-install
       with:
         version: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
         host: ${{ inputs.qt-host }}
         arch: ${{ inputs.qt-arch }}
         modules: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}
+
+    - name: Install Qt for Android
+      if: inputs.mode == 'android'
+      id: qt-android
+      uses: ./.github/actions/qt-android
+      with:
+        host: ${{ inputs.qt-host }}
+        arch: ${{ inputs.qt-arch }}
+        version: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
+        modules: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}
+        abis: ${{ inputs.abis }}
+        cpm-modules: ${{ inputs.cpm-modules }}
+        build-type: ${{ inputs.build-type }}
+        ndk-full-version: ${{ steps.config.outputs.ndk_full_version }}
+        java-version: ${{ steps.config.outputs.java_version }}
+        android-platform: ${{ steps.config.outputs.android_platform }}
+        android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
+        android-build-tools: ${{ steps.config.outputs.android_build_tools }}
+        save-cache: ${{ inputs.save-cache }}
+
+    - name: Install Qt for iOS
+      if: inputs.mode == 'ios'
+      id: qt-ios
+      uses: ./.github/actions/qt-ios
+      with:
+        version: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
+        modules: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}
+        ios-modules: ${{ inputs.ios-modules || steps.config.outputs.qt_modules_ios }}
+        xcode-version: ${{ steps.config.outputs.xcode_ios_version }}
+        cpm-modules: ${{ inputs.cpm-modules }}
+        build-type: ${{ inputs.build-type }}
+        save-cache: ${{ inputs.save-cache }}

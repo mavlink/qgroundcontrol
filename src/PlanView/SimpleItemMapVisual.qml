@@ -15,7 +15,7 @@ MissionItemMapVisualBase {
 
     function hideItemVisuals() {
         if (_itemVisualShowing) {
-            itemVisualLoader.active = false
+            _itemVisualLoader.active = false
             loiterVisualLoader.active = false
             _itemVisualShowing = false
         }
@@ -23,7 +23,7 @@ MissionItemMapVisualBase {
 
     function showItemVisuals() {
         if (!_itemVisualShowing) {
-            itemVisualLoader.active = true
+            _itemVisualLoader.active = true
             loiterVisualLoader.active = true
             _itemVisualShowing = true
         }

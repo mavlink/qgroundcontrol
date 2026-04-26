@@ -5,8 +5,7 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
-
-#include <limits>
+#include <QtCore/QThread>
 
 #include <osmium/handler.hpp>
 #include <osmium/io/reader.hpp>
@@ -14,7 +13,9 @@
 #include <osmium/visitor.hpp>
 
 #include <cmath>
+#include <exception>
 #include <limits>
+#include <utility>
 
 QGC_LOGGING_CATEGORY(OsmParserThreadLog, "Viewer3d.OsmParserThread")
 

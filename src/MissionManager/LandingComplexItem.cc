@@ -1,7 +1,8 @@
 #include "LandingComplexItem.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
-#include "JsonHelper.h"
+#include "GeoJsonHelper.h"
+#include "JsonParsing.h"
 #include "MissionController.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
@@ -704,7 +705,7 @@ QJsonObject LandingComplexItem::_save(void)
 
     coordinate = _finalApproachCoordinate;
     coordinate.setAltitude(finalApproachAltitude()->rawValue().toDouble());
-    JsonHelper::saveGeoCoordinate(coordinate, true /* writeAltitude */, jsonCoordinate);
+    GeoJsonHelper::saveGeoCoordinate(coordinate, true /* writeAltitude */, jsonCoordinate);
     saveObject[_jsonFinalApproachCoordinateKey] = jsonCoordinate;
 
     saveObject[_jsonUseDoChangeSpeedKey]        = useDoChangeSpeed()->rawValue().toBool();
@@ -712,7 +713,7 @@ QJsonObject LandingComplexItem::_save(void)
 
     coordinate = _landingCoordinate;
     coordinate.setAltitude(landingAltitude()->rawValue().toDouble());
-    JsonHelper::saveGeoCoordinate(coordinate, true /* writeAltitude */, jsonCoordinate);
+    GeoJsonHelper::saveGeoCoordinate(coordinate, true /* writeAltitude */, jsonCoordinate);
     saveObject[_jsonLandingCoordinateKey] = jsonCoordinate;
 
     saveObject[_jsonLoiterRadiusKey]            = loiterRadius()->rawValue().toDouble();
@@ -727,8 +728,8 @@ QJsonObject LandingComplexItem::_save(void)
 
 bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNumber, const QString& jsonComplexItemTypeValue, bool useDeprecatedRelAltKeys, QString& errorString)
 {
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,                   QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
+        { JsonParsing::jsonVersionKey,                   QJsonValue::Double, true },
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
         { _jsonDeprecatedLoiterCoordinateKey,           QJsonValue::Array,  false }, // Loiter changed to Final Approach
@@ -742,15 +743,15 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
         { _jsonStopTakingVideoKey,                      QJsonValue::Bool,   false },
         { _jsonUseLoiterToAltKey,                       QJsonValue::Bool,   false },
     };
-    if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
     }
 
     if (!complexObject.contains(_jsonDeprecatedLoiterCoordinateKey) && !complexObject.contains(_jsonFinalApproachCoordinateKey)) {
-        QList<JsonHelper::KeyValidateInfo> finalApproachKeyInfoList = {
+        QList<JsonParsing::KeyValidateInfo> finalApproachKeyInfoList = {
             { _jsonFinalApproachCoordinateKey, QJsonValue::Array, true },
         };
-        if (!JsonHelper::validateKeys(complexObject, finalApproachKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(complexObject, finalApproachKeyInfoList, errorString)) {
             return false;
         }
     }
@@ -767,11 +768,11 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
     _ignoreRecalcSignals = true;
 
     if (useDeprecatedRelAltKeys) {
-        QList<JsonHelper::KeyValidateInfo> v1KeyInfoList = {
+        QList<JsonParsing::KeyValidateInfo> v1KeyInfoList = {
             { _jsonDeprecatedLoiterAltitudeRelativeKey,   QJsonValue::Bool,  true },
             { _jsonDeprecatedLandingAltitudeRelativeKey,  QJsonValue::Bool,  true },
         };
-        if (!JsonHelper::validateKeys(complexObject, v1KeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(complexObject, v1KeyInfoList, errorString)) {
             return false;
         }
 
@@ -786,10 +787,10 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
             _altitudesAreRelative = loiterAltitudeRelative;
         }
     } else {
-        QList<JsonHelper::KeyValidateInfo> v2KeyInfoList = {
+        QList<JsonParsing::KeyValidateInfo> v2KeyInfoList = {
             { _jsonAltitudesAreRelativeKey, QJsonValue::Bool,  true },
         };
-        if (!JsonHelper::validateKeys(complexObject, v2KeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(complexObject, v2KeyInfoList, errorString)) {
             _ignoreRecalcSignals = false;
             return false;
         }
@@ -798,7 +799,7 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
 
     QGeoCoordinate coordinate;
     QString finalApproachKey = complexObject.contains(_jsonFinalApproachCoordinateKey) ? _jsonFinalApproachCoordinateKey : _jsonDeprecatedLoiterCoordinateKey;
-    if (!JsonHelper::loadGeoCoordinate(complexObject[finalApproachKey], true /* altitudeRequired */, coordinate, errorString)) {
+    if (!GeoJsonHelper::loadGeoCoordinate(complexObject[finalApproachKey], true /* altitudeRequired */, coordinate, errorString)) {
         return false;
     }
     _finalApproachCoordinate = coordinate;
@@ -809,7 +810,7 @@ bool LandingComplexItem::_load(const QJsonObject& complexObject, int sequenceNum
                                       ? complexObject[_jsonFinalApproachSpeedKey].toDouble()
                                       : finalApproachSpeed()->rawDefaultValue());
 
-    if (!JsonHelper::loadGeoCoordinate(complexObject[_jsonLandingCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
+    if (!GeoJsonHelper::loadGeoCoordinate(complexObject[_jsonLandingCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
         return false;
     }
     _landingCoordinate = coordinate;

@@ -4,7 +4,7 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(CameraMetaDataLog, "Camera.CameraMetaData")
@@ -48,21 +48,21 @@ QList<CameraMetaData*> CameraMetaData::parseCameraMetaData()
 
     QString errorString;
     int version = 0;
-    const QJsonObject jsonObject = JsonHelper::openInternalQGCJsonFile(QStringLiteral(":/json/CameraMetaData.json"), "CameraMetaData", 1, 1, version, errorString);
+    const QJsonObject jsonObject = JsonParsing::openInternalQGCJsonFile(QStringLiteral(":/json/CameraMetaData.json"), "CameraMetaData", 1, 1, version, errorString);
     if (!errorString.isEmpty()) {
         qCWarning(CameraMetaDataLog) << "Internal Error:" << errorString;
         return cameraList;
     }
 
-    static const QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> rootKeyInfoList = {
         { "cameraMetaData", QJsonValue::Array, true }
     };
-    if (!JsonHelper::validateKeys(jsonObject, rootKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(jsonObject, rootKeyInfoList, errorString)) {
         qCWarning(CameraMetaDataLog) << errorString;
         return cameraList;
     }
 
-    static const QList<JsonHelper::KeyValidateInfo> cameraKeyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> cameraKeyInfoList = {
         { "canonicalName", QJsonValue::String, true },
         { "brand", QJsonValue::String, true },
         { "model", QJsonValue::String, true },
@@ -84,7 +84,7 @@ QList<CameraMetaData*> CameraMetaData::parseCameraMetaData()
         }
 
         const QJsonObject obj = jsonValue.toObject();
-        if (!JsonHelper::validateKeys(obj, cameraKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(obj, cameraKeyInfoList, errorString)) {
             qCWarning(CameraMetaDataLog) << errorString;
             return cameraList;
         }

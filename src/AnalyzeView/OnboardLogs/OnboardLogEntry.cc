@@ -1,6 +1,6 @@
 #include "OnboardLogEntry.h"
 #include "MAVLinkLib.h"
-#include "QGC.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QtMath>

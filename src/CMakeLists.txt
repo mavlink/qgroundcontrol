@@ -42,6 +42,8 @@ add_subdirectory(FollowMe)
 add_subdirectory(Gimbal)
 add_subdirectory(GPS)
 add_subdirectory(Utilities)
+# Must be added after Utilities — links QGCLogging/QGCFileSystem/QGCNetwork/QGCCompression.
+add_subdirectory(LogManager)
 add_subdirectory(Joystick)
 add_subdirectory(MAVLink)
 add_subdirectory(MissionManager)
@@ -93,15 +95,12 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Charts
         Qt6::Concurrent
         Qt6::Core
-        Qt6::Core5Compat
         Qt6::CorePrivate
         Qt6::Gui
         Qt6::HttpServer
         Qt6::Network
-        Qt6::Sensors
         Qt6::StateMachine
         Qt6::Svg
-        Qt6::TextToSpeech
         Qt6::Widgets
         Qt6::Xml
 
@@ -111,6 +110,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Quick
         Qt6::Quick3D
         Qt6::QuickControls2
+        Qt6::QuickVectorImage
 
         # Qt6 Location
         Qt6::Location
@@ -193,9 +193,8 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         OUTPUT_NAME ${CMAKE_PROJECT_NAME}
 )
 
-# ----------------------------------------------------------------------------
-# Precompiled Headers
-# ----------------------------------------------------------------------------
+# Helper STATIC libs declare their own tailored PCH; REUSE_FROM is impractical
+# because clang's PCH validator requires matching link-set-derived defines.
 target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE pch.h)
 
 # ============================================================================

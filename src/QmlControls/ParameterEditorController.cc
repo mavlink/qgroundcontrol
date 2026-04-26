@@ -1,6 +1,6 @@
 #include "QmlObjectListModel.h"
 #include "ParameterEditorController.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "ParameterManager.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"

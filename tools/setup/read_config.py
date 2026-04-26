@@ -133,7 +133,7 @@ def format_github_output(values: dict[str, str]) -> str:
 
     # Add derived values
     if "QT_MODULES" in values:
-        ios_excluded = {"qtserialport", "qtscxml"}
+        ios_excluded = {"qtserialport"}
         modules = values["QT_MODULES"].split()
         ios_modules = " ".join(m for m in modules if m not in ios_excluded)
         lines.append(f"qt_modules_ios={ios_modules}")

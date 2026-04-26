@@ -2,7 +2,7 @@
 
 #include "MAVLinkLib.h"
 #include "MavCommandQueue.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 

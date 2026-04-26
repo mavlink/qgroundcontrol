@@ -1,6 +1,6 @@
 #include "ParameterMetaData.h"
 #include "JsonParsing.h"
-#include "QGCFileHelper.h"
+#include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonDocument>
@@ -112,7 +112,7 @@ QVersionNumber ParameterMetaData::versionFromJsonData(const QByteArray &jsonData
 QVersionNumber ParameterMetaData::versionFromMetaDataFile(const QString &metaDataFile)
 {
     QString errorString;
-    const QByteArray data = QGCFileHelper::readFile(metaDataFile, &errorString);
+    const QByteArray data = QGCCompression::readFile(metaDataFile, &errorString);
     if (data.isEmpty()) {
         qCWarning(ParameterMetaDataLog) << "Failed to read parameter meta data file:" << metaDataFile << errorString;
         return {};

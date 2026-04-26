@@ -59,11 +59,11 @@ endif()
 # ----------------------------------------------------------------------------
 # Apple-Specific Pre-Project Settings
 # ----------------------------------------------------------------------------
-if(APPLE)
+# APPLE is true on iOS too; gate on CMAKE_SYSTEM_NAME or the iOS toolchain's
+# arm64-only CMAKE_OSX_ARCHITECTURES gets clobbered with x86_64h;arm64.
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(CMAKE_OSX_DEPLOYMENT_TARGET "${QGC_CONFIG_MACOS_DEPLOYMENT_TARGET}" CACHE STRING "macOS minimum deployment target")
-    # iOS builds: set(CMAKE_OSX_SYSROOT "iphoneos")
     if(QGC_MACOS_UNIVERSAL_BUILD)
-        # Universal binary for both Intel and Apple Silicon
         set(CMAKE_OSX_ARCHITECTURES "x86_64h;arm64")
     endif()
 endif()
@@ -195,7 +195,6 @@ find_package(Qt6
         Charts
         Concurrent
         Core
-        Core5Compat
         Gui
         HttpServer
         LinguistTools
@@ -208,6 +207,7 @@ find_package(Qt6
         QmlIntegration
         Quick
         QuickControls2
+        QuickVectorImage
         QuickWidgets
         Sensors
         Sql
@@ -276,9 +276,7 @@ endif()
 # Don't route the big .qrcs through qt_add_big_resources — its pass2 object-file
 # output fails on MSVC ("No data signature found") when large data sections are elided.
 list(APPEND QGC_RESOURCES
-    "${CMAKE_SOURCE_DIR}/qgcimages.qrc"
     "${CMAKE_SOURCE_DIR}/qgcresources.qrc"
-    "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/InstrumentValueIcons.qrc"
 )
 
 # ============================================================================

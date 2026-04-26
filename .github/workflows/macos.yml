@@ -33,22 +33,15 @@ permissions:
   actions: read
   security-events: write
 
+env:
+  IS_STABLE_BUILD: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+
 jobs:
   changes:
-    name: Detect Changes
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      should_build: ${{ steps.detect.outputs.any }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-      - id: detect
-        uses: ./.github/actions/detect-changes
-        with:
-          platform: macos
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: macos
 
   build:
     needs: changes
@@ -66,17 +59,20 @@ jobs:
         shell: bash
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
-          fetch-tags: ${{ github.event_name != 'pull_request' }}
 
       - name: Build Setup
         id: setup
         uses: ./.github/actions/build-setup
         with:
-          restore-timestamps: ${{ github.event_name != 'pull_request' && 'true' || 'false' }}
           qt-host: mac
           qt-arch: clang_64
           build-type: ${{ matrix.build_type }}
@@ -94,7 +90,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
-          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          stable: ${{ env.IS_STABLE_BUILD }}
           extra-args: -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build

@@ -1,11 +1,12 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QString>
-#include <QtCore/QVariant>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DGeometry>
 
 class OsmParser;
+class QVariant;
 class Viewer3DMapProvider;
 
 class CityMapGeometry : public QQuick3DGeometry

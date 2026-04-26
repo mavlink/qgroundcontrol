@@ -36,7 +36,7 @@ void LoggingQmlBindingTest::_singletonAccessible()
     QQmlComponent component(_engine);
     component.setData(R"(
         import QtQuick
-        import QGroundControl.Logging
+        import QGroundControl.LogManager
 
         QtObject {
             property var mgr: LogManager
@@ -90,7 +90,7 @@ void LoggingQmlBindingTest::_modelReceivesEntries()
     QQmlComponent component(_engine);
     component.setData(R"(
         import QtQuick
-        import QGroundControl.Logging
+        import QGroundControl.LogManager
 
         QtObject {
             property int total: LogManager.model.totalCount
@@ -112,7 +112,7 @@ void LoggingQmlBindingTest::_filterBindingsWork()
     QQmlComponent component(_engine);
     component.setData(R"(
         import QtQuick
-        import QGroundControl.Logging
+        import QGroundControl.LogManager
 
         QtObject {
             property var model: LogManager.model
@@ -143,7 +143,7 @@ void LoggingQmlBindingTest::_settingsDialogLoads()
     QQmlComponent component(_engine);
     component.setData(R"(
         import QtQuick
-        import QGroundControl.Logging
+        import QGroundControl.LogManager
 
         QtObject {
             property bool diskEnabled: LogManager.diskLoggingEnabled

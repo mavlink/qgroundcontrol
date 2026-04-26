@@ -136,14 +136,6 @@ def cmd_ctest(args: argparse.Namespace) -> None:
         cmd += ["-L", args.include_labels]
     if args.exclude_labels:
         cmd += ["-LE", args.exclude_labels]
-    if args.shard_index or args.shard_count:
-        if not (args.shard_index and args.shard_count):
-            print("::error::Both --shard-index and --shard-count must be specified together")
-            sys.exit(1)
-        if args.shard_index < 1 or args.shard_index > args.shard_count:
-            print(f"::error::--shard-index must be between 1 and --shard-count ({args.shard_count})")
-            sys.exit(1)
-        cmd += ["-I", f"{args.shard_index},,{args.shard_count}"]
 
     start = time.monotonic()
 
@@ -200,8 +192,6 @@ def main() -> None:
     p_ctest.add_argument("--jobs", type=int, required=True)
     p_ctest.add_argument("--include-labels", default="")
     p_ctest.add_argument("--exclude-labels", default="")
-    p_ctest.add_argument("--shard-index", type=int, default=0, help="Shard index (1-based)")
-    p_ctest.add_argument("--shard-count", type=int, default=0, help="Total shard count")
 
     args = parser.parse_args()
     commands = {

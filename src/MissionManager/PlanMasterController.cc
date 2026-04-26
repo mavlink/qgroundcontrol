@@ -1,12 +1,11 @@
 #include "PlanMasterController.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
-#include "JsonHelper.h"
 #include "JsonParsing.h"
 #include "MissionManager.h"
 #include "KMLPlanDomDocument.h"
@@ -370,17 +369,17 @@ void PlanMasterController::loadFromFile(const QString& filename)
         QGCCorePlugin::instance()->preLoadFromJson(this, json);
 
         int version;
-        if (!JsonHelper::validateExternalQGCJsonFile(json, kPlanFileType, kPlanFileVersion, kPlanFileVersion, version, errorString)) {
+        if (!JsonParsing::validateExternalQGCJsonFile(json, kPlanFileType, kPlanFileVersion, kPlanFileVersion, version, errorString)) {
             QGC::showAppMessage(errorMessage.arg(errorString));
             return;
         }
 
-        QList<JsonHelper::KeyValidateInfo> rgKeyInfo = {
+        QList<JsonParsing::KeyValidateInfo> rgKeyInfo = {
             { kJsonMissionObjectKey,        QJsonValue::Object, true },
             { kJsonGeoFenceObjectKey,       QJsonValue::Object, true },
             { kJsonRallyPointsObjectKey,    QJsonValue::Object, true },
         };
-        if (!JsonHelper::validateKeys(json, rgKeyInfo, errorString)) {
+        if (!JsonParsing::validateKeys(json, rgKeyInfo, errorString)) {
             QGC::showAppMessage(errorMessage.arg(errorString));
             return;
         }
@@ -444,7 +443,7 @@ QJsonDocument PlanMasterController::saveToJson()
     QJsonObject missionJson;
     QJsonObject fenceJson;
     QJsonObject rallyJson;
-    JsonHelper::saveQGCJsonFileHeader(planJson, kPlanFileType, kPlanFileVersion);
+    JsonParsing::saveQGCJsonFileHeader(planJson, kPlanFileType, kPlanFileVersion);
     //-- Allow plugin to preemptly add its own keys to mission
     QGCCorePlugin::instance()->preSaveToMissionJson(this, missionJson);
     _missionController.save(missionJson);

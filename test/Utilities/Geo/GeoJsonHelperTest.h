@@ -19,4 +19,6 @@ private slots:
     void _loadPolylineFromNestedGeometryCollection_test();
     void _loadPolygonFromPolylineFails_test();
     void _loadPolylineFromPolygonFails_test();
+    void _loadSaveGeoJsonCoordinate_test();
+    void _loadSaveGeoJsonCoordinateWithAltitude_test();
 };

@@ -1,7 +1,7 @@
 #include "QGCCachedTileSet.h"
 
 #include "ElevationMapProvider.h"
-#include "QGC.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"

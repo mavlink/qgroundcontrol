@@ -5,7 +5,7 @@
 #include <QtSensors/QCompass>
 #include <QtSensors/QPressureSensor>
 
-namespace QGCDeviceInfo
+namespace QGCSensors
 {
 
 ////////////////////////////////////////////////////////////////////
@@ -140,4 +140,4 @@ private:
 
 ////////////////////////////////////////////////////////////////////
 
-} /* namespace QGCDeviceInfo */
+} /* namespace QGCSensors */

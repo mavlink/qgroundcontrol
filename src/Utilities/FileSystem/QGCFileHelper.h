@@ -11,17 +11,7 @@
 /// Generic file system helper utilities
 namespace QGCFileHelper {
 
-// ============================================================================
-// File Reading (with optional decompression)
-// ============================================================================
-
-/// Read file contents with optional automatic decompression
-/// Supports transparent decompression of .gz, .xz, .zst, .bz2, .lz4 files
-/// Uses QGCCompression::isCompressedFile() for format detection
-/// @param filePath Path to file (may be compressed or uncompressed)
-/// @param errorString Output error message on failure
-/// @param maxBytes Maximum bytes to read (0 = unlimited, applies to decompressed size)
-/// @return File contents (decompressed if applicable), empty on failure
+/// Read raw file contents. @param maxBytes Cap on returned bytes (0 = unlimited).
 QByteArray readFile(const QString &filePath, QString *errorString = nullptr,
                     qint64 maxBytes = 0);
 
@@ -145,15 +135,6 @@ constexpr QCryptographicHash::Algorithm kDefaultHashAlgorithm = QCryptographicHa
 /// @return Hash as hex string, or empty string on error
 QString computeFileHash(const QString &filePath,
                         QCryptographicHash::Algorithm algorithm = kDefaultHashAlgorithm);
-
-/// Compute hash of decompressed file contents
-/// Automatically decompresses .gz, .xz, .zst, .bz2, .lz4 files before hashing
-/// For uncompressed files, behaves identically to computeFileHash
-/// @param filePath Path to file (may be compressed)
-/// @param algorithm Hash algorithm (default: SHA-256)
-/// @return Hash as hex string, or empty string on error
-QString computeDecompressedFileHash(const QString &filePath,
-                                    QCryptographicHash::Algorithm algorithm = kDefaultHashAlgorithm);
 
 /// Compute hash of data
 /// @param data Data to hash

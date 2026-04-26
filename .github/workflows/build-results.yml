@@ -2,6 +2,10 @@ name: Build Results
 
 on:
   workflow_run:
+    # GitHub requires literal workflow names here (no expressions). Keep this
+    # list in sync with build-config.json's `platform_workflows` plus any
+    # non-platform triggers (pre-commit). Drift is enforced by
+    # .github/scripts/tests/test_build_results_workflow_sync.py.
     workflows: [Linux, Windows, MacOS, Android, pre-commit]
     types: [completed]
 
@@ -13,12 +17,38 @@ permissions:
   issues: write
 
 env:
-  PLATFORM_WORKFLOWS: Linux,Windows,MacOS,Android
   QGC_GH_API_MODE: http
 
 jobs:
+  load-config:
+    name: Load Build Config
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      platform_workflows: ${{ steps.read.outputs.platform_workflows }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/build-config.json
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+      - name: Read platform_workflows
+        id: read
+        run: |
+          value=$(jq -r '.platform_workflows' .github/build-config.json)
+          if [[ -z "$value" || "$value" == "null" ]]; then
+            echo "::error::platform_workflows missing from build-config.json"
+            exit 1
+          fi
+          echo "platform_workflows=${value}" >> "$GITHUB_OUTPUT"
+
   post-pr-comment:
     name: Post Build Results
+    needs: load-config
     runs-on: ubuntu-latest
     if: github.event.workflow_run.event == 'pull_request'
     concurrency:
@@ -61,7 +91,7 @@ jobs:
         if: steps.pr.outputs.result != 'null'
         uses: actions/github-script@v9
         env:
-          PLATFORM_WORKFLOWS: ${{ env.PLATFORM_WORKFLOWS }}
+          PLATFORM_WORKFLOWS: ${{ needs.load-config.outputs.platform_workflows }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         with:
           script: |
@@ -95,6 +125,7 @@ jobs:
             }
             core.setOutput('ready', ready ? 'true' : 'false');
 
+      # Keep this list identical to the save-baselines job's checkout below — they share scripts.
       - name: Checkout
         if: steps.pr.outputs.result != 'null' && steps.gate.outputs.ready == 'true'
         uses: actions/checkout@v6
@@ -103,9 +134,11 @@ jobs:
             .github/actions/download-all-artifacts
             .github/actions/collect-artifact-sizes
             .github/actions/setup-python
-            .github/scripts/collect_build_status.py
-            .github/scripts/collect_artifact_sizes.py
+            .github/scripts/check_baseline_ready.py
             .github/scripts/ci_bootstrap.py
+            .github/scripts/collect_artifact_sizes.py
+            .github/scripts/collect_build_status.py
+            .github/scripts/download_artifacts.py
             .github/scripts/generate_build_results_comment.py
             .github/scripts/templates/build_results.md.j2
             .github/scripts/xml_utils.py
@@ -117,7 +150,6 @@ jobs:
             tools/uv.lock
             tools/setup/setup_bootstrap.py
             tools/setup/install_python.py
-            .github/scripts/download_artifacts.py
           sparse-checkout-cone-mode: false
 
       - name: Setup Python dependencies
@@ -130,7 +162,7 @@ jobs:
         if: steps.pr.outputs.result != 'null' && steps.gate.outputs.ready == 'true'
         id: builds
         env:
-          PLATFORM_WORKFLOWS: ${{ env.PLATFORM_WORKFLOWS }}
+          PLATFORM_WORKFLOWS: ${{ needs.load-config.outputs.platform_workflows }}
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -143,23 +175,42 @@ jobs:
             --runs-cache workflow-runs-cache.json
 
       - name: Download artifacts from all platform workflows
+        id: download
         if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
         continue-on-error: true
         uses: ./.github/actions/download-all-artifacts
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
-          workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: pull_request
           runs-file: workflow-runs-cache.json
           artifact-prefixes: coverage-report,test-results-
           artifact-metadata-file: workflow-artifacts.json
+
+      - name: Post fallback comment on artifact download failure
+        if: steps.pr.outputs.result != 'null' && steps.download.outcome == 'failure'
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          pr-number: ${{ steps.pr.outputs.result }}
+          comment-tag: build-results
+          message: |
+            <!-- thollander/actions-comment-pull-request "build-results" -->
+            ⚠️ **Build results unavailable** — artifact download from one or more platform workflows failed (likely artifact retention expiry or transient API error). The combined report cannot be generated for this run.
+
+            See the [Build Results workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+
+      - name: Stop if artifact download failed
+        if: steps.pr.outputs.result != 'null' && steps.download.outcome == 'failure'
+        run: |
+          echo "::error::Artifact download failed; skipping combined report generation."
+          exit 1
 
       - name: Collect artifact sizes
         if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
         uses: ./.github/actions/collect-artifact-sizes
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
-          workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: pull_request
           output-file: pr-sizes.json
           runs-file: workflow-runs-cache.json
@@ -256,6 +307,7 @@ jobs:
 
   save-baselines:
     name: Save Baselines
+    needs: load-config
     runs-on: ubuntu-latest
     if: >
       github.event.workflow_run.head_branch == 'master' &&
@@ -278,7 +330,7 @@ jobs:
         id: gate
         uses: actions/github-script@v9
         env:
-          PLATFORM_WORKFLOWS: ${{ env.PLATFORM_WORKFLOWS }}
+          PLATFORM_WORKFLOWS: ${{ needs.load-config.outputs.platform_workflows }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         with:
           script: |
@@ -312,6 +364,7 @@ jobs:
             }
             core.setOutput('ready', ready ? 'true' : 'false');
 
+      # Keep this list identical to post-pr-comment's checkout above.
       - name: Checkout
         if: steps.gate.outputs.ready == 'true'
         uses: actions/checkout@v6
@@ -321,8 +374,13 @@ jobs:
             .github/actions/collect-artifact-sizes
             .github/actions/setup-python
             .github/scripts/check_baseline_ready.py
-            .github/scripts/collect_artifact_sizes.py
             .github/scripts/ci_bootstrap.py
+            .github/scripts/collect_artifact_sizes.py
+            .github/scripts/collect_build_status.py
+            .github/scripts/download_artifacts.py
+            .github/scripts/generate_build_results_comment.py
+            .github/scripts/templates/build_results.md.j2
+            .github/scripts/xml_utils.py
             tools/common/build_config.py
             tools/common/file_traversal.py
             tools/common/gh_actions.py
@@ -331,7 +389,6 @@ jobs:
             tools/uv.lock
             tools/setup/setup_bootstrap.py
             tools/setup/install_python.py
-            .github/scripts/download_artifacts.py
           sparse-checkout-cone-mode: false
 
       - name: Setup Python dependencies
@@ -344,7 +401,7 @@ jobs:
         if: steps.gate.outputs.ready == 'true'
         id: ready
         env:
-          PLATFORM_WORKFLOWS: ${{ env.PLATFORM_WORKFLOWS }}
+          PLATFORM_WORKFLOWS: ${{ needs.load-config.outputs.platform_workflows }}
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -362,7 +419,7 @@ jobs:
         uses: ./.github/actions/download-all-artifacts
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
-          workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: push
           runs-file: workflow-runs-cache.json
           artifact-prefixes: coverage-report,test-results-
@@ -373,7 +430,7 @@ jobs:
         uses: ./.github/actions/collect-artifact-sizes
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
-          workflows: ${{ env.PLATFORM_WORKFLOWS }}
+          workflows: ${{ needs.load-config.outputs.platform_workflows }}
           event: push
           output-file: baseline-sizes.json
           runs-file: workflow-runs-cache.json

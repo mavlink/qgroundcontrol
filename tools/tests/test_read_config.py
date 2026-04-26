@@ -115,7 +115,7 @@ def test_github_output_includes_ios_modules(tmp_path: Path) -> None:
     assert "qt_minimum_version=6.8.0" in output_text
     assert "gstreamer_version=1.28.1" in output_text
     assert "gstreamer_windows_version=1.26.6" in output_text
-    # Derived value excludes qtserialport and qtscxml and normalizes spacing.
+    # Derived value excludes qtserialport and normalizes spacing.
     assert "qt_modules_ios=qtpositioning" in output_text
 
     env_text = github_env.read_text(encoding="utf-8")

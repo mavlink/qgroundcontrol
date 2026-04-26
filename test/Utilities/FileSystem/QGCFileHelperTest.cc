@@ -208,7 +208,7 @@ void QGCFileHelperTest::_testAtomicWriteEmptyData()
 void QGCFileHelperTest::_testReadCompressedFile()
 {
     QString error;
-    const QByteArray data = QGCFileHelper::readFile(":/unittest/manifest.json.gz", &error);
+    const QByteArray data = QGCCompression::readFile(":/unittest/manifest.json.gz", &error);
     QVERIFY2(error.isEmpty(), qPrintable(error));
     QVERIFY(!data.isEmpty());
     QVERIFY(data.contains("\"name\""));
@@ -217,7 +217,7 @@ void QGCFileHelperTest::_testReadCompressedFile()
 void QGCFileHelperTest::_testReadCompressedFileMaxBytes()
 {
     QString error;
-    const QByteArray partial = QGCFileHelper::readFile(":/unittest/manifest.json.gz", &error, 8);
+    const QByteArray partial = QGCCompression::readFile(":/unittest/manifest.json.gz", &error, 8);
     QVERIFY2(error.isEmpty(), qPrintable(error));
     QVERIFY(!partial.isEmpty());
     QVERIFY(partial.size() <= 8);
@@ -412,21 +412,21 @@ void QGCFileHelperTest::_testComputeDecompressedFileHash()
 {
     const QString gzPath = QStringLiteral(":/unittest/manifest.json.gz");
     QString error;
-    const QByteArray plainData = QGCFileHelper::readFile(gzPath, &error);
+    const QByteArray plainData = QGCCompression::readFile(gzPath, &error);
     QVERIFY2(error.isEmpty(), qPrintable(error));
     QVERIFY(!plainData.isEmpty());
 
     const QString expectedPlainHash = QGCFileHelper::computeHash(plainData);
     QVERIFY(!expectedPlainHash.isEmpty());
 
-    const QString decompressedHash = QGCFileHelper::computeDecompressedFileHash(gzPath);
+    const QString decompressedHash = QGCCompression::computeFileHash(gzPath);
     QVERIFY(!decompressedHash.isEmpty());
     QCOMPARE(decompressedHash, expectedPlainHash);
 
-    // For uncompressed files, the helper should match computeFileHash()
+    // For uncompressed files, QGCCompression::computeFileHash should match QGCFileHelper::computeFileHash().
     const QString passthroughPath = QStringLiteral(":/unittest/arducopter.apj");
     const QString regularHash = QGCFileHelper::computeFileHash(passthroughPath);
-    const QString passthroughHash = QGCFileHelper::computeDecompressedFileHash(passthroughPath);
+    const QString passthroughHash = QGCCompression::computeFileHash(passthroughPath);
     QCOMPARE(passthroughHash, regularHash);
 }
 

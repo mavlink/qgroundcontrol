@@ -91,7 +91,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     if(QGC_TIME_TRACE)
         if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             add_compile_options(-ftime-trace -ftime-trace-granularity=100)
-            message(STATUS "QGC: -ftime-trace enabled (granularity=100us)")
+            # ccache rejects -ftime-trace; clear the launcher so profile builds
+            # don't pay fork overhead per TU only to be marked unsupported.
+            set(CMAKE_C_COMPILER_LAUNCHER "")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "")
+            message(STATUS "QGC: -ftime-trace enabled (granularity=100us); compiler launcher disabled")
         else()
             message(WARNING "QGC_TIME_TRACE requires Clang; ignoring with ${CMAKE_CXX_COMPILER_ID}")
         endif()

@@ -160,12 +160,25 @@ class TestResolveCachePolicy:
     def test_auto_same_repo_pr(self) -> None:
         env = {"EVENT_NAME": "pull_request", "PR_REPO": "owner/repo", "THIS_REPO": "owner/repo"}
         with patch.dict(os.environ, env, clear=False):
-            assert mod.resolve_cache_policy("auto") == "true"
+            assert mod.resolve_cache_policy("auto") == "false"
 
     def test_auto_fork_pr(self) -> None:
         env = {"EVENT_NAME": "pull_request", "PR_REPO": "fork/repo", "THIS_REPO": "owner/repo"}
         with patch.dict(os.environ, env, clear=False):
             assert mod.resolve_cache_policy("auto") == "false"
+
+    def test_auto_pull_request_target(self) -> None:
+        env = {"EVENT_NAME": "pull_request_target", "PR_REPO": "owner/repo", "THIS_REPO": "owner/repo"}
+        with patch.dict(os.environ, env, clear=False):
+            assert mod.resolve_cache_policy("auto") == "false"
+
+    def test_auto_schedule(self) -> None:
+        with patch.dict(os.environ, {"EVENT_NAME": "schedule"}, clear=False):
+            assert mod.resolve_cache_policy("auto") == "true"
+
+    def test_auto_workflow_dispatch(self) -> None:
+        with patch.dict(os.environ, {"EVENT_NAME": "workflow_dispatch"}, clear=False):
+            assert mod.resolve_cache_policy("auto") == "true"
 
 
 class TestWriteGithubOutput:

@@ -1,6 +1,6 @@
 #include "ADSBVehicleManager.h"
 #include "MAVLinkLib.h"
-#include "QGC.h"
+#include "AppMessages.h"
 #include "SettingsManager.h"
 #include "ADSBVehicleManagerSettings.h"
 #include "ADSBTCPLink.h"

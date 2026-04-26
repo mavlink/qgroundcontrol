@@ -1,5 +1,5 @@
 #include "PowerModulePresetController.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonArray>
@@ -16,7 +16,7 @@ QVariantList PowerModulePresetController::powerModulePresets() const
 {
     int version;
     QString errorString;
-    const QJsonObject root = JsonHelper::openInternalQGCJsonFile(
+    const QJsonObject root = JsonParsing::openInternalQGCJsonFile(
         QStringLiteral(":/json/PowerModulePresets.json"),
         QStringLiteral("PowerModulePresets"), 1, 1, version, errorString);
     if (root.isEmpty()) {
@@ -29,7 +29,7 @@ QVariantList PowerModulePresetController::powerModulePresets() const
         return {};
     }
 
-    static const QList<JsonHelper::KeyValidateInfo> keyInfo = {
+    static const QList<JsonParsing::KeyValidateInfo> keyInfo = {
         { "name",       QJsonValue::String, true },
         { "voltMult",   QJsonValue::Double, true },
         { "ampPerVolt", QJsonValue::Double, true },
@@ -48,7 +48,7 @@ QVariantList PowerModulePresetController::powerModulePresets() const
         const QJsonObject obj = modules.at(i).toObject();
 
         errorString.clear();
-        if (!JsonHelper::validateKeysStrict(obj, keyInfo, errorString)) {
+        if (!JsonParsing::validateKeysStrict(obj, keyInfo, errorString)) {
             qCCritical(PowerModulePresetControllerLog) << "powerModules[" << i << "]:" << errorString;
             return {};
         }

@@ -1,5 +1,5 @@
 #include "QGCFencePolygon.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 
 QGCFencePolygon::QGCFencePolygon(bool inclusion, QObject* parent)
     : QGCMapPolygon (parent)
@@ -36,7 +36,7 @@ void QGCFencePolygon::_setDirty(void)
 
 void QGCFencePolygon::saveToJson(QJsonObject& json)
 {
-    json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;
+    json[JsonParsing::jsonVersionKey] = _jsonCurrentVersion;
     json[_jsonInclusionKey] = _inclusion;
     QGCMapPolygon::saveToJson(json);
 }
@@ -45,15 +45,15 @@ bool QGCFencePolygon::loadFromJson(const QJsonObject& json, bool required, QStri
 {
     errorString.clear();
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
+        { JsonParsing::jsonVersionKey,   QJsonValue::Double, true },
         { _jsonInclusionKey,            QJsonValue::Bool,   true },
     };
-    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
-    if (json[JsonHelper::jsonVersionKey].toInt() != _jsonCurrentVersion) {
+    if (json[JsonParsing::jsonVersionKey].toInt() != _jsonCurrentVersion) {
         errorString = tr("GeoFence Polygon only supports version %1").arg(_jsonCurrentVersion);
         return false;
     }

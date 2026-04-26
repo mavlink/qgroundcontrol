@@ -1,5 +1,5 @@
 #include "MissionCommandList.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "MissionCommandUIInfo.h"
 #include "QGCLoggingCategory.h"
 
@@ -23,7 +23,10 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
 
     QString errorString;
     int version;
-    QJsonObject jsonObject = JsonHelper::openInternalQGCJsonFile(jsonFilename, qgcFileType, 1, 1, version, errorString);
+    QJsonObject jsonObject = JsonParsing::openInternalQGCJsonFile(
+        jsonFilename, qgcFileType, 1, 1, version, errorString,
+        QStringList{"label", "enumStrings", "friendlyName", "description", "category"},
+        QStringList{"rawName", "comment"});
     if (!errorString.isEmpty()) {
         qWarning() << "Internal Error: " << errorString;
         return;

@@ -1,38 +1,7 @@
-# ============================================================================
-# Geo Subsystem
-# Geographic data handling (GeoJSON, KML, Shapefiles)
-# ============================================================================
-
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        GeoJsonHelper.cc
-        GeoJsonHelper.h
-        KMLDomDocument.cc
-        KMLDomDocument.h
-        KMLHelper.cc
-        KMLHelper.h
-        KMLSchemaValidator.cc
-        KMLSchemaValidator.h
-        QGCGeo.cc
-        QGCGeo.h
-        ShapeFileHelper.cc
-        ShapeFileHelper.h
-        SHPFileHelper.cc
-        SHPFileHelper.h
+qt_add_library(QGCGeoMath STATIC
+    QGCGeo.cc
+    QGCGeo.h
 )
-
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-# KML Schema Resources (OGC KML 2.2 XSD for validation)
-qt_add_resources(${CMAKE_PROJECT_NAME} "kml_schema"
-    PREFIX "/kml"
-    FILES
-        ogckml22.xsd
-)
-
-# ============================================================================
-# GeographicLib Integration
-# ============================================================================
 
 CPMAddPackage(
     NAME geographiclib
@@ -58,27 +27,25 @@ CPMAddPackage(
     PATCHES geographiclib.patch
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GeographicLib::GeographicLib)
 if(geographiclib_ADDED)
     qgc_disable_dependency_warnings(GeographicLib_STATIC)
 endif()
 
-# ============================================================================
-# Shapelib Integration
-# ============================================================================
-
-CPMAddPackage(
-    NAME Shapelib
-    VERSION 1.6.3
-    GITHUB_REPOSITORY OSGeo/shapelib
-    GIT_TAG v1.6.3
-    OPTIONS
-        "BUILD_SHAPELIB_CONTRIB OFF"
-        "BUILD_APPS OFF"
-        "BUILD_TESTING OFF"
+target_link_libraries(QGCGeoMath
+    PUBLIC
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Positioning
+    PRIVATE
+        GeographicLib::GeographicLib
+        QGCLogging
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shp)
-if(Shapelib_ADDED)
-    qgc_disable_dependency_warnings(shp)
-endif()
+target_include_directories(QGCGeoMath
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGeoMath)
+
+add_subdirectory(Formats)
