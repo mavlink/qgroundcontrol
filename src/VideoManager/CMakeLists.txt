@@ -2,6 +2,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         SubtitleWriter.cc
         SubtitleWriter.h
+        CEVideoStatus.cc
+        CEVideoStatus.h
         VideoManager.cc
         VideoManager.h
 )

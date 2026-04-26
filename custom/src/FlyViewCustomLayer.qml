@@ -21,6 +21,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.VideoManager
 
 Item {
     id: root
@@ -124,6 +125,10 @@ Item {
 
     // ARM is only permitted during Demo #4 (Points Round)
     readonly property bool _canArm: demoLocked && selectedDemoIndex === 3
+
+    CEVideoStatus {
+        id: ceVideoStatus
+    }
 
     // ─────────────────────────────────────────────────────────────────────
     // DEMO LOOKUP TABLES  (read-only data, safe to treat as constants)
@@ -407,6 +412,25 @@ Item {
                         text:           _activeVehicle ? "ACTIVE" : "INACTIVE"
                         color:          _activeVehicle ? _clrGreen : _clrMuted
                         font.pixelSize: 11
+                    }
+                }
+                Rectangle {
+                    width:  videoStatusText.width + 18
+                    height: 28
+                    radius: 4
+                    color:  ceVideoStatus.state === "OK" ? _clrGreen :
+                            ceVideoStatus.state === "LOW_FPS" ? _clrAmber :
+                            (ceVideoStatus.state === "STALE" || ceVideoStatus.state === "NO_VIDEO") ? _clrRed :
+                            _clrCard
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Text {
+                        id:               videoStatusText
+                        anchors.centerIn: parent
+                        text:             ceVideoStatus.hasStatus ? "VIDEO " + ceVideoStatus.state : "VIDEO --"
+                        color:            "white"
+                        font.pixelSize:   11
+                        font.bold:        true
                     }
                 }
             }
@@ -1007,4 +1031,3 @@ Item {
         }
     }
 }
-

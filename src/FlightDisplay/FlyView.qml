@@ -60,6 +60,7 @@ Item {
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property var    _mapControl:            mapControl
+    property bool   _ceVideoInsetVisible:   true
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
@@ -75,8 +76,8 @@ Item {
 
     QGCToolInsets {
         id:                     _toolInsets
-        leftEdgeBottomInset:    _pipView.leftEdgeBottomInset
-        bottomEdgeLeftInset:    _pipView.bottomEdgeLeftInset
+        leftEdgeBottomInset:    0
+        bottomEdgeLeftInset:    0
     }
 
     FlyViewToolBar {
@@ -93,34 +94,22 @@ Item {
 
         FlyViewMap {
             id:                     mapControl
+            anchors.fill:           parent
             planMasterController:   _planController
             rightPanelWidth:        ScreenTools.defaultFontPixelHeight * 9
             pipView:                _pipView
-            pipMode:                !_mainWindowIsMap
+            pipMode:                false
             toolInsets:             customOverlay.totalToolInsets
             mapName:                "FlightDisplayView"
             enabled:                !viewer3DWindow.isOpen
+            Component.onCompleted:  pipState.state = pipState.fullState
         }
 
-        FlyViewVideo {
-            id:         videoControl
-            pipView:    _pipView
-        }
-
-        PipView {
-            id:                     _pipView
-            anchors.left:           parent.left
-            anchors.bottom:         parent.bottom
-            anchors.margins:        _toolsMargin
-            item1IsFullSettingsKey: "MainFlyWindowIsMap"
-            item1:                  mapControl
-            item2:                  QGroundControl.videoManager.hasVideo ? videoControl : null
-            show:                   QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen &&
-                                        (videoControl.pipState.state === videoControl.pipState.pipState || mapControl.pipState.state === mapControl.pipState.pipState)
-            z:                      QGroundControl.zOrderWidgets
-
-            property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
-            property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
+        Item {
+            id:         _pipView
+            visible:    false
+            property real leftEdgeBottomInset: 0
+            property real bottomEdgeLeftInset: 0
         }
 
         FlyViewWidgetLayer {
@@ -177,6 +166,77 @@ Item {
         Viewer3D{
             id:                     viewer3DWindow
             anchors.fill:           parent
+        }
+
+        Rectangle {
+            id:                     ceVideoInset
+            z:                      QGroundControl.zOrderTopMost - 2
+            visible:                QGroundControl.videoManager.hasVideo && _ceVideoInsetVisible && !viewer3DWindow.isOpen
+            anchors.left:           parent.left
+            anchors.bottom:         parent.bottom
+            anchors.leftMargin:     customOverlay.totalToolInsets.leftEdgeBottomInset + _toolsMargin
+            anchors.bottomMargin:   customOverlay.totalToolInsets.bottomEdgeLeftInset + _toolsMargin
+            width:                  Math.max(ScreenTools.defaultFontPixelWidth * 28, parent.width * 0.26)
+            height:                 width * 9 / 16
+            color:                  "black"
+            border.color:           Qt.rgba(1, 1, 1, 0.35)
+            border.width:           1
+            radius:                 3
+            clip:                   true
+
+            FlightDisplayViewVideo {
+                anchors.fill:   parent
+                useSmallFont:   true
+                visible:        QGroundControl.videoManager.isStreamSource
+            }
+
+            Rectangle {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                anchors.top:    parent.top
+                height:         ScreenTools.defaultFontPixelHeight * 2
+                color:          Qt.rgba(0, 0, 0, 0.55)
+
+                Row {
+                    anchors.right:          parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 0.5
+                    spacing:                ScreenTools.defaultFontPixelWidth * 0.5
+
+                    QGCButton {
+                        width:      ScreenTools.defaultFontPixelHeight * 1.7
+                        height:     width
+                        text:       qsTr("X")
+                        onClicked:  _ceVideoInsetVisible = false
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            z:                  QGroundControl.zOrderTopMost - 1
+            visible:            QGroundControl.videoManager.hasVideo && !_ceVideoInsetVisible && !viewer3DWindow.isOpen
+            anchors.left:       parent.left
+            anchors.bottom:     parent.bottom
+            anchors.leftMargin: customOverlay.totalToolInsets.leftEdgeBottomInset + _toolsMargin
+            anchors.bottomMargin: customOverlay.totalToolInsets.bottomEdgeLeftInset + _toolsMargin
+            width:              ScreenTools.defaultFontPixelHeight * 2.4
+            height:             width
+            radius:             3
+            color:              Qt.rgba(0, 0, 0, 0.7)
+
+            QGCLabel {
+                anchors.centerIn: parent
+                text:             qsTr("VID")
+                color:            "white"
+                font.pointSize:   ScreenTools.smallFontPointSize
+                font.bold:        true
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked:    _ceVideoInsetVisible = true
+            }
         }
     }
 }

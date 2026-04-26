@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "VideoManager.h"
+#include "CEVideoStatus.h"
 #include "AppSettings.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -74,6 +75,7 @@ void VideoManager::registerQmlTypes()
 {
     (void) qmlRegisterUncreatableType<VideoManager>("QGroundControl.VideoManager", 1, 0, "VideoManager", "Reference only");
     (void) qmlRegisterUncreatableType<VideoReceiver>("QGroundControl", 1, 0, "VideoReceiver","Reference only");
+    (void) qmlRegisterType<CEVideoStatus>("QGroundControl.VideoManager", 1, 0, "CEVideoStatus");
 #ifndef QGC_GST_STREAMING
     (void) qmlRegisterType<VideoItemStub>("org.freedesktop.gstreamer.Qt6GLVideoItem", 1, 0, "GstGLQt6VideoItem");
 #endif
