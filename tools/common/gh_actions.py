@@ -200,14 +200,16 @@ def is_fork_pr() -> bool:
 def resolve_cache_policy(requested: str) -> str:
     """Resolve cache save policy.
 
-    Args:
-        requested: "auto", "true", or "false"
-
-    Returns:
-        "true" or "false"
+    "auto" only saves on non-PR events (push, schedule, workflow_dispatch).
+    PRs read from the shared cache but never write, so the 10 GB repo cap
+    isn't churned by per-PR entries. Long-lived cache state is owned by
+    push-to-default-branch builds.
     """
     if requested != "auto":
         return requested
+    event = os.environ.get("EVENT_NAME", os.environ.get("GITHUB_EVENT_NAME", ""))
+    if event in {"pull_request", "pull_request_target"}:
+        return "false"
     return "false" if is_fork_pr() else "true"
 
 

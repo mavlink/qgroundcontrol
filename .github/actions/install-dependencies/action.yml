@@ -22,6 +22,13 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Cache GStreamer (Windows)
+      if: runner.os == 'Windows' && inputs.gstreamer == 'true'
+      uses: actions/cache@v5
+      with:
+        path: C:\gstreamer
+        key: gstreamer-windows-${{ inputs.gstreamer-version || hashFiles('.github/build-config.json') }}
+
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
       uses: nick-fields/retry@v3
@@ -109,6 +116,13 @@ runs:
           validated="$(python3 tools/setup/install_dependencies.py --validate-extra-packages $EXTRA_PACKAGES)"
           # shellcheck disable=SC2086
           sudo apt-get install -y $validated
+
+    - name: Cache GStreamer (macOS)
+      if: runner.os == 'macOS'
+      uses: actions/cache@v5
+      with:
+        path: /Library/Frameworks/GStreamer.framework
+        key: gstreamer-macos-${{ inputs.gstreamer-version || hashFiles('.github/build-config.json') }}
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'

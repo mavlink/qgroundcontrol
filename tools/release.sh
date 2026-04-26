@@ -64,7 +64,7 @@ fi
 
 # Pin versions for reproducibility and security (update via Dependabot)
 SR_VERSION="24.2.5"
-SR_PACKAGES="semantic-release@$SR_VERSION @semantic-release/changelog@6.0.3 @semantic-release/git@10.0.1 conventional-changelog-conventionalcommits@8.0.0"
+SR_PACKAGES="semantic-release@$SR_VERSION @semantic-release/changelog@6.0.3 @semantic-release/git@10.0.1 @semantic-release/exec@7.1.0 conventional-changelog-conventionalcommits@8.0.0"
 
 # Install to local node_modules if requested
 if [[ "$INSTALL_DEPS" == true ]]; then

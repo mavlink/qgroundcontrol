@@ -1,11 +1,12 @@
 name: Cache Cleanup (PR)
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
 
 permissions:
   actions: write
+  pull-requests: read
 
 jobs:
   cleanup:
@@ -22,7 +23,7 @@ jobs:
         run: |
           echo "Cleaning caches for branch: $BRANCH"
 
-          KEYS=$(gh actions-cache list -R "$GH_REPO" -B "$BRANCH" --limit 100 -L 1 2>/dev/null | cut -f1 || true)
+          KEYS=$(gh actions-cache list -R "$GH_REPO" -B "$BRANCH" --limit 100 2>/dev/null | cut -f1 || true)
           if [[ -z "$KEYS" ]]; then
             echo "No caches found for this PR branch"
             exit 0

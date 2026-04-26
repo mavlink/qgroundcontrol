@@ -1,5 +1,5 @@
 #include "OnboardLogFtpEntry.h"
-#include "QGC.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(OnboardLogFtpEntryLog, "AnalyzeView.QGCOnboardLogFtpEntry")

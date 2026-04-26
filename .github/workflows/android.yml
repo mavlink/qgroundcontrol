@@ -33,22 +33,15 @@ permissions:
   actions: read
   security-events: write
 
+env:
+  IS_STABLE_BUILD: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+
 jobs:
   changes:
-    name: Detect Changes
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      should_build: ${{ steps.detect.outputs.any }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-      - id: detect
-        uses: ./.github/actions/detect-changes
-        with:
-          platform: android
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: android
 
   build:
     name: Android (${{ matrix.host }})
@@ -114,14 +107,17 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
-          fetch-tags: ${{ github.event_name != 'pull_request' }}
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Build Setup (Android)
+        id: setup
+        uses: ./.github/actions/build-setup
+        with:
+          mode: android
+          qt-host: ${{ matrix.qt_host || matrix.host }}
+          qt-arch: ${{ matrix.arch }}
+          abis: ${{ env.QT_ANDROID_ABIS }}
+          build-type: ${{ inputs.build_type || 'Release' }}
+          cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
       - name: Install host build dependencies
         if: runner.os == 'Linux'
@@ -131,23 +127,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.event_name == 'pull_request' }}
-
-      - name: Install Qt for Android
-        id: qt-android
-        uses: ./.github/actions/qt-android
-        with:
-          host: ${{ matrix.qt_host || matrix.host }}
-          arch: ${{ matrix.arch }}
-          version: ${{ steps.config.outputs.qt_version }}
-          modules: ${{ steps.config.outputs.qt_modules }}
-          abis: ${{ env.QT_ANDROID_ABIS }}
-          build-type: ${{ inputs.build_type || 'Release' }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          ndk-full-version: ${{ steps.config.outputs.ndk_full_version }}
-          java-version: ${{ steps.config.outputs.java_version }}
-          android-platform: ${{ steps.config.outputs.android_platform }}
-          android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
-          android-build-tools: ${{ steps.config.outputs.android_build_tools }}
 
       - name: Create Debug Keystore
         if: ${{ env.QT_ANDROID_KEYSTORE_STORE_PASS == '' || !matrix.primary }}
@@ -170,14 +149,14 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ inputs.build_type || 'Release' }}
-          stable: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
+          stable: ${{ env.IS_STABLE_BUILD }}
           use-qt-cmake: 'false'
           extra-args: >-
             -DCMAKE_WARN_DEPRECATED=FALSE
-            -DCMAKE_TOOLCHAIN_FILE=${{ steps.qt-android.outputs.target_qt_root_dir }}/lib/cmake/Qt6/qt.toolchain.cmake
-            -DCMAKE_PREFIX_PATH=${{ steps.qt-android.outputs.target_qt_root_dir }}
+            -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup.outputs.target_qt_root_dir }}/lib/cmake/Qt6/qt.toolchain.cmake
+            -DCMAKE_PREFIX_PATH=${{ steps.setup.outputs.target_qt_root_dir }}
             -DQT_ANDROID_ABIS=${{ env.QT_ANDROID_ABIS }}
-            -DQT_HOST_PATH=${{ steps.qt-android.outputs.host_qt_root_dir }}
+            -DQT_HOST_PATH=${{ steps.setup.outputs.host_qt_root_dir }}
             -DQT_ANDROID_SIGN_APK=ON
 
       - name: Build
@@ -191,6 +170,7 @@ jobs:
           output-file: ${{ matrix.emulator && 'qgc-build.log' || '' }}
 
       - name: Retry Build (emulator JSON truncation recovery)
+        id: build-retry
         if: ${{ matrix.emulator && steps.build.outcome == 'failure' }}
         shell: bash
         env:
@@ -223,6 +203,11 @@ jobs:
 
           cmake --build "${BUILD_DIR}" --target all --config "${BUILD_TYPE}" --parallel 1 2>&1 | tee "${retry_log}"
 
+      # `failure()` is required: build's continue-on-error makes outcome alone insufficient.
+      - name: Annotate emulator build retry failure
+        if: ${{ failure() && matrix.emulator && steps.build.outcome == 'failure' && steps.build-retry.outcome == 'failure' }}
+        run: echo "::error::Android emulator build failed (initial + retry). See logs for the truncation root cause."
+
       - name: Android Lint
         if: ${{ matrix.host == 'linux' }}
         shell: bash
@@ -254,18 +239,18 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: AVD Cache
+      - name: Restore AVD cache
         if: ${{ matrix.emulator }}
         id: avd-cache
-        uses: actions/cache@v5
+        uses: actions/cache/restore@v5
         with:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
           key: >-
-            avd-${{ runner.os }}-${{ runner.arch }}-api${{ steps.config.outputs.android_platform }}
-            -x86_64-google_apis-pixel_6-qt${{ steps.config.outputs.qt_version }}
-            -ndk${{ steps.config.outputs.ndk_full_version }}-v2
+            avd-${{ runner.os }}-${{ runner.arch }}-api${{ steps.setup.outputs.android_platform }}
+            -x86_64-google_apis-pixel_6-qt${{ steps.setup.outputs.qt_version }}
+            -ndk${{ steps.setup.outputs.ndk_full_version }}-v2
 
       - name: Create AVD Snapshot
         id: avd-snapshot
@@ -274,8 +259,8 @@ jobs:
         continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ steps.config.outputs.android_platform }}
-          system-image-api-level: ${{ steps.config.outputs.android_platform }}
+          api-level: ${{ steps.setup.outputs.android_platform }}
+          system-image-api-level: ${{ steps.setup.outputs.android_platform }}
           arch: x86_64
           target: google_apis
           profile: pixel_6
@@ -290,6 +275,15 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: echo "Generated AVD snapshot for cache."
 
+      - name: Save AVD cache
+        if: ${{ matrix.emulator && steps.avd-cache.outputs.cache-hit != 'true' && steps.avd-snapshot.outcome == 'success' }}
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: ${{ steps.avd-cache.outputs.cache-primary-key }}
+
       - name: Kill Stale Emulator
         if: ${{ matrix.emulator && steps.avd-snapshot.outcome == 'failure' }}
         shell: bash
@@ -303,8 +297,8 @@ jobs:
         timeout-minutes: 20
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ steps.config.outputs.android_platform }}
-          system-image-api-level: ${{ steps.config.outputs.android_platform }}
+          api-level: ${{ steps.setup.outputs.android_platform }}
+          system-image-api-level: ${{ steps.setup.outputs.android_platform }}
           arch: x86_64
           target: google_apis
           profile: pixel_6

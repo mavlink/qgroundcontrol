@@ -32,7 +32,7 @@ DEFAULT_EXPORT_KEYS = [
     "ios_deployment_target",
     "platform_workflows",
 ]
-IOS_QT_MODULE_EXCLUDES = {"qtserialport", "qtscxml"}
+IOS_QT_MODULE_EXCLUDES = {"qtserialport"}
 
 
 def find_build_config(
@@ -84,10 +84,15 @@ def get_build_config_value(
     start: Path | None = None,
     extra_candidates: list[Path] | None = None,
 ) -> str:
-    """Return a string value from the build config or *default*."""
+    """Return a string value from the build config or *default*.
+
+    File-missing / unreadable → silent default (callers may run outside the repo).
+    Parse / schema errors → raise: an existing-but-corrupted config silently
+    swapping defaults can produce wrong artifacts without warning.
+    """
     try:
         config = load_build_config(config_file, start=start, extra_candidates=extra_candidates)
-    except (FileNotFoundError, OSError, json.JSONDecodeError, ValueError):
+    except (FileNotFoundError, OSError):
         return default
     value = config.get(key, default)
     return str(value) if value is not None else default

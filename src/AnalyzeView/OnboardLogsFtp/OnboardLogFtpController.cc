@@ -3,7 +3,7 @@
 #include "FTPManager.h"
 #include "MultiVehicleManager.h"
 #include "OnboardLogFtpEntry.h"
-#include "QGC.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
