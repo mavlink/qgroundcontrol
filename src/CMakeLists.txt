@@ -95,7 +95,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Charts
         Qt6::Concurrent
         Qt6::Core
-        Qt6::Core5Compat
         Qt6::CorePrivate
         Qt6::Gui
         Qt6::HttpServer
@@ -111,6 +110,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Quick
         Qt6::Quick3D
         Qt6::QuickControls2
+        Qt6::QuickVectorImage
 
         # Qt6 Location
         Qt6::Location
