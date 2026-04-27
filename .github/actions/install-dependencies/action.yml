@@ -22,9 +22,10 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Cache GStreamer (Windows)
+    - name: Restore GStreamer cache (Windows)
       if: runner.os == 'Windows' && inputs.gstreamer == 'true'
-      uses: actions/cache@v5
+      id: gst-win-cache
+      uses: actions/cache/restore@v5
       with:
         path: C:\gstreamer
         key: gstreamer-windows-${{ inputs.gstreamer-version || hashFiles('.github/build-config.json') }}
@@ -50,6 +51,13 @@ runs:
           if os.environ.get('INPUT_VULKAN') == 'true':
               args.append('--vulkan')
           sys.exit(subprocess.run(args).returncode)
+
+    - name: Save GStreamer cache (Windows)
+      if: runner.os == 'Windows' && inputs.gstreamer == 'true' && github.event_name != 'pull_request' && steps.gst-win-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: C:\gstreamer
+        key: ${{ steps.gst-win-cache.outputs.cache-primary-key }}
 
     - name: Get system package list (Linux)
       if: runner.os == 'Linux'
@@ -87,9 +95,10 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" detect-python-version
 
-    - name: Cache pipx and pip downloads (Linux)
+    - name: Restore pipx/pip cache (Linux)
       if: runner.os == 'Linux'
-      uses: actions/cache@v5
+      id: pipx-cache
+      uses: actions/cache/restore@v5
       with:
         path: |
           ~/.cache/pip
@@ -104,6 +113,15 @@ runs:
       shell: bash
       run: python3 tools/setup/install_dependencies.py --platform debian --skip-system-packages
 
+    - name: Save pipx/pip cache (Linux)
+      if: runner.os == 'Linux' && github.event_name != 'pull_request' && steps.pipx-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.local/pipx
+        key: ${{ steps.pipx-cache.outputs.cache-primary-key }}
+
     - name: Install extra packages (Linux)
       if: runner.os == 'Linux' && inputs.extra-packages != ''
       uses: nick-fields/retry@v3
@@ -117,9 +135,10 @@ runs:
           # shellcheck disable=SC2086
           sudo apt-get install -y $validated
 
-    - name: Cache GStreamer (macOS)
+    - name: Restore GStreamer cache (macOS)
       if: runner.os == 'macOS'
-      uses: actions/cache@v5
+      id: gst-mac-cache
+      uses: actions/cache/restore@v5
       with:
         path: /Library/Frameworks/GStreamer.framework
         key: gstreamer-macos-${{ inputs.gstreamer-version || hashFiles('.github/build-config.json') }}
@@ -132,3 +151,10 @@ runs:
         max_attempts: 3
         command: |
           python3 tools/setup/install_dependencies.py --platform macos
+
+    - name: Save GStreamer cache (macOS)
+      if: runner.os == 'macOS' && github.event_name != 'pull_request' && steps.gst-mac-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: /Library/Frameworks/GStreamer.framework
+        key: ${{ steps.gst-mac-cache.outputs.cache-primary-key }}

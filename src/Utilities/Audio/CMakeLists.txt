@@ -20,3 +20,11 @@ target_include_directories(QGCAudio
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCAudio)
+
+# AudioOutput.cc was 3.4s frontend in build profile; absorbing the QtTextToSpeech
+# + QObject (qfloat16->std::format chain) headers cuts most of it.
+target_precompile_headers(QGCAudio PRIVATE
+    <QtCore/QObject>
+    <QtCore/QString>
+    <QtTextToSpeech/QTextToSpeech>
+)

@@ -1,0 +1,65 @@
+/*
+ * GStreamer iOS xcframework initialization shim.
+ * Auto-generated from template by CMake configure_file().
+ *
+ * GStreamer 1.28+ xcframework bundles every plugin into libGStreamer.a but
+ * exposes no auto-registration entrypoint; the CMake find module enumerates
+ * plugin descriptors via nm and substitutes the GST_PLUGIN_STATIC_*() calls
+ * below.
+ *
+ * SPDX-License-Identifier: LGPL-2.1-or-later
+ */
+
+#import <Foundation/Foundation.h>
+#include <gst/gst.h>
+
+@GST_STATIC_PLUGIN_DECLARES@
+
+void
+gst_init_static_plugins (void)
+{
+@GST_STATIC_PLUGIN_REGISTERS@
+}
+
+void
+gst_ios_pre_init (void)
+{
+    NSString *resources = [[NSBundle mainBundle] resourcePath];
+    NSString *tmp = NSTemporaryDirectory();
+    NSString *cache = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Caches"];
+    NSString *docs = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+
+    const gchar *resources_dir = [resources UTF8String];
+    const gchar *tmp_dir = [tmp UTF8String];
+    const gchar *cache_dir = [cache UTF8String];
+    const gchar *docs_dir = [docs UTF8String];
+
+    g_setenv("TMP", tmp_dir, TRUE);
+    g_setenv("TEMP", tmp_dir, TRUE);
+    g_setenv("TMPDIR", tmp_dir, TRUE);
+    g_setenv("XDG_RUNTIME_DIR", resources_dir, TRUE);
+    g_setenv("XDG_CACHE_HOME", cache_dir, TRUE);
+    g_setenv("HOME", docs_dir, TRUE);
+    g_setenv("XDG_DATA_DIRS", resources_dir, TRUE);
+    g_setenv("XDG_CONFIG_DIRS", resources_dir, TRUE);
+    g_setenv("XDG_CONFIG_HOME", cache_dir, TRUE);
+    g_setenv("XDG_DATA_HOME", resources_dir, TRUE);
+}
+
+void
+gst_ios_post_init (void)
+{
+    GstRegistry *reg = gst_registry_get();
+
+    /* Prefer native iOS AVFoundation source over generic filesrc/giosrc. */
+    GstPluginFeature *plugin = gst_registry_lookup_feature(reg, "filesrc");
+    if (plugin) {
+        gst_plugin_feature_set_rank(plugin, GST_RANK_SECONDARY);
+        gst_object_unref(plugin);
+    }
+    plugin = gst_registry_lookup_feature(reg, "giosrc");
+    if (plugin) {
+        gst_plugin_feature_set_rank(plugin, (GST_RANK_SECONDARY - 1));
+        gst_object_unref(plugin);
+    }
+}

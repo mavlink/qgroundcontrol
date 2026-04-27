@@ -25,6 +25,10 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UNITTEST_BUILD)
 
+target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE
+    <QtTest/QTest>
+)
+
 # ----------------------------------------------------------------------------
 # CTest Integration (CTest included in root CMakeLists.txt)
 # ----------------------------------------------------------------------------

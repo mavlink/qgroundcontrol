@@ -445,14 +445,19 @@ macro(_qgc_discover_ios_sdk)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
     endif()
 
+    # ── User-supplied root ────────────────────────────────────────────────────
     if(NOT DEFINED GStreamer_ROOT_DIR)
-        if(EXISTS "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
+        # Check well-known system install locations (framework and xcframework).
+        if(EXISTS "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.xcframework")
+            set(_gst_ios_system_xcfw "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.xcframework")
+        elseif(EXISTS "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
             set(GSTREAMER_FRAMEWORK_PATH "/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework")
             set(GStreamer_ROOT_DIR "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0")
         endif()
     endif()
 
-    if(NOT DEFINED GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}")
+    # ── Auto-download / expand ────────────────────────────────────────────────
+    if((NOT DEFINED GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}") AND NOT DEFINED _gst_ios_system_xcfw)
         if(CPM_SOURCE_CACHE)
             set(_gst_ios_cache_dir "${CPM_SOURCE_CACHE}/gstreamer-ios-${GStreamer_FIND_VERSION}")
         else()
@@ -463,10 +468,9 @@ macro(_qgc_discover_ios_sdk)
         gstreamer_download_sdk(ios ${GStreamer_FIND_VERSION}
             "gstreamer-ios.pkg" "${_gst_ios_cache_dir}" _gst_ios_pkg)
 
-        # Multiple anchor files — Info.plist is a symlink in the iOS framework
-        # and pkgutil --expand-full doesn't always preserve it intact. gst.h
-        # and the framework binary are real files inside Payload trees.
+        # Anchors that prove the expansion is complete for either SDK layout.
         set(_gst_ios_anchor_globs
+            "${_gst_ios_expanded}/*/GStreamer.xcframework/Info.plist"
             "${_gst_ios_expanded}/*/GStreamer.framework/Headers/gst/gst.h"
             "${_gst_ios_expanded}/*/GStreamer.framework/Versions/1.0/Headers/gst/gst.h"
             "${_gst_ios_expanded}/*/GStreamer.framework/GStreamer"
@@ -502,50 +506,127 @@ macro(_qgc_discover_ios_sdk)
             _qgc_validate_expanded_pkg("${_gst_ios_expanded}" "iOS")
         endif()
 
-        # iOS pkg internal layout has shifted across releases; try several anchors.
-        set(_anchor_hit "")
-        foreach(_glob IN LISTS _gst_ios_anchor_globs)
-            file(GLOB_RECURSE _anchor_hit "${_glob}")
-            if(_anchor_hit)
-                break()
-            endif()
-        endforeach()
+        # ── xcframework detection (GStreamer 1.28+) ───────────────────────────
+        # Check xcframework first; fall through to .framework for older SDKs.
+        file(GLOB_RECURSE _xcfw_info_plists LIST_DIRECTORIES false
+            "${_gst_ios_expanded}/*/GStreamer.xcframework/Info.plist"
+            "${_gst_ios_expanded}/GStreamer.xcframework/Info.plist"
+        )
+        if(NOT _xcfw_info_plists)
+            # Broader walk in case the pkg nests the xcframework further.
+            file(GLOB_RECURSE _all_dirs LIST_DIRECTORIES true "${_gst_ios_expanded}/*")
+            foreach(_d IN LISTS _all_dirs)
+                if(IS_DIRECTORY "${_d}" AND _d MATCHES "/GStreamer\.xcframework$")
+                    if(EXISTS "${_d}/Info.plist")
+                        list(APPEND _xcfw_info_plists "${_d}/Info.plist")
+                        break()
+                    endif()
+                endif()
+            endforeach()
+        endif()
 
-        if(_anchor_hit)
-            list(GET _anchor_hit 0 _anchor_first)
-            # Walk parents up to the .framework directory.
-            set(_walk "${_anchor_first}")
-            while(_walk AND NOT _walk MATCHES "GStreamer\\.framework$")
-                cmake_path(GET _walk PARENT_PATH _walk)
-                if(_walk STREQUAL "/" OR _walk STREQUAL "")
+        if(_xcfw_info_plists)
+            list(GET _xcfw_info_plists 0 _xcfw_info_first)
+            cmake_path(GET _xcfw_info_first PARENT_PATH _gst_ios_system_xcfw)
+        else()
+            # ── .framework fallback (pre-1.28 SDK) ───────────────────────────
+            # Older SDK versions ship GStreamer.framework; try anchors first.
+            set(_anchor_hit "")
+            foreach(_glob IN LISTS _gst_ios_anchor_globs)
+                file(GLOB_RECURSE _anchor_hit "${_glob}")
+                if(_anchor_hit)
                     break()
                 endif()
-            endwhile()
-            if(_walk MATCHES "GStreamer\\.framework$")
-                set(GSTREAMER_FRAMEWORK_PATH "${_walk}")
+            endforeach()
+
+            if(_anchor_hit)
+                list(GET _anchor_hit 0 _anchor_first)
+                set(_walk "${_anchor_first}")
+                while(_walk AND NOT _walk MATCHES "GStreamer\.framework$")
+                    cmake_path(GET _walk PARENT_PATH _walk)
+                    if(_walk STREQUAL "/" OR _walk STREQUAL "")
+                        break()
+                    endif()
+                endwhile()
+                if(_walk MATCHES "GStreamer\.framework$")
+                    set(GSTREAMER_FRAMEWORK_PATH "${_walk}")
+                endif()
             endif()
-        endif()
 
-        if(NOT GSTREAMER_FRAMEWORK_PATH)
-            file(GLOB _top_entries LIST_DIRECTORIES true "${_gst_ios_expanded}/*")
-            file(GLOB_RECURSE _all_frameworks LIST_DIRECTORIES true
-                "${_gst_ios_expanded}/*.framework")
-            file(GLOB_RECURSE _all_in_expanded "${_gst_ios_expanded}/*")
-            list(LENGTH _all_in_expanded _n)
-            string(REPLACE ";" "\n  " _top_entries_str "${_top_entries}")
-            string(REPLACE ";" "\n  " _all_frameworks_str "${_all_frameworks}")
-            message(FATAL_ERROR
-                "Could not locate GStreamer.framework in expanded iOS SDK at"
-                " '${_gst_ios_expanded}' (${_n} entries). The .pkg layout may"
-                " have changed; check the pkgutil --expand-full output.\n"
-                "Top-level entries:\n  ${_top_entries_str}\n"
-                "All *.framework directories:\n  ${_all_frameworks_str}")
-        endif()
+            if(NOT GSTREAMER_FRAMEWORK_PATH)
+                file(GLOB_RECURSE _all_dirs LIST_DIRECTORIES true "${_gst_ios_expanded}/*")
+                foreach(_d IN LISTS _all_dirs)
+                    if(IS_DIRECTORY "${_d}" AND _d MATCHES "/GStreamer\.framework$")
+                        if(EXISTS "${_d}/Headers" OR EXISTS "${_d}/Versions/1.0/Headers")
+                            set(GSTREAMER_FRAMEWORK_PATH "${_d}")
+                            break()
+                        elseif(NOT GSTREAMER_FRAMEWORK_PATH)
+                            set(GSTREAMER_FRAMEWORK_PATH "${_d}")
+                        endif()
+                    endif()
+                endforeach()
+            endif()
 
-        set(GStreamer_ROOT_DIR "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0")
+            if(NOT GSTREAMER_FRAMEWORK_PATH)
+                file(GLOB _top_entries LIST_DIRECTORIES true "${_gst_ios_expanded}/*")
+                file(GLOB_RECURSE _all_frameworks LIST_DIRECTORIES true
+                    "${_gst_ios_expanded}/*.framework")
+                file(GLOB_RECURSE _all_xcframeworks LIST_DIRECTORIES true
+                    "${_gst_ios_expanded}/*.xcframework")
+                file(GLOB_RECURSE _all_in_expanded "${_gst_ios_expanded}/*")
+                list(LENGTH _all_in_expanded _n)
+                string(REPLACE ";" "\n  " _top_entries_str "${_top_entries}")
+                string(REPLACE ";" "\n  " _all_frameworks_str "${_all_frameworks}")
+                string(REPLACE ";" "\n  " _all_xcframeworks_str "${_all_xcframeworks}")
+                message(FATAL_ERROR
+                    "Could not locate GStreamer.xcframework or GStreamer.framework in expanded iOS SDK at"
+                    " '${_gst_ios_expanded}' (${_n} entries). The .pkg layout may"
+                    " have changed; check the pkgutil --expand-full output.\n"
+                    "Top-level entries:\n  ${_top_entries_str}\n"
+                    "All *.framework directories:\n  ${_all_frameworks_str}\n"
+                    "All *.xcframework directories:\n  ${_all_xcframeworks_str}")
+            endif()
+
+            set(GStreamer_ROOT_DIR "${GSTREAMER_FRAMEWORK_PATH}/Versions/1.0")
+        endif()
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
+    # ── xcframework path: pick the right slice ────────────────────────────────
+    if(DEFINED _gst_ios_system_xcfw)
+        set(GStreamer_USE_XCFRAMEWORK ON)
+
+        # Select slice based on sysroot: iphoneos=device, iphonesimulator=simulator.
+        if(CMAKE_OSX_SYSROOT MATCHES "iphonesimulator")
+            set(_xcfw_slice "ios-arm64_x86_64-simulator")
+        else()
+            set(_xcfw_slice "ios-arm64")
+        endif()
+
+        set(_xcfw_slice_dir "${_gst_ios_system_xcfw}/${_xcfw_slice}")
+        if(NOT EXISTS "${_xcfw_slice_dir}")
+            message(FATAL_ERROR
+                "GStreamer xcframework slice '${_xcfw_slice}' not found in ${_gst_ios_system_xcfw}.
+"
+                "Available slices: check ${_gst_ios_system_xcfw}/Info.plist AvailableLibraries.")
+        endif()
+
+        # Synthetic path vars so guards and consumers have consistent variables.
+        # xcframework has no lib/ or lib/gstreamer-1.0/ — all code is in libGStreamer.a.
+        set(GStreamer_ROOT_DIR       "${_xcfw_slice_dir}")
+        set(GSTREAMER_XCFRAMEWORK_PATH "${_gst_ios_system_xcfw}")
+        set(GSTREAMER_XCFRAMEWORK_LIB  "${_xcfw_slice_dir}/libGStreamer.a")
+        set(GSTREAMER_INCLUDE_PATH  "${_xcfw_slice_dir}/Headers")
+        # GSTREAMER_LIB_PATH and GSTREAMER_PLUGIN_PATH are synthetic — they point
+        # to the slice dir itself because there is no lib/ subdirectory in an xcframework.
+        set(GSTREAMER_LIB_PATH    "${_xcfw_slice_dir}")
+        set(GSTREAMER_PLUGIN_PATH "${_xcfw_slice_dir}")
+
+        _gst_normalize_and_validate_root()
+        return()
+    endif()
+
+    # ── Classic .framework path ───────────────────────────────────────────────
     _gst_normalize_and_validate_root()
 
     set(GStreamer_USE_FRAMEWORK ON)
@@ -554,6 +635,23 @@ macro(_qgc_discover_ios_sdk)
         cmake_path(NORMAL_PATH GSTREAMER_FRAMEWORK_PATH)
     endif()
     _gst_set_standard_paths(INCLUDE_PATH "${GSTREAMER_FRAMEWORK_PATH}/Headers")
+
+    # Cerbero iOS framework lays out libraries under Versions/1.0/lib but the
+    # framework root also exposes Libraries -> Versions/Current/lib symlinks;
+    # if the default ${GStreamer_ROOT_DIR}/lib doesn't exist, try alternatives.
+    if(NOT EXISTS "${GSTREAMER_LIB_PATH}")
+        foreach(_cand IN ITEMS
+            "${GStreamer_ROOT_DIR}/Libraries"
+            "${GSTREAMER_FRAMEWORK_PATH}/Libraries"
+            "${GSTREAMER_FRAMEWORK_PATH}/lib"
+        )
+            if(EXISTS "${_cand}")
+                set(GSTREAMER_LIB_PATH "${_cand}")
+                set(GSTREAMER_PLUGIN_PATH "${GSTREAMER_LIB_PATH}/gstreamer-1.0")
+                break()
+            endif()
+        endforeach()
+    endif()
 
     _qgc_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
     _gst_configure_pkg_config(
@@ -574,12 +672,43 @@ elseif(IOS)
     _qgc_discover_ios_sdk()
 endif()
 
-if(NOT EXISTS "${GStreamer_ROOT_DIR}" OR NOT EXISTS "${GSTREAMER_LIB_PATH}" OR NOT EXISTS "${GSTREAMER_PLUGIN_PATH}" OR NOT EXISTS "${GSTREAMER_INCLUDE_PATH}")
-    message(FATAL_ERROR "GStreamer: Could not locate required directories - check installation or set GStreamer_ROOT_DIR")
-endif()
+# xcframework sets GSTREAMER_LIB_PATH / GSTREAMER_PLUGIN_PATH to the slice dir
+# (which has no lib/ subdir), so the existence checks still pass.
+if(NOT GStreamer_USE_XCFRAMEWORK)
+    set(_gst_required_paths
+        "GStreamer_ROOT_DIR=${GStreamer_ROOT_DIR}"
+        "GSTREAMER_LIB_PATH=${GSTREAMER_LIB_PATH}"
+        "GSTREAMER_PLUGIN_PATH=${GSTREAMER_PLUGIN_PATH}"
+        "GSTREAMER_INCLUDE_PATH=${GSTREAMER_INCLUDE_PATH}"
+    )
+    set(_gst_missing_paths)
+    if(NOT EXISTS "${GStreamer_ROOT_DIR}")
+        list(APPEND _gst_missing_paths "GStreamer_ROOT_DIR=${GStreamer_ROOT_DIR}")
+    endif()
+    if(NOT EXISTS "${GSTREAMER_LIB_PATH}")
+        list(APPEND _gst_missing_paths "GSTREAMER_LIB_PATH=${GSTREAMER_LIB_PATH}")
+    endif()
+    if(NOT EXISTS "${GSTREAMER_PLUGIN_PATH}")
+        list(APPEND _gst_missing_paths "GSTREAMER_PLUGIN_PATH=${GSTREAMER_PLUGIN_PATH}")
+    endif()
+    if(NOT EXISTS "${GSTREAMER_INCLUDE_PATH}")
+        list(APPEND _gst_missing_paths "GSTREAMER_INCLUDE_PATH=${GSTREAMER_INCLUDE_PATH}")
+    endif()
+    if(_gst_missing_paths)
+        string(REPLACE ";" "\n  " _gst_missing_str "${_gst_missing_paths}")
+        message(FATAL_ERROR
+            "GStreamer: required directories do not exist on disk:\n  ${_gst_missing_str}\n"
+            "GSTREAMER_FRAMEWORK_PATH=${GSTREAMER_FRAMEWORK_PATH}\n"
+            "Check installation or set GStreamer_ROOT_DIR.")
+    endif()
 
-if(GStreamer_USE_FRAMEWORK AND NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
-    message(FATAL_ERROR "GStreamer: Could not locate framework at ${GSTREAMER_FRAMEWORK_PATH}")
+    if(GStreamer_USE_FRAMEWORK AND NOT EXISTS "${GSTREAMER_FRAMEWORK_PATH}")
+        message(FATAL_ERROR "GStreamer: Could not locate framework at ${GSTREAMER_FRAMEWORK_PATH}")
+    endif()
+else()
+    if(NOT EXISTS "${GSTREAMER_XCFRAMEWORK_LIB}")
+        message(FATAL_ERROR "GStreamer: xcframework library not found at ${GSTREAMER_XCFRAMEWORK_LIB}")
+    endif()
 endif()
 
 function(_qgc_gstreamer_component_to_api_name INPUT_COMPONENT OUTPUT_VAR)
@@ -685,8 +814,11 @@ if(ANDROID)
     set(GStreamer_ASSETS_DIR "${_gst_android_build_dir}/assets")
 elseif(IOS)
     set(GStreamer_Mobile_MODULE_NAME gstreamer_mobile)
-    set(G_IO_MODULES openssl)
-    set(G_IO_MODULES_PATH "${GStreamer_ROOT_DIR}/lib/gio/modules")
+    if(NOT GStreamer_USE_XCFRAMEWORK)
+        # xcframework bundles gio modules into libGStreamer.a; no separate module dir.
+        set(G_IO_MODULES openssl)
+        set(G_IO_MODULES_PATH "${GStreamer_ROOT_DIR}/lib/gio/modules")
+    endif()
     set(GStreamer_ASSETS_DIR "${CMAKE_BINARY_DIR}/assets")
 endif()
 
@@ -695,6 +827,134 @@ set(GStreamer_ROOT_DIR "${GStreamer_ROOT_DIR}" CACHE PATH "GStreamer SDK root di
 if(GStreamer_USE_FRAMEWORK)
     list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
 endif()
+
+if(GStreamer_USE_XCFRAMEWORK)
+    # ── xcframework path: create IMPORTED targets directly from the fat .a ───
+    # No pkg-config or .framework; all APIs and plugins live in one archive.
+    if(NOT TARGET GStreamer::GStreamer)
+        add_library(GStreamer_static STATIC IMPORTED GLOBAL)
+        set_target_properties(GStreamer_static PROPERTIES
+            IMPORTED_LOCATION "${GSTREAMER_XCFRAMEWORK_LIB}"
+        )
+        add_library(GStreamer::GStreamer INTERFACE IMPORTED GLOBAL)
+        target_link_libraries(GStreamer::GStreamer INTERFACE
+            GStreamer_static
+        )
+        target_include_directories(GStreamer::GStreamer INTERFACE
+            "${GSTREAMER_INCLUDE_PATH}"
+            "${GSTREAMER_INCLUDE_PATH}/gstreamer-1.0"
+            "${GSTREAMER_INCLUDE_PATH}/glib-2.0"
+        )
+        # System frameworks required by GStreamer on iOS.
+        find_library(_xcfw_foundation     Foundation     REQUIRED)
+        find_library(_xcfw_avfoundation   AVFoundation   REQUIRED)
+        find_library(_xcfw_audiotoolbox   AudioToolbox   REQUIRED)
+        find_library(_xcfw_videotoolbox   VideoToolbox   REQUIRED)
+        find_library(_xcfw_coremedia      CoreMedia      REQUIRED)
+        find_library(_xcfw_corevideo      CoreVideo      REQUIRED)
+        find_library(_xcfw_coreaudio      CoreAudio      REQUIRED)
+        find_library(_xcfw_coregraphics   CoreGraphics   REQUIRED)
+        find_library(_xcfw_security       Security       REQUIRED)
+        find_library(_xcfw_opengles       OpenGLES       REQUIRED)
+        find_library(_xcfw_uikit          UIKit          REQUIRED)
+        find_library(_xcfw_corefoundation CoreFoundation REQUIRED)
+        target_link_libraries(GStreamer::GStreamer INTERFACE
+            "${_xcfw_foundation}"
+            "${_xcfw_avfoundation}"
+            "${_xcfw_audiotoolbox}"
+            "${_xcfw_videotoolbox}"
+            "${_xcfw_coremedia}"
+            "${_xcfw_corevideo}"
+            "${_xcfw_coreaudio}"
+            "${_xcfw_coregraphics}"
+            "${_xcfw_security}"
+            "${_xcfw_opengles}"
+            "${_xcfw_uikit}"
+            "${_xcfw_corefoundation}"
+            "-lresolv" "-liconv" "-lz" "-lbz2"
+        )
+        target_compile_definitions(GStreamer::GStreamer INTERFACE
+            QGC_GST_STATIC_BUILD
+        )
+        unset(_xcfw_foundation CACHE)
+        unset(_xcfw_avfoundation CACHE)
+        unset(_xcfw_audiotoolbox CACHE)
+        unset(_xcfw_videotoolbox CACHE)
+        unset(_xcfw_coremedia CACHE)
+        unset(_xcfw_corevideo CACHE)
+        unset(_xcfw_coreaudio CACHE)
+        unset(_xcfw_coregraphics CACHE)
+        unset(_xcfw_security CACHE)
+        unset(_xcfw_opengles CACHE)
+        unset(_xcfw_uikit CACHE)
+        unset(_xcfw_corefoundation CACHE)
+    endif()
+
+    # All API component targets alias the single mega-library.
+    foreach(_xcfw_comp IN ITEMS api_base api_gl api_gl_prototypes api_rtsp api_video api_app)
+        if(NOT TARGET GStreamer::${_xcfw_comp})
+            add_library(GStreamer::${_xcfw_comp} INTERFACE IMPORTED GLOBAL)
+            target_link_libraries(GStreamer::${_xcfw_comp} INTERFACE GStreamer::GStreamer)
+        endif()
+    endforeach()
+
+    # Build the xcframework mobile init shim — calls gst_init_static_plugins().
+    if(NOT TARGET GStreamer::mobile)
+        enable_language(OBJC OBJCXX)
+
+        # GStreamer 1.28+ ships every plugin compiled into libGStreamer.a but
+        # provides no auto-registration entrypoint; enumerate plugin descriptors
+        # from the archive and emit explicit GST_PLUGIN_STATIC_REGISTER() calls.
+        find_program(_xcfw_nm NAMES nm llvm-nm REQUIRED)
+        execute_process(
+            COMMAND "${_xcfw_nm}" -gjU "${GSTREAMER_XCFRAMEWORK_LIB}"
+            OUTPUT_VARIABLE _xcfw_nm_out
+            ERROR_QUIET
+            RESULT_VARIABLE _xcfw_nm_rc
+        )
+        if(NOT _xcfw_nm_rc EQUAL 0)
+            message(FATAL_ERROR "nm failed on ${GSTREAMER_XCFRAMEWORK_LIB} (rc=${_xcfw_nm_rc})")
+        endif()
+        string(REGEX MATCHALL "_gst_plugin_[A-Za-z0-9_]+_get_desc" _xcfw_descs "${_xcfw_nm_out}")
+        list(REMOVE_DUPLICATES _xcfw_descs)
+        set(_xcfw_decl "")
+        set(_xcfw_reg  "")
+        foreach(_sym IN LISTS _xcfw_descs)
+            string(REGEX REPLACE "^_gst_plugin_(.+)_get_desc$" "\\1" _name "${_sym}")
+            string(APPEND _xcfw_decl "GST_PLUGIN_STATIC_DECLARE(${_name});\n")
+            string(APPEND _xcfw_reg  "    GST_PLUGIN_STATIC_REGISTER(${_name});\n")
+        endforeach()
+        list(LENGTH _xcfw_descs _xcfw_n)
+        message(STATUS "GStreamer xcframework: registering ${_xcfw_n} static plugins")
+        set(GST_STATIC_PLUGIN_DECLARES "${_xcfw_decl}")
+        set(GST_STATIC_PLUGIN_REGISTERS "${_xcfw_reg}")
+
+        set(_xcfw_shim "${CMAKE_BINARY_DIR}/${GStreamer_Mobile_MODULE_NAME}.m")
+        configure_file(
+            "${CMAKE_CURRENT_LIST_DIR}/GStreamer/gst_ios_xcframework_init.m.in"
+            "${_xcfw_shim}"
+            @ONLY
+        )
+        add_library(GStreamerMobileXcfw SHARED)
+        target_sources(GStreamerMobileXcfw PRIVATE "${_xcfw_shim}")
+        set_source_files_properties("${_xcfw_shim}" PROPERTIES LANGUAGE OBJC GENERATED TRUE)
+        target_link_libraries(GStreamerMobileXcfw PRIVATE GStreamer::GStreamer)
+        set_target_properties(GStreamerMobileXcfw PROPERTIES
+            LIBRARY_OUTPUT_NAME ${GStreamer_Mobile_MODULE_NAME}
+            LINKER_LANGUAGE OBJCXX
+            FRAMEWORK TRUE
+            FRAMEWORK_VERSION A
+            MACOSX_FRAMEWORK_IDENTIFIER org.gstreamer.GStreamerMobile
+        )
+        add_library(GStreamer::mobile ALIAS GStreamerMobileXcfw)
+        add_library(GStreamerMobile ALIAS GStreamerMobileXcfw)
+        set(GStreamerMobile_FOUND TRUE)
+        set(GStreamerMobile_mobile_FOUND TRUE)
+    endif()
+
+    set(GStreamer_FOUND TRUE)
+    set(GStreamer_VERSION "${GStreamer_FIND_VERSION}")
+else()
 
 if(GStreamer_USE_STATIC_LIBS)
     list(APPEND PKG_CONFIG_ARGN "--static")
@@ -760,6 +1020,8 @@ if(ANDROID OR IOS)
     find_package(GStreamerMobile REQUIRED COMPONENTS ${_mobile_components})
 endif()
 
+endif() # GStreamer_USE_XCFRAMEWORK
+
 foreach(_comp IN ITEMS Core Base Video Gl GlPrototypes Rtsp)
     set(QGCGStreamer_${_comp}_FOUND TRUE)
     set(GStreamer_${_comp}_FOUND TRUE)
@@ -799,7 +1061,7 @@ if(LINUX AND NOT "videoconvertscale" IN_LIST GSTREAMER_PLUGINS
     endif()
 endif()
 
-if(NOT GStreamer_USE_STATIC_LIBS AND EXISTS "${GSTREAMER_PLUGIN_PATH}")
+if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_XCFRAMEWORK AND EXISTS "${GSTREAMER_PLUGIN_PATH}")
     set(_gst_missing_plugins)
     if(WIN32)
         set(_gst_plugin_glob "gst*.dll")

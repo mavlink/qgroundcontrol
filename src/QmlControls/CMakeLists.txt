@@ -204,7 +204,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} json_controls
     FILES ${JSON_FILES}
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} qmlcontrols_resources
+qt_add_resources(QGroundControlControlsModule qmlcontrols_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES
@@ -221,7 +221,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} qmlcontrols_resources
 set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/CogWheels.png"
     PROPERTIES QT_RESOURCE_ALIAS "subMenuButtonImage.png")
 
-qt_add_resources(${CMAKE_PROJECT_NAME} qmlcontrols_qmlimages
+qt_add_resources(QGroundControlControlsModule qmlcontrols_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES
@@ -235,7 +235,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} qmlcontrols_qmlimages
 file(GLOB INSTRUMENT_VALUE_ICONS CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons/*.svg"
 )
-qt_add_resources(${CMAKE_PROJECT_NAME} instrument_value_icons
+qt_add_resources(QGroundControlControlsModule instrument_value_icons
     PREFIX "/InstrumentValueIcons"
     BASE "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons"
     FILES ${INSTRUMENT_VALUE_ICONS}

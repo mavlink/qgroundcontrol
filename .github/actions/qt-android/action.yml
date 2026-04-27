@@ -59,6 +59,7 @@ runs:
         distribution: temurin
         java-version: ${{ inputs.java-version }}
         cache: gradle
+        cache-read-only: ${{ github.event_name == 'pull_request' }}
         cache-dependency-path: |
           **/*.gradle*
           **/gradle-wrapper.properties
