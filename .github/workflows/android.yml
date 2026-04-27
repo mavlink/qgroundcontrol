@@ -276,7 +276,7 @@ jobs:
           script: echo "Generated AVD snapshot for cache."
 
       - name: Save AVD cache
-        if: ${{ matrix.emulator && steps.avd-cache.outputs.cache-hit != 'true' && steps.avd-snapshot.outcome == 'success' }}
+        if: ${{ matrix.emulator && github.event_name != 'pull_request' && steps.avd-cache.outputs.cache-hit != 'true' && steps.avd-snapshot.outcome == 'success' }}
         uses: actions/cache/save@v5
         with:
           path: |

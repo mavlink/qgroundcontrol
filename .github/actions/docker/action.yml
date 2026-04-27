@@ -55,7 +55,7 @@ runs:
         tags: qgc-builder:latest
         load: true
         cache-from: type=gha,scope=${{ inputs.dockerfile }}
-        cache-to: type=gha,mode=max,scope=${{ inputs.dockerfile }}
+        cache-to: ${{ github.event_name != 'pull_request' && format('type=gha,mode=max,scope={0}', inputs.dockerfile) || '' }}
 
     - name: Run Docker build
       if: contains(fromJSON('["Release", "Debug"]'), inputs.build-type)

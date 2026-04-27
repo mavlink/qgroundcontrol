@@ -105,6 +105,14 @@ target_precompile_headers(gstqml6gl
         <gst/gst.h>
         <gst/gl/gl.h>
         <gst/video/video.h>
+        # 6 TUs (qt6glitem/qsg6material/qml6gl{mixer,overlay,sink,src}) hit
+        # qquickitem.h -> qqml.h cold; share via PCH.
+        <QtCore/QObject>
+        <QtCore/QString>
+        <QtGui/QOpenGLFunctions>
+        <QtQml/QQmlEngine>
+        <QtQuick/QQuickItem>
+        <QtQuick/QQuickWindow>
 )
 
 file(GLOB _shader_files
