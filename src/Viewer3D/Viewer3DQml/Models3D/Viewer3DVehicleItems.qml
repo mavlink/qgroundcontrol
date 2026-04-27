@@ -1,5 +1,6 @@
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.Viewer3D
 import QtQuick3D
 import QtQuick3D.Helpers
 

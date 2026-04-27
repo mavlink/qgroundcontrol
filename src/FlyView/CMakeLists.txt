@@ -77,7 +77,7 @@ qt_add_qml_module(FlyViewModule
     NO_PLUGIN
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} flyview_resources
+qt_add_resources(FlyViewModule flyview_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES
@@ -87,7 +87,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} flyview_resources
         "${CMAKE_SOURCE_DIR}/resources/pause-mission.svg"
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} flyview_qmlimages
+qt_add_resources(FlyViewModule flyview_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES

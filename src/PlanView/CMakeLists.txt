@@ -64,7 +64,7 @@ set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/gear-black.svg"
 set_source_files_properties("${CMAKE_SOURCE_DIR}/resources/camera.svg"
     PROPERTIES QT_RESOURCE_ALIAS "PlanSimpleItemCamera.svg")
 
-qt_add_resources(${CMAKE_PROJECT_NAME} planview_resources
+qt_add_resources(PlanViewModule planview_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES
@@ -81,7 +81,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} planview_resources
         "${CMAKE_SOURCE_DIR}/resources/waypoint.svg"
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} planview_qmlimages
+qt_add_resources(PlanViewModule planview_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES

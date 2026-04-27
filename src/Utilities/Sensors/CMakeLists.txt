@@ -18,3 +18,12 @@ target_include_directories(QGCSensors
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCSensors)
+
+target_precompile_headers(QGCSensors PRIVATE
+    <QtCore/QObject>
+    <QtCore/QString>
+    <QtPositioning/QGeoPositionInfo>
+    <QtSensors/QAmbientTemperatureSensor>
+    <QtSensors/QCompass>
+    <QtSensors/QPressureSensor>
+)

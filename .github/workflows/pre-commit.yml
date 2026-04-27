@@ -45,15 +45,15 @@ jobs:
           groups: precommit
           python-version: '3.12'
 
-      - name: Restore pre-commit cache (PR from fork)
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+      - name: Restore pre-commit cache (PR)
+        if: github.event_name == 'pull_request'
         uses: actions/cache/restore@v5
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
 
-      - name: Cache pre-commit hooks (push or same-repo PR)
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+      - name: Cache pre-commit hooks (push)
+        if: github.event_name != 'pull_request'
         uses: actions/cache@v5
         with:
           path: ~/.cache/pre-commit

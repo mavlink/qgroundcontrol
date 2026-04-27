@@ -92,6 +92,18 @@ target_include_directories(QGCLocation
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLocation)
 
+target_precompile_headers(QGCLocation PRIVATE
+    <QtCore/QDir>
+    <QtCore/QLoggingCategory>
+    <QtCore/QObject>
+    <QtCore/QString>
+    <QtCore/QStringList>
+    <QtCore/QVariant>
+    <QtNetwork/QNetworkRequest>
+    <QtPositioning/QGeoCoordinate>
+    <QtQml/QQmlEngine>
+)
+
 qt_add_resources(${CMAKE_PROJECT_NAME} qtlocationplugin_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"

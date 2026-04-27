@@ -52,9 +52,10 @@ runs:
         QT_ARCHIVES: ${{ inputs.archives }}
       run: python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" cache-key --arch "${QT_ARCH}" --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}"
 
-    - name: Restore extracted Qt cache
+    # Full Qt matrix is ~14 GB; only push events save to fit under the 10 GB repo cache cap.
+    - name: Restore Qt cache
       id: qt-cache
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       with:
         path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
         # `runner.os` is implied by `inputs.host` (linux/mac/windows...) so it's omitted.
@@ -81,6 +82,13 @@ runs:
           --outdir "${QT_OUTDIR}" \
           --modules "${QT_MODULES}" \
           --archives "${QT_ARCHIVES}"
+
+    - name: Save Qt cache
+      if: github.event_name != 'pull_request' && steps.qt-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
+        key: ${{ steps.qt-cache.outputs.cache-primary-key }}
 
     - name: Resolve Qt paths (cache hit)
       if: steps.qt-cache.outputs.cache-hit == 'true'
