@@ -486,7 +486,6 @@ void OnboardLogController::cancel()
 
 void OnboardLogController::selectAll(bool select)
 {
-    bool changed = false;
     const int count = _logEntriesModel->count();
     for (int i = 0; i < count; i++) {
         QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
@@ -496,18 +495,12 @@ void OnboardLogController::selectAll(bool select)
 
         if (entry->selected() != select) {
             entry->setSelected(select);
-            changed = true;
         }
-    }
-
-    if (changed) {
-        emit selectionChanged();
     }
 }
 
 void OnboardLogController::invertSelection()
 {
-    bool changed = false;
     const int count = _logEntriesModel->count();
     for (int i = 0; i < count; i++) {
         QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
@@ -516,11 +509,6 @@ void OnboardLogController::invertSelection()
         }
 
         entry->setSelected(!entry->selected());
-        changed = true;
-    }
-
-    if (changed) {
-        emit selectionChanged();
     }
 }
 

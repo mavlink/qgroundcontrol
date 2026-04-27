@@ -17,6 +17,7 @@ class DataFlashLogParser : public QObject
     Q_PROPERTY(QVariantList events READ events NOTIFY eventsChanged)
     Q_PROPERTY(QStringList plottableSignals READ plottableSignals NOTIFY plottableSignalsChanged)
     Q_PROPERTY(QVariantList modeSegments READ modeSegments NOTIFY modeSegmentsChanged)
+    Q_PROPERTY(QString detectedVehicleType READ detectedVehicleType NOTIFY detectedVehicleTypeChanged)
     Q_PROPERTY(double minTimestamp READ minTimestamp NOTIFY timeRangeChanged)
     Q_PROPERTY(double maxTimestamp READ maxTimestamp NOTIFY timeRangeChanged)
     Q_PROPERTY(int sampleCount READ sampleCount NOTIFY sampleCountChanged)
@@ -32,11 +33,13 @@ public:
     QVariantList events() const { return _events; }
     QStringList plottableSignals() const { return _plottableSignals; }
     QVariantList modeSegments() const { return _modeSegments; }
+    QString detectedVehicleType() const { return _detectedVehicleType; }
     double minTimestamp() const { return _minTimestamp; }
     double maxTimestamp() const { return _maxTimestamp; }
     int sampleCount() const { return _sampleCount; }
 
     Q_INVOKABLE bool parseFile(const QString &filePath);
+    Q_INVOKABLE void parseFileAsync(const QString &filePath);
     Q_INVOKABLE void clear();
     Q_INVOKABLE QVariantList signalSamples(const QString &signalName) const;
     Q_INVOKABLE double signalValueAt(const QString &signalName, double timestampSeconds) const;
@@ -51,8 +54,10 @@ signals:
     void eventsChanged();
     void plottableSignalsChanged();
     void modeSegmentsChanged();
+    void detectedVehicleTypeChanged();
     void timeRangeChanged();
     void sampleCountChanged();
+    void parseFileFinished(const QString &filePath, bool ok, const QString &errorMessage);
 
 private:
     static double _extractTimestampSeconds(const QMap<QString, QVariant> &values);
@@ -66,6 +71,7 @@ private:
     QVariantList _parameters;
     QVariantList _events;
     QVariantList _modeSegments;
+    QString _detectedVehicleType;
     QHash<QString, QVariantList> _signalSamples;
     double _minTimestamp = -1.0;
     double _maxTimestamp = -1.0;

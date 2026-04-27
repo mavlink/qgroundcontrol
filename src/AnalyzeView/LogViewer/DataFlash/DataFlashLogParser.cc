@@ -3,7 +3,9 @@
 #include "DataFlashUtility.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtConcurrent/QtConcurrent>
 #include <QtCore/QFile>
+#include <QtCore/QFutureWatcher>
 #include <QtCore/QHash>
 #include <QtCore/QSet>
 
@@ -14,9 +16,42 @@
 QGC_LOGGING_CATEGORY(DataFlashLogParserLog, "AnalyzeView.DataFlashLogParser")
 
 namespace {
-QString _ardupilotModeName(int modeNumber)
+struct ParseResult {
+    bool ok = false;
+    QString errorMessage;
+    QStringList availableSignals;
+    QStringList plottableSignals;
+    QVariantList parameters;
+    QVariantList events;
+    QVariantList modeSegments;
+    QHash<QString, QVariantList> signalSamples;
+    double minTimestamp = -1.0;
+    double maxTimestamp = -1.0;
+    int sampleCount = 0;
+    QString detectedVehicleType;
+};
+
+QString _vehicleTypeFromMessageText(const QString &messageText)
 {
-    // ArduPlane flight mode mapping provided by user/project issue context.
+    const QString text = messageText.toLower();
+    if (text.contains(QStringLiteral("arducopter"))) {
+        return QStringLiteral("ArduCopter");
+    }
+    if (text.contains(QStringLiteral("arduplane"))) {
+        return QStringLiteral("ArduPlane");
+    }
+    if (text.contains(QStringLiteral("ardurover"))) {
+        return QStringLiteral("ArduRover");
+    }
+    if (text.contains(QStringLiteral("ardusub"))) {
+        return QStringLiteral("ArduSub");
+    }
+
+    return QString();
+}
+
+QString _ardupilotModeName(const QString &vehicleType, int modeNumber)
+{
     static const QHash<int, QString> planeModes = {
         {0, QStringLiteral("Manual")},
         {1, QStringLiteral("CIRCLE")},
@@ -44,42 +79,118 @@ QString _ardupilotModeName(int modeNumber)
         {25, QStringLiteral("Loiter to QLand")},
         {26, QStringLiteral("AUTOLAND")},
     };
+    static const QHash<int, QString> copterModes = {
+        {0, QStringLiteral("Stabilize")},
+        {1, QStringLiteral("Acro")},
+        {2, QStringLiteral("AltHold")},
+        {3, QStringLiteral("Auto")},
+        {4, QStringLiteral("Guided")},
+        {5, QStringLiteral("Loiter")},
+        {6, QStringLiteral("RTL")},
+        {7, QStringLiteral("Circle")},
+        {9, QStringLiteral("Land")},
+        {11, QStringLiteral("Drift")},
+        {13, QStringLiteral("Sport")},
+        {14, QStringLiteral("Flip")},
+        {15, QStringLiteral("AutoTune")},
+        {16, QStringLiteral("PosHold")},
+        {17, QStringLiteral("Brake")},
+        {18, QStringLiteral("Throw")},
+        {19, QStringLiteral("Avoid_ADSB")},
+        {20, QStringLiteral("Guided_NoGPS")},
+        {21, QStringLiteral("Smart_RTL")},
+        {22, QStringLiteral("FlowHold")},
+        {23, QStringLiteral("Follow")},
+        {24, QStringLiteral("ZigZag")},
+        {25, QStringLiteral("SystemID")},
+        {26, QStringLiteral("Heli_Autorotate")},
+        {27, QStringLiteral("Auto RTL")},
+        {28, QStringLiteral("Turtle")},
+    };
 
-    return planeModes.value(modeNumber);
+    if (vehicleType == QStringLiteral("ArduPlane")) {
+        return planeModes.value(modeNumber, QStringLiteral("Mode %1").arg(modeNumber));
+    }
+    if (vehicleType == QStringLiteral("ArduCopter")) {
+        return copterModes.value(modeNumber, QStringLiteral("Mode %1").arg(modeNumber));
+    }
+
+    // Numeric ArduPilot mode values are vehicle-specific. Without reliable
+    // vehicle-type detection, preserve numeric representation.
+    return QStringLiteral("Mode %1").arg(modeNumber);
 }
-} // namespace
 
-DataFlashLogParser::DataFlashLogParser(QObject *parent)
-    : QObject(parent)
+double _extractTimestampSeconds(const QMap<QString, QVariant> &values)
 {
-    qCDebug(DataFlashLogParserLog) << this;
+    if (values.contains(QStringLiteral("TimeUS"))) {
+        return values.value(QStringLiteral("TimeUS")).toDouble() / 1000000.0;
+    }
+    if (values.contains(QStringLiteral("TimeMS"))) {
+        return values.value(QStringLiteral("TimeMS")).toDouble() / 1000.0;
+    }
+    if (values.contains(QStringLiteral("Time"))) {
+        return values.value(QStringLiteral("Time")).toDouble() / 1000.0;
+    }
+
+    return -1.0;
 }
 
-DataFlashLogParser::~DataFlashLogParser()
+void _appendEvent(QVariantList &events, double timestampSecs, const QString &type, const QString &description)
 {
-    qCDebug(DataFlashLogParserLog) << this;
+    if ((timestampSecs < 0.0) || description.isEmpty()) {
+        return;
+    }
+
+    QVariantMap eventRow;
+    eventRow[QStringLiteral("time")] = timestampSecs;
+    eventRow[QStringLiteral("type")] = type;
+    eventRow[QStringLiteral("description")] = description;
+    events.append(eventRow);
 }
 
-bool DataFlashLogParser::parseFile(const QString &filePath)
+ParseResult _parseDataFlashFile(const QString &filePath)
 {
-    clear();
+    ParseResult result;
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
-        _setParseError(tr("Failed to open DataFlash file"));
-        return false;
+        result.errorMessage = DataFlashLogParser::tr("Failed to open DataFlash file");
+        return result;
     }
 
-    const QByteArray bytes = file.readAll();
-    if (bytes.isEmpty()) {
-        _setParseError(tr("DataFlash file is empty"));
-        return false;
+    const qint64 fileSize = file.size();
+    if (fileSize <= 0) {
+        result.errorMessage = DataFlashLogParser::tr("DataFlash file is empty");
+        return result;
     }
+    if (fileSize > std::numeric_limits<qsizetype>::max()) {
+        result.errorMessage = DataFlashLogParser::tr("DataFlash file is too large to parse");
+        return result;
+    }
+
+    uchar *const mappedData = file.map(0, fileSize);
+    if (mappedData == nullptr) {
+        result.errorMessage = DataFlashLogParser::tr("Failed to memory-map DataFlash file");
+        return result;
+    }
+
+    struct ScopedFileUnmap {
+        QFile &file;
+        uchar *data = nullptr;
+        ~ScopedFileUnmap()
+        {
+            if (data != nullptr) {
+                file.unmap(data);
+            }
+        }
+    } scopedFileUnmap{file, mappedData};
+
+    const QByteArray bytes = QByteArray::fromRawData(reinterpret_cast<const char *>(mappedData), static_cast<qsizetype>(fileSize));
 
     QMap<uint8_t, DataFlashUtility::MessageFormat> formats;
     if (!DataFlashUtility::parseFmtMessages(bytes.constData(), bytes.size(), formats)) {
-        _setParseError(tr("No valid FMT messages were found"));
-        return false;
+        result.errorMessage = DataFlashLogParser::tr("No valid FMT messages were found");
+        return result;
     }
 
     QSet<QString> signalSet;
@@ -89,7 +200,8 @@ bool DataFlashLogParser::parseFile(const QString &filePath)
     bool hasOpenModeSegment = false;
     double modeSegmentStartSecs = -1.0;
     QString currentModeName;
-    DataFlashUtility::iterateMessages(bytes.constData(), bytes.size(), formats, [this, &signalSet, &plottableSet, &minTimestampSecs, &maxTimestampSecs, &hasOpenModeSegment, &modeSegmentStartSecs, &currentModeName](uint8_t, const char *payload, int, const DataFlashUtility::MessageFormat &fmt) {
+
+    DataFlashUtility::iterateMessages(bytes.constData(), bytes.size(), formats, [&result, &signalSet, &plottableSet, &minTimestampSecs, &maxTimestampSecs, &hasOpenModeSegment, &modeSegmentStartSecs, &currentModeName](uint8_t, const char *payload, int, const DataFlashUtility::MessageFormat &fmt) {
         const QMap<QString, QVariant> values = DataFlashUtility::parseMessage(payload, fmt);
         const double timestampSecs = _extractTimestampSeconds(values);
         if (timestampSecs >= 0.0) {
@@ -110,27 +222,31 @@ bool DataFlashLogParser::parseFile(const QString &filePath)
                 QVariantMap row;
                 row[QStringLiteral("name")] = paramName;
                 row[QStringLiteral("value")] = paramValue;
-                _parameters.append(row);
+                result.parameters.append(row);
+            }
+        } else if (fmt.name == QStringLiteral("MSG")) {
+            const QString text = values.value(QStringLiteral("Message")).toString();
+            const QString detected = _vehicleTypeFromMessageText(text);
+            if (result.detectedVehicleType.isEmpty() && !detected.isEmpty()) {
+                result.detectedVehicleType = detected;
             }
         } else if (fmt.name == QStringLiteral("MODE")) {
             QString modeName = values.value(QStringLiteral("Mode")).toString();
             bool isNumericMode = false;
             const int modeNumber = modeName.toInt(&isNumericMode);
             if (isNumericMode) {
-                const QString mappedName = _ardupilotModeName(modeNumber);
-                modeName = mappedName.isEmpty() ? QStringLiteral("Mode %1").arg(modeNumber)
-                                                : QStringLiteral("%1 (%2)").arg(mappedName).arg(modeNumber);
+                modeName = _ardupilotModeName(result.detectedVehicleType, modeNumber);
             } else if (modeName.isEmpty()) {
                 modeName = QStringLiteral("Unknown");
             }
-            _appendEvent(timestampSecs, QStringLiteral("mode"), tr("Mode: %1").arg(modeName));
+            _appendEvent(result.events, timestampSecs, QStringLiteral("mode"), DataFlashLogParser::tr("Mode: %1").arg(modeName));
             if (timestampSecs >= 0.0) {
                 if (hasOpenModeSegment && (timestampSecs > modeSegmentStartSecs)) {
                     QVariantMap segment;
                     segment[QStringLiteral("mode")] = currentModeName;
                     segment[QStringLiteral("start")] = modeSegmentStartSecs;
                     segment[QStringLiteral("end")] = timestampSecs;
-                    _modeSegments.append(segment);
+                    result.modeSegments.append(segment);
                 }
                 hasOpenModeSegment = true;
                 modeSegmentStartSecs = timestampSecs;
@@ -139,19 +255,19 @@ bool DataFlashLogParser::parseFile(const QString &filePath)
         } else if (fmt.name == QStringLiteral("ERR")) {
             const QString subsystem = values.value(QStringLiteral("Subsys")).toString();
             const QString ecode = values.value(QStringLiteral("ECode")).toString();
-            _appendEvent(timestampSecs, QStringLiteral("error"), QStringLiteral("Error: Subsys=%1 ECode=%2").arg(subsystem, ecode));
+            _appendEvent(result.events, timestampSecs, QStringLiteral("error"), QStringLiteral("Error: Subsys=%1 ECode=%2").arg(subsystem, ecode));
         } else if (fmt.name == QStringLiteral("EV")) {
             const int eventId = values.value(QStringLiteral("Id")).toInt();
             QString description = QStringLiteral("Event %1").arg(eventId);
             if (eventId == 10) {
-                description = tr("Armed");
+                description = DataFlashLogParser::tr("Armed");
             } else if (eventId == 11) {
-                description = tr("Disarmed");
+                description = DataFlashLogParser::tr("Disarmed");
             }
-            _appendEvent(timestampSecs, QStringLiteral("event"), description);
+            _appendEvent(result.events, timestampSecs, QStringLiteral("event"), description);
         }
 
-        _sampleCount++;
+        result.sampleCount++;
         if (timestampSecs >= 0.0) {
             for (auto it = values.cbegin(); it != values.cend(); ++it) {
                 const QString signalName = QStringLiteral("%1.%2").arg(fmt.name, it.key());
@@ -163,7 +279,7 @@ bool DataFlashLogParser::parseFile(const QString &filePath)
                     QVariantMap point;
                     point[QStringLiteral("x")] = timestampSecs;
                     point[QStringLiteral("y")] = it.value().toDouble();
-                    _signalSamples[signalName].append(point);
+                    result.signalSamples[signalName].append(point);
                     plottableSet.insert(signalName);
                 }
             }
@@ -177,21 +293,57 @@ bool DataFlashLogParser::parseFile(const QString &filePath)
         segment[QStringLiteral("mode")] = currentModeName;
         segment[QStringLiteral("start")] = modeSegmentStartSecs;
         segment[QStringLiteral("end")] = maxTimestampSecs;
-        _modeSegments.append(segment);
+        result.modeSegments.append(segment);
     }
 
-    _availableSignals = signalSet.values();
-    std::sort(_availableSignals.begin(), _availableSignals.end());
-    _plottableSignals = plottableSet.values();
-    std::sort(_plottableSignals.begin(), _plottableSignals.end());
+    result.availableSignals = signalSet.values();
+    std::sort(result.availableSignals.begin(), result.availableSignals.end());
+    result.plottableSignals = plottableSet.values();
+    std::sort(result.plottableSignals.begin(), result.plottableSignals.end());
+    result.minTimestamp = minTimestampSecs;
+    result.maxTimestamp = maxTimestampSecs;
+    result.ok = true;
+    return result;
+}
+} // namespace
+
+DataFlashLogParser::DataFlashLogParser(QObject *parent)
+    : QObject(parent)
+{
+    qCDebug(DataFlashLogParserLog) << this;
+}
+
+DataFlashLogParser::~DataFlashLogParser()
+{
+    qCDebug(DataFlashLogParserLog) << this;
+}
+
+bool DataFlashLogParser::parseFile(const QString &filePath)
+{
+    clear();
+    const ParseResult result = _parseDataFlashFile(filePath);
+    if (!result.ok) {
+        _setParseError(result.errorMessage);
+        return false;
+    }
+
+    _availableSignals = result.availableSignals;
+    _plottableSignals = result.plottableSignals;
+    _parameters = result.parameters;
+    _events = result.events;
+    _modeSegments = result.modeSegments;
+    _signalSamples = result.signalSamples;
+    _sampleCount = result.sampleCount;
+    _detectedVehicleType = result.detectedVehicleType;
     emit availableSignalsChanged();
     emit plottableSignalsChanged();
     emit parametersChanged();
     emit eventsChanged();
     emit modeSegmentsChanged();
-    if (_minTimestamp != minTimestampSecs || _maxTimestamp != maxTimestampSecs) {
-        _minTimestamp = minTimestampSecs;
-        _maxTimestamp = maxTimestampSecs;
+    emit detectedVehicleTypeChanged();
+    if (_minTimestamp != result.minTimestamp || _maxTimestamp != result.maxTimestamp) {
+        _minTimestamp = result.minTimestamp;
+        _maxTimestamp = result.maxTimestamp;
         emit timeRangeChanged();
     }
     emit sampleCountChanged();
@@ -200,6 +352,52 @@ bool DataFlashLogParser::parseFile(const QString &filePath)
     emit parsedChanged();
     qCDebug(DataFlashLogParserLog) << "Parsed signals" << _availableSignals.count() << "parameters" << _parameters.count() << "events" << _events.count();
     return true;
+}
+
+void DataFlashLogParser::parseFileAsync(const QString &filePath)
+{
+    clear();
+
+    auto *watcher = new QFutureWatcher<ParseResult>(this);
+    (void) connect(watcher, &QFutureWatcher<ParseResult>::finished, this, [this, watcher, filePath]() {
+        const ParseResult result = watcher->result();
+        watcher->deleteLater();
+
+        if (!result.ok) {
+            _setParseError(result.errorMessage);
+            emit parseFileFinished(filePath, false, result.errorMessage);
+            return;
+        }
+
+        _availableSignals = result.availableSignals;
+        _plottableSignals = result.plottableSignals;
+        _parameters = result.parameters;
+        _events = result.events;
+        _modeSegments = result.modeSegments;
+        _signalSamples = result.signalSamples;
+        _sampleCount = result.sampleCount;
+        _detectedVehicleType = result.detectedVehicleType;
+        emit availableSignalsChanged();
+        emit plottableSignalsChanged();
+        emit parametersChanged();
+        emit eventsChanged();
+        emit modeSegmentsChanged();
+        emit detectedVehicleTypeChanged();
+        if (_minTimestamp != result.minTimestamp || _maxTimestamp != result.maxTimestamp) {
+            _minTimestamp = result.minTimestamp;
+            _maxTimestamp = result.maxTimestamp;
+            emit timeRangeChanged();
+        }
+        emit sampleCountChanged();
+
+        _parsed = true;
+        emit parsedChanged();
+        emit parseFileFinished(filePath, true, QString());
+    });
+
+    watcher->setFuture(QtConcurrent::run([filePath]() {
+        return _parseDataFlashFile(filePath);
+    }));
 }
 
 void DataFlashLogParser::clear()
@@ -235,6 +433,11 @@ void DataFlashLogParser::clear()
         emit modeSegmentsChanged();
     }
 
+    if (!_detectedVehicleType.isEmpty()) {
+        _detectedVehicleType.clear();
+        emit detectedVehicleTypeChanged();
+    }
+
     if (!_plottableSignals.isEmpty()) {
         _plottableSignals.clear();
         emit plottableSignalsChanged();
@@ -260,23 +463,32 @@ QVariantList DataFlashLogParser::signalSamples(const QString &signalName) const
 
 double DataFlashLogParser::signalValueAt(const QString &signalName, double timestampSeconds) const
 {
-    const QVariantList points = _signalSamples.value(signalName);
-    if (points.isEmpty()) {
+    const auto signalIt = _signalSamples.constFind(signalName);
+    if ((signalIt == _signalSamples.cend()) || signalIt->isEmpty()) {
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-    int nearestIndex = 0;
-    double nearestDistance = std::fabs(points.first().toMap().value(QStringLiteral("x")).toDouble() - timestampSeconds);
+    const QVariantList &points = signalIt.value();
+    const auto lower = std::lower_bound(points.cbegin(), points.cend(), timestampSeconds,
+        [](const QVariant &point, double timestamp) {
+            return point.toMap().value(QStringLiteral("x")).toDouble() < timestamp;
+        });
 
-    for (int i = 1; i < points.count(); ++i) {
-        const double distance = std::fabs(points[i].toMap().value(QStringLiteral("x")).toDouble() - timestampSeconds);
-        if (distance < nearestDistance) {
-            nearestDistance = distance;
-            nearestIndex = i;
-        }
+    if (lower == points.cbegin()) {
+        return lower->toMap().value(QStringLiteral("y")).toDouble();
     }
 
-    return points[nearestIndex].toMap().value(QStringLiteral("y")).toDouble();
+    if (lower == points.cend()) {
+        return points.constLast().toMap().value(QStringLiteral("y")).toDouble();
+    }
+
+    const auto previous = std::prev(lower);
+    const double lowerDistance = std::fabs(lower->toMap().value(QStringLiteral("x")).toDouble() - timestampSeconds);
+    const double previousDistance = std::fabs(previous->toMap().value(QStringLiteral("x")).toDouble() - timestampSeconds);
+
+    return (previousDistance <= lowerDistance)
+        ? previous->toMap().value(QStringLiteral("y")).toDouble()
+        : lower->toMap().value(QStringLiteral("y")).toDouble();
 }
 
 QString DataFlashLogParser::modeAt(double timestampSeconds) const
@@ -326,7 +538,7 @@ double DataFlashLogParser::_extractTimestampSeconds(const QMap<QString, QVariant
 
 void DataFlashLogParser::_appendEvent(double timestampSecs, const QString &type, const QString &description)
 {
-    if (description.isEmpty()) {
+    if ((timestampSecs < 0.0) || description.isEmpty()) {
         return;
     }
 

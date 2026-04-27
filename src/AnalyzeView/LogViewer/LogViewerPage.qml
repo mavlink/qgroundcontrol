@@ -27,10 +27,15 @@ AnalyzePage {
             property var cursorRows: []
             property var cursorEventRows: []
             property string cursorModeName: ""
+            property string signalSearchText: ""
+            property string parameterSearchText: ""
+            property var filteredSignalRows: []
+            property var filteredParameters: []
             property real fullMinX: 0
             property real fullMaxX: 1
             property real zoomMinX: 0
             property real zoomMaxX: 1
+            property int maxChartPointsPerSignal: 6000
 
             function eventColor(eventType) {
                 return logViewerController.eventColor(eventType)
@@ -46,6 +51,69 @@ AnalyzePage {
 
             function rebuildGroupedSignals() {
                 logViewerController.setPlottableSignals(dataFlashParser.plottableSignals)
+                applySignalFilter()
+            }
+
+            function applySignalFilter() {
+                const query = String(signalSearchText).trim().toLowerCase()
+                if (query.length === 0) {
+                    filteredSignalRows = logViewerController.signalRows
+                    return
+                }
+
+                const groupedMap = {}
+                const signals = dataFlashParser.plottableSignals
+                for (let i = 0; i < signals.length; i++) {
+                    const fullName = String(signals[i])
+                    const splitIndex = fullName.indexOf(".")
+                    const groupName = splitIndex > 0 ? fullName.substring(0, splitIndex) : qsTr("Other")
+                    const shortName = splitIndex > 0 ? fullName.substring(splitIndex + 1) : fullName
+                    const haystack = (fullName + " " + groupName + " " + shortName).toLowerCase()
+                    if (haystack.indexOf(query) === -1) {
+                        continue
+                    }
+
+                    if (!groupedMap[groupName]) {
+                        groupedMap[groupName] = []
+                    }
+                    groupedMap[groupName].push({ fullName: fullName, shortName: shortName })
+                }
+
+                const groups = Object.keys(groupedMap).sort()
+                const rows = []
+                for (let g = 0; g < groups.length; g++) {
+                    const groupName = groups[g]
+                    rows.push({ rowType: "group", group: groupName })
+                    groupedMap[groupName].sort((a, b) => String(a.shortName).localeCompare(String(b.shortName)))
+                    for (let s = 0; s < groupedMap[groupName].length; s++) {
+                        rows.push({
+                            rowType: "signal",
+                            group: groupName,
+                            fullName: groupedMap[groupName][s].fullName,
+                            shortName: groupedMap[groupName][s].shortName
+                        })
+                    }
+                }
+                filteredSignalRows = rows
+            }
+
+            function applyParameterFilter() {
+                const query = String(parameterSearchText).trim().toLowerCase()
+                if (query.length === 0) {
+                    filteredParameters = dataFlashParser.parameters
+                    return
+                }
+
+                const output = []
+                for (let i = 0; i < dataFlashParser.parameters.length; i++) {
+                    const item = dataFlashParser.parameters[i]
+                    const name = String(item.name)
+                    const value = String(item.value)
+                    if ((name + " " + value).toLowerCase().indexOf(query) !== -1) {
+                        output.push(item)
+                    }
+                }
+                filteredParameters = output
             }
 
             function isGroupExpanded(groupName) {
@@ -53,7 +121,11 @@ AnalyzePage {
             }
 
             function toggleGroupExpanded(groupName) {
+                if (String(signalSearchText).trim().length > 0) {
+                    return
+                }
                 logViewerController.toggleGroupExpanded(groupName)
+                applySignalFilter()
             }
 
             function isSignalSelected(signalName) {
@@ -152,6 +224,8 @@ AnalyzePage {
                 logViewerController.setPlottableSignals([])
                 logViewerController.clearSelection()
                 cursorEventRows = []
+                filteredSignalRows = []
+                filteredParameters = []
                 refreshBinChart()
                 if (clearControllerState) {
                     logViewerController.clear()
@@ -174,22 +248,32 @@ AnalyzePage {
                     return
                 }
 
-                Qt.callLater(function() {
-                    const ok = dataFlashParser.parseFile(pendingBinFile)
-                    if (!ok) {
-                        QGroundControl.showMessageDialog(logViewerPage, qsTr("Log Viewer"), dataFlashParser.parseError)
-                    }
-                    rebuildGroupedSignals()
-                    logViewerController.clearSelection()
-                    fullMinX = 0
-                    fullMaxX = 1
-                    zoomMinX = 0
-                    zoomMaxX = 1
-                    refreshBinChart()
-                    logViewerController.openBinLog(pendingBinFile)
+                const file = pendingBinFile
+                if (typeof dataFlashParser.parseFileAsync === "function") {
+                    dataFlashParser.parseFileAsync(file)
+                    return
+                }
+
+                // Compatibility fallback if async parser API is unavailable.
+                const ok = dataFlashParser.parseFile(file)
+                if (!ok) {
+                    QGroundControl.showMessageDialog(logViewerPage, qsTr("Log Viewer"), dataFlashParser.parseError)
                     binLoading = false
                     pendingBinFile = ""
-                })
+                    return
+                }
+
+                rebuildGroupedSignals()
+                applyParameterFilter()
+                logViewerController.clearSelection()
+                fullMinX = 0
+                fullMaxX = 1
+                zoomMinX = 0
+                zoomMaxX = 1
+                refreshBinChart()
+                logViewerController.openBinLog(file)
+                binLoading = false
+                pendingBinFile = ""
             }
 
             function refreshBinChart() {
@@ -253,13 +337,28 @@ AnalyzePage {
 
                     const series = binChart.createSeries(ChartView.SeriesTypeLine, signalName, binXAxis, binYAxis)
                     series.color = signalColor(signalName)
-                    for (let i = 0; i < points.length; i++) {
+                    const sampleStep = Math.max(1, Math.ceil(points.length / Math.max(1, maxChartPointsPerSignal)))
+                    let appendedLastX = -Number.MAX_VALUE
+                    for (let i = 0; i < points.length; i += sampleStep) {
                         const p = points[i]
                         series.append(p.x, p.y)
+                        appendedLastX = p.x
                         minX = Math.min(minX, p.x)
                         maxX = Math.max(maxX, p.x)
                         minY = Math.min(minY, p.y)
                         maxY = Math.max(maxY, p.y)
+                    }
+
+                    // Ensure the final point is represented after decimation.
+                    if (sampleStep > 1) {
+                        const lastPoint = points[points.length - 1]
+                        if (lastPoint && lastPoint.x !== appendedLastX) {
+                            series.append(lastPoint.x, lastPoint.y)
+                            maxX = Math.max(maxX, lastPoint.x)
+                            minX = Math.min(minX, lastPoint.x)
+                            minY = Math.min(minY, lastPoint.y)
+                            maxY = Math.max(maxY, lastPoint.y)
+                        }
                     }
                 }
 
@@ -310,6 +409,43 @@ AnalyzePage {
 
             DataFlashLogParser {
                 id: dataFlashParser
+            }
+
+            Connections {
+                target: logViewerController
+                function onSignalRowsChanged() {
+                    applySignalFilter()
+                }
+            }
+
+            Connections {
+                target: dataFlashParser
+                ignoreUnknownSignals: true
+
+                function onParseFileFinished(filePath, ok, errorMessage) {
+                    if (filePath !== pendingBinFile) {
+                        return
+                    }
+
+                    if (!ok) {
+                        QGroundControl.showMessageDialog(logViewerPage, qsTr("Log Viewer"), errorMessage)
+                        binLoading = false
+                        pendingBinFile = ""
+                        return
+                    }
+
+                    rebuildGroupedSignals()
+                    applyParameterFilter()
+                    logViewerController.clearSelection()
+                    fullMinX = 0
+                    fullMaxX = 1
+                    zoomMinX = 0
+                    zoomMaxX = 1
+                    refreshBinChart()
+                    logViewerController.openBinLog(filePath)
+                    binLoading = false
+                    pendingBinFile = ""
+                }
             }
 
             LogReplayLinkController {
@@ -452,8 +588,41 @@ AnalyzePage {
 
                         QGCLabel {
                             visible: logViewerController.sourceType === LogViewerController.Bin
-                            text: qsTr("Signals (click to plot)")
-                            font.bold: true
+                            text: qsTr("Detected vehicle type: %1")
+                                  .arg(dataFlashParser.detectedVehicleType.length > 0
+                                       ? dataFlashParser.detectedVehicleType
+                                       : qsTr("Unknown"))
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            spacing: ScreenTools.defaultFontPixelWidth * 0.5
+
+                            QGCLabel {
+                                text: qsTr("Signals (click to plot)")
+                                font.bold: true
+                            }
+
+                            QGCTextField {
+                                id: signalSearchField
+                                Layout.fillWidth: true
+                                placeholderText: qsTr("Search signals")
+                                onTextChanged: {
+                                    signalSearchText = text
+                                    if (text.trim().length === 0) {
+                                        signalSearchTimer.stop()
+                                        applySignalFilter()
+                                    } else {
+                                        signalSearchTimer.restart()
+                                    }
+                                }
+                                onAccepted: {
+                                    signalSearchText = text
+                                    signalSearchTimer.stop()
+                                    applySignalFilter()
+                                }
+                            }
                         }
 
                         ScrollView {
@@ -466,7 +635,7 @@ AnalyzePage {
                             ListView {
                                 id: signalsListView
                                 anchors.fill: parent
-                                model: logViewerController.signalRows
+                                model: filteredSignalRows
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.15
                                 clip: true
                                 ScrollBar.vertical: ScrollBar { }
@@ -491,7 +660,7 @@ AnalyzePage {
                                             anchors.verticalCenter: parent.verticalCenter
                                             spacing: ScreenTools.defaultFontPixelWidth * 0.3
 
-                                            QGCLabel { text: isGroupExpanded(modelData.group) ? "▼" : "▶" }
+                                            QGCLabel { text: (String(signalSearchText).trim().length > 0) ? "▼" : (isGroupExpanded(modelData.group) ? "▼" : "▶") }
                                             QGCLabel { id: groupLabel; text: modelData.group; font.bold: true }
                                         }
 
@@ -538,10 +707,35 @@ AnalyzePage {
                             visible: logViewerController.sourceType === LogViewerController.Bin
                         }
 
-                        QGCLabel {
+                        RowLayout {
+                            Layout.fillWidth: true
                             visible: logViewerController.sourceType === LogViewerController.Bin
-                            text: qsTr("Parameters")
-                            font.bold: true
+                            spacing: ScreenTools.defaultFontPixelWidth * 0.5
+
+                            QGCLabel {
+                                text: qsTr("Parameters")
+                                font.bold: true
+                            }
+
+                            QGCTextField {
+                                id: parameterSearchField
+                                Layout.fillWidth: true
+                                placeholderText: qsTr("Search parameters")
+                                onTextChanged: {
+                                    parameterSearchText = text
+                                    if (text.trim().length === 0) {
+                                        parameterSearchTimer.stop()
+                                        applyParameterFilter()
+                                    } else {
+                                        parameterSearchTimer.restart()
+                                    }
+                                }
+                                onAccepted: {
+                                    parameterSearchText = text
+                                    parameterSearchTimer.stop()
+                                    applyParameterFilter()
+                                }
+                            }
                         }
 
                         ScrollView {
@@ -553,7 +747,7 @@ AnalyzePage {
                             ListView {
                                 id: parametersListView
                                 anchors.fill: parent
-                                model: dataFlashParser.parameters
+                                model: filteredParameters
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.2
                                 clip: true
                                 ScrollBar.vertical: ScrollBar { }
@@ -943,7 +1137,8 @@ AnalyzePage {
             }
 
             Rectangle {
-                anchors.fill: parent
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 visible: binLoading
                 color: Qt.rgba(0, 0, 0, 0.4)
                 z: 5000
@@ -968,6 +1163,20 @@ AnalyzePage {
                 interval: 50
                 repeat: false
                 onTriggered: _executePendingBinParse()
+            }
+
+            Timer {
+                id: signalSearchTimer
+                interval: 250
+                repeat: false
+                onTriggered: applySignalFilter()
+            }
+
+            Timer {
+                id: parameterSearchTimer
+                interval: 250
+                repeat: false
+                onTriggered: applyParameterFilter()
             }
         }
     }

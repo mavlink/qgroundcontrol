@@ -208,11 +208,11 @@ QString LogViewerController::_assignColorForKey(const QString &key) const
         QStringLiteral("#6EA827"),
     };
 
-    int hash = 0;
+    quint32 hash = 0;
     for (const QChar ch : key) {
-        hash = ((hash << 5) - hash) + ch.unicode();
+        hash = (hash * 31U) + ch.unicode();
     }
 
-    const int idx = std::abs(hash) % palette.count();
+    const qsizetype idx = static_cast<qsizetype>(hash % static_cast<quint32>(palette.count()));
     return palette[idx];
 }
