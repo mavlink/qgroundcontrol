@@ -595,8 +595,14 @@ void OnboardLogController::_sortEntriesByTimestamp()
     std::stable_sort(sortedEntries.begin(), sortedEntries.end(), [this](const QObject *lhsObj, const QObject *rhsObj) {
         const QGCOnboardLogEntry *const lhs = qobject_cast<const QGCOnboardLogEntry*>(lhsObj);
         const QGCOnboardLogEntry *const rhs = qobject_cast<const QGCOnboardLogEntry*>(rhsObj);
-        if (!lhs || !rhs) {
+        if (lhs == rhs) {
             return false;
+        }
+        if (!lhs) {
+            return false;
+        }
+        if (!rhs) {
+            return true;
         }
 
         const bool lhsHasTime = lhs->received() && (lhs->time().toSecsSinceEpoch() > 0);

@@ -2,7 +2,13 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QHash>
+#include <QtCore/QPointF>
+#include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QVariant>
 #include <QtCore/QVariantList>
+#include <QtCore/QVector>
+#include <QtCore/QtGlobal>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class DataFlashLogParser : public QObject
@@ -60,8 +66,6 @@ signals:
     void parseFileFinished(const QString &filePath, bool ok, const QString &errorMessage);
 
 private:
-    static double _extractTimestampSeconds(const QMap<QString, QVariant> &values);
-    void _appendEvent(double timestampSecs, const QString &type, const QString &description);
     void _setParseError(const QString &error);
 
     bool _parsed = false;
@@ -72,8 +76,9 @@ private:
     QVariantList _events;
     QVariantList _modeSegments;
     QString _detectedVehicleType;
-    QHash<QString, QVariantList> _signalSamples;
+    QHash<QString, QVector<QPointF>> _signalSamples;
     double _minTimestamp = -1.0;
     double _maxTimestamp = -1.0;
     int _sampleCount = 0;
+    quint64 _parseRequestId = 0;
 };

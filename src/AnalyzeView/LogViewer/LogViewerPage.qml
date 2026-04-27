@@ -1026,7 +1026,7 @@ AnalyzePage {
 
                         Row {
                             Layout.fillWidth: true
-                            visible: logViewerController.sourceType === LogViewerController.Bin && dataFlashParser.events.length > 0
+                            visible: logViewerController.sourceType === LogViewerController.Bin && logViewerController.selectedSignals.length > 0
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.1
                             spacing: ScreenTools.defaultFontPixelWidth
 
@@ -1127,7 +1127,17 @@ AnalyzePage {
                         if (logViewerController.hasLoadedLog) {
                             clearLoadedLogState(true)
                         }
-                        replayController.link = QGroundControl.linkManager.startLogReplay(file)
+                        const replayLink = QGroundControl.linkManager.startLogReplay(file)
+                        if (!replayLink) {
+                            QGroundControl.showMessageDialog(
+                                logViewerPage,
+                                qsTr("Log Viewer"),
+                                qsTr("Failed to start telemetry replay for the selected .tlog file.")
+                            )
+                            close()
+                            return
+                        }
+                        replayController.link = replayLink
                         logViewerController.openTLog(file)
                     } else {
                         loadBinFile(file)

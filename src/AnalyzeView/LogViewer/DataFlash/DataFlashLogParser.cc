@@ -24,7 +24,7 @@ struct ParseResult {
     QVariantList parameters;
     QVariantList events;
     QVariantList modeSegments;
-    QHash<QString, QVariantList> signalSamples;
+    QHash<QString, QVector<QPointF>> signalSamples;
     double minTimestamp = -1.0;
     double maxTimestamp = -1.0;
     int sampleCount = 0;
@@ -255,10 +255,10 @@ ParseResult _parseDataFlashFile(const QString &filePath)
         } else if (fmt.name == QStringLiteral("ERR")) {
             const QString subsystem = values.value(QStringLiteral("Subsys")).toString();
             const QString ecode = values.value(QStringLiteral("ECode")).toString();
-            _appendEvent(result.events, timestampSecs, QStringLiteral("error"), QStringLiteral("Error: Subsys=%1 ECode=%2").arg(subsystem, ecode));
+            _appendEvent(result.events, timestampSecs, QStringLiteral("error"), DataFlashLogParser::tr("Error: Subsys=%1 ECode=%2").arg(subsystem, ecode));
         } else if (fmt.name == QStringLiteral("EV")) {
             const int eventId = values.value(QStringLiteral("Id")).toInt();
-            QString description = QStringLiteral("Event %1").arg(eventId);
+            QString description = DataFlashLogParser::tr("Event %1").arg(eventId);
             if (eventId == 10) {
                 description = DataFlashLogParser::tr("Armed");
             } else if (eventId == 11) {
@@ -276,10 +276,7 @@ ParseResult _parseDataFlashFile(const QString &filePath)
                                      (typeId == QMetaType::LongLong) || (typeId == QMetaType::ULongLong) ||
                                      (typeId == QMetaType::Float) || (typeId == QMetaType::Double);
                 if (numeric) {
-                    QVariantMap point;
-                    point[QStringLiteral("x")] = timestampSecs;
-                    point[QStringLiteral("y")] = it.value().toDouble();
-                    result.signalSamples[signalName].append(point);
+                    result.signalSamples[signalName].append(QPointF(timestampSecs, it.value().toDouble()));
                     plottableSet.insert(signalName);
                 }
             }
@@ -320,6 +317,7 @@ DataFlashLogParser::~DataFlashLogParser()
 
 bool DataFlashLogParser::parseFile(const QString &filePath)
 {
+    ++_parseRequestId; // Invalidate any in-flight async parse results.
     clear();
     const ParseResult result = _parseDataFlashFile(filePath);
     if (!result.ok) {
@@ -356,12 +354,18 @@ bool DataFlashLogParser::parseFile(const QString &filePath)
 
 void DataFlashLogParser::parseFileAsync(const QString &filePath)
 {
+    const quint64 requestId = ++_parseRequestId;
     clear();
 
     auto *watcher = new QFutureWatcher<ParseResult>(this);
-    (void) connect(watcher, &QFutureWatcher<ParseResult>::finished, this, [this, watcher, filePath]() {
+    (void) connect(watcher, &QFutureWatcher<ParseResult>::finished, this, [this, watcher, filePath, requestId]() {
         const ParseResult result = watcher->result();
         watcher->deleteLater();
+
+        if (requestId != _parseRequestId) {
+            // A newer parse request has superseded this result.
+            return;
+        }
 
         if (!result.ok) {
             _setParseError(result.errorMessage);
@@ -458,7 +462,22 @@ void DataFlashLogParser::clear()
 
 QVariantList DataFlashLogParser::signalSamples(const QString &signalName) const
 {
-    return _signalSamples.value(signalName);
+    QVariantList output;
+    const auto signalIt = _signalSamples.constFind(signalName);
+    if (signalIt == _signalSamples.cend()) {
+        return output;
+    }
+
+    const QVector<QPointF> &points = signalIt.value();
+    output.reserve(points.size());
+    for (const QPointF &point : points) {
+        QVariantMap row;
+        row[QStringLiteral("x")] = point.x();
+        row[QStringLiteral("y")] = point.y();
+        output.append(row);
+    }
+
+    return output;
 }
 
 double DataFlashLogParser::signalValueAt(const QString &signalName, double timestampSeconds) const
@@ -468,27 +487,27 @@ double DataFlashLogParser::signalValueAt(const QString &signalName, double times
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-    const QVariantList &points = signalIt.value();
+    const QVector<QPointF> &points = signalIt.value();
     const auto lower = std::lower_bound(points.cbegin(), points.cend(), timestampSeconds,
-        [](const QVariant &point, double timestamp) {
-            return point.toMap().value(QStringLiteral("x")).toDouble() < timestamp;
+        [](const QPointF &point, double timestamp) {
+            return point.x() < timestamp;
         });
 
     if (lower == points.cbegin()) {
-        return lower->toMap().value(QStringLiteral("y")).toDouble();
+        return lower->y();
     }
 
     if (lower == points.cend()) {
-        return points.constLast().toMap().value(QStringLiteral("y")).toDouble();
+        return points.constLast().y();
     }
 
     const auto previous = std::prev(lower);
-    const double lowerDistance = std::fabs(lower->toMap().value(QStringLiteral("x")).toDouble() - timestampSeconds);
-    const double previousDistance = std::fabs(previous->toMap().value(QStringLiteral("x")).toDouble() - timestampSeconds);
+    const double lowerDistance = std::fabs(lower->x() - timestampSeconds);
+    const double previousDistance = std::fabs(previous->x() - timestampSeconds);
 
     return (previousDistance <= lowerDistance)
-        ? previous->toMap().value(QStringLiteral("y")).toDouble()
-        : lower->toMap().value(QStringLiteral("y")).toDouble();
+        ? previous->y()
+        : lower->y();
 }
 
 QString DataFlashLogParser::modeAt(double timestampSeconds) const
@@ -519,34 +538,6 @@ QVariantList DataFlashLogParser::eventsNear(double timestampSeconds, double thre
     }
 
     return matches;
-}
-
-double DataFlashLogParser::_extractTimestampSeconds(const QMap<QString, QVariant> &values)
-{
-    if (values.contains(QStringLiteral("TimeUS"))) {
-        return values.value(QStringLiteral("TimeUS")).toDouble() / 1000000.0;
-    }
-    if (values.contains(QStringLiteral("TimeMS"))) {
-        return values.value(QStringLiteral("TimeMS")).toDouble() / 1000.0;
-    }
-    if (values.contains(QStringLiteral("Time"))) {
-        return values.value(QStringLiteral("Time")).toDouble() / 1000.0;
-    }
-
-    return -1.0;
-}
-
-void DataFlashLogParser::_appendEvent(double timestampSecs, const QString &type, const QString &description)
-{
-    if ((timestampSecs < 0.0) || description.isEmpty()) {
-        return;
-    }
-
-    QVariantMap eventRow;
-    eventRow[QStringLiteral("time")] = timestampSecs;
-    eventRow[QStringLiteral("type")] = type;
-    eventRow[QStringLiteral("description")] = description;
-    _events.append(eventRow);
 }
 
 void DataFlashLogParser::_setParseError(const QString &error)
