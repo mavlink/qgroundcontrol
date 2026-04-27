@@ -18,6 +18,7 @@ Rectangle {
     property alias textFieldShowHelp:       factTextField.textFieldShowHelp
     property alias textField:               factTextField
     property alias enableCheckBoxChecked:   enableCheckbox.checked
+    property bool  warnOnUserMinMaxInvalid: true  ///< true: warn if userMin/userMax are invalid, false: no warning
 
     property bool   showEnableCheckbox: false ///< true: show enable/disable checkbox, false: hide
     property bool   allowUsingMinMax:   false ///< true: fall back to fact.min/max when userMin/Max not set
@@ -52,7 +53,7 @@ Rectangle {
 
     Component.onCompleted: {
         _loadComplete = true
-        if (!allowUsingMinMax && sliderMin === undefined && sliderMax === undefined && (fact.userMin === undefined || fact.userMax === undefined)) {
+        if (warnOnUserMinMaxInvalid && !allowUsingMinMax && sliderMin === undefined && sliderMax === undefined && (fact.userMin === undefined || fact.userMax === undefined)) {
             console.warn("FactTextFieldSlider: userMin/userMax not set for", fact.name)
         }
     }

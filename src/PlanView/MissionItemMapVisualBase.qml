@@ -19,9 +19,6 @@ Item {
     /// Subclasses must set this to their indicator Component
     property Component indicatorComponent
 
-    /// Exposed so subclasses can drive additional visual loaders alongside the base.
-    property alias _itemVisualLoader: itemVisualLoader
-
     property var _missionItem: object
     property bool _itemVisualShowing: false
     property bool _dragAreaShowing: false
@@ -29,17 +26,11 @@ Item {
     signal clicked(int sequenceNumber)
 
     function hideItemVisuals() {
-        if (_itemVisualShowing) {
-            itemVisualLoader.active = false
-            _itemVisualShowing = false
-        }
+        _hideItemVisuals()
     }
 
     function showItemVisuals() {
-        if (!_itemVisualShowing) {
-            itemVisualLoader.active = true
-            _itemVisualShowing = true
-        }
+        _showItemVisuals()
     }
 
     function hideDragArea() {
@@ -61,6 +52,20 @@ Item {
             showDragArea()
         } else {
             hideDragArea()
+        }
+    }
+
+    function _hideItemVisuals() {
+        if (_itemVisualShowing) {
+            itemVisualLoader.active = false
+            _itemVisualShowing = false
+        }
+    }
+
+    function _showItemVisuals() {
+        if (!_itemVisualShowing) {
+            itemVisualLoader.active = true
+            _itemVisualShowing = true
         }
     }
 
