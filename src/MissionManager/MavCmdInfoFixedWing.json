@@ -26,7 +26,9 @@
                 "label":            "Pitch",
                 "units":            "deg",
                 "default":          15,
-                "decimalPlaces":    2
+                "decimalPlaces":    2,
+                "userMin":          0,
+                "userMax":          45
             }
         }
     ]
