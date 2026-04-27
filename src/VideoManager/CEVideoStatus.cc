@@ -34,7 +34,7 @@ void CEVideoStatus::_readPendingDatagrams()
         }
 
         const QJsonObject obj = doc.object();
-        const QString state = obj.value(QStringLiteral("state")).toString(QStringLiteral("UNKNOWN"));
+        const QString state = obj.value(QStringLiteral("state")).toString(QStringLiteral("NO_VIDEO"));
         const double fps = obj.value(QStringLiteral("fps")).toDouble(0.0);
         const double age = obj.value(QStringLiteral("last_frame_age_sec")).isNull()
             ? -1.0
@@ -48,7 +48,7 @@ void CEVideoStatus::_readPendingDatagrams()
 void CEVideoStatus::_checkTimeout()
 {
     if (_hasStatus && _lastPacketTimer.elapsed() > 3000) {
-        _setStatus(QStringLiteral("NO_STATUS"), 0.0, -1.0, false);
+        _setStatus(QStringLiteral("NO_VIDEO"), 0.0, -1.0, false);
     }
 }
 

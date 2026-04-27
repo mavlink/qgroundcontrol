@@ -42,7 +42,7 @@ private:
     QUdpSocket _socket;
     QTimer _timeoutTimer;
     QElapsedTimer _lastPacketTimer;
-    QString _state = QStringLiteral("NO_STATUS");
+    QString _state = QStringLiteral("NO_VIDEO");
     double _fps = 0.0;
     double _lastFrameAgeSec = -1.0;
     bool _hasStatus = false;

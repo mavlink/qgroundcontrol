@@ -130,6 +130,20 @@ Item {
         id: ceVideoStatus
     }
 
+    readonly property string _videoHealthState: ceVideoStatus.hasStatus ? ceVideoStatus.state : "NO_VIDEO"
+    readonly property bool _videoHealthOk: _videoHealthState === "OK"
+    readonly property bool _videoHealthWarn: _videoHealthState === "LOW_FPS"
+    readonly property bool _videoHealthBad: _videoHealthState === "STALE" || _videoHealthState === "NO_VIDEO"
+    readonly property string _videoStatusText: _videoHealthState === "OK" ? "Ok" :
+                                               _videoHealthState === "LOW_FPS" ? "Low FPS" :
+                                               _videoHealthState === "STALE" ? "Stale" :
+                                               "No Video"
+    readonly property string _videoStatusLabel: "Video: " + _videoStatusText
+    readonly property color _videoStatusColor: _videoHealthOk ? _clrGreen :
+                                               _videoHealthWarn ? _clrAmber :
+                                               _videoHealthBad ? _clrRed :
+                                               _clrCard
+
     // ─────────────────────────────────────────────────────────────────────
     // DEMO LOOKUP TABLES  (read-only data, safe to treat as constants)
     // ─────────────────────────────────────────────────────────────────────
@@ -418,16 +432,13 @@ Item {
                     width:  videoStatusText.width + 18
                     height: 28
                     radius: 4
-                    color:  ceVideoStatus.state === "OK" ? _clrGreen :
-                            ceVideoStatus.state === "LOW_FPS" ? _clrAmber :
-                            (ceVideoStatus.state === "STALE" || ceVideoStatus.state === "NO_VIDEO") ? _clrRed :
-                            _clrCard
+                    color:  _videoStatusColor
                     anchors.verticalCenter: parent.verticalCenter
 
                     Text {
                         id:               videoStatusText
                         anchors.centerIn: parent
-                        text:             ceVideoStatus.hasStatus ? "VIDEO " + ceVideoStatus.state : "VIDEO --"
+                        text:             _videoStatusLabel
                         color:            "white"
                         font.pixelSize:   11
                         font.bold:        true
