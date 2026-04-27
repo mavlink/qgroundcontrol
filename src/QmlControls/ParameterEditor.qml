@@ -166,6 +166,12 @@ Item {
                     clearTimer.start()
                 }
             }
+
+            QGCCheckBox {
+                text:       qsTr("Hide read-only")
+                checked:    controller.hideReadOnly
+                onClicked:  controller.hideReadOnly = checked
+            }
         }
 
         QGCButton {
@@ -344,6 +350,7 @@ Item {
 
         delegate: Rectangle {
             implicitWidth:  column === 0 ? ScreenTools.implicitCheckBoxHeight + ScreenTools.defaultFontPixelWidth
+                                         : column === 1 ? nameRow.implicitWidth + ScreenTools.defaultFontPixelWidth
                                          : column === 2 ? ScreenTools.defaultFontPixelWidth * 16
                                                         : label.contentWidth + ScreenTools.defaultFontPixelWidth
             implicitHeight: label.contentHeight + ScreenTools.defaultFontPixelHeight * 0.5
@@ -383,9 +390,34 @@ Item {
                 onClicked:              controller.toggleFavorite(fact.name)
             }
 
+            Row {
+                id:                     nameRow
+                visible:                column === 1
+                anchors.left:           parent.left
+                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
+                anchors.verticalCenter: parent.verticalCenter
+                spacing:               lockIcon.visible ? ScreenTools.defaultFontPixelWidth / 3 : 0
+
+                QGCLabel {
+                    text:               column === 1 ? display : ""
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                QGCColoredImage {
+                    id:                 lockIcon
+                    visible:            fact.readOnly
+                    source:             "qrc:/InstrumentValueIcons/lock-closed.svg"
+                    color:              qgcPal.text
+                    width:              ScreenTools.defaultFontPixelHeight * 0.8
+                    height:             width
+                    sourceSize.width:   width
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+
             QGCLabel {
                 id:                 label
-                visible:            column !== 0
+                visible:            column !== 0 && column !== 1
                 anchors.left:       parent.left
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
                 anchors.verticalCenter: parent.verticalCenter

@@ -1387,16 +1387,17 @@ FactMetaData *FactMetaData::createFromJsonObject(const QJsonObject &json, const 
     }
     metaData->setVehicleRebootRequired(rebootRequired);
 
+    bool readOnly = false;
+    if (json.contains(_readOnlyJsonKey)) {
+        readOnly = json[_readOnlyJsonKey].toBool();
+    }
+    metaData->setReadOnly(readOnly);
+
     bool volatileValue = false;
     if (json.contains(_volatileJsonKey)) {
         volatileValue = json[_volatileJsonKey].toBool();
     }
     metaData->setVolatileValue(volatileValue);
-
-    if (json.contains(_readOnlyJsonKey)) {
-        metaData->setReadOnly(json[_readOnlyJsonKey].toBool());
-    }
-
     if (json.contains(_groupJsonKey)) {
         metaData->setGroup(json[_groupJsonKey].toString());
     }
@@ -1484,9 +1485,6 @@ QVariant FactMetaData::cookedMin() const
 void FactMetaData::setVolatileValue(bool bValue)
 {
     _volatile = bValue;
-    if (_volatile) {
-        _readOnly = true;
-    }
 }
 
 QStringList FactMetaData::splitTranslatedList(const QString &translatedList)
