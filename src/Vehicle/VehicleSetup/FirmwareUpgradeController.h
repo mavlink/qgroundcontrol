@@ -153,6 +153,7 @@ signals:
     void flashComplete                  (void);
     void flashCancelled                 (void);
     void error                          (void);
+    void eraseStarted                   (void);
     void selectedFirmwareBuildTypeChanged(FirmwareBuildType_t firmwareType);
     void apmFirmwareNamesChanged        (void);
     void px4StableVersionChanged        (const QString& px4StableVersion);
