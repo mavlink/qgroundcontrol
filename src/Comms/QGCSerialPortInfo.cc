@@ -271,40 +271,6 @@ QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts()
     return list;
 }
 
-QList<QGCSerialPortInfo> QGCSerialPortInfo::flashablePortsPreferAutopilot()
-{
-    QList<QGCSerialPortInfo> flashable;
-    bool hasPixhawk = false;
-
-    for (const QGCSerialPortInfo &info : availablePorts()) {
-        if (!info.canFlash()) {
-            continue;
-        }
-        BoardType_t boardType;
-        QString boardName;
-        info.getBoardInfo(boardType, boardName);
-        if (boardType == BoardTypePixhawk) {
-            hasPixhawk = true;
-        }
-        flashable.append(info);
-    }
-
-    if (hasPixhawk) {
-        QList<QGCSerialPortInfo> filtered;
-        for (const QGCSerialPortInfo &info : flashable) {
-            BoardType_t boardType;
-            QString boardName;
-            info.getBoardInfo(boardType, boardName);
-            if (boardType != BoardTypeSiKRadio) {
-                filtered.append(info);
-            }
-        }
-        return filtered;
-    }
-
-    return flashable;
-}
-
 bool QGCSerialPortInfo::isBootloader() const
 {
     BoardType_t boardType;
