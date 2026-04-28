@@ -50,6 +50,7 @@ SetupPage {
             property bool   firmwareWarningMessageVisible:  false
             property string firmwareName
             property bool   _flashStarted:              false  ///< true: user has clicked Flash, suppress further preselection
+            property bool   _cancellable:               true   ///< false once erase has started — past the point of clean cancellation
             property string _selectedSystemLocation
             property string _selectedDisplayName                ///< snapshot of chosen port's label, used while flashing
 
@@ -138,11 +139,16 @@ SetupPage {
                 }
 
                 onShowFirmwareSelectDlg:    firmwareSelectDialogFactory.open()
+                onEraseStarted:             _cancellable = false
                 onError: {
                     statusTextArea.append(flashFailText)
                     _flashStarted = false
+                    _cancellable = true
                 }
-                onFlashComplete: _flashStarted = false
+                onFlashComplete: {
+                    _flashStarted = false
+                    _cancellable = true
+                }
             }
 
             QGCPopupDialogFactory {
@@ -501,9 +507,11 @@ SetupPage {
                     id:         cancelButton
                     text:       qsTr("Cancel")
                     visible:    _flashStarted
+                    enabled:    _cancellable
                     onClicked: {
                         controller.cancel()
                         _flashStarted = false
+                        _cancellable = true
                         _selectedDisplayName = ""
                         statusTextArea.append(highlightPrefix + qsTr("Cancelled. Select a port and press Flash to try again.") + highlightSuffix)
                     }
