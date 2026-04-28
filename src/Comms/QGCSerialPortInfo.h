@@ -46,6 +46,9 @@ public:
     /// Override of QSerialPortInfo::availablePorts
     static QList<QGCSerialPortInfo> availablePorts();
 
+    /// Returns flashable ports with SiK radios filtered out when any Pixhawk is also present.
+    static QList<QGCSerialPortInfo> flashablePortsPreferAutopilot();
+
 private:
     struct BoardClassString2BoardType_t {
         const QString classString;

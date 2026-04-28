@@ -137,6 +137,7 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     connect(_threadController, &PX4FirmwareUpgradeThreadController::eraseComplete,          this, &FirmwareUpgradeController::_eraseComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::flashComplete,          this, &FirmwareUpgradeController::_flashComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress,         this, &FirmwareUpgradeController::_updateProgress);
+    connect(_threadController, &PX4FirmwareUpgradeThreadController::portsAvailable,         this, &FirmwareUpgradeController::_portsAvailable);
 
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
 
@@ -215,6 +216,20 @@ void FirmwareUpgradeController::cancel(void)
     _threadController->cancel();
 }
 
+void FirmwareUpgradeController::flashPort(const QString& systemLocation)
+{
+    qCDebug(FirmwareUpgradeControllerLog) << "flashPort" << systemLocation;
+    _bootloaderFound = false;
+    _startFlashWhenBootloaderFound = false;
+    _threadController->setTargetPort(systemLocation);
+}
+
+void FirmwareUpgradeController::_portsAvailable(const QVariantList& ports)
+{
+    _availablePorts = ports;
+    emit availablePortsChanged();
+}
+
 QStringList FirmwareUpgradeController::availableBoardsName(void)
 {
     QGCSerialPortInfo::BoardType_t boardType;
@@ -236,7 +251,13 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
 {
     _boardInfo      = info;
     _boardType      = static_cast<QGCSerialPortInfo::BoardType_t>(boardType);
-    _boardTypeName  = boardName;
+    if (!boardName.isEmpty()) {
+        _boardTypeName = boardName;
+    } else if (!info.description().isEmpty()) {
+        _boardTypeName = info.description();
+    } else {
+        _boardTypeName = info.portName();
+    }
 
     qDebug() << info.manufacturer() << info.description();
 

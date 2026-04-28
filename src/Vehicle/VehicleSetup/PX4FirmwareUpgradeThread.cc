@@ -3,7 +3,9 @@
 #include "FirmwareImage.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QSet>
 #include <QtCore/QThread>
+#include <QtCore/QVariantMap>
 
 QGC_LOGGING_CATEGORY(PX4FirmwareUpgradeThreadLog, "Vehicle.VehicleSetup.PX4FirmwareUpgradeThread")
 QGC_LOGGING_CATEGORY(PX4FirmwareUpgradeThreadVerboseLog, "Vehicle.VehicleSetup.PX4FirmwareUpgradeThread.Verbose")
@@ -17,6 +19,7 @@ PX4FirmwareUpgradeThreadWorker::PX4FirmwareUpgradeThreadWorker(PX4FirmwareUpgrad
     connect(_controller, &PX4FirmwareUpgradeThreadController::_flashOnThread,               this, &PX4FirmwareUpgradeThreadWorker::_flash);
     connect(_controller, &PX4FirmwareUpgradeThreadController::_rebootOnThread,              this, &PX4FirmwareUpgradeThreadWorker::_reboot);
     connect(_controller, &PX4FirmwareUpgradeThreadController::_cancel,                      this, &PX4FirmwareUpgradeThreadWorker::_cancel);
+    connect(_controller, &PX4FirmwareUpgradeThreadController::_setTargetPortOnThread,       this, &PX4FirmwareUpgradeThreadWorker::_setTargetPort);
 }
 
 PX4FirmwareUpgradeThreadWorker::~PX4FirmwareUpgradeThreadWorker()
@@ -37,11 +40,18 @@ void PX4FirmwareUpgradeThreadWorker::_init(void)
 void PX4FirmwareUpgradeThreadWorker::_cancel(void)
 {
     qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "_cancel";
+    _targetSystemLocation.clear();
+    _targetSerialNumber.clear();
+    _targetSeenAtLeastOnce = false;
+    _foundBoard = false;
     if (_bootloader) {
         _bootloader->reboot();
         _bootloader->close();
         _bootloader->deleteLater();
         _bootloader = nullptr;
+    }
+    if (_findBoardTimer && !_findBoardTimer->isActive()) {
+        _findBoardTimer->start();
     }
 }
 
@@ -49,28 +59,134 @@ void PX4FirmwareUpgradeThreadWorker::_startFindBoardLoop(void)
 {
     _foundBoard = false;
     _findBoardFirstAttempt = true;
+    _targetSystemLocation.clear();
+    _targetSerialNumber.clear();
+    _targetSeenAtLeastOnce = false;
     _findBoardOnce();
+}
+
+void PX4FirmwareUpgradeThreadWorker::_setTargetPort(const QString& systemLocation)
+{
+    qCDebug(PX4FirmwareUpgradeThreadLog) << "_setTargetPort" << systemLocation;
+    _targetSystemLocation = systemLocation;
+    _targetSerialNumber.clear();
+    _targetSeenAtLeastOnce = false;
+    _foundBoard = false;
+
+    bool currentlyVisible = false;
+    for (const QGCSerialPortInfo& info : QGCSerialPortInfo::availablePorts()) {
+        if (info.systemLocation() == systemLocation) {
+            currentlyVisible = true;
+            // Capture serial number so we can find the board across a path change
+            // when it re-enumerates as a bootloader on a different /dev/ttyACM*.
+            _targetSerialNumber = info.serialNumber();
+            break;
+        }
+    }
+    _findBoardFirstAttempt = currentlyVisible;
+}
+
+QVariantList PX4FirmwareUpgradeThreadWorker::_buildPortDescriptors() const
+{
+    QVariantList list;
+    const QList<QGCSerialPortInfo> flashable = QGCSerialPortInfo::flashablePortsPreferAutopilot();
+    QSet<QString> flashableLocations;
+    for (const QGCSerialPortInfo& info : flashable) {
+        flashableLocations.insert(info.systemLocation());
+    }
+
+    for (const QGCSerialPortInfo& info : QGCSerialPortInfo::availablePorts()) {
+        // Hide SiK radios when a Pixhawk is also connected, matching the flashable filter.
+        QGCSerialPortInfo::BoardType_t boardType;
+        QString boardName;
+        const bool recognized = info.getBoardInfo(boardType, boardName);
+        if (recognized && boardType == QGCSerialPortInfo::BoardTypeSiKRadio
+            && !flashableLocations.contains(info.systemLocation())) {
+            continue;
+        }
+
+        QVariantMap entry;
+        entry["systemLocation"] = info.systemLocation();
+        entry["portName"]       = info.portName();
+        entry["description"]    = info.description();
+        entry["manufacturer"]   = info.manufacturer();
+        entry["boardType"]      = static_cast<int>(recognized ? boardType : QGCSerialPortInfo::BoardTypeUnknown);
+        entry["boardName"]      = recognized ? boardName : QString();
+        entry["recognized"]     = recognized;
+
+        QString display = info.portName();
+        if (!info.description().isEmpty()) {
+            display += QStringLiteral(" — ") + info.description();
+        }
+        if (recognized && !boardName.isEmpty()) {
+            display += QStringLiteral(" [") + boardName + QStringLiteral("]");
+        }
+        entry["displayName"] = display;
+
+        list.append(entry);
+    }
+
+    return list;
 }
 
 void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
 {
     qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "_findBoardOnce";
 
-    QGCSerialPortInfo               portInfo;
-    QGCSerialPortInfo::BoardType_t  boardType;
-    QString                         boardName;
+    emit portsAvailable(_buildPortDescriptors());
 
-    if (_findBoardFromPorts(portInfo, boardType, boardName)) {
+    if (_targetSystemLocation.isEmpty()) {
+        _findBoardTimer->start();
+        return;
+    }
+
+    QGCSerialPortInfo               targetPort;
+    QGCSerialPortInfo::BoardType_t  boardType   = QGCSerialPortInfo::BoardTypeUnknown;
+    QString                         boardName;
+    bool                            foundTarget = false;
+
+    for (const QGCSerialPortInfo& info: QGCSerialPortInfo::availablePorts()) {
+        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "Serial Port --------------";
+        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tport name:" << info.portName();
+        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tdescription:" << info.description();
+        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tsystem location:" << info.systemLocation();
+        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tvendor ID:" << info.vendorIdentifier();
+        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tproduct ID:" << info.productIdentifier();
+
+        bool match = (info.systemLocation() == _targetSystemLocation);
+        if (!match && !_targetSerialNumber.isEmpty() && !info.serialNumber().isEmpty()) {
+            match = (info.serialNumber() == _targetSerialNumber);
+        }
+        // After we've seen the target at least once and it's now gone, accept any
+        // recognized flashable port — covers the common case where a board re-enumerates
+        // as a bootloader at a different /dev/ttyACM* path with a different VID/PID.
+        if (!match && _targetSeenAtLeastOnce && !_foundBoard && info.canFlash()) {
+            match = true;
+        }
+
+        if (match) {
+            targetPort = info;
+            info.getBoardInfo(boardType, boardName);
+            foundTarget = true;
+            break;
+        }
+    }
+
+    if (foundTarget) {
         if (!_foundBoard) {
             _foundBoard = true;
-            _foundBoardPortInfo = portInfo;
-            emit foundBoard(_findBoardFirstAttempt, portInfo, boardType, boardName);
+            _targetSeenAtLeastOnce = true;
+            _foundBoardPortInfo = targetPort;
+            if (_targetSerialNumber.isEmpty() && !targetPort.serialNumber().isEmpty()) {
+                _targetSerialNumber = targetPort.serialNumber();
+            }
+            emit foundBoard(_findBoardFirstAttempt, targetPort, boardType, boardName);
             if (!_findBoardFirstAttempt) {
 
                 _bootloader = new Bootloader(boardType == QGCSerialPortInfo::BoardTypeSiKRadio, this);
                 connect(_bootloader, &Bootloader::updateProgress, this, &PX4FirmwareUpgradeThreadWorker::_updateProgress);
 
-                if (_bootloader->open(portInfo.portName())) {
+                if (_bootloader->open(targetPort.portName())) {
                     uint32_t    bootloaderVersion;
                     uint32_t    boardId;
                     uint32_t    flashSize;
@@ -88,39 +204,13 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
     } else {
         if (_foundBoard) {
             _foundBoard = false;
-            qCDebug(PX4FirmwareUpgradeThreadLog) << "Board gone";
+            qCDebug(PX4FirmwareUpgradeThreadLog) << "Target port gone";
             emit boardGone();
-        } else if (_findBoardFirstAttempt) {
-            emit noBoardFound();
         }
     }
 
     _findBoardFirstAttempt = false;
     _findBoardTimer->start();
-}
-
-bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType, QString& boardName)
-{
-    for (const QGCSerialPortInfo& info: QGCSerialPortInfo::availablePorts()) {
-        info.getBoardInfo(boardType, boardName);
-
-        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "Serial Port --------------";
-        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tboard type" << boardType;
-        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tboard name" << boardName;
-        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tmanufacturer:" << info.manufacturer();
-        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tport name:" << info.portName();
-        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tdescription:" << info.description();
-        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tsystem location:" << info.systemLocation();
-        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tvendor ID:" << info.vendorIdentifier();
-        qCDebug(PX4FirmwareUpgradeThreadVerboseLog) << "\tproduct ID:" << info.productIdentifier();
-
-        if (info.canFlash()) {
-            portInfo = info;
-            return true;
-        }
-    }
-
-    return false;
 }
 
 void PX4FirmwareUpgradeThreadWorker::_reboot(void)
@@ -214,6 +304,7 @@ PX4FirmwareUpgradeThreadController::PX4FirmwareUpgradeThreadController(QObject* 
     connect(_worker, &PX4FirmwareUpgradeThreadWorker::eraseStarted,         this, &PX4FirmwareUpgradeThreadController::_eraseStarted);
     connect(_worker, &PX4FirmwareUpgradeThreadWorker::eraseComplete,        this, &PX4FirmwareUpgradeThreadController::_eraseComplete);
     connect(_worker, &PX4FirmwareUpgradeThreadWorker::flashComplete,        this, &PX4FirmwareUpgradeThreadController::_flashComplete);
+    connect(_worker, &PX4FirmwareUpgradeThreadWorker::portsAvailable,       this, &PX4FirmwareUpgradeThreadController::_portsAvailable);
 
     _workerThread->start();
 
