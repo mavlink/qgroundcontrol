@@ -11,6 +11,8 @@ static void commandResultHandler(void *resultHandlerData, [[maybe_unused]] int c
     StandardModes* standardModes = static_cast<StandardModes*>(resultHandlerData);
     if (ack.result != MAV_RESULT_ACCEPTED) {
         qCDebug(StandardModesLog) << "Failed to request available modes - MAV_RESULT" << ack.result;
+        standardModes->_requestActive = false;
+        standardModes->_wantReset = false;
         emit standardModes->requestCompleted();
     }
 }
