@@ -607,6 +607,8 @@ AnalyzePage {
                             QGCTextField {
                                 id: signalSearchField
                                 Layout.fillWidth: true
+                                textColor: qgcPal.textFieldText
+                                placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
                                 placeholderText: qsTr("Search signals")
                                 onTextChanged: {
                                     signalSearchText = text
@@ -621,6 +623,21 @@ AnalyzePage {
                                     signalSearchText = text
                                     signalSearchTimer.stop()
                                     applySignalFilter()
+                                }
+                            }
+
+                            QGCButton {
+                                text: qsTr("Clear Selected")
+                                horizontalAlignment: Text.AlignHCenter
+                                Layout.preferredHeight: signalSearchField.implicitHeight
+                                Layout.minimumHeight: signalSearchField.implicitHeight
+                                topPadding: 0
+                                bottomPadding: 0
+                                enabled: logViewerController.selectedSignals.length > 0
+                                onClicked: {
+                                    logViewerController.clearSelection()
+                                    applySignalFilter()
+                                    refreshBinChart()
                                 }
                             }
                         }
@@ -680,8 +697,8 @@ AnalyzePage {
                                         QGCCheckBox {
                                             id: signalCheckBox
                                             anchors.verticalCenter: parent.verticalCenter
-                                            checked: isSignalSelected(modelData.fullName)
                                             onClicked: toggleSignal(modelData.fullName)
+                                            checked: logViewerController.selectedSignals.indexOf(modelData.fullName) !== -1
                                         }
 
                                         QGCLabel {
@@ -720,6 +737,8 @@ AnalyzePage {
                             QGCTextField {
                                 id: parameterSearchField
                                 Layout.fillWidth: true
+                                textColor: qgcPal.textFieldText
+                                placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
                                 placeholderText: qsTr("Search parameters")
                                 onTextChanged: {
                                     parameterSearchText = text
@@ -1005,6 +1024,11 @@ AnalyzePage {
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.1
                             spacing: ScreenTools.defaultFontPixelWidth
 
+                            QGCLabel {
+                                text: qsTr("Modes:")
+                                font.bold: true
+                            }
+
                             Repeater {
                                 model: modeLegendEntries()
 
@@ -1030,6 +1054,11 @@ AnalyzePage {
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.1
                             spacing: ScreenTools.defaultFontPixelWidth
 
+                            QGCLabel {
+                                text: qsTr("Signals:")
+                                font.bold: true
+                            }
+
                             Repeater {
                                 model: logViewerController.selectedSignals
 
@@ -1054,6 +1083,11 @@ AnalyzePage {
                             visible: logViewerController.sourceType === LogViewerController.Bin && dataFlashParser.events.length > 0
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.1
                             spacing: ScreenTools.defaultFontPixelWidth
+
+                            QGCLabel {
+                                text: qsTr("Events:")
+                                font.bold: true
+                            }
 
                             Repeater {
                                 model: ["mode", "event", "error"]

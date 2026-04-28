@@ -120,6 +120,228 @@ QString _ardupilotModeName(const QString &vehicleType, int modeNumber)
     return QStringLiteral("Mode %1").arg(modeNumber);
 }
 
+QString _ardupilotErrDescription(int subsystem, int ecode)
+{
+    QString subsystemName;
+    switch (subsystem) {
+    case 1:  subsystemName = DataFlashLogParser::tr("Main"); break;
+    case 2:  subsystemName = DataFlashLogParser::tr("Radio"); break;
+    case 3:  subsystemName = DataFlashLogParser::tr("Compass"); break;
+    case 4:  subsystemName = DataFlashLogParser::tr("Optflow"); break;
+    case 5:  subsystemName = DataFlashLogParser::tr("Radio Failsafe"); break;
+    case 6:  subsystemName = DataFlashLogParser::tr("Battery Failsafe"); break;
+    case 7:  subsystemName = DataFlashLogParser::tr("GPS Failsafe"); break;
+    case 8:  subsystemName = DataFlashLogParser::tr("GCS Failsafe"); break;
+    case 9:  subsystemName = DataFlashLogParser::tr("Fence Failsafe"); break;
+    case 10: subsystemName = DataFlashLogParser::tr("Flight mode"); break;
+    case 11: subsystemName = DataFlashLogParser::tr("GPS"); break;
+    case 12: subsystemName = DataFlashLogParser::tr("Crash Check"); break;
+    case 13: subsystemName = DataFlashLogParser::tr("Flip"); break;
+    case 14: subsystemName = DataFlashLogParser::tr("Autotune"); break;
+    case 15: subsystemName = DataFlashLogParser::tr("Parachute"); break;
+    case 16: subsystemName = DataFlashLogParser::tr("EKF Check"); break;
+    case 17: subsystemName = DataFlashLogParser::tr("EKF Failsafe"); break;
+    case 18: subsystemName = DataFlashLogParser::tr("Barometer"); break;
+    case 19: subsystemName = DataFlashLogParser::tr("CPU Load Watchdog"); break;
+    case 20: subsystemName = DataFlashLogParser::tr("ADSB Failsafe"); break;
+    case 21: subsystemName = DataFlashLogParser::tr("Terrain Data"); break;
+    case 22: subsystemName = DataFlashLogParser::tr("Navigation"); break;
+    case 23: subsystemName = DataFlashLogParser::tr("Terrain Failsafe"); break;
+    case 24: subsystemName = DataFlashLogParser::tr("EKF Primary"); break;
+    case 25: subsystemName = DataFlashLogParser::tr("Thrust Loss Check"); break;
+    case 26: subsystemName = DataFlashLogParser::tr("Sensor Failsafe"); break;
+    case 27: subsystemName = DataFlashLogParser::tr("Leak Failsafe"); break;
+    case 28: subsystemName = DataFlashLogParser::tr("Pilot Input"); break;
+    case 29: subsystemName = DataFlashLogParser::tr("Vibration Failsafe"); break;
+    case 30: subsystemName = DataFlashLogParser::tr("Internal Error"); break;
+    case 31: subsystemName = DataFlashLogParser::tr("Deadreckon Failsafe"); break;
+    default: subsystemName = DataFlashLogParser::tr("Subsystem %1").arg(subsystem); break;
+    }
+
+    QString ecodeText;
+    switch (subsystem) {
+    case 1: // MAIN
+        if (ecode == 1) { ecodeText = DataFlashLogParser::tr("INS delay"); }
+        break;
+    case 2: // RADIO
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Errors Resolved"); }
+        else if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Late Frame"); }
+        break;
+    case 3: // COMPASS
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Errors Resolved"); }
+        else if (ecode == 1) { ecodeText = DataFlashLogParser::tr("Failed to initialise"); }
+        else if (ecode == 4) { ecodeText = DataFlashLogParser::tr("Unhealthy"); }
+        break;
+    case 5: // FAILSAFE_RADIO
+    case 6: // FAILSAFE_BATT
+    case 7: // FAILSAFE_GPS
+    case 8: // FAILSAFE_GCS
+    case 17: // FAILSAFE_EKFINAV
+    case 19: // CPU
+    case 23: // FAILSAFE_TERRAIN
+    case 26: // FAILSAFE_SENSORS
+    case 27: // FAILSAFE_LEAK
+    case 28: // PILOT_INPUT
+    case 31: // FAILSAFE_DEADRECKON
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Failsafe Resolved"); }
+        else if (ecode == 1) { ecodeText = DataFlashLogParser::tr("Failsafe Triggered"); }
+        break;
+    case 9: // FAILSAFE_FENCE
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Failsafe Resolved"); }
+        else if (ecode == 1) { ecodeText = DataFlashLogParser::tr("Altitude fence breach"); }
+        else if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Circular fence breach"); }
+        else if (ecode == 3) { ecodeText = DataFlashLogParser::tr("Altitude and circular fence breach"); }
+        else if (ecode == 4) { ecodeText = DataFlashLogParser::tr("Polygon fence breach"); }
+        break;
+    case 10: // FLIGHT_MODE
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Flight mode change failure"); }
+        break;
+    case 11: // GPS
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Glitch cleared"); }
+        else if (ecode == 2) { ecodeText = DataFlashLogParser::tr("GPS glitch occurred"); }
+        break;
+    case 12: // CRASH_CHECK
+        if (ecode == 1) { ecodeText = DataFlashLogParser::tr("Crash into ground detected"); }
+        else if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Loss of control detected"); }
+        break;
+    case 13: // FLIP
+        if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Flip abandoned"); }
+        break;
+    case 15: // PARACHUTES
+        if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Parachute not deployed (too low)"); }
+        else if (ecode == 3) { ecodeText = DataFlashLogParser::tr("Parachute not deployed (landed)"); }
+        break;
+    case 16: // EKFCHECK
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Variance cleared"); }
+        else if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Bad variance"); }
+        break;
+    case 18: // BARO
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Errors Resolved"); }
+        else if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Baro glitch"); }
+        else if (ecode == 3) { ecodeText = DataFlashLogParser::tr("Bad depth"); }
+        else if (ecode == 4) { ecodeText = DataFlashLogParser::tr("Unhealthy"); }
+        break;
+    case 20: // FAILSAFE_ADSB
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Failsafe Resolved"); }
+        else if (ecode == 1) { ecodeText = DataFlashLogParser::tr("No action report only"); }
+        else if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Avoid by climb/descend"); }
+        else if (ecode == 3) { ecodeText = DataFlashLogParser::tr("Avoid by horizontal move"); }
+        else if (ecode == 4) { ecodeText = DataFlashLogParser::tr("Avoid perpendicular move"); }
+        else if (ecode == 5) { ecodeText = DataFlashLogParser::tr("RTL invoked"); }
+        break;
+    case 21: // TERRAIN
+        if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Missing terrain data"); }
+        break;
+    case 22: // NAVIGATION
+        if (ecode == 2) { ecodeText = DataFlashLogParser::tr("Failed to set destination"); }
+        else if (ecode == 3) { ecodeText = DataFlashLogParser::tr("RTL restarted"); }
+        else if (ecode == 4) { ecodeText = DataFlashLogParser::tr("Circle initialisation failed"); }
+        else if (ecode == 5) { ecodeText = DataFlashLogParser::tr("Destination outside fence"); }
+        else if (ecode == 6) { ecodeText = DataFlashLogParser::tr("RTL missing rangefinder"); }
+        break;
+    case 24: // EKF_PRIMARY
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("1st EKF became primary"); }
+        else if (ecode == 1) { ecodeText = DataFlashLogParser::tr("2nd EKF became primary"); }
+        break;
+    case 25: // THRUST_LOSS_CHECK
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Thrust restored"); }
+        else if (ecode == 1) { ecodeText = DataFlashLogParser::tr("Thrust loss detected"); }
+        break;
+    case 29: // FAILSAFE_VIBE
+        if (ecode == 0) { ecodeText = DataFlashLogParser::tr("Excessive vibration compensation de-activated"); }
+        else if (ecode == 1) { ecodeText = DataFlashLogParser::tr("Excessive vibration compensation activated"); }
+        break;
+    case 30: // INTERNAL_ERROR
+        if (ecode == 1) { ecodeText = DataFlashLogParser::tr("Internal errors detected"); }
+        break;
+    default:
+        break;
+    }
+
+    if (ecodeText.isEmpty()) {
+        ecodeText = DataFlashLogParser::tr("Code %1").arg(ecode);
+    }
+
+    return QStringLiteral("%1 (%2): %3 (%4)").arg(subsystemName).arg(subsystem).arg(ecodeText).arg(ecode);
+}
+
+QString _ardupilotEventDescription(int eventId)
+{
+    switch (eventId) {
+    case 10: return DataFlashLogParser::tr("Armed");
+    case 11: return DataFlashLogParser::tr("Disarmed");
+    case 15: return DataFlashLogParser::tr("Auto Armed");
+    case 17: return DataFlashLogParser::tr("Land Complete Maybe");
+    case 18: return DataFlashLogParser::tr("Land Complete");
+    case 19: return DataFlashLogParser::tr("Lost GPS");
+    case 21: return DataFlashLogParser::tr("Flip Start");
+    case 22: return DataFlashLogParser::tr("Flip End");
+    case 25: return DataFlashLogParser::tr("Set Home");
+    case 26: return DataFlashLogParser::tr("Simple Mode Enabled");
+    case 27: return DataFlashLogParser::tr("Simple Mode Disabled");
+    case 28: return DataFlashLogParser::tr("Not Landed");
+    case 29: return DataFlashLogParser::tr("Super Simple Mode Enabled");
+    case 30: return DataFlashLogParser::tr("AutoTune Initialised");
+    case 31: return DataFlashLogParser::tr("AutoTune Off");
+    case 32: return DataFlashLogParser::tr("AutoTune Restart");
+    case 33: return DataFlashLogParser::tr("AutoTune Success");
+    case 34: return DataFlashLogParser::tr("AutoTune Failed");
+    case 35: return DataFlashLogParser::tr("AutoTune Reached Limit");
+    case 36: return DataFlashLogParser::tr("AutoTune Pilot Testing");
+    case 37: return DataFlashLogParser::tr("AutoTune Saved Gains");
+    case 38: return DataFlashLogParser::tr("Save Trim");
+    case 39: return DataFlashLogParser::tr("Save Waypoint Add");
+    case 41: return DataFlashLogParser::tr("Fence Enabled");
+    case 42: return DataFlashLogParser::tr("Fence Disabled");
+    case 43: return DataFlashLogParser::tr("Acro Trainer Off");
+    case 44: return DataFlashLogParser::tr("Acro Trainer Leveling");
+    case 45: return DataFlashLogParser::tr("Acro Trainer Limited");
+    case 46: return DataFlashLogParser::tr("Gripper Grab");
+    case 47: return DataFlashLogParser::tr("Gripper Release");
+    case 49: return DataFlashLogParser::tr("Parachute Disabled");
+    case 50: return DataFlashLogParser::tr("Parachute Enabled");
+    case 51: return DataFlashLogParser::tr("Parachute Released");
+    case 52: return DataFlashLogParser::tr("Landing Gear Deployed");
+    case 53: return DataFlashLogParser::tr("Landing Gear Retracted");
+    case 54: return DataFlashLogParser::tr("Motors Emergency Stopped");
+    case 55: return DataFlashLogParser::tr("Motors Emergency Stop Cleared");
+    case 56: return DataFlashLogParser::tr("Motors Interlock Disabled");
+    case 57: return DataFlashLogParser::tr("Motors Interlock Enabled");
+    case 58: return DataFlashLogParser::tr("Rotor Runup Complete");
+    case 59: return DataFlashLogParser::tr("Rotor Speed Below Critical");
+    case 60: return DataFlashLogParser::tr("EKF Altitude Reset");
+    case 61: return DataFlashLogParser::tr("Land Cancelled By Pilot");
+    case 62: return DataFlashLogParser::tr("EKF Yaw Reset");
+    case 63: return DataFlashLogParser::tr("ADSB Avoidance Enabled");
+    case 64: return DataFlashLogParser::tr("ADSB Avoidance Disabled");
+    case 65: return DataFlashLogParser::tr("Proximity Avoidance Enabled");
+    case 66: return DataFlashLogParser::tr("Proximity Avoidance Disabled");
+    case 67: return DataFlashLogParser::tr("GPS Primary Changed");
+    case 71: return DataFlashLogParser::tr("ZigZag Store A");
+    case 72: return DataFlashLogParser::tr("ZigZag Store B");
+    case 73: return DataFlashLogParser::tr("Land Repo Active");
+    case 74: return DataFlashLogParser::tr("Standby Enabled");
+    case 75: return DataFlashLogParser::tr("Standby Disabled");
+    case 76: return DataFlashLogParser::tr("Fence Alt Max Enabled");
+    case 77: return DataFlashLogParser::tr("Fence Alt Max Disabled");
+    case 78: return DataFlashLogParser::tr("Fence Circle Enabled");
+    case 79: return DataFlashLogParser::tr("Fence Circle Disabled");
+    case 80: return DataFlashLogParser::tr("Fence Alt Min Enabled");
+    case 81: return DataFlashLogParser::tr("Fence Alt Min Disabled");
+    case 82: return DataFlashLogParser::tr("Fence Polygon Enabled");
+    case 83: return DataFlashLogParser::tr("Fence Polygon Disabled");
+    case 85: return DataFlashLogParser::tr("EK3 Source Set: Primary");
+    case 86: return DataFlashLogParser::tr("EK3 Source Set: Secondary");
+    case 87: return DataFlashLogParser::tr("EK3 Source Set: Tertiary");
+    case 90: return DataFlashLogParser::tr("Airspeed Primary Changed");
+    case 163: return DataFlashLogParser::tr("Surfaced");
+    case 164: return DataFlashLogParser::tr("Not Surfaced");
+    case 165: return DataFlashLogParser::tr("Bottomed");
+    case 166: return DataFlashLogParser::tr("Not Bottomed");
+    default: return DataFlashLogParser::tr("Event %1").arg(eventId);
+    }
+}
+
 double _extractTimestampSeconds(const QMap<QString, QVariant> &values)
 {
     if (values.contains(QStringLiteral("TimeUS"))) {
@@ -253,18 +475,12 @@ ParseResult _parseDataFlashFile(const QString &filePath)
                 currentModeName = modeName;
             }
         } else if (fmt.name == QStringLiteral("ERR")) {
-            const QString subsystem = values.value(QStringLiteral("Subsys")).toString();
-            const QString ecode = values.value(QStringLiteral("ECode")).toString();
-            _appendEvent(result.events, timestampSecs, QStringLiteral("error"), DataFlashLogParser::tr("Error: Subsys=%1 ECode=%2").arg(subsystem, ecode));
+            const int subsystem = values.value(QStringLiteral("Subsys")).toInt();
+            const int ecode = values.value(QStringLiteral("ECode")).toInt();
+            _appendEvent(result.events, timestampSecs, QStringLiteral("error"), _ardupilotErrDescription(subsystem, ecode));
         } else if (fmt.name == QStringLiteral("EV")) {
-            const int eventId = values.value(QStringLiteral("Id")).toInt();
-            QString description = DataFlashLogParser::tr("Event %1").arg(eventId);
-            if (eventId == 10) {
-                description = DataFlashLogParser::tr("Armed");
-            } else if (eventId == 11) {
-                description = DataFlashLogParser::tr("Disarmed");
-            }
-            _appendEvent(result.events, timestampSecs, QStringLiteral("event"), description);
+            const int eventId = values.value(QStringLiteral("Id"), values.value(QStringLiteral("Event"))).toInt();
+            _appendEvent(result.events, timestampSecs, QStringLiteral("event"), _ardupilotEventDescription(eventId));
         }
 
         result.sampleCount++;

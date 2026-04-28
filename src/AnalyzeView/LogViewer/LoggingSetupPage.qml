@@ -74,9 +74,34 @@ AnalyzePage {
                             RowLayout {
                                 Layout.fillWidth: true
 
+                                FactComboBox {
+                                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 38
+                                    Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 48
+                                    visible: paramCard._available && paramCard._fact && (paramCard._fact.enumStrings.length > 0)
+                                    fact: paramCard._fact
+                                }
+
+                                ColumnLayout {
+                                    visible: paramCard._available && paramCard._fact && (paramCard._fact.bitmaskStrings.length > 0)
+                                    spacing: ScreenTools.defaultFontPixelHeight * 0.2
+
+                                    FactBitmask {
+                                        Layout.fillWidth: true
+                                        fact: paramCard._fact
+                                    }
+
+                                    QGCLabel {
+                                        text: qsTr("Combined value: %1").arg(paramCard._fact ? paramCard._fact.rawValue : 0)
+                                        color: qgcPal.text
+                                    }
+                                }
+
                                 FactTextField {
                                     Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 18
                                     visible: paramCard._available
+                                             && paramCard._fact
+                                             && (paramCard._fact.enumStrings.length === 0)
+                                             && (paramCard._fact.bitmaskStrings.length === 0)
                                     fact: paramCard._fact
                                 }
 
