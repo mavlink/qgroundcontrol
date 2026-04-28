@@ -39,6 +39,7 @@ public:
     DEFINE_SETTINGFACT(enableManualControlAux4)
     DEFINE_SETTINGFACT(enableManualControlAux5)
     DEFINE_SETTINGFACT(enableManualControlAux6)
+    DEFINE_SETTINGFACT(useRcOverrideForAuxChannels)
 
 private:
     QString _joystickName;

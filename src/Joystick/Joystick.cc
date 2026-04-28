@@ -106,6 +106,7 @@ Joystick::Joystick(const QString &name, int axisCount, int buttonCount, int hatC
         ensureFactThread(_joystickSettings.enableManualControlAux4());
         ensureFactThread(_joystickSettings.enableManualControlAux5());
         ensureFactThread(_joystickSettings.enableManualControlAux6());
+        ensureFactThread(_joystickSettings.useRcOverrideForAuxChannels());
     }
 
     // Changes to manual control extension settings require re-calibration
@@ -447,6 +448,7 @@ void Joystick::_loadFromSettingsIntoCalibrationData()
     qCDebug(JoystickLog) << "    enableManualControlAux4:" <<           _joystickSettings.enableManualControlAux4()->rawValue().toBool();
     qCDebug(JoystickLog) << "    enableManualControlAux5:" <<           _joystickSettings.enableManualControlAux5()->rawValue().toBool();
     qCDebug(JoystickLog) << "    enableManualControlAux6:" <<           _joystickSettings.enableManualControlAux6()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    useRcOverrideForAuxChannels:" <<       _joystickSettings.useRcOverrideForAuxChannels()->rawValue().toBool();
 
     _loadAxisSettings(calibrated, transmitterMode);
     _loadButtonSettings();
@@ -583,6 +585,7 @@ void Joystick::_saveFromCalibrationDataIntoSettings()
     qCDebug(JoystickLog) << "    enableManualControlAux4:" << _joystickSettings.enableManualControlAux4()->rawValue().toBool();
     qCDebug(JoystickLog) << "    enableManualControlAux5:" << _joystickSettings.enableManualControlAux5()->rawValue().toBool();
     qCDebug(JoystickLog) << "    enableManualControlAux6:" << _joystickSettings.enableManualControlAux6()->rawValue().toBool();
+    qCDebug(JoystickLog) << "    useRcOverrideForAuxChannels:" << _joystickSettings.useRcOverrideForAuxChannels()->rawValue().toBool();
     qCDebug(JoystickLog) << "    transmitterMode:" << transmitterMode;
 
     _clearAxisSettings();
@@ -812,7 +815,15 @@ float Joystick::_adjustRange(int value, const AxisCalibration_t &calibration, bo
     float axisLength;
     float axisBasis;
 
-    if (value > calibration.center) {
+    if (calibration.center == calibration.min) {
+        axisBasis = 1.0f;
+        valueNormalized = value - calibration.center;
+        axisLength = calibration.max - calibration.center;
+    } else if (calibration.center == calibration.max) {
+        axisBasis = -1.0f;
+        valueNormalized = calibration.center - value;
+        axisLength = calibration.center - calibration.min;
+    } else if (value > calibration.center) {
         axisBasis = 1.0f;
         valueNormalized = value - calibration.center;
         axisLength =  calibration.max - calibration.center;
@@ -820,6 +831,10 @@ float Joystick::_adjustRange(int value, const AxisCalibration_t &calibration, bo
         axisBasis = -1.0f;
         valueNormalized = calibration.center - value;
         axisLength =  calibration.center - calibration.min;
+    }
+
+    if (axisLength <= 0.0f) {
+        return 0.0f;
     }
 
     float axisPercent;
@@ -841,6 +856,19 @@ float Joystick::_adjustRange(int value, const AxisCalibration_t &calibration, bo
     }
 
     return std::max(-1.0f, std::min(correctedValue, 1.0f));
+}
+
+uint16_t Joystick::_adjustRangeToRcOverridePwm(int value, const AxisCalibration_t &calibration, bool withDeadbands)
+{
+    const float normalizedValue = _adjustRange(value, calibration, withDeadbands);
+    const bool oneSidedAxis = (calibration.center == calibration.min) || (calibration.center == calibration.max);
+
+    float pwmValue = 1500.0f + (std::clamp(normalizedValue, -1.0f, 1.0f) * 500.0f);
+    if (oneSidedAxis) {
+        pwmValue = 1000.0f + (std::clamp(normalizedValue, 0.0f, 1.0f) * 1000.0f);
+    }
+
+    return static_cast<uint16_t>(std::lround(std::clamp(pwmValue, 1000.0f, 2000.0f)));
 }
 
 void Joystick::_handleAxis()
@@ -884,6 +912,7 @@ void Joystick::_handleAxis()
         bool negativeThrust = _joystickSettings.negativeThrust()->rawValue().toBool();
         bool circleCorrection = _joystickSettings.circleCorrection()->rawValue().toBool();
         bool throttleSmoothing = _joystickSettings.throttleSmoothing()->rawValue().toBool();
+        bool useRcOverrideForAuxChannels = _joystickSettings.useRcOverrideForAuxChannels()->rawValue().toBool();
         double exponentialPercent = _joystickSettings.exponentialPct()->rawValue().toDouble();
 
         if (_getJoystickAxisForAxisFunction(rollFunction) == kJoystickAxisNotAssigned ||
@@ -920,6 +949,9 @@ void Joystick::_handleAxis()
             axisIndex = _getJoystickAxisForAxisFunction(rollExtensionFunction);
             rollExtension = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
         }
+        std::array<uint16_t, 6> auxOverrideValues{};
+        std::array<bool, 6> auxOverrideEnabled{};
+
         float aux1 = qQNaN();
         if (_joystickSettings.enableManualControlAux1()->rawValue().toBool()) {
             if (_getJoystickAxisForAxisFunction(aux1ExtensionFunction) == kJoystickAxisNotAssigned) {
@@ -927,7 +959,12 @@ void Joystick::_handleAxis()
                 return;
             }
             axisIndex = _getJoystickAxisForAxisFunction(aux1ExtensionFunction);
-            aux1 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            if (useRcOverrideForAuxChannels) {
+                auxOverrideValues[0] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxOverrideEnabled[0] = true;
+            } else {
+                aux1 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            }
         }
         float aux2 = qQNaN();
         if (_joystickSettings.enableManualControlAux2()->rawValue().toBool()) {
@@ -936,7 +973,12 @@ void Joystick::_handleAxis()
                 return;
             }
             axisIndex = _getJoystickAxisForAxisFunction(aux2ExtensionFunction);
-            aux2 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            if (useRcOverrideForAuxChannels) {
+                auxOverrideValues[1] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxOverrideEnabled[1] = true;
+            } else {
+                aux2 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            }
         }
         float aux3 = qQNaN();
         if (_joystickSettings.enableManualControlAux3()->rawValue().toBool()) {
@@ -945,7 +987,12 @@ void Joystick::_handleAxis()
                 return;
             }
             axisIndex = _getJoystickAxisForAxisFunction(aux3ExtensionFunction);
-            aux3 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            if (useRcOverrideForAuxChannels) {
+                auxOverrideValues[2] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxOverrideEnabled[2] = true;
+            } else {
+                aux3 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            }
         }
         float aux4 = qQNaN();
         if (_joystickSettings.enableManualControlAux4()->rawValue().toBool()) {
@@ -954,7 +1001,12 @@ void Joystick::_handleAxis()
                 return;
             }
             axisIndex = _getJoystickAxisForAxisFunction(aux4ExtensionFunction);
-            aux4 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            if (useRcOverrideForAuxChannels) {
+                auxOverrideValues[3] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxOverrideEnabled[3] = true;
+            } else {
+                aux4 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            }
         }
         float aux5 = qQNaN();
         if (_joystickSettings.enableManualControlAux5()->rawValue().toBool()) {
@@ -963,7 +1015,12 @@ void Joystick::_handleAxis()
                 return;
             }
             axisIndex = _getJoystickAxisForAxisFunction(aux5ExtensionFunction);
-            aux5 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            if (useRcOverrideForAuxChannels) {
+                auxOverrideValues[4] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxOverrideEnabled[4] = true;
+            } else {
+                aux5 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            }
         }
         float aux6 = qQNaN();
         if (_joystickSettings.enableManualControlAux6()->rawValue().toBool()) {
@@ -972,7 +1029,12 @@ void Joystick::_handleAxis()
                 return;
             }
             axisIndex = _getJoystickAxisForAxisFunction(aux6ExtensionFunction);
-            aux6 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            if (useRcOverrideForAuxChannels) {
+                auxOverrideValues[5] = _adjustRangeToRcOverridePwm(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+                auxOverrideEnabled[5] = true;
+            } else {
+                aux6 = _adjustRange(_getAxisValue(axisIndex), _rgCalibration[axisIndex], useDeadband);
+            }
         }
 
         if (throttleSmoothing) {
@@ -1024,7 +1086,8 @@ void Joystick::_handleAxis()
             << "aux3:" << aux3
             << "aux4:" << aux4
             << "aux5:" << aux5
-            << "aux6:" << aux6;
+            << "aux6:" << aux6
+            << "useRcOverrideForAuxChannels:" << useRcOverrideForAuxChannels;
 
         // NOTE: The buttonPressedBits going to MANUAL_CONTROL are currently used by ArduSub (and it only handles 16 bits)
         // Set up button bitmap
@@ -1043,6 +1106,7 @@ void Joystick::_handleAxis()
 
 
         vehicle->sendJoystickDataThreadSafe(roll, pitch, yaw, throttle, lowButtons, highButtons, pitchExtension, rollExtension, aux1, aux2, aux3, aux4, aux5, aux6);
+        vehicle->sendJoystickAuxRcOverrideThreadSafe(auxOverrideValues, auxOverrideEnabled, useRcOverrideForAuxChannels);
     }
 }
 
@@ -1146,6 +1210,7 @@ void Joystick::_stopPollingForConfiguration()
 void Joystick::_stopAllPolling()
 {
     if (_pollingVehicle) {
+        _pollingVehicle->sendJoystickAuxRcOverrideThreadSafe({}, {}, false);
         (void) disconnect(this, nullptr, _pollingVehicle, nullptr);
         (void) disconnect(_pollingVehicle, &Vehicle::flightModesChanged, this, &Joystick::_flightModesChanged);
         if (GimbalController *const gimbal = _pollingVehicle->gimbalController()) {

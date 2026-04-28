@@ -8,6 +8,8 @@
 #include <QtGui/QVector3D>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <array>
+
 #include "RemoteControlCalibrationController.h"
 #include "JoystickSettings.h"
 
@@ -426,6 +428,7 @@ private:
 
     /// Adjust the raw axis value to the -1:1 range given calibration information
     float _adjustRange(int reversedAxisValue, const AxisCalibration_t &calibration, bool withDeadbands);
+    uint16_t _adjustRangeToRcOverridePwm(int value, const AxisCalibration_t &calibration, bool withDeadbands);
 
     void _executeButtonAction(const QString &action, const ButtonEvent_t buttonEvent);
     int  _findAvailableButtonActionIndex(const QString &action);
