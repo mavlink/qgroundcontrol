@@ -151,15 +151,18 @@ Rectangle {
 
             QGCLabel {
                 text: qsTr("Altitude (AMSL)")
+                font.pointSize: ScreenTools.smallFontPointSize
             }
             FactTextField {
                 fact: _root._settingsItem ? _root._settingsItem.plannedHomePositionAltitude : null
                 Layout.fillWidth: true
+                font.pointSize: ScreenTools.smallFontPointSize
                 visible: _root._settingsItem && _root._settingsItem.terrainQueryFailed
             }
             QGCLabel {
                 text: _root._settingsItem ? _root._settingsItem.plannedHomePositionAltitude.valueString + " " + _root._settingsItem.plannedHomePositionAltitude.units : ""
                 Layout.fillWidth: true
+                font.pointSize: ScreenTools.smallFontPointSize
                 visible: !_root._settingsItem || !_root._settingsItem.terrainQueryFailed
             }
         }
@@ -171,6 +174,38 @@ Rectangle {
             text: qsTr("Actual position/alt set by vehicle at flight time.")
             horizontalAlignment: Text.AlignHCenter
             visible: plannedHomePositionSection.checked && _root.missionController.homePositionSet
+        }
+
+        // ── Plan Templates ──
+        SectionHeader {
+            id: planTemplateSectionHeader
+            Layout.fillWidth: true
+            text: qsTr("Plan Templates")
+            visible: _root.planMasterController.readyForPlanCreation
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: ScreenTools.defaultFontPixelHeight / 2
+            visible: planTemplateSectionHeader.visible && planTemplateSectionHeader.checked
+            enabled: _root.missionController.homePositionSet
+            opacity: enabled ? 1.0 : 0.5
+
+            Repeater {
+                model: _root.planMasterController.planCreators
+
+                QGCButton {
+                    Layout.fillWidth: true
+                    text: object.name
+                    onClicked: {
+                        if (object.blankPlan) {
+                            _root.planMasterController.manualCreation = true
+                        } else {
+                            object.createPlan(_root.editorMap.center)
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -6,6 +6,7 @@
 #include "MissionController.h"
 #include "GeoFenceController.h"
 #include "RallyPointController.h"
+#include "QGCMAVLinkTypes.h"
 
 class QGCCompressionJob;
 class QmlObjectListModel;
@@ -103,7 +104,7 @@ public:
 
     bool        offline         (void) const { return _offline; }
     bool        containsItems   (void) const;
-    bool        readyForPlanCreation(void) const { return !containsItems(); }
+    bool        readyForPlanCreation(void) const { return !containsItems() && !_manualCreation; }
     bool        syncInProgress  (void) const;
     bool        dirtyForSave    (void) const { return _dirtyForSave; }
     bool        dirtyForUpload  (void) const { return _dirtyForUpload; }
@@ -201,6 +202,7 @@ private:
     bool                    _readyForPlanCreation =     true;
     bool                    _suppressOverallDirtyUpdate = false;
     QmlObjectListModel*     _planCreators =             nullptr;
+    QGCMAVLinkTypes::VehicleClass_t _planCreatorsVehicleClass = -1;
     bool                    _manualCreation =           false;
     QGCCompressionJob*      _extractionJob =            nullptr;
     QString                 _extractionOutputDir;

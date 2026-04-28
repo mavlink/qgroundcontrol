@@ -19,6 +19,11 @@
 #endif
 #include "SettingsManager.h"
 #include "VideoReceiver.h"
+#include "SurveyPlanCreator.h"
+#include "CorridorScanPlanCreator.h"
+#include "StructureScanPlanCreator.h"
+#include "BlankPlanCreator.h"
+#include "PlanMasterController.h"
 
 #ifdef QGC_CUSTOM_BUILD
 #include CUSTOMHEADER
@@ -360,4 +365,14 @@ void QGCCorePlugin::_setShowAdvancedUI(bool show)
         _showAdvancedUI = show;
         emit showAdvancedUIChanged(show);
     }
+}
+
+QList<PlanCreator*> QGCCorePlugin::planCreators(PlanMasterController *planMasterController)
+{
+    return {
+        new SurveyPlanCreator(planMasterController),
+        new CorridorScanPlanCreator(planMasterController),
+        new StructureScanPlanCreator(planMasterController),
+        new BlankPlanCreator(planMasterController),
+    };
 }

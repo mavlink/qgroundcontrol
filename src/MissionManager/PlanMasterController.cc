@@ -9,10 +9,7 @@
 #include "JsonParsing.h"
 #include "MissionManager.h"
 #include "KMLPlanDomDocument.h"
-#include "SurveyPlanCreator.h"
-#include "StructureScanPlanCreator.h"
-#include "CorridorScanPlanCreator.h"
-#include "BlankPlanCreator.h"
+#include "PlanCreator.h"
 #include "QmlObjectListModel.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
@@ -582,6 +579,10 @@ bool PlanMasterController::containsItems(void) const
 
 void PlanMasterController::_updateReadyForPlanCreation(void)
 {
+    if (!containsItems() && _manualCreation) {
+        setManualCreation(false);
+    }
+
     const bool ready = readyForPlanCreation();
     if (ready != _readyForPlanCreation) {
         _readyForPlanCreation = ready;
@@ -783,25 +784,38 @@ void PlanMasterController::_setDirtyStates(bool dirtyForSave, bool dirtyForUploa
 
 void PlanMasterController::_updatePlanCreatorsList(void)
 {
-    if (!_flyView) {
-        if (!_planCreators) {
-            _planCreators = new QmlObjectListModel(this);
-            _planCreators->append(new BlankPlanCreator(this, this));
-            _planCreators->append(new SurveyPlanCreator(this, this));
-            _planCreators->append(new CorridorScanPlanCreator(this, this));
-            emit planCreatorsChanged(_planCreators);
-        }
+    if (_flyView) {
+        return;
+    }
 
-        if (_managerVehicle->fixedWing()) {
-            if (_planCreators->count() == 4) {
-                _planCreators->removeAt(_planCreators->count() - 1);
-            }
+    const auto vehicleClass = _managerVehicle->vehicleClass();
+
+    // Only rebuild if the vehicle class actually changed
+    if (_planCreators && _planCreatorsVehicleClass == vehicleClass) {
+        return;
+    }
+
+    if (!_planCreators) {
+        _planCreators = new QmlObjectListModel(this);
+    } else {
+        _planCreators->clearAndDeleteContents();
+    }
+
+    _planCreatorsVehicleClass = vehicleClass;
+
+    // Allow custom builds to provide their own list of plan creators
+    const QList<PlanCreator*> creators = QGCCorePlugin::instance()->planCreators(this);
+
+    // Filter by vehicle class and add to the model
+    for (PlanCreator* creator : creators) {
+        if (creator->supportsVehicleClass(vehicleClass)) {
+            _planCreators->append(creator);
         } else {
-            if (_planCreators->count() != 4) {
-                _planCreators->append(new StructureScanPlanCreator(this, this));
-            }
+            delete creator;
         }
     }
+
+    emit planCreatorsChanged(_planCreators);
 }
 
 void PlanMasterController::showPlanFromManagerVehicle(void)
@@ -822,6 +836,7 @@ void PlanMasterController::setManualCreation(bool manualCreation)
     if (_manualCreation != manualCreation) {
         _manualCreation = manualCreation;
         emit manualCreationChanged();
+        _updateReadyForPlanCreation();
     }
 }
 

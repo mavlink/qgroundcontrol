@@ -1,9 +1,10 @@
 #include "StructureScanPlanCreator.h"
 #include "PlanMasterController.h"
+#include "QGCMAVLink.h"
 #include "StructureScanComplexItem.h"
 
-StructureScanPlanCreator::StructureScanPlanCreator(PlanMasterController* planMasterController, QObject* parent)
-    : PlanCreator(planMasterController, StructureScanComplexItem::name, QStringLiteral("/qmlimages/PlanCreator/StructureScanPlanCreator.png"), parent)
+StructureScanPlanCreator::StructureScanPlanCreator(PlanMasterController* planMasterController)
+    : PlanCreator(planMasterController, StructureScanComplexItem::name, QStringLiteral("/qmlimages/PlanCreator/StructureScanPlanCreator.png"), {QGCMAVLink::VehicleClassMultiRotor, QGCMAVLink::VehicleClassVTOL})
 {
 
 }

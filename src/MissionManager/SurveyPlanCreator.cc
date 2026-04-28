@@ -1,9 +1,10 @@
 #include "SurveyPlanCreator.h"
 #include "PlanMasterController.h"
+#include "QGCMAVLink.h"
 #include "SurveyComplexItem.h"
 
-SurveyPlanCreator::SurveyPlanCreator(PlanMasterController* planMasterController, QObject* parent)
-    : PlanCreator(planMasterController, SurveyComplexItem::name, QStringLiteral("/qmlimages/PlanCreator/SurveyPlanCreator.png"), parent)
+SurveyPlanCreator::SurveyPlanCreator(PlanMasterController* planMasterController)
+    : PlanCreator(planMasterController, SurveyComplexItem::name, QStringLiteral("/qmlimages/PlanCreator/SurveyPlanCreator.png"), QGCMAVLink::allVehicleClasses())
 {
 
 }
