@@ -3,7 +3,6 @@
 #include "FirmwareImage.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QSet>
 #include <QtCore/QThread>
 #include <QtCore/QVariantMap>
 
@@ -89,21 +88,11 @@ void PX4FirmwareUpgradeThreadWorker::_setTargetPort(const QString& systemLocatio
 QVariantList PX4FirmwareUpgradeThreadWorker::_buildPortDescriptors() const
 {
     QVariantList list;
-    const QList<QGCSerialPortInfo> flashable = QGCSerialPortInfo::flashablePortsPreferAutopilot();
-    QSet<QString> flashableLocations;
-    for (const QGCSerialPortInfo& info : flashable) {
-        flashableLocations.insert(info.systemLocation());
-    }
 
     for (const QGCSerialPortInfo& info : QGCSerialPortInfo::availablePorts()) {
-        // Hide SiK radios when a Pixhawk is also connected, matching the flashable filter.
         QGCSerialPortInfo::BoardType_t boardType;
         QString boardName;
         const bool recognized = info.getBoardInfo(boardType, boardName);
-        if (recognized && boardType == QGCSerialPortInfo::BoardTypeSiKRadio
-            && !flashableLocations.contains(info.systemLocation())) {
-            continue;
-        }
 
         QVariantMap entry;
         entry["systemLocation"] = info.systemLocation();
