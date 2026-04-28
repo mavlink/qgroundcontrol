@@ -232,7 +232,6 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
 
         if (_bootloader->program(_controller->image())) {
             qCDebug(PX4FirmwareUpgradeThreadLog) << "Program complete";
-            emit status("Program complete");
         } else {
             qCDebug(PX4FirmwareUpgradeThreadLog) << "Program failed:" << _bootloader->errorString();
             goto Error;
@@ -242,7 +241,6 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
 
         if (_bootloader->verify(_controller->image())) {
             qCDebug(PX4FirmwareUpgradeThreadLog) << "Verify complete";
-            emit status(tr("Verify complete"));
         } else {
             qCDebug(PX4FirmwareUpgradeThreadLog) << "Verify failed:" << _bootloader->errorString();
             goto Error;
