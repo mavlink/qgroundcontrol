@@ -15,17 +15,15 @@ MissionItemMapVisualBase {
 
     function hideItemVisuals() {
         if (_itemVisualShowing) {
-            _itemVisualLoader.active = false
+            _hideItemVisuals()
             loiterVisualLoader.active = false
-            _itemVisualShowing = false
         }
     }
 
     function showItemVisuals() {
         if (!_itemVisualShowing) {
-            _itemVisualLoader.active = true
+            _showItemVisuals()
             loiterVisualLoader.active = true
-            _itemVisualShowing = true
         }
     }
 

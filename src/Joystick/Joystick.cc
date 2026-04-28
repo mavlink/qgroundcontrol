@@ -15,6 +15,7 @@
 #include "MultiVehicleManager.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QSet>
 #include <algorithm>
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
@@ -751,6 +752,7 @@ void Joystick::_handleButtons()
 
         //-- Process button press/release
         const int buttonDelay = static_cast<int>(1000.0 / _joystickSettings.buttonFrequencyHz()->rawValue().toDouble());
+        QSet<QString> executedActions;
         for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
             if (!_assignedButtonActions[buttonIndex]) {
                 continue;
@@ -774,18 +776,26 @@ void Joystick::_handleButtons()
                     if (buttonEventState == ButtonEventDownTransition) {
                         // Check for multi-button action
                         QList<int> multiActionButtons = { buttonIndex };
+                        bool allActionButtonsPressed = true;
                         for (int multiIndex = 0; multiIndex < _totalButtonCount; multiIndex++) {
+                            if (multiIndex == buttonIndex) {
+                                continue;
+                            }
                             if (_assignedButtonActions[multiIndex] && (_assignedButtonActions[multiIndex]->actionName == buttonAction)) {
                                 // We found a multi-button action
                                 if (_buttonEventStates[multiIndex] == ButtonEventDownTransition || _buttonEventStates[multiIndex] == ButtonEventRepeat) {
                                     // So far so good
                                     multiActionButtons.append(multiIndex);
-                                    continue;
                                 } else {
-                                    // We are missing a press we need
-                                    return;
+                                    // We are missing a press we need, skip this multi-button action only
+                                    allActionButtonsPressed = false;
+                                    break;
                                 }
                             }
+                        }
+
+                        if (!allActionButtonsPressed) {
+                            continue;
                         }
 
                         if (multiActionButtons.size() > 1) {
@@ -793,14 +803,24 @@ void Joystick::_handleButtons()
                         } else {
                             qCDebug(JoystickLog) << "Action triggered - button:Action" << buttonIndex << buttonAction;
                         }
-                        _executeButtonAction(buttonAction, ButtonEventDownTransition);
-                        return;
+                        // Multiple buttons can share the same action name (multi-button feature).
+                        // Guard against executing the action more than once per poll cycle when
+                        // several such buttons are all in the same event state simultaneously.
+                        if (!executedActions.contains(buttonAction)) {
+                            _executeButtonAction(buttonAction, ButtonEventDownTransition);
+                            executedActions.insert(buttonAction);
+                        }
+                        continue;
                     }
                 }
             } else if (buttonEventState == ButtonEventUpTransition) {
-                qCDebug(JoystickLog) << "Button up - button:action" << buttonIndex << buttonAction;
-                _executeButtonAction(buttonAction, ButtonEventUpTransition);
-                return;
+                // Same deduplication guard for release events.
+                if (!executedActions.contains(buttonAction)) {
+                    qCDebug(JoystickLog) << "Button up - button:action" << buttonIndex << buttonAction;
+                    _executeButtonAction(buttonAction, ButtonEventUpTransition);
+                    executedActions.insert(buttonAction);
+                }
+                continue;
             }
         }
     }
@@ -1428,59 +1448,62 @@ void Joystick::_executeButtonAction(const QString &action, const ButtonEvent_t b
         std::function<void()> func;
     };
     auto actionInfo = std::to_array<ActionInfo>({
-        { _buttonActionArm,                     ButtonEventDownTransition,  [this]() { emit setArmed(true); } },
-        { _buttonActionDisarm,                  ButtonEventDownTransition,  [this]() { emit setArmed(false); } },
-        { _buttonActionToggleArm,               ButtonEventDownTransition,  [this, vehicle]() { emit setArmed(!vehicle->armed()); } },
-        { _buttonActionVTOLFixedWing,           ButtonEventDownTransition,  [this]() { emit setVtolInFwdFlight(true); } },
-        { _buttonActionVTOLMultiRotor,          ButtonEventDownTransition,  [this]() { emit setVtolInFwdFlight(false); } },
-        { _buttonActionTriggerCamera,           ButtonEventDownTransition,  [this]() { emit triggerCamera(); } },
-        { _buttonActionContinuousZoomIn,        ButtonEventDownTransition,  [this]() { emit startContinuousZoom(1); } },
-        { _buttonActionContinuousZoomIn,        ButtonEventRepeat,          [this]() { emit startContinuousZoom(1); } },
-        { _buttonActionContinuousZoomOut,       ButtonEventDownTransition,  [this]() { emit startContinuousZoom(-1); } },
-        { _buttonActionContinuousZoomOut,       ButtonEventRepeat,          [this]() { emit startContinuousZoom(-1); } },
-        { _buttonActionStepZoomIn,              ButtonEventDownTransition,  [this]() { emit stepZoom(1); } },
-        { _buttonActionStepZoomIn,              ButtonEventRepeat,          [this]() { emit stepZoom(1); } },
-        { _buttonActionStepZoomOut,             ButtonEventDownTransition,  [this]() { emit stepZoom(-1); } },
-        { _buttonActionStepZoomOut,             ButtonEventRepeat,          [this]() { emit stepZoom(-1); } },
-        { _buttonActionContinuousFocusIn,       ButtonEventDownTransition,  [this]() { emit startContinuousFocus(1); } },
-        { _buttonActionContinuousFocusIn,       ButtonEventRepeat,          [this]() { emit startContinuousFocus(1); } },
-        { _buttonActionContinuousFocusOut,      ButtonEventDownTransition,  [this]() { emit startContinuousFocus(-1); } },
-        { _buttonActionContinuousFocusOut,      ButtonEventRepeat,          [this]() { emit startContinuousFocus(-1); } },
-        { _buttonActionStepFocusIn,             ButtonEventDownTransition,  [this]() { emit stepFocus(1); } },
-        { _buttonActionStepFocusIn,             ButtonEventRepeat,          [this]() { emit stepFocus(1); } },
-        { _buttonActionStepFocusOut,            ButtonEventDownTransition,  [this]() { emit stepFocus(-1); } },
-        { _buttonActionStepFocusOut,            ButtonEventRepeat,          [this]() { emit stepFocus(-1); } },
-        { _buttonActionNextStream,              ButtonEventDownTransition,  [this]() { emit stepStream(1); } },
-        { _buttonActionPreviousStream,          ButtonEventDownTransition,  [this]() { emit stepStream(-1); } },
-        { _buttonActionNextCamera,              ButtonEventDownTransition,  [this]() { emit stepCamera(1); } },
-        { _buttonActionPreviousCamera,          ButtonEventDownTransition,  [this]() { emit stepCamera(-1); } },
-        { _buttonActionGimbalUp,                ButtonEventDownTransition,  [this]() { emit gimbalPitchStart(1); } },
-        { _buttonActionGimbalUp,                ButtonEventUpTransition,    [this]() { emit gimbalPitchStop(); } },
-        { _buttonActionGimbalDown,              ButtonEventDownTransition,  [this]() { emit gimbalPitchStart(-1); } },
-        { _buttonActionGimbalDown,              ButtonEventUpTransition,    [this]() { emit gimbalPitchStop(); } },
-        { _buttonActionGimbalLeft,              ButtonEventDownTransition,  [this]() { emit gimbalYawStart(-1); } },
-        { _buttonActionGimbalLeft,              ButtonEventUpTransition,    [this]() { emit gimbalYawStop(); } },
-        { _buttonActionGimbalRight,             ButtonEventDownTransition,  [this]() { emit gimbalYawStart(1); } },
-        { _buttonActionGimbalRight,             ButtonEventUpTransition,    [this]() { emit gimbalYawStop(); } },
-        { _buttonActionStartVideoRecord,        ButtonEventDownTransition,  [this]() { emit startVideoRecord(); } },
-        { _buttonActionStopVideoRecord,         ButtonEventDownTransition,  [this]() { emit stopVideoRecord(); } },
-        { _buttonActionToggleVideoRecord,       ButtonEventDownTransition,  [this]() { emit toggleVideoRecord(); } },
-        { _buttonActionGimbalCenter,            ButtonEventDownTransition,  [this]() { emit centerGimbal(); } },
-        { _buttonActionGimbalYawLock,           ButtonEventDownTransition,  [this]() { emit gimbalYawLock(true); } },
-        { _buttonActionGimbalYawFollow,         ButtonEventDownTransition,  [this]() { emit gimbalYawLock(false); } },
-        { _buttonActionEmergencyStop,           ButtonEventDownTransition,  [this]() { emit emergencyStop(); } },
-        { _buttonActionGripperGrab,             ButtonEventDownTransition,  [this]() { emit gripperAction(GRIPPER_ACTION_GRAB); } },
-        { _buttonActionGripperRelease,          ButtonEventDownTransition,  [this]() { emit gripperAction(GRIPPER_ACTION_RELEASE); } },
-        { _buttonActionGripperHold,             ButtonEventDownTransition,  [this]() { emit gripperAction(GRIPPER_ACTION_HOLD); } },
-        { _buttonActionLandingGearDeploy,       ButtonEventDownTransition,  [this]() { emit landingGearDeploy(); } },
-        { _buttonActionLandingGearRetract,      ButtonEventDownTransition,  [this]() { emit landingGearRetract(); } },
-        { _buttonActionMotorInterlockEnable,    ButtonEventDownTransition,  [this]() { emit motorInterlock(true); } },
-        { _buttonActionMotorInterlockDisable,   ButtonEventDownTransition,  [this]() { emit motorInterlock(false); } },
+        { _buttonActionArm,                     ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Arming"; emit setArmed(true); } },
+        { _buttonActionDisarm,                  ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Disarming"; emit setArmed(false); } },
+        { _buttonActionToggleArm,               ButtonEventDownTransition,  [this, vehicle]() { qCDebug(JoystickLog) << "Button Action: Toggling arm state"; emit setArmed(!vehicle->armed()); } },
+        { _buttonActionVTOLFixedWing,           ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Switching to VTOL Fixed Wing"; emit setVtolInFwdFlight(true); } },
+        { _buttonActionVTOLMultiRotor,          ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Switching to VTOL Multi Rotor"; emit setVtolInFwdFlight(false); } },
+        { _buttonActionTriggerCamera,           ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Triggering camera"; emit triggerCamera(); } },
+        { _buttonActionContinuousZoomIn,        ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Continuous Zoom In"; emit startContinuousZoom(1); } },
+        { _buttonActionContinuousZoomIn,        ButtonEventRepeat,          [this]() { qCDebug(JoystickLog) << "Button Action: Continuous Zoom In"; emit startContinuousZoom(1); } },
+        { _buttonActionContinuousZoomIn,        ButtonEventUpTransition,    [this]() { qCDebug(JoystickLog) << "Button Action: Stop Continuous Zoom"; emit stopContinuousZoom(); } },
+        { _buttonActionContinuousZoomOut,       ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Continuous Zoom Out"; emit startContinuousZoom(-1); } },
+        { _buttonActionContinuousZoomOut,       ButtonEventRepeat,          [this]() { qCDebug(JoystickLog) << "Button Action: Continuous Zoom Out"; emit startContinuousZoom(-1); } },
+        { _buttonActionContinuousZoomOut,       ButtonEventUpTransition,    [this]() { qCDebug(JoystickLog) << "Button Action: Stop Continuous Zoom"; emit stopContinuousZoom(); } },
+        { _buttonActionStepZoomIn,              ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Step Zoom In"; emit stepZoom(1); } },
+        { _buttonActionStepZoomIn,              ButtonEventRepeat,          [this]() { qCDebug(JoystickLog) << "Button Action: Step Zoom In"; emit stepZoom(1); } },
+        { _buttonActionStepZoomOut,             ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Step Zoom Out"; emit stepZoom(-1); } },
+        { _buttonActionStepZoomOut,             ButtonEventRepeat,          [this]() { qCDebug(JoystickLog) << "Button Action: Step Zoom Out"; emit stepZoom(-1); } },
+        { _buttonActionContinuousFocusIn,       ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Continuous Focus In"; emit startContinuousFocus(1); } },
+        { _buttonActionContinuousFocusIn,       ButtonEventRepeat,          [this]() { qCDebug(JoystickLog) << "Button Action: Continuous Focus In"; emit startContinuousFocus(1); } },
+        { _buttonActionContinuousFocusOut,      ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Continuous Focus Out"; emit startContinuousFocus(-1); } },
+        { _buttonActionContinuousFocusOut,      ButtonEventRepeat,          [this]() { qCDebug(JoystickLog) << "Button Action: Continuous Focus Out"; emit startContinuousFocus(-1); } },
+        { _buttonActionStepFocusIn,             ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Step Focus In"; emit stepFocus(1); } },
+        { _buttonActionStepFocusIn,             ButtonEventRepeat,          [this]() { qCDebug(JoystickLog) << "Button Action: Step Focus In"; emit stepFocus(1); } },
+        { _buttonActionStepFocusOut,            ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Step Focus Out"; emit stepFocus(-1); } },
+        { _buttonActionStepFocusOut,            ButtonEventRepeat,          [this]() { qCDebug(JoystickLog) << "Button Action: Step Focus Out"; emit stepFocus(-1); } },
+        { _buttonActionNextStream,              ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Next Stream"; emit stepStream(1); } },
+        { _buttonActionPreviousStream,          ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Previous Stream"; emit stepStream(-1); } },
+        { _buttonActionNextCamera,              ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Next Camera"; emit stepCamera(1); } },
+        { _buttonActionPreviousCamera,          ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Previous Camera"; emit stepCamera(-1); } },
+        { _buttonActionGimbalUp,                ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Up"; emit gimbalPitchStart(1); } },
+        { _buttonActionGimbalUp,                ButtonEventUpTransition,    [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Up Released"; emit gimbalPitchStop(); } },
+        { _buttonActionGimbalDown,              ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Down"; emit gimbalPitchStart(-1); } },
+        { _buttonActionGimbalDown,              ButtonEventUpTransition,    [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Down Released"; emit gimbalPitchStop(); } },
+        { _buttonActionGimbalLeft,              ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Left"; emit gimbalYawStart(-1); } },
+        { _buttonActionGimbalLeft,              ButtonEventUpTransition,    [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Left Released"; emit gimbalYawStop(); } },
+        { _buttonActionGimbalRight,             ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Right"; emit gimbalYawStart(1); } },
+        { _buttonActionGimbalRight,             ButtonEventUpTransition,    [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Right Released"; emit gimbalYawStop(); } },
+        { _buttonActionStartVideoRecord,        ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Start Video Record"; emit startVideoRecord(); } },
+        { _buttonActionStopVideoRecord,         ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Stop Video Record"; emit stopVideoRecord(); } },
+        { _buttonActionToggleVideoRecord,       ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Toggle Video Record"; emit toggleVideoRecord(); } },
+        { _buttonActionGimbalCenter,            ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Center"; emit centerGimbal(); } },
+        { _buttonActionGimbalYawLock,           ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Yaw Lock"; emit gimbalYawLock(true); } },
+        { _buttonActionGimbalYawFollow,         ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gimbal Yaw Follow"; emit gimbalYawLock(false); } },
+        { _buttonActionEmergencyStop,           ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Emergency Stop"; emit emergencyStop(); } },
+        { _buttonActionGripperGrab,             ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gripper Grab"; emit gripperAction(GRIPPER_ACTION_GRAB); } },
+        { _buttonActionGripperRelease,          ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gripper Release"; emit gripperAction(GRIPPER_ACTION_RELEASE); } },
+        { _buttonActionGripperHold,             ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Gripper Hold"; emit gripperAction(GRIPPER_ACTION_HOLD); } },
+        { _buttonActionLandingGearDeploy,       ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Landing Gear Deploy"; emit landingGearDeploy(); } },
+        { _buttonActionLandingGearRetract,      ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Landing Gear Retract"; emit landingGearRetract(); } },
+        { _buttonActionMotorInterlockEnable,    ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Motor Interlock Enable"; emit motorInterlock(true); } },
+        { _buttonActionMotorInterlockDisable,   ButtonEventDownTransition,  [this]() { qCDebug(JoystickLog) << "Button Action: Motor Interlock Disable"; emit motorInterlock(false); } },
     });
 
     // First check for flight mode match
     if (vehicle->flightModes().contains(action)) {
         if (buttonEvent == ButtonEventDownTransition) {
+            qCDebug(JoystickLog) << "Button Action: Switching flight mode to" << action;
             emit setFlightMode(action);
             return;
         }
@@ -1501,6 +1524,7 @@ void Joystick::_executeButtonAction(const QString &action, const ButtonEvent_t b
         for (int i = 0; i<_mavlinkActionManager->actions()->count(); i++) {
             MavlinkAction *const mavlinkAction = _mavlinkActionManager->actions()->value<MavlinkAction*>(i);
             if (action == mavlinkAction->label()) {
+                qCDebug(JoystickLog) << "Button Action: Sending MAVLink action" << action;
                 mavlinkAction->sendTo(vehicle);
                 return;
             }

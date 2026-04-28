@@ -93,6 +93,10 @@ Rectangle {
                 Layout.fillWidth: true
                 visible: _multipleTabsVisible()
 
+                property bool showBasicItems:    tabBar.visible ? tabBar.currentIndex === 0 : _basicItemsAvailable
+                property bool showCameraItems:   tabBar.visible ? tabBar.currentIndex === 1 : _cameraAvailable
+                property bool showAdvancedItems: tabBar.visible ? tabBar.currentIndex === 2 : _advancedItemsAvailable
+
                 property bool _basicItemsAvailable: _specifiesAltitude || missionItem.speedSection.available || missionItem.comboboxFacts.count > 0 || missionItem.textFieldFacts.count > 0 || missionItem.nanFacts.count > 0
                 property bool _advancedItemsAvailable: missionItem.comboboxFactsAdvanced.count > 0 || missionItem.textFieldFactsAdvanced.count > 0 || missionItem.nanFactsAdvanced.count > 0
                 property bool _cameraAvailable: missionItem.cameraSection.available
@@ -139,7 +143,7 @@ Rectangle {
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: _fieldSpacing
-                visible: tabBar.currentIndex === 0
+                visible: tabBar.showBasicItems
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -215,6 +219,7 @@ Rectangle {
                         label: object.name
                         fact: object
                         enabled: !object.readOnly
+                        warnOnUserMinMaxInvalid: false
                     }
                 }
 
@@ -227,6 +232,7 @@ Rectangle {
                         fact: object
                         showEnableCheckbox: true
                         enableCheckBoxChecked: !isNaN(object.rawValue)
+                        warnOnUserMinMaxInvalid: false
 
                         onEnableCheckboxClicked: object.rawValue = enableCheckBoxChecked ? 0 : NaN
                     }
@@ -248,7 +254,7 @@ Rectangle {
                 Layout.fillWidth: true
                 showSectionHeader: false
                 missionItem: root.missionItem
-                visible: tabBar.currentIndex === 1
+                visible: tabBar.showCameraItems
 
                 Component.onCompleted: checked = missionItem.cameraSection.settingsSpecified
             }
@@ -256,7 +262,7 @@ Rectangle {
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: _fieldSpacing
-                visible: tabBar.currentIndex === 2
+                visible: tabBar.showAdvancedItems
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -293,6 +299,7 @@ Rectangle {
                         label: object.name
                         fact: object
                         enabled: !object.readOnly
+                        warnOnUserMinMaxInvalid: false
                     }
                 }
 
@@ -305,6 +312,7 @@ Rectangle {
                         fact: object
                         showEnableCheckbox: true
                         enableCheckBoxChecked: !isNaN(object.rawValue)
+                        warnOnUserMinMaxInvalid: false
 
                         onEnableCheckboxClicked: object.rawValue = enableCheckBoxChecked ? 0 : NaN
                     }
