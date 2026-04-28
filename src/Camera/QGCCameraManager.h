@@ -10,6 +10,7 @@
 
 #include "MAVLinkMessageType.h"
 #include "QmlObjectListModel.h"
+#include "SimulatedCameraControl.h"
 
 class Vehicle;
 
@@ -18,7 +19,6 @@ class Joystick;
 class MavlinkCameraControlInterface;
 class QGCCameraManagerTest;
 class QGCVideoStreamInfo;
-class SimulatedCameraControl;
 
 /// Camera Manager
 class QGCCameraManager : public QObject
@@ -69,6 +69,9 @@ public:
     QGCVideoStreamInfo* thermalStreamInstance();
 
     const QVariantList& cameraList() const;
+    bool hasMavlinkCameraComponent() const {
+        return !_cameras.isEmpty() && (_cameras[0] != _simulatedCameraControl);
+    }
 
     Vehicle* vehicle() const { return _vehicle; }
 

@@ -765,6 +765,11 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 #if !defined(QGC_NO_ARDUPILOT_DIALECT)
 void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
 {
+    // If a MAVLink camera component is present, CAMERA_IMAGE_CAPTURED is authoritative
+    if (_cameraManager && _cameraManager->hasMavlinkCameraComponent() && (message.compid == _defaultComponentId)) {
+        return;
+    }
+
     mavlink_camera_feedback_t feedback;
 
     mavlink_msg_camera_feedback_decode(&message, &feedback);
