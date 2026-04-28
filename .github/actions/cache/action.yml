@@ -57,10 +57,10 @@ runs:
           --target "${{ inputs.target }}" \
           --conf "${GITHUB_WORKSPACE}/tools/configs/ccache.conf"
 
-    - name: Cache ccache binary (Linux)
+    - name: Restore ccache binary (Linux)
       if: runner.os == 'Linux'
       id: ccache-binary
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       with:
         path: /usr/local/bin/ccache
         key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-${{ steps.ccache-config.outputs.arch }}
@@ -72,6 +72,13 @@ runs:
         python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install \
           --version "${{ steps.ccache-config.outputs.version }}" \
           --arch "${{ steps.ccache-config.outputs.arch }}"
+
+    - name: Save ccache binary (Linux)
+      if: runner.os == 'Linux' && steps.cache-policy.outputs.save == 'true' && steps.ccache-binary.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: /usr/local/bin/ccache
+        key: ${{ steps.ccache-binary.outputs.cache-primary-key }}
 
     - name: Install ccache (macOS)
       if: runner.os == 'macOS'
@@ -88,10 +95,10 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" windows-config --host "${{ inputs.host }}" --target "${{ inputs.target }}"
 
-    - name: Cache ccache binary (Windows)
+    - name: Restore ccache binary (Windows)
       if: runner.os == 'Windows'
       id: ccache-binary-win
-      uses: actions/cache@v5
+      uses: actions/cache/restore@v5
       with:
         path: ${{ runner.temp }}/ccache-${{ steps.ccache-config.outputs.version }}-windows-${{ steps.win-ccache.outputs.arch }}/ccache.exe
         key: ccache-binary-${{ steps.ccache-config.outputs.version }}-windows-${{ steps.win-ccache.outputs.arch }}
@@ -109,6 +116,13 @@ runs:
           --arch "${CCACHE_ARCH}" \
           --sha256 "${CCACHE_WIN_SHA256}" \
           --runner-temp "${RUNNER_TEMP//\\//}"
+
+    - name: Save ccache binary (Windows)
+      if: runner.os == 'Windows' && steps.cache-policy.outputs.save == 'true' && steps.ccache-binary-win.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ runner.temp }}/ccache-${{ steps.ccache-config.outputs.version }}-windows-${{ steps.win-ccache.outputs.arch }}/ccache.exe
+        key: ${{ steps.ccache-binary-win.outputs.cache-primary-key }}
 
     - name: Add ccache to PATH (Windows)
       if: runner.os == 'Windows'
