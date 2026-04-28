@@ -8,6 +8,8 @@
 #include <QtGui/QVector3D>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <functional>
+
 #include "RemoteControlCalibrationController.h"
 #include "JoystickSettings.h"
 
@@ -34,14 +36,23 @@ class AvailableButtonAction : public QObject
     Q_PROPERTY(bool     canRepeat   READ canRepeat  CONSTANT)
 
 public:
-    AvailableButtonAction(const QString &actionName, bool canRepeat, QObject *parent = nullptr);
+    AvailableButtonAction(const QString &actionName,
+                          std::function<void()> onDown,
+                          std::function<void()> onUp = nullptr,
+                          std::function<void()> onRepeat = nullptr,
+                          QObject *parent = nullptr);
 
     const QString &action() const { return _actionName; }
-    bool canRepeat() const { return _repeat; }
+    bool canRepeat() const { return bool(_onRepeat); }
+    const std::function<void()> &onDown() const { return _onDown; }
+    const std::function<void()> &onRepeat() const { return _onRepeat; }
+    const std::function<void()> &onUp() const { return _onUp; }
 
 private:
     const QString _actionName;
-    const bool _repeat = false;
+    const std::function<void()> _onDown;
+    const std::function<void()> _onRepeat;
+    const std::function<void()> _onUp;
 };
 
 // There is only one Joystick instance active in the system at a time.
