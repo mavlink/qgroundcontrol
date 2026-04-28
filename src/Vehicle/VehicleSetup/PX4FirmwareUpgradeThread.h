@@ -5,6 +5,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QTime>
+#include <QtCore/QVariantList>
 
 class PX4FirmwareUpgradeThreadController;
 class Bootloader;
@@ -34,6 +35,7 @@ signals:
     void eraseStarted           (void);
     void eraseComplete          (void);
     void flashComplete          (void);
+    void portsAvailable         (const QVariantList& ports);
 
 private slots:
     void _init              (void);
@@ -43,10 +45,11 @@ private slots:
     void _findBoardOnce     (void);
     void _updateProgress    (int curr, int total) { emit updateProgress(curr, total); }
     void _cancel            (void);
+    void _setTargetPort     (const QString& systemLocation);
 
 private:
-    bool _findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType, QString& boardName);
     bool _erase             (void);
+    QVariantList _buildPortDescriptors() const;
 
     PX4FirmwareUpgradeThreadController* _controller;
 
@@ -54,8 +57,10 @@ private:
     QTimer*             _findBoardTimer         = nullptr;
     QTime               _elapsed;
     bool                _foundBoard             = false;
-    bool                _boardIsSiKRadio        = false;
-    bool                _findBoardFirstAttempt  = true;     ///< true: we found the board right away, it needs to be unplugged and plugged back in
+    bool                _findBoardFirstAttempt  = true;     ///< true: target was already plugged in when user clicked Flash; user must unplug+replug
+    bool                _targetSeenAtLeastOnce  = false;    ///< true: target was visible at some point — broaden match after disconnect
+    QString             _targetSystemLocation;              ///< empty: discovery only, no flash target chosen yet
+    QString             _targetSerialNumber;                ///< serial number captured when target was last seen
     QGCSerialPortInfo   _foundBoardPortInfo;                ///< port info for found board
 };
 
@@ -80,6 +85,9 @@ public:
 
     void flash(const FirmwareImage* image);
 
+    /// Tells the worker to flash a specific port (selected by the user) when it appears in bootloader mode.
+    void setTargetPort(const QString& systemLocation) { emit _setTargetPortOnThread(systemLocation); }
+
     const FirmwareImage* image(void) { return _image; }
 
 signals:
@@ -93,6 +101,7 @@ signals:
     void eraseComplete  (void);
     void flashComplete  (void);
     void updateProgress (int curr, int total);
+    void portsAvailable (const QVariantList& ports);
 
     // Internal signals to communicate with thread worker
     void _initThreadWorker          (void);
@@ -100,6 +109,7 @@ signals:
     void _rebootOnThread            (void);
     void _flashOnThread             (void);
     void _cancel                    (void);
+    void _setTargetPortOnThread     (const QString& systemLocation);
 
 private slots:
     void _foundBoard            (bool firstAttempt, const QGCSerialPortInfo& portInfo, int type, QString name) { emit foundBoard(firstAttempt, portInfo, type, name); }
@@ -111,6 +121,7 @@ private slots:
     void _eraseStarted          (void) { emit eraseStarted(); }
     void _eraseComplete         (void) { emit eraseComplete(); }
     void _flashComplete         (void) { emit flashComplete(); }
+    void _portsAvailable        (const QVariantList& ports) { emit portsAvailable(ports); }
 
 private:
     void _updateProgress(int curr, int total) { emit updateProgress(curr, total); }
