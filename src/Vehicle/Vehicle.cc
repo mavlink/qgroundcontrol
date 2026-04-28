@@ -766,7 +766,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
 {
     // If a MAVLink camera component is present, CAMERA_IMAGE_CAPTURED is authoritative
-    if (_cameraManager && _cameraManager->hasMavlinkCameraComponent()) {
+    if (_cameraManager && _cameraManager->hasMavlinkCameraComponent() && (message.compid == _defaultComponentId)) {
         return;
     }
 
