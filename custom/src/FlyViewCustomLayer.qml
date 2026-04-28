@@ -970,11 +970,36 @@ Item {
                     anchors.fill: parent
                     onClicked: {
                         if (_activeVehicle) {
-                            _activeVehicle.guidedModeLand()
+                            _activeVehicle.emergencyStop()
                         }
                     }
                 }
             }
+
+	    Button {
+		id: modeToggle
+		
+		property var vehicle: _activeVehicle
+		
+		text: {
+		    switch (vehicle.flightMode) {
+		    case "Mission":
+		        return "Switch to Stabilized"
+		    case "Stabilized":
+		        return "Switch to Auto"
+		    default:
+		        return "Mode: " + vehicle.flightMode
+		    }
+		}
+		
+		onClicked: {
+		    if (vehicle.flightMode === "Mission") {
+		        vehicle.setFlightMode("Stabilized")
+		    } else {
+		        vehicle.setFlightMode("Mission")
+		    }
+		}
+	    }
 
             // Retrieval Mechanism Control
             Rectangle {

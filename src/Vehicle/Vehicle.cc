@@ -1655,6 +1655,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
     uint8_t     base_mode;
     uint32_t    custom_mode;
 
+    qDebug() << "in setFlightMode()";
     if (setFlightModeCustom(flightMode, &base_mode, &custom_mode)) {
         SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
         if (!sharedLink) {
@@ -1669,6 +1670,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
         newBaseMode |= base_mode;
 
         if (_firmwarePlugin->MAV_CMD_DO_SET_MODE_is_supported()) {
+	    qDebug() << "setFlightMode 1";
             sendMavCommand(defaultComponentId(),
                            MAV_CMD_DO_SET_MODE,
                            true,    // show error if fails
@@ -1676,6 +1678,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
                            custom_mode);
         } else {
             mavlink_message_t msg;
+	    qDebug() << "setFlightMode 2";
             mavlink_msg_set_mode_pack_chan(MAVLinkProtocol::instance()->getSystemId(),
                                            MAVLinkProtocol::getComponentId(),
                                            sharedLink->mavlinkChannel(),
@@ -2413,6 +2416,22 @@ void Vehicle::setCurrentMissionSequence(int seq)
 
 void Vehicle::sendMavCommand(int compId, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
+    // TODO: put log message here
+
+    if (command == MAV_CMD_COMPONENT_ARM_DISARM && param2 == 21196) {
+        qDebug() << "[KILL SWITCH COMMAND DETECTED]";
+    }
+    qDebug() << "[MAV_CMD SEND]"
+         << "cmd:" << command
+         << "comp:" << compId
+         << "p1:" << param1
+         << "p2:" << param2
+         << "p3:" << param3
+         << "p4:" << param4
+         << "p5:" << param5
+         << "p6:" << param6
+         << "p7:" << param7;
+
     _sendMavCommandWorker(false,            // commandInt
                           showError,
                           nullptr,          // no handlers
