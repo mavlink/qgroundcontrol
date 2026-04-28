@@ -106,16 +106,6 @@ SetupPage {
                 }
             }
 
-            QGCFileDialog {
-                id:                 customFirmwareDialog
-                title:              qsTr("Select Firmware File")
-                nameFilters:        [qsTr("Firmware Files (*.px4 *.apj *.bin *.ihx)"), qsTr("All Files (*)")]
-                folder:             QGroundControl.settingsManager.appSettings.logSavePath
-                onAcceptedForLoad: (file) => {
-                    controller.flashFirmwareUrl(file)
-                    close()
-                }
-            }
 
             FirmwareUpgradeController {
                 id:             controller
@@ -170,6 +160,18 @@ SetupPage {
                     buttons:    Dialog.Ok | Dialog.Cancel
 
                     property bool showFirmwareTypeSelection:    _advanced.checked
+
+                    QGCFileDialog {
+                        id:                 customFirmwareDialog
+                        title:              qsTr("Select Firmware File")
+                        nameFilters:        [qsTr("Firmware Files (*.px4 *.apj *.bin *.ihx)"), qsTr("All Files (*)")]
+                        folder:             QGroundControl.settingsManager.appSettings.logSavePath
+                        onAcceptedForLoad: (file) => {
+                            controller.flashFirmwareUrl(file)
+                            close()
+                            firmwareSelectDialog.close()
+                        }
+                    }
 
                     function firmwareVersionChanged(model) {
                         firmwareWarningMessageVisible = false
@@ -410,14 +412,15 @@ SetupPage {
                             model:              _singleFirmwareMode ? singleFirmwareModeTypeList : firmwareBuildTypeList
 
                             onActivated: (index) => {
-                                controller.selectedFirmwareBuildType = model.get(index).firmwareType
-                                if (model.get(index).firmwareType === FirmwareUpgradeController.BetaFirmware) {
+                                var fwType = model.get(index).firmwareType
+                                controller.selectedFirmwareBuildType = fwType
+                                if (fwType === FirmwareUpgradeController.BetaFirmware) {
                                     firmwareWarningMessageVisible = true
                                     firmwareVersionWarningLabel.text = qsTr("WARNING: BETA FIRMWARE. ") +
                                             qsTr("This firmware version is ONLY intended for beta testers. ") +
                                             qsTr("Although it has received FLIGHT TESTING, it represents actively changed code. ") +
                                             qsTr("Do NOT use for normal operation.")
-                                } else if (model.get(index).firmwareType === FirmwareUpgradeController.DeveloperFirmware) {
+                                } else if (fwType === FirmwareUpgradeController.DeveloperFirmware) {
                                     firmwareWarningMessageVisible = true
                                     firmwareVersionWarningLabel.text = qsTr("WARNING: CONTINUOUS BUILD FIRMWARE. ") +
                                             qsTr("This firmware has NOT BEEN FLIGHT TESTED. ") +
@@ -429,6 +432,9 @@ SetupPage {
                                     firmwareWarningMessageVisible = false
                                 }
                                 updatePX4VersionDisplay()
+                                if (fwType === FirmwareUpgradeController.CustomFirmware) {
+                                    customFirmwareDialog.openForLoad()
+                                }
                             }
                         }
 
