@@ -378,8 +378,12 @@ void FirmwareUpgradeController::_downloadFirmware(void)
 {
     Q_ASSERT(!_firmwareFilename.isEmpty());
 
-    _appendStatusLog(tr("Downloading firmware..."));
-    _appendStatusLog(tr(" From: %1").arg(_firmwareFilename));
+    const bool isRemote = _firmwareFilename.startsWith(QStringLiteral("http"), Qt::CaseInsensitive);
+    if (isRemote) {
+        _appendStatusLog(tr("Downloading firmware from %1").arg(_firmwareFilename));
+    } else {
+        _appendStatusLog(tr("Using firmware file %1").arg(_firmwareFilename));
+    }
 
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::finished, downloader, &QObject::deleteLater);
@@ -405,7 +409,10 @@ void FirmwareUpgradeController::_firmwareDownloadProgress(qint64 curr, qint64 to
 void FirmwareUpgradeController::_firmwareDownloadComplete(bool success, const QString &localFile, const QString &errorMsg)
 {
     if (success) {
-        _appendStatusLog(tr("Download complete"));
+        const bool isRemote = _firmwareFilename.startsWith(QStringLiteral("http"), Qt::CaseInsensitive);
+        if (isRemote) {
+            _appendStatusLog(tr("Download complete"));
+        }
 
         FirmwareImage* image = new FirmwareImage(this);
 
@@ -457,7 +464,6 @@ void FirmwareUpgradeController::_flashComplete(void)
     _image = nullptr;
 
     _appendStatusLog(tr("Upgrade complete"), true);
-    _appendStatusLog("------------------------------------------", false);
     emit flashComplete();
     LinkManager::instance()->setConnectionsAllowed();
 }
@@ -499,7 +505,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
     QString varText;
 
     if (critical) {
-        varText = QString("<font color=\"yellow\">%1</font>").arg(text);
+        varText = QString("<b>%1</b>").arg(text);
     } else {
         varText = text;
     }
@@ -513,7 +519,6 @@ void FirmwareUpgradeController::_errorCancel(const QString& msg)
 {
     _appendStatusLog(msg, false);
     _appendStatusLog(tr("Upgrade cancelled"), true);
-    _appendStatusLog("------------------------------------------", false);
     emit error();
     cancel();
     LinkManager::instance()->setConnectionsAllowed();
