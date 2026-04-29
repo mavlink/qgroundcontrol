@@ -1,5 +1,5 @@
 import QtQuick
-import QtCharts
+import QtGraphs
 
 import QGroundControl
 import QGroundControl.Controls
@@ -50,49 +50,70 @@ Rectangle {
             height: terrainProfileFlickable.height
             width:  terrainProfileFlickable.width
 
-            ChartView {
+            GraphsView {
                 id:                 chart
                 anchors.fill:       parent
-                margins.top:        0
-                margins.right:      0
-                margins.bottom:     0
-                margins.left:       0
-                backgroundColor:    "transparent"
-                legend.visible:     false
-                antialiasing:       true
+                marginTop:          ScreenTools.defaultFontPixelHeight / 2  // Fixes top clipping problem
+                marginRight:        ScreenTools.defaultFontPixelWidth * 2   // Prevents clipping last tick mark
+                marginBottom:       -ScreenTools.defaultFontPixelHeight / 2 // For some reason you can't get rid of bottom margin by setting to 0
+                marginLeft:         0
 
-                ValueAxis {
-                    id:                         axisX
-                    min:                        0
-                    max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(missionController.missionTotalDistance)
-                    lineVisible:                true
-                    labelsFont.family:          ScreenTools.fixedFontFamily
-                    labelsFont.pointSize:       ScreenTools.smallFontPointSize
-                    labelsColor:                qgcPal.text
-                    tickCount:                  5
-                    gridLineColor:              applyOpacity(qgcPal.text, 0.25)
+                theme: GraphsTheme {
+                    colorScheme:                qgcPal.globalTheme === QGCPalette.Light ? GraphsTheme.ColorScheme.Light : GraphsTheme.ColorScheme.Dark
+                    backgroundColor:            "transparent"
+                    backgroundVisible:          false
+                    plotAreaBackgroundColor:     qgcPal.window
+                    grid.mainColor:             applyOpacity(qgcPal.text, 0.5)
+                    grid.subColor:              applyOpacity(qgcPal.text, 0.3)
+                    grid.mainWidth:             1
+                    labelBackgroundVisible:     false
+                    labelTextColor:             qgcPal.text
+                    axisXLabelFont.family:      ScreenTools.fixedFontFamily
+                    axisXLabelFont.pointSize:   ScreenTools.smallFontPointSize
+                    axisYLabelFont.family:      ScreenTools.fixedFontFamily
+                    axisYLabelFont.pointSize:   ScreenTools.smallFontPointSize
                 }
 
-                ValueAxis {
+                axisX: ValueAxis {
+                    id:                         axisX
+                    min:                        0
+                    max:                        _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionTotalDistance)
+                    lineVisible:                true
+                    tickInterval:               max > 0 ? max / 4 : 1
+                    labelDecimals:              1
+                }
+
+                axisY: ValueAxis {
                     id:                         axisY
                     min:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude)
                     max:                        _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude)
                     lineVisible:                true
-                    labelsFont.family:          ScreenTools.fixedFontFamily
-                    labelsFont.pointSize:       ScreenTools.smallFontPointSize
-                    labelsColor:                qgcPal.text
-                    tickCount:                  4
-                    gridLineColor:              applyOpacity(qgcPal.text, 0.25)
+                    tickInterval:               (max - min) > 0 ? (max - min) / 3 : 1
+                    labelDecimals:              1
                 }
 
                 LineSeries {
-                    id:         lineSeries
-                    axisX:      axisX
-                    axisY:      axisY
-                    visible:    true
+                    id:         terrainSeries
+                    color:      "green"
+                    width:      2
+                }
 
-                    XYPoint { x: 0; y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_minAMSLAltitude) }
-                    XYPoint { x: _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_missionTotalDistance); y: _unitsConversion.metersToAppSettingsVerticalDistanceUnits(_maxAMSLAltitude) }
+                LineSeries {
+                    id:         flightSeries
+                    color:      "orange"
+                    width:      2
+                }
+
+                LineSeries {
+                    id:         missingSeries
+                    color:      "yellow"
+                    width:      2
+                }
+
+                LineSeries {
+                    id:         collisionSeries
+                    color:      "red"
+                    width:      3
                 }
             }
 
@@ -103,6 +124,10 @@ Rectangle {
                 height:             chart.plotArea.height
                 visibleWidth:       chart.plotArea.width
                 missionController:  root.missionController
+                horizontalScale:    _unitsConversion.metersToAppSettingsHorizontalDistanceUnits(1)
+                verticalScale:      _unitsConversion.metersToAppSettingsVerticalDistanceUnits(1)
+
+                onProfileChanged:   terrainProfile.updateSeries(terrainSeries, flightSeries, missingSeries, collisionSeries)
 
                 Repeater {
                     model: missionController.visualItems

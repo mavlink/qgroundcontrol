@@ -192,7 +192,7 @@ find_package(Qt6
     ${QGC_QT_MINIMUM_VERSION}...${QGC_QT_MAXIMUM_VERSION}
     REQUIRED
     COMPONENTS
-        Charts
+        Graphs
         Concurrent
         Core
         Gui
@@ -213,7 +213,6 @@ find_package(Qt6
         Sql
         Svg
         TextToSpeech
-        Widgets
         Xml
         Quick3D
         StateMachine

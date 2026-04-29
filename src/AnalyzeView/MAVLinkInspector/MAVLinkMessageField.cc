@@ -4,8 +4,8 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCharts/QLineSeries>
-#include <QtCharts/QAbstractSeries>
+#include <QtGraphs/QLineSeries>
+#include <QtGraphs/QAbstractSeries>
 
 QGC_LOGGING_CATEGORY(MAVLinkMessageFieldLog, "AnalyzeView.MAVLinkMessageField")
 
