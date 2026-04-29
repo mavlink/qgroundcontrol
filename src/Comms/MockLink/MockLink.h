@@ -2,6 +2,7 @@
 
 #include "PX4/px4_custom_mode.h"
 #include "LinkInterface.h"
+#include "MAVLinkLib.h"
 #include "MAVLinkMessageType.h"
 #include "QGCMAVLinkTypes.h"
 #include "MockConfiguration.h"
@@ -279,6 +280,11 @@ private:
 
     uint8_t _mavlinkAuxChannel = std::numeric_limits<uint8_t>::max();
     QMutex _mavlinkAuxMutex;
+
+    // Simulated-vehicle signing state, separate from LinkInterface::_signingController so MockLink's
+    // install doesn't trample the QGC-side SigningChannel._keyHint during deferred-confirmation flows.
+    mavlink_signing_t _mockSigning{};
+    mavlink_signing_streams_t _mockSigningStreams{};
 
     bool _connected = false;
     bool _inNSH = false;

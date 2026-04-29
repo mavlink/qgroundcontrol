@@ -163,6 +163,8 @@ add_qgc_test(SDLTest LABELS Unit Joystick RESOURCE_LOCK Joystick)
 # ----------------------------------------------------------------------------
 add_subdirectory(MAVLink)
 add_qgc_test(SigningTest LABELS Unit MAVLink)
+add_qgc_test(SigningStatusTest LABELS Unit MAVLink)
+add_qgc_test(SigningControllerTest LABELS Unit MAVLink)
 add_qgc_test(MockLinkSigningTest LABELS Integration Vehicle MAVLink RESOURCE_LOCK MockLink)
 add_qgc_test(HealthAndArmingCheckReportTest LABELS Unit MAVLink)
 add_qgc_test(ImageProtocolManagerTest LABELS Unit MAVLink)

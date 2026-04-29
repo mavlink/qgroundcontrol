@@ -2,9 +2,12 @@
 
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <memory>
+
 #include "LinkConfiguration.h"
 
 class LinkManager;
+class SigningController;
 
 /// The link interface defines the interface for all links used to communicate with the ground station application.
 class LinkInterface : public QObject
@@ -32,9 +35,11 @@ public:
     void writeBytesThreadSafe(const char *bytes, int length);
     void addVehicleReference() { ++_vehicleReferenceCount; }
     void removeVehicleReference();
-    bool initMavlinkSigning();
-    void setSigningSignatureFailure(bool failure);
     void reportMavlinkV1Traffic();
+
+    /// Per-link signing state and confirmation state machine. Non-null after channel allocation.
+    SigningController* signing() { return _signingController.get(); }
+    const SigningController* signing() const { return _signingController.get(); }
 
 signals:
     void bytesReceived(LinkInterface *link, const QByteArray &data);
@@ -68,8 +73,10 @@ private:
     uint8_t _mavlinkChannel = std::numeric_limits<uint8_t>::max();
     bool _decodedFirstMavlinkPacket = false;
     int _vehicleReferenceCount = 0;
-    bool _signingSignatureFailure = false;
     bool _mavlinkV1TrafficReported = false;
+    /// Must `reset()` in `_freeMavlinkChannel` before LinkManager frees the channel so the
+    /// controller can flush the final timestamp.
+    std::unique_ptr<SigningController> _signingController;
 };
 
 typedef std::shared_ptr<LinkInterface> SharedLinkInterfacePtr;
