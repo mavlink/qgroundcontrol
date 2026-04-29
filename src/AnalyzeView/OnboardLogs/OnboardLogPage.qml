@@ -36,7 +36,10 @@ AnalyzePage {
 
                     QGCCheckBox {
                         id: headerCheckBox
-                        enabled: false
+                        enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 0)
+                        tristate: true
+                        checkState: OnboardLogController.selectionCheckState
+                        onClicked: OnboardLogController.selectAll(checkState === Qt.Checked)
                     }
 
                     Repeater {
@@ -47,7 +50,9 @@ AnalyzePage {
                                 value: object.selected ? Qt.Checked : Qt.Unchecked
                             }
 
-                            onClicked: object.selected = checked
+                            onClicked: {
+                                object.selected = checked
+                            }
                         }
                     }
 
@@ -154,6 +159,13 @@ AnalyzePage {
                             close()
                         }
                     }
+                }
+
+                QGCButton {
+                    Layout.fillWidth: true
+                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 1)
+                    text: OnboardLogController.sortAscending ? qsTr("Sort: Oldest First") : qsTr("Sort: Newest First")
+                    onClicked: OnboardLogController.toggleSortByDate()
                 }
 
                 QGCButton {
