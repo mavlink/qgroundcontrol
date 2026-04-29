@@ -3375,9 +3375,12 @@ void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY sever
 
 void Vehicle::_errorMessageReceived(QString message)
 {
-    if (_isActiveVehicle) {
-        QGC::showCriticalVehicleMessage(message);
+    QString vehicleIdPrefix;
+
+    if (MultiVehicleManager::instance()->vehicles()->count() > 1) {
+        vehicleIdPrefix = tr("Vehicle %1: ").arg(id());
     }
+    QGC::showCriticalVehicleMessage(vehicleIdPrefix + message);
 }
 
 /*---------------------------------------------------------------------------*/
