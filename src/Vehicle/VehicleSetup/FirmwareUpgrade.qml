@@ -31,14 +31,16 @@ SetupPage {
             readonly property string highlightSuffix:   "</font>"
             readonly property string welcomeText:       qsTr("%1 can upgrade the firmware on Pixhawk devices and SiK Radios.").arg(QGroundControl.appName)
             readonly property string welcomeTextSingle: qsTr("Update the autopilot firmware to the latest version")
-            readonly property string plugInText:        "<big>" + highlightPrefix + qsTr("Plug in your device") + highlightSuffix + qsTr(" via USB to ") + highlightPrefix + qsTr("start") + highlightSuffix + qsTr(" firmware upgrade.") + "</big>"
+            readonly property string plugInText:        highlightPrefix + qsTr("Plug in your device") + highlightSuffix + qsTr(" via USB, then select it below and press ") + highlightPrefix + qsTr("Flash") + highlightSuffix + "."
+            readonly property string unplugReplugText:  highlightPrefix + qsTr("Now unplug your device and plug it back in to enter bootloader mode.") + highlightSuffix
             readonly property string flashFailText:     qsTr("If upgrade failed, make sure to connect ") + highlightPrefix + qsTr("directly") + highlightSuffix + qsTr(" to a powered USB port on your computer, not through a USB hub. ") +
                                                         qsTr("Also make sure you are only powered via USB ") + highlightPrefix + qsTr("not battery") + highlightSuffix + "."
-            readonly property string qgcUnplugText1:    qsTr("All %1 connections to vehicles must be ").arg(QGroundControl.appName) + highlightPrefix + qsTr(" disconnected ") + highlightSuffix + qsTr("prior to firmware upgrade.")
-            readonly property string qgcUnplugText2:    highlightPrefix + "<big>" + qsTr("Please unplug your Pixhawk and/or Radio from USB.") + "</big>" + highlightSuffix
 
             readonly property int _defaultFimwareTypePX4:   12
             readonly property int _defaultFimwareTypeAPM:   3
+
+            readonly property int _boardTypePixhawk:    0
+            readonly property int _boardTypeSiKRadio:   1
 
             property var    _firmwareUpgradeSettings:   QGroundControl.settingsManager.firmwareUpgradeSettings
             property var    _defaultFirmwareFact:       _firmwareUpgradeSettings.defaultFirmwareType
@@ -46,8 +48,11 @@ SetupPage {
 
             property string firmwareWarningMessage
             property bool   firmwareWarningMessageVisible:  false
-            property bool   initialBoardSearch:             true
             property string firmwareName
+            property bool   _flashStarted:              false  ///< true: user has clicked Flash, suppress further preselection
+            property bool   _cancellable:               true   ///< false once erase has started — past the point of clean cancellation
+            property string _selectedSystemLocation
+            property string _selectedDisplayName                ///< snapshot of chosen port's label, used while flashing
 
             property bool _singleFirmwareMode:          QGroundControl.corePlugin.options.firmwareUpgradeSingleURL.length != 0   ///< true: running in special single firmware download mode
 
@@ -56,16 +61,52 @@ SetupPage {
                 _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
             }
 
-            QGCFileDialog {
-                id:                 customFirmwareDialog
-                title:              qsTr("Select Firmware File")
-                nameFilters:        [qsTr("Firmware Files (*.px4 *.apj *.bin *.ihx)"), qsTr("All Files (*)")]
-                folder:             QGroundControl.settingsManager.appSettings.logSavePath
-                onAcceptedForLoad: (file) => {
-                    controller.flashFirmwareUrl(file)
-                    close()
+            function _preselectIndex() {
+                var ports = controller.availablePorts
+                if (ports.length === 0) {
+                    return -1
+                }
+                // Prefer a recognized Pixhawk
+                for (var i = 0; i < ports.length; i++) {
+                    if (ports[i].boardType === _boardTypePixhawk) {
+                        return i
+                    }
+                }
+                // Else prefer a recognized SiK radio
+                for (var j = 0; j < ports.length; j++) {
+                    if (ports[j].boardType === _boardTypeSiKRadio) {
+                        return j
+                    }
+                }
+                // Else first item
+                return 0
+            }
+
+            function _refreshSelection() {
+                if (_flashStarted) {
+                    return
+                }
+                var ports = controller.availablePorts
+                if (ports.length === 0) {
+                    portCombo.currentIndex = -1
+                    _selectedSystemLocation = ""
+                    return
+                }
+                // Try to keep the current selection if its port is still present
+                if (_selectedSystemLocation !== "") {
+                    for (var i = 0; i < ports.length; i++) {
+                        if (ports[i].systemLocation === _selectedSystemLocation) {
+                            portCombo.currentIndex = i
+                            return
+                        }
+                    }
+                }
+                portCombo.currentIndex = _preselectIndex()
+                if (portCombo.currentIndex >= 0) {
+                    _selectedSystemLocation = ports[portCombo.currentIndex].systemLocation
                 }
             }
+
 
             FirmwareUpgradeController {
                 id:             controller
@@ -75,47 +116,39 @@ SetupPage {
                 property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
                 onActiveVehicleChanged: {
-                    if (!globals.activeVehicle) {
+                    if (!globals.activeVehicle && !_flashStarted) {
                         statusTextArea.append(plugInText)
                     }
                 }
 
-                onNoBoardFound: {
-                    initialBoardSearch = false
-                    if (!QGroundControl.multiVehicleManager.activeVehicleAvailable) {
-                        statusTextArea.append(plugInText)
-                    }
-                }
+                onAvailablePortsChanged: _refreshSelection()
 
                 onBoardGone: {
-                    initialBoardSearch = false
-                    if (!QGroundControl.multiVehicleManager.activeVehicleAvailable) {
-                        statusTextArea.append(plugInText)
+                    if (_flashStarted) {
+                        statusTextArea.append(highlightPrefix + qsTr("Device disconnected — waiting for it to reappear in bootloader mode...") + highlightSuffix)
                     }
                 }
 
                 onBoardFound: {
-                    if (initialBoardSearch) {
-                        // Board was found right away, so something is already plugged in before we've started upgrade
-                        statusTextArea.append(qgcUnplugText1)
-                        statusTextArea.append(qgcUnplugText2)
-
-                        var availableDevices = controller.availableBoardsName()
-                        if (availableDevices.length > 1) {
-                            statusTextArea.append(highlightPrefix + qsTr("Multiple devices detected! Remove all detected devices to perform the firmware upgrade."))
-                            statusTextArea.append(qsTr("Detected [%1]: ").arg(availableDevices.length) + availableDevices.join(", "))
-                        }
+                    if (_flashStarted) {
+                        statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
                         if (QGroundControl.multiVehicleManager.activeVehicle) {
                             QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.autoDisconnect = true
                         }
-                    } else {
-                        // We end up here when we detect a board plugged in after we've started upgrade
-                        statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
                     }
                 }
 
                 onShowFirmwareSelectDlg:    firmwareSelectDialogFactory.open()
-                onError:                    statusTextArea.append(flashFailText)
+                onEraseStarted:             _cancellable = false
+                onError: {
+                    statusTextArea.append(flashFailText)
+                    _flashStarted = false
+                    _cancellable = true
+                }
+                onFlashComplete: {
+                    _flashStarted = false
+                    _cancellable = true
+                }
             }
 
             QGCPopupDialogFactory {
@@ -133,6 +166,18 @@ SetupPage {
                     buttons:    Dialog.Ok | Dialog.Cancel
 
                     property bool showFirmwareTypeSelection:    _advanced.checked
+
+                    QGCFileDialog {
+                        id:                 customFirmwareDialog
+                        title:              qsTr("Select Firmware File")
+                        nameFilters:        [qsTr("Firmware Files (*.px4 *.apj *.bin *.ihx)"), qsTr("All Files (*)")]
+                        folder:             QGroundControl.settingsManager.appSettings.logSavePath
+                        onAcceptedForLoad: (file) => {
+                            controller.flashFirmwareUrl(file)
+                            close()
+                            firmwareSelectDialog.close()
+                        }
+                    }
 
                     function firmwareVersionChanged(model) {
                         firmwareWarningMessageVisible = false
@@ -219,7 +264,6 @@ SetupPage {
 
                     function reject() {
                         statusTextArea.append(highlightPrefix + qsTr("Upgrade cancelled") + highlightSuffix)
-                        statusTextArea.append("------------------------------------------")
                         controller.cancel()
                         close()
                     }
@@ -374,14 +418,15 @@ SetupPage {
                             model:              _singleFirmwareMode ? singleFirmwareModeTypeList : firmwareBuildTypeList
 
                             onActivated: (index) => {
-                                controller.selectedFirmwareBuildType = model.get(index).firmwareType
-                                if (model.get(index).firmwareType === FirmwareUpgradeController.BetaFirmware) {
+                                var fwType = model.get(index).firmwareType
+                                controller.selectedFirmwareBuildType = fwType
+                                if (fwType === FirmwareUpgradeController.BetaFirmware) {
                                     firmwareWarningMessageVisible = true
                                     firmwareVersionWarningLabel.text = qsTr("WARNING: BETA FIRMWARE. ") +
                                             qsTr("This firmware version is ONLY intended for beta testers. ") +
                                             qsTr("Although it has received FLIGHT TESTING, it represents actively changed code. ") +
                                             qsTr("Do NOT use for normal operation.")
-                                } else if (model.get(index).firmwareType === FirmwareUpgradeController.DeveloperFirmware) {
+                                } else if (fwType === FirmwareUpgradeController.DeveloperFirmware) {
                                     firmwareWarningMessageVisible = true
                                     firmwareVersionWarningLabel.text = qsTr("WARNING: CONTINUOUS BUILD FIRMWARE. ") +
                                             qsTr("This firmware has NOT BEEN FLIGHT TESTED. ") +
@@ -393,6 +438,9 @@ SetupPage {
                                     firmwareWarningMessageVisible = false
                                 }
                                 updatePX4VersionDisplay()
+                                if (fwType === FirmwareUpgradeController.CustomFirmware) {
+                                    customFirmwareDialog.openForLoad()
+                                }
                             }
                         }
 
@@ -405,6 +453,70 @@ SetupPage {
                     } // ColumnLayout
                 } // QGCPopupDialog
             } // Component - firmwareSelectDialogComponent
+
+            RowLayout {
+                Layout.fillWidth:   true
+                spacing:            ScreenTools.defaultFontPixelWidth
+                visible:            !flashBootloaderButton.visible
+
+                QGCComboBox {
+                    id:                 portCombo
+                    Layout.fillWidth:   true
+                    visible:            !_flashStarted
+                    enabled:            controller.availablePorts.length > 0
+                    model:              controller.availablePorts
+                    textRole:           "displayName"
+                    onActivated: (index) => {
+                        if (index >= 0 && index < controller.availablePorts.length) {
+                            _selectedSystemLocation = controller.availablePorts[index].systemLocation
+                        }
+                    }
+                }
+
+                QGCLabel {
+                    id:                 portLabel
+                    Layout.fillWidth:   true
+                    visible:            _flashStarted
+                    text:               _selectedDisplayName
+                    elide:              Text.ElideRight
+                }
+
+                QGCButton {
+                    id:         flashButton
+                    text:       qsTr("Flash")
+                    visible:    !_flashStarted
+                    enabled:    portCombo.currentIndex >= 0 && controller.availablePorts.length > 0
+                    onClicked: {
+                        var ports = controller.availablePorts
+                        if (portCombo.currentIndex < 0 || portCombo.currentIndex >= ports.length) {
+                            return
+                        }
+                        var entry = ports[portCombo.currentIndex]
+                        _selectedSystemLocation = entry.systemLocation
+                        _selectedDisplayName = entry.displayName
+                        _flashStarted = true
+                        statusTextArea.append(unplugReplugText)
+                        if (QGroundControl.multiVehicleManager.activeVehicle) {
+                            QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.autoDisconnect = true
+                        }
+                        controller.flashPort(entry.systemLocation)
+                    }
+                }
+
+                QGCButton {
+                    id:         cancelButton
+                    text:       qsTr("Cancel")
+                    visible:    _flashStarted
+                    enabled:    _cancellable
+                    onClicked: {
+                        controller.cancel()
+                        _flashStarted = false
+                        _cancellable = true
+                        _selectedDisplayName = ""
+                        statusTextArea.append(highlightPrefix + qsTr("Cancelled. Select a port and press Flash to try again.") + highlightSuffix)
+                    }
+                }
+            }
 
             ProgressBar {
                 id:                     progressBar

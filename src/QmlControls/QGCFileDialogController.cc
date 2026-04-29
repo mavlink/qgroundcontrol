@@ -103,11 +103,24 @@ QString QGCFileDialogController::urlToLocalFile(QUrl url)
 {
     // For some strange reason on Qt6 running on Linux files returned by FileDialog are not returned as local file urls.
     // Seems to be new behavior with Qt6.
+    QString result;
     if (url.isLocalFile()) {
-        return url.toLocalFile();
+        result = url.toLocalFile();
+    } else {
+        result = url.toString();
     }
 
-    return url.toString();
+#ifndef Q_OS_WIN
+    // Qt6 Linux FileDialog can return file URLs missing the third slash
+    // (file://path instead of file:///path). Qt parses that as host=first-segment,
+    // path=rest, and toLocalFile() yields "//host/rest" (UNC-style). On non-Windows
+    // platforms drop the spurious leading slash so it becomes a normal absolute path.
+    if (result.startsWith(QStringLiteral("//"))) {
+        result = result.mid(1);
+    }
+#endif
+
+    return result;
 }
 
 void QGCFileDialogController::importFromNativePicker()
