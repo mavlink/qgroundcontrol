@@ -13,7 +13,7 @@ class QGCMAVLinkMessageField : public QObject
 {
     Q_OBJECT
     // QML_ELEMENT
-    Q_MOC_INCLUDE(<QtCharts/QAbstractSeries>)
+    Q_MOC_INCLUDE(<QtGraphs/QAbstractSeries>)
     Q_PROPERTY(QString                  name        READ name       CONSTANT)
     Q_PROPERTY(QString                  label       READ label      CONSTANT)
     Q_PROPERTY(QString                  type        READ type       CONSTANT)

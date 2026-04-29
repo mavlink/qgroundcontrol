@@ -4,10 +4,8 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCharts/QAbstractSeries>
+#include <QtGraphs/QAbstractSeries>
 #include <QtCore/QTimer>
-
-Q_DECLARE_METATYPE(QAbstractSeries*)
 
 QGC_LOGGING_CATEGORY(MAVLinkChartControllerLog, "AnalyzeView.MAVLinkChartController")
 
@@ -16,8 +14,6 @@ MAVLinkChartController::MAVLinkChartController(QObject *parent)
     , _updateSeriesTimer(new QTimer(this))
 {
     // qCDebug(MAVLinkChartControllerLog) << Q_FUNC_INFO << this;
-
-    (void) qRegisterMetaType<QAbstractSeries*>("QAbstractSeries*");
 
     (void) connect(_updateSeriesTimer, &QTimer::timeout, this, &MAVLinkChartController::_refreshSeries);
 }
@@ -43,7 +39,7 @@ void MAVLinkChartController::setRangeYIndex(quint32 index)
         return;
     }
 
-    if (index >= static_cast<quint32>(_inspectorController->rangeSt().count())) {
+    if (!_inspectorController || index >= static_cast<quint32>(_inspectorController->rangeSt().count())) {
         return;
     }
 
@@ -61,6 +57,17 @@ void MAVLinkChartController::setRangeYIndex(quint32 index)
     }
 }
 
+qreal MAVLinkChartController::rangeXMs() const
+{
+    if (!_inspectorController) {
+        return 5000.0;
+    }
+    if (_rangeXIndex < static_cast<quint32>(_inspectorController->timeScaleSt().count())) {
+        return static_cast<qreal>(_inspectorController->timeScaleSt()[static_cast<int>(_rangeXIndex)]->timeScale);
+    }
+    return 5000.0;
+}
+
 void MAVLinkChartController::setRangeXIndex(quint32 index)
 {
     if (index == _rangeXIndex) {
@@ -75,15 +82,19 @@ void MAVLinkChartController::setRangeXIndex(quint32 index)
 
 void MAVLinkChartController::updateXRange()
 {
+    if (!_inspectorController) {
+        return;
+    }
+
     if (_rangeXIndex >= static_cast<quint32>(_inspectorController->timeScaleSt().count())) {
         return;
     }
 
     const qint64 bootTime = static_cast<qint64>(qgcApp()->msecsSinceBoot());
-    _rangeXMax = QDateTime::fromMSecsSinceEpoch(bootTime);
+    _rangeXMax = static_cast<qreal>(bootTime);
     emit rangeXMaxChanged();
 
-    _rangeXMin = QDateTime::fromMSecsSinceEpoch(bootTime - _inspectorController->timeScaleSt()[static_cast<int>(_rangeXIndex)]->timeScale);
+    _rangeXMin = static_cast<qreal>(bootTime - _inspectorController->timeScaleSt()[static_cast<int>(_rangeXIndex)]->timeScale);
     emit rangeXMinChanged();
 }
 

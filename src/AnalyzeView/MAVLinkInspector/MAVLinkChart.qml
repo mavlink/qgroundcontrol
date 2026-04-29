@@ -1,48 +1,68 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtCharts
+import QtGraphs
 
 import QGroundControl
 import QGroundControl.Controls
 
-ChartView {
+GraphsView {
     id:                 chartView
-    theme:              ChartView.ChartThemeDark
-    antialiasing:       true
-    animationOptions:   ChartView.NoAnimation
-    legend.visible:     false
-    backgroundColor:    qgcPal.window
-    backgroundRoundness: 0
-    margins.bottom:     ScreenTools.defaultFontPixelHeight * 1.5
-    margins.top:        chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
+    marginBottom:       ScreenTools.defaultFontPixelHeight * 1.5
+    marginTop:          chartHeader.height + (ScreenTools.defaultFontPixelHeight * 2)
+    marginLeft:         0
+    marginRight:        0
     visible:            chartController.chartFields.length > 0
 
     required property var inspectorController
     required property int chartIndex
 
-    property var _seriesColors: ["#00E04B","#DE8500","#F32836","#BFBFBF","#536DFF","#EECC44"]
+    property var _seriesColors: [qgcPal.colorGreen, qgcPal.colorOrange, qgcPal.colorRed, qgcPal.colorGrey, qgcPal.colorBlue, qgcPal.colorYellow]
+
+    Component {
+        id: lineSeriesComponent
+        LineSeries { }
+    }
 
     function addDimension(field) {
-        var color   = _seriesColors[chartView.count]
-        var serie   = createSeries(ChartView.SeriesTypeLine, field.label)
-        serie.axisX = axisX
-        serie.axisY = axisY
-        serie.useOpenGL = QGroundControl.videoManager.gstreamerEnabled // Details on why here: https://github.com/mavlink/qgroundcontrol/issues/13068
-        serie.color = color
-        serie.width = 1
+        var color   = _seriesColors[chartView.seriesList.length]
+        var serie   = lineSeriesComponent.createObject(chartView, {color: color, width: 1})
+        chartView.addSeries(serie)
         chartController.addSeries(field, serie)
     }
 
     function delDimension(field) {
         if(chartController) {
-            chartView.removeSeries(field.series)
-            chartController.delSeries(field)
+            for (var i = 0; i < chartView.seriesList.length; i++) {
+                if (chartView.seriesList[i] === field.series) {
+                    var s = chartView.seriesList[i]
+                    chartView.removeSeries(s)
+                    chartController.delSeries(field)
+                    s.destroy()
+                    break
+                }
+            }
         }
     }
 
     function roomForNewDimension() {
         return chartController.chartFields.length < _seriesColors.length
+    }
+
+    theme: GraphsTheme {
+        colorScheme:                qgcPal.globalTheme === QGCPalette.Light ? GraphsTheme.ColorScheme.Light : GraphsTheme.ColorScheme.Dark
+        backgroundColor:            qgcPal.window
+        backgroundVisible:          true
+        plotAreaBackgroundColor:     qgcPal.window
+        grid.mainColor:             Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.3)
+        grid.subColor:              Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.15)
+        grid.mainWidth:             1
+        labelBackgroundVisible:     false
+        labelTextColor:             qgcPal.text
+        axisXLabelFont.family:      ScreenTools.fixedFontFamily
+        axisXLabelFont.pointSize:   ScreenTools.smallFontPointSize
+        axisYLabelFont.family:      ScreenTools.fixedFontFamily
+        axisYLabelFont.pointSize:   ScreenTools.smallFontPointSize
     }
 
     MAVLinkChartController {
@@ -51,37 +71,50 @@ ChartView {
         chartIndex:             chartView.chartIndex
     }
 
-    DateTimeAxis {
+    axisX: ValueAxis {
         id:                         axisX
-        min:                        chartController ? chartController.rangeXMin : new Date()
-        max:                        chartController ? chartController.rangeXMax : new Date()
+        min:                        chartController ? chartController.rangeXMin : 0
+        max:                        chartController ? chartController.rangeXMax : 1
         visible:                    chartController !== null
-        format:                     "<br/>mm:ss.zzz"
-        tickCount:                  5
-        gridVisible:                true
-        labelsFont.family:          ScreenTools.fixedFontFamily
-        labelsFont.pointSize:       ScreenTools.smallFontPointSize
-        labelsColor:                qgcPal.text
+        tickInterval:               chartController ? chartController.rangeXMs / 3 : 5000
+        subTickCount:               0
+        labelsVisible:              true
+        labelDelegate: Component {
+            Item {
+                property string text
+                implicitWidth:  label.implicitWidth
+                implicitHeight: label.implicitHeight
+                Text {
+                    id: label
+                    text: {
+                        var ms = parseFloat(parent.text)
+                        if (isNaN(ms)) return parent.text
+                        var d = new Date(ms)
+                        return d.getMinutes().toString().padStart(2, '0') + ":" + d.getSeconds().toString().padStart(2, '0')
+                    }
+                    color:          qgcPal.text
+                    font.family:    ScreenTools.fixedFontFamily
+                    font.pointSize: ScreenTools.smallFontPointSize
+                }
+            }
+        }
     }
 
-    ValueAxis {
+    axisY: ValueAxis {
         id:                         axisY
         min:                        chartController ? chartController.rangeYMin : 0
         max:                        chartController ? chartController.rangeYMax : 0
         visible:                    chartController !== null
         lineVisible:                false
-        labelsFont.family:          ScreenTools.fixedFontFamily
-        labelsFont.pointSize:       ScreenTools.smallFontPointSize
-        labelsColor:                qgcPal.text
     }
 
     Row {
         id:                         chartHeader
-        anchors.left:               parent.left
+        anchors.left:               parent ? parent.left : undefined
         anchors.leftMargin:         ScreenTools.defaultFontPixelWidth  * 4
-        anchors.right:              parent.right
+        anchors.right:              parent ? parent.right : undefined
         anchors.rightMargin:        ScreenTools.defaultFontPixelWidth  * 4
-        anchors.top:                parent.top
+        anchors.top:                parent ? parent.top : undefined
         anchors.topMargin:          ScreenTools.defaultFontPixelHeight * 1.5
         spacing:                    ScreenTools.defaultFontPixelWidth  * 2
         visible:                    chartController !== null
@@ -98,7 +131,7 @@ ChartView {
                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
                 Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 10
                 height:             ScreenTools.defaultFontPixelHeight
-                model:              controller.timeScales
+                model:              inspectorController.timeScales
                 currentIndex:       chartController ? chartController.rangeXIndex : 0
                 onActivated: (index) => { if(chartController) chartController.rangeXIndex = index; }
                 Layout.alignment:   Qt.AlignVCenter
@@ -111,7 +144,7 @@ ChartView {
                 Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
                 Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 10
                 height:             ScreenTools.defaultFontPixelHeight
-                model:              controller.rangeList
+                model:              inspectorController.rangeList
                 currentIndex:       chartController ? chartController.rangeYIndex : 0
                 onActivated: (index) => { if(chartController) chartController.rangeYIndex = index; }
                 Layout.alignment:   Qt.AlignVCenter
@@ -123,7 +156,7 @@ ChartView {
                 model:              chartController ? chartController.chartFields : []
                 QGCLabel {
                     text:           modelData.label
-                    color:          chartView.series(index).color
+                    color:          index < chartView.seriesList.length ? chartView.seriesList[index].color : qgcPal.text
                     font.pointSize: ScreenTools.smallFontPointSize
                 }
             }

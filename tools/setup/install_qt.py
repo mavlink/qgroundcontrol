@@ -7,8 +7,8 @@ generation, and path resolution. Used by the qt-install GitHub Action.
 
 Usage:
     python tools/setup/install_qt.py --version 6.8.3 --host linux --arch linux_gcc_64
-    python tools/setup/install_qt.py --version 6.8.3 --host mac --arch clang_64 --modules "qtcharts qtlocation"
-    python tools/setup/install_qt.py cache-key --arch linux_gcc_64 --modules "qtcharts"
+    python tools/setup/install_qt.py --version 6.8.3 --host mac --arch clang_64 --modules "qtgraphs qtlocation"
+    python tools/setup/install_qt.py cache-key --arch linux_gcc_64 --modules "qtgraphs"
     python tools/setup/install_qt.py resolve-arch --arch win64_msvc2022_64
 """
 
