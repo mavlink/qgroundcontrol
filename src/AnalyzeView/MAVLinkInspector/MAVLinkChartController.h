@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QDateTime>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -16,17 +15,18 @@ class MAVLinkChartController : public QObject
     QML_ELEMENT
     Q_MOC_INCLUDE("MAVLinkInspectorController.h")
     Q_MOC_INCLUDE("MAVLinkMessageField.h")
-    Q_MOC_INCLUDE("QtCharts/qabstractseries.h")
+    Q_MOC_INCLUDE("QtGraphs/qabstractseries.h")
 
     Q_PROPERTY(MAVLinkInspectorController*  inspectorController READ inspectorController WRITE setInspectorController REQUIRED)
     Q_PROPERTY(int          chartIndex  MEMBER _chartIndex                          REQUIRED)
     Q_PROPERTY(QVariantList chartFields READ chartFields                            NOTIFY chartFieldsChanged)
-    Q_PROPERTY(QDateTime    rangeXMin   READ rangeXMin                              NOTIFY rangeXMinChanged)
-    Q_PROPERTY(QDateTime    rangeXMax   READ rangeXMax                              NOTIFY rangeXMaxChanged)
+    Q_PROPERTY(qreal        rangeXMin   READ rangeXMin                              NOTIFY rangeXMinChanged)
+    Q_PROPERTY(qreal        rangeXMax   READ rangeXMax                              NOTIFY rangeXMaxChanged)
     Q_PROPERTY(qreal        rangeYMin   READ rangeYMin                              NOTIFY rangeYMinChanged)
     Q_PROPERTY(qreal        rangeYMax   READ rangeYMax                              NOTIFY rangeYMaxChanged)
     Q_PROPERTY(quint32      rangeYIndex READ rangeYIndex    WRITE setRangeYIndex    NOTIFY rangeYIndexChanged)
     Q_PROPERTY(quint32      rangeXIndex READ rangeXIndex    WRITE setRangeXIndex    NOTIFY rangeXIndexChanged)
+    Q_PROPERTY(qreal        rangeXMs    READ rangeXMs                               NOTIFY rangeXIndexChanged)
 
 public:
     explicit MAVLinkChartController(QObject *parent = nullptr);
@@ -38,11 +38,12 @@ public:
     void setInspectorController(MAVLinkInspectorController *inspectorController);
     MAVLinkInspectorController *inspectorController() const { return _inspectorController; }
     QVariantList chartFields() const { return _chartFields; }
-    QDateTime rangeXMin() const { return _rangeXMin; }
-    QDateTime rangeXMax() const { return _rangeXMax; }
+    qreal rangeXMin() const { return _rangeXMin; }
+    qreal rangeXMax() const { return _rangeXMax; }
     qreal rangeYMin() const { return _rangeYMin; }
     qreal rangeYMax() const { return _rangeYMax; }
     quint32 rangeXIndex() const { return _rangeXIndex; }
+    qreal rangeXMs() const;
     quint32 rangeYIndex() const { return _rangeYIndex; }
     int chartIndex() const { return _chartIndex; }
 
@@ -68,8 +69,8 @@ private:
     MAVLinkInspectorController *_inspectorController = nullptr;
     QTimer *_updateSeriesTimer = nullptr;
 
-    QDateTime _rangeXMin;
-    QDateTime _rangeXMax;
+    qreal _rangeXMin = 0;
+    qreal _rangeXMax = 0;
     qreal _rangeYMin = 0;
     qreal _rangeYMax = 1;
     quint32 _rangeXIndex = 0;   ///< 5 Seconds
