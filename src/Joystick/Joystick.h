@@ -402,7 +402,7 @@ private:
     void _startPollingForActiveVehicle();
     void _startPollingForConfiguration();
     void _stopPollingForConfiguration();
-    void _stopAllPolling();
+    void _stopAllPollingForVehicle();
     QString _pollingTypeToString(PollingType pollingType) const;
     PollingType _currentPollingType = NotPolling;
     PollingType _previousPollingType = NotPolling;

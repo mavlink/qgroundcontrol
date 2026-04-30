@@ -47,7 +47,7 @@ JoystickManager::JoystickManager(QObject *parent)
             if (_joystickEnabledForVehicle(activeVehicle)) {
                 _activeJoystick->_startPollingForActiveVehicle();
             } else {
-                _activeJoystick->_stopAllPolling();
+                _activeJoystick->_stopAllPollingForVehicle();
             }
         }
         emit activeJoystickEnabledForActiveVehicleChanged();
@@ -123,7 +123,7 @@ void JoystickManager::_checkForAddedOrRemovedJoysticks()
             auto key = it->first;
             auto joystick = it->second;
             qCInfo(JoystickManagerLog) << "Joystick disconnected, releasing:" << key;
-            joystick->_stopAllPolling();
+            joystick->_stopAllPollingForVehicle();
             joystick->stop();
             joystick->deleteLater();
         }
@@ -198,7 +198,7 @@ void JoystickManager::_setActiveJoystick(Joystick *newActiveJoystick)
 
     // Cleanup old active joystick
     if (_activeJoystick) {
-        _activeJoystick->_stopAllPolling();
+        _activeJoystick->_stopAllPollingForVehicle();
         _activeJoystick = nullptr;
         emit activeJoystickChanged(nullptr);
     }
@@ -241,7 +241,7 @@ void JoystickManager::_activeVehicleChanged(Vehicle *activeVehicle)
         return;
     }
 
-    _activeJoystick->_stopAllPolling();
+    _activeJoystick->_stopAllPollingForVehicle();
 
     if (activeVehicle && _joystickEnabledForVehicle(activeVehicle)) {
         if (!_activeJoystick->settings()->calibrated()->rawValue().toBool()) {
