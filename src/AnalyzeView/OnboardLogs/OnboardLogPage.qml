@@ -38,7 +38,9 @@ AnalyzePage {
                         id: headerCheckBox
                         enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 0)
                         tristate: true
-                        checkState: OnboardLogController.selectionCheckState
+                        Binding on checkState {
+                            value: OnboardLogController.selectionCheckState
+                        }
                         onClicked: OnboardLogController.selectAll(checkState === Qt.Checked)
                     }
 

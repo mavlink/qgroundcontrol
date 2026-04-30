@@ -482,7 +482,7 @@ ParseResult _parseDataFlashFile(const QString &filePath)
             if (isNumericMode) {
                 modeName = _ardupilotModeName(result.detectedVehicleType, modeNumber);
             } else if (modeName.isEmpty()) {
-                modeName = QStringLiteral("Unknown");
+                modeName = DataFlashLogParser::tr("Unknown");
             }
             _appendEvent(result.events, timestampSecs, QStringLiteral("mode"), DataFlashLogParser::tr("Mode: %1").arg(modeName));
             if (timestampSecs >= 0.0) {

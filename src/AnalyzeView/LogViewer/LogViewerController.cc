@@ -193,7 +193,7 @@ void LogViewerController::_rebuildSignalRows()
 
     for (const QString &signal : _plottableSignals) {
         const int splitIndex = signal.indexOf('.');
-        const QString groupName = (splitIndex > 0) ? signal.left(splitIndex) : QStringLiteral("Other");
+        const QString groupName = (splitIndex > 0) ? signal.left(splitIndex) : tr("Other");
         const QString shortName = (splitIndex > 0) ? signal.mid(splitIndex + 1) : signal;
         groupedMap[groupName].append(shortName);
         if (!groups.contains(groupName)) {

@@ -70,6 +70,19 @@ AnalyzePage {
                 return logViewerController.eventColor(eventType)
             }
 
+            function eventTypeLabel(eventType) {
+                if (eventType === "mode") {
+                    return qsTr("Mode")
+                }
+                if (eventType === "event") {
+                    return qsTr("Event")
+                }
+                if (eventType === "error") {
+                    return qsTr("Error")
+                }
+                return eventType
+            }
+
             function modeColor(modeName) {
                 return logViewerController.modeColor(String(modeName))
             }
@@ -1193,7 +1206,7 @@ AnalyzePage {
                                     }
 
                                     QGCLabel {
-                                        text: modelData
+                                        text: eventTypeLabel(modelData)
                                     }
                                 }
                             }
