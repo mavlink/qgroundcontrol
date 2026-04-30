@@ -21,6 +21,7 @@ class DataFlashLogParser : public QObject
     Q_PROPERTY(QStringList availableSignals READ availableSignals NOTIFY availableSignalsChanged)
     Q_PROPERTY(QVariantList parameters READ parameters NOTIFY parametersChanged)
     Q_PROPERTY(QVariantList events READ events NOTIFY eventsChanged)
+    Q_PROPERTY(QVariantList messages READ messages NOTIFY messagesChanged)
     Q_PROPERTY(QStringList plottableSignals READ plottableSignals NOTIFY plottableSignalsChanged)
     Q_PROPERTY(QVariantList modeSegments READ modeSegments NOTIFY modeSegmentsChanged)
     Q_PROPERTY(QString detectedVehicleType READ detectedVehicleType NOTIFY detectedVehicleTypeChanged)
@@ -37,6 +38,7 @@ public:
     QStringList availableSignals() const { return _availableSignals; }
     QVariantList parameters() const { return _parameters; }
     QVariantList events() const { return _events; }
+    QVariantList messages() const { return _messages; }
     QStringList plottableSignals() const { return _plottableSignals; }
     QVariantList modeSegments() const { return _modeSegments; }
     QString detectedVehicleType() const { return _detectedVehicleType; }
@@ -58,6 +60,7 @@ signals:
     void availableSignalsChanged();
     void parametersChanged();
     void eventsChanged();
+    void messagesChanged();
     void plottableSignalsChanged();
     void modeSegmentsChanged();
     void detectedVehicleTypeChanged();
@@ -74,6 +77,7 @@ private:
     QStringList _plottableSignals;
     QVariantList _parameters;
     QVariantList _events;
+    QVariantList _messages;
     QVariantList _modeSegments;
     QString _detectedVehicleType;
     QHash<QString, QVector<QPointF>> _signalSamples;

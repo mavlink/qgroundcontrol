@@ -85,6 +85,22 @@ void LogViewerController::toggleSignal(const QString &signalName)
     emit selectedSignalsChanged();
 }
 
+void LogViewerController::setSignalSelected(const QString &signalName, bool selected)
+{
+    const bool currentlySelected = _selectedSignals.contains(signalName);
+    if (currentlySelected == selected) {
+        return;
+    }
+
+    if (selected) {
+        _selectedSignals.append(signalName);
+    } else {
+        _selectedSignals.removeAll(signalName);
+    }
+
+    emit selectedSignalsChanged();
+}
+
 bool LogViewerController::isSignalSelected(const QString &signalName) const
 {
     return _selectedSignals.contains(signalName);
@@ -112,7 +128,28 @@ QString LogViewerController::eventColor(const QString &eventType) const
 
 QString LogViewerController::modeColor(const QString &modeName) const
 {
-    return _assignColorForKey(QStringLiteral("mode-%1").arg(modeName));
+    static const QStringList modePalette = {
+        QStringLiteral("#E53935"), // red
+        QStringLiteral("#FB8C00"), // orange
+        QStringLiteral("#FDD835"), // yellow
+        QStringLiteral("#43A047"), // green
+        QStringLiteral("#00897B"), // teal
+        QStringLiteral("#00ACC1"), // cyan
+        QStringLiteral("#1E88E5"), // blue
+        QStringLiteral("#5E35B1"), // indigo
+        QStringLiteral("#8E24AA"), // purple
+        QStringLiteral("#D81B60"), // pink
+        QStringLiteral("#6D4C41"), // brown
+        QStringLiteral("#546E7A"), // blue grey
+    };
+
+    quint32 hash = 0;
+    for (const QChar ch : modeName) {
+        hash = (hash * 31U) + ch.unicode();
+    }
+
+    const qsizetype idx = static_cast<qsizetype>(hash % static_cast<quint32>(modePalette.count()));
+    return modePalette[idx];
 }
 
 QStringList LogViewerController::modeLegendEntries(const QVariantList &modeSegments) const

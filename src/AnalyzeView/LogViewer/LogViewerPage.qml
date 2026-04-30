@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtCharts
+import QtGraphs
 
 import QGroundControl
 import QGroundControl.Controls
@@ -36,6 +36,35 @@ AnalyzePage {
             property real zoomMinX: 0
             property real zoomMaxX: 1
             property int maxChartPointsPerSignal: 6000
+
+            // Visually distinct categorical palette for selected-signal series.
+            // Position-based picks avoid hash collisions producing similar colors.
+            readonly property var _signalChartColors: [
+                "#1E88E5", // blue
+                "#E53935", // red
+                "#43A047", // green
+                "#FB8C00", // orange
+                "#8E24AA", // purple
+                "#00ACC1", // cyan
+                "#FDD835", // yellow
+                "#D81B60", // pink
+                "#6D4C41", // brown
+                "#546E7A", // blue grey
+                "#3949AB", // indigo
+                "#00897B", // teal
+            ]
+
+            Component {
+                id: lineSeriesComponent
+
+                LineSeries { }
+            }
+
+            Component {
+                id: scatterSeriesComponent
+
+                ScatterSeries { }
+            }
 
             function eventColor(eventType) {
                 return logViewerController.eventColor(eventType)
@@ -133,12 +162,11 @@ AnalyzePage {
             }
 
             function signalColor(signalName) {
+                const idx = logViewerController.selectedSignals.indexOf(signalName)
+                if (idx >= 0) {
+                    return _signalChartColors[idx % _signalChartColors.length]
+                }
                 return logViewerController.signalColor(signalName)
-            }
-
-            function toggleSignal(signalName) {
-                logViewerController.toggleSignal(signalName)
-                refreshBinChart()
             }
 
             function applyZoomRange(minX, maxX) {
@@ -277,19 +305,13 @@ AnalyzePage {
             }
 
             function refreshBinChart() {
-                binXAxis.min = 0
-                binXAxis.max = 1
-                binYAxis.min = 0
-                binYAxis.max = 1
-                if (typeof binChart.removeAllSeries === "function") {
-                    binChart.removeAllSeries()
-                } else {
-                    while (binChart.seriesCount > 0) {
-                        binChart.removeSeries(binChart.series(0))
-                    }
+                while (binChart.seriesList.length > 0) {
+                    binChart.removeSeries(binChart.seriesList[0])
                 }
 
                 const selectedSignals = logViewerController.selectedSignals
+
+                // Empty selection: keep axes initialized and only show event markers.
                 if (selectedSignals.length === 0) {
                     if (dataFlashParser.minTimestamp >= 0.0 && dataFlashParser.maxTimestamp > dataFlashParser.minTimestamp) {
                         fullMinX = dataFlashParser.minTimestamp
@@ -302,9 +324,18 @@ AnalyzePage {
                     zoomMaxX = fullMaxX
                     binXAxis.min = zoomMinX
                     binXAxis.max = zoomMaxX
-                    // Keep chart initialized (axes visible) even with no selected signals.
-                    const emptySeries = binChart.createSeries(ChartView.SeriesTypeLine, "__empty__", binXAxis, binYAxis)
+                    binYAxis.min = 0
+                    binYAxis.max = 1
+
+                    const emptySeries = lineSeriesComponent.createObject(binChart, {
+                        color: "transparent",
+                        width: 1,
+                        axisX: binXAxis,
+                        axisY: binYAxis
+                    })
+                    binChart.addSeries(emptySeries)
                     emptySeries.visible = false
+
                     const eventListNoSignals = dataFlashParser.events
                     const eventSeriesByType = ({})
                     for (let e = 0; e < eventListNoSignals.length; e++) {
@@ -313,53 +344,59 @@ AnalyzePage {
                             continue
                         }
                         if (!eventSeriesByType[event.type]) {
-                            const eventSeries = binChart.createSeries(ChartView.SeriesTypeScatter, event.type, binXAxis, binYAxis)
-                            eventSeries.markerSize = 9
-                            eventSeries.color = eventColor(event.type)
-                            eventSeries.borderColor = eventSeries.color
+                            const eventSeries = scatterSeriesComponent.createObject(binChart, {
+                                color: eventColor(event.type),
+                                axisX: binXAxis,
+                                axisY: binYAxis
+                            })
+                            binChart.addSeries(eventSeries)
                             eventSeriesByType[event.type] = eventSeries
                         }
                         eventSeriesByType[event.type].append(event.time, binYAxis.max)
                     }
+                    binChart.update()
+                    Qt.callLater(_nudgeChartLayout)
                     return
                 }
 
+                // First pass: collect decimated points per signal and compute axis ranges
+                // BEFORE creating series, so axes are stable when series are populated.
                 let minX = Number.MAX_VALUE
                 let maxX = -Number.MAX_VALUE
                 let minY = Number.MAX_VALUE
                 let maxY = -Number.MAX_VALUE
+                const decimatedPerSignal = []
                 for (let s = 0; s < selectedSignals.length; s++) {
                     const signalName = selectedSignals[s]
                     const points = dataFlashParser.signalSamples(signalName)
                     if (!points || points.length === 0) {
+                        decimatedPerSignal.push(null)
                         continue
                     }
 
-                    const series = binChart.createSeries(ChartView.SeriesTypeLine, signalName, binXAxis, binYAxis)
-                    series.color = signalColor(signalName)
                     const sampleStep = Math.max(1, Math.ceil(points.length / Math.max(1, maxChartPointsPerSignal)))
+                    const decimated = []
                     let appendedLastX = -Number.MAX_VALUE
                     for (let i = 0; i < points.length; i += sampleStep) {
                         const p = points[i]
-                        series.append(p.x, p.y)
+                        decimated.push({ x: p.x, y: p.y })
                         appendedLastX = p.x
-                        minX = Math.min(minX, p.x)
-                        maxX = Math.max(maxX, p.x)
-                        minY = Math.min(minY, p.y)
-                        maxY = Math.max(maxY, p.y)
+                        if (p.x < minX) { minX = p.x }
+                        if (p.x > maxX) { maxX = p.x }
+                        if (p.y < minY) { minY = p.y }
+                        if (p.y > maxY) { maxY = p.y }
                     }
-
-                    // Ensure the final point is represented after decimation.
                     if (sampleStep > 1) {
                         const lastPoint = points[points.length - 1]
                         if (lastPoint && lastPoint.x !== appendedLastX) {
-                            series.append(lastPoint.x, lastPoint.y)
-                            maxX = Math.max(maxX, lastPoint.x)
-                            minX = Math.min(minX, lastPoint.x)
-                            minY = Math.min(minY, lastPoint.y)
-                            maxY = Math.max(maxY, lastPoint.y)
+                            decimated.push({ x: lastPoint.x, y: lastPoint.y })
+                            if (lastPoint.x < minX) { minX = lastPoint.x }
+                            if (lastPoint.x > maxX) { maxX = lastPoint.x }
+                            if (lastPoint.y < minY) { minY = lastPoint.y }
+                            if (lastPoint.y > maxY) { maxY = lastPoint.y }
                         }
                     }
+                    decimatedPerSignal.push(decimated)
                 }
 
                 if (minX === Number.MAX_VALUE) {
@@ -374,6 +411,8 @@ AnalyzePage {
                     maxY = minY + 1
                 }
 
+                // Set axes BEFORE creating/populating series so QtGraphs lays out
+                // the plot area correctly the first time and renders all series.
                 fullMinX = minX
                 fullMaxX = maxX
                 if (zoomMaxX <= zoomMinX || zoomMinX < fullMinX || zoomMaxX > fullMaxX) {
@@ -385,6 +424,29 @@ AnalyzePage {
                 binYAxis.min = minY
                 binYAxis.max = maxY
 
+                // Second pass: create one series per selected signal and feed points.
+                // Explicit axisX/axisY bind is required for QtGraphs LineSeries created
+                // dynamically; without it only the last-added series renders until the
+                // axes are mutated (e.g. by zooming).
+                for (let s = 0; s < selectedSignals.length; s++) {
+                    const decimated = decimatedPerSignal[s]
+                    if (!decimated || decimated.length === 0) {
+                        continue
+                    }
+
+                    const signalName = selectedSignals[s]
+                    const series = lineSeriesComponent.createObject(binChart, {
+                        color: signalColor(signalName),
+                        width: 2,
+                        axisX: binXAxis,
+                        axisY: binYAxis
+                    })
+                    binChart.addSeries(series)
+                    for (let i = 0; i < decimated.length; i++) {
+                        series.append(decimated[i].x, decimated[i].y)
+                    }
+                }
+
                 const eventList = dataFlashParser.events
                 const eventTypeSeries = ({})
                 for (let e = 0; e < eventList.length; e++) {
@@ -393,14 +455,39 @@ AnalyzePage {
                         continue
                     }
                     if (!eventTypeSeries[event.type]) {
-                        const eventSeries = binChart.createSeries(ChartView.SeriesTypeScatter, event.type, binXAxis, binYAxis)
-                        eventSeries.markerSize = 9
-                        eventSeries.color = eventColor(event.type)
-                        eventSeries.borderColor = eventSeries.color
+                        const eventSeries = scatterSeriesComponent.createObject(binChart, {
+                            color: eventColor(event.type),
+                            axisX: binXAxis,
+                            axisY: binYAxis
+                        })
+                        binChart.addSeries(eventSeries)
                         eventTypeSeries[event.type] = eventSeries
                     }
                     eventTypeSeries[event.type].append(event.time, maxY)
                 }
+                binChart.update()
+
+                // QtGraphs sometimes only renders the most recently added series until
+                // the axis range changes. Re-applying the same range on the next event
+                // loop turn forces a re-layout for every series at once.
+                Qt.callLater(_nudgeChartLayout)
+            }
+
+            function _nudgeChartLayout() {
+                const xMax = binXAxis.max
+                const xMin = binXAxis.min
+                const yMax = binYAxis.max
+                const yMin = binYAxis.min
+                if (xMax <= xMin || yMax <= yMin) {
+                    return
+                }
+                const xEpsilon = (xMax - xMin) * 1e-9
+                const yEpsilon = (yMax - yMin) * 1e-9
+                binXAxis.max = xMax + xEpsilon
+                binXAxis.max = xMax
+                binYAxis.max = yMax + yEpsilon
+                binYAxis.max = yMax
+                binChart.update()
             }
 
             LogViewerController {
@@ -415,6 +502,9 @@ AnalyzePage {
                 target: logViewerController
                 function onSignalRowsChanged() {
                     applySignalFilter()
+                }
+                function onSelectedSignalsChanged() {
+                    Qt.callLater(refreshBinChart)
                 }
             }
 
@@ -645,7 +735,7 @@ AnalyzePage {
                         ScrollView {
                             id: signalsScroll
                             Layout.fillWidth: true
-                            Layout.preferredHeight: parent.height * 0.45
+                            Layout.preferredHeight: parent.height * 0.35
                             visible: logViewerController.sourceType === LogViewerController.Bin
                             clip: true
 
@@ -697,7 +787,7 @@ AnalyzePage {
                                         QGCCheckBox {
                                             id: signalCheckBox
                                             anchors.verticalCenter: parent.verticalCenter
-                                            onClicked: toggleSignal(modelData.fullName)
+                                            onClicked: logViewerController.setSignalSelected(modelData.fullName, checked)
                                             checked: logViewerController.selectedSignals.indexOf(modelData.fullName) !== -1
                                         }
 
@@ -724,43 +814,50 @@ AnalyzePage {
                             visible: logViewerController.sourceType === LogViewerController.Bin
                         }
 
-                        RowLayout {
+                        QGCTabBar {
+                            id: dataTabBar
                             Layout.fillWidth: true
                             visible: logViewerController.sourceType === LogViewerController.Bin
-                            spacing: ScreenTools.defaultFontPixelWidth * 0.5
 
-                            QGCLabel {
+                            QGCTabButton {
                                 text: qsTr("Parameters")
-                                font.bold: true
+                                checked: true
                             }
 
-                            QGCTextField {
-                                id: parameterSearchField
-                                Layout.fillWidth: true
-                                textColor: qgcPal.textFieldText
-                                placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
-                                placeholderText: qsTr("Search parameters")
-                                onTextChanged: {
-                                    parameterSearchText = text
-                                    if (text.trim().length === 0) {
-                                        parameterSearchTimer.stop()
-                                        applyParameterFilter()
-                                    } else {
-                                        parameterSearchTimer.restart()
-                                    }
-                                }
-                                onAccepted: {
-                                    parameterSearchText = text
+                            QGCTabButton {
+                                text: qsTr("Messages")
+                                checked: false
+                            }
+                        }
+
+                        QGCTextField {
+                            id: parameterSearchField
+                            Layout.fillWidth: true
+                            visible: logViewerController.sourceType === LogViewerController.Bin && dataTabBar.currentIndex === 0
+                            textColor: qgcPal.textFieldText
+                            placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
+                            placeholderText: qsTr("Search parameters")
+                            onTextChanged: {
+                                parameterSearchText = text
+                                if (text.trim().length === 0) {
                                     parameterSearchTimer.stop()
                                     applyParameterFilter()
+                                } else {
+                                    parameterSearchTimer.restart()
                                 }
+                            }
+                            onAccepted: {
+                                parameterSearchText = text
+                                parameterSearchTimer.stop()
+                                applyParameterFilter()
                             }
                         }
 
                         ScrollView {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
-                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            Layout.minimumHeight: 0
+                            visible: logViewerController.sourceType === LogViewerController.Bin && dataTabBar.currentIndex === 0
                             clip: true
 
                             ListView {
@@ -779,6 +876,35 @@ AnalyzePage {
                                 }
                             }
                         }
+
+                        ScrollView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: 0
+                            visible: logViewerController.sourceType === LogViewerController.Bin && dataTabBar.currentIndex === 1
+                            clip: true
+
+                            ListView {
+                                id: messagesListView
+                                anchors.fill: parent
+                                model: dataFlashParser.messages
+                                spacing: ScreenTools.defaultFontPixelHeight * 0.2
+                                clip: true
+                                ScrollBar.vertical: ScrollBar { }
+
+                                delegate: QGCLabel {
+                                    width: ListView.view.width
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 3
+                                    text: {
+                                        const t = Number(modelData.time)
+                                        const prefix = isNaN(t) || t < 0 ? "" : ("[" + t.toFixed(3) + "s] ")
+                                        return prefix + String(modelData.text)
+                                    }
+                                }
+                            }
+                        }
+
                     }
                 }
 
@@ -806,27 +932,50 @@ AnalyzePage {
                             visible: logViewerController.sourceType !== LogViewerController.TLog
                         }
 
-                        ChartView {
-                            id: binChart
+                        Item {
+                            id: chartContainer
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.preferredHeight: parent.height * 0.72
                             visible: logViewerController.sourceType === LogViewerController.Bin
-                            antialiasing: true
-                            legend.visible: false
 
-                            ValueAxis {
-                                id: binXAxis
-                                titleText: qsTr("Time (s)")
-                                min: 0
-                                max: 1
-                            }
+                            GraphsView {
+                                id: binChart
+                                anchors.fill: parent
+                                marginTop: 0
+                                marginRight: 0
+                                marginBottom: 0
+                                marginLeft: 0
 
-                            ValueAxis {
-                                id: binYAxis
-                                titleText: qsTr("Value")
-                                min: 0
-                                max: 1
+                                theme: GraphsTheme {
+                                    colorScheme: qgcPal.globalTheme === QGCPalette.Light ? GraphsTheme.ColorScheme.Light : GraphsTheme.ColorScheme.Dark
+                                    backgroundColor: qgcPal.windowShadeDark
+                                    backgroundVisible: true
+                                    plotAreaBackgroundColor: qgcPal.windowShadeDark
+                                    grid.mainColor: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.25)
+                                    grid.subColor: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.12)
+                                    grid.mainWidth: 1
+                                    labelBackgroundVisible: false
+                                    labelTextColor: qgcPal.text
+                                    axisXLabelFont.family: ScreenTools.fixedFontFamily
+                                    axisXLabelFont.pointSize: ScreenTools.smallFontPointSize
+                                    axisYLabelFont.family: ScreenTools.fixedFontFamily
+                                    axisYLabelFont.pointSize: ScreenTools.smallFontPointSize
+                                }
+
+                                axisX: ValueAxis {
+                                    id: binXAxis
+                                    titleText: qsTr("Time (s)")
+                                    min: 0
+                                    max: 1
+                                }
+
+                                axisY: ValueAxis {
+                                    id: binYAxis
+                                    titleText: qsTr("Value")
+                                    min: 0
+                                    max: 1
+                                }
                             }
 
                             Rectangle {
@@ -901,17 +1050,18 @@ AnalyzePage {
 
                             Rectangle {
                                 visible: cursorVisible && logViewerController.sourceType === LogViewerController.Bin
-                                x: _axisXToPixel(cursorXValue)
-                                y: 0
+                                x: cursorPixelX
+                                y: binChart.plotArea.y
                                 width: 1
-                                height: parent.height
+                                height: binChart.plotArea.height
                                 color: qgcPal.buttonHighlight
                                 z: 1002
                             }
 
                             Rectangle {
+                                id: cursorPopup
                                 visible: cursorVisible && cursorRows.length > 0 && logViewerController.sourceType === LogViewerController.Bin
-                                x: Math.min(parent.width - width, cursorPixelX + ScreenTools.defaultFontPixelWidth)
+                                x: Math.max(0, Math.min(chartContainer.width - width, cursorPixelX + ScreenTools.defaultFontPixelWidth))
                                 y: cursorPopupY
                                 width: ScreenTools.defaultFontPixelWidth * 30
                                 color: qgcPal.windowShade
@@ -935,6 +1085,7 @@ AnalyzePage {
                                         visible: cursorModeName.length > 0
                                         text: qsTr("Mode: %1").arg(cursorModeName)
                                         font.bold: true
+                                        color: cursorModeName.length > 0 ? modeColor(cursorModeName) : qgcPal.text
                                     }
 
                                     Repeater {
@@ -950,7 +1101,7 @@ AnalyzePage {
                                             }
 
                                             QGCLabel {
-                                                width: parent.parent.width - (ScreenTools.defaultFontPixelWidth * 4)
+                                                width: cursorPopup.width - (ScreenTools.defaultFontPixelWidth * 4)
                                                 elide: Text.ElideMiddle
                                                 text: modelData.name + ": " + Number(modelData.value).toFixed(3)
                                             }
@@ -970,7 +1121,7 @@ AnalyzePage {
                                             }
 
                                             QGCLabel {
-                                                width: parent.parent.width - (ScreenTools.defaultFontPixelWidth * 4)
+                                                width: cursorPopup.width - (ScreenTools.defaultFontPixelWidth * 4)
                                                 wrapMode: Text.WordWrap
                                                 maximumLineCount: 2
                                                 text: modelData.text

@@ -45,6 +45,7 @@ public:
     Q_INVOKABLE void toggleGroupExpanded(const QString &groupName);
     Q_INVOKABLE bool isGroupExpanded(const QString &groupName) const;
     Q_INVOKABLE void toggleSignal(const QString &signalName);
+    Q_INVOKABLE void setSignalSelected(const QString &signalName, bool selected);
     Q_INVOKABLE bool isSignalSelected(const QString &signalName) const;
     Q_INVOKABLE QString signalColor(const QString &signalName) const;
     Q_INVOKABLE QString eventColor(const QString &eventType) const;
