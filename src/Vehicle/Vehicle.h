@@ -14,6 +14,12 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <array>
+
+#include "HealthAndArmingCheckReport.h"
+#include "MAVLinkStreamConfig.h"
+#include "QGCMapCircle.h"
+
 #include "QGCMAVLink.h"
 #include "VehicleFactGroup.h"
 #include "VehicleSigningController.h"  // Q_PROPERTY needs the full QObject type for moc/QML metatype registration
@@ -414,6 +420,7 @@ public:
     void updateFlightDistance(double distance);
 
     void sendJoystickDataThreadSafe (float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float pitchExtension, float rollExtension, float aux1, float aux2, float aux3, float aux4, float aux5, float aux6);
+    void sendJoystickAuxRcOverrideThreadSafe(const std::array<uint16_t, 6> &channelValues, const std::array<bool, 6> &channelEnabled, bool useRcOverride);
 
     // Property accesors
     int id() const{ return _systemID; }
@@ -940,6 +947,9 @@ private:
     bool            _readyToFly                             = false;
     bool            _allSensorsHealthy                      = true;
     VehicleSigningController* _signingController            = nullptr;
+    bool            _mavlinkSigning                         = false;
+    bool            _joystickAuxRcOverrideActive            = false;
+    QString         _mavlinkSigningKeyName;
 
     std::unique_ptr<SysStatusSensorInfo> _sysStatusSensorInfo;
 
