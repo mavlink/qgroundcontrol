@@ -156,5 +156,12 @@ ColumnLayout {
             fact: _joystickSettings.enableManualControlAux6
             visible: fact.userVisible
         }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth: true
+            text: qsTr("RC_CHANNELS_OVERRIDE for AUX1-AUX6")
+            fact: _joystickSettings.useRcOverrideForAuxChannels
+            visible: fact.userVisible
+        }
     }
 }
