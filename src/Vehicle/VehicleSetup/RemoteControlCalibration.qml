@@ -221,6 +221,12 @@ ColumnLayout {
         }
 
         QGCButton {
+            text: qsTr("Unable")
+            visible: controller.unableButtonVisible
+            onClicked: controller.unableButtonClicked()
+        }
+
+        QGCButton {
             id: nextButton
             primary: true
             text: qsTr("Calibrate")

@@ -26,6 +26,7 @@ class RemoteControlCalibrationController : public FactPanelController
     Q_PROPERTY(bool         joystickMode                            READ    joystickMode                        WRITE setJoystickMode       NOTIFY joystickModeChanged REQUIRED)
     Q_PROPERTY(bool         calibrating                             READ    calibrating                                         NOTIFY calibratingChanged)
     Q_PROPERTY(bool         singleStickDisplay                      READ    singleStickDisplay                                  NOTIFY singleStickDisplayChanged)
+    Q_PROPERTY(bool         unableButtonVisible                     READ    unableButtonVisible                                NOTIFY unableButtonVisibleChanged)
 
     Q_PROPERTY(bool         rollChannelMapped                       READ    rollChannelMapped                                   NOTIFY rollChannelMappedChanged)
     Q_PROPERTY(bool         pitchChannelMapped                      READ    pitchChannelMapped                                  NOTIFY pitchChannelMappedChanged)
@@ -113,6 +114,7 @@ public:
 
     Q_INVOKABLE void cancelButtonClicked();
     Q_INVOKABLE void nextButtonClicked();
+    Q_INVOKABLE void unableButtonClicked();
     virtual Q_INVOKABLE void start();
     Q_INVOKABLE void copyTrims();
 
@@ -180,6 +182,7 @@ public:
     bool joystickMode() const { return _joystickMode; }
     bool calibrating() const { return _calibrating; }
     bool singleStickDisplay() const { return _singleStickDisplay; }
+    bool unableButtonVisible() const;
 
     void setTransmitterMode(int mode);
     void setCenteredThrottle(bool centered);
@@ -251,6 +254,7 @@ signals:
     void joystickModeChanged(bool joystickMode);
     void calibratingChanged(bool calibrating);
     void singleStickDisplayChanged(bool singleStickDisplay);
+    void unableButtonVisibleChanged(bool visible);
     void calibrationCompleted();
 
 public slots:
@@ -349,6 +353,7 @@ private:
     void _inputStickMin(StickFunction stickFunction, int channel, int value);
     void _inputCenterWait(StickFunction stickFunction, int channel, int value);
     void _inputSwitchMinMax(StickFunction stickFunction, int channel, int value);    ///< Saves min/max for non-mapped channels
+    void _skipOptionalStep();
     void _saveCalibrationValues();
     void _saveAllTrims();
     bool _stickSettleComplete(int value);
@@ -361,6 +366,7 @@ private:
     void _emitDeadbandChanged(StickFunction stickFunction);
     void _setSingleStickDisplay(bool singleStickDisplay);
     int _adjustChannelRawValue(const ChannelInfo& info, int rawValue) const;
+    bool _isOptionalExtensionOmitStep(int step) const;
 
     int _currentStep = -1;
     int _transmitterMode = 2;

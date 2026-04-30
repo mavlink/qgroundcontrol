@@ -375,6 +375,24 @@ void JoystickTest::_adjustRangeTest()
     _pumpEvents();
     QVERIFY(js->_update());
     QCOMPARE(js->_getAxisValue(0), Joystick::AxisMin);
+
+    cal.min = 0;
+    cal.max = Joystick::AxisMax;
+    cal.center = 0;
+    js->setAxisCalibration(0, cal);
+    QVERIFY(qAbs(js->_adjustRange(0, cal, false) - 0.0f) < 0.0001f);
+    QVERIFY(qAbs(js->_adjustRange(Joystick::AxisMax / 2, cal, false) - 0.5f) < 0.0001f);
+    QVERIFY(qAbs(js->_adjustRange(Joystick::AxisMax, cal, false) - 1.0f) < 0.0001f);
+
+    cal.min = Joystick::AxisMin;
+    cal.max = 0;
+    cal.center = 0;
+    cal.reversed = true;
+    js->setAxisCalibration(0, cal);
+    QVERIFY(qAbs(js->_adjustRange(0, cal, false) - 0.0f) < 0.0001f);
+    QVERIFY(qAbs(js->_adjustRange(Joystick::AxisMin / 2, cal, false) - 0.5f) < 0.0001f);
+    QVERIFY(qAbs(js->_adjustRange(Joystick::AxisMin, cal, false) - 1.0f) < 0.0001f);
+
     js->_close();
 }
 
