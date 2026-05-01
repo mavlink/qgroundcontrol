@@ -11,7 +11,7 @@ env:
   QT_VERSION: 6.8.3
   QT_MODULES: >-
     qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia
-    qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+    qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtquicktimeline
 
 jobs:
   setup:
@@ -26,7 +26,8 @@ jobs:
       - name: Compute version and notes
         id: compute
         run: |
-          BASE=$(echo '${{ github.base_ref || github.ref_name }}' | grep -oP 'v[\d.]+' | head -1 || echo "dev")
+          BASE=$(echo '${{ github.base_ref || github.ref_name }}' | grep -oP 'v[\d.]+' | head -1)
+          BASE=${BASE:-dev}
           echo "version=${BASE}.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -81,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: appimage
-          path: ${{ github.workspace }}/../ce_lcp/qgc-interface/release-packages/*.AppImage
+          path: ${{ runner.workspace }}/ce_lcp/qgc-interface/release-packages/*.AppImage
           if-no-files-found: error
 
   build-dmg:
@@ -113,6 +114,16 @@ jobs:
         working-directory: ${{ github.workspace }}/tools/setup
         run: sh install-dependencies-osx.sh
 
+      - name: Install GStreamer
+        run: |
+          set -e
+          GST_VERSION=1.28.2
+          GST_URL=https://gstreamer.freedesktop.org/data/pkg/osx/${GST_VERSION}
+          curl -fL "${GST_URL}/gstreamer-1.0-${GST_VERSION}-universal.pkg" -o /tmp/gst.pkg
+          curl -fL "${GST_URL}/gstreamer-1.0-devel-${GST_VERSION}-universal.pkg" -o /tmp/gst-devel.pkg
+          sudo installer -pkg /tmp/gst.pkg -target /
+          sudo installer -pkg /tmp/gst-devel.pkg -target /
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -134,7 +145,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dmg
-          path: ${{ github.workspace }}/../ce_lcp/qgc-interface/release-packages/*.dmg
+          path: ${{ runner.workspace }}/ce_lcp/qgc-interface/release-packages/*.dmg
           if-no-files-found: error
 
   publish-release:
