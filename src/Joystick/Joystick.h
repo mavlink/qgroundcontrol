@@ -391,11 +391,12 @@ private slots:
     void _flightModesChanged() { _buildAvailableButtonsActionList(_pollingVehicle); }
 
 private:
-    enum PollingType {
-        NotPolling, ///< Not currrently polling
-        PollingForConfiguration, ///< Polling for configuration/calibration display
-        PollingForVehicle, ///< Normal polling for joystick output to Vehicle
+    enum PollingFlag {
+        PollingNone             = 0x0,
+        PollingForVehicle       = 0x1, ///< Normal polling for joystick output to Vehicle
+        PollingForConfiguration = 0x2, ///< Polling for configuration/calibration display
     };
+    using PollingFlags = QFlags<PollingFlag>;
 
     using AxisFunctionMap_t = QMap<AxisFunction_t, int>;
 
@@ -414,9 +415,10 @@ private:
     void _startPollingForConfiguration();
     void _stopPollingForConfiguration();
     void _stopAllPollingForVehicle();
-    QString _pollingTypeToString(PollingType pollingType) const;
-    PollingType _currentPollingType = NotPolling;
-    PollingType _previousPollingType = NotPolling;
+    void _startPollingThread();
+    void _stopPollingThread();
+    QString _pollingFlagsToString(PollingFlags flags) const;
+    PollingFlags _pollingFlags = PollingNone;
     Vehicle* _pollingVehicle = nullptr;
 
     void _resetFunctionToAxisMap();
@@ -470,7 +472,7 @@ private:
 
     QElapsedTimer _axisElapsedTimer;
     QStringList _availableActionTitles;
-    std::atomic<bool> _exitThread = false;    ///< true: signal thread to exit
+    std::atomic<bool> _exitPollingThread = false;    ///< true: signal thread to exit
 
     // HOTAS/Multi-device linking
     QString _linkedGroupId;
