@@ -1,0 +1,164 @@
+name: QGC Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - 'CrownEagle/qgc_build_v5.0.8'
+  workflow_dispatch:
+
+env:
+  QT_VERSION: 6.8.3
+  QT_MODULES: >-
+    qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia
+    qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors
+
+jobs:
+  setup:
+    name: Compute version and release notes
+    runs-on: ubuntu-22.04
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    outputs:
+      version: ${{ steps.compute.outputs.version }}
+      notes: ${{ steps.compute.outputs.notes }}
+
+    steps:
+      - name: Compute version and notes
+        id: compute
+        run: |
+          BASE=$(echo '${{ github.base_ref || github.ref_name }}' | grep -oP 'v[\d.]+' | head -1 || echo "dev")
+          echo "version=${BASE}.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "notes=${{ github.event.pull_request.title }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "notes=Manual release build" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-appimage:
+    name: AppImage (Linux AMD64)
+    runs-on: ubuntu-22.04
+    needs: setup
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Clone ce_lcp build scripts
+        run: |
+          git clone https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.com/achau3910/ce_lcp.git \
+            "${{ github.workspace }}/../ce_lcp"
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
+
+      - name: Install system dependencies
+        run: |
+          chmod a+x ./tools/setup/install-dependencies-debian.sh
+          sudo ./tools/setup/install-dependencies-debian.sh
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          dir: ${{ runner.temp }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Build and package AppImage
+        working-directory: ${{ github.workspace }}/../ce_lcp/qgc-interface
+        run: bash package_release.sh --skip-upload --version=${{ needs.setup.outputs.version }}
+        env:
+          QT_ROOT: ${{ env.QT_ROOT_DIR }}
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: appimage
+          path: ${{ github.workspace }}/../ce_lcp/qgc-interface/release-packages/*.AppImage
+          if-no-files-found: error
+
+  build-dmg:
+    name: DMG (macOS ARM)
+    runs-on: macos-latest
+    needs: setup
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Clone ce_lcp build scripts
+        run: |
+          git clone https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.com/achau3910/ce_lcp.git \
+            "${{ github.workspace }}/../ce_lcp"
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '<=16.x'
+
+      - name: Initial Setup
+        uses: ./.github/actions/common
+
+      - name: Install system dependencies
+        working-directory: ${{ github.workspace }}/tools/setup
+        run: sh install-dependencies-osx.sh
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: mac
+          target: desktop
+          arch: clang_64
+          dir: ${{ runner.temp }}
+          modules: ${{ env.QT_MODULES }}
+          cache: true
+
+      - name: Build and package DMG
+        working-directory: ${{ github.workspace }}/../ce_lcp/qgc-interface
+        run: bash package_release.sh --skip-upload --version=${{ needs.setup.outputs.version }}
+        env:
+          QT_ROOT: ${{ env.QT_ROOT_DIR }}
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: ${{ github.workspace }}/../ce_lcp/qgc-interface/release-packages/*.dmg
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-22.04
+    needs: [setup, build-appimage, build-dmg]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "$VERSION" \
+            --repo "${{ github.repository }}" \
+            --title "QGroundControl $VERSION" \
+            --notes "$NOTES" \
+            artifacts/*
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.setup.outputs.version }}
+          NOTES: ${{ needs.setup.outputs.notes }}

@@ -476,7 +476,7 @@ public:
     bool flightModeSetAvailable             ();
     QStringList flightModes                 ();
     QString flightMode                      () const;
-    void setFlightMode                      (const QString& flightMode);
+    Q_INVOKABLE void setFlightMode                      (const QString& flightMode);
 
     bool airship() const;
 
