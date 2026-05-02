@@ -50,7 +50,9 @@
             "default": 15.0,
             "min": 1.0,
             "units": "m/s",
-            "decimalPlaces": 2,
+            "decimalPlaces": 1,
+            "userMin": 1.0,
+            "userMax": 30,
             "label": "Offline editing cruise speed"
         },
         {
@@ -61,7 +63,9 @@
             "default": 5.0,
             "min": 1.0,
             "units": "m/s",
-            "decimalPlaces": 2,
+            "decimalPlaces": 1,
+            "userMin": 1.0,
+            "userMax": 30,
             "label": "Offline editing hover speed"
         },
         {
@@ -72,7 +76,9 @@
             "default": 3.0,
             "min": 0.1,
             "units": "m/s",
-            "decimalPlaces": 2,
+            "decimalPlaces": 1,
+            "userMin": 0.1,
+            "userMax": 30,
             "label": "Offline editing ascent speed"
         },
         {
@@ -83,7 +89,9 @@
             "default": 1.0,
             "min": 0.1,
             "units": "m/s",
-            "decimalPlaces": 2,
+            "decimalPlaces": 1,
+            "userMin": 0.1,
+            "userMax": 30,
             "label": "Offline editing descent speed"
         },
         {

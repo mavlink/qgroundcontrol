@@ -17,9 +17,11 @@ Rectangle {
     property var _visualItems: missionController.visualItems
     property bool _noMissionItemsAdded: _visualItems ? _visualItems.count <= 1 : true
     property var _settingsItem: _visualItems && _visualItems.count > 0 ? _visualItems.get(0) : null
+    property bool _flightSpeedSpecified: _settingsItem ? _settingsItem.speedSection.specifyFlightSpeed : false
     property bool _showCruiseSpeed: _controllerVehicle ? !_controllerVehicle.multiRotor : false
     property bool _showHoverSpeed: _controllerVehicle ? (_controllerVehicle.multiRotor || _controllerVehicle.vtol) : false
-    property real _fieldWidth: ScreenTools.defaultFontPixelWidth * 16
+    property bool _showAscentDescentSpeed: _controllerVehicle ? (_controllerVehicle.multiRotor || _controllerVehicle.vtol) : false
+    property bool _isVtol: _controllerVehicle ? _controllerVehicle.vtol : false
 
     width:  parent ? parent.width : 0
     height: mainColumn.height + ScreenTools.defaultFontPixelHeight
@@ -106,47 +108,50 @@ Rectangle {
         SectionHeader {
             id: vehicleSpeedsSectionHeader
             Layout.fillWidth: true
-            text: qsTr("Vehicle Speeds")
-            visible: _root._showCruiseSpeed || _root._showHoverSpeed
-            checked: false
+            text: qsTr("Expected Vehicle Speeds")
+            visible: _root._showCruiseSpeed || _root._showHoverSpeed || _root._showAscentDescentSpeed
         }
 
-        GridLayout {
+        ColumnLayout {
             Layout.fillWidth: true
-            columnSpacing: ScreenTools.defaultFontPixelWidth
-            rowSpacing: columnSpacing
-            columns: 2
+            spacing: ScreenTools.defaultFontPixelHeight * 0.5
             visible: vehicleSpeedsSectionHeader.visible && vehicleSpeedsSectionHeader.checked
 
             QGCLabel {
-                Layout.columnSpan: 2
-                Layout.alignment: Qt.AlignHCenter
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 font.pointSize: ScreenTools.smallFontPointSize
                 text: qsTr("The following speed values are used to calculate total mission time. They do not affect the flight speed for the mission.")
             }
 
-            QGCLabel {
-                text: qsTr("Cruise speed")
-                visible: _root._showCruiseSpeed
+            FactTextFieldSlider {
                 Layout.fillWidth: true
-            }
-            FactTextField {
+                label: _root._isVtol ? qsTr("FW - Flight speed") : qsTr("Flight speed")
                 fact: QGroundControl.settingsManager.appSettings.offlineEditingCruiseSpeed
                 visible: _root._showCruiseSpeed
-                Layout.preferredWidth: _root._fieldWidth
+                enabled: !_root._flightSpeedSpecified
             }
 
-            QGCLabel {
-                text: qsTr("Hover speed")
-                visible: _root._showHoverSpeed
+            FactTextFieldSlider {
                 Layout.fillWidth: true
-            }
-            FactTextField {
+                label: _root._isVtol ? qsTr("MR - Flight speed") : qsTr("Flight speed")
                 fact: QGroundControl.settingsManager.appSettings.offlineEditingHoverSpeed
                 visible: _root._showHoverSpeed
-                Layout.preferredWidth: _root._fieldWidth
+                enabled: !_root._flightSpeedSpecified
+            }
+
+            FactTextFieldSlider {
+                Layout.fillWidth: true
+                label: _root._isVtol ? qsTr("MR - Ascent speed") : qsTr("Ascent speed")
+                fact: QGroundControl.settingsManager.appSettings.offlineEditingAscentSpeed
+                visible: _root._showAscentDescentSpeed
+            }
+
+            FactTextFieldSlider {
+                Layout.fillWidth: true
+                label: _root._isVtol ? qsTr("MR - Descent speed") : qsTr("Descent speed")
+                fact: QGroundControl.settingsManager.appSettings.offlineEditingDescentSpeed
+                visible: _root._showAscentDescentSpeed
             }
         }
     }
