@@ -39,7 +39,7 @@ Item {
                 OfflineMapInfo {
                     tileSet:    object
                     enabled:    !object.deleting
-                    onClicked:  offlineMapEditorComponent.createObject(root, { tileSet: object }).showInfo()
+                    onClicked:  offlineMapEditorComponent.createObject(mainWindow.contentItem, { tileSet: object }).showInfo()
                 }
             }
 
@@ -47,7 +47,7 @@ Item {
                 label:      qsTr("Add New Set")
                 buttonText: qsTr("Add")
                 enabled:    !_currentlyImportOrExporting
-                onClicked:  offlineMapEditorComponent.createObject(root).addNewSet()
+                onClicked:  offlineMapEditorComponent.createObject(mainWindow.contentItem).addNewSet()
             }
 
             LabelledButton {
@@ -195,6 +195,7 @@ Item {
         OfflineMapEditor {
             id:             offlineMapEditor
             anchors.fill:   parent
+            z:              QGroundControl.zOrderTopMost
         }
     }
 }
