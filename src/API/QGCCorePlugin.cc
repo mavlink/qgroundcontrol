@@ -288,6 +288,7 @@ VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
 #elif defined(QGC_QT_STREAMING)
     return QtMultimediaReceiver::createVideoReceiver(parent);
 #else
+    Q_UNUSED(parent);
     return nullptr;
 #endif
 }
