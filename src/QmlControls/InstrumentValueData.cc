@@ -6,18 +6,18 @@
 #include "Vehicle.h"
 #include "FactGroup.h"
 
-// Important: The indices of these strings must match the InstrumentValueData::RangeType enum
-const QStringList InstrumentValueData::_rangeTypeNames = {
-    QT_TRANSLATE_NOOP("InstrumentValue", "None"),
-    QT_TRANSLATE_NOOP("InstrumentValue", "Color"),
-    QT_TRANSLATE_NOOP("InstrumentValue", "Opacity"),
-    QT_TRANSLATE_NOOP("InstrumentValue", "Icon"),
-};
+#include <QtCore/QCoreApplication>
 
 InstrumentValueData::InstrumentValueData(FactValueGrid* factValueGrid, QObject* parent)
     : QObject       (parent)
     , _factValueGrid(factValueGrid)
     , _vehicle      (factValueGrid->currentVehicle())
+    , _rangeTypeNames({
+        QCoreApplication::translate("InstrumentValue", "None"),
+        QCoreApplication::translate("InstrumentValue", "Color"),
+        QCoreApplication::translate("InstrumentValue", "Opacity"),
+        QCoreApplication::translate("InstrumentValue", "Icon"),
+    })
 {
     connect(this, &InstrumentValueData::rangeTypeChanged,       this, &InstrumentValueData::_resetRangeInfo);
     connect(this, &InstrumentValueData::rangeTypeChanged,       this, &InstrumentValueData::_updateRanges);

@@ -38,3 +38,11 @@
   types: [c++]
   exclude: ^(build/|libs/|test/)
   pass_filenames: true
+
+- id: qt-translate-noop-check
+  name: Check QT_TRANSLATE_NOOP misuse
+  entry: python3 tools/analyzers/qt_translate_noop_check.py
+  language: system
+  types: [c++]
+  exclude: ^(build/|libs/|test/)
+  pass_filenames: true

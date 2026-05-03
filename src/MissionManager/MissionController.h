@@ -3,6 +3,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QFile>
 #include <QtCore/QPersistentModelIndex>
+#include <QtCore/QVariant>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -58,7 +59,7 @@ public:
     Q_PROPERTY(QPersistentModelIndex transformGroupIndex              READ transformGroupIndex              CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  simpleFlightPathSegments        READ simpleFlightPathSegments       CONSTANT)                               ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QmlObjectListModel*  directionArrows                 READ directionArrows                CONSTANT)
-    Q_PROPERTY(QStringList          complexMissionItemNames         READ complexMissionItemNames        NOTIFY complexMissionItemNamesChanged)
+    Q_PROPERTY(QVariantList          complexMissionItems              READ complexMissionItems             NOTIFY complexMissionItemsChanged)  ///< Each entry is a QVariantMap with keys "canonicalName" (insertion key) and "translatedName" (display string)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition             READ plannedHomePosition            NOTIFY plannedHomePositionChanged)      ///< Includes AMSL altitude
     Q_PROPERTY(bool                 homePositionSet                 READ homePositionSet                NOTIFY homePositionSetChanged)          ///< true: Home position has been set by the user
     Q_PROPERTY(QGeoCoordinate       previousCoordinate              MEMBER _previousCoordinate          NOTIFY planViewStateChanged)
@@ -81,9 +82,6 @@ public:
     Q_PROPERTY(int                  batteryChangePoint              READ batteryChangePoint             NOTIFY batteryChangePointChanged)
     Q_PROPERTY(int                  batteriesRequired               READ batteriesRequired              NOTIFY batteriesRequiredChanged)
     Q_PROPERTY(QGCGeoBoundingCube*  travelBoundingCube              READ travelBoundingCube             NOTIFY missionBoundingCubeChanged)
-    Q_PROPERTY(QString              surveyComplexItemName           READ surveyComplexItemName          CONSTANT)
-    Q_PROPERTY(QString              corridorScanComplexItemName     READ corridorScanComplexItemName    CONSTANT)
-    Q_PROPERTY(QString              structureScanComplexItemName    READ structureScanComplexItemName   CONSTANT)
     Q_PROPERTY(bool                 onlyInsertTakeoffValid          MEMBER _onlyInsertTakeoffValid      NOTIFY planViewStateChanged)
     Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY planViewStateChanged)
     Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY planViewStateChanged)
@@ -141,7 +139,7 @@ public:
     Q_INVOKABLE VisualMissionItem*  insertCancelROIMissionItem(int visualItemIndex, bool makeCurrentItem = false);
 
     /// Add a new complex mission item to the list
-    ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
+    ///     @param itemName: Name of complex item to create (canonicalName from complexMissionItems)
     ///     @param mapCenterCoordinate: coordinate for current center of map
     ///     @param visualItemIndex: index to insert at, -1 for end of list
     ///     @param makeCurrentItem: true: Make this item the current item
@@ -149,7 +147,7 @@ public:
     Q_INVOKABLE VisualMissionItem*  insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int visualItemIndex, bool makeCurrentItem = false);
 
     /// Add a new complex mission item to the list
-    ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
+    ///     @param itemName: Name of complex item to create (canonicalName from complexMissionItems)
     ///     @param file: kml or shp file to load from shape from
     ///     @param coordinate: Coordinate for item
     ///     @param visualItemIndex: index to insert at, -1 for end of list
@@ -261,15 +259,12 @@ public:
     QPersistentModelIndex transformGroupIndex         (void) const { return _transformGroupIndex; }
     QmlObjectListModel* simpleFlightPathSegments    (void) { return &_simpleFlightPathSegments; }
     QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
-    QStringList         complexMissionItemNames     (void) const;
+    QVariantList        complexMissionItems          (void) const;
     QGeoCoordinate      plannedHomePosition         (void) const;
     bool                homePositionSet             (void) const;
     VisualMissionItem*  currentPlanViewItem         (void) const { return _currentPlanViewItem; }
     TakeoffMissionItem* takeoffMissionItem          (void) const { return _takeoffMissionItem; }
     double              progressPct                 (void) const { return _progressPct; }
-    QString             surveyComplexItemName       (void) const;
-    QString             corridorScanComplexItemName (void) const;
-    QString             structureScanComplexItemName(void) const;
     bool                isInsertTakeoffValid        (void) const;
     bool                multipleLandPatternsAllowed (void) const;
     double              minAMSLAltitude             (void) const { return _minAMSLAltitude; }
@@ -320,7 +315,7 @@ signals:
     void missionCruiseDistanceChanged       (double missionCruiseDistance);
     void missionCruiseTimeChanged           (void);
     void missionMaxTelemetryChanged         (double missionMaxTelemetry);
-    void complexMissionItemNamesChanged     (void);
+    void complexMissionItemsChanged         (void);
     void resumeMissionIndexChanged          (void);
     void resumeMissionReady                 (void);
     void resumeMissionUploadFail            (void);

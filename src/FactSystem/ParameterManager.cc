@@ -15,6 +15,7 @@
 #include "QGCMath.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "QGCStateMachine.h"
@@ -1208,8 +1209,8 @@ void ParameterManager::writeParametersToStream(QTextStream &stream) const
     stream << "# Onboard parameters for Vehicle " << _vehicle->id() << "\n";
     stream << "#\n";
 
-    stream << "# Stack: " << _vehicle->firmwareTypeString() << "\n";
-    stream << "# Vehicle: " << _vehicle->vehicleTypeString() << "\n";
+    stream << "# Stack: " << QGCMAVLink::firmwareClassToCanonicalString(QGCMAVLink::firmwareClass(_vehicle->firmwareType())) << "\n";
+    stream << "# Vehicle: " << QGCMAVLink::vehicleClassToCanonicalString(QGCMAVLink::vehicleClass(_vehicle->vehicleType())) << "\n";
     stream << "# Version: "
            << _vehicle->firmwareMajorVersion() << "."
            << _vehicle->firmwareMinorVersion() << "."

@@ -37,6 +37,7 @@ public:
 /// MAVLink Camera API controller - connected to a real mavlink v2 camera
 class VehicleCameraControl : public MavlinkCameraControlInterface
 {
+    Q_OBJECT
 public:
     VehicleCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
     ~VehicleCameraControl() override;

@@ -21,6 +21,7 @@ from ..common.controls import (
     ButtonDef,
     parse_enable_checkbox,
     parse_button,
+    qml_tr,
     render_slider,
     render_checkbox,
     render_combobox,
@@ -237,7 +238,7 @@ def _wrap_with_description(control_qml: str, fact_ref: str, vis_expr: str, inden
     return "\n".join(wrapper_lines)
 
 
-def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
+def _qml_control(ctrl: ControlDef, settings_dir: Path, json_context: str = "") -> str:
     """Generate QML for a single control."""
     indent = "        "
     fact_ref = f"QGroundControl.settingsManager.{ctrl.setting}"
@@ -260,10 +261,11 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
             enable_checkbox=ctrl.enableCheckbox,
             button=ctrl.button,
             enable_when=ctrl.enableWhen,
+            tr_context=json_context,
         )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif ctrl.control == "browse":
-        label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
+        label_line = f'    label: {qml_tr(ctrl.label, json_context)}' if ctrl.label else "    label: fact.label"
         enabled = _enabled_line()
         control_qml = (
             f"{indent}LabelledFactBrowse {{\n"
@@ -275,7 +277,7 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
         )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif ctrl.control == "scaler":
-        label_line = f'    label: qsTr("{ctrl.label}")' if ctrl.label else "    label: fact.label"
+        label_line = f'    label: {qml_tr(ctrl.label, json_context)}' if ctrl.label else "    label: fact.label"
         enabled = _enabled_line()
         control_qml = (
             f"{indent}LabelledFactIncrementer {{\n"
@@ -311,6 +313,7 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
             label_property="text",
             label_source="fact.label",
             qml_type="FactCheckBoxSlider",
+            tr_context=json_context,
         )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     elif use_combobox:
@@ -320,6 +323,7 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
             enable_when=ctrl.enableWhen,
             label_source="fact.label",
             qml_type="LabelledFactComboBox",
+            tr_context=json_context,
         )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
     else:
@@ -335,6 +339,7 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path) -> str:
             label_source="fact.label",
             qml_type="LabelledFactTextField",
             extra_lines=extra if extra else None,
+            tr_context=json_context,
         )
         return _wrap_with_description(control_qml, fact_ref, _vis_expr(), indent)
 
@@ -363,8 +368,9 @@ def _needs_string_field_width(page: PageDef, settings_dir: Path) -> bool:
     return False
 
 
-def generate_page_qml(page: PageDef, settings_dir: Path) -> str:
+def generate_page_qml(page: PageDef, settings_dir: Path, json_context: str = "") -> str:
     """Generate a complete QML settings page from a page definition."""
+    _tr = (lambda s: f'qsTranslate("{json_context}", "{s}")') if json_context else (lambda s: f'qsTr("{s}")')
     has_string_fields = _needs_string_field_width(page, settings_dir)
 
     lines: list[str] = []
@@ -449,7 +455,7 @@ def generate_page_qml(page: PageDef, settings_dir: Path) -> str:
         lines.append("    SettingsGroupLayout {")
         lines.append("        Layout.fillWidth: true")
         if grp.heading:
-            lines.append(f'        heading: qsTr("{grp.heading}")')
+            lines.append(f'        heading: {_tr(grp.heading)}')
         if grp.headingDescription:
             lines.append(f"        headingDescription: {grp.headingDescription}")
 
@@ -469,7 +475,7 @@ def generate_page_qml(page: PageDef, settings_dir: Path) -> str:
         lines.append("")
 
         for ctrl in grp.controls:
-            lines.append(_qml_control(ctrl, settings_dir))
+            lines.append(_qml_control(ctrl, settings_dir, json_context))
             lines.append("")
 
         for desc in grp.missing:
@@ -589,7 +595,7 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
 
         lines.append("")
         lines.append("    ListElement {")
-        lines.append(f'        name: qsTr("{name}")')
+        lines.append(f'        name: qsTranslate("SettingsPages.json", "{name}")')
         lines.append(f'        url: "{url}"')
         lines.append(f'        iconUrl: "{icon}"')
         lines.append(f"        sections: '{sections_json}'")

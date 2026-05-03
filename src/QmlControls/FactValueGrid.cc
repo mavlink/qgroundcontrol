@@ -6,24 +6,23 @@
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
 #include <QtCore/QDir>
 
 QStringList FactValueGrid::_iconNames;
 
-// Important: The indices of these strings must match the FactValueGrid::FontSize enum
-const QStringList FactValueGrid::_fontSizeNames = {
-    QT_TRANSLATE_NOOP("FactValueGrid", "Default"),
-    QT_TRANSLATE_NOOP("FactValueGrid", "Small"),
-    QT_TRANSLATE_NOOP("FactValueGrid", "Medium"),
-    QT_TRANSLATE_NOOP("FactValueGrid", "Large"),
-};
-
 QList<FactValueGrid*> FactValueGrid::_vehicleCardInstanceList;
 
 FactValueGrid::FactValueGrid(QQuickItem* parent)
     : QQuickItem(parent)
-    , _columns  (new QmlObjectListModel(this))
+    , _columns      (new QmlObjectListModel(this))
+    , _fontSizeNames({
+        QCoreApplication::translate("FactValueGrid", "Default"),
+        QCoreApplication::translate("FactValueGrid", "Small"),
+        QCoreApplication::translate("FactValueGrid", "Medium"),
+        QCoreApplication::translate("FactValueGrid", "Large"),
+    })
 {
     if (_iconNames.isEmpty()) {
         QDir iconDir(":/InstrumentValueIcons/");

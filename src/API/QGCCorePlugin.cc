@@ -22,6 +22,10 @@
 #include "SurveyPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
 #include "StructureScanPlanCreator.h"
+#include "SurveyComplexItem.h"
+#include "CorridorScanComplexItem.h"
+#include "StructureScanComplexItem.h"
+#include "Vehicle.h"
 #include "BlankPlanCreator.h"
 #include "PlanMasterController.h"
 
@@ -365,6 +369,25 @@ void QGCCorePlugin::_setShowAdvancedUI(bool show)
         _showAdvancedUI = show;
         emit showAdvancedUIChanged(show);
     }
+}
+
+QVariantList QGCCorePlugin::complexMissionItemNames(Vehicle *vehicle)
+{
+    auto makeEntry = [](const char* canonical, const QString& translated) {
+        QVariantMap entry;
+        entry[QStringLiteral("canonicalName")]  = QString(canonical);
+        entry[QStringLiteral("translatedName")] = translated;
+        return entry;
+    };
+
+    QVariantList items;
+    items.append(makeEntry(SurveyComplexItem::canonicalName,       SurveyComplexItem::tr(SurveyComplexItem::canonicalName)));
+    items.append(makeEntry(CorridorScanComplexItem::canonicalName, CorridorScanComplexItem::tr(CorridorScanComplexItem::canonicalName)));
+    if (vehicle->multiRotor() || vehicle->vtol()) {
+        items.append(makeEntry(StructureScanComplexItem::canonicalName, StructureScanComplexItem::tr(StructureScanComplexItem::canonicalName)));
+    }
+    // Note: Landing pattern items are not added here — they have their own dedicated button
+    return items;
 }
 
 QList<PlanCreator*> QGCCorePlugin::planCreators(PlanMasterController *planMasterController)

@@ -134,10 +134,17 @@ public:
     /// Custom builds must override to provide their own location.
     virtual QString stableDownloadLocation() const { return QStringLiteral("qgroundcontrol.com"); }
 
-    /// Returns the complex mission items to display in the Plan UI
-    /// @param complexMissionItemNames Default set of complex items
+    /// Returns the complex mission items to display in the Plan UI.
+    /// Each entry in the list is a QVariantMap with keys:
+    ///   "canonicalName"  - untranslated key used with insertComplexMissionItem()
+    ///   "translatedName" - user-visible display string (already translated)
+    /// The base class builds and returns the default set. Custom builds should
+    /// override this method, call the base class to get the defaults, modify as
+    /// needed, and return the result. When adding a new entry, set both keys and
+    /// override insertComplexMissionItem() to handle the new canonicalName.
+    /// @param vehicle Vehicle for which the list is being built
     /// @return Complex items to be made available to user
-    virtual QStringList complexMissionItemNames(Vehicle *vehicle, const QStringList &complexMissionItemNames) { Q_UNUSED(vehicle); return complexMissionItemNames; }
+    virtual QVariantList complexMissionItemNames(Vehicle *vehicle);
 
     /// Returns the list of plan creators to show when creating a new plan.
     /// Custom builds can override to provide their own set of plan creators.

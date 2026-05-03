@@ -425,7 +425,7 @@ class TestGeneratePagesModelQml:
 
     def test_page_entry(self, pages_setup: Path):
         qml = generate_pages_model_qml(pages_setup)
-        assert 'name: qsTr("Test Page")' in qml
+        assert 'name: qsTranslate("SettingsPages.json", "Test Page")' in qml
         assert "qrc:/qml/QGroundControl/AppSettings/TestPage.qml" in qml
         assert "qrc:/test.svg" in qml
 

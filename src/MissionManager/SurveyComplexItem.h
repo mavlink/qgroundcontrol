@@ -27,7 +27,7 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
-    QString         patternName         (void) const final { return name; }
+    QString         patternName         (void) const final { return tr(canonicalName); }
     bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     QString         mapVisualQML        (void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
     QString         presetsSettingsGroup(void) { return settingsGroup; }
@@ -59,7 +59,7 @@ public:
         EntryLocationLast = EntryLocationBottomRight
     };
 
-    static const QString name;
+    static constexpr const char* canonicalName = QT_TR_NOOP("Survey");
 
     static constexpr const char* jsonComplexItemTypeValue =   "survey";
     static constexpr const char* jsonV3ComplexItemTypeValue = "survey";

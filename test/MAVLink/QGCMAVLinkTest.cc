@@ -132,7 +132,8 @@ void QGCMAVLinkTest::_testVehicleTypeFromString()
 {
     QCOMPARE(QGCMAVLink::vehicleTypeFromString(QStringLiteral("Multi-Rotor")), MAV_TYPE_QUADROTOR);
     QCOMPARE(QGCMAVLink::vehicleTypeFromString(QStringLiteral("Fixed Wing")), MAV_TYPE_FIXED_WING);
-    QCOMPARE(QGCMAVLink::vehicleTypeFromString(QStringLiteral("Rover")), MAV_TYPE_GROUND_ROVER);
+    QCOMPARE(QGCMAVLink::vehicleTypeFromString(QStringLiteral("Rover")), MAV_TYPE_GROUND_ROVER);         // legacy spelling
+    QCOMPARE(QGCMAVLink::vehicleTypeFromString(QStringLiteral("Rover-Boat")), MAV_TYPE_GROUND_ROVER);    // canonical spelling
     QCOMPARE(QGCMAVLink::vehicleTypeFromString(QStringLiteral("Sub")), MAV_TYPE_SUBMARINE);
 
     // Whitespace tolerance.

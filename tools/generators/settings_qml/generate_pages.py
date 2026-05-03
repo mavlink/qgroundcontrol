@@ -70,7 +70,7 @@ def main() -> int:
             continue
 
         page = load_page_def(page_def_path)
-        qml = generate_page_qml(page, SETTINGS_DIR)
+        qml = generate_page_qml(page, SETTINGS_DIR, json_context=page_def_name)
 
         if args.dry_run:
             print(f"=== {qml_name} ===")

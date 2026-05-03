@@ -355,10 +355,10 @@ bool MissionController::multipleLandPatternsAllowed(void) const {
 VisualMissionItem* MissionController::insertLandItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
 {
     if (_controllerVehicle->fixedWing()) {
-        FixedWingLandingComplexItem* fwLanding = qobject_cast<FixedWingLandingComplexItem*>(insertComplexMissionItem(FixedWingLandingComplexItem::name, coordinate, visualItemIndex, makeCurrentItem));
+        FixedWingLandingComplexItem* fwLanding = qobject_cast<FixedWingLandingComplexItem*>(insertComplexMissionItem(FixedWingLandingComplexItem::canonicalName, coordinate, visualItemIndex, makeCurrentItem));
         return fwLanding;
     } else if (_controllerVehicle->vtol()) {
-        VTOLLandingComplexItem* vtolLanding = qobject_cast<VTOLLandingComplexItem*>(insertComplexMissionItem(VTOLLandingComplexItem::name, coordinate, visualItemIndex, makeCurrentItem));
+        VTOLLandingComplexItem* vtolLanding = qobject_cast<VTOLLandingComplexItem*>(insertComplexMissionItem(VTOLLandingComplexItem::canonicalName, coordinate, visualItemIndex, makeCurrentItem));
         return vtolLanding;
     } else {
         return _insertSimpleMissionItemWorker(coordinate, _controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_LAND : MAV_CMD_NAV_RETURN_TO_LAUNCH, visualItemIndex, makeCurrentItem);
@@ -391,7 +391,7 @@ VisualMissionItem* MissionController::insertComplexMissionItem(QString itemName,
 {
     ComplexMissionItem* newItem = nullptr;
 
-    if (itemName == SurveyComplexItem::name) {
+    if (itemName == SurveyComplexItem::canonicalName) {
         newItem = new SurveyComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
         newItem->setCoordinate(mapCenterCoordinate);
 
@@ -403,13 +403,13 @@ VisualMissionItem* MissionController::insertComplexMissionItem(QString itemName,
                 qobject_cast<SurveyComplexItem*>(newItem)->cameraCalc()->setDistanceMode(prevAltFrame);
             }
         }
-    } else if (itemName == FixedWingLandingComplexItem::name) {
+    } else if (itemName == FixedWingLandingComplexItem::canonicalName) {
         newItem = new FixedWingLandingComplexItem(_masterController, _flyView);
-    } else if (itemName == VTOLLandingComplexItem::name) {
+    } else if (itemName == VTOLLandingComplexItem::canonicalName) {
         newItem = new VTOLLandingComplexItem(_masterController, _flyView);
-    } else if (itemName == StructureScanComplexItem::name) {
+    } else if (itemName == StructureScanComplexItem::canonicalName) {
         newItem = new StructureScanComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
-    } else if (itemName == CorridorScanComplexItem::name) {
+    } else if (itemName == CorridorScanComplexItem::canonicalName) {
         newItem = new CorridorScanComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
@@ -425,11 +425,11 @@ VisualMissionItem* MissionController::insertComplexMissionItemFromKMLOrSHP(QStri
 {
     ComplexMissionItem* newItem = nullptr;
 
-    if (itemName == SurveyComplexItem::name) {
+    if (itemName == SurveyComplexItem::canonicalName) {
         newItem = new SurveyComplexItem(_masterController, _flyView, file);
-    } else if (itemName == StructureScanComplexItem::name) {
+    } else if (itemName == StructureScanComplexItem::canonicalName) {
         newItem = new StructureScanComplexItem(_masterController, _flyView, file);
-    } else if (itemName == CorridorScanComplexItem::name) {
+    } else if (itemName == CorridorScanComplexItem::canonicalName) {
         newItem = new CorridorScanComplexItem(_masterController, _flyView, file);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
@@ -1679,9 +1679,9 @@ void MissionController::_managerVehicleChanged(Vehicle* managerVehicle)
     connect(_missionManager, &MissionManager::resumeMissionUploadFail,  this, &MissionController::resumeMissionUploadFail);
     connect(_managerVehicle, &Vehicle::defaultCruiseSpeedChanged,       this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(_managerVehicle, &Vehicle::defaultHoverSpeedChanged,        this, &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
-    connect(_managerVehicle, &Vehicle::vehicleTypeChanged,              this, &MissionController::complexMissionItemNamesChanged);
+    connect(_managerVehicle, &Vehicle::vehicleTypeChanged,              this, &MissionController::complexMissionItemsChanged);
 
-    emit complexMissionItemNamesChanged();
+    emit complexMissionItemsChanged();
     emit resumeMissionIndexChanged();
 }
 
@@ -1866,19 +1866,9 @@ void MissionController::removeAllFromVehicle(void)
     }
 }
 
-QStringList MissionController::complexMissionItemNames(void) const
+QVariantList MissionController::complexMissionItems(void) const
 {
-    QStringList complexItems;
-
-    complexItems.append(SurveyComplexItem::name);
-    complexItems.append(CorridorScanComplexItem::name);
-    if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
-        complexItems.append(StructureScanComplexItem::name);
-    }
-
-    // Note: The landing pattern items are not added here since they have there own button which adds them
-
-    return QGCCorePlugin::instance()->complexMissionItemNames(_controllerVehicle, complexItems);
+    return QGCCorePlugin::instance()->complexMissionItemNames(_controllerVehicle);
 }
 
 void MissionController::resumeMission(int resumeIndex)
@@ -2425,21 +2415,6 @@ void MissionController::_forceRecalcOfAllowedBits(void)
 {
     // Force a recalc of allowed bits
     setCurrentPlanViewSeqNum(_currentPlanViewSeqNum, true /* force */);
-}
-
-QString MissionController::surveyComplexItemName(void) const
-{
-    return SurveyComplexItem::name;
-}
-
-QString MissionController::corridorScanComplexItemName(void) const
-{
-    return CorridorScanComplexItem::name;
-}
-
-QString MissionController::structureScanComplexItemName(void) const
-{
-    return StructureScanComplexItem::name;
 }
 
 void MissionController::_allItemsRemoved(void)

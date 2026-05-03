@@ -42,6 +42,7 @@ public:
     static FirmwareClass_t          firmwareClass               (MAV_AUTOPILOT autopilot);
     static MAV_AUTOPILOT            firmwareClassToAutopilot    (FirmwareClass_t firmwareClass) { return static_cast<MAV_AUTOPILOT>(firmwareClass); }
     static QString                  firmwareClassToString       (FirmwareClass_t firmwareClass);
+    static const char*              firmwareClassToCanonicalString(FirmwareClass_t firmwareClass);
     static MAV_AUTOPILOT            firmwareTypeFromString      (const QString &firmwareTypeStr);
     static QList<FirmwareClass_t>   allFirmwareClasses          ();
 
@@ -56,6 +57,7 @@ public:
     static MAV_TYPE                 vehicleClassToMavType       (VehicleClass_t vehicleClass) { return static_cast<MAV_TYPE>(vehicleClass); }
     static QString                  vehicleClassToUserVisibleString(VehicleClass_t vehicleClass);
     static QString                  vehicleClassToInternalString(VehicleClass_t vehicleClass);
+    static const char*              vehicleClassToCanonicalString(VehicleClass_t vehicleClass);
     static MAV_TYPE                 vehicleTypeFromString(const QString &vehicleStr);
     static QList<VehicleClass_t>    allVehicleClasses           (void);
 

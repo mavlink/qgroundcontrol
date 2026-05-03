@@ -1425,7 +1425,7 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonFile(const QString &
     int version;
     const QJsonObject jsonObject = JsonParsing::openInternalQGCJsonFile(
         jsonFilename, qgcFileType, 1, 1, version, errorString,
-        QStringList{"shortDesc", "longDesc", "enumStrings"},
+        QStringList{"label", "shortDesc", "longDesc", "enumStrings"},
         QStringList{"name"});
     if (!errorString.isEmpty()) {
         qWarning(FactMetaDataLog) << "Internal Error:" << errorString;

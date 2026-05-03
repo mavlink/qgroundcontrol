@@ -214,6 +214,11 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, qLocaleLanguage)
             }
         }
 #endif
+#ifdef QT_DEBUG
+        // Debug builds include pseudo-localization for UI layout testing
+        rgEnumStrings.append(AppSettings::tr("Pseudo Localization (Test Only)"));
+        rgEnumValues.append(QLocale::Esperanto);
+#endif
         metaData->setEnumInfo(rgEnumStrings, rgEnumValues);
 
         if (_qLocaleLanguageFact->enumIndex() == -1) {
@@ -356,6 +361,12 @@ QLocale::Language AppSettings::_qLocaleLanguageEarlyAccess(void)
             return localeLanguage;
         }
     }
+
+#ifdef QT_DEBUG
+    if (localeLanguage == QLocale::Esperanto) {
+        return localeLanguage;
+    }
+#endif
 
     localeLanguage = QLocale::AnyLanguage;
     settings.setValue(qLocaleLanguageName, localeLanguage);
