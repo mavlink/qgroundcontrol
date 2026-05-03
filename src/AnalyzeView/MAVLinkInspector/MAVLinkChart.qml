@@ -38,7 +38,13 @@ GraphsView {
                     var s = chartView.seriesList[i]
                     chartView.removeSeries(s)
                     chartController.delSeries(field)
-                    s.destroy()
+                    // Do not call s.destroy() here. QGraphsView holds an internal
+                    // pointer to the series (via QPointer) that is only cleared
+                    // during the next updatePolish() pass. Destroying the series
+                    // before that pass — whether immediately or via Qt.callLater —
+                    // causes a SIGSEGV in QGraphsView::updatePolish(). The series
+                    // is parented to chartView so it is freed when the chart is
+                    // closed. GPU/graph resources are released by removeSeries().
                     break
                 }
             }
