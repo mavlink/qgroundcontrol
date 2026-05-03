@@ -92,7 +92,7 @@ private:
 
     // These are user facing string for the various enums.
     static       QStringList _iconNames;
-    static const QStringList _fontSizeNames;
+    QStringList _fontSizeNames;
 
     static constexpr const char* _columnsKey          = "columns";
     static constexpr const char* _rowsKey             = "rows";

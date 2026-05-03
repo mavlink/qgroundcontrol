@@ -6,7 +6,7 @@
 QGC_LOGGING_CATEGORY(ShapeFileHelperLog, "Utilities.ShapeFileHelper")
 
 namespace {
-    constexpr const char *_errorPrefix = QT_TR_NOOP("Shape file load failed. %1");
+    constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("ShapeFileHelper", "Shape file load failed. %1");
 }
 
 ShapeFileHelper::ShapeFileType ShapeFileHelper::_getShapeFileType(const QString &file, QString &errorString)
@@ -21,7 +21,7 @@ ShapeFileHelper::ShapeFileType ShapeFileHelper::_getShapeFileType(const QString 
         // Strip leading dots for user-friendly error message
         const QString kmlExt = QString(kmlFileExtension).mid(1);
         const QString shpExt = QString(shpFileExtension).mid(1);
-        errorString = QString(_errorPrefix).arg(tr("Unsupported file type. Only %1 and %2 are supported.").arg(kmlExt, shpExt));
+        errorString = tr(_errorPrefix).arg(tr("Unsupported file type. Only %1 and %2 are supported.").arg(kmlExt, shpExt));
     }
 
     return ShapeFileType::None;

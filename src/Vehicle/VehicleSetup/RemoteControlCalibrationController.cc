@@ -5,35 +5,36 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
 #include <algorithm>
 
 QGC_LOGGING_CATEGORY(RemoteControlCalibrationControllerLog, "RemoteControl.RemoteControlCalibrationController")
 QGC_LOGGING_CATEGORY(RemoteControlCalibrationControllerVerboseLog, "RemoteControl.RemoteControlCalibrationController:verbose")
 
-static constexpr const char *msgBeginThrottleDown = QT_TR_NOOP(
+static constexpr const char *msgBeginThrottleDown = QT_TRANSLATE_NOOP("RemoteControlCalibrationController",
         "* Lower the Throttle stick all the way down as shown in diagram\n"
         "* Please ensure all motor power is disconnected AND all props are removed from the vehicle.\n"
         "* Click Next to continue"
 );
-static constexpr const char *msgBeginThrottleCenter = QT_TR_NOOP(
+static constexpr const char *msgBeginThrottleCenter = QT_TRANSLATE_NOOP("RemoteControlCalibrationController",
     "* Center all sticks as shown in diagram.\n"
     "* Please ensure all motor power is disconnected from the vehicle.\n"
     "* Click Next to continue"
 );
-static constexpr const char *msgThrottleUp =            QT_TR_NOOP("Move the Throttle stick all the way up and hold it there...");
-static constexpr const char *msgThrottleDown =          QT_TR_NOOP("Move the Throttle stick all the way down and leave it there...");
-static constexpr const char *msgYawLeft =               QT_TR_NOOP("Move the Yaw stick all the way to the left and hold it there...");
-static constexpr const char *msgYawRight =              QT_TR_NOOP("Move the Yaw stick all the way to the right and hold it there...");
-static constexpr const char *msgRollLeft =              QT_TR_NOOP("Move the Roll stick all the way to the left and hold it there...");
-static constexpr const char *msgRollRight =             QT_TR_NOOP("Move the Roll stick all the way to the right and hold it there...");
-static constexpr const char *msgPitchDown =             QT_TR_NOOP("Move the Pitch stick all the way down and hold it there...");
-static constexpr const char *msgPitchUp =               QT_TR_NOOP("Move the Pitch stick all the way up and hold it there...");
-static constexpr const char *msgPitchCenter =           QT_TR_NOOP("Allow the Pitch stick to move back to center...");
-static constexpr const char *msgExtensionHigh =         QT_TR_NOOP("Move the %1 Extension stick to its high value position and hold it there...");
-static constexpr const char *msgExtensionLow =          QT_TR_NOOP("Move the %1 Extension stick to its low value position and hold it there...");
-static constexpr const char *msgSwitchMinMaxRC =        QT_TR_NOOP("Move all the transmitter switches and/or dials back and forth to their extreme positions.");
-static constexpr const char *msgComplete =              QT_TR_NOOP("All settings have been captured. Click Next to write the new parameters to your board.");
+static constexpr const char *msgThrottleUp =            QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Throttle stick all the way up and hold it there...");
+static constexpr const char *msgThrottleDown =          QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Throttle stick all the way down and leave it there...");
+static constexpr const char *msgYawLeft =               QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Yaw stick all the way to the left and hold it there...");
+static constexpr const char *msgYawRight =              QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Yaw stick all the way to the right and hold it there...");
+static constexpr const char *msgRollLeft =              QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Roll stick all the way to the left and hold it there...");
+static constexpr const char *msgRollRight =             QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Roll stick all the way to the right and hold it there...");
+static constexpr const char *msgPitchDown =             QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Pitch stick all the way down and hold it there...");
+static constexpr const char *msgPitchUp =               QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Pitch stick all the way up and hold it there...");
+static constexpr const char *msgPitchCenter =           QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Allow the Pitch stick to move back to center...");
+static constexpr const char *msgExtensionHigh =         QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the %1 Extension stick to its high value position and hold it there...");
+static constexpr const char *msgExtensionLow =          QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the %1 Extension stick to its low value position and hold it there...");
+static constexpr const char *msgSwitchMinMaxRC =        QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move all the transmitter switches and/or dials back and forth to their extreme positions.");
+static constexpr const char *msgComplete =              QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "All settings have been captured. Click Next to write the new parameters to your board.");
 
 RemoteControlCalibrationController::RemoteControlCalibrationController(QObject *parent)
     : FactPanelController(parent)
@@ -357,20 +358,21 @@ void RemoteControlCalibrationController::_setupCurrentState()
         ? _bothStickDisplayPositionThrottleCenteredMap.value(state.stepFunction).value(_transmitterMode, defaultPositions)
         : _bothStickDisplayPositionThrottleDownMap.value(state.stepFunction).value(_transmitterMode, defaultPositions);
 
-    QString msg = _stepFunctionToMsgStringMap.value(state.stepFunction, QString());
+    QString msg = QCoreApplication::translate("RemoteControlCalibrationController", _stepFunctionToMsgStringMap.value(state.stepFunction, ""));
     if (state.stepFunction == StateMachineStepExtensionHighHorz || state.stepFunction == StateMachineStepExtensionHighVert ||
         state.stepFunction == StateMachineStepExtensionLowHorz  || state.stepFunction == StateMachineStepExtensionLowVert) {
-        static const QMap <StickFunction, QString> extensionNameMap = {
-            { stickFunctionPitchExtension,  QT_TR_NOOP("Pitch") },
-            { stickFunctionRollExtension,   QT_TR_NOOP("Roll") },
-            { stickFunctionAux1Extension,   QT_TR_NOOP("Aux 1") },
-            { stickFunctionAux2Extension,   QT_TR_NOOP("Aux 2") },
-            { stickFunctionAux3Extension,   QT_TR_NOOP("Aux 3") },
-            { stickFunctionAux4Extension,   QT_TR_NOOP("Aux 4") },
-            { stickFunctionAux5Extension,   QT_TR_NOOP("Aux 5") },
-            { stickFunctionAux6Extension,   QT_TR_NOOP("Aux 6") },
+        static const QMap <StickFunction, const char*> extensionNameMap = {
+            { stickFunctionPitchExtension,  QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Pitch") },
+            { stickFunctionRollExtension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Roll") },
+            { stickFunctionAux1Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 1") },
+            { stickFunctionAux2Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 2") },
+            { stickFunctionAux3Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 3") },
+            { stickFunctionAux4Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 4") },
+            { stickFunctionAux5Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 5") },
+            { stickFunctionAux6Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 6") },
         };
-        msg = msg.arg(extensionNameMap.value(state.stickFunction, QT_TR_NOOP("Unknown")));
+        const char* extName = extensionNameMap.value(state.stickFunction, QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Unknown"));
+        msg = msg.arg(QCoreApplication::translate("RemoteControlCalibrationController", extName));
     }
 
     _setSingleStickDisplay(state.stepFunction == StateMachineStepExtensionHighHorz || state.stepFunction == StateMachineStepExtensionHighVert ||

@@ -137,7 +137,7 @@ private:
     QVariantList        _rangeOpacities;                    /// double opacity value
 
     // These are user facing string for the various enums.
-    static const QStringList _rangeTypeNames;
+    QStringList _rangeTypeNames;
 
 };
 

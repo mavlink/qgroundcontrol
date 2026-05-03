@@ -167,6 +167,10 @@ def writeJsonTSFile(output_path, multiFileLocArray):
             ET.SubElement(message, "source").text = sourceStr
             ET.SubElement(message, "translation", type="unfinished")
 
+    try:
+        ET.indent(ts_root, space="    ")
+    except AttributeError:
+        pass  # Python < 3.9 — no indentation
     with open(output_path, "w", encoding="utf-8") as jsonTSFile:
         jsonTSFile.write('<?xml version="1.0" encoding="utf-8"?>\n')
         jsonTSFile.write("<!DOCTYPE TS>\n")

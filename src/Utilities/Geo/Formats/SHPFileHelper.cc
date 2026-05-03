@@ -2,6 +2,7 @@
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
@@ -12,7 +13,7 @@
 QGC_LOGGING_CATEGORY(SHPFileHelperLog, "Utilities.SHPFileHelper")
 
 namespace {
-    constexpr const char *_errorPrefix = QT_TR_NOOP("SHP file load failed. %1");
+    constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("SHPFileHelper", "SHP file load failed. %1");
 
     // QFile-based hooks for shapelib to support Qt Resource System (qrc:/) paths.
     // This allows loading shapefiles embedded in the application binary.
@@ -157,19 +158,19 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
     errorString.clear();
 
     if (!shpFile.endsWith(QStringLiteral(".shp"), Qt::CaseInsensitive)) {
-        errorString = QString(_errorPrefix).arg(QString(QT_TRANSLATE_NOOP("SHP", "File is not a .shp file: %1")).arg(shpFile));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "File is not a .shp file: %1").arg(shpFile));
         return false;
     }
 
     const QString prjFilename = shpFile.left(shpFile.length() - 4) + QStringLiteral(".prj");
     QFile prjFile(prjFilename);
     if (!prjFile.exists()) {
-        errorString = QString(_errorPrefix).arg(QString(QT_TRANSLATE_NOOP("SHP", "File not found: %1")).arg(prjFilename));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "File not found: %1").arg(prjFilename));
         return false;
     }
 
     if (!prjFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("PRJ file open failed: %1").arg(prjFile.errorString()));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHPFileHelper", "PRJ file open failed: %1").arg(prjFile.errorString()));
         return false;
     }
 
@@ -191,7 +192,7 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
         }
 
         if (*utmZone == 0) {
-            errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "UTM projection is not in supported format. Must be PROJCS[\"WGS_1984_UTM_Zone_##N/S"));
+            errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "UTM projection is not in supported format. Must be PROJCS[\"WGS_1984_UTM_Zone_##N/S"));
         }
     } else {
         // Extract projection name from WKT for error reporting
@@ -204,12 +205,12 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
         }
 
         if (!projectionName.isEmpty()) {
-            errorString = QString(_errorPrefix).arg(
-                QString(QT_TRANSLATE_NOOP("SHP", "Unsupported projection: %1. Supported projections are: WGS84 (GEOGCS[\"GCS_WGS_1984\"]) and UTM (PROJCS[\"WGS_1984_UTM_Zone_##N/S\"]). Convert your shapefile to WGS84 using QGIS or ogr2ogr."))
+            errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(
+                QCoreApplication::translate("SHP", "Unsupported projection: %1. Supported projections are: WGS84 (GEOGCS[\"GCS_WGS_1984\"]) and UTM (PROJCS[\"WGS_1984_UTM_Zone_##N/S\"]). Convert your shapefile to WGS84 using QGIS or ogr2ogr.")
                 .arg(projectionName));
         } else {
-            errorString = QString(_errorPrefix).arg(
-                QT_TRANSLATE_NOOP("SHP", "Unable to parse projection from PRJ file. Supported projections are: WGS84 (GEOGCS[\"GCS_WGS_1984\"]) and UTM (PROJCS[\"WGS_1984_UTM_Zone_##N/S\"])."));
+            errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(
+                QCoreApplication::translate("SHP", "Unable to parse projection from PRJ file. Supported projections are: WGS84 (GEOGCS[\"GCS_WGS_1984\"]) and UTM (PROJCS[\"WGS_1984_UTM_Zone_##N/S\"])."));
         }
     }
 
@@ -230,7 +231,7 @@ SHPHandle SHPFileHelper::_loadShape(const QString &shpFile, int *utmZone, bool *
 
     SHPHandle shpHandle = SHPOpenLL(shpFile.toUtf8().constData(), "rb", &sHooks);
     if (!shpHandle) {
-        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "SHPOpen failed."));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "SHPOpen failed."));
     }
 
     return shpHandle;
@@ -254,7 +255,7 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpF
         SHPGetInfo(shpHandle, &cEntities, &type, nullptr, nullptr);
         qCDebug(SHPFileHelperLog) << "SHPGetInfo" << shpHandle << cEntities << type;
         if (cEntities < 1) {
-            errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "No entities found."));
+            errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "No entities found."));
         } else if (type == SHPT_POLYGON || type == SHPT_POLYGONZ) {
             shapeType = ShapeType::Polygon;
         } else if (type == SHPT_ARC || type == SHPT_ARCZ) {
@@ -262,7 +263,7 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpF
         } else if (type == SHPT_POINT || type == SHPT_POINTZ) {
             shapeType = ShapeType::Point;
         } else {
-            errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "No supported types found."));
+            errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "No supported types found."));
         }
     }
 
@@ -313,7 +314,7 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr, nullptr);
     if (shapeType != SHPT_POLYGON && shapeType != SHPT_POLYGONZ) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("File contains %1, expected Polygon.").arg(SHPTypeName(shapeType)));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHPFileHelper", "File contains %1, expected Polygon.").arg(SHPTypeName(shapeType)));
         return false;
     }
 
@@ -397,7 +398,7 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
     }
 
     if (polygons.isEmpty()) {
-        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "No valid polygons found."));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "No valid polygons found."));
         return false;
     }
 
@@ -426,7 +427,7 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr, nullptr);
     if (shapeType != SHPT_ARC && shapeType != SHPT_ARCZ) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("File contains %1, expected Arc.").arg(SHPTypeName(shapeType)));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHPFileHelper", "File contains %1, expected Arc.").arg(SHPTypeName(shapeType)));
         return false;
     }
 
@@ -490,7 +491,7 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
     }
 
     if (polylines.isEmpty()) {
-        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "No valid polylines found."));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "No valid polylines found."));
         return false;
     }
 
@@ -519,7 +520,7 @@ bool SHPFileHelper::loadPointsFromFile(const QString &shpFile, QList<QGeoCoordin
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr, nullptr);
     if (shapeType != SHPT_POINT && shapeType != SHPT_POINTZ) {
-        errorString = QString(_errorPrefix).arg(QObject::tr("File contains %1, expected Point.").arg(SHPTypeName(shapeType)));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHPFileHelper", "File contains %1, expected Point.").arg(SHPTypeName(shapeType)));
         return false;
     }
 
@@ -558,7 +559,7 @@ bool SHPFileHelper::loadPointsFromFile(const QString &shpFile, QList<QGeoCoordin
     }
 
     if (points.isEmpty()) {
-        errorString = QString(_errorPrefix).arg(QT_TRANSLATE_NOOP("SHP", "No valid points found."));
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "No valid points found."));
         return false;
     }
 

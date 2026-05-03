@@ -17,8 +17,6 @@
 
 QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "Plan.SurveyComplexItem")
 
-const QString SurveyComplexItem::name(SurveyComplexItem::tr("Survey"));
-
 SurveyComplexItem::SurveyComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))

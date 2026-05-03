@@ -147,5 +147,6 @@ repos:
       - id: clazy
       - id: check-no-qassert
       - id: vehicle-null-check
+      - id: qt-translate-noop-check
 
 exclude: ^build/

@@ -394,7 +394,7 @@ private:
     bool _joystickMode = false;
     bool _calibrating = false;
     bool _singleStickDisplay = false;
-    QMap<StateMachineStepFunction, QString> _stepFunctionToMsgStringMap;
+    QMap<StateMachineStepFunction, const char*> _stepFunctionToMsgStringMap;
     QMap<StateMachineStepFunction, QMap<int, BothSticksDisplayPositions>> _bothStickDisplayPositionThrottleCenteredMap;
     QMap<StateMachineStepFunction, QMap<int, BothSticksDisplayPositions>> _bothStickDisplayPositionThrottleDownMap;
 

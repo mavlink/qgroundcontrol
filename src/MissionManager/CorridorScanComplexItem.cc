@@ -11,8 +11,6 @@
 
 QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "Plan.CorridorScanComplexItemL")
 
-const QString CorridorScanComplexItem::name(CorridorScanComplexItem::tr("Corridor Scan"));
-
 CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
     , _entryPointLocation       (EntryPointDefaultOrder)

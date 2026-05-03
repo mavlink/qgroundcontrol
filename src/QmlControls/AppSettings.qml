@@ -55,7 +55,7 @@ Rectangle {
                         matches.push(terms[i].section)
                     }
                 }
-            } catch(e) {}
+            } catch(e) { console.warn("AppSettings: JSON parse error in searchTerms:", e) }
         }
 
         // Check translatable terms (translated at runtime)
@@ -75,7 +75,7 @@ Rectangle {
                         }
                     }
                 }
-            } catch(e) {}
+            } catch(e) { console.warn("AppSettings: JSON parse error in translatableTerms:", e) }
         }
 
         return matches
@@ -199,9 +199,18 @@ Rectangle {
                     property var    pageVisible: model.pageVisible ?? function() { return true }
                     property var    pageSections: {
                         try {
+                            var trStr = model.translatableTerms
+                            if (trStr && trStr !== "") {
+                                var trTerms = JSON.parse(trStr)
+                                return trTerms.map(function(t) {
+                                    if (!t.terms || t.terms.length === 0) return ""
+                                    return qsTranslate(t.context, t.terms[0])
+                                }).filter(function(s) { return s !== "" })
+                            }
                             var s = model.sections
                             return (s && s !== "") ? JSON.parse(s) : []
                         } catch(e) {
+                            console.warn("AppSettings: JSON parse error in pageSections:", e)
                             return []
                         }
                     }

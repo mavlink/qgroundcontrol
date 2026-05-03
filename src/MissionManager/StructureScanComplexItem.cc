@@ -13,8 +13,6 @@
 
 QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "Plan.StructureScanComplexItem")
 
-const QString StructureScanComplexItem::name(StructureScanComplexItem::tr("Structure Scan"));
-
 StructureScanComplexItem::StructureScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
     : ComplexMissionItem        (masterController, flyView)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))

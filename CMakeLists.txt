@@ -339,7 +339,15 @@ endif()
 # ----------------------------------------------------------------------------
 # Translation/Localization Configuration
 # ----------------------------------------------------------------------------
-file(GLOB TS_SOURCES "${CMAKE_SOURCE_DIR}/translations/qgc_*.ts")
+file(GLOB TS_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/translations/qgc_*.ts")
+# Exclude pseudo-localization files from non-debug builds.
+# Multi-config generators (VS, Xcode, Ninja Multi-Config) do not set CMAKE_BUILD_TYPE
+# at configure time, so _eo files cannot be conditionally included for Debug only —
+# excluding them from all multi-config configurations avoids shipping them in Release.
+get_property(_qgc_is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(_qgc_is_multi_config OR NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(FILTER TS_SOURCES EXCLUDE REGEX "_eo\\.ts$")
+endif()
 set_source_files_properties(${TS_SOURCES} PROPERTIES OUTPUT_LOCATION "${CMAKE_BINARY_DIR}/i18n")
 
 qt_add_translations(${CMAKE_PROJECT_NAME}

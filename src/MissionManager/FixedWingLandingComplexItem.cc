@@ -10,8 +10,6 @@
 
 QGC_LOGGING_CATEGORY(FixedWingLandingComplexItemLog, "Plan.FixedWingLandingComplexItem")
 
-const QString FixedWingLandingComplexItem::name(FixedWingLandingComplexItem::tr("Fixed Wing Landing"));
-
 FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* masterController, bool flyView)
     : LandingComplexItem        (masterController, flyView)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/FWLandingPattern.FactMetaData.json"), this))
@@ -47,9 +45,9 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(PlanMasterController* m
 
 QString FixedWingLandingComplexItem::patternName() const {
     if (_masterController->missionController()->isFirstLandingComplexItem(this)) {
-        return name;
+        return tr(canonicalName);
     } else {
-        return "Alternate Landing";
+        return tr("Alternate Landing");
     }
 }
 

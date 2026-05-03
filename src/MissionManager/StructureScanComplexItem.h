@@ -49,7 +49,7 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
-    QString patternName         (void) const final { return name; }
+    QString patternName         (void) const final { return tr(canonicalName); }
     double  complexDistance     (void) const final { return _scanDistance; }
     int     lastSequenceNumber  (void) const final;
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
@@ -88,7 +88,7 @@ public:
     double              minAMSLAltitude             (void) const final;
     double              maxAMSLAltitude             (void) const final;
 
-    static const QString name;
+    static constexpr const char* canonicalName = QT_TR_NOOP("Structure Scan");
 
     static constexpr const char* settingsGroup =               "StructureScan";
     static constexpr const char* scanBottomAltName =           "ScanBottomAlt";
