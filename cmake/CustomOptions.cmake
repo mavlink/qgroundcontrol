@@ -173,12 +173,19 @@ set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Additional QML im
 option(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING "Silence missing dependency warnings" OFF)
 option(QT_ENABLE_VERBOSE_DEPLOYMENT "Enable verbose deployment output" OFF)
 option(QT_DEBUG_FIND_PACKAGE "Print search paths when package not found" ON)
-option(QT_QML_GENERATE_QMLLS_INI "Generate qmlls.ini for QML language server" ON)
+# qmlls.ini writes into the source tree dirty the CI checkout.
+if(DEFINED ENV{CI})
+    set(_qmlls_ini_default OFF)
+else()
+    set(_qmlls_ini_default ON)
+endif()
+option(QT_QML_GENERATE_QMLLS_INI "Generate qmlls.ini for QML language server" ${_qmlls_ini_default})
+unset(_qmlls_ini_default)
 option(QT_QMLLINT_CONTEXT_PROPERTY_DUMP "Emit qmllint context property data (Qt 6.11+; no-op on older)" ON)
-option(QGC_ENABLE_QMLLINT "Enable automatic QML linting during build" OFF)
+option(QT_QML_GENERATE_QMLLINT "Run qmllint at build time" OFF)
 
-set(QGC_QT_DISABLE_DEPRECATED_UP_TO "0x061000" CACHE STRING "Disable Qt APIs deprecated before this version")
-set(QGC_QT_ENABLE_STRICT_MODE_UP_TO "0x061000" CACHE STRING "Enable strict Qt API mode up to this version")
+set(QGC_QT_DISABLE_DEPRECATED_UP_TO "0x060A00" CACHE STRING "Disable Qt APIs deprecated before this version")
+set(QGC_QT_ENABLE_STRICT_MODE_UP_TO "0x060A00" CACHE STRING "Enable strict Qt API mode up to this version")
 
 # Debug environment variables (uncomment to enable)
 # set(ENV{QT_DEBUG_PLUGINS} "1")

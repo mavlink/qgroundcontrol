@@ -1,0 +1,147 @@
+name: Build Profile
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - RelWithDebInfo
+          - Debug
+      limit:
+        description: 'Rows per section in summary (TU/header/template ranks)'
+        required: false
+        default: '50'
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  profile:
+    name: Clang -ftime-trace + ClangBuildAnalyzer
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      CC: clang
+      CXX: clang++
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: ${{ inputs.build_type }}
+          save-cache: 'false'
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+        with:
+          extra-packages: clang
+
+      - name: Install ClangBuildAnalyzer
+        run: |
+          set -euo pipefail
+          curl -fsSL \
+            https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v1.6.0/ClangBuildAnalyzer-linux-x64 \
+            -o /tmp/ClangBuildAnalyzer
+          chmod +x /tmp/ClangBuildAnalyzer
+          test -x /tmp/ClangBuildAnalyzer
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ inputs.build_type }}
+          extra-args: -DQGC_TIME_TRACE=ON -DQGC_USE_CACHE=OFF
+
+      - name: Start ClangBuildAnalyzer capture
+        working-directory: ${{ runner.temp }}/build
+        run: /tmp/ClangBuildAnalyzer --start .
+
+      - name: Build
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ inputs.build_type }}
+
+      - name: Stop ClangBuildAnalyzer capture
+        working-directory: ${{ runner.temp }}/build
+        run: /tmp/ClangBuildAnalyzer --stop . qgc-trace.bin
+
+      - name: Analyze ClangBuildAnalyzer capture
+        working-directory: ${{ runner.temp }}/build
+        run: /tmp/ClangBuildAnalyzer --analyze qgc-trace.bin > qgc-trace-report.txt
+
+      - name: Run tools/build_profile.py (ninja + per-TU)
+        working-directory: ${{ runner.temp }}/build
+        env:
+          LIMIT: ${{ inputs.limit }}
+        run: |
+          [[ "$LIMIT" =~ ^[0-9]+$ ]] || { echo "::error::limit must be a positive integer (got: $LIMIT)"; exit 1; }
+          python3 "${GITHUB_WORKSPACE}/tools/build_profile.py" \
+            --build-dir . \
+            --limit "$LIMIT" \
+            > qgc-tu-report.txt
+          python3 "${GITHUB_WORKSPACE}/tools/build_profile.py" \
+            --build-dir . \
+            --limit "$LIMIT" \
+            --json \
+            > qgc-tu-report.json
+
+      - name: Post summary
+        working-directory: ${{ runner.temp }}/build
+        run: |
+          {
+            echo "## Build profile (${{ inputs.build_type }})"
+            echo
+            echo "Commit: \`${{ github.sha }}\`"
+            echo "Compiler: \`$(${CXX} --version | head -n1)\`"
+            echo
+            echo "### tools/build_profile.py — ninja + per-TU"
+            echo
+            echo '```'
+            cat qgc-tu-report.txt
+            echo '```'
+            echo
+            echo "### ClangBuildAnalyzer — headers / templates / functions"
+            echo
+            echo '```'
+            cat qgc-trace-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload profile artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-profile-${{ inputs.build_type }}
+          path: |
+            ${{ runner.temp }}/build/qgc-trace.bin
+            ${{ runner.temp }}/build/qgc-trace-report.txt
+            ${{ runner.temp }}/build/qgc-tu-report.txt
+            ${{ runner.temp }}/build/qgc-tu-report.json
+            ${{ runner.temp }}/build/.ninja_log
+          if-no-files-found: ignore
+          retention-days: 90

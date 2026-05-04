@@ -45,9 +45,9 @@ release:
         -DQGC_BUILD_TESTING=OFF
     cmake --build {{build_dir}} --config Release --parallel
 
-# Clean build directory
-clean:
-    rm -rf {{build_dir}}
+# Clean build directory (forwards to tools/clean.sh; pass --cache, --all, --dry-run)
+clean *ARGS:
+    ./tools/clean.sh {{ARGS}}
 
 # Clean, configure, and build
 rebuild: clean configure build
@@ -117,7 +117,7 @@ info:
 check-deps:
     python3 ./tools/check_deps.py
 
-# Clean all caches and build artifacts
-distclean: clean
-    rm -rf .cache
+# Clean build, caches, and generated files
+distclean:
+    ./tools/clean.sh --all
     rm -rf node_modules

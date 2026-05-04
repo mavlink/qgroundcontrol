@@ -39,6 +39,11 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
             Qt6::MultimediaQuickPrivate  # found by root CMakeLists.txt find_package
     )
 
+    # iOS GStreamer.cc references gst_ios_{pre,post}_init defined in GStreamer::mobile.
+    if(IOS AND TARGET GStreamer::mobile)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
+    endif()
+
     add_subdirectory(HwBuffers)
     add_subdirectory(gstqgc)
 endif()

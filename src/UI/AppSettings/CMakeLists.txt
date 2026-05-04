@@ -51,11 +51,12 @@ add_custom_command(
 
 add_custom_target(GenerateSettingsQml DEPENDS ${_generated_qml})
 
-# Set QT_RESOURCE_ALIAS on each generated file so qt_add_qml_module places
-# them at the correct QRC path despite living in the build tree.
+# GENERATED suppresses qmlimportscanner reads of not-yet-existing files at configure time.
 foreach(_name IN LISTS _generated_qml_names)
     set_source_files_properties("${SETTINGS_QML_GEN_DIR}/${_name}"
-        PROPERTIES QT_RESOURCE_ALIAS "${_name}"
+        PROPERTIES
+            GENERATED TRUE
+            QT_RESOURCE_ALIAS "${_name}"
     )
 endforeach()
 

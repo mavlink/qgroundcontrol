@@ -104,11 +104,12 @@ add_custom_command(
 
 add_custom_target(GenerateConfigQmlAPM DEPENDS ${_apm_config_generated_qml})
 
-# Set QT_RESOURCE_ALIAS so qt_add_qml_module places generated files at the
-# correct QRC path despite living in the build tree.
+# GENERATED suppresses qmlimportscanner reads of not-yet-existing files at configure time.
 foreach(_name IN LISTS _apm_config_generated_qml_names)
     set_source_files_properties("${APM_CONFIG_QML_GEN_DIR}/${_name}"
-        PROPERTIES QT_RESOURCE_ALIAS "${_name}"
+        PROPERTIES
+            GENERATED TRUE
+            QT_RESOURCE_ALIAS "${_name}"
     )
 endforeach()
 

@@ -13,6 +13,8 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -22,6 +24,26 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import append_github_env, write_github_output  # noqa: E402
+
+
+def _run_with_tee(cmd: list[str], output_file: str) -> int:
+    # Use `bash | tee` so children keep a real stdout — Popen+PIPE deadlocks
+    # Gradle/javac on Windows when grandchildren block-buffer 8KB+ output.
+    bash = shutil.which("bash")
+    if bash:
+        quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
+        quoted_log = shlex.quote(output_file)
+        script = f"set -o pipefail; {quoted_cmd} 2>&1 | tee {quoted_log}"
+        return subprocess.run([bash, "-c", script], check=False).returncode
+
+    with open(output_file, "w") as log:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            sys.stdout.write(line)
+            log.write(line)
+        proc.wait()
+        return proc.returncode
 
 
 def detect_jobs(requested: str = "auto") -> int:
@@ -72,13 +94,7 @@ def cmd_build(args: argparse.Namespace) -> None:
     start = time.monotonic()
 
     if output_file:
-        with open(output_file, "w") as log:
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            for line in proc.stdout:
-                sys.stdout.write(line)
-                log.write(line)
-            proc.wait()
-            exit_code = proc.returncode
+        exit_code = _run_with_tee(cmd, output_file)
     else:
         result = subprocess.run(cmd, check=False)
         exit_code = result.returncode
@@ -138,15 +154,7 @@ def cmd_ctest(args: argparse.Namespace) -> None:
         cmd += ["-LE", args.exclude_labels]
 
     start = time.monotonic()
-
-    with open(args.ctest_output, "w") as log:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        for line in proc.stdout:
-            sys.stdout.write(line)
-            log.write(line)
-        proc.wait()
-        exit_code = proc.returncode
-
+    exit_code = _run_with_tee(cmd, args.ctest_output)
     duration = int(time.monotonic() - start)
     print(f"::notice::Tests completed in {duration}s")
     sys.exit(exit_code)

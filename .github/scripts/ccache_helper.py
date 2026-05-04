@@ -556,6 +556,7 @@ def compute_cpm_fingerprint(root: Path) -> str:
             content = path.read_bytes()
         except OSError:
             continue
+        content = content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")  # Windows autocrlf parity for cpm-modules-shared- key.
         digest.update(rel_path.encode("utf-8"))
         digest.update(b"\0")
         digest.update(content)

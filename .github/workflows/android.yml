@@ -162,12 +162,16 @@ jobs:
       - name: Build
         id: build
         continue-on-error: ${{ matrix.emulator }}
+        timeout-minutes: 75
+        # Disable Gradle daemon on CI — Windows runners hang for 30+ min after BUILD SUCCESSFUL waiting for daemon shutdown.
+        env:
+          GRADLE_OPTS: -Dorg.gradle.daemon=false
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ inputs.build_type || 'Release' }}
           parallel-jobs: ${{ matrix.emulator && '2' || '' }}
-          output-file: ${{ matrix.emulator && 'qgc-build.log' || '' }}
+          output-file: qgc-build.log
 
       - name: Retry Build (emulator JSON truncation recovery)
         id: build-retry
@@ -207,6 +211,21 @@ jobs:
       - name: Annotate emulator build retry failure
         if: ${{ failure() && matrix.emulator && steps.build.outcome == 'failure' && steps.build-retry.outcome == 'failure' }}
         run: echo "::error::Android emulator build failed (initial + retry). See logs for the truncation root cause."
+
+      - name: Upload build log on failure
+        if: ${{ failure() && steps.build.outcome == 'failure' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-${{ matrix.host }}-build-log
+          path: |
+            ${{ runner.temp }}/build/qgc-build.log
+            ${{ runner.temp }}/build/qgc-build-retry.log
+            ${{ runner.temp }}/build/CMakeFiles/CMakeOutput.log
+            ${{ runner.temp }}/build/CMakeFiles/CMakeError.log
+            ${{ runner.temp }}/build/.ninja_log
+            ${{ runner.temp }}/build/android-QGroundControl-deployment-settings.json
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Android Lint
         if: ${{ matrix.host == 'linux' }}

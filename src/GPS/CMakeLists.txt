@@ -3,7 +3,18 @@
 # GPS/GNSS positioning and RTK support
 # ============================================================================
 
-# GPS requires serial link support
+# NTRIP + RTCMMavlink are network/MAVLink-only — build even when QGC_NO_SERIAL_LINK skips the rest.
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        RTCMMavlink.cc
+        RTCMMavlink.h
+)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_subdirectory(NTRIP)
+
+# Everything below uses QSerialPort or spawns a serial-attached GPS process.
 if(QGC_NO_SERIAL_LINK)
     return()
 endif()
@@ -18,21 +29,10 @@ target_sources(${CMAKE_PROJECT_NAME}
         GPSRtk.h
         GPSRTKFactGroup.cc
         GPSRTKFactGroup.h
-        RTCMMavlink.cc
-        RTCMMavlink.h
         satellite_info.h
         sensor_gnss_relative.h
         sensor_gps.h
 )
-
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core)
-
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-# ----------------------------------------------------------------------------
-# NTRIP Subsystem
-# ----------------------------------------------------------------------------
-add_subdirectory(NTRIP)
 
 # ============================================================================
 # PX4 GPS Drivers Integration

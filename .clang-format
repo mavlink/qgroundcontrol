@@ -42,7 +42,7 @@ ReferenceAlignment: Left
 DerivePointerAlignment: false
 
 # Spacing
-SpaceAfterCStyleCast: false
+SpaceAfterCStyleCast: true
 SpaceAfterLogicalNot: false
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeParens: ControlStatements
