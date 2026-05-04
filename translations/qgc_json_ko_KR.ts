@@ -43,10 +43,64 @@
       <translation type="unfinished">General</translation>
     </message>
     <message>
+      <extracomment>.groups[General].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
+      <source>3d view</source>
+      <translation type="unfinished">3d view</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
+      <source>3d map</source>
+      <translation type="unfinished">3d map</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
+      <source>enable 3d</source>
+      <translation type="unfinished">enable 3d</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
+      <source>map provider</source>
+      <translation type="unfinished">map provider</translation>
+    </message>
+    <message>
       <extracomment>.groups[Data].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
       <source>Data</source>
       <translation type="unfinished">Data</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Data].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
+      <source>osm</source>
+      <translation type="unfinished">osm</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Data].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
+      <source>openstreetmap</source>
+      <translation type="unfinished">openstreetmap</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Data].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
+      <source>3d data</source>
+      <translation type="unfinished">3d data</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Data].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
+      <source>building height</source>
+      <translation type="unfinished">building height</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Data].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Viewer3D.SettingsUI.json"/>
+      <source>altitude bias</source>
+      <translation type="unfinished">altitude bias</translation>
     </message>
   </context>
   <context>
@@ -58,16 +112,106 @@
       <translation type="unfinished">Log Control</translation>
     </message>
     <message>
+      <extracomment>.groups[Log Control].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>px4 log</source>
+      <translation type="unfinished">px4 log</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Log Control].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>logging</source>
+      <translation type="unfinished">logging</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Log Control].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>start log</source>
+      <translation type="unfinished">start log</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Log Control].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>stop log</source>
+      <translation type="unfinished">stop log</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Log Control].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>auto log</source>
+      <translation type="unfinished">auto log</translation>
+    </message>
+    <message>
       <extracomment>.groups[Upload Settings].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
       <source>Upload Settings</source>
       <translation type="unfinished">Upload Settings</translation>
     </message>
     <message>
+      <extracomment>.groups[Upload Settings].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>upload</source>
+      <translation type="unfinished">upload</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Upload Settings].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>flight review</source>
+      <translation type="unfinished">flight review</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Upload Settings].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>email</source>
+      <translation type="unfinished">email</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Upload Settings].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>description</source>
+      <translation type="unfinished">description</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Upload Settings].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>wind</source>
+      <translation type="unfinished">wind</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Upload Settings].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>rating</source>
+      <translation type="unfinished">rating</translation>
+    </message>
+    <message>
       <extracomment>.groups[Log Files].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
       <source>Log Files</source>
       <translation type="unfinished">Log Files</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Log Files].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>log files</source>
+      <translation type="unfinished">log files</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Log Files].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>download</source>
+      <translation type="unfinished">download</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Log Files].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>delete</source>
+      <translation type="unfinished">delete</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Log Files].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PX4LogTransfer.SettingsUI.json"/>
+      <source>upload logs</source>
+      <translation type="unfinished">upload logs</translation>
     </message>
   </context>
   <context>
@@ -79,10 +223,76 @@
       <translation type="unfinished">Map Provider</translation>
     </message>
     <message>
+      <extracomment>.groups[Map Provider].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>map provider</source>
+      <translation type="unfinished">map provider</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Map Provider].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>satellite</source>
+      <translation type="unfinished">satellite</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Map Provider].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>terrain</source>
+      <translation type="unfinished">terrain</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Map Provider].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>street</source>
+      <translation type="unfinished">street</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Map Provider].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>hybrid</source>
+      <translation type="unfinished">hybrid</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Map Provider].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>google</source>
+      <translation type="unfinished">google</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Map Provider].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>bing</source>
+      <translation type="unfinished">bing</translation>
+    </message>
+    <message>
       <extracomment>.groups[Offline Maps].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
       <source>Offline Maps</source>
       <translation type="unfinished">Offline Maps</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Offline Maps].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>offline</source>
+      <translation type="unfinished">offline</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Offline Maps].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>download</source>
+      <translation type="unfinished">download</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Offline Maps].keywords[2], .groups[Tile Cache].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>cache</source>
+      <translation type="unfinished">cache</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Offline Maps].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>tile set</source>
+      <translation type="unfinished">tile set</translation>
     </message>
     <message>
       <extracomment>.groups[Tokens].heading</extracomment>
@@ -91,10 +301,64 @@
       <translation type="unfinished">Tokens</translation>
     </message>
     <message>
+      <extracomment>.groups[Tokens].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>token</source>
+      <translation type="unfinished">token</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Tokens].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>api key</source>
+      <translation type="unfinished">api key</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Tokens].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>tianditu</source>
+      <translation type="unfinished">tianditu</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Tokens].keywords[3], .groups[Mapbox Login].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>mapbox</source>
+      <translation type="unfinished">mapbox</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Tokens].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>esri</source>
+      <translation type="unfinished">esri</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Tokens].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>vworld</source>
+      <translation type="unfinished">vworld</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Tokens].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>openaip</source>
+      <translation type="unfinished">openaip</translation>
+    </message>
+    <message>
       <extracomment>.groups[Mapbox Login].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
       <source>Mapbox Login</source>
       <translation type="unfinished">Mapbox Login</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Mapbox Login].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>account</source>
+      <translation type="unfinished">account</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Mapbox Login].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>style</source>
+      <translation type="unfinished">style</translation>
     </message>
     <message>
       <extracomment>.groups[Custom Map URL].heading</extracomment>
@@ -103,10 +367,52 @@
       <translation type="unfinished">Custom Map URL</translation>
     </message>
     <message>
+      <extracomment>.groups[Custom Map URL].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>custom map</source>
+      <translation type="unfinished">custom map</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Custom Map URL].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>wms</source>
+      <translation type="unfinished">wms</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Custom Map URL].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>tile url</source>
+      <translation type="unfinished">tile url</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Custom Map URL].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>tile server</source>
+      <translation type="unfinished">tile server</translation>
+    </message>
+    <message>
       <extracomment>.groups[Tile Cache].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
       <source>Tile Cache</source>
       <translation type="unfinished">Tile Cache</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Tile Cache].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>disk size</source>
+      <translation type="unfinished">disk size</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Tile Cache].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>memory size</source>
+      <translation type="unfinished">memory size</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Tile Cache].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Maps.SettingsUI.json"/>
+      <source>tile cache</source>
+      <translation type="unfinished">tile cache</translation>
     </message>
   </context>
   <context>
@@ -118,16 +424,250 @@
       <translation type="unfinished">General</translation>
     </message>
     <message>
+      <extracomment>.groups[General].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>language</source>
+      <translation type="unfinished">language</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>locale</source>
+      <translation type="unfinished">locale</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>color scheme</source>
+      <translation type="unfinished">color scheme</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>dark mode</source>
+      <translation type="unfinished">dark mode</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>theme</source>
+      <translation type="unfinished">theme</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>palette</source>
+      <translation type="unfinished">palette</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>follow me</source>
+      <translation type="unfinished">follow me</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[7]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>audio</source>
+      <translation type="unfinished">audio</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[8]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>volume</source>
+      <translation type="unfinished">volume</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[9]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>sound</source>
+      <translation type="unfinished">sound</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[10]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>gstreamer</source>
+      <translation type="unfinished">gstreamer</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[11]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>debug level</source>
+      <translation type="unfinished">debug level</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[12]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>ui scale</source>
+      <translation type="unfinished">ui scale</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[13]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>font size</source>
+      <translation type="unfinished">font size</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[14]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>zoom</source>
+      <translation type="unfinished">zoom</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[15]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>save path</source>
+      <translation type="unfinished">save path</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[16]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>storage</source>
+      <translation type="unfinished">storage</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[17]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>reset</source>
+      <translation type="unfinished">reset</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[18]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>clear settings</source>
+      <translation type="unfinished">clear settings</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[19]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>factory reset</source>
+      <translation type="unfinished">factory reset</translation>
+    </message>
+    <message>
       <extracomment>.groups[General].controls[3].button.text</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
       <source>Test</source>
       <translation type="unfinished">Test</translation>
     </message>
     <message>
+      <extracomment>.groups[Vehicle Preferences].heading</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>Vehicle Preferences</source>
+      <translation type="unfinished">Vehicle Preferences</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Vehicle Preferences].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>firmware</source>
+      <translation type="unfinished">firmware</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Vehicle Preferences].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>ardupilot</source>
+      <translation type="unfinished">ardupilot</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Vehicle Preferences].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>px4</source>
+      <translation type="unfinished">px4</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Vehicle Preferences].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>vehicle</source>
+      <translation type="unfinished">vehicle</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Vehicle Preferences].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>multirotor</source>
+      <translation type="unfinished">multirotor</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Vehicle Preferences].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>fixed wing</source>
+      <translation type="unfinished">fixed wing</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Vehicle Preferences].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>vtol</source>
+      <translation type="unfinished">vtol</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Vehicle Preferences].keywords[7]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>rover</source>
+      <translation type="unfinished">rover</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Vehicle Preferences].keywords[8]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>sub</source>
+      <translation type="unfinished">sub</translation>
+    </message>
+    <message>
       <extracomment>.groups[Units].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
       <source>Units</source>
       <translation type="unfinished">Units</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Units].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>units</source>
+      <translation type="unfinished">units</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Units].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>metric</source>
+      <translation type="unfinished">metric</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Units].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>imperial</source>
+      <translation type="unfinished">imperial</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Units].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>distance</source>
+      <translation type="unfinished">distance</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Units].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>speed</source>
+      <translation type="unfinished">speed</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Units].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>area</source>
+      <translation type="unfinished">area</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Units].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>temperature</source>
+      <translation type="unfinished">temperature</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Units].keywords[7]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>feet</source>
+      <translation type="unfinished">feet</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Units].keywords[8]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/General.SettingsUI.json"/>
+      <source>meters</source>
+      <translation type="unfinished">meters</translation>
     </message>
   </context>
   <context>
@@ -137,6 +677,48 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PlanView.SettingsUI.json"/>
       <source>General</source>
       <translation type="unfinished">General</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PlanView.SettingsUI.json"/>
+      <source>mission altitude</source>
+      <translation type="unfinished">mission altitude</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PlanView.SettingsUI.json"/>
+      <source>default altitude</source>
+      <translation type="unfinished">default altitude</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PlanView.SettingsUI.json"/>
+      <source>vtol transition</source>
+      <translation type="unfinished">vtol transition</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PlanView.SettingsUI.json"/>
+      <source>condition gate</source>
+      <translation type="unfinished">condition gate</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PlanView.SettingsUI.json"/>
+      <source>takeoff</source>
+      <translation type="unfinished">takeoff</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PlanView.SettingsUI.json"/>
+      <source>landing pattern</source>
+      <translation type="unfinished">landing pattern</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/PlanView.SettingsUI.json"/>
+      <source>waypoint</source>
+      <translation type="unfinished">waypoint</translation>
     </message>
   </context>
   <context>
@@ -148,10 +730,76 @@
       <translation type="unfinished">Connection Status</translation>
     </message>
     <message>
+      <extracomment>.groups[Connection Status].keywords[0], .groups[Options].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>ntrip</source>
+      <translation type="unfinished">ntrip</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection Status].keywords[1], .groups[Server Settings].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>rtk</source>
+      <translation type="unfinished">rtk</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection Status].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>connection status</source>
+      <translation type="unfinished">connection status</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection Status].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>corrections</source>
+      <translation type="unfinished">corrections</translation>
+    </message>
+    <message>
       <extracomment>.groups[Server Settings].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
       <source>Server Settings</source>
       <translation type="unfinished">Server Settings</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Server Settings].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>ntrip server</source>
+      <translation type="unfinished">ntrip server</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Server Settings].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>caster</source>
+      <translation type="unfinished">caster</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Server Settings].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>host</source>
+      <translation type="unfinished">host</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Server Settings].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>port</source>
+      <translation type="unfinished">port</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Server Settings].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>username</source>
+      <translation type="unfinished">username</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Server Settings].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>password</source>
+      <translation type="unfinished">password</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Server Settings].keywords[7], .groups[Mountpoint Browser].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>mountpoint</source>
+      <translation type="unfinished">mountpoint</translation>
     </message>
     <message>
       <extracomment>.groups[Mountpoint Browser].sectionName</extracomment>
@@ -160,10 +808,40 @@
       <translation type="unfinished">Mountpoint Browser</translation>
     </message>
     <message>
+      <extracomment>.groups[Mountpoint Browser].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>browse</source>
+      <translation type="unfinished">browse</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Mountpoint Browser].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>stream</source>
+      <translation type="unfinished">stream</translation>
+    </message>
+    <message>
       <extracomment>.groups[Options].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
       <source>Options</source>
       <translation type="unfinished">Options</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Options].keywords[0], .groups[UDP Forwarding].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>rtcm</source>
+      <translation type="unfinished">rtcm</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Options].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>whitelist</source>
+      <translation type="unfinished">whitelist</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Options].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>message filter</source>
+      <translation type="unfinished">message filter</translation>
     </message>
     <message>
       <extracomment>.groups[Options].controls[0].placeholder</extracomment>
@@ -177,6 +855,24 @@
       <source>UDP Forwarding</source>
       <translation type="unfinished">UDP Forwarding</translation>
     </message>
+    <message>
+      <extracomment>.groups[UDP Forwarding].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>udp forward</source>
+      <translation type="unfinished">udp forward</translation>
+    </message>
+    <message>
+      <extracomment>.groups[UDP Forwarding].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>relay</source>
+      <translation type="unfinished">relay</translation>
+    </message>
+    <message>
+      <extracomment>.groups[UDP Forwarding].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/NTRIP.SettingsUI.json"/>
+      <source>corrections forward</source>
+      <translation type="unfinished">corrections forward</translation>
+    </message>
   </context>
   <context>
     <name>Video.SettingsUI.json</name>
@@ -187,10 +883,64 @@
       <translation type="unfinished">Video Source</translation>
     </message>
     <message>
+      <extracomment>.groups[Video Source].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>video source</source>
+      <translation type="unfinished">video source</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Video Source].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>camera</source>
+      <translation type="unfinished">camera</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Video Source].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>stream</source>
+      <translation type="unfinished">stream</translation>
+    </message>
+    <message>
       <extracomment>.groups[Connection].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
       <source>Connection</source>
       <translation type="unfinished">Connection</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>rtsp</source>
+      <translation type="unfinished">rtsp</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>tcp</source>
+      <translation type="unfinished">tcp</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>udp</source>
+      <translation type="unfinished">udp</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>mpegts</source>
+      <translation type="unfinished">mpegts</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>video url</source>
+      <translation type="unfinished">video url</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Connection].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>stream url</source>
+      <translation type="unfinished">stream url</translation>
     </message>
     <message>
       <extracomment>.groups[Settings].heading</extracomment>
@@ -199,10 +949,76 @@
       <translation type="unfinished">Settings</translation>
     </message>
     <message>
+      <extracomment>.groups[Settings].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>aspect ratio</source>
+      <translation type="unfinished">aspect ratio</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Settings].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>low latency</source>
+      <translation type="unfinished">low latency</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Settings].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>decoder</source>
+      <translation type="unfinished">decoder</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Settings].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>hardware decode</source>
+      <translation type="unfinished">hardware decode</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Settings].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>disable when disarmed</source>
+      <translation type="unfinished">disable when disarmed</translation>
+    </message>
+    <message>
       <extracomment>.groups[Local Video Storage].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
       <source>Local Video Storage</source>
       <translation type="unfinished">Local Video Storage</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Local Video Storage].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>record</source>
+      <translation type="unfinished">record</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Local Video Storage].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>recording format</source>
+      <translation type="unfinished">recording format</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Local Video Storage].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>mp4</source>
+      <translation type="unfinished">mp4</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Local Video Storage].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>mkv</source>
+      <translation type="unfinished">mkv</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Local Video Storage].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>storage limit</source>
+      <translation type="unfinished">storage limit</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Local Video Storage].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Video.SettingsUI.json"/>
+      <source>video file</source>
+      <translation type="unfinished">video file</translation>
     </message>
   </context>
   <context>
@@ -212,6 +1028,60 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
       <source>ADSB Server</source>
       <translation type="unfinished">ADSB Server</translation>
+    </message>
+    <message>
+      <extracomment>.groups[ADSB Server].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
+      <source>adsb</source>
+      <translation type="unfinished">adsb</translation>
+    </message>
+    <message>
+      <extracomment>.groups[ADSB Server].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
+      <source>ads-b</source>
+      <translation type="unfinished">ads-b</translation>
+    </message>
+    <message>
+      <extracomment>.groups[ADSB Server].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
+      <source>traffic</source>
+      <translation type="unfinished">traffic</translation>
+    </message>
+    <message>
+      <extracomment>.groups[ADSB Server].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
+      <source>aircraft</source>
+      <translation type="unfinished">aircraft</translation>
+    </message>
+    <message>
+      <extracomment>.groups[ADSB Server].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
+      <source>tracking</source>
+      <translation type="unfinished">tracking</translation>
+    </message>
+    <message>
+      <extracomment>.groups[ADSB Server].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
+      <source>sbs</source>
+      <translation type="unfinished">sbs</translation>
+    </message>
+    <message>
+      <extracomment>.groups[ADSB Server].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
+      <source>server</source>
+      <translation type="unfinished">server</translation>
+    </message>
+    <message>
+      <extracomment>.groups[ADSB Server].keywords[7]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
+      <source>host</source>
+      <translation type="unfinished">host</translation>
+    </message>
+    <message>
+      <extracomment>.groups[ADSB Server].keywords[8]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/ADSBVehicleManager.SettingsUI.json"/>
+      <source>port</source>
+      <translation type="unfinished">port</translation>
     </message>
   </context>
   <context>
@@ -223,16 +1093,118 @@
       <translation type="unfinished">AutoConnect</translation>
     </message>
     <message>
+      <extracomment>.groups[AutoConnect].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>auto connect</source>
+      <translation type="unfinished">auto connect</translation>
+    </message>
+    <message>
+      <extracomment>.groups[AutoConnect].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>pixhawk</source>
+      <translation type="unfinished">pixhawk</translation>
+    </message>
+    <message>
+      <extracomment>.groups[AutoConnect].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>sik radio</source>
+      <translation type="unfinished">sik radio</translation>
+    </message>
+    <message>
+      <extracomment>.groups[AutoConnect].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>librepilot</source>
+      <translation type="unfinished">librepilot</translation>
+    </message>
+    <message>
+      <extracomment>.groups[AutoConnect].keywords[4], .groups[Link Management].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>udp</source>
+      <translation type="unfinished">udp</translation>
+    </message>
+    <message>
+      <extracomment>.groups[AutoConnect].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>rtk gps</source>
+      <translation type="unfinished">rtk gps</translation>
+    </message>
+    <message>
+      <extracomment>.groups[AutoConnect].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>usb</source>
+      <translation type="unfinished">usb</translation>
+    </message>
+    <message>
       <extracomment>.groups[NMEA GPS].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
       <source>NMEA GPS</source>
       <translation type="unfinished">NMEA GPS</translation>
     </message>
     <message>
+      <extracomment>.groups[NMEA GPS].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>nmea</source>
+      <translation type="unfinished">nmea</translation>
+    </message>
+    <message>
+      <extracomment>.groups[NMEA GPS].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>gps</source>
+      <translation type="unfinished">gps</translation>
+    </message>
+    <message>
+      <extracomment>.groups[NMEA GPS].keywords[2], .groups[Link Management].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>serial</source>
+      <translation type="unfinished">serial</translation>
+    </message>
+    <message>
+      <extracomment>.groups[NMEA GPS].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>baud rate</source>
+      <translation type="unfinished">baud rate</translation>
+    </message>
+    <message>
+      <extracomment>.groups[NMEA GPS].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>external gps</source>
+      <translation type="unfinished">external gps</translation>
+    </message>
+    <message>
       <extracomment>.groups[Link Management].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
       <source>Link Management</source>
       <translation type="unfinished">Link Management</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Management].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>link</source>
+      <translation type="unfinished">link</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Management].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>connection</source>
+      <translation type="unfinished">connection</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Management].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>tcp</source>
+      <translation type="unfinished">tcp</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Management].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>bluetooth</source>
+      <translation type="unfinished">bluetooth</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Management].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/CommLinks.SettingsUI.json"/>
+      <source>add link</source>
+      <translation type="unfinished">add link</translation>
     </message>
   </context>
   <context>
@@ -244,10 +1216,76 @@
       <translation type="unfinished">Region</translation>
     </message>
     <message>
+      <extracomment>.groups[Region].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>region</source>
+      <translation type="unfinished">region</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Region].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>faa</source>
+      <translation type="unfinished">faa</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Region].keywords[2], .groups[EU Vehicle Info].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>eu</source>
+      <translation type="unfinished">eu</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Region].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>remote id</source>
+      <translation type="unfinished">remote id</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Region].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>regulation</source>
+      <translation type="unfinished">regulation</translation>
+    </message>
+    <message>
       <extracomment>.groups[Basic ID].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Basic ID</source>
       <translation type="unfinished">Basic ID</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Basic ID].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>basic id</source>
+      <translation type="unfinished">basic id</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Basic ID].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>serial number</source>
+      <translation type="unfinished">serial number</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Basic ID].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>drone id</source>
+      <translation type="unfinished">drone id</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Basic ID].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>ua type</source>
+      <translation type="unfinished">ua type</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Basic ID].keywords[4], .groups[Operator ID].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>registration</source>
+      <translation type="unfinished">registration</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Basic ID].keywords[5], .groups[Operator ID].keywords[3], .groups[Self ID].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>broadcast</source>
+      <translation type="unfinished">broadcast</translation>
     </message>
     <message>
       <extracomment>.groups[Operator ID].heading</extracomment>
@@ -256,10 +1294,46 @@
       <translation type="unfinished">Operator ID</translation>
     </message>
     <message>
+      <extracomment>.groups[Operator ID].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>operator</source>
+      <translation type="unfinished">operator</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Operator ID].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>pilot</source>
+      <translation type="unfinished">pilot</translation>
+    </message>
+    <message>
       <extracomment>.groups[Self ID].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>Self ID</source>
       <translation type="unfinished">Self ID</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Self ID].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>self id</source>
+      <translation type="unfinished">self id</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Self ID].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>flight purpose</source>
+      <translation type="unfinished">flight purpose</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Self ID].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>emergency</source>
+      <translation type="unfinished">emergency</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Self ID].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>description</source>
+      <translation type="unfinished">description</translation>
     </message>
     <message>
       <extracomment>.groups[GroundStation Location].heading</extracomment>
@@ -268,10 +1342,64 @@
       <translation type="unfinished">GroundStation Location</translation>
     </message>
     <message>
+      <extracomment>.groups[GroundStation Location].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>ground station</source>
+      <translation type="unfinished">ground station</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GroundStation Location].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>gcs location</source>
+      <translation type="unfinished">gcs location</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GroundStation Location].keywords[2], .groups[GCS Position].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>latitude</source>
+      <translation type="unfinished">latitude</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GroundStation Location].keywords[3], .groups[GCS Position].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>longitude</source>
+      <translation type="unfinished">longitude</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GroundStation Location].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>altitude</source>
+      <translation type="unfinished">altitude</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GroundStation Location].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>fixed position</source>
+      <translation type="unfinished">fixed position</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GroundStation Location].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>gnss</source>
+      <translation type="unfinished">gnss</translation>
+    </message>
+    <message>
       <extracomment>.groups[GCS Position].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>GCS Position</source>
       <translation type="unfinished">GCS Position</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GCS Position].keywords[2], .groups[GPS Location].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>hdop</source>
+      <translation type="unfinished">hdop</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GCS Position].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>gcs position</source>
+      <translation type="unfinished">gcs position</translation>
     </message>
     <message>
       <extracomment>.groups[GPS Location].sectionName</extracomment>
@@ -280,10 +1408,52 @@
       <translation type="unfinished">GPS Location</translation>
     </message>
     <message>
+      <extracomment>.groups[GPS Location].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>gps</source>
+      <translation type="unfinished">gps</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GPS Location].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>nmea</source>
+      <translation type="unfinished">nmea</translation>
+    </message>
+    <message>
+      <extracomment>.groups[GPS Location].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>position</source>
+      <translation type="unfinished">position</translation>
+    </message>
+    <message>
       <extracomment>.groups[EU Vehicle Info].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
       <source>EU Vehicle Info</source>
       <translation type="unfinished">EU Vehicle Info</translation>
+    </message>
+    <message>
+      <extracomment>.groups[EU Vehicle Info].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>classification</source>
+      <translation type="unfinished">classification</translation>
+    </message>
+    <message>
+      <extracomment>.groups[EU Vehicle Info].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>category</source>
+      <translation type="unfinished">category</translation>
+    </message>
+    <message>
+      <extracomment>.groups[EU Vehicle Info].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>class</source>
+      <translation type="unfinished">class</translation>
+    </message>
+    <message>
+      <extracomment>.groups[EU Vehicle Info].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/RemoteID.SettingsUI.json"/>
+      <source>ce marking</source>
+      <translation type="unfinished">ce marking</translation>
     </message>
   </context>
   <context>
@@ -295,10 +1465,106 @@
       <translation type="unfinished">General</translation>
     </message>
     <message>
+      <extracomment>.groups[General].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>checklist</source>
+      <translation type="unfinished">checklist</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>preflight</source>
+      <translation type="unfinished">preflight</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>multi vehicle</source>
+      <translation type="unfinished">multi vehicle</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>center map</source>
+      <translation type="unfinished">center map</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>log replay</source>
+      <translation type="unfinished">log replay</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>camera control</source>
+      <translation type="unfinished">camera control</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>home position</source>
+      <translation type="unfinished">home position</translation>
+    </message>
+    <message>
+      <extracomment>.groups[General].keywords[7]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>mission popup</source>
+      <translation type="unfinished">mission popup</translation>
+    </message>
+    <message>
       <extracomment>.groups[Guided Commands].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
       <source>Guided Commands</source>
       <translation type="unfinished">Guided Commands</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Guided Commands].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>altitude</source>
+      <translation type="unfinished">altitude</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Guided Commands].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>guided</source>
+      <translation type="unfinished">guided</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Guided Commands].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>minimum</source>
+      <translation type="unfinished">minimum</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Guided Commands].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>maximum</source>
+      <translation type="unfinished">maximum</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Guided Commands].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>goto</source>
+      <translation type="unfinished">goto</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Guided Commands].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>go to</source>
+      <translation type="unfinished">go to</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Guided Commands].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>loiter radius</source>
+      <translation type="unfinished">loiter radius</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Guided Commands].keywords[7]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>confirmation</source>
+      <translation type="unfinished">confirmation</translation>
     </message>
     <message>
       <extracomment>.groups[MAVLink Actions].sectionName</extracomment>
@@ -307,16 +1573,100 @@
       <translation type="unfinished">MAVLink Actions</translation>
     </message>
     <message>
+      <extracomment>.groups[MAVLink Actions].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>mavlink action</source>
+      <translation type="unfinished">mavlink action</translation>
+    </message>
+    <message>
+      <extracomment>.groups[MAVLink Actions].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>pre-arm</source>
+      <translation type="unfinished">pre-arm</translation>
+    </message>
+    <message>
+      <extracomment>.groups[MAVLink Actions].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>post-arm</source>
+      <translation type="unfinished">post-arm</translation>
+    </message>
+    <message>
+      <extracomment>.groups[MAVLink Actions].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>disarm</source>
+      <translation type="unfinished">disarm</translation>
+    </message>
+    <message>
       <extracomment>.groups[Virtual Joystick].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
       <source>Virtual Joystick</source>
       <translation type="unfinished">Virtual Joystick</translation>
     </message>
     <message>
+      <extracomment>.groups[Virtual Joystick].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>joystick</source>
+      <translation type="unfinished">joystick</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Virtual Joystick].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>virtual stick</source>
+      <translation type="unfinished">virtual stick</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Virtual Joystick].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>throttle</source>
+      <translation type="unfinished">throttle</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Virtual Joystick].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>left handed</source>
+      <translation type="unfinished">left handed</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Virtual Joystick].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>auto center</source>
+      <translation type="unfinished">auto center</translation>
+    </message>
+    <message>
       <extracomment>.groups[Instrument Panel].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
       <source>Instrument Panel</source>
       <translation type="unfinished">Instrument Panel</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Instrument Panel].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>compass</source>
+      <translation type="unfinished">compass</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Instrument Panel].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>indicators</source>
+      <translation type="unfinished">indicators</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Instrument Panel].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>hud</source>
+      <translation type="unfinished">hud</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Instrument Panel].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>instrument</source>
+      <translation type="unfinished">instrument</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Instrument Panel].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/FlyView.SettingsUI.json"/>
+      <source>nose up</source>
+      <translation type="unfinished">nose up</translation>
     </message>
   </context>
   <context>
@@ -328,10 +1678,64 @@
       <translation type="unfinished">Ground Station</translation>
     </message>
     <message>
+      <extracomment>.groups[Ground Station].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>system id</source>
+      <translation type="unfinished">system id</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Ground Station].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>mavlink id</source>
+      <translation type="unfinished">mavlink id</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Ground Station].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>heartbeat</source>
+      <translation type="unfinished">heartbeat</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Ground Station].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>initial download</source>
+      <translation type="unfinished">initial download</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Ground Station].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>gcs</source>
+      <translation type="unfinished">gcs</translation>
+    </message>
+    <message>
       <extracomment>.groups[MAVLink Forwarding].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>MAVLink Forwarding</source>
       <translation type="unfinished">MAVLink Forwarding</translation>
+    </message>
+    <message>
+      <extracomment>.groups[MAVLink Forwarding].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>forward</source>
+      <translation type="unfinished">forward</translation>
+    </message>
+    <message>
+      <extracomment>.groups[MAVLink Forwarding].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>relay</source>
+      <translation type="unfinished">relay</translation>
+    </message>
+    <message>
+      <extracomment>.groups[MAVLink Forwarding].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>mavlink forward</source>
+      <translation type="unfinished">mavlink forward</translation>
+    </message>
+    <message>
+      <extracomment>.groups[MAVLink Forwarding].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>host</source>
+      <translation type="unfinished">host</translation>
     </message>
     <message>
       <extracomment>.groups[Logging].heading</extracomment>
@@ -340,10 +1744,76 @@
       <translation type="unfinished">Logging</translation>
     </message>
     <message>
+      <extracomment>.groups[Logging].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>telemetry log</source>
+      <translation type="unfinished">telemetry log</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Logging].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>tlog</source>
+      <translation type="unfinished">tlog</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Logging].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>save log</source>
+      <translation type="unfinished">save log</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Logging].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>recording</source>
+      <translation type="unfinished">recording</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Logging].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>csv</source>
+      <translation type="unfinished">csv</translation>
+    </message>
+    <message>
       <extracomment>.groups[Stream Rates (ArduPilot Only)].heading</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>Stream Rates (ArduPilot Only)</source>
       <translation type="unfinished">Stream Rates (ArduPilot Only)</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>stream rate</source>
+      <translation type="unfinished">stream rate</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>ardupilot</source>
+      <translation type="unfinished">ardupilot</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>apm</source>
+      <translation type="unfinished">apm</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>raw sensors</source>
+      <translation type="unfinished">raw sensors</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>rc channels</source>
+      <translation type="unfinished">rc channels</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Stream Rates (ArduPilot Only)].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>position rate</source>
+      <translation type="unfinished">position rate</translation>
     </message>
     <message>
       <extracomment>.groups[Signing Key].sectionName</extracomment>
@@ -352,10 +1822,70 @@
       <translation type="unfinished">Signing Key</translation>
     </message>
     <message>
+      <extracomment>.groups[Signing Key].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>signing</source>
+      <translation type="unfinished">signing</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Signing Key].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>encryption</source>
+      <translation type="unfinished">encryption</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Signing Key].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>key</source>
+      <translation type="unfinished">key</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Signing Key].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>security</source>
+      <translation type="unfinished">security</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Signing Key].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>mavlink2</source>
+      <translation type="unfinished">mavlink2</translation>
+    </message>
+    <message>
       <extracomment>.groups[Link Status].sectionName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
       <source>Link Status</source>
       <translation type="unfinished">Link Status</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Status].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>link status</source>
+      <translation type="unfinished">link status</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Status].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>packet loss</source>
+      <translation type="unfinished">packet loss</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Status].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>received</source>
+      <translation type="unfinished">received</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Status].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>sent</source>
+      <translation type="unfinished">sent</translation>
+    </message>
+    <message>
+      <extracomment>.groups[Link Status].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/UI/AppSettings/pages/Telemetry.SettingsUI.json"/>
+      <source>latency</source>
+      <translation type="unfinished">latency</translation>
     </message>
   </context>
   <context>
@@ -762,6 +2292,70 @@
   <context>
     <name>App.SettingsGroup.json</name>
     <message>
+      <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Tailors the interface to a specific firmware for a simpler experience.</source>
+      <translation type="unfinished">Tailors the interface to a specific firmware for a simpler experience.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>When set to a specific firmware type, the interface is streamlined for that firmware.</source>
+      <translation type="unfinished">When set to a specific firmware type, the interface is streamlined for that firmware.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].enumStrings</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>All,ArduPilot,PX4 Pro</source>
+      <translation type="unfinished">All,ArduPilot,PX4 Pro</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Preferred Firmware</source>
+      <translation type="unfinished">Preferred Firmware</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[preferredFirmwareClass].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>firmware,ardupilot,px4</source>
+      <translation type="unfinished">firmware,ardupilot,px4</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Tailors the interface to a specific vehicle type for a simpler experience.</source>
+      <translation type="unfinished">Tailors the interface to a specific vehicle type for a simpler experience.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>When set to a specific vehicle class, the interface is streamlined for that vehicle type.</source>
+      <translation type="unfinished">When set to a specific vehicle class, the interface is streamlined for that vehicle type.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].enumStrings</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>All,Fixed Wing,Multi-Rotor,VTOL,Rover,Sub</source>
+      <translation type="unfinished">All,Fixed Wing,Multi-Rotor,VTOL,Rover,Sub</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Preferred Vehicle</source>
+      <translation type="unfinished">Preferred Vehicle</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[preferredVehicleClass].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>vehicle,multirotor,fixed wing,vtol,rover,sub</source>
+      <translation type="unfinished">vehicle,multirotor,fixed wing,vtol,rover,sub</translation>
+    </message>
+    <message>
       <extracomment>.QGC.MetaData.Facts[offlineEditingFirmwareClass].shortDesc, .QGC.MetaData.Facts[offlineEditingFirmwareClass].label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Offline editing firmware class</source>
@@ -1000,14 +2594,14 @@
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].shortDesc</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
-      <source>Sets the verbosity of video streaming debug logging. Requires restart.</source>
-      <translation type="unfinished">Sets the verbosity of video streaming debug logging. Requires restart.</translation>
+      <source>Sets the verbosity of GStreamer debug logging.</source>
+      <translation type="unfinished">Sets the verbosity of GStreamer debug logging.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].longDesc</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
-      <source>Sets the environment variable GST_DEBUG for all pipeline elements on boot.</source>
-      <translation type="unfinished">Sets the environment variable GST_DEBUG for all pipeline elements on boot.</translation>
+      <source>Controls the GStreamer debug threshold for all pipeline elements. Changes take effect immediately.</source>
+      <translation type="unfinished">Controls the GStreamer debug threshold for all pipeline elements. Changes take effect immediately.</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[gstDebugLevel].enumStrings</extracomment>
@@ -1484,6 +3078,224 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Comma separated list of favorite parameter names.</source>
       <translation type="unfinished">Comma separated list of favorite parameter names.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingEnabled].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Enable remote log streaming</source>
+      <translation type="unfinished">Enable remote log streaming</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingEnabled].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Stream application logs to a remote endpoint.</source>
+      <translation type="unfinished">Stream application logs to a remote endpoint.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingEnabled].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote Logging</source>
+      <translation type="unfinished">Remote Logging</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingEnabled].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>remote,logging,stream</source>
+      <translation type="unfinished">remote,logging,stream</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingHost].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote logging host</source>
+      <translation type="unfinished">Remote logging host</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingHost].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>IP address or hostname of the remote log receiver.</source>
+      <translation type="unfinished">IP address or hostname of the remote log receiver.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingHost].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote Logging Host</source>
+      <translation type="unfinished">Remote Logging Host</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingHost].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>remote,logging,host</source>
+      <translation type="unfinished">remote,logging,host</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingPort].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote logging port</source>
+      <translation type="unfinished">Remote logging port</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingPort].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Port of the remote log receiver.</source>
+      <translation type="unfinished">Port of the remote log receiver.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingPort].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote Logging Port</source>
+      <translation type="unfinished">Remote Logging Port</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingPort].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>remote,logging,port</source>
+      <translation type="unfinished">remote,logging,port</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingProtocol].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote logging protocol</source>
+      <translation type="unfinished">Remote logging protocol</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingProtocol].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Transport protocol: 0=UDP, 1=TCP, 2=Auto (UDP with TCP fallback).</source>
+      <translation type="unfinished">Transport protocol: 0=UDP, 1=TCP, 2=Auto (UDP with TCP fallback).</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingProtocol].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote Logging Protocol</source>
+      <translation type="unfinished">Remote Logging Protocol</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingProtocol].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>remote,logging,protocol</source>
+      <translation type="unfinished">remote,logging,protocol</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingVehicleId].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Vehicle ID for remote logs</source>
+      <translation type="unfinished">Vehicle ID for remote logs</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingVehicleId].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Identifier included in remote log messages for multi-vehicle discrimination.</source>
+      <translation type="unfinished">Identifier included in remote log messages for multi-vehicle discrimination.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingVehicleId].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote Logging Vehicle ID</source>
+      <translation type="unfinished">Remote Logging Vehicle ID</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingVehicleId].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>remote,logging,vehicle</source>
+      <translation type="unfinished">remote,logging,vehicle</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingTlsEnabled].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Enable TLS encryption</source>
+      <translation type="unfinished">Enable TLS encryption</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingTlsEnabled].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Encrypt remote log connections using TLS.</source>
+      <translation type="unfinished">Encrypt remote log connections using TLS.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingTlsEnabled].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote Logging TLS</source>
+      <translation type="unfinished">Remote Logging TLS</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingTlsEnabled].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>remote,logging,tls</source>
+      <translation type="unfinished">remote,logging,tls</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingTlsVerifyPeer].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Verify TLS peer certificate</source>
+      <translation type="unfinished">Verify TLS peer certificate</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingTlsVerifyPeer].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Verify the remote server's TLS certificate.</source>
+      <translation type="unfinished">Verify the remote server's TLS certificate.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingTlsVerifyPeer].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Verify TLS Peer</source>
+      <translation type="unfinished">Verify TLS Peer</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingTlsVerifyPeer].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>remote,logging,tls,certificate</source>
+      <translation type="unfinished">remote,logging,tls,certificate</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingCompressionEnabled].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Enable log compression</source>
+      <translation type="unfinished">Enable log compression</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingCompressionEnabled].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Compress log messages before sending to the remote endpoint.</source>
+      <translation type="unfinished">Compress log messages before sending to the remote endpoint.</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingCompressionEnabled].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Remote Log Compression</source>
+      <translation type="unfinished">Remote Log Compression</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingCompressionEnabled].keywords, .QGC.MetaData.Facts[remoteLoggingCompressionLevel].keywords</extracomment>
+      <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>remote,logging,compression</source>
+      <translation type="unfinished">remote,logging,compression</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingCompressionLevel].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Compression level</source>
+      <translation type="unfinished">Compression level</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingCompressionLevel].longDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>zlib compression level (1=fast, 6=default, 9=best).</source>
+      <translation type="unfinished">zlib compression level (1=fast, 6=default, 9=best).</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[remoteLoggingCompressionLevel].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
+      <source>Compression Level</source>
+      <translation type="unfinished">Compression Level</translation>
     </message>
   </context>
   <context>
@@ -4646,6 +6458,12 @@
       <source>Imu temperature</source>
       <translation type="unfinished">Imu temperature</translation>
     </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rcRSSI].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/VehicleFact.json"/>
+      <source>RC RSSI</source>
+      <translation type="unfinished">RC RSSI</translation>
+    </message>
   </context>
   <context>
     <name>ClockFact.json</name>
@@ -4705,6 +6523,51 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/LocalPositionFact.json"/>
       <source>Vz</source>
       <translation type="unfinished">Vz</translation>
+    </message>
+  </context>
+  <context>
+    <name>RadioStatusFact.json</name>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[lrssi].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/RadioStatusFact.json"/>
+      <source>Local RSSI</source>
+      <translation type="unfinished">Local RSSI</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rrssi].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/RadioStatusFact.json"/>
+      <source>Remote RSSI</source>
+      <translation type="unfinished">Remote RSSI</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rxErrors].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/RadioStatusFact.json"/>
+      <source>RX Errors</source>
+      <translation type="unfinished">RX Errors</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[fixed].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/RadioStatusFact.json"/>
+      <source>Errors Fixed</source>
+      <translation type="unfinished">Errors Fixed</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[txBuffer].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/RadioStatusFact.json"/>
+      <source>TX Buffer</source>
+      <translation type="unfinished">TX Buffer</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[lNoise].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/RadioStatusFact.json"/>
+      <source>Local Noise</source>
+      <translation type="unfinished">Local Noise</translation>
+    </message>
+    <message>
+      <extracomment>.QGC.MetaData.Facts[rNoise].shortDesc</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/RadioStatusFact.json"/>
+      <source>Remote Noise</source>
+      <translation type="unfinished">Remote Noise</translation>
     </message>
   </context>
   <context>
@@ -5725,6 +7588,24 @@
       <translation type="unfinished">Return altitude:</translation>
     </message>
     <message>
+      <extracomment>.sections[Return to Launch].controls[2].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Loiter radius</source>
+      <translation type="unfinished">Loiter radius</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[3].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise</source>
+      <translation type="unfinished">0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Return to Launch].controls[4].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
+      <source>Auto land after RTL</source>
+      <translation type="unfinished">Auto land after RTL</translation>
+    </message>
+    <message>
       <extracomment>.sections[GeoFence].title, .sections[GeoFence].title</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>GeoFence</source>
@@ -5909,6 +7790,195 @@
       <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMFlightSafety.VehicleConfig.json"/>
       <source>Skip arming checks</source>
       <translation type="unfinished">Skip arming checks</translation>
+    </message>
+  </context>
+  <context>
+    <name>APMTuningCopter.VehicleConfig.json</name>
+    <message>
+      <extracomment>.sections[Flight Response].title</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Flight Response</source>
+      <translation type="unfinished">Flight Response</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>tuning</source>
+      <translation type="unfinished">tuning</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>pid</source>
+      <translation type="unfinished">pid</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>roll</source>
+      <translation type="unfinished">roll</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>pitch</source>
+      <translation type="unfinished">pitch</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>climb</source>
+      <translation type="unfinished">climb</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].keywords[5]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>sensitivity</source>
+      <translation type="unfinished">sensitivity</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].keywords[6]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>thrust</source>
+      <translation type="unfinished">thrust</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].keywords[7]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>motor</source>
+      <translation type="unfinished">motor</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].controls[0].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Roll/Pitch Sensitivity</source>
+      <translation type="unfinished">Roll/Pitch Sensitivity</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].controls[1].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Climb Sensitivity</source>
+      <translation type="unfinished">Climb Sensitivity</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].controls[2].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>RC Roll/Pitch Feel</source>
+      <translation type="unfinished">RC Roll/Pitch Feel</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].controls[3].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Spin While Armed</source>
+      <translation type="unfinished">Spin While Armed</translation>
+    </message>
+    <message>
+      <extracomment>.sections[Flight Response].controls[4].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Minimum Thrust</source>
+      <translation type="unfinished">Minimum Thrust</translation>
+    </message>
+    <message>
+      <extracomment>.sections[AutoTune].title</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>AutoTune</source>
+      <translation type="unfinished">AutoTune</translation>
+    </message>
+    <message>
+      <extracomment>.sections[AutoTune].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>autotune</source>
+      <translation type="unfinished">autotune</translation>
+    </message>
+    <message>
+      <extracomment>.sections[AutoTune].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>auto tune</source>
+      <translation type="unfinished">auto tune</translation>
+    </message>
+    <message>
+      <extracomment>.sections[AutoTune].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>axes</source>
+      <translation type="unfinished">axes</translation>
+    </message>
+    <message>
+      <extracomment>.sections[AutoTune].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>channel</source>
+      <translation type="unfinished">channel</translation>
+    </message>
+    <message>
+      <extracomment>.sections[AutoTune].keywords[4]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>switch</source>
+      <translation type="unfinished">switch</translation>
+    </message>
+    <message>
+      <extracomment>.sections[AutoTune].controls[0].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Axes to AutoTune</source>
+      <translation type="unfinished">Axes to AutoTune</translation>
+    </message>
+    <message>
+      <extracomment>.sections[AutoTune].controls[2].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Aggressiveness</source>
+      <translation type="unfinished">Aggressiveness</translation>
+    </message>
+    <message>
+      <extracomment>.sections[AutoTune].controls[3].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Minimum D gain</source>
+      <translation type="unfinished">Minimum D gain</translation>
+    </message>
+    <message>
+      <extracomment>.sections[In Flight Tuning].title</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>In Flight Tuning</source>
+      <translation type="unfinished">In Flight Tuning</translation>
+    </message>
+    <message>
+      <extracomment>.sections[In Flight Tuning].keywords[0]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>in flight tuning</source>
+      <translation type="unfinished">in flight tuning</translation>
+    </message>
+    <message>
+      <extracomment>.sections[In Flight Tuning].keywords[1]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>tune</source>
+      <translation type="unfinished">tune</translation>
+    </message>
+    <message>
+      <extracomment>.sections[In Flight Tuning].keywords[2]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>channel 6</source>
+      <translation type="unfinished">channel 6</translation>
+    </message>
+    <message>
+      <extracomment>.sections[In Flight Tuning].keywords[3]</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>rc tuning</source>
+      <translation type="unfinished">rc tuning</translation>
+    </message>
+    <message>
+      <extracomment>.sections[In Flight Tuning].controls[0].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>RC Channel 6 Option (Tuning)</source>
+      <translation type="unfinished">RC Channel 6 Option (Tuning)</translation>
+    </message>
+    <message>
+      <extracomment>.sections[In Flight Tuning].controls[1].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Min</source>
+      <translation type="unfinished">Min</translation>
+    </message>
+    <message>
+      <extracomment>.sections[In Flight Tuning].controls[2].label</extracomment>
+      <location filename="/Users/don/repos/qgroundcontrol/src/AutoPilotPlugins/APM/VehicleConfig/APMTuningCopter.VehicleConfig.json"/>
+      <source>Max</source>
+      <translation type="unfinished">Max</translation>
     </message>
   </context>
   <context>

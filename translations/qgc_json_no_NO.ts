@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="fr" sourcelanguage="en">
+<TS version="2.1" language="no" sourcelanguage="en">
   <context>
     <name>GimbalFact.json</name>
     <message>
@@ -2733,7 +2733,7 @@
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/Settings/App.SettingsGroup.json"/>
       <source>Indoor,Outdoor</source>
-      <translation>Intérieur, Extérieur</translation>
+      <translation type="unfinished">Indoor,Outdoor</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[indoorPalette].label</extracomment>
@@ -3524,7 +3524,7 @@
       <extracomment>.QGC.MetaData.Defines.StreamRateEnumStrings</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/Settings/APMMavlinkStreamRate.SettingsGroup.json"/>
       <source>Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</source>
-      <translation>Contrôlé par le véhicule,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
+      <translation type="unfinished">Controlled By Vehicle,0 hz,1 hz,2 hz,3 hz,4 hz,5 hz,6 hz,7 hz,8 hz,9 hz,10 hz,50 hz,100 hz</translation>
     </message>
   </context>
   <context>
@@ -6271,7 +6271,7 @@
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Disabled,Enabled</source>
-      <translation>Activer,Désactiver</translation>
+      <translation type="unfinished">Disabled,Enabled</translation>
     </message>
     <message>
       <extracomment>.QGC.MetaData.Facts[rangefinderDistance].shortDesc</extracomment>
@@ -6296,7 +6296,7 @@
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/Vehicle/FactGroups/SubmarineFact.json"/>
       <source>Disabled,Enabled,Unavailable</source>
-      <translation>Désactivé,Activé,Indisponible</translation>
+      <translation type="unfinished">Disabled,Enabled,Unavailable</translation>
     </message>
   </context>
   <context>
@@ -9159,55 +9159,55 @@
       <extracomment>.mavCmdInfo[HomeRaw].friendlyName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Home Position</source>
-      <translation>Position de départ</translation>
+      <translation type="unfinished">Home Position</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].description</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Planned home position for mission.</source>
-      <translation>Position d'origine prévue pour la mission</translation>
+      <translation type="unfinished">Planned home position for mission.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].category, .mavCmdInfo[MAV_CMD_NAV_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].category, .mavCmdInfo[MAV_CMD_NAV_LAND].category, .mavCmdInfo[MAV_CMD_NAV_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].category, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].category, .mavCmdInfo[MAV_CMD_CONDITION_DELAY].category</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Basic</source>
-      <translation>Élémentaire</translation>
+      <translation type="unfinished">Basic</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param5.label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Latitude</source>
-      <translation>Latitude</translation>
+      <translation type="unfinished">Latitude</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[HomeRaw].param6.label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Longitude</source>
-      <translation>Longitude</translation>
+      <translation type="unfinished">Longitude</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].friendlyName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Waypoint</source>
-      <translation>Repère</translation>
+      <translation type="unfinished">Waypoint</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].description</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Travel to a position in 3D space.</source>
-      <translation>Se diriger vers une position dans l'espace 3D.</translation>
+      <translation type="unfinished">Travel to a position in 3D space.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_SPLINE_WAYPOINT].param1.label, .mavCmdInfo[MAV_CMD_NAV_DELAY].param1.label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Hold</source>
-      <translation>Maintenir</translation>
+      <translation type="unfinished">Hold</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param2.label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Acceptance</source>
-      <translation>Acceptation</translation>
+      <translation type="unfinished">Acceptance</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param3.label</extracomment>
@@ -9219,13 +9219,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_WAYPOINT].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param4.label, .mavCmdInfo[MAV_CMD_NAV_LAND].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_TAKEOFF].param4.label, .mavCmdInfo[MAV_CMD_NAV_VTOL_LAND].param4.label, .mavCmdInfo[MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW].param2.label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Yaw</source>
-      <translation>Axe de lacet</translation>
+      <translation type="unfinished">Yaw</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].friendlyName, .mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].category, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].category</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter</source>
-      <translation>Attendre</translation>
+      <translation type="unfinished">Loiter</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].description</extracomment>
@@ -9237,7 +9237,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_UNLIM].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param3.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param2.label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Radius</source>
-      <translation>Rayon</translation>
+      <translation type="unfinished">Radius</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].friendlyName</extracomment>
@@ -9255,7 +9255,7 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param1.label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Turns</source>
-      <translation>Tours</translation>
+      <translation type="unfinished">Turns</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param2.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param1.label</extracomment>
@@ -9274,20 +9274,20 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.label, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Exit loiter from</source>
-      <translation>Quitter l'attente de</translation>
+      <translation type="unfinished">Exit loiter from</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TURNS].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].param4.enumStrings, .mavCmdInfo[MAV_CMD_NAV_LOITER_TO_ALT].param4.enumStrings</extracomment>
       <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Center,Tangent</source>
-      <translation>Centre,Tangente</translation>
+      <translation type="unfinished">Center,Tangent</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].friendlyName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Loiter (time)</source>
-      <translation>Vol d'attente (durée)</translation>
+      <translation type="unfinished">Loiter (time)</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LOITER_TIME].description</extracomment>
@@ -9312,31 +9312,31 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].friendlyName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Return To Launch</source>
-      <translation>Retour au Point de Décollage (RTL)</translation>
+      <translation type="unfinished">Return To Launch</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_RETURN_TO_LAUNCH].description</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Send the vehicle back to the launch position.</source>
-      <translation>Renvoyez le véhicule à la position de décollage.</translation>
+      <translation type="unfinished">Send the vehicle back to the launch position.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].friendlyName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land</source>
-      <translation>Atterir</translation>
+      <translation type="unfinished">Land</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].description</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Land vehicle at the specified location.</source>
-      <translation>Faire atterrir le véhicule à la position indiquée.</translation>
+      <translation type="unfinished">Land vehicle at the specified location.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param1.label</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Abort Alt</source>
-      <translation>Abandonner Alt</translation>
+      <translation type="unfinished">Abort Alt</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND].param2.label</extracomment>
@@ -9355,13 +9355,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].friendlyName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Takeoff</source>
-      <translation>Décollage</translation>
+      <translation type="unfinished">Takeoff</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_TAKEOFF].description</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Launch from the ground and travel towards the specified takeoff position.</source>
-      <translation>Départ depuis le sol et déplacement vers la position de décollage spécifiée.</translation>
+      <translation type="unfinished">Launch from the ground and travel towards the specified takeoff position.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_NAV_LAND_LOCAL].friendlyName</extracomment>
@@ -9716,13 +9716,13 @@
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].friendlyName</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode</source>
-      <translation>Sélection du Mode de vol</translation>
+      <translation type="unfinished">Set flight mode</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].description</extracomment>
       <location filename="/Users/don/repos/qgroundcontrol/src/MissionManager/MavCmdInfoCommon.json"/>
       <source>Set flight mode.</source>
-      <translation>Sélection du Mode de vol</translation>
+      <translation type="unfinished">Set flight mode.</translation>
     </message>
     <message>
       <extracomment>.mavCmdInfo[MAV_CMD_DO_SET_MODE].param2.label</extracomment>
