@@ -18,7 +18,7 @@ Options:
     --type TYPE           Build type: release or debug (default: release)
     --prefix DIR          Install prefix
     --work-dir DIR        Working directory for source
-    --qt-prefix DIR       Qt installation path (for qml6 plugin)
+    --qt-prefix DIR       Qt installation path (added to PKG_CONFIG_PATH)
     --jobs N              Parallel jobs (default: auto)
     --clean               Clean build directory before building
     --simulator           iOS simulator build (iOS only)

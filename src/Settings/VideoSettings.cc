@@ -2,6 +2,7 @@
 #include "VideoManager.h"
 
 #include "QGCLoggingCategory.h"
+#include <QtCore/QSettings>
 #include <QtCore/QVariantList>
 
 QGC_LOGGING_CATEGORY(VideoSettingsLog, "Settings.VideoSettings")
@@ -59,6 +60,22 @@ DECLARE_SETTINGGROUP(Video, "Video")
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceCookedList, videoSourceList);
 
     _setForceVideoDecodeList();
+
+    // Migrate legacy gpuZeroCopyEnabled (pre-rename) into the new force-CPU semantics.
+    {
+        QSettings settings;
+        settings.beginGroup(settingsGroup);
+        const bool hasLegacy = settings.contains(QStringLiteral("gpuZeroCopyEnabled"));
+        const bool hasNew    = settings.contains(forceCpuVideoPathName);
+        if (hasLegacy) {
+            if (!hasNew) {
+                const bool gpuZeroCopy = settings.value(QStringLiteral("gpuZeroCopyEnabled")).toBool();
+                forceCpuVideoPath()->setRawValue(!gpuZeroCopy);
+            }
+            settings.remove(QStringLiteral("gpuZeroCopyEnabled"));
+        }
+        settings.endGroup();
+    }
 
     // Set default value for videoSource
     _setDefaults();
@@ -122,6 +139,49 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, lowLatencyMode)
         connect(_lowLatencyModeFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _lowLatencyModeFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceCpuVideoPath)
+{
+    if (!_forceCpuVideoPathFact) {
+        _forceCpuVideoPathFact = _createSettingsFact(forceCpuVideoPathName);
+
+#if defined(QGC_HAS_ANY_GPU_PATH)
+        _forceCpuVideoPathFact->setUserVisible(kGstEnabled);
+#else
+        _forceCpuVideoPathFact->setUserVisible(false);
+#endif
+    }
+    return _forceCpuVideoPathFact;
+}
+
+// videoConversionElement / disablePixelAspectRatio are read by GStreamer::createVideoSink()
+// at bin construction and passed as construct-only properties — no env-var indirection.
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoConversionElement)
+{
+    if (!_videoConversionElementFact) {
+        _videoConversionElementFact = _createSettingsFact(videoConversionElementName);
+        _videoConversionElementFact->setUserVisible(kGstEnabled);
+    }
+    return _videoConversionElementFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, disablePixelAspectRatio)
+{
+    if (!_disablePixelAspectRatioFact) {
+        _disablePixelAspectRatioFact = _createSettingsFact(disablePixelAspectRatioName);
+        _disablePixelAspectRatioFact->setUserVisible(kGstEnabled);
+    }
+    return _disablePixelAspectRatioFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, frameSmoothingEnabled)
+{
+    if (!_frameSmoothingEnabledFact) {
+        _frameSmoothingEnabledFact = _createSettingsFact(frameSmoothingEnabledName);
+        _frameSmoothingEnabledFact->setUserVisible(kGstEnabled);
+    }
+    return _frameSmoothingEnabledFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspTimeout)

@@ -42,7 +42,7 @@
         },
         {
             "heading": "Settings",
-            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed"],
+            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy"],
             "showWhen": "!sourceDisabled",
             "controls": [
                 {
@@ -56,6 +56,10 @@
                 {
                     "setting": "videoSettings.lowLatencyMode",
                     "showWhen": "!autoStreamConfig && isStreamSource && isGST"
+                },
+                {
+                    "setting": "videoSettings.forceCpuVideoPath",
+                    "showWhen": "isGST && QGroundControl.settingsManager.videoSettings.forceCpuVideoPath.userVisible"
                 },
                 {
                     "setting": "videoSettings.forceVideoDecoder"

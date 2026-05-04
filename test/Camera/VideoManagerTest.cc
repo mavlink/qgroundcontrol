@@ -7,7 +7,7 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "VideoManager.h"
 
-void VideoManagerTest::_gstQt6VideoItemQmlTypeAvailableInUnitTestMode_test()
+void VideoManagerTest::_videoOutputQmlTypeAvailableInUnitTestMode_test()
 {
     static constexpr auto envName = "QGC_TEST_ENABLE_GSTREAMER";
     TestFixtures::EnvVarFixture envBackup(envName);
@@ -19,9 +19,9 @@ void VideoManagerTest::_gstQt6VideoItemQmlTypeAvailableInUnitTestMode_test()
 
     component.setData(R"QML(
 import QtQuick
-import org.freedesktop.gstreamer.Qt6GLVideoItem 1.0
+import QtMultimedia
 
-GstGLQt6VideoItem {
+VideoOutput {
     width: 32
     height: 24
 }
@@ -36,4 +36,3 @@ GstGLQt6VideoItem {
 }
 
 UT_REGISTER_TEST(VideoManagerTest, TestLabel::Unit)
-

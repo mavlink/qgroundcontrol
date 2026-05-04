@@ -1,7 +1,4 @@
-# ============================================================================
-# GStreamer Integration Tests
-# Requires GStreamer runtime; tests skip gracefully when GST is disabled.
-# ============================================================================
+# TODO: QGC tests universally add to ${CMAKE_PROJECT_NAME} (test/Vehicle/, test/MissionManager/); a dedicated target would require reworking the whole test framework.
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE

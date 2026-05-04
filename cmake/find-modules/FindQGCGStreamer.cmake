@@ -623,7 +623,6 @@ macro(_qgc_discover_ios_sdk)
         set(GSTREAMER_PLUGIN_PATH "${_xcfw_slice_dir}")
 
         _gst_normalize_and_validate_root()
-        return()
     endif()
 
     # ── Classic .framework path ───────────────────────────────────────────────
@@ -652,11 +651,33 @@ macro(_qgc_discover_ios_sdk)
             endif()
         endforeach()
     endif()
+    # 1.28+ embeds everything in the framework binary — no lib/ subdir exists.
+    if(NOT EXISTS "${GSTREAMER_LIB_PATH}")
+        set(GSTREAMER_LIB_PATH    "${GStreamer_ROOT_DIR}")
+        set(GSTREAMER_PLUGIN_PATH "${GStreamer_ROOT_DIR}")
+    endif()
 
-    _qgc_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
-    _gst_configure_pkg_config(
-        LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
-    )
+    # When no pkgconfig dir is present the framework is a single fat binary (1.28+
+    # Cerbero layout); reuse the xcframework target-creation path which already handles
+    # this: no pkg-config queries, direct link of the binary, system framework deps.
+    if(NOT EXISTS "${GSTREAMER_LIB_PATH}/pkgconfig")
+        # The framework binary lives at Versions/1.0/<FrameworkName> (= GStreamer_ROOT_DIR/GStreamer).
+        set(GSTREAMER_XCFRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
+        set(GSTREAMER_XCFRAMEWORK_LIB  "${GStreamer_ROOT_DIR}/GStreamer")
+        set(GSTREAMER_INCLUDE_PATH     "${GSTREAMER_FRAMEWORK_PATH}/Headers")
+        # Point synthetic lib/plugin paths at the root so downstream existence checks pass.
+        set(GSTREAMER_LIB_PATH    "${GStreamer_ROOT_DIR}")
+        set(GSTREAMER_PLUGIN_PATH "${GStreamer_ROOT_DIR}")
+        set(GStreamer_USE_XCFRAMEWORK ON)
+        _gst_normalize_and_validate_root()
+    endif()
+
+    if(NOT GStreamer_USE_XCFRAMEWORK)  # xcframework has no .pc files; target already created
+        _qgc_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
+        _gst_configure_pkg_config(
+            LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
+        )
+    endif()
 endmacro()
 
 # Dispatch to the appropriate platform discovery macro
@@ -756,8 +777,12 @@ if(NOT DEFINED GSTREAMER_EXTRA_DEPS)
     endif()
 endif()
 
+# Default plugin set assumes the videoconvert→appsink rendering path used everywhere.
+# The base opengl / d3d11 plugins are kept because GStreamer auto-plugs gldownload /
+# d3d11download when hardware decoders produce GPU memory.
 if(NOT DEFINED GSTREAMER_PLUGINS)
     set(GSTREAMER_PLUGINS
+        app
         coreelements
         isomp4
         libav
@@ -775,15 +800,12 @@ if(NOT DEFINED GSTREAMER_PLUGINS)
         udp
         videoparsersbad
         vpx
+        # gst >=1.22 split: only the one matching the SDK gets a target; #ifdef in GStreamer.cc picks it.
+        videoconvertscale
+        videoconvert
+        videoscale
     )
-    # Deferred on Linux — actual version may differ from the minimum (see finalization below)
-    if(NOT LINUX)
-        if(GStreamer_FIND_VERSION VERSION_GREATER_EQUAL "1.22")
-            list(APPEND GSTREAMER_PLUGINS videoconvertscale)
-        else()
-            list(APPEND GSTREAMER_PLUGINS videoconvert videoscale)
-        endif()
-    endif()
+    # Deferred for all platforms — GStreamer_VERSION is populated after find_package(GStreamer) below.
     if(ANDROID)
         list(APPEND GSTREAMER_PLUGINS androidmedia dav1d)
     elseif(APPLE)
@@ -840,12 +862,18 @@ if(GStreamer_USE_XCFRAMEWORK)
         target_link_libraries(GStreamer::GStreamer INTERFACE
             GStreamer_static
         )
-        target_include_directories(GStreamer::GStreamer INTERFACE
-            "${GSTREAMER_INCLUDE_PATH}"
-            "${GSTREAMER_INCLUDE_PATH}/gstreamer-1.0"
-            "${GSTREAMER_INCLUDE_PATH}/glib-2.0"
-        )
+        # iOS .framework has flat Headers/; macOS-style installs have the gstreamer-1.0 /
+        # glib-2.0 subdirs. Add only what exists — INTERFACE_INCLUDE_DIRECTORIES is validated.
+        target_include_directories(GStreamer::GStreamer INTERFACE "${GSTREAMER_INCLUDE_PATH}")
+        foreach(_inc_sub IN ITEMS gstreamer-1.0 glib-2.0)
+            if(IS_DIRECTORY "${GSTREAMER_INCLUDE_PATH}/${_inc_sub}")
+                target_include_directories(GStreamer::GStreamer INTERFACE "${GSTREAMER_INCLUDE_PATH}/${_inc_sub}")
+            endif()
+        endforeach()
         # System frameworks required by GStreamer on iOS.
+        # Note: gstreamer-ios 1.28+ bundles libass (CoreText), MoltenVK (Metal/IOSurface/QuartzCore),
+        # applemedia iosassetsrc (AssetsLibrary), and EAGL/CAMetalLayer (QuartzCore) — all of which
+        # demand additional system frameworks at the *consumer* link step.
         find_library(_xcfw_foundation     Foundation     REQUIRED)
         find_library(_xcfw_avfoundation   AVFoundation   REQUIRED)
         find_library(_xcfw_audiotoolbox   AudioToolbox   REQUIRED)
@@ -858,6 +886,13 @@ if(GStreamer_USE_XCFRAMEWORK)
         find_library(_xcfw_opengles       OpenGLES       REQUIRED)
         find_library(_xcfw_uikit          UIKit          REQUIRED)
         find_library(_xcfw_corefoundation CoreFoundation REQUIRED)
+        find_library(_xcfw_coretext       CoreText       REQUIRED)
+        find_library(_xcfw_iosurface      IOSurface      REQUIRED)
+        find_library(_xcfw_metal          Metal          REQUIRED)
+        find_library(_xcfw_quartzcore     QuartzCore     REQUIRED)
+        # AssetsLibrary is deprecated since iOS 9 but the headers/lib are still present;
+        # libgstapplemedia iosassetsrc references _OBJC_CLASS_$_ALAssetsLibrary.
+        find_library(_xcfw_assetslibrary  AssetsLibrary)
         target_link_libraries(GStreamer::GStreamer INTERFACE
             "${_xcfw_foundation}"
             "${_xcfw_avfoundation}"
@@ -871,8 +906,25 @@ if(GStreamer_USE_XCFRAMEWORK)
             "${_xcfw_opengles}"
             "${_xcfw_uikit}"
             "${_xcfw_corefoundation}"
+            "${_xcfw_coretext}"
+            "${_xcfw_iosurface}"
+            "${_xcfw_metal}"
+            "${_xcfw_quartzcore}"
             "-lresolv" "-liconv" "-lz" "-lbz2"
         )
+        if(_xcfw_assetslibrary)
+            target_link_libraries(GStreamer::GStreamer INTERFACE "${_xcfw_assetslibrary}")
+        else()
+            # If AssetsLibrary truly isn't present in the SDK, weak-link by name so dyld
+            # tolerates absence at load time (iosassetsrc is not invoked by QGC).
+            target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-weak_framework,AssetsLibrary")
+        endif()
+        # gstreamer-ios 1.28 bundles many Rust-built static libs (gst-plugins-rs); each contributes
+        # a `_rust_eh_personality` reference and Mach-O compact unwind can encode only ~4 unique
+        # personalities. Switch to DWARF unwind tables to sidestep the limit. Slightly larger
+        # binary; runtime perf impact is negligible (only used during exception unwinding, and
+        # GStreamer doesn't throw C++ exceptions across its API surface).
+        target_link_options(GStreamer::GStreamer INTERFACE "-Wl,-no_compact_unwind")
         target_compile_definitions(GStreamer::GStreamer INTERFACE
             QGC_GST_STATIC_BUILD
         )
@@ -888,6 +940,11 @@ if(GStreamer_USE_XCFRAMEWORK)
         unset(_xcfw_opengles CACHE)
         unset(_xcfw_uikit CACHE)
         unset(_xcfw_corefoundation CACHE)
+        unset(_xcfw_coretext CACHE)
+        unset(_xcfw_iosurface CACHE)
+        unset(_xcfw_metal CACHE)
+        unset(_xcfw_quartzcore CACHE)
+        unset(_xcfw_assetslibrary CACHE)
     endif()
 
     # All API component targets alias the single mega-library.
@@ -917,15 +974,25 @@ if(GStreamer_USE_XCFRAMEWORK)
         endif()
         string(REGEX MATCHALL "_gst_plugin_[A-Za-z0-9_]+_get_desc" _xcfw_descs "${_xcfw_nm_out}")
         list(REMOVE_DUPLICATES _xcfw_descs)
+        # Plugins whose dependent static libraries aren't bundled in the iOS xcframework.
+        # Auto-registering them would cause unresolved-symbol link failures on the consumer.
+        # x265: gstreamer-ios 1.28.1 ships libgstx265.a but not libx265.a (libx265 was likely
+        # filtered as a permissive-licensed CPU encoder QGC doesn't need on iOS).
+        set(_xcfw_skip_plugins x265)
         set(_xcfw_decl "")
         set(_xcfw_reg  "")
+        set(_xcfw_used 0)
         foreach(_sym IN LISTS _xcfw_descs)
             string(REGEX REPLACE "^_gst_plugin_(.+)_get_desc$" "\\1" _name "${_sym}")
+            if(_name IN_LIST _xcfw_skip_plugins)
+                continue()
+            endif()
             string(APPEND _xcfw_decl "GST_PLUGIN_STATIC_DECLARE(${_name});\n")
             string(APPEND _xcfw_reg  "    GST_PLUGIN_STATIC_REGISTER(${_name});\n")
+            math(EXPR _xcfw_used "${_xcfw_used} + 1")
         endforeach()
         list(LENGTH _xcfw_descs _xcfw_n)
-        message(STATUS "GStreamer xcframework: registering ${_xcfw_n} static plugins")
+        message(STATUS "GStreamer xcframework: registering ${_xcfw_used}/${_xcfw_n} static plugins (skipped: ${_xcfw_skip_plugins})")
         set(GST_STATIC_PLUGIN_DECLARES "${_xcfw_decl}")
         set(GST_STATIC_PLUGIN_REGISTERS "${_xcfw_reg}")
 
@@ -1052,15 +1119,6 @@ foreach(plugin IN LISTS GSTREAMER_PLUGINS)
     endif()
 endforeach()
 
-if(LINUX AND NOT "videoconvertscale" IN_LIST GSTREAMER_PLUGINS
-        AND NOT "videoconvert" IN_LIST GSTREAMER_PLUGINS)
-    if(GStreamer_VERSION VERSION_GREATER_EQUAL "1.22")
-        list(APPEND GSTREAMER_PLUGINS videoconvertscale)
-    else()
-        list(APPEND GSTREAMER_PLUGINS videoconvert videoscale)
-    endif()
-endif()
-
 if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_XCFRAMEWORK AND EXISTS "${GSTREAMER_PLUGIN_PATH}")
     set(_gst_missing_plugins)
     if(WIN32)
@@ -1084,7 +1142,18 @@ if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_XCFRAMEWORK AND EXISTS "$
         endif()
     endforeach()
     list(REMOVE_DUPLICATES _gst_available_basenames)
+    # videoconvert(scale)/videoscale alternate — only one ships per gst version; don't warn on the absent ones.
+    set(_gst_alternate_satisfied FALSE)
+    if("videoconvertscale" IN_LIST _gst_available_basenames
+            OR ("videoconvert" IN_LIST _gst_available_basenames
+                AND "videoscale" IN_LIST _gst_available_basenames))
+        set(_gst_alternate_satisfied TRUE)
+    endif()
     foreach(_plugin IN LISTS GSTREAMER_PLUGINS)
+        if(_gst_alternate_satisfied
+                AND _plugin MATCHES "^(videoconvertscale|videoconvert|videoscale)$")
+            continue()
+        endif()
         if(NOT _plugin IN_LIST _gst_available_basenames)
             list(APPEND _gst_missing_plugins "${_plugin}")
         endif()
@@ -1096,14 +1165,74 @@ if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_XCFRAMEWORK AND EXISTS "$
     endif()
 endif()
 
-if(GStreamer_VERSION AND TARGET GStreamer::GStreamer)
+if(GStreamer_VERSION)
     string(REGEX MATCH "^([0-9]+)\\.([0-9]+)" _gst_ver_match "${GStreamer_VERSION}")
     if(_gst_ver_match)
-        target_compile_definitions(GStreamer::GStreamer INTERFACE
-            QGC_GST_BUILD_VERSION_MAJOR=${CMAKE_MATCH_1}
-            QGC_GST_BUILD_VERSION_MINOR=${CMAKE_MATCH_2}
-        )
+        # Mobile (iOS/Android) builds consume GStreamerMobile (alias GStreamer::mobile) instead
+        # of GStreamer::GStreamer, so propagate the version defines to whichever exists.
+        foreach(_gst_target IN ITEMS GStreamer::GStreamer GStreamerMobile)
+            if(TARGET ${_gst_target})
+                # target_compile_definitions can't be called on ALIAS targets — resolve first.
+                get_target_property(_gst_aliased ${_gst_target} ALIASED_TARGET)
+                if(_gst_aliased)
+                    set(_gst_real ${_gst_aliased})
+                else()
+                    set(_gst_real ${_gst_target})
+                endif()
+                target_compile_definitions(${_gst_real} INTERFACE
+                    QGC_GST_BUILD_VERSION_MAJOR=${CMAKE_MATCH_1}
+                    QGC_GST_BUILD_VERSION_MINOR=${CMAKE_MATCH_2}
+                )
+            endif()
+        endforeach()
     endif()
+endif()
+
+# GstVideoOrientationMeta is officially in 1.26+, but bundled iOS/Android SDKs sometimes
+# strip it. Feature-test the actual header instead of trusting the version number.
+include(CheckCXXSourceCompiles)
+foreach(_gst_target IN ITEMS GStreamer::GStreamer GStreamerMobile)
+    if(TARGET ${_gst_target})
+        set(CMAKE_REQUIRED_LIBRARIES_BACKUP "${CMAKE_REQUIRED_LIBRARIES}")
+        set(CMAKE_REQUIRED_LIBRARIES ${_gst_target})
+        check_cxx_source_compiles("
+            #include <gst/video/gstvideometa.h>
+            int main() { GstVideoOrientationMeta *m = nullptr; (void)m; return 0; }
+        " QGC_GST_HAS_VIDEO_ORIENTATION_META_${_gst_target})
+        set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BACKUP}")
+        if(QGC_GST_HAS_VIDEO_ORIENTATION_META_${_gst_target})
+            get_target_property(_gst_aliased ${_gst_target} ALIASED_TARGET)
+            if(_gst_aliased)
+                set(_gst_real ${_gst_aliased})
+            else()
+                set(_gst_real ${_gst_target})
+            endif()
+            target_compile_definitions(${_gst_real} INTERFACE
+                QGC_HAS_GST_VIDEO_ORIENTATION_META=1)
+        endif()
+    endif()
+endforeach()
+
+# Zero-copy DMABuf GPU path (Linux only). Requires gst-allocators and Qt's
+# private QHwVideoBuffer header. Both are detected here and the combined
+# QGC_HAS_GST_DMABUF_GPU_PATH define is exposed to consumers via
+# target_compile_definitions on the QGCGStreamerDmaBufFeature interface target
+# below — the feature consumer picks it up by linking that target.
+if(LINUX)
+    foreach(_gst_target IN ITEMS GStreamer::GStreamer GStreamerMobile)
+        if(TARGET ${_gst_target})
+            set(CMAKE_REQUIRED_LIBRARIES_BACKUP "${CMAKE_REQUIRED_LIBRARIES}")
+            set(CMAKE_REQUIRED_LIBRARIES ${_gst_target})
+            check_cxx_source_compiles("
+                #include <gst/allocators/gstdmabuf.h>
+                int main() { (void)gst_is_dmabuf_memory; return 0; }
+            " QGC_GST_HAS_DMABUF_${_gst_target})
+            set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BACKUP}")
+            if(QGC_GST_HAS_DMABUF_${_gst_target})
+                set(QGC_GST_HAS_DMABUF TRUE)
+            endif()
+        endif()
+    endforeach()
 endif()
 
 include(FindPackageHandleStandardArgs)

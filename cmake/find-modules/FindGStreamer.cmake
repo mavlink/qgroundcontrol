@@ -33,8 +33,20 @@ Configuration Variables
 
 #]=======================================================================]
 
+# Short-circuit only when every currently-requested component already has a target;
+# otherwise re-run so a later find_package(... COMPONENTS NewOne) can populate the
+# new GStreamer::NewOne target instead of silently inheriting the cached _FOUND.
 if (GStreamer_FOUND)
-    return()
+    set(_gst_all_present TRUE)
+    foreach(_gst_c IN LISTS GStreamer_FIND_COMPONENTS)
+        if (NOT TARGET GStreamer::${_gst_c})
+            set(_gst_all_present FALSE)
+            break()
+        endif()
+    endforeach()
+    if (_gst_all_present)
+        return()
+    endif()
 endif()
 
 if (NOT GStreamer_ROOT_DIR OR NOT EXISTS "${GStreamer_ROOT_DIR}")
@@ -137,8 +149,8 @@ endif()
 # _gst_IGNORED_SYSTEM_LIBRARIES and _gst_SRT_REGEX_PATCH are defined in GStreamerHelpers.cmake
 
 if(PC_GStreamer_FOUND AND (NOT TARGET GStreamer::GStreamer))
-    add_library(GStreamer::GStreamer INTERFACE IMPORTED)
-    add_library(GStreamer::deps INTERFACE IMPORTED)
+    add_library(GStreamer::GStreamer INTERFACE IMPORTED GLOBAL)
+    add_library(GStreamer::deps INTERFACE IMPORTED GLOBAL)
 
     if (GStreamer_USE_STATIC_LIBS)
         _gst_filter_missing_directories(PC_GStreamer_STATIC_INCLUDE_DIRS)

@@ -4,10 +4,17 @@
 #include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 #include "GstVideoReceiver.h"
+#include "SettingsManager.h"
+#include "VideoSettings.h"
+#include "Fact.h"
 
-#ifdef Q_OS_MACOS
 #include "GstAppSinkAdapter.h"
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+#  include "HwBuffers/GstGlContextBridge.h"
 #endif
+
+#include <QtGui/QGuiApplication>
+#include <QtGui/QScreen>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
@@ -26,8 +33,8 @@
 
 #include <gst/gst.h>
 
-QGC_LOGGING_CATEGORY(GStreamerLog, "VideoManager.GStreamer.GStreamer")
-QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "VideoManager.GStreamer.GStreamer.DecoderRanks")
+QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
+QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamer.GStreamer.DecoderRanks")
 
 #ifdef Q_OS_IOS
 extern "C" {
@@ -38,12 +45,12 @@ void gst_ios_post_init(void);
 
 G_BEGIN_DECLS
 #ifdef QGC_GST_STATIC_BUILD
+GST_PLUGIN_STATIC_DECLARE(app);
 GST_PLUGIN_STATIC_DECLARE(coreelements);
 GST_PLUGIN_STATIC_DECLARE(isomp4);
 GST_PLUGIN_STATIC_DECLARE(libav);
 GST_PLUGIN_STATIC_DECLARE(matroska);
 GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
-GST_PLUGIN_STATIC_DECLARE(opengl);
 GST_PLUGIN_STATIC_DECLARE(openh264);
 GST_PLUGIN_STATIC_DECLARE(playback);
 GST_PLUGIN_STATIC_DECLARE(rtp);
@@ -53,10 +60,16 @@ GST_PLUGIN_STATIC_DECLARE(sdpelem);
 GST_PLUGIN_STATIC_DECLARE(tcp);
 GST_PLUGIN_STATIC_DECLARE(typefindfunctions);
 GST_PLUGIN_STATIC_DECLARE(udp);
-#if defined(QGC_GST_BUILD_VERSION_MAJOR) && (QGC_GST_BUILD_VERSION_MAJOR > 1 || QGC_GST_BUILD_VERSION_MINOR >= 22)
+// gst 1.22 merged videoconvert+videoscale into videoconvertscale, but custom/embedded
+// gst builds may keep the legacy split. FindQGCGStreamer.cmake exports GST_PLUGIN_<name>_FOUND
+// so we declare against what the linker actually has, not a version assumption.
+#ifdef GST_PLUGIN_videoconvertscale_FOUND
 GST_PLUGIN_STATIC_DECLARE(videoconvertscale);
-#else
+#endif
+#ifdef GST_PLUGIN_videoconvert_FOUND
 GST_PLUGIN_STATIC_DECLARE(videoconvert);
+#endif
+#ifdef GST_PLUGIN_videoscale_FOUND
 GST_PLUGIN_STATIC_DECLARE(videoscale);
 #endif
 GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
@@ -97,10 +110,6 @@ GST_PLUGIN_STATIC_DECLARE(vulkan);
 #endif
 #endif
 
-GST_PLUGIN_STATIC_DECLARE(qml6);
-#ifdef QGC_GST_D3D11_SINK
-GST_PLUGIN_STATIC_DECLARE(qt6d3d11);
-#endif
 GST_PLUGIN_STATIC_DECLARE(qgc);
 G_END_DECLS
 
@@ -116,12 +125,12 @@ static QString s_envPathsError;
 void _registerPlugins()
 {
 #ifdef QGC_GST_STATIC_BUILD
+    GST_PLUGIN_STATIC_REGISTER(app);
     GST_PLUGIN_STATIC_REGISTER(coreelements);
     GST_PLUGIN_STATIC_REGISTER(isomp4);
     GST_PLUGIN_STATIC_REGISTER(libav);
     GST_PLUGIN_STATIC_REGISTER(matroska);
     GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
-    GST_PLUGIN_STATIC_REGISTER(opengl);
     GST_PLUGIN_STATIC_REGISTER(openh264);
     GST_PLUGIN_STATIC_REGISTER(playback);
     GST_PLUGIN_STATIC_REGISTER(rtp);
@@ -131,10 +140,13 @@ void _registerPlugins()
     GST_PLUGIN_STATIC_REGISTER(tcp);
     GST_PLUGIN_STATIC_REGISTER(typefindfunctions);
     GST_PLUGIN_STATIC_REGISTER(udp);
-#if defined(QGC_GST_BUILD_VERSION_MAJOR) && (QGC_GST_BUILD_VERSION_MAJOR > 1 || QGC_GST_BUILD_VERSION_MINOR >= 22)
+#ifdef GST_PLUGIN_videoconvertscale_FOUND
     GST_PLUGIN_STATIC_REGISTER(videoconvertscale);
-#else
+#endif
+#ifdef GST_PLUGIN_videoconvert_FOUND
     GST_PLUGIN_STATIC_REGISTER(videoconvert);
+#endif
+#ifdef GST_PLUGIN_videoscale_FOUND
     GST_PLUGIN_STATIC_REGISTER(videoscale);
 #endif
     GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
@@ -175,10 +187,6 @@ void _registerPlugins()
 #endif
 #endif
 
-    GST_PLUGIN_STATIC_REGISTER(qml6);
-#ifdef QGC_GST_D3D11_SINK
-    GST_PLUGIN_STATIC_REGISTER(qt6d3d11);
-#endif
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
 
@@ -591,7 +599,11 @@ bool _verifyPlugins()
     }
 
     bool result = true;
-    static constexpr const char *requiredPlugins[] = {"qml6", "qgc", "coreelements"};
+    // Mirror the install-time verification list so a stripped registry fails loudly here
+    // instead of waiting for first stream attempt with a misleading "no source element".
+    static constexpr const char *requiredPlugins[] = {
+        "qgc", "coreelements", "playback", "rtp", "rtpmanager", "rtsp", "tcp", "udp",
+    };
     for (const char *name : requiredPlugins) {
         GstPlugin *plugin = gst_registry_find_plugin(registry, name);
         if (!plugin) {
@@ -720,10 +732,6 @@ void setDebugLevel(int level)
     qCDebug(GStreamerLog) << "GStreamer debug threshold set to" << clamped;
 }
 
-namespace {
-
-} // anonymous namespace
-
 void prepareEnvironment()
 {
     _setGstEnvVars();
@@ -807,43 +815,13 @@ bool completeInit()
 
     _logDecoderRanks();
 
-    bool haveSink = false;
-#ifdef QGC_GST_D3D11_SINK
-    GstElementFactory *d3d11SinkFactory = gst_element_factory_find("qml6d3d11sink");
-    if (d3d11SinkFactory) {
-        qCDebug(GStreamerLog) << "qml6d3d11sink factory available (D3D11 rendering)";
-        gst_object_unref(d3d11SinkFactory);
-        haveSink = true;
-    }
-#endif
-#if defined(__APPLE__) && defined(__MACH__)
-    if (!haveSink) {
-        GstElementFactory *appsinkFactory = gst_element_factory_find("appsink");
-        if (appsinkFactory) {
-            qCDebug(GStreamerLog) << "appsink factory available (macOS Metal rendering)";
-            gst_object_unref(appsinkFactory);
-            haveSink = true;
-        }
-    }
-#endif
-    if (!haveSink) {
-        GstElementFactory *glSinkFactory = gst_element_factory_find("qml6glsink");
-        if (glSinkFactory) {
-            gst_object_unref(glSinkFactory);
-            haveSink = true;
-        }
-    }
-    if (!haveSink) {
-        qCCritical(GStreamerLog) << "No QML video sink factory found (tried qml6d3d11sink, appsink, qml6glsink)";
+    GstElementFactory *appsinkFactory = gst_element_factory_find("appsink");
+    if (!appsinkFactory) {
+        qCCritical(GStreamerLog) << "appsink factory not found — videoconvert→appsink path unavailable";
         return false;
     }
-
-    GstElementFactory *playbinFactory = gst_element_factory_find("playbin");
-    if (!playbinFactory) {
-        qCCritical(GStreamerLog) << "playbin factory not found";
-        return false;
-    }
-    gst_object_unref(playbinFactory);
+    qCDebug(GStreamerLog) << "appsink factory available (videoconvert → appsink → QVideoSink)";
+    gst_object_unref(appsinkFactory);
 
     if (GStreamer::didExternalPluginLoaderFail()) {
         qCCritical(GStreamerLog)
@@ -876,17 +854,42 @@ bool initialize()
 //   _ensureVideoSinkInPipeline — gst_object_ref (+1=2), gst_bin_add (+1=3).
 //   _shutdownDecodingBranch   — gst_bin_remove (-1=2), gst_clear_object (-1=1).
 //   releaseVideoSink  — gst_clear_object (-1=0, freed).
-void *createVideoSink(QQuickItem *widget, QObject * /*parent*/)
+void *createVideoSink(QQuickItem * /*widget*/, QObject * /*parent*/)
 {
-    GstElement *videoSinkBin = gst_element_factory_make("qgcvideosinkbin", NULL);
-    if (videoSinkBin) {
-        if (widget) {
-            g_object_set(videoSinkBin, "widget", widget, NULL);
-        }
-    } else {
+    GstElement *videoSinkBin = nullptr;
+    // All bin tunables are construct-only — properties drive behavior, no env-var indirection.
+    VideoSettings *const vs = SettingsManager::instance()->videoSettings();
+    const QByteArray conversionElement = vs->videoConversionElement()->rawValue().toString().toUtf8();
+    const gboolean disablePar = vs->disablePixelAspectRatio()->rawValue().toBool() ? TRUE : FALSE;
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    // gpu-zerocopy is construct-only on the bin; adapter reads it back from the bin so the two halves can't desync.
+    // Bin defaults to gpu-zerocopy=FALSE — every GPU-capable platform must set it explicitly here or zero-copy stays off.
+    const bool forceCpu = vs->forceCpuVideoPath()->rawValue().toBool();
+    const bool swDecoder = vs->forceVideoDecoder()->rawValue().toInt()
+                           == GStreamer::ForceVideoDecoderSoftware;
+    const bool gpuZeroCopy = !forceCpu && !swDecoder;
+    if (GstElementFactory *factory = gst_element_factory_find("qgcvideosinkbin")) {
+        videoSinkBin = gst_element_factory_create_full(factory,
+                                                       "gpu-zerocopy", gpuZeroCopy ? TRUE : FALSE,
+                                                       "conversion-element",
+                                                            conversionElement.isEmpty() ? nullptr : conversionElement.constData(),
+                                                       "disable-par", disablePar,
+                                                       NULL);
+        gst_object_unref(factory);
+    }
+#else
+    if (GstElementFactory *factory = gst_element_factory_find("qgcvideosinkbin")) {
+        videoSinkBin = gst_element_factory_create_full(factory,
+                                                       "conversion-element",
+                                                            conversionElement.isEmpty() ? nullptr : conversionElement.constData(),
+                                                       "disable-par", disablePar,
+                                                       NULL);
+        gst_object_unref(factory);
+    }
+#endif
+    if (!videoSinkBin) {
         qCCritical(GStreamerLog) << "gst_element_factory_make('qgcvideosinkbin') failed";
     }
-
     return videoSinkBin;
 }
 
@@ -902,12 +905,35 @@ VideoReceiver *createVideoReceiver(QObject *parent)
     return new GstVideoReceiver(parent);
 }
 
-bool setupAppleSinkAdapter(void *sinkBin, QVideoSink *videoSink, QObject *adapterParent)
+bool setupAppSinkAdapter(void *sinkBin, QVideoSink *videoSink, QObject *adapterParent)
 {
-#ifdef Q_OS_MACOS
-    if (!sinkBin || !videoSink) {
+    if (!sinkBin || !videoSink || !adapterParent) {
+        // adapterParent owns the adapter's QObject lifetime; without it the adapter
+        // would leak on success since the caller has no handle to destroy it.
+        qCWarning(GStreamerLog) << "setupAppSinkAdapter: null sinkBin, videoSink, or adapterParent";
         return false;
     }
+
+    // Idempotent re-setup: tear down any previous adapter parented under this caller
+    // before creating a new one, so repeated startDecoding cycles don't accumulate
+    // dangling adapters under the same parent.
+    const auto existing = adapterParent->findChildren<GstAppSinkAdapter *>(
+        QString(), Qt::FindDirectChildrenOnly);
+    for (GstAppSinkAdapter *old : existing) {
+        // setActive(false) BEFORE teardown — teardown() nulls the sink under lock and
+        // the empty-frame push would no-op. Order matters for the ghost-frame fix to land.
+        old->setActive(false);
+        old->teardown();
+        old->deleteLater();
+    }
+
+    // Clear the GL bridge's exhausted-retry latch so a pipeline restart that occurs after Qt's
+    // globalShareContext finally appeared can prime on the next NEED_CONTEXT. No-op when the
+    // bridge is already primed (keeps cached display/context across restarts to avoid the
+    // expensive re-discovery dance).
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+    GstGlContextBridge::rearm();
+#endif
 
     auto *adapter = new GstAppSinkAdapter(adapterParent);
     if (!adapter->setup(GST_ELEMENT(sinkBin), videoSink)) {
@@ -915,11 +941,40 @@ bool setupAppleSinkAdapter(void *sinkBin, QVideoSink *videoSink, QObject *adapte
         adapter->deleteLater();
         return false;
     }
+
+    // Hand the display refresh rate to the adapter so it can keep max-time bounded by the
+    // panel's redraw budget; the adapter combines this with the negotiated stream framerate
+    // on each caps change. setRefreshRate is a no-op when QScreen is unavailable
+    // (headless/early boot) — bin's 33 ms default stays in effect.
+    const qreal refreshHz = QGuiApplication::primaryScreen()
+        ? QGuiApplication::primaryScreen()->refreshRate() : 0.0;
+    if (refreshHz >= 1.0) {
+        adapter->setRefreshRate(refreshHz);
+    }
+
+    // Opt-in OBS-style smoothing ring (default off). Read here so the streaming thread
+    // never has to dip into the SettingsManager. Pass refreshHz so the tick paces with
+    // the panel; the adapter falls back to 60 Hz when refreshHz is 0.
+    if (SettingsManager::instance()->videoSettings()->frameSmoothingEnabled()->rawValue().toBool()) {
+        adapter->setSmoothingEnabled(true, refreshHz);
+    }
+    // Connect latencyChanged so the adapter re-queries immediately on RTSP jitter-buffer reconfigures.
+    if (auto *gstReceiver = qobject_cast<GstVideoReceiver *>(adapterParent)) {
+        QObject::connect(gstReceiver, &GstVideoReceiver::latencyChanged,
+                         adapter, &GstAppSinkAdapter::requestLatencyRefresh,
+                         Qt::DirectConnection);
+    }
     return true;
-#else
-    Q_UNUSED(sinkBin); Q_UNUSED(videoSink); Q_UNUSED(adapterParent);
-    return false;
-#endif
+}
+
+void setAppSinkAdaptersActive(QObject *adapterParent, bool active)
+{
+    if (!adapterParent) return;
+    const auto adapters = adapterParent->findChildren<GstAppSinkAdapter *>(
+        QString(), Qt::FindDirectChildrenOnly);
+    for (GstAppSinkAdapter *a : adapters) {
+        a->setActive(active);
+    }
 }
 
 } // namespace GStreamer
