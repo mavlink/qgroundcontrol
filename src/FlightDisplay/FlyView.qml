@@ -190,27 +190,6 @@ Item {
                 visible:        QGroundControl.videoManager.isStreamSource
             }
 
-            Rectangle {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                anchors.top:    parent.top
-                height:         ScreenTools.defaultFontPixelHeight * 2
-                color:          Qt.rgba(0, 0, 0, 0.55)
-
-                Row {
-                    anchors.right:          parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 0.5
-                    spacing:                ScreenTools.defaultFontPixelWidth * 0.5
-
-                    QGCButton {
-                        width:      ScreenTools.defaultFontPixelHeight * 1.7
-                        height:     width
-                        text:       qsTr("X")
-                        onClicked:  _ceVideoInsetVisible = false
-                    }
-                }
-            }
         }
 
         Rectangle {

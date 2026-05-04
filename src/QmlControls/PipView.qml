@@ -25,6 +25,7 @@ Item {
     property var    item2:                  null    // Optional, may come and go
     property string item1IsFullSettingsKey          // Settings key to save whether item1 was saved in full mode
     property bool   show:                   true
+    property bool   showTopControls:        true
 
     readonly property string _pipExpandedSettingsKey: "IsPIPVisible"
 
@@ -121,6 +122,7 @@ Item {
     MouseArea {
         id:                 pipResize
         anchors.fill:       pipResizeIcon
+        enabled:            _isExpanded && showTopControls
         preventStealing:    true
         cursorShape:        Qt.PointingHandCursor
 
@@ -156,7 +158,7 @@ Item {
         mipmap:         true
         anchors.right:  parent.right
         anchors.top:    parent.top
-        visible:        _isExpanded && (ScreenTools.isMobile || pipMouseArea.containsMouse)
+        visible:        _isExpanded && showTopControls && (ScreenTools.isMobile || pipMouseArea.containsMouse)
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height
@@ -188,7 +190,7 @@ Item {
         fillMode:       Image.PreserveAspectFit
         anchors.left:   parent.left
         anchors.top:    parent.top
-        visible:        _isExpanded && !ScreenTools.isMobile && pipMouseArea.containsMouse
+        visible:        _isExpanded && showTopControls && !ScreenTools.isMobile && pipMouseArea.containsMouse
         height:         ScreenTools.defaultFontPixelHeight * 2.5
         width:          ScreenTools.defaultFontPixelHeight * 2.5
         sourceSize.height:  height

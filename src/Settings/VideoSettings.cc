@@ -72,7 +72,7 @@ void VideoSettings::_setDefaults()
     if (_noVideo) {
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceNoVideo);
     } else {
-        // CrownEagle: ce_video streams H.264 RTP/UDP to QGC on udp://0.0.0.0:5600.
+        // CrownEagle: the operator smoke test tone-maps the bundled HDR source to H.264 SDR on udp://0.0.0.0:5600.
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceUDPH264);
     }
 }

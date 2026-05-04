@@ -34,6 +34,11 @@ void CEVideoStatus::_readPendingDatagrams()
         }
 
         const QJsonObject obj = doc.object();
+        const QString source = obj.value(QStringLiteral("source")).toString();
+        if (source == QStringLiteral("qgc_video_stream")) {
+            continue;
+        }
+
         const QString state = obj.value(QStringLiteral("state")).toString(QStringLiteral("NO_VIDEO"));
         const double fps = obj.value(QStringLiteral("fps")).toDouble(0.0);
         const double age = obj.value(QStringLiteral("last_frame_age_sec")).isNull()
