@@ -29,6 +29,10 @@ public:
     DEFINE_SETTINGFACT(disableWhenDisarmed)
     DEFINE_SETTINGFACT(lowLatencyMode)
     DEFINE_SETTINGFACT(forceVideoDecoder)
+    DEFINE_SETTINGFACT(forceCpuVideoPath)
+    DEFINE_SETTINGFACT(videoConversionElement)
+    DEFINE_SETTINGFACT(disablePixelAspectRatio)
+    DEFINE_SETTINGFACT(frameSmoothingEnabled)
 
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)

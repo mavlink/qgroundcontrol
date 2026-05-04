@@ -103,59 +103,18 @@ Item {
             }
             return root.height
         }
-        Component {
-            id: videoBackgroundGLComponent
-            QGCVideoBackground {
-                objectName:     "videoContent"
-
-                Connections {
-                    target: QGroundControl.videoManager
-                    function onImageFileChanged(filename) {
-                        grabToImage(function(result) {
-                            if (!result.saveToFile(filename)) {
-                                console.error('Error capturing video frame');
-                            }
-                        });
-                    }
-                }
-            }
-        }
-        Component {
-            id: videoBackgroundD3D11Component
-            QGCVideoBackgroundD3D11 {
-                objectName:     "videoContent"
-
-                Connections {
-                    target: QGroundControl.videoManager
-                    function onImageFileChanged(filename) {
-                        grabToImage(function(result) {
-                            if (!result.saveToFile(filename)) {
-                                console.error('Error capturing video frame');
-                            }
-                        });
-                    }
-                }
-            }
-        }
-        Component {
-            id: videoBackgroundMetalComponent
-            FlightDisplayViewMetal {
-            }
-        }
         Loader {
-            // GStreamer is causing crashes on Lenovo laptop OpenGL Intel drivers. In order to workaround this
-            // we don't load a QGCVideoBackground object when video is disabled. This prevents any video rendering
-            // code from running. Hence the Loader to completely remove it.
             id:                 videoStreamLoader
             anchors.fill:       videoContentArea
             visible:            _showStreamLoader
-            sourceComponent:    QGroundControl.videoManager.gstreamerD3D11Sink
-                                    ? videoBackgroundD3D11Component
-                                    : QGroundControl.videoManager.gstreamerAppleSink
-                                        ? videoBackgroundMetalComponent
-                                        : videoBackgroundGLComponent
+            sourceComponent:    videoOutputComponent
 
             property bool videoDisabled: QGroundControl.settingsManager.videoSettings.videoSource.rawValue === QGroundControl.settingsManager.videoSettings.disabledVideoSource
+        }
+        Component {
+            id: videoOutputComponent
+            FlightDisplayViewVideoOutput {
+            }
         }
         //-- UVC Video (USB Camera or Video Device)
         Loader {
@@ -239,24 +198,12 @@ Item {
                 id:             thermalVideo
                 anchors.fill:   parent
                 opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
-                sourceComponent: QGroundControl.videoManager.gstreamerD3D11Sink
-                    ? thermalBackgroundD3D11
-                    : QGroundControl.videoManager.gstreamerAppleSink
-                        ? thermalBackgroundMetal
-                        : thermalBackgroundGL
+                sourceComponent: thermalOutputComponent
                 onLoaded: { if (item) item.objectName = "thermalVideo" }
 
                 Component {
-                    id: thermalBackgroundGL
-                    QGCVideoBackground {}
-                }
-                Component {
-                    id: thermalBackgroundD3D11
-                    QGCVideoBackgroundD3D11 {}
-                }
-                Component {
-                    id: thermalBackgroundMetal
-                    FlightDisplayViewMetal {}
+                    id: thermalOutputComponent
+                    FlightDisplayViewVideoOutput {}
                 }
             }
         }

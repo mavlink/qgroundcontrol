@@ -1,16 +1,23 @@
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE VideoItemStub.h)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers
+)
 
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
-    set(_gst_required_components Core Base Video Gl GlPrototypes Rtsp)
-    if(APPLE)
-        list(APPEND _gst_required_components App)
+    # Linux pulls in gst-allocators (DMABuf zero-copy detection); other
+    # platforms keep the existing minimal component set.
+    if(LINUX)
+        find_package(QGCGStreamer
+            REQUIRED
+            # Allocators adds gstreamer-allocators-1.0 to GStreamer::GStreamer — required for the DMABuf header probe in FindQGCGStreamer.cmake.
+            COMPONENTS Core Base Video App Rtsp Allocators
+        )
+    else()
+        find_package(QGCGStreamer
+            REQUIRED
+            COMPONENTS Core Base Video App Rtsp
+        )
     endif()
-    find_package(QGCGStreamer
-        REQUIRED
-        COMPONENTS ${_gst_required_components}
-        OPTIONAL_COMPONENTS GlEgl GlWayland GlX11
-    )
 
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -20,27 +27,23 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
             GStreamerHelpers.h
             GStreamerLogging.cc
             GStreamerLogging.h
+            GstAppSinkAdapter.cc
+            GstAppSinkAdapter.h
             GstVideoReceiver.cc
             GstVideoReceiver.h
     )
+    target_link_libraries(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            GStreamer::GStreamer
+            Qt6::Multimedia
+            Qt6::MultimediaQuickPrivate  # found by root CMakeLists.txt find_package
+    )
 
-    if(APPLE)
-        target_sources(${CMAKE_PROJECT_NAME}
-            PRIVATE
-                GstAppSinkAdapter.cc
-                GstAppSinkAdapter.h
-        )
-        target_link_libraries(${CMAKE_PROJECT_NAME}
-            PRIVATE
-                Qt6::Multimedia
-                Qt6::MultimediaQuickPrivate
-        )
-    endif()
-
+    add_subdirectory(HwBuffers)
     add_subdirectory(gstqgc)
 endif()
 
-if(NOT QGC_ENABLE_GST_VIDEOSTREAMING OR NOT TARGET gstqml6gl)
+if(NOT QGC_ENABLE_GST_VIDEOSTREAMING)
     return()
 endif()
 
@@ -50,7 +53,8 @@ endif()
 
 include(GStreamerHelpers)
 
-if(MACOS AND GSTREAMER_FRAMEWORK)
+# GSTREAMER_LIB_PATH is set by both framework and flat-SDK layouts; GSTREAMER_FRAMEWORK is only set for the framework path.
+if(MACOS AND GSTREAMER_LIB_PATH)
     set_property(TARGET ${CMAKE_PROJECT_NAME} APPEND PROPERTY
         BUILD_RPATH "${GSTREAMER_LIB_PATH}")
 endif()
@@ -172,9 +176,7 @@ elseif(MACOS)
         set(_mac_lib_dest "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/lib")
         set(_mac_libexec_dest "${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/libexec/gstreamer-1.0")
 
-        # gstreamer_install_libs copies ALL dylibs from a directory unfiltered,
-        # which is only safe for isolated SDK prefixes. For shared prefixes
-        # (Homebrew), install only the GStreamer-related libraries.
+        # Unfiltered copy is only safe for isolated SDK prefixes; Homebrew shares the prefix so we filter.
         if(GStreamer_AUTO_DOWNLOADED)
             gstreamer_install_libs(
                 SOURCE_DIR "${GSTREAMER_LIB_PATH}"
@@ -283,7 +285,7 @@ if(_gst_verify_dest)
         endforeach()
         if(_missing_plugins)
             list(JOIN _missing_plugins \", \" _missing_list)
-            message(WARNING \"GStreamer install verification: missing plugins in ${_gst_verify_dest}: \${_missing_list}\")
+            message(FATAL_ERROR \"GStreamer install verification: missing required plugins in ${_gst_verify_dest}: \${_missing_list} — built bundle cannot run any pipeline\")
         else()
             message(STATUS \"GStreamer install verification: all required plugins present in ${_gst_verify_dest}\")
         endif()
