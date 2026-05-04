@@ -197,12 +197,13 @@ void _resetEnvValidation()
     s_envPathsValid.store(true, std::memory_order_release);
 }
 
-QString _cleanJoin(const QString &base, const QString &relative)
+// Used by every platform branch except iOS.
+[[maybe_unused]] QString _cleanJoin(const QString &base, const QString &relative)
 {
     return QDir::cleanPath(QDir(base).filePath(relative));
 }
 
-void _setGstEnv(const char *name, const QString &value)
+[[maybe_unused]] void _setGstEnv(const char *name, const QString &value)
 {
     qputenv(name, value.toUtf8());
     qCDebug(GStreamerLog) << "  " << name << "=" << value;

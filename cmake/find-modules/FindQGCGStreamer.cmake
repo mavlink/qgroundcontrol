@@ -844,7 +844,7 @@ elseif(IOS)
     set(GStreamer_ASSETS_DIR "${CMAKE_BINARY_DIR}/assets")
 endif()
 
-set(GStreamer_ROOT_DIR "${GStreamer_ROOT_DIR}" CACHE PATH "GStreamer SDK root directory" FORCE)
+set(GStreamer_ROOT_DIR "${GStreamer_ROOT_DIR}" CACHE PATH "GStreamer SDK root directory")
 
 if(GStreamer_USE_FRAMEWORK)
     list(APPEND CMAKE_FRAMEWORK_PATH "${GSTREAMER_FRAMEWORK_PATH}")
@@ -1030,8 +1030,6 @@ endif()
 find_package(PkgConfig REQUIRED QUIET)
 
 list(PREPEND CMAKE_PREFIX_PATH ${GStreamer_ROOT_DIR})
-
-set(PKG_CONFIG_ARGN "${PKG_CONFIG_ARGN}" CACHE STRING "Arguments to supply to pkg-config" FORCE)
 
 # CPM creates a stub gstreamer-config.cmake that shadows our vendored module
 if(DEFINED CMAKE_FIND_PACKAGE_REDIRECTS_DIR)

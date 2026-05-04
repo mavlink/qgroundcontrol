@@ -134,6 +134,9 @@ runs:
         rm_cmd: rmz
 
     - uses: lukka/get-cmake@v4.2.3
+      with:
+        useCloudCache: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
+        useLocalCache: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
 
     - uses: ./.github/actions/setup-python
       with:

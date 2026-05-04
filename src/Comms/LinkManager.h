@@ -175,7 +175,6 @@ private:
     bool _portAlreadyConnected(const QString &portName);
     void _filterCompositePorts(QList<QGCSerialPortInfo> &portList);
 
-    UdpIODevice *_nmeaSocket = nullptr;
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
     QList<SerialLink*> _activeLinkCheckList;       ///< List of links we are waiting for a vehicle to show up on
     QStringList _commPortList;
@@ -185,4 +184,7 @@ private:
     uint32_t _nmeaBaud = 0;
     QSerialPort *_nmeaPort = nullptr;
 #endif // QGC_NO_SERIAL_LINK
+
+    // NMEA UDP is network-only; available regardless of QGC_NO_SERIAL_LINK.
+    UdpIODevice *_nmeaSocket = nullptr;
 };

@@ -23,6 +23,7 @@ runs:
       uses: astral-sh/setup-uv@v8.1.0
       with:
         enable-cache: true
+        save-cache: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
         cache-dependency-glob: |
           tools/pyproject.toml
           tools/uv.lock

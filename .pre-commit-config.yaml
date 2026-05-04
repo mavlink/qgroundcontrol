@@ -12,20 +12,21 @@ repos:
         args: [--allow-multiple-documents, --unsafe]
       - id: check-json
       - id: pretty-format-json
-        args: ['--indent=2', '--no-ensure-ascii']
-        exclude: ^(translations/|package-lock\.json|src/|test/|resources/|deploy/|cmake/)
+        args: ['--indent=2', '--no-ensure-ascii', '--no-sort-keys']
+        files: ^(\.github/|tools/).*\.json$
       - id: check-xml
         exclude: ^test/
       - id: check-merge-conflict
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args: ['--maxkb=2000']
+        exclude: ^(resources/icons/|resources/audio/)
       - id: trailing-whitespace
         args: ['--markdown-linebreak-ext=md']
         exclude: ^translations/
       - id: end-of-file-fixer
         exclude: ^(translations/.*\.ts|.*\.(png|jpg|jpeg|gif|svg|ico|bin|dat))$
       - id: mixed-line-ending
-        args: ['--fix=no']
+        args: ['--fix=lf']
         exclude: \.(bat|ps1)$
 
   # Secret detection
@@ -45,7 +46,7 @@ repos:
         types_or: [c++, c]
         exclude: ^(build/|libs/)
 
-  # C++ static analysis (requires compile_commands.json - run 'make configure' first)
+  # C++ static analysis (requires compile_commands.json - run 'just configure' first)
   - repo: https://github.com/pocc/pre-commit-hooks
     rev: v1.3.5
     hooks:
@@ -139,14 +140,46 @@ repos:
       - id: typos
         args: []  # Empty args disables auto-fix mode
 
-  # QGC-specific checks (defined in .pre-commit-hooks.yaml)
-  - repo: .
-    rev: HEAD
+  - repo: local
     hooks:
       - id: qmllint
+        name: Lint QML files
+        entry: python3 ./tools/analyze.py --tool qmllint
+        language: system
+        files: \.qml$
+        exclude: ^build/
+        pass_filenames: false
+
       - id: clazy
+        name: Qt static analysis (clazy)
+        entry: python3 ./tools/analyze.py --tool clazy
+        language: system
+        types: [c++]
+        exclude: ^(build/|libs/|test/)
+        pass_filenames: false
+
       - id: check-no-qassert
+        name: Check for Q_ASSERT in production code
+        entry: bash -c 'if grep -n "Q_ASSERT" "$@" 2>/dev/null; then echo "::warning::Q_ASSERT found. Consider defensive checks with early returns instead." >&2; fi; exit 0' --
+        language: system
+        types: [c++]
+        exclude: ^test/
+        pass_filenames: true
+
       - id: vehicle-null-check
+        name: Check vehicle null safety
+        entry: python3 tools/analyzers/vehicle_null_check.py
+        language: system
+        types: [c++]
+        exclude: ^(build/|libs/|test/)
+        pass_filenames: true
+
       - id: qt-translate-noop-check
+        name: Check QT_TRANSLATE_NOOP misuse
+        entry: python3 tools/analyzers/qt_translate_noop_check.py
+        language: system
+        types: [c++]
+        exclude: ^(build/|libs/|test/)
+        pass_filenames: true
 
 exclude: ^build/

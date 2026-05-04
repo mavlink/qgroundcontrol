@@ -133,7 +133,7 @@ See [test/TESTING.md](../test/TESTING.md) for the complete testing guide, includ
 Run before committing:
 
 ```bash
-make lint                    # or: just lint
+just lint                    # quick check
 pre-commit run --all-files   # full check
 ```
 

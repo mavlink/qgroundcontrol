@@ -11,7 +11,7 @@ endif()
 # ----------------------------------------------------------------------------
 # CMAKE_ANDROID_NDK_VERSION format varies: "27.2" or "27.2.12829759"
 # Extract major.minor from ndk_full_version for reliable comparison
-if(DEFINED QGC_CONFIG_NDK_FULL_VERSION AND Qt6_VERSION VERSION_GREATER_EQUAL "${QGC_CONFIG_QT_MINIMUM_VERSION}")
+if(DEFINED QGC_CONFIG_NDK_FULL_VERSION)
     string(REGEX MATCH "^([0-9]+\\.[0-9]+)" _ndk_major_minor "${QGC_CONFIG_NDK_FULL_VERSION}")
     if(_ndk_major_minor AND NOT CMAKE_ANDROID_NDK_VERSION VERSION_GREATER_EQUAL "${_ndk_major_minor}")
         message(FATAL_ERROR "QGC: NDK ${CMAKE_ANDROID_NDK_VERSION} is too old. Qt ${Qt6_VERSION} requires NDK ${_ndk_major_minor}+ (${QGC_CONFIG_NDK_VERSION})")
