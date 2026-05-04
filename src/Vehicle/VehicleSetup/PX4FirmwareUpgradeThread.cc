@@ -42,6 +42,7 @@ void PX4FirmwareUpgradeThreadWorker::_cancel(void)
     _targetSystemLocation.clear();
     _targetSerialNumber.clear();
     _targetSeenAtLeastOnce = false;
+    _ignoredPorts.clear();
     _foundBoard = false;
     if (_bootloader) {
         _bootloader->reboot();
@@ -61,7 +62,20 @@ void PX4FirmwareUpgradeThreadWorker::_startFindBoardLoop(void)
     _targetSystemLocation.clear();
     _targetSerialNumber.clear();
     _targetSeenAtLeastOnce = false;
+    _ignoredPorts.clear();
     _findBoardOnce();
+}
+
+void PX4FirmwareUpgradeThreadWorker::_resumeDiscovery(void)
+{
+    _targetSystemLocation.clear();
+    _targetSerialNumber.clear();
+    _targetSeenAtLeastOnce = false;
+    _ignoredPorts.clear();
+    _foundBoard = false;
+    if (_findBoardTimer && !_findBoardTimer->isActive()) {
+        _findBoardTimer->start();
+    }
 }
 
 void PX4FirmwareUpgradeThreadWorker::_setTargetPort(const QString& systemLocation)
@@ -71,18 +85,27 @@ void PX4FirmwareUpgradeThreadWorker::_setTargetPort(const QString& systemLocatio
     _targetSerialNumber.clear();
     _targetSeenAtLeastOnce = false;
     _foundBoard = false;
+    _ignoredPorts.clear();
 
     bool currentlyVisible = false;
+    bool currentlyInBootloader = false;
     for (const QGCSerialPortInfo& info : QGCSerialPortInfo::availablePorts()) {
         if (info.systemLocation() == systemLocation) {
             currentlyVisible = true;
             // Capture serial number so we can find the board across a path change
             // when it re-enumerates as a bootloader on a different /dev/ttyACM*.
             _targetSerialNumber = info.serialNumber();
-            break;
+            // If the descriptor already looks like a bootloader, skip the unplug-replug
+            // dance and handshake immediately on the next poll.
+            currentlyInBootloader = info.description().contains(QStringLiteral("BL"))
+                                  || info.description().contains(QStringLiteral("Bootloader"), Qt::CaseInsensitive);
+        } else {
+            // Remember which ports were already there so we don't accidentally attach
+            // to one of them via the canFlash() fallback after the target disappears.
+            _ignoredPorts.insert(info.systemLocation());
         }
     }
-    _findBoardFirstAttempt = currentlyVisible;
+    _findBoardFirstAttempt = currentlyVisible && !currentlyInBootloader;
 }
 
 QVariantList PX4FirmwareUpgradeThreadWorker::_buildPortDescriptors() const
@@ -147,9 +170,13 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
             match = (info.serialNumber() == _targetSerialNumber);
         }
         // After we've seen the target at least once and it's now gone, accept any
-        // recognized flashable port — covers the common case where a board re-enumerates
-        // as a bootloader at a different /dev/ttyACM* path with a different VID/PID.
-        if (!match && _targetSeenAtLeastOnce && !_foundBoard && info.canFlash()) {
+        // recognized flashable port that wasn't already there at click time —
+        // covers a board re-enumerating as a bootloader at a different /dev/ttyACM*
+        // path with a different VID/PID, while not attaching to other unrelated
+        // flashable devices that were already plugged in.
+        if (!match && _targetSeenAtLeastOnce && !_foundBoard
+            && info.canFlash()
+            && !_ignoredPorts.contains(info.systemLocation())) {
             match = true;
         }
 
@@ -213,6 +240,7 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
 
     if (!_bootloader->initFlashSequence()) {
         emit error(_bootloader->errorString());
+        _resumeDiscovery();
         return;
     }
 
@@ -245,6 +273,7 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
 
     emit flashComplete();
 
+    _resumeDiscovery();
     return;
 
 Error:
@@ -253,6 +282,7 @@ Error:
     _bootloader->close();
     _bootloader->deleteLater();
     _bootloader = nullptr;
+    _resumeDiscovery();
 }
 
 bool PX4FirmwareUpgradeThreadWorker::_erase(void)

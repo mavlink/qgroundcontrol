@@ -4,6 +4,7 @@
 #include "QGCSerialPortInfo.h"
 
 #include <QtCore/QObject>
+#include <QtCore/QSet>
 #include <QtCore/QTime>
 #include <QtCore/QVariantList>
 
@@ -50,6 +51,7 @@ private slots:
 private:
     bool _erase             (void);
     QVariantList _buildPortDescriptors() const;
+    void _resumeDiscovery   (void);
 
     PX4FirmwareUpgradeThreadController* _controller;
 
@@ -61,6 +63,7 @@ private:
     bool                _targetSeenAtLeastOnce  = false;    ///< true: target was visible at some point — broaden match after disconnect
     QString             _targetSystemLocation;              ///< empty: discovery only, no flash target chosen yet
     QString             _targetSerialNumber;                ///< serial number captured when target was last seen
+    QSet<QString>       _ignoredPorts;                      ///< ports already present at click time (other than target) — never auto-match these
     QGCSerialPortInfo   _foundBoardPortInfo;                ///< port info for found board
 };
 

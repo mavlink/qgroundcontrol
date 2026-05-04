@@ -221,7 +221,14 @@ SetupPage {
 
                     onAccepted: {
                         if (_singleFirmwareMode) {
-                            controller.flashSingleFirmwareMode(controller.selectedFirmwareBuildType)
+                            if (controller.selectedFirmwareBuildType === FirmwareUpgradeController.CustomFirmware) {
+                                // User picked Custom but cancelled the auto-opened picker; reopen it
+                                // and keep this dialog open until a file is chosen or Cancel is clicked.
+                                customFirmwareDialog.openForLoad()
+                                firmwareSelectDialog.preventClose = true
+                            } else {
+                                controller.flashSingleFirmwareMode(controller.selectedFirmwareBuildType)
+                            }
                         } else {
                             var firmwareBuildType = firmwareBuildTypeCombo.model.get(firmwareBuildTypeCombo.currentIndex).firmwareType
                             var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
