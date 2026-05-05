@@ -238,6 +238,13 @@ void PX4FirmwareUpgradeThreadWorker::_flash(void)
 {
     qCDebug(PX4FirmwareUpgradeThreadLog) << "PX4FirmwareUpgradeThreadWorker::_flash";
 
+    if (!_bootloader) {
+        // Cancelled between download completion and the queued flash slot firing.
+        qCDebug(PX4FirmwareUpgradeThreadLog) << "_flash: bootloader gone, aborting";
+        _resumeDiscovery();
+        return;
+    }
+
     if (!_bootloader->initFlashSequence()) {
         emit error(_bootloader->errorString());
         _resumeDiscovery();

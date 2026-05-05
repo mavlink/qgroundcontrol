@@ -1,12 +1,15 @@
 ﻿#pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtGui/QPixmap>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick/QQuickItem>
 
 #include "QGCSerialPortInfo.h"
+
+class QGCFileDownload;
 
 class PX4FirmwareUpgradeThread;
 class PX4FirmwareUpgradeThreadController;
@@ -285,6 +288,8 @@ private:
     Fact*                                   _apmChibiOSSetting;
     Fact*                                   _apmVehicleTypeSetting;
     QVariantList                            _availablePorts;
+    QPointer<QGCFileDownload>               _activeDownloader;          ///< in-flight firmware download, aborted on cancel
+    bool                                    _flashCancelled = false;    ///< cancel was issued; ignore late download completions
 
     FirmwareBuildType_t     _manifestMavFirmwareVersionTypeToFirmwareBuildType  (const QString& manifestMavFirmwareVersionType);
     FirmwareVehicleType_t   _manifestMavTypeToFirmwareVehicleType               (const QString& manifestMavType);

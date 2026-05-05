@@ -213,6 +213,10 @@ void FirmwareUpgradeController::flashSingleFirmwareMode(FirmwareBuildType_t firm
 void FirmwareUpgradeController::cancel(void)
 {
     _eraseTimer.stop();
+    _flashCancelled = true;
+    if (_activeDownloader) {
+        _activeDownloader->cancel();
+    }
     _threadController->cancel();
 }
 
@@ -378,6 +382,8 @@ void FirmwareUpgradeController::_downloadFirmware(void)
 {
     Q_ASSERT(!_firmwareFilename.isEmpty());
 
+    _flashCancelled = false;
+
     const bool isRemote = _firmwareFilename.startsWith(QStringLiteral("http"), Qt::CaseInsensitive);
     if (isRemote) {
         _appendStatusLog(tr("Downloading firmware from %1").arg(_firmwareFilename));
@@ -386,11 +392,13 @@ void FirmwareUpgradeController::_downloadFirmware(void)
     }
 
     QGCFileDownload* downloader = new QGCFileDownload(this);
+    _activeDownloader = downloader;
     connect(downloader, &QGCFileDownload::finished, downloader, &QObject::deleteLater);
     connect(downloader, &QGCFileDownload::finished, this, &FirmwareUpgradeController::_firmwareDownloadComplete);
     connect(downloader, &QGCFileDownload::downloadProgress, this, &FirmwareUpgradeController::_firmwareDownloadProgress);
     if (!downloader->start(_firmwareFilename)) {
         downloader->deleteLater();
+        _activeDownloader = nullptr;
         _errorCancel(downloader->errorString());
         return;
     }
@@ -408,6 +416,13 @@ void FirmwareUpgradeController::_firmwareDownloadProgress(qint64 curr, qint64 to
 /// @brief Called when the firmware download completes.
 void FirmwareUpgradeController::_firmwareDownloadComplete(bool success, const QString &localFile, const QString &errorMsg)
 {
+    _activeDownloader = nullptr;
+
+    if (_flashCancelled) {
+        // User cancelled while the download was in flight; ignore late completion.
+        return;
+    }
+
     if (success) {
         const bool isRemote = _firmwareFilename.startsWith(QStringLiteral("http"), Qt::CaseInsensitive);
         if (isRemote) {
