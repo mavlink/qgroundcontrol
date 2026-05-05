@@ -1180,13 +1180,7 @@ void Joystick::_startPollingForVehicle(Vehicle &vehicle)
     }
 
     _pollingVehicle = &vehicle;
-    if (_currentPollingType == PollingForConfiguration) {
-        qCDebug(JoystickLog) << "Delayed start of polling for vehicle. Currently PollingForConfiguration. Vehicle id:"  << _pollingVehicle->id();
-        _previousPollingType = PollingForVehicle;
-    } else {
-        qCDebug(JoystickLog) << "Started joystick polling for vehicle. Vehicle id:"  << _pollingVehicle->id();
-        _currentPollingType = PollingForVehicle;
-    }
+    qCDebug(JoystickLog) << "Started joystick polling for vehicle. Vehicle id:" << _pollingVehicle->id();
 
     _buildAvailableButtonsActionList(_pollingVehicle);
 
