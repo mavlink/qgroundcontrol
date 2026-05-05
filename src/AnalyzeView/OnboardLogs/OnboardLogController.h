@@ -1,123 +1,113 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtQmlIntegration/QtQmlIntegration>
+#include <cstdint>
 
-struct OnboardLogDownloadData;
-class QGCOnboardLogEntry;
-class QmlObjectListModel;
-class QTimer;
-class QThread;
+#include "OnboardLogTransport.h"
+
+class FtpTransport;
+class LogProtocolTransport;
+class OnboardLogSortFilterModel;
+class QAbstractItemModel;
+class OnboardLogModel;
 class Vehicle;
-class OnboardLogDownloadTest;
 
+/// QML facade picking LOG-protocol vs MAVLink-FTP transport per active vehicle.
 class OnboardLogController : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
-
     Q_MOC_INCLUDE("Vehicle.h")
-    Q_MOC_INCLUDE("QmlObjectListModel.h")
+    Q_MOC_INCLUDE("QAbstractItemModel")
+    Q_PROPERTY(QAbstractItemModel* model READ model CONSTANT FINAL)
+    Q_PROPERTY(bool downloadingLogs READ downloadingLogs NOTIFY downloadingLogsChanged FINAL)
+    Q_PROPERTY(bool busy READ busy NOTIFY busyChanged FINAL)
+    Q_PROPERTY(TransportKind transportKind READ transportKind NOTIFY transportKindChanged FINAL)
+    Q_PROPERTY(qreal batchProgress READ batchProgress NOTIFY batchProgressChanged FINAL)
+    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged FINAL)
+    Q_PROPERTY(bool allLogsSelected READ allLogsSelected NOTIFY selectionChanged FINAL)
+    Q_PROPERTY(bool sortAscending READ sortAscending WRITE setSortAscending NOTIFY sortAscendingChanged FINAL)
 
-    Q_PROPERTY(QmlObjectListModel *model               READ _getModel                                           CONSTANT)
-    Q_PROPERTY(bool               requestingList       READ _getRequestingList                                  NOTIFY requestingListChanged)
-    Q_PROPERTY(bool               downloadingLogs      READ _getDownloadingLogs                                 NOTIFY downloadingLogsChanged)
-    Q_PROPERTY(bool               allLogsSelected      READ allLogsSelected                                     NOTIFY selectionChanged)
-    Q_PROPERTY(bool               sortAscending        READ sortAscending          WRITE setSortAscending       NOTIFY sortAscendingChanged)
-    Q_PROPERTY(bool               compressLogs         READ compressLogs           WRITE setCompressLogs        NOTIFY compressLogsChanged)
-    Q_PROPERTY(bool               compressing          READ compressing                                         NOTIFY compressingChanged)
-    Q_PROPERTY(float              compressionProgress  READ compressionProgress                                 NOTIFY compressionProgressChanged)
-
+#ifdef QGC_UNITTEST_BUILD
     friend class OnboardLogDownloadTest;
+#endif
 
 public:
-    explicit OnboardLogController(QObject *parent = nullptr);
-    ~OnboardLogController();
+    enum class TransportKind : uint8_t
+    {
+        LogProtocol,
+        MavlinkFtp,
+    };
+    Q_ENUM(TransportKind)
 
+    explicit OnboardLogController(QObject* parent = nullptr);
+    ~OnboardLogController() override;
+
+    QAbstractItemModel* model() const;
+    bool downloadingLogs() const;
+
+    bool busy() const { return _active && _active->busy(); }
+
+    TransportKind transportKind() const;
+    qreal batchProgress() const;
+    QString errorMessage() const;
+    bool allLogsSelected() const;
+
+    bool sortAscending() const { return _sortAscending; }
+
+    Q_INVOKABLE void ensureLoaded();
     Q_INVOKABLE void refresh();
-    Q_INVOKABLE void download(const QString &path = QString());
-    Q_INVOKABLE void eraseAll();
+    Q_INVOKABLE void download(const QString& path = QString());
+    Q_INVOKABLE bool eraseAllForVehicle(Vehicle* expectedVehicle);
     Q_INVOKABLE void cancel();
     Q_INVOKABLE void selectAll(bool select);
     Q_INVOKABLE int selectedCount() const;
     Q_INVOKABLE void toggleSortByDate();
 
-    bool compressLogs() const { return _compressLogs; }
-    void setCompressLogs(bool compress);
-    bool compressing() const { return _compressing; }
-    float compressionProgress() const { return _compressionProgress; }
-    bool allLogsSelected() const;
-    bool sortAscending() const { return _sortAscending; }
     void setSortAscending(bool ascending);
 
-    /// Compress a single log file
-    Q_INVOKABLE bool compressLogFile(const QString &logPath);
-
-    /// Cancel compression
-    Q_INVOKABLE void cancelCompression();
-
 signals:
-    void requestingListChanged();
     void downloadingLogsChanged();
+    void busyChanged();
+    void transportKindChanged();
+    void batchProgressChanged();
+    void errorMessageChanged();
     void selectionChanged();
-    void compressLogsChanged();
     void sortAscendingChanged();
-    void compressingChanged();
-    void compressionProgressChanged();
-    void compressionComplete(const QString &outputPath, const QString &error);
 
 private slots:
-    void _setActiveVehicle(Vehicle *vehicle);
-
-    void _logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
-    void _logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data);
-    void _processDownload();
-    void _handleCompressionProgress(qreal progress);
-    void _handleCompressionFinished(bool success);
+    void _setActiveVehicle(Vehicle* vehicle);
+    void _reevaluateTransport();
+    void _activeRequestingListChanged();
+    void _activeListingFinished(OnboardLogTransport::ListingResult result);
 
 private:
-    QmlObjectListModel *_getModel() const { return _logEntriesModel; }
-    bool _getRequestingList() const { return _requestingLogEntries; }
-    bool _getDownloadingLogs() const { return _downloadingLogs; }
+    enum class LoadState : uint8_t
+    {
+        NotLoaded,
+        Loading,
+        Loaded,
+        Failed,
+    };
 
-    bool _chunkComplete() const;
-    bool _entriesComplete() const;
-    bool _logComplete() const;
-    bool _prepareLogDownload();
-    void _downloadToDirectory(const QString &dir);
-    void _findMissingData();
-    void _findMissingEntries();
-    void _receivedAllData();
-    void _receivedAllEntries();
-    void _requestLogData(uint16_t id, uint32_t offset, uint32_t count, int retryCount = 0);
-    void _requestLogList(uint32_t start, uint32_t end);
-    void _requestLogEnd();
-    void _resetSelection(bool canceled = false);
-    void _setDownloading(bool active);
-    void _setListing(bool active);
-    void _updateDataRate();
+    static bool _shouldAutoSelectFtp(bool firmwareAllowsFtp, bool capabilitiesKnown, uint64_t capabilityBits);
+    void _invalidateLoadState();
+    void _setActiveTransport(OnboardLogTransport* transport);
+    OnboardLogModel* sourceModel() const;
 
-    void _sortEntriesByTimestamp();
-
-    QGCOnboardLogEntry *_getNextSelected() const;
-
-    QTimer *_timer = nullptr;
-    QmlObjectListModel *_logEntriesModel = nullptr;
-
-    bool _downloadingLogs = false;
-    bool _requestingLogEntries = false;
-    int _apmOffset = 0;
-    int _retries = 0;
-    std::unique_ptr<OnboardLogDownloadData> _downloadData;
-    QString _downloadPath;
-    Vehicle *_vehicle = nullptr;
-    bool _compressLogs = false;
-    bool _compressing = false;
-    float _compressionProgress = 0.0F;
+    LogProtocolTransport* _logTransport = nullptr;
+    FtpTransport* _ftpTransport = nullptr;
+    OnboardLogSortFilterModel* _sortModel = nullptr;
+    OnboardLogTransport* _active = nullptr;
+    QPointer<Vehicle> _vehicle;
+    QPointer<Vehicle> _pendingVehicle;
+    QPointer<Vehicle> _loadVehicle;
+    QPointer<OnboardLogTransport> _loadTransport;
+    LoadState _loadState = LoadState::NotLoaded;
+    bool _changingVehicle = false;
+    bool _vehicleChangePending = false;
     bool _sortAscending = false;
-
-    static constexpr uint32_t kTimeOutMs = 500;
-    static constexpr uint32_t kGUIRateMs = 500; ///< Update download rate twice per second
-    static constexpr uint32_t kRequestLogListTimeoutMs = 5000;
 };

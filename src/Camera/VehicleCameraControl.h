@@ -2,7 +2,9 @@
 
 #include "MavlinkCameraControlInterface.h"
 #include "QmlObjectListModel.h"
+#include <QtCore/QPointer>
 
+class FTPDownloadJob;
 class QGCVideoStreamInfo;
 class QNetworkAccessManager;
 class QDomNode;
@@ -267,6 +269,7 @@ protected:
     uint32_t                            _storageTotal       = 0;
     int                                 _batteryRemaining   = -1;
     QNetworkAccessManager*              _netManager         = nullptr;
+    QPointer<FTPDownloadJob>            _ftpDownloadJob;
     QString                             _modelName;
     QString                             _vendor;
     QString                             _cacheFile;

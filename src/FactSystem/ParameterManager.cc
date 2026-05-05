@@ -12,6 +12,7 @@
 #include "FactGroup.h"
 #include "FirmwarePlugin.h"
 #include "FTPManager.h"
+#include "FTPManagerJob.h"
 #include "MAVLinkProtocol.h"
 #include "AppMessages.h"
 #include "QGCMath.h"
@@ -528,8 +529,7 @@ void ParameterManager::_ftpDownloadComplete(const QString &fileName, const QStri
     bool continueWithDefaultParameterdownload = true;
     bool immediateRetry = false;
 
-    (void) disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
-    (void) disconnect(_vehicle->ftpManager(), &FTPManager::commandProgress, this, &ParameterManager::_ftpDownloadProgress);
+    _ftpDownloadJob = nullptr;
 
     if (errorMsg.isEmpty()) {
         qCDebug(ParameterManagerLog) << "ParameterManager::_ftpDownloadComplete : Parameter file received:" << fileName;
@@ -643,17 +643,17 @@ void ParameterManager::_startParameterDownload(uint8_t componentId)
             _paramRequestListTimer.start();
         }
         FTPManager *const ftpManager = _vehicle->ftpManager();
-        (void) connect(ftpManager, &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
         _waitingParamTimeoutTimer.stop();
-        if (ftpManager->download(MAV_COMP_ID_AUTOPILOT1,
-                                 QStringLiteral("@PARAM/param.pck?withdefaults=1"),
-                                 QStandardPaths::writableLocation(QStandardPaths::TempLocation),
-                                 QStringLiteral("param.pck"),
-                                 false /* No filesize check */)) {
-            (void) connect(ftpManager, &FTPManager::commandProgress, this, &ParameterManager::_ftpDownloadProgress);
+        FTPDownloadJob* const job = ftpManager->startDownload(
+            MAV_COMP_ID_AUTOPILOT1, QStringLiteral("@PARAM/param.pck?withdefaults=1"),
+            QStandardPaths::writableLocation(QStandardPaths::TempLocation), QStringLiteral("param.pck"),
+            false /* No filesize check */);
+        if (job) {
+            _ftpDownloadJob = job;
+            (void) connect(job, &FTPDownloadJob::finished, this, &ParameterManager::_ftpDownloadComplete);
+            (void) connect(job, &FTPJob::progress, this, &ParameterManager::_ftpDownloadProgress);
         } else {
             qCWarning(ParameterManagerLog) << "ParameterManager::_startParameterDownload FTPManager::download returned failure";
-            (void) disconnect(ftpManager, &FTPManager::downloadComplete, this, &ParameterManager::_ftpDownloadComplete);
         }
     } else if (_vehicle->px4Firmware() && !_initialLoadComplete && !_hashCheckDone) {
         // PX4: Try _HASH_CHECK first to see if we can load from cache without a full parameter stream

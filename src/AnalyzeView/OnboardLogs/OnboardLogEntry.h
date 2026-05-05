@@ -1,95 +1,149 @@
 #pragma once
 
-#include <QtCore/QBitArray>
 #include <QtCore/QDateTime>
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QFile>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
+#include <cstdint>
 
-class QGCOnboardLogEntry;
-
-struct OnboardLogDownloadData
-{
-    explicit OnboardLogDownloadData(QGCOnboardLogEntry * const logEntry);
-    ~OnboardLogDownloadData();
-
-    void advanceChunk();
-
-    /// The number of MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN bins in the current chunk
-    uint32_t chunkBins() const;
-
-    /// The number of kChunkSize chunks in the file
-    uint32_t numChunks() const;
-
-    /// True if all bins in the chunk have been set to val
-    bool chunkEquals(const bool val) const;
-
-    uint ID = 0;
-    QGCOnboardLogEntry *const entry = nullptr;
-
-    QBitArray chunk_table;
-    uint32_t current_chunk = 0;
-    QFile file;
-    QString filename;
-    uint written = 0;
-    uint last_status_written = 0;
-    size_t rate_bytes = 0;
-    qreal rate_avg = 0.;
-    QElapsedTimer elapsed;
-
-    static constexpr uint32_t kTableBins = 2048;  // 2048 packets = ~180 KB chunks (4x larger for better throughput)
-    static const uint32_t kChunkSize;             // kTableBins * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN (defined in .cc)
-};
-
-/*===========================================================================*/
-
-class QGCOnboardLogEntry : public QObject
+class OnboardLogEntry : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
+    QML_ELEMENT
+    QML_UNCREATABLE("")
+    Q_DISABLE_COPY_MOVE(OnboardLogEntry)
 
-    Q_PROPERTY(uint         id          READ id                             NOTIFY idChanged)
-    Q_PROPERTY(QDateTime    time        READ time                           NOTIFY timeChanged)
-    Q_PROPERTY(uint         size        READ size                           NOTIFY sizeChanged)
-    Q_PROPERTY(QString      sizeStr     READ sizeStr                        NOTIFY sizeChanged)
-    Q_PROPERTY(bool         received    READ received                       NOTIFY receivedChanged)
-    Q_PROPERTY(bool         selected    READ selected   WRITE setSelected   NOTIFY selectedChanged)
-    Q_PROPERTY(QString      status      READ status                         NOTIFY statusChanged)
+    Q_PROPERTY(uint id READ id CONSTANT FINAL)
+    Q_PROPERTY(QDateTime time READ time NOTIFY timeChanged FINAL)
+    Q_PROPERTY(uint size READ size NOTIFY sizeChanged FINAL)
+    Q_PROPERTY(QString sizeStr READ sizeStr NOTIFY sizeChanged FINAL)
+    Q_PROPERTY(bool received READ received NOTIFY receivedChanged FINAL)
+    Q_PROPERTY(bool selected READ selected WRITE setSelected NOTIFY selectedChanged FINAL)
+    Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
+    Q_PROPERTY(QString status READ status NOTIFY statusChanged FINAL)
+    Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged FINAL)
 
 public:
-    explicit QGCOnboardLogEntry(uint logId, const QDateTime &dateTime = QDateTime(), uint logSize = 0, bool received = false, QObject *parent = nullptr);
-    ~QGCOnboardLogEntry();
+    enum class State : uint8_t
+    {
+        Pending,
+        Available,
+        Queued,
+        Downloading,
+        Downloaded,
+        Erasing,
+        Canceled,
+        Skipped,
+        Error,
+    };
+    Q_ENUM(State)
+
+    explicit OnboardLogEntry(uint logId, const QDateTime& dateTime = QDateTime(), uint logSize = 0,
+                             bool received = false, QObject* parent = nullptr);
+    ~OnboardLogEntry() override;
 
     uint id() const { return _logID; }
+
     uint size() const { return _logSize; }
+
     QString sizeStr() const;
+
     QDateTime time() const { return _logTimeUTC; }
+
     bool received() const { return _received; }
+
     bool selected() const { return _selected; }
+
+    State state() const { return _state; }
+
     QString status() const { return _status; }
 
-    void setId(uint id) { if (id != _logID) { _logID = id; emit idChanged(); } }
-    void setSize(uint size) { if (size != _logSize) { _logSize = size; emit sizeChanged(); } }
-    void setTime(const QDateTime &date) { if (date != _logTimeUTC) {_logTimeUTC = date; emit timeChanged(); } }
-    void setReceived(bool rec) { if (rec != _received) { _received = rec; emit receivedChanged(); } }
-    void setSelected(bool sel) { if (sel != _selected) { _selected = sel; emit selectedChanged(); } }
-    void setStatus(const QString &stat) { if (stat != _status) { _status = stat; emit statusChanged(); } }
+    QString errorMessage() const { return _errorMessage; }
+
+    QString ftpPath() const { return _ftpPath; }  // empty for LOG-protocol entries
+
+    void setSize(uint size)
+    {
+        if (size != _logSize) {
+            _logSize = size;
+            emit sizeChanged();
+        }
+    }
+
+    void setTime(const QDateTime& date)
+    {
+        if (date != _logTimeUTC) {
+            _logTimeUTC = date;
+            emit timeChanged();
+        }
+    }
+
+    void setReceived(bool rec)
+    {
+        if (rec != _received) {
+            _received = rec;
+            emit receivedChanged();
+        }
+    }
+
+    void setSelected(bool sel)
+    {
+        if (sel != _selected) {
+            _selected = sel;
+            emit selectedChanged();
+        }
+    }
+
+    void setState(State state, const QString& status)
+    {
+        const bool stateDidChange = state != _state;
+        const bool statusDidChange = status != _status;
+        _state = state;
+        _status = status;
+
+        if (stateDidChange) {
+            emit stateChanged();
+        }
+        if (statusDidChange) {
+            emit statusChanged();
+        }
+    }
+
+    void setStatus(const QString& status)
+    {
+        if (status != _status) {
+            _status = status;
+            emit statusChanged();
+        }
+    }
+
+    void setErrorMessage(const QString& errorMessage)
+    {
+        if (errorMessage != _errorMessage) {
+            _errorMessage = errorMessage;
+            emit errorMessageChanged();
+        }
+    }
+
+    void setFtpPath(const QString& path) { _ftpPath = path; }
 
 signals:
-    void idChanged();
     void timeChanged();
     void sizeChanged();
     void receivedChanged();
     void selectedChanged();
+    void stateChanged();
     void statusChanged();
+    void errorMessageChanged();
 
 private:
-    uint _logID = 0;
+    const uint _logID = 0;
     uint _logSize = 0;
     QDateTime _logTimeUTC;
     bool _received = false;
     bool _selected = false;
-    QString _status = QStringLiteral("Pending");
+    State _state = State::Pending;
+    QString _status;
+    QString _errorMessage;
+    QString _ftpPath;
 };

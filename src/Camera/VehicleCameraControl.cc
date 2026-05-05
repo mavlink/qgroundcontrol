@@ -7,6 +7,7 @@
 #include "VideoManager.h"
 #include "QGCCameraManager.h"
 #include "FTPManager.h"
+#include "FTPManagerJob.h"
 #include "QGCCompression.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileHelper.h"
@@ -15,6 +16,7 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "LinkInterface.h"
+#include "MAVLinkFTP.h"
 #include "MAVLinkProtocol.h"
 #include "QGCVideoStreamInfo.h"
 #include "MissionCommandTree.h"
@@ -2172,8 +2174,7 @@ void VehicleCameraControl::_handleDefinitionFile(const QString &url)
     //-- First check and see if we have it cached
     QFile xmlFile(_cacheFile);
 
-    QString ftpPrefix(QStringLiteral("%1://").arg(FTPManager::mavlinkFTPScheme));
-    if (!xmlFile.exists() && url.startsWith(ftpPrefix, Qt::CaseInsensitive)) {
+    if (!xmlFile.exists() && MavlinkFTP::isMavlinkFtpUri(url)) {
         qCDebug(VehicleCameraControlLog) << "No camera definition file cached, attempt ftp download";
         int ver = static_cast<int>(_mavlinkCameraInfo.cam_definition_version);
         QString ext = "";
@@ -2184,10 +2185,15 @@ void VehicleCameraControl::_handleDefinitionFile(const QString &url)
             _modelName.toStdString().c_str(),
             ver,
             ext.toStdString().c_str());
-        connect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &VehicleCameraControl::_ftpDownloadComplete);
-        _vehicle->ftpManager()->download(_compID, url,
-            SettingsManager::instance()->appSettings()->parameterSavePath().toStdString().c_str(),
-            fileName);
+        FTPDownloadJob* const job = _vehicle->ftpManager()->startDownload(
+            _compID, url, SettingsManager::instance()->appSettings()->parameterSavePath(), fileName);
+        if (!job) {
+            qCWarning(VehicleCameraControlLog) << "Unable to start camera definition FTP download" << url;
+            emit dataReady({});
+            return;
+        }
+        _ftpDownloadJob = job;
+        connect(job, &FTPDownloadJob::finished, this, &VehicleCameraControl::_ftpDownloadComplete);
         return;
     }
 
@@ -2258,21 +2264,31 @@ void VehicleCameraControl::_ftpDownloadComplete(const QString& fileName, const Q
 {
     qCDebug(VehicleCameraControlLog) << "FTP Download completed: " << fileName << ", " << errorMsg;
 
-    disconnect(_vehicle->ftpManager(), &FTPManager::downloadComplete, this, &VehicleCameraControl::_ftpDownloadComplete);
+    _ftpDownloadJob = nullptr;
+
+    if (!errorMsg.isEmpty()) {
+        qCWarning(VehicleCameraControlLog) << "Camera definition FTP download failed" << errorMsg;
+        emit dataReady({});
+        return;
+    }
 
     QString outputFileName = QGCCompression::decompressIfNeeded(fileName);
     if (outputFileName.isEmpty()) {
         qCWarning(VehicleCameraControlLog) << "Inflate of compressed xml failed" << fileName;
+        emit dataReady({});
+        return;
     }
 
     QFile xmlFile(outputFileName);
 
     if (!xmlFile.exists()) {
         qCDebug(VehicleCameraControlLog) << "No camera definition file present after ftp download completed";
+        emit dataReady({});
         return;
     }
     if (!xmlFile.open(QIODevice::ReadOnly)) {
         qWarning() << "Could not read downloaded camera definition file: " << fileName;
+        emit dataReady({});
         return;
     }
 

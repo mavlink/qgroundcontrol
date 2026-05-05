@@ -2,6 +2,7 @@
 
 #include <QtCore/QMap>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -11,6 +12,7 @@
 #include "QGCMAVLinkTypes.h"
 
 class QTextStream;
+class FTPDownloadJob;
 
 class ParameterEditorController;
 class Vehicle;
@@ -188,6 +190,7 @@ private:
     static QVariant _stringToTypedVariant(const QString &string, FactMetaData::ValueType_t type, bool failOk = false);
 
     Vehicle *_vehicle = nullptr;
+    QPointer<FTPDownloadJob> _ftpDownloadJob;
 
     QMap<int /* comp id */, QMap<QString /* parameter name */, Fact*>> _mapCompId2FactMap;
 

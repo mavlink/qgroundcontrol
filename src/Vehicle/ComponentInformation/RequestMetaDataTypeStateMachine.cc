@@ -5,6 +5,8 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "FTPManager.h"
+#include "FTPManagerJob.h"
+#include "MAVLinkFTP.h"
 #include "QGCCompression.h"
 #include "CompInfoGeneral.h"
 #include "QGCCachedFileDownload.h"
@@ -500,13 +502,15 @@ void RequestMetaDataTypeStateMachine::_requestFile(const QString& cacheFileTag, 
             _metadataSource = MetadataSource::FTP;
             _metadataUri = uri;
         }
-        connect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
-        if (ftpManager->download(MAV_COMP_ID_AUTOPILOT1, uri, QStandardPaths::writableLocation(QStandardPaths::TempLocation))) {
+        FTPDownloadJob* const job = ftpManager->startDownload(
+            MAV_COMP_ID_AUTOPILOT1, uri, QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+        if (job) {
+            _ftpDownloadJob = job;
+            connect(job, &FTPDownloadJob::finished, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
             _downloadStartTime.start();
-            connect(ftpManager, &FTPManager::commandProgress, this, &RequestMetaDataTypeStateMachine::_ftpDownloadProgress);
+            connect(job, &FTPJob::progress, this, &RequestMetaDataTypeStateMachine::_ftpDownloadProgress);
         } else {
             qCWarning(RequestMetaDataTypeStateMachineLog) << "FTPManager::download returned failure";
-            disconnect(ftpManager, &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
             completeCurrentState();
         }
     } else {
@@ -546,8 +550,7 @@ void RequestMetaDataTypeStateMachine::_ftpDownloadComplete(const QString& fileNa
 {
     qCDebug(RequestMetaDataTypeStateMachineLog) << "_ftpDownloadComplete fileName:errorMsg" << fileName << errorMsg;
 
-    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::downloadComplete, this, &RequestMetaDataTypeStateMachine::_ftpDownloadComplete);
-    disconnect(_compInfo->vehicle->ftpManager(), &FTPManager::commandProgress, this, &RequestMetaDataTypeStateMachine::_ftpDownloadProgress);
+    _ftpDownloadJob = nullptr;
 
     if (errorMsg.isEmpty()) {
         if (_currentFileName) {
@@ -602,5 +605,5 @@ void RequestMetaDataTypeStateMachine::_httpDownloadComplete(bool success, const 
 
 bool RequestMetaDataTypeStateMachine::_uriIsMAVLinkFTP(const QString& uri)
 {
-    return uri.startsWith(QStringLiteral("%1://").arg(FTPManager::mavlinkFTPScheme), Qt::CaseInsensitive);
+    return MavlinkFTP::isMavlinkFtpUri(uri);
 }

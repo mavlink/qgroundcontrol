@@ -29,6 +29,9 @@ public:
 
     void enableRandomDrops(bool enable) { _randomDropsEnabled = enable; }
 
+    /// Drops the next ResetSessions responses after applying the reset on the server.
+    void setResetCommandResponseDropCount(int count) { _resetCommandResponseDropCount = count; }
+
     /// Returns the list of remote paths which have been uploaded in this session.
     QStringList uploadedFiles() const { return _uploadedFiles.keys(); }
 
@@ -52,8 +55,8 @@ public:
     /// Sets the error mode for command responses. This allows you to simulate various server errors.
     void setErrorMode(ErrorMode_t errMode) { _errMode = errMode; };
 
-    /// Controls whether the server implements the kCmdListDirectoryWithTime command. When false the
-    /// server Naks it with kErrUnknownCommand so the client fallback to kCmdListDirectory can be tested.
+    /// Controls whether the server implements timestamped directory listings. When false the server
+    /// returns MAV_FTP_ERR_UNKNOWNCOMMAND so the client's plain-listing fallback can be tested.
     void setListDirectoryWithTimeSupported(bool supported) { _listDirectoryWithTimeSupported = supported; }
 
     /// Array of failure modes you can cycle through for testing. By looping through this array you can avoid
@@ -72,7 +75,7 @@ public:
 
     static constexpr const char *sizeFilenamePrefix = "mocklink-size-";
 
-    /// Base modification time (seconds since UNIX epoch UTC) reported by the kCmdListDirectoryWithTime
+    /// Base modification time (seconds since UNIX epoch UTC) reported by timestamped directory listings.
     /// mock listing. Entry N reports kMockModificationTime + N.
     static constexpr uint32_t kMockModificationTime = 1700000000;
 
@@ -85,9 +88,9 @@ signals:
 
 private:
     /// Sends an Ack
-    void _sendAck(uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
-    void _sendNak(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::ErrorCode_t error, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
-    void _sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber, MavlinkFTP::OpCode_t reqOpCode);
+    void _sendAck(uint8_t targetSystemId, uint8_t targetComponentId, uint16_t seqNumber, MAV_FTP_OPCODE reqOpCode);
+    void _sendNak(uint8_t targetSystemId, uint8_t targetComponentId, MAV_FTP_ERR error, uint16_t seqNumber, MAV_FTP_OPCODE reqOpCode);
+    void _sendNakErrno(uint8_t targetSystemId, uint8_t targetComponentId, uint8_t nakErrno, uint16_t seqNumber, MAV_FTP_OPCODE reqOpCode);
     /// Emits a Request through the messageReceived signal.
     void _sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     /// Handles List command requests. Only supports root folder paths.
@@ -117,8 +120,9 @@ private:
 
     bool _lastReplyValid = false;
     bool _randomDropsEnabled = false;
+    int _resetCommandResponseDropCount = 0;
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
-    bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
+    bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements timestamped listings.
     mavlink_message_t _lastReply{};
     QFile _currentFile;
     QString _paramPckTempFile;

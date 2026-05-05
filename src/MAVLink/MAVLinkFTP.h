@@ -1,78 +1,163 @@
 #pragma once
 
 #include <QtCore/QString>
+#include <QtCore/QStringList>
+#include <QtCore/QStringView>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+
 #include "MAVLinkLib.h"
 
-class MavlinkFTP {
+/// Stateless encoding and validation helpers for the MAVLink FTP wire protocol.
+class MavlinkFTP
+{
 public:
     /// This is the fixed length portion of the protocol data.
-    /// This needs to be packed, because it's typecasted from mavlink_file_transfer_protocol_t.payload, which starts
-    /// at a 3 byte offset, causing an unaligned access to seq_number and offset
-    MAVPACKED(
-            typedef struct RequestHeader {
-                uint16_t    seqNumber;      ///< sequence number for message
-                uint8_t     session;        ///< Session id for read and write commands
-                uint8_t     opcode;         ///< Command opcode
-                uint8_t     size;           ///< Size of data
-                uint8_t     req_opcode;     ///< Request opcode returned in kRspAck, kRspNak message
-                uint8_t     burstComplete;  ///< Only used if req_opcode=kCmdBurstReadFile - 1: set of burst packets complete, 0: More burst packets coming.
-                uint8_t     paddng;        ///< 32 bit aligment padding
-                uint32_t    offset;         ///< Offsets for List and Read commands
-            }) RequestHeader;
+    /// This needs to be packed, because it is typecast from mavlink_file_transfer_protocol_t.payload, which starts
+    /// at a 3-byte offset, causing unaligned access to seqNumber and offset.
+    MAVPACKED(typedef struct RequestHeader {
+        uint16_t seqNumber;     ///< Sequence number for message.
+        uint8_t session;        ///< Session id for read and write commands.
+        uint8_t opcode;         ///< MAV_FTP_OPCODE command or response opcode.
+        uint8_t size;           ///< Size of data.
+        uint8_t req_opcode;     ///< Request opcode returned in ACK and NAK messages.
+        uint8_t burstComplete;  ///< Whether the current burst is complete.
+        uint8_t padding;        ///< 32-bit alignment padding.
+        uint32_t offset;        ///< Offset for list and read commands.
+    })
+    RequestHeader;
 
-    MAVPACKED(
-            typedef struct Request{
-                RequestHeader hdr;
+    MAVPACKED(typedef struct Request {
+        RequestHeader hdr;
+        uint8_t data[sizeof(((mavlink_file_transfer_protocol_t*) nullptr)->payload) - sizeof(RequestHeader)];
+    })
+    Request;
 
-                // We use a union here instead of just casting (uint32_t)&payload[0] to not break strict aliasing rules
-                union {
-                    // The entire Request must fit into the payload member of the mavlink_file_transfer_protocol_t structure. We use as many leftover bytes
-                    // after we use up space for the RequestHeader for the data portion of the Request.
-                    uint8_t data[sizeof(((mavlink_file_transfer_protocol_t*)0)->payload) - sizeof(RequestHeader)];
+    static_assert(sizeof(RequestHeader) == 12, "MAVLink FTP request header wire layout changed");
+    static_assert(alignof(RequestHeader) == 1, "MAVLink FTP request header must remain packed");
+    static_assert(offsetof(RequestHeader, offset) == 8, "MAVLink FTP request offset field moved");
+    static_assert(sizeof(Request) == sizeof(((mavlink_file_transfer_protocol_t*) nullptr)->payload),
+                  "MAVLink FTP request no longer fills the MAVLink payload");
+    static_assert(alignof(Request) == 1, "MAVLink FTP request must remain packed");
+    static_assert(offsetof(Request, data) == sizeof(RequestHeader), "MAVLink FTP request data field moved");
 
-                    // File length returned by Open command
-                    uint32_t openFileLength;
-                };
-            }) Request;
+    enum class DirectoryEntryType : uint8_t
+    {
+        Unknown,
+        File,
+        Directory,
+        Skip,
+    };
 
-    typedef enum {
-        kCmdNone = 0,           ///< ignored, always acked
-        kCmdTerminateSession,	///< Terminates open Read session
-        kCmdResetSessions,		///< Terminates all open Read sessions
-        kCmdListDirectory,		///< List files in <path> from <offset>
-        kCmdOpenFileRO,			///< Opens file at <path> for reading, returns <session>
-        kCmdReadFile,			///< Reads <size> bytes from <offset> in <session>
-        kCmdCreateFile,			///< Creates file at <path> for writing, returns <session>
-        kCmdWriteFile,			///< Writes <size> bytes to <offset> in <session>
-        kCmdRemoveFile,			///< Remove file at <path>
-        kCmdCreateDirectory,	///< Creates directory at <path>
-        kCmdRemoveDirectory,	///< Removes Directory at <path>, must be empty
-        kCmdOpenFileWO,			///< Opens file at <path> for writing, returns <session>
-        kCmdTruncateFile,		///< Truncate file at <path> to <offset> length
-        kCmdRename,				///< Rename <path1> to <path2>
-        kCmdCalcFileCRC32,		///< Calculate CRC32 for file at <path>
-        kCmdBurstReadFile,      ///< Burst download session file
-        kCmdListDirectoryWithTime,  ///< List directory as kCmdListDirectory, each entry additionally carrying trailing \t<modification time>
+    enum class DirectoryEntryParseError : uint8_t
+    {
+        None,
+        Empty,
+        UnknownType,
+        MissingName,
+        MissingSize,
+        InvalidSize,
+        InvalidModificationTime,
+        ExtraFields,
+    };
 
-        kRspAck = 128,          ///< Ack response
-        kRspNak,                ///< Nak response
-    } OpCode_t;
+    struct DirectoryEntry
+    {
+        DirectoryEntryType type = DirectoryEntryType::Unknown;
+        QString name;
+        std::optional<quint64> size;
+        std::optional<qint64> modificationTime;
+    };
 
-    /// @brief Error codes returned in Nak response PayloadHeader.data[0].
-   typedef enum {
-        kErrNone = 0,
-        kErrFail,                   ///< Unknown failure
-        kErrFailErrno,              ///< errno sent back in PayloadHeader.data[1]
-        kErrInvalidDataSize,		///< PayloadHeader.size is invalid
-        kErrInvalidSession,         ///< Session is not currently open
-        kErrNoSessionsAvailable,	///< All available Sessions in use
-        kErrEOF,                    ///< Offset past end of file for List and Read commands
-        kErrUnknownCommand,         ///< Unknown command opcode
-        kErrFailFileExists,         ///< File exists already
-        kErrFailFileProtected,      ///< File is write protected
-        kErrFailFileNotFound
-    } ErrorCode_t;
+    struct DirectoryEntryParseResult
+    {
+        DirectoryEntry entry;
+        DirectoryEntryParseError error = DirectoryEntryParseError::None;
 
-    static QString opCodeToString   (OpCode_t opCode);
-    static QString errorCodeToString(ErrorCode_t errorCode);
+        bool valid() const { return error == DirectoryEntryParseError::None; }
+    };
+
+    enum class DirectoryPayloadParseError : uint8_t
+    {
+        None,
+        Empty,
+        EmptyEntry,
+        Oversized,
+        UnterminatedEntry,
+        InvalidUtf8,
+    };
+
+    struct DirectoryPayloadParseResult
+    {
+        QStringList records;
+        DirectoryPayloadParseError error = DirectoryPayloadParseError::None;
+
+        bool valid() const { return error == DirectoryPayloadParseError::None; }
+    };
+
+    enum class ResponseValidationResult : uint8_t
+    {
+        Valid,
+        Unrelated,
+        Malformed,
+    };
+
+    enum class ResponseValidationError : uint8_t
+    {
+        None,
+        InvalidResponseOpcode,
+        OversizedPayload,
+        MissingNakErrorCode,
+        InvalidNakPayload,
+    };
+
+    struct ResponseValidation
+    {
+        ResponseValidationResult result = ResponseValidationResult::Valid;
+        ResponseValidationError error = ResponseValidationError::None;
+    };
+
+    struct NakError
+    {
+        MAV_FTP_ERR code = MAV_FTP_ERR_NONE;
+        std::optional<uint8_t> errorNumber;
+    };
+
+    enum class UriParseError : uint8_t
+    {
+        None,
+        InvalidScheme,
+        InvalidComponentId,
+        EmbeddedNull,
+        PathTooLong,
+    };
+
+    struct UriParseResult
+    {
+        QString path;
+        uint8_t componentId = MAV_COMP_ID_AUTOPILOT1;
+        UriParseError error = UriParseError::None;
+
+        bool valid() const { return error == UriParseError::None; }
+    };
+
+    static constexpr const char* uriScheme = "mftp";
+    static constexpr qsizetype dataCapacity = sizeof(((Request*) nullptr)->data);
+
+    static bool setRequestData(Request& request, QStringView value);
+    static std::optional<uint32_t> decodeOpenFileLength(const Request& response);
+    static void setOpenFileLength(Request& response, uint32_t length);
+    static ResponseValidation validateResponse(const Request& response, MAV_FTP_OPCODE expectedRequestOpcode);
+    static std::optional<NakError> decodeNak(const Request& response);
+
+    static DirectoryEntryParseResult parseDirectoryEntry(QStringView record);
+    static QString formatDirectoryEntry(const DirectoryEntry& entry, bool includeModificationTime = false);
+    static DirectoryPayloadParseResult parseDirectoryPayload(const Request& response);
+
+    static bool isMavlinkFtpUri(QStringView uri);
+    static UriParseResult parseUri(uint8_t defaultComponentId, QStringView uri);
+
+    static QString opCodeToString(MAV_FTP_OPCODE opcode);
+    static QString errorCodeToString(MAV_FTP_ERR errorCode);
 };

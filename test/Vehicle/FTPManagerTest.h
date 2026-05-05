@@ -12,7 +12,15 @@ private slots:
     void _performSizeBasedTestCases_data();
     void _performSizeBasedTestCases();
     void _testLostPackets();
+    void _testDownloadCancelBeforeOpen();
+    void _testDownloadSessionCleanup();
+    void _testDownloadResetResponseLoss();
+    void _testDownloadFinalizeFailure();
     void _testListDirectory();
+    void _testListDirectoryLimit();
+    void _testListDirectoryParsing();
+    void _testScopedListDirectoryJob();
+    void _testOperationStartValidation();
     void _testListDirectoryWithTime();
     void _testListDirectoryWithTimeFallback();
     void _testListDirectoryNoResponse();
@@ -23,6 +31,7 @@ private slots:
     void _testListDirectoryBadSequence();
     void _testListDirectoryCancel();
     void _testUpload();
+    void _testUploadResetResponseLoss();
 
     // Overrides from UnitTest
     void cleanup() override;

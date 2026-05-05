@@ -42,7 +42,10 @@ APMSensorsComponentController::~APMSensorsComponentController()
 
 void APMSensorsComponentController::_appendStatusLog(const QString &text)
 {
-    Q_ASSERT(_statusLog);
+    if (!_statusLog) {
+        qCWarning(APMSensorsComponentControllerLog) << "Cannot append calibration status without a status log";
+        return;
+    }
 
     const QString varText = text;
     (void) QMetaObject::invokeMethod(_statusLog, "append", varText);
@@ -107,7 +110,7 @@ void APMSensorsComponentController::_resetInternalState()
 void APMSensorsComponentController::_stopCalibration(APMSensorsComponentController::StopCalibrationCode code)
 {
     (void) disconnect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
-    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(true);
+    _communicationLostInhibitor.reset();
 
     (void) disconnect(_vehicle, &Vehicle::textMessageReceived, this, &APMSensorsComponentController::_handleTextMessage);
 
@@ -265,7 +268,7 @@ void APMSensorsComponentController::calibrateAccel(bool doSimpleAccelCal)
         _vehicle->startCalibration(_calTypeInProgress);
         return;
     }
-    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
+    _inhibitCommunicationLost();
     _startVisualCalibration();
     _cancelButton->setEnabled(false);
     (void) _orientationCalAreaHelpText->setProperty("text", tr("Hold still in the current orientation and press Next when ready"));
@@ -311,7 +314,7 @@ void APMSensorsComponentController::calibrateAccel(bool doSimpleAccelCal)
 void APMSensorsComponentController::calibrateMotorInterference()
 {
     _calTypeInProgress = QGCMAVLink::CalibrationAPMCompassMot;
-    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
+    _inhibitCommunicationLost();
     _startLogCalibration();
     _appendStatusLog(tr("Raise the throttle slowly to between 50% ~ 75% (the props will spin!) for 5 ~ 10 seconds."));
     _appendStatusLog(tr("Quickly bring the throttle back down to zero"));
@@ -322,7 +325,7 @@ void APMSensorsComponentController::calibrateMotorInterference()
 void APMSensorsComponentController::levelHorizon()
 {
     _calTypeInProgress = QGCMAVLink::CalibrationLevel;
-    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
+    _inhibitCommunicationLost();
     _startLogCalibration();
     _appendStatusLog(tr("Hold the vehicle in its level flight position."));
     _vehicle->startCalibration(_calTypeInProgress);
@@ -331,7 +334,7 @@ void APMSensorsComponentController::levelHorizon()
 void APMSensorsComponentController::calibratePressure()
 {
     _calTypeInProgress = QGCMAVLink::CalibrationAPMPressureAirspeed;
-    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
+    _inhibitCommunicationLost();
     _startLogCalibration();
     _appendStatusLog(tr("Requesting pressure calibration..."));
     _vehicle->startCalibration(_calTypeInProgress);
@@ -340,7 +343,7 @@ void APMSensorsComponentController::calibratePressure()
 void APMSensorsComponentController::calibrateGyro()
 {
     _calTypeInProgress = QGCMAVLink::CalibrationGyro;
-    _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(false);
+    _inhibitCommunicationLost();
     _startLogCalibration();
     _appendStatusLog(tr("Requesting gyro calibration..."));
     _vehicle->startCalibration(_calTypeInProgress);
@@ -366,6 +369,14 @@ void APMSensorsComponentController::_handleTextMessage(int sysid, int componenti
 
     _appendStatusLog(originalMessageText);
     qCDebug(APMSensorsComponentControllerLog) << originalMessageText << severity;
+}
+
+void APMSensorsComponentController::_inhibitCommunicationLost()
+{
+    if (!_communicationLostInhibitor && _vehicle) {
+        _communicationLostInhibitor =
+            std::make_unique<CommunicationLostInhibitor>(_vehicle->vehicleLinkManager()->inhibitCommunicationLost());
+    }
 }
 
 void APMSensorsComponentController::_refreshParams()

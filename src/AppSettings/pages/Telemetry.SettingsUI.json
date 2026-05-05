@@ -46,6 +46,15 @@
             ]
         },
         {
+            "heading": "Onboard Logs",
+            "keywords": ["onboard log", "download", "ftp", "log protocol", "transport"],
+            "controls": [
+                {
+                    "setting": "mavlinkSettings.onboardLogTransport"
+                }
+            ]
+        },
+        {
             "heading": "Stream Rates (ArduPilot Only)",
             "keywords": ["stream rate", "ardupilot", "apm", "raw sensors", "rc channels", "position rate"],
             "controls": [

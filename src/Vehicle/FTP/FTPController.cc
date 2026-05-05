@@ -4,6 +4,7 @@
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
 #include "FTPManager.h"
+#include "FTPManagerJob.h"
 #include "MultiVehicleManager.h"
 #include "QGCFileHelper.h"
 #include "Vehicle.h"
@@ -18,22 +19,40 @@ QGC_LOGGING_CATEGORY(FTPControllerLog, "Vehicle.FTPController")
 
 FTPController::FTPController(QObject *parent)
     : QObject(parent)
-    , _vehicle(MultiVehicleManager::instance()->activeVehicle())
-    , _ftpManager(_vehicle->ftpManager())
     , _archiveModel(new QGCArchiveModel(this))
 {
-    connect(_ftpManager, &FTPManager::downloadComplete, this, &FTPController::_handleDownloadComplete);
-    connect(_ftpManager, &FTPManager::downloadComplete, this, &FTPController::downloadComplete);
-    connect(_ftpManager, &FTPManager::uploadComplete, this, &FTPController::_handleUploadComplete);
-    connect(_ftpManager, &FTPManager::uploadComplete, this, &FTPController::uploadComplete);
-    connect(_ftpManager, &FTPManager::listDirectoryComplete, this, &FTPController::_handleDirectoryComplete);
-    connect(_ftpManager, &FTPManager::commandProgress, this, &FTPController::_handleCommandProgress);
-    connect(_ftpManager, &FTPManager::deleteComplete, this, &FTPController::_handleDeleteComplete);
-    connect(_ftpManager, &FTPManager::deleteComplete, this, &FTPController::deleteComplete);
+    connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &FTPController::setVehicle);
+    setVehicle(MultiVehicleManager::instance()->activeVehicle());
+}
+
+Vehicle* FTPController::vehicle() const
+{
+    return _vehicle;
+}
+
+void FTPController::setVehicle(Vehicle* vehicle)
+{
+    if (vehicle == _vehicle) {
+        return;
+    }
+
+    cancelActiveOperation();
+    _activeJob = nullptr;
+    _setBusy(false);
+    _clearOperation();
+    _resetDirectoryState();
+
+    _vehicle = vehicle;
+    _ftpManager = vehicle ? vehicle->ftpManager() : nullptr;
+    emit vehicleChanged();
 }
 
 bool FTPController::listDirectory(const QString &uri, int componentId)
 {
+    if (!_ftpManager) {
+        _setErrorString(tr("No active vehicle is available"));
+        return false;
+    }
     if (_operation != Operation::None) {
         _setErrorString(tr("Another FTP operation is in progress"));
         return false;
@@ -52,7 +71,8 @@ bool FTPController::listDirectory(const QString &uri, int componentId)
     emit progressChanged();
 
     const uint8_t compId = _componentIdForRequest(componentId);
-    if (!_ftpManager->listDirectory(compId, uri)) {
+    FTPListDirectoryJob* const job = _ftpManager->startListDirectory(compId, uri);
+    if (!job) {
         qCWarning(FTPControllerLog) << "Failed to start list operation for" << uri;
         _setErrorString(tr("Failed to list %1").arg(uri));
         _currentPath = previousPath;
@@ -62,11 +82,20 @@ bool FTPController::listDirectory(const QString &uri, int componentId)
         return false;
     }
 
+    _activeJob = job;
+    connect(job, &FTPListDirectoryJob::finished, this, &FTPController::_handleDirectoryComplete);
+
     return true;
 }
 
 bool FTPController::downloadFile(const QString &uri, const QString &localDir, const QString &fileName, int componentId)
 {
+    if (!_ftpManager) {
+        const QString error = tr("No active vehicle is available");
+        _setErrorString(error);
+        emit downloadComplete(QString(), error);
+        return false;
+    }
     if (_operation != Operation::None) {
         const QString error = tr("Another FTP operation is in progress");
         _setErrorString(error);
@@ -93,7 +122,8 @@ bool FTPController::downloadFile(const QString &uri, const QString &localDir, co
     emit progressChanged();
 
     const uint8_t compId = _componentIdForRequest(componentId);
-    if (!_ftpManager->download(compId, uri, absoluteLocalDir, fileName)) {
+    FTPDownloadJob* const job = _ftpManager->startDownload(compId, uri, absoluteLocalDir, fileName);
+    if (!job) {
         qCWarning(FTPControllerLog) << "Failed to start download" << uri << absoluteLocalDir;
         const QString error = tr("Failed to download %1").arg(uri);
         _setErrorString(error);
@@ -103,11 +133,22 @@ bool FTPController::downloadFile(const QString &uri, const QString &localDir, co
         return false;
     }
 
+    _activeJob = job;
+    connect(job, &FTPDownloadJob::finished, this, &FTPController::_handleDownloadComplete);
+    connect(job, &FTPDownloadJob::finished, this, &FTPController::downloadComplete);
+    connect(job, &FTPJob::progress, this, &FTPController::_handleCommandProgress);
+
     return true;
 }
 
 bool FTPController::uploadFile(const QString &localFile, const QString &uri, int componentId)
 {
+    if (!_ftpManager) {
+        const QString error = tr("No active vehicle is available");
+        _setErrorString(error);
+        emit uploadComplete(QString(), error);
+        return false;
+    }
     if (_operation != Operation::None) {
         const QString error = tr("Another FTP operation is in progress");
         _setErrorString(error);
@@ -133,7 +174,8 @@ bool FTPController::uploadFile(const QString &localFile, const QString &uri, int
     emit progressChanged();
 
     const uint8_t compId = _componentIdForRequest(componentId);
-    if (!_ftpManager->upload(compId, uri, sourceInfo.absoluteFilePath())) {
+    FTPUploadJob* const job = _ftpManager->startUpload(compId, uri, sourceInfo.absoluteFilePath());
+    if (!job) {
         qCWarning(FTPControllerLog) << "Failed to start upload" << sourceInfo.absoluteFilePath() << uri;
         const QString error = tr("Failed to upload %1").arg(sourceInfo.fileName());
         _setErrorString(error);
@@ -143,11 +185,22 @@ bool FTPController::uploadFile(const QString &localFile, const QString &uri, int
         return false;
     }
 
+    _activeJob = job;
+    connect(job, &FTPUploadJob::finished, this, &FTPController::_handleUploadComplete);
+    connect(job, &FTPUploadJob::finished, this, &FTPController::uploadComplete);
+    connect(job, &FTPJob::progress, this, &FTPController::_handleCommandProgress);
+
     return true;
 }
 
 bool FTPController::deleteFile(const QString &uri, int componentId)
 {
+    if (!_ftpManager) {
+        const QString error = tr("No active vehicle is available");
+        _setErrorString(error);
+        emit deleteComplete(QString(), error);
+        return false;
+    }
     if (_operation != Operation::None) {
         const QString error = tr("Another FTP operation is in progress");
         _setErrorString(error);
@@ -160,7 +213,8 @@ bool FTPController::deleteFile(const QString &uri, int componentId)
     _setOperation(Operation::Delete);
 
     const uint8_t compId = _componentIdForRequest(componentId);
-    if (!_ftpManager->deleteFile(compId, uri)) {
+    FTPDeleteJob* const job = _ftpManager->startDeleteFile(compId, uri);
+    if (!job) {
         qCWarning(FTPControllerLog) << "Failed to start delete" << uri;
         const QString error = tr("Failed to delete %1").arg(uri);
         _setErrorString(error);
@@ -170,26 +224,17 @@ bool FTPController::deleteFile(const QString &uri, int componentId)
         return false;
     }
 
+    _activeJob = job;
+    connect(job, &FTPDeleteJob::finished, this, &FTPController::_handleDeleteComplete);
+    connect(job, &FTPDeleteJob::finished, this, &FTPController::deleteComplete);
+
     return true;
 }
 
 void FTPController::cancelActiveOperation()
 {
-    switch (_operation) {
-    case Operation::Download:
-        _ftpManager->cancelDownload();
-        break;
-    case Operation::Upload:
-        _ftpManager->cancelUpload();
-        break;
-    case Operation::List:
-        _ftpManager->cancelListDirectory();
-        break;
-    case Operation::Delete:
-        _ftpManager->cancelDelete();
-        break;
-    case Operation::None:
-        break;
+    if (_activeJob) {
+        _activeJob->cancel();
     }
 }
 
@@ -199,6 +244,7 @@ void FTPController::_handleDownloadComplete(const QString &filePath, const QStri
         return;
     }
 
+    _activeJob = nullptr;
     _setBusy(false);
 
     if (error.isEmpty()) {
@@ -224,6 +270,7 @@ void FTPController::_handleUploadComplete(const QString &remotePath, const QStri
         return;
     }
 
+    _activeJob = nullptr;
     _setBusy(false);
 
     if (error.isEmpty()) {
@@ -239,12 +286,15 @@ void FTPController::_handleUploadComplete(const QString &remotePath, const QStri
     _clearOperation();
 }
 
-void FTPController::_handleDirectoryComplete(const QStringList &entries, const QString &error)
+void FTPController::_handleDirectoryComplete(const QStringList& entries, const QString& error, bool truncated)
 {
+    Q_UNUSED(truncated)
+
     if (_operation != Operation::List) {
         return;
     }
 
+    _activeJob = nullptr;
     _setBusy(false);
 
     if (error.isEmpty()) {
@@ -269,6 +319,7 @@ void FTPController::_handleDeleteComplete(const QString &remotePath, const QStri
         return;
     }
 
+    _activeJob = nullptr;
     _setBusy(false);
 
     if (error.isEmpty()) {

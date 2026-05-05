@@ -12,4 +12,6 @@ private slots:
     void _extractArchiveConcurrentRejected();
     void _browseArchiveRejectsInvalidInput();
     void _browseArchiveHappyPath();
+    void _noVehicleRejectsOperations();
+    void _vehicleChangeCancelsOperation();
 };

@@ -27,6 +27,7 @@ public:
     QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const override;
     AutoPilotPlugin *autopilotPlugin(Vehicle* vehicle) const override;
     bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) const override;
+    OnboardLogPolicy onboardLogPolicy(Vehicle* vehicle) const override;
     void setGuidedMode(Vehicle *vehicle, bool guidedMode) const override;
     void guidedModeTakeoff(Vehicle *vehicle, double altitudeRel) const override;
     bool guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius) const override;

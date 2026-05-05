@@ -12,6 +12,7 @@ class VehicleLinkManagerTest : public CommsTest
 private slots:
     void _simpleLinkTest();
     void _simpleCommLossTest();
+    void _communicationLostInhibitorTest();
     void _multiLinkSingleVehicleTest();
     void _connectionRemovedTest();
     void _highLatencyLinkTest();

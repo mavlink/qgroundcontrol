@@ -20,6 +20,7 @@ public:
 
     AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) const override;
     bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) const override;
+    OnboardLogPolicy onboardLogPolicy(Vehicle* vehicle) const override;
     QStringList         flightModes                     (Vehicle* vehicle) const override;
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const override;
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) const override;

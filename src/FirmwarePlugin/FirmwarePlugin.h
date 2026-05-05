@@ -77,6 +77,14 @@ public:
     explicit FirmwarePlugin(QObject *parent = nullptr);
     virtual ~FirmwarePlugin();
 
+    struct OnboardLogPolicy
+    {
+        QString ftpFallbackDirectory;
+        QString logFileExtension = QStringLiteral("bin");
+        bool logProtocolIdsAreOneBased = false;
+        bool autoSelectFtp = true;
+    };
+
     /// Set of optional capabilites which firmware may support
     enum FirmwareCapabilities {
         SetFlightModeCapability =   1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
@@ -125,6 +133,9 @@ public:
 
     /// @return true: Firmware supports all specified capabilites
     virtual bool isCapable(const Vehicle* /*vehicle*/, FirmwareCapabilities /*capabilities*/) const { return false; }
+
+    /// Returns firmware-specific behavior for listing and downloading onboard logs.
+    virtual OnboardLogPolicy onboardLogPolicy(Vehicle* /*vehicle*/) const { return {}; }
 
     /// Returns the list of available flight modes for the Fly View dropdown. This may or may not be the full
     /// list available from the firmware. Call will be made again if advanced mode changes.

@@ -371,9 +371,78 @@ void VehicleLinkManager::closeVehicle()
 
 void VehicleLinkManager::setCommunicationLostEnabled(bool communicationLostEnabled)
 {
+    if (_communicationLostInhibitCount > 0) {
+        _communicationLostEnabledAfterInhibition = communicationLostEnabled;
+        communicationLostEnabled = false;
+    }
+    _setCommunicationLostEnabledActual(communicationLostEnabled);
+}
+
+CommunicationLostInhibitor VehicleLinkManager::inhibitCommunicationLost()
+{
+    return CommunicationLostInhibitor(this);
+}
+
+void VehicleLinkManager::_acquireCommunicationLostInhibition()
+{
+    if (_communicationLostInhibitCount++ == 0) {
+        _communicationLostEnabledAfterInhibition = _communicationLostEnabled;
+        _setCommunicationLostEnabledActual(false);
+    }
+}
+
+void VehicleLinkManager::_releaseCommunicationLostInhibition()
+{
+    if (_communicationLostInhibitCount == 0) {
+        return;
+    }
+    if (--_communicationLostInhibitCount == 0) {
+        _setCommunicationLostEnabledActual(_communicationLostEnabledAfterInhibition);
+    }
+}
+
+void VehicleLinkManager::_setCommunicationLostEnabledActual(bool communicationLostEnabled)
+{
     if (_communicationLostEnabled != communicationLostEnabled) {
         _communicationLostEnabled = communicationLostEnabled;
         emit communicationLostEnabledChanged(communicationLostEnabled);
+    }
+}
+
+CommunicationLostInhibitor::CommunicationLostInhibitor(VehicleLinkManager* manager) : _manager(manager)
+{
+    if (_manager) {
+        _manager->_acquireCommunicationLostInhibition();
+    }
+}
+
+CommunicationLostInhibitor::CommunicationLostInhibitor(CommunicationLostInhibitor&& other) noexcept
+    : _manager(other._manager)
+{
+    other._manager = nullptr;
+}
+
+CommunicationLostInhibitor& CommunicationLostInhibitor::operator=(CommunicationLostInhibitor&& other) noexcept
+{
+    if (this != &other) {
+        reset();
+        _manager = other._manager;
+        other._manager = nullptr;
+    }
+    return *this;
+}
+
+CommunicationLostInhibitor::~CommunicationLostInhibitor()
+{
+    reset();
+}
+
+void CommunicationLostInhibitor::reset()
+{
+    if (_manager) {
+        VehicleLinkManager* const manager = _manager;
+        _manager = nullptr;
+        manager->_releaseCommunicationLostInhibition();
     }
 }
 

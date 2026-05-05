@@ -2,6 +2,7 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -10,6 +11,7 @@
 
 class Vehicle;
 class VehicleLinkManagerTest;
+class CommunicationLostInhibitor;
 
 class VehicleLinkManager : public QObject
 {
@@ -43,6 +45,7 @@ public:
     bool communicationLostEnabled() const { return _communicationLostEnabled; }
     void setPrimaryLinkByName(const QString &name);
     void setCommunicationLostEnabled(bool communicationLostEnabled);
+    [[nodiscard]] CommunicationLostInhibitor inhibitCommunicationLost();
     void closeVehicle();
 
 signals:
@@ -58,6 +61,11 @@ private slots:
     void _commLostCheck();
 
 private:
+    friend class CommunicationLostInhibitor;
+
+    void _acquireCommunicationLostInhibition();
+    void _releaseCommunicationLostInhibition();
+    void _setCommunicationLostEnabledActual(bool communicationLostEnabled);
     int _containsLinkIndex(const LinkInterface *link);
     void _addLink(LinkInterface *link);
     void _removeLink(LinkInterface *link);
@@ -78,6 +86,8 @@ private:
     WeakLinkInterfacePtr _primaryLink;
     bool _communicationLost = false;
     bool _communicationLostEnabled = true;
+    bool _communicationLostEnabledAfterInhibition = true;
+    uint _communicationLostInhibitCount = 0;
     bool _autoDisconnect = false;                           ///< true: Automatically disconnect vehicle when last connection goes away or lost heartbeat
     bool _allLinksRemovedSignalledByCloseVehicle = false;
 
@@ -94,4 +104,27 @@ public:
     /// Full comm loss detection timeout for tests: accounts for timer interval + heartbeat timeout + margin.
     /// Use this in tests waiting for communicationLostChanged or linkStatusesChanged signals.
     static constexpr int kTestCommLostDetectionTimeoutMs = kTestCommLostCheckTimeoutMs + kTestHeartbeatTimeoutMs + 300;
+};
+
+/// Move-only token which temporarily suppresses communication-loss detection.
+/// Nested tokens are reference-counted and the caller's previous setting is
+/// restored when the final token is released.
+class CommunicationLostInhibitor final
+{
+    Q_DISABLE_COPY(CommunicationLostInhibitor)
+
+public:
+    CommunicationLostInhibitor() = default;
+    CommunicationLostInhibitor(CommunicationLostInhibitor&& other) noexcept;
+    CommunicationLostInhibitor& operator=(CommunicationLostInhibitor&& other) noexcept;
+    ~CommunicationLostInhibitor();
+
+    void reset();
+    bool active() const { return !_manager.isNull(); }
+
+private:
+    friend class VehicleLinkManager;
+    explicit CommunicationLostInhibitor(VehicleLinkManager* manager);
+
+    QPointer<VehicleLinkManager> _manager;
 };

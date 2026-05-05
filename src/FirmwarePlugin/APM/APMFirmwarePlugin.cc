@@ -56,6 +56,17 @@ APMFirmwarePlugin::~APMFirmwarePlugin()
 
 }
 
+FirmwarePlugin::OnboardLogPolicy APMFirmwarePlugin::onboardLogPolicy(Vehicle* /*vehicle*/) const
+{
+    OnboardLogPolicy policy;
+    policy.ftpFallbackDirectory = QStringLiteral("/APM/LOGS");
+    policy.logProtocolIdsAreOneBased = true;
+    // Generic FTP capability does not guarantee that ArduPilot exposes its logs over FTP,
+    // and those listings may not provide log timestamps, so keep FTP opt-in.
+    policy.autoSelectFtp = false;
+    return policy;
+}
+
 AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle *vehicle) const
 {
     return new APMAutoPilotPlugin(vehicle, vehicle);
@@ -129,6 +140,11 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle *vehicle, mavlink_mess
 {
     Q_UNUSED(vehicle);
 
+    if (qgcApp()->thread() != QThread::currentThread()) {
+        qCCritical(APMFirmwarePluginLog) << "Received PARAM_VALUE outside the application thread";
+        return;
+    }
+
     mavlink_param_value_t paramValue;
     mavlink_param_union_t paramUnion;
 
@@ -174,7 +190,6 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle *vehicle, mavlink_mess
     mavlink_status_t *mavlinkStatusReEncode = mavlink_get_channel_status(channel);
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
 
-    Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     (void) mavlink_msg_param_value_encode_chan(
         message->sysid,
         message->compid,
@@ -338,6 +353,11 @@ void APMFirmwarePlugin::adjustOutgoingMavlinkMessageThreadSafe(Vehicle *vehicle,
 
 void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t *message) const
 {
+    if (qgcApp()->thread() != QThread::currentThread()) {
+        qCCritical(APMFirmwarePluginLog) << "Cannot rewrite STATUSTEXT severity outside the application thread";
+        return;
+    }
+
     // Re-Encoding is always done using mavlink 1.0
     const uint8_t channel = _reencodeMavlinkChannel();
     QMutexLocker reencode_lock{&_reencodeMavlinkChannelMutex()};
@@ -349,7 +369,6 @@ void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t *message) const
 
     statusText.severity = MAV_SEVERITY_INFO;
 
-    Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     (void) mavlink_msg_statustext_encode_chan(
         message->sysid,
         message->compid,
@@ -361,6 +380,11 @@ void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t *message) const
 
 void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t *message) const
 {
+    if (qgcApp()->thread() != QThread::currentThread()) {
+        qCCritical(APMFirmwarePluginLog) << "Cannot rewrite calibration STATUSTEXT outside the application thread";
+        return;
+    }
+
     mavlink_statustext_t statusText{};
     mavlink_msg_statustext_decode(message, &statusText);
 
@@ -372,7 +396,6 @@ void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t *mes
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
     statusText.severity = MAV_SEVERITY_INFO;
 
-    Q_ASSERT(qgcApp()->thread() == QThread::currentThread());
     (void) mavlink_msg_statustext_encode_chan(
         message->sysid,
         message->compid,
@@ -956,8 +979,12 @@ void APMFirmwarePlugin::guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoor
 
     float maxYawRate = 0.f;
     static const QString maxYawRateParam = QStringLiteral("ATC_RATE_Y_MAX");
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, maxYawRateParam)) {
-        maxYawRate = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, maxYawRateParam)->rawValue().toFloat();
+    ParameterManager* const parameterManager = vehicle->parameterManager();
+    if (parameterManager->parameterExists(ParameterManager::defaultComponentId, maxYawRateParam)) {
+        if (Fact* const maximumYawRate =
+                parameterManager->getParameter(ParameterManager::defaultComponentId, maxYawRateParam)) {
+            maxYawRate = maximumYawRate->rawValue().toFloat();
+        }
     }
 
     vehicle->sendMavCommand(
@@ -1240,8 +1267,12 @@ double APMFirmwarePlugin::maximumEquivalentAirspeed(Vehicle *vehicle) const
 {
     const QString airspeedMax("AIRSPEED_MAX");
 
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMax)) {
-        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMax)->rawValue().toDouble();
+    ParameterManager* const parameterManager = vehicle->parameterManager();
+    if (parameterManager->parameterExists(ParameterManager::defaultComponentId, airspeedMax)) {
+        if (Fact* const maximumAirspeed =
+                parameterManager->getParameter(ParameterManager::defaultComponentId, airspeedMax)) {
+            return maximumAirspeed->rawValue().toDouble();
+        }
     }
 
     return FirmwarePlugin::maximumEquivalentAirspeed(vehicle);
@@ -1251,8 +1282,12 @@ double APMFirmwarePlugin::minimumEquivalentAirspeed(Vehicle *vehicle) const
 {
     const QString airspeedMin("AIRSPEED_MIN");
 
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMin)) {
-        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMin)->rawValue().toDouble();
+    ParameterManager* const parameterManager = vehicle->parameterManager();
+    if (parameterManager->parameterExists(ParameterManager::defaultComponentId, airspeedMin)) {
+        if (Fact* const minimumAirspeed =
+                parameterManager->getParameter(ParameterManager::defaultComponentId, airspeedMin)) {
+            return minimumAirspeed->rawValue().toDouble();
+        }
     }
 
     return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);

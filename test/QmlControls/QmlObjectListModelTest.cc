@@ -1,23 +1,18 @@
 #include "QmlObjectListModelTest.h"
+
+#include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
 
 #include "TestDirtyObject.h"
-
 
 namespace {
 
 class TestQmlObjectListModel : public QmlObjectListModel
 {
 public:
-    explicit TestQmlObjectListModel(QObject* parent = nullptr)
-        : QmlObjectListModel(parent)
-    {
-    }
+    explicit TestQmlObjectListModel(QObject* parent = nullptr) : QmlObjectListModel(parent) {}
 
-    void setSkipDirtyFirstItemForTest(bool skip)
-    {
-        _skipDirtyFirstItem = skip;
-    }
+    void setSkipDirtyFirstItemForTest(bool skip) { _skipDirtyFirstItem = skip; }
 };
 
 }  // namespace
@@ -109,6 +104,26 @@ void QmlObjectListModelTest::_appendObjectWithoutDirtySignal()
     QCOMPARE(modelDirtySpy.count(), 1);
     QCOMPARE(modelDirtySpy.takeFirst().at(0).toBool(), true);
     QCOMPARE(model.dirty(), true);
+}
+
+void QmlObjectListModelTest::_modelContract()
+{
+    TestQmlObjectListModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::Fatal);
+    QObject first;
+    QObject second;
+
+    model.append(&first);
+    model.append(&second);
+    QCOMPARE(model.count(), 2);
+
+    const QModelIndex firstIndex = model.index(0, 0);
+    QVERIFY(firstIndex.isValid());
+    QCOMPARE(static_cast<QAbstractItemModel*>(&model)->rowCount(firstIndex), 0);
+
+    QCOMPARE(model.removeOne(&first), &first);
+    QCOMPARE(model.removeOne(&second), &second);
+    QCOMPARE(model.count(), 0);
 }
 
 UT_REGISTER_TEST(QmlObjectListModelTest, TestLabel::Unit)

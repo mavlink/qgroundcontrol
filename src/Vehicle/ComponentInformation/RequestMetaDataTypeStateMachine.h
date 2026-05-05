@@ -6,6 +6,8 @@
 #include "VehicleTypes.h"
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QPointer>
+class FTPDownloadJob;
 class Vehicle;
 class ComponentInformationManager;
 class CompInfo;
@@ -88,6 +90,7 @@ private:
     bool _currentFileValidCrc = false;
 
     QElapsedTimer _downloadStartTime;
+    QPointer<FTPDownloadJob> _ftpDownloadJob;
     MetadataSource _metadataSource = MetadataSource::None;
     QString _metadataUri;
     bool _metadataIsFallback = false;

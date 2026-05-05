@@ -9,6 +9,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         HealthAndArmingCheckReportTest.h
         ImageProtocolManagerTest.cc
         ImageProtocolManagerTest.h
+        MAVLinkFTPTest.cc
+        MAVLinkFTPTest.h
         MAVLinkStreamConfigTest.cc
         MAVLinkStreamConfigTest.h
         QGCMAVLinkTest.cc
@@ -25,6 +27,7 @@ add_subdirectory(Signing)
 
 add_qgc_test(HealthAndArmingCheckReportTest LABELS Unit MAVLink)
 add_qgc_test(ImageProtocolManagerTest LABELS Unit MAVLink)
+add_qgc_test(MAVLinkFTPTest LABELS Unit MAVLink)
 add_qgc_test(MAVLinkStreamConfigTest LABELS Unit MAVLink)
 add_qgc_test(QGCMAVLinkTest LABELS Unit MAVLink)
 add_qgc_test(StatusTextHandlerTest LABELS Unit MAVLink)

@@ -1,503 +1,194 @@
 #include "OnboardLogController.h"
-#include "AppSettings.h"
-#include "OnboardLogEntry.h"
+
+#include <QtCore/QPersistentModelIndex>
+#include <QtCore/QSignalBlocker>
+#include <utility>
+
+#include "Fact.h"
+#include "FirmwarePlugin.h"
+#include "FtpTransport.h"
+#include "LogProtocolTransport.h"
 #include "MAVLinkLib.h"
-#include "MAVLinkProtocol.h"
+#include "MavlinkSettings.h"
 #include "MultiVehicleManager.h"
-#include "ParameterManager.h"
-#include "QGCFormat.h"
+#include "OnboardLogEntry.h"
+#include "OnboardLogModel.h"
+#include "OnboardLogSortFilterModel.h"
+#include "OnboardLogTransport.h"
 #include "QGCLoggingCategory.h"
-#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
-#include "VehicleLinkManager.h"
 
-#include <algorithm>
+QGC_LOGGING_CATEGORY(OnboardLogControllerLog, "AnalyzeView.OnboardLogs.OnboardLogController")
 
-#include <QtCore/QApplicationStatic>
-#include <QtCore/QTimer>
+namespace {
 
-QGC_LOGGING_CATEGORY(OnboardLogControllerLog, "AnalyzeView.OnboardLogController")
+enum class TransportOverride : uint32_t
+{
+    Auto = 0,
+    LogProtocol = 1,
+    MavlinkFtp = 2,
+};
 
-OnboardLogController::OnboardLogController(QObject *parent)
-    : QObject(parent)
-    , _timer(new QTimer(this))
-    , _logEntriesModel(new QmlObjectListModel(this))
+}  // namespace
+
+OnboardLogController::OnboardLogController(QObject* parent)
+    : QObject(parent),
+      _logTransport(new LogProtocolTransport(this)),
+      _ftpTransport(new FtpTransport(this)),
+      _sortModel(new OnboardLogSortFilterModel(this))
 {
     qCDebug(OnboardLogControllerLog) << this;
 
-    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &OnboardLogController::_setActiveVehicle);
-    (void) connect(_timer, &QTimer::timeout, this, &OnboardLogController::_processDownload);
+    _setActiveTransport(_logTransport);
 
-    _timer->setSingleShot(false);
+    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this,
+                   &OnboardLogController::_setActiveVehicle);
+
+    // Re-pick transport when the user toggles the override Fact at runtime.
+    Fact* const transportFact = SettingsManager::instance()->mavlinkSettings()->onboardLogTransport();
+    (void) connect(transportFact, &Fact::rawValueChanged, this, &OnboardLogController::_reevaluateTransport);
 
     _setActiveVehicle(MultiVehicleManager::instance()->activeVehicle());
 }
 
-OnboardLogController::~OnboardLogController()
+OnboardLogController::~OnboardLogController() = default;
+
+QAbstractItemModel* OnboardLogController::model() const
 {
-    qCDebug(OnboardLogControllerLog) << this;
+    return _sortModel;
 }
 
-void OnboardLogController::download(const QString &path)
+OnboardLogModel* OnboardLogController::sourceModel() const
 {
-    const QString dir = path.isEmpty() ? SettingsManager::instance()->appSettings()->logSavePath() : path;
-    _downloadToDirectory(dir);
+    return _active ? _active->model() : nullptr;
 }
 
-void OnboardLogController::_downloadToDirectory(const QString &dir)
+bool OnboardLogController::downloadingLogs() const
 {
-    _receivedAllEntries();
+    return _active && _active->downloadingLogs();
+}
 
-    _downloadData.reset();
+OnboardLogController::TransportKind OnboardLogController::transportKind() const
+{
+    return (_active == _ftpTransport) ? TransportKind::MavlinkFtp : TransportKind::LogProtocol;
+}
 
-    _downloadPath = dir;
-    if (_downloadPath.isEmpty()) {
+qreal OnboardLogController::batchProgress() const
+{
+    return _active ? _active->batchProgress() : 0.;
+}
+
+QString OnboardLogController::errorMessage() const
+{
+    return _active ? _active->errorMessage() : QString();
+}
+
+void OnboardLogController::ensureLoaded()
+{
+    if (!_vehicle || !_active || busy()) {
         return;
     }
 
-    if (!_downloadPath.endsWith(QDir::separator())) {
-        _downloadPath += QDir::separator();
-    }
-
-    QGCOnboardLogEntry *const log = _getNextSelected();
-    if (log) {
-        log->setStatus(tr("Waiting"));
-    }
-
-    _setDownloading(true);
-    _receivedAllData();
-}
-
-void OnboardLogController::_processDownload()
-{
-    if (_requestingLogEntries) {
-        _findMissingEntries();
-    } else if (_downloadingLogs) {
-        _findMissingData();
-    }
-}
-
-void OnboardLogController::_findMissingEntries()
-{
-    const int num_logs = _logEntriesModel->count();
-    int start = -1;
-    int end = -1;
-    for (int i = 0; i < num_logs; i++) {
-        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
-        if (!entry) {
-            continue;
-        }
-
-        if (!entry->received()) {
-            if (start < 0) {
-                start = i;
-            } else {
-                end = i;
-            }
-        } else if (start >= 0) {
-            break;
-        }
-    }
-
-    if (start < 0) {
-        _receivedAllEntries();
+    const bool sameLoadKey = (_loadVehicle == _vehicle) && (_loadTransport == _active);
+    if (sameLoadKey && ((_loadState == LoadState::Loading) || (_loadState == LoadState::Loaded))) {
         return;
     }
 
-    if (_retries++ > 2) {
-        for (int i = 0; i < num_logs; i++) {
-            QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
-            if (entry && !entry->received()) {
-                entry->setStatus(tr("Error"));
-            }
-        }
-
-        _receivedAllEntries();
-        qCWarning(OnboardLogControllerLog) << "Too many errors retreiving log list. Giving up.";
-        return;
-    }
-
-    if (end < 0) {
-        end = start;
-    }
-
-    start += _apmOffset;
-    end += _apmOffset;
-
-    _requestLogList(static_cast<uint32_t>(start), static_cast<uint32_t>(end));
-}
-
-void OnboardLogController::_setActiveVehicle(Vehicle *vehicle)
-{
-    if (vehicle == _vehicle) {
-        return;
-    }
-
-    if (_vehicle) {
-        _logEntriesModel->clearAndDeleteContents();
-        (void) disconnect(_vehicle, &Vehicle::logEntry, this, &OnboardLogController::_logEntry);
-        (void) disconnect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
-    }
-
-    _vehicle = vehicle;
-
-    if (_vehicle) {
-        (void) connect(_vehicle, &Vehicle::logEntry, this, &OnboardLogController::_logEntry);
-        (void) connect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
-    }
-}
-
-void OnboardLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num)
-{
-    Q_UNUSED(last_log_num);
-
-    if (!_requestingLogEntries) {
-        return;
-    }
-
-    if ((_logEntriesModel->count() == 0) && (num_logs > 0)) {
-        if (_vehicle->firmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-            // APM ID starts at 1
-            _apmOffset = 1;
-        }
-
-        for (int i = 0; i < num_logs; i++) {
-            QGCOnboardLogEntry *const entry = new QGCOnboardLogEntry(i);
-            (void) connect(entry, &QGCOnboardLogEntry::selectedChanged, this, &OnboardLogController::selectionChanged);
-            _logEntriesModel->append(entry);
-        }
-    }
-
-    if (num_logs > 0) {
-        if ((size > 0) || (_vehicle->firmwareType() != MAV_AUTOPILOT_ARDUPILOTMEGA)) {
-            id -= _apmOffset;
-            if (id < _logEntriesModel->count()) {
-                QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(id);
-                entry->setSize(size);
-                entry->setTime(QDateTime::fromSecsSinceEpoch(time_utc));
-                entry->setReceived(true);
-                entry->setStatus(tr("Available"));
-            } else {
-                qCWarning(OnboardLogControllerLog) << "Received onboard log entry for out-of-bound index:" << id;
-            }
-        }
-    } else {
-        _receivedAllEntries();
-    }
-
-    _retries = 0;
-
-    if (_entriesComplete()) {
-        _receivedAllEntries();
-    } else {
-        _timer->start(kTimeOutMs);
-    }
-}
-
-void OnboardLogController::_receivedAllEntries()
-{
-    _timer->stop();
-    _setListing(false);
-}
-
-bool OnboardLogController::_entriesComplete() const
-{
-    const int num_logs = _logEntriesModel->count();
-    for (int i = 0; i < num_logs; i++) {
-        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
-        if (!entry) {
-            continue;
-        }
-
-        if (!entry->received()) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-void OnboardLogController::_logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data)
-{
-    if (!_downloadingLogs || !_downloadData) {
-        return;
-    }
-
-    id -= _apmOffset;
-    if (_downloadData->ID != id) {
-        qCWarning(OnboardLogControllerLog) << "Received log data for wrong log";
-        return;
-    }
-
-    if ((ofs % MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN) != 0) {
-        qCWarning(OnboardLogControllerLog) << "Ignored misaligned incoming packet @" << ofs;
-        return;
-    }
-
-    bool result = false;
-    if (ofs <= _downloadData->entry->size()) {
-        const uint32_t chunk = ofs / OnboardLogDownloadData::kChunkSize;
-        // qCDebug(OnboardLogControllerLog) << "Received data - Offset:" << ofs << "Chunk:" << chunk;
-        if (chunk != _downloadData->current_chunk) {
-            qCWarning(OnboardLogControllerLog) << "Ignored packet for out of order chunk actual:expected" << chunk << _downloadData->current_chunk;
-            return;
-        }
-
-        const uint16_t bin = (ofs - (chunk * OnboardLogDownloadData::kChunkSize)) / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
-        if (bin >= _downloadData->chunk_table.size()) {
-            qCWarning(OnboardLogControllerLog) << "Out of range bin received";
-        } else {
-            _downloadData->chunk_table.setBit(bin);
-        }
-
-        if (_downloadData->file.pos() != ofs) {
-            if (!_downloadData->file.seek(ofs)) {
-                qCWarning(OnboardLogControllerLog) << "Error while seeking log file offset";
-                return;
-            }
-        }
-
-        if (_downloadData->file.write(reinterpret_cast<const char*>(data), count)) {
-            _downloadData->written += count;
-            _downloadData->rate_bytes += count;
-            _updateDataRate();
-
-            result = true;
-            _retries = 0;
-
-            _timer->start(kTimeOutMs);
-            if (_logComplete()) {
-                _downloadData->entry->setStatus(tr("Downloaded"));
-                _receivedAllData();
-            } else if (_chunkComplete()) {
-                _downloadData->advanceChunk();
-                _requestLogData(_downloadData->ID,
-                                _downloadData->current_chunk * OnboardLogDownloadData::kChunkSize,
-                                _downloadData->chunk_table.size() * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-            } else if ((bin < (_downloadData->chunk_table.size() - 1)) && _downloadData->chunk_table.at(bin + 1)) {
-                // Likely to be grabbing fragments and got to the end of a gap
-                _findMissingData();
-            }
-        } else {
-            qCWarning(OnboardLogControllerLog) << "Error while writing log file chunk";
-        }
-    } else {
-        qCWarning(OnboardLogControllerLog) << "Received log offset greater than expected";
-    }
-
-    if (!result) {
-        _downloadData->entry->setStatus(tr("Error"));
-    }
-}
-
-void OnboardLogController::_findMissingData()
-{
-    if (_logComplete()) {
-        _receivedAllData();
-        return;
-    }
-
-    if (_chunkComplete()) {
-        _downloadData->advanceChunk();
-    }
-
-    _retries++;
-
-    _updateDataRate();
-
-    uint16_t start = 0, end = 0;
-    const int size = _downloadData->chunk_table.size();
-    for (; start < size; start++) {
-        if (!_downloadData->chunk_table.testBit(start)) {
-            break;
-        }
-    }
-
-    for (end = start; end < size; end++) {
-        if (_downloadData->chunk_table.testBit(end)) {
-            break;
-        }
-    }
-
-    const uint32_t pos = (_downloadData->current_chunk * OnboardLogDownloadData::kChunkSize) + (start * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-    const uint32_t len = (end - start) * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN;
-    _requestLogData(_downloadData->ID, pos, len, _retries);
-}
-
-void OnboardLogController::_updateDataRate()
-{
-    constexpr uint kSizeUpdateThreshold = 102400; // 0.1 MB
-    const bool timeThresholdMet = _downloadData->elapsed.elapsed() >= kGUIRateMs;
-    const bool sizeThresholdMet = (_downloadData->written - _downloadData->last_status_written) >= kSizeUpdateThreshold;
-
-    if (!timeThresholdMet && !sizeThresholdMet) {
-        return;
-    }
-
-    QString status;
-    if (timeThresholdMet) {
-        // Update both rate and size
-        const qreal rate = _downloadData->rate_bytes / (_downloadData->elapsed.elapsed() / 1000.0);
-        _downloadData->rate_avg = (_downloadData->rate_avg * 0.95) + (rate * 0.05);
-        _downloadData->rate_bytes = 0;
-
-        status = QStringLiteral("%1 (%2/s)").arg(QGC::bigSizeToString(_downloadData->written),
-                                                   QGC::bigSizeToString(_downloadData->rate_avg));
-        _downloadData->elapsed.start();
-    } else {
-        // Update size only, keep previous rate
-        status = QStringLiteral("%1 (%2/s)").arg(QGC::bigSizeToString(_downloadData->written),
-                                                   QGC::bigSizeToString(_downloadData->rate_avg));
-    }
-
-    _downloadData->entry->setStatus(status);
-    _downloadData->last_status_written = _downloadData->written;
-}
-
-bool OnboardLogController::_chunkComplete() const
-{
-    return _downloadData->chunkEquals(true);
-}
-
-bool OnboardLogController::_logComplete() const
-{
-    return (_chunkComplete() && ((_downloadData->current_chunk + 1) == _downloadData->numChunks()));
-}
-
-void OnboardLogController::_receivedAllData()
-{
-    _timer->stop();
-    if (_prepareLogDownload()) {
-        _requestLogData(_downloadData->ID, 0, _downloadData->chunk_table.size() * MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN);
-        _timer->start(kTimeOutMs);
-    } else {
-        _resetSelection();
-        _setDownloading(false);
-    }
-}
-
-bool OnboardLogController::_prepareLogDownload()
-{
-    _downloadData.reset();
-
-    QGCOnboardLogEntry *const entry = _getNextSelected();
-    if (!entry) {
-        return false;
-    }
-
-    entry->setSelected(false);
-    emit selectionChanged();
-
-    const QString ftime = (entry->time().date().year() >= 2010) ? entry->time().toString(QStringLiteral("yyyy-M-d-hh-mm-ss")) : QStringLiteral("UnknownDate");
-
-    _downloadData = std::make_unique<OnboardLogDownloadData>(entry);
-    _downloadData->filename = QStringLiteral("log_") + QString::number(entry->id()) + "_" + ftime;
-
-    if (_vehicle->firmwareType() == MAV_AUTOPILOT_PX4) {
-        const QString loggerParam = QStringLiteral("SYS_LOGGER");
-        ParameterManager *const parameterManager = _vehicle->parameterManager();
-        if (parameterManager->parameterExists(ParameterManager::defaultComponentId, loggerParam) && parameterManager->getParameter(ParameterManager::defaultComponentId, loggerParam)->rawValue().toInt() == 0) {
-            _downloadData->filename += ".px4log";
-        } else {
-            _downloadData->filename += ".ulg";
-        }
-    } else {
-        _downloadData->filename += ".bin";
-    }
-
-    _downloadData->file.setFileName(_downloadPath + _downloadData->filename);
-
-    if (_downloadData->file.exists()) {
-        uint32_t numDups = 0;
-        const QStringList filename_spl = _downloadData->filename.split('.');
-        do {
-            numDups += 1;
-            const QString filename = filename_spl[0] + '_' + QString::number(numDups) + '.' + filename_spl[1];
-            _downloadData->file.setFileName(_downloadPath + filename);
-        } while ( _downloadData->file.exists());
-    }
-
-    bool result = false;
-    if (!_downloadData->file.open(QIODevice::WriteOnly)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to create log file:" <<  _downloadData->filename;
-    } else if (!_downloadData->file.resize(entry->size())) {
-        qCWarning(OnboardLogControllerLog) << "Failed to allocate space for log file:" <<  _downloadData->filename;
-    } else {
-        _downloadData->current_chunk = 0;
-        _downloadData->chunk_table = QBitArray(_downloadData->chunkBins(), false);
-        _downloadData->elapsed.start();
-        result = true;
-    }
-
-    if (!result) {
-        if (_downloadData->file.exists()) {
-            (void) _downloadData->file.remove();
-        }
-
-        _downloadData->entry->setStatus(QStringLiteral("Error"));
-        _downloadData.reset();
-    }
-
-    return result;
+    refresh();
 }
 
 void OnboardLogController::refresh()
 {
-    _logEntriesModel->clearAndDeleteContents();
-    emit selectionChanged();
-    _requestLogList(0, 0xffff);
-}
-
-QGCOnboardLogEntry *OnboardLogController::_getNextSelected() const
-{
-    const int numLogs = _logEntriesModel->count();
-    for (int i = 0; i < numLogs; i++) {
-        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
-        if (!entry) {
-            continue;
-        }
-
-        if (entry->selected()) {
-           return entry;
-        }
+    if (!_active || busy()) {
+        return;
     }
 
-    return nullptr;
+    _loadVehicle = _vehicle;
+    _loadTransport = _active;
+    _loadState = LoadState::Loading;
+    _active->refresh();
+
+    // A transport that cannot start a listing returns to idle synchronously.
+    if (!_active->requestingList() && (_loadState == LoadState::Loading)) {
+        _loadState = LoadState::Failed;
+    }
+}
+
+void OnboardLogController::download(const QString& path)
+{
+    if (_active && !busy()) {
+        _active->download(path);
+    }
+}
+
+bool OnboardLogController::eraseAllForVehicle(Vehicle* expectedVehicle)
+{
+    OnboardLogModel* const logModel = sourceModel();
+    if (!expectedVehicle || (expectedVehicle != _vehicle) || !_active || busy() || !logModel ||
+        (logModel->count() == 0)) {
+        qCWarning(OnboardLogControllerLog)
+            << "Ignoring stale or invalid onboard log erase request" << expectedVehicle << _vehicle;
+        return false;
+    }
+
+    _active->eraseAll();
+    return true;
 }
 
 void OnboardLogController::cancel()
 {
-    _requestLogEnd();
-    _receivedAllEntries();
-
-    if (_downloadData) {
-        _downloadData->entry->setStatus(QStringLiteral("Canceled"));
-        if (_downloadData->file.exists()) {
-            (void) _downloadData->file.remove();
+    if (_active) {
+        if ((_loadState == LoadState::Loading) && (_loadVehicle == _vehicle) && (_loadTransport == _active)) {
+            _invalidateLoadState();
         }
-
-        _downloadData.reset();
+        _active->cancel();
     }
-
-    _resetSelection(true);
-    _setDownloading(false);
 }
 
 void OnboardLogController::selectAll(bool select)
 {
-    const int count = _logEntriesModel->count();
-    for (int i = 0; i < count; i++) {
-        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
-        if (!entry || !entry->received()) {
-            continue;
+    OnboardLogTransport* const activeTransport = _active;
+    OnboardLogModel* const logModel = sourceModel();
+    if (!activeTransport || !logModel) {
+        return;
+    }
+
+    struct SelectionTarget
+    {
+        QPointer<OnboardLogEntry> entry;
+        QPersistentModelIndex index;
+    };
+
+    QList<SelectionTarget> entries;
+    const int count = logModel->count();
+    entries.reserve(count);
+    for (int index = 0; index < count; ++index) {
+        OnboardLogEntry* const entry = logModel->value<OnboardLogEntry*>(index);
+        if (entry && entry->received() && (entry->selected() != select)) {
+            entries.append({entry, QPersistentModelIndex(logModel->index(index, 0))});
+        }
+    }
+
+    const auto targetIsCurrent = [this, activeTransport, logModel](const SelectionTarget& target) {
+        return (_active == activeTransport) && (sourceModel() == logModel) && target.entry && target.index.isValid() &&
+               (target.index.model() == logModel) &&
+               (target.index.data(Qt::UserRole).value<QObject*>() == target.entry.data());
+    };
+
+    // Keep per-entry notifications alive for QML delegates while suppressing the
+    // transport's aggregate selectionChanged signal until the batch is complete.
+    const QSignalBlocker blocker(activeTransport);
+    for (const SelectionTarget& target : std::as_const(entries)) {
+        if (!targetIsCurrent(target)) {
+            emit selectionChanged();
+            return;
         }
 
-        if (entry->selected() != select) {
-            // Block per-entry signals to avoid O(n²) allLogsSelected() re-evaluations.
-            // A single selectionChanged() is emitted after the loop.
-            QSignalBlocker blocker(entry);
-            entry->setSelected(select);
+        target.entry->setSelected(select);
+        if (!targetIsCurrent(target)) {
+            emit selectionChanged();
+            return;
         }
     }
     emit selectionChanged();
@@ -505,10 +196,15 @@ void OnboardLogController::selectAll(bool select)
 
 int OnboardLogController::selectedCount() const
 {
+    const OnboardLogModel* const logModel = sourceModel();
+    if (!logModel) {
+        return 0;
+    }
+
     int selected = 0;
-    const int count = _logEntriesModel->count();
+    const int count = logModel->count();
     for (int i = 0; i < count; i++) {
-        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
+        const OnboardLogEntry* const entry = logModel->value<const OnboardLogEntry*>(i);
         if (entry && entry->received() && entry->selected()) {
             selected++;
         }
@@ -519,20 +215,24 @@ int OnboardLogController::selectedCount() const
 
 bool OnboardLogController::allLogsSelected() const
 {
-    int selectable = 0;
-    int selected = 0;
-    const int count = _logEntriesModel->count();
+    const OnboardLogModel* const logModel = sourceModel();
+    if (!logModel) {
+        return false;
+    }
+
+    bool hasSelectableLog = false;
+    const int count = logModel->count();
     for (int i = 0; i < count; i++) {
-        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
+        const OnboardLogEntry* const entry = logModel->value<const OnboardLogEntry*>(i);
         if (entry && entry->received()) {
-            selectable++;
-            if (entry->selected()) {
-                selected++;
+            hasSelectableLog = true;
+            if (!entry->selected()) {
+                return false;
             }
         }
     }
 
-    return (selectable > 0) && (selected == selectable);
+    return hasSelectableLog;
 }
 
 void OnboardLogController::toggleSortByDate()
@@ -547,245 +247,177 @@ void OnboardLogController::setSortAscending(bool ascending)
     }
 
     _sortAscending = ascending;
-    _sortEntriesByTimestamp();
+    _sortModel->setAscending(ascending);
     emit sortAscendingChanged();
 }
 
-void OnboardLogController::_resetSelection(bool canceled)
+void OnboardLogController::_setActiveVehicle(Vehicle* vehicle)
 {
-    const int num_logs = _logEntriesModel->count();
-    for (int i = 0; i < num_logs; i++) {
-        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
-        if (!entry) {
+    if (_changingVehicle && (vehicle == _vehicle)) {
+        return;
+    }
+
+    _pendingVehicle = vehicle;
+    _vehicleChangePending = true;
+    if (_changingVehicle) {
+        return;
+    }
+
+    _changingVehicle = true;
+    while (_vehicleChangePending) {
+        const QPointer<Vehicle> targetVehicle = _pendingVehicle;
+        _vehicleChangePending = false;
+
+        if (targetVehicle && (targetVehicle == _vehicle)) {
+            _reevaluateTransport();
             continue;
         }
 
-        if (entry->selected()) {
-            if (canceled) {
-                entry->setStatus(tr("Canceled"));
-            }
-            entry->setSelected(false);
+        if (_vehicle) {
+            (void) disconnect(_vehicle, &Vehicle::capabilityBitsChanged, this,
+                              &OnboardLogController::_reevaluateTransport);
         }
+
+        _invalidateLoadState();
+        _vehicle = targetVehicle;
+        _logTransport->setVehicle(targetVehicle);
+        if (_vehicleChangePending) {
+            continue;
+        }
+        _ftpTransport->setVehicle(targetVehicle);
+        if (_vehicleChangePending) {
+            continue;
+        }
+
+        if (_vehicle) {
+            // Capability bits may arrive after the vehicle is active; re-pick when they do.
+            (void) connect(_vehicle, &Vehicle::capabilityBitsChanged, this,
+                           &OnboardLogController::_reevaluateTransport);
+        }
+
+        _reevaluateTransport();
+    }
+    _changingVehicle = false;
+}
+
+bool OnboardLogController::_shouldAutoSelectFtp(bool firmwareAllowsFtp, bool capabilitiesKnown, uint64_t capabilityBits)
+{
+    return firmwareAllowsFtp && capabilitiesKnown && ((capabilityBits & MAV_PROTOCOL_CAPABILITY_FTP) != 0);
+}
+
+void OnboardLogController::_reevaluateTransport()
+{
+    const uint rawOverride = SettingsManager::instance()->mavlinkSettings()->onboardLogTransport()->rawValue().toUInt();
+    TransportOverride transportOverride = TransportOverride::Auto;
+    if (rawOverride <= static_cast<uint>(TransportOverride::MavlinkFtp)) {
+        transportOverride = static_cast<TransportOverride>(rawOverride);
+    } else {
+        qCWarning(OnboardLogControllerLog) << "Invalid onboard-log transport override:" << rawOverride;
     }
 
+    OnboardLogTransport* target = _logTransport;
+    switch (transportOverride) {
+        case TransportOverride::LogProtocol:
+            target = _logTransport;
+            break;
+        case TransportOverride::MavlinkFtp:
+            target = _ftpTransport;
+            break;
+        case TransportOverride::Auto:
+            if (_vehicle && _shouldAutoSelectFtp(_vehicle->firmwarePlugin()->onboardLogPolicy(_vehicle).autoSelectFtp,
+                                                 _vehicle->capabilitiesKnown(), _vehicle->capabilityBits())) {
+                target = _ftpTransport;
+            }
+            break;
+    }
+
+    qCDebug(OnboardLogControllerLog) << "vehicle" << _vehicle << "override" << rawOverride << "→ transport"
+                                     << ((target == _ftpTransport) ? "ftp" : "log");
+
+    _setActiveTransport(target);
+}
+
+void OnboardLogController::_activeRequestingListChanged()
+{
+    if (_active && !_active->requestingList()) {
+        _sortModel->resort();
+    }
+}
+
+void OnboardLogController::_activeListingFinished(OnboardLogTransport::ListingResult result)
+{
+    if ((_loadState != LoadState::Loading) || (_loadVehicle != _vehicle) || (_loadTransport != _active)) {
+        return;
+    }
+
+    switch (result) {
+        case OnboardLogTransport::ListingResult::Success:
+        case OnboardLogTransport::ListingResult::Partial:
+            _loadState = LoadState::Loaded;
+            break;
+        case OnboardLogTransport::ListingResult::Failed:
+            _loadState = LoadState::Failed;
+            break;
+        case OnboardLogTransport::ListingResult::Canceled:
+            _loadState = LoadState::NotLoaded;
+            break;
+    }
+}
+
+void OnboardLogController::_invalidateLoadState()
+{
+    _loadVehicle = nullptr;
+    _loadTransport = nullptr;
+    _loadState = LoadState::NotLoaded;
+}
+
+void OnboardLogController::_setActiveTransport(OnboardLogTransport* transport)
+{
+    if (transport == _active) {
+        return;
+    }
+
+    if (_active) {
+        (void) disconnect(_active, &OnboardLogTransport::requestingListChanged, this,
+                          &OnboardLogController::_activeRequestingListChanged);
+        (void) disconnect(_active, &OnboardLogTransport::listingFinished, this,
+                          &OnboardLogController::_activeListingFinished);
+        (void) disconnect(_active, &OnboardLogTransport::downloadingLogsChanged, this,
+                          &OnboardLogController::downloadingLogsChanged);
+        (void) disconnect(_active, &OnboardLogTransport::busyChanged, this, &OnboardLogController::busyChanged);
+        (void) disconnect(_active, &OnboardLogTransport::batchProgressChanged, this,
+                          &OnboardLogController::batchProgressChanged);
+        (void) disconnect(_active, &OnboardLogTransport::errorMessageChanged, this,
+                          &OnboardLogController::errorMessageChanged);
+        (void) disconnect(_active, &OnboardLogTransport::selectionChanged, this,
+                          &OnboardLogController::selectionChanged);
+        _invalidateLoadState();
+        _active->cancel();  // stop any in-flight work on the deselected transport
+    }
+
+    _active = transport;
+
+    if (_active) {
+        (void) connect(_active, &OnboardLogTransport::requestingListChanged, this,
+                       &OnboardLogController::_activeRequestingListChanged);
+        (void) connect(_active, &OnboardLogTransport::listingFinished, this,
+                       &OnboardLogController::_activeListingFinished);
+        (void) connect(_active, &OnboardLogTransport::downloadingLogsChanged, this,
+                       &OnboardLogController::downloadingLogsChanged);
+        (void) connect(_active, &OnboardLogTransport::busyChanged, this, &OnboardLogController::busyChanged);
+        (void) connect(_active, &OnboardLogTransport::batchProgressChanged, this,
+                       &OnboardLogController::batchProgressChanged);
+        (void) connect(_active, &OnboardLogTransport::errorMessageChanged, this,
+                       &OnboardLogController::errorMessageChanged);
+        (void) connect(_active, &OnboardLogTransport::selectionChanged, this, &OnboardLogController::selectionChanged);
+    }
+
+    _sortModel->setSourceModel(_active ? _active->model() : nullptr);
+    _sortModel->sort(0);
+    emit downloadingLogsChanged();
+    emit busyChanged();
+    emit transportKindChanged();
+    emit batchProgressChanged();
+    emit errorMessageChanged();
     emit selectionChanged();
-}
-
-void OnboardLogController::_sortEntriesByTimestamp()
-{
-    QObjectList sortedEntries = *_logEntriesModel->objectList();
-    std::stable_sort(sortedEntries.begin(), sortedEntries.end(), [this](const QObject *lhsObj, const QObject *rhsObj) {
-        const QGCOnboardLogEntry *const lhs = qobject_cast<const QGCOnboardLogEntry*>(lhsObj);
-        const QGCOnboardLogEntry *const rhs = qobject_cast<const QGCOnboardLogEntry*>(rhsObj);
-        if (lhs == rhs) {
-            return false;
-        }
-        if (!lhs) {
-            return false;
-        }
-        if (!rhs) {
-            return true;
-        }
-
-        const bool lhsHasTime = lhs->received() && (lhs->time().toSecsSinceEpoch() > 0);
-        const bool rhsHasTime = rhs->received() && (rhs->time().toSecsSinceEpoch() > 0);
-        if (lhsHasTime != rhsHasTime) {
-            // Keep entries with valid timestamps grouped first.
-            return lhsHasTime;
-        }
-
-        if (lhsHasTime && rhsHasTime) {
-            if (lhs->time() == rhs->time()) {
-                return _sortAscending ? (lhs->id() < rhs->id()) : (lhs->id() > rhs->id());
-            }
-
-            return _sortAscending ? (lhs->time() < rhs->time()) : (lhs->time() > rhs->time());
-        }
-
-        // Fallback for entries with missing/invalid time.
-        return _sortAscending ? (lhs->id() < rhs->id()) : (lhs->id() > rhs->id());
-    });
-
-    (void) _logEntriesModel->swapObjectList(sortedEntries);
-}
-
-void OnboardLogController::eraseAll()
-{
-    if (!_vehicle) {
-        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
-        return;
-    }
-
-    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
-        return;
-    }
-
-    mavlink_message_t msg{};
-    (void) mavlink_msg_log_erase_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId()
-    );
-
-    if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to send";
-        return;
-    }
-
-    refresh();
-}
-
-void OnboardLogController::_requestLogList(uint32_t start, uint32_t end)
-{
-    if (!_vehicle) {
-        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
-        return;
-    }
-
-    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
-        return;
-    }
-
-    mavlink_message_t msg{};
-    (void) mavlink_msg_log_request_list_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId(),
-        start,
-        end
-    );
-
-    if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to send";
-        return;
-    }
-
-    qCDebug(OnboardLogControllerLog) << "Request onboard log entry list (" << start << "through" << end << ")";
-    _setListing(true);
-    _timer->start(kRequestLogListTimeoutMs);
-}
-
-void OnboardLogController::_requestLogData(uint16_t id, uint32_t offset, uint32_t count, int retryCount)
-{
-    if (!_vehicle) {
-        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
-        return;
-    }
-
-    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
-        return;
-    }
-
-    id += _apmOffset;
-    qCDebug(OnboardLogControllerLog) << "Request log data (id:" << id << "offset:" << offset << "size:" << count << "retryCount" << retryCount << ")";
-
-    mavlink_message_t msg{};
-    (void) mavlink_msg_log_request_data_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId(),
-        id,
-        offset,
-        count
-    );
-
-    if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to send";
-    }
-}
-
-void OnboardLogController::_requestLogEnd()
-{
-    if (!_vehicle) {
-        qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
-        return;
-    }
-
-    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
-    if (!sharedLink) {
-        qCWarning(OnboardLogControllerLog) << "Link Unavailable";
-        return;
-    }
-
-    mavlink_message_t msg{};
-    (void) mavlink_msg_log_request_end_pack_chan(
-        MAVLinkProtocol::instance()->getSystemId(),
-        MAVLinkProtocol::getComponentId(),
-        sharedLink->mavlinkChannel(),
-        &msg,
-        _vehicle->id(),
-        _vehicle->defaultComponentId()
-    );
-
-    if (!_vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg)) {
-        qCWarning(OnboardLogControllerLog) << "Failed to send";
-    }
-}
-
-void OnboardLogController::_setDownloading(bool active)
-{
-    if (_downloadingLogs != active) {
-        _downloadingLogs = active;
-        _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(!active);
-        emit downloadingLogsChanged();
-    }
-}
-
-void OnboardLogController::_setListing(bool active)
-{
-    if (_requestingLogEntries != active) {
-        _requestingLogEntries = active;
-        _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(!active);
-        if (!active) {
-            _sortEntriesByTimestamp();
-        }
-        emit requestingListChanged();
-    }
-}
-
-void OnboardLogController::setCompressLogs(bool compress)
-{
-    if (_compressLogs != compress) {
-        _compressLogs = compress;
-        emit compressLogsChanged();
-    }
-}
-
-bool OnboardLogController::compressLogFile(const QString &logPath)
-{
-    Q_UNUSED(logPath)
-    qCWarning(OnboardLogControllerLog) << "Log compression not yet implemented (decompression-only API)";
-    return false;
-}
-
-void OnboardLogController::cancelCompression()
-{
-    // Not implemented - compression API is decompression-only
-}
-
-void OnboardLogController::_handleCompressionProgress(qreal progress)
-{
-    Q_UNUSED(progress)
-    // Not implemented - compression API is decompression-only
-}
-
-void OnboardLogController::_handleCompressionFinished(bool success)
-{
-    Q_UNUSED(success)
-    // Not implemented - compression API is decompression-only
 }

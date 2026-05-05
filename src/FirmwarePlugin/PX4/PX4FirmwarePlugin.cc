@@ -101,6 +101,28 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
     updateAvailableFlightModes(availableFlightModes);
 }
 
+FirmwarePlugin::OnboardLogPolicy PX4FirmwarePlugin::onboardLogPolicy(Vehicle* vehicle) const
+{
+    OnboardLogPolicy policy;
+    policy.ftpFallbackDirectory = QStringLiteral("/fs/microsd/log");
+    policy.logFileExtension = QStringLiteral("ulg");
+
+    if (vehicle) {
+        static const QString loggerParameter = QStringLiteral("SYS_LOGGER");
+        ParameterManager* const parameterManager = vehicle->parameterManager();
+        if (parameterManager->parameterExists(ParameterManager::defaultComponentId, loggerParameter)) {
+            if (const Fact* const loggerFact =
+                    parameterManager->getParameter(ParameterManager::defaultComponentId, loggerParameter)) {
+                if (loggerFact->rawValue().toInt() == 0) {
+                    policy.logFileExtension = QStringLiteral("px4log");
+                }
+            }
+        }
+    }
+
+    return policy;
+}
+
 PX4FirmwarePlugin::~PX4FirmwarePlugin()
 {
 }
@@ -340,8 +362,11 @@ double PX4FirmwarePlugin::maximumHorizontalSpeedMultirotorMetersSecond(Vehicle* 
 {
     QString speedParam("MPC_XY_VEL_MAX");
 
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, speedParam)) {
-        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, speedParam)->rawValue().toDouble();
+    ParameterManager* const parameterManager = vehicle->parameterManager();
+    if (parameterManager->parameterExists(ParameterManager::defaultComponentId, speedParam)) {
+        if (Fact* const speed = parameterManager->getParameter(ParameterManager::defaultComponentId, speedParam)) {
+            return speed->rawValue().toDouble();
+        }
     }
 
     return FirmwarePlugin::maximumHorizontalSpeedMultirotorMetersSecond(vehicle);
@@ -351,8 +376,12 @@ double PX4FirmwarePlugin::maximumEquivalentAirspeed(Vehicle* vehicle) const
 {
     QString airspeedMax("FW_AIRSPD_MAX");
 
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMax)) {
-        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMax)->rawValue().toDouble();
+    ParameterManager* const parameterManager = vehicle->parameterManager();
+    if (parameterManager->parameterExists(ParameterManager::defaultComponentId, airspeedMax)) {
+        if (Fact* const maximumAirspeed =
+                parameterManager->getParameter(ParameterManager::defaultComponentId, airspeedMax)) {
+            return maximumAirspeed->rawValue().toDouble();
+        }
     }
 
     return FirmwarePlugin::maximumEquivalentAirspeed(vehicle);
@@ -362,8 +391,12 @@ double PX4FirmwarePlugin::minimumEquivalentAirspeed(Vehicle* vehicle) const
 {
     QString airspeedMin("FW_AIRSPD_MIN");
 
-    if (vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, airspeedMin)) {
-        return vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, airspeedMin)->rawValue().toDouble();
+    ParameterManager* const parameterManager = vehicle->parameterManager();
+    if (parameterManager->parameterExists(ParameterManager::defaultComponentId, airspeedMin)) {
+        if (Fact* const minimumAirspeed =
+                parameterManager->getParameter(ParameterManager::defaultComponentId, airspeedMin)) {
+            return minimumAirspeed->rawValue().toDouble();
+        }
     }
 
     return FirmwarePlugin::minimumEquivalentAirspeed(vehicle);

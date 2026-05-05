@@ -104,6 +104,54 @@ void VehicleLinkManagerTest::_simpleCommLossTest()
     QCOMPARE(spyCommLostChanged.count(), 1);
 }
 
+void VehicleLinkManagerTest::_communicationLostInhibitorTest()
+{
+    SharedLinkConfigurationPtr mockConfig;
+    SharedLinkInterfacePtr mockLink;
+    _startMockLink(1, false /*highLatency*/, true /*incrementVehicleId*/, mockConfig, mockLink);
+
+    Vehicle* const vehicle = waitForVehicleConnect(TestTimeout::shortMs());
+    QVERIFY(vehicle);
+    VehicleLinkManager* const manager = vehicle->vehicleLinkManager();
+    QVERIFY(manager);
+    QVERIFY(manager->communicationLostEnabled());
+
+    QSignalSpy enabledSpy(manager, &VehicleLinkManager::communicationLostEnabledChanged);
+    {
+        auto firstInhibitor = manager->inhibitCommunicationLost();
+        QVERIFY(firstInhibitor.active());
+        QVERIFY(!manager->communicationLostEnabled());
+        QCOMPARE(enabledSpy.count(), 1);
+
+        {
+            auto secondInhibitor = manager->inhibitCommunicationLost();
+            QVERIFY(secondInhibitor.active());
+            QCOMPARE(enabledSpy.count(), 1);
+
+            manager->setCommunicationLostEnabled(true);
+            QVERIFY(!manager->communicationLostEnabled());
+            QCOMPARE(enabledSpy.count(), 1);
+        }
+
+        QVERIFY(!manager->communicationLostEnabled());
+        QCOMPARE(enabledSpy.count(), 1);
+    }
+
+    QVERIFY(manager->communicationLostEnabled());
+    QCOMPARE(enabledSpy.count(), 2);
+
+    manager->setCommunicationLostEnabled(false);
+    QCOMPARE(enabledSpy.count(), 3);
+    {
+        auto inhibitor = manager->inhibitCommunicationLost();
+        QVERIFY(inhibitor.active());
+        QCOMPARE(enabledSpy.count(), 3);
+    }
+    QVERIFY(!manager->communicationLostEnabled());
+    QCOMPARE(enabledSpy.count(), 3);
+    manager->setCommunicationLostEnabled(true);
+}
+
 void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
 {
     SharedLinkConfigurationPtr mockConfig1;

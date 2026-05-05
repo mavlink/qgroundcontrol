@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QUrl>
@@ -11,6 +12,7 @@
 #include "QGCLoggingCategory.h"
 
 class FTPManager;
+class FTPJob;
 class Vehicle;
 class QGCCompressionJob;
 
@@ -22,6 +24,7 @@ class FTPController : public QObject
     QML_ELEMENT
     Q_MOC_INCLUDE("Vehicle.h")
 
+    Q_PROPERTY(Vehicle* vehicle READ vehicle WRITE setVehicle NOTIFY vehicleChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
     Q_PROPERTY(bool listInProgress READ listInProgress NOTIFY activeOperationChanged)
     Q_PROPERTY(bool downloadInProgress READ downloadInProgress NOTIFY activeOperationChanged)
@@ -41,6 +44,7 @@ class FTPController : public QObject
 public:
     explicit FTPController(QObject *parent = nullptr);
 
+    Vehicle* vehicle() const;
     bool busy() const { return _busy; }
     bool listInProgress() const { return _operation == Operation::List; }
     bool downloadInProgress() const { return _operation == Operation::Download; }
@@ -63,6 +67,8 @@ public:
     Q_INVOKABLE bool deleteFile(const QString &uri, int componentId = MAV_COMP_ID_AUTOPILOT1);
     Q_INVOKABLE void cancelActiveOperation();
 
+    void setVehicle(Vehicle* vehicle);
+
     /// Browse the contents of a downloaded archive file
     /// @param archivePath Path to the archive file (use lastDownloadFile after download)
     /// @return true if archive was opened successfully
@@ -78,6 +84,7 @@ public:
     Q_INVOKABLE void cancelExtraction();
 
 signals:
+    void vehicleChanged();
     void busyChanged();
     void activeOperationChanged();
     void progressChanged();
@@ -96,7 +103,7 @@ signals:
 private slots:
     void _handleDownloadComplete(const QString &filePath, const QString &error);
     void _handleUploadComplete(const QString &remotePath, const QString &error);
-    void _handleDirectoryComplete(const QStringList &entries, const QString &error);
+    void _handleDirectoryComplete(const QStringList& entries, const QString& error, bool truncated);
     void _handleDeleteComplete(const QString &remotePath, const QString &error);
     void _handleCommandProgress(float value);
     void _handleExtractionProgress(qreal progress);
@@ -118,8 +125,9 @@ private:
     void _resetDirectoryState();
     uint8_t _componentIdForRequest(int componentId) const;
 
-    Vehicle *_vehicle = nullptr;
-    FTPManager *_ftpManager = nullptr;
+    QPointer<Vehicle> _vehicle;
+    QPointer<FTPManager> _ftpManager;
+    QPointer<FTPJob> _activeJob;
     Operation _operation = Operation::None;
     bool _busy = false;
     float _progress = 0.0F;

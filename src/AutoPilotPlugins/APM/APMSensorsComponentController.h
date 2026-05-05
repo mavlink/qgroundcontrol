@@ -7,8 +7,10 @@
 #include <QtCore/QObject>
 #include <QtQuick/QQuickItem>
 #include <QtQmlIntegration/QtQmlIntegration>
+#include <memory>
 
 class APMSensorsComponent;
+class CommunicationLostInhibitor;
 class LinkInterface;
 
 /// \brief Sensors Component MVC Controller for SensorsComponent.qml.
@@ -136,6 +138,7 @@ private:
     bool _handleCmdLongAccelcalVehiclePos(const mavlink_command_long_t &commandLong);
     void _handleCommandLong(const mavlink_message_t &message);
     void _restorePreviousCompassCalFitness();
+    void _inhibitCommunicationLost();
 
     enum StopCalibrationCode {
         StopCalibrationSuccess,
@@ -148,6 +151,7 @@ private:
     void _updateAndEmitShowOrientationCalArea(bool show);
 
     APMSensorsComponent *_sensorsComponent = nullptr;
+    std::unique_ptr<CommunicationLostInhibitor> _communicationLostInhibitor;
 
     QQuickItem *_statusLog = nullptr;
     QQuickItem *_progressBar = nullptr;
