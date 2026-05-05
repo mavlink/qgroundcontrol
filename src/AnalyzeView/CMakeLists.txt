@@ -7,11 +7,6 @@ add_subdirectory(GeoTag)
 add_subdirectory(MAVLinkConsole)
 add_subdirectory(MAVLinkInspector)
 add_subdirectory(OnboardLogs)
-add_subdirectory(OnboardLogsFtp)
-
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -32,7 +27,7 @@ qt_add_qml_module(AnalyzeViewModule
         MAVLinkInspector/MAVLinkMessageButton.qml
         MAVLinkInspector/MAVLinkInspectorPage.qml
         OnboardLogs/OnboardLogPage.qml
-        OnboardLogsFtp/OnboardLogFtpPage.qml
+        OnboardLogs/OnboardLogTable.qml
         Vibration/VibrationPage.qml
     NO_PLUGIN
 )

@@ -91,6 +91,17 @@
             "default": false,
             "label": "Skip param/plan download if flying on connect",
             "keywords": "initial download"
+        },
+        {
+            "name": "onboardLogTransport",
+            "shortDesc": "Transport used to download onboard logs from the vehicle.",
+            "longDesc": "Auto picks MAVLink FTP when the vehicle advertises that capability and the LOG protocol otherwise. Force a specific transport here when capability detection is unreliable.",
+            "type": "uint32",
+            "enumStrings": "Auto,LOG protocol,MAVLink FTP",
+            "enumValues": "0,1,2",
+            "default": 0,
+            "label": "Onboard log transport",
+            "keywords": "onboard log,download,ftp,log protocol,transport"
         }
     ]
 }

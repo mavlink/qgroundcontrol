@@ -1,8 +1,14 @@
-#include "OnboardLogFtpController.h"
+#include "FtpTransport.h"
+
+#include <QtCore/QDateTime>
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QTimeZone>
+
 #include "AppSettings.h"
 #include "FTPManager.h"
 #include "MultiVehicleManager.h"
-#include "OnboardLogFtpEntry.h"
+#include "OnboardLogEntry.h"
 #include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
@@ -10,36 +16,30 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
-#include <QtCore/QDateTime>
-#include <QtCore/QDir>
-#include <QtCore/QFile>
-#include <QtCore/QTimeZone>
-
-QGC_LOGGING_CATEGORY(OnboardLogFtpControllerLog, "AnalyzeView.OnboardLogFtpController")
+QGC_LOGGING_CATEGORY(FtpTransportLog, "AnalyzeView.FtpTransport")
 
 // MAVLink FTP defines "@MAV_LOG" as the virtual log directory.
 // Older firmware that doesn't implement the alias requires the physical path
 // instead — which is firmware-specific.
-static constexpr const char *kMavlinkLogRoot = "@MAV_LOG";
-static constexpr const char *kPx4LogRootFallback = "/fs/microsd/log";
-static constexpr const char *kApmLogRootFallback = "/APM/LOGS";
+static constexpr const char* kMavlinkLogRoot = "@MAV_LOG";
+static constexpr const char* kPx4LogRootFallback = "/fs/microsd/log";
+static constexpr const char* kApmLogRootFallback = "/APM/LOGS";
 
-OnboardLogFtpController::OnboardLogFtpController(QObject *parent)
-    : QObject(parent)
-    , _logEntriesModel(new QmlObjectListModel(this))
+FtpTransport::FtpTransport(QObject* parent) : OnboardLogTransport(parent)
 {
-    qCDebug(OnboardLogFtpControllerLog) << this;
+    qCDebug(FtpTransportLog) << this;
 
-    (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this, &OnboardLogFtpController::_setActiveVehicle);
+    (void)connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this,
+                  &FtpTransport::_setActiveVehicle);
     _setActiveVehicle(MultiVehicleManager::instance()->activeVehicle());
 }
 
-OnboardLogFtpController::~OnboardLogFtpController()
+FtpTransport::~FtpTransport()
 {
-    qCDebug(OnboardLogFtpControllerLog) << this;
+    qCDebug(FtpTransportLog) << this;
 }
 
-void OnboardLogFtpController::_setActiveVehicle(Vehicle *vehicle)
+void FtpTransport::_setActiveVehicle(Vehicle* vehicle)
 {
     if (vehicle == _vehicle) {
         return;
@@ -47,10 +47,10 @@ void OnboardLogFtpController::_setActiveVehicle(Vehicle *vehicle)
 
     if (_vehicle) {
         _logEntriesModel->clearAndDeleteContents();
-        FTPManager *const ftp = _vehicle->ftpManager();
-        (void) disconnect(ftp, &FTPManager::listDirectoryComplete, this, &OnboardLogFtpController::_listDirComplete);
-        (void) disconnect(ftp, &FTPManager::downloadComplete,      this, &OnboardLogFtpController::_downloadComplete);
-        (void) disconnect(ftp, &FTPManager::commandProgress,       this, &OnboardLogFtpController::_downloadProgress);
+        FTPManager* const ftp = _vehicle->ftpManager();
+        (void)disconnect(ftp, &FTPManager::listDirectoryComplete, this, &FtpTransport::_listDirComplete);
+        (void)disconnect(ftp, &FTPManager::downloadComplete, this, &FtpTransport::_downloadComplete);
+        (void)disconnect(ftp, &FTPManager::commandProgress, this, &FtpTransport::_downloadProgress);
 
         _listState = Idle;
         _dirsToList.clear();
@@ -62,56 +62,56 @@ void OnboardLogFtpController::_setActiveVehicle(Vehicle *vehicle)
     _vehicle = vehicle;
 }
 
-void OnboardLogFtpController::refresh()
+void FtpTransport::refresh()
 {
     _logEntriesModel->clearAndDeleteContents();
 
     if (!_vehicle) {
-        qCWarning(OnboardLogFtpControllerLog) << "refresh: no active vehicle";
+        qCWarning(FtpTransportLog) << "refresh: no active vehicle";
         return;
     }
 
     if (!_vehicle->capabilitiesKnown() || !(_vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_FTP)) {
-        qCWarning(OnboardLogFtpControllerLog) << "refresh: vehicle does not advertise MAV_PROTOCOL_CAPABILITY_FTP"
-            << "(capsKnown:" << _vehicle->capabilitiesKnown() << ")";
+        qCWarning(FtpTransportLog) << "refresh: vehicle does not advertise MAV_PROTOCOL_CAPABILITY_FTP"
+                                   << "(capsKnown:" << _vehicle->capabilitiesKnown() << ")";
         return;
     }
 
     _startListing();
 }
 
-void OnboardLogFtpController::_startListing()
+void FtpTransport::_startListing()
 {
     _dirsToList.clear();
     _logIdCounter = 0;
     _logRoot = QString::fromLatin1(kMavlinkLogRoot);
     _triedFallbackRoot = false;
 
-    FTPManager *const ftp = _vehicle->ftpManager();
-    (void) disconnect(ftp, &FTPManager::listDirectoryComplete, this, &OnboardLogFtpController::_listDirComplete);
-    (void) connect(ftp, &FTPManager::listDirectoryComplete, this, &OnboardLogFtpController::_listDirComplete);
+    FTPManager* const ftp = _vehicle->ftpManager();
+    (void)disconnect(ftp, &FTPManager::listDirectoryComplete, this, &FtpTransport::_listDirComplete);
+    (void)connect(ftp, &FTPManager::listDirectoryComplete, this, &FtpTransport::_listDirComplete);
 
     _setListing(true);
     _listRoot();
 }
 
-void OnboardLogFtpController::_listRoot()
+void FtpTransport::_listRoot()
 {
     _listState = ListingRoot;
 
-    qCDebug(OnboardLogFtpControllerLog) << "listing root" << _logRoot;
+    qCDebug(FtpTransportLog) << "listing root" << _logRoot;
 
     if (!_vehicle->ftpManager()->listDirectory(MAV_COMP_ID_AUTOPILOT1, _logRoot)) {
-        qCWarning(OnboardLogFtpControllerLog) << "failed to start root listing for" << _logRoot;
+        qCWarning(FtpTransportLog) << "failed to start root listing for" << _logRoot;
         _finishListing();
     }
 }
 
-void OnboardLogFtpController::_listDirComplete(const QStringList &dirList, const QString &errorMsg)
+void FtpTransport::_listDirComplete(const QStringList& dirList, const QString& errorMsg)
 {
     if (!errorMsg.isEmpty()) {
         if (_listState == ListingRoot && !_triedFallbackRoot && _vehicle) {
-            const char *fallback = nullptr;
+            const char* fallback = nullptr;
             if (_vehicle->px4Firmware()) {
                 fallback = kPx4LogRootFallback;
             } else if (_vehicle->apmFirmware()) {
@@ -119,8 +119,8 @@ void OnboardLogFtpController::_listDirComplete(const QStringList &dirList, const
             }
 
             if (fallback) {
-                qCDebug(OnboardLogFtpControllerLog) << "root listing of" << _logRoot << "failed (" << errorMsg
-                    << "), falling back to" << fallback;
+                qCDebug(FtpTransportLog) << "root listing of" << _logRoot << "failed (" << errorMsg
+                                         << "), falling back to" << fallback;
                 _triedFallbackRoot = true;
                 _logRoot = QString::fromLatin1(fallback);
                 _listRoot();
@@ -128,7 +128,7 @@ void OnboardLogFtpController::_listDirComplete(const QStringList &dirList, const
             }
         }
 
-        qCWarning(OnboardLogFtpControllerLog) << "listing error:" << errorMsg;
+        qCWarning(FtpTransportLog) << "listing error:" << errorMsg;
         _finishListing();
         return;
     }
@@ -138,7 +138,7 @@ void OnboardLogFtpController::_listDirComplete(const QStringList &dirList, const
         // and/or date subdirectories to descend into (PX4 fallback /fs/microsd/log).
         const uint flatLogs = _processFileEntries(dirList, QString());
 
-        for (const QString &entry : dirList) {
+        for (const QString& entry : dirList) {
             if (entry.startsWith(QLatin1Char('D'))) {
                 const QString dirName = entry.mid(1);
                 if (!dirName.isEmpty()) {
@@ -148,8 +148,8 @@ void OnboardLogFtpController::_listDirComplete(const QStringList &dirList, const
         }
 
         _dirsToList.sort();
-        qCDebug(OnboardLogFtpControllerLog) << "root listing of" << _logRoot
-            << "found" << flatLogs << "flat logs and" << _dirsToList.size() << "subdirectories";
+        qCDebug(FtpTransportLog) << "root listing of" << _logRoot << "found" << flatLogs << "flat logs and"
+                                 << _dirsToList.size() << "subdirectories";
 
         _listState = ListingSubdir;
         _listNextSubdir();
@@ -159,7 +159,7 @@ void OnboardLogFtpController::_listDirComplete(const QStringList &dirList, const
     const QString currentDir = _dirsToList.isEmpty() ? QString() : _dirsToList.first();
     const uint logsFoundInDir = _processFileEntries(dirList, currentDir);
 
-    qCDebug(OnboardLogFtpControllerLog) << currentDir << "->" << logsFoundInDir << "logs";
+    qCDebug(FtpTransportLog) << currentDir << "->" << logsFoundInDir << "logs";
 
     if (!_dirsToList.isEmpty()) {
         _dirsToList.removeFirst();
@@ -168,12 +168,12 @@ void OnboardLogFtpController::_listDirComplete(const QStringList &dirList, const
     _listNextSubdir();
 }
 
-uint OnboardLogFtpController::_processFileEntries(const QStringList &dirList, const QString &subdir)
+uint FtpTransport::_processFileEntries(const QStringList& dirList, const QString& subdir)
 {
     const QDate dirDate = subdir.isEmpty() ? QDate() : QDate::fromString(subdir, QStringLiteral("yyyy-MM-dd"));
     uint logsFound = 0;
 
-    for (const QString &entry : dirList) {
+    for (const QString& entry : dirList) {
         if (!entry.startsWith(QLatin1Char('F'))) {
             continue;
         }
@@ -210,10 +210,10 @@ uint OnboardLogFtpController::_processFileEntries(const QStringList &dirList, co
         }
 
         const QString ftpPath = subdir.isEmpty()
-            ? (_logRoot + QStringLiteral("/") + fileName)
-            : (_logRoot + QStringLiteral("/") + subdir + QStringLiteral("/") + fileName);
+                                    ? (_logRoot + QStringLiteral("/") + fileName)
+                                    : (_logRoot + QStringLiteral("/") + subdir + QStringLiteral("/") + fileName);
 
-        QGCOnboardLogFtpEntry *const logEntry = new QGCOnboardLogFtpEntry(_logIdCounter++, dateTime, fileSize, true, this);
+        OnboardLogEntry* const logEntry = new OnboardLogEntry(_logIdCounter++, dateTime, fileSize, true, this);
         logEntry->setFtpPath(ftpPath);
         logEntry->setStatus(tr("Available"));
         _logEntriesModel->append(logEntry);
@@ -223,10 +223,10 @@ uint OnboardLogFtpController::_processFileEntries(const QStringList &dirList, co
     return logsFound;
 }
 
-void OnboardLogFtpController::_listNextSubdir()
+void FtpTransport::_listNextSubdir()
 {
     if (_dirsToList.isEmpty()) {
-        qCDebug(OnboardLogFtpControllerLog) << "listing complete, found" << _logEntriesModel->count() << "logs";
+        qCDebug(FtpTransportLog) << "listing complete, found" << _logEntriesModel->count() << "logs";
         _finishListing();
         return;
     }
@@ -234,28 +234,28 @@ void OnboardLogFtpController::_listNextSubdir()
     const QString subdir = _dirsToList.first();
     const QString path = _logRoot + QStringLiteral("/") + subdir;
 
-    qCDebug(OnboardLogFtpControllerLog) << "listing subdir" << path;
+    qCDebug(FtpTransportLog) << "listing subdir" << path;
 
     if (!_vehicle->ftpManager()->listDirectory(MAV_COMP_ID_AUTOPILOT1, path)) {
-        qCWarning(OnboardLogFtpControllerLog) << "failed to list subdir" << path;
+        qCWarning(FtpTransportLog) << "failed to list subdir" << path;
         _dirsToList.removeFirst();
         _listNextSubdir();
     }
 }
 
-void OnboardLogFtpController::_finishListing()
+void FtpTransport::_finishListing()
 {
     _listState = Idle;
     _setListing(false);
 }
 
-void OnboardLogFtpController::download(const QString &path)
+void FtpTransport::download(const QString& path)
 {
     const QString dir = path.isEmpty() ? SettingsManager::instance()->appSettings()->logSavePath() : path;
     _downloadToDirectory(dir);
 }
 
-void OnboardLogFtpController::_downloadToDirectory(const QString &dir)
+void FtpTransport::_downloadToDirectory(const QString& dir)
 {
     _downloadPath = dir;
     if (_downloadPath.isEmpty()) {
@@ -269,7 +269,7 @@ void OnboardLogFtpController::_downloadToDirectory(const QString &dir)
     _downloadQueue.clear();
     const int numLogs = _logEntriesModel->count();
     for (int i = 0; i < numLogs; i++) {
-        QGCOnboardLogFtpEntry *const entry = _logEntriesModel->value<QGCOnboardLogFtpEntry*>(i);
+        OnboardLogEntry* const entry = _logEntriesModel->value<OnboardLogEntry*>(i);
         if (entry && entry->selected() && !entry->ftpPath().isEmpty()) {
             entry->setStatus(tr("Waiting"));
             _downloadQueue.enqueue(entry);
@@ -277,17 +277,17 @@ void OnboardLogFtpController::_downloadToDirectory(const QString &dir)
     }
 
     if (_downloadQueue.isEmpty()) {
-        qCWarning(OnboardLogFtpControllerLog) << "no selected logs have FTP paths for download";
+        qCWarning(FtpTransportLog) << "no selected logs have FTP paths for download";
         return;
     }
 
-    qCDebug(OnboardLogFtpControllerLog) << "queued" << _downloadQueue.size() << "logs for download to" << _downloadPath;
+    qCDebug(FtpTransportLog) << "queued" << _downloadQueue.size() << "logs for download to" << _downloadPath;
     _setDownloading(true);
 
     _downloadEntry(_downloadQueue.dequeue());
 }
 
-void OnboardLogFtpController::_downloadEntry(QGCOnboardLogFtpEntry *entry)
+void FtpTransport::_downloadEntry(OnboardLogEntry* entry)
 {
     if (!entry || !_vehicle) {
         return;
@@ -319,16 +319,16 @@ void OnboardLogFtpController::_downloadEntry(QGCOnboardLogFtpEntry *entry)
         } while (QFile::exists(_downloadPath + localFilename));
     }
 
-    FTPManager *const ftp = _vehicle->ftpManager();
-    (void) disconnect(ftp, &FTPManager::downloadComplete, this, &OnboardLogFtpController::_downloadComplete);
-    (void) disconnect(ftp, &FTPManager::commandProgress,  this, &OnboardLogFtpController::_downloadProgress);
-    (void) connect(ftp, &FTPManager::downloadComplete, this, &OnboardLogFtpController::_downloadComplete);
-    (void) connect(ftp, &FTPManager::commandProgress,  this, &OnboardLogFtpController::_downloadProgress);
+    FTPManager* const ftp = _vehicle->ftpManager();
+    (void)disconnect(ftp, &FTPManager::downloadComplete, this, &FtpTransport::_downloadComplete);
+    (void)disconnect(ftp, &FTPManager::commandProgress, this, &FtpTransport::_downloadProgress);
+    (void)connect(ftp, &FTPManager::downloadComplete, this, &FtpTransport::_downloadComplete);
+    (void)connect(ftp, &FTPManager::commandProgress, this, &FtpTransport::_downloadProgress);
 
-    qCDebug(OnboardLogFtpControllerLog) << "downloading" << entry->ftpPath() << "to" << _downloadPath + localFilename;
+    qCDebug(FtpTransportLog) << "downloading" << entry->ftpPath() << "to" << _downloadPath + localFilename;
 
     if (!ftp->download(MAV_COMP_ID_AUTOPILOT1, entry->ftpPath(), _downloadPath, localFilename, true)) {
-        qCWarning(OnboardLogFtpControllerLog) << "failed to start download for" << entry->ftpPath();
+        qCWarning(FtpTransportLog) << "failed to start download for" << entry->ftpPath();
         entry->setStatus(tr("Error"));
         _currentDownloadEntry = nullptr;
 
@@ -340,7 +340,7 @@ void OnboardLogFtpController::_downloadEntry(QGCOnboardLogFtpEntry *entry)
     }
 }
 
-void OnboardLogFtpController::_downloadComplete(const QString &file, const QString &errorMsg)
+void FtpTransport::_downloadComplete(const QString& file, const QString& errorMsg)
 {
     if (!_currentDownloadEntry) {
         return;
@@ -348,10 +348,10 @@ void OnboardLogFtpController::_downloadComplete(const QString &file, const QStri
 
     if (errorMsg.isEmpty()) {
         _currentDownloadEntry->setStatus(tr("Downloaded"));
-        qCDebug(OnboardLogFtpControllerLog) << "download complete" << file;
+        qCDebug(FtpTransportLog) << "download complete" << file;
     } else {
         _currentDownloadEntry->setStatus(tr("Error"));
-        qCWarning(OnboardLogFtpControllerLog) << "download error:" << errorMsg;
+        qCWarning(FtpTransportLog) << "download error:" << errorMsg;
     }
 
     _currentDownloadEntry = nullptr;
@@ -363,7 +363,7 @@ void OnboardLogFtpController::_downloadComplete(const QString &file, const QStri
     }
 }
 
-void OnboardLogFtpController::_downloadProgress(float value)
+void FtpTransport::_downloadProgress(float value)
 {
     if (!_currentDownloadEntry) {
         return;
@@ -373,7 +373,8 @@ void OnboardLogFtpController::_downloadProgress(float value)
         return;
     }
 
-    const size_t totalBytes = static_cast<size_t>(static_cast<qreal>(_currentDownloadEntry->size()) * static_cast<qreal>(value));
+    const size_t totalBytes =
+        static_cast<size_t>(static_cast<qreal>(_currentDownloadEntry->size()) * static_cast<qreal>(value));
     const size_t bytesSinceLastUpdate = totalBytes - _downloadBytesAtLastUpdate;
     const qreal elapsedSec = _downloadElapsed.elapsed() / 1000.0;
     const qreal rate = (elapsedSec > 0) ? (bytesSinceLastUpdate / elapsedSec) : 0;
@@ -381,14 +382,13 @@ void OnboardLogFtpController::_downloadProgress(float value)
     _downloadBytesAtLastUpdate = totalBytes;
     _downloadElapsed.start();
 
-    const QString status = QStringLiteral("%1 (%2/s)").arg(
-        QGC::bigSizeToString(totalBytes),
-        QGC::bigSizeToString(_downloadRateAvg));
+    const QString status =
+        QStringLiteral("%1 (%2/s)").arg(QGC::bigSizeToString(totalBytes), QGC::bigSizeToString(_downloadRateAvg));
 
     _currentDownloadEntry->setStatus(status);
 }
 
-void OnboardLogFtpController::cancel()
+void FtpTransport::cancel()
 {
     if (!_vehicle) {
         return;
@@ -409,15 +409,117 @@ void OnboardLogFtpController::cancel()
         _downloadQueue.clear();
     }
 
+    if (_erasing) {
+        _vehicle->ftpManager()->cancelDelete();
+        if (_currentEraseEntry) {
+            _currentEraseEntry->setStatus(tr("Canceled"));
+            _currentEraseEntry = nullptr;
+        }
+        _eraseQueue.clear();
+        _finishErase();
+    }
+
     _resetSelection(true);
     _setDownloading(false);
 }
 
-void OnboardLogFtpController::_resetSelection(bool canceled)
+void FtpTransport::eraseAll()
+{
+    if (!_vehicle) {
+        qCWarning(FtpTransportLog) << "eraseAll: no active vehicle";
+        return;
+    }
+    if (_erasing) {
+        return;
+    }
+
+    const int numLogs = _logEntriesModel->count();
+    _eraseQueue.clear();
+    _eraseFailureCount = 0;
+    for (int i = 0; i < numLogs; i++) {
+        OnboardLogEntry* const entry = _logEntriesModel->value<OnboardLogEntry*>(i);
+        if (entry && !entry->ftpPath().isEmpty()) {
+            entry->setStatus(tr("Waiting"));
+            _eraseQueue.enqueue(entry);
+        }
+    }
+
+    if (_eraseQueue.isEmpty()) {
+        qCWarning(FtpTransportLog) << "eraseAll: nothing to delete";
+        return;
+    }
+
+    qCDebug(FtpTransportLog) << "queued" << _eraseQueue.size() << "files for delete";
+
+    FTPManager* const ftp = _vehicle->ftpManager();
+    (void)disconnect(ftp, &FTPManager::deleteComplete, this, &FtpTransport::_deleteComplete);
+    (void)connect(ftp, &FTPManager::deleteComplete, this, &FtpTransport::_deleteComplete);
+
+    _erasing = true;
+    // _setListing surfaces "busy" to QML so Refresh/Download stay disabled during erase.
+    _setListing(true);
+
+    _eraseNext();
+}
+
+void FtpTransport::_eraseNext()
+{
+    if (_eraseQueue.isEmpty()) {
+        _finishErase();
+        return;
+    }
+
+    _currentEraseEntry = _eraseQueue.dequeue();
+    _currentEraseEntry->setStatus(tr("Deleting"));
+
+    FTPManager* const ftp = _vehicle->ftpManager();
+    if (!ftp->deleteFile(MAV_COMP_ID_AUTOPILOT1, _currentEraseEntry->ftpPath())) {
+        qCWarning(FtpTransportLog) << "deleteFile failed to start for" << _currentEraseEntry->ftpPath();
+        _currentEraseEntry->setStatus(tr("Error"));
+        _currentEraseEntry = nullptr;
+        ++_eraseFailureCount;
+        _eraseNext();
+    }
+}
+
+void FtpTransport::_deleteComplete(const QString& file, const QString& errorMsg)
+{
+    if (!_currentEraseEntry) {
+        return;
+    }
+
+    if (errorMsg.isEmpty()) {
+        qCDebug(FtpTransportLog) << "deleted" << file;
+        // Remove the row from the model so the UI reflects the erase immediately.
+        _logEntriesModel->removeOne(_currentEraseEntry);
+        _currentEraseEntry->deleteLater();
+    } else {
+        qCWarning(FtpTransportLog) << "delete failed for" << file << ":" << errorMsg;
+        _currentEraseEntry->setStatus(tr("Error"));
+        ++_eraseFailureCount;
+    }
+
+    _currentEraseEntry = nullptr;
+    _eraseNext();
+}
+
+void FtpTransport::_finishErase()
+{
+    _erasing = false;
+    _setListing(false);
+
+    if (_eraseFailureCount > 0) {
+        qCWarning(FtpTransportLog) << "erase finished with" << _eraseFailureCount << "failure(s)";
+    } else {
+        qCDebug(FtpTransportLog) << "erase finished";
+    }
+}
+
+void FtpTransport::_resetSelection(bool canceled)
 {
     const int numLogs = _logEntriesModel->count();
     for (int i = 0; i < numLogs; i++) {
-        QGCOnboardLogFtpEntry *const entry = _logEntriesModel->value<QGCOnboardLogFtpEntry*>(i);
+        OnboardLogEntry* const entry = _logEntriesModel->value<OnboardLogEntry*>(i);
         if (!entry) {
             continue;
         }
@@ -433,7 +535,7 @@ void OnboardLogFtpController::_resetSelection(bool canceled)
     emit selectionChanged();
 }
 
-void OnboardLogFtpController::_setDownloading(bool active)
+void FtpTransport::_setDownloading(bool active)
 {
     if (_downloadingLogs != active) {
         _downloadingLogs = active;
@@ -444,7 +546,7 @@ void OnboardLogFtpController::_setDownloading(bool active)
     }
 }
 
-void OnboardLogFtpController::_setListing(bool active)
+void FtpTransport::_setListing(bool active)
 {
     if (_requestingLogEntries != active) {
         _requestingLogEntries = active;

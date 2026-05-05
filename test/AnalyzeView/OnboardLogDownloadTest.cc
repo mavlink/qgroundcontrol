@@ -2,11 +2,11 @@
 
 #include <QtCore/QDir>
 
-#include "OnboardLogController.h"
-#include "OnboardLogEntry.h"
 #include "MAVLinkProtocol.h"
 #include "MultiSignalSpy.h"
 #include "MultiVehicleManager.h"
+#include "OnboardLogController.h"
+#include "OnboardLogEntry.h"
 #include "QmlObjectListModel.h"
 
 void OnboardLogDownloadTest::_downloadTest()
@@ -18,21 +18,21 @@ void OnboardLogDownloadTest::_downloadTest()
     controller->refresh();
     QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", TestTimeout::longMs()));
     multiSpyLogDownloadController->clearAllSignals();
-    if (controller->_getRequestingList()) {
+    if (controller->requestingList()) {
         QVERIFY(multiSpyLogDownloadController->waitForSignal("requestingListChanged", TestTimeout::longMs()));
-        QCOMPARE(controller->_getRequestingList(), false);
+        QCOMPARE(controller->requestingList(), false);
     }
     multiSpyLogDownloadController->clearAllSignals();
-    QmlObjectListModel* const model = controller->_getModel();
+    QmlObjectListModel* const model = controller->model();
     QVERIFY(model);
-    model->value<QGCOnboardLogEntry*>(0)->setSelected(true);
+    model->value<OnboardLogEntry*>(0)->setSelected(true);
     const QString downloadTo = QDir::currentPath();
     controller->download(downloadTo);
     QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", TestTimeout::longMs()));
     multiSpyLogDownloadController->clearAllSignals();
-    if (controller->_getDownloadingLogs()) {
+    if (controller->downloadingLogs()) {
         QVERIFY(multiSpyLogDownloadController->waitForSignal("downloadingLogsChanged", TestTimeout::longMs()));
-        QCOMPARE(controller->_getDownloadingLogs(), false);
+        QCOMPARE(controller->downloadingLogs(), false);
     }
     multiSpyLogDownloadController->clearAllSignals();
     const QString downloadFile = QDir(downloadTo).filePath("log_0_UnknownDate.ulg");

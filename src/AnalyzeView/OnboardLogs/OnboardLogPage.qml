@@ -1,15 +1,17 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt.labs.qmlmodels
 
 import QGroundControl
+import QGroundControl.AnalyzeView
 import QGroundControl.Controls
 
 AnalyzePage {
     id: onboardLogPage
     pageComponent: pageComponent
-    pageDescription: qsTr("Onboard Logs allows you to download binary log files from your vehicle. Click Refresh to get list of available logs.")
+    pageDescription: OnboardLogController.transportName === "ftp"
+        ? qsTr("Onboard Logs lists log files on the vehicle's SD card via MAVLink FTP. Click Refresh to query the vehicle.")
+        : qsTr("Onboard Logs allows you to download binary log files from your vehicle. Click Refresh to get list of available logs.")
 
     Component {
         id: pageComponent
@@ -20,81 +22,10 @@ AnalyzePage {
 
             Component.onCompleted: OnboardLogController.refresh()
 
-            QGCFlickable {
+            OnboardLogTable {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                contentWidth: gridLayout.width
-                contentHeight: gridLayout.height
-
-                GridLayout {
-                    id: gridLayout
-                    rows: OnboardLogController.model.count + 1
-                    columns: 5
-                    flow: GridLayout.TopToBottom
-                    columnSpacing: ScreenTools.defaultFontPixelWidth
-                    rowSpacing: 0
-
-                    QGCCheckBox {
-                        id: headerCheckBox
-                        enabled: false
-                    }
-
-                    Repeater {
-                        model: OnboardLogController.model
-
-                        QGCCheckBox {
-                            Binding on checkState {
-                                value: object.selected ? Qt.Checked : Qt.Unchecked
-                            }
-
-                            onClicked: object.selected = checked
-                        }
-                    }
-
-                    QGCLabel { text: qsTr("Id") }
-
-                    Repeater {
-                        model: OnboardLogController.model
-
-                        QGCLabel { text: object.id }
-                    }
-
-                    QGCLabel { text: qsTr("Date") }
-
-                    Repeater {
-                        model: OnboardLogController.model
-
-                        QGCLabel {
-                            text: {
-                                if (!object.received) {
-                                    return ""
-                                }
-
-                                if (object.time.getUTCFullYear() < 2010) {
-                                    return qsTr("Date Unknown")
-                                }
-
-                                return object.time.toLocaleString(undefined)
-                            }
-                        }
-                    }
-
-                    QGCLabel { text: qsTr("Size") }
-
-                    Repeater {
-                        model: OnboardLogController.model
-
-                        QGCLabel { text: object.sizeStr }
-                    }
-
-                    QGCLabel { text: qsTr("Status") }
-
-                    Repeater {
-                        model: OnboardLogController.model
-
-                        QGCLabel { text: object.status }
-                    }
-                }
+                controller: OnboardLogController
             }
 
             ColumnLayout {
@@ -124,10 +55,13 @@ AnalyzePage {
 
                     onClicked: {
                         var logsSelected = false
-                        for (var i = 0; i < OnboardLogController.model.count; i++) {
-                            if (OnboardLogController.model.get(i).selected) {
-                                logsSelected = true
-                                break
+                        var listModel = OnboardLogController.model
+                        if (listModel) {
+                            for (var i = 0; i < listModel.count; i++) {
+                                if (listModel.get(i).selected) {
+                                    logsSelected = true
+                                    break
+                                }
                             }
                         }
 
@@ -158,7 +92,11 @@ AnalyzePage {
 
                 QGCButton {
                     Layout.fillWidth: true
-                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 0)
+                    visible: OnboardLogController.canErase
+                    enabled: OnboardLogController.canErase &&
+                             !OnboardLogController.requestingList &&
+                             !OnboardLogController.downloadingLogs &&
+                             OnboardLogController.model && OnboardLogController.model.count > 0
                     text: qsTr("Erase All")
                     onClicked: QGroundControl.showMessageDialog(
                         onboardLogPage,
