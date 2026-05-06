@@ -50,10 +50,18 @@ public:
     /// Get joystick by name (returns nullptr if not found)
     Q_INVOKABLE Joystick *joystickByName(const QString &name) const;
 
+    /// Returns "auto", "joystick", or "gamepad" for the named device.
+    Q_INVOKABLE QString joystickTypeOverride(const QString &name) const;
+
+    /// Set per-device override; "auto" clears it. Triggers re-discovery so the
+    /// device is recreated with the new branch (gamepad vs raw joystick).
+    Q_INVOKABLE void setJoystickTypeOverride(const QString &name, const QString &mode);
+
 signals:
     void activeJoystickChanged(Joystick *joystick);
     void activeJoystickEnabledForActiveVehicleChanged();
     void availableJoystickNamesChanged();
+    void joystickTypeOverrideChanged(const QString &name);
 
 public slots:
     void init();

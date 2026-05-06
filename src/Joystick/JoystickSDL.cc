@@ -175,6 +175,16 @@ void JoystickSDL::shutdown(bool deleteDiscoveryCache)
     s_discoveryCache.clear();
 }
 
+void JoystickSDL::forgetCachedJoystick(const QString &name)
+{
+    auto it = s_discoveryCache.find(name);
+    if (it == s_discoveryCache.end()) {
+        return;
+    }
+    // Caller already deleteLater()'d the live instance; the cache holds the same pointer.
+    s_discoveryCache.erase(it);
+}
+
 QMap<QString, Joystick*> JoystickSDL::discover()
 {
     Q_ASSERT(QThread::isMainThread());
@@ -252,38 +262,55 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         QList<int> gamepadAxes;
         QSet<int> joyAxesMappedToGamepad;
 
-        if (SDL_IsGamepad(jid)) {
+        const QString typeOverride = JoystickManager::instance()->joystickTypeOverride(name);
+        bool tryAsGamepad;
+        if (typeOverride == QLatin1String("joystick")) {
+            tryAsGamepad = false;
+        } else if (typeOverride == QLatin1String("gamepad")) {
+            // SDL_OpenGamepad will fail if no mapping is registered for this GUID — we
+            // fall through to the joystick path below in that case.
+            tryAsGamepad = true;
+        } else {
+            tryAsGamepad = SDL_IsGamepad(jid);
+        }
+
+        if (tryAsGamepad) {
             auto tmpGamepad = SDL_OpenGamepad(jid);
             if (!tmpGamepad) {
-                qCWarning(JoystickSDLLog) << "Failed to open gamepad" << jid << SDL_GetError();
-                continue;
-            }
-
-            // Determine if this gamepad axis is one we should show to the user
-            for (int i = 0; i < SDL_GAMEPAD_AXIS_COUNT; i++) {
-                if (SDL_GamepadHasAxis(tmpGamepad, static_cast<SDL_GamepadAxis>(i))) {
-                    gamepadAxes.append(i);
+                if (typeOverride == QLatin1String("gamepad")) {
+                    qCWarning(JoystickSDLLog) << "Forced-gamepad open failed for" << name
+                                              << "- no SDL mapping; falling back to joystick:" << SDL_GetError();
+                } else {
+                    qCWarning(JoystickSDLLog) << "Failed to open gamepad" << jid << SDL_GetError();
+                    continue;
                 }
-            }
-
-            // If a sdlJoystick axis is mapped to a sdlGamepad axis, then the axis is represented
-            // by both the sdlJoystick interface and the sdlGamepad interface. If this is the case,
-            // We'll only show the sdlGamepad interface version of the axis to the user.
-            int bindingCount = 0;
-            SDL_GamepadBinding **bindings = SDL_GetGamepadBindings(tmpGamepad, &bindingCount);
-            if (bindings) {
-                for (int i = 0; i < bindingCount; ++i) {
-                    SDL_GamepadBinding *binding = bindings[i];
-                    if (binding && binding->input_type == SDL_GAMEPAD_BINDTYPE_AXIS && binding->output_type == SDL_GAMEPAD_BINDTYPE_AXIS) {
-                        joyAxesMappedToGamepad.insert(binding->input.axis.axis);
+            } else {
+                // Determine if this gamepad axis is one we should show to the user
+                for (int i = 0; i < SDL_GAMEPAD_AXIS_COUNT; i++) {
+                    if (SDL_GamepadHasAxis(tmpGamepad, static_cast<SDL_GamepadAxis>(i))) {
+                        gamepadAxes.append(i);
                     }
                 }
-                SDL_free(bindings);
-            } else {
-                qCWarning(JoystickSDLLog) << "Failed to get bindings for" << name << "error:" << SDL_GetError();
-            }
 
-            SDL_CloseGamepad(tmpGamepad);
+                // If a sdlJoystick axis is mapped to a sdlGamepad axis, then the axis is represented
+                // by both the sdlJoystick interface and the sdlGamepad interface. If this is the case,
+                // We'll only show the sdlGamepad interface version of the axis to the user.
+                int bindingCount = 0;
+                SDL_GamepadBinding **bindings = SDL_GetGamepadBindings(tmpGamepad, &bindingCount);
+                if (bindings) {
+                    for (int i = 0; i < bindingCount; ++i) {
+                        SDL_GamepadBinding *binding = bindings[i];
+                        if (binding && binding->input_type == SDL_GAMEPAD_BINDTYPE_AXIS && binding->output_type == SDL_GAMEPAD_BINDTYPE_AXIS) {
+                            joyAxesMappedToGamepad.insert(binding->input.axis.axis);
+                        }
+                    }
+                    SDL_free(bindings);
+                } else {
+                    qCWarning(JoystickSDLLog) << "Failed to get bindings for" << name << "error:" << SDL_GetError();
+                }
+
+                SDL_CloseGamepad(tmpGamepad);
+            }
         }
 
         SDL_Joystick *tmpJoy = SDL_OpenJoystick(jid);
@@ -739,7 +766,9 @@ QString JoystickSDL::powerState() const
 
 bool JoystickSDL::isGamepad() const
 {
-    return SDL_IsGamepad(_instanceId);
+    // Tracks the discovery-time decision (which honors the user override). Querying
+    // SDL here would ignore "force joystick" / "force gamepad" overrides.
+    return !_gamepadAxes.isEmpty();
 }
 
 QString JoystickSDL::gamepadType() const

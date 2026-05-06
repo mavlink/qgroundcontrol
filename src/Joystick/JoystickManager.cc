@@ -15,6 +15,8 @@
 using JoystickBackend = JoystickSDL;
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 #include <QtCore/QSettings>
 #include <QtGui/QVector3D>
 
@@ -364,6 +366,64 @@ QStringList JoystickManager::linkedGroupMembers(const QString &groupId) const
 Joystick *JoystickManager::joystickByName(const QString &name) const
 {
     return _name2JoystickMap.value(name, nullptr);
+}
+
+QString JoystickManager::joystickTypeOverride(const QString &name) const
+{
+    if (name.isEmpty()) {
+        return QStringLiteral("auto");
+    }
+    const QString raw = _joystickManagerSettings->joystickTypeOverrides()->rawValue().toString();
+    const QJsonDocument doc = QJsonDocument::fromJson(raw.toUtf8());
+    if (!doc.isObject()) {
+        return QStringLiteral("auto");
+    }
+    const QString mode = doc.object().value(name).toString();
+    if (mode == QLatin1String("joystick") || mode == QLatin1String("gamepad")) {
+        return mode;
+    }
+    return QStringLiteral("auto");
+}
+
+void JoystickManager::setJoystickTypeOverride(const QString &name, const QString &mode)
+{
+    if (name.isEmpty()) {
+        return;
+    }
+
+    QString normalized = mode;
+    if (normalized != QLatin1String("joystick") && normalized != QLatin1String("gamepad")) {
+        normalized = QStringLiteral("auto");
+    }
+    if (joystickTypeOverride(name) == normalized) {
+        return;
+    }
+
+    const QString raw = _joystickManagerSettings->joystickTypeOverrides()->rawValue().toString();
+    QJsonObject obj = QJsonDocument::fromJson(raw.toUtf8()).object();
+    if (normalized == QLatin1String("auto")) {
+        obj.remove(name);
+    } else {
+        obj.insert(name, normalized);
+    }
+    _joystickManagerSettings->joystickTypeOverrides()->setRawValue(QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
+
+    // Drop the cached + active instance so discovery rebuilds it on the requested branch.
+    if (_activeJoystick && _activeJoystick->name() == name) {
+        _setActiveJoystick(nullptr);
+    }
+    if (Joystick *existing = _name2JoystickMap.take(name)) {
+        existing->_stopAllPollingForVehicle();
+        existing->stop();
+        existing->deleteLater();
+    }
+    JoystickBackend::forgetCachedJoystick(name);
+
+    qCInfo(JoystickManagerLog) << "Joystick type override set" << name << "->" << normalized;
+
+    emit joystickTypeOverrideChanged(name);
+
+    _checkForAddedOrRemovedJoysticks();
 }
 
 void JoystickManager::_updatePollingTimer()

@@ -15,3 +15,4 @@ DECLARE_SETTINGGROUP(JoystickManager, "JoystickManager")
 
 DECLARE_SETTINGSFACT(JoystickManagerSettings, activeJoystickName)
 DECLARE_SETTINGSFACT(JoystickManagerSettings, joystickEnabledVehiclesIds)
+DECLARE_SETTINGSFACT(JoystickManagerSettings, joystickTypeOverrides)

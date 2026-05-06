@@ -15,6 +15,13 @@
             "type": "string",
             "default": "",
             "label": "Comma separated list of vehicle IDs with joystick enabled"
+        },
+        {
+            "name": "joystickTypeOverrides",
+            "shortDesc": "JSON map of joystick name to type override (\"joystick\" or \"gamepad\")",
+            "type": "string",
+            "default": "{}",
+            "label": "Per-device joystick type overrides"
         }
     ]
 }

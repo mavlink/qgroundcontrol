@@ -72,6 +72,36 @@ SetupPage {
                     onClicked: joystickManager.activeJoystickEnabledForActiveVehicle = checked
                 }
 
+                QGCLabel { text: qsTr("Type:") }
+
+                QGCComboBox {
+                    id: typeOverrideCombo
+                    sizeToContents: true
+                    visible: activeJoystickName !== ""
+                    // Display labels (translated) backed by stable mode keys.
+                    readonly property var modeKeys: ["auto", "joystick", "gamepad"]
+                    model: [qsTr("Auto"), qsTr("Force Joystick"), qsTr("Force Gamepad")]
+
+                    function _sync() {
+                        const mode = joystickManager.joystickTypeOverride(activeJoystickName)
+                        const idx = modeKeys.indexOf(mode)
+                        currentIndex = idx >= 0 ? idx : 0
+                    }
+
+                    onActivated: (index) => {
+                        joystickManager.setJoystickTypeOverride(activeJoystickName, modeKeys[index])
+                    }
+
+                    Component.onCompleted: _sync()
+                    Connections { target: root; function onActiveJoystickNameChanged() { typeOverrideCombo._sync() } }
+                    Connections {
+                        target: joystickManager
+                        function onJoystickTypeOverrideChanged(name) {
+                            if (name === root.activeJoystickName) typeOverrideCombo._sync()
+                        }
+                    }
+                }
+
                 QGCLabel {
                     font.pointSize: ScreenTools.smallFontPointSize
                     text: qsTr("Not currently available")

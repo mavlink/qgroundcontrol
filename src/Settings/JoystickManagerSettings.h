@@ -25,4 +25,5 @@ public:
 
     DEFINE_SETTINGFACT(activeJoystickName)
     DEFINE_SETTINGFACT(joystickEnabledVehiclesIds)
+    DEFINE_SETTINGFACT(joystickTypeOverrides)
 };

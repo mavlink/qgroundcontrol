@@ -140,6 +140,9 @@ public:
     [[nodiscard]] static bool init();
     static void shutdown(bool deleteDiscoveryCache = true);
     static QMap<QString, Joystick*> discover();
+    /// Drop a single name from the discovery cache (caller must have already
+    /// stopped/deleted the live instance in `_name2JoystickMap`).
+    static void forgetCachedJoystick(const QString &name);
 
 private:
     [[nodiscard]] bool _open() final;
