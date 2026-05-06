@@ -1,13 +1,13 @@
-#include "ULogUtility.h"
+#include "PX4ULogUtility.h"
 #include "QGCLoggingCategory.h"
 
 #include <cstring>
 
 #include <ulog_cpp/reader.hpp>
 
-QGC_LOGGING_CATEGORY(ULogUtilityLog, "Utilities.ULogUtility")
+QGC_LOGGING_CATEGORY(PX4ULogUtilityLog, "Utilities.PX4ULogUtility")
 
-namespace ULogUtility
+namespace PX4ULogUtility
 {
 
 // ============================================================================
@@ -112,13 +112,13 @@ void MessageHandler::data(const ulog_cpp::Data &data)
             // Note: ulog_cpp doesn't support early termination, so we just skip remaining
         }
     } catch (const ulog_cpp::AccessException &exception) {
-        qCWarning(ULogUtilityLog) << "Failed to parse" << QString::fromStdString(_targetMessageName)
+        qCWarning(PX4ULogUtilityLog) << "Failed to parse" << QString::fromStdString(_targetMessageName)
                                   << ":" << exception.what();
         QStringList fields;
         for (const std::string &name : _messageFormat->fieldNames()) {
             fields.append(QString::fromStdString(name));
         }
-        qCDebug(ULogUtilityLog) << "Available fields:" << fields;
+        qCDebug(PX4ULogUtilityLog) << "Available fields:" << fields;
     }
 }
 
@@ -150,4 +150,4 @@ bool iterateMessages(const char *data, qint64 size,
     return true;
 }
 
-} // namespace ULogUtility
+} // namespace PX4ULogUtility

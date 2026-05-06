@@ -86,6 +86,7 @@ add_qgc_test(MAVLinkMessageFieldTest LABELS Unit AnalyzeView)
 add_qgc_test(MAVLinkMessageTest LABELS Unit AnalyzeView)
 add_qgc_test(MAVLinkSystemTest LABELS Unit AnalyzeView)
 add_qgc_test(MavlinkLogTest LABELS Integration AnalyzeView Vehicle RESOURCE_LOCK MockLink)
+add_qgc_test(APMDataFlashLogParserTest LABELS Unit AnalyzeView)
 
 # ----------------------------------------------------------------------------
 # Camera
@@ -244,11 +245,11 @@ add_qgc_test(QGCStreamingDecompressionTest LABELS Unit Utilities)
 # Network
 add_qgc_test(QGCNetworkHelperTest LABELS Unit Utilities Network)
 # Parsing
-add_qgc_test(DataFlashUtilityTest LABELS Unit Utilities)
+add_qgc_test(APMDataFlashUtilityTest LABELS Unit Utilities)
 add_qgc_test(ExifUtilityTest LABELS Unit Utilities)
 add_qgc_test(JsonHelperTest LABELS Unit Utilities)
 add_qgc_test(JsonParsingTest LABELS Unit Utilities)
-add_qgc_test(ULogUtilityTest LABELS Unit Utilities)
+add_qgc_test(PX4ULogUtilityTest LABELS Unit Utilities)
 # FileSystem
 add_qgc_test(QGCArchiveWatcherTest LABELS Unit Utilities RESOURCE_LOCK TempFiles)
 add_qgc_test(QGCCachedFileDownloadTest LABELS Integration Network Utilities)

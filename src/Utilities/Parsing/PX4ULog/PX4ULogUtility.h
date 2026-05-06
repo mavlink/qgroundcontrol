@@ -12,7 +12,7 @@
 #include <ulog_cpp/messages.hpp>
 #include <ulog_cpp/subscription.hpp>
 
-namespace ULogUtility
+namespace PX4ULogUtility
 {
 
 // ============================================================================
@@ -110,4 +110,4 @@ bool iterateMessages(const char *data, qint64 size,
                      const MessageCallback &callback,
                      QString &errorMessage);
 
-} // namespace ULogUtility
+} // namespace PX4ULogUtility

@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <functional>
 
-namespace DataFlashUtility
+namespace APMDataFlashUtility
 {
 
 // ============================================================================
@@ -133,4 +133,4 @@ int iterateMessages(const char *data, qint64 size,
 /// @return Converted float value
 float halfToFloat(uint16_t bits);
 
-} // namespace DataFlashUtility
+} // namespace APMDataFlashUtility

@@ -2,12 +2,12 @@
 
 #include "UnitTest.h"
 
-class ULogUtilityTest : public UnitTest
+class PX4ULogUtilityTest : public UnitTest
 {
     Q_OBJECT
 
 public:
-    ULogUtilityTest() = default;
+    PX4ULogUtilityTest() = default;
 
 private slots:
     // Header validation tests

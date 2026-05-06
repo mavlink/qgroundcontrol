@@ -1,17 +1,17 @@
 # ============================================================================
 # Parsing Utilities
-# EXIF, DataFlash, ULog, JSON
+# EXIF, APMDataFlash (ArduPilot DataFlash binary log), PX4ULog (PX4 ULog), JSON
 # ============================================================================
 
 qt_add_library(QGCParsing STATIC
-    DataFlash/DataFlashUtility.cc
-    DataFlash/DataFlashUtility.h
+    APMDataFlash/APMDataFlashUtility.cc
+    APMDataFlash/APMDataFlashUtility.h
     Exif/ExifUtility.cc
     Exif/ExifUtility.h
     Json/JsonParsing.cc
     Json/JsonParsing.h
-    ULog/ULogUtility.cc
-    ULog/ULogUtility.h
+    PX4ULog/PX4ULogUtility.cc
+    PX4ULog/PX4ULogUtility.h
 )
 
 # ============================================================================
@@ -129,10 +129,10 @@ target_include_directories(QGCParsing SYSTEM PUBLIC ${ulog_cpp_SOURCE_DIR})
 target_include_directories(QGCParsing
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/DataFlash
+        ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash
         ${CMAKE_CURRENT_SOURCE_DIR}/Exif
         ${CMAKE_CURRENT_SOURCE_DIR}/Json
-        ${CMAKE_CURRENT_SOURCE_DIR}/ULog
+        ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
 )
 
 target_precompile_headers(QGCParsing PRIVATE

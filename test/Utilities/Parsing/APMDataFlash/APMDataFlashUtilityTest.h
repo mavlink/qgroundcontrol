@@ -2,12 +2,12 @@
 
 #include "UnitTest.h"
 
-class DataFlashUtilityTest : public UnitTest
+class APMDataFlashUtilityTest : public UnitTest
 {
     Q_OBJECT
 
 public:
-    DataFlashUtilityTest() = default;
+    APMDataFlashUtilityTest() = default;
 
 private slots:
     // Format character size tests
