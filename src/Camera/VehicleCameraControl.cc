@@ -122,6 +122,8 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
                                     _modelName.toStdString().c_str(),
                                     static_cast<int>(_mavlinkCameraInfo.cam_definition_version));
 
+    connect(this, &VehicleCameraControl::dataReady, this, &VehicleCameraControl::_dataReady);
+
     if(info->cam_definition_uri[0] != 0) {
         //-- Process camera definition file
         _handleDefinitionFile(info->cam_definition_uri);
@@ -143,8 +145,6 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     //-- Tracking capabilities
     _hasTrackingRectCapability = _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_RECTANGLE;
     _hasTrackingPointCapability = _mavlinkCameraInfo.flags & CAMERA_CAP_FLAGS_HAS_TRACKING_POINT;
-
-    connect(this, &VehicleCameraControl::dataReady, this, &VehicleCameraControl::_dataReady);
 
     qCDebug(VehicleCameraControlLog) << "Camera Info:";
     qCDebug(VehicleCameraControlLog) << "   vendor:" << vendor();
