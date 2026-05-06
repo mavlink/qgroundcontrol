@@ -1,9 +1,9 @@
 # ============================================================================
 # Parsing Utility Tests
-# Tests for EXIF, DataFlash, and ULog parsing modules
+# Tests for EXIF, APMDataFlash (ArduPilot), and PX4ULog (PX4) parsing modules
 # ============================================================================
 
-add_subdirectory(DataFlash)
+add_subdirectory(APMDataFlash)
 add_subdirectory(Exif)
 add_subdirectory(Json)
-add_subdirectory(ULog)
+add_subdirectory(PX4ULog)

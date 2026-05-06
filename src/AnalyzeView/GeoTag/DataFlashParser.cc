@@ -1,5 +1,5 @@
 #include "DataFlashParser.h"
-#include "DataFlashUtility.h"
+#include "APMDataFlashUtility.h"
 #include "GeoTagData.h"
 #include "QGCLoggingCategory.h"
 
@@ -81,14 +81,14 @@ bool getTagsFromLog(const char *data, qint64 size, QList<GeoTagData> &cameraFeed
 {
     cameraFeedback.clear();
 
-    if (!DataFlashUtility::isValidHeader(data, size)) {
+    if (!APMDataFlashUtility::isValidHeader(data, size)) {
         errorMessage = QStringLiteral("Invalid DataFlash log format");
         return false;
     }
 
     // First pass: Parse FMT messages to learn message formats
-    QMap<uint8_t, DataFlashUtility::MessageFormat> formats;
-    if (!DataFlashUtility::parseFmtMessages(data, size, formats)) {
+    QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
+    if (!APMDataFlashUtility::parseFmtMessages(data, size, formats)) {
         errorMessage = QStringLiteral("No message formats found in log");
         return false;
     }
@@ -110,10 +110,10 @@ bool getTagsFromLog(const char *data, qint64 size, QList<GeoTagData> &cameraFeed
     }
 
     // Second pass: Extract CAM messages using iterator
-    DataFlashUtility::iterateMessages(data, size, formats,
-        [&](uint8_t msgType, const char *payload, int, const DataFlashUtility::MessageFormat &fmt) {
+    APMDataFlashUtility::iterateMessages(data, size, formats,
+        [&](uint8_t msgType, const char *payload, int, const APMDataFlashUtility::MessageFormat &fmt) {
             if (msgType == camMessageType) {
-                const QMap<QString, QVariant> fields = DataFlashUtility::parseMessage(payload, fmt);
+                const QMap<QString, QVariant> fields = APMDataFlashUtility::parseMessage(payload, fmt);
                 GeoTagData feedback = extractGeoTagData(fields);
 
                 if (feedback.coordinate.isValid()) {

@@ -1,11 +1,11 @@
-#include "DataFlashUtility.h"
+#include "APMDataFlashUtility.h"
 #include "QGCLoggingCategory.h"
 
 #include <cstring>
 
-QGC_LOGGING_CATEGORY(DataFlashUtilityLog, "Utilities.DataFlashUtility")
+QGC_LOGGING_CATEGORY(APMDataFlashUtilityLog, "Utilities.APMDataFlashUtility")
 
-namespace DataFlashUtility
+namespace APMDataFlashUtility
 {
 
 // ============================================================================
@@ -312,4 +312,4 @@ int iterateMessages(const char *data, qint64 size,
     return count;
 }
 
-} // namespace DataFlashUtility
+} // namespace APMDataFlashUtility

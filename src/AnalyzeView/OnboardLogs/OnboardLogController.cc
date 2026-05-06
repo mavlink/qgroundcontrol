@@ -12,6 +12,8 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
+#include <algorithm>
+
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QTimer>
 
@@ -162,6 +164,7 @@ void OnboardLogController::_logEntry(uint32_t time_utc, uint32_t size, uint16_t 
 
         for (int i = 0; i < num_logs; i++) {
             QGCOnboardLogEntry *const entry = new QGCOnboardLogEntry(i);
+            (void) connect(entry, &QGCOnboardLogEntry::selectedChanged, this, &OnboardLogController::selectionChanged);
             _logEntriesModel->append(entry);
         }
     }
@@ -442,6 +445,7 @@ bool OnboardLogController::_prepareLogDownload()
 void OnboardLogController::refresh()
 {
     _logEntriesModel->clearAndDeleteContents();
+    emit selectionChanged();
     _requestLogList(0, 0xffff);
 }
 
@@ -480,6 +484,73 @@ void OnboardLogController::cancel()
     _setDownloading(false);
 }
 
+void OnboardLogController::selectAll(bool select)
+{
+    const int count = _logEntriesModel->count();
+    for (int i = 0; i < count; i++) {
+        QGCOnboardLogEntry *const entry = _logEntriesModel->value<QGCOnboardLogEntry*>(i);
+        if (!entry || !entry->received()) {
+            continue;
+        }
+
+        if (entry->selected() != select) {
+            // Block per-entry signals to avoid O(n²) allLogsSelected() re-evaluations.
+            // A single selectionChanged() is emitted after the loop.
+            QSignalBlocker blocker(entry);
+            entry->setSelected(select);
+        }
+    }
+    emit selectionChanged();
+}
+
+int OnboardLogController::selectedCount() const
+{
+    int selected = 0;
+    const int count = _logEntriesModel->count();
+    for (int i = 0; i < count; i++) {
+        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
+        if (entry && entry->received() && entry->selected()) {
+            selected++;
+        }
+    }
+
+    return selected;
+}
+
+bool OnboardLogController::allLogsSelected() const
+{
+    int selectable = 0;
+    int selected = 0;
+    const int count = _logEntriesModel->count();
+    for (int i = 0; i < count; i++) {
+        const QGCOnboardLogEntry *const entry = _logEntriesModel->value<const QGCOnboardLogEntry*>(i);
+        if (entry && entry->received()) {
+            selectable++;
+            if (entry->selected()) {
+                selected++;
+            }
+        }
+    }
+
+    return (selectable > 0) && (selected == selectable);
+}
+
+void OnboardLogController::toggleSortByDate()
+{
+    setSortAscending(!_sortAscending);
+}
+
+void OnboardLogController::setSortAscending(bool ascending)
+{
+    if (_sortAscending == ascending) {
+        return;
+    }
+
+    _sortAscending = ascending;
+    _sortEntriesByTimestamp();
+    emit sortAscendingChanged();
+}
+
 void OnboardLogController::_resetSelection(bool canceled)
 {
     const int num_logs = _logEntriesModel->count();
@@ -498,6 +569,44 @@ void OnboardLogController::_resetSelection(bool canceled)
     }
 
     emit selectionChanged();
+}
+
+void OnboardLogController::_sortEntriesByTimestamp()
+{
+    QObjectList sortedEntries = *_logEntriesModel->objectList();
+    std::stable_sort(sortedEntries.begin(), sortedEntries.end(), [this](const QObject *lhsObj, const QObject *rhsObj) {
+        const QGCOnboardLogEntry *const lhs = qobject_cast<const QGCOnboardLogEntry*>(lhsObj);
+        const QGCOnboardLogEntry *const rhs = qobject_cast<const QGCOnboardLogEntry*>(rhsObj);
+        if (lhs == rhs) {
+            return false;
+        }
+        if (!lhs) {
+            return false;
+        }
+        if (!rhs) {
+            return true;
+        }
+
+        const bool lhsHasTime = lhs->received() && (lhs->time().toSecsSinceEpoch() > 0);
+        const bool rhsHasTime = rhs->received() && (rhs->time().toSecsSinceEpoch() > 0);
+        if (lhsHasTime != rhsHasTime) {
+            // Keep entries with valid timestamps grouped first.
+            return lhsHasTime;
+        }
+
+        if (lhsHasTime && rhsHasTime) {
+            if (lhs->time() == rhs->time()) {
+                return _sortAscending ? (lhs->id() < rhs->id()) : (lhs->id() > rhs->id());
+            }
+
+            return _sortAscending ? (lhs->time() < rhs->time()) : (lhs->time() > rhs->time());
+        }
+
+        // Fallback for entries with missing/invalid time.
+        return _sortAscending ? (lhs->id() < rhs->id()) : (lhs->id() > rhs->id());
+    });
+
+    (void) _logEntriesModel->swapObjectList(sortedEntries);
 }
 
 void OnboardLogController::eraseAll()
@@ -642,6 +751,9 @@ void OnboardLogController::_setListing(bool active)
     if (_requestingLogEntries != active) {
         _requestingLogEntries = active;
         _vehicle->vehicleLinkManager()->setCommunicationLostEnabled(!active);
+        if (!active) {
+            _sortEntriesByTimestamp();
+        }
         emit requestingListChanged();
     }
 }

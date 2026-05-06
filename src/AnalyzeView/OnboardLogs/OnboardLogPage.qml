@@ -34,10 +34,7 @@ AnalyzePage {
                     columnSpacing: ScreenTools.defaultFontPixelWidth
                     rowSpacing: 0
 
-                    QGCCheckBox {
-                        id: headerCheckBox
-                        enabled: false
-                    }
+                    Item { } // First column is for checkboxes, so add empty item to align headers with log entries
 
                     Repeater {
                         model: OnboardLogController.model
@@ -119,6 +116,13 @@ AnalyzePage {
 
                 QGCButton {
                     Layout.fillWidth: true
+                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 0)
+                    text: OnboardLogController.allLogsSelected ? qsTr("Deselect All") : qsTr("Select All")
+                    onClicked: OnboardLogController.selectAll(!OnboardLogController.allLogsSelected)
+                }
+
+                QGCButton {
+                    Layout.fillWidth: true
                     enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs
                     text: qsTr("Download")
 
@@ -154,6 +158,13 @@ AnalyzePage {
                             close()
                         }
                     }
+                }
+
+                QGCButton {
+                    Layout.fillWidth: true
+                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 1)
+                    text: OnboardLogController.sortAscending ? qsTr("Sort Descending") : qsTr("Sort Ascending")
+                    onClicked: OnboardLogController.toggleSortByDate()
                 }
 
                 QGCButton {
