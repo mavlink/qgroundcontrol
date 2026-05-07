@@ -21,4 +21,10 @@ private slots:
 
     // Timestamp tests
     void _testGetHeaderTimestamp();
+
+    // Message iteration tests
+    void _testIterateMessages();
+    void _testIterateMessagesMultiple();
+    void _testIterateMessagesUnknownMessage();
+    void _testIterateMessagesFatalError();
 };
