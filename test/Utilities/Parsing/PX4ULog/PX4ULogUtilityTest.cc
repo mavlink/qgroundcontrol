@@ -1,7 +1,14 @@
 #include "PX4ULogUtilityTest.h"
 
-
 #include <cstring>
+#include <vector>
+
+#include <QtCore/QByteArray>
+#include <QtCore/QList>
+
+#include <ulog_cpp/messages.hpp>
+#include <ulog_cpp/subscription.hpp>
+#include <ulog_cpp/writer.hpp>
 
 #include "PX4ULogUtility.h"
 
@@ -117,6 +124,169 @@ void PX4ULogUtilityTest::_testGetHeaderTimestamp()
 
     // Too small
     QCOMPARE(PX4ULogUtility::getHeaderTimestamp(header, 8), 0ULL);
+}
+
+// ============================================================================
+// Message Iteration Tests
+//
+// ULog binary is constructed in-memory using ulog_cpp::Writer — the same
+// approach used by the ulog_cpp library's own test suite.  This lets us
+// exercise iterateMessages() / MessageHandler against a well-formed stream
+// without shipping a binary test fixture file.
+//
+// Message format used throughout: "test_msg"
+//   uint64_t  timestamp  (offset 0, 8 bytes)
+//   float     value      (offset 8, 4 bytes)
+//   Total payload = 12 bytes
+// ============================================================================
+
+namespace {
+
+// Build a payload buffer for "test_msg" from raw values (avoids struct-padding
+// issues that would arise from sizeof(struct{uint64_t; float;}) == 16).
+std::vector<uint8_t> makeTestMsgPayload(uint64_t timestamp, float value)
+{
+    std::vector<uint8_t> buf(12);
+    memcpy(buf.data(),     &timestamp, 8);
+    memcpy(buf.data() + 8, &value,     4);
+    return buf;
+}
+
+// Build a complete minimal ULog byte stream containing `count` test_msg
+// records, each with a sequential timestamp (step 500000 µs) and the given
+// base value (incremented by 1.0f per record).
+QByteArray buildTestULog(int count, uint64_t baseTimestamp = 500000ULL, float baseValue = 1.0f)
+{
+    std::vector<uint8_t> buffer;
+
+    // ulog_cpp::Writer is concrete (all DataHandlerInterface methods have
+    // default no-op implementations).  We just capture the serialized bytes.
+    ulog_cpp::Writer writer([&](const uint8_t *data, int length) {
+        buffer.insert(buffer.end(), data, data + length);
+    });
+
+    // --- Header section ---
+    writer.fileHeader(ulog_cpp::FileHeader{});
+    writer.messageFormat(ulog_cpp::MessageFormat{
+        "test_msg",
+        {ulog_cpp::Field{"uint64_t", "timestamp"}, ulog_cpp::Field{"float", "value"}}
+    });
+    writer.headerComplete();
+
+    // --- Data section ---
+    const uint16_t msgId = 7;  // arbitrary non-zero subscription id
+    writer.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, msgId, "test_msg"});
+
+    for (int i = 0; i < count; ++i) {
+        const uint64_t ts  = baseTimestamp + static_cast<uint64_t>(i) * 500000ULL;
+        const float    val = baseValue + static_cast<float>(i);
+        writer.data(ulog_cpp::Data{msgId, makeTestMsgPayload(ts, val)});
+    }
+
+    return QByteArray(reinterpret_cast<const char *>(buffer.data()), static_cast<int>(buffer.size()));
+}
+
+} // namespace
+
+void PX4ULogUtilityTest::_testIterateMessages()
+{
+    const QByteArray ulog = buildTestULog(1, 1000000ULL, 3.14f);
+
+    int callCount = 0;
+    uint64_t gotTimestamp = 0;
+    float    gotValue     = 0.f;
+
+    QString error;
+    const bool ok = PX4ULogUtility::iterateMessages(
+        ulog.constData(), ulog.size(), "test_msg",
+        [&](const ulog_cpp::TypedDataView &sample) {
+            ++callCount;
+            gotTimestamp = sample.at("timestamp").as<uint64_t>();
+            gotValue     = sample.at("value").as<float>();
+            return true;
+        },
+        error);
+
+    QVERIFY2(ok, qPrintable(error));
+    QVERIFY(error.isEmpty());
+    QCOMPARE(callCount, 1);
+    QCOMPARE(gotTimestamp, 1000000ULL);
+    QVERIFY2(qAbs(gotValue - 3.14f) < 0.001f,
+             qPrintable(QStringLiteral("Expected 3.14, got %1").arg(static_cast<double>(gotValue))));
+}
+
+void PX4ULogUtilityTest::_testIterateMessagesMultiple()
+{
+    constexpr int kCount = 5;
+    const QByteArray ulog = buildTestULog(kCount, 100000ULL, 0.0f);
+
+    int callCount = 0;
+    QList<uint64_t> timestamps;
+    QList<float>    values;
+
+    QString error;
+    const bool ok = PX4ULogUtility::iterateMessages(
+        ulog.constData(), ulog.size(), "test_msg",
+        [&](const ulog_cpp::TypedDataView &sample) {
+            ++callCount;
+            timestamps.append(sample.at("timestamp").as<uint64_t>());
+            values.append(sample.at("value").as<float>());
+            return true;
+        },
+        error);
+
+    QVERIFY2(ok, qPrintable(error));
+    QCOMPARE(callCount, kCount);
+
+    for (int i = 0; i < kCount; ++i) {
+        const uint64_t expectedTs  = 100000ULL + static_cast<uint64_t>(i) * 500000ULL;
+        const float    expectedVal = static_cast<float>(i);
+        QCOMPARE(timestamps[i], expectedTs);
+        QVERIFY2(qAbs(values[i] - expectedVal) < 0.001f,
+                 qPrintable(QStringLiteral("Record %1: expected %2, got %3")
+                     .arg(i).arg(static_cast<double>(expectedVal)).arg(static_cast<double>(values[i]))));
+    }
+}
+
+void PX4ULogUtilityTest::_testIterateMessagesUnknownMessage()
+{
+    // Valid ULog, but we request a message type that isn't in it.
+    const QByteArray ulog = buildTestULog(3);
+
+    int callCount = 0;
+    QString error;
+    const bool ok = PX4ULogUtility::iterateMessages(
+        ulog.constData(), ulog.size(), "nonexistent_msg",
+        [&](const ulog_cpp::TypedDataView &) { ++callCount; return true; },
+        error);
+
+    QVERIFY2(ok, qPrintable(error));   // parse still succeeds
+    QCOMPARE(callCount, 0);            // callback never fires
+}
+
+void PX4ULogUtilityTest::_testIterateMessagesFatalError()
+{
+    // Garbage data that is not a valid ULog stream.
+    const QByteArray garbage(64, static_cast<char>(0xFF));
+
+    int callCount = 0;
+    QString error;
+    const bool ok = PX4ULogUtility::iterateMessages(
+        garbage.constData(), garbage.size(), "test_msg",
+        [&](const ulog_cpp::TypedDataView &) { ++callCount; return true; },
+        error);
+
+    QVERIFY(!ok);
+    QCOMPARE(callCount, 0);
+
+    // Empty data — header can never be complete
+    callCount = 0;
+    QString error2;
+    const QByteArray empty;
+    QVERIFY(!PX4ULogUtility::iterateMessages(
+        empty.constData(), empty.size(), "test_msg",
+        [&](const ulog_cpp::TypedDataView &) { ++callCount; return true; }, error2));
+    QCOMPARE(callCount, 0);
 }
 
 UT_REGISTER_TEST(PX4ULogUtilityTest, TestLabel::Unit, TestLabel::Utilities)
