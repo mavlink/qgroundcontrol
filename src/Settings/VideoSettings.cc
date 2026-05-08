@@ -72,7 +72,8 @@ void VideoSettings::_setDefaults()
     if (_noVideo) {
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceNoVideo);
     } else {
-        _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
+        // CrownEagle: the operator smoke test tone-maps the bundled HDR source to H.264 SDR on udp://0.0.0.0:5600.
+        _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceUDPH264);
     }
 }
 

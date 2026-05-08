@@ -21,6 +21,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.VideoManager
 
 Item {
     id: root
@@ -124,6 +125,24 @@ Item {
 
     // ARM is only permitted during Demo #4 (Points Round)
     readonly property bool _canArm: demoLocked && selectedDemoIndex === 3
+
+    CEVideoStatus {
+        id: ceVideoStatus
+    }
+
+    readonly property string _videoHealthState: ceVideoStatus.hasStatus ? ceVideoStatus.state : "NO_VIDEO"
+    readonly property bool _videoHealthOk: _videoHealthState === "OK"
+    readonly property bool _videoHealthWarn: _videoHealthState === "LOW_FPS"
+    readonly property bool _videoHealthBad: _videoHealthState === "STALE" || _videoHealthState === "NO_VIDEO"
+    readonly property string _videoStatusText: _videoHealthState === "OK" ? "Ok" :
+                                               _videoHealthState === "LOW_FPS" ? "Low FPS" :
+                                               _videoHealthState === "STALE" ? "Stale" :
+                                               "No Video"
+    readonly property string _videoStatusLabel: "Video: " + _videoStatusText
+    readonly property color _videoStatusColor: _videoHealthOk ? _clrGreen :
+                                               _videoHealthWarn ? _clrAmber :
+                                               _videoHealthBad ? _clrRed :
+                                               _clrCard
 
     // ─────────────────────────────────────────────────────────────────────
     // DEMO LOOKUP TABLES  (read-only data, safe to treat as constants)
@@ -407,6 +426,22 @@ Item {
                         text:           _activeVehicle ? "ACTIVE" : "INACTIVE"
                         color:          _activeVehicle ? _clrGreen : _clrMuted
                         font.pixelSize: 11
+                    }
+                }
+                Rectangle {
+                    width:  videoStatusText.width + 18
+                    height: 28
+                    radius: 4
+                    color:  _videoStatusColor
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Text {
+                        id:               videoStatusText
+                        anchors.centerIn: parent
+                        text:             _videoStatusLabel
+                        color:            "white"
+                        font.pixelSize:   11
+                        font.bold:        true
                     }
                 }
             }
@@ -1032,4 +1067,3 @@ Item {
         }
     }
 }
-
