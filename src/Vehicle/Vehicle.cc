@@ -821,7 +821,11 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
 
     mavlink_msg_camera_image_captured_decode(&message, &feedback);
 
-    _cameraImageCapturedMessageAvailable = true;
+    if(!_cameraImageCapturedMessageAvailable) {
+        _cameraImageCapturedMessageAvailable = true;
+        // Avoid initial duplicatation in case where first photo has CAMERA_FEEDBACK processed first.
+        if(_cameraTriggerPoints->count() > 0) return;
+    }
 
     QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lon / qPow(10.0, 7.0), feedback.alt);
     qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.image_index << feedback.capture_result;
