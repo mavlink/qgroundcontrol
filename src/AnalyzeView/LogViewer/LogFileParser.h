@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QtCore/QObject>
 #include <QtCore/QHash>
+#include <QtCore/QObject>
 #include <QtCore/QPointF>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -11,12 +11,25 @@
 #include <QtCore/QtGlobal>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-class APMDataFlashLogParser : public QObject
+/// Unified log file parser for both DataFlash (.bin/.log) and PX4 ULog (.ulg) files.
+///
+/// Dispatches by file extension, verifies the header magic bytes match the expected
+/// format, then parses the file into a canonical set of properties that the log
+/// viewer UI consumes identically for both formats:
+///
+///  - availableFields / plottableFields — two-level "Type.Field" hierarchy
+///  - fieldSamples(name) — time-series (QPointF) for charting
+///  - modeSegments — flight-mode bands for the chart timeline
+///  - events — timestamped events / errors / warnings
+///  - parameters — parameter name/value pairs from the log
+///  - messages — free-text log messages
+///  - dropouts — (ULog only) data-dropout intervals rendered as chart overlays
+class LogFileParser : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(bool        parsed              READ parsed              NOTIFY parsedChanged)
+    Q_PROPERTY(bool         parsed              READ parsed              NOTIFY parsedChanged)
     Q_PROPERTY(QString      parseError          READ parseError          NOTIFY parseErrorChanged)
     Q_PROPERTY(QStringList  availableFields     READ availableFields     NOTIFY availableFieldsChanged)
     Q_PROPERTY(QVariantList parameters          READ parameters          NOTIFY parametersChanged)
@@ -24,14 +37,15 @@ class APMDataFlashLogParser : public QObject
     Q_PROPERTY(QVariantList messages            READ messages            NOTIFY messagesChanged)
     Q_PROPERTY(QStringList  plottableFields     READ plottableFields     NOTIFY plottableFieldsChanged)
     Q_PROPERTY(QVariantList modeSegments        READ modeSegments        NOTIFY modeSegmentsChanged)
+    Q_PROPERTY(QVariantList dropouts            READ dropouts            NOTIFY dropoutsChanged)
     Q_PROPERTY(QString      detectedVehicleType READ detectedVehicleType NOTIFY detectedVehicleTypeChanged)
     Q_PROPERTY(double       minTimestamp        READ minTimestamp        NOTIFY timeRangeChanged)
     Q_PROPERTY(double       maxTimestamp        READ maxTimestamp        NOTIFY timeRangeChanged)
     Q_PROPERTY(int          sampleCount         READ sampleCount         NOTIFY sampleCountChanged)
 
 public:
-    explicit APMDataFlashLogParser(QObject *parent = nullptr);
-    ~APMDataFlashLogParser();
+    explicit LogFileParser(QObject *parent = nullptr);
+    ~LogFileParser();
 
     bool parsed() const { return _parsed; }
     QString parseError() const { return _parseError; }
@@ -41,6 +55,7 @@ public:
     QVariantList messages() const { return _messages; }
     QStringList plottableFields() const { return _plottableFields; }
     QVariantList modeSegments() const { return _modeSegments; }
+    QVariantList dropouts() const { return _dropouts; }
     QString detectedVehicleType() const { return _detectedVehicleType; }
     double minTimestamp() const { return _minTimestamp; }
     double maxTimestamp() const { return _maxTimestamp; }
@@ -63,6 +78,7 @@ signals:
     void messagesChanged();
     void plottableFieldsChanged();
     void modeSegmentsChanged();
+    void dropoutsChanged();
     void detectedVehicleTypeChanged();
     void timeRangeChanged();
     void sampleCountChanged();
@@ -70,6 +86,7 @@ signals:
 
 private:
     void _setParseError(const QString &error);
+    void _applyResult(const struct LogParseResult &result);
 
     bool _parsed = false;
     QString _parseError;
@@ -79,6 +96,7 @@ private:
     QVariantList _events;
     QVariantList _messages;
     QVariantList _modeSegments;
+    QVariantList _dropouts;
     QString _detectedVehicleType;
     QHash<QString, QVector<QPointF>> _fieldSamples;
     double _minTimestamp = -1.0;

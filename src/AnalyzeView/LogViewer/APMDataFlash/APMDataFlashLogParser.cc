@@ -19,13 +19,13 @@ namespace {
 struct ParseResult {
     bool ok = false;
     QString errorMessage;
-    QStringList availableSignals;
-    QStringList plottableSignals;
+    QStringList availableFields;
+    QStringList plottableFields;
     QVariantList parameters;
     QVariantList events;
     QVariantList messages;
     QVariantList modeSegments;
-    QHash<QString, QVector<QPointF>> signalSamples;
+    QHash<QString, QVector<QPointF>> fieldSamples;
     double minTimestamp = -1.0;
     double maxTimestamp = -1.0;
     int sampleCount = 0;
@@ -528,7 +528,7 @@ ParseResult _parseDataFlashFile(const QString &filePath)
                                  (typeId == QMetaType::LongLong) || (typeId == QMetaType::ULongLong) ||
                                  (typeId == QMetaType::Float) || (typeId == QMetaType::Double);
             if (numeric) {
-                result.signalSamples[signalName].append(QPointF(timestampSecs, it.value().toDouble()));
+                result.fieldSamples[signalName].append(QPointF(timestampSecs, it.value().toDouble()));
                 plottableSet.insert(signalName);
             }
         }
@@ -544,10 +544,10 @@ ParseResult _parseDataFlashFile(const QString &filePath)
         result.modeSegments.append(segment);
     }
 
-    result.availableSignals = signalSet.values();
-    std::sort(result.availableSignals.begin(), result.availableSignals.end());
-    result.plottableSignals = plottableSet.values();
-    std::sort(result.plottableSignals.begin(), result.plottableSignals.end());
+    result.availableFields = signalSet.values();
+    std::sort(result.availableFields.begin(), result.availableFields.end());
+    result.plottableFields = plottableSet.values();
+    std::sort(result.plottableFields.begin(), result.plottableFields.end());
     result.minTimestamp = minTimestampSecs;
     result.maxTimestamp = maxTimestampSecs;
     result.ok = true;
@@ -576,17 +576,17 @@ bool APMDataFlashLogParser::parseFile(const QString &filePath)
         return false;
     }
 
-    _availableSignals = result.availableSignals;
-    _plottableSignals = result.plottableSignals;
+    _availableFields = result.availableFields;
+    _plottableFields = result.plottableFields;
     _parameters = result.parameters;
     _events = result.events;
     _messages = result.messages;
     _modeSegments = result.modeSegments;
-    _signalSamples = result.signalSamples;
+    _fieldSamples = result.fieldSamples;
     _sampleCount = result.sampleCount;
     _detectedVehicleType = result.detectedVehicleType;
-    emit availableSignalsChanged();
-    emit plottableSignalsChanged();
+    emit availableFieldsChanged();
+    emit plottableFieldsChanged();
     emit parametersChanged();
     emit eventsChanged();
     emit messagesChanged();
@@ -601,7 +601,7 @@ bool APMDataFlashLogParser::parseFile(const QString &filePath)
 
     _parsed = true;
     emit parsedChanged();
-    qCDebug(APMDataFlashLogParserLog) << "Parsed signals" << _availableSignals.count() << "parameters" << _parameters.count() << "events" << _events.count();
+    qCDebug(APMDataFlashLogParserLog) << "Parsed fields" << _availableFields.count() << "parameters" << _parameters.count() << "events" << _events.count();
     return true;
 }
 
@@ -626,17 +626,17 @@ void APMDataFlashLogParser::parseFileAsync(const QString &filePath)
             return;
         }
 
-        _availableSignals = result.availableSignals;
-        _plottableSignals = result.plottableSignals;
+        _availableFields = result.availableFields;
+        _plottableFields = result.plottableFields;
         _parameters = result.parameters;
         _events = result.events;
         _messages = result.messages;
         _modeSegments = result.modeSegments;
-        _signalSamples = result.signalSamples;
+        _fieldSamples = result.fieldSamples;
         _sampleCount = result.sampleCount;
         _detectedVehicleType = result.detectedVehicleType;
-        emit availableSignalsChanged();
-        emit plottableSignalsChanged();
+        emit availableFieldsChanged();
+        emit plottableFieldsChanged();
         emit parametersChanged();
         emit eventsChanged();
         emit messagesChanged();
@@ -672,9 +672,9 @@ void APMDataFlashLogParser::clear()
         emit parseErrorChanged();
     }
 
-    if (!_availableSignals.isEmpty()) {
-        _availableSignals.clear();
-        emit availableSignalsChanged();
+    if (!_availableFields.isEmpty()) {
+        _availableFields.clear();
+        emit availableFieldsChanged();
     }
 
     if (!_parameters.isEmpty()) {
@@ -702,12 +702,12 @@ void APMDataFlashLogParser::clear()
         emit detectedVehicleTypeChanged();
     }
 
-    if (!_plottableSignals.isEmpty()) {
-        _plottableSignals.clear();
-        emit plottableSignalsChanged();
+    if (!_plottableFields.isEmpty()) {
+        _plottableFields.clear();
+        emit plottableFieldsChanged();
     }
 
-    _signalSamples.clear();
+    _fieldSamples.clear();
     if (_minTimestamp != -1.0 || _maxTimestamp != -1.0) {
         _minTimestamp = -1.0;
         _maxTimestamp = -1.0;
@@ -720,15 +720,15 @@ void APMDataFlashLogParser::clear()
     }
 }
 
-QVariantList APMDataFlashLogParser::signalSamples(const QString &signalName) const
+QVariantList APMDataFlashLogParser::fieldSamples(const QString &fieldName) const
 {
     QVariantList output;
-    const auto signalIt = _signalSamples.constFind(signalName);
-    if (signalIt == _signalSamples.cend()) {
+    const auto fieldIt = _fieldSamples.constFind(fieldName);
+    if (fieldIt == _fieldSamples.cend()) {
         return output;
     }
 
-    const QVector<QPointF> &points = signalIt.value();
+    const QVector<QPointF> &points = fieldIt.value();
     output.reserve(points.size());
     for (const QPointF &point : points) {
         output.append(point);
@@ -737,14 +737,14 @@ QVariantList APMDataFlashLogParser::signalSamples(const QString &signalName) con
     return output;
 }
 
-double APMDataFlashLogParser::signalValueAt(const QString &signalName, double timestampSeconds) const
+double APMDataFlashLogParser::fieldValueAt(const QString &fieldName, double timestampSeconds) const
 {
-    const auto signalIt = _signalSamples.constFind(signalName);
-    if ((signalIt == _signalSamples.cend()) || signalIt->isEmpty()) {
+    const auto fieldIt = _fieldSamples.constFind(fieldName);
+    if ((fieldIt == _fieldSamples.cend()) || fieldIt->isEmpty()) {
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-    const QVector<QPointF> &points = signalIt.value();
+    const QVector<QPointF> &points = fieldIt.value();
     const auto lower = std::lower_bound(points.cbegin(), points.cend(), timestampSeconds,
         [](const QPointF &point, double timestamp) {
             return point.x() < timestamp;

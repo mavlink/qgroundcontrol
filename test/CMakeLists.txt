@@ -87,6 +87,7 @@ add_qgc_test(MAVLinkMessageTest LABELS Unit AnalyzeView)
 add_qgc_test(MAVLinkSystemTest LABELS Unit AnalyzeView)
 add_qgc_test(MavlinkLogTest LABELS Integration AnalyzeView Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(APMDataFlashLogParserTest LABELS Unit AnalyzeView)
+add_qgc_test(LogFileParserTest LABELS Unit AnalyzeView)
 
 # ----------------------------------------------------------------------------
 # Camera

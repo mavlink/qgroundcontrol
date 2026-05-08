@@ -9,7 +9,7 @@ import QGroundControl.Controls
 AnalyzePage {
     id: logViewerPage
     pageComponent: pageComponent
-    pageDescription: qsTr("Open and inspect DataFlash (.bin) and telemetry (.tlog) logs in a unified workflow.")
+    pageDescription: qsTr("Open and inspect DataFlash (.bin), PX4 ULog (.ulg), and telemetry (.tlog) logs in a unified workflow.")
 
     Component {
         id: pageComponent
@@ -28,22 +28,32 @@ AnalyzePage {
             property var cursorRows: []
             property var cursorEventRows: []
             property string cursorModeName: ""
-            property string signalSearchText: ""
+            property string fieldSearchText: ""
             property string parameterSearchText: ""
-            property var filteredSignalRows: []
+            property var filteredFieldRows: []
             property var filteredParameters: []
             property real fullMinX: 0
             property real fullMaxX: 1
             property real zoomMinX: 0
             property real zoomMaxX: 1
 
+            // Maps fieldName → LineSeries and fieldName → {min, max} for incremental add/remove.
+            property var _seriesByField: ({})
+            property var _fieldYRange: ({})
+            // Maps eventType → ScatterSeries; rebuilt whenever field selection changes,
+            // because Y pin position depends on binYAxis.max which is recomputed at that time.
+            property var _eventSeriesByType: ({})
+
             // Cap decimation to keep QtGraphs rendering below ~16ms per frame.
             // Empirically, >~6000 points per series causes visible frame drops on mid-range hardware.
-            property int maxChartPointsPerSignal: 6000
+            property int maxChartPointsPerField: 6000
 
-            // Visually distinct categorical palette for selected-signal series.
+            readonly property bool isFirmwareLog: logViewerController.sourceType === LogViewerController.Bin
+                                             || logViewerController.sourceType === LogViewerController.ULog
+
+            // Visually distinct categorical palette for selected-field series.
             // Position-based picks avoid hash collisions producing similar colors.
-            readonly property var _signalChartColors: [
+            readonly property var _fieldChartColors: [
                 "#1E88E5", // blue
                 "#E53935", // red
                 "#43A047", // green
@@ -84,6 +94,9 @@ AnalyzePage {
                 if (eventType === "error") {
                     return qsTr("Error")
                 }
+                if (eventType === "warning") {
+                    return qsTr("Warning")
+                }
                 return eventType
             }
 
@@ -92,25 +105,25 @@ AnalyzePage {
             }
 
             function modeLegendEntries() {
-                return logViewerController.modeLegendEntries(dataFlashParser.modeSegments)
+                return logViewerController.modeLegendEntries(logParser.modeSegments)
             }
 
-            function rebuildGroupedSignals() {
-                logViewerController.setPlottableSignals(dataFlashParser.plottableSignals)
-                applySignalFilter()
+            function rebuildGroupedFields() {
+                logViewerController.setPlottableFields(logParser.plottableFields)
+                applyFieldFilter()
             }
 
-            function applySignalFilter() {
-                const query = String(signalSearchText).trim().toLowerCase()
+            function applyFieldFilter() {
+                const query = String(fieldSearchText).trim().toLowerCase()
                 if (query.length === 0) {
-                    filteredSignalRows = logViewerController.signalRows
+                    filteredFieldRows = logViewerController.fieldRows
                     return
                 }
 
                 const groupedMap = {}
-                const signals = dataFlashParser.plottableSignals
-                for (let i = 0; i < signals.length; i++) {
-                    const fullName = String(signals[i])
+                const fields = logParser.plottableFields
+                for (let i = 0; i < fields.length; i++) {
+                    const fullName = String(fields[i])
                     const splitIndex = fullName.indexOf(".")
                     const groupName = splitIndex > 0 ? fullName.substring(0, splitIndex) : qsTr("Other")
                     const shortName = splitIndex > 0 ? fullName.substring(splitIndex + 1) : fullName
@@ -133,26 +146,26 @@ AnalyzePage {
                     groupedMap[groupName].sort((a, b) => String(a.shortName).localeCompare(String(b.shortName)))
                     for (let s = 0; s < groupedMap[groupName].length; s++) {
                         rows.push({
-                            rowType: "signal",
+                            rowType: "field",
                             group: groupName,
                             fullName: groupedMap[groupName][s].fullName,
                             shortName: groupedMap[groupName][s].shortName
                         })
                     }
                 }
-                filteredSignalRows = rows
+                filteredFieldRows = rows
             }
 
             function applyParameterFilter() {
                 const query = String(parameterSearchText).trim().toLowerCase()
                 if (query.length === 0) {
-                    filteredParameters = dataFlashParser.parameters
+                    filteredParameters = logParser.parameters
                     return
                 }
 
                 const output = []
-                for (let i = 0; i < dataFlashParser.parameters.length; i++) {
-                    const item = dataFlashParser.parameters[i]
+                for (let i = 0; i < logParser.parameters.length; i++) {
+                    const item = logParser.parameters[i]
                     const name = String(item.name)
                     const value = String(item.value)
                     if ((name + " " + value).toLowerCase().indexOf(query) !== -1) {
@@ -167,23 +180,23 @@ AnalyzePage {
             }
 
             function toggleGroupExpanded(groupName) {
-                if (String(signalSearchText).trim().length > 0) {
+                if (String(fieldSearchText).trim().length > 0) {
                     return
                 }
                 logViewerController.toggleGroupExpanded(groupName)
-                applySignalFilter()
+                applyFieldFilter()
             }
 
-            function isSignalSelected(signalName) {
-                return logViewerController.isSignalSelected(signalName)
+            function isFieldSelected(fieldName) {
+                return logViewerController.isFieldSelected(fieldName)
             }
 
-            function signalColor(signalName) {
-                const idx = logViewerController.selectedSignals.indexOf(signalName)
+            function fieldColor(fieldName) {
+                const idx = logViewerController.selectedFields.indexOf(fieldName)
                 if (idx >= 0) {
-                    return _signalChartColors[idx % _signalChartColors.length]
+                    return _fieldChartColors[idx % _fieldChartColors.length]
                 }
-                return logViewerController.signalColor(signalName)
+                return logViewerController.fieldColor(fieldName)
             }
 
             function applyZoomRange(minX, maxX) {
@@ -212,20 +225,9 @@ AnalyzePage {
                 return binXAxis.min + (ratio * (binXAxis.max - binXAxis.min))
             }
 
-            function _axisXToPixel(xValue) {
-                const plotX = binChart.plotArea.x
-                const plotW = binChart.plotArea.width
-                if (plotW <= 0 || binXAxis.max <= binXAxis.min) {
-                    return plotX
-                }
-
-                const ratio = (xValue - binXAxis.min) / (binXAxis.max - binXAxis.min)
-                return plotX + (Math.max(0, Math.min(1, ratio)) * plotW)
-            }
-
             function updateCursorInfo(pixelX, pixelY, width, height) {
-                const selectedSignals = logViewerController.selectedSignals
-                if (selectedSignals.length === 0 || width <= 0 || height <= 0) {
+                const selectedFields = logViewerController.selectedFields
+                if (selectedFields.length === 0 || width <= 0 || height <= 0) {
                     cursorVisible = false
                     return
                 }
@@ -234,25 +236,25 @@ AnalyzePage {
                 cursorPixelX = Math.max(binChart.plotArea.x, Math.min(binChart.plotArea.x + binChart.plotArea.width, pixelX))
                 cursorXValue = _pixelToAxisX(cursorPixelX)
                 cursorPopupY = Math.max(0, Math.min(height - (ScreenTools.defaultFontPixelHeight * 4), pixelY))
-                cursorModeName = dataFlashParser.modeAt(cursorXValue)
+                cursorModeName = logParser.modeAt(cursorXValue)
 
                 const rows = []
-                for (let i = 0; i < selectedSignals.length; i++) {
-                    const signal = selectedSignals[i]
-                    const value = dataFlashParser.signalValueAt(signal, cursorXValue)
+                for (let i = 0; i < selectedFields.length; i++) {
+                    const field = selectedFields[i]
+                    const value = logParser.fieldValueAt(field, cursorXValue)
                     if (isNaN(value)) {
                         continue
                     }
                     rows.push({
-                        name: signal,
-                        color: signalColor(signal),
+                        name: field,
+                        color: fieldColor(field),
                         value: value
                     })
                 }
                 cursorRows = rows
 
                 const threshold = Math.max(0.05, (binXAxis.max - binXAxis.min) / 200.0)
-                const nearbyEvents = dataFlashParser.eventsNear(cursorXValue, threshold)
+                const nearbyEvents = logParser.eventsNear(cursorXValue, threshold)
                 const events = []
                 for (let i = 0; i < nearbyEvents.length; i++) {
                     events.push({
@@ -266,11 +268,11 @@ AnalyzePage {
             function clearLoadedLogState(clearControllerState) {
                 replayController.isPlaying = false
                 replayController.link = null
-                dataFlashParser.clear()
-                logViewerController.setPlottableSignals([])
+                logParser.clear()
+                logViewerController.setPlottableFields([])
                 logViewerController.clearSelection()
                 cursorEventRows = []
-                filteredSignalRows = []
+                filteredFieldRows = []
                 filteredParameters = []
                 refreshBinChart()
                 if (clearControllerState) {
@@ -295,246 +297,170 @@ AnalyzePage {
                 }
 
                 const file = pendingBinFile
-                if (typeof dataFlashParser.parseFileAsync === "function") {
-                    dataFlashParser.parseFileAsync(file)
-                    return
-                }
-
-                // Compatibility fallback if async parser API is unavailable.
-                const ok = dataFlashParser.parseFile(file)
-                if (!ok) {
-                    QGroundControl.showMessageDialog(logViewerPage, qsTr("Log Viewer"), dataFlashParser.parseError)
-                    binLoading = false
-                    pendingBinFile = ""
-                    return
-                }
-
-                rebuildGroupedSignals()
-                applyParameterFilter()
-                logViewerController.clearSelection()
-                fullMinX = 0
-                fullMaxX = 1
-                zoomMinX = 0
-                zoomMaxX = 1
-                refreshBinChart()
-                logViewerController.openBinLog(file)
-                binLoading = false
-                pendingBinFile = ""
+                logParser.parseFileAsync(file)
             }
 
+            // Full reset: remove all series and reinitialise axes from the log time range.
+            // Called on log load, on full clear (clearLoadedLogState), and when all selected fields
+            // are cleared via the "Clear Selected" button. For incremental selection changes use
+            // _syncSeriesWithSelection instead.
             function refreshBinChart() {
                 while (binChart.seriesList.length > 0) {
                     binChart.removeSeries(binChart.seriesList[0])
                 }
+                _seriesByField = {}
+                _fieldYRange = {}
+                _eventSeriesByType = {}
 
-                const selectedSignals = logViewerController.selectedSignals
-
-                // Empty selection: keep axes initialized and only show event markers.
-                if (selectedSignals.length === 0) {
-                    if (dataFlashParser.minTimestamp >= 0.0 && dataFlashParser.maxTimestamp > dataFlashParser.minTimestamp) {
-                        fullMinX = dataFlashParser.minTimestamp
-                        fullMaxX = dataFlashParser.maxTimestamp
-                    } else {
-                        fullMinX = 0
-                        fullMaxX = 1
-                    }
-                    zoomMinX = fullMinX
-                    zoomMaxX = fullMaxX
-                    binXAxis.min = zoomMinX
-                    binXAxis.max = zoomMaxX
-                    binYAxis.min = 0
-                    binYAxis.max = 1
-
-                    const emptySeries = lineSeriesComponent.createObject(binChart, {
-                        color: "transparent",
-                        width: 1,
-                        axisX: binXAxis,
-                        axisY: binYAxis
-                    })
-                    binChart.addSeries(emptySeries)
-                    emptySeries.visible = false
-
-                    const eventListNoSignals = dataFlashParser.events
-                    const eventSeriesByType = ({})
-                    for (let e = 0; e < eventListNoSignals.length; e++) {
-                        const event = eventListNoSignals[e]
-                        if (event.time < binXAxis.min || event.time > binXAxis.max) {
-                            continue
-                        }
-                        if (!eventSeriesByType[event.type]) {
-                            const eventSeries = scatterSeriesComponent.createObject(binChart, {
-                                color: eventColor(event.type),
-                                axisX: binXAxis,
-                                axisY: binYAxis
-                            })
-                            binChart.addSeries(eventSeries)
-                            eventSeriesByType[event.type] = eventSeries
-                        }
-                        eventSeriesByType[event.type].append(event.time, binYAxis.max)
-                    }
-                    binChart.update()
-                    Qt.callLater(_nudgeChartLayout)
-                    return
+                if (logParser.minTimestamp >= 0.0 && logParser.maxTimestamp > logParser.minTimestamp) {
+                    fullMinX = logParser.minTimestamp
+                    fullMaxX = logParser.maxTimestamp
+                } else {
+                    fullMinX = 0
+                    fullMaxX = 1
                 }
-
-                // First pass: collect decimated points per signal and compute axis ranges
-                // BEFORE creating series, so axes are stable when series are populated.
-                let minX = Number.MAX_VALUE
-                let maxX = -Number.MAX_VALUE
-                let minY = Number.MAX_VALUE
-                let maxY = -Number.MAX_VALUE
-                const decimatedPerSignal = []
-                for (let s = 0; s < selectedSignals.length; s++) {
-                    const signalName = selectedSignals[s]
-                    const points = dataFlashParser.signalSamples(signalName)
-                    if (!points || points.length === 0) {
-                        decimatedPerSignal.push(null)
-                        continue
-                    }
-
-                    const sampleStep = Math.max(1, Math.ceil(points.length / Math.max(1, maxChartPointsPerSignal)))
-                    const decimated = []
-                    let appendedLastX = -Number.MAX_VALUE
-                    for (let i = 0; i < points.length; i += sampleStep) {
-                        const p = points[i]
-                        decimated.push({ x: p.x, y: p.y })
-                        appendedLastX = p.x
-                        if (p.x < minX) { minX = p.x }
-                        if (p.x > maxX) { maxX = p.x }
-                        if (p.y < minY) { minY = p.y }
-                        if (p.y > maxY) { maxY = p.y }
-                    }
-                    if (sampleStep > 1) {
-                        const lastPoint = points[points.length - 1]
-                        if (lastPoint && lastPoint.x !== appendedLastX) {
-                            decimated.push({ x: lastPoint.x, y: lastPoint.y })
-                            if (lastPoint.x < minX) { minX = lastPoint.x }
-                            if (lastPoint.x > maxX) { maxX = lastPoint.x }
-                            if (lastPoint.y < minY) { minY = lastPoint.y }
-                            if (lastPoint.y > maxY) { maxY = lastPoint.y }
-                        }
-                    }
-                    decimatedPerSignal.push(decimated)
-                }
-
-                if (minX === Number.MAX_VALUE) {
-                    minX = 0
-                    maxX = 1
-                    minY = 0
-                    maxY = 1
-                } else if (minX === maxX) {
-                    maxX = minX + 1
-                }
-                if (minY === maxY) {
-                    maxY = minY + 1
-                }
-
-                // Set axes BEFORE creating/populating series so QtGraphs lays out
-                // the plot area correctly the first time and renders all series.
-                fullMinX = minX
-                fullMaxX = maxX
-                if (zoomMaxX <= zoomMinX || zoomMinX < fullMinX || zoomMaxX > fullMaxX) {
-                    zoomMinX = fullMinX
-                    zoomMaxX = fullMaxX
-                }
+                zoomMinX = fullMinX
+                zoomMaxX = fullMaxX
                 binXAxis.min = zoomMinX
                 binXAxis.max = zoomMaxX
-                binYAxis.min = minY
-                binYAxis.max = maxY
+                binYAxis.min = 0
+                binYAxis.max = 1
+            }
 
-                // Second pass: create one series per selected signal and feed points.
-                // Explicit axisX/axisY bind is required for QtGraphs LineSeries created
-                // dynamically; without it only the last-added series renders until the
-                // axes are mutated (e.g. by zooming).
-                for (let s = 0; s < selectedSignals.length; s++) {
-                    const decimated = decimatedPerSignal[s]
-                    if (!decimated || decimated.length === 0) {
+            // Incremental update: diff the current series map against the new selection,
+            // remove series for deselected fields, add series for newly selected fields,
+            // then recompute the Y axis and rebuild the event scatter series.
+            function _syncSeriesWithSelection() {
+                const newSelection = logViewerController.selectedFields
+
+                // Build lookup of desired fields
+                const desired = {}
+                for (let i = 0; i < newSelection.length; i++) {
+                    desired[String(newSelection[i])] = true
+                }
+
+                // Remove series for fields that are no longer selected
+                const tracked = Object.keys(_seriesByField)
+                for (let i = 0; i < tracked.length; i++) {
+                    if (!desired[tracked[i]]) {
+                        binChart.removeSeries(_seriesByField[tracked[i]])
+                        delete _seriesByField[tracked[i]]
+                        delete _fieldYRange[tracked[i]]
+                    }
+                }
+
+                // Add a series for each newly selected field
+                for (let i = 0; i < newSelection.length; i++) {
+                    const fieldName = String(newSelection[i])
+                    if (_seriesByField[fieldName]) {
                         continue
                     }
 
-                    const signalName = selectedSignals[s]
+                    const points = logParser.fieldSamples(fieldName)
+                    if (!points || points.length === 0) {
+                        continue
+                    }
+
                     const series = lineSeriesComponent.createObject(binChart, {
-                        color: signalColor(signalName),
+                        color: fieldColor(fieldName),
                         width: 2,
                         axisX: binXAxis,
                         axisY: binYAxis
                     })
                     binChart.addSeries(series)
-                    for (let i = 0; i < decimated.length; i++) {
-                        series.append(decimated[i].x, decimated[i].y)
+
+                    let minY = Number.MAX_VALUE
+                    let maxY = -Number.MAX_VALUE
+                    const sampleStep = Math.max(1, Math.ceil(points.length / maxChartPointsPerField))
+                    let appendedLastX = -Number.MAX_VALUE
+                    for (let j = 0; j < points.length; j += sampleStep) {
+                        series.append(points[j].x, points[j].y)
+                        appendedLastX = points[j].x
+                        if (points[j].y < minY) minY = points[j].y
+                        if (points[j].y > maxY) maxY = points[j].y
                     }
+                    if (sampleStep > 1) {
+                        const last = points[points.length - 1]
+                        if (last && last.x !== appendedLastX) {
+                            series.append(last.x, last.y)
+                        }
+                    }
+
+                    _seriesByField[fieldName] = series
+                    _fieldYRange[fieldName] = { min: minY, max: maxY }
                 }
 
-                const eventList = dataFlashParser.events
-                const eventTypeSeries = ({})
+                // Update colors for all tracked series (selection indices may have shifted)
+                for (let i = 0; i < newSelection.length; i++) {
+                    const fn = String(newSelection[i])
+                    const s = _seriesByField[fn]
+                    if (s) s.color = fieldColor(fn)
+                }
+
+                // Recompute Y axis from cached per-field ranges
+                const allTracked = Object.keys(_seriesByField)
+                let globalMinY = 0
+                let globalMaxY = 1
+                if (allTracked.length > 0) {
+                    globalMinY = Number.MAX_VALUE
+                    globalMaxY = -Number.MAX_VALUE
+                    for (let i = 0; i < allTracked.length; i++) {
+                        const r = _fieldYRange[allTracked[i]]
+                        if (r) {
+                            if (r.min < globalMinY) globalMinY = r.min
+                            if (r.max > globalMaxY) globalMaxY = r.max
+                        }
+                    }
+                    if (globalMinY === globalMaxY) globalMaxY = globalMinY + 1
+                }
+                binYAxis.min = globalMinY
+                binYAxis.max = globalMaxY
+
+                // Rebuild event scatter series (Y position is pinned to current binYAxis.max)
+                const existingTypes = Object.keys(_eventSeriesByType)
+                for (let i = 0; i < existingTypes.length; i++) {
+                    binChart.removeSeries(_eventSeriesByType[existingTypes[i]])
+                }
+                _eventSeriesByType = {}
+                const eventList = logParser.events
                 for (let e = 0; e < eventList.length; e++) {
-                    const event = eventList[e]
-                    if (event.time < binXAxis.min || event.time > binXAxis.max) {
+                    const ev = eventList[e]
+                    if (ev.time < binXAxis.min || ev.time > binXAxis.max) {
                         continue
                     }
-                    if (!eventTypeSeries[event.type]) {
+                    if (!_eventSeriesByType[ev.type]) {
                         const eventSeries = scatterSeriesComponent.createObject(binChart, {
-                            color: eventColor(event.type),
+                            color: eventColor(ev.type),
                             axisX: binXAxis,
                             axisY: binYAxis
                         })
                         binChart.addSeries(eventSeries)
-                        eventTypeSeries[event.type] = eventSeries
+                        _eventSeriesByType[ev.type] = eventSeries
                     }
-                    eventTypeSeries[event.type].append(event.time, maxY)
+                    _eventSeriesByType[ev.type].append(ev.time, binYAxis.max)
                 }
-                binChart.update()
-
-                // QtGraphs sometimes only renders the most recently added series until
-                // the axis range changes. Re-applying the same range on the next event
-                // loop turn forces a re-layout for every series at once.
-                Qt.callLater(_nudgeChartLayout)
-            }
-
-            // Workaround for a QtGraphs bug: after dynamically adding multiple series,
-            // only the most recently added series renders until the axis range changes.
-            // Writing axis.max to (value + epsilon) then back to value on the next event-loop
-            // turn triggers the property-change notification twice, forcing a full re-layout.
-            // The factor 1e-9 is intentional: small enough to be imperceptible on any realistic
-            // axis range (up to ~10^9 s), yet large enough to produce a distinct double value
-            // that passes Qt's property-change equality check.
-            function _nudgeChartLayout() {
-                const xMax = binXAxis.max
-                const xMin = binXAxis.min
-                const yMax = binYAxis.max
-                const yMin = binYAxis.min
-                if (xMax <= xMin || yMax <= yMin) {
-                    return
-                }
-                const xEpsilon = (xMax - xMin) * 1e-9
-                const yEpsilon = (yMax - yMin) * 1e-9
-                binXAxis.max = xMax + xEpsilon
-                binXAxis.max = xMax
-                binYAxis.max = yMax + yEpsilon
-                binYAxis.max = yMax
-                binChart.update()
             }
 
             LogViewerController {
                 id: logViewerController
             }
 
-            APMDataFlashLogParser {
-                id: dataFlashParser
+            LogFileParser {
+                id: logParser
             }
 
             Connections {
                 target: logViewerController
-                function onSignalRowsChanged() {
-                    applySignalFilter()
+                function onFieldRowsChanged() {
+                    applyFieldFilter()
                 }
-                function onSelectedSignalsChanged() {
-                    Qt.callLater(refreshBinChart)
+                function onSelectedFieldsChanged() {
+                    Qt.callLater(_syncSeriesWithSelection)
                 }
             }
 
             Connections {
-                target: dataFlashParser
+                target: logParser
                 ignoreUnknownSignals: true
 
                 function onParseFileFinished(filePath, ok, errorMessage) {
@@ -549,7 +475,7 @@ AnalyzePage {
                         return
                     }
 
-                    rebuildGroupedSignals()
+                    rebuildGroupedFields()
                     applyParameterFilter()
                     logViewerController.clearSelection()
                     fullMinX = 0
@@ -557,7 +483,13 @@ AnalyzePage {
                     zoomMinX = 0
                     zoomMaxX = 1
                     refreshBinChart()
-                    logViewerController.openBinLog(filePath)
+
+                    const lowerPath = filePath.toLowerCase()
+                    if (lowerPath.endsWith(".ulg")) {
+                        logViewerController.openULogFile(filePath)
+                    } else {
+                        logViewerController.openBinLog(filePath)
+                    }
                     binLoading = false
                     pendingBinFile = ""
                 }
@@ -575,6 +507,14 @@ AnalyzePage {
                     text: qsTr("Open .bin")
                     onClicked: {
                         openDialog.nameFilters = ["DataFlash Logs (*.bin *.BIN *.log *.LOG)"]
+                        openDialog.openForLoad()
+                    }
+                }
+
+                QGCButton {
+                    text: qsTr("Open .ulg")
+                    onClicked: {
+                        openDialog.nameFilters = ["PX4 ULog Files (*.ulg *.ULG)"]
                         openDialog.openForLoad()
                     }
                 }
@@ -688,95 +628,95 @@ AnalyzePage {
                             Layout.fillWidth: true
                             wrapMode: Text.WordWrap
                             maximumLineCount: 3
-                            text: logViewerController.sourceType === LogViewerController.Bin
+                            text: (isFirmwareLog)
                                   ? qsTr("DataFlash message and parameter browser will appear here.")
                                   : qsTr("For telemetry replay, MAVLink message and field selection is available through the Inspector integration.")
                         }
 
                         QGCLabel {
-                            visible: logViewerController.sourceType === LogViewerController.Bin
-                            text: qsTr("Signals: %1  Parameters: %2  Events: %3")
-                                  .arg(dataFlashParser.plottableSignals.length)
-                                  .arg(dataFlashParser.parameters.length)
-                                  .arg(dataFlashParser.events.length)
+                            visible: isFirmwareLog
+                            text: qsTr("Fields: %1  Parameters: %2  Events: %3")
+                                  .arg(logParser.plottableFields.length)
+                                  .arg(logParser.parameters.length)
+                                  .arg(logParser.events.length)
                         }
 
                         QGCLabel {
-                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            visible: isFirmwareLog
                             text: qsTr("Detected vehicle type: %1")
-                                  .arg(dataFlashParser.detectedVehicleType.length > 0
-                                       ? dataFlashParser.detectedVehicleType
+                                  .arg(logParser.detectedVehicleType.length > 0
+                                       ? logParser.detectedVehicleType
                                        : qsTr("Unknown"))
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            visible: isFirmwareLog
                             spacing: ScreenTools.defaultFontPixelWidth * 0.5
 
                             QGCLabel {
-                                text: qsTr("Signals (click to plot)")
+                                text: qsTr("Fields (click to plot)")
                                 font.bold: true
                             }
 
                             QGCTextField {
-                                id: signalSearchField
+                                id: fieldSearchField
                                 Layout.fillWidth: true
                                 textColor: qgcPal.textFieldText
                                 placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
-                                placeholderText: qsTr("Search signals")
+                                placeholderText: qsTr("Search fields")
                                 onTextChanged: {
-                                    signalSearchText = text
+                                    fieldSearchText = text
                                     if (text.trim().length === 0) {
-                                        signalSearchTimer.stop()
-                                        applySignalFilter()
+                                        fieldSearchTimer.stop()
+                                        applyFieldFilter()
                                     } else {
-                                        signalSearchTimer.restart()
+                                        fieldSearchTimer.restart()
                                     }
                                 }
                                 onAccepted: {
-                                    signalSearchText = text
-                                    signalSearchTimer.stop()
-                                    applySignalFilter()
+                                    fieldSearchText = text
+                                    fieldSearchTimer.stop()
+                                    applyFieldFilter()
                                 }
                             }
 
                             QGCButton {
                                 text: qsTr("Clear Selected")
                                 horizontalAlignment: Text.AlignHCenter
-                                Layout.preferredHeight: signalSearchField.implicitHeight
-                                Layout.minimumHeight: signalSearchField.implicitHeight
+                                Layout.preferredHeight: fieldSearchField.implicitHeight
+                                Layout.minimumHeight: fieldSearchField.implicitHeight
                                 topPadding: 0
                                 bottomPadding: 0
-                                enabled: logViewerController.selectedSignals.length > 0
+                                enabled: logViewerController.selectedFields.length > 0
                                 onClicked: {
                                     logViewerController.clearSelection()
-                                    applySignalFilter()
+                                    applyFieldFilter()
                                     refreshBinChart()
                                 }
                             }
                         }
 
                         ScrollView {
-                            id: signalsScroll
+                            id: fieldsScroll
                             Layout.fillWidth: true
                             Layout.preferredHeight: parent.height * 0.35
-                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            visible: isFirmwareLog
                             clip: true
 
                             ListView {
-                                id: signalsListView
+                                id: fieldsListView
                                 anchors.fill: parent
-                                model: filteredSignalRows
+                                model: filteredFieldRows
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.15
                                 clip: true
                                 ScrollBar.vertical: ScrollBar { }
 
                                 delegate: Item {
-                                    width: signalsListView.width
+                                    width: fieldsListView.width
                                     height: (modelData.rowType === "group")
                                             ? (groupRect.implicitHeight + (ScreenTools.defaultFontPixelHeight * 0.1))
-                                            : (signalRow.implicitHeight + (ScreenTools.defaultFontPixelHeight * 0.1))
+                                            : (fieldRow.implicitHeight + (ScreenTools.defaultFontPixelHeight * 0.1))
 
                                     Rectangle {
                                         id: groupRect
@@ -792,7 +732,7 @@ AnalyzePage {
                                             anchors.verticalCenter: parent.verticalCenter
                                             spacing: ScreenTools.defaultFontPixelWidth * 0.3
 
-                                            QGCLabel { text: (String(signalSearchText).trim().length > 0) ? "▼" : (isGroupExpanded(modelData.group) ? "▼" : "▶") }
+                                            QGCLabel { text: (String(fieldSearchText).trim().length > 0) ? "▼" : (isGroupExpanded(modelData.group) ? "▼" : "▶") }
                                             QGCLabel { id: groupLabel; text: modelData.group; font.bold: true }
                                         }
 
@@ -803,21 +743,21 @@ AnalyzePage {
                                     }
 
                                     Row {
-                                        id: signalRow
-                                        visible: modelData.rowType === "signal"
+                                        id: fieldRow
+                                        visible: modelData.rowType === "field"
                                         width: parent.width
-                                        height: Math.max(signalNameLabel.implicitHeight, signalCheckBox.implicitHeight)
+                                        height: Math.max(fieldNameLabel.implicitHeight, fieldCheckBox.implicitHeight)
                                         spacing: ScreenTools.defaultFontPixelWidth * 0.25
 
                                         QGCCheckBox {
-                                            id: signalCheckBox
+                                            id: fieldCheckBox
                                             anchors.verticalCenter: parent.verticalCenter
-                                            onClicked: logViewerController.setSignalSelected(modelData.fullName, checked)
-                                            checked: logViewerController.selectedSignals.indexOf(modelData.fullName) !== -1
+                                            onClicked: logViewerController.setFieldSelected(modelData.fullName, checked)
+                                            checked: logViewerController.selectedFields.indexOf(modelData.fullName) !== -1
                                         }
 
                                         QGCLabel {
-                                            id: signalNameLabel
+                                            id: fieldNameLabel
                                             anchors.verticalCenter: parent.verticalCenter
                                             width: Math.max(0, parent.width - (ScreenTools.defaultFontPixelWidth * 3))
                                             height: Math.max(implicitHeight, ScreenTools.defaultFontPixelHeight * 1.2)
@@ -825,7 +765,7 @@ AnalyzePage {
                                             maximumLineCount: 2
                                             verticalAlignment: Text.AlignVCenter
                                             text: modelData.shortName ? String(modelData.shortName) : ""
-                                            color: isSignalSelected(modelData.fullName) ? signalColor(modelData.fullName) : qgcPal.text
+                                            color: isFieldSelected(modelData.fullName) ? fieldColor(modelData.fullName) : qgcPal.text
                                         }
                                     }
                                 }
@@ -836,13 +776,13 @@ AnalyzePage {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 1
                             color: qgcPal.windowShadeDark
-                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            visible: isFirmwareLog
                         }
 
                         QGCTabBar {
                             id: dataTabBar
                             Layout.fillWidth: true
-                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            visible: isFirmwareLog
 
                             QGCTabButton {
                                 text: qsTr("Parameters")
@@ -858,7 +798,7 @@ AnalyzePage {
                         QGCTextField {
                             id: parameterSearchField
                             Layout.fillWidth: true
-                            visible: logViewerController.sourceType === LogViewerController.Bin && dataTabBar.currentIndex === 0
+                            visible: isFirmwareLog && dataTabBar.currentIndex === 0
                             textColor: qgcPal.textFieldText
                             placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
                             placeholderText: qsTr("Search parameters")
@@ -882,7 +822,7 @@ AnalyzePage {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.minimumHeight: 0
-                            visible: logViewerController.sourceType === LogViewerController.Bin && dataTabBar.currentIndex === 0
+                            visible: isFirmwareLog && dataTabBar.currentIndex === 0
                             clip: true
 
                             ListView {
@@ -906,13 +846,13 @@ AnalyzePage {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.minimumHeight: 0
-                            visible: logViewerController.sourceType === LogViewerController.Bin && dataTabBar.currentIndex === 1
+                            visible: isFirmwareLog && dataTabBar.currentIndex === 1
                             clip: true
 
                             ListView {
                                 id: messagesListView
                                 anchors.fill: parent
-                                model: dataFlashParser.messages
+                                model: logParser.messages
                                 spacing: ScreenTools.defaultFontPixelHeight * 0.2
                                 clip: true
                                 ScrollBar.vertical: ScrollBar { }
@@ -962,7 +902,7 @@ AnalyzePage {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             Layout.preferredHeight: parent.height * 0.72
-                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            visible: isFirmwareLog
 
                             GraphsView {
                                 id: binChart
@@ -1015,7 +955,7 @@ AnalyzePage {
                             MouseArea {
                                 id: chartZoomArea
                                 anchors.fill: parent
-                                enabled: logViewerController.sourceType === LogViewerController.Bin && (binXAxis.max > binXAxis.min)
+                                enabled: isFirmwareLog && (binXAxis.max > binXAxis.min)
                                 hoverEnabled: true
                                 acceptedButtons: Qt.LeftButton | Qt.RightButton
                                 z: 1001
@@ -1075,7 +1015,7 @@ AnalyzePage {
                             }
 
                             Rectangle {
-                                visible: cursorVisible && logViewerController.sourceType === LogViewerController.Bin
+                                visible: cursorVisible && (isFirmwareLog)
                                 x: cursorPixelX
                                 y: binChart.plotArea.y
                                 width: 1
@@ -1086,7 +1026,7 @@ AnalyzePage {
 
                             Rectangle {
                                 id: cursorPopup
-                                visible: cursorVisible && cursorRows.length > 0 && logViewerController.sourceType === LogViewerController.Bin
+                                visible: cursorVisible && cursorRows.length > 0 && (isFirmwareLog)
                                 x: Math.max(0, Math.min(chartContainer.width - width, cursorPixelX + ScreenTools.defaultFontPixelWidth))
                                 y: cursorPopupY
                                 width: ScreenTools.defaultFontPixelWidth * 30
@@ -1161,11 +1101,11 @@ AnalyzePage {
                         Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 0.6
-                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            visible: isFirmwareLog
                             color: qgcPal.windowShade
 
                             Repeater {
-                                model: dataFlashParser.modeSegments
+                                model: logParser.modeSegments
 
                                 Rectangle {
                                     visible: binXAxis.max > binXAxis.min && modelData.end >= binXAxis.min && modelData.start <= binXAxis.max
@@ -1181,7 +1121,22 @@ AnalyzePage {
                             }
 
                             Repeater {
-                                model: dataFlashParser.events
+                                model: logParser.dropouts
+
+                                Rectangle {
+                                    visible: binXAxis.max > binXAxis.min && modelData.end >= binXAxis.min && modelData.start <= binXAxis.max
+                                    y: 0
+                                    height: parent.height
+                                    color: Qt.alpha(eventColor("error"), 0.533)
+                                    x: Math.max(binChart.plotArea.x,
+                                                Math.min(binChart.plotArea.x + binChart.plotArea.width,
+                                                         binChart.plotArea.x + ((Math.max(modelData.start, binXAxis.min) - binXAxis.min) / (binXAxis.max - binXAxis.min)) * binChart.plotArea.width))
+                                    width: Math.max(2, ((Math.min(modelData.end, binXAxis.max) - Math.max(modelData.start, binXAxis.min)) / (binXAxis.max - binXAxis.min)) * binChart.plotArea.width)
+                                }
+                            }
+
+                            Repeater {
+                                model: logParser.events
 
                                 Rectangle {
                                     width: 2
@@ -1197,7 +1152,7 @@ AnalyzePage {
 
                         Row {
                             Layout.fillWidth: true
-                            visible: logViewerController.sourceType === LogViewerController.Bin && modeLegendEntries().length > 0
+                            visible: isFirmwareLog && modeLegendEntries().length > 0
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.1
                             spacing: ScreenTools.defaultFontPixelWidth
 
@@ -1219,7 +1174,7 @@ AnalyzePage {
                                     }
 
                                     QGCLabel {
-                                        text: eventTypeLabel(modelData)
+                                        text: modelData
                                     }
                                 }
                             }
@@ -1227,17 +1182,17 @@ AnalyzePage {
 
                         Row {
                             Layout.fillWidth: true
-                            visible: logViewerController.sourceType === LogViewerController.Bin && logViewerController.selectedSignals.length > 0
+                            visible: isFirmwareLog && logViewerController.selectedFields.length > 0
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.1
                             spacing: ScreenTools.defaultFontPixelWidth
 
                             QGCLabel {
-                                text: qsTr("Signals:")
+                                text: qsTr("Fields:")
                                 font.bold: true
                             }
 
                             Repeater {
-                                model: logViewerController.selectedSignals
+                                model: logViewerController.selectedFields
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth * 0.2
@@ -1245,7 +1200,7 @@ AnalyzePage {
                                     Rectangle {
                                         width: ScreenTools.defaultFontPixelWidth
                                         height: ScreenTools.defaultFontPixelHeight * 0.6
-                                        color: signalColor(modelData)
+                                        color: fieldColor(modelData)
                                     }
 
                                     QGCLabel {
@@ -1257,7 +1212,7 @@ AnalyzePage {
 
                         Row {
                             Layout.fillWidth: true
-                            visible: logViewerController.sourceType === LogViewerController.Bin && dataFlashParser.events.length > 0
+                            visible: isFirmwareLog && logParser.events.length > 0
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.1
                             spacing: ScreenTools.defaultFontPixelWidth
 
@@ -1267,13 +1222,13 @@ AnalyzePage {
                             }
 
                             Repeater {
-                                model: ["mode", "event", "error"]
+                                model: ["mode", "event", "error", "warning"]
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth * 0.2
                                     visible: {
-                                        for (let i = 0; i < dataFlashParser.events.length; i++) {
-                                            if (dataFlashParser.events[i].type === modelData) {
+                                        for (let i = 0; i < logParser.events.length; i++) {
+                                            if (logParser.events[i].type === modelData) {
                                                 return true
                                             }
                                         }
@@ -1287,7 +1242,7 @@ AnalyzePage {
                                     }
 
                                     QGCLabel {
-                                        text: modelData
+                                        text: eventTypeLabel(modelData)
                                     }
                                 }
                             }
@@ -1295,7 +1250,7 @@ AnalyzePage {
 
                         RowLayout {
                             Layout.fillWidth: true
-                            visible: logViewerController.sourceType === LogViewerController.Bin
+                            visible: isFirmwareLog
                             spacing: ScreenTools.defaultFontPixelWidth
 
                             QGCLabel {
@@ -1387,10 +1342,10 @@ AnalyzePage {
             }
 
             Timer {
-                id: signalSearchTimer
+                id: fieldSearchTimer
                 interval: 250
                 repeat: false
-                onTriggered: applySignalFilter()
+                onTriggered: applyFieldFilter()
             }
 
             Timer {

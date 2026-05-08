@@ -73,8 +73,8 @@ void APMDataFlashLogParserTest::_parseMinimalLogTest()
     QVERIFY(parser.parseFile(tempFile.fileName()));
     QVERIFY(parser.parsed());
     QCOMPARE(parser.parseError(), QString());
-    QVERIFY(parser.availableSignals().contains(QStringLiteral("PARM.Name")));
-    QVERIFY(parser.availableSignals().contains(QStringLiteral("PARM.Value")));
+    QVERIFY(parser.availableFields().contains(QStringLiteral("PARM.Name")));
+    QVERIFY(parser.availableFields().contains(QStringLiteral("PARM.Value")));
     QCOMPARE(parser.parameters().count(), 1);
     // One MODE message produces a "mode" event; one EV message produces an "event" event.
     QCOMPARE(parser.events().count(), 2);

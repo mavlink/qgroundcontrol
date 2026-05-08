@@ -20,12 +20,12 @@ LogViewerController::~LogViewerController()
 
 void LogViewerController::clear()
 {
-    _plottableSignals.clear();
-    _signalRows.clear();
-    _selectedSignals.clear();
+    _plottableFields.clear();
+    _fieldRows.clear();
+    _selectedFields.clear();
     _expandedGroups.clear();
-    emit signalRowsChanged();
-    emit selectedSignalsChanged();
+    emit fieldRowsChanged();
+    emit selectedFieldsChanged();
     _setLog(SourceType::None, QString(), tr("No log loaded"));
 }
 
@@ -39,23 +39,28 @@ void LogViewerController::openBinLog(const QString &path)
     _setLog(SourceType::Bin, path, tr("DataFlash log loaded"));
 }
 
-void LogViewerController::setPlottableSignals(const QStringList &signalNames)
+void LogViewerController::openULogFile(const QString &path)
 {
-    _plottableSignals = signalNames;
-    std::sort(_plottableSignals.begin(), _plottableSignals.end());
-    _selectedSignals.clear();
-    emit selectedSignalsChanged();
-    _rebuildSignalRows();
+    _setLog(SourceType::ULog, path, tr("ULog file loaded"));
+}
+
+void LogViewerController::setPlottableFields(const QStringList &fieldNames)
+{
+    _plottableFields = fieldNames;
+    std::sort(_plottableFields.begin(), _plottableFields.end());
+    _selectedFields.clear();
+    emit selectedFieldsChanged();
+    _rebuildFieldRows();
 }
 
 void LogViewerController::clearSelection()
 {
-    if (_selectedSignals.isEmpty()) {
+    if (_selectedFields.isEmpty()) {
         return;
     }
 
-    _selectedSignals.clear();
-    emit selectedSignalsChanged();
+    _selectedFields.clear();
+    emit selectedFieldsChanged();
 }
 
 void LogViewerController::toggleGroupExpanded(const QString &groupName)
@@ -66,7 +71,7 @@ void LogViewerController::toggleGroupExpanded(const QString &groupName)
         _expandedGroups.insert(groupName);
     }
 
-    _rebuildSignalRows();
+    _rebuildFieldRows();
 }
 
 bool LogViewerController::isGroupExpanded(const QString &groupName) const
@@ -74,30 +79,30 @@ bool LogViewerController::isGroupExpanded(const QString &groupName) const
     return _expandedGroups.contains(groupName);
 }
 
-void LogViewerController::setSignalSelected(const QString &signalName, bool selected)
+void LogViewerController::setFieldSelected(const QString &fieldName, bool selected)
 {
-    const bool currentlySelected = _selectedSignals.contains(signalName);
+    const bool currentlySelected = _selectedFields.contains(fieldName);
     if (currentlySelected == selected) {
         return;
     }
 
     if (selected) {
-        _selectedSignals.append(signalName);
+        _selectedFields.append(fieldName);
     } else {
-        _selectedSignals.removeAll(signalName);
+        _selectedFields.removeAll(fieldName);
     }
 
-    emit selectedSignalsChanged();
+    emit selectedFieldsChanged();
 }
 
-bool LogViewerController::isSignalSelected(const QString &signalName) const
+bool LogViewerController::isFieldSelected(const QString &fieldName) const
 {
-    return _selectedSignals.contains(signalName);
+    return _selectedFields.contains(fieldName);
 }
 
-QString LogViewerController::signalColor(const QString &signalName) const
+QString LogViewerController::fieldColor(const QString &fieldName) const
 {
-    return _assignColorForKey(signalName);
+    return _assignColorForKey(fieldName);
 }
 
 QString LogViewerController::eventColor(const QString &eventType) const
@@ -110,6 +115,9 @@ QString LogViewerController::eventColor(const QString &eventType) const
     }
     if (eventType == QStringLiteral("event")) {
         return _assignColorForKey(QStringLiteral("event-generic"));
+    }
+    if (eventType == QStringLiteral("warning")) {
+        return _assignColorForKey(QStringLiteral("event-warning"));
     }
 
     return _assignColorForKey(QStringLiteral("event-other"));
@@ -175,15 +183,15 @@ void LogViewerController::_setLog(SourceType sourceType, const QString &path, co
     qCDebug(LogViewerControllerLog) << "sourceType" << static_cast<int>(_sourceType) << "path" << _currentLogPath;
 }
 
-void LogViewerController::_rebuildSignalRows()
+void LogViewerController::_rebuildFieldRows()
 {
     QHash<QString, QStringList> groupedMap;
     QStringList groups;
 
-    for (const QString &signal : _plottableSignals) {
-        const int splitIndex = signal.indexOf('.');
-        const QString groupName = (splitIndex > 0) ? signal.left(splitIndex) : tr("Other");
-        const QString shortName = (splitIndex > 0) ? signal.mid(splitIndex + 1) : signal;
+    for (const QString &field : _plottableFields) {
+        const int splitIndex = field.indexOf('.');
+        const QString groupName = (splitIndex > 0) ? field.left(splitIndex) : tr("Other");
+        const QString shortName = (splitIndex > 0) ? field.mid(splitIndex + 1) : field;
         if (!groupedMap.contains(groupName)) {
             groups.append(groupName);
         }
@@ -203,20 +211,20 @@ void LogViewerController::_rebuildSignalRows()
             continue;
         }
 
-        QStringList signalNames = groupedMap.value(groupName);
-        std::sort(signalNames.begin(), signalNames.end());
-        for (const QString &shortName : signalNames) {
-            QVariantMap signalRow;
-            signalRow[QStringLiteral("rowType")] = QStringLiteral("signal");
-            signalRow[QStringLiteral("group")] = groupName;
-            signalRow[QStringLiteral("shortName")] = shortName;
-            signalRow[QStringLiteral("fullName")] = QStringLiteral("%1.%2").arg(groupName, shortName);
-            rows.append(signalRow);
+        QStringList fieldNames = groupedMap.value(groupName);
+        std::sort(fieldNames.begin(), fieldNames.end());
+        for (const QString &shortName : fieldNames) {
+            QVariantMap fieldRow;
+            fieldRow[QStringLiteral("rowType")] = QStringLiteral("field");
+            fieldRow[QStringLiteral("group")] = groupName;
+            fieldRow[QStringLiteral("shortName")] = shortName;
+            fieldRow[QStringLiteral("fullName")] = QStringLiteral("%1.%2").arg(groupName, shortName);
+            rows.append(fieldRow);
         }
     }
 
-    _signalRows = rows;
-    emit signalRowsChanged();
+    _fieldRows = rows;
+    emit fieldRowsChanged();
 }
 
 QString LogViewerController::_assignColorForKey(const QString &key) const
