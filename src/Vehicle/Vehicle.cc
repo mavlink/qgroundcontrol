@@ -765,6 +765,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
 #if !defined(QGC_NO_ARDUPILOT_DIALECT)
 void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
 {
+    // If CAMERA_IMAGE_CAPTURED is supported, then CAMERA_FEEDBACK is redundant and should be ignored
+    // to avoid duplicate points.
+    if(_cameraImageCapturedMessageAvailable) return;
+
     mavlink_camera_feedback_t feedback;
 
     mavlink_msg_camera_feedback_decode(&message, &feedback);
@@ -816,6 +820,8 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
     mavlink_camera_image_captured_t feedback;
 
     mavlink_msg_camera_image_captured_decode(&message, &feedback);
+
+    _cameraImageCapturedMessageAvailable = true;
 
     QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lon / qPow(10.0, 7.0), feedback.alt);
     qCDebug(VehicleLog) << "_handleCameraFeedback coord:index" << imageCoordinate << feedback.image_index << feedback.capture_result;
@@ -1609,6 +1615,7 @@ void Vehicle::_rallyPointManagerError(int errorCode, const QString& errorMsg)
 
 void Vehicle::_clearCameraTriggerPoints()
 {
+    _cameraImageCapturedMessageAvailable = false;
     _cameraTriggerPoints->clearAndDeleteContents();
 }
 
