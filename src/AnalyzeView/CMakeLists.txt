@@ -33,7 +33,6 @@ qt_add_qml_module(AnalyzeViewModule
         MAVLinkInspector/MAVLinkMessageButton.qml
         MAVLinkInspector/MAVLinkInspectorPage.qml
         LogViewer/LogViewerPage.qml
-        LogViewer/LoggingSetupPage.qml
         OnboardLogs/OnboardLogPage.qml
         OnboardLogsFtp/OnboardLogFtpPage.qml
         Vibration/VibrationPage.qml

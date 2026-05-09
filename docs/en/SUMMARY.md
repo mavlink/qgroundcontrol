@@ -46,6 +46,7 @@
       - [ArduCopter Tuning](qgc-user-guide/setup_view/tuning_arducopter.md)
       - [ArduSub Tuning](qgc-user-guide/setup_view/tuning_ardusub.md)
     - [Tuning (PX4)](qgc-user-guide/setup_view/tuning_px4.md)
+  - [Logging (ArduPilot)](qgc-user-guide/setup_view/logging_ardupilot.md)
   - [Camera](qgc-user-guide/setup_view/camera.md)
   - [Joystick](qgc-user-guide/setup_view/joystick.md)
   - [Parameters](qgc-user-guide/setup_view/parameters.md)
