@@ -397,71 +397,114 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
 
     QTextStream stream(&file);
 
+    // Accept tab/whitespace/comma separators so we handle QGC's tab-separated
+    // export, Mission Planner whitespace-aligned dumps, and simple `name,value`
+    // CSVs from ArduPilot tooling.
+    static const QRegularExpression rxSeparator(QStringLiteral("[\\s,]+"));
+
     int firstComponentId = -1;
     while (!stream.atEnd()) {
-        QString line = stream.readLine();
-        if (!line.startsWith("#")) {
-            QStringList wpParams = line.split("\t");
-            if (wpParams.size() == 5) {
-                int         vehicleId       = wpParams.at(0).toInt();
-                int         componentId     = wpParams.at(1).toInt();
-                QString     paramName       = wpParams.at(2);
-                QString     fileValueStr    = wpParams.at(3);
-                int         mavParamType    = wpParams.at(4).toInt();
-                QString     vehicleValueStr;
-                QString     units;
-                QVariant    fileValueVar    = fileValueStr;
-                bool        noVehicleValue   = false;
-                bool        readOnly         = false;
+        const QString line = stream.readLine().trimmed();
+        if (line.isEmpty() || line.startsWith("#")) {
+            continue;
+        }
 
-                if (_vehicle->id() != vehicleId) {
-                    _diffOtherVehicle = true;
-                }
-                if (firstComponentId == -1) {
-                    firstComponentId = componentId;
-                } else if (firstComponentId != componentId) {
-                    _diffMultipleComponents = true;
-                }
+        const QStringList tokens = line.split(rxSeparator, Qt::SkipEmptyParts);
 
-                if (_parameterMgr->parameterExists(componentId, paramName)) {
-                    Fact*           vehicleFact         = _parameterMgr->getParameter(componentId, paramName);
-                    FactMetaData*   vehicleFactMetaData = vehicleFact->metaData();
-                    Fact*           fileFact            = new Fact(vehicleFact->componentId(), vehicleFact->name(), vehicleFact->type(), this);
+        int         vehicleId    = _vehicle->id();
+        int         componentId  = MAV_COMP_ID_AUTOPILOT1;
+        QString     paramName;
+        QString     fileValueStr;
+        int         mavParamType = -1;
 
-                    // Turn off reboot messaging before setting value in fileFact
-                    bool vehicleRebootRequired = vehicleFactMetaData->vehicleRebootRequired();
-                    vehicleFactMetaData->setVehicleRebootRequired(false);
-                    fileFact->setMetaData(vehicleFact->metaData());
-                    fileFact->setRawValue(fileValueStr);
-                    vehicleFactMetaData->setVehicleRebootRequired(vehicleRebootRequired);
-                    readOnly = vehicleFact->readOnly();
+        // Supported per-line formats:
+        //   5 tokens: vehicleId componentId name value mavType
+        //   2 tokens: name value  (component/type resolved against the vehicle)
+        if (tokens.size() == 5) {
+            vehicleId    = tokens.at(0).toInt();
+            componentId  = tokens.at(1).toInt();
+            paramName    = tokens.at(2);
+            fileValueStr = tokens.at(3);
+            mavParamType = tokens.at(4).toInt();
+        } else if (tokens.size() == 2) {
+            paramName    = tokens.at(0);
+            fileValueStr = tokens.at(1);
+        } else {
+            continue;
+        }
 
-                    if (vehicleFact->rawValue() == fileFact->rawValue()) {
-                        continue;
-                    }
-                    fileValueStr    = fileFact->enumOrValueString();
-                    fileValueVar    = fileFact->rawValue();
-                    vehicleValueStr = vehicleFact->enumOrValueString();
-                    units           = vehicleFact->cookedUnits();
-                } else {
-                    noVehicleValue = true;
-                }
+        QString     vehicleValueStr;
+        QString     units;
+        QVariant    fileValueVar    = fileValueStr;
+        bool        noVehicleValue  = false;
+        bool        readOnly        = false;
 
-                if (!readOnly) {
-                    ParameterEditorDiff* paramDiff = new ParameterEditorDiff(this);
+        if (_vehicle->id() != vehicleId) {
+            _diffOtherVehicle = true;
+        }
 
-                    paramDiff->componentId      = componentId;
-                    paramDiff->name             = paramName;
-                    paramDiff->valueType        = ParameterManager::mavTypeToFactType(static_cast<MAV_PARAM_TYPE>(mavParamType));
-                    paramDiff->fileValue        = fileValueStr;
-                    paramDiff->fileValueVar     = fileValueVar;
-                    paramDiff->vehicleValue     = vehicleValueStr;
-                    paramDiff->noVehicleValue   = noVehicleValue;
-                    paramDiff->units            = units;
-
-                    _diffList.append(paramDiff);
+        // 2-column files don't carry a component id; locate the parameter on
+        // whichever component owns it before recording multi-component state.
+        if (tokens.size() == 2 && !_parameterMgr->parameterExists(componentId, paramName)) {
+            for (int compId : _parameterMgr->componentIds()) {
+                if (_parameterMgr->parameterExists(compId, paramName)) {
+                    componentId = compId;
+                    break;
                 }
             }
+        }
+
+        if (firstComponentId == -1) {
+            firstComponentId = componentId;
+        } else if (firstComponentId != componentId) {
+            _diffMultipleComponents = true;
+        }
+
+        if (_parameterMgr->parameterExists(componentId, paramName)) {
+            Fact*           vehicleFact         = _parameterMgr->getParameter(componentId, paramName);
+            FactMetaData*   vehicleFactMetaData = vehicleFact->metaData();
+            Fact*           fileFact            = new Fact(vehicleFact->componentId(), vehicleFact->name(), vehicleFact->type(), this);
+
+            if (mavParamType < 0) {
+                mavParamType = ParameterManager::factTypeToMavType(vehicleFact->type());
+            }
+
+            // Turn off reboot messaging before setting value in fileFact
+            bool vehicleRebootRequired = vehicleFactMetaData->vehicleRebootRequired();
+            vehicleFactMetaData->setVehicleRebootRequired(false);
+            fileFact->setMetaData(vehicleFact->metaData());
+            fileFact->setRawValue(fileValueStr);
+            vehicleFactMetaData->setVehicleRebootRequired(vehicleRebootRequired);
+            readOnly = vehicleFact->readOnly();
+
+            if (vehicleFact->rawValue() == fileFact->rawValue()) {
+                continue;
+            }
+            fileValueStr    = fileFact->enumOrValueString();
+            fileValueVar    = fileFact->rawValue();
+            vehicleValueStr = vehicleFact->enumOrValueString();
+            units           = vehicleFact->cookedUnits();
+        } else {
+            noVehicleValue = true;
+            if (mavParamType < 0) {
+                // No vehicle parameter and no type column: can't infer what to send.
+                continue;
+            }
+        }
+
+        if (!readOnly) {
+            ParameterEditorDiff* paramDiff = new ParameterEditorDiff(this);
+
+            paramDiff->componentId      = componentId;
+            paramDiff->name             = paramName;
+            paramDiff->valueType        = ParameterManager::mavTypeToFactType(static_cast<MAV_PARAM_TYPE>(mavParamType));
+            paramDiff->fileValue        = fileValueStr;
+            paramDiff->fileValueVar     = fileValueVar;
+            paramDiff->vehicleValue     = vehicleValueStr;
+            paramDiff->noVehicleValue   = noVehicleValue;
+            paramDiff->units            = units;
+
+            _diffList.append(paramDiff);
         }
     }
 
