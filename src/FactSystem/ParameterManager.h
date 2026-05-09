@@ -55,11 +55,14 @@ public:
     /// vehicle is not PX4, cacheCheckOnlyFailed() is emitted.
     void tryHashCheckCacheLoad();
 
-    /// Request a refresh on the specific parameter
-    void refreshParameter(int componentId, const QString &paramName);
+    /// Request a refresh on the specific parameter.
+    ///     @param notifyFailure: when true (default) a user-visible popup is shown if the
+    ///         vehicle never responds. Pass false for batch/background refreshes that would
+    ///         otherwise spawn one modal per parameter and freeze the UI.
+    void refreshParameter(int componentId, const QString &paramName, bool notifyFailure = true);
 
     /// Request a refresh on all parameters that begin with the specified prefix
-    void refreshParametersPrefix(int componentId, const QString &namePrefix);
+    void refreshParametersPrefix(int componentId, const QString &namePrefix, bool notifyFailure = true);
 
     void resetAllParametersToDefaults();
     void resetAllToVehicleConfiguration();

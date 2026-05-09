@@ -381,13 +381,16 @@ void APMSensorsComponentController::_refreshParams()
         QStringLiteral("INS_ACCOFFS_X"), QStringLiteral("INS_ACCOFFS_Y"), QStringLiteral("INS_ACCOFFS_Z")
     };
 
+    // After a calibration finishes (success or cancel) the FC can be slow to answer the
+    // bulk refresh, so suppress the per-parameter "read failed" popups — otherwise dozens
+    // of modals stack up and freeze the UI (e.g. cancelling compass cal on ArduPilot).
     for (const QString &paramName : fastRefreshList) {
-        _vehicle->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, paramName);
+        _vehicle->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, paramName, false /* notifyFailure */);
     }
 
     // Now ask for all to refresh
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_"));
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, QStringLiteral("INS_"));
+    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_"), false /* notifyFailure */);
+    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, QStringLiteral("INS_"), false /* notifyFailure */);
 }
 
 void APMSensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)

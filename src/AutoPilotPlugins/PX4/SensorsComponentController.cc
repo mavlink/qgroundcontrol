@@ -434,15 +434,17 @@ void SensorsComponentController::_refreshParams(void)
 {
     QStringList fastRefreshList;
 
-    // We ask for a refresh on these first so that the rotation combo show up as fast as possible
+    // We ask for a refresh on these first so that the rotation combo show up as fast as possible.
+    // Suppress per-parameter failure popups: a slow/unresponsive FC otherwise stacks dozens of
+    // modals during the bulk refresh and freezes the UI.
     fastRefreshList << "CAL_MAG0_ID" << "CAL_MAG1_ID" << "CAL_MAG2_ID" << "CAL_MAG0_ROT" << "CAL_MAG1_ROT" << "CAL_MAG2_ROT";
     for (const QString &paramName : std::as_const(fastRefreshList)) {
-        _vehicle->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, paramName);
+        _vehicle->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, paramName, false /* notifyFailure */);
     }
 
     // Now ask for all to refresh
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, "CAL_");
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, "SENS_");
+    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, "CAL_", false /* notifyFailure */);
+    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, "SENS_", false /* notifyFailure */);
 }
 
 void SensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)

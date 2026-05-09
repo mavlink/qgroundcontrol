@@ -704,23 +704,23 @@ int ParameterManager::_actualComponentId(int componentId) const
     return componentId;
 }
 
-void ParameterManager::refreshParameter(int componentId, const QString &paramName)
+void ParameterManager::refreshParameter(int componentId, const QString &paramName, bool notifyFailure)
 {
     componentId = _actualComponentId(componentId);
 
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParameter - name:" << paramName << ")";
 
-    _mavlinkParamRequestRead(componentId, paramName, -1, true /* notifyFailure */);
+    _mavlinkParamRequestRead(componentId, paramName, -1, notifyFailure);
 }
 
-void ParameterManager::refreshParametersPrefix(int componentId, const QString &namePrefix)
+void ParameterManager::refreshParametersPrefix(int componentId, const QString &namePrefix, bool notifyFailure)
 {
     componentId = _actualComponentId(componentId);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParametersPrefix - name:" << namePrefix << ")";
 
     for (const QString &paramName: _mapCompId2FactMap[componentId].keys()) {
         if (paramName.startsWith(namePrefix)) {
-            refreshParameter(componentId, paramName);
+            refreshParameter(componentId, paramName, notifyFailure);
         }
     }
 }
