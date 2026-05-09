@@ -56,17 +56,17 @@ def load_config(config_file: Path) -> dict[str, Any]:
         return json.load(f)
 
 
-# Keys to export as environment variables (top-level simple values)
+# Keys to export as environment variables; dotted keys walk nested objects
 EXPORT_KEYS = [
     "qt_version",
     "qt_minimum_version",
     "qt_modules",
-    "gstreamer_minimum_version",
-    "gstreamer_default_version",
-    "gstreamer_macos_version",
-    "gstreamer_ios_version",
-    "gstreamer_android_version",
-    "gstreamer_windows_version",
+    "gstreamer.version.minimum",
+    "gstreamer.version.default",
+    "gstreamer.version.macos",
+    "gstreamer.version.ios",
+    "gstreamer.version.android",
+    "gstreamer.version.windows",
     "xcode_version",
     "xcode_ios_version",
     "ndk_version",
@@ -82,15 +82,32 @@ EXPORT_KEYS = [
 ]
 
 
+_GSTREAMER_VERSION_ENV_NAMES = {
+    "gstreamer.version.default": "GSTREAMER_DEFAULT_VERSION",
+    "gstreamer.version.minimum": "GSTREAMER_MINIMUM_VERSION",
+    "gstreamer.version.android": "GSTREAMER_ANDROID_VERSION",
+    "gstreamer.version.ios":     "GSTREAMER_IOS_VERSION",
+    "gstreamer.version.macos":   "GSTREAMER_MACOS_VERSION",
+    "gstreamer.version.windows": "GSTREAMER_WINDOWS_VERSION",
+}
+
+
 def get_export_values(config: dict[str, Any]) -> dict[str, str]:
     """Extract values to export, converting to uppercase env var names."""
     result = {}
     for key in EXPORT_KEYS:
-        if key in config:
-            env_name = key.upper()
-            result[env_name] = str(config[key])
-            if key == "gstreamer_default_version":
-                result["GSTREAMER_VERSION"] = str(config[key])
+        value: Any = config
+        for part in key.split("."):
+            if isinstance(value, dict) and part in value:
+                value = value[part]
+            else:
+                value = None
+                break
+        if value is not None:
+            env_name = _GSTREAMER_VERSION_ENV_NAMES.get(key, key.replace(".", "_").upper())
+            result[env_name] = str(value)
+            if key == "gstreamer.version.default":
+                result["GSTREAMER_VERSION"] = str(value)
     return result
 
 
@@ -184,11 +201,17 @@ def main() -> int:
     # Handle --get for single value
     if args.get:
         key = args.get.lower()  # Normalize to lowercase
-        if key == "gstreamer_version" and "gstreamer_default_version" in config:
-            print(config["gstreamer_default_version"])
-            return 0
-        if key in config:
-            print(config[key])
+        if key == "gstreamer_version":
+            key = "gstreamer.version.default"
+        value: Any = config
+        for part in key.split("."):
+            if isinstance(value, dict) and part in value:
+                value = value[part]
+            else:
+                value = None
+                break
+        if value is not None:
+            print(value)
             return 0
         else:
             print(f"Error: Key '{key}' not found in config", file=sys.stderr)

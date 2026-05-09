@@ -40,11 +40,15 @@ enum
 
 static GParamSpec *properties[PROP_LAST];
 
+// video/x-raw(ANY) accepts any caps features (memory:DMABuf, memory:GLMemory, memory:D3D11Memory,
+// memory:AHardwareBuffer, etc.) plus the system catch-all. The bin sits after the decoder, so
+// upstream is always raw video — narrowing from CAPS_ANY lets GStreamer reject non-raw links at
+// link time instead of during PAUSED negotiation, without losing any zero-copy memory feature.
 static GstStaticPadTemplate sink_factory = GST_STATIC_PAD_TEMPLATE(
     "sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS_ANY);
+    GST_STATIC_CAPS("video/x-raw(ANY)"));
 
 #define gst_qgc_video_sink_bin_parent_class parent_class
 G_DEFINE_TYPE(GstQgcVideoSinkBin, gst_qgc_video_sink_bin, GST_TYPE_BIN);
@@ -317,10 +321,23 @@ gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin *self)
         capsStr += kFormats;
 #else
 #  if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#    if GST_CHECK_VERSION(1, 24, 0)
+        // QGC_GST_OFFER_DMA_DRM_LINEAR=1 prepends explicit LINEAR-modifier DMA_DRM caps so
+        // modifier-aware drivers (AMD VAAPI, ANV Vulkan, Mali) can negotiate guaranteed-LINEAR
+        // DMABuf without the legacy implicit-modifier guess. Restricting drm-format to
+        // modifier=0x0 prevents iHD from picking tiled+CCS (the original reason DMA_DRM caps
+        // were excluded). Drivers that can't produce LINEAR cleanly fail this link and fall
+        // through to the legacy memory:DMABuf and system caps below.
+        const char *drmEnv = g_getenv("QGC_GST_OFFER_DMA_DRM_LINEAR");
+        if (drmEnv && drmEnv[0] && drmEnv[0] != '0') {
+            capsStr += "video/x-raw(memory:DMABuf), format=DMA_DRM, drm-format="
+                       "{ NV12:0x0, NV21:0x0, I420:0x0, P010_10LE:0x0, BGRA:0x0, RGBA:0x0 }; ";
+        }
+#    endif
         // Legacy memory:DMABuf,format=NV12 only — covers v4l2h264dec / Mali / V3D LINEAR
-        // DMABuf paths. DMA_DRM caps deliberately omitted: gst-va on Intel iHD negotiates
-        // tiled+CCS layouts that crash both GPU and CPU paths. The system catch-all below
-        // routes va to GstVaMemory whose map() detiles via libva.
+        // DMABuf paths. DMA_DRM caps deliberately omitted by default: gst-va on Intel iHD
+        // negotiates tiled+CCS layouts that crash both GPU and CPU paths. The system catch-all
+        // below routes va to GstVaMemory whose map() detiles via libva.
         capsStr += "video/x-raw(memory:DMABuf), format=";
         capsStr += kFormats;
         capsStr += "; ";

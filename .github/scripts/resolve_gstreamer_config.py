@@ -15,10 +15,10 @@ from common.build_config import get_build_config_value
 from common.gh_actions import write_github_output
 
 VERSION_KEYS = {
-    "macos": "gstreamer_macos_version",
-    "windows": "gstreamer_windows_version",
-    "android": "gstreamer_android_version",
-    "ios": "gstreamer_ios_version",
+    "macos": "gstreamer.version.macos",
+    "windows": "gstreamer.version.windows",
+    "android": "gstreamer.version.android",
+    "ios": "gstreamer.version.ios",
 }
 
 
@@ -26,7 +26,7 @@ def resolve_version(platform_name: str, requested_version: str) -> str:
     """Return explicit version override or platform-specific config version."""
     if requested_version:
         return requested_version
-    version_key = VERSION_KEYS.get(platform_name, "gstreamer_default_version")
+    version_key = VERSION_KEYS.get(platform_name, "gstreamer.version.default")
     return get_build_config_value(version_key)
 
 

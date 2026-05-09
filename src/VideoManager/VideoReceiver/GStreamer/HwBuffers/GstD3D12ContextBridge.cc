@@ -5,11 +5,11 @@
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
 
 #include "QGCLoggingCategory.h"
+#include "QGCRhiCapture.h"
 
 #include <QtCore/QMutexLocker>
 
-#include <QtGui/rhi/qrhi.h>
-#include <QtGui/rhi/qrhi_platform.h>
+#include <rhi/qrhi.h>  // QRhi::Implementation enum only; native handles come from the snapshot
 
 #include <gst/d3d12/gstd3d12.h>
 
@@ -25,22 +25,14 @@ bool primeLocked()
 {
     if (s_state.primed) return true;
 
-    QRhi *rhi = GstD3DContextBridgeCommon::checkRhiBackend(
-        s_state, GstD3D12BridgeLog(), int(QRhi::D3D12), "D3D12");
-    if (!rhi) return false;
-
-    auto *handles = static_cast<const QRhiD3D12NativeHandles *>(rhi->nativeHandles());
-    if (!handles || !handles->dev) {
-        qCWarning(GstD3D12BridgeLog) << "QRhiD3D12NativeHandles missing ID3D12Device*";
+    if (!GstD3DContextBridgeCommon::checkSnapshotBackend(
+            s_state, GstD3D12BridgeLog(), int(QRhi::D3D12), "D3D12")) {
         return false;
     }
 
-    // Compose the adapter LUID from the two halves Qt exposes, then let gst-d3d12
-    // create (or retrieve from cache) a GstD3D12Device on that adapter.
-    // HighPart is qint32 (signed, mirrors LARGE_INTEGER::HighPart=LONG); sign-extend
-    // before the shift so negative HighPart matches LARGE_INTEGER::QuadPart bit-for-bit.
-    const gint64 luid = (static_cast<gint64>(handles->adapterLuidHigh) << 32)
-                        | static_cast<gint64>(handles->adapterLuidLow);
+    // Snapshot is composed on the render thread (sceneGraphInitialized) where the LUID halves
+    // are sign-extended into a single 64-bit value matching LARGE_INTEGER::QuadPart.
+    const gint64 luid = QGCRhiCapture::deviceSnapshot().adapterLuid.load(std::memory_order_acquire);
 
     s_device = gst_d3d12_device_new_for_adapter_luid(luid);
     if (!s_device) {
@@ -50,7 +42,7 @@ bool primeLocked()
     s_state.primed = true;
     qCInfo(GstD3D12BridgeLog) << "D3D12 bridge primed: shared device =" << s_device
                               << "luid=" << luid;
-    GstD3DContextBridgeCommon::logAdapterMatch(rhi, luid, s_device,
+    GstD3DContextBridgeCommon::logAdapterMatch(luid, s_device,
                                                 GstD3D12BridgeLog(), "D3D12");
     return true;
 }

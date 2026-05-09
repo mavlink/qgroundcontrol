@@ -11,8 +11,6 @@
 
 #include <gst/gst.h>
 
-class QRhi;
-
 /// Common bookkeeping shared by GstD3D11ContextBridge and GstD3D12ContextBridge.
 ///
 /// The two bridges differ in how they construct the shared GstD3DXDevice
@@ -32,14 +30,15 @@ struct BridgeState {
     std::atomic<bool> loggedFirstHandoff{false};
 };
 
-/// Returns the live QRhi if (a) it exists and (b) it matches @p expectedBackend.
-/// @p backendName is purely for logging ("D3D11" / "D3D12"). Returns nullptr if
-/// QRhi isn't ready yet (caller should retry on next NEED_CONTEXT) or if the
-/// backend is wrong (caller logs once via @p state.warnedWrongBackend).
-QRhi *checkRhiBackend(BridgeState &state,
-                      const QLoggingCategory &cat,
-                      int expectedBackend,
-                      const char *backendName);
+/// True if QGCRhiCapture's atomic snapshot has been populated and matches @p expectedBackend.
+/// Reads atomic fields only — safe from the bus-sync thread. @p backendName is purely for
+/// logging ("D3D11" / "D3D12"). Returns false if the snapshot isn't ready yet (caller should
+/// retry on next NEED_CONTEXT) or if the backend is wrong (caller logs once via
+/// @p state.warnedWrongBackend).
+bool checkSnapshotBackend(BridgeState &state,
+                          const QLoggingCategory &cat,
+                          int expectedBackend,
+                          const char *backendName);
 
 /// Inspects @p message; if it's a NEED_CONTEXT for @p expectedContextType,
 /// returns the source element. Otherwise returns nullptr (caller passes the
@@ -60,7 +59,7 @@ gint64 readAdapterLuid(gpointer device);
 
 /// One-shot LUID compare at prime time. Mismatch = gst wrapped a different physical adapter
 /// than QRhi; zero-copy will corrupt at sample time.
-void logAdapterMatch(QRhi *rhi, gint64 expectedLuid, gpointer gstDevice,
+void logAdapterMatch(gint64 expectedLuid, gpointer gstDevice,
                      const QLoggingCategory &cat, const char *apiName);
 
 } // namespace GstD3DContextBridgeCommon

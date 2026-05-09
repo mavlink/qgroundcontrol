@@ -13,15 +13,12 @@ static constexpr bool kGstEnabled = true;
 #else
 static constexpr bool kGstEnabled = false;
 #endif
-#ifndef QGC_DISABLE_UVC
 #include "UVCReceiver.h"
-#endif
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;
-#if defined(QGC_GST_STREAMING) || defined(QGC_QT_STREAMING)
     videoSourceList.append(videoSourceRTSP);
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
@@ -31,18 +28,15 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceParrotDiscovery);
     videoSourceList.append(videoSourceYuneecMantisG);
 
-    #ifdef QGC_HERELINK_AIRUNIT_VIDEO
-        videoSourceList.append(videoSourceHerelinkAirUnit);
-    #else
-        videoSourceList.append(videoSourceHerelinkHotspot);
-    #endif
+#ifdef QGC_HERELINK_AIRUNIT_VIDEO
+    videoSourceList.append(videoSourceHerelinkAirUnit);
+#else
+    videoSourceList.append(videoSourceHerelinkHotspot);
 #endif
-#ifndef QGC_DISABLE_UVC
     QStringList uvcDevices = UVCReceiver::getDeviceNameList();
     for (const QString& device : uvcDevices) {
         videoSourceList.append(device);
     }
-#endif
     if (videoSourceList.count() == 0) {
         _noVideo = true;
         videoSourceList.append(videoSourceNoVideo);
@@ -265,12 +259,10 @@ bool VideoSettings::streamConfigured(void)
         qCDebug(VideoSettingsLog) << "Stream configured for Herelink Hotspot";
         return true;
     }
-#ifndef QGC_DISABLE_UVC
     if (UVCReceiver::enabled() && UVCReceiver::deviceExists(vSource)) {
         qCDebug(VideoSettingsLog) << "Stream configured for UVC";
         return true;
     }
-#endif
     return false;
 }
 

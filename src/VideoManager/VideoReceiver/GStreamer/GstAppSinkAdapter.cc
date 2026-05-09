@@ -884,6 +884,20 @@ GstFlowReturn GstAppSinkAdapter::onNewSample(GstAppSink *appsink, gpointer userD
 #endif
         }
 
+        // Capture human-readable diagnostics for the negotiated* Q_PROPERTYs (QML stats overlay).
+        // gst_caps_features_to_string() returns nullptr for missing features; treat as system memory.
+        const QString formatName = QString::fromUtf8(
+            gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&parsedInfo)));
+        QString featuresString;
+        if (GstCapsFeatures *features = gst_caps_get_features(caps, 0)) {
+            if (gchar *fs = gst_caps_features_to_string(features)) {
+                featuresString = QString::fromUtf8(fs);
+                g_free(fs);
+            }
+        }
+        if (featuresString.isEmpty()) featuresString = QStringLiteral("memory:SystemMemory");
+        const QSize resolution(GST_VIDEO_INFO_WIDTH(&parsedInfo), GST_VIDEO_INFO_HEIGHT(&parsedInfo));
+
         gst_caps_ref(caps);
         {
             QMutexLocker locker(&self->_stateMutex);
@@ -895,7 +909,12 @@ GstFlowReturn GstAppSinkAdapter::onNewSample(GstAppSink *appsink, gpointer userD
             self->_cachedFormat = parsedFormat;
             self->_cachedPixelFormat = pixelFormat;
             self->_cachedAllocatorName = allocName;
+            self->_cachedFormatName = formatName;
+            self->_cachedFeaturesString = featuresString;
+            self->_cachedResolution = resolution;
         }
+        // Auto-queued to the receiver's thread (signal-emit from streaming thread).
+        emit self->negotiationChanged();
 
         localInfo = parsedInfo;
         localFormat = parsedFormat;
@@ -905,13 +924,18 @@ GstFlowReturn GstAppSinkAdapter::onNewSample(GstAppSink *appsink, gpointer userD
         if (GstMemory *mem0 = gst_buffer_peek_memory(buffer, 0)) {
             const QString memType = QString::fromUtf8(
                 (mem0->allocator) ? mem0->allocator->mem_type : "(none)");
-            QMutexLocker locker(&self->_stateMutex);
-            if (memType != self->_cachedAllocatorName) {
-                qCInfo(GstAppSinkAdapterLog).noquote()
-                    << "Allocator changed mid-stream:" << self->_cachedAllocatorName
-                    << "→" << memType;
-                self->_cachedAllocatorName = memType;
+            bool changed = false;
+            {
+                QMutexLocker locker(&self->_stateMutex);
+                if (memType != self->_cachedAllocatorName) {
+                    qCInfo(GstAppSinkAdapterLog).noquote()
+                        << "Allocator changed mid-stream:" << self->_cachedAllocatorName
+                        << "→" << memType;
+                    self->_cachedAllocatorName = memType;
+                    changed = true;
+                }
             }
+            if (changed) emit self->negotiationChanged();
         }
     }
 
@@ -1286,6 +1310,30 @@ quint64 GstAppSinkAdapter::appsinkDroppedFrames() const noexcept
     // delivered counters lag by at most the in-flight callback. Underflow is therefore possible
     // for a single-buffer race window — clamp to zero so QML never sees a wraparound value.
     return in > out ? in - out : 0;
+}
+
+QString GstAppSinkAdapter::negotiatedAllocator() const
+{
+    QMutexLocker locker(&_stateMutex);
+    return _cachedAllocatorName;
+}
+
+QString GstAppSinkAdapter::negotiatedFormat() const
+{
+    QMutexLocker locker(&_stateMutex);
+    return _cachedFormatName;
+}
+
+QString GstAppSinkAdapter::negotiatedFeatures() const
+{
+    QMutexLocker locker(&_stateMutex);
+    return _cachedFeaturesString;
+}
+
+QSize GstAppSinkAdapter::negotiatedResolution() const
+{
+    QMutexLocker locker(&_stateMutex);
+    return _cachedResolution;
 }
 
 GstPadProbeReturn GstAppSinkAdapter::appsinkBufferProbe(GstPad *, GstPadProbeInfo *info, gpointer userData)

@@ -93,15 +93,6 @@ QtMultimediaReceiver::~QtMultimediaReceiver()
     qCDebug(QtMultimediaReceiverLog) << Q_FUNC_INFO << this;
 }
 
-bool QtMultimediaReceiver::enabled()
-{
-#ifdef QGC_QT_STREAMING
-    return true;
-#else
-    return false;
-#endif
-}
-
 void *QtMultimediaReceiver::createVideoSink(QQuickItem *widget, QObject *parent)
 {
     Q_UNUSED(parent);

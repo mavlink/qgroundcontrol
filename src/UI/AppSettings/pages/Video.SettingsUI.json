@@ -5,8 +5,7 @@
         "videoSource": "QGroundControl.settingsManager.videoSettings.videoSource.rawValue",
         "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
         "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource",
-        "isStreamSource": "QGroundControl.videoManager.isStreamSource",
-        "isGST": "QGroundControl.videoManager.gstreamerEnabled"
+        "isStreamSource": "QGroundControl.videoManager.isStreamSource"
     },
     "groups": [
         {
@@ -55,11 +54,11 @@
                 },
                 {
                     "setting": "videoSettings.lowLatencyMode",
-                    "showWhen": "!autoStreamConfig && isStreamSource && isGST"
+                    "showWhen": "!autoStreamConfig && isStreamSource && QGroundControl.settingsManager.videoSettings.lowLatencyMode.userVisible"
                 },
                 {
                     "setting": "videoSettings.forceCpuVideoPath",
-                    "showWhen": "isGST && QGroundControl.settingsManager.videoSettings.forceCpuVideoPath.userVisible"
+                    "showWhen": "QGroundControl.settingsManager.videoSettings.forceCpuVideoPath.userVisible"
                 },
                 {
                     "setting": "videoSettings.forceVideoDecoder"

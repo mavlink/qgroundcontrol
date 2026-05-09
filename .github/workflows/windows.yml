@@ -138,11 +138,9 @@ jobs:
           build-type: ${{ matrix.build_type }}
           stable: ${{ env.IS_STABLE_BUILD }}
           extra-args: >-
-            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && 'ON' || 'OFF' }}
             ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.qt-host.outputs.qt_root_dir) || '' }}
 
       - name: Add GStreamer to PATH
-        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
         shell: pwsh
         run: |
           $cacheFile = "${{ runner.temp }}\build\CMakeCache.txt"

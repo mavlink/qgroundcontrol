@@ -39,9 +39,7 @@
 #include "SettingsManager.h"
 #include "MavlinkSettings.h"
 #include "AppSettings.h"
-#include "UDPLink.h"
 #include "Vehicle.h"
-#include "VehicleComponent.h"
 #include "VideoManager.h"
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -291,8 +289,8 @@ bool QGCApplication::_initVideo()
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
     VideoManager *videoManager = VideoManager::instance();
-    videoManager->startGStreamerInit();
-    const bool initSucceeded = !_simpleBootTest || videoManager->waitForGStreamerInit();
+    videoManager->startVideoBackendInit();
+    const bool initSucceeded = !_simpleBootTest || videoManager->waitForVideoBackendReady();
     _videoManagerInitialized = true;
     return initSucceeded;
 }

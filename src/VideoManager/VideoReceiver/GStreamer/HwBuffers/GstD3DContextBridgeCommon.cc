@@ -4,34 +4,32 @@
 
 #include "QGCRhiCapture.h"
 
-#include <rhi/qrhi.h>
 #include <glib-object.h>
 
 namespace GstD3DContextBridgeCommon {
 
-// Caller must hold state.mutex — warnedWrongBackend is a plain bool, not atomic.
-// Also called from the bus-sync thread; backend()/backendName() are read-only enum/string
-// accessors on QRhi and don't touch GPU state, but QRhi is documented single-thread so this
-// is "safe by inspection" rather than by API contract — keep the calls limited to these.
-QRhi *checkRhiBackend(BridgeState &state,
-                      const QLoggingCategory &cat,
-                      int expectedBackend,
-                      const char *backendName)
+// Reads from QGCRhiCapture::deviceSnapshot() — atomic loads, safe from the bus-sync thread.
+// The snapshot is populated on the render thread when sceneGraphInitialized fires, so the
+// previous "safe by inspection" cross-thread QRhi access is gone.
+bool checkSnapshotBackend(BridgeState &state,
+                          const QLoggingCategory &cat,
+                          int expectedBackend,
+                          const char *backendName)
 {
-    QRhi *rhi = QGCRhiCapture::cachedRhi();
-    if (!rhi) {
-        qCDebug(cat) << "QRhi not yet available; will retry on next NEED_CONTEXT";
-        return nullptr;
+    const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
+    if (backend < 0) {
+        qCDebug(cat) << "QRhi snapshot not yet populated; will retry on next NEED_CONTEXT";
+        return false;
     }
-    if (static_cast<int>(rhi->backend()) != expectedBackend) {
+    if (backend != expectedBackend) {
         if (!state.warnedWrongBackend) {
-            qCInfo(cat) << "QRhi backend is" << rhi->backendName()
+            qCInfo(cat) << "QRhi backend tag is" << backend
                         << "(not" << backendName << "); bridge inactive";
             state.warnedWrongBackend = true;
         }
-        return nullptr;
+        return false;
     }
-    return rhi;
+    return true;
 }
 
 GstElement *matchNeedContext(GstMessage *message, const char *expectedContextType)
@@ -70,7 +68,7 @@ gint64 readAdapterLuid(gpointer device)
     return luid;
 }
 
-void logAdapterMatch(QRhi *rhi, gint64 expectedLuid, gpointer gstDevice,
+void logAdapterMatch(gint64 expectedLuid, gpointer gstDevice,
                      const QLoggingCategory &cat, const char *apiName)
 {
     const gint64 actualLuid = readAdapterLuid(gstDevice);
@@ -81,13 +79,9 @@ void logAdapterMatch(QRhi *rhi, gint64 expectedLuid, gpointer gstDevice,
             << "(zero-copy will appear corrupt; check NEED_CONTEXT race)";
         return;
     }
-    if (!rhi) return;
-    const QRhiDriverInfo info = rhi->driverInfo();
     qCInfo(cat).noquote()
-        << apiName << "bridge adapter:" << info.deviceName
-        << QString::asprintf("(vendorId=0x%04X deviceId=0x%04X type=%d luid=%lld)",
-                             unsigned(info.vendorId), unsigned(info.deviceId),
-                             int(info.deviceType), static_cast<long long>(expectedLuid));
+        << apiName << "bridge adapter LUID="
+        << QString::asprintf("0x%llx", static_cast<long long>(expectedLuid));
 }
 
 } // namespace GstD3DContextBridgeCommon

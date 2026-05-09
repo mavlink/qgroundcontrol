@@ -1,12 +1,13 @@
 #include "GStreamer.h"
-#include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
-#include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 #include "GstVideoReceiver.h"
 #include "SettingsManager.h"
 #include "VideoSettings.h"
 #include "Fact.h"
+#if defined(QGC_HAS_ANY_GPU_PATH)
+#include "HwBuffers/QGCRhiCapture.h"
+#endif
 
 #include "GstAppSinkAdapter.h"
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
@@ -15,99 +16,47 @@
 
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
+#include <QtGui/QWindow>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QMutex>
-#include <QtCore/QSettings>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
+#include <QtMultimedia/QVideoSink>
+#include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickItem>
+#include <QtQuick/QQuickWindow>
 
 #include <atomic>
+#include <memory>
 
 #ifdef Q_OS_LINUX
 #include <dlfcn.h>
 #endif
 
+#ifdef Q_OS_ANDROID
+#include <QtCore/QCoreApplication>
+#include <QtCore/QJniEnvironment>
+#include <QtCore/QJniObject>
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+#endif
+
 #include <gst/gst.h>
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
-QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamer.GStreamer.DecoderRanks")
-
-#ifdef Q_OS_IOS
-extern "C" {
-void gst_ios_pre_init(void);
-void gst_ios_post_init(void);
-}
-#endif
 
 G_BEGIN_DECLS
 #ifdef QGC_GST_STATIC_BUILD
-GST_PLUGIN_STATIC_DECLARE(app);
-GST_PLUGIN_STATIC_DECLARE(coreelements);
-GST_PLUGIN_STATIC_DECLARE(isomp4);
-GST_PLUGIN_STATIC_DECLARE(libav);
-GST_PLUGIN_STATIC_DECLARE(matroska);
-GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
-GST_PLUGIN_STATIC_DECLARE(openh264);
-GST_PLUGIN_STATIC_DECLARE(playback);
-GST_PLUGIN_STATIC_DECLARE(rtp);
-GST_PLUGIN_STATIC_DECLARE(rtpmanager);
-GST_PLUGIN_STATIC_DECLARE(rtsp);
-GST_PLUGIN_STATIC_DECLARE(sdpelem);
-GST_PLUGIN_STATIC_DECLARE(tcp);
-GST_PLUGIN_STATIC_DECLARE(typefindfunctions);
-GST_PLUGIN_STATIC_DECLARE(udp);
-// gst 1.22 merged videoconvert+videoscale into videoconvertscale, but custom/embedded
-// gst builds may keep the legacy split. FindQGCGStreamer.cmake exports GST_PLUGIN_<name>_FOUND
-// so we declare against what the linker actually has, not a version assumption.
-#ifdef GST_PLUGIN_videoconvertscale_FOUND
-GST_PLUGIN_STATIC_DECLARE(videoconvertscale);
-#endif
-#ifdef GST_PLUGIN_videoconvert_FOUND
-GST_PLUGIN_STATIC_DECLARE(videoconvert);
-#endif
-#ifdef GST_PLUGIN_videoscale_FOUND
-GST_PLUGIN_STATIC_DECLARE(videoscale);
-#endif
-GST_PLUGIN_STATIC_DECLARE(videoparsersbad);
-GST_PLUGIN_STATIC_DECLARE(vpx);
-
-#ifdef GST_PLUGIN_androidmedia_FOUND
-GST_PLUGIN_STATIC_DECLARE(androidmedia);
-#endif
-#ifdef GST_PLUGIN_applemedia_FOUND
-GST_PLUGIN_STATIC_DECLARE(applemedia);
-#endif
-#ifdef GST_PLUGIN_d3d_FOUND
-GST_PLUGIN_STATIC_DECLARE(d3d);
-#endif
-#ifdef GST_PLUGIN_d3d11_FOUND
-GST_PLUGIN_STATIC_DECLARE(d3d11);
-#endif
-#ifdef GST_PLUGIN_d3d12_FOUND
-GST_PLUGIN_STATIC_DECLARE(d3d12);
-#endif
-#ifdef GST_PLUGIN_dav1d_FOUND
-GST_PLUGIN_STATIC_DECLARE(dav1d);
-#endif
-#ifdef GST_PLUGIN_dxva_FOUND
-GST_PLUGIN_STATIC_DECLARE(dxva);
-#endif
-#ifdef GST_PLUGIN_nvcodec_FOUND
-GST_PLUGIN_STATIC_DECLARE(nvcodec);
-#endif
-#ifdef GST_PLUGIN_qsv_FOUND
-GST_PLUGIN_STATIC_DECLARE(qsv);
-#endif
-#ifdef GST_PLUGIN_va_FOUND
-GST_PLUGIN_STATIC_DECLARE(va);
-#endif
-#ifdef GST_PLUGIN_vulkan_FOUND
-GST_PLUGIN_STATIC_DECLARE(vulkan);
-#endif
+// Provided by gst_static_plugins.c, generated from gst_static_plugins.c.in
+// (Android.cmake / IOS.cmake on mobile; src/.../GStreamer/CMakeLists.txt on
+// desktop static). Registers every plugin in GSTREAMER_PLUGINS that resolved
+// to a target at configure time, and on mobile also loads gioopenssl + the
+// bundled CA bundle. Mirrors upstream gstreamer_android-1.0.c.
+extern void gst_init_static_plugins(void);
 #endif
 
 GST_PLUGIN_STATIC_DECLARE(qgc);
@@ -125,68 +74,8 @@ static QString s_envPathsError;
 void _registerPlugins()
 {
 #ifdef QGC_GST_STATIC_BUILD
-    GST_PLUGIN_STATIC_REGISTER(app);
-    GST_PLUGIN_STATIC_REGISTER(coreelements);
-    GST_PLUGIN_STATIC_REGISTER(isomp4);
-    GST_PLUGIN_STATIC_REGISTER(libav);
-    GST_PLUGIN_STATIC_REGISTER(matroska);
-    GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
-    GST_PLUGIN_STATIC_REGISTER(openh264);
-    GST_PLUGIN_STATIC_REGISTER(playback);
-    GST_PLUGIN_STATIC_REGISTER(rtp);
-    GST_PLUGIN_STATIC_REGISTER(rtpmanager);
-    GST_PLUGIN_STATIC_REGISTER(rtsp);
-    GST_PLUGIN_STATIC_REGISTER(sdpelem);
-    GST_PLUGIN_STATIC_REGISTER(tcp);
-    GST_PLUGIN_STATIC_REGISTER(typefindfunctions);
-    GST_PLUGIN_STATIC_REGISTER(udp);
-#ifdef GST_PLUGIN_videoconvertscale_FOUND
-    GST_PLUGIN_STATIC_REGISTER(videoconvertscale);
+    gst_init_static_plugins();
 #endif
-#ifdef GST_PLUGIN_videoconvert_FOUND
-    GST_PLUGIN_STATIC_REGISTER(videoconvert);
-#endif
-#ifdef GST_PLUGIN_videoscale_FOUND
-    GST_PLUGIN_STATIC_REGISTER(videoscale);
-#endif
-    GST_PLUGIN_STATIC_REGISTER(videoparsersbad);
-    GST_PLUGIN_STATIC_REGISTER(vpx);
-
-#ifdef GST_PLUGIN_androidmedia_FOUND
-    GST_PLUGIN_STATIC_REGISTER(androidmedia);
-#endif
-#ifdef GST_PLUGIN_applemedia_FOUND
-    GST_PLUGIN_STATIC_REGISTER(applemedia);
-#endif
-#ifdef GST_PLUGIN_d3d_FOUND
-    GST_PLUGIN_STATIC_REGISTER(d3d);
-#endif
-#ifdef GST_PLUGIN_d3d11_FOUND
-    GST_PLUGIN_STATIC_REGISTER(d3d11);
-#endif
-#ifdef GST_PLUGIN_d3d12_FOUND
-    GST_PLUGIN_STATIC_REGISTER(d3d12);
-#endif
-#ifdef GST_PLUGIN_dav1d_FOUND
-    GST_PLUGIN_STATIC_REGISTER(dav1d);
-#endif
-#ifdef GST_PLUGIN_dxva_FOUND
-    GST_PLUGIN_STATIC_REGISTER(dxva);
-#endif
-#ifdef GST_PLUGIN_nvcodec_FOUND
-    GST_PLUGIN_STATIC_REGISTER(nvcodec);
-#endif
-#ifdef GST_PLUGIN_qsv_FOUND
-    GST_PLUGIN_STATIC_REGISTER(qsv);
-#endif
-#ifdef GST_PLUGIN_va_FOUND
-    GST_PLUGIN_STATIC_REGISTER(va);
-#endif
-#ifdef GST_PLUGIN_vulkan_FOUND
-    GST_PLUGIN_STATIC_REGISTER(vulkan);
-#endif
-#endif
-
     GST_PLUGIN_STATIC_REGISTER(qgc);
 }
 
@@ -208,6 +97,66 @@ void _resetEnvValidation()
     qputenv(name, value.toUtf8());
     qCDebug(GStreamerLog) << "  " << name << "=" << value;
 }
+
+#ifdef Q_OS_ANDROID
+// Extract an APK asset to destPath; skip rewrite when sizes already match
+// (asset bytes are immutable per APK build, so size match ⇒ same content).
+bool _extractApkAsset(const char *assetPath, const QString &destPath)
+{
+    QJniObject ctx = QNativeInterface::QAndroidApplication::context();
+    if (!ctx.isValid()) {
+        qCWarning(GStreamerLog) << "Cannot resolve Android Context for asset extraction";
+        return false;
+    }
+
+    QJniObject jAssetMgr = ctx.callObjectMethod("getAssets", "()Landroid/content/res/AssetManager;");
+    if (!jAssetMgr.isValid()) {
+        qCWarning(GStreamerLog) << "Context.getAssets() returned null";
+        return false;
+    }
+
+    QJniEnvironment env;
+    AAssetManager *am = AAssetManager_fromJava(env.jniEnv(), jAssetMgr.object());
+    if (!am) {
+        qCWarning(GStreamerLog) << "AAssetManager_fromJava failed";
+        return false;
+    }
+
+    AAsset *asset = AAssetManager_open(am, assetPath, AASSET_MODE_BUFFER);
+    if (!asset) {
+        qCDebug(GStreamerLog) << "APK asset not present:" << assetPath;
+        return false;
+    }
+    const off_t assetLen = AAsset_getLength(asset);
+
+    const QFileInfo destInfo(destPath);
+    if (destInfo.exists() && destInfo.size() == assetLen) {
+        AAsset_close(asset);
+        return true;
+    }
+
+    QDir().mkpath(destInfo.absolutePath());
+    QFile out(destPath);
+    if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        qCWarning(GStreamerLog) << "Cannot open" << destPath << "for write:" << out.errorString();
+        AAsset_close(asset);
+        return false;
+    }
+
+    const void *buf = AAsset_getBuffer(asset);
+    bool ok = false;
+    if (buf && assetLen > 0) {
+        ok = (out.write(static_cast<const char *>(buf), assetLen) == assetLen);
+    }
+    out.close();
+    AAsset_close(asset);
+    if (!ok) {
+        qCWarning(GStreamerLog) << "Failed writing asset" << assetPath << "to" << destPath;
+        QFile::remove(destPath);
+    }
+    return ok;
+}
+#endif
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
 
@@ -496,6 +445,20 @@ void _setGstEnvVars()
     }
 #endif
 
+    // libgioopenssl's compiled-in CA path is the Cerbero build prefix; once the
+    // SDK is relocated into the .app bundle, point OpenSSL at the bundled file.
+    // Framework path: GStreamer.framework/Versions/1.0/etc/...
+    // Non-framework path: Contents/Resources/etc/... (installed by gstreamer_install_macos_sdk).
+    if (qEnvironmentVariableIsEmpty("SSL_CERT_FILE")) {
+        const QString caBundle = _firstExistingPath({
+            _cleanJoin(rootDir, "etc/ssl/certs/ca-certificates.crt"),
+            _cleanJoin(appDir, "../Resources/etc/ssl/certs/ca-certificates.crt"),
+        });
+        if (!caBundle.isEmpty()) {
+            _setGstEnv("SSL_CERT_FILE", caBundle);
+        }
+    }
+
 #elif defined(Q_OS_WIN)
     const QString libDir = _cleanJoin(appDir, "../lib");
     const QString pluginDir = _cleanJoin(libDir, "gstreamer-1.0");
@@ -516,12 +479,66 @@ void _setGstEnvVars()
         if (!curPath.split(';').contains(binDir)) {
             qputenv("PATH", binDir + ";" + curPath);
         }
+
+        // gioopenssl.dll's compiled-in CA path is relative to the Cerbero SDK
+        // root and breaks once QGC.exe is detached from it; point OpenSSL at
+        // the bundled CA file (installed by gstreamer_install_windows_sdk).
+        if (qEnvironmentVariableIsEmpty("SSL_CERT_FILE")) {
+            const QString caBundle = _cleanJoin(appDir, "../etc/ssl/certs/ca-certificates.crt");
+            if (QFileInfo::exists(caBundle)) {
+                qputenv("SSL_CERT_FILE", QFile::encodeName(QDir::toNativeSeparators(caBundle)));
+            }
+        }
+    }
+
+#elif defined(Q_OS_IOS)
+    // Static plugins — no GST_PLUGIN_PATH. Bundle resources are read-only at
+    // applicationDirPath; writable scratch lives in the app sandbox. CA bundle
+    // is dropped into the .app via MACOSX_PACKAGE_LOCATION (see CMakeLists.txt)
+    // and consumed by qgc_load_gio_modules_and_ca() once _registerPlugins()
+    // calls gst_init_static_plugins(). Mirrors upstream Tutorial 5 gst_ios_init.m.
+    {
+        const QString resources = appDir;
+        const QString docs      = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        const QString cache     = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+        const QString tmp       = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+
+        if (!tmp.isEmpty()) {
+            _setGstEnv("TMP", tmp);
+            _setGstEnv("TEMP", tmp);
+            _setGstEnv("TMPDIR", tmp);
+        }
+        if (!cache.isEmpty()) {
+            _setGstEnv("XDG_CACHE_HOME", cache);
+            _setGstEnv("XDG_CONFIG_HOME", cache);
+        }
+        // Upstream Tutorial 5 binds XDG_RUNTIME_DIR to the (read-only) bundle;
+        // libGStreamer never writes there on iOS, so this is benign.
+        if (!resources.isEmpty()) {
+            _setGstEnv("XDG_RUNTIME_DIR", resources);
+            _setGstEnv("XDG_DATA_DIRS",   resources);
+            _setGstEnv("XDG_CONFIG_DIRS", resources);
+            _setGstEnv("XDG_DATA_HOME",   resources);
+        }
+        if (!docs.isEmpty()) {
+            _setGstEnv("HOME", docs);
+        }
+
+        if (!resources.isEmpty() && qEnvironmentVariableIsEmpty("CA_CERTIFICATES")) {
+            const QString caBundle = _cleanJoin(resources, "ssl/certs/ca-certificates.crt");
+            if (QFileInfo::exists(caBundle)) {
+                _setGstEnv("CA_CERTIFICATES", caBundle);
+            }
+        }
     }
 
 #elif defined(Q_OS_ANDROID)
-    // Android uses static plugins — no GST_PLUGIN_PATH needed. But fontconfig
-    // and TLS need env vars pointing to the app's files/cache dirs where
-    // GStreamer.java copied fonts and certificates.
+    // Static plugins — no GST_PLUGIN_PATH. APK assets are read-only, so the CA
+    // bundle is extracted to filesDir on first launch; qgc_load_gio_modules_and_ca()
+    // (run when _registerPlugins() calls gst_init_static_plugins()) installs it
+    // as the default GTlsBackend database — same wiring upstream
+    // gstreamer_android-1.0.c uses. Java's GStreamer.init() also calls gst_init,
+    // which we run from C++ instead, so we do the asset copy here.
     {
         const QString filesDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
         const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
@@ -529,7 +546,11 @@ void _setGstEnvVars()
         if (!filesDir.isEmpty()) {
             _setGstEnv("HOME", filesDir);
             _setGstEnv("FONTCONFIG_PATH", _cleanJoin(filesDir, "fontconfig"));
-            _setGstEnv("CA_CERTIFICATES", _cleanJoin(filesDir, "ssl/certs/ca-certificates.crt"));
+            const QString caBundle = _cleanJoin(filesDir, "ssl/certs/ca-certificates.crt");
+            if (_extractApkAsset("ssl/certs/ca-certificates.crt", caBundle)
+                && qEnvironmentVariableIsEmpty("CA_CERTIFICATES")) {
+                _setGstEnv("CA_CERTIFICATES", caBundle);
+            }
             _setGstEnv("XDG_DATA_DIRS", filesDir);
             _setGstEnv("XDG_CONFIG_DIRS", filesDir);
             _setGstEnv("XDG_CONFIG_HOME", filesDir);
@@ -655,83 +676,7 @@ bool _verifyPlugins()
     return result;
 }
 
-void _logDecoderRanks()
-{
-    GList *factories = gst_element_factory_list_get_elements(
-        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
-        GST_RANK_NONE);
-
-    if (!factories) {
-        qCDebug(GStreamerDecoderRanksLog) << "No video decoder factories found";
-        return;
-    }
-
-    factories = g_list_sort(factories, [](gconstpointer lhs, gconstpointer rhs) -> gint {
-        const guint lhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(lhs));
-        const guint rhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(rhs));
-        if (lhsRank != rhsRank) {
-            return (lhsRank > rhsRank) ? -1 : 1;
-        }
-        return g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(lhs)),
-                         gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(rhs)));
-    });
-
-    qCDebug(GStreamerDecoderRanksLog) << "Video decoder ranks:";
-    for (GList *node = factories; node != nullptr; node = node->next) {
-        GstElementFactory *factory = GST_ELEMENT_FACTORY(node->data);
-        GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
-        const gchar *featureName = gst_plugin_feature_get_name(feature);
-        const guint rank = gst_plugin_feature_get_rank(feature);
-        const gchar *klass = gst_element_factory_get_klass(factory);
-        const bool isHw = GStreamer::isHardwareDecoderFactory(factory);
-
-        GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
-        const gchar *pluginName = plugin ? gst_plugin_get_name(plugin) : "?";
-
-        qCDebug(GStreamerDecoderRanksLog).noquote()
-            << QStringLiteral("  [%1] %2/%3 rank=%4 (%5)")
-                   .arg(isHw ? QStringLiteral("HW") : QStringLiteral("SW"),
-                        QString::fromUtf8(pluginName),
-                        QString::fromUtf8(featureName))
-                   .arg(rank)
-                   .arg(QString::fromUtf8(klass));
-
-        if (plugin) {
-            gst_object_unref(plugin);
-        }
-    }
-
-    gst_plugin_feature_list_free(factories);
-}
-
-void _configureDebugLogging()
-{
-    gst_debug_remove_log_function(gst_debug_log_default);
-    gst_debug_add_log_function(GStreamer::qtGstLog, nullptr, nullptr);
-
-    if (!qEnvironmentVariableIsEmpty("GST_DEBUG")) {
-        return;
-    }
-
-    QSettings settings;
-    if (settings.contains(AppSettings::gstDebugLevelName)) {
-        const int level = qBound(0, settings.value(AppSettings::gstDebugLevelName).toInt(),
-                                 static_cast<int>(GST_LEVEL_MEMDUMP));
-        gst_debug_set_default_threshold(static_cast<GstDebugLevel>(level));
-    }
-}
-
 } // anonymous namespace
-
-void setDebugLevel(int level)
-{
-    if (!gst_is_initialized()) {
-        return;
-    }
-    const int clamped = qBound(0, level, static_cast<int>(GST_LEVEL_MEMDUMP));
-    gst_debug_set_default_threshold(static_cast<GstDebugLevel>(clamped));
-    qCDebug(GStreamerLog) << "GStreamer debug threshold set to" << clamped;
-}
 
 void prepareEnvironment()
 {
@@ -766,20 +711,12 @@ bool _initGstRuntime()
     char **argvPtr = argv.data();
     GError *error = nullptr;
 
-#ifdef Q_OS_IOS
-    gst_ios_pre_init();
-#endif
-
     if (!gst_init_check(&argc, &argvPtr, &error)) {
         qCCritical(GStreamerLog) << "Failed to initialize GStreamer:"
                                   << (error ? error->message : "unknown error");
         g_clear_error(&error);
         return false;
     }
-
-#ifdef Q_OS_IOS
-    gst_ios_post_init();
-#endif
 
     return true;
 }
@@ -793,7 +730,7 @@ bool completeInit()
         return false;
     }
 
-    _configureDebugLogging();
+    GStreamer::configureDebugLogging();
 
     guint major, minor, micro, nano;
     gst_version(&major, &minor, &micro, &nano);
@@ -809,12 +746,27 @@ bool completeInit()
 
     _registerPlugins();
 
+#ifdef Q_OS_IOS
+    // Prefer applemedia-backed sources over generic filesrc/giosrc on iOS.
+    // Must run after _registerPlugins() — the registry is empty before then.
+    if (GstRegistry *reg = gst_registry_get()) {
+        for (const auto &[name, rank] : std::initializer_list<std::pair<const char *, int>>{
+                 {"filesrc", GST_RANK_SECONDARY},
+                 {"giosrc",  GST_RANK_SECONDARY - 1}}) {
+            if (GstPluginFeature *plugin = gst_registry_lookup_feature(reg, name)) {
+                gst_plugin_feature_set_rank(plugin, rank);
+                gst_object_unref(plugin);
+            }
+        }
+    }
+#endif
+
     if (!_verifyPlugins()) {
         qCCritical(GStreamerLog) << "Plugin verification failed";
         return false;
     }
 
-    _logDecoderRanks();
+    GStreamer::logDecoderRanks();
 
     GstElementFactory *appsinkFactory = gst_element_factory_find("appsink");
     if (!appsinkFactory) {
@@ -823,6 +775,20 @@ bool completeInit()
     }
     qCDebug(GStreamerLog) << "appsink factory available (videoconvert → appsink → QVideoSink)";
     gst_object_unref(appsinkFactory);
+
+    // qgc plugin is registered above but plugin_init can fail silently — verify the element
+    // factory is exposed, otherwise every createVideoSink() call later returns nullptr with a
+    // misleading "factory_make failed". Common cause on iOS LTO / Android R8: GST_ELEMENT_REGISTER
+    // symbols stripped because nothing in C++ references them directly.
+    GstElementFactory *qgcSinkFactory = gst_element_factory_find("qgcvideosinkbin");
+    if (!qgcSinkFactory) {
+        qCCritical(GStreamerLog)
+            << "qgcvideosinkbin factory not found — qgc plugin registered but element exposure failed."
+            << "Likely cause: link-time symbol stripping (iOS LTO / Android R8) removed the"
+            << "GST_ELEMENT_REGISTER side effect. Add gstqgcelements.cc to a -force_load / keep rule.";
+        return false;
+    }
+    gst_object_unref(qgcSinkFactory);
 
     if (GStreamer::didExternalPluginLoaderFail()) {
         qCCritical(GStreamerLog)
@@ -976,6 +942,66 @@ void setAppSinkAdaptersActive(QObject *adapterParent, bool active)
     for (GstAppSinkAdapter *a : adapters) {
         a->setActive(active);
     }
+}
+
+void attachAppSink(QObject *receiver, void *sink, QQuickItem *widget)
+{
+    if (!sink || !widget || !receiver) {
+        return;
+    }
+
+    auto *videoOutput = qobject_cast<QQuickVideoOutput *>(widget);
+    if (!videoOutput) {
+        qCWarning(GStreamerLog) << "Widget is not a VideoOutput, cannot connect appsink";
+        return;
+    }
+
+    QVideoSink *videoSink = videoOutput->videoSink();
+    if (!setupAppSinkAdapter(sink, videoSink, receiver)) {
+        qCWarning(GStreamerLog) << "setupAppSinkAdapter failed";
+    }
+
+    // Visibility gate: drop frames at the appsink while the host window is hidden
+    // or minimized. Decoder still runs (cheap with HW accel) but render-thread and
+    // copy work disappears.
+    auto applyVisibility = [receiver](QWindow *win) {
+        if (!win) return;
+        const QWindow::Visibility v = win->visibility();
+        const bool active = (v != QWindow::Hidden && v != QWindow::Minimized);
+        setAppSinkAdaptersActive(receiver, active);
+    };
+    // Track the previous connection so windowChanged can drop it before wiring the
+    // new window — without this, an old hidden window keeps gating the live receiver.
+    auto prevConn = std::make_shared<QMetaObject::Connection>();
+    auto wireWindow = [receiver, applyVisibility, prevConn](QQuickWindow *qw) {
+        if (*prevConn) {
+            QObject::disconnect(*prevConn);
+            *prevConn = QMetaObject::Connection{};
+        }
+        if (!qw) return;
+        applyVisibility(qw);
+        *prevConn = QObject::connect(qw, &QWindow::visibilityChanged, receiver,
+            [applyVisibility, qw](QWindow::Visibility) { applyVisibility(qw); });
+    };
+    if (QQuickWindow *qw = videoOutput->window()) wireWindow(qw);
+    QObject::connect(videoOutput, &QQuickVideoOutput::windowChanged, receiver, wireWindow);
+}
+
+void bindDebugLevelFact(Fact *fact, QObject *context)
+{
+    if (!fact) return;
+    QObject::connect(fact, &Fact::rawValueChanged, context, [](const QVariant &value) {
+        setDebugLevel(value.toInt());
+    });
+}
+
+void onMainWindowReady(QQuickWindow *window)
+{
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    QGCRhiCapture::connectWindow(window);
+#else
+    Q_UNUSED(window);
+#endif
 }
 
 } // namespace GStreamer

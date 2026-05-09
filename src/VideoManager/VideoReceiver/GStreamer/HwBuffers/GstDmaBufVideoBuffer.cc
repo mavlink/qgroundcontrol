@@ -298,7 +298,13 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::mapTextures(QRhi &rhi, QVideoFrame
 
     // dmabuf mmap as a sync barrier — Intel iHD legacy LINEAR exporter has no implicit fence
     // and vaSyncSurface() is a no-op there. Tiled paths carry fences and aren't safe to mmap.
-    if (drmModifier == 0 /* DRM_FORMAT_MOD_LINEAR / unknown */) {
+    // QGC_GST_DMABUF_NO_MMAP_FENCE=1 skips this stall on Mesa ≥23 / libva ≥2.20 / iHD ≥24.2,
+    // where DRM PRIME 2 fence FDs make the mmap redundant. Default keeps the safety mmap
+    // because skipping it on legacy drivers shows torn frames; flip only after verifying the
+    // local stack carries fences (test: no green/torn frames after sustained playback).
+    static const bool s_skipMmapFence = !qEnvironmentVariableIsEmpty("QGC_GST_DMABUF_NO_MMAP_FENCE")
+                                        && qgetenv("QGC_GST_DMABUF_NO_MMAP_FENCE") != "0";
+    if (drmModifier == 0 /* DRM_FORMAT_MOD_LINEAR / unknown */ && !s_skipMmapFence) {
         if (GstBuffer *syncBuf = gst_sample_get_buffer(_sample)) {
             GstVideoFrame syncFrame;
             if (gst_video_frame_map(&syncFrame, &_videoInfo, syncBuf, GST_MAP_READ)) {

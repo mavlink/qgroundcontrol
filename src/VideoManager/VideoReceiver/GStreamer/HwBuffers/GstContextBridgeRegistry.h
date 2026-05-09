@@ -15,13 +15,26 @@ namespace GstContextBridgeRegistry {
 using BridgeHandler = GstBusSyncReply(*)(GstMessage *);
 using ResetCallback = void(*)();
 
+/// Opaque slot handle returned by register*; pass to unregister* to clear that slot.
+/// kInvalidHandle indicates the registry was full or the handler was already registered.
+using RegistrationHandle = int;
+constexpr RegistrationHandle kInvalidHandle = -1;
+
 /// Register a bridge handler. Called from static initializers before any pipeline starts.
-void registerBridgeHandler(BridgeHandler handler);
+/// Duplicate registrations of the same handler pointer are ignored (returns the existing slot).
+RegistrationHandle registerBridgeHandler(BridgeHandler handler);
 
 /// Register a per-bridge reset callback that drops cached devices/contexts.
 /// Invoked on QQuickWindow scene-graph teardown to keep wrapped GPU handles
-/// from outliving the underlying QRhi.
-void registerResetCallback(ResetCallback callback);
+/// from outliving the underlying QRhi. Duplicates dedup as with registerBridgeHandler.
+RegistrationHandle registerResetCallback(ResetCallback callback);
+
+/// Clear a previously-registered bridge handler slot. Safe no-op on kInvalidHandle.
+/// Slot is reusable by subsequent registerBridgeHandler calls.
+void unregisterBridgeHandler(RegistrationHandle handle);
+
+/// Clear a previously-registered reset callback slot. Safe no-op on kInvalidHandle.
+void unregisterResetCallback(RegistrationHandle handle);
 
 /// Dispatch message to all registered handlers; returns GST_BUS_DROP on first consumer.
 GstBusSyncReply dispatchBridges(GstMessage *message);

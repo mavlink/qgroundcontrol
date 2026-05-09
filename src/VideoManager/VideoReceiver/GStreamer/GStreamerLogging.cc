@@ -1,7 +1,10 @@
 #include "GStreamer.h"
+#include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "AppSettings.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QSettings>
 #include <QtCore/QString>
 
 #include <atomic>
@@ -9,6 +12,7 @@
 
 QGC_LOGGING_CATEGORY(GStreamerLoggingLog, "Video.GStreamer.GStreamerLogging")
 QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamer.GStreamerAPI")
+QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamer.DecoderRanks")
 
 namespace {
 
@@ -126,6 +130,82 @@ void qtGstLog(GstDebugCategory *category,
     default:
         break;
     }
+}
+
+void configureDebugLogging()
+{
+    gst_debug_remove_log_function(gst_debug_log_default);
+    gst_debug_add_log_function(GStreamer::qtGstLog, nullptr, nullptr);
+
+    if (!qEnvironmentVariableIsEmpty("GST_DEBUG")) {
+        return;
+    }
+
+    QSettings settings;
+    if (settings.contains(AppSettings::gstDebugLevelName)) {
+        const int level = qBound(0, settings.value(AppSettings::gstDebugLevelName).toInt(),
+                                 static_cast<int>(GST_LEVEL_MEMDUMP));
+        gst_debug_set_default_threshold(static_cast<GstDebugLevel>(level));
+    }
+}
+
+void setDebugLevel(int level)
+{
+    if (!gst_is_initialized()) {
+        return;
+    }
+    const int clamped = qBound(0, level, static_cast<int>(GST_LEVEL_MEMDUMP));
+    gst_debug_set_default_threshold(static_cast<GstDebugLevel>(clamped));
+    qCDebug(GStreamerLoggingLog) << "GStreamer debug threshold set to" << clamped;
+}
+
+void logDecoderRanks()
+{
+    GList *factories = gst_element_factory_list_get_elements(
+        static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
+        GST_RANK_NONE);
+
+    if (!factories) {
+        qCDebug(GStreamerDecoderRanksLog) << "No video decoder factories found";
+        return;
+    }
+
+    factories = g_list_sort(factories, [](gconstpointer lhs, gconstpointer rhs) -> gint {
+        const guint lhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(lhs));
+        const guint rhsRank = gst_plugin_feature_get_rank(GST_PLUGIN_FEATURE(rhs));
+        if (lhsRank != rhsRank) {
+            return (lhsRank > rhsRank) ? -1 : 1;
+        }
+        return g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(lhs)),
+                         gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(rhs)));
+    });
+
+    qCDebug(GStreamerDecoderRanksLog) << "Video decoder ranks:";
+    for (GList *node = factories; node != nullptr; node = node->next) {
+        GstElementFactory *factory = GST_ELEMENT_FACTORY(node->data);
+        GstPluginFeature *feature = GST_PLUGIN_FEATURE(factory);
+        const gchar *featureName = gst_plugin_feature_get_name(feature);
+        const guint rank = gst_plugin_feature_get_rank(feature);
+        const gchar *klass = gst_element_factory_get_klass(factory);
+        const bool isHw = GStreamer::isHardwareDecoderFactory(factory);
+
+        GstPlugin *plugin = gst_plugin_feature_get_plugin(feature);
+        const gchar *pluginName = plugin ? gst_plugin_get_name(plugin) : "?";
+
+        qCDebug(GStreamerDecoderRanksLog).noquote()
+            << QStringLiteral("  [%1] %2/%3 rank=%4 (%5)")
+                   .arg(isHw ? QStringLiteral("HW") : QStringLiteral("SW"),
+                        QString::fromUtf8(pluginName),
+                        QString::fromUtf8(featureName))
+                   .arg(rank)
+                   .arg(QString::fromUtf8(klass));
+
+        if (plugin) {
+            gst_object_unref(plugin);
+        }
+    }
+
+    gst_plugin_feature_list_free(factories);
 }
 
 } // namespace GStreamer

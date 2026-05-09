@@ -6,9 +6,9 @@ QGroundControl uses GStreamer for UDP RTP and RTSP video streaming in the Main F
 
 - **Enable/disable**: Set `QGC_ENABLE_GST_VIDEOSTREAMING` CMake option to `ON`/`OFF`
 - **Version & URLs**: Defined in [`.github/build-config.json`](../../../../.github/build-config.json), parsed by [`cmake/BuildConfig.cmake`](../../../../cmake/BuildConfig.cmake)
-- **SDK discovery & auto-download**: [`cmake/find-modules/FindQGCGStreamer.cmake`](../../../../cmake/find-modules/FindQGCGStreamer.cmake)
-- **Plugin allowlist**: `GSTREAMER_PLUGINS` in `FindQGCGStreamer.cmake` — controls both static linking (mobile) and dynamic install (desktop)
-- **Install helpers**: [`cmake/find-modules/GStreamerHelpers.cmake`](../../../../cmake/find-modules/GStreamerHelpers.cmake)
+- **SDK discovery & auto-download**: [`cmake/GStreamer/Orchestrator.cmake`](../../../../cmake/GStreamer/Orchestrator.cmake)
+- **Plugin allowlist**: `gstreamer.plugins` in [`.github/build-config.json`](../../../../.github/build-config.json) — controls both static linking (mobile) and dynamic install (desktop)
+- **Install helpers**: [`cmake/GStreamer/Helpers.cmake`](../../../../cmake/GStreamer/Helpers.cmake) (aggregator), with focused submodules in [`cmake/GStreamer/`](../../../../cmake/GStreamer/)
 
 ## Runtime Environment Setup
 
@@ -38,6 +38,16 @@ GStreamer SDKs are auto-downloaded during CMake configure. To use a local instal
 Auto-downloaded during CMake configure. No manual setup required.
 
 > **Windows users building for Android**: Enable Developer Mode (Settings > System > For developers) to support symbolic links during the build.
+
+### Caching downloaded SDKs
+
+Auto-downloaded SDK archives are cached to `${CPM_SOURCE_CACHE}/gstreamer-*` when `CPM_SOURCE_CACHE` is set, otherwise to `${CMAKE_BINARY_DIR}/_deps/gstreamer-*` (lost on `rm -rf build`). Set `CPM_SOURCE_CACHE` to a stable location (e.g. `~/.cache/CPM`) to avoid re-downloading the 200-700 MB archives on every clean build:
+
+```
+export CPM_SOURCE_CACHE=$HOME/.cache/CPM
+```
+
+Cached archives are checksum-verified against the upstream `.sha256` on every hit.
 
 ## Testing Pipelines
 

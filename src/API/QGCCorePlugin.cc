@@ -1,24 +1,20 @@
 #include "QGCCorePlugin.h"
 #include "AppSettings.h"
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
 #include "MavlinkSettings.h"
+#endif
 #include "FactMetaData.h"
 #include "QGCMAVLink.h"
-#ifdef QGC_GST_STREAMING
-#include "GStreamer.h"
-#endif
 #include "HorizontalFactValueGrid.h"
 #include "InstrumentValueData.h"
 #include "JoystickManager.h"
-#include "MAVLinkMessageType.h"
 #include "QGCLoggingCategory.h"
 #include "QGCOptions.h"
 #include "QmlComponentInfo.h"
 #include "QmlObjectListModel.h"
-#ifdef QGC_QT_STREAMING
-#include "QtMultimediaReceiver.h"
-#endif
 #include "SettingsManager.h"
 #include "VideoReceiver.h"
+#include "VideoReceiverFactory.h"
 #include "SurveyPlanCreator.h"
 #include "CorridorScanPlanCreator.h"
 #include "StructureScanPlanCreator.h"
@@ -292,36 +288,17 @@ void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
 {
-#ifdef QGC_GST_STREAMING
-    return GStreamer::createVideoReceiver(parent);
-#elif defined(QGC_QT_STREAMING)
-    return QtMultimediaReceiver::createVideoReceiver(parent);
-#else
-    Q_UNUSED(parent);
-    return nullptr;
-#endif
+    return VideoReceiverFactory::createReceiver(parent);
 }
 
 void *QGCCorePlugin::createVideoSink(QQuickItem *widget, QObject *parent)
 {
-#ifdef QGC_GST_STREAMING
-    return GStreamer::createVideoSink(widget, parent);
-#elif defined(QGC_QT_STREAMING)
-    return QtMultimediaReceiver::createVideoSink(widget, parent);
-#else
-    Q_UNUSED(widget); Q_UNUSED(parent);
-    return nullptr;
-#endif
+    return VideoReceiverFactory::createSink(widget, parent);
 }
+
 void QGCCorePlugin::releaseVideoSink(void *sink)
 {
-#ifdef QGC_GST_STREAMING
-    GStreamer::releaseVideoSink(sink);
-#elif defined(QGC_QT_STREAMING)
-    QtMultimediaReceiver::releaseVideoSink(sink);
-#else
-    Q_UNUSED(sink);
-#endif
+    VideoReceiverFactory::releaseSink(sink);
 }
 
 const QVariantList &QGCCorePlugin::toolBarIndicators()

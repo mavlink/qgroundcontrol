@@ -1,4 +1,5 @@
 #include "GStreamerHelpers.h"
+#include "GStreamer.h"
 #include "QGCLoggingCategory.h"
 
 #include <gst/rtsp/gstrtspurl.h>

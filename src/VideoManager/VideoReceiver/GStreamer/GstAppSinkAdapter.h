@@ -5,6 +5,8 @@
 #include <QtCore/QList>
 #include <QtCore/QMutex>
 #include <QtCore/QPointer>
+#include <QtCore/QSize>
+#include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
@@ -51,6 +53,13 @@ class GstAppSinkAdapter : public QObject
     /// Frames the appsink dropped because of `max-buffers=1, drop=true` queue overflow.
     /// Distinct from decoder-level QoS drops surfaced by GstVideoReceiver.
     Q_PROPERTY(quint64 appsinkDroppedFrames READ appsinkDroppedFrames NOTIFY frameCountsChanged)
+    /// Allocator-decision diagnostics, captured at each caps change. Emitted by negotiationChanged
+    /// for QML stats overlay so users can see whether the pipeline actually negotiated a zero-copy
+    /// memory feature (DMABuf / GLMemory / D3D11Memory / …) or fell back to system memory.
+    Q_PROPERTY(QString negotiatedAllocator READ negotiatedAllocator NOTIFY negotiationChanged)
+    Q_PROPERTY(QString negotiatedFormat    READ negotiatedFormat    NOTIFY negotiationChanged)
+    Q_PROPERTY(QString negotiatedFeatures  READ negotiatedFeatures  NOTIFY negotiationChanged)
+    Q_PROPERTY(QSize   negotiatedResolution READ negotiatedResolution NOTIFY negotiationChanged)
 
 public:
     explicit GstAppSinkAdapter(QObject *parent = nullptr);
@@ -89,8 +98,14 @@ public:
     quint64 appsinkInputFrames() const noexcept;
     quint64 appsinkDroppedFrames() const noexcept;
 
+    QString negotiatedAllocator() const;
+    QString negotiatedFormat() const;
+    QString negotiatedFeatures() const;
+    QSize negotiatedResolution() const;
+
 signals:
     void frameCountsChanged();
+    void negotiationChanged();
 
 private:
     static GstFlowReturn onNewSample(GstAppSink *appsink, gpointer userData);
@@ -170,6 +185,12 @@ private:
     QVideoFrameFormat _cachedFormat;
     int _cachedPixelFormat = 0; // QVideoFrameFormat::Format_Invalid sentinel
     QString _cachedAllocatorName; // negotiated allocator from first sample of each caps change
+    // Captured at each caps change for the negotiated* Q_PROPERTYs surfaced to QML stats overlay.
+    // GstVideoFormat string (e.g. "NV12"), caps-features string (e.g. "memory:DMABuf"), and the
+    // negotiated resolution. All read under _stateMutex.
+    QString _cachedFormatName;
+    QString _cachedFeaturesString;
+    QSize _cachedResolution;
 
     // Steady-clock ns checkpoint + matching total-frames snapshot for fps-over-window in _logFrameStats.
     // Both mutated from the streaming thread; readers (currently none) get a relaxed view.

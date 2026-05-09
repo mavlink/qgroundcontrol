@@ -1,6 +1,9 @@
 #pragma once
 
+class Fact;
+class QObject;
 class QQuickItem;
+class QQuickWindow;
 class QVideoSink;
 class VideoReceiver;
 
@@ -19,8 +22,6 @@ enum VideoDecoderOptions {
     ForceVideoDecoderHardware
 };
 
-void prepareEnvironment();
-bool initialize();
 bool completeInit();
 void setDebugLevel(int level);
 void *createVideoSink(QQuickItem *widget, QObject *parent = nullptr);
@@ -35,5 +36,24 @@ bool setupAppSinkAdapter(void *sinkBin, QVideoSink *videoSink, QObject *adapterP
 /// full decode→render path against a non-visible sink. Safe to call repeatedly; no-op
 /// when no adapters exist.
 void setAppSinkAdaptersActive(QObject *adapterParent, bool active);
+
+// Functions called from VideoManager. Stubbed when QGC_GST_STREAMING is off so
+// callers don't need to ifdef their call sites — gstreamerEnabled() at runtime
+// (constexpr) guards the behavior, the linker resolves the no-op stubs.
+#ifdef QGC_GST_STREAMING
+void prepareEnvironment();
+bool initialize();
+void setCodecPriorities(VideoDecoderOptions option);
+void attachAppSink(QObject *receiver, void *sink, QQuickItem *widget);
+void bindDebugLevelFact(Fact *fact, QObject *context);
+void onMainWindowReady(QQuickWindow *window);
+#else
+inline void prepareEnvironment() {}
+inline bool initialize() { return false; }
+inline void setCodecPriorities(VideoDecoderOptions) {}
+inline void attachAppSink(QObject *, void *, QQuickItem *) {}
+inline void bindDebugLevelFact(Fact *, QObject *) {}
+inline void onMainWindowReady(QQuickWindow *) {}
+#endif
 
 }

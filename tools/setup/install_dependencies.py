@@ -587,7 +587,7 @@ def install_macos(dry_run: bool = False) -> bool:
         return False
 
     # Install GStreamer
-    gst_version = get_config_value("gstreamer_macos_version")
+    gst_version = get_config_value("gstreamer.version.macos")
     macos_gst_root = Path("/Library/Frameworks/GStreamer.framework")
     if not gst_version:
         print("\nWarning: GSTREAMER_MACOS_VERSION not found in build-config.json")
@@ -758,7 +758,7 @@ def install_windows(
     print(f"Architecture: {arch}")
 
     if not skip_gstreamer:
-        version = gstreamer_version or get_config_value("gstreamer_windows_version")
+        version = gstreamer_version or get_config_value("gstreamer.version.windows")
         if not version:
             print(
                 "Error: GStreamer version not found. "

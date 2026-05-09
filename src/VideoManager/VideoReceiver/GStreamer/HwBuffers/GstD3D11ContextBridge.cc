@@ -5,13 +5,15 @@
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
 
 #include "QGCLoggingCategory.h"
+#include "QGCRhiCapture.h"
 
 #include <QtCore/QMutexLocker>
 
-#include <QtGui/rhi/qrhi.h>
-#include <QtGui/rhi/qrhi_platform.h>
+#include <rhi/qrhi.h>  // QRhi::Implementation enum only; no runtime use across threads
 
 #include <gst/d3d11/gstd3d11.h>
+
+#include <d3d11.h>
 
 QGC_LOGGING_CATEGORY(GstD3D11BridgeLog, "Video.GStreamer.HwBuffers.GstD3D11Bridge")
 
@@ -25,28 +27,30 @@ bool primeLocked()
 {
     if (s_state.primed) return true;
 
-    QRhi *rhi = GstD3DContextBridgeCommon::checkRhiBackend(
-        s_state, GstD3D11BridgeLog(), int(QRhi::D3D11), "D3D11");
-    if (!rhi) return false;
+    // Snapshot is populated on the render thread when sceneGraphInitialized fires; here we
+    // only do atomic loads — safe from the bus-sync thread.
+    if (!GstD3DContextBridgeCommon::checkSnapshotBackend(
+            s_state, GstD3D11BridgeLog(), int(QRhi::D3D11), "D3D11")) {
+        return false;
+    }
 
-    auto *handles = static_cast<const QRhiD3D11NativeHandles *>(rhi->nativeHandles());
-    if (!handles || !handles->dev) {
-        qCWarning(GstD3D11BridgeLog) << "QRhiD3D11NativeHandles missing ID3D11Device*";
+    auto *dev = static_cast<ID3D11Device *>(
+        QGCRhiCapture::deviceSnapshot().d3d11Device.load(std::memory_order_acquire));
+    if (!dev) {
+        qCWarning(GstD3D11BridgeLog) << "QRhi D3D11 snapshot missing ID3D11Device*";
         return false;
     }
 
     // gst_d3d11_device_new_wrapped (renamed from gst_d3d11_device_wrap in 1.28): shared device keeps textures sampleable by QRhi without keyed-mutex transfer.
-    s_device = gst_d3d11_device_new_wrapped(static_cast<ID3D11Device *>(handles->dev));
+    s_device = gst_d3d11_device_new_wrapped(dev);
     if (!s_device) {
         qCWarning(GstD3D11BridgeLog) << "gst_d3d11_device_new_wrapped failed";
         return false;
     }
     s_state.primed = true;
     qCInfo(GstD3D11BridgeLog) << "D3D11 bridge primed: shared device =" << s_device;
-    // Sign-extend qint32 HighPart so it matches LARGE_INTEGER::QuadPart bit-for-bit.
-    const gint64 expectedLuid = (static_cast<gint64>(handles->adapterLuidHigh) << 32)
-                                | (static_cast<gint64>(handles->adapterLuidLow) & 0xFFFFFFFFLL);
-    GstD3DContextBridgeCommon::logAdapterMatch(rhi, expectedLuid, s_device,
+    const gint64 expectedLuid = QGCRhiCapture::deviceSnapshot().adapterLuid.load(std::memory_order_acquire);
+    GstD3DContextBridgeCommon::logAdapterMatch(expectedLuid, s_device,
                                                 GstD3D11BridgeLog(), "D3D11");
     return true;
 }

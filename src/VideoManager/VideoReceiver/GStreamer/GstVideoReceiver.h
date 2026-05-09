@@ -79,7 +79,6 @@ private slots:
     void _handleEOS();
 
 private:
-    GstElement *_makeSource(const QString &input);
     GstElement *_makeDecoder();
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
 
@@ -101,14 +100,13 @@ private:
     bool _needDispatch();
     void _dispatchSignal(Task emitter);
 
+    /// Returns a strong ref to _pipeline (caller must gst_object_unref) or nullptr if torn down.
+    /// Bus sync-message callbacks run on the streaming thread concurrent with stop() on the
+    /// worker thread, so direct dereference of _pipeline races with gst_clear_object(&_pipeline).
+    GstElement *_acquirePipelineRef() const;
+
     static gboolean _onBusMessage(GstBus *bus, GstMessage *message, gpointer user_data);
     static void _onNewPad(GstElement *element, GstPad *pad, gpointer data);
-    static void _wrapWithGhostPad(GstElement *element, GstPad *pad, gpointer data);
-    static void _linkPad(GstElement *element, GstPad *pad, gpointer data);
-    static gboolean _padProbe(GstElement *element, GstPad *pad, gpointer user_data);
-#if !defined(QGC_GST_BUILD_VERSION_MAJOR) || (QGC_GST_BUILD_VERSION_MAJOR == 1 && QGC_GST_BUILD_VERSION_MINOR < 28)
-    static gboolean _filterParserCaps(GstElement *bin, GstPad *pad, GstElement *element, GstQuery *query, gpointer data);
-#endif
     static GstPadProbeReturn _teeProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _videoSinkProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn _eosProbe(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
@@ -118,6 +116,7 @@ private:
     GstElement *_decoderValve = nullptr;
     GstElement *_fileSink = nullptr;
     GstElement *_pipeline = nullptr;
+    mutable QMutex _pipelineMutex;  // serializes _pipeline mutation (worker) vs read in _onBusMessage (streaming thread)
     GstElement *_recorderValve = nullptr;
     GstElement *_source = nullptr;
     GstElement *_tee = nullptr;

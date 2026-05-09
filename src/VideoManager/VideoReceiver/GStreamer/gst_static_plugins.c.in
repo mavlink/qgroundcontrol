@@ -1,0 +1,74 @@
+/*
+ * QGC GStreamer static-plugin registration shim. Auto-generated.
+ *
+ * Provides gst_init_static_plugins() — invoked by GStreamer::_registerPlugins()
+ * on platforms where GStreamer ships as a static archive:
+ *   • Android: libgstreamer_android.so (_qgc_create_android_mobile_target)
+ *   • iOS:     GStreamer.xcframework   (cmake/GStreamer/platform/IOS.cmake)
+ *
+ * Each platform populates @PLUGINS_DECLARATION@ / @PLUGINS_REGISTRATION@ /
+ * @G_IO_MODULES_DECLARE@ / @G_IO_MODULES_LOAD@ with a different set; the
+ * GIO+TLS-database block is a verbatim port of upstream gstreamer_android-
+ * 1.0.c.in so gioopenssl becomes the default GIO TLS backend with the
+ * bundled CA file. iOS env setup + applemedia plugin rerank live in C++
+ * (GStreamer::_setGstEnvVars and the rerank block in completeInit).
+ */
+
+#include <gst/gst.h>
+#include <gio/gio.h>
+
+#define GST_G_IO_MODULE_DECLARE(name) \
+extern void G_PASTE(g_io_, G_PASTE(name, _load)) (gpointer data)
+
+#define GST_G_IO_MODULE_LOAD(name) \
+G_PASTE(g_io_, G_PASTE(name, _load)) (NULL)
+
+/* Wrap GST_PLUGIN_STATIC_REGISTER so a returned FALSE (missing transitive
+ * dep, ABI mismatch) produces a g_warning at init-time instead of surfacing
+ * later as "no element 'x'" deep in pipeline construction. */
+#define QGC_REGISTER_STATIC_PLUGIN(name) \
+    do { \
+        if (!GST_PLUGIN_STATIC_REGISTER (name)) \
+            g_warning ("QGC: static-register failed for plugin: " #name); \
+    } while (0)
+
+@PLUGINS_DECLARATION@
+
+@G_IO_MODULES_DECLARE@
+
+/* Load statically-linked GIO modules (gioopenssl on Android/iOS) and install
+ * the bundled CA bundle as the default TLS database. Mirrors upstream
+ * gstreamer_android-1.0.c:gst_android_load_gio_modules(). No-op on platforms
+ * where @G_IO_MODULES_LOAD@ expands to empty. */
+static void
+qgc_load_gio_modules_and_ca (void)
+{
+    const gchar *ca_certs;
+    GTlsBackend *backend;
+
+@G_IO_MODULES_LOAD@
+
+    ca_certs = g_getenv ("CA_CERTIFICATES");
+    backend = g_tls_backend_get_default ();
+    if (backend && ca_certs && *ca_certs) {
+        GTlsDatabase *db;
+        GError *error = NULL;
+
+        db = g_tls_file_database_new (ca_certs, &error);
+        if (db) {
+            g_tls_backend_set_default_database (backend, db);
+            g_object_unref (db);
+        } else {
+            g_warning ("QGC: failed to load CA bundle '%s': %s",
+                ca_certs, error ? error->message : "unknown error");
+            g_clear_error (&error);
+        }
+    }
+}
+
+void
+gst_init_static_plugins (void)
+{
+@PLUGINS_REGISTRATION@
+    qgc_load_gio_modules_and_ca ();
+}
