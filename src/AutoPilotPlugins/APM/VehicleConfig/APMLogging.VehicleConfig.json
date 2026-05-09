@@ -1,0 +1,117 @@
+{
+    "fileType": "VehicleConfig",
+    "version": 1,
+    "sections": [
+        {
+            "title": "Storage",
+            "keywords": [
+                "logging",
+                "log",
+                "backend",
+                "bitmask",
+                "sd card",
+                "onboard flash",
+                "mavlink stream",
+                "max files",
+                "free space"
+            ],
+            "controls": [
+                {
+                    "param": "LOG_BACKEND_TYPE",
+                    "label": "Logging backends",
+                    "optional": true,
+                    "control": "bitmask"
+                },
+                {
+                    "param": "LOG_BITMASK",
+                    "label": "Logged data groups",
+                    "optional": true,
+                    "control": "bitmask"
+                },
+                {
+                    "param": "LOG_MAX_FILES",
+                    "label": "Maximum retained log files",
+                    "optional": true
+                },
+                {
+                    "param": "LOG_FILE_MB_FREE",
+                    "label": "Minimum free space (MB)",
+                    "optional": true
+                }
+            ]
+        },
+        {
+            "title": "Rate Limits",
+            "keywords": [
+                "rate",
+                "hz",
+                "limit",
+                "file rate",
+                "block rate",
+                "mavlink rate",
+                "logging rate"
+            ],
+            "controls": [
+                {
+                    "param": "LOG_FILE_RATEMAX",
+                    "label": "Maximum file logging rate (Hz)",
+                    "optional": true
+                },
+                {
+                    "param": "LOG_BLK_RATEMAX",
+                    "label": "Maximum block logging rate (Hz)",
+                    "optional": true
+                },
+                {
+                    "param": "LOG_MAV_RATEMAX",
+                    "label": "Maximum MAVLink stream rate (Hz)",
+                    "optional": true
+                }
+            ]
+        },
+        {
+            "title": "Options",
+            "keywords": [
+                "disarmed",
+                "pre-arm",
+                "rotate",
+                "replay",
+                "ekf",
+                "ekf3",
+                "log options"
+            ],
+            "controls": [
+                {
+                    "param": "LOG_DISARMED",
+                    "label": "Log while disarmed",
+                    "optional": true,
+                    "control": "combobox"
+                },
+                {
+                    "param": "LOG_FILE_DSRMROT",
+                    "label": "Rotate log file on disarm/rearm",
+                    "optional": true,
+                    "control": "combobox"
+                },
+                {
+                    "param": "LOG_REPLAY",
+                    "label": "Log extra data for EKF replay",
+                    "optional": true,
+                    "control": "combobox"
+                },
+                {
+                    "param": "EK3_LOG_LEVEL",
+                    "label": "EKF3 logging verbosity",
+                    "optional": true,
+                    "control": "combobox",
+                    "enumValues": [
+                        { "value": 0, "label": "Full logging" },
+                        { "value": 1, "label": "XKF4 scaled innovations only" },
+                        { "value": 2, "label": "XKF4 and GSF" },
+                        { "value": 3, "label": "Disabled" }
+                    ]
+                }
+            ]
+        }
+    ]
+}

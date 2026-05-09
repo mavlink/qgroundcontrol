@@ -136,7 +136,11 @@ void FactMetaData::setRawDefaultValue(const QVariant &rawDefaultValue)
         _rawDefaultValue = rawDefaultValue;
         _defaultValueAvailable = true;
     } else {
-        qWarning(FactMetaDataLog) << "Attempt to set default value which is outside min/max range";
+        qWarning(FactMetaDataLog) << "Attempt to set default value which is outside min/max range. Name:" << name()
+                                  << ", attempted value:" << rawDefaultValue
+                                  << ", type:" << type()
+                                  << ", min:" << _rawMin
+                                  << ", max:" << _rawMax;
     }
 }
 
@@ -149,7 +153,7 @@ void FactMetaData::setRawMin(const QVariant &rawMin)
         }
     } else {
         qWarning(FactMetaDataLog) << "Attempt to set min below allowable value for fact:" << name()
-                                  << ", value attempted:" << rawMin
+                                  << ", attempted value:" << rawMin
                                   << ", type:" << type()
                                   << ", min for type:" << _minForType();
         _rawMin = _minForType();
@@ -166,7 +170,7 @@ void FactMetaData::setRawMax(const QVariant &rawMax)
         }
     } else {
         qWarning(FactMetaDataLog) << "Attempt to set max above allowable value for fact:" << name()
-                                  << ", value attempted:" << rawMax
+                                  << ", attempted value:" << rawMax
                                   << ", type:" << type()
                                   << ", max for type:" << _maxForType();
         _rawMax = _maxForType();
@@ -180,7 +184,7 @@ void FactMetaData::setRawUserMin(const QVariant &rawUserMin)
         _rawUserMin = rawUserMin;
     } else {
         qWarning(FactMetaDataLog) << "Attempt to set user min below allowable value for fact:" << name()
-                                  << ", value attempted:" << rawUserMin
+                                  << ", attempted value:" << rawUserMin
                                   << ", type:" << type()
                                   << ", min:" << _rawMin;
         _rawUserMin = _rawMin;
@@ -193,7 +197,7 @@ void FactMetaData::setRawUserMax(const QVariant &rawUserMax)
         _rawUserMax = rawUserMax;
     } else {
         qWarning(FactMetaDataLog) << "Attempt to set user max above allowable value for fact:" << name()
-                                  << ", value attempted:" << rawUserMax
+                                  << ", attempted value:" << rawUserMax
                                   << ", type:" << type()
                                   << ", max:" << _rawMax;
         _rawUserMax = _rawMax;

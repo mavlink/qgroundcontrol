@@ -1,6 +1,8 @@
-# Log Setup (Analyze View)
+# Log Setup (Vehicle Config)
 
-The _Log Setup_ screen (**Analyze > Log Setup**) helps you configure common ArduPilot logging parameters and provides practical troubleshooting guidance.
+The _Log Setup_ screen (**Vehicle Config > Logging**) is available for ArduPilot vehicles and allows you to configure how and what the flight controller logs.
+
+See [Logging (ArduPilot)](../setup_view/logging_ardupilot.md) for full documentation.
 
 ## Common Parameters
 
