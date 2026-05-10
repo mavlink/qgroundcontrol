@@ -324,7 +324,9 @@ ColumnLayout {
             _eventSeriesByType[ev.type].append(ev.time, _binYAxis.max)
         }
 
-        Qt.callLater(_refreshCursorAtCurrentPosition)
+        if (_positionMarkerVisible) {
+            Qt.callLater(_refreshCursorAtCurrentPosition)
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -585,7 +587,8 @@ ColumnLayout {
 
             function _popupX() {
                 const rightCornerX = _binChart.plotArea.x + _binChart.plotArea.width - width
-                return (_markerPixelX > rightCornerX) ? _binChart.plotArea.x : rightCornerX
+                const popupX = (_markerPixelX > rightCornerX) ? _binChart.plotArea.x : rightCornerX
+                return Math.max(0, Math.min(popupX, _chartContainer.width - width))
             }
 
             ColumnLayout {

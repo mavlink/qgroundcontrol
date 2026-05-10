@@ -408,6 +408,7 @@ AnalyzePage {
                                     Item {
                                         id: groupRect
                                         visible: modelData.rowType === "group"
+                                        width: parent.width
                                         implicitWidth: groupLayout.implicitWidth
                                         implicitHeight: groupLayout.implicitHeight
 

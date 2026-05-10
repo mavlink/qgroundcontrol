@@ -41,5 +41,4 @@ qt_add_qml_module(LogViewerModule
     NO_PLUGIN
 )
 
-target_link_libraries(LogViewerModule PRIVATE AnalyzeViewModule)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE LogViewerModule)
