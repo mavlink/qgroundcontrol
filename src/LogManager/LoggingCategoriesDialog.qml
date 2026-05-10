@@ -173,20 +173,29 @@ QGCPopupDialog {
             heading: qsTr("Search Results")
             visible: searchText.text !== ""
 
-            Repeater {
-                id: searchRepeater
+            ListView {
+                id: searchListView
 
+                readonly property real _rowHeight: ScreenTools.defaultFontPixelHeight * 2.2
+
+                Layout.fillWidth: true
+                Layout.maximumHeight: ScreenTools.defaultFontPixelHeight * 40
+                Layout.preferredHeight: Math.min(contentHeight, ScreenTools.defaultFontPixelHeight * 40)
+                clip: true
                 model: _filteredModel
+                spacing: 0
 
-                RowLayout {
+                delegate: RowLayout {
                     required property string fullName
                     required property int index
                     required property int logLevel
 
-                    Layout.fillWidth: true
+                    height: searchListView._rowHeight
+                    width: searchListView.width
 
                     QGCLabel {
                         Layout.fillWidth: true
+                        elide: Text.ElideRight
                         text: fullName
                     }
 
@@ -206,7 +215,7 @@ QGCPopupDialog {
             QGCLabel {
                 color: qgcPal.colorGrey
                 text: qsTr("No matching categories")
-                visible: searchRepeater.count === 0 && searchText.text !== ""
+                visible: searchListView.count === 0 && searchText.text !== ""
             }
         }
     }
