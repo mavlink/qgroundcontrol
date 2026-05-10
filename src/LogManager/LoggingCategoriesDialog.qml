@@ -150,14 +150,6 @@ QGCPopupDialog {
                         }
                     }
                 }
-
-                Component.onCompleted: _delayedExpand.start()
-
-                Timer {
-                    id: _delayedExpand
-                    interval: 0
-                    onTriggered: treeView.expandRecursively(-1, -1)
-                }
             }
 
             QGCLabel {
