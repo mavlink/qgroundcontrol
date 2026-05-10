@@ -767,7 +767,9 @@ void Vehicle::_handleCameraFeedback(const mavlink_message_t& message)
 {
     // If CAMERA_IMAGE_CAPTURED is supported, then CAMERA_FEEDBACK is redundant and should be ignored
     // to avoid duplicate points.
-    if(_cameraImageCapturedMessageAvailable) return;
+    if (_cameraImageCapturedMessageAvailable) {
+        return;
+    }
 
     mavlink_camera_feedback_t feedback;
 
@@ -821,10 +823,12 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
 
     mavlink_msg_camera_image_captured_decode(&message, &feedback);
 
-    if(!_cameraImageCapturedMessageAvailable) {
+    if (!_cameraImageCapturedMessageAvailable) {
         _cameraImageCapturedMessageAvailable = true;
         // Avoid initial duplicatation in case where first photo has CAMERA_FEEDBACK processed first.
-        if(_cameraTriggerPoints->count() > 0) return;
+        if (_cameraTriggerPoints->count() > 0) {
+            return;
+        }
     }
 
     QGeoCoordinate imageCoordinate((double)feedback.lat / qPow(10.0, 7.0), (double)feedback.lon / qPow(10.0, 7.0), feedback.alt);
