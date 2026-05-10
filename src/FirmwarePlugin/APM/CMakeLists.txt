@@ -45,11 +45,48 @@ qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_apm_resource
 
 #===========================================================================#
 
-CPMAddPackage(
-    NAME ArduPilotParams
-    GITHUB_REPOSITORY ArduPilot/ParameterRepository
-    GIT_TAG 037ff6bcfc080608544a4526f2c22406f2cce60f
-)
+# Always track HEAD of the ParameterRepository.
+# CPM cannot do this (it caches by tag string and never re-fetches a branch).
+# Instead, clone on first configure and pull on every subsequent configure so
+# the embedded metadata is always up to date with new firmware versions and
+# updated parameter descriptions.
+# Store alongside other CPM packages so the clone survives build-dir wipes and
+# is shared across Debug/Release/etc. build trees.
+find_package(Git REQUIRED)
+set(_ardupilot_params_dir "${CPM_SOURCE_CACHE}/ardupilotparams/HEAD")
+if(NOT EXISTS "${_ardupilot_params_dir}/.git")
+    message(STATUS "APM: Cloning ArduPilot/ParameterRepository...")
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} clone --depth=1 --progress
+            https://github.com/ArduPilot/ParameterRepository.git
+            "${_ardupilot_params_dir}"
+        RESULT_VARIABLE _git_result
+        ERROR_VARIABLE _git_error
+        OUTPUT_QUIET
+    )
+    if(NOT _git_result EQUAL 0)
+        message(FATAL_ERROR "APM: Failed to clone ArduPilot/ParameterRepository (exit code ${_git_result}):\n${_git_error}")
+    endif()
+else()
+    message(STATUS "APM: Updating ArduPilot/ParameterRepository...")
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} fetch --depth=1 origin
+        WORKING_DIRECTORY "${_ardupilot_params_dir}"
+        RESULT_VARIABLE _git_result
+        ERROR_VARIABLE _git_error
+        OUTPUT_QUIET
+    )
+    if(_git_result EQUAL 0)
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} reset --hard origin/HEAD
+            WORKING_DIRECTORY "${_ardupilot_params_dir}"
+            OUTPUT_QUIET ERROR_QUIET
+        )
+    else()
+        message(WARNING "APM: git fetch failed (exit code ${_git_result}) — using cached metadata:\n${_git_error}")
+    endif()
+endif()
+set(ArduPilotParams_SOURCE_DIR "${_ardupilot_params_dir}")
 
 # Filters applied to discovered ArduPilot parameter dirs (e.g. "Copter-4.7").
 # Regex (CMake syntax) — match against the dir name; matches are dropped.
