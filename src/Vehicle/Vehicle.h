@@ -930,6 +930,7 @@ private:
     bool            _gpsRawIntMessageAvailable              = false;
     bool            _gps2RawMessageAvailable                = false;
     bool            _globalPositionIntMessageAvailable      = false;
+    bool            _cameraImageCapturedMessageAvailable    = false;
     double          _defaultCruiseSpeed = qQNaN();
     double          _defaultHoverSpeed = qQNaN();
     bool            _capabilityBitsKnown                    = false;
@@ -1298,7 +1299,7 @@ private:
 
 public:
     HealthAndArmingCheckReport* healthAndArmingCheckReport();
-    
+
     void setEventsMetadata(uint8_t compid, const QString& metadataJsonFileName);
 
 private:
