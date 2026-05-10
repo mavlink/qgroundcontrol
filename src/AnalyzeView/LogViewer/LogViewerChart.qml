@@ -22,7 +22,6 @@ ColumnLayout {
     property bool   _positionMarkerVisible: false
     property real   _markerPixelX: 0
     property real   _markerXValue: 0
-    property real   _markerPopupY: 0
     property var    _markerRows: []
     property var    _markerEventRows: []
     property string _markerModeName: ""
@@ -169,7 +168,6 @@ ColumnLayout {
         _positionMarkerVisible = true
         _markerPixelX = Math.max(_binChart.plotArea.x, Math.min(_binChart.plotArea.x + _binChart.plotArea.width, pixelX))
         _markerXValue = _pixelToAxisX(_markerPixelX)
-        _markerPopupY = Math.max(0, Math.min(h - (ScreenTools.defaultFontPixelHeight * 4), pixelY))
         _queryCursorValues()
     }
 
@@ -184,7 +182,6 @@ ColumnLayout {
         if (_binXAxis.max <= _binXAxis.min) return
         _markerXValue = (_binXAxis.min + _binXAxis.max) / 2
         _markerPixelX = _axisXToPixel(_markerXValue)
-        _markerPopupY = _binChart.plotArea.y
         _positionMarkerVisible = true
         _queryCursorValues()
     }
@@ -345,24 +342,27 @@ ColumnLayout {
     // -------------------------------------------------------------------------
     ColumnLayout {
         id: _timelineContainer
-        Layout.preferredWidth: _binChart.plotArea.width
+        Layout.preferredWidth: _binChart.plotArea.x + _binChart.plotArea.width
         spacing: ScreenTools.defaultFontPixelHeight * 0.1
 
         property real _barHeight: ScreenTools.defaultFontPixelHeight * 0.6
 
         function _segmentX(start) {
+            const w = _binChart.plotArea.width
             if (_binXAxis.max <= _binXAxis.min) return 0
-            return Math.max(0, Math.min(width, ((Math.max(start, _binXAxis.min) - _binXAxis.min) / (_binXAxis.max - _binXAxis.min)) * width))
+            return Math.max(0, Math.min(w, ((Math.max(start, _binXAxis.min) - _binXAxis.min) / (_binXAxis.max - _binXAxis.min)) * w))
         }
 
         function _segmentWidth(start, end) {
+            const w = _binChart.plotArea.width
             if (_binXAxis.max <= _binXAxis.min) return 0
-            return ((Math.min(end, _binXAxis.max) - Math.max(start, _binXAxis.min)) / (_binXAxis.max - _binXAxis.min)) * width
+            return ((Math.min(end, _binXAxis.max) - Math.max(start, _binXAxis.min)) / (_binXAxis.max - _binXAxis.min)) * w
         }
 
         function _eventX(time, itemWidth) {
+            const w = _binChart.plotArea.width
             if (_binXAxis.max <= _binXAxis.min) return 0
-            return Math.max(0, Math.min(width - itemWidth, ((time - _binXAxis.min) / (_binXAxis.max - _binXAxis.min)) * width))
+            return Math.max(0, Math.min(w - itemWidth, ((time - _binXAxis.min) / (_binXAxis.max - _binXAxis.min)) * w))
         }
 
         // Bar 1: Flight modes
@@ -571,7 +571,7 @@ ColumnLayout {
         // Value popup
         Rectangle {
             id: _valuePopup
-            visible: _positionMarkerVisible && _markerRows.length > 0
+            visible: _positionMarkerVisible
             x: _popupX()
             y: _binChart.plotArea.y
             width: ScreenTools.defaultFontPixelWidth * 30
