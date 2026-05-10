@@ -569,7 +569,7 @@ def render_factslider(
     if major_tick_step_size:
         lines.append(f"{inner}    majorTickStepSize: {major_tick_step_size}")
     else:
-        lines.append(f"{inner}    majorTickStepSize: {fact_ref}.increment")
+        lines.append(f"{inner}    majorTickStepSize: fact ? fact.increment : 1")
     if decimal_places:
         lines.append(f"{inner}    decimalPlaces: {decimal_places}")
 

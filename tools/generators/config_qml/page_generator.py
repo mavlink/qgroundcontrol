@@ -62,6 +62,7 @@ class ControlDef:
     enableCheckbox: EnableCheckboxDef | None = None  # slider: checked/onClicked
     button: ButtonDef | None = None                  # adjacent button
     options: list[RadioOptionDef] = field(default_factory=list)  # radiogroup options
+    enumValues: list[tuple[int | float | str, str]] = field(default_factory=list)  # combobox: manual [(value, label), ...]
     dialogButton: DialogButtonDef | None = None      # button that opens a popup dialog
     actionButton: ActionButtonDef | None = None       # standalone button calling a method
     warning: bool = False                            # label: use warning color
@@ -136,6 +137,37 @@ class PageDef:
 # JSON loading
 # --------------------------------------------------------------------------- #
 
+def _vis_expr(show_when: str, optional: bool, param: str, fact_ref: str) -> str:
+    """Return the QML visibility expression for a control.
+
+    When both a fact-existence guard and an explicit showWhen are needed, they
+    are composed with && so the control is only visible when the param exists
+    *and* the showWhen condition is met.
+    """
+    fact_guard = f"{fact_ref} !== null" if optional and param else ""
+    if fact_guard and show_when:
+        return f"{fact_guard} && ({show_when})"
+    return show_when or fact_guard
+
+
+def _parse_enum_value_entry(entry: object, ctrl_name: str) -> tuple[int | float | str, str]:
+    """Validate and unpack a single enumValues entry, giving a clear error on bad JSON."""
+    if not isinstance(entry, dict):
+        raise ValueError(f"enumValues entry must be a JSON object in control '{ctrl_name}', got: {entry!r}")
+    if "value" not in entry:
+        raise ValueError(f"enumValues entry missing 'value' key in control '{ctrl_name}': {entry}")
+    if "label" not in entry:
+        raise ValueError(f"enumValues entry missing 'label' key in control '{ctrl_name}': {entry}")
+    value = entry["value"]
+    label = entry["label"]
+    # bool is a subclass of int in Python — reject it explicitly to catch JSON true/false
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        raise ValueError(f"enumValues 'value' must be a number or string in control '{ctrl_name}', got: {value!r}")
+    if not isinstance(label, str):
+        raise ValueError(f"enumValues 'label' must be a string in control '{ctrl_name}', got: {label!r}")
+    return (value, label)
+
+
 def load_page_def(json_path: Path) -> PageDef:
     """Load a config page definition from a JSON file."""
     with open(json_path, encoding="utf-8") as f:
@@ -171,6 +203,12 @@ def load_page_def(json_path: Path) -> PageDef:
                 enableCheckbox=parse_enable_checkbox(ctrl_data.get("enableCheckbox")),
                 button=parse_button(ctrl_data.get("button")),
                 options=parse_radio_options(ctrl_data.get("options")),
+                enumValues=[
+                    (
+                        _parse_enum_value_entry(entry, ctrl_data.get("param") or ctrl_data.get("label", ""))
+                    )
+                    for entry in (ctrl_data.get("enumValues") or [])
+                ],
                 dialogButton=parse_dialog_button(ctrl_data.get("dialogButton")),
                 actionButton=parse_action_button(ctrl_data.get("actionButton")),
                 warning=ctrl_data.get("warning", False),
@@ -459,9 +497,9 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
                 tr_context=tr_context,
             )
 
-        if ctrl.showWhen:
-            # Wrap in a ColumnLayout with visibility
-            qml = f"{indent}ColumnLayout {{\n{indent}    visible: {ctrl.showWhen}\n" + \
+        _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, fact_ref)
+        if _v:
+            qml = f"{indent}ColumnLayout {{\n{indent}    visible: {_v}\n" + \
                   "\n".join(f"    {l}" for l in qml.splitlines()) + \
                   f"\n{indent}}}"
         return _apply_indent(qml)
@@ -489,7 +527,7 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             major_tick_step_size=ctrl.majorTickStepSize,
             decimal_places=ctrl.decimalPlaces,
             linked_params=ctrl.linkedParams if ctrl.linkedParams else None,
-            show_when=ctrl.showWhen,
+            show_when=_vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, fact_ref),
             enable_when=ctrl.enableWhen,
             tr_context=tr_context,
         )
@@ -508,8 +546,9 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             slider_max=ctrl.sliderMax,
             tr_context=tr_context,
         )
-        if ctrl.showWhen:
-            qml = _inject_prop(qml, f"{indent}    visible: {ctrl.showWhen}")
+        _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, fact_ref)
+        if _v:
+            qml = _inject_prop(qml, f"{indent}    visible: {_v}")
         return _apply_indent(qml)
 
     # Radio group — label + radio buttons
@@ -523,8 +562,8 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             optional=ctrl.optional,
             tr_context=tr_context,
         )
-        if ctrl.showWhen:
-            # Wrap the label + column in a ColumnLayout with visibility
+        _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, fact_ref)
+        if _v:
             inner_qml = render_radiogroup(
                 fact_ref, indent + "    ",
                 label=ctrl.label,
@@ -536,7 +575,7 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             )
             qml = (
                 f"{indent}ColumnLayout {{\n"
-                f"{indent}    visible: {ctrl.showWhen}\n"
+                f"{indent}    visible: {_v}\n"
                 f"{indent}    spacing: 0\n"
                 f"{inner_qml}\n"
                 f"{indent}}}"
@@ -552,8 +591,9 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             enable_when=ctrl.enableWhen,
             tr_context=tr_context,
         )
-        if ctrl.showWhen:
-            qml = _inject_prop(qml, f"{indent}    visible: {ctrl.showWhen}")
+        _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, "fact")
+        if _v:
+            qml = _inject_prop(qml, f"{indent}    visible: {_v}")
         return _apply_indent(qml)
 
     # Bitmask — full FactBitmask widget
@@ -563,8 +603,9 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             first_entry_is_all=ctrl.firstEntryIsAll,
             enable_when=ctrl.enableWhen,
         )
-        if ctrl.showWhen:
-            qml = _inject_prop(qml, f"{indent}    visible: {ctrl.showWhen}")
+        _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, "fact")
+        if _v:
+            qml = _inject_prop(qml, f"{indent}    visible: {_v}")
         return _apply_indent(qml)
 
     # Toggle checkbox — QGCCheckBoxSlider with custom logic
@@ -578,8 +619,9 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             fact_ref=fact_ref,
             tr_context=tr_context,
         )
-        if ctrl.showWhen:
-            qml = _inject_prop(qml, f"{indent}    visible: {ctrl.showWhen}")
+        _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, fact_ref)
+        if _v:
+            qml = _inject_prop(qml, f"{indent}    visible: {_v}")
         return _apply_indent(qml)
 
     # Checkbox — FactCheckBoxSlider includes label
@@ -592,12 +634,38 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             qml_type="FactCheckBoxSlider",
             tr_context=tr_context,
         )
-        if ctrl.showWhen:
-            qml = _inject_prop(qml, f"{indent}    visible: {ctrl.showWhen}")
+        _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, "fact")
+        if _v:
+            qml = _inject_prop(qml, f"{indent}    visible: {_v}")
         return _apply_indent(qml)
 
     # Combobox — LabelledFactComboBox includes label
     if control_type == "combobox":
+        # Manual enum values: emit a LabelledComboBox with a hardcoded model
+        # bound to the fact's rawValue instead of relying on Fact enumStrings.
+        if ctrl.enumValues:
+            model_items = ", ".join(
+                qml_tr(label, tr_context) for _, label in ctrl.enumValues
+            )
+            values_list = ", ".join(json.dumps(v) for v, _ in ctrl.enumValues)
+            display_label = qml_tr(ctrl.label, tr_context) if ctrl.label else '_fact ? _fact.shortDescription : ""'
+            lines: list[str] = []
+            lines.append(f"{indent}LabelledComboBox {{")
+            lines.append(f"{indent}    property var _fact: {fact_ref}")
+            lines.append(f"{indent}    label: {display_label}")
+            lines.append(f"{indent}    Layout.fillWidth: true")
+            lines.append(f"{indent}    comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30")
+            lines.append(f"{indent}    model: [{model_items}]")
+            lines.append(f"{indent}    property var _enumValues: [{values_list}]")
+            lines.append(f"{indent}    currentIndex: {{ var v = _fact ? _fact.rawValue : 0; var i = _enumValues.indexOf(v); return i >= 0 ? i : 0 }}")
+            lines.append(f"{indent}    onActivated: (index) => {{ if (_fact) _fact.rawValue = _enumValues[index] }}")
+            if ctrl.enableWhen:
+                lines.append(f"{indent}    enabled: {ctrl.enableWhen}")
+            _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, "_fact")
+            if _v:
+                lines.append(f"{indent}    visible: {_v}")
+            lines.append(f"{indent}}}")
+            return _apply_indent("\n".join(lines))
         qml = render_combobox(
             fact_ref, indent,
             label=ctrl.label,
@@ -607,8 +675,9 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
             combo_preferred_width="ScreenTools.defaultFontPixelWidth * 30",
             tr_context=tr_context,
         )
-        if ctrl.showWhen:
-            qml = _inject_prop(qml, f"{indent}    visible: {ctrl.showWhen}")
+        _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, "fact")
+        if _v:
+            qml = _inject_prop(qml, f"{indent}    visible: {_v}")
         return _apply_indent(qml)
 
     # Textfield — LabelledFactTextField includes label
@@ -620,8 +689,9 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
         qml_type="LabelledFactTextField",
         tr_context=tr_context,
     )
-    if ctrl.showWhen:
-        qml = _inject_prop(qml, f"{indent}    visible: {ctrl.showWhen}")
+    _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, "fact")
+    if _v:
+        qml = _inject_prop(qml, f"{indent}    visible: {_v}")
     return _apply_indent(qml)
 
 

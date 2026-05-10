@@ -43,10 +43,23 @@ typedef struct _GstElement GstElement;
 class GstVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
+    Q_PROPERTY(QString decoderName       READ decoderName       NOTIFY decoderStatsChanged)
+    Q_PROPERTY(quint64 processedFrames   READ processedFrames   NOTIFY decoderStatsChanged)
+    Q_PROPERTY(quint64 droppedFrames     READ droppedFrames     NOTIFY decoderStatsChanged)
+    Q_PROPERTY(qint64  currentJitterNs   READ currentJitterNs   NOTIFY decoderStatsChanged)
+    Q_PROPERTY(double  qosProportion     READ qosProportion     NOTIFY decoderStatsChanged)
+    Q_PROPERTY(int     qosQuality        READ qosQuality        NOTIFY decoderStatsChanged)
 
 public:
     explicit GstVideoReceiver(QObject *parent = nullptr);
     ~GstVideoReceiver();
+
+    QString decoderName()     const { return _decoderName; }
+    quint64 processedFrames() const { return _processedFrames; }
+    quint64 droppedFrames()   const { return _droppedFrames; }
+    qint64  currentJitterNs() const { return _currentJitterNs; }
+    double  qosProportion()   const { return _qosProportion; }
+    int     qosQuality()      const { return _qosQuality; }
 
 public slots:
     void start(uint32_t timeout) override;
@@ -56,6 +69,10 @@ public slots:
     void startRecording(const QString &videoFile, FILE_FORMAT format) override;
     void stopRecording() override;
     void takeScreenshot(const QString &imageFile) override;
+
+signals:
+    void decoderStatsChanged();
+    void latencyChanged();
 
 private slots:
     void _watchdog();
@@ -108,6 +125,17 @@ private:
     GstVideoWorker *_worker = nullptr;
     gulong _teeProbeId = 0;
     gulong _videoSinkProbeId = 0;
+    gulong _eosProbeId = 0;
+    GstPad *_eosProbePad = nullptr;  // ref-held: probe install pad, kept so removal targets the right pad regardless of _decoder lifecycle
+    gulong _keyframeWatchId = 0;
+    bool _recordingStopRequested = false;
+
+    QString _decoderName;
+    quint64 _processedFrames = 0;
+    quint64 _droppedFrames = 0;
+    qint64  _currentJitterNs = 0;
+    double  _qosProportion = 1.0;
+    int     _qosQuality = 1000000;
 
     static constexpr const char *_kFileMux[FILE_FORMAT_MAX + 1] = {
         "matroskamux",

@@ -10,7 +10,7 @@ include(CMakePrintHelpers)
 # ----------------------------------------------------------------------------
 # Qt Installer Framework Detection
 # ----------------------------------------------------------------------------
-set(QT_INSTALLER_FRAMEWORK_DIR ${QT_ROOT_DIR}/../../Tools/QtInstallerFramework)
+set(QT_INSTALLER_FRAMEWORK_DIR $ENV{QT_ROOT_DIR}/../../Tools/QtInstallerFramework)
 find_program(QT_INSTALLER_FRAMEWORK binarycreator
     PATHS "${QT_INSTALLER_FRAMEWORK_DIR}/*/bin"
     REQUIRED

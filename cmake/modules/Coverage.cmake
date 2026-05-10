@@ -18,7 +18,7 @@ if(NOT QGC_ENABLE_COVERAGE)
     return()
 endif()
 
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(WARNING "Code coverage requires Debug build, but CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
     return()
 endif()

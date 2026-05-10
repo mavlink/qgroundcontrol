@@ -1,12 +1,15 @@
 ﻿#pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtGui/QPixmap>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick/QQuickItem>
 
 #include "QGCSerialPortInfo.h"
+
+class QGCFileDownload;
 
 class PX4FirmwareUpgradeThread;
 class PX4FirmwareUpgradeThreadController;
@@ -86,6 +89,7 @@ public:
     Q_PROPERTY(QStringList          apmFirmwareUrls             MEMBER _apmFirmwareUrls                                             NOTIFY apmFirmwareNamesChanged)
     Q_PROPERTY(QString              px4StableVersion            READ px4StableVersion                                               NOTIFY px4StableVersionChanged)
     Q_PROPERTY(QString              px4BetaVersion              READ px4BetaVersion                                                 NOTIFY px4BetaVersionChanged)
+    Q_PROPERTY(QVariantList         availablePorts              MEMBER _availablePorts                                              NOTIFY availablePortsChanged)
 
     /// TextArea for log output
     Q_PROPERTY(QQuickItem* statusLog READ statusLog WRITE setStatusLog)
@@ -95,6 +99,9 @@ public:
 
     /// Starts searching for boards on the background thread
     Q_INVOKABLE void startBoardSearch(void);
+
+    /// Selects which serial port to flash. The worker will wait for this port to be in bootloader mode and then handshake.
+    Q_INVOKABLE void flashPort(const QString& systemLocation);
 
     /// Cancels whatever state the upgrade worker thread is in
     Q_INVOKABLE void cancel(void);
@@ -149,11 +156,13 @@ signals:
     void flashComplete                  (void);
     void flashCancelled                 (void);
     void error                          (void);
+    void eraseStarted                   (void);
     void selectedFirmwareBuildTypeChanged(FirmwareBuildType_t firmwareType);
     void apmFirmwareNamesChanged        (void);
     void px4StableVersionChanged        (const QString& px4StableVersion);
     void px4BetaVersionChanged          (const QString& px4BetaVersion);
     void downloadingFirmwareListChanged (bool downloadingFirmwareList);
+    void availablePortsChanged          (void);
 
 private slots:
     void _firmwareDownloadProgress          (qint64 curr, qint64 total);
@@ -173,6 +182,7 @@ private slots:
     void _px4ReleasesGithubDownloadComplete (bool success, const QString &localFile, const QString &errorMsg);
     void _ardupilotManifestDownloadComplete (bool success, const QString &localFile, const QString &errorMsg);
     void _buildAPMFirmwareNames             (void);
+    void _portsAvailable                    (const QVariantList& ports);
 
 private:
     QHash<FirmwareIdentifier, QString>* _firmwareHashForBoardId(int boardId);
@@ -277,6 +287,9 @@ private:
     QStringList                             _apmFirmwareUrls;
     Fact*                                   _apmChibiOSSetting;
     Fact*                                   _apmVehicleTypeSetting;
+    QVariantList                            _availablePorts;
+    QPointer<QGCFileDownload>               _activeDownloader;          ///< in-flight firmware download, aborted on cancel
+    bool                                    _flashCancelled = false;    ///< cancel was issued; ignore late download completions
 
     FirmwareBuildType_t     _manifestMavFirmwareVersionTypeToFirmwareBuildType  (const QString& manifestMavFirmwareVersionType);
     FirmwareVehicleType_t   _manifestMavTypeToFirmwareVehicleType               (const QString& manifestMavType);

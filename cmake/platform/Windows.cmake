@@ -19,8 +19,6 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 # Windows Executable Configuration
 # ----------------------------------------------------------------------------
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
-
 if(COMMAND _qt_internal_generate_win32_rc_file)
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES

@@ -7,8 +7,8 @@
 #include <atomic>
 #include <memory>
 
-QGC_LOGGING_CATEGORY(GStreamerLoggingLog, "VideoManager.GStreamer.GStreamerLogging")
-QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamerAPI")
+QGC_LOGGING_CATEGORY(GStreamerLoggingLog, "Video.GStreamer.GStreamerLogging")
+QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamer.GStreamerAPI")
 
 namespace {
 

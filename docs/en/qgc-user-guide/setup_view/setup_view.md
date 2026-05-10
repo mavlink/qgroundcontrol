@@ -42,6 +42,9 @@ The set of options shown and the contents of each option may differ based on whe
 **[Tuning](tuning.md)**
 <br>Tune flight characteristics of the vehicle.
 
+**[Logging (ArduPilot)](logging_ardupilot.md)**
+<br>Configure ArduPilot logging parameters (storage backends, data groups, rate limits).
+
 **[Camera](camera.md)**
 <br>Configure settings for camera and gimbal.
 

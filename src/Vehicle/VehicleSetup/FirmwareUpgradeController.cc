@@ -137,6 +137,7 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     connect(_threadController, &PX4FirmwareUpgradeThreadController::eraseComplete,          this, &FirmwareUpgradeController::_eraseComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::flashComplete,          this, &FirmwareUpgradeController::_flashComplete);
     connect(_threadController, &PX4FirmwareUpgradeThreadController::updateProgress,         this, &FirmwareUpgradeController::_updateProgress);
+    connect(_threadController, &PX4FirmwareUpgradeThreadController::portsAvailable,         this, &FirmwareUpgradeController::_portsAvailable);
 
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
 
@@ -212,7 +213,25 @@ void FirmwareUpgradeController::flashSingleFirmwareMode(FirmwareBuildType_t firm
 void FirmwareUpgradeController::cancel(void)
 {
     _eraseTimer.stop();
+    _flashCancelled = true;
+    if (_activeDownloader) {
+        _activeDownloader->cancel();
+    }
     _threadController->cancel();
+}
+
+void FirmwareUpgradeController::flashPort(const QString& systemLocation)
+{
+    qCDebug(FirmwareUpgradeControllerLog) << "flashPort" << systemLocation;
+    _bootloaderFound = false;
+    _startFlashWhenBootloaderFound = false;
+    _threadController->setTargetPort(systemLocation);
+}
+
+void FirmwareUpgradeController::_portsAvailable(const QVariantList& ports)
+{
+    _availablePorts = ports;
+    emit availablePortsChanged();
 }
 
 QStringList FirmwareUpgradeController::availableBoardsName(void)
@@ -236,7 +255,13 @@ void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPort
 {
     _boardInfo      = info;
     _boardType      = static_cast<QGCSerialPortInfo::BoardType_t>(boardType);
-    _boardTypeName  = boardName;
+    if (!boardName.isEmpty()) {
+        _boardTypeName = boardName;
+    } else if (!info.description().isEmpty()) {
+        _boardTypeName = info.description();
+    } else {
+        _boardTypeName = info.portName();
+    }
 
     qDebug() << info.manufacturer() << info.description();
 
@@ -357,15 +382,23 @@ void FirmwareUpgradeController::_downloadFirmware(void)
 {
     Q_ASSERT(!_firmwareFilename.isEmpty());
 
-    _appendStatusLog(tr("Downloading firmware..."));
-    _appendStatusLog(tr(" From: %1").arg(_firmwareFilename));
+    _flashCancelled = false;
+
+    const bool isRemote = _firmwareFilename.startsWith(QStringLiteral("http"), Qt::CaseInsensitive);
+    if (isRemote) {
+        _appendStatusLog(tr("Downloading firmware from %1").arg(_firmwareFilename));
+    } else {
+        _appendStatusLog(tr("Using firmware file %1").arg(_firmwareFilename));
+    }
 
     QGCFileDownload* downloader = new QGCFileDownload(this);
+    _activeDownloader = downloader;
     connect(downloader, &QGCFileDownload::finished, downloader, &QObject::deleteLater);
     connect(downloader, &QGCFileDownload::finished, this, &FirmwareUpgradeController::_firmwareDownloadComplete);
     connect(downloader, &QGCFileDownload::downloadProgress, this, &FirmwareUpgradeController::_firmwareDownloadProgress);
     if (!downloader->start(_firmwareFilename)) {
         downloader->deleteLater();
+        _activeDownloader = nullptr;
         _errorCancel(downloader->errorString());
         return;
     }
@@ -383,8 +416,18 @@ void FirmwareUpgradeController::_firmwareDownloadProgress(qint64 curr, qint64 to
 /// @brief Called when the firmware download completes.
 void FirmwareUpgradeController::_firmwareDownloadComplete(bool success, const QString &localFile, const QString &errorMsg)
 {
+    _activeDownloader = nullptr;
+
+    if (_flashCancelled) {
+        // User cancelled while the download was in flight; ignore late completion.
+        return;
+    }
+
     if (success) {
-        _appendStatusLog(tr("Download complete"));
+        const bool isRemote = _firmwareFilename.startsWith(QStringLiteral("http"), Qt::CaseInsensitive);
+        if (isRemote) {
+            _appendStatusLog(tr("Download complete"));
+        }
 
         FirmwareImage* image = new FirmwareImage(this);
 
@@ -436,7 +479,6 @@ void FirmwareUpgradeController::_flashComplete(void)
     _image = nullptr;
 
     _appendStatusLog(tr("Upgrade complete"), true);
-    _appendStatusLog("------------------------------------------", false);
     emit flashComplete();
     LinkManager::instance()->setConnectionsAllowed();
 }
@@ -478,7 +520,7 @@ void FirmwareUpgradeController::_appendStatusLog(const QString& text, bool criti
     QString varText;
 
     if (critical) {
-        varText = QString("<font color=\"yellow\">%1</font>").arg(text);
+        varText = QString("<b>%1</b>").arg(text);
     } else {
         varText = text;
     }
@@ -492,7 +534,6 @@ void FirmwareUpgradeController::_errorCancel(const QString& msg)
 {
     _appendStatusLog(msg, false);
     _appendStatusLog(tr("Upgrade cancelled"), true);
-    _appendStatusLog("------------------------------------------", false);
     emit error();
     cancel();
     LinkManager::instance()->setConnectionsAllowed();
@@ -503,6 +544,7 @@ void FirmwareUpgradeController::_eraseStarted(void)
     // We set up our own progress bar for erase since the erase command does not provide one
     _eraseTickCount = 0;
     _eraseTimer.start(_eraseTickMsec);
+    emit eraseStarted();
 }
 
 void FirmwareUpgradeController::_eraseComplete(void)

@@ -10,6 +10,7 @@
 #include "APMESCComponent.h"
 #include "APMPowerComponent.h"
 #include "APMRadioComponent.h"
+#include "APMLoggingComponent.h"
 #include "APMRemoteSupportComponent.h"
 #include "APMFailsafesComponent.h"
 #include "APMFlightSafetyComponent.h"
@@ -163,6 +164,10 @@ const QVariantList &APMAutoPilotPlugin::vehicleComponents()
                 _esp8266Component->setupTriggerSignals();
                 _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_esp8266Component)));
             }
+
+            _loggingComponent = new APMLoggingComponent(_vehicle, this);
+            _loggingComponent->setupTriggerSignals();
+            _components.append(QVariant::fromValue(qobject_cast<VehicleComponent*>(_loggingComponent)));
 
             _apmRemoteSupportComponent = new APMRemoteSupportComponent(_vehicle, this);
             _apmRemoteSupportComponent->setupTriggerSignals();

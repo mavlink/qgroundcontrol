@@ -31,6 +31,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         APMHeliComponent.h
         APMLightsComponent.cc
         APMLightsComponent.h
+        APMLoggingComponent.cc
+        APMLoggingComponent.h
         APMMotorComponent.cc
         APMMotorComponent.h
         APMServoComponent.cc
@@ -80,6 +82,7 @@ file(GLOB _apm_config_page_definitions CONFIGURE_DEPENDS "${APM_CONFIG_PAGES_DIR
 # Generated QML outputs (must match what generate_pages.py produces)
 set(_apm_config_generated_qml_names
     APMFailsafesComponent.qml
+    APMLoggingComponent.qml
     APMPowerComponent.qml
     APMFlightSafetyComponent.qml
     APMTuningCopterComponent.qml
@@ -104,11 +107,12 @@ add_custom_command(
 
 add_custom_target(GenerateConfigQmlAPM DEPENDS ${_apm_config_generated_qml})
 
-# Set QT_RESOURCE_ALIAS so qt_add_qml_module places generated files at the
-# correct QRC path despite living in the build tree.
+# GENERATED suppresses qmlimportscanner reads of not-yet-existing files at configure time.
 foreach(_name IN LISTS _apm_config_generated_qml_names)
     set_source_files_properties("${APM_CONFIG_QML_GEN_DIR}/${_name}"
-        PROPERTIES QT_RESOURCE_ALIAS "${_name}"
+        PROPERTIES
+            GENERATED TRUE
+            QT_RESOURCE_ALIAS "${_name}"
     )
 endforeach()
 
@@ -171,6 +175,7 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMAdvancedTuningCopterComponent.qml
     RESOURCES
         VehicleConfig/APMFailsafes.VehicleConfig.json
+        VehicleConfig/APMLogging.VehicleConfig.json
         VehicleConfig/APMPower.VehicleConfig.json
         VehicleConfig/APMFlightSafety.VehicleConfig.json
         VehicleConfig/APMTuningCopter.VehicleConfig.json

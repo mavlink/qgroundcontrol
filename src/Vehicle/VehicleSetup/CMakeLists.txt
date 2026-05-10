@@ -7,6 +7,9 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         JoystickConfigController.cc
         JoystickConfigController.h
+        # Base class for RadioComponentController and JoystickConfigController — must build unconditionally.
+        RemoteControlCalibrationController.cc
+        RemoteControlCalibrationController.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -25,8 +28,6 @@ if(NOT QGC_NO_SERIAL_LINK)
             FirmwareUpgradeController.h
             PX4FirmwareUpgradeThread.cc
             PX4FirmwareUpgradeThread.h
-            RemoteControlCalibrationController.cc
-            RemoteControlCalibrationController.h
     )
 endif()
 

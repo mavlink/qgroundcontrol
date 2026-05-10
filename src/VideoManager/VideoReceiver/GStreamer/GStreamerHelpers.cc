@@ -3,10 +3,9 @@
 
 #include <gst/rtsp/gstrtspurl.h>
 #include <QtCore/QLatin1String>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 
-QGC_LOGGING_CATEGORY(GStreamerHelpersLog, "VideoManager.GStreamer.GStreamerHelpers")
+QGC_LOGGING_CATEGORY(GStreamerHelpersLog, "Video.GStreamer.GStreamerHelpers")
 
 namespace GStreamer
 {
@@ -214,13 +213,7 @@ void setCodecPriorities(VideoDecoderOptions option)
 
     switch (option) {
     case ForceVideoDecoderDefault:
-        // Android/iOS hardware decoders (amcviddec, vtdec) already have higher
-        // default ranks than software decoders, so decodebin tries them first.
-        // However, AMC decoders require GL output (GLMemory caps) which the
-        // current pipeline doesn't support — so they fail and decodebin falls
-        // back to software. Setting software to RANK_NONE here would eliminate
-        // that fallback entirely.  Leave ranks untouched until the pipeline
-        // supports GL context sharing with Qt.
+        // HW-decoder GPU caps (GLMemory/DMABuf/VAMemory) auto-plug to system memory via gldownload/vapostproc.
         break;
     case ForceVideoDecoderSoftware:
         prioritizeByHardwareClass(registry, PrioritizedRank, false);

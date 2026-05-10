@@ -51,10 +51,8 @@ __pycache__/
 # Local development
 .claude/
 .cache/
-sessions/
 CLAUDE.md
 AGENTS.md
-GEMINI.md
 
 # Platform artifacts
 .DS_Store
