@@ -234,7 +234,6 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceHeadingGCS);
     connect(this, &Vehicle::homePositionChanged,    this, &Vehicle::_updateDistanceHeadingHome);
     connect(this, &Vehicle::hobbsMeterChanged,      this, &Vehicle::_updateHobbsMeter);
-    connect(this, &Vehicle::coordinateChanged, _terrainQueryCoordinator, &TerrainQueryCoordinator::updateAltAboveTerrain);
     connect(this, &Vehicle::vehicleTypeChanged,     this, &Vehicle::inFwdFlightChanged);
     connect(this, &Vehicle::vtolInFwdFlightChanged, this, &Vehicle::inFwdFlightChanged);
 
@@ -267,6 +266,7 @@ void Vehicle::_commonInit(LinkInterface* link)
     connect(_messageIntervalManager, &MessageIntervalManager::mavlinkMsgIntervalsChanged,
             this, &Vehicle::mavlinkMsgIntervalsChanged);
     _terrainQueryCoordinator = new TerrainQueryCoordinator(this);
+    connect(this, &Vehicle::coordinateChanged, _terrainQueryCoordinator, &TerrainQueryCoordinator::updateAltAboveTerrain);
 
     _vehicleLinkManager = new VehicleLinkManager(this);
     if (link) {
