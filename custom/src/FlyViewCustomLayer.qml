@@ -22,6 +22,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 import QGroundControl.VideoManager
+import QGroundControl.Vehicle
 
 Item {
     id: root
@@ -123,8 +124,7 @@ Item {
     // ─────────────────────────────────────────────────────────────────────
     property bool isArmed: false
 
-    // ARM is only permitted during Demo #4 (Points Round)
-    readonly property bool _canArm: demoLocked && selectedDemoIndex === 3
+    readonly property bool _canArm: demoLocked
 
     CEVideoStatus {
         id: ceVideoStatus
@@ -231,6 +231,24 @@ Item {
             anchors.leftMargin:  12
             anchors.rightMargin: 12
             spacing:             10
+
+            Rectangle {
+                width:  planBtn.width + 16; height: 28; radius: 4
+                color:  _clrCard
+                Text {
+                    id:               planBtn
+                    anchors.centerIn: parent
+                    text:             "⊞ PLAN"
+                    color:            "white"
+                    font.pixelSize:   12
+                    font.bold:        true
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked:    mainWindow.showToolSelectDialog()
+                    cursorShape:  Qt.PointingHandCursor
+                }
+            }
 
             Text {
                 text:           "Crown & Eagle Engineering"
@@ -1011,30 +1029,39 @@ Item {
                 }
             }
 
-	    Button {
-		id: modeToggle
-		
-		property var vehicle: _activeVehicle
-		
-		text: {
-		    switch (vehicle.flightMode) {
-		    case "Mission":
-		        return "Switch to Stabilized"
-		    case "Stabilized":
-		        return "Switch to Auto"
-		    default:
-		        return "Mode: " + vehicle.flightMode
-		    }
-		}
-		
-		onClicked: {
-		    if (vehicle.flightMode === "Mission") {
-		        vehicle.setFlightMode("Stabilized")
-		    } else {
-		        vehicle.setFlightMode("Mission")
-		    }
-		}
-	    }
+            Rectangle {
+                width:   modeToggleLbl.width + 24; height: 34; radius: 6
+                color:   _clrBlue
+                opacity: _activeVehicle ? 1.0 : 0.4
+
+                Text {
+                    id: modeToggleLbl
+                    anchors.centerIn: parent
+                    text: {
+                        if (!_activeVehicle) return "Mode Toggle"
+                        switch (_activeVehicle.flightMode) {
+                        case "Mission":    return "Switch to Stabilized"
+                        case "Stabilized": return "Switch to Auto"
+                        default:           return "Mode: " + _activeVehicle.flightMode
+                        }
+                    }
+                    color:          "white"
+                    font.pixelSize: 12
+                    font.bold:      true
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled:      !!_activeVehicle
+                    onClicked: {
+                        if (_activeVehicle.flightMode === "Mission") {
+                            _activeVehicle.setFlightMode("Stabilized")
+                        } else {
+                            _activeVehicle.setFlightMode("Mission")
+                        }
+                    }
+                }
+            }
 
             // Retrieval Mechanism Control
             Rectangle {

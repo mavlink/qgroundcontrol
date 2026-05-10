@@ -4,6 +4,14 @@ set_source_files_properties(
 	${CMAKE_SOURCE_DIR}/custom/src/FlyViewCustomLayer.qml
 	PROPERTIES QT_RESOURCE_ALIAS "FlyViewCustomLayer.qml"
 )
+set_source_files_properties(
+	${CMAKE_SOURCE_DIR}/custom/src/FlyView.qml
+	PROPERTIES QT_RESOURCE_ALIAS "FlyView.qml"
+)
+set_source_files_properties(
+	${CMAKE_SOURCE_DIR}/custom/src/FlyViewWidgetLayer.qml
+	PROPERTIES QT_RESOURCE_ALIAS "FlyViewWidgetLayer.qml"
+)
 qt_add_qml_module(FlightDisplayModule
     URI QGroundControl.FlightDisplay
     VERSION 1.0
@@ -17,7 +25,7 @@ qt_add_qml_module(FlightDisplayModule
         FlightDisplayViewQtMultimedia.qml
         FlightDisplayViewUVC.qml
         FlightDisplayViewVideo.qml
-        FlyView.qml
+	${CMAKE_SOURCE_DIR}/custom/src/FlyView.qml
         FlyViewAdditionalActionsButton.qml
         FlyViewAdditionalActionsList.qml
         FlyViewAdditionalActionsPanel.qml
@@ -34,7 +42,7 @@ qt_add_qml_module(FlightDisplayModule
         FlyViewTopRightColumnLayout.qml
         FlyViewTopRightPanel.qml
         FlyViewVideo.qml
-        FlyViewWidgetLayer.qml
+	${CMAKE_SOURCE_DIR}/custom/src/FlyViewWidgetLayer.qml
         GripperMenu.qml
         GuidedActionConfirm.qml
         GuidedActionGripper.qml

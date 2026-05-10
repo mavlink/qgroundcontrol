@@ -138,6 +138,8 @@ To create a GitLab token: **GitLab → avatar → Edit profile → Access tokens
 
 ### Triggering manually
 
-The workflow also has a `workflow_dispatch` trigger, so you can run it without a PR:
+The workflow also has a `workflow_dispatch` trigger, so you can build any branch without opening a PR:
 
-**GitHub → Actions → QGC Release → Run workflow**
+**GitHub → Actions → QGC Release → Run workflow → select your branch → Run**
+
+When triggered manually, the `publish-release` job is skipped — no GitHub Release is created. The `.AppImage` and `.dmg` are still built and saved as workflow artifacts, which you can download from the Actions run page.

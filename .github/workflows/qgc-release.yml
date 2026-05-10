@@ -85,6 +85,22 @@ jobs:
           path: ${{ runner.workspace }}/ce_lcp/qgc-interface/release-packages/*.AppImage
           if-no-files-found: error
 
+  # TODO: Linux ARM64 AppImage
+  # Add a build-appimage-arm job for team members running Linux ARM64 (e.g. Apple Silicon
+  # Macs with a Linux VM) so they can download a pre-built binary without building locally.
+  #
+  # Blocked by: Qt 6.8.3 does not distribute pre-built Linux ARM64 packages via aqt
+  # (the tool used by jurplel/install-qt-action), so Qt must be built from source.
+  #
+  # Recommended approach:
+  #   - runs-on: ubuntu-22.04-arm (GitHub-hosted ARM64 runner, free for public repos)
+  #   - Use actions/cache keyed on Qt version to store the built Qt installation
+  #   - On cache miss: download qt-everywhere-src-6.8.3.tar.xz, configure with only the
+  #     modules QGC needs (see QT_MODULES env var above), build and install to /opt/Qt/6.8.3
+  #   - First run ~2 hours to build Qt; all subsequent runs hit the cache and are fast
+  #   - Set QT_ROOT=/opt/Qt/6.8.3/gcc_arm64 before running package_release.sh
+  #   - package_release.sh already uses linuxdeploy (not linuxdeployqt) which supports ARM64
+
   build-dmg:
     name: DMG (macOS ARM)
     runs-on: macos-latest
@@ -152,6 +168,7 @@ jobs:
     name: Publish GitHub Release
     runs-on: ubuntu-22.04
     needs: [setup, build-appimage, build-dmg]
+    if: github.event_name != 'workflow_dispatch'
     permissions:
       contents: write
 
