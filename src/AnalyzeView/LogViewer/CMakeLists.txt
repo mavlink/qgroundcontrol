@@ -26,3 +26,20 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/APMDataFlash
         ${CMAKE_CURRENT_SOURCE_DIR}/PX4ULog
 )
+
+# ----------------------------------------------------------------------------
+# QML Module for Log Viewer UI components
+# ----------------------------------------------------------------------------
+qt_add_library(LogViewerModule STATIC)
+
+qt_add_qml_module(LogViewerModule
+    URI QGroundControl.LogViewer
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        LogViewerChart.qml
+    NO_PLUGIN
+)
+
+target_link_libraries(LogViewerModule PRIVATE AnalyzeViewModule)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE LogViewerModule)
