@@ -58,6 +58,7 @@
   - [Console Logging](qgc-user-guide/settings_view/console_logging.md)
   - [Virtual Joystick (PX4)](qgc-user-guide/settings_view/virtual_joystick.md)
 - [Analyze](qgc-user-guide/analyze_view/index.md)
+  - [Log Viewer](qgc-user-guide/analyze_view/log_viewer.md)
   - [Log Download](qgc-user-guide/analyze_view/log_download.md)
   - [GeoTag Images (PX4)](qgc-user-guide/analyze_view/geotag_images.md)
   - [MAVLink Console (PX4)](qgc-user-guide/analyze_view/mavlink_console.md)
