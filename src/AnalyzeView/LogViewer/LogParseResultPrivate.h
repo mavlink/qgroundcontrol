@@ -11,6 +11,8 @@
 #include <QtCore/QVector>
 
 struct LogParseResult {
+    enum class SourceType { Unknown, PX4ULog, APMDataFlash };
+
     bool ok = false;
     QString errorMessage;
     QStringList availableFields;
@@ -25,4 +27,7 @@ struct LogParseResult {
     double maxTimestamp = -1.0;
     int sampleCount = 0;
     QString detectedVehicleType;
+    SourceType sourceType = SourceType::Unknown;
+    int firmwareMajorVersion = -1;
+    int firmwareMinorVersion = -1;
 };

@@ -33,9 +33,13 @@ ColumnLayout {
 
     property var    _seriesByField: ({})
     property var    _fieldYRange: ({})
+    property var    _fieldFullRange: ({})   // full-dataset min/max, set when series is first created
     property var    _eventSeriesByType: ({})
 
-    property int    _maxChartPointsPerField: 6000
+    // Shared position / zoom signals
+    signal cursorMoved(real timestampSeconds)
+    signal zoomApplied(real minX, real maxX)
+
 
     readonly property real _legendRowHeight: ScreenTools.defaultFontPixelHeight * 1.1
     readonly property real _legendColorBlockSize: ScreenTools.defaultFontPixelHeight * 0.8
@@ -105,13 +109,37 @@ ColumnLayout {
     // -------------------------------------------------------------------------
     // Zoom
     // -------------------------------------------------------------------------
-    function applyZoomRange(minX, maxX) {
+    function _applyZoomInternal(minX, maxX) {
         if (maxX <= minX) return
         _zoomMinX = minX
         _zoomMaxX = maxX
         _binXAxis.min = _zoomMinX
         _binXAxis.max = _zoomMaxX
+        if (_positionMarkerVisible && (_markerXValue < _zoomMinX || _markerXValue > _zoomMaxX)) {
+            _markerXValue = (_zoomMinX + _zoomMaxX) / 2
+        }
         _refreshCursorPixelPos()
+        Qt.callLater(_syncSeriesWithSelection)
+    }
+
+    // User-driven zoom — also emits zoomApplied so other charts can sync
+    function applyZoomRange(minX, maxX) {
+        _applyZoomInternal(minX, maxX)
+        zoomApplied(minX, maxX)
+    }
+
+    // External zoom sync — apply without re-emitting
+    function setSharedZoom(minX, maxX) {
+        _applyZoomInternal(minX, maxX)
+    }
+
+    // External cursor sync — apply without re-emitting
+    function setSharedCursor(t) {
+        if (_binXAxis.max <= _binXAxis.min) return
+        _markerXValue = t
+        _markerPixelX = _axisXToPixel(t)
+        _positionMarkerVisible = true
+        _queryCursorValues()
     }
 
     function resetZoom() {
@@ -150,7 +178,14 @@ ColumnLayout {
             const field = selectedFields[i]
             const value = logParser.fieldValueAt(field, _markerXValue)
             if (isNaN(value)) continue
-            rows.push({ name: field, color: fieldColor(field), value: value })
+            const fr = _fieldFullRange[field]
+            rows.push({
+                name:  field,
+                color: fieldColor(field),
+                value: value,
+                min:   fr ? fr.min : NaN,
+                max:   fr ? fr.max : NaN
+            })
         }
         _markerRows = rows
 
@@ -169,6 +204,7 @@ ColumnLayout {
         _markerPixelX = Math.max(_binChart.plotArea.x, Math.min(_binChart.plotArea.x + _binChart.plotArea.width, pixelX))
         _markerXValue = _pixelToAxisX(_markerPixelX)
         _queryCursorValues()
+        cursorMoved(_markerXValue)
     }
 
     function _refreshCursorPixelPos() {
@@ -211,6 +247,7 @@ ColumnLayout {
         }
         _seriesByField = {}
         _fieldYRange = {}
+        _fieldFullRange = {}
         _eventSeriesByType = {}
 
         if (logParser.minTimestamp >= 0.0 && logParser.maxTimestamp > logParser.minTimestamp) {
@@ -231,11 +268,11 @@ ColumnLayout {
     function _syncSeriesWithSelection() {
         const newSelection = logViewerController.selectedFields
 
+        // Remove series no longer in selection
         const desired = {}
         for (let i = 0; i < newSelection.length; i++) {
             desired[String(newSelection[i])] = true
         }
-
         const tracked = Object.keys(_seriesByField)
         for (let i = 0; i < tracked.length; i++) {
             if (!desired[tracked[i]]) {
@@ -245,37 +282,46 @@ ColumnLayout {
             }
         }
 
+        // Rebuild series data for the current zoom window.
+        // Reuse existing series objects (clear + repopulate) to avoid Qt Graphs
+        // lifecycle issues that occur when a series is removed and immediately recreated.
         for (let i = 0; i < newSelection.length; i++) {
             const fieldName = String(newSelection[i])
-            if (_seriesByField[fieldName]) continue
 
-            const points = logParser.fieldSamples(fieldName)
-            if (!points || points.length === 0) continue
+            const pixelWidth = Math.max(1, Math.floor(_binChart.plotArea.width))
+            const points = logParser.fieldSamplesFiltered(fieldName, _zoomMinX, _zoomMaxX, pixelWidth)
 
-            const series = _lineSeriesComponent.createObject(_binChart, {
-                color: fieldColor(fieldName),
-                width: 2,
-                axisX: _binXAxis,
-                axisY: _binYAxis
-            })
-            _binChart.addSeries(series)
+            let series
+            if (_seriesByField[fieldName]) {
+                series = _seriesByField[fieldName]
+                series.clear()
+            } else {
+                series = _lineSeriesComponent.createObject(_binChart, {
+                    color: fieldColor(fieldName),
+                    width: 2,
+                    axisX: _binXAxis,
+                    axisY: _binYAxis
+                })
+                _binChart.addSeries(series)
+                _seriesByField[fieldName] = series
+
+                // Compute full-dataset min/max once when the series is first created
+                const fr = logParser.fieldMinMax(fieldName)
+                _fieldFullRange[fieldName] = (fr && fr.min !== undefined && fr.min <= fr.max) ? { min: fr.min, max: fr.max } : null
+            }
+
+            if (!points || points.length === 0) {
+                _fieldYRange[fieldName] = { min: 0, max: 1 }
+                continue
+            }
 
             let minY = Number.MAX_VALUE
             let maxY = -Number.MAX_VALUE
-            const sampleStep = Math.max(1, Math.ceil(points.length / _maxChartPointsPerField))
-            let appendedLastX = -Number.MAX_VALUE
-            for (let j = 0; j < points.length; j += sampleStep) {
+            for (let j = 0; j < points.length; j++) {
                 series.append(points[j].x, points[j].y)
-                appendedLastX = points[j].x
                 if (points[j].y < minY) minY = points[j].y
                 if (points[j].y > maxY) maxY = points[j].y
             }
-            if (sampleStep > 1) {
-                const last = points[points.length - 1]
-                if (last && last.x !== appendedLastX) series.append(last.x, last.y)
-            }
-
-            _seriesByField[fieldName] = series
             _fieldYRange[fieldName] = { min: minY, max: maxY }
         }
 
@@ -573,28 +619,35 @@ ColumnLayout {
         // Value popup
         Rectangle {
             id: _valuePopup
-            visible: _positionMarkerVisible
             x: _popupX()
             y: _binChart.plotArea.y
-            width: ScreenTools.defaultFontPixelWidth * 30
+            z: 1003
+            implicitWidth: _valueColumnLayout.implicitWidth + (margin * 2)
+            implicitHeight: _valueColumnLayout.implicitHeight + (margin * 2)
             color: qgcPal.windowShade
             border.color: qgcPal.windowShadeDark
             radius: ScreenTools.defaultFontPixelWidth * 0.3
-            z: 1003
-            implicitHeight: _valueColumnLayout.implicitHeight + (ScreenTools.defaultFontPixelHeight * 0.6)
+            visible: _positionMarkerVisible
 
+            property real margin: ScreenTools.defaultFontPixelWidth / 2
             property real colorBlockWidth: ScreenTools.defaultFontPixelHeight * 0.8
 
             function _popupX() {
-                const rightCornerX = _binChart.plotArea.x + _binChart.plotArea.width - width
-                const popupX = (_markerPixelX > rightCornerX) ? _binChart.plotArea.x : rightCornerX
-                return Math.max(0, Math.min(popupX, _chartContainer.width - width))
+                const plotMidX = _binChart.plotArea.x + _binChart.plotArea.width / 2
+                if (_markerPixelX < plotMidX) {
+                    // Cursor in left half — place popup on the right
+                    const rightX = _binChart.plotArea.x + _binChart.plotArea.width - width
+                    return Math.max(0, Math.min(rightX, _chartContainer.width - width))
+                } else {
+                    // Cursor in right half — place popup on the left
+                    return Math.max(0, _binChart.plotArea.x)
+                }
             }
 
             ColumnLayout {
                 id: _valueColumnLayout
                 anchors.fill: parent
-                anchors.margins: ScreenTools.defaultFontPixelHeight * 0.3
+                anchors.margins: _valuePopup.margin
                 spacing: ScreenTools.defaultFontPixelHeight * 0.2
 
                 QGCLabel {
@@ -612,25 +665,51 @@ ColumnLayout {
                         color: modeColor(_markerModeName)
                     }
 
-                    QGCLabel { text: qsTr("Mode: %1").arg(_markerModeName) }
+                    QGCLabel { text: qsTr("Mode:") }
+                    QGCLabel { text: _markerModeName; font.bold: true }
                 }
 
                 Repeater {
                     model: _markerRows
 
-                    RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth * 0.2
+                    ColumnLayout {
+                        spacing: ScreenTools.defaultFontPixelHeight * 0.15
 
-                        Rectangle {
-                            Layout.preferredWidth: _valuePopup.colorBlockWidth
-                            Layout.preferredHeight: _valuePopup.colorBlockWidth
-                            color: modelData.color
+                        // Line 1: color block + field name
+                        RowLayout {
+                            spacing: ScreenTools.defaultFontPixelWidth * 0.4
+
+                            Rectangle {
+                                Layout.preferredWidth:  _valuePopup.colorBlockWidth
+                                Layout.preferredHeight: _valuePopup.colorBlockWidth
+                                color: modelData.color
+                            }
+
+                            QGCLabel {
+                                width: _valuePopup.width - (ScreenTools.defaultFontPixelWidth * 4)
+                                elide: Text.ElideMiddle
+                                text:  modelData.name
+                                font.bold: true
+                            }
                         }
 
-                        QGCLabel {
-                            width: _valuePopup.width - (ScreenTools.defaultFontPixelWidth * 4)
-                            elide: Text.ElideMiddle
-                            text: modelData.name + ": " + Number(modelData.value).toFixed(3)
+                        // Line 2: Current / Min / Max
+                        RowLayout {
+                            Layout.leftMargin: _valuePopup.colorBlockWidth + ScreenTools.defaultFontPixelWidth * 0.4
+                            spacing: ScreenTools.defaultFontPixelWidth * 0.3
+
+                            QGCLabel { text: qsTr("Current") }
+                            QGCLabel { text: Number(modelData.value).toFixed(3); font.bold: true }
+
+                            Item { width: ScreenTools.defaultFontPixelWidth * 0.5 }
+
+                            QGCLabel { text: qsTr("Min") }
+                            QGCLabel { text: isNaN(modelData.min) ? "—" : Number(modelData.min).toFixed(3); font.bold: true }
+
+                            Item { width: ScreenTools.defaultFontPixelWidth * 0.5 }
+
+                            QGCLabel { text: qsTr("Max") }
+                            QGCLabel { text: isNaN(modelData.max) ? "—" : Number(modelData.max).toFixed(3); font.bold: true }
                         }
                     }
                 }

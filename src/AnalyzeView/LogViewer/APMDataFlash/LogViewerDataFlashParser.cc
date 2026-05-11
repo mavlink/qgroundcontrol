@@ -6,6 +6,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QHash>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QSet>
 #include <QtCore/QVariantMap>
 
@@ -22,6 +23,17 @@ QString _vehicleTypeFromMessageText(const QString &messageText)
     if (text.contains(QStringLiteral("ardurover")))  { return QStringLiteral("ArduRover"); }
     if (text.contains(QStringLiteral("ardusub")))    { return QStringLiteral("ArduSub"); }
     return QString();
+}
+
+// Parse "major.minor" from firmware version strings like "ArduCopter V4.3.1" or "V4.5-stable"
+void _parseFirmwareVersionFromMessageText(const QString &messageText, int &major, int &minor)
+{
+    static const QRegularExpression re(QStringLiteral("V(\\d+)\\.(\\d+)"));
+    const QRegularExpressionMatch m = re.match(messageText);
+    if (m.hasMatch()) {
+        major = m.captured(1).toInt();
+        minor = m.captured(2).toInt();
+    }
 }
 
 QString _ardupilotModeName(const QString &vehicleType, int modeNumber)
@@ -207,6 +219,7 @@ namespace DataFlashParser {
 LogParseResult parseFile(const QString &filePath)
 {
     LogParseResult result;
+    result.sourceType = LogParseResult::SourceType::APMDataFlash;
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -295,8 +308,14 @@ LogParseResult parseFile(const QString &filePath)
                 : values.value(QStringLiteral("Val"));
             if (!paramName.isEmpty()) {
                 QVariantMap row;
-                row[QStringLiteral("name")] = paramName;
-                row[QStringLiteral("value")] = paramValue;
+                row[QStringLiteral("name")]         = paramName;
+                row[QStringLiteral("value")]        = paramValue;
+                // DataFlash logs don't carry default value metadata
+                row[QStringLiteral("isFloat")]      = paramValue.metaType() == QMetaType::fromType<float>()
+                                                      || paramValue.metaType() == QMetaType::fromType<double>();
+                row[QStringLiteral("hasDefault")]   = false;
+                row[QStringLiteral("defaultValue")] = QVariant();
+                row[QStringLiteral("isDefault")]    = false;
                 result.parameters.append(row);
             }
         } else if (fmt.name == kMSG) {
@@ -304,6 +323,7 @@ LogParseResult parseFile(const QString &filePath)
             const QString detected = _vehicleTypeFromMessageText(text);
             if (result.detectedVehicleType.isEmpty() && !detected.isEmpty()) {
                 result.detectedVehicleType = detected;
+                _parseFirmwareVersionFromMessageText(text, result.firmwareMajorVersion, result.firmwareMinorVersion);
             }
             if (!text.isEmpty()) {
                 QVariantMap row;

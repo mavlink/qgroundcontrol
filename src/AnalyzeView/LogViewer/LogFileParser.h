@@ -65,9 +65,26 @@ public:
     Q_INVOKABLE void parseFileAsync(const QString &filePath);
     Q_INVOKABLE void clear();
     Q_INVOKABLE QVariantList fieldSamples(const QString &fieldName) const;
+    Q_INVOKABLE QVariantList fieldSamplesFiltered(const QString &fieldName, double minX, double maxX, int pixelWidth) const;
+    Q_INVOKABLE QVariantMap  fieldMinMax(const QString &fieldName) const;
     Q_INVOKABLE double fieldValueAt(const QString &fieldName, double timestampSeconds) const;
     Q_INVOKABLE QString modeAt(double timestampSeconds) const;
     Q_INVOKABLE QVariantList eventsNear(double timestampSeconds, double thresholdSeconds) const;
+
+    /// Returns a list of GPS path points as QVariantMap entries with `latitude` and `longitude` keys
+    /// (compatible with QML MapPolyline.path via implicit coordinate coercion).
+    /// Tries known field name patterns for both PX4 ULog and APM DataFlash.
+    /// Returns an empty list if no GPS data is found.
+    Q_INVOKABLE QVariantList gpsPath() const;
+
+    /// Returns the field name used for altitude data paired with the GPS path source,
+    /// e.g. "vehicle_global_position.alt". Returns empty string if no GPS data was found.
+    /// Must be called after gpsPath() has been evaluated.
+    Q_INVOKABLE QString gpsAltitudeFieldName() const;
+
+    /// Returns {latitude, longitude} for the GPS position nearest to timestampSeconds.
+    /// Returns an empty map if GPS data is not available.
+    Q_INVOKABLE QVariantMap gpsCoordAt(double timestampSeconds) const;
 
 signals:
     void parsedChanged();
@@ -103,4 +120,9 @@ private:
     double _maxTimestamp = -1.0;
     int _sampleCount = 0;
     quint64 _parseRequestId = 0;
+
+    // Cached GPS field names, set by gpsPath() when a valid candidate is found.
+    mutable QString _gpsLatField;
+    mutable QString _gpsLonField;
+    mutable QString _gpsAltField;
 };

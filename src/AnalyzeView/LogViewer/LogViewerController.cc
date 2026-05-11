@@ -26,22 +26,22 @@ void LogViewerController::clear()
     _expandedGroups.clear();
     emit fieldRowsChanged();
     emit selectedFieldsChanged();
-    _setLog(SourceType::None, QString(), tr("No log loaded"));
+    _setLog(SourceType::None, QString());
 }
 
 void LogViewerController::openTLog(const QString &path)
 {
-    _setLog(SourceType::TLog, path, tr("Telemetry log loaded"));
+    _setLog(SourceType::TLog, path);
 }
 
 void LogViewerController::openBinLog(const QString &path)
 {
-    _setLog(SourceType::Bin, path, tr("DataFlash log loaded"));
+    _setLog(SourceType::Bin, path);
 }
 
 void LogViewerController::openULogFile(const QString &path)
 {
-    _setLog(SourceType::ULog, path, tr("ULog file loaded"));
+    _setLog(SourceType::ULog, path);
 }
 
 void LogViewerController::setPlottableFields(const QStringList &fieldNames)
@@ -163,7 +163,7 @@ QStringList LogViewerController::modeLegendEntries(const QVariantList &modeSegme
     return modes;
 }
 
-void LogViewerController::_setLog(SourceType sourceType, const QString &path, const QString &statusText)
+void LogViewerController::_setLog(SourceType sourceType, const QString &path)
 {
     if (_sourceType != sourceType) {
         _sourceType = sourceType;
@@ -173,11 +173,6 @@ void LogViewerController::_setLog(SourceType sourceType, const QString &path, co
     if (_currentLogPath != path) {
         _currentLogPath = path;
         emit currentLogPathChanged();
-    }
-
-    if (_statusText != statusText) {
-        _statusText = statusText;
-        emit statusTextChanged();
     }
 
     qCDebug(LogViewerControllerLog) << "sourceType" << static_cast<int>(_sourceType) << "path" << _currentLogPath;
