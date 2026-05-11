@@ -15,7 +15,6 @@ class LogViewerController : public QObject
     Q_PROPERTY(SourceType   sourceType     READ sourceType     NOTIFY sourceTypeChanged)
     Q_PROPERTY(QString      currentLogPath READ currentLogPath NOTIFY currentLogPathChanged)
     Q_PROPERTY(bool         hasLoadedLog   READ hasLoadedLog   NOTIFY currentLogPathChanged)
-    Q_PROPERTY(QString      statusText     READ statusText     NOTIFY statusTextChanged)
     Q_PROPERTY(QVariantList fieldRows      READ fieldRows      NOTIFY fieldRowsChanged)
     Q_PROPERTY(QStringList  selectedFields READ selectedFields NOTIFY selectedFieldsChanged)
 
@@ -34,7 +33,6 @@ public:
     SourceType sourceType() const { return _sourceType; }
     QString currentLogPath() const { return _currentLogPath; }
     bool hasLoadedLog() const { return !_currentLogPath.isEmpty(); }
-    QString statusText() const { return _statusText; }
     QVariantList fieldRows() const { return _fieldRows; }
     QStringList selectedFields() const { return _selectedFields; }
 
@@ -58,18 +56,16 @@ public:
 signals:
     void sourceTypeChanged();
     void currentLogPathChanged();
-    void statusTextChanged();
     void fieldRowsChanged();
     void selectedFieldsChanged();
 
 private:
     void _rebuildFieldRows();
     QString _assignColorForKey(const QString &key) const;
-    void _setLog(SourceType sourceType, const QString &path, const QString &statusText);
+    void _setLog(SourceType sourceType, const QString &path);
 
     SourceType _sourceType = SourceType::None;
     QString _currentLogPath;
-    QString _statusText;
     QStringList _plottableFields;
     QVariantList _fieldRows;
     QStringList _selectedFields;

@@ -331,4 +331,349 @@ void LogFileParserTest::_parseUnsupportedExtensionTest()
     QVERIFY(!parser.parseError().isEmpty());
 }
 
+void LogFileParserTest::_fieldSamplesFilteredComprehensiveTest()
+{
+    // -----------------------------------------------------------------------
+    // Dataset: 500 samples, t_i = (i*2000 + 1000) μs  for i = 0..499
+    //          → 0.001 s, 0.003 s, ..., 0.999 s  (step = 0.002 s)
+    //
+    // 10 macro-buckets  b = 0..9, each containing 50 consecutive samples.
+    // Within macro-bucket b  (i = b*50 + offset, offset = 0..49):
+    //   offset  0  → y =  1000.0 + b   unique "first" per bucket
+    //   offset 15  → y = -9999.0       global minimum
+    //   offset 30  → y = +9999.0       global maximum
+    //   offset 49  → y = -(1000.0 + b) unique "last" per bucket
+    //   all other  → y =  0.0
+    //
+    // With filter range [0.0, 1.0] and pixelWidth=10, col = floor(t*10),
+    // so macro-bucket b maps exactly to pixel column b (verified analytically).
+    // 500 > 4×10=40 → filtering applies; expected output = 40 points.
+    // -----------------------------------------------------------------------
+    const QByteArray bytes = buildULog(
+        [](ulog_cpp::Writer &w) {
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "sens",
+                {ulog_cpp::Field{"uint64_t", "timestamp"},
+                 ulog_cpp::Field{"float",    "val"}}
+            });
+        },
+        [](ulog_cpp::Writer &w) {
+            w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 1, "sens"});
+            for (int i = 0; i < 500; i++) {
+                const uint64_t ts     = static_cast<uint64_t>(i) * 2000ULL + 1000ULL;
+                const int      b      = i / 50;   // macro-bucket 0..9
+                const int      offset = i % 50;   // position within bucket
+                float y = 0.0f;
+                if      (offset ==  0) y =  1000.0f + static_cast<float>(b);
+                else if (offset == 15) y = -9999.0f;
+                else if (offset == 30) y = +9999.0f;
+                else if (offset == 49) y = -(1000.0f + static_cast<float>(b));
+                w.data(ulog_cpp::Data{1, makePayload64Float(ts, y)});
+            }
+        });
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.ulg"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+    QCOMPARE(parser.fieldSamples(QStringLiteral("sens.val")).size(), 500);
+
+    // -----------------------------------------------------------------------
+    // Full range [0.0, 1.0], pixelWidth=10
+    // 500 > 4×10=40 → filtering; one pixel column per macro-bucket.
+    // Each bucket has 4 distinct landmarks → exactly 40 output points.
+    // -----------------------------------------------------------------------
+    {
+        const QVariantList result = parser.fieldSamplesFiltered(
+            QStringLiteral("sens.val"), 0.0, 1.0, 10);
+
+        QCOMPARE(result.size(), 40);
+
+        int minCount = 0, maxCount = 0, firstCount = 0, lastCount = 0;
+        for (const QVariant &v : result) {
+            const double y = v.toPointF().y();
+            if (qAbs(y - (-9999.0)) < 0.01) ++minCount;
+            if (qAbs(y - (+9999.0)) < 0.01) ++maxCount;
+            if (y >= 1000.0 && y <= 1009.0)   ++firstCount;  // 1000+b, b=0..9
+            if (y <= -1000.0 && y >= -1009.0)  ++lastCount;  // -(1000+b)
+        }
+        QCOMPARE(minCount,   10);  // one per bucket
+        QCOMPARE(maxCount,   10);
+        QCOMPARE(firstCount, 10);
+        QCOMPARE(lastCount,  10);
+
+        for (int i = 1; i < result.size(); i++) {
+            QVERIFY(result[i].toPointF().x() >= result[i - 1].toPointF().x());
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Passthrough: pixelWidth=500 → threshold 4×500=2000 ≥ 500 → no filtering
+    // -----------------------------------------------------------------------
+    {
+        const QVariantList result = parser.fieldSamplesFiltered(
+            QStringLiteral("sens.val"), 0.0, 1.0, 500);
+        QCOMPARE(result.size(), 500);
+    }
+
+    // -----------------------------------------------------------------------
+    // Zoom: first half [0.0, 0.5], pixelWidth=10
+    // Slice = 250 samples (i=0..249) > 40 → filtering; 10 sub-buckets of 25.
+    // Sub-buckets 0,2,4,6,8 contain the min; sub-buckets 1,3,5,7,9 the max.
+    // -----------------------------------------------------------------------
+    {
+        const QVariantList result = parser.fieldSamplesFiltered(
+            QStringLiteral("sens.val"), 0.0, 0.5, 10);
+
+        QVERIFY(result.size() > 0);
+        QVERIFY(result.size() <= 40);
+
+        int minCount = 0, maxCount = 0;
+        for (const QVariant &v : result) {
+            const QPointF p = v.toPointF();
+            QVERIFY(p.x() >= 0.0 && p.x() <= 0.5);
+            if (qAbs(p.y() - (-9999.0)) < 0.01) ++minCount;
+            if (qAbs(p.y() - (+9999.0)) < 0.01) ++maxCount;
+        }
+        QCOMPARE(minCount, 5);
+        QCOMPARE(maxCount, 5);
+
+        for (int i = 1; i < result.size(); i++) {
+            QVERIFY(result[i].toPointF().x() >= result[i - 1].toPointF().x());
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Zoom: single macro-bucket [0.0, 0.1], pixelWidth=10
+    // Slice = 50 samples > 40 → filtering; 10 sub-buckets of 5 samples each.
+    // Macro-bucket 0 landmarks land in distinct sub-buckets:
+    //   offset  0 → col 0  (y =  1000.0  first of b=0)
+    //   offset 15 → col 3  (y = -9999.0)
+    //   offset 30 → col 6  (y = +9999.0)
+    //   offset 49 → col 9  (y = -1000.0  last of b=0)
+    // -----------------------------------------------------------------------
+    {
+        const QVariantList result = parser.fieldSamplesFiltered(
+            QStringLiteral("sens.val"), 0.0, 0.1, 10);
+
+        QVERIFY(result.size() > 0);
+        QVERIFY(result.size() <= 40);
+
+        bool hasFirst = false, hasMin = false, hasMax = false, hasLast = false;
+        for (const QVariant &v : result) {
+            const QPointF p = v.toPointF();
+            QVERIFY(p.x() >= 0.0 && p.x() <= 0.1);
+            if (qAbs(p.y() -   1000.0) < 0.01) hasFirst = true;
+            if (qAbs(p.y() - (-9999.0)) < 0.01) hasMin   = true;
+            if (qAbs(p.y() -   9999.0) < 0.01) hasMax   = true;
+            if (qAbs(p.y() - (-1000.0)) < 0.01) hasLast  = true;
+        }
+        QVERIFY(hasFirst);
+        QVERIFY(hasMin);
+        QVERIFY(hasMax);
+        QVERIFY(hasLast);
+
+        for (int i = 1; i < result.size(); i++) {
+            QVERIFY(result[i].toPointF().x() >= result[i - 1].toPointF().x());
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Out-of-range: no samples in [5.0, 6.0] → empty result
+    // -----------------------------------------------------------------------
+    {
+        const QVariantList result = parser.fieldSamplesFiltered(
+            QStringLiteral("sens.val"), 5.0, 6.0, 100);
+        QCOMPARE(result.size(), 0);
+    }
+}
+
+// ============================================================================
+// gpsPath() tests
+// ============================================================================
+
+namespace {
+
+// Build a ULog payload: uint64_t timestamp + two doubles (lat, lon).
+std::vector<uint8_t> makePayload64DoubleDouble(uint64_t ts, double lat, double lon)
+{
+    std::vector<uint8_t> buf(24);
+    memcpy(buf.data(),      &ts,  8);
+    memcpy(buf.data() +  8, &lat, 8);
+    memcpy(buf.data() + 16, &lon, 8);
+    return buf;
+}
+
+// Build a DataFlash payload for a POS message: Q (uint64) + L (int32) + L (int32).
+// 'L' format = int32 stored as degrees * 1e7.
+QByteArray makePOSPayload(uint64_t timeUs, double latDeg, double lonDeg)
+{
+    QByteArray payload(16, '\0');
+    memcpy(payload.data(), &timeUs, 8);
+    const int32_t latRaw = static_cast<int32_t>(latDeg * 1.0e7);
+    const int32_t lonRaw = static_cast<int32_t>(lonDeg * 1.0e7);
+    memcpy(payload.data() + 8,  &latRaw, 4);
+    memcpy(payload.data() + 12, &lonRaw, 4);
+    return payload;
+}
+
+void appendBinMessage(QByteArray &bytes, uint8_t type, const QByteArray &payload)
+{
+    bytes.append(static_cast<char>(0xA3));
+    bytes.append(static_cast<char>(0x95));
+    bytes.append(static_cast<char>(type));
+    bytes.append(payload);
+}
+
+QByteArray makeFmtPayloadStr(uint8_t type, uint8_t length, const char *name,
+                              const char *format, const char *columns)
+{
+    QByteArray p(86, '\0');
+    p[0] = static_cast<char>(type);
+    p[1] = static_cast<char>(length);
+    memcpy(p.data() + 2,  name,    qMin<int>(4,  static_cast<int>(strlen(name))));
+    memcpy(p.data() + 6,  format,  qMin<int>(16, static_cast<int>(strlen(format))));
+    memcpy(p.data() + 22, columns, qMin<int>(64, static_cast<int>(strlen(columns))));
+    return p;
+}
+
+} // anonymous namespace
+
+void LogFileParserTest::_gpsPathULogVehicleGlobalPositionTest()
+{
+    // Build a ULog with vehicle_global_position containing lat/lon as double (degrees).
+    // Three samples at known coordinates.
+    struct Sample { double lat; double lon; };
+    static const Sample samples[] = {
+        { 47.397742, 8.545594 },
+        { 47.397800, 8.545700 },
+        { 47.397900, 8.545800 },
+    };
+
+    const QByteArray bytes = buildULog(
+        [](ulog_cpp::Writer &w) {
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "vehicle_global_position",
+                {ulog_cpp::Field{"uint64_t", "timestamp"},
+                 ulog_cpp::Field{"double",   "lat"},
+                 ulog_cpp::Field{"double",   "lon"}}
+            });
+        },
+        [](ulog_cpp::Writer &w) {
+            w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 1, "vehicle_global_position"});
+            uint64_t ts = 500000ULL;
+            for (const auto &s : samples) {
+                w.data(ulog_cpp::Data{1, makePayload64DoubleDouble(ts, s.lat, s.lon)});
+                ts += 500000ULL;
+            }
+        });
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.ulg"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+    QVERIFY(parser.parsed());
+
+    const QVariantList path = parser.gpsPath();
+    QCOMPARE(path.size(), static_cast<int>(std::size(samples)));
+
+    for (int i = 0; i < path.size(); i++) {
+        const QVariantMap coord = path[i].toMap();
+        QVERIFY(qAbs(coord.value(QStringLiteral("latitude")).toDouble()  - samples[i].lat) < 1e-6);
+        QVERIFY(qAbs(coord.value(QStringLiteral("longitude")).toDouble() - samples[i].lon) < 1e-6);
+    }
+}
+
+void LogFileParserTest::_gpsPathULogVehicleGpsPositionLatDegTest()
+{
+    // Simulates newer PX4 firmware that logs vehicle_gps_position with
+    // latitude_deg/longitude_deg (double, degrees) instead of lat/lon.
+    // vehicle_global_position is intentionally absent to confirm fallback.
+    struct Sample { double lat; double lon; };
+    static const Sample samples[] = {
+        { 47.397742, 8.545594 },
+        { 47.397800, 8.545700 },
+        { 47.397900, 8.545800 },
+    };
+
+    const QByteArray bytes = buildULog(
+        [](ulog_cpp::Writer &w) {
+            w.messageFormat(ulog_cpp::MessageFormat{
+                "vehicle_gps_position",
+                {ulog_cpp::Field{"uint64_t", "timestamp"},
+                 ulog_cpp::Field{"double",   "latitude_deg"},
+                 ulog_cpp::Field{"double",   "longitude_deg"}}
+            });
+        },
+        [](ulog_cpp::Writer &w) {
+            w.addLoggedMessage(ulog_cpp::AddLoggedMessage{0, 1, "vehicle_gps_position"});
+            uint64_t ts = 500000ULL;
+            for (const auto &s : samples) {
+                w.data(ulog_cpp::Data{1, makePayload64DoubleDouble(ts, s.lat, s.lon)});
+                ts += 500000ULL;
+            }
+        });
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.ulg"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+    QVERIFY(parser.parsed());
+
+    const QVariantList path = parser.gpsPath();
+    QCOMPARE(path.size(), static_cast<int>(std::size(samples)));
+
+    for (int i = 0; i < path.size(); i++) {
+        const QVariantMap coord = path[i].toMap();
+        QVERIFY(qAbs(coord.value(QStringLiteral("latitude")).toDouble()  - samples[i].lat) < 1e-6);
+        QVERIFY(qAbs(coord.value(QStringLiteral("longitude")).toDouble() - samples[i].lon) < 1e-6);
+    }
+}
+
+void LogFileParserTest::_gpsPathAPMDataFlashPOSTest()
+{
+    // Build a minimal DataFlash .bin with a POS message (format QLL).
+    // 'L' type: int32 stored, value = raw / 1e7 (degrees).
+    struct Sample { double lat; double lon; };
+    static const Sample samples[] = {
+        { -35.363261, 149.165230 },
+        { -35.363100, 149.165400 },
+        { -35.362900, 149.165600 },
+    };
+
+    QByteArray bytes;
+    // FMT for POS: type=155, length= 3(hdr)+8(Q)+4(L)+4(L)=19, name="POS", format="QLL"
+    appendBinMessage(bytes, 128, makeFmtPayloadStr(155, 19, "POS", "QLL", "TimeUS,Lat,Lng"));
+
+    uint64_t ts = 1000000ULL;
+    for (const auto &s : samples) {
+        appendBinMessage(bytes, 155, makePOSPayload(ts, s.lat, s.lon));
+        ts += 1000000ULL;
+    }
+
+    QTemporaryFile tmp;
+    tmp.setFileTemplate(QDir::tempPath() + QStringLiteral("/logtest_XXXXXX.bin"));
+    QVERIFY(writeTempFile(tmp, bytes));
+
+    LogFileParser parser;
+    QVERIFY(parser.parseFile(tmp.fileName()));
+    QVERIFY(parser.parsed());
+
+    const QVariantList path = parser.gpsPath();
+    QCOMPARE(path.size(), static_cast<int>(std::size(samples)));
+
+    for (int i = 0; i < path.size(); i++) {
+        const QVariantMap coord = path[i].toMap();
+        // 'L' precision is 1e-7 degrees; allow a small rounding tolerance
+        QVERIFY(qAbs(coord.value(QStringLiteral("latitude")).toDouble()  - samples[i].lat) < 1e-6);
+        QVERIFY(qAbs(coord.value(QStringLiteral("longitude")).toDouble() - samples[i].lon) < 1e-6);
+    }
+}
+
 UT_REGISTER_TEST(LogFileParserTest, TestLabel::Unit, TestLabel::AnalyzeView)

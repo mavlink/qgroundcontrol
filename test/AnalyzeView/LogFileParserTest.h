@@ -15,4 +15,8 @@ private slots:
     void _parseULogInvalidFileTest();
     void _parseDataFlashRegressionTest();
     void _parseUnsupportedExtensionTest();
+    void _fieldSamplesFilteredComprehensiveTest();
+    void _gpsPathULogVehicleGlobalPositionTest();
+    void _gpsPathULogVehicleGpsPositionLatDegTest();
+    void _gpsPathAPMDataFlashPOSTest();
 };
