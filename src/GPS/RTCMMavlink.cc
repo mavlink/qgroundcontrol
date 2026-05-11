@@ -84,7 +84,7 @@ void RTCMMavlink::_calculateBandwith(qsizetype bytes)
 
     const qint64 elapsed = _bandwidthTimer.elapsed();
     if (elapsed > 1000) {
-        qCDebug(RTCMMavlinkLog) << QStringLiteral("RTCM bandwidth: %1 kB/s").arg(((_bandwidthByteCounter / elapsed) * 1000.f) / 1024.f);
+        qCDebug(RTCMMavlinkLog) << QStringLiteral("RTCM bandwidth: %1 kB/s").arg((_bandwidthByteCounter * 1000.0) / elapsed / 1024.0, 0, 'f', 3);
         (void) _bandwidthTimer.restart();
         _bandwidthByteCounter = 0;
     }

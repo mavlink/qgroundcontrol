@@ -10,6 +10,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class RTCMMavlink;
+class RTCMUdpInput;
 class NTRIPSettings;
 class Vehicle;
 class MultiVehicleManager;
@@ -115,6 +116,7 @@ private:
 
     NTRIPHttpTransport* _transport = nullptr;
     RTCMMavlink* _rtcmMavlink = nullptr;
+    RTCMUdpInput* _rtcmUdpInput = nullptr;
     QTimer* _reconnectTimer = nullptr;
     int _reconnectAttempts = 0;
     bool _startStopBusy = false;

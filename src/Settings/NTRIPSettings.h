@@ -22,4 +22,6 @@ public:
     DEFINE_SETTINGFACT(ntripUdpForwardEnabled)
     DEFINE_SETTINGFACT(ntripUdpTargetAddress)
     DEFINE_SETTINGFACT(ntripUdpTargetPort)
+    DEFINE_SETTINGFACT(rtcmUdpInputEnabled)
+    DEFINE_SETTINGFACT(rtcmUdpInputPort)
 };
