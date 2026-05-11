@@ -141,8 +141,13 @@ Map {
         acceptedDevices:    Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland" ?
                                 PointerDevice.Mouse | PointerDevice.TouchPad : PointerDevice.Mouse
         rotationScale:      1 / 120
-        property:           "zoomLevel"
 
+        onWheel: (event) => {
+            const zoomDelta = event.angleDelta.y * rotationScale
+            const mouseGeoPos = _map.toCoordinate(Qt.point(event.x, event.y), false)
+            _map.zoomLevel = Math.max(_map.zoomLevel + zoomDelta, 0)
+            _map.alignCoordinateToPoint(mouseGeoPos, Qt.point(event.x, event.y))
+        }
     }
 
     // We specifically do not use a DragHandler for panning. It just causes too many problems if you overlay anything else like a Flickable above it.
