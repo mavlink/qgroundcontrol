@@ -11,6 +11,9 @@
                 },
                 {
                     "setting": "viewer3DSettings.mapProvider"
+                },
+                {
+                    "setting": "viewer3DSettings.keepSceneAlive"
                 }
             ]
         },
