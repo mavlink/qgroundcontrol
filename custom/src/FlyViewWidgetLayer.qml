@@ -56,18 +56,28 @@ Item {
 
     property bool utmspActTrigger
 
+    // Crown & Eagle panel constants — must stay in sync with FlyViewCustomLayer.qml
+    readonly property real _ceLeftPanel:  260
+    readonly property real _ceRightPanel: 260
+    readonly property real _ceTopBar:     44
+    readonly property real _ceBottomBar:  56
+
+    // Pip-view inset pass-through (null-safe, used only for inset reporting)
+    readonly property real _piBottomLeft: parentToolInsets ? parentToolInsets.bottomEdgeLeftInset : 0
+    readonly property real _piLeftBottom: parentToolInsets ? parentToolInsets.leftEdgeBottomInset : 0
+
     QGCToolInsets {
         id:                     _totalToolInsets
         leftEdgeTopInset:       toolStrip.leftEdgeTopInset
         leftEdgeCenterInset:    toolStrip.leftEdgeCenterInset
-        leftEdgeBottomInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.leftEdgeBottomInset : parentToolInsets.leftEdgeBottomInset
+        leftEdgeBottomInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.leftEdgeBottomInset : _piLeftBottom
         rightEdgeTopInset:      topRightPanel.rightEdgeTopInset
         rightEdgeCenterInset:   topRightPanel.rightEdgeCenterInset
         rightEdgeBottomInset:   0
         topEdgeLeftInset:       toolStrip.topEdgeLeftInset
         topEdgeCenterInset:     mapScale.topEdgeCenterInset
         topEdgeRightInset:      topRightPanel.topEdgeRightInset
-        bottomEdgeLeftInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeLeftInset : parentToolInsets.bottomEdgeLeftInset
+        bottomEdgeLeftInset:    virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeLeftInset : _piBottomLeft
         bottomEdgeCenterInset:  0
         bottomEdgeRightInset:   virtualJoystickMultiTouch.visible ? virtualJoystickMultiTouch.bottomEdgeRightInset : 0
     }
@@ -76,13 +86,23 @@ Item {
         id:                     topRightPanel
         anchors.top:            parent.top
         anchors.right:          parent.right
-        anchors.topMargin:      _layoutMargin
-        anchors.rightMargin:    _layoutMargin
+        anchors.topMargin:      _layoutMargin + _ceTopBar
+        anchors.rightMargin:    _layoutMargin + _ceRightPanel
         maximumHeight:          parent.height - _margins * 5
 
         property real topEdgeRightInset:    height + _layoutMargin
         property real rightEdgeTopInset:    width + _layoutMargin
         property real rightEdgeCenterInset: rightEdgeTopInset
+    }
+
+    FlyViewTopRightColumnLayout {
+        id:                 topRightColumnLayout
+        anchors.top:        parent.top
+        anchors.right:      parent.right
+        anchors.topMargin:  _layoutMargin + _ceTopBar
+        anchors.rightMargin: _layoutMargin + _ceRightPanel
+        spacing:            _layoutSpacing
+        visible:            !topRightPanel.visible
     }
 
     FlyViewMissionCompleteDialog {
@@ -106,7 +126,7 @@ Item {
         id:                         virtualJoystickMultiTouch
         z:                          QGroundControl.zOrderTopMost + 1
         anchors.right:              parent.right
-        anchors.rightMargin:        anchors.leftMargin
+        anchors.rightMargin:        _ceRightPanel
         height:                     Math.min(parent.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
         visible:                    _virtualJoystickEnabled && !QGroundControl.videoManager.fullScreen && !(_activeVehicle ? _activeVehicle.usingHighLatencyLink : false)
         anchors.bottom:             parent.bottom
@@ -121,8 +141,8 @@ Item {
         property bool leftHandedMode:          QGroundControl.settingsManager.appSettings.virtualJoystickLeftHandedMode.rawValue
         property bool _virtualJoystickEnabled: QGroundControl.settingsManager.appSettings.virtualJoystick.rawValue
         property real bottomEdgeRightInset:    parent.height-y
-        property var  _pipViewMargin:          _pipView.visible ? parentToolInsets.bottomEdgeLeftInset + ScreenTools.defaultFontPixelHeight * 2 :
-                                               ScreenTools.defaultFontPixelHeight * 1.5
+        property var  _pipViewMargin:          _pipView.visible ? _ceBottomBar + ScreenTools.defaultFontPixelHeight * 2 :
+                                               _ceBottomBar + ScreenTools.defaultFontPixelHeight * 1.5
 
         property var  bottomLoaderMargin:      _pipViewMargin >= parent.height / 2 ? parent.height / 2 : _pipViewMargin
 
@@ -147,12 +167,12 @@ Item {
 
     FlyViewToolStrip {
         id:                     toolStrip
-        anchors.leftMargin:     _toolsMargin + parentToolInsets.leftEdgeCenterInset
-        anchors.topMargin:      _toolsMargin + parentToolInsets.topEdgeLeftInset
+        anchors.leftMargin:     _toolsMargin + _ceLeftPanel
+        anchors.topMargin:      _toolsMargin + _ceTopBar
         anchors.left:           parent.left
         anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
-        maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
+        maxHeight:              parent.height - y - _ceBottomBar - _toolsMargin
         visible:                !QGroundControl.videoManager.fullScreen
 
         onDisplayPreFlightChecklist: {
@@ -179,6 +199,7 @@ Item {
     MapScale {
         id:                 mapScale
         anchors.margins:    _toolsMargin
+        anchors.topMargin:  _toolsMargin + _ceTopBar
         anchors.left:       toolStrip.right
         anchors.top:        parent.top
         mapControl:         _mapControl
