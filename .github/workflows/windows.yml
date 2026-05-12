@@ -68,15 +68,12 @@ jobs:
             arch: win64_msvc2022_arm64
             package: QGroundControl-installer-ARM64
 
-          # TODO: Remove qt_version override once aqtinstall supports Qt 6.10.1+ for cross-compiled ARM64
-          # Workaround: Pin to Qt 6.10.0 until aqtinstall fix is released
-          # Tracking: https://github.com/miurahr/aqtinstall/pull/952
           - variant: arm64-cross
             os: windows-2022
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             package: QGroundControl-installer-AMD64-ARM64
-            qt_version: '6.10.0'
+            qt_version: '6.10.1'
 
     defaults:
       run:
