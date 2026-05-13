@@ -69,6 +69,9 @@ public:
 
     QGCOptions* options() final { return _options; }
 
+    QString stableVersionCheckFileUrl() const override;
+    QString stableDownloadLocation() const override;
+
     /// This allows you to override/hide QGC Application settings
     void adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool& userVisible) final;
     /// This modifies QGC colors palette to match possible custom corporate branding

@@ -28,6 +28,13 @@
         <file alias="QGCLogoFull.svg">res/Images/QGCLogoFull.svg</file>
         <file alias="qgroundcontrol.ico">res/icons/custom_qgroundcontrol.ico</file>
     </qresource>
+    <qresource prefix="/Custom/fonts">
+        <file alias="BebasNeue-Regular.ttf">res/Custom/fonts/BebasNeue-Regular.ttf</file>
+        <file alias="Barlow-Regular.ttf">res/Custom/fonts/Barlow-Regular.ttf</file>
+        <file alias="Barlow-Medium.ttf">res/Custom/fonts/Barlow-Medium.ttf</file>
+        <file alias="Barlow-SemiBold.ttf">res/Custom/fonts/Barlow-SemiBold.ttf</file>
+        <file alias="Barlow-Bold.ttf">res/Custom/fonts/Barlow-Bold.ttf</file>
+    </qresource>
     <qresource prefix="/res">
         <file alias="QGCLogoFull.svg">res/Custom/logos/sprig-logo-light.svg</file>
         <file alias="QGCLogoWhite.svg">res/Custom/logos/sprig-logo-light.svg</file>
