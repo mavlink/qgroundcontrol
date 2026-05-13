@@ -164,6 +164,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
     PRIVATE
         $<$<NOT:$<BOOL:${QGC_STABLE_BUILD}>>:QGC_DAILY_BUILD>
         $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>
+        $<$<BOOL:${QGC_DISABLE_APM_PLUGIN}>:QGC_DISABLE_APM_PLUGIN>
 )
 
 # Build configuration-specific definitions
