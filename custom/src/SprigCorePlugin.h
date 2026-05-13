@@ -18,12 +18,13 @@ class SprigFlyViewOptions : public QGCFlyViewOptions
     Q_OBJECT
 
 public:
-    explicit SprigFlyViewOptions(SprigOptions *options, QObject *parent = nullptr);
+    explicit SprigFlyViewOptions(SprigOptions* options, QObject* parent = nullptr);
 
     // Overrides from QGCFlyViewOptions
 
     /// This custom build has it's own custom instrument panel. Don't show regular one.
     bool showInstrumentPanel() const final { return false; }
+
     /// This custom build does not support conecting multiple vehicles to it.
     /// This in turn simplifies various parts of the QGC ui.
     bool showMultiVehicleList() const final { return false; }
@@ -36,17 +37,18 @@ class SprigOptions : public QGCOptions
     Q_OBJECT
 
 public:
-    explicit SprigOptions(SprigCorePlugin *plugin, QObject *parent = nullptr);
+    explicit SprigOptions(SprigCorePlugin* plugin, QObject* parent = nullptr);
 
     // Overrides from QGCOptions
 
     /// Firmware upgrade page is only shown in Advanced Mode.
     bool showFirmwareUpgrade() const final { return _plugin->showAdvancedUI(); }
-    QGCFlyViewOptions *flyViewOptions() const final { return _flyViewOptions; }
+
+    QGCFlyViewOptions* flyViewOptions() const final { return _flyViewOptions; }
 
 private:
-    QGCCorePlugin *_plugin = nullptr;
-    SprigFlyViewOptions *_flyViewOptions = nullptr;
+    QGCCorePlugin* _plugin = nullptr;
+    SprigFlyViewOptions* _flyViewOptions = nullptr;
 };
 
 /*===========================================================================*/
@@ -56,21 +58,25 @@ class SprigCorePlugin : public QGCCorePlugin
     Q_OBJECT
 
 public:
-    explicit SprigCorePlugin(QObject *parent = nullptr);
+    explicit SprigCorePlugin(QObject* parent = nullptr);
 
-    static QGCCorePlugin *instance();
+    static QGCCorePlugin* instance();
 
     // Overrides from QGCCorePlugin
 
     void init() override;
     void cleanup() final;
-    QGCOptions *options() final { return _options; }
+
+    QGCOptions* options() final { return _options; }
+
+    QString stableVersionCheckFileUrl() const final;
+    QString stableDownloadLocation() const final;
     /// This allows you to override/hide QGC Application settings
-    void adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible) final;
+    void adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool& userVisible) final;
     /// This modifies QGC colors palette to match possible custom corporate branding
-    void paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t &colorInfo) final;
+    void paletteOverride(const QString& colorName, QGCPalette::PaletteColorInfo_t& colorInfo) final;
     /// We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
-    QQmlApplicationEngine *createQmlApplicationEngine(QObject *parent) final;
+    QQmlApplicationEngine* createQmlApplicationEngine(QObject* parent) final;
 
 private slots:
     void _advancedChanged(bool advanced);
@@ -78,10 +84,10 @@ private slots:
 private:
     void _addSettingsEntry(const QString& title, const char* qmlFile, const char* iconFile = nullptr);
 
-    SprigOptions *_options = nullptr;
-    QQmlApplicationEngine *_qmlEngine = nullptr;
-    class SprigOverrideInterceptor *_selector = nullptr;
-    QVariantList _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+    SprigOptions* _options = nullptr;
+    QQmlApplicationEngine* _qmlEngine = nullptr;
+    class SprigOverrideInterceptor* _selector = nullptr;
+    QVariantList _customSettingsList;  // Not to be mixed up with QGCCorePlugin implementation
 };
 
 /*===========================================================================*/
@@ -91,5 +97,5 @@ class SprigOverrideInterceptor : public QQmlAbstractUrlInterceptor
 public:
     SprigOverrideInterceptor();
 
-    QUrl intercept(const QUrl &url, QQmlAbstractUrlInterceptor::DataType type) final;
+    QUrl intercept(const QUrl& url, QQmlAbstractUrlInterceptor::DataType type) final;
 };
