@@ -6,7 +6,10 @@
 # ----------------------------------------------------------------------------
 # Application Branding
 # ----------------------------------------------------------------------------
-set(QGC_APP_NAME "Custom-QGroundControl" CACHE STRING "App Name" FORCE)
+set(QGC_APP_NAME        "Avicontrol"                    CACHE STRING "Application name"   FORCE)
+set(QGC_ORG_NAME        "Sprig Aerospace"               CACHE STRING "Organization name"  FORCE)
+set(QGC_ORG_DOMAIN      "sprigaerospace.com"             CACHE STRING "Organization domain" FORCE)
+set(QGC_APP_COPYRIGHT   "© 2026 Sprig Aerospace"        CACHE STRING "Copyright notice"   FORCE)
 
 # ----------------------------------------------------------------------------
 # Custom Icons and Graphics
