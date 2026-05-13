@@ -45,6 +45,17 @@ void SprigCorePlugin::init()
     qCInfo(SprigLog) << "Sprig GCS core plugin active";
 }
 
+// Placeholder -- actual auto-update infra is Phase 7
+QString SprigCorePlugin::stableVersionCheckFileUrl() const
+{
+    return QStringLiteral("https://updates.sprigaerospace.com/qgc/stable/version.json");
+}
+
+QString SprigCorePlugin::stableDownloadLocation() const
+{
+    return QStringLiteral("https://updates.sprigaerospace.com/qgc/stable/");
+}
+
 void SprigCorePlugin::cleanup()
 {
     if (_qmlEngine) {
