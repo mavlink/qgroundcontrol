@@ -23,6 +23,8 @@
         <file alias="QGroundControl/FlyView/FlyViewCustomLayer.qml">src/FlyViewCustomLayer.qml</file>
         <file alias="QGroundControl/FlyView/FlyViewToolStripActionList.qml">src/FlyViewToolStripActionList.qml</file>
         <file alias="QGroundControl/Toolbar/SelectViewDropdown.qml">res/Custom/qml/QGroundControl/Toolbar/SelectViewDropdown.qml</file>
+        <file alias="QGroundControl/AppSettings/HelpSettings.qml">res/Custom/qml/QGroundControl/AppSettings/HelpSettings.qml</file>
+        <file alias="QGroundControl/FlyView/PreFlightSoundCheck.qml">res/Custom/qml/QGroundControl/FlyView/PreFlightSoundCheck.qml</file>
     </qresource>
     <qresource prefix="/Custom/res">
         <file alias="QGCLogoFull.svg">res/Images/QGCLogoFull.svg</file>
