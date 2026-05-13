@@ -90,14 +90,22 @@ bool indicatesMissingBackend(QKeychain::Error err)
     return err == QKeychain::NoBackendAvailable || err == QKeychain::AccessDenied;
 }
 
-// Linux libsecret backend reports DBus ServiceUnknown as OtherError — recognize it as "no backend".
+// Linux libsecret backend reports a few "no Secret Service reachable" conditions
+// as QKeychain::OtherError. Recognize the known patterns so we transparently fall
+// back to QSettings instead of failing the call.
 bool isMissingSecretService(QKeychain::Error err, const QString& errorString)
 {
     if (err != QKeychain::OtherError) {
         return false;
     }
-    return errorString.contains(QLatin1String("org.freedesktop.secrets")) ||
-           errorString.contains(QLatin1String("ServiceUnknown"));
+    // libsecret can't reach the Secret Service over D-Bus.
+    if (errorString.contains(QLatin1String("org.freedesktop.secrets")) ||
+        errorString.contains(QLatin1String("ServiceUnknown"))) {
+        return true;
+    }
+    // No session bus to talk to (headless CI without dbus-launch / gnome-keyring).
+    return errorString.contains(QLatin1String("autolaunch D-Bus")) ||
+           errorString.contains(QLatin1String("DBUS_SESSION_BUS_ADDRESS"));
 }
 
 }  // namespace
