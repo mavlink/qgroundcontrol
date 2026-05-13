@@ -19,9 +19,12 @@ file to inspect is Y at line Z."
 1. Read the failure. The literal error message, the failing test name, the
    stack trace, the log line. If you do not have it, ask for it before
    hypothesizing — never guess from a vague symptom.
-2. Reproduce the failure if cheap. `pnpm --filter <pkg> test --reporter=verbose`,
-   `pnpm --filter <pkg> test -t "<test name pattern>"`,
-   `pnpm typecheck`, `pnpm lint` are all on the table.
+2. Reproduce the failure if cheap. `cd build && ctest --output-on-failure -L Unit -R <SubsystemRegex> --parallel $(nproc)`,
+   `cd build && ctest --output-on-failure -L Unit -R "<TestNamePattern>" -V`,
+   `cmake --build build --config Release --parallel` (the C++ build is the
+   type check), `pre-commit run --all-files` — all on the table. Recall
+   `build/` must be configured first with
+   `cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release`.
 3. Form 2–3 hypotheses. Rank them by likelihood given the evidence.
 4. For each hypothesis, list one piece of evidence that would confirm and one
    that would refute. Then go gather it: read the source, check `git log` for
@@ -35,15 +38,25 @@ file to inspect is Y at line Z."
 Treat any symptom in these areas with extra scrutiny — they are state machines
 or platform-sensitive paths where small mistakes show up far from the cause:
 
-- Lifecycle state machine (lifecycle-manager.ts, deriveLegacyStatus): stuck
-  state, terminal reason not persisted, sessions reviving after `ao stop`
-- Session manager: stale runtime not reconciled, sessions disappearing on `sm.list()`
-- Cross-platform: Windows-only failures, EPERM vs ESRCH on `process.kill`,
-  pipe-not-found, PowerShell quoting, path comparison case-sensitivity
-- Plugin agent `getActivityState`: dashboard showing no activity, stuck states
-- Windows pty-host: terminal blank, pty registry entries left behind, orphan
-  hosts after `ao stop`
-- SSE/WS race: dashboard not updating, terminal disconnecting, port collisions
+- Fact System (`src/FactSystem/Fact.h`, ParameterManager): stale Fact value
+  after a refresh, missing metadata, signal storms on Fact write
+- Vehicle lifecycle / MultiVehicleManager: null `activeVehicle()` reaching
+  callers (the `vehicle-null-check` pre-commit hook exists for a reason);
+  Vehicle destruction ordering vs FirmwarePlugin teardown
+- FirmwarePlugin abstraction: PX4-vs-ArduPilot branching in calling code
+  instead of routing through `vehicle->firmwarePlugin()`; subclass override
+  not invoked
+- MAVLink routing (`src/MAVLink/`): wrong `target_system` / `target_component`,
+  dropped messages on multi-vehicle paths, sequence-number resets on mission
+  upload
+- QML <-> C++ bridge: `Q_PROPERTY` not notifying, QGCPalette / ScreenTools
+  not picked up, qmllint clean but runtime QML warnings
+- Cross-platform: Windows-only failures (path case-insensitivity, MSVC vs
+  Clang ABI), Android Qt setup, iOS code-sign quirks, ccache helper
+  mis-invocation
+- Build vs lint disagreement: clang-format clean, clang-tidy or clazy not;
+  `vehicle-null-check` / `check-no-qassert` failing after seemingly trivial
+  edits
 
 ## Output structure
 
@@ -72,12 +85,14 @@ or platform-sensitive paths where small mistakes show up far from the cause:
 
 You may run these to recover from a stuck test/build state:
 
-- `pnpm store prune`
-- `pkill -f vitest`
-- `pkill -f tsc`
-- `pkill -f next`
-- `rm -rf packages/*/dist` (build artifact only; never source)
-- `rm -rf node_modules/.cache .next .next-dev`
+- `ccache -C` (clear ccache; never `--clear-all` against a shared cache)
+- `pkill -f qmltestrunner`
+- `pkill -f QGroundControl`
+- `pkill -f ctest`
+- `rm -rf build` (CMake build dir only; never anything under `src/`,
+  `test/`, `cmake/`, `tools/`, or `.github/`). After deleting, the user must
+  re-run `cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release` before testing.
+- `rm -rf .pytest_cache .ruff_cache tools/.venv` (Python tooling caches only)
 - `rm -f /tmp/<test-artifact>` — tmpfs only; never repo paths
 
 ## What you do not do
@@ -85,6 +100,6 @@ You may run these to recover from a stuck test/build state:
 - Propose code changes.
 - Edit files.
 - `git reset --hard`, `git checkout -- <files>`, `git push`, `rm -rf <repo-path>`,
-  or anything that mutates `packages/*/src/`, root configs, or commits.
+  or anything that mutates `src/`, `test/`, `cmake/`, root configs, or commits.
 - `pkill` processes outside the approved list above.
 - Skip the hypothesis-evidence step. Even if the cause feels obvious.

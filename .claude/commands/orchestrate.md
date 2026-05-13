@@ -4,24 +4,25 @@ allowed-tools: Bash, Read, Write, Edit, Task, Agent
 argument-hint: <plan-path-or-task-description>
 ---
 
-# /orchestrate — sprig-ao
+# /orchestrate — qgroundcontrol
 
-You are the **orchestrator** in Architect mode. Codex executes; you plan,
-dispatch, verify, aggregate. You **never** edit `packages/*/src/`,
-`package.json`, `pnpm-lock.yaml`, `tsconfig*.json`, `eslint.config.js`, or
-`.github/workflows/` directly. All such edits route through Codex via
-`Agent(subagent_type="codex-handoff", ...)` or, for rescue dispatches,
-`Agent(subagent_type="codex:codex-rescue", ...)`.
+You are the **orchestrator** in Architect mode. The executor (`jcode`,
+sometimes Codex) writes production code; you plan, dispatch, verify,
+aggregate. You **never** edit `src/**`, root or per-module `CMakeLists.txt`,
+`cmake/**`, `.clang-format`, `.clang-tidy`, `.pre-commit-config.yaml`,
+`.github/workflows/**`, or `.github/actions/**` directly. All such edits route
+through the executor — either a direct `jcode` Bash dispatch (default) or, for
+rescue cases, `Agent(subagent_type="codex:codex-rescue", ...)`.
 
-`CLAUDE.md`, any `AGENTS.md`, `DESIGN.md`, `docs/CROSS_PLATFORM.md`,
-`.orchestrator/templates/*.md`, and any plan in `.orchestrator/plans/` are
-the source of truth. Defer to them.
+`CLAUDE.md`, `AGENTS.md`, `CODING_STYLE.md`, `test/TESTING.md`,
+`.pre-commit-config.yaml`, `.orchestrator/templates/*.md`, and any plan in
+`.orchestrator/plans/` are the source of truth. Defer to them.
 
 ## Inputs
 
 `$ARGUMENTS` is one of:
-- A plan path: `.orchestrator/plans/03-lifecycle-refactor.md` → drive that plan.
-- A free-form task: `"Add an ao mobile status subcommand"` →
+- A plan path: `.orchestrator/plans/03-mission-upload-refactor.md` → drive that plan.
+- A free-form task: `"Add a per-vehicle telemetry rate setting"` →
   draft a slice plan first, write it to `.orchestrator/work/<slug>/plan.md`,
   then drive it.
 
@@ -102,30 +103,36 @@ right template from `.orchestrator/templates/`:
 Paste the plan's slice fields into the template slots — no re-interpretation.
 Save to `.orchestrator/work/<slug>/slice-N-{red,green,refactor}-brief.md`.
 
-#### 3c. Dispatch Codex
+#### 3c. Dispatch the executor (jcode)
 
-Default path — plan-driven slice with a pre-built brief:
+Default path — plan-driven slice with a pre-built brief at
+`.orchestrator/briefs/<slug>.md`. Dispatch `jcode` directly via `Bash` (NOT
+via Agent/Task):
 
+```bash
+jcode run -C /Users/stratten/Documents/Github/qgroundcontrol -p auto "$(cat .orchestrator/briefs/<slug>.md)"
 ```
-Agent(subagent_type="codex-handoff", description="Slice N: <short>", prompt="<verbatim brief contents>")
-```
 
-`codex-handoff` is the narrow architect→Codex pipeline: read brief, shell out
-to `codex exec`, return stdout verbatim. It does not interpret the brief.
+`-C` / `--cwd` sets the working directory, `-p` / `--provider auto` picks the
+provider automatically, and the brief is passed as the positional `<MESSAGE>`
+argument. **Do not use `-m`** — `-m` is `--model`, not `--message`.
 
-Rescue path — if `codex-handoff` reports an empty diff or a failure and the
-brief itself needs tightening, dispatch:
+Rescue path — if `jcode` returns an empty diff or a failure and the brief
+itself needs tightening, dispatch the Codex rescue subagent (NOT
+`codex-handoff` as a first-line; that is a documented fallback path):
 
 ```
 Agent(subagent_type="codex:codex-rescue", description="Slice N rescue: <short>", prompt="<sharpened brief>")
 ```
 
-Default model (no `--model`), default effort (no `--effort`). The Codex
-companion runs in `--write` mode by default and edits files directly.
+The Codex companion runs in `--write` mode by default and edits files
+directly. Reserve `codex-handoff` for the rare case where you want the
+architect→Codex pipeline explicitly (e.g., to compare jcode vs Codex output
+on a contract slice).
 
 #### 3d. Read return + diff
 
-Save Codex's stdout verbatim to `slice-N-result.md`. Snapshot diff:
+Save the executor's stdout verbatim to `slice-N-result.md`. Snapshot diff:
 
 ```bash
 git diff > .orchestrator/work/<slug>/slice-N-diff.patch
@@ -134,39 +141,48 @@ git diff --stat > .orchestrator/work/<slug>/slice-N-diff.stat
 
 #### 3e. Verify
 
-Use the slice's declared verification command from the brief. Typical commands:
-`pnpm --filter @aoagents/<pkg> test`, `pnpm test`, `pnpm typecheck`,
-`pnpm lint`, `pnpm test:integration`.
+Use the slice's declared verification command from the brief. `build/` must
+already be configured with
+`cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release`. Typical commands:
+
+- Subsystem unit: `cd build && ctest --output-on-failure -L Unit -R <SubsystemRegex> --parallel $(nproc)`
+- All unit: `cd build && ctest --output-on-failure -L Unit --parallel $(nproc)`
+- Integration: `cd build && ctest --output-on-failure -L Integration --parallel $(nproc)`
+- Build (acts as C++ type check): `cmake --build build --config Release --parallel`
+- Lint: `pre-commit run --all-files`
 
 For TDD RED phase:
 - Run the verification command — must show **the new test failing for the
-  right reason** (not a collection/parse error). Inspect Vitest output.
-- If green or wrong-reason red, **reject**: dispatch a follow-up Codex via
+  right reason** (not a build error that blocks the whole suite). Inspect
+  QTest / ctest output.
+- If green or wrong-reason red, **reject**: dispatch a follow-up via
   `Agent(subagent_type="codex:codex-rescue", ...)` with the failure context.
 
 For TDD GREEN phase:
 - Run the verification command — must show **all tests green**, including
   the previously failing one.
-- Run `pnpm typecheck` if types changed. `pnpm lint` if the surface is
-  non-trivial.
-- If anything red, dispatch Codex follow-up with the failure context.
+- Run `cmake --build build --config Release --parallel` if headers changed
+  (the build is the C++ type check). `pre-commit run --all-files` if the
+  surface is non-trivial or touches files matched by clang-format /
+  clang-tidy / clazy / qmllint / vehicle-null-check / check-no-qassert.
+- If anything red, dispatch executor follow-up with the failure context.
 
 For refactor slice:
 - Run the verification command — must show **same test count, all green**.
 - Compare test ids against pre-slice baseline if behavior was supposed to
   be unchanged. No silent test loss.
-- If the slice touched web UI: `pnpm --filter @aoagents/ao-web test`.
+- If the slice touched QML: also run `pre-commit run qmllint --files <paths>`.
 
 #### 3f. Update state
 
 Append to `state.md` (don't overwrite). Mark slice N done with timestamp,
 diff stat, test result.
 
-#### 3g. Commit (orchestrator does this directly via Bash, NOT via Codex)
+#### 3g. Commit (orchestrator does this directly via Bash, NOT via the executor)
 
 The orchestrator is allowed to run `git add` and `git commit` on the
-changes Codex produced — this is bookkeeping, not production-code editing.
-Commit message format:
+changes the executor produced — this is bookkeeping, not production-code
+editing. Commit message format:
 
 ```
 <type>(<scope>): <slice description> - Refs <plan>
@@ -175,8 +191,9 @@ Slice N of plan <path>. Dispatched via /orchestrate.
 ```
 
 `<type>` is conventional (`refactor`, `feat`, `fix`, `test`, `chore`).
-`<scope>` matches the plan's affected module (e.g., `core`, `cli`, `web`,
-`plugin-agent-codex`).
+`<scope>` matches the plan's affected subsystem (e.g., `vehicle`,
+`factsystem`, `firmwareplugin-px4`, `mission`, `mavlink`, `qmlcontrols`,
+`tools`).
 
 DO NOT push. Pushing is a separate manual step.
 
@@ -220,11 +237,11 @@ discard** — only fold in if it clearly meets one of the durable criteria.
 
 | Discovery | Goes to | Only if… |
 |-----------|---------|----------|
-| New project convention (naming, file layout, error pattern) | `CLAUDE.md` (relevant section) | a future slice in *any* package would benefit |
-| Architectural decision or load-bearing constraint (plugin contract, lifecycle invariant, cross-platform helper) | `CLAUDE.md` or `docs/CROSS_PLATFORM.md` | the constraint will outlive the current sprint and could be violated by future agents |
+| New project convention (naming, file layout, error pattern) | `AGENTS.md` or `CODING_STYLE.md` (relevant section) | a future slice in *any* subsystem would benefit |
+| Architectural decision or load-bearing constraint (Fact contract, FirmwarePlugin interface, MultiVehicle invariant, cross-platform CI helper) | `AGENTS.md` (Golden Rules) or the relevant `docs/` file | the constraint will outlive the current sprint and could be violated by future agents |
 | Recurring bug pattern or review check | `.orchestrator/review-rubric.md` | the same pattern has been flagged in **2+ slices**; on first sighting, leave it in the synthesis only |
-| New verification command or test pattern | one-line note in CLAUDE.md "Build & Test" section | the command will be re-run |
-| Non-obvious quirk (vendor bug, library footgun, environment trap) | `CLAUDE.md` → `## Known quirks` (create if absent) | the quirk is non-obvious from the code itself |
+| New verification command or test pattern | one-line note in AGENTS.md "Build & Test Commands" section | the command will be re-run |
+| Non-obvious quirk (Qt version footgun, MAVLink library quirk, platform CI trap) | `AGENTS.md` → `## Known quirks` (create if absent) | the quirk is non-obvious from the code itself |
 | Plan-specific implementation detail (which function, which file, which test) | **discard** | git log + the merged code already document it |
 | One-off bugfix where the fix *is* the documentation | **discard** | the commit message captures it |
 
@@ -236,12 +253,13 @@ slice's `state.md` and proceed to 6d.
 For each surviving fact, write a 1–3 sentence summary of what would be added
 and where. Present the full list to the user as a single message and wait
 for explicit approval. On `y`, perform the edits via `Edit` tool calls
-(orchestrator-scope; no Codex). On `edit`, take the user's revisions
-verbatim. On `n`, skip the fold and record "user declined" in `state.md`.
+(orchestrator-scope; no executor dispatch). On `edit`, take the user's
+revisions verbatim. On `n`, skip the fold and record "user declined" in
+`state.md`.
 
 #### 6d. Clean ephemeral docs
 
-Per the user's sprig-ao convention, `.orchestrator/work/` is **tracked**
+Per project convention, `.orchestrator/work/` is **tracked**
 (not gitignored), so other devs can see in-flight runs. After harvest,
 delete the slice's scratch via git:
 
@@ -275,18 +293,19 @@ one-line harvest summary, then mark the issue done if not already.
 
 | Scenario | Action |
 |----------|--------|
-| Codex returns with no diff | Re-dispatch with sharpened brief; if 2 rejections in a row, halt and ask user. |
-| Codex edits files outside the slice's allowed scope | Restore ONLY the paths the slice was authorised to touch — read the "Files touched" table from the slice plan/brief and run `git checkout HEAD -- <path1> <path2> ...` per-path. Do NOT run a bulk `git checkout` against the whole worktree (destructive: discards unrelated workspace state). If the authorised paths are not recorded, STOP and prompt the user. After restore, update brief with stricter scope, re-dispatch once. |
-| Tests fail after GREEN dispatch | Dispatch Codex follow-up with the failing test output; max 2 follow-ups per slice. |
+| Executor returns with no diff | Re-dispatch with sharpened brief; if 2 rejections in a row, escalate to `Agent(subagent_type="codex:codex-rescue", ...)`; if that also fails, halt and ask user. |
+| Executor edits files outside the slice's allowed scope | Restore ONLY the paths the slice was authorised to touch — read the "Files touched" table from the slice plan/brief and run `git checkout HEAD -- <path1> <path2> ...` per-path. Do NOT run a bulk `git checkout` against the whole worktree (destructive: discards unrelated workspace state). If the authorised paths are not recorded, STOP and prompt the user. After restore, update brief with stricter scope, re-dispatch once. |
+| Tests fail after GREEN dispatch | Dispatch executor follow-up with the failing test output; max 2 follow-ups per slice. |
 | Working tree dirty at slice start | Halt. Never run an orchestration over uncommitted changes. |
 | User overrides the dirty-tree halt ("roll it in") | Before dispatch, snapshot the pre-slice tree: `git stash push -u -m pre-slice-<slug> && git stash show -p stash@{0} > .orchestrator/work/<slug>/pre-slice.patch && git stash pop`. After the slice commits, diff `git status` against the original dirty set; if any pre-slice-dirty path is no longer dirty AND isn't in the committed scope, the executor silently reverted it — re-apply its chunk from `pre-slice.patch`. |
 | Plan slice underspecified | Read the source files (read-only), draft a sharper brief, save back to slice-N-brief.md, dispatch. |
 
 ## What the orchestrator does NOT do
 
-- Edit `packages/*/src/`, `package.json`, `pnpm-lock.yaml`, `tsconfig*.json`,
-  `eslint.config.js`, `.github/workflows/`, `Containerfile`.
+- Edit `src/**`, root or per-module `CMakeLists.txt`, `cmake/**`,
+  `.clang-format`, `.clang-tidy`, `.pre-commit-config.yaml`,
+  `.github/workflows/**`, `.github/actions/**`, or `tools/pyproject.toml`.
 - Push to remote.
 - Merge PRs.
 - Auto-fix `/review` findings (each fix is a fresh `/orchestrate` call).
-- Run Codex on read-only investigation tasks (use `Agent(subagent_type="Explore")` for that).
+- Run the executor on read-only investigation tasks (use `Agent(subagent_type="Explore")` for that).

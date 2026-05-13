@@ -1,16 +1,20 @@
-# sprig-ao Review Rubric
+# qgroundcontrol Review Rubric
 
 Use this rubric in Phase 5 of the orchestrator workflow. Reviewers (Claude,
-Codex, MiMo, Gemini) read this alongside the diff and `CLAUDE.md` and produce
-a structured issue list. **Findings under "high-weight zones" are elevated in
-synthesis even when only one reviewer flags them.**
+Codex, MiMo, Gemini) read this alongside the diff and `CLAUDE.md`, `AGENTS.md`,
+`CODING_STYLE.md`, `test/TESTING.md`, and `.pre-commit-config.yaml`. They
+produce a structured issue list. **Findings under "high-weight zones" are
+elevated in synthesis even when only one reviewer flags them.**
 
 Severity tags reviewers should use:
-- **BLOCKER** — must fix before merge; would corrupt session/runtime state,
-  break Windows users, violate a plugin contract, deadlock the lifecycle state
-  machine, leak credentials, or regress pinned behavior
+- **BLOCKER** — must fix before merge; would cause incorrect flight behavior,
+  vehicle-state corruption, null dereference of `activeVehicle()`, break
+  Windows / macOS / Android / iOS users, violate the Fact System or
+  FirmwarePlugin contract, leak credentials, or regress pinned behavior
 - **MAJOR** — should fix before merge; real bug, semantic gap, missing test
-  for new behavior, plugin contract drift not captured in `types.ts`
+  for new behavior, public-header drift in `src/FactSystem/Fact.h` /
+  `src/Vehicle/Vehicle.h` / `src/FirmwarePlugin/FirmwarePlugin.h` not
+  captured by downstream subclasses
 - **MINOR** — nice to fix; no functional impact
 - **NIT** — style, naming, organization
 
@@ -24,316 +28,305 @@ These are paths where a single sharp reviewer catching an issue is enough to
 act. Two LLMs trained on similar data will hallucinate the same wrong answer
 here, so single hits matter.
 
-1. **Lifecycle state machine** — `packages/core/src/lifecycle-manager.ts`,
-   `lifecycle-state.ts`, `deriveLegacyStatus`, the canonical state and
-   terminal-reason enums. Implicit transition dependencies; small changes
-   break dashboard status.
-2. **Session manager stale-runtime reconciliation** —
-   `packages/core/src/session-manager.ts`, especially `sm.list()`. The
-   *only* place dead runtimes get persisted as `runtime_lost`.
-3. **Plugin contract** — any exported interface in
-   `packages/core/src/types.ts`. Changing a shape breaks every plugin.
-4. **Cross-platform helpers** — `packages/core/src/platform.ts`,
-   `path-equality.ts`, Windows pty-host pipe protocol, signal/PID probes.
-   See `docs/CROSS_PLATFORM.md` for the full helper inventory.
-5. **Agent plugin `getActivityState` cascade** — process check → JSONL
-   actionable state → native signal → JSONL entry fallback → null.
-   Skipping the fallback breaks the dashboard activity display.
-6. **Activity log contract** — JSONL append-only, dedup window,
-   classification helpers (`classifyTerminalActivity`, `recordTerminalActivity`).
-7. **SSE 5s interval** — `useSessionEvents` hook. CLAUDE.md C-14 invariant.
-8. **Worktree / state storage layout** —
-   `~/.agent-orchestrator/{hash}-{projectId}/` where hash is SHA-256 of the
-   config directory. Collision prevention across checkouts.
-9. **Design tokens / dark theme** — `packages/web/src/app/globals.css`,
-   Tailwind v4 `@theme` block. CLAUDE.md C-02 (no inline styles), C-05
-   (dark theme preserved), C-01 (no new UI libs).
-10. **Agent plugin `setupWorkspaceHooks`** — without it, PRs created by
-    agents don't appear in the dashboard. Two patterns: agent-native hooks
-    (Claude Code PostToolUse) and PATH wrappers (Codex/Aider/OpenCode
-    `~/.ao/bin/gh` and `~/.ao/bin/git`).
+1. **Fact System public contract** — `src/FactSystem/Fact.h`,
+   `src/FactSystem/ParameterManager.*`. Fact metadata, signal/slot wiring,
+   `setCookedValue` / `setRawValue` semantics. Every vehicle parameter
+   consumer depends on this.
+2. **Vehicle public surface** — `src/Vehicle/Vehicle.h` and every consumer
+   of `MultiVehicleManager::instance()->activeVehicle()`. Null-check is
+   enforced by the `vehicle-null-check` pre-commit hook; missing checks are
+   BLOCKER even on a one-line patch.
+3. **FirmwarePlugin abstraction** — `src/FirmwarePlugin/FirmwarePlugin.h` and
+   the PX4 / ArduPilot subclasses. Any firmware-specific behavior must route
+   through `vehicle->firmwarePlugin()`. Inline branching on firmware type
+   outside this layer is BLOCKER.
+4. **MAVLink routing** — `src/MAVLink/`. `target_system` / `target_component`
+   selection, message id assignment, multi-vehicle dispatch, sequence-number
+   continuity on mission upload.
+5. **MissionManager** — `src/MissionManager/`. Mission upload state machine,
+   geofence/rally upload, mission-item type discrimination, retry on
+   `MISSION_REQUEST_INT` timeout, `MISSION_ACK` validated for accepted
+   status (not merely non-error).
+6. **QML sizing & color contract** — `ScreenTools.defaultFontPixelHeight/Width`
+   for sizing; `QGCPalette` for colors. Hardcoded pixel values or color
+   literals are BLOCKER. See AGENTS.md golden rules and CODING_STYLE.md.
+7. **`Q_ASSERT` ban** — enforced by the `check-no-qassert` pre-commit hook.
+   Replace with logged error + graceful return.
+8. **Cross-platform CI** —
+   `.github/workflows/{linux,macos,windows,android,ios}.yml`, plus composite
+   actions under `.github/actions/`. Drift between platform workflows is a
+   common silent-break source.
+9. **Pre-commit gate** — `.pre-commit-config.yaml`: clang-format, clang-tidy,
+   ruff, pyright, shellcheck, actionlint, zizmor, qmllint, clazy,
+   vehicle-null-check, check-no-qassert. Any change must still pass
+   `pre-commit run --all-files`.
+10. **Python tooling layer** — `tools/` (uv-managed) and `.github/scripts/`
+    (httpx + jinja2 for API access and templating). Bootstrap scripts
+    (`install_dependencies.py`, `ccache_helper.py`) must be **stdlib-only** —
+    they run before deps are installed. See AGENTS.md "CI Conventions".
 
 ---
 
-## 1. Core types and plugin contract (`packages/core/src/types.ts`)
+## 1. Fact System (`src/FactSystem/`)
 
-### Interface stability
-- [ ] Does the diff change an exported interface? If yes, are ALL implementing
-      plugins updated in the same PR (or is there a documented migration plan)?
-- [ ] New optional fields are fine. Required fields, renamed fields, or
-      removed fields are BLOCKER unless all implementations are updated.
-- [ ] Does the change introduce a new plugin slot? If yes, is the slot
-      documented in CLAUDE.md "Plugin System (8 Slots)" and is at least one
-      default implementation present?
+### Contract stability
+- [ ] Does the diff change a public method or `Q_PROPERTY` on `Fact` /
+      `ParameterManager` / `FactMetaData`? If yes, are ALL consumers in
+      `src/Vehicle/`, `src/AutoPilotPlugins/`, `src/MissionManager/`,
+      `src/QmlControls/`, and `src/Settings/` updated in the same PR?
+- [ ] New optional methods are fine. Renamed or removed methods, or changed
+      signal signatures, are BLOCKER unless all consumers are updated.
 
-### Imports
-- [ ] No barrel files added (except the canonical `core/src/index.ts`)?
-- [ ] `import type` used for type-only imports (enforced by ESLint)?
+### Parameter storage discipline
+- [ ] **No custom parameter storage.** All vehicle parameters route through
+      `vehicle->parameterManager()->getParameter(...)`. Ad-hoc `QVariant`
+      caches or static maps in unrelated subsystems are BLOCKER.
+- [ ] Metadata (units, range, decimals, default) defined once, not re-derived
+      at call sites?
 
----
-
-## 2. Lifecycle state machine (`packages/core/src/lifecycle-*.ts`)
-
-### Canonical states & terminal reasons
-- [ ] Any new state in `LifecycleState` mapped in `deriveLegacyStatus`?
-- [ ] Any new terminal reason added to the `TerminalReason` enum AND mapped
-      to a legacy status in `deriveLegacyStatus`?
-- [ ] `isTerminalSession` updated if a new terminal reason was added?
-
-### Transitions
-- [ ] State transitions documented (in code comments or the plan)?
-- [ ] Does the change preserve the invariant that `sm.list()` is the only
-      place `runtime_lost` is persisted to disk?
-- [ ] Polling-loop reactions don't double-fire on the same state change?
-
-### Storage
-- [ ] Session metadata written under the canonical
-      `~/.agent-orchestrator/{hash}-{projectId}/sessions/{sessionId}` path?
-- [ ] No hardcoded paths that bypass the hash-prefix scheme (collision risk
-      across multiple checkouts)?
+### Signals & slots
+- [ ] `Fact::valueChanged` listeners disconnected on object destruction or
+      via parent ownership? No dangling lambdas capturing raw pointers?
+- [ ] `Q_PROPERTY` NOTIFY signals declared and emitted on every write path?
 
 ---
 
-## 3. Session manager (`packages/core/src/session-manager.ts`)
+## 2. Vehicle & MultiVehicle (`src/Vehicle/`)
 
-### Stale runtime detection
-- [ ] If the diff touches `sm.list()` or enrichment, does it still detect dead
-      runtimes (tmux/process gone) and persist `runtime_lost` to disk?
-- [ ] No "active" status returned for sessions with dead runtimes?
+### MultiVehicle null-check (BLOCKER if missing)
+- [ ] **Every call site** of `MultiVehicleManager::instance()->activeVehicle()`
+      null-checks before dereferencing. The `vehicle-null-check` pre-commit
+      hook catches the obvious cases; reviewer eyes catch the subtle ones
+      (e.g., null-check on line 10, four-line gap, deref on line 14 after a
+      function call that could have detached the vehicle).
+- [ ] QML access uses
+      `property var vehicle: QGroundControl.multiVehicleManager.activeVehicle`
+      followed by an `enabled: vehicle && ...` guard?
 
-### CRUD invariants
-- [ ] Session ID generation collision-free (UUID, monotonic, or
-      hash-prefixed)?
-- [ ] Archives written to `archive/{sessionId}_{timestamp}` per the storage
-      contract?
+### Vehicle lifecycle
+- [ ] Vehicle destruction ordering: FirmwarePlugin teardown happens before
+      MAVLink link teardown, not after?
+- [ ] Signal disconnections on vehicle disconnect — no slot fires on a
+      partially-destroyed Vehicle?
+- [ ] No new global mutable state outside `Vehicle` / `MultiVehicleManager`
+      that holds vehicle-derived data (such state goes stale on disconnect)?
 
----
-
-## 4. Cross-platform (`docs/CROSS_PLATFORM.md` is normative)
-
-### The Golden Rule
-- [ ] **No new `process.platform === "win32"` checks inlined.** Use
-      `isWindows()` from `@aoagents/ao-core` or add a helper to
-      `packages/core/src/platform.ts`. This is a BLOCKER even for one-liners.
-
-### Process and shell
-- [ ] Process spawn uses `getShell()` (PowerShell on Windows, `/bin/sh`
-      elsewhere) or explicit `shell: isWindows()` for `.cmd`/`.bat`/`.exe`
-      shim resolution?
-- [ ] Process kill uses `killProcessTree(pid, signal?)` not bare
-      `process.kill()` (which doesn't reach descendants on POSIX or anywhere
-      on Windows)?
-- [ ] Signal-0 probe handles **both** EPERM (process exists, owned by another
-      user) and ESRCH (process gone)? Treating EPERM as "gone" causes false
-      terminations on Windows.
-
-### Paths
-- [ ] Path comparisons use `pathsEqual()` / `canonicalCompareKey()` (NTFS
-      and APFS are case-insensitive; naive `===` breaks on Windows/macOS)?
-- [ ] No `/dev/null`, no `$(cat …)`, no POSIX-only shell idioms in
-      cross-platform code paths?
-- [ ] PowerShell-vs-bash quoting: shell args escaped via `shellEscape()`
-      (which does the right thing per platform)?
-
-### Network
-- [ ] No bare `localhost` for binds that might resolve to IPv6 on Windows
-      and stall? Use `127.0.0.1` explicitly or the project's resolved
-      helper.
-
-### Windows pty-host (runtime-process plugin)
-- [ ] Named pipe path resolved via `getPipePath()` / `resolvePipePath()`?
-- [ ] Pty-host registered via `registerWindowsPtyHost` and unregistered on
-      teardown?
-- [ ] `sweepWindowsPtyHosts()` invoked during `ao stop` cleanup so orphan
-      hosts are reaped?
+### Comms
+- [ ] Telemetry rate changes route through the existing rate-control path?
+- [ ] No hardcoded sysid/compid — pulled from `Vehicle` or `MAVLinkProtocol`?
 
 ---
 
-## 5. Agent plugins (`packages/plugins/agent-*`)
+## 3. FirmwarePlugin (`src/FirmwarePlugin/`)
 
-### `Agent` interface completeness
-- [ ] All required methods implemented: `getLaunchCommand`,
-      `getEnvironment`, `detectActivity`, `getActivityState`,
-      `isProcessRunning`, `getSessionInfo`?
-- [ ] Optional methods implemented where applicable: `getRestoreCommand`,
-      `setupWorkspaceHooks`, `postLaunchSetup`, `recordActivity`?
-- [ ] **`setupWorkspaceHooks` is present**? Without it, PRs created by this
-      agent will not appear in the dashboard.
+### Abstraction discipline (BLOCKER if violated)
+- [ ] **No `vehicle->firmwareType() == MAV_AUTOPILOT_PX4` (or similar) outside
+      `src/FirmwarePlugin/`.** Firmware-specific behavior MUST be a virtual
+      method on `FirmwarePlugin` with PX4 / ArduPilot overrides. Inline
+      firmware branching in `src/Vehicle/`, `src/MissionManager/`, or
+      `src/QmlControls/` is BLOCKER.
+- [ ] New behavior added to one subclass also covered in the other (or the
+      base class returns a sensible default and the diff explains why one
+      firmware needs the override)?
 
-### `getActivityState` cascade (BLOCKER if any step missing)
-- [ ] **Step 1 — process check:** if not running, return
-      `{ state: "exited", timestamp }`.
-- [ ] **Step 2 — actionable states:** read `waiting_input` / `blocked` via
-      `checkActivityLogState(activityResult)` from native JSONL OR AO
-      activity JSONL; if found, return.
-- [ ] **Step 3 — native signal (if applicable):** classify by age (active
-      <30s / ready 30s–threshold / idle >threshold).
-- [ ] **Step 4 — JSONL entry fallback (REQUIRED):** call
-      `getActivityFallbackState(activityResult, activeWindowMs, threshold)`.
-      Skipping this returns `null` whenever the native signal fails and the
-      dashboard goes blind. This was a real bug in the OpenCode plugin.
-- [ ] Returns `null` only if there is genuinely no data at all.
-
-### `isProcessRunning`
-- [ ] Supports tmux runtime (TTY-based `ps` lookup with process-name regex)?
-- [ ] Supports process runtime (PID signal-0 with EPERM handling)?
-- [ ] Regex matches both the node wrapper name AND the actual binary
-      (some agents install as `.agentname` with a dot prefix)?
-- [ ] Returns `false` (not `null`) on error?
-
-### PATH wrappers
-- [ ] If this agent uses PATH wrappers (Codex, Aider, OpenCode), is
-      `setupPathWrapperWorkspace(workspacePath)` invoked?
-- [ ] `~/.ao/bin` prepended to PATH via `buildAgentPath(basePath?)`?
-
-### Required tests
-- [ ] Returns `exited` when process is not running
-- [ ] Returns `waiting_input` from JSONL when at a permission prompt
-- [ ] Returns `blocked` from JSONL when at an error state
-- [ ] Returns `active` from native signal (if applicable)
-- [ ] Returns `active` from JSONL entry fallback when native signal fails (fresh entry)
-- [ ] Returns `idle` from JSONL entry fallback when native signal fails (old entry)
-- [ ] Returns `null` when both native and JSONL are unavailable
+### Public header changes
+- [ ] If `FirmwarePlugin.h` virtual signature changed, both `PX4FirmwarePlugin`
+      and `APMFirmwarePlugin` (and any custom build subclasses) updated in
+      the same PR?
+- [ ] New pure-virtuals avoided unless every existing subclass implements
+      them in the same diff?
 
 ---
 
-## 6. Runtime plugins (`packages/plugins/runtime-*`)
+## 4. MAVLink (`src/MAVLink/`)
 
-### tmux runtime
-- [ ] Session names scoped by `sessionPrefix` to avoid collisions across
-      checkouts (see issue #1705 pattern)?
-- [ ] PTY cleanup on `destroy()` — no leaked slots on macOS (#1710, #1718)?
+### Message construction
+- [ ] `target_system` is the **vehicle** sysid (not the GCS sysid)?
+- [ ] `target_component` is the correct component id
+      (`MAV_COMP_ID_AUTOPILOT1` for most flight-controller messages)?
+- [ ] Sysid/compid consistent across multi-message sequences (mission upload,
+      parameter download)?
 
-### Process runtime (Windows-heavy)
-- [ ] Pty-host registry entries cleaned up on session terminate?
-- [ ] `validateSessionId()` from `@/server/tmux-utils` called before any
-      pipe/shell use to prevent injection?
-- [ ] `connectPtyHost` failures handled (host died, pipe path stale)?
+### Routing
+- [ ] Multi-vehicle: messages dispatched to the right Vehicle by sysid, not
+      broadcast?
+- [ ] Heartbeat handling preserves the existing vehicle-discovery flow?
 
----
-
-## 7. Web dashboard (`packages/web/`)
-
-### Tailwind & styling
-- [ ] **No inline `style=` attributes** (C-02). Use Tailwind utility classes
-      and `var(--color-*)` design tokens from `globals.css`.
-- [ ] No new UI component libraries (C-01) — no Radix, no shadcn, no Headless UI.
-- [ ] Dark theme preserved (C-05). Don't add light-mode-only colors.
-- [ ] Tokens used via `var(--color-*)` not hex literals where a token exists.
-
-### Components
-- [ ] Component file ≤ 400 lines (C-04)? If over, split.
-- [ ] Client components marked `"use client"` only when they actually need
-      client-side state or effects?
-- [ ] Test file present for any new component (C-12)?
-
-### Data flow
-- [ ] SSE 5s interval preserved (C-14) — `useSessionEvents` polling
-      interval is load-bearing for dashboard latency expectations.
-- [ ] No new state libraries (no Redux, no Zustand). React hooks only.
-- [ ] Sidebar consumers use unscoped `useSessionEvents` (no project filter)
-      so cross-project sessions show up?
-
-### Hooks
-- [ ] Custom hooks named `use*` and live in `hooks/`?
-- [ ] Boolean variables prefixed `is`/`has`?
+### Tests
+- [ ] New message construction tested with golden bytes where feasible
+      (byte-for-byte verified encoding)?
+- [ ] Timeouts configurable, not magic numbers?
 
 ---
 
-## 8. CLI (`packages/cli/`)
+## 5. MissionManager (`src/MissionManager/`)
 
-### `ao start` / `ao stop` invariants
-- [ ] `ao stop` (no args) kills ALL sessions across ALL projects (loads
-      global config, not just local)?
-- [ ] `ao stop <project>` kills only that project's sessions, does NOT
-      kill the parent dashboard?
-- [ ] `ao start` Ctrl+C does a full graceful shutdown via the same path as
-      `ao stop` (with 10s hard timeout)?
-- [ ] `LastStopState` includes `otherProjects` for cross-project session
-      restore?
-- [ ] Tab completions merge local config + global config?
+### Upload state machine
+- [ ] Sequence numbers monotonic, starting at 0?
+- [ ] Bounded retries on `MISSION_REQUEST_INT` timeout?
+- [ ] `MISSION_ACK` checked for `MAV_MISSION_ACCEPTED`, not just non-error?
+- [ ] Geofence / rally uploads kept distinct from the standard mission state
+      machine — no cross-contamination?
 
-### Config loading
-- [ ] `loadConfig()` searches up from cwd for `agent-orchestrator.yaml`?
-- [ ] Cross-project visibility commands fall back to global
-      `~/.agent-orchestrator/config.yaml`?
+### Mission items
+- [ ] Item-type discrimination handles all `MAV_CMD_*` variants the UI can
+      emit, with a fallback for unknown commands?
+- [ ] Coordinate frames (`MAV_FRAME_*`) preserved on round-trip
+      upload/download?
 
 ---
 
-## 9. Plugin standards (`packages/plugins/*`)
+## 6. AutoPilotPlugins (`src/AutoPilotPlugins/`)
 
-### Manifest & exports
-- [ ] Package named `@aoagents/ao-plugin-{slot}-{name}` (lowercase, hyphenated)?
-- [ ] `manifest.name` matches the `{name}` suffix?
-- [ ] `manifest.slot` uses `as const`?
-- [ ] Default export is `{ manifest, create, detect } satisfies PluginModule<T>`?
-
-### Config & error handling
-- [ ] Plugin-level config validated once in `create()` and closured?
-- [ ] Errors wrapped with `cause`: `throw new Error("msg", { cause: err })`?
-- [ ] Returns `null` for "not found", throws for unexpected errors?
-- [ ] `shellEscape()` used for all command arguments?
-
-### Testing
-- [ ] `src/__tests__/index.test.ts` present with manifest values, `create()`
-      shape, all public methods, and error paths covered?
+- [ ] New setup pages register through the existing AutoPilotPlugin facade?
+- [ ] Vehicle parameter access goes through Facts; no `QSettings` for
+      per-vehicle state?
+- [ ] Firmware-specific setup pages live under the right subclass
+      (`PX4/` vs `APM/`), not in shared code?
 
 ---
 
-## 10. Security / safety
+## 7. QmlControls (`src/QmlControls/`) and QML at large
 
-- [ ] No hardcoded credentials, API keys, PII?
-- [ ] Shell args escaped via `shellEscape()`?
-- [ ] User-supplied session IDs validated via `validateSessionId()`?
-- [ ] Webhook URLs validated via `validateUrl()`?
-- [ ] No `.env` or secret-bearing files committed (gitleaks should catch,
-      but reviewer eyes too)?
+### Sizing & colors (BLOCKER if violated)
+- [ ] **No hardcoded pixel values.** Use
+      `ScreenTools.defaultFontPixelHeight` / `defaultFontPixelWidth` and
+      their multiples.
+- [ ] **No hardcoded color literals (`"#RRGGBB"` or `Qt.rgba(...)`)**. Use
+      `QGCPalette` (e.g., `qgcPal.window`, `qgcPal.text`, `qgcPal.button`).
+
+### Bindings & ownership
+- [ ] `Q_PROPERTY` NOTIFY signals wired so QML bindings update correctly?
+- [ ] No JS-side caching of Fact values that could go stale (bind directly
+      to the Fact)?
+
+### qmllint
+- [ ] `pre-commit run qmllint --files <paths>` clean?
+- [ ] No new QML files outside the expected `src/.../qml/` locations?
 
 ---
 
-## 11. Tests
+## 8. Settings (`src/Settings/`)
+
+- [ ] New settings registered through the existing SettingsManager facade?
+- [ ] No bare `QSettings::setValue` in unrelated subsystems?
+- [ ] Defaults defined alongside the setting declaration, not duplicated at
+      read sites?
+
+---
+
+## 9. C++20 / coding style
+
+### Per CODING_STYLE.md
+- [ ] Naming follows the documented conventions (PascalCase types,
+      camelCase methods, `m_` member prefix where the existing file uses
+      it — match surrounding style)?
+- [ ] C++20 features used appropriately (no regression to pre-C++20
+      idioms when the surrounding code uses concepts / ranges / `consteval`)?
+- [ ] `qCDebug` / `qCWarning` for logging, not bare `qDebug()` at call
+      sites in shipping code?
+
+### `Q_ASSERT` ban (BLOCKER if violated)
+- [ ] **No new `Q_ASSERT` / `Q_ASSERT_X`.** Replace with logged error +
+      graceful return. The `check-no-qassert` pre-commit hook will reject
+      otherwise, but reviewer eyes catch it earlier.
+
+---
+
+## 10. Tests (`test/`, per `test/TESTING.md`)
 
 ### Discipline
-- [ ] Vitest tests in `__tests__/` subdirs, named `*.test.ts` or `*.test.tsx`?
-- [ ] Every new public function or component has at least one test?
-- [ ] Tests independent (no order dependencies)?
-- [ ] Mocks reset in `beforeEach`?
-- [ ] Web tests use `@testing-library/react`, not direct DOM manipulation?
-
-### Cross-platform tests
-- [ ] Platform helpers tested by mocking `process.platform`, not by running
-      on each OS?
+- [ ] New tests derive from the project's QTest base classes (see
+      `test/TESTING.md`) rather than raw `QObject`?
+- [ ] CTest label registered correctly (`Unit` vs `Integration`)?
+- [ ] Asynchronous flows use `MultiSignalSpy` from `test/TESTING.md`, not
+      bare `QSignalSpy` plus ad-hoc waits?
+- [ ] Every new public method / signal / Fact has at least one test?
 
 ### Forbidden patterns
-- [ ] No `sleep()` where `vi.useFakeTimers()` would work?
-- [ ] No tests that depend on real network, real ports without fallback
-      to ephemeral, or real external services?
+- [ ] No `QSKIP` on platforms the test is meant to cover?
+- [ ] No `QTest::qSleep(...)` where `MultiSignalSpy::wait(...)` would work?
+- [ ] No tests that depend on real network, real serial ports, or a real
+      vehicle?
 
 ---
 
-## 12. Cross-cutting
+## 11. CMake & build (`CMakeLists.txt`, `cmake/`)
 
-### TypeScript
-- [ ] No new `any` types (`@typescript-eslint/no-explicit-any: error`)?
-- [ ] `import type` for type-only imports?
-- [ ] Unused vars prefixed `_` (`argsIgnorePattern: "^_"`)?
+- [ ] Build still configures cleanly with
+      `cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release`?
+- [ ] New source files added to the right module's `target_sources(...)`?
+- [ ] No new third-party dependency added without an open question /
+      architect sign-off?
+- [ ] ccache helper invocation preserved on platform workflows?
+
+---
+
+## 12. Python tooling (`tools/`, `.github/scripts/`)
+
+### CI scripts
+- [ ] HTTPX used for GitHub API access (with `gh` CLI fallback via
+      `common.gh_actions`)?
+- [ ] Jinja2 templates live under `.github/scripts/templates/`?
+- [ ] Version numbers / build settings read from `.github/build-config.json`
+      via `common.build_config.get_build_config_value()` — not hardcoded?
+- [ ] `$GITHUB_OUTPUT` writes go through `common.gh_actions.write_github_output()`?
+
+### Bootstrap scripts
+- [ ] `install_dependencies.py` and `ccache_helper.py` remain **stdlib-only**
+      (they run before deps are installed)?
+
+### `tools/` Python
+- [ ] uv extras (`scripts`, `test`) used per `tools/README.md`?
+- [ ] Tests run via `uv run --extra scripts --extra test pytest tests/ -q`?
+
+---
+
+## 13. CI / GitHub Actions (`.github/workflows/`, `.github/actions/`)
+
+- [ ] Platform workflows (`linux.yml`, `macos.yml`, `windows.yml`,
+      `android.yml`, `ios.yml`) consistent — changes touch all relevant
+      platforms or explain the omission?
+- [ ] Reusable workflows and composite actions used over ad-hoc inline
+      steps where one exists (cmake-configure, cmake-build, run-unit-tests,
+      qt-install, etc.)?
+- [ ] zizmor and actionlint clean on new workflow changes?
+
+---
+
+## 14. Cross-cutting
+
+### Security / safety
+- [ ] No hardcoded credentials, API keys, or PII?
+- [ ] No `.env` or secret-bearing files committed?
+- [ ] User-facing safety-critical commands (arm / disarm / mode change /
+      mission start) preserved as explicit user actions, not auto-triggered?
+
+### Documentation
+- [ ] AGENTS.md / CODING_STYLE.md / test/TESTING.md updated if conventions
+      changed?
+- [ ] Public C++ API documented (Doxygen comments) where the surrounding
+      code is documented?
 
 ### Conventions
 - [ ] Conventional commit prefix (`feat:`, `fix:`, `refactor:`, `docs:`,
       `test:`, `chore:`, `perf:`, `ci:`)?
-- [ ] Changeset added if a published package's surface changed?
-
-### Documentation
-- [ ] CLAUDE.md updated if a convention changed?
-- [ ] `docs/CROSS_PLATFORM.md` updated if a new platform helper was added?
+- [ ] Commit scope matches the affected subsystem (`vehicle`, `factsystem`,
+      `firmwareplugin-px4`, `mission`, `mavlink`, `qmlcontrols`, `tools`,
+      `ci`)?
 
 ---
 
 ## Reviewer self-check before submitting findings
 
-- Did I read `CLAUDE.md` for project conventions before flagging style issues?
-- Did I read `docs/CROSS_PLATFORM.md` for the helper inventory before
-  flagging any platform-touching code?
+- Did I read `AGENTS.md` for the golden rules (Fact System, MultiVehicle
+  null-check, FirmwarePlugin abstraction, QML sizing/colors) before
+  flagging style issues?
+- Did I read `CODING_STYLE.md` and `test/TESTING.md` before flagging
+  conventions or test-shape issues?
+- Did I check `.pre-commit-config.yaml` to know which hooks gate the
+  commit (so I don't flag something the linter will catch automatically)?
 - Are my BLOCKER findings actually blockers, or am I being conservative?
 - Did I distinguish between "this is wrong" and "I'd write it differently"?
-- Did I check whether the plan declared something out of scope before flagging it?
+- Did I check whether the plan declared something out of scope before
+  flagging it?

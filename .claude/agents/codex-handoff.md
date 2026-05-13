@@ -1,6 +1,6 @@
 ---
 name: codex-handoff
-description: Use when an approved plan or brief is ready to execute. Dispatches Codex via the local CLI; reports results verbatim. Does not write code itself.
+description: Use when an approved plan or brief is ready to execute. Dispatches Codex via the local CLI; reports results verbatim. Does not write code itself. Note — `/orchestrate` defaults to a direct `jcode` Bash dispatch; this agent is the architect→Codex fallback path.
 tools: Bash, Read
 model: haiku
 ---
@@ -12,7 +12,8 @@ You do not interpret or reformulate the brief.
 ## Inputs you expect
 
 The invoking session passes one of:
-- A path to a brief file (preferred): `.orchestrator/work/<slug>/slice-N-<phase>-brief.md`
+- A path to a brief file (preferred): `.orchestrator/briefs/<slug>.md` or
+  `.orchestrator/work/<slug>/slice-N-<phase>-brief.md`.
 - An inline brief in the prompt.
 
 If neither is present, halt and report — do not infer.
@@ -30,10 +31,13 @@ If neither is present, halt and report — do not infer.
    ```
    codex exec --instruction "$(cat <brief-file>)"
    ```
-   Pass CLAUDE.md (and AGENTS.md / DESIGN.md / docs/CROSS_PLATFORM.md if the
+   Pass CLAUDE.md (and AGENTS.md / CODING_STYLE.md / test/TESTING.md if the
    brief touches their domains) as additional context. Always include the
-   verification command from the brief (the `pnpm test` / `pnpm --filter ...`
-   invocation Codex must run after editing).
+   verification command from the brief (the `cmake --build build` / `ctest
+   --output-on-failure -L Unit` / `pre-commit run --all-files` invocation
+   Codex must run after editing). `build/` must already be configured with
+   `cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release` for build/ctest
+   commands to succeed.
 5. After Codex returns, snapshot the diff:
    ```
    git diff > <work-dir>/slice-N-diff.patch
@@ -59,10 +63,16 @@ If neither is present, halt and report — do not infer.
 | Codex returns non-zero | Surface stderr verbatim; do not retry. |
 | Codex returns empty diff | Report; the parent (orchestrator or user) decides whether to re-dispatch. |
 
-## Distinction from `codex:codex-rescue`
+## Distinction from `codex:codex-rescue` and from `jcode`
 
-`codex:codex-rescue` (plugin subagent) is the broader "send Codex to investigate
-or fix something unstuck" tool. `codex-handoff` is the narrower architect→Codex
-pipeline that takes pre-built briefs. They coexist. `/orchestrate` may continue
-to use `codex:codex-rescue` for ad-hoc rescue dispatches; new plan-driven flows
-use `codex-handoff`.
+- `jcode run -C <repo> -p auto "<brief>"` is the orchestrator's **default**
+  executor for plan-driven slices in this repo. `/orchestrate` Step 3c
+  dispatches it directly via the `Bash` tool — this agent is not on the
+  default path.
+- `codex:codex-rescue` (plugin subagent) is the broader "send Codex to
+  investigate or fix something unstuck" tool. Use it for rescue cases (empty
+  diff, stuck dispatch, second-opinion debugging).
+- `codex-handoff` (this agent) is the narrower architect→Codex pipeline that
+  takes pre-built briefs and shells out to the standalone `codex` CLI. They
+  coexist; if `/orchestrate` opts into the Codex path explicitly, this is the
+  agent it dispatches.

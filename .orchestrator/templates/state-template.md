@@ -3,7 +3,7 @@
 - **Plan:** {{plan_path}}
 - **Started:** {{iso_timestamp}}
 - **Orchestrator:** Claude Code (Architect)
-- **Executor:** Codex via Agent(subagent_type="codex-handoff")
+- **Executor:** jcode via Bash (`jcode run -C <repo> -p auto "<brief>"`); rescue via Agent(subagent_type="codex:codex-rescue")
 
 ## Slices
 

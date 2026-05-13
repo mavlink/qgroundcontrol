@@ -32,7 +32,7 @@ ship the single POV as-is.
    - which reviewer raised it
 2. Cluster findings that point at the same site. Same site = same file +
    line ±5, OR same file + same semantic concern (e.g., both mention
-   "missing process-check in getActivityState").
+   "missing activeVehicle() null-check before parameter access").
 3. For each cluster, apply the consensus rule:
    - **Consensus** (≥2 reviewers agree): always surface. Highest severity
      in the cluster wins. List all reviewers that raised it.
@@ -60,7 +60,7 @@ ship the single POV as-is.
 
 ## BLOCKER
 - [<file>:<line>] [<subsystem>] [reviewers: claude+codex] <finding text>
-- [<file>:<line>] [<subsystem>] [reviewers: mimo] [ELEVATED: high-weight zone] <finding>
+- [<file>:<line>] [<subsystem>] [reviewers: gemini] [ELEVATED: high-weight zone] <finding>
 - ...
 
 ## MAJOR

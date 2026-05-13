@@ -4,15 +4,15 @@ allowed-tools: Bash, Read, Write, Edit, Task
 argument-hint: [base-branch]
 ---
 
-# /review — sprig-ao
+# /review — qgroundcontrol
 
 You are the **review orchestrator**. TDD-Guard already enforced the
 red/green/refactor discipline at hook time. This command picks up at
 Phase 5: independent review against `.orchestrator/review-rubric.md`,
 synthesis, and commit.
 
-`CLAUDE.md`, `AGENTS.md` (if present), `DESIGN.md` (if present),
-`docs/CROSS_PLATFORM.md`, and `.orchestrator/review-rubric.md` are the
+`CLAUDE.md`, `AGENTS.md`, `CODING_STYLE.md`, `test/TESTING.md`,
+`.pre-commit-config.yaml`, and `.orchestrator/review-rubric.md` are the
 source of truth for project conventions and review scope. Defer to them.
 
 ## Inputs
@@ -24,20 +24,27 @@ source of truth for project conventions and review scope. Defer to them.
 
 ## Reviewer ground rules (high-weight zones — single-reviewer findings elevated)
 
-1. Lifecycle state machine — `lifecycle-manager.ts`, `lifecycle-state.ts`,
-   `deriveLegacyStatus`, terminal-reason enum
-2. Session manager stale-runtime reconciliation — `sm.list()` in
-   `packages/core/src/session-manager.ts`
-3. Plugin contract — any exported interface in `packages/core/src/types.ts`
-4. Cross-platform helpers — `packages/core/src/platform.ts`,
-   `path-equality.ts`, Windows pty-host pipe protocol
-5. Agent plugin `getActivityState` cascade — process check → JSONL
-   actionable → native signal → JSONL fallback → null
-6. Activity log contract — JSONL append-only, dedup, classification
-7. SSE 5s interval — `useSessionEvents` hook
-8. Worktree/state storage layout under `~/.agent-orchestrator/{hash}-{projectId}/`
-9. Design tokens / dark theme / no inline styles
-10. Agent plugin `setupWorkspaceHooks` — required for dashboard PR tracking
+1. Fact System public contract — `src/FactSystem/Fact.h`, `ParameterManager`
+   metadata + signal wiring
+2. Vehicle public surface — `src/Vehicle/Vehicle.h` and every consumer of
+   `MultiVehicleManager::instance()->activeVehicle()` (null-check enforced
+   by the `vehicle-null-check` pre-commit hook)
+3. FirmwarePlugin abstraction — `src/FirmwarePlugin/FirmwarePlugin.h` plus
+   PX4 and ArduPilot subclasses; no firmware-type branching outside this layer
+4. MAVLink routing — `src/MAVLink/`: `target_system` / `target_component`
+   selection, message id assignment, multi-vehicle dispatch
+5. MissionManager — mission upload sequence, geofence/rally upload,
+   mission-item discrimination
+6. QML sizing & colors — `ScreenTools.defaultFontPixelHeight/Width` and
+   `QGCPalette`; hardcoded pixels/colors are BLOCKER per AGENTS.md
+7. `Q_ASSERT` ban — enforced by the `check-no-qassert` pre-commit hook
+8. Cross-platform CI — `.github/workflows/{linux,macos,windows,android,ios}.yml`
+   plus composite actions under `.github/actions/`
+9. Build & lint gating — every commit must pass `pre-commit run --all-files`
+   (clang-format, clang-tidy, ruff, pyright, shellcheck, actionlint, zizmor,
+   qmllint, clazy, vehicle-null-check, check-no-qassert)
+10. Python tooling — `tools/` (uv-managed) and `.github/scripts/` (httpx +
+    jinja2, bootstrap scripts must be stdlib-only)
 
 Full rubric in `.orchestrator/review-rubric.md`. Do not paraphrase it —
 feed the file verbatim to each reviewer.
@@ -58,8 +65,8 @@ no synthesis). Synthesis happens in Phase 6.
    ```
    Agent(subagent_type="reviewer", description="POV review against rubric",
          prompt="Review .orchestrator/diff.patch against
-         .orchestrator/review-rubric.md, CLAUDE.md, and (if present)
-         AGENTS.md, DESIGN.md, docs/CROSS_PLATFORM.md.
+         .orchestrator/review-rubric.md, CLAUDE.md, AGENTS.md,
+         CODING_STYLE.md, test/TESTING.md, and .pre-commit-config.yaml.
          List findings only, tagged BLOCKER/MAJOR/MINOR/NIT, grouped by
          file. Tag high-weight-zone hits with [HIGH-WEIGHT]. Do not
          propose fixes. Return the full markdown.")
@@ -68,8 +75,8 @@ no synthesis). Synthesis happens in Phase 6.
 
 2. **Codex review** via the local Codex CLI:
    `codex exec --instruction "Review .orchestrator/diff.patch against
-   .orchestrator/review-rubric.md, CLAUDE.md, and (if present) AGENTS.md,
-   DESIGN.md, docs/CROSS_PLATFORM.md. List issues only with
+   .orchestrator/review-rubric.md, CLAUDE.md, AGENTS.md, CODING_STYLE.md,
+   test/TESTING.md, and .pre-commit-config.yaml. List issues only with
    BLOCKER/MAJOR/MINOR/NIT tags, grouped by file. Tag high-weight-zone
    hits with [HIGH-WEIGHT]. Do not propose fixes."`
    → `.orchestrator/review-codex.md`.
@@ -143,8 +150,11 @@ git commit -m "chore(review): record review artifacts for $(git rev-parse --shor
 ```
 
 PR description must include:
-- The verification command for the change under review (e.g. `pnpm test`,
-  `pnpm --filter @aoagents/ao-core test`).
+- The verification command for the change under review (e.g.
+  `cd build && ctest --output-on-failure -L Unit --parallel $(nproc)` or
+  `cd build && ctest --output-on-failure -L Unit -R <SubsystemRegex> --parallel $(nproc)`,
+  plus `cmake --build build --config Release --parallel` if headers changed,
+  and `pre-commit run --all-files` for lint gating).
 - A summary of `.orchestrator/review-synthesis.md`.
 - The user merges manually — no auto-merge.
 

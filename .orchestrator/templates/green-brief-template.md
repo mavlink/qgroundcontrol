@@ -7,7 +7,7 @@ implement the minimum production code that makes it pass.
 </task>
 
 <context>
-Repo: this repository (sprig-ao monorepo).
+Repo: this repository (qgroundcontrol — C++20 / Qt / QML).
 Plan path: {{plan_path}}
 Slice number: {{N}} (GREEN phase 2 of 2)
 RED phase result: {{red_summary}}
@@ -16,9 +16,12 @@ Constraints:
 - Implement only what the failing test requires. No extra features.
 - All prior tests in `{{verification_command}}` must remain green; the failing test must turn green.
 - Do not modify the test file. If the test is wrong, STOP and report.
-- Do not change exported interface shapes in `packages/core/src/types.ts` unless this slice IS the contract change.
-- Preserve cross-platform invariants: never inline `process.platform === "win32"` (use helpers from `@aoagents/ao-core`).
-- For agent plugins: preserve the `getActivityState` cascade (process check → JSONL actionable → native signal → JSONL fallback → null). The fallback step is mandatory.
+- Do not change the public interface of `src/FactSystem/Fact.h`, `src/Vehicle/Vehicle.h`, or `src/FirmwarePlugin/FirmwarePlugin.h` unless this slice IS the contract change.
+- Always null-check `MultiVehicleManager::instance()->activeVehicle()` before dereferencing (the `vehicle-null-check` pre-commit hook enforces this).
+- Route firmware-specific behavior through `vehicle->firmwarePlugin()` — do not branch on firmware type in calling code.
+- QML changes: use `ScreenTools.defaultFontPixelHeight/Width` for sizing and `QGCPalette` for colors. No hardcoded pixel or color values.
+- No `Q_ASSERT` — replace with logged error + graceful return (`check-no-qassert` hook enforces).
+- `build/` must already be configured (`cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release`) before `{{verification_command}}` will succeed.
 </context>
 
 <structured_output_contract>

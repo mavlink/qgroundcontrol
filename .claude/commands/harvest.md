@@ -35,8 +35,9 @@ flow (plan-skip bugfixes, hand-driven small changes).
 ## What `/harvest` does NOT do
 
 - Run tests. The slice is assumed merged; harvest is doc work only.
-- Touch `packages/*/src/`, `package.json`, `pnpm-lock.yaml`, `tsconfig*.json`,
-  `eslint.config.js`, or `.github/workflows/`. Same scope as the architect.
+- Touch `src/**`, `CMakeLists.txt`, `cmake/**`, `.clang-format`,
+  `.clang-tidy`, `.pre-commit-config.yaml`, `.github/workflows/**`,
+  `.github/actions/**`, or `tools/pyproject.toml`. Same scope as the architect.
 - Push or merge anything.
 - Re-harvest a slice. If the slice's plan/work dir is already gone and
   STATUS shows it under "Recently Merged" with a Harvest summary, halt and

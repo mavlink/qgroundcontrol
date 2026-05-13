@@ -13,9 +13,12 @@ The user decides what to act on.
 
 - `.orchestrator/review-rubric.md` (verbatim, do not paraphrase)
 - `CLAUDE.md`
-- `AGENTS.md` (if present)
-- `DESIGN.md` (if present, for web UI changes)
-- `docs/CROSS_PLATFORM.md` (for any cross-platform-touching change)
+- `AGENTS.md`
+- `CODING_STYLE.md` (naming, formatting, C++20 features, QML style, logging)
+- `test/TESTING.md` (QtTest base classes, CTest labels, MultiSignalSpy)
+- `.pre-commit-config.yaml` (enforced linters: clang-format, clang-tidy,
+  ruff, pyright, shellcheck, actionlint, zizmor, qmllint, clazy,
+  vehicle-null-check, check-no-qassert)
 
 If `.orchestrator/review-rubric.md` is absent, halt and surface that as the
 only finding. Do not freelance a rubric.
@@ -26,17 +29,19 @@ only finding. Do not freelance a rubric.
 2. Read the rubric, CLAUDE.md, and any other source-of-truth docs above.
 3. Walk the diff. For each change, evaluate against the rubric.
 4. Tag every finding with one severity:
-   - **BLOCKER** — would cause production-state corruption, break Windows users,
-     violate a plugin contract, dead-lock the lifecycle state machine, leak
-     credentials, or regress pinned behavior.
-   - **MAJOR** — semantic bug, missing test for new behavior, unsafe assumption,
-     plugin contract drift not captured in `types.ts`.
+   - **BLOCKER** — would cause incorrect flight behavior, vehicle-state
+     corruption, break Windows/macOS/Android/iOS users, violate the Fact
+     System or FirmwarePlugin contract, dereference a null `activeVehicle()`,
+     leak credentials, or regress pinned behavior.
+   - **MAJOR** — semantic bug, missing test for new behavior, unsafe
+     assumption, public-header drift in `src/FactSystem/Fact.h` /
+     `src/Vehicle/Vehicle.h` / `src/FirmwarePlugin/FirmwarePlugin.h` not
+     captured by downstream subclasses.
    - **MINOR** — readability, naming, redundant code that survives correctness.
    - **NIT** — style, doc-only, formatting.
 5. Tag every finding with its subsystem from the rubric taxonomy
-   (core, cli, web, plugin-agent, plugin-runtime, plugin-workspace,
-   plugin-tracker, plugin-scm, plugin-notifier, plugin-terminal,
-   cross-platform, integration-tests, infra).
+   (Vehicle, FactSystem, FirmwarePlugin, AutoPilotPlugins, MissionManager,
+   MAVLink, QmlControls, Settings, tools, ci-scripts, infra, tests).
 6. Group findings by file. Within a file, ordered by line number.
 
 ## High-weight zones (flag these explicitly)
@@ -44,22 +49,29 @@ only finding. Do not freelance a rubric.
 Tag findings in these zones with `[HIGH-WEIGHT]` so synthesizer can elevate
 single-reviewer hits:
 
-- Lifecycle state machine (`packages/core/src/lifecycle-manager.ts`,
-  `lifecycle-state.ts`, `deriveLegacyStatus`, terminal-reason enum)
-- Session manager stale-runtime reconciliation
-  (`packages/core/src/session-manager.ts`, especially `sm.list()`)
-- Plugin contract (`packages/core/src/types.ts` — any exported interface)
-- Cross-platform helpers (`packages/core/src/platform.ts`, `path-equality.ts`,
-  Windows pty-host pipe protocol, `killProcessTree`, `findPidByPort`)
-- Agent plugin `getActivityState` cascade (process check → JSONL actionable
-  state → native signal → JSONL entry fallback → null)
-- Activity log contract (JSONL append-only, dedup window, classification helpers)
-- SSE 5s interval (`useSessionEvents` hook) — invariant
-- Worktree/state storage layout under `~/.agent-orchestrator/{hash}-{projectId}/`
-- Design tokens / dark theme / no inline styles / no new UI component libraries
-  (`packages/web/src/app/globals.css`, Tailwind v4)
-- Agent plugin `setupWorkspaceHooks` — without it, PRs created by agents
-  don't appear in the dashboard
+- Fact System public contract (`src/FactSystem/Fact.h`,
+  `src/FactSystem/ParameterManager.*`) — Fact metadata, signal/slot wiring,
+  `setCookedValue` semantics
+- Vehicle public surface (`src/Vehicle/Vehicle.h`,
+  `MultiVehicleManager::instance()->activeVehicle()` consumers) — every
+  consumer must null-check, and `vehicle-null-check` (pre-commit) enforces it
+- FirmwarePlugin abstraction (`src/FirmwarePlugin/FirmwarePlugin.h` +
+  `PX4/` + `APM/` subclasses) — any firmware-specific behavior must route
+  through `vehicle->firmwarePlugin()` rather than branching on firmware type
+- MAVLink routing (`src/MAVLink/`) — `target_system` / `target_component`
+  selection, message id assignment, multi-vehicle dispatch
+- MissionManager (`src/MissionManager/`) — mission upload sequence,
+  geofence/rally upload, mission-item type discrimination
+- QML sizing & color contract (`ScreenTools.defaultFontPixelHeight/Width`,
+  `QGCPalette`) — hardcoded pixel/color values are BLOCKER (see CODING_STYLE.md
+  + AGENTS.md golden rules)
+- Cross-platform CI (`.github/workflows/{linux,macos,windows,android,ios}.yml`
+  + `.github/actions/`) — composite-action drift, ccache helper, qt-install
+  caching
+- `Q_ASSERT` ban — `check-no-qassert` pre-commit hook; replace with logged
+  error + graceful return
+- Python tooling layer (`tools/`, `.github/scripts/`) — `httpx`/`jinja2`
+  patterns documented in AGENTS.md; bootstrap scripts must be stdlib-only
 
 ## Output structure
 
