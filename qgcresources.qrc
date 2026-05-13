@@ -10,6 +10,8 @@
         <file alias="CameraGimbal.png">resources/CameraGimbal.png</file>
         <file alias="chevron-double-right.svg">resources/chevron-double-right.svg</file>
         <file alias="GeoFence.svg">resources/GeoFence.svg</file>
+        <file alias="gear-white.svg">resources/gear-white.svg</file>
+        <file alias="gear-black.svg">resources/gear-black.svg</file>
         <file alias="QGCLogoFull.svg">resources/QGCLogoFull.svg</file>
         <file alias="QGCLogoWhite.svg">resources/QGCLogoWhite.svg</file>
         <file alias="QGCLogoArrow.svg">resources/QGCLogoArrow.svg</file>
