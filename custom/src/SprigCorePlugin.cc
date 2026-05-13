@@ -13,6 +13,7 @@
 #include "QGCMAVLink.h"
 #include "QGCPalette.h"
 #include "QmlComponentInfo.h"
+#include "VideoSettings.h"
 
 QGC_LOGGING_CATEGORY(SprigLog, "Sprig.SprigCorePlugin")
 
@@ -50,14 +51,12 @@ void SprigCorePlugin::init()
 
     // Load Sprig fonts from QRC into QFontDatabase
     static const QList<QString> kFontResources = {
-        QStringLiteral(":/Custom/fonts/BebasNeue-Regular.ttf"),
-        QStringLiteral(":/Custom/fonts/Barlow-Regular.ttf"),
-        QStringLiteral(":/Custom/fonts/Barlow-Medium.ttf"),
-        QStringLiteral(":/Custom/fonts/Barlow-SemiBold.ttf"),
+        QStringLiteral(":/Custom/fonts/BebasNeue-Regular.ttf"), QStringLiteral(":/Custom/fonts/Barlow-Regular.ttf"),
+        QStringLiteral(":/Custom/fonts/Barlow-Medium.ttf"),     QStringLiteral(":/Custom/fonts/Barlow-SemiBold.ttf"),
         QStringLiteral(":/Custom/fonts/Barlow-Bold.ttf"),
     };
 
-    for (const QString &res : kFontResources) {
+    for (const QString& res : kFontResources) {
         QFile f(res);
         if (!f.open(QIODevice::ReadOnly)) {
             qCWarning(SprigLog) << "Font not found in QRC:" << res;
@@ -67,8 +66,7 @@ void SprigCorePlugin::init()
         if (id < 0) {
             qCWarning(SprigLog) << "Failed to register font:" << res;
         } else {
-            qCInfo(SprigLog) << "Registered font:" << res
-                             << "families:" << QFontDatabase::applicationFontFamilies(id);
+            qCInfo(SprigLog) << "Registered font:" << res << "families:" << QFontDatabase::applicationFontFamilies(id);
         }
     }
 
@@ -133,6 +131,32 @@ void SprigCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMe
             // Force default palette to Dark for industrial/outdoor use case.
             // indoorPalette: 1 = Indoor (Dark), 0 = Outdoor (Light)
             metaData.setRawDefaultValue(1);
+            return;
+        }
+    }
+
+    if (settingsGroup == VideoSettings::settingsGroup) {
+        if (metaData.name() == VideoSettings::videoSourceName) {
+            // Hide vendor-specific video presets that are not relevant to Sprig GCS.
+            static const QSet<QString> kAllowedSources = {
+                VideoSettings::videoSourceNoVideo, VideoSettings::videoDisabled,      VideoSettings::videoSourceRTSP,
+                VideoSettings::videoSourceUDPH264, VideoSettings::videoSourceUDPH265, VideoSettings::videoSourceTCP,
+                VideoSettings::videoSourceMPEGTS,
+            };
+
+            const QStringList origStrings = metaData.enumStrings();
+            const QVariantList origValues = metaData.enumValues();
+
+            QStringList filteredStrings;
+            QVariantList filteredValues;
+            for (int i = 0; i < origValues.size(); ++i) {
+                if (kAllowedSources.contains(origValues[i].toString())) {
+                    filteredStrings.append(origStrings[i]);
+                    filteredValues.append(origValues[i]);
+                }
+            }
+
+            metaData.setEnumInfo(filteredStrings, filteredValues);
             return;
         }
     }
