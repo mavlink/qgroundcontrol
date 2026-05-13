@@ -66,35 +66,27 @@ void JoystickConfigController::_setJoystick(Joystick* joystick)
     // Connect to settings changes to emit extension enabled signals
     connect(_joystick->settings()->enableManualControlPitchExtension(), &Fact::rawValueChanged, this, [this]() {
         emit pitchExtensionEnabledChanged(pitchExtensionEnabled());
-        emit anyExtensionEnabledChanged(anyExtensionEnabled());
     });
     connect(_joystick->settings()->enableManualControlRollExtension(), &Fact::rawValueChanged, this, [this]() {
         emit rollExtensionEnabledChanged(rollExtensionEnabled());
-        emit anyExtensionEnabledChanged(anyExtensionEnabled());
     });
-    connect(_joystick->settings()->enableManualControlAux1(), &Fact::rawValueChanged, this, [this]() {
-        emit aux1ExtensionEnabledChanged(aux1ExtensionEnabled());
-        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    connect(_joystick->settings()->enableAdditionalAxis1(), &Fact::rawValueChanged, this, [this]() {
+        emit additionalAxis1EnabledChanged(additionalAxis1Enabled());
     });
-    connect(_joystick->settings()->enableManualControlAux2(), &Fact::rawValueChanged, this, [this]() {
-        emit aux2ExtensionEnabledChanged(aux2ExtensionEnabled());
-        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    connect(_joystick->settings()->enableAdditionalAxis2(), &Fact::rawValueChanged, this, [this]() {
+        emit additionalAxis2EnabledChanged(additionalAxis2Enabled());
     });
-    connect(_joystick->settings()->enableManualControlAux3(), &Fact::rawValueChanged, this, [this]() {
-        emit aux3ExtensionEnabledChanged(aux3ExtensionEnabled());
-        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    connect(_joystick->settings()->enableAdditionalAxis3(), &Fact::rawValueChanged, this, [this]() {
+        emit additionalAxis3EnabledChanged(additionalAxis3Enabled());
     });
-    connect(_joystick->settings()->enableManualControlAux4(), &Fact::rawValueChanged, this, [this]() {
-        emit aux4ExtensionEnabledChanged(aux4ExtensionEnabled());
-        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    connect(_joystick->settings()->enableAdditionalAxis4(), &Fact::rawValueChanged, this, [this]() {
+        emit additionalAxis4EnabledChanged(additionalAxis4Enabled());
     });
-    connect(_joystick->settings()->enableManualControlAux5(), &Fact::rawValueChanged, this, [this]() {
-        emit aux5ExtensionEnabledChanged(aux5ExtensionEnabled());
-        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    connect(_joystick->settings()->enableAdditionalAxis5(), &Fact::rawValueChanged, this, [this]() {
+        emit additionalAxis5EnabledChanged(additionalAxis5Enabled());
     });
-    connect(_joystick->settings()->enableManualControlAux6(), &Fact::rawValueChanged, this, [this]() {
-        emit aux6ExtensionEnabledChanged(aux6ExtensionEnabled());
-        emit anyExtensionEnabledChanged(anyExtensionEnabled());
+    connect(_joystick->settings()->enableAdditionalAxis6(), &Fact::rawValueChanged, this, [this]() {
+        emit additionalAxis6EnabledChanged(additionalAxis6Enabled());
     });
 
     emit joystickChanged(_joystick);
@@ -196,18 +188,18 @@ bool JoystickConfigController::_stickFunctionEnabled(StickFunction stickFunction
         return _joystick->settings()->enableManualControlRollExtension()->rawValue().toBool();
     case stickFunctionPitchExtension:
         return _joystick->settings()->enableManualControlPitchExtension()->rawValue().toBool();
-    case stickFunctionAux1Extension:
-        return _joystick->settings()->enableManualControlAux1()->rawValue().toBool();
-    case stickFunctionAux2Extension:
-        return _joystick->settings()->enableManualControlAux2()->rawValue().toBool();
-    case stickFunctionAux3Extension:
-        return _joystick->settings()->enableManualControlAux3()->rawValue().toBool();
-    case stickFunctionAux4Extension:
-        return _joystick->settings()->enableManualControlAux4()->rawValue().toBool();
-    case stickFunctionAux5Extension:
-        return _joystick->settings()->enableManualControlAux5()->rawValue().toBool();
-    case stickFunctionAux6Extension:
-        return _joystick->settings()->enableManualControlAux6()->rawValue().toBool();
+    case stickFunctionAdditionalAxis1:
+        return _joystick->settings()->enableAdditionalAxis1()->rawValue().toBool();
+    case stickFunctionAdditionalAxis2:
+        return _joystick->settings()->enableAdditionalAxis2()->rawValue().toBool();
+    case stickFunctionAdditionalAxis3:
+        return _joystick->settings()->enableAdditionalAxis3()->rawValue().toBool();
+    case stickFunctionAdditionalAxis4:
+        return _joystick->settings()->enableAdditionalAxis4()->rawValue().toBool();
+    case stickFunctionAdditionalAxis5:
+        return _joystick->settings()->enableAdditionalAxis5()->rawValue().toBool();
+    case stickFunctionAdditionalAxis6:
+        return _joystick->settings()->enableAdditionalAxis6()->rawValue().toBool();
     case stickFunctionRoll:
     case stickFunctionPitch:
     case stickFunctionYaw:

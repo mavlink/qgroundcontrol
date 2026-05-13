@@ -48,6 +48,7 @@ private slots:
     // Calibration tests
     void _calibrationDataTest();
     void _adjustRangeTest();
+    void _adjustRangeToRcOverridePwmTest();
 
     // Error handling tests
     void _invalidAxisIndexTest();

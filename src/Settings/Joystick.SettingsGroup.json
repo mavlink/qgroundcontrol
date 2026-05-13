@@ -91,48 +91,6 @@
             "label": "Stick Exponential"
         },
         {
-            "name": "enableManualControlAux1",
-            "shortDesc": "Enable manual control for Aux 1",
-            "type": "bool",
-            "default": false,
-            "label": "Enable manual control for Aux 1"
-        },
-        {
-            "name": "enableManualControlAux2",
-            "shortDesc": "Enable manual control for Aux 2",
-            "type": "bool",
-            "default": false,
-            "label": "Enable manual control for Aux 2"
-        },
-        {
-            "name": "enableManualControlAux3",
-            "shortDesc": "Enable manual control for Aux 3",
-            "type": "bool",
-            "default": false,
-            "label": "Enable manual control for Aux 3"
-        },
-        {
-            "name": "enableManualControlAux4",
-            "shortDesc": "Enable manual control for Aux 4",
-            "type": "bool",
-            "default": false,
-            "label": "Enable manual control for Aux 4"
-        },
-        {
-            "name": "enableManualControlAux5",
-            "shortDesc": "Enable manual control for Aux 5",
-            "type": "bool",
-            "default": false,
-            "label": "Enable manual control for Aux 5"
-        },
-        {
-            "name": "enableManualControlAux6",
-            "shortDesc": "Enable manual control for Aux 6",
-            "type": "bool",
-            "default": false,
-            "label": "Enable manual control for Aux 6"
-        },
-        {
             "name": "enableManualControlPitchExtension",
             "shortDesc": "Enable manual control pitch extension",
             "type": "bool",
@@ -145,6 +103,57 @@
             "type": "bool",
             "default": false,
             "label": "Enable manual control roll extension"
+        },
+        {
+            "name": "additionalAxesFunction",
+            "shortDesc": "Function for additional axes (manual control or RC override)",
+            "type": "uint32",
+            "enumStrings": "MANUAL_CONTROL,RC_CHANNELS_OVERRIDE",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "Function for additional axes"
+        },
+        {
+            "name": "enableAdditionalAxis1",
+            "shortDesc": "Enable additional axis 1",
+            "type": "bool",
+            "default": false,
+            "label": "Enable additional axis 1"
+        },
+        {
+            "name": "enableAdditionalAxis2",
+            "shortDesc": "Enable additional axis 2",
+            "type": "bool",
+            "default": false,
+            "label": "Enable additional axis 2"
+        },
+        {
+            "name": "enableAdditionalAxis3",
+            "shortDesc": "Enable additional axis 3",
+            "type": "bool",
+            "default": false,
+            "label": "Enable additional axis 3"
+        },
+        {
+            "name": "enableAdditionalAxis4",
+            "shortDesc": "Enable additional axis 4",
+            "type": "bool",
+            "default": false,
+            "label": "Enable additional axis 4"
+        },
+        {
+            "name": "enableAdditionalAxis5",
+            "shortDesc": "Enable additional axis 5",
+            "type": "bool",
+            "default": false,
+            "label": "Enable additional axis 5"
+        },
+        {
+            "name": "enableAdditionalAxis6",
+            "shortDesc": "Enable additional axis 6",
+            "type": "bool",
+            "default": false,
+            "label": "Enable additional axis 6"
         }
     ]
 }
