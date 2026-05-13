@@ -13,6 +13,7 @@
 #include <QtCore/QSet>
 #include <QtPositioning/QGeoCoordinate>
 
+#include <array>
 #include <atomic>
 
 class MockLinkCamera;
@@ -212,6 +213,7 @@ private:
     void _handleInProgressCommandLong(const mavlink_command_long_t &request);
     void _handleCommandLongSetMessageInterval(const mavlink_command_long_t &request, bool &acccepted);
     void _handleManualControl(const mavlink_message_t &msg);
+    void _handleRCChannelsOverride(const mavlink_message_t &msg);
     void _handlePreFlightCalibration(const mavlink_command_long_t &request);
     void _handleTakeoff(const mavlink_command_long_t &request);
     void _handleLogRequestList(const mavlink_message_t &msg);
@@ -346,6 +348,13 @@ private:
     bool _hashCheckNoResponse = false;
     int _hashCheckRequestCount = 0;
     bool _paramRequestListHashCheckSent = false;
+
+    struct RCChannelOverride {
+        enum class State { Ignore, Overridden, Released } state = State::Ignore;
+        uint16_t value = 0;
+    };
+    static constexpr int kRcChannelOverrideChannelCount = 18;
+    std::array<RCChannelOverride, kRcChannelOverrideChannelCount> _rcChannelOverrides;
 
     QMap<MAV_CMD, int> _receivedMavCommandCountMap;
     QMap<MAV_CMD, QMap<int, int>> _receivedMavCommandByCompCountMap;

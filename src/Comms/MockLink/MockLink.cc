@@ -729,6 +729,9 @@ void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
     case MAVLINK_MSG_ID_MANUAL_CONTROL:
         _handleManualControl(msg);
         break;
+    case MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE:
+        _handleRCChannelsOverride(msg);
+        break;
     case MAVLINK_MSG_ID_LOG_REQUEST_LIST:
         _handleLogRequestList(msg);
         break;
@@ -749,7 +752,7 @@ void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
 void MockLink::_handleHeartBeat(const mavlink_message_t &msg)
 {
     Q_UNUSED(msg);
-    qCDebug(MockLinkLog) << "Heartbeat";
+    qCDebug(MockLinkVerboseLog) << "Heartbeat";
 }
 
 void MockLink::_handleParamMapRC(const mavlink_message_t &msg)
@@ -824,7 +827,117 @@ void MockLink::_handleManualControl(const mavlink_message_t &msg)
     mavlink_manual_control_t manualControl{};
     mavlink_msg_manual_control_decode(&msg, &manualControl);
 
-    qCDebug(MockLinkLog) << "MANUAL_CONTROL" << manualControl.x << manualControl.y << manualControl.z << manualControl.r;
+    // INT16_MAX means "axis invalid/not provided" per MAVLink spec
+    const auto axisStr = [](int16_t v) -> QString {
+        return (v == INT16_MAX) ? QStringLiteral("invalid") : QString::number(v);
+    };
+    // Extension fields are only valid when the corresponding enabled_extensions bit is set
+    const auto extStr = [](int16_t v, bool enabled) -> QString {
+        return enabled ? QString::number(v) : QStringLiteral("disabled");
+    };
+
+    const uint8_t ext = manualControl.enabled_extensions;
+
+    qCDebug(MockLinkVerboseLog).noquote()
+        << "MANUAL_CONTROL"
+        << "target:"             << manualControl.target
+        << "x:"                  << axisStr(manualControl.x)
+        << "y:"                  << axisStr(manualControl.y)
+        << "z:"                  << axisStr(manualControl.z)
+        << "r:"                  << axisStr(manualControl.r)
+        << "buttons:"            << QStringLiteral("0x%1").arg(manualControl.buttons,  4, 16, QLatin1Char('0'))
+        << "buttons2:"           << QStringLiteral("0x%1").arg(manualControl.buttons2, 4, 16, QLatin1Char('0'))
+        << "enabled_extensions:" << QStringLiteral("0x%1").arg(ext, 2, 16, QLatin1Char('0'))
+        << "s(pitch):"           << extStr(manualControl.s,    ext & (1 << 0))
+        << "t(roll):"            << extStr(manualControl.t,    ext & (1 << 1))
+        << "aux1:"               << extStr(manualControl.aux1, ext & (1 << 2))
+        << "aux2:"               << extStr(manualControl.aux2, ext & (1 << 3))
+        << "aux3:"               << extStr(manualControl.aux3, ext & (1 << 4))
+        << "aux4:"               << extStr(manualControl.aux4, ext & (1 << 5))
+        << "aux5:"               << extStr(manualControl.aux5, ext & (1 << 6))
+        << "aux6:"               << extStr(manualControl.aux6, ext & (1 << 7));
+}
+
+void MockLink::_handleRCChannelsOverride(const mavlink_message_t &msg)
+{
+    mavlink_rc_channels_override_t override{};
+    mavlink_msg_rc_channels_override_decode(&msg, &override);
+
+    // Per the MAVLink spec:
+    //   Channels 1-8:  UINT16_MAX = ignore (no state change), 0 = release back to RC radio
+    //   Channels 9-18: UINT16_MAX or 0 = ignore,              UINT16_MAX-1 = release back to RC radio
+    const uint16_t rawValues[18] = {
+        override.chan1_raw,  override.chan2_raw,  override.chan3_raw,  override.chan4_raw,
+        override.chan5_raw,  override.chan6_raw,  override.chan7_raw,  override.chan8_raw,
+        override.chan9_raw,  override.chan10_raw, override.chan11_raw, override.chan12_raw,
+        override.chan13_raw, override.chan14_raw, override.chan15_raw, override.chan16_raw,
+        override.chan17_raw, override.chan18_raw,
+    };
+
+    bool anyChange = false;
+    for (int i = 0; i < kRcChannelOverrideChannelCount; ++i) {
+        const uint16_t raw = rawValues[i];
+        const bool isExtended = (i >= 8);
+
+        RCChannelOverride::State newState;
+        if (isExtended) {
+            if (raw == 0 || raw == UINT16_MAX) {
+                continue; // ignore — no change to this channel's state
+            } else if (raw == static_cast<uint16_t>(UINT16_MAX - 1)) {
+                newState = RCChannelOverride::State::Released;
+            } else {
+                newState = RCChannelOverride::State::Overridden;
+            }
+        } else {
+            if (raw == UINT16_MAX) {
+                continue; // ignore — no change to this channel's state
+            } else if (raw == 0) {
+                newState = RCChannelOverride::State::Released;
+            } else {
+                newState = RCChannelOverride::State::Overridden;
+            }
+        }
+
+        RCChannelOverride &ch = _rcChannelOverrides[i];
+        if (ch.state == newState) {
+            continue;
+        }
+
+        anyChange = true;
+
+        const auto stateLabel = [](RCChannelOverride::State s) -> const char * {
+            switch (s) {
+            case RCChannelOverride::State::Ignore:      return "ignore";
+            case RCChannelOverride::State::Released:    return "released";
+            case RCChannelOverride::State::Overridden:  return "overridden";
+            }
+            return "unknown";
+        };
+        qCDebug(MockLinkLog).noquote() << QStringLiteral("RC_CHANNELS_OVERRIDE ch%1: %2 -> %3").arg(i + 1).arg(stateLabel(ch.state)).arg(stateLabel(newState));
+
+        ch.state = newState;
+        ch.value = (newState == RCChannelOverride::State::Overridden) ? raw : 0;
+    }
+
+    if (anyChange) {
+        QStringList active;
+        for (int i = 0; i < kRcChannelOverrideChannelCount; ++i) {
+            if (_rcChannelOverrides[i].state == RCChannelOverride::State::Overridden) {
+                active << QStringLiteral("ch%1").arg(i + 1);
+            }
+        }
+        if (active.isEmpty()) {
+            qCDebug(MockLinkLog) << "RC_CHANNELS_OVERRIDE: no channels currently overridden";
+        } else {
+            qCDebug(MockLinkLog).noquote() << "RC_CHANNELS_OVERRIDE active overrides:" << active.join(QStringLiteral(", "));
+        }
+    }
+
+    for (int i = 0; i < kRcChannelOverrideChannelCount; ++i) {
+        if (_rcChannelOverrides[i].state == RCChannelOverride::State::Overridden) {
+            qCDebug(MockLinkVerboseLog).noquote() << QStringLiteral("RC_CHANNELS_OVERRIDE ch%1 value: %2").arg(i + 1).arg(_rcChannelOverrides[i].value);
+        }
+    }
 }
 
 void MockLink::_setParamFloatUnionIntoMap(int componentId, const QString &paramName, float paramFloat)

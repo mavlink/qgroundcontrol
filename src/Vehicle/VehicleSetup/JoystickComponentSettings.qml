@@ -15,6 +15,17 @@ ColumnLayout {
 
     readonly property var _joystickSettings: joystick.settings
     readonly property real _margins: ScreenTools.defaultFontPixelHeight / 2
+    readonly property bool _anyAdvancedSettingsEnabled:
+        _joystickSettings.circleCorrection.rawValue ||
+        _joystickSettings.useDeadband.rawValue ||
+        _joystickSettings.enableManualControlPitchExtension.rawValue ||
+        _joystickSettings.enableManualControlRollExtension.rawValue ||
+        _joystickSettings.enableAdditionalAxis1.rawValue ||
+        _joystickSettings.enableAdditionalAxis2.rawValue ||
+        _joystickSettings.enableAdditionalAxis3.rawValue ||
+        _joystickSettings.enableAdditionalAxis4.rawValue ||
+        _joystickSettings.enableAdditionalAxis5.rawValue ||
+        _joystickSettings.enableAdditionalAxis6.rawValue
 
     ColumnLayout {
         Layout.fillWidth: true
@@ -53,6 +64,7 @@ ColumnLayout {
             id: advancedSettingsCheckbox
             Layout.fillWidth: true
             text: qsTr("Advanced Settings")
+            Component.onCompleted: checked = _anyAdvancedSettingsEnabled
         }
     }
 
@@ -83,9 +95,8 @@ ColumnLayout {
         }
 
         ColumnLayout {
-            Layout.preferredWidth: parent.width
+            Layout.fillWidth: true
             spacing: 0
-            visible: advancedSettingsCheckbox.checked
 
             FactCheckBoxSlider {
                 text: qsTr("Deadband")
@@ -95,66 +106,111 @@ ColumnLayout {
 
             QGCLabel{
                 Layout.fillWidth: true
+                Layout.maximumWidth: additionalAxesRcChannelsOverride.x + additionalAxesRcChannelsOverride.width
                 font.pointSize: ScreenTools.smallFontPointSize
                 wrapMode: Text.WordWrap
                 text: qsTr("Deadband can be set during the first step of calibration by gently wiggling each axis. ")
             }
         }
 
-        FactCheckBoxSlider {
+        ColumnLayout {
             Layout.fillWidth: true
-            text: qsTr("MANUAL_CONTROL Pitch Extension")
-            fact: _joystickSettings.enableManualControlPitchExtension
-            visible: fact.userVisible
+            spacing: ScreenTools.defaultFontPixelWidth / 2
+
+            QGCLabel { text: qsTr("MANUAL_CONTROL Extensions") }
+
+            ColumnLayout {
+                Layout.leftMargin: ScreenTools.defaultFontPixelWidth
+                Layout.fillWidth: true
+                spacing: ScreenTools.defaultFontPixelWidth / 2
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth: true
+                    text: qsTr("Pitch")
+                    fact: _joystickSettings.enableManualControlPitchExtension
+                    visible: fact.userVisible
+                }
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth: true
+                    text: qsTr("Roll")
+                    fact: _joystickSettings.enableManualControlRollExtension
+                    visible: fact.userVisible
+                }
+            }
         }
 
-        FactCheckBoxSlider {
+        ColumnLayout {
             Layout.fillWidth: true
-            text: qsTr("MANUAL_CONTROL Roll Extension")
-            fact: _joystickSettings.enableManualControlRollExtension
-            visible: fact.userVisible
-        }
+            spacing: ScreenTools.defaultFontPixelWidth / 2
 
-        FactCheckBoxSlider {
-            Layout.fillWidth: true
-            text: qsTr("MANUAL_CONTROL Aux1")
-            fact: _joystickSettings.enableManualControlAux1
-            visible: fact.userVisible
-        }
+            QGCLabel { text: qsTr("Additional Axes") }
 
-        FactCheckBoxSlider {
-            Layout.fillWidth: true
-            text: qsTr("MANUAL_CONTROL Aux2")
-            fact: _joystickSettings.enableManualControlAux2
-            visible: fact.userVisible
-        }
+            ColumnLayout {
+                Layout.leftMargin: ScreenTools.defaultFontPixelWidth
+                Layout.fillWidth: true
+                spacing: ScreenTools.defaultFontPixelWidth / 2
 
-        FactCheckBoxSlider {
-            Layout.fillWidth: true
-            text: qsTr("MANUAL_CONTROL Aux3")
-            fact: _joystickSettings.enableManualControlAux3
-            visible: fact.userVisible
-        }
+                ColumnLayout {
+                    spacing: 0
 
-        FactCheckBoxSlider {
-            Layout.fillWidth: true
-            text: qsTr("MANUAL_CONTROL Aux4")
-            fact: _joystickSettings.enableManualControlAux4
-            visible: fact.userVisible
-        }
+                    QGCRadioButton {
+                        id: additionalAxesManualControl
+                        text: qsTr("Send using MANUAL_CONTROL")
+                        checked: _joystickSettings.additionalAxesFunction.rawValue == 0
+                        onClicked: _joystickSettings.additionalAxesFunction.rawValue = 0
+                    }
 
-        FactCheckBoxSlider {
-            Layout.fillWidth: true
-            text: qsTr("MANUAL_CONTROL Aux5")
-            fact: _joystickSettings.enableManualControlAux5
-            visible: fact.userVisible
-        }
+                    QGCRadioButton {
+                        id: additionalAxesRcChannelsOverride
+                        text: qsTr("Send using RC_CHANNELS_OVERRIDE")
+                        checked: _joystickSettings.additionalAxesFunction.rawValue == 1
+                        onClicked: _joystickSettings.additionalAxesFunction.rawValue = 1
+                    }
+                }
 
-        FactCheckBoxSlider {
-            Layout.fillWidth: true
-            text: qsTr("MANUAL_CONTROL Aux6")
-            fact: _joystickSettings.enableManualControlAux6
-            visible: fact.userVisible
+                FactCheckBoxSlider {
+                    Layout.fillWidth: true
+                    text: additionalAxesManualControl.checked ? qsTr("Aux1") : qsTr("Channel 5")
+                    fact: _joystickSettings.enableAdditionalAxis1
+                    visible: fact.userVisible
+                }
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth: true
+                    text: additionalAxesManualControl.checked ? qsTr("Aux2") : qsTr("Channel 6")
+                    fact: _joystickSettings.enableAdditionalAxis2
+                    visible: fact.userVisible
+                }
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth: true
+                    text: additionalAxesManualControl.checked ? qsTr("Aux3") : qsTr("Channel 7")
+                    fact: _joystickSettings.enableAdditionalAxis3
+                    visible: fact.userVisible
+                }
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth: true
+                    text: additionalAxesManualControl.checked ? qsTr("Aux4") : qsTr("Channel 8")
+                    fact: _joystickSettings.enableAdditionalAxis4
+                    visible: fact.userVisible
+                }
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth: true
+                    text: additionalAxesManualControl.checked ? qsTr("Aux5") : qsTr("Channel 9")
+                    fact: _joystickSettings.enableAdditionalAxis5
+                    visible: fact.userVisible
+                }
+
+                FactCheckBoxSlider {
+                    Layout.fillWidth: true
+                    text: additionalAxesManualControl.checked ? qsTr("Aux6") : qsTr("Channel 10")
+                    fact: _joystickSettings.enableAdditionalAxis6
+                    visible: fact.userVisible
+                }
+            }
         }
     }
 }
