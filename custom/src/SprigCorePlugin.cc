@@ -1,6 +1,10 @@
 #include "SprigCorePlugin.h"
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QFile>
+#include <QtGui/QFont>
+#include <QtGui/QFontDatabase>
+#include <QtGui/QGuiApplication>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlFile>
 
@@ -43,6 +47,37 @@ QGCCorePlugin* SprigCorePlugin::instance()
 void SprigCorePlugin::init()
 {
     qCInfo(SprigLog) << "Sprig GCS core plugin active";
+
+    // Load Sprig fonts from QRC into QFontDatabase
+    static const QList<QString> kFontResources = {
+        QStringLiteral(":/Custom/fonts/BebasNeue-Regular.ttf"),
+        QStringLiteral(":/Custom/fonts/Barlow-Regular.ttf"),
+        QStringLiteral(":/Custom/fonts/Barlow-Medium.ttf"),
+        QStringLiteral(":/Custom/fonts/Barlow-SemiBold.ttf"),
+        QStringLiteral(":/Custom/fonts/Barlow-Bold.ttf"),
+    };
+
+    for (const QString &res : kFontResources) {
+        QFile f(res);
+        if (!f.open(QIODevice::ReadOnly)) {
+            qCWarning(SprigLog) << "Font not found in QRC:" << res;
+            continue;
+        }
+        const int id = QFontDatabase::addApplicationFontFromData(f.readAll());
+        if (id < 0) {
+            qCWarning(SprigLog) << "Failed to register font:" << res;
+        } else {
+            qCInfo(SprigLog) << "Registered font:" << res
+                             << "families:" << QFontDatabase::applicationFontFamilies(id);
+        }
+    }
+
+    // Set Barlow as the application default font.
+    // Point size 11 matches Qt's default; adjust if visual sizing regresses.
+    const QFont appFont(QStringLiteral("Barlow"), 11);
+    QGuiApplication::setFont(appFont);
+    qCInfo(SprigLog) << "App default font set to:" << QGuiApplication::font().family()
+                     << "pt:" << QGuiApplication::font().pointSize();
 }
 
 // Placeholder -- actual auto-update infra is Phase 7
