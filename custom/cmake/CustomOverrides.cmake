@@ -16,24 +16,36 @@ set(QGC_APP_COPYRIGHT   "© 2026 Sprig Aerospace"        CACHE STRING "Copyright
 # ----------------------------------------------------------------------------
 
 # macOS Icon
-if(EXISTS "${CMAKE_SOURCE_DIR}/custom/res/icons/custom_qgroundcontrol.icns")
-    set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/custom/res/icons/custom_qgroundcontrol.icns" CACHE FILEPATH "MacOS Icon Path" FORCE)
+if(EXISTS "${CMAKE_SOURCE_DIR}/custom/res/icons/sprig.icns")
+    set(QGC_MACOS_ICON_PATH "${CMAKE_SOURCE_DIR}/custom/res/icons/sprig.icns"
+        CACHE FILEPATH "macOS application icon path" FORCE)
 endif()
 
-# Linux AppImage Icon
-if(EXISTS "${CMAKE_SOURCE_DIR}/custom/res/icons/custom_qgroundcontrol.svg")
-    set(QGC_APPIMAGE_ICON_SCALABLE_PATH "${CMAKE_SOURCE_DIR}/custom/res/icons/custom_qgroundcontrol.svg" CACHE FILEPATH "AppImage Icon SVG Path" FORCE)
+# Linux AppImage Icon (scalable SVG)
+if(EXISTS "${CMAKE_SOURCE_DIR}/custom/res/Custom/logos/sprig-mark.svg")
+    set(QGC_APPIMAGE_ICON_SCALABLE_PATH "${CMAKE_SOURCE_DIR}/custom/res/Custom/logos/sprig-mark.svg"
+        CACHE FILEPATH "AppImage icon SVG path" FORCE)
 endif()
 
 # Windows Installer Header
 if(EXISTS "${CMAKE_SOURCE_DIR}/custom/deploy/windows/installheader.bmp")
-    set(QGC_WINDOWS_INSTALL_HEADER_PATH "${CMAKE_SOURCE_DIR}/custom/deploy/windows/installheader.bmp" CACHE FILEPATH "Windows Install Header Path" FORCE)
+    set(QGC_WINDOWS_INSTALL_HEADER_PATH "${CMAKE_SOURCE_DIR}/custom/deploy/windows/installheader.bmp"
+        CACHE FILEPATH "Windows installer header image" FORCE)
 endif()
 
 # Windows Application Icon
-if(EXISTS "${CMAKE_SOURCE_DIR}/custom/deploy/windows/WindowsQGC.ico")
-    set(QGC_WINDOWS_ICON_PATH "${CMAKE_SOURCE_DIR}/custom/deploy/windows/WindowsQGC.ico" CACHE FILEPATH "Windows Icon Path" FORCE)
+if(EXISTS "${CMAKE_SOURCE_DIR}/custom/deploy/windows/WindowsSprig.ico")
+    set(QGC_WINDOWS_ICON_PATH "${CMAKE_SOURCE_DIR}/custom/deploy/windows/WindowsSprig.ico"
+        CACHE FILEPATH "Windows application icon" FORCE)
 endif()
+
+# Linux AppImage 256x256 PNG Icon
+if(EXISTS "${CMAKE_SOURCE_DIR}/custom/res/icons/sprig_256.png")
+    set(QGC_APPIMAGE_ICON_256_PATH "${CMAKE_SOURCE_DIR}/custom/res/icons/sprig_256.png"
+        CACHE FILEPATH "AppImage 256x256 icon path" FORCE)
+endif()
+
+# iOS icons: deferred to Phase 7
 
 # ----------------------------------------------------------------------------
 # Feature Set Customization
