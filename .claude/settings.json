@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/tdd-guard-packages.sh"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/agent-path-guard.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "TodoWrite",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.npm-global/bin/tdd-guard"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+$schema: https://raw.githubusercontent.com/ComposioHQ/agent-orchestrator/main/schema/config.schema.json
+name: qgroundcontrol
+sessionPrefix: qgc
+repo: Strattoon/qgroundcontrol
+path: /Users/stratten/Documents/Github/qgroundcontrol
+defaultBranch: master
+defaults:
+  runtime: tmux
+  agent: claude-code
+  workspace: worktree
+  notifiers: []
+# Orchestrator (this Claude Code session) stays on claude-code via defaults.
+# Workers spawned via `ao spawn` use jcode pinned to a Codex-class model.
+worker:
+  agent: jcode
