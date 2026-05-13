@@ -1,0 +1,17 @@
+runners:
+  linux-x64-builder:
+    family: ["c8i.2xlarge"]
+    spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+  linux-arm64-builder:
+    family: ["c8g.2xlarge"]
+    spot: false
+    image: ubuntu24-full-arm64
+    extras: s3-cache
+  linux-x64-tester:
+    family: ["m8i.2xlarge"]
+    spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 60gb
