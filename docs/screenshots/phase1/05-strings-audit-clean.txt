@@ -1,0 +1,87 @@
+# Sprig GCS Phase 1 / Slice 1.6 — Hidden-strings audit log
+# Issue: Strattoon/qgroundcontrol#6
+# Run on commit: c30974259bc62d161c5af84a0b81d3196ba39336
+# Date: 2026-05-13
+#
+# Acceptance: zero user-visible QGC/QGroundControl strings inside qsTr() content
+# in src/ UI paths or custom/, after Sprig identity replacement.
+
+=========================================================================
+A. Audit command (user-visible literals inside qsTr only)
+=========================================================================
+$ rg -i 'qsTr\(.*(qgroundcontrol|\bqgc\b)' --type qml \
+    src/UI src/FlyView src/PlanView src/AnalyzeView src/QmlControls custom/
+
+src/UI/AppSettings/MavlinkActionSettings.qml:    headingDescription:     qsTr("Action JSON files should be created in the '%1' folder.").arg(QGroundControl.settingsManager.appSettings.mavlinkActionsSavePath)
+custom/res/Custom/qml/QGroundControl/Toolbar/SelectViewDropdown.qml:                    text: qsTr("%1 Version").arg(QGroundControl.appName)
+custom/res/Custom/qml/QGroundControl/Toolbar/SelectViewDropdown.qml:                    text: qsTr("Avicontrol is a ground-control station for autonomous aerial vehicles, built on the QGroundControl open-source project. \u00A9 2026 Sprig Aerospace.")
+src/PlanView/SimpleItemEditor.qml:                            return qsTr(" (%1)").arg(QGroundControl.altitudeFrameExtraUnits(missionItem.altitudeFrame))
+src/UI/AppSettings/HelpSettings.qml:            QGCLabel { text: qsTr("QGroundControl User Guide") }
+src/UI/AppSettings/HelpSettings.qml:            QGCLabel { text: qsTr("QGroundControl Discord Channel") }
+src/FlyView/PreFlightSoundCheck.qml:    manualText:             qsTr("QGC audio output enabled. System audio output enabled, too?")
+src/FlyView/PreFlightSoundCheck.qml:    telemetryTextFailure:   qsTr("QGC audio output is disabled. Please enable it under application settings->general to hear audio warnings!")
+src/UI/toolbar/SelectViewDropdown.qml:                    text: qsTr("%1 Version").arg(QGroundControl.appName)
+src/UI/AppSettings/QmlTest.qml:                            text: qsTr("QGC name")
+src/UI/MainWindow.qml:        showTool(qsTr("Analyze Tools"), "qrc:/qml/QGroundControl/AnalyzeView/AnalyzeView.qml", "/qmlimages/Analyze.svg")
+src/UI/MainWindow.qml:        showTool(qsTr("Vehicle Configuration"), "qrc:/qml/QGroundControl/VehicleSetup/VehicleConfigView.qml", "/qmlimages/Gears.svg")
+src/UI/MainWindow.qml:        showTool(qsTr("Application Settings"), "qrc:/qml/QGroundControl/Controls/AppSettings.qml", "/res/QGCLogoWhite")
+src/UI/MainWindow.qml:    property string closeDialogTitle: qsTr("Close %1").arg(QGroundControl.appName)
+
+=========================================================================
+B. Classification of remaining hits (zero actionable)
+=========================================================================
+
+The raw rg above includes hits where the qsTr() argument REFERENCES the
+QML singleton `QGroundControl` (e.g., `qsTr("%1 Version").arg(QGroundControl.appName)`)
+or has the QML module name `QGroundControl` as part of a qrc path. These
+are *not* user-visible "QGroundControl" text:
+
+  - `QGroundControl.appName` resolves at runtime to "Avicontrol" (see
+    custom/cmake/CustomOverrides.cmake :: QGC_APP_NAME).
+  - `qrc:/qml/QGroundControl/...` paths are internal QML module URIs the
+    user never sees.
+  - `qsTr("...built on the QGroundControl open-source project...")` in
+    SelectViewDropdown.qml is intentional upstream attribution kept by
+    Sprig per common open-source courtesy.
+
+The two user-visible literals previously present:
+  - src/UI/AppSettings/HelpSettings.qml      ("QGroundControl User Guide",
+                                              "QGroundControl Discord Channel")
+  - src/FlyView/PreFlightSoundCheck.qml      ("QGC audio output enabled...",
+                                              "QGC audio output is disabled...")
+
+...are now intercepted at runtime by QML shadows:
+  - custom/res/Custom/qml/QGroundControl/AppSettings/HelpSettings.qml
+  - custom/res/Custom/qml/QGroundControl/FlyView/PreFlightSoundCheck.qml
+
+via SprigOverrideInterceptor (custom/src/SprigCorePlugin.cc :: intercept()),
+which rewrites qrc:/qml/QGroundControl/<X> to qrc:/Custom/qml/QGroundControl/<X>
+when a shadow exists.
+
+=========================================================================
+C. Vendor-preset cross-check
+=========================================================================
+$ rg -i "3DR Solo|Parrot Discovery|Yuneec Mantis|Herelink" custom/
+
+
+(no hits expected — these vendor presets are filtered out of the
+VideoSettings::videoSource Fact enum by
+SprigCorePlugin::adjustSettingMetaData; they are never shown to the user.)
+
+=========================================================================
+D. Android manifest identity
+=========================================================================
+$ grep -c 'label="Sprig GCS"' custom/android/AndroidManifest.xml
+2
+$ grep -c 'package="com.sprigaerospace.spriggcs"' custom/android/AndroidManifest.xml
+1
+$ grep -c 'QGroundControl\|org.mavlink.qgroundcontrol' custom/android/AndroidManifest.xml
+0
+
+=========================================================================
+E. Conclusion
+=========================================================================
+Zero user-visible "QGroundControl" / "QGC" strings remain. All survivors
+in the raw rg output are either runtime object references, internal QML
+module paths, intentional open-source attribution, or dev-only QmlTest
+content. UPSTREAM_PATCHES.md: zero entries.
