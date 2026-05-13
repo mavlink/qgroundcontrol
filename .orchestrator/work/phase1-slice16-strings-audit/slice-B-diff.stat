@@ -1,0 +1,16 @@
+commit 128bea71864ace068c33855b6ada2795e74ef465
+Author: Strattoon <stratten@sprigaerospace.com>
+Date:   Wed May 13 12:35:25 2026 -1000
+
+    custom: filter vendor-specific video source presets from Settings dropdown
+    
+    Hide 3DR Solo, Parrot Discovery, Yuneec Mantis G, Herelink AirUnit,
+    and Herelink Hotspot from the VideoSettings::videoSource enum in
+    SprigCorePlugin::adjustSettingMetaData.  Only the seven generic
+    transport sources (NoVideo, Disabled, RTSP, UDP h.264, UDP h.265,
+    TCP, MPEG-TS) remain visible.
+    
+    Slice 1.6-B of phase-1 strings audit.
+
+ custom/src/SprigCorePlugin.cc | 38 +++++++++++++++++++++++++++++++-------
+ 1 file changed, 31 insertions(+), 7 deletions(-)
