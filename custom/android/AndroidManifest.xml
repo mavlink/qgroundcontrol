@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.mavlink.qgroundcontrol"
+    android:installLocation="auto"
+    android:versionCode="-- %%INSERT_VERSION_CODE%% --"
+    android:versionName="-- %%INSERT_VERSION_NAME%% --">
+
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:smallScreens="true" />
+
+    <!-- %%INSERT_PERMISSIONS -->
+
+    <uses-permission android:name="android.permission.USB_PERMISSION" />
+    <!-- Need MulticastLock to receive broadcast UDP packets -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <!-- Needed to keep working while 'asleep' -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- %%INSERT_FEATURES -->
+
+    <uses-feature android:name="android.hardware.audio.output" android:required="false" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.location.network" android:required="false" />
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
+
+    <application
+        android:name="org.qtproject.qt.android.bindings.QtApplication"
+        android:hardwareAccelerated="true"
+        android:label="Custom QGroundControl"
+        android:requestLegacyExternalStorage="true"
+        android:allowBackup="true"
+        android:fullBackupOnly="false"
+        android:icon="@drawable/icon"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config">
+        <!-- android:theme="@style/AppTheme" -->
+
+        <!-- <meta-data android:name="android.app.system_libs_prefix" android:value="/system/lib/" /> -->
+
+        <activity
+            android:name="org.mavlink.qgroundcontrol.QGCActivity"
+            android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
+            android:label="Custom QGroundControl"
+            android:launchMode="singleTop"
+            android:screenOrientation="sensorLandscape"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+                <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+                <!-- TODO: CMake configure xml file -->
+                <!-- %%QGC_INSERT_ACTIVITY_INTENT_FILTER -->
+            </intent-filter>
+
+            <!-- %%QGC_INSERT_ACTIVITY_META_DATA -->
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_DETACHED"
+                android:resource="@xml/device_filter" />
+
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="-- %%INSERT_APP_LIB_NAME%% --" />
+            <meta-data
+                android:name="android.app.arguments"
+                android:value="-- %%INSERT_APP_ARGUMENTS%% --" />
+            <meta-data
+                android:name="android.app.extract_android_style"
+                android:value="minimal" />
+            <meta-data
+                android:name="android.app.splash_screen_drawable"
+                android:resource="@drawable/splashscreen" />
+            <!-- <meta-data android:name="android.app.splash_screen_drawable_portrait" -->
+            <!-- <meta-data android:name="android.app.splash_screen_drawable_landscape" -->
+            <meta-data
+                android:name="android.app.splash_screen_sticky"
+                android:value="false" />
+            <!-- <meta-data android:name="android.app.background_running" -->
+            <!-- <meta-data android:name="android.app.trace_location" -->
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.qtprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/qtprovider_paths" />
+        </provider>
+
+    </application>
+
+</manifest>
