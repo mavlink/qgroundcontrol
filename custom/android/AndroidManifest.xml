@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.mavlink.qgroundcontrol"
+    package="com.sprigaerospace.spriggcs"
     android:installLocation="auto"
     android:versionCode="-- %%INSERT_VERSION_CODE%% --"
     android:versionName="-- %%INSERT_VERSION_NAME%% --">
@@ -33,7 +33,7 @@
     <application
         android:name="org.qtproject.qt.android.bindings.QtApplication"
         android:hardwareAccelerated="true"
-        android:label="Custom QGroundControl"
+        android:label="Sprig GCS"
         android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:fullBackupOnly="false"
@@ -45,9 +45,9 @@
         <!-- <meta-data android:name="android.app.system_libs_prefix" android:value="/system/lib/" /> -->
 
         <activity
-            android:name="org.mavlink.qgroundcontrol.QGCActivity"
+            android:name="com.sprigaerospace.spriggcs.QGCActivity"
             android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density"
-            android:label="Custom QGroundControl"
+            android:label="Sprig GCS"
             android:launchMode="singleTop"
             android:screenOrientation="sensorLandscape"
             android:exported="true">
