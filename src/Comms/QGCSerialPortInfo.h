@@ -11,9 +11,8 @@
 class QGCSerialPortInfoTest;
 
 /// \brief QGC's version of Qt QSerialPortInfo. It provides additional information about board types
-///
 /// that QGC cares about.
-///
+
 class QGCSerialPortInfo : public QSerialPortInfo
 {
     friend class QGCSerialPortInfoTest;
