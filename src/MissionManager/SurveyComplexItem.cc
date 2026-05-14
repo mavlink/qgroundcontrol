@@ -100,6 +100,12 @@ void SurveyComplexItem::loadPreset(const QString& presetName)
     _rebuildTransects();
 }
 
+void SurveyComplexItem::applyPreviousAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame prevAltFrame, double prevAltitude)
+{
+    Q_UNUSED(prevAltitude);
+    _cameraCalc.setDistanceMode(prevAltFrame);
+}
+
 bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
 {
     // We need to pull version first to determine what validation/conversion needs to be performed

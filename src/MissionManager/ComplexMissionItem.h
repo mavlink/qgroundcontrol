@@ -2,6 +2,7 @@
 
 #include <QtCore/QMap>
 
+#include "QGroundControlQmlGlobal.h"
 #include "VisualMissionItem.h"
 #include "QmlObjectListModel.h"
 #include "FlightPathSegment.h"
@@ -84,6 +85,14 @@ public:
     virtual QString presetsSettingsGroup(void) { return QString(); }
 
     virtual void addKMLVisuals(KMLPlanDomDocument& domDocument);
+
+    /// Called by MissionController after inserting a new item when a previous altitude is available and the
+    /// global altitude frame is AltitudeFrameMixed. Override to apply altitude frame context to the item.
+    /// The default implementation is a no-op.
+    ///     @param prevAltFrame     Altitude frame of the previous mission item
+    ///     @param prevAltitude     Altitude of the previous mission item
+    virtual void applyPreviousAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame prevAltFrame, double prevAltitude)
+        { Q_UNUSED(prevAltFrame); Q_UNUSED(prevAltitude); }
 
     bool presetsSupported   (void) { return !presetsSettingsGroup().isEmpty(); }
     bool isIncomplete       (void) const { return _isIncomplete; }
