@@ -115,12 +115,14 @@ void LogFileParser::_applyResult(const LogParseResult &result)
     if (!_parameters.isEmpty()) {
         if (result.sourceType == LogParseResult::SourceType::PX4ULog) {
             LogViewerParamMetaData::enrichForPX4(_parameters);
+#ifndef QGC_NO_ARDUPILOT_DIALECT
         } else if (result.sourceType == LogParseResult::SourceType::APMDataFlash) {
             LogViewerParamMetaData::enrichForAPM(
                 _parameters,
                 result.detectedVehicleType,
                 result.firmwareMajorVersion,
                 result.firmwareMinorVersion);
+#endif
         }
     }
     _events = result.events;
