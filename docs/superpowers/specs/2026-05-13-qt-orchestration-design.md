@@ -46,7 +46,7 @@ softer interpretation than the gate, because they read the same code.
 
 ## Architecture
 
-```
+```text
 tools/qt_orchestration/
 ├── rules.py          # The Qt-completion rule set — single source of truth
 ├── scan.py           # Repo scanner: qrc blocks, AUTOMOC targets, shadows
@@ -166,7 +166,7 @@ declared by the agent, so an agent cannot silence a rule mid-slice.
 
 ## Data Flow
 
-```
+```text
 [1] Conversational drafting (user + orchestrator session)
     User prose + qt_orchestration.scan(...) → draft_issue.render(...)
     → reviewed and approved by user
@@ -263,17 +263,20 @@ actually gates green.
 ## Testing
 
 ### Layer 1 — Unit tests per rule
+
 - Each rule paired with `<rule_id>_pass/` and `<rule_id>_fail/` fixture
   directories: synthetic mini-tree (few files, small CMakeLists, small qrc)
-  + expected `findings.json`. Tests apply the rule, assert findings match.
+  - expected `findings.json`. Tests apply the rule, assert findings match.
 - Fixtures under `tests/fixtures/rules/<rule_id>/`, small enough to read in
   one screen. Doubles as living documentation.
 
 ### Layer 2 — Golden-file tests on scanner + brief expander
+
 - Fixture issues + fixture repo snapshots → assert produced manifest /
   brief is byte-identical to checked-in golden. `--update-goldens` flag.
 
 ### Layer 3 — End-to-end against the real repo (marked `slow`, opt-in)
+
 - Replays a recorded Phase-1 slice diff (e.g.,
   `phase1-slice16-strings-audit` artifacts on disk) and asserts
   `verify-slice` produces expected findings.
@@ -285,18 +288,21 @@ actually gates green.
   runs Layer 1 + 2 only.
 
 ### Layer 4 — /orchestrate integration smoke
+
 - Scripted run: synthetic issue → `expand-brief` → fake `jcode` shim
   (writes deliberately-broken diff) → `verify-slice` → assert findings
   file written, retry brief generated, escalation triggers at retry-cap.
   `--dry-run` jcode shim so no Codex credits are burned.
 
 ### Rule overrides + disputes
+
 - Override path: fixture issue with `rule_overrides: { R-TR-01: MINOR }`
-  + diff that triggers R-TR-01 → assert exit 0, finding logged at MINOR.
+  triggering R-TR-01 → assert exit 0, finding logged at MINOR.
 - Dispute path: fixture Codex output with `qt_verification_disputes` →
   assert `/orchestrate` halts with dispute surfaced, no retry attempted.
 
 ### Coverage targets
+
 - `rules.py` ≥ 90% line coverage (load-bearing).
 - `scan.py` / `expand_brief.py` ≥ 80%.
 - `verify_slice.py` covered via Layer 4 integration rather than unit
