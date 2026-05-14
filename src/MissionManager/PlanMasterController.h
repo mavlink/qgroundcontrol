@@ -16,7 +16,8 @@ class Vehicle;
 class PlanMasterControllerTest;
 #endif
 
-/// Master controller for mission, fence, rally
+/// \brief Master controller for mission, fence, rally
+///
 class PlanMasterController : public QObject
 {
     Q_OBJECT

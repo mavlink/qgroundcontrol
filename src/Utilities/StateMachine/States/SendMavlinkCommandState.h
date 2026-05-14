@@ -5,7 +5,8 @@
 
 class Vehicle;
 
-/// Sends the specified MAVLink command to the vehicle and waits for the result
+/// \brief Sends the specified MAVLink command to the vehicle and waits for the result
+///
 class SendMavlinkCommandState : public WaitStateBase
 {
     Q_OBJECT

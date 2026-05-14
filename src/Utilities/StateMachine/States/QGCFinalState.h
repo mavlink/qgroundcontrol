@@ -6,7 +6,8 @@
 class QGCStateMachine;
 class Vehicle;
 
-/// Final state for a QGCStateMachine with logging support
+/// \brief Final state for a QGCStateMachine with logging support
+///
 class QGCFinalState : public QFinalState
 {
     Q_OBJECT

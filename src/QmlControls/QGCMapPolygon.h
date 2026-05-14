@@ -10,8 +10,10 @@
 
 class KMLDomDocument;
 
-/// The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
+/// \brief The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
+///
 /// It maintains a representation of the polygon on QVariantList and QmlObjectListModel format.
+///
 class QGCMapPolygon : public QObject
 {
     Q_OBJECT

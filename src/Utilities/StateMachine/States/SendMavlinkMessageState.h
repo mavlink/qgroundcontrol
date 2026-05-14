@@ -8,7 +8,8 @@
 
 class Vehicle;
 
-/// Sends the specified MAVLink message to the vehicle
+/// \brief Sends the specified MAVLink message to the vehicle
+///
 class SendMavlinkMessageState : public QGCState
 {
     Q_OBJECT

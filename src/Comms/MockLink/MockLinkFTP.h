@@ -10,7 +10,8 @@
 
 class MockLink;
 
-/// Mock implementation of Mavlink FTP server.
+/// \brief Mock implementation of Mavlink FTP server.
+///
 class MockLinkFTP : public QObject
 {
     Q_OBJECT

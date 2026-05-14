@@ -13,7 +13,8 @@
 
 class SigningController;
 
-/// Owns MAVLink signing state for one channel: signing/streams structs, key hint, and RW lock.
+/// \brief Owns MAVLink signing state for one channel: signing/streams structs, key hint, and RW lock.
+///
 class SigningChannel
 {
 public:

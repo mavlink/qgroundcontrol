@@ -8,7 +8,7 @@
 
 class QGCStateMachine;
 
-/// Fluent builder for creating error recovery states.
+/// \brief Fluent builder for creating error recovery states.
 ///
 /// Combines multiple error recovery patterns into a single state
 /// using a declarative fluent API.
@@ -23,6 +23,7 @@ class QGCStateMachine;
 ///     .onExhausted(ErrorRecoveryBuilder::LogAndError)
 ///     .build();
 /// @endcode
+///
 class ErrorRecoveryBuilder
 {
 public:
@@ -74,7 +75,8 @@ private:
     ExhaustedBehavior _exhaustedBehavior = EmitError;
 };
 
-/// The state created by ErrorRecoveryBuilder
+/// \brief The state created by ErrorRecoveryBuilder
+///
 class ErrorRecoveryState : public QGCState
 {
     Q_OBJECT

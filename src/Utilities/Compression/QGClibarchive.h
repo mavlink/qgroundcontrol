@@ -41,7 +41,8 @@ enum class ReaderMode {
 // RAII Archive Reader
 // ============================================================================
 
-/// RAII wrapper for libarchive reader with automatic cleanup
+/// \brief RAII wrapper for libarchive reader with automatic cleanup
+///
 class ArchiveReader {
 public:
     ArchiveReader() = default;

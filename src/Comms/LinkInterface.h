@@ -9,7 +9,8 @@
 class LinkManager;
 class SigningController;
 
-/// The link interface defines the interface for all links used to communicate with the ground station application.
+/// \brief The link interface defines the interface for all links used to communicate with the ground station application.
+///
 class LinkInterface : public QObject
 {
     Q_OBJECT

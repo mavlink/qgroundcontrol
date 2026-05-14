@@ -4,7 +4,7 @@
 
 #include <functional>
 
-/// A state that tries multiple strategies in order until one succeeds.
+/// \brief A state that tries multiple strategies in order until one succeeds.
 ///
 /// Strategies are executed in the order they were added. If a strategy
 /// succeeds, the state emits advance(). If all strategies fail, error() is emitted.
@@ -19,6 +19,7 @@
 /// state->addTransition(state, &FallbackChainState::advance, connectedState);
 /// state->addTransition(state, &FallbackChainState::error, failedState);
 /// @endcode
+///
 class FallbackChainState : public QGCState
 {
     Q_OBJECT

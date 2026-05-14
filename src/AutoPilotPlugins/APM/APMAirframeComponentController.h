@@ -10,7 +10,8 @@ class APMAirframeModel;
 class APMAirframeType;
 class QmlObjectListModel;
 
-/// MVC Controller for APMAirframeComponent.qml.
+/// \brief MVC Controller for APMAirframeComponent.qml.
+///
 class APMAirframeComponentController : public FactPanelController
 {
     Q_OBJECT

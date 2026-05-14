@@ -4,7 +4,8 @@
 
 #include "SettingsGroup.h"
 
-/// Application Settings
+/// \brief Application Settings
+///
 class AppSettings : public SettingsGroup
 {
     Q_OBJECT

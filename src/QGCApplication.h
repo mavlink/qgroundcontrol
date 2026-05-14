@@ -32,7 +32,8 @@ struct QMetaObject;
 
 #define qgcApp() qApp
 
-/// The main application and management class.
+/// \brief The main application and management class.
+///
 class QGCApplication : public QGuiApplication
 {
     Q_OBJECT

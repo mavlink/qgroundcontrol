@@ -11,7 +11,8 @@
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QObject>
 
-/// QObject wrapper for compression operations with progress signals
+/// \brief QObject wrapper for compression operations with progress signals
+///
 /// Uses QtConcurrent and QPromise for modern async operations
 /// Can be used from C++ or QML
 ///
@@ -54,6 +55,7 @@
 /// });
 /// watcher->setFuture(future);
 /// @endcode
+///
 class QGCCompressionJob : public QObject
 {
     Q_OBJECT

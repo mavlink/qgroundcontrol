@@ -6,7 +6,7 @@
 
 #include <functional>
 
-/// A state that implements the circuit breaker pattern.
+/// \brief A state that implements the circuit breaker pattern.
 ///
 /// After a threshold of failures, the circuit "trips" and immediately
 /// fails without attempting the action for a reset timeout period.
@@ -28,6 +28,7 @@
 /// state->addTransition(state, &CircuitBreakerState::advance, successState);
 /// state->addTransition(state, &CircuitBreakerState::error, errorState);
 /// @endcode
+///
 class CircuitBreakerState : public QGCState
 {
     Q_OBJECT

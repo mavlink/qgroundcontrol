@@ -11,7 +11,8 @@
 class APMSensorsComponent;
 class LinkInterface;
 
-/// Sensors Component MVC Controller for SensorsComponent.qml.
+/// \brief Sensors Component MVC Controller for SensorsComponent.qml.
+///
 class APMSensorsComponentController : public FactPanelController
 {
     Q_OBJECT

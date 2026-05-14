@@ -4,8 +4,10 @@
 
 #include <functional>
 
-/// A transition that only fires if a guard predicate returns true
+/// \brief A transition that only fires if a guard predicate returns true
+///
 /// Useful for conditional transitions based on runtime state
+///
 class GuardedTransition : public QGCSignalTransition
 {
     Q_OBJECT

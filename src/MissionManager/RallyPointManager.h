@@ -6,8 +6,10 @@
 
 class Vehicle;
 
-/// This is the base class for firmware specific rally point managers. A rally point manager is responsible
+/// \brief This is the base class for firmware specific rally point managers. A rally point manager is responsible
+///
 /// for communicating with the vehicle to set/get rally points.
+///
 class RallyPointManager : public PlanManager
 {
     Q_OBJECT

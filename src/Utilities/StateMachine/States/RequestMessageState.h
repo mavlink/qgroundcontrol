@@ -10,12 +10,14 @@ class Vehicle;
 #include <cstdint>
 #include <functional>
 
-/// Requests a MAVLink message from the vehicle using MAV_CMD_REQUEST_MESSAGE.
+/// \brief Requests a MAVLink message from the vehicle using MAV_CMD_REQUEST_MESSAGE.
+///
 /// Emits messageReceived() with the decoded message on success.
 /// Emits completed()/advance() on success, timeout()/timedOut() on timeout, error() on failure.
 ///
 /// Note: Vehicle::requestMessage() has its own internal timeout, but this state
 /// adds an additional safety timeout at the state machine level.
+///
 class RequestMessageState : public WaitStateBase
 {
     Q_OBJECT

@@ -13,7 +13,8 @@ class QmlObjectListModel;
 class QTimer;
 class Vehicle;
 
-/// MAVLink message inspector controller (provides the logic for UI display)
+/// \brief MAVLink message inspector controller (provides the logic for UI display)
+///
 class MAVLinkInspectorController : public QObject
 {
     Q_OBJECT

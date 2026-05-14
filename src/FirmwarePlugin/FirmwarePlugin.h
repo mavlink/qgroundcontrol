@@ -63,10 +63,12 @@ struct FirmwareFlightMode
 typedef QList<FirmwareFlightMode> FlightModeList;
 typedef QMap<uint32_t,QString> FlightModeCustomModeMap;
 
-/// The FirmwarePlugin class represents the methods and objects which are specific to a certain Firmware flight stack.
+/// \brief The FirmwarePlugin class represents the methods and objects which are specific to a certain Firmware flight stack.
+///
 /// This is the only place where flight stack specific code should reside in QGroundControl. The remainder of the
 /// QGroundControl source is generic to a common mavlink implementation. The implementation in the base class supports
 /// mavlink generic firmware. Override the base clase virtuals to create your own firmware specific plugin.
+///
 class FirmwarePlugin : public QObject
 {
     Q_OBJECT

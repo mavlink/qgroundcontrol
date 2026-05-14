@@ -36,9 +36,11 @@
         Fact* NAME(); \
         static const char* NAME ## Name;
 
-/// Provides access to group of settings. The group is named and has a userVisible
+/// \brief Provides access to group of settings. The group is named and has a userVisible
+///
 /// property that controls whether the entire group is shown in the UI.
 /// Custom builds can hide groups via QGCCorePlugin::overrideSettingsGroupVisibility.
+///
 class SettingsGroup : public QObject
 {
     Q_OBJECT

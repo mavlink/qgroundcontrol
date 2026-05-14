@@ -6,7 +6,8 @@ class QTextToSpeech;
 class Fact;
 class AudioOutputTest;
 
-/// The AudioOutput class provides functionality for audio output using text-to-speech.
+/// \brief The AudioOutput class provides functionality for audio output using text-to-speech.
+///
 class AudioOutput : public QObject
 {
     Q_OBJECT

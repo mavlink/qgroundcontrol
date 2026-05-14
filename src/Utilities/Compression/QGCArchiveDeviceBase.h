@@ -11,9 +11,11 @@
 
 struct archive;
 
-/// Base class for QIODevice wrappers that use libarchive for decompression
+/// \brief Base class for QIODevice wrappers that use libarchive for decompression
+///
 /// Provides common source management, buffer handling, and archive lifecycle
 /// Read-only, sequential access only
+///
 class QGCArchiveDeviceBase : public QIODevice
 {
     Q_OBJECT

@@ -6,7 +6,8 @@
 
 #include "MAVLinkLib.h"
 
-/// Encapsulates the contents of a [VIDEO_STREAM_INFORMATION](https://mavlink.io/en/messages/common.html#VIDEO_STREAM_INFORMATION) message
+/// \brief Encapsulates the contents of a [VIDEO_STREAM_INFORMATION](https://mavlink.io/en/messages/common.html#VIDEO_STREAM_INFORMATION) message
+///
 class QGCVideoStreamInfo : public QObject
 {
     Q_OBJECT

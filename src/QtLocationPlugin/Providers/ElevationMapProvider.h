@@ -19,7 +19,8 @@ public:
     virtual QByteArray serialize(const QByteArray &image) const = 0;
 };
 
-/// https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model
+/// \brief https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model
+///
 class CopernicusElevationProvider : public ElevationProvider
 {
 public:

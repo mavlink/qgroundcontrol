@@ -10,7 +10,7 @@
 class QAbstractState;
 class QGCStateMachine;
 
-/// Records state machine transitions for debugging and analysis.
+/// \brief Records state machine transitions for debugging and analysis.
 ///
 /// Maintains a circular buffer of state transitions with timestamps,
 /// transition reasons, and optional metadata.
@@ -25,6 +25,7 @@ class QGCStateMachine;
 ///
 /// qDebug() << recorder.dumpHistory();
 /// @endcode
+///
 class StateHistoryRecorder : public QObject
 {
     Q_OBJECT

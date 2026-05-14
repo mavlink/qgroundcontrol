@@ -8,7 +8,7 @@
 #include <optional>
 #include <typeinfo>
 
-/// Type-safe context for passing data between states in a state machine.
+/// \brief Type-safe context for passing data between states in a state machine.
 ///
 /// StateContext provides a way for states to share data without tight coupling.
 /// Data is stored by key and can be retrieved with type checking.
@@ -27,6 +27,7 @@
 /// @endcode
 ///
 /// The context can also be accessed via QGCStateMachine::context().
+///
 class StateContext
 {
 public:

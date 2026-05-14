@@ -7,7 +7,8 @@
 #include "QmlObjectListModel.h"
 #include "FactPanelController.h"
 
-/// MVC Controller for AirframeComponent.qml.
+/// \brief MVC Controller for AirframeComponent.qml.
+///
 class AirframeComponentController : public FactPanelController
 {
     Q_OBJECT

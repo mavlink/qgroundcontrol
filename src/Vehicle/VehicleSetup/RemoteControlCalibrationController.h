@@ -7,7 +7,8 @@
 #include "FactPanelController.h"
 #include "QGCMAVLink.h"
 
-/// Abstract base class for calibrating RC and Joystick controller.
+/// \brief Abstract base class for calibrating RC and Joystick controller.
+///
 class RemoteControlCalibrationController : public FactPanelController
 {
     Q_OBJECT

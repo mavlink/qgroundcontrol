@@ -7,7 +7,8 @@
 class QColor;
 class QGeoCoordinate;
 
-/// Used to convert a Plan to a KML document
+/// \brief Used to convert a Plan to a KML document
+///
 class KMLDomDocument : public QDomDocument
 {
 public:

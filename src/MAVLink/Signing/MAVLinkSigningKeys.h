@@ -15,7 +15,8 @@ class QmlObjectListModel;
 class SigningController;
 class Vehicle;
 
-/// A single named signing key entry.
+/// \brief A single named signing key entry.
+///
 class MAVLinkSigningKey : public QObject
 {
     Q_OBJECT
@@ -43,7 +44,8 @@ private:
     uint64_t _lastTimestamp = 0;
 };
 
-/// Bag of named MAVLink signing keys; correct key per vehicle is auto-detected from incoming signed packets.
+/// \brief Bag of named MAVLink signing keys; correct key per vehicle is auto-detected from incoming signed packets.
+///
 class MAVLinkSigningKeys : public QObject
 {
     Q_OBJECT

@@ -2,13 +2,14 @@
 
 #include "FactGroup.h"
 
-/// Radio link telemetry decoded from MAVLINK_MSG_ID_RADIO_STATUS.
+/// \brief Radio link telemetry decoded from MAVLINK_MSG_ID_RADIO_STATUS.
 ///
 /// Consolidates the seven scalars that the 3DR-style telemetry radios publish:
 /// local/remote RSSI (dBm), local/remote noise floor (dBm), RX error counters,
 /// errors fixed, and the TX buffer fill percentage. The 3DR Si1k raw-to-dBm
 /// conversion from the datasheet is applied here (detected via the '3'/'D'
 /// sysid/compid marker).
+///
 class RadioStatusFactGroup : public FactGroup
 {
     Q_OBJECT

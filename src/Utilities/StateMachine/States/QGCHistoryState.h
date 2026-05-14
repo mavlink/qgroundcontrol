@@ -8,8 +8,10 @@ Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
 class QGCStateMachine;
 class Vehicle;
 
-/// QGroundControl wrapper around QHistoryState for consistency with other QGC state classes
+/// \brief QGroundControl wrapper around QHistoryState for consistency with other QGC state classes
+///
 /// History states remember which child state was active and return to it
+///
 class QGCHistoryState : public QHistoryState
 {
     Q_OBJECT

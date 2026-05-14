@@ -6,7 +6,8 @@
 #include "QGCArchiveDeviceBase.h"
 
 #include <QtCore/QDateTime>
-/// QIODevice for reading a single entry from an archive without full extraction
+/// \brief QIODevice for reading a single entry from an archive without full extraction
+///
 /// Supports ZIP, TAR, 7z, and other libarchive-supported formats
 /// Read-only, sequential access only
 ///
@@ -16,6 +17,7 @@
 /// file.open(QIODevice::ReadOnly);
 /// QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
 /// @endcode
+///
 class QGCArchiveFile : public QGCArchiveDeviceBase
 {
     Q_OBJECT

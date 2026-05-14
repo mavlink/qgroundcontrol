@@ -3,7 +3,8 @@
 #include <QtCore/QList>
 #include "TerrainTile.h"
 
-/// Implements an interface for https://terrain-ce.suite.auterion.com/api/v1/
+/// \brief Implements an interface for https://terrain-ce.suite.auterion.com/api/v1/
+///
 class TerrainTileCopernicus : public TerrainTile
 {
     friend class TerrainTileTest;

@@ -8,7 +8,8 @@ class MavlinkCameraControlInterface;
 class Fact;
 class Vehicle;
 
-/// Camera parameter handler.
+/// \brief Camera parameter handler.
+///
 class QGCCameraParamIO : public QObject
 {
 public:

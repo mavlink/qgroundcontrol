@@ -5,7 +5,8 @@
 
 #include "FactPanelController.h"
 
-/// Sensors Component MVC Controller for SensorsComponent.qml.
+/// \brief Sensors Component MVC Controller for SensorsComponent.qml.
+///
 class SensorsComponentController : public FactPanelController
 {
     Q_OBJECT

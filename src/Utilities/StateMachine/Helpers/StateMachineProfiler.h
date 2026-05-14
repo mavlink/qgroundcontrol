@@ -9,7 +9,7 @@
 class QAbstractState;
 class QGCStateMachine;
 
-/// Performance profiler for state machines.
+/// \brief Performance profiler for state machines.
 ///
 /// Tracks time spent in each state and provides profiling data.
 ///
@@ -24,6 +24,7 @@ class QGCStateMachine;
 /// qDebug() << profiler.summary();
 /// qDebug() << profiler.toJson();
 /// @endcode
+///
 class StateMachineProfiler : public QObject
 {
     Q_OBJECT

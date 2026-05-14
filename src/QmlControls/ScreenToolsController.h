@@ -3,7 +3,8 @@
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// This Qml control is used to return screen parameters
+/// \brief This Qml control is used to return screen parameters
+///
 class ScreenToolsController : public QObject
 {
     Q_OBJECT

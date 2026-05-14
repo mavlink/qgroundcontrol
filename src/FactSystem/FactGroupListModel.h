@@ -6,7 +6,8 @@
 
 #include <QList>
 
-/// Dynamically manages FactGroupWithIds based on incoming messages.
+/// \brief Dynamically manages FactGroupWithIds based on incoming messages.
+///
 class FactGroupListModel : public QmlObjectListModel
 {
     Q_OBJECT

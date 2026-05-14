@@ -4,8 +4,10 @@
 
 #include <QtCore/QTimer>
 
-/// Base class for states that wait for something with optional timeout
+/// \brief Base class for states that wait for something with optional timeout
+///
 /// Provides common timeout handling infrastructure
+///
 class WaitStateBase : public QGCState
 {
     Q_OBJECT

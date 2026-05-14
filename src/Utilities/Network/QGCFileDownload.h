@@ -15,7 +15,7 @@ class QAbstractNetworkCache;
 class QGCCompressionJob;
 class QFile;
 
-/// File download with progress, decompression, and hash verification
+/// \brief File download with progress, decompression, and hash verification
 ///
 /// Features:
 /// - HTTP/HTTPS and local file:// downloads
@@ -56,6 +56,7 @@ class QFile;
 ///                                   : downloader.start(urlField.text)
 /// }
 /// @endcode
+///
 class QGCFileDownload : public QObject
 {
     Q_OBJECT

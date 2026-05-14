@@ -59,7 +59,17 @@ INTERACTIVE_SVG        = YES
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = NO
-PREDEFINED             = Q_OBJECT Q_PROPERTY Q_INVOKABLE Q_SIGNAL Q_SLOT
+PREDEFINED             = Q_OBJECT Q_PROPERTY Q_INVOKABLE Q_SIGNAL Q_SLOT \
+                         QML_ELEMENT \
+                         QML_ANONYMOUS \
+                         QML_INTERFACE \
+                         QML_SINGLETON \
+                         "QML_UNCREATABLE(x)=" \
+                         "QML_NAMED_ELEMENT(x)=" \
+                         "QML_EXTENDED(x)=" \
+                         "QML_ATTACHED(x)=" \
+                         "QML_ADDED_IN_VERSION(x,y)=" \
+                         "Q_MOC_INCLUDE(x)="
 
 # Warnings
 QUIET                  = NO

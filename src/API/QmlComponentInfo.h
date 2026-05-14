@@ -3,7 +3,8 @@
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
 
-/// Represents a Qml component which can be loaded from a resource.
+/// \brief Represents a Qml component which can be loaded from a resource.
+///
 class QmlComponentInfo : public QObject
 {
     Q_OBJECT

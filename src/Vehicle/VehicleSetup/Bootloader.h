@@ -10,7 +10,8 @@
 
 class FirmwareImage;
 
-/// Bootloader Utility routines. Works with PX4 and 3DR Radio bootloaders.
+/// \brief Bootloader Utility routines. Works with PX4 and 3DR Radio bootloaders.
+///
 class Bootloader : public QObject
 {
     Q_OBJECT

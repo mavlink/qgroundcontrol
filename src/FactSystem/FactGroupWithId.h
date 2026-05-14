@@ -2,7 +2,8 @@
 
 #include "FactGroup.h"
 
-/// FactGroupWithId is a FactGroup which has an id Fact which can be used to identify the group.
+/// \brief FactGroupWithId is a FactGroup which has an id Fact which can be used to identify the group.
+///
 /// It is mainly used in combination with FactGroupListModel to manage dynamic FactGroups.
 
 class FactGroupWithId : public FactGroup

@@ -5,8 +5,10 @@
 class PlanMasterController;
 class MissionSettingsItem;
 
-/// Takeoff mission item is a special case of a SimpleMissionItem which supports Launch Location display/editing
+/// \brief Takeoff mission item is a special case of a SimpleMissionItem which supports Launch Location display/editing
+///
 /// which is tied to home position.
+///
 class TakeoffMissionItem : public SimpleMissionItem
 {
     Q_OBJECT

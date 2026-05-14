@@ -8,7 +8,8 @@
 
 class QRhi;
 
-/// Wraps a GstAppleCoreVideoMemory/IOSurface-backed sample as a QHwVideoBuffer; samples natively on QRhi::Metal.
+/// \brief Wraps a GstAppleCoreVideoMemory/IOSurface-backed sample as a QHwVideoBuffer; samples natively on QRhi::Metal.
+///
 class GstIOSurfaceVideoBuffer final : public GstHwVideoBuffer
 {
 public:

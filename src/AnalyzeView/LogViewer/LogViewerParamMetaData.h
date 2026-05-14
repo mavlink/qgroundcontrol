@@ -3,7 +3,8 @@
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
 
-/// Helper that enriches parameter rows with metadata from the bundled
+/// \brief Helper that enriches parameter rows with metadata from the bundled
+///
 /// PX4 / APM FactMetaData JSON files. Each row in @a parameters is a
 /// QVariantMap; on return the following keys are added (or left absent if
 /// no metadata was found for that parameter):
@@ -12,6 +13,7 @@
 ///   shortDescription QString — one-line summary
 ///   enumStrings    QStringList — ordered enum labels  (empty if not an enum)
 ///   enumValues     QVariantList — corresponding numeric values (parallel array)
+///
 class LogViewerParamMetaData
 {
 public:

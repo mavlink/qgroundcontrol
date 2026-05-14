@@ -11,8 +11,10 @@
 
 #include "ObjectItemModelBase.h"
 
-/// Base class for flat QObject* list models. Inherits common dirty/reset/role
+/// \brief Base class for flat QObject* list models. Inherits common dirty/reset/role
+///
 /// handling from ObjectItemModelBase and adds flat-list index()/parent() overrides.
+///
 class ObjectListModelBase : public ObjectItemModelBase
 {
     Q_OBJECT

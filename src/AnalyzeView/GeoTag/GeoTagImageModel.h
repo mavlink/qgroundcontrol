@@ -4,7 +4,8 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// Model for displaying geotagging image status in QML
+/// \brief Model for displaying geotagging image status in QML
+///
 class GeoTagImageModel : public QAbstractListModel
 {
     Q_OBJECT

@@ -5,7 +5,8 @@
 
 #include "Fact.h"
 
-/// A SettingsFact is Fact which holds a QSettings value.
+/// \brief A SettingsFact is Fact which holds a QSettings value.
+///
 class SettingsFact : public Fact
 {
     Q_OBJECT

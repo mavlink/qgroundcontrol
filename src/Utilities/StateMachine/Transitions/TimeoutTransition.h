@@ -4,7 +4,8 @@
 
 #include <QtCore/QTimer>
 
-/// Transition that fires automatically after a specified delay.
+/// \brief Transition that fires automatically after a specified delay.
+///
 /// Useful for adding timeout behavior to any state without requiring WaitStateBase.
 ///
 /// The timer starts when the source state is entered and stops when exited.
@@ -15,6 +16,7 @@
 /// auto* timeoutTransition = new TimeoutTransition(5000, errorState);
 /// normalState->addTransition(timeoutTransition);
 /// @endcode
+///
 class TimeoutTransition : public QGCSignalTransition
 {
     Q_OBJECT

@@ -4,13 +4,15 @@
 
 #include <functional>
 
-/// Calls a function when entered and waits for an external trigger to advance
+/// \brief Calls a function when entered and waits for an external trigger to advance
+///
 /// Unlike FunctionState (which advances immediately), this state waits for:
 /// - A signal from an external object, OR
 /// - A call to complete() from within the function's callbacks
 ///
 /// Useful for async operations like loading from vehicle where you call a function
 /// and wait for a completion signal.
+///
 class AsyncFunctionState : public WaitStateBase
 {
     Q_OBJECT

@@ -11,7 +11,7 @@
 #include <QtCore/QtGlobal>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// Unified log file parser for both DataFlash (.bin/.log) and PX4 ULog (.ulg) files.
+/// \brief Unified log file parser for both DataFlash (.bin/.log) and PX4 ULog (.ulg) files.
 ///
 /// Dispatches by file extension, verifies the header magic bytes match the expected
 /// format, then parses the file into a canonical set of properties that the log
@@ -24,6 +24,7 @@
 ///  - parameters — parameter name/value pairs from the log
 ///  - messages — free-text log messages
 ///  - dropouts — (ULog only) data-dropout intervals rendered as chart overlays
+///
 class LogFileParser : public QObject
 {
     Q_OBJECT

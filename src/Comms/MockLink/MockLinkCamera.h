@@ -6,7 +6,7 @@
 
 class MockLink;
 
-/// Simulates MAVLink Camera Protocol v2 components for MockLink.
+/// \brief Simulates MAVLink Camera Protocol v2 components for MockLink.
 ///
 /// Two cameras are provided:
 ///   Camera 1 (MAV_COMP_ID_CAMERA)  – full-featured: video capture, photo capture,
@@ -31,6 +31,7 @@ class MockLink;
 ///   MAV_CMD_CAMERA_TRACK_POINT / TRACK_RECTANGLE / STOP_TRACKING
 ///
 /// Simulated storage: 16 GiB total, 8 GiB free, SD card.
+///
 class MockLinkCamera
 {
 public:
