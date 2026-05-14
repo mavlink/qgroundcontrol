@@ -5,9 +5,8 @@
 class JoystickComponent;
 
 /// \brief This is the generic implementation of the AutoPilotPlugin class for mavs
-///
 /// we do not have a specific AutoPilotPlugin implementation.
-///
+
 class GenericAutoPilotPlugin : public AutoPilotPlugin
 {
     Q_OBJECT
