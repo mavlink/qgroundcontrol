@@ -16,6 +16,7 @@ public:
     uint16_t messageId() const;
     const uint8_t* crcBytes() const { return _crcBytes; }
     static constexpr int kCrcSize = 3;
+    static constexpr int kHeaderSize = 3;
 
     bool validateCrc() const;
     static uint32_t crc24q(const uint8_t* data, size_t len);
@@ -29,7 +30,6 @@ private:
     };
 
     static constexpr uint16_t kMaxPayloadLength = 1023;
-    static constexpr int kHeaderSize = 3;
 
     State _state;
     uint8_t _buffer[kHeaderSize + kMaxPayloadLength];

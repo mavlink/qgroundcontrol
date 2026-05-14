@@ -48,6 +48,7 @@ NTRIPManager::NTRIPManager(QObject* parent)
         const quint16 port = static_cast<quint16>(
             settings->rtcmUdpInputPort()->rawValue().toUInt());
 
+
         _rtcmUdpInput = new RTCMUdpInput(port, this);
         connect(_rtcmUdpInput, &RTCMUdpInput::rtcmDataReceived,
                 _rtcmMavlink,  &RTCMMavlink::RTCMDataUpdate);
@@ -55,7 +56,8 @@ NTRIPManager::NTRIPManager(QObject* parent)
         auto applyUdpInputSettings = [this, settings]() {
             const quint16 uin_port = static_cast<quint16>(
                 settings->rtcmUdpInputPort()->rawValue().toUInt());
-                _rtcmUdpInput->setPort(uin_port);
+            _rtcmUdpInput->setPort(uin_port);
+            _rtcmUdpInput->setValidation(settings->rtcmUdpValidate()->rawValue().toBool());
             if (settings->rtcmUdpInputEnabled()->rawValue().toBool()) {
                 _rtcmUdpInput->start();
             } else {

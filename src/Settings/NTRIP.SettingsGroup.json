@@ -108,6 +108,14 @@
             "max": 65535,
             "decimalPlaces": 0,
             "label": "UDP RTCM input port"
+        },
+        {
+            "name": "rtcmUdpValidate",
+            "shortDesc": "UDP RTCM enable validation",
+            "longDesc": "Enable validation of incoming data as RTCM and drop garbage (improves security).",
+            "type": "bool",
+            "default": true,
+            "label": "UDP RTCM enable validation"
         }
     ]
 }

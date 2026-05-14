@@ -1,6 +1,7 @@
 #include "RTCMUdpInput.h"
 #include "QGCLoggingCategory.h"
 
+
 QGC_LOGGING_CATEGORY(RTCMUdpInputLog, "GPS.RTCMUdpInput")
 
 RTCMUdpInput::RTCMUdpInput(quint16 port, QObject *parent)
@@ -18,6 +19,7 @@ RTCMUdpInput::~RTCMUdpInput()
 bool RTCMUdpInput::start()
 {
     stop();
+    _rtcmParser.reset();
 
     if (!_socket.bind(QHostAddress::AnyIPv4, _port)) {
         qCWarning(RTCMUdpInputLog) << "Failed to bind UDP socket on port" << _port
@@ -62,7 +64,7 @@ void RTCMUdpInput::_readDatagrams()
     while (_socket.hasPendingDatagrams()) {
         const qint64 size = _socket.pendingDatagramSize();
         if (size <= 0) {
-            (void) _socket.readDatagram(nullptr, 0); // discard malformed
+            (void) _socket.readDatagram(nullptr, 0);
             continue;
         }
 
@@ -77,7 +79,39 @@ void RTCMUdpInput::_readDatagrams()
             data.resize(static_cast<qsizetype>(read));
         }
 
-        qCDebug(RTCMUdpInputLog) << "Received RTCM datagram:" << read << "bytes";
-        emit rtcmDataReceived(data);
+        if (!_validateRtcm) {
+            qCDebug(RTCMUdpInputLog) << "Received RTCM datagram:" << read << "bytes";
+            emit rtcmDataReceived(data);
+            return;
+        }
+
+        // RTCM Validation keeps track of some stats to see what % of the stream is garbage.
+
+        for (qsizetype i = 0; i < data.size(); ++i) {
+            if (!_rtcmParser.addByte(static_cast<uint8_t>(data[i]))) {
+                continue;
+            }
+
+            if (_rtcmParser.validateCrc()) {
+                const uint16_t frameSize = RTCMParser::kHeaderSize + _rtcmParser.messageLength() + RTCMParser::kCrcSize;
+                QByteArray frame(reinterpret_cast<const char*>(_rtcmParser.message()), frameSize);
+                _validBytes += frameSize;
+                qCDebug(RTCMUdpInputLog) << "RTCM message" << _rtcmParser.messageId() << frameSize << "bytes";
+                emit rtcmDataReceived(frame);
+            } else {
+                const uint16_t frameSize = RTCMParser::kHeaderSize + _rtcmParser.messageLength() + RTCMParser::kCrcSize;
+                qCWarning(RTCMUdpInputLog) << "Dropped RTCM message" << _rtcmParser.messageId() << "- CRC mismatch";
+                _invalidBytes += frameSize;
+            }
+
+            _rtcmParser.reset();
+        }
+
+        const quint64 totalBytes = _validBytes + _invalidBytes;
+        if (totalBytes > 0 && (totalBytes % 100000) < static_cast<quint64>(data.size())) {
+            const double dropPct = 100.0 * _invalidBytes / totalBytes;
+            qCDebug(RTCMUdpInputLog) << QString("RTCM byte stats: %1 valid, %2 invalid, %3% dropped")
+                                            .arg(_validBytes).arg(_invalidBytes).arg(dropPct, 0, 'f', 1);
+        }
     }
 }
