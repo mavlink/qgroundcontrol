@@ -18,9 +18,8 @@ class SigningController;
 class Vehicle;
 
 /// \brief Per-vehicle signing facade. Owns the wiring between Vehicle and the active SigningController
-///
 /// (which lives on the vehicle's primary LinkInterface). Re-binds when the primary link changes.
-///
+
 class VehicleSigningController : public QObject
 {
     Q_OBJECT
