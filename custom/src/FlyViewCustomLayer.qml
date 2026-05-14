@@ -24,6 +24,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 import QGroundControl.VideoManager
+import QGroundControl.Vehicle
 
 Item {
     id: root
@@ -128,8 +129,7 @@ Item {
     // ─────────────────────────────────────────────────────────────────────
     property bool isArmed: false
 
-    // ARM is only permitted during Demo #4 (Points Round)
-    readonly property bool _canArm: demoLocked && selectedDemoIndex === 3
+    readonly property bool _canArm: demoLocked
 
     property int selectedRoundSpecIndex: 0
     property int selectedSurveyQuadrantIndex: 0
@@ -595,6 +595,24 @@ Item {
             anchors.leftMargin:  12
             anchors.rightMargin: 12
             spacing:             10
+
+            Rectangle {
+                width:  planBtn.width + 16; height: 28; radius: 4
+                color:  _clrCard
+                Text {
+                    id:               planBtn
+                    anchors.centerIn: parent
+                    text:             "⊞ PLAN"
+                    color:            "white"
+                    font.pixelSize:   12
+                    font.bold:        true
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked:    mainWindow.showToolSelectDialog()
+                    cursorShape:  Qt.PointingHandCursor
+                }
+            }
 
             Text {
                 text:           "Crown & Eagle Engineering"
