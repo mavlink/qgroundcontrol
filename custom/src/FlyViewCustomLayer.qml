@@ -143,73 +143,75 @@ Item {
     readonly property var roundSpecOptions: [
         {
             label: "Rd 1,3,4",
-            fobCoordinates: [38.750765, -77.497292, 0],
+            fobCoordinates: [38.7508357856351, -77.4969789717910, 0],
             geofenceFilePath: ":/Custom/qml/geofences/ce_geofence_rd_134.plan"
         },
         {
             label: "Rd 2",
-            fobCoordinates: [38.750765, -77.496940, 0],
+            fobCoordinates: [38.7508357856351, -77.4969789717910, 0],
             geofenceFilePath: ":/Custom/qml/geofences/ce_geofence_rd_2.plan"
         }
     ]
     readonly property var surveyQuadrantOptions: ["Q1", "Q2", "Q3", "Q4"]
     readonly property var _arenaPath: [
-        QtPositioning.coordinate(38.750902, -77.497292),
-        QtPositioning.coordinate(38.750902, -77.496940),
-        QtPositioning.coordinate(38.750628, -77.496940),
-        QtPositioning.coordinate(38.750628, -77.497292)
+        QtPositioning.coordinate(38.7507608625056, -77.49735908548331),
+        QtPositioning.coordinate(38.75094024382851, -77.49709285710168),
+        QtPositioning.coordinate(38.75073132744176, -77.49686508648041),
+        QtPositioning.coordinate(38.750551952470936, -77.49713235890398)
     ]
     readonly property var _quadrantPaths: [
+        // Rd 1,3,4: opponent territory is left-field side half.
         [
             [
-                QtPositioning.coordinate(38.750902, -77.497292),
-                QtPositioning.coordinate(38.750902, -77.497204),
-                QtPositioning.coordinate(38.750765, -77.497204),
-                QtPositioning.coordinate(38.750765, -77.497292)
+                QtPositioning.coordinate(38.7507608625056, -77.49735908548331),
+                QtPositioning.coordinate(38.75080570783633, -77.4972925283879),
+                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
+                QtPositioning.coordinate(38.750656407488265, -77.49724572219364)
             ],
             [
-                QtPositioning.coordinate(38.750902, -77.497204),
-                QtPositioning.coordinate(38.750902, -77.497116),
-                QtPositioning.coordinate(38.750765, -77.497116),
-                QtPositioning.coordinate(38.750765, -77.497204)
+                QtPositioning.coordinate(38.75080570783633, -77.4972925283879),
+                QtPositioning.coordinate(38.750850553167055, -77.4972259712925),
+                QtPositioning.coordinate(38.7507460965617, -77.49711234699234),
+                QtPositioning.coordinate(38.75070125202498, -77.497179034593)
             ],
             [
-                QtPositioning.coordinate(38.750765, -77.497292),
-                QtPositioning.coordinate(38.750765, -77.497204),
-                QtPositioning.coordinate(38.750628, -77.497204),
-                QtPositioning.coordinate(38.750628, -77.497292)
+                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
+                QtPositioning.coordinate(38.7507460965617, -77.49711234699234),
+                QtPositioning.coordinate(38.75064163995635, -77.4969987226922),
+                QtPositioning.coordinate(38.75059679621364, -77.49706554079809)
             ],
             [
-                QtPositioning.coordinate(38.750765, -77.497204),
-                QtPositioning.coordinate(38.750765, -77.497116),
-                QtPositioning.coordinate(38.750628, -77.497116),
-                QtPositioning.coordinate(38.750628, -77.497204)
+                QtPositioning.coordinate(38.750656407488265, -77.49724572219364),
+                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
+                QtPositioning.coordinate(38.75059679621364, -77.49706554079809),
+                QtPositioning.coordinate(38.750551952470936, -77.49713235890398)
             ]
         ],
+        // Rd 2 uses the same left-field side half.
         [
             [
-                QtPositioning.coordinate(38.750902, -77.497116),
-                QtPositioning.coordinate(38.750902, -77.497028),
-                QtPositioning.coordinate(38.750765, -77.497028),
-                QtPositioning.coordinate(38.750765, -77.497116)
+                QtPositioning.coordinate(38.7507608625056, -77.49735908548331),
+                QtPositioning.coordinate(38.75080570783633, -77.4972925283879),
+                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
+                QtPositioning.coordinate(38.750656407488265, -77.49724572219364)
             ],
             [
-                QtPositioning.coordinate(38.750902, -77.497028),
-                QtPositioning.coordinate(38.750902, -77.496940),
-                QtPositioning.coordinate(38.750765, -77.496940),
-                QtPositioning.coordinate(38.750765, -77.497028)
+                QtPositioning.coordinate(38.75080570783633, -77.4972925283879),
+                QtPositioning.coordinate(38.750850553167055, -77.4972259712925),
+                QtPositioning.coordinate(38.7507460965617, -77.49711234699234),
+                QtPositioning.coordinate(38.75070125202498, -77.497179034593)
             ],
             [
-                QtPositioning.coordinate(38.750765, -77.497116),
-                QtPositioning.coordinate(38.750765, -77.497028),
-                QtPositioning.coordinate(38.750628, -77.497028),
-                QtPositioning.coordinate(38.750628, -77.497116)
+                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
+                QtPositioning.coordinate(38.7507460965617, -77.49711234699234),
+                QtPositioning.coordinate(38.75064163995635, -77.4969987226922),
+                QtPositioning.coordinate(38.75059679621364, -77.49706554079809)
             ],
             [
-                QtPositioning.coordinate(38.750765, -77.497028),
-                QtPositioning.coordinate(38.750765, -77.496940),
-                QtPositioning.coordinate(38.750628, -77.496940),
-                QtPositioning.coordinate(38.750628, -77.497028)
+                QtPositioning.coordinate(38.750656407488265, -77.49724572219364),
+                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
+                QtPositioning.coordinate(38.75059679621364, -77.49706554079809),
+                QtPositioning.coordinate(38.750551952470936, -77.49713235890398)
             ]
         ]
     ]
@@ -334,7 +336,7 @@ Item {
             target_class: targetClass(),
             round_spec_label: roundSpec.label,
             fob_coordinates_label: roundSpec.label,
-            fob_coordinates_placeholder: roundSpec.fobCoordinates,
+            fob_coordinates: roundSpec.fobCoordinates,
             geofence_label: roundSpec.label,
             geofence_plan_file: roundSpec.geofenceFilePath,
             geofence_height_ft: 30,
@@ -362,7 +364,6 @@ Item {
             _planMasterController.loadFromFile(roundSpec.geofenceFilePath)
         }
         showTemporaryMapOverlays()
-        sendRoundConfig()
     }
 
     function _clearMapObject(object) {
@@ -1070,7 +1071,6 @@ Item {
                     onActivated: function(i) {
                         root.selectedSurveyQuadrantIndex = i
                         root.showTemporaryMapOverlays()
-                        root.sendRoundConfig()
                     }
                     background: Rectangle { color: _clrCard; radius: 4 }
                     contentItem: Text {
@@ -1100,7 +1100,6 @@ Item {
                     currentIndex: model.indexOf(root.cameraMode)
                     onActivated: function(i) {
                         root.cameraMode = model[i]
-                        root.sendRoundConfig()
                     }
                     background: Rectangle { color: _clrCard; radius: 4 }
                     contentItem: Text {
