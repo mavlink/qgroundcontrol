@@ -1,16 +1,17 @@
 name: Custom Build
 
 on:
+  # Intentionally mirrors the paths-ignore filter used by the standard platform
+  # CI workflows (linux.yml, macos.yml, windows.yml). Mainline QGC source
+  # changes can break the custom build, so this workflow must run whenever
+  # those workflows run.
   push:
     branches: [master]
-    paths:
-      - 'custom-example/**'
-      - '.github/workflows/custom-build.yml'
+    paths-ignore:
+      - 'docs/**'
   pull_request:
-    branches: [master]
-    paths:
-      - 'custom-example/**'
-      - '.github/workflows/custom-build.yml'
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
 
 concurrency:
