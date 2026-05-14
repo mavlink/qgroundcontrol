@@ -88,6 +88,27 @@ qt_add_qml_module(CustomModule
 )
 
 # ============================================================================
+# Custom Plan Module (PerimeterScan map visual + editor)
+# ============================================================================
+
+qt_add_library(CustomPlanModule STATIC)
+
+qgc_set_qt_resource_alias(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/PlanView/PerimeterScanMapVisual.qml
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/PlanView/PerimeterScanEditor.qml
+)
+
+qt_add_qml_module(CustomPlanModule
+    URI Custom.Plan
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    QML_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/PlanView/PerimeterScanMapVisual.qml
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/PlanView/PerimeterScanEditor.qml
+    NO_PLUGIN
+)
+
+# ============================================================================
 # Custom Plugin Sources
 # ============================================================================
 
@@ -100,6 +121,10 @@ set(CUSTOM_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/CustomFirmwarePlugin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/CustomFirmwarePluginFactory.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin/CustomFirmwarePluginFactory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanComplexItem.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanComplexItem.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanPlanCreator.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager/PerimeterScanPlanCreator.h
     CACHE INTERNAL "" FORCE
 )
 
@@ -110,6 +135,7 @@ set(CUSTOM_SOURCES
 # Custom libraries to link
 set(CUSTOM_LIBRARIES
     CustomModule
+    CustomPlanModule
     CACHE INTERNAL "" FORCE
 )
 
@@ -118,6 +144,7 @@ set(CUSTOM_INCLUDE_DIRECTORIES
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/AutoPilotPlugin
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FirmwarePlugin
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MissionManager
     CACHE INTERNAL "" FORCE
 )
 

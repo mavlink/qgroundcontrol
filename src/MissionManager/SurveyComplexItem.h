@@ -28,6 +28,7 @@ public:
 
     // Overrides from ComplexMissionItem
     QString         patternName         (void) const final { return tr(canonicalName); }
+    void            applyPreviousAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame prevAltFrame, double prevAltitude) final;
     bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     QString         mapVisualQML        (void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
     QString         presetsSettingsGroup(void) { return settingsGroup; }

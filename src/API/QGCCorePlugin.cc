@@ -25,8 +25,11 @@
 #include "SurveyComplexItem.h"
 #include "CorridorScanComplexItem.h"
 #include "StructureScanComplexItem.h"
+#include "FixedWingLandingComplexItem.h"
+#include "VTOLLandingComplexItem.h"
 #include "Vehicle.h"
 #include "BlankPlanCreator.h"
+#include "ComplexMissionItem.h"
 #include "PlanMasterController.h"
 
 #ifdef QGC_CUSTOM_BUILD
@@ -403,4 +406,26 @@ QList<PlanCreator*> QGCCorePlugin::planCreators(PlanMasterController *planMaster
         new StructureScanPlanCreator(planMasterController),
         new BlankPlanCreator(planMasterController),
     };
+}
+
+ComplexMissionItem *QGCCorePlugin::createComplexMissionItem(
+    const QString &complexItemType,
+    PlanMasterController *masterController,
+    bool flyView,
+    const QString &kmlOrShpFile)
+{
+    if (complexItemType == SurveyComplexItem::canonicalName || complexItemType == SurveyComplexItem::jsonComplexItemTypeValue) {
+        return new SurveyComplexItem(masterController, flyView, kmlOrShpFile);
+    } else if (complexItemType == CorridorScanComplexItem::canonicalName || complexItemType == CorridorScanComplexItem::jsonComplexItemTypeValue) {
+        return new CorridorScanComplexItem(masterController, flyView, kmlOrShpFile);
+    } else if (complexItemType == StructureScanComplexItem::canonicalName || complexItemType == StructureScanComplexItem::jsonComplexItemTypeValue) {
+        return new StructureScanComplexItem(masterController, flyView, kmlOrShpFile);
+    } else if (complexItemType == FixedWingLandingComplexItem::canonicalName || complexItemType == FixedWingLandingComplexItem::jsonComplexItemTypeValue) {
+        return new FixedWingLandingComplexItem(masterController, flyView);
+    } else if (complexItemType == VTOLLandingComplexItem::canonicalName || complexItemType == VTOLLandingComplexItem::jsonComplexItemTypeValue) {
+        return new VTOLLandingComplexItem(masterController, flyView);
+    }
+
+    qCWarning(QGCCorePluginLog) << "QGCCorePlugin::createComplexMissionItem - Unknown complex item type:" << complexItemType;
+    return nullptr;
 }

@@ -1,0 +1,13 @@
+{
+    "version":      1,
+    "fileType":  "FactMetaData",
+    "QGC.MetaData.Facts":
+[{
+    "name":             "Altitude",
+    "shortDesc": "Altitude to fly the perimeter scan.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "default":     50
+}]
+}
