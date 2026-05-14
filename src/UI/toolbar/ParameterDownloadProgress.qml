@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-/// Provides UI for parameter download progress. This is overlayed on top of the FlyViewToolBar.
+/// \brief Provides UI for parameter download progress. This is overlayed on top of the FlyViewToolBar.
 
 Item {
     id: control

@@ -6,7 +6,7 @@
 #include "MAVLinkLib.h"
 
 /// \brief Class which represents sensor info from the SYS_STATUS mavlink message
-///
+
 class SysStatusSensorInfo : public QObject
 {
     Q_OBJECT

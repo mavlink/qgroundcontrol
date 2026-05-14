@@ -5,7 +5,7 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 
-/// Popup container for preflight checklists
+/// \brief Popup container for preflight checklists
 QGCPopupDialog {
     id:         _root
     title:      qsTr("Pre-Flight Checklist")

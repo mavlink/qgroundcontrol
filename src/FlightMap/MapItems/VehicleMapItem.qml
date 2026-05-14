@@ -6,7 +6,7 @@ import QtPositioning
 import QGroundControl
 import QGroundControl.Controls
 
-/// Marker for displaying a vehicle location on the map
+/// \brief Marker for displaying a vehicle location on the map
 MapQuickItem {
     id: _root
 

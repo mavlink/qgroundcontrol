@@ -6,7 +6,7 @@ import QtPositioning
 import QGroundControl
 import QGroundControl.Controls
 
-/// Mission item map visual
+/// \brief Mission item map visual
 Item {
     id: _root
 

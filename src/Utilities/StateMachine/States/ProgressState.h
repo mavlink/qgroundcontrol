@@ -23,7 +23,7 @@
 ///     return calculateProgress();
 /// });
 /// @endcode
-///
+
 class ProgressState : public QGCState
 {
     Q_OBJECT

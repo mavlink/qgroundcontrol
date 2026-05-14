@@ -8,7 +8,7 @@ class FirmwarePlugin;
 class FirmwarePluginFactory;
 
 /// \brief FirmwarePluginManager is a singleton which is used to return the correct FirmwarePlugin for a MAV_AUTOPILOT type.
-///
+
 class FirmwarePluginManager : public QObject
 {
     Q_OBJECT

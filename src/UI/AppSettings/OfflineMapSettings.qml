@@ -6,7 +6,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.QGCMapEngineManager
 
-/// Offline map tile set management: list, add, import, export, and progress display.
+/// \brief Offline map tile set management: list, add, import, export, and progress display.
+///
 /// Self-contained component including all dialogs needed for offline map operations.
 Item {
     id: root

@@ -12,7 +12,7 @@
 class FactValueSliderListModel;
 
 /// \brief A Fact is used to hold a single value within the system.
-///
+
 class Fact : public QObject
 {
     Q_OBJECT

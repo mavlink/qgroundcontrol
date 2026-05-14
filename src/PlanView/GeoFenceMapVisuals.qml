@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// GeoFence map visuals
+/// \brief GeoFence map visuals
 Item {
     id: _root
     z: QGroundControl.zOrderMapItems

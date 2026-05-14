@@ -4,7 +4,7 @@
 #include "TerrainTile.h"
 
 /// \brief Implements an interface for https://terrain-ce.suite.auterion.com/api/v1/
-///
+
 class TerrainTileCopernicus : public TerrainTile
 {
     friend class TerrainTileTest;

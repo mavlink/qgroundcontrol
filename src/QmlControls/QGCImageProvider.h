@@ -5,7 +5,7 @@
 #include <QtQuick/QQuickImageProvider>
 
 /// \brief This is used to expose images from ImageProtocolHandler
-///
+
 class QGCImageProvider : public QQuickImageProvider
 {
 public:

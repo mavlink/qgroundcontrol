@@ -9,9 +9,8 @@ class TcpTransport;
 class UdpTransport;
 
 /// \brief Encapsulates UDP/TCP/AutoFallback protocol selection, lazy transport
-///
 /// creation, TLS configuration, and TCP reconnection with exponential backoff.
-///
+
 class TransportStrategy : public QObject
 {
     Q_OBJECT

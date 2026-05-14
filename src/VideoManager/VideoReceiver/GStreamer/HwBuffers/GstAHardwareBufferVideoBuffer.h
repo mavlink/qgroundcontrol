@@ -14,7 +14,7 @@ class QRhi;
 ///
 /// Imports via eglGetNativeClientBufferANDROID + eglCreateImageKHR into GL textures.
 /// Requires EGL_ANDROID_image_native_buffer.
-///
+
 class GstAHardwareBufferVideoBuffer final : public GstHwVideoBuffer
 {
 public:

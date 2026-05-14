@@ -14,7 +14,7 @@ class QTimer;
 class Vehicle;
 
 /// \brief MAVLink message inspector controller (provides the logic for UI display)
-///
+
 class MAVLinkInspectorController : public QObject
 {
     Q_OBJECT

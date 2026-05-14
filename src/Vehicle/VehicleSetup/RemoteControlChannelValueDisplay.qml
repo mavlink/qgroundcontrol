@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-/// Displays the value of a single channel as an indicator within a value range bar
+/// \brief Displays the value of a single channel as an indicator within a value range bar
 Item {
     enum Mode {
         RawValue, // Display raw channel value

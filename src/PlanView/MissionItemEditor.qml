@@ -8,7 +8,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-/// Mission item edit control
+/// \brief Mission item edit control
 Rectangle {
     required property var    missionItem         ///< MissionItem associated with this editor
     required property var    map                 ///< Map control

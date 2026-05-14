@@ -15,7 +15,7 @@ class QmlObjectListModel;
 class Vehicle;
 
 /// \brief Abstract base class for all camera controls: real and simulated
-///
+
 class MavlinkCameraControlInterface : public FactGroup
 {
     Q_OBJECT

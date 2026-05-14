@@ -5,7 +5,8 @@ import QtGraphs
 import QGroundControl
 import QGroundControl.Controls
 
-/// Altitude mini-chart for the Log Viewer Map tab.
+/// \brief Altitude mini-chart for the Log Viewer Map tab.
+///
 /// Displays vehicle_global_position.alt (or equivalent) as a line chart
 /// with zoom, position marker, and value popup. The marker timestamp is
 /// exposed via the markerChanged / markerCleared signals so the parent

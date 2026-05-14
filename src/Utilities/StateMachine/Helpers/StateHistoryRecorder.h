@@ -25,7 +25,7 @@ class QGCStateMachine;
 ///
 /// qDebug() << recorder.dumpHistory();
 /// @endcode
-///
+
 class StateHistoryRecorder : public QObject
 {
     Q_OBJECT

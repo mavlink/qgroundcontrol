@@ -10,7 +10,7 @@ class FirmwarePlugin;
 class CompInfoGeneral;
 
 /// \brief Base class for all CompInfo types
-///
+
 class CompInfo : public QObject
 {
     Q_OBJECT

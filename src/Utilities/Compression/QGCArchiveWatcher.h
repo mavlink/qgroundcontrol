@@ -30,7 +30,7 @@ class QGCCompressionJob;
 /// });
 /// watcher.watchDirectory("/downloads");
 /// @endcode
-///
+
 class QGCArchiveWatcher : public QObject
 {
     Q_OBJECT

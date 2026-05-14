@@ -17,7 +17,7 @@
 /// QTextStream stream(&device);
 /// QString content = stream.readAll();
 /// @endcode
-///
+
 class QGCDecompressDevice : public QGCArchiveDeviceBase
 {
     Q_OBJECT

@@ -1,11 +1,11 @@
 #pragma once
 
 #include <QtCore/QList>
-/// \brief Allows to configure a set of mavlink streams to a specific rate,
-///
+/// \brief Allows to configure a set of mavlink streams to a specific rate
 /// and restore back to default.
-/// Note that only one set is active at a time.
 ///
+/// Note that only one set is active at a time.
+
 class MAVLinkStreamConfig
 {
 public:

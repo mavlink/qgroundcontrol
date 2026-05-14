@@ -34,7 +34,7 @@ class QGCStateMachine;
 /// // Or log to file
 /// logger.setLogFile("/tmp/machine.log");
 /// @endcode
-///
+
 class StateMachineLogger : public QObject
 {
     Q_OBJECT

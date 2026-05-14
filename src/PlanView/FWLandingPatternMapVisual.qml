@@ -8,7 +8,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// Fixed Wing Landing Pattern map visuals
+/// \brief Fixed Wing Landing Pattern map visuals
 Item {
     id: _root
 

@@ -12,7 +12,7 @@ class QRhi;
 ///
 /// Wraps GstGLMemory texture ids in QRhiTextures. Requires the QRhi GL context
 /// to share with the GstGLContext — see GstGlContextBridge for the wiring.
-///
+
 class GstGlVideoBuffer final : public GstHwVideoBuffer
 {
 public:

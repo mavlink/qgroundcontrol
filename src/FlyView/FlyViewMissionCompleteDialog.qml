@@ -6,7 +6,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-/// Dialog which shows up when a flight completes. Prompts the user for things like whether they should remove the plan from the vehicle.
+/// \brief Dialog which shows up when a flight completes. Prompts the user for things like whether they should remove the plan from the vehicle.
 Item {
     id:      missionCompleteDialogHelper
     visible: false

@@ -6,7 +6,8 @@ import QtGraphs
 import QGroundControl
 import QGroundControl.Controls
 
-/// Self-contained chart view for the Log Viewer.
+/// \brief Self-contained chart view for the Log Viewer.
+///
 /// Sizing and visibility are controlled entirely by the parent.
 /// The parent calls refreshBinChart(), centerCursor(), and clearMarker() at
 /// appropriate lifecycle points (log load, log clear, field-clear).

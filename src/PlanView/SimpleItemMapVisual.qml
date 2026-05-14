@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// Simple Mission Item visuals
+/// \brief Simple Mission Item visuals
 MissionItemMapVisualBase {
     id: _root
 

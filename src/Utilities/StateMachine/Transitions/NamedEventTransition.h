@@ -10,7 +10,7 @@
 ///
 /// Uses QAbstractTransition (via QGCAbstractTransition) to intercept events posted via
 /// QStateMachine::postEvent() / QGCStateMachine::postEvent().
-///
+
 class NamedEventTransition : public QGCAbstractTransition
 {
     Q_OBJECT

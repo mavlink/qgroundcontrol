@@ -23,7 +23,7 @@ namespace TerrainQuery
 }
 
 /// \brief Base class for offline/online terrain queries
-///
+
 class TerrainQueryInterface : public QObject
 {
     Q_OBJECT

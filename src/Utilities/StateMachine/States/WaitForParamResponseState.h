@@ -13,7 +13,7 @@ class Vehicle;
 /// On PARAM_VALUE matching predicate: calls waitComplete() (emits advance())
 /// On PARAM_ERROR matching predicate: stores error info, calls waitFailed() (emits error())
 /// On timeout: existing timeout() signal fires (for retry path)
-///
+
 class WaitForParamResponseState : public WaitStateBase
 {
     Q_OBJECT

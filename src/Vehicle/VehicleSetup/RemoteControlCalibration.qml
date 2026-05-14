@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.FactControls
 import QGroundControl.Controls
 
-/// Base class for Remote Control Calibration (supports both RC and Joystick)
+/// \brief Base class for Remote Control Calibration (supports both RC and Joystick)
 ColumnLayout {
     required property var controller
     property Component additionalSetupComponent

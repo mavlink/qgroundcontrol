@@ -7,7 +7,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// Base component for mission item map visuals providing common drag/indicator infrastructure.
+/// \brief Base component for mission item map visuals providing common drag/indicator infrastructure.
+///
 /// Subclasses must provide an indicatorComponent.
 Item {
     id: control

@@ -7,7 +7,7 @@ class QGCStateMachine;
 class Vehicle;
 
 /// \brief Base class for custom transitions that need access to QGCStateMachine and Vehicle
-///
+
 class QGCAbstractTransition : public QAbstractTransition
 {
     Q_OBJECT

@@ -15,7 +15,7 @@
 #include "SigningStatus.h"
 
 /// \brief Owns MAVLink signing state and the deferred-confirmation state machine for one LinkInterface.
-///
+
 class SigningController : public QObject
 {
     Q_OBJECT

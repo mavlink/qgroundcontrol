@@ -36,7 +36,7 @@ void applySqlitePragmas(QSqlDatabase& db);
 /// Creates a uniquely-named connection on construction, removes it on
 /// destruction. Avoids the common pitfall of reusing connection names
 /// or forgetting to call removeDatabase.
-///
+
 class ScopedConnection
 {
 public:
@@ -69,7 +69,7 @@ private:
 /// Begins a transaction on construction; rolls back in destructor unless
 /// commit() was called. Check ok() before issuing queries — begin can fail
 /// (e.g. driver doesn't support transactions, or one is already open).
-///
+
 class Transaction
 {
 public:

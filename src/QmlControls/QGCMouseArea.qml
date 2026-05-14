@@ -3,7 +3,8 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-/// Works just like a regular MouseArea except:
+/// \brief Works just like a regular MouseArea except:
+///
 ///     1) It supports the ability to show touch extents based on QGroundControl.showTouchAreas
 ///     2) You can specify fillItem and it will automatically fill to the size and adjust touch areas on mobile
 MouseArea {

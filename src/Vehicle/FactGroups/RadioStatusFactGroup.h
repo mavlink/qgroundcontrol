@@ -9,7 +9,7 @@
 /// errors fixed, and the TX buffer fill percentage. The 3DR Si1k raw-to-dBm
 /// conversion from the datasheet is applied here (detected via the '3'/'D'
 /// sysid/compid marker).
-///
+
 class RadioStatusFactGroup : public FactGroup
 {
     Q_OBJECT

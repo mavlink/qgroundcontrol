@@ -4,7 +4,7 @@ import QtPositioning
 import QGroundControl
 import QGroundControl.FlightMap
 
-/// Set of functions for fitting the map view to a specific constraint
+/// \brief Set of functions for fitting the map view to a specific constraint
 Item {
     property var    map
     property bool   usePlannedHomePosition      ///< true: planned home position used for calculations, false: vehicle home position use for calculations

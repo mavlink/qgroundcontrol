@@ -20,7 +20,7 @@ struct LogParseResult;
 /// Streams through a ULog file in a single pass, collecting signal samples,
 /// parameters, log messages, events, and dropouts into a LogParseResult.
 /// Call finalize() after parsing to build mode segments and sort signal lists.
-///
+
 class ULogFullHandler final : public ulog_cpp::DataHandlerInterface
 {
 public:

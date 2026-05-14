@@ -8,10 +8,12 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-/// This is an example Qml file which is used to describe the QGroundControl coding style.
-/// In general almost everything in here has some coding style meaning including order of
-/// code. Not all style choices are explained. If there is any confusion please ask
-/// and we'll answer and update style as needed.
+/// \brief One-line summary of the control.
+///
+/// The first line must begin with \brief. If additional detail is needed,
+/// leave a blank /// line after \brief and write the detail below it.
+/// Describe the control's purpose, required properties, and any important usage notes.
+
 Item {
     // ===================================================================================
     // PUBLIC PROPERTIES SECTION

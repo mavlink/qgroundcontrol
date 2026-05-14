@@ -7,7 +7,7 @@ namespace QGC {
 /// \brief RAII guard for an atomic suspend flag: sets on construction, clears on destruction.
 ///
 /// Movable so it can live in moved-from owner objects (e.g. PendingOp variants).
-///
+
 class AutoSuspendGuard
 {
 public:

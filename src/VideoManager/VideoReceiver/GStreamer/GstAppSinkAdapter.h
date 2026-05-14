@@ -39,7 +39,7 @@ void                             applyOrientationToFrame(QVideoFrame &frame, Gst
 /// Each decoded frame arriving at the appsink is copied into a QVideoFrame
 /// and pushed to the QVideoSink, which renders through Qt's native RHI
 /// backend (Metal on macOS, Vulkan/D3D elsewhere).
-///
+
 class GstAppSinkAdapter : public QObject
 {
     Q_OBJECT

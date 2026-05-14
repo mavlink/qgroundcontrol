@@ -4,7 +4,7 @@ import QtLocation
 import QGroundControl
 import QGroundControl.Controls
 
-/// Use to drag a MissionItemIndicator
+/// \brief Use to drag a MissionItemIndicator
 Rectangle {
     id:             itemDragger
     x:              _itemIndicatorX - _touchMarginHorizontal

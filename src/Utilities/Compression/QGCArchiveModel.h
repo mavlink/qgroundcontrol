@@ -25,7 +25,7 @@
 ///     }
 /// }
 /// @endcode
-///
+
 class QGCArchiveModel : public QAbstractListModel
 {
     Q_OBJECT

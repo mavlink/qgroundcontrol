@@ -68,7 +68,7 @@ typedef QMap<uint32_t,QString> FlightModeCustomModeMap;
 /// This is the only place where flight stack specific code should reside in QGroundControl. The remainder of the
 /// QGroundControl source is generic to a common mavlink implementation. The implementation in the base class supports
 /// mavlink generic firmware. Override the base clase virtuals to create your own firmware specific plugin.
-///
+
 class FirmwarePlugin : public QObject
 {
     Q_OBJECT

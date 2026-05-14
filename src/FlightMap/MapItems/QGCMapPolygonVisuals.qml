@@ -10,7 +10,7 @@ import QGroundControl.Controls
 import QGroundControl.FlightMap
 import QGroundControl.PlanView
 
-/// QGCMapPolygon map visuals
+/// \brief QGCMapPolygon map visuals
 Item {
     id: _root
 

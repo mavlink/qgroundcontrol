@@ -24,7 +24,7 @@ class Vehicle;
 ///
 /// ## Notes
 /// - Local error-state helpers are not provided; use registerState() for global error handling.
-///
+
 class QGCAbstractState : public QState
 {
     Q_OBJECT

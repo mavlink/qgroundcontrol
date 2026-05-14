@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-/// File Button controls used by QGCFileDialog control
+/// \brief File Button controls used by QGCFileDialog control
 Rectangle {
     implicitWidth:  ScreenTools.implicitButtonWidth
     implicitHeight: ScreenTools.implicitButtonHeight

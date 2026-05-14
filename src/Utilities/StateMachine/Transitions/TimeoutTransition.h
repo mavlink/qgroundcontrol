@@ -16,7 +16,7 @@
 /// auto* timeoutTransition = new TimeoutTransition(5000, errorState);
 /// normalState->addTransition(timeoutTransition);
 /// @endcode
-///
+
 class TimeoutTransition : public QGCSignalTransition
 {
     Q_OBJECT

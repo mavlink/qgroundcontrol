@@ -28,7 +28,7 @@
 /// state->addTransition(state, &CircuitBreakerState::advance, successState);
 /// state->addTransition(state, &CircuitBreakerState::error, errorState);
 /// @endcode
-///
+
 class CircuitBreakerState : public QGCState
 {
     Q_OBJECT

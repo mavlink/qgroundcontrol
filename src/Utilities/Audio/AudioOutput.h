@@ -7,7 +7,7 @@ class Fact;
 class AudioOutputTest;
 
 /// \brief The AudioOutput class provides functionality for audio output using text-to-speech.
-///
+
 class AudioOutput : public QObject
 {
     Q_OBJECT

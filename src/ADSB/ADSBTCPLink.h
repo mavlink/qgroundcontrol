@@ -9,9 +9,8 @@ class QTcpSocket;
 class QTimer;
 
 /// \brief The ADSBTCPLink class handles the TCP connection to an ADS-B server
-///
 /// and processes incoming ADS-B data.
-///
+
 class ADSBTCPLink : public QObject
 {
     Q_OBJECT

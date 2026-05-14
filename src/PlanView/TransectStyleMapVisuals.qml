@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// Base control for both Survey and Corridor Scan map visuals
+/// \brief Base control for both Survey and Corridor Scan map visuals
 Item {
     id: _root
 

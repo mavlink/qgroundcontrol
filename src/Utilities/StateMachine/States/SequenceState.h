@@ -29,7 +29,7 @@
 /// seqState->addTransition(seqState, &SequenceState::advance, successState);
 /// seqState->addTransition(seqState, &SequenceState::error, errorState);
 /// @endcode
-///
+
 class SequenceState : public QGCState
 {
     Q_OBJECT

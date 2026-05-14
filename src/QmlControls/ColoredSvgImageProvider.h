@@ -3,12 +3,11 @@
 #include <QtQuick/QQuickImageProvider>
 
 /// \brief Image provider that rasterizes an SVG (or any QImage-loadable Qt resource)
-///
 /// and recolors its alpha mask with a caller-supplied tint, avoiding the need
 /// for a runtime ColorOverlay shader.
 ///
 /// URL format: image://coloredsvg/<resource-path>?color=<RRGGBB|AARRGGBB>
-///
+
 class ColoredSvgImageProvider : public QQuickImageProvider
 {
 public:

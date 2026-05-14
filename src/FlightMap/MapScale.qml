@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QGroundControl
 import QGroundControl.Controls
 
-/// Map scale control
+/// \brief Map scale control
 Item {
     id:     control
     width:  rightEnd.x + rightEnd.width

@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// Survey Complex Mission Item visuals
+/// \brief Survey Complex Mission Item visuals
 TransectStyleMapVisuals {
     polygonInteractive: true
 }

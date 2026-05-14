@@ -6,7 +6,7 @@
 /// \brief Transition that fires when a specific QEvent is received by a watched object
 ///
 /// Useful for reacting to timer events, mouse events, focus changes, etc.
-///
+
 class QGCEventTransition : public QEventTransition
 {
     Q_OBJECT

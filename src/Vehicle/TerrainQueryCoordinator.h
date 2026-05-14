@@ -23,7 +23,7 @@ class Vehicle;
 /// Each workflow owns a single outstanding TerrainAtCoordinateQuery; starting a new
 /// request while one is in-flight disconnects the previous one (auto-deleted by
 /// TerrainQuery). Callbacks access the Vehicle to send commands or write facts.
-///
+
 class TerrainQueryCoordinator : public QObject
 {
     Q_OBJECT

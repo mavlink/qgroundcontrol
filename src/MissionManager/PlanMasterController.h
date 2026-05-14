@@ -17,7 +17,7 @@ class PlanMasterControllerTest;
 #endif
 
 /// \brief Master controller for mission, fence, rally
-///
+
 class PlanMasterController : public QObject
 {
     Q_OBJECT

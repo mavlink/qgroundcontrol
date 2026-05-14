@@ -8,7 +8,7 @@
 #include "QGCMAVLink.h"
 
 /// \brief Abstract base class for calibrating RC and Joystick controller.
-///
+
 class RemoteControlCalibrationController : public FactPanelController
 {
     Q_OBJECT

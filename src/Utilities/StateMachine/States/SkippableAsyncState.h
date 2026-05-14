@@ -30,7 +30,7 @@
 /// missionState->addTransition(missionState, &QGCState::advance, nextState);
 /// missionState->addTransition(missionState, &SkippableAsyncState::skipped, nextState);
 /// @endcode
-///
+
 class SkippableAsyncState : public WaitStateBase
 {
     Q_OBJECT

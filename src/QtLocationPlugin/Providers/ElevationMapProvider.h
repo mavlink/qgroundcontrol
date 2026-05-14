@@ -20,7 +20,7 @@ public:
 };
 
 /// \brief https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model
-///
+
 class CopernicusElevationProvider : public ElevationProvider
 {
 public:

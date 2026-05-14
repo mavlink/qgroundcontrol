@@ -13,7 +13,7 @@
 class QFile;
 
 /// \brief MAVLink micro air vehicle protocol reference implementation.
-///
+
 class MAVLinkProtocol : public QObject
 {
     Q_OBJECT

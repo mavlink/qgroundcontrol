@@ -57,7 +57,7 @@ void lockJoysticks();
 void unlockJoysticks();
 
 /// \brief RAII lock guard for joysticks
-///
+
 class JoystickLock {
 public:
     JoystickLock() { lockJoysticks(); }

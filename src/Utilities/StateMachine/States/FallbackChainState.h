@@ -19,7 +19,7 @@
 /// state->addTransition(state, &FallbackChainState::advance, connectedState);
 /// state->addTransition(state, &FallbackChainState::error, failedState);
 /// @endcode
-///
+
 class FallbackChainState : public QGCState
 {
     Q_OBJECT

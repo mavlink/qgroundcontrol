@@ -7,7 +7,7 @@
 #include "Fact.h"
 
 /// \brief The QGCMapCircle represents a circular area which can be displayed on a Map control.
-///
+
 class QGCMapCircle : public QObject
 {
     Q_OBJECT

@@ -2,7 +2,8 @@ import QtQuick
 
 import QGroundControl
 
-/// Manages access to ArduPilot battery parameters for a given battery index.
+/// \brief Manages access to ArduPilot battery parameters for a given battery index.
+///
 /// ArduPilot battery parameter prefixes: BATT_, BATT2_, ..., BATT9_, BATTA_, ..., BATTG_
 QtObject {
     required property var controller

@@ -12,7 +12,7 @@ import QGroundControl.FlightMap
 import QGroundControl.PlanView
 import QGroundControl.Toolbar
 
-/// @brief Native QML top level window
+/// \brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
 ApplicationWindow {
     id:         mainWindow

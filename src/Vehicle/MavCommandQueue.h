@@ -17,7 +17,7 @@ class Vehicle;
 /// and ack timeout. A periodic timer resends entries whose ack window has expired;
 /// incoming COMMAND_ACK messages are matched by (compId, command) and either complete
 /// the entry or refresh its timer on MAV_RESULT_IN_PROGRESS.
-///
+
 class MavCommandQueue : public QObject, public VehicleTypes
 {
     Q_OBJECT

@@ -1,7 +1,8 @@
 import QtQuick
 import QtQml
 
-/// Factory for creating and opening QGCPopupDialog instances from a Component.
+/// \brief Factory for creating and opening QGCPopupDialog instances from a Component.
+///
 /// Place the factory immediately before its associated Component. The dialog is created
 /// with the factory's parent as the initial parent, then QGCPopupDialog reparents itself
 /// to Overlay.overlay on completion.

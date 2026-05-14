@@ -9,7 +9,7 @@ import QGroundControl.Controls
 import QGroundControl.FlightMap
 import QGroundControl.PlanView
 
-/// QGCMapPolyline map visuals
+/// \brief QGCMapPolyline map visuals
 Item {
     id: _root
 

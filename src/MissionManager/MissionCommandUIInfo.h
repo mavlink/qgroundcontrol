@@ -115,7 +115,7 @@ private:
 /// category                string  Advanced    Category which this command belongs to
 /// paramRemove             string              Used by an override to remove params, example: "1,3" will remove params 1 and 3 on the override
 /// param[1-7]              object              MissionCommandParamInfo object
-///
+
 class MissionCommandUIInfo : public QObject {
     Q_OBJECT
 

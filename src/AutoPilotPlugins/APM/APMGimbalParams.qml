@@ -2,7 +2,7 @@ import QtQuick
 
 import QGroundControl
 
-/// Manages access to ArduPilot mount parameters
+/// \brief Manages access to ArduPilot mount parameters
 Item {
     /// The MNT#_ parameters this object manages
     property int instance: 1

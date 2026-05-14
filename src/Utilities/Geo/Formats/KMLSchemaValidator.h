@@ -10,7 +10,7 @@ class QDomElement;
 /// \brief Validates KML documents against rules extracted from the OGC KML 2.2 XSD schema.
 ///
 /// This provides schema-driven validation without requiring a full XML Schema processor.
-///
+
 class KMLSchemaValidator
 {
 public:

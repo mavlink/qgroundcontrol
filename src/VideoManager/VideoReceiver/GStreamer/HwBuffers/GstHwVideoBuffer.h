@@ -12,7 +12,7 @@
 ///
 /// Owns a ref on GstSample for its lifetime; holds a GstVideoInfo and
 /// QVideoFrameFormat so subclasses don't duplicate those three members.
-///
+
 class GstHwVideoBuffer : public QHwVideoBuffer
 {
 public:

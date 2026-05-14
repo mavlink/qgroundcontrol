@@ -10,7 +10,7 @@
 ///
 /// The action is executed on entry. If it fails, the state retries after a delay.
 /// Once retries are exhausted, behavior is controlled by ExhaustedBehavior.
-///
+
 class RetryState : public QGCState
 {
     Q_OBJECT

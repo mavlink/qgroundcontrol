@@ -6,7 +6,7 @@
 #include "FactPanelController.h"
 
 /// \brief MVC Controller for PX4SimpleFlightModes.qml
-///
+
 class PX4SimpleFlightModesController : public FactPanelController
 {
     Q_OBJECT

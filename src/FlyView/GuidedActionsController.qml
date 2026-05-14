@@ -10,7 +10,8 @@ import QGroundControl.Controls
 import QGroundControl.FlightMap
 import QGroundControl.Logging
 
-/// This provides the smarts behind the guided mode commands, minus the user interface. This way you can change UI
+/// \brief This provides the smarts behind the guided mode commands, minus the user interface. This way you can change UI
+///
 /// without affecting the underlying functionality.
 Item {
     id: _root

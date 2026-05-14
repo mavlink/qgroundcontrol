@@ -21,7 +21,7 @@ class QGCVideoStreamInfo;
 class SimulatedCameraControl;
 
 /// \brief Camera Manager
-///
+
 class QGCCameraManager : public QObject
 {
     Q_OBJECT

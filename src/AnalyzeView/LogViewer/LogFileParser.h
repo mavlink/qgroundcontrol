@@ -24,7 +24,7 @@
 ///  - parameters — parameter name/value pairs from the log
 ///  - messages — free-text log messages
 ///  - dropouts — (ULog only) data-dropout intervals rendered as chart overlays
-///
+
 class LogFileParser : public QObject
 {
     Q_OBJECT

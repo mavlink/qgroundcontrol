@@ -15,7 +15,7 @@ class Vehicle;
 class QGCCompressionJob;
 
 /// \brief QML-facing controller for MAVLink FTP operations.
-///
+
 class FTPController : public QObject
 {
     Q_OBJECT

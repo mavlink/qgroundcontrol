@@ -49,7 +49,7 @@ class QNetworkDiskCache;
 ///     onClicked: cachedDownloader.download(urlField.text, 3600)
 /// }
 /// @endcode
-///
+
 class QGCCachedFileDownload : public QObject
 {
     Q_OBJECT

@@ -4,8 +4,8 @@
 
 #include <QtCore/QTimer>
 
-/// \brief Delays that state machine for the specified time in milliseconds
-///
+/// \brief Delays the state machine for the specified time in milliseconds
+
 class DelayState : public QGCState
 {
     Q_OBJECT

@@ -4,7 +4,8 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-/// Generic increment/decrement control for a numeric Fact.
+/// \brief Generic increment/decrement control for a numeric Fact.
+///
 /// Shows a label, a "-" button, the current value with its units,
 /// and a "+" button.  Clamped to fact.min / fact.max.
 ///

@@ -55,7 +55,7 @@
 /// });
 /// watcher->setFuture(future);
 /// @endcode
-///
+
 class QGCCompressionJob : public QObject
 {
     Q_OBJECT

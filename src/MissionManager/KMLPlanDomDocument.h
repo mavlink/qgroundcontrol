@@ -7,7 +7,7 @@ class Vehicle;
 class QmlObjectListModel;
 
 /// \brief Used to convert a Plan to a KML document
-///
+
 class KMLPlanDomDocument : public KMLDomDocument
 {
 

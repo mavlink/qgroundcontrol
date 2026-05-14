@@ -44,7 +44,7 @@ Q_DECLARE_LOGGING_CATEGORY(CodingStyleLog)
 ///
 /// Qt6 QML Integration: Use QML_ELEMENT for QML-creatable types, QML_SINGLETON for singletons,
 /// and QML_UNCREATABLE("reason") for C++-only instantiation.
-///
+
 class CodingStyle : public QObject
 {
     Q_OBJECT

@@ -1,6 +1,6 @@
 import QtQuick
 
-/// Object which exposes vehicle distanceSensors FactGroup information for use in UI
+/// \brief Object which exposes vehicle distanceSensors FactGroup information for use in UI
 QtObject {
     property var    vehicle
 

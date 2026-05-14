@@ -5,7 +5,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 /// \brief Model for displaying geotagging image status in QML
-///
+
 class GeoTagImageModel : public QAbstractListModel
 {
     Q_OBJECT

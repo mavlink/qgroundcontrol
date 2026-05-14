@@ -8,11 +8,12 @@
 
 class SettingsManager;
 
-/// \brief Holds the meta data associated with a Fact. This is kept in a separate object from the Fact itself
+/// \brief Holds the meta data associated with a Fact.
 ///
-/// since you may have multiple instances of the same Fact. But there is only ever one FactMetaData
-/// instance or each Fact.
-///
+/// This is kept in a separate object from the Fact itself since you may have
+/// multiple instances of the same Fact. But there is only ever one FactMetaData
+/// instance for each Fact.
+
 class FactMetaData : public QObject
 {
     Q_OBJECT

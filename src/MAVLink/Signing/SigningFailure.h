@@ -7,7 +7,7 @@
 #include <cstdint>
 
 /// \brief Reason a signing operation failed. Used by SigningController error path and Vehicle::signingFailed.
-///
+
 class SigningFailure
 {
     Q_GADGET

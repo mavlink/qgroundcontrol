@@ -26,7 +26,7 @@
 /// Multiple events can be configured using addExpectedEvent().
 /// The state advances when ANY of the expected events is received (OR logic).
 /// For AND logic (wait for all events), chain multiple EventQueuedState instances.
-///
+
 class EventQueuedState : public WaitStateBase
 {
     Q_OBJECT

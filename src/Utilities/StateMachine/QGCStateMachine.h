@@ -58,7 +58,7 @@ class StateMachineProfiler;
 class StateHistoryRecorder;
 
 /// \brief QGroundControl specific state machine with enhanced error handling
-///
+
 class QGCStateMachine : public QStateMachine
 {
     Q_OBJECT

@@ -11,7 +11,7 @@ class Vehicle;
 /// \brief QGroundControl wrapper around QHistoryState for consistency with other QGC state classes
 ///
 /// History states remember which child state was active and return to it
-///
+
 class QGCHistoryState : public QHistoryState
 {
     Q_OBJECT

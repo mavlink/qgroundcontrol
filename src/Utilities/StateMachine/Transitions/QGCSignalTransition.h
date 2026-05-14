@@ -7,7 +7,7 @@ class QGCStateMachine;
 class Vehicle;
 
 /// \brief Base class for signal-based transitions that need access to QGCStateMachine and Vehicle
-///
+
 class QGCSignalTransition : public QSignalTransition
 {
     Q_OBJECT

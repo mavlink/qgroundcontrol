@@ -18,7 +18,7 @@ class Vehicle;
 ///
 /// Use QGCAbstractState when you only need callback-driven entry/exit.
 /// Use QGCState when you need the extra features listed above.
-///
+
 class QGCState : public QGCAbstractState
 {
     Q_OBJECT

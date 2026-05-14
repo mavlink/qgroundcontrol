@@ -5,7 +5,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-/// File or folder browser control for a string-valued Fact.
+/// \brief File or folder browser control for a string-valued Fact.
+///
 /// Shows a label, the current path (or a default placeholder), and a
 /// "Browse" button that opens a native file dialog.
 ///

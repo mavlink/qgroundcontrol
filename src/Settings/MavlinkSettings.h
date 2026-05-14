@@ -5,7 +5,7 @@
 #include "SettingsGroup.h"
 
 /// \brief Application Settings
-///
+
 class MavlinkSettings : public SettingsGroup
 {
     Q_OBJECT

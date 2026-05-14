@@ -19,7 +19,7 @@
 /// state->addTransition(state, &RollbackState::advance, successState);
 /// state->addTransition(state, &RollbackState::error, errorState);
 /// @endcode
-///
+
 class RollbackState : public QGCState
 {
     Q_OBJECT

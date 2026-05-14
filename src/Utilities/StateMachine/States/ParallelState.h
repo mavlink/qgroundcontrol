@@ -6,7 +6,7 @@
 ///
 /// When entered, all child states are activated simultaneously.
 /// The state completes when all child states have finished.
-///
+
 class ParallelState : public QGCState
 {
     Q_OBJECT

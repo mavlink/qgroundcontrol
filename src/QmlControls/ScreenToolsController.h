@@ -4,7 +4,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 /// \brief This Qml control is used to return screen parameters
-///
+
 class ScreenToolsController : public QObject
 {
     Q_OBJECT

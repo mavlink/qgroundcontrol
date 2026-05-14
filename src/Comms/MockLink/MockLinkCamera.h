@@ -31,7 +31,7 @@ class MockLink;
 ///   MAV_CMD_CAMERA_TRACK_POINT / TRACK_RECTANGLE / STOP_TRACKING
 ///
 /// Simulated storage: 16 GiB total, 8 GiB free, SD card.
-///
+
 class MockLinkCamera
 {
 public:

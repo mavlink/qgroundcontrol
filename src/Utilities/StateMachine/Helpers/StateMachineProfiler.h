@@ -24,7 +24,7 @@ class QGCStateMachine;
 /// qDebug() << profiler.summary();
 /// qDebug() << profiler.toJson();
 /// @endcode
-///
+
 class StateMachineProfiler : public QObject
 {
     Q_OBJECT

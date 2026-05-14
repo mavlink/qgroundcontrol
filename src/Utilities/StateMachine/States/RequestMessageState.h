@@ -17,7 +17,7 @@ class Vehicle;
 ///
 /// Note: Vehicle::requestMessage() has its own internal timeout, but this state
 /// adds an additional safety timeout at the state machine level.
-///
+
 class RequestMessageState : public WaitStateBase
 {
     Q_OBJECT

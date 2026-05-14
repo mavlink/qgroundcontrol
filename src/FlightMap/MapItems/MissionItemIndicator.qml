@@ -5,7 +5,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.PlanView
 
-/// Marker for displaying a mission item on the map
+/// \brief Marker for displaying a mission item on the map
 MapQuickItem {
     id: _item
 

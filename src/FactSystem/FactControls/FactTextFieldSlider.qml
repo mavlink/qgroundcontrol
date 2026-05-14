@@ -6,7 +6,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-/// Fact-bound text field with an optional slider and enable/disable checkbox.
+/// \brief Fact-bound text field with an optional slider and enable/disable checkbox.
+///
 /// The slider range is determined by (in priority order): explicit sliderMin/Max,
 /// fact.userMin/Max, or fact.min/max when allowUsingMinMax is true.
 Rectangle {

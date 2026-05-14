@@ -5,7 +5,7 @@
 #include "FactPanelController.h"
 
 /// \brief MVC Controller for APMSubMotorComponent.qml.
-///
+
 class APMSubMotorComponentController : public FactPanelController
 {
     Q_OBJECT

@@ -16,7 +16,7 @@ class SigningController;
 class Vehicle;
 
 /// \brief A single named signing key entry.
-///
+
 class MAVLinkSigningKey : public QObject
 {
     Q_OBJECT
@@ -45,7 +45,7 @@ private:
 };
 
 /// \brief Bag of named MAVLink signing keys; correct key per vehicle is auto-detected from incoming signed packets.
-///
+
 class MAVLinkSigningKeys : public QObject
 {
     Q_OBJECT

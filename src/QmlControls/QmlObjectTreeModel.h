@@ -20,7 +20,7 @@
 ///
 /// Top-level items are children of an invisible root node. The root is represented
 /// by an invalid QModelIndex (the default).
-///
+
 class QmlObjectTreeModel : public ObjectItemModelBase
 {
     Q_OBJECT

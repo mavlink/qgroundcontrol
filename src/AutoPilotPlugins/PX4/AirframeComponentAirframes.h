@@ -4,7 +4,7 @@
 #include <QtCore/QMap>
 
 /// \brief MVC Controller for AirframeComponent.qml.
-///
+
 class AirframeComponentAirframes
 {
 public:

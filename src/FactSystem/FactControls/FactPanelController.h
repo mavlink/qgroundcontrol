@@ -9,7 +9,7 @@ class Vehicle;
 class Fact;
 
 /// \brief Used for handling missing Facts from C++ code.
-///
+
 class FactPanelController : public QObject
 {
     Q_OBJECT

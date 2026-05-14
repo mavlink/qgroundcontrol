@@ -5,7 +5,7 @@ import QtPositioning
 import QGroundControl
 import QGroundControl.Controls
 
-/// Home position map visual for MissionSettingsItem
+/// \brief Home position map visual for MissionSettingsItem
 MissionItemMapVisualBase {
     id: control
 

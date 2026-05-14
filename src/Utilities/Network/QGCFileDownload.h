@@ -56,7 +56,7 @@ class QFile;
 ///                                   : downloader.start(urlField.text)
 /// }
 /// @endcode
-///
+
 class QGCFileDownload : public QObject
 {
     Q_OBJECT

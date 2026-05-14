@@ -6,8 +6,9 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-/// Controt that allows the user to select from a list of controls to display.
-/// Selection is is shown on right-click for desktop and long press for mobile.
+/// \brief Control that allows the user to select from a list of controls to display.
+///
+/// Selection is shown on right-click for desktop and long press for mobile.
 Control {
     id:             control
     topInset:       0

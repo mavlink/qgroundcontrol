@@ -10,7 +10,7 @@ class QmlObjectListModel;
 ///
 /// Action files are loaded from the default MavlinkActions directory.
 /// The actions file name is filename only, no path.
-///
+
 class MavlinkActionManager : public QObject
 {
     Q_OBJECT

@@ -9,7 +9,7 @@
 class QRhi;
 
 /// \brief Wraps a D3D11Memory-backed GstSample as a QHwVideoBuffer; samples natively on QRhi::D3D11.
-///
+
 class GstD3D11VideoBuffer final : public GstHwVideoBuffer
 {
 public:

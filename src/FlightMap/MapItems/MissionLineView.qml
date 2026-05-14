@@ -4,7 +4,7 @@ import QtPositioning
 
 import QGroundControl
 
-/// The MissionLineView control is used to add lines between mission items
+/// \brief The MissionLineView control is used to add lines between mission items
 MapItemView {
     property bool showSpecialVisual: false
     delegate: MapPolyline {

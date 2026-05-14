@@ -5,7 +5,7 @@
 #include "FactPanelController.h"
 
 /// \brief Power Component MVC Controller for PowerComponent.qml.
-///
+
 class PowerComponentController : public FactPanelController
 {
     Q_OBJECT

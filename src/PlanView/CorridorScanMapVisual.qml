@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// Corridor Scan Complex Mission Item visuals
+/// \brief Corridor Scan Complex Mission Item visuals
 TransectStyleMapVisuals {
     polygonInteractive: false
     hideMapPolygon:     mapPolylineVisuals.dragging

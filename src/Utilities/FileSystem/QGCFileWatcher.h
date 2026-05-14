@@ -22,7 +22,7 @@
 ///     qDebug() << "Config changed:" << path;
 /// });
 /// @endcode
-///
+
 class QGCFileWatcher : public QObject
 {
     Q_OBJECT

@@ -13,9 +13,8 @@ class QQuickItem;
 class QQmlContext;
 
 /// \brief A vehicle component is an object which abstracts the physical portion of a vehicle into a set of
-///
 /// configurable values and user interface.
-///
+
 class VehicleComponent : public QObject
 {
     Q_OBJECT

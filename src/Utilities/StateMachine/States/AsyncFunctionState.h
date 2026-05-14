@@ -12,7 +12,7 @@
 ///
 /// Useful for async operations like loading from vehicle where you call a function
 /// and wait for a completion signal.
-///
+
 class AsyncFunctionState : public WaitStateBase
 {
     Q_OBJECT

@@ -2,7 +2,7 @@ import QtQuick
 
 import QGroundControl
 
-/// This is used to handle the various differences between firmware versions and missing parameters in each in a standard way.
+/// \brief This is used to handle the various differences between firmware versions and missing parameters in each in a standard way.
 Item {
     property var factPanelController  ///< Must be specified by consumer of control
 

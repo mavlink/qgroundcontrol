@@ -17,7 +17,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-/// Generic version of Channel Monitor which should work with both RC Transmitters and Joysticks
+/// \brief Generic version of Channel Monitor which should work with both RC Transmitters and Joysticks
+///
 /// Used to display raw channel values
 GridLayout {
     required property int channelCount

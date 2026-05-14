@@ -3,7 +3,8 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-/// Toggle slider bound to a single bit within a Fact's bitmask rawValue.
+/// \brief Toggle slider bound to a single bit within a Fact's bitmask rawValue.
+///
 /// The slider stays in sync with the Fact and sets/clears the specified bit on click.
 ///
 /// Example:

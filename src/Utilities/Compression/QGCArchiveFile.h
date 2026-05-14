@@ -17,7 +17,7 @@
 /// file.open(QIODevice::ReadOnly);
 /// QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
 /// @endcode
-///
+
 class QGCArchiveFile : public QGCArchiveDeviceBase
 {
     Q_OBJECT

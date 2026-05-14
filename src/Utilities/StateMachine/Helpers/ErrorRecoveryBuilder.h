@@ -23,7 +23,7 @@ class QGCStateMachine;
 ///     .onExhausted(ErrorRecoveryBuilder::LogAndError)
 ///     .build();
 /// @endcode
-///
+
 class ErrorRecoveryBuilder
 {
 public:
@@ -76,7 +76,7 @@ private:
 };
 
 /// \brief The state created by ErrorRecoveryBuilder
-///
+
 class ErrorRecoveryState : public QGCState
 {
     Q_OBJECT

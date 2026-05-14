@@ -28,7 +28,7 @@ class ScriptingComponent;
 class Vehicle;
 
 /// \brief This is the AutoPilotPlugin implementation for the MAV_AUTOPILOT_ARDUPILOT type.
-///
+
 class APMAutoPilotPlugin : public AutoPilotPlugin
 {
     Q_OBJECT

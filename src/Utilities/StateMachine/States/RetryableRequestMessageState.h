@@ -27,7 +27,7 @@ class Vehicle;
 ///     2  // max retries
 /// );
 /// @endcode
-///
+
 class RetryableRequestMessageState : public WaitStateBase
 {
     Q_OBJECT

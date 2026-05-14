@@ -8,7 +8,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// QGCMapCircle map visuals
+/// \brief QGCMapCircle map visuals
 Item {
     id: _root
 

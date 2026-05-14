@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// Structure Scan Complex Mission Item visuals
+/// \brief Structure Scan Complex Mission Item visuals
 Item {
     id: _root
 

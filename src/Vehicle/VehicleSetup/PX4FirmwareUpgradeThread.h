@@ -17,7 +17,7 @@ class QTimer;
 /// @brief Used to run bootloader commands on a separate thread. These routines are mainly meant to to be called
 ///         internally by the PX4FirmwareUpgradeThreadController. Clients should call the various public methods
 ///         exposed by PX4FirmwareUpgradeThreadController.
-///
+
 class PX4FirmwareUpgradeThreadWorker : public QObject
 {
     Q_OBJECT
@@ -70,7 +70,7 @@ private:
 
 /// @brief Provides methods to interact with the bootloader. The commands themselves are signalled
 ///         across to PX4FirmwareUpgradeThreadWorker so that they run on the separate thread.
-///
+
 class PX4FirmwareUpgradeThreadController : public QObject
 {
     Q_OBJECT

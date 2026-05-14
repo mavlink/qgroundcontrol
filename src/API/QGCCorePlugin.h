@@ -31,7 +31,7 @@ typedef struct __mavlink_message mavlink_message_t;
 /// hooks, and other application-level behavior. The base class provides the
 /// standard QGC implementation; custom builds subclass it and register the
 /// subclass before \c QGCApplication starts up.
-///
+
 class QGCCorePlugin : public QObject
 {
     Q_OBJECT

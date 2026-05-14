@@ -3,7 +3,7 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-/// This is the dial background for the compass
+/// \brief This is the dial background for the compass
 
 Item {
     id: control

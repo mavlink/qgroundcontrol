@@ -30,7 +30,7 @@ class FactMetaData;
 class JoystickManagerSettings;
 
 /// \brief Provides access to all app settings
-///
+
 class SettingsManager : public QObject
 {
     Q_OBJECT

@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.FactControls
 import QGroundControl.Controls
 
-/// Base view control for all Setup pages
+/// \brief Base view control for all Setup pages
 Item {
     id:             setupView
     enabled:        !_disableDueToArmed && !_disableDueToFlying

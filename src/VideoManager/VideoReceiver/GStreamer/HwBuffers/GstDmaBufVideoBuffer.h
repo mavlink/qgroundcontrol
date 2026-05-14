@@ -15,7 +15,7 @@ class QRhi;
 ///
 /// Imports per-plane DMABuf fds into EGLImages on demand in mapTextures(),
 /// which Qt invokes on the render thread with a current GL context.
-///
+
 class GstDmaBufVideoBuffer final : public GstHwVideoBuffer
 {
 public:

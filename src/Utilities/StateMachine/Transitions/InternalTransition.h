@@ -8,7 +8,7 @@
 ///
 /// Useful for handling repeated signals (like heartbeats) without state churn.
 /// The action is executed but no state exit/entry occurs.
-///
+
 class InternalTransition : public QGCSignalTransition
 {
     Q_OBJECT

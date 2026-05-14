@@ -22,7 +22,7 @@
 /// );
 /// state->addTransition(retry);
 /// @endcode
-///
+
 class RetryTransition : public QGCSignalTransition
 {
     Q_OBJECT

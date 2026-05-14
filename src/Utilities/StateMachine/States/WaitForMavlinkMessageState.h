@@ -11,7 +11,7 @@ class Vehicle;
 /// \brief Waits for the specified MAVLink message from the vehicle
 ///
 /// Filters by message ID and optional predicate before advancing
-///
+
 class WaitForMavlinkMessageState : public WaitStateBase
 {
     Q_OBJECT

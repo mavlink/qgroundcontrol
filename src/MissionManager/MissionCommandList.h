@@ -9,7 +9,7 @@
 class MissionCommandUIInfo;
 
 /// \brief Maintains a list of MissionCommandUIInfo objects loaded from a json file.
-///
+
 class MissionCommandList : public QObject
 {
     Q_OBJECT

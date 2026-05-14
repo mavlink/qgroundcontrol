@@ -9,7 +9,7 @@
 ///
 /// Provides shared data(), headerData(), roleNames(), and columnCount()
 /// implementations. Subclasses supply entries via entryAt().
-///
+
 class LogEntryTableModel : public QAbstractTableModel
 {
     Q_OBJECT

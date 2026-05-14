@@ -8,7 +8,7 @@
 #include "QGCMAVLinkTypes.h"
 
 /// \brief MVC Controller for FlightModesComponent.qml.
-///
+
 class APMFlightModesComponentController : public FactPanelController
 {
     Q_OBJECT

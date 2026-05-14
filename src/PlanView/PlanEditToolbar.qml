@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-/// Toolbar used for things like Polygon editing tools
+/// \brief Toolbar used for things like Polygon editing tools
 Item {
     width:  Math.min(toolsRowLayout.width + (_margins * 2), availableWidth)
     height: toolsFlickable.y + toolsFlickable.height + _margins

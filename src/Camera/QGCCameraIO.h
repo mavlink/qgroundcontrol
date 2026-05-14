@@ -9,7 +9,7 @@ class Fact;
 class Vehicle;
 
 /// \brief Camera parameter handler.
-///
+
 class QGCCameraParamIO : public QObject
 {
 public:

@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
 
-/// Rally Point map visuals
+/// \brief Rally Point map visuals
 Item {
     id: _root
     z: QGroundControl.zOrderMapItems

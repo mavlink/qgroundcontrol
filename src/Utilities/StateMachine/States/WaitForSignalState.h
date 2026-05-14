@@ -9,7 +9,7 @@
 /// \brief Waits for a signal from a QObject before advancing
 ///
 /// Can optionally timeout if the signal is not received within a specified time
-///
+
 class WaitForSignalState : public WaitStateBase
 {
     Q_OBJECT

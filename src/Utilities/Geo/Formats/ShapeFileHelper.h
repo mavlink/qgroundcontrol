@@ -6,7 +6,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 /// \brief Routines for loading polygons or polylines from KML or SHP files.
-///
+
 class ShapeFileHelper : public QObject
 {
     Q_OBJECT

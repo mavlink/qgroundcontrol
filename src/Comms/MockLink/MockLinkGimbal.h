@@ -19,7 +19,7 @@ class MockLink;
 ///   MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW
 ///   MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE
 ///   Periodic sending of GIMBAL_MANAGER_STATUS and GIMBAL_DEVICE_ATTITUDE_STATUS
-///
+
 class MockLinkGimbal
 {
 public:

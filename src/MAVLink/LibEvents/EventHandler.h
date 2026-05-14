@@ -17,7 +17,7 @@ class ParsedEvent;
 } // namespace events
 
 /// \brief Drives the MAVLink events protocol for a single component.
-///
+
 class EventHandler : public QObject
 {
     Q_OBJECT

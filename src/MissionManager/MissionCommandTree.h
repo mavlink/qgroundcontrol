@@ -30,7 +30,7 @@ class Vehicle;
 ///
 /// When ui info is requested for a specific vehicle the static hierarchy in _staticCommandTree is collapsed into the set of available commands in
 /// _allCommands taking into account the appropriate set of overrides for the MAV_AUTOPILOT/MAV_TYPE combination associated with the vehicle.
-///
+
 class MissionCommandTree : public QObject
 {
     Q_OBJECT

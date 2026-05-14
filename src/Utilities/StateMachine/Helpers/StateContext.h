@@ -27,7 +27,7 @@
 /// @endcode
 ///
 /// The context can also be accessed via QGCStateMachine::context().
-///
+
 class StateContext
 {
 public:

@@ -58,7 +58,7 @@ using MessageCallback = std::function<bool(const ulog_cpp::TypedDataView &sample
 /// \brief Generic streaming handler for ULog messages by name
 ///
 /// Filters messages by name and calls a callback for each matching message
-///
+
 class MessageHandler : public ulog_cpp::DataHandlerInterface {
 public:
     /// Create a handler that filters for a specific message type

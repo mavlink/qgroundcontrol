@@ -15,7 +15,7 @@ struct archive;
 ///
 /// Provides common source management, buffer handling, and archive lifecycle
 /// Read-only, sequential access only
-///
+
 class QGCArchiveDeviceBase : public QIODevice
 {
     Q_OBJECT

@@ -68,7 +68,7 @@ private:
 /*===========================================================================*/
 
 /// \brief NOTE: TerrainAtCoordinateQuery is not thread safe. All instances/calls to ElevationProvider must be on main thread.
-///
+
 class TerrainAtCoordinateQuery : public QObject
 {
     Q_OBJECT

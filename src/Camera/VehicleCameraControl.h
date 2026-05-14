@@ -10,7 +10,7 @@ class QDomNodeList;
 
 //-----------------------------------------------------------------------------
 /// \brief Camera option exclusions
-///
+
 class QGCCameraOptionExclusion : public QObject
 {
 public:
@@ -22,7 +22,7 @@ public:
 
 //-----------------------------------------------------------------------------
 /// \brief Camera option ranges
-///
+
 class QGCCameraOptionRange : public QObject
 {
 public:
@@ -37,7 +37,7 @@ public:
 };
 
 /// \brief MAVLink Camera API controller - connected to a real mavlink v2 camera
-///
+
 class VehicleCameraControl : public MavlinkCameraControlInterface
 {
     Q_OBJECT

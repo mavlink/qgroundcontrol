@@ -12,10 +12,10 @@ class Vehicle;
 class VisualMissionItem;
 
 /// \brief Computes mission flight status (distances, times, battery, altitude range)
-///
 /// from a list of visual mission items and vehicle properties.
-/// Extracted from MissionController to reduce its complexity.
 ///
+/// Extracted from MissionController to reduce its complexity.
+
 class MissionFlightStatusCalculator
 {
 public:
