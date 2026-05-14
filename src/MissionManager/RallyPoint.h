@@ -6,9 +6,8 @@
 #include "Fact.h"
 
 /// \brief This class is used to encapsulate the QGeoCoordinate associated with a Rally Point into a QObject such
-///
 /// that it can be used in a QmlObjectListMode for Qml.
-///
+
 class RallyPoint : public QObject
 {
     Q_OBJECT

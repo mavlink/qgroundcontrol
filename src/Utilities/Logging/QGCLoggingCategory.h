@@ -13,9 +13,8 @@ class QString;
     Q_LOGGING_CATEGORY(name, categoryStr, QtInfoMsg)
 
 /// \brief Helper that defers category registration until the QGCLoggingCategoryManager
-///
 /// singleton exists. Pre-manager registrations are buffered and replayed on init().
-///
+
 class QGCLoggingCategory
 {
 public:
