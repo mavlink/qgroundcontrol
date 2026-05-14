@@ -22,6 +22,15 @@ class VideoSink;
 class FactValueGrid;
 typedef struct __mavlink_message mavlink_message_t;
 
+/// \brief Extension mechanism for generic, non-firmware-specific customization of QGC.
+///
+/// QGCCorePlugin is the extension point for custom builds that need to modify QGC
+/// as a whole, rather than for behavior that varies by firmware type (which belongs
+/// in FirmwarePlugin). Override its virtual methods to add or replace UI pages,
+/// Flight Map items, toolbar indicators, video pipeline components, plan file
+/// hooks, and other application-level behavior. The base class provides the
+/// standard QGC implementation; custom builds subclass it and register the
+/// subclass before \c QGCApplication starts up.
 class QGCCorePlugin : public QObject
 {
     Q_OBJECT
