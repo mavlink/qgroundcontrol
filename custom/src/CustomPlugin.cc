@@ -1,4 +1,5 @@
 #include "CustomPlugin.h"
+#include "QGCRosBridgeClient.h"
 #include "QmlComponentInfo.h"
 #include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
@@ -7,6 +8,7 @@
 
 #include <QtCore/QApplicationStatic>
 #include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlContext>
 #include <QtQml/QQmlFile>
 
 QGC_LOGGING_CATEGORY(CustomLog, "Custom.CustomPlugin")
@@ -32,6 +34,7 @@ CustomOptions::CustomOptions(CustomPlugin *plugin, QObject *parent)
 CustomPlugin::CustomPlugin(QObject *parent)
     : QGCCorePlugin(parent)
     , _options(new CustomOptions(this, this))
+    , _rosBridgeClient(new QGCRosBridgeClient(this))
 {
     qCDebug(CustomLog) << this;
 
@@ -42,6 +45,11 @@ CustomPlugin::CustomPlugin(QObject *parent)
 QGCCorePlugin *CustomPlugin::instance()
 {
     return _customPluginInstance();
+}
+
+QObject *CustomPlugin::rosBridgeClient() const
+{
+    return _rosBridgeClient;
 }
 
 void CustomPlugin::cleanup()
@@ -252,6 +260,7 @@ void CustomPlugin::paletteOverride(const QString &colorName, QGCPalette::Palette
 QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
 {
     _qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
+    _qmlEngine->rootContext()->setContextProperty(QStringLiteral("qgcRosBridgeClient"), _rosBridgeClient);
     _qmlEngine->addImportPath("qrc:/qml/Custom/Widgets");
     // TODO: Investigate _qmlEngine->setExtraSelectors({"custom"})
 

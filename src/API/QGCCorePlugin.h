@@ -49,6 +49,7 @@ class QGCCorePlugin : public QObject
     Q_PROPERTY(QString showAdvancedUIMessage            READ showAdvancedUIMessage                                          CONSTANT)
     Q_PROPERTY(QVariantList analyzePages                READ analyzePages                                                   CONSTANT)
     Q_PROPERTY(QVariantList toolBarIndicators           READ toolBarIndicators                                              CONSTANT)
+    Q_PROPERTY(QObject *rosBridgeClient                 READ rosBridgeClient                                                CONSTANT)
 
 public:
     explicit QGCCorePlugin(QObject *parent = nullptr);
@@ -106,6 +107,9 @@ public:
 
     /// Allows the plugin to override the creation of the root (native) window.
     virtual void createRootWindow(QQmlApplicationEngine *qmlEngine);
+
+    /// Optional custom-build bridge object exposed to QML.
+    virtual QObject *rosBridgeClient() const { return nullptr; }
 
     /// Allows the plugin to override the creation of VideoReceiver.
     virtual VideoReceiver *createVideoReceiver(QObject *parent);

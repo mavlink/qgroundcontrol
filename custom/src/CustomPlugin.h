@@ -10,6 +10,7 @@ class CustomOptions;
 class CustomPlugin;
 class CustomSettings;
 class QQmlApplicationEngine;
+class QGCRosBridgeClient;
 
 Q_DECLARE_LOGGING_CATEGORY(CustomLog)
 
@@ -70,6 +71,7 @@ public:
     void paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t &colorInfo) final;
     /// We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
     QQmlApplicationEngine *createQmlApplicationEngine(QObject *parent) final;
+    QObject *rosBridgeClient() const final;
 
 private slots:
     void _advancedChanged(bool advanced);
@@ -78,6 +80,7 @@ private:
     void _addSettingsEntry(const QString& title, const char* qmlFile, const char* iconFile = nullptr);
 
     CustomOptions *_options = nullptr;
+    QGCRosBridgeClient *_rosBridgeClient = nullptr;
     QQmlApplicationEngine *_qmlEngine = nullptr;
     class CustomOverrideInterceptor *_selector = nullptr;
     QVariantList _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
