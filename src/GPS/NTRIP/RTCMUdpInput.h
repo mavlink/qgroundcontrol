@@ -8,8 +8,6 @@
 
 Q_DECLARE_LOGGING_CATEGORY(RTCMUdpInputLog)
 
-class RTCMParser;
-
 /**
  * @brief Listens on a UDP port for raw RTCM3 correction data and emits it
  *        for forwarding to connected vehicles via RTCMMavlink::RTCMDataUpdate().

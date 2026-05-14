@@ -48,7 +48,6 @@ NTRIPManager::NTRIPManager(QObject* parent)
         const quint16 port = static_cast<quint16>(
             settings->rtcmUdpInputPort()->rawValue().toUInt());
 
-
         _rtcmUdpInput = new RTCMUdpInput(port, this);
         connect(_rtcmUdpInput, &RTCMUdpInput::rtcmDataReceived,
                 _rtcmMavlink,  &RTCMMavlink::RTCMDataUpdate);
