@@ -20,6 +20,7 @@ public:
     /// Enrich parameters from a PX4 ULog file.
     static void enrichForPX4(QVariantList &parameters);
 
+#ifndef QGC_NO_ARDUPILOT_DIALECT
     /// Enrich parameters from an APM DataFlash file.
     /// @param vehicleType  APM vehicle name: "ArduCopter", "ArduPlane", "ArduRover", "ArduSub"
     /// @param major / minor  Firmware version numbers parsed from the log (pass -1 if unknown).
@@ -27,4 +28,5 @@ public:
                              const QString &vehicleType,
                              int major,
                              int minor);
+#endif
 };

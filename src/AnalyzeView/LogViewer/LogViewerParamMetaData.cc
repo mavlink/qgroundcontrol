@@ -1,6 +1,8 @@
 #include "LogViewerParamMetaData.h"
 
+#ifndef QGC_NO_ARDUPILOT_DIALECT
 #include "APMParameterMetaData.h"
+#endif
 #include "FactMetaData.h"
 #include "PX4ParameterMetaData.h"
 #include "QGCLoggingCategory.h"
@@ -10,6 +12,8 @@
 QGC_LOGGING_CATEGORY(LogViewerParamMetaDataLog, "AnalyzeView.LogViewerParamMetaData")
 
 namespace {
+
+#ifndef QGC_NO_ARDUPILOT_DIALECT
 
 // Map the APM vehicle name as stored in detectedVehicleType to the file-path
 // component used in :/FirmwarePlugin/APM/APMParameterFactMetaData.{X}.major.minor.json
@@ -53,6 +57,8 @@ QString _findAPMMetaDataFile(const QString &fileVehicleName, int major, int mino
 
     return QString();
 }
+
+#endif // QGC_NO_ARDUPILOT_DIALECT
 
 void _enrichRows(QVariantList &parameters, ParameterMetaData *metaData)
 {
@@ -98,6 +104,7 @@ void LogViewerParamMetaData::enrichForPX4(QVariantList &parameters)
     delete metaData;
 }
 
+#ifndef QGC_NO_ARDUPILOT_DIALECT
 void LogViewerParamMetaData::enrichForAPM(QVariantList &parameters,
                                           const QString &vehicleType,
                                           int major,
@@ -134,3 +141,5 @@ void LogViewerParamMetaData::enrichForAPM(QVariantList &parameters,
 
     delete metaData;
 }
+
+#endif // QGC_NO_ARDUPILOT_DIALECT

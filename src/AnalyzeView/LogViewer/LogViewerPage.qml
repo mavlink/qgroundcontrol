@@ -216,7 +216,8 @@ AnalyzePage {
                 spacing: ScreenTools.defaultFontPixelWidth
 
                 QGCButton {
-                    text: qsTr("Open .bin")
+                    text:    qsTr("Open .bin")
+                    visible: QGroundControl.hasAPMSupport
                     onClicked: {
                         openDialog.nameFilters = ["DataFlash Logs (*.bin *.BIN *.log *.LOG)"]
                         openDialog.openForLoad()
