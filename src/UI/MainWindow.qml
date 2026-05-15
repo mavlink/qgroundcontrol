@@ -650,11 +650,16 @@ ApplicationWindow {
     // to mainWindow. Otherwise if they are rooted to the AnalyzeView itself they will die when the analyze viewSwitch
     // closes.
 
-    function createWindowedAnalyzePage(title, source, requiresVehicle) {
+    function createWindowedAnalyzePage(title, source, requiresVehicle, existingItem) {
         var windowedPage = windowedAnalyzePage.createObject(mainWindow)
         windowedPage.title = title
-        windowedPage.source = source
         windowedPage.requiresVehicle = requiresVehicle
+        if (existingItem) {
+            windowedPage.adoptItem(existingItem)
+        } else {
+            windowedPage.source = source
+        }
+        windowedPage.visible = true
     }
 
     Component {
@@ -663,10 +668,19 @@ ApplicationWindow {
         Window {
             width:      ScreenTools.defaultFontPixelWidth  * 100
             height:     ScreenTools.defaultFontPixelHeight * 40
-            visible:    true
+            visible:    false
 
             property alias source: loader.source
             property bool requiresVehicle: false
+
+            function adoptItem(item) {
+                loader.visible = false
+                loader.source = ""
+                item.parent = contentRect
+                item.anchors.fill = contentRect
+                item.popped = true
+                item.visible = true
+            }
 
             Connections {
                 target: QGroundControl.multiVehicleManager
@@ -678,6 +692,7 @@ ApplicationWindow {
             }
 
             Rectangle {
+                id:             contentRect
                 color:          QGroundControl.globalPalette.window
                 anchors.fill:   parent
 
@@ -690,6 +705,13 @@ ApplicationWindow {
 
             onClosing: {
                 visible = false
+                // Destroy any reparented children (not owned by loader)
+                for (var i = contentRect.children.length - 1; i >= 0; i--) {
+                    var child = contentRect.children[i]
+                    if (child !== loader) {
+                        child.destroy()
+                    }
+                }
                 source = ""
                 Qt.callLater(destroy)
             }
