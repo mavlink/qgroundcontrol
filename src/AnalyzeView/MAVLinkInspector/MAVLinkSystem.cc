@@ -4,6 +4,8 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 
+#include <algorithm>
+
 QGC_LOGGING_CATEGORY(MAVLinkSystemLog, "AnalyzeView.MAVLinkSystem")
 
 QGCMAVLinkSystem::QGCMAVLinkSystem(quint8 id, QObject *parent)
@@ -51,14 +53,13 @@ void QGCMAVLinkSystem::_resetSelection()
         QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(_messages->get(i));
         if (msg && msg->selected()) {
             msg->setSelected(false);
-            emit msg->selectedChanged();
         }
     }
 }
 
 void QGCMAVLinkSystem::setSelected(int sel)
 {
-    if (sel >= _messages->count()) {
+    if (sel < 0 || sel >= _messages->count()) {
         return;
     }
 
@@ -66,9 +67,8 @@ void QGCMAVLinkSystem::setSelected(int sel)
     emit selectedChanged();
     _resetSelection();
     QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(_messages->get(sel));
-    if(msg && !msg->selected()) {
+    if (msg && !msg->selected()) {
         msg->setSelected(true);
-        emit msg->selectedChanged();
     }
 }
 
@@ -82,21 +82,6 @@ QGCMAVLinkMessage *QGCMAVLinkSystem::selectedMsg()
     return selectedMsg;
 }
 
-static bool messages_sort(const QObject *a, const QObject *b)
-{
-    const QGCMAVLinkMessage *const aa = qobject_cast<const QGCMAVLinkMessage*>(a);
-    const QGCMAVLinkMessage *const bb = qobject_cast<const QGCMAVLinkMessage*>(b);
-    if (!aa || !bb) {
-        return false;
-    }
-
-    if (aa->name() == bb->name()) {
-        return (aa->name() < bb->name());
-    }
-
-    return (aa->name() < bb->name());
-}
-
 void QGCMAVLinkSystem::append(QGCMAVLinkMessage *message)
 {
     QGCMAVLinkMessage *selectedMsg = nullptr;
@@ -105,14 +90,16 @@ void QGCMAVLinkSystem::append(QGCMAVLinkMessage *message)
     } else {
         message->setSelected(true);
     }
-    _messages->append(message);
-
-    if (_messages->count() > 0) {
-        _messages->beginResetModel();
-        std::sort(_messages->objectList()->begin(), _messages->objectList()->end(), messages_sort);
-        _messages->endResetModel();
-        _checkCompID(message);
-    }
+    const auto cmp = [](const QObject *a, const QObject *b) {
+        const auto *ma = qobject_cast<const QGCMAVLinkMessage*>(a);
+        const auto *mb = qobject_cast<const QGCMAVLinkMessage*>(b);
+        if (!ma || !mb) return false;
+        return ma->name() < mb->name();
+    };
+    QList<QObject*> *const list = _messages->objectList();
+    const int insertPos = static_cast<int>(std::lower_bound(list->cbegin(), list->cend(), static_cast<const QObject*>(message), cmp) - list->cbegin());
+    _messages->insert(insertPos, message);
+    _checkCompID(message);
 
     if (selectedMsg) {
         const int idx = findMessage(selectedMsg);

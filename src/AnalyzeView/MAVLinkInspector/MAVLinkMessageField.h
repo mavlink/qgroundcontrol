@@ -5,6 +5,8 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <limits>
+
 class QGCMAVLinkMessage;
 class MAVLinkChartController;
 class QAbstractSeries;
@@ -19,7 +21,7 @@ class QGCMAVLinkMessageField : public QObject
     Q_PROPERTY(QString                  type        READ type       CONSTANT)
     Q_PROPERTY(QString                  value       READ value      NOTIFY valueChanged)
     Q_PROPERTY(bool                     selectable  READ selectable NOTIFY selectableChanged)
-    Q_PROPERTY(int                      chartIndex  READ chartIndex CONSTANT)
+    Q_PROPERTY(int                      chartIndex  READ chartIndex NOTIFY seriesChanged)
     Q_PROPERTY(const QAbstractSeries    *series     READ series     NOTIFY seriesChanged)
 
 public:
@@ -55,11 +57,13 @@ private:
     QString _name;
     QGCMAVLinkMessage *_msg = nullptr;
 
+    static constexpr int kMaxDataPoints = 50 * 60; ///< 1 minute of data at 50 Hz
+
     QString _value;
     bool _selectable = true;
     int _dataIndex = 0;
-    qreal _rangeMin = 0;
-    qreal _rangeMax = 0;
+    qreal _rangeMin = std::numeric_limits<qreal>::max();
+    qreal _rangeMax = std::numeric_limits<qreal>::lowest();
     QList<QPointF> _values;
 
     QAbstractSeries *_pSeries = nullptr;

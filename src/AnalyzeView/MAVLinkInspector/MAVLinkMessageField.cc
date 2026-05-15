@@ -46,6 +46,8 @@ void QGCMAVLinkMessageField::delSeries()
     }
 
     _values.clear();
+    _rangeMin = std::numeric_limits<qreal>::max();
+    _rangeMax = std::numeric_limits<qreal>::lowest();
     QLineSeries *const lineSeries = static_cast<QLineSeries*>(_pSeries);
     lineSeries->replace(_values);
     _pSeries = nullptr;
@@ -88,7 +90,7 @@ void QGCMAVLinkMessageField::updateValue(const QString &newValue, qreal v)
     }
 
     const int count = _values.count();
-    if (count < (50 * 60)) { ///< Arbitrary limit of 1 minute of data at 50Hz for now
+    if (count < kMaxDataPoints) {
         const QPointF p(qgcApp()->msecsSinceBoot(), v);
         _values.append(p);
     } else {
@@ -105,15 +107,11 @@ void QGCMAVLinkMessageField::updateValue(const QString &newValue, qreal v)
     }
 
     qreal vmin = std::numeric_limits<qreal>::max();
-    qreal vmax = std::numeric_limits<qreal>::min();
+    qreal vmax = std::numeric_limits<qreal>::lowest();
     for (const QPointF &point : _values) {
         const qreal value = point.y();
-        if (vmax < value) {
-            vmax = value;
-        }
-        if (vmin > value) {
-            vmin = value;
-        }
+        vmin = std::min(vmin, value);
+        vmax = std::max(vmax, value);
     }
 
     bool changed = false;
