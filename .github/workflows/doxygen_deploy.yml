@@ -3,6 +3,10 @@ name: Doxygen API Docs
 on:
   schedule:
     - cron: '0 4 * * 0'  # Sunday 04:00 UTC
+  pull_request:
+    paths:
+      - 'Doxyfile'
+      - 'src/**'
   workflow_dispatch:
 
 permissions:
@@ -45,7 +49,7 @@ jobs:
           retention-days: 1
 
   deploy:
-    if: github.repository_owner == 'mavlink'
+    if: github.repository_owner == 'mavlink' && github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15

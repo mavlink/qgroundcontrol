@@ -1,17 +1,12 @@
 name: Custom Build
 
 on:
-  # Intentionally mirrors the paths-ignore filter used by the standard platform
-  # CI workflows (linux.yml, macos.yml, windows.yml). Mainline QGC source
-  # changes can break the custom build, so this workflow must run whenever
-  # those workflows run.
   push:
     branches: [master]
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths-ignore:
-      - 'docs/**'
+  merge_group:
   workflow_dispatch:
 
 concurrency:
@@ -23,8 +18,16 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: custom-build
+
   build:
     name: Custom Plugin Build
+    needs: changes
+    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
     runs-on: ubuntu-22.04
     timeout-minutes: 60
 
