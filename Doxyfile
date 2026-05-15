@@ -55,11 +55,22 @@ DIRECTORY_GRAPH        = YES
 DOT_IMAGE_FORMAT       = svg
 INTERACTIVE_SVG        = YES
 
+# Qt-specific settings
+OPTIMIZE_OUTPUT_JAVA   = NO
+QT_AUTOBRIEF           = YES
+
 # Preprocessing
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
-EXPAND_ONLY_PREDEF     = NO
-PREDEFINED             = Q_OBJECT Q_PROPERTY Q_INVOKABLE Q_SIGNAL Q_SLOT \
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = Q_OBJECT \
+                         Q_GADGET \
+                         Q_SIGNAL= \
+                         Q_SLOT= \
+                         "Q_PROPERTY(x)=" \
+                         "Q_ENUM(x)=" \
+                         "Q_FLAG(x)=" \
+                         "Q_DECLARE_FLAGS(x,y)=" \
                          QML_ELEMENT \
                          QML_ANONYMOUS \
                          QML_INTERFACE \
@@ -69,7 +80,10 @@ PREDEFINED             = Q_OBJECT Q_PROPERTY Q_INVOKABLE Q_SIGNAL Q_SLOT \
                          "QML_EXTENDED(x)=" \
                          "QML_ATTACHED(x)=" \
                          "QML_ADDED_IN_VERSION(x,y)=" \
-                         "Q_MOC_INCLUDE(x)="
+                         "Q_MOC_INCLUDE(x)=" \
+                         signals=Q_SIGNALS \
+                         slots=Q_SLOTS \
+                         emit=
 
 # Warnings
 QUIET                  = NO

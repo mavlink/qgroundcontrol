@@ -41,6 +41,7 @@ _COMMON_PATTERNS: list[str] = [
 # Per-platform additional patterns
 _PLATFORM_PATTERNS: dict[str, list[str]] = {
     "android": [r"^android/"],
+    "custom-build": [r"^custom-example/"],
     "docker-linux": [
         r"^deploy/docker/Dockerfile-build-ubuntu$",
         r"^deploy/linux/",
@@ -68,6 +69,8 @@ def workflow_name_for_platform(platform: str) -> str:
     """Map a platform to its workflow YAML filename (without extension)."""
     if platform.startswith("docker-"):
         return "docker"
+    if platform == "custom-build":
+        return "custom-build"
     return platform
 
 
