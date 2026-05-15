@@ -72,6 +72,21 @@ if(mavlink_ADDED)
     # Register the QML anchor files so AUTOMOC picks up Q_NAMESPACE + Q_ENUM_NS
     set_source_files_properties("${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}" PROPERTIES GENERATED TRUE)
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}")
+
+    # Generate MAVLinkInstanceFields.h (message ID → instance field name mapping)
+    set(MAVLINK_INSTANCE_FIELDS_H "${CMAKE_BINARY_DIR}/MAVLinkInstanceFields.h")
+    set(MAVLINK_INSTANCE_FIELDS_GENERATOR "${CMAKE_SOURCE_DIR}/tools/generators/mavlink_instance_fields.py")
+    set(MAVLINK_XML_DIR "${mavlink_SOURCE_DIR}/message_definitions/v1.0")
+    add_custom_command(
+        OUTPUT "${MAVLINK_INSTANCE_FIELDS_H}"
+        COMMAND ${Python3_EXECUTABLE} "${MAVLINK_INSTANCE_FIELDS_GENERATOR}"
+                "${MAVLINK_XML_DIR}" "${QGC_MAVLINK_DIALECT}" "${MAVLINK_INSTANCE_FIELDS_H}"
+        DEPENDS mavlink "${MAVLINK_INSTANCE_FIELDS_GENERATOR}"
+        COMMENT "Generating MAVLinkInstanceFields.h"
+        VERBATIM
+    )
+    add_custom_target(mavlink_instance_fields DEPENDS "${MAVLINK_INSTANCE_FIELDS_H}")
+    add_dependencies(${CMAKE_PROJECT_NAME} mavlink_instance_fields)
 endif()
 
 # ----------------------------------------------------------------------------

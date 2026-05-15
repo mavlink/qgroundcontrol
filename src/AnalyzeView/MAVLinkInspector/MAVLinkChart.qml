@@ -55,6 +55,7 @@ ColumnLayout {
         id:                     chartController
         inspectorController:    chartView.inspectorController
         chartIndex:             chartView.chartIndex
+        plotPixelWidth:         Math.max(1, Math.floor(_graphsView.plotArea.width))
     }
 
     // -------------------------------------------------------------------------

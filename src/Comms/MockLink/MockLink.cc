@@ -22,6 +22,7 @@
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
+#include <cmath>
 #include <cstring>
 
 QGC_LOGGING_CATEGORY(MockLinkLog, "Comms.MockLink.MockLink")
@@ -199,6 +200,7 @@ void MockLink::run1HzTasks()
 
     _sendVibration();
     _sendBatteryStatus();
+    _sendNamedValueFloats();
     _sendSysStatus();
     _sendADSBVehicles();
     if (_vehicleType != MAV_TYPE_SUBMARINE) {
@@ -571,6 +573,38 @@ void MockLink::_sendBatteryStatus()
         rgVoltagesExtNone,
         0, // MAV_BATTERY_MODE
         0  // MAV_BATTERY_FAULT
+    );
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendNamedValueFloats()
+{
+    const uint32_t timeBootMs = static_cast<uint32_t>(_runningTime.elapsed());
+
+    // Send two named float values with varying data to exercise Inspector instance separation
+    const float sinVal = static_cast<float>(std::sin(static_cast<double>(timeBootMs) / 1000.0));
+    const float cosVal = static_cast<float>(std::cos(static_cast<double>(timeBootMs) / 1000.0));
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_named_value_float_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        _getMavlinkVehicleChannel(),
+        &msg,
+        timeBootMs,
+        "sin_wave",
+        sinVal
+    );
+    respondWithMavlinkMessage(msg);
+
+    (void) mavlink_msg_named_value_float_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        _getMavlinkVehicleChannel(),
+        &msg,
+        timeBootMs,
+        "cos_wave",
+        cosVal
     );
     respondWithMavlinkMessage(msg);
 }

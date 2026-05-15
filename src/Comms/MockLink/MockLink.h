@@ -235,6 +235,7 @@ private:
     void _sendVibration();
     void _sendSysStatus();
     void _sendBatteryStatus();
+    void _sendNamedValueFloats();
     void _sendChunkedStatusText(uint16_t chunkId, bool missingChunks);
     void _sendStatusTextMessages();
     void _respondWithAutopilotVersion();

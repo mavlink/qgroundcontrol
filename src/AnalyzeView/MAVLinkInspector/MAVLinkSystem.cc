@@ -21,12 +21,12 @@ QGCMAVLinkSystem::~QGCMAVLinkSystem()
     _messages->clearAndDeleteContents();
 }
 
-QGCMAVLinkMessage *QGCMAVLinkSystem::findMessage(uint32_t id, uint8_t compId)
+QGCMAVLinkMessage *QGCMAVLinkSystem::findMessage(uint32_t id, uint8_t compId, const QString &instanceValue)
 {
     for (int i = 0; i < _messages->count(); i++) {
         QGCMAVLinkMessage *const msg = qobject_cast<QGCMAVLinkMessage*>(_messages->get(i));
         if(msg) {
-            if((msg->id() == id) && (msg->compId() == compId)) {
+            if((msg->id() == id) && (msg->compId() == compId) && (msg->instanceValue() == instanceValue)) {
                 return msg;
             }
         }
