@@ -39,6 +39,9 @@ QGCMAVLinkMessage::QGCMAVLinkMessage(const mavlink_message_t &message, QObject *
             case MAVLINK_TYPE_DOUBLE:   type = QString("double");   break;
             case MAVLINK_TYPE_UINT64_T: type = QString("uint64_t"); break;
             case MAVLINK_TYPE_INT64_T:  type = QString("int64_t");  break;
+            default:
+                qCWarning(MAVLinkMessageLog) << "Unknown MAVLink field type:" << msgInfo->fields[i].type;
+                break;
         }
 
         QGCMAVLinkMessageField *const field = new QGCMAVLinkMessageField(msgInfo->fields[i].name, type, this);
@@ -133,7 +136,7 @@ void QGCMAVLinkMessage::_updateFields()
 
         const unsigned int offset = msgInfo->fields[i].wire_offset;
         const unsigned int array_length = msgInfo->fields[i].array_length;
-        static const unsigned int array_buffer_length = (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_CHECKSUM_BYTES + 7);
+        static constexpr unsigned int array_buffer_length = (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_CHECKSUM_BYTES + 7);
 
         switch (msgInfo->fields[i].type) {
         case MAVLINK_TYPE_CHAR:
@@ -209,7 +212,7 @@ void QGCMAVLinkMessage::_updateFields()
                 field->updateValue(string, static_cast<qreal>(nums[0]));
             } else {
                 int16_t n;
-                memcpy(&n, msg + offset, sizeof(int16_t));
+                (void) memcpy(&n, msg + offset, sizeof(int16_t));
                 field->updateValue(QString::number(n), static_cast<qreal>(n));
             }
             break;
@@ -326,6 +329,7 @@ void QGCMAVLinkMessage::_updateFields()
             }
             break;
         default:
+            qCWarning(MAVLinkMessageLog) << "Unknown MAVLink field type:" << msgInfo->fields[i].type;
             break;
         }
     }

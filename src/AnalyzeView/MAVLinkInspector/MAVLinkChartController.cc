@@ -105,19 +105,27 @@ void MAVLinkChartController::updateYRange()
     }
 
     qreal vmin = std::numeric_limits<qreal>::max();
-    qreal vmax = std::numeric_limits<qreal>::min();
+    qreal vmax = std::numeric_limits<qreal>::lowest();
     for (const QVariant &field : _chartFields) {
         QObject *const object = qvariant_cast<QObject*>(field);
         QGCMAVLinkMessageField *const pField = qobject_cast<QGCMAVLinkMessageField*>(object);
         if (pField) {
-            if (vmax < pField->rangeMax()) {
-                vmax = pField->rangeMax();
-            }
-
-            if (vmin > pField->rangeMin()) {
-                vmin = pField->rangeMin();
-            }
+            vmin = std::min(vmin, pField->rangeMin());
+            vmax = std::max(vmax, pField->rangeMax());
         }
+    }
+
+    if (vmin > vmax) {
+        return; // No field has received data yet (sentinel values)
+    }
+
+    if (qAbs(vmax - vmin) < 0.000001) {
+        vmin -= 1.0;
+        vmax += 1.0;
+    } else {
+        const qreal padding = (vmax - vmin) * 0.05;
+        vmin -= padding;
+        vmax += padding;
     }
 
     if (qAbs(_rangeYMin - vmin) > 0.000001) {
@@ -141,6 +149,10 @@ void MAVLinkChartController::_refreshSeries()
         if(pField) {
             pField->updateSeries();
         }
+    }
+
+    if (_rangeYIndex == 0) {
+        updateYRange();
     }
 }
 

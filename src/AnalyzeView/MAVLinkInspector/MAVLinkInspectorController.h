@@ -55,7 +55,7 @@ public:
 
     QmlObjectListModel *systems() const { return _systems; }
     QGCMAVLinkSystem *activeSystem() const { return _activeSystem; }
-    QStringList systemNames() const { return _systemNames; }
+    QStringList systemNames() const;
     QStringList timeScales();
     QStringList rangeList();
 
@@ -82,7 +82,6 @@ private:
 
     QStringList _timeScales;
     QStringList _rangeList;
-    QStringList _systemNames;
     QList<TimeScale_st*>_timeScaleSt;
     QList<Range_st*> _rangeSt;
     QGCMAVLinkSystem *_activeSystem = nullptr;
