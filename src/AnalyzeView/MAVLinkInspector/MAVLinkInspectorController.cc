@@ -50,10 +50,12 @@ MAVLinkInspectorController::MAVLinkInspectorController(QObject *parent)
     _updateFrequencyTimer->setSingleShot(false);
     _updateFrequencyTimer->start();
 
-    _timeScaleSt.append(new TimeScale_st(tr("5 Sec"),   5 * 1000));
-    _timeScaleSt.append(new TimeScale_st(tr("10 Sec"), 10 * 1000));
-    _timeScaleSt.append(new TimeScale_st(tr("30 Sec"), 30 * 1000));
-    _timeScaleSt.append(new TimeScale_st(tr("60 Sec"), 60 * 1000));
+    _timeScaleSt.append(new TimeScale_st(tr("5 Sec"),    5 * 1000));
+    _timeScaleSt.append(new TimeScale_st(tr("10 Sec"),  10 * 1000));
+    _timeScaleSt.append(new TimeScale_st(tr("30 Sec"),  30 * 1000));
+    _timeScaleSt.append(new TimeScale_st(tr("60 Sec"),  60 * 1000));
+    _timeScaleSt.append(new TimeScale_st(tr("2 Min"),  120 * 1000));
+    _timeScaleSt.append(new TimeScale_st(tr("5 Min"),  300 * 1000));
 
     _rangeSt.append(new Range_st(tr("Auto"),    0));
     _rangeSt.append(new Range_st(tr("10,000"),  10000));
@@ -198,6 +200,7 @@ void MAVLinkInspectorController::_receiveMessage(LinkInterface *link, const mavl
 
     QGCMAVLinkMessage *msg = nullptr;
     QGCMAVLinkSystem *system = _findVehicle(message.sysid);
+    const QString instanceValue = QGCMAVLinkMessage::extractInstanceValue(message);
 
     if (!system) {
         system = new QGCMAVLinkSystem(message.sysid, this);
@@ -209,11 +212,11 @@ void MAVLinkInspectorController::_receiveMessage(LinkInterface *link, const mavl
             emit activeSystemChanged();
         }
     } else {
-        msg = system->findMessage(message.msgid, message.compid);
+        msg = system->findMessage(message.msgid, message.compid, instanceValue);
     }
 
     if (!msg) {
-        msg = new QGCMAVLinkMessage(message, this);
+        msg = new QGCMAVLinkMessage(message, instanceValue, this);
         system->append(msg);
     } else {
         msg->update(message);

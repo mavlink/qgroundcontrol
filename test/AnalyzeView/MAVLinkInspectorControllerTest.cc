@@ -44,9 +44,9 @@ void MAVLinkInspectorControllerTest::_timeScalesCountTest()
 {
     MAVLinkInspectorController controller;
 
-    // 4 time scales: 5s, 10s, 30s, 60s
-    QCOMPARE(controller.timeScales().count(), 4);
-    QCOMPARE(controller.timeScaleSt().count(), 4);
+    // 6 time scales: 5s, 10s, 30s, 60s, 2min, 5min
+    QCOMPARE(controller.timeScales().count(), 6);
+    QCOMPARE(controller.timeScaleSt().count(), 6);
 }
 
 void MAVLinkInspectorControllerTest::_rangeListCountTest()
