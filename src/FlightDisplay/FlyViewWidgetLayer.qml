@@ -48,6 +48,7 @@ Item {
     property rect   _centerViewport:        Qt.rect(0, 0, width, height)
     property real   _rightPanelWidth:       ScreenTools.defaultFontPixelWidth * 30
     property alias  _gripperMenu:           gripperOptions
+    property alias  _servoDropMenu:         servoDropOptions
     property real   _layoutMargin:          ScreenTools.defaultFontPixelWidth * 0.75
     property bool   _layoutSpacing:         ScreenTools.defaultFontPixelWidth
     property bool   _showSingleVehicleUI:   true
@@ -195,6 +196,10 @@ Item {
 
     GripperMenu {
         id: gripperOptions
+    }
+
+    ServoDropMenu {
+        id: servoDropOptions
     }
 
     VehicleWarnings {

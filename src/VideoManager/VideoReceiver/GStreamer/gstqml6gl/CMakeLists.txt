@@ -137,23 +137,23 @@ if(EXISTS "${QGC_GST_QT6_PLUGIN_PATH}/resources.qrc")
 
         set(RGBA_BASE_QSB "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb")
         set(RGBA_GLES_SRC "${QGC_GST_QT6_PLUGIN_PATH}/RGBA_gles.frag")
-        set(RGBA_EXTERNAL "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb.external")
+        set(RGBA_EXTERNAL "${CMAKE_CURRENT_BINARY_DIR}/.qsb/RGBA.frag.qsb")
 
-        add_custom_command(
-            OUTPUT ${RGBA_EXTERNAL}
-            COMMAND ${QSB_WRAPPER}
-                ${QSB_PROGRAM}
-                ${RGBA_EXTERNAL}
-                ${RGBA_GLES_SRC}
-                ${RGBA_BASE_QSB}
-            DEPENDS
-                ${RGBA_BASE_QSB}
-                ${RGBA_GLES_SRC}
-            COMMENT "Generating external GLES shader: ${RGBA_EXTERNAL}"
-            VERBATIM
-        )
+        #add_custom_command(
+            #OUTPUT ${RGBA_EXTERNAL}
+            #COMMAND ${QSB_WRAPPER}
+                #${QSB_PROGRAM}
+                #${RGBA_EXTERNAL}
+                #${RGBA_GLES_SRC}
+                #${RGBA_BASE_QSB}
+            #DEPENDS
+                #${RGBA_BASE_QSB}
+                #${RGBA_GLES_SRC}
+            #COMMENT "Generating external GLES shader: ${RGBA_EXTERNAL}"
+            #VERBATIM
+        #)
 
-        set_source_files_properties(${RGBA_EXTERNAL} PROPERTIES QT_RESOURCE_ALIAS org/freedesktop/gstreamer/qml6/RGBA.frag.qsb.external)
+        set_source_files_properties(${RGBA_EXTERNAL} PROPERTIES QT_RESOURCE_ALIAS org/freedesktop/gstreamer/qml6/RGBA.frag.qsb)
         set(QGC_GSTREAMER_SHADER_RESOURCES "${RGBA_EXTERNAL}" CACHE INTERNAL "")
         # qt_add_resources(gstqml6gl "gstqml6gl_shaders1"
         #     PREFIX "/org/freedesktop/gstreamer/qml6"

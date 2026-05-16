@@ -169,8 +169,8 @@ if(QGC_ENABLE_HERELINK AND ANDROID)
     set(QGC_QT_MAXIMUM_VERSION "6.6.3" CACHE STRING "Maximum Supported Qt Version")
     set(QGC_QT_ANDROID_MIN_SDK_VERSION "25" CACHE STRING "Android Min SDK Version")
 else()
-    set(QGC_QT_MINIMUM_VERSION "6.8.3" CACHE STRING "Minimum Supported Qt Version")
-    set(QGC_QT_MAXIMUM_VERSION "6.8.3" CACHE STRING "Maximum Supported Qt Version")
+    set(QGC_QT_MINIMUM_VERSION "6.8.0" CACHE STRING "Minimum Supported Qt Version")
+    set(QGC_QT_MAXIMUM_VERSION "6.12.0" CACHE STRING "Maximum Supported Qt Version")
     set(QGC_QT_ANDROID_MIN_SDK_VERSION "28" CACHE STRING "Android Min SDK Version")
 endif()
 
@@ -330,10 +330,10 @@ if(WIN32)
         list(APPEND QGC_INSTALLER_SOURCE_WIN_FILES "${QGC_INSTALLER_SOURCE_WIN}/${FILE_NAME}")
     endforeach()
 
-    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_INSTALLER_SOURCE_WIN_FILES})
+    #target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${QGC_INSTALLER_SOURCE_WIN_FILES})
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES
-            WIN32_EXECUTABLE TRUE
+            # WIN32_EXECUTABLE TRUE
             # QT_TARGET_WINDOWS_RC_FILE "${QGC_WINDOWS_RESOURCE_FILE_PATH}"
             QT_TARGET_COMPANY_NAME "${QGC_ORG_NAME}"
             QT_TARGET_DESCRIPTION "${CMAKE_PROJECT_DESCRIPTION}"
@@ -344,7 +344,7 @@ if(WIN32)
             # QT_TARGET_ORIGINAL_FILENAME: RC Original FileName
             # QT_TARGET_TRADEMARKS: RC LegalTrademarks
             # QT_TARGET_INTERNALNAME: RC InternalName
-            QT_TARGET_RC_ICONS "${QGC_WINDOWS_ICON_PATH}"
+            # QT_TARGET_RC_ICONS "${QGC_WINDOWS_ICON_PATH}"
     )
     target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE _USE_MATH_DEFINES)
 elseif(APPLE)
@@ -501,13 +501,13 @@ set_target_properties(${CMAKE_PROJECT_NAME}
         OUTPUT_NAME ${CMAKE_PROJECT_NAME}
 )
 
-target_precompile_headers(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        <QtCore/QLoggingCategory>
-        <QtCore/QObject>
-        <QtCore/QString>
-        <QtCore/QTimer>
-)
+#target_precompile_headers(${CMAKE_PROJECT_NAME}
+    #PRIVATE
+        #<QtCore/QLoggingCategory>
+        #<QtCore/QObject>
+        #<QtCore/QString>
+        #<QtCore/QTimer>
+#)
 
 qt_add_qml_module(${CMAKE_PROJECT_NAME}
     URI QGroundControl
@@ -544,6 +544,13 @@ qt_add_translations(${CMAKE_PROJECT_NAME}
 
 set_source_files_properties(resources/qtquickcontrols2.conf PROPERTIES QT_RESOURCE_ALIAS qtquickcontrols2.conf)
 set_source_files_properties(${SDL_GAMECONTROLLERDB_PATH} PROPERTIES QT_RESOURCE_ALIAS gamecontrollerdb.txt)
+
+foreach(shader ${QGC_GSTREAMER_SHADER_RESOURCES})
+    get_filename_component(shader_name ${shader} NAME)
+    set_source_files_properties(${shader}
+        PROPERTIES QT_RESOURCE_ALIAS ${shader_name})
+endforeach()
+
 qt_add_resources(${CMAKE_PROJECT_NAME} "qgcresources_cmake"
     PREFIX "/"
     FILES

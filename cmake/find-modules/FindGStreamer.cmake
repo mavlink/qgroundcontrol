@@ -2,7 +2,7 @@ if(NOT DEFINED GStreamer_FIND_VERSION)
     if(LINUX)
         set(GStreamer_FIND_VERSION 1.20)
     else()
-        set(GStreamer_FIND_VERSION 1.22.12)
+        set(GStreamer_FIND_VERSION 1.28.2)
     endif()
 endif()
 

@@ -233,7 +233,8 @@ endmacro()
 find_package(PkgConfig REQUIRED)
 
 # GStreamer's pkg-config modules are a MUST -- but we'll test them below
-pkg_check_modules(PC_GStreamer gstreamer-1.0 ${GStreamer_EXTRA_DEPS})
+# pkg_check_modules(PC_GStreamer gstreamer-1.0 ${GStreamer_EXTRA_DEPS})
+pkg_check_modules(PC_GStreamer REQUIRED gstreamer-1.0)
 # Simulate the list that'll be wholearchive'd.
 # Unfortunately, this uses an option only available with pkgconf.
 # set(_old_pkg_config_executable "${PKG_CONFIG_EXECUTABLE}")

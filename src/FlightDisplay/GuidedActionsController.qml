@@ -62,6 +62,7 @@ Item {
     readonly property string setEstimatorOriginTitle:       qsTr("Set Estimator origin")
     readonly property string setFlightMode:                 qsTr("Set Flight Mode")
     readonly property string changeHeadingTitle:            qsTr("Change Heading")
+    readonly property string servoDropTitle:               qsTr("Servo Drop Control")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
     readonly property string mvArmMessage:                      qsTr("Arm selected vehicles.")
@@ -127,8 +128,7 @@ Item {
     readonly property int actionMVArm:                      31
     readonly property int actionMVDisarm:                   32
     readonly property int actionChangeLoiterRadius:         33
-
-
+    readonly property int actionServoDrop:                  34
 
     readonly property int customActionStart:                10000 // Custom actions ids should start here so that they don't collide with the built in actions
 
@@ -164,6 +164,7 @@ Item {
     property bool showGripper:              _initialConnectComplete ? _activeVehicle.hasGripper : false
     property bool showSetEstimatorOrigin:   _activeVehicle && !(_activeVehicle.sensorsPresentBits & Vehicle.SysStatusSensorGPS)
     property bool showChangeHeading:        _guidedActionsEnabled && _vehicleFlying
+    property bool showServoDrop:            _initialConnectComplete && _activeVehicle
 
     property string changeSpeedTitle:   _vehicleInFwdFlight ? changeAirspeedTitle : changeCruiseSpeedTitle
     property string changeSpeedMessage: _vehicleInFwdFlight ? changeAirspeedMessage : changeCruiseSpeedMessage
@@ -586,6 +587,11 @@ Item {
         case actionChangeHeading:
             confirmDialog.title = changeHeadingTitle
             confirmDialog.message = changeHeadingMessage
+            break
+        case actionServoDrop:
+            confirmDialog.hideTrigger = true
+            confirmDialog.title = servoDropTitle
+            mainWindow.showPopupDialog(Qt.resolvedUrl("ServoDropMenu.qml"))
             break
         default:
             if (!customController.customConfirmAction(actionCode, actionData, mapIndicator, confirmDialog)) {
