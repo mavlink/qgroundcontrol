@@ -7,9 +7,9 @@ import QGroundControl
 import QGroundControl.Controls
 
 ColumnLayout {
-    id:                 chartView
-    visible:            chartController.chartFields.length > 0
-    spacing:            0
+    id: chartView
+    visible: chartController.chartFields.length > 0
+    spacing: ScreenTools.defaultFontPixelHeight
 
     required property var inspectorController
     required property int chartIndex
@@ -52,59 +52,43 @@ ColumnLayout {
     }
 
     MAVLinkChartController {
-        id:                     chartController
-        inspectorController:    chartView.inspectorController
-        chartIndex:             chartView.chartIndex
-        plotPixelWidth:         Math.max(1, Math.floor(_graphsView.plotArea.width))
+        id: chartController
+        inspectorController: chartView.inspectorController
+        chartIndex: chartView.chartIndex
+        plotPixelWidth: Math.max(1, Math.floor(_graphsView.plotArea.width))
     }
 
     // -------------------------------------------------------------------------
     // Header: Scale / Range controls + active field labels
     // -------------------------------------------------------------------------
     Row {
-        id:                         chartHeader
-        Layout.fillWidth:           true
-        spacing:                    ScreenTools.defaultFontPixelWidth  * 2
+        spacing: ScreenTools.defaultFontPixelWidth
 
-        GridLayout {
-            columns:                2
-            columnSpacing:          ScreenTools.defaultFontPixelWidth
-            rowSpacing:             ScreenTools.defaultFontPixelHeight * 0.25
-            anchors.verticalCenter: parent.verticalCenter
-            QGCLabel {
-                text:               qsTr("Scale:")
-                Layout.alignment:   Qt.AlignVCenter
-            }
-            QGCComboBox {
-                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
-                Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 10
-                height:             ScreenTools.defaultFontPixelHeight
-                model:              inspectorController.timeScales
-                currentIndex:       chartController.rangeXIndex
+        ColumnLayout {
+            LabelledComboBox {
+                label: qsTr("Scale")
+                model: inspectorController.timeScales
+                currentIndex: chartController.rangeXIndex
                 onActivated: (index) => { chartController.rangeXIndex = index }
-                Layout.alignment:   Qt.AlignVCenter
             }
-            QGCLabel {
-                text:               qsTr("Range:")
-                Layout.alignment:   Qt.AlignVCenter
-            }
-            QGCComboBox {
-                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 10
-                Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 10
-                height:             ScreenTools.defaultFontPixelHeight
-                model:              inspectorController.rangeList
-                currentIndex:       chartController.rangeYIndex
+
+            LabelledComboBox {
+                label: qsTr("Range")
+                model: inspectorController.rangeList
+                currentIndex: chartController.rangeYIndex
                 onActivated: (index) => { chartController.rangeYIndex = index }
-                Layout.alignment:   Qt.AlignVCenter
             }
         }
+
         ColumnLayout {
-            anchors.verticalCenter: parent.verticalCenter
+            spacing: 0
+
             Repeater {
-                model:              chartController.chartFields
+                model: chartController.chartFields
+
                 QGCLabel {
-                    text:           modelData.label
-                    color:          index < _graphsView.seriesList.length ? _graphsView.seriesList[index].color : qgcPal.text
+                    text: modelData.label
+                    color: index < _graphsView.seriesList.length ? _graphsView.seriesList[index].color : qgcPal.text
                     font.pointSize: ScreenTools.smallFontPointSize
                 }
             }
@@ -115,41 +99,41 @@ ColumnLayout {
     // Chart
     // -------------------------------------------------------------------------
     GraphsView {
-        id:                 _graphsView
-        Layout.fillWidth:   true
-        Layout.fillHeight:  true
-        marginBottom:       ScreenTools.defaultFontPixelHeight * 1.5
-        marginTop:          0
-        marginLeft:         0
-        marginRight:        0
+        id: _graphsView
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        marginBottom: ScreenTools.defaultFontPixelHeight * 1.5
+        marginTop: 0
+        marginLeft: 0
+        marginRight: 0
 
         theme: GraphsTheme {
-            colorScheme:                qgcPal.globalTheme === QGCPalette.Light ? GraphsTheme.ColorScheme.Light : GraphsTheme.ColorScheme.Dark
-            backgroundColor:            qgcPal.window
-            backgroundVisible:          true
-            plotAreaBackgroundColor:    qgcPal.window
-            grid.mainColor:             Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.3)
-            grid.subColor:              Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.15)
-            grid.mainWidth:             1
-            labelBackgroundVisible:     false
-            labelTextColor:             qgcPal.text
-            axisXLabelFont.family:      ScreenTools.fixedFontFamily
-            axisXLabelFont.pointSize:   ScreenTools.smallFontPointSize
-            axisYLabelFont.family:      ScreenTools.fixedFontFamily
-            axisYLabelFont.pointSize:   ScreenTools.smallFontPointSize
+            colorScheme: qgcPal.globalTheme === QGCPalette.Light ? GraphsTheme.ColorScheme.Light : GraphsTheme.ColorScheme.Dark
+            backgroundColor: qgcPal.window
+            backgroundVisible: true
+            plotAreaBackgroundColor: qgcPal.window
+            grid.mainColor: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.3)
+            grid.subColor: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.15)
+            grid.mainWidth: 1
+            labelBackgroundVisible: false
+            labelTextColor: qgcPal.text
+            axisXLabelFont.family: ScreenTools.fixedFontFamily
+            axisXLabelFont.pointSize: ScreenTools.smallFontPointSize
+            axisYLabelFont.family: ScreenTools.fixedFontFamily
+            axisYLabelFont.pointSize: ScreenTools.smallFontPointSize
         }
 
         axisX: ValueAxis {
-            id:             axisX
-            min:            chartController.rangeXMin
-            max:            chartController.rangeXMax
-            tickInterval:   chartController.rangeXMs / 3
-            subTickCount:   0
-            labelsVisible:  true
+            id: axisX
+            min: chartController.rangeXMin
+            max: chartController.rangeXMax
+            tickInterval: chartController.rangeXMs / 3
+            subTickCount: 0
+            labelsVisible: true
             labelDelegate: Component {
                 Item {
                     property string text
-                    implicitWidth:  label.implicitWidth
+                    implicitWidth: label.implicitWidth
                     implicitHeight: label.implicitHeight
                     Text {
                         id: label
@@ -159,8 +143,8 @@ ColumnLayout {
                             var d = new Date(ms)
                             return d.getMinutes().toString().padStart(2, '0') + ":" + d.getSeconds().toString().padStart(2, '0')
                         }
-                        color:          qgcPal.text
-                        font.family:    ScreenTools.fixedFontFamily
+                        color: qgcPal.text
+                        font.family: ScreenTools.fixedFontFamily
                         font.pointSize: ScreenTools.smallFontPointSize
                     }
                 }
@@ -168,10 +152,10 @@ ColumnLayout {
         }
 
         axisY: ValueAxis {
-            id:             axisY
-            min:            chartController.rangeYMin
-            max:            chartController.rangeYMax
-            lineVisible:    false
+            id: axisY
+            min: chartController.rangeYMin
+            max: chartController.rangeYMax
+            lineVisible: false
         }
     }
 }
