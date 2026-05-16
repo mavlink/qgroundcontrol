@@ -122,9 +122,16 @@ void TerrainProfile::_updateProfile(void)
     _pixelsPerMeter = (missionTotalDistance > 0.0) ? (_visibleWidth / missionTotalDistance) : 0.0;
 
     static int counter = 0;
-    qCDebug(TerrainProfileLog) << "missionController min/max" << _missionController->minAMSLAltitude() << _missionController->maxAMSLAltitude();
-    qCDebug(TerrainProfileLog) << QStringLiteral("updateProfile counter:%1 cFlightProfileSegments:%2 cTerrainProfilePoints:%3 cMissingTerrainSegments:%4 cTerrainCollisionSegments:%5 _minAMSLAlt:%6 _maxAMSLAlt:%7 maxTerrainHeight:%8")
-                                  .arg(counter++).arg(cFlightProfileSegments).arg(cTerrainProfilePoints).arg(cMissingTerrainSegments).arg(cTerrainCollisionSegments).arg(_minAMSLAlt).arg(_maxAMSLAlt).arg(maxTerrainHeight);
+    qCDebug(TerrainProfileLog).noquote() << "counter" << counter++ <<
+        "\n\tmissionController minAMSLAltitude" << _missionController->minAMSLAltitude() <<
+        "\n\tmissionController maxAMSLAltitude" << _missionController->maxAMSLAltitude() <<
+        "\n\tcFlightProfileSegments" << cFlightProfileSegments <<
+        "\n\tcTerrainProfilePoints" << cTerrainProfilePoints <<
+        "\n\tcMissingTerrainSegments" << cMissingTerrainSegments <<
+        "\n\tcTerrainCollisionSegments" << cTerrainCollisionSegments <<
+        "\n\t_minAMSLAlt" << _minAMSLAlt <<
+        "\n\t_maxAMSLAlt" << _maxAMSLAlt <<
+        "\n\tmaxTerrainHeight" << maxTerrainHeight;
 
     setImplicitWidth(_visibleWidth);
     setWidth(implicitWidth());
@@ -181,21 +188,26 @@ void TerrainProfile::updateSeries(QXYSeries* terrainSeries, QXYSeries* flightSer
         }
     }
 
+    // Using clear/append instead of replace works around bugs in QtGraphs where you end up with parts of old series data showing.
     if (terrainSeries) {
-        terrainSeries->replace(terrainPoints);
+        terrainSeries->clear();
+        terrainSeries->append(terrainPoints);
     }
     if (flightSeries) {
-        flightSeries->replace(flightPoints);
+        flightSeries->clear();
+        flightSeries->append(flightPoints);
     }
     if (missingSeries) {
-        missingSeries->replace(missingPoints);
+        missingSeries->clear();
+        missingSeries->append(missingPoints);
     }
     if (collisionSeries) {
-        collisionSeries->replace(collisionPoints);
+        collisionSeries->clear();
+        collisionSeries->append(collisionPoints);
     }
 
-    qCDebug(TerrainProfileLog) << QStringLiteral("updateSeries terrain:%1 flight:%2 missing:%3 collision:%4")
-                                  .arg(terrainPoints.count()).arg(flightPoints.count()).arg(missingPoints.count()).arg(collisionPoints.count());
+    qCDebug(TerrainProfileLog).noquote() << QStringLiteral("updateSeries terrainPoints:%1 flightPoints:%2 missingPoints:%3 collisionPoints:%4")
+        .arg(terrainPoints.count()).arg(flightPoints.count()).arg(missingPoints.count()).arg(collisionPoints.count());
 }
 
 void TerrainProfile::_addTerrainPoints(FlightPathSegment* segment, double currentDistance, QList<QPointF>& points)
