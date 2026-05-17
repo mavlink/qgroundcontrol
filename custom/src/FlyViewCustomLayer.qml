@@ -142,14 +142,20 @@ Item {
 
     readonly property var roundSpecOptions: [
         {
-            label: "Rd 1,3,4",
-            fobCoordinates: [38.7508357856351, -77.4969789717910, 0],
-            geofenceFilePath: ":/Custom/qml/geofences/ce_geofence_rd_134.plan"
+            label: "Outfield",
+            // Opponent (WvX) quadrants are in outfield half; C&E FOB is opposite.
+            opponentQuadrantSideIndex: 1,
+            ceFobCoordinates: [38.75065209603611, -77.49701011362711, 0],
+            wvxFobCoordinates: [38.75084010396389, -77.49721463637287, 0],
+            geofenceFilePath: ":/Custom/qml/geofences/ce_geofence_outfield.plan"
         },
         {
-            label: "Rd 2",
-            fobCoordinates: [38.7508357856351, -77.4969789717910, 0],
-            geofenceFilePath: ":/Custom/qml/geofences/ce_geofence_rd_2.plan"
+            label: "Home Base",
+            // Opponent (WvX) quadrants are in home-base half; C&E FOB is opposite.
+            opponentQuadrantSideIndex: 0,
+            ceFobCoordinates: [38.75084010396389, -77.49721463637287, 0],
+            wvxFobCoordinates: [38.75065209603611, -77.49701011362711, 0],
+            geofenceFilePath: ":/Custom/qml/geofences/ce_geofence_home_base.plan"
         }
     ]
     readonly property var surveyQuadrantOptions: ["Q1", "Q2", "Q3", "Q4"]
@@ -160,58 +166,58 @@ Item {
         QtPositioning.coordinate(38.750551952470936, -77.49713235890398)
     ]
     readonly property var _quadrantPaths: [
-        // Rd 1,3,4: opponent territory is left-field side half.
+        // Opponent outfield side half (top / AB-adjacent).
         [
             [
-                QtPositioning.coordinate(38.7507608625056, -77.49735908548331),
-                QtPositioning.coordinate(38.75080570783633, -77.4972925283879),
-                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
-                QtPositioning.coordinate(38.750656407488265, -77.49724572219364)
+                QtPositioning.coordinate(38.750552, -77.4971324),
+                QtPositioning.coordinate(38.75064165, -77.49699874999999),
+                QtPositioning.coordinate(38.750693874999996, -77.49705555),
+                QtPositioning.coordinate(38.7506042, -77.49718905)
             ],
             [
-                QtPositioning.coordinate(38.75080570783633, -77.4972925283879),
-                QtPositioning.coordinate(38.750850553167055, -77.4972259712925),
-                QtPositioning.coordinate(38.7507460965617, -77.49711234699234),
-                QtPositioning.coordinate(38.75070125202498, -77.497179034593)
+                QtPositioning.coordinate(38.75064165, -77.49699874999999),
+                QtPositioning.coordinate(38.7507313, -77.4968651),
+                QtPositioning.coordinate(38.750783549999994, -77.49692205),
+                QtPositioning.coordinate(38.750693874999996, -77.49705555)
             ],
             [
-                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
-                QtPositioning.coordinate(38.7507460965617, -77.49711234699234),
-                QtPositioning.coordinate(38.75064163995635, -77.4969987226922),
-                QtPositioning.coordinate(38.75059679621364, -77.49706554079809)
+                QtPositioning.coordinate(38.750693874999996, -77.49705555),
+                QtPositioning.coordinate(38.750783549999994, -77.49692205),
+                QtPositioning.coordinate(38.7508358, -77.496979),
+                QtPositioning.coordinate(38.7507461, -77.49711235)
             ],
             [
-                QtPositioning.coordinate(38.750656407488265, -77.49724572219364),
-                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
-                QtPositioning.coordinate(38.75059679621364, -77.49706554079809),
-                QtPositioning.coordinate(38.750551952470936, -77.49713235890398)
+                QtPositioning.coordinate(38.7506042, -77.49718905),
+                QtPositioning.coordinate(38.750693874999996, -77.49705555),
+                QtPositioning.coordinate(38.7507461, -77.49711235),
+                QtPositioning.coordinate(38.7506564, -77.4972457)
             ]
         ],
-        // Rd 2 uses the same left-field side half.
+        // Opponent home-base side half (bottom / CD-adjacent).
         [
             [
-                QtPositioning.coordinate(38.7507608625056, -77.49735908548331),
-                QtPositioning.coordinate(38.75080570783633, -77.4972925283879),
-                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
-                QtPositioning.coordinate(38.750656407488265, -77.49724572219364)
+                QtPositioning.coordinate(38.7506564, -77.4972457),
+                QtPositioning.coordinate(38.7507461, -77.49711235),
+                QtPositioning.coordinate(38.750798325000005, -77.497169175),
+                QtPositioning.coordinate(38.75070865, -77.4973024)
             ],
             [
-                QtPositioning.coordinate(38.75080570783633, -77.4972925283879),
-                QtPositioning.coordinate(38.750850553167055, -77.4972259712925),
-                QtPositioning.coordinate(38.7507460965617, -77.49711234699234),
-                QtPositioning.coordinate(38.75070125202498, -77.497179034593)
+                QtPositioning.coordinate(38.7507461, -77.49711235),
+                QtPositioning.coordinate(38.7508358, -77.496979),
+                QtPositioning.coordinate(38.750888, -77.49703595),
+                QtPositioning.coordinate(38.750798325000005, -77.497169175)
             ],
             [
-                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
-                QtPositioning.coordinate(38.7507460965617, -77.49711234699234),
-                QtPositioning.coordinate(38.75064163995635, -77.4969987226922),
-                QtPositioning.coordinate(38.75059679621364, -77.49706554079809)
+                QtPositioning.coordinate(38.750798325000005, -77.497169175),
+                QtPositioning.coordinate(38.750888, -77.49703595),
+                QtPositioning.coordinate(38.7509402, -77.4970929),
+                QtPositioning.coordinate(38.75085055, -77.497226)
             ],
             [
-                QtPositioning.coordinate(38.750656407488265, -77.49724572219364),
-                QtPositioning.coordinate(38.75070125202498, -77.497179034593),
-                QtPositioning.coordinate(38.75059679621364, -77.49706554079809),
-                QtPositioning.coordinate(38.750551952470936, -77.49713235890398)
+                QtPositioning.coordinate(38.75070865, -77.4973024),
+                QtPositioning.coordinate(38.750798325000005, -77.497169175),
+                QtPositioning.coordinate(38.75085055, -77.497226),
+                QtPositioning.coordinate(38.7507609, -77.4973591)
             ]
         ]
     ]
@@ -335,8 +341,8 @@ Item {
             round_id: demoLocked ? selectedDemoIndex + 1 : 0,
             target_class: targetClass(),
             round_spec_label: roundSpec.label,
-            fob_coordinates_label: roundSpec.label,
-            fob_coordinates: roundSpec.fobCoordinates,
+            fob_coordinates_label: "C&E",
+            fob_coordinates: roundSpec.ceFobCoordinates,
             geofence_label: roundSpec.label,
             geofence_plan_file: roundSpec.geofenceFilePath,
             geofence_height_ft: 30,
@@ -417,7 +423,7 @@ Item {
 
         for (var q = 0; q < surveyQuadrantOptions.length; q++) {
             var selected = q === selectedSurveyQuadrantIndex
-            var quadrantPath = _quadrantPaths[selectedRoundSpecIndex][q]
+            var quadrantPath = _quadrantPaths[roundSpecOptions[selectedRoundSpecIndex].opponentQuadrantSideIndex][q]
             var quadrant = quadrantOverlayComponent.createObject(mapControl, {
                 path: quadrantPath,
                 label: surveyQuadrantOptions[q],
@@ -435,16 +441,23 @@ Item {
             _quadrantLabels.push(quadrantLabel)
         }
 
-        for (var i = 0; i < roundSpecOptions.length; i++) {
-            var roundSpec = roundSpecOptions[i]
-            var marker = fobMarkerComponent.createObject(mapControl, {
-                coordinate: QtPositioning.coordinate(roundSpec.fobCoordinates[0], roundSpec.fobCoordinates[1], roundSpec.fobCoordinates[2]),
-                label: "FOB " + roundSpec.label,
-                selected: i === selectedRoundSpecIndex
-            })
-            mapControl.addMapItem(marker)
-            _fobMarkers.push(marker)
-        }
+        var selectedSpec = roundSpecOptions[selectedRoundSpecIndex]
+
+        var ceMarker = fobMarkerComponent.createObject(mapControl, {
+            coordinate: QtPositioning.coordinate(selectedSpec.ceFobCoordinates[0], selectedSpec.ceFobCoordinates[1], selectedSpec.ceFobCoordinates[2]),
+            label: "C&E",
+            selected: true
+        })
+        mapControl.addMapItem(ceMarker)
+        _fobMarkers.push(ceMarker)
+
+        var wvxMarker = fobMarkerComponent.createObject(mapControl, {
+            coordinate: QtPositioning.coordinate(selectedSpec.wvxFobCoordinates[0], selectedSpec.wvxFobCoordinates[1], selectedSpec.wvxFobCoordinates[2]),
+            label: "WvX",
+            selected: false
+        })
+        mapControl.addMapItem(wvxMarker)
+        _fobMarkers.push(wvxMarker)
 
         mapControl.center = QtPositioning.coordinate(38.750765, -77.497116)
         if (mapControl.zoomLevel < 20) {
@@ -1034,7 +1047,7 @@ Item {
 
                 ComboBox {
                     id: roundSpecCombo
-                    model: ["Rd 1,3,4", "Rd 2"]
+                    model: root.roundSpecOptions.map(function(option) { return option.label })
                     width: 236
                     implicitHeight: 30
                     currentIndex: root.selectedRoundSpecIndex
@@ -1044,7 +1057,7 @@ Item {
                     }
                     background: Rectangle { color: _clrCard; radius: 4 }
                     contentItem: Text {
-                        text: "Round Upload: " + roundSpecCombo.displayText
+                        text: "C&E Territory: " + roundSpecCombo.displayText
                         color: "white"
                         font.pixelSize: 12
                         verticalAlignment: Text.AlignVCenter

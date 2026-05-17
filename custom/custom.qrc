@@ -3,7 +3,7 @@
         <file alias="QGroundControl/FlightDisplay/FlyViewCustomLayer.qml">src/FlyViewCustomLayer.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyView.qml">src/FlyView.qml</file>
         <file alias="QGroundControl/FlightDisplay/FlyViewWidgetLayer.qml">src/FlyViewWidgetLayer.qml</file>
-        <file alias="geofences/ce_geofence_rd_134.plan">res/geofences/ce_geofence_rd_134.plan</file>
-        <file alias="geofences/ce_geofence_rd_2.plan">res/geofences/ce_geofence_rd_2.plan</file>
+        <file alias="geofences/ce_geofence_home_base.plan">res/geofences/ce_geofence_home_base.plan</file>
+        <file alias="geofences/ce_geofence_outfield.plan">res/geofences/ce_geofence_outfield.plan</file>
     </qresource>
 </RCC>
