@@ -116,9 +116,12 @@ Map {
     signal mapRightClicked(var position)
     signal mapPressAndHold(var position)
 
+    // PinchHandler is retained for touchpad pinch gestures on platforms where WheelHandler
+    // only accepts Mouse (e.g. Windows). Touchscreen pinch is handled by the MultiPointTouchArea below.
     PinchHandler {
-        id:     pinchHandler
-        target: null
+        id:             pinchHandler
+        target:         null
+        acceptedDevices: PointerDevice.TouchPad
 
         property var pinchStartCentroid
 
@@ -151,57 +154,109 @@ Map {
     }
 
     // We specifically do not use a DragHandler for panning. It just causes too many problems if you overlay anything else like a Flickable above it.
-    // Causes all sorts of crazy problems where dragging/scrolling  no longerr works on items above in the hierarchy.
+    // Causes all sorts of crazy problems where dragging/scrolling no longer works on items above in the hierarchy.
     // Since we are using a MouseArea we also can't use TapHandler for clicks. So we handle that here as well.
+    // Pinch-to-zoom is also handled here rather than via PinchHandler to prevent the handler from stealing
+    // touch grabs from items above (e.g. virtual joystick pads). See GitHub issue #13450.
     MultiPointTouchArea {
         id: multiTouchArea
         anchors.fill: parent
-        maximumTouchPoints: 1
+        maximumTouchPoints: 2
         mouseEnabled: true
 
+        touchPoints: [
+            TouchPoint { id: tp1 },
+            TouchPoint { id: tp2 }
+        ]
+
         property bool dragActive: false
+        property bool pinchActive: false
+        property bool wasMultiTouch: false
         property real lastMouseX
         property real lastMouseY
         property bool isPressed: false
         property bool pressAndHold: false
+        property real pinchStartDist
+        property real pinchStartZoom
+        property var pinchStartCentroid
+
+        function pinchDistance() {
+            let dx = tp2.x - tp1.x
+            let dy = tp2.y - tp1.y
+            return Math.sqrt(dx * dx + dy * dy)
+        }
 
         onPressed: (touchPoints) => {
-            lastMouseX = touchPoints[0].x
-            lastMouseY = touchPoints[0].y
-            isPressed = true
-            pressAndHold = false
-            pressAndHoldTimer.start()
+            if (!pinchActive && !dragActive) {
+                lastMouseX = tp1.x
+                lastMouseY = tp1.y
+                isPressed = true
+                pressAndHold = false
+                pressAndHoldTimer.start()
+            }
         }
 
         onGestureStarted: (gesture) => {
-            dragActive = true
             gesture.grab()
-            mapPanStart()
+            if (!pinchActive && !dragActive) {
+                dragActive = true
+                mapPanStart()
+            }
         }
 
         onUpdated: (touchPoints) => {
-            if (dragActive) {
-                let deltaX = touchPoints[0].x - lastMouseX
-                let deltaY = touchPoints[0].y - lastMouseY
+            if (tp1.pressed && tp2.pressed) {
+                if (!pinchActive) {
+                    // Transition to pinch
+                    pinchActive = true
+                    wasMultiTouch = true
+                    dragActive = false
+                    pinchStartDist = pinchDistance()
+                    pinchStartZoom = _map.zoomLevel
+                    let cx = (tp1.x + tp2.x) / 2
+                    let cy = (tp1.y + tp2.y) / 2
+                    pinchStartCentroid = _map.toCoordinate(Qt.point(cx, cy), false)
+                    pressAndHoldTimer.stop()
+                }
+                let currentDist = pinchDistance()
+                if (pinchStartDist > 0) {
+                    let scale = currentDist / pinchStartDist
+                    _map.zoomLevel = pinchStartZoom + Math.log2(scale)
+                    let cx = (tp1.x + tp2.x) / 2
+                    let cy = (tp1.y + tp2.y) / 2
+                    _map.alignCoordinateToPoint(pinchStartCentroid, Qt.point(cx, cy))
+                }
+            } else if (dragActive && !pinchActive) {
+                let deltaX = tp1.x - lastMouseX
+                let deltaY = tp1.y - lastMouseY
                 if (Math.abs(deltaX) >= 1.0 || Math.abs(deltaY) >= 1.0) {
-                    _map.pan(lastMouseX - touchPoints[0].x, lastMouseY - touchPoints[0].y)
-                    lastMouseX = touchPoints[0].x
-                    lastMouseY = touchPoints[0].y
+                    _map.pan(lastMouseX - tp1.x, lastMouseY - tp1.y)
+                    lastMouseX = tp1.x
+                    lastMouseY = tp1.y
                 }
             }
         }
 
         onReleased: (touchPoints) => {
-            isPressed = false
-            pressAndHoldTimer.stop()
-            if (dragActive) {
-                _map.pan(lastMouseX - touchPoints[0].x, lastMouseY - touchPoints[0].y)
-                dragActive = false
-                mapPanStop()
-            } else if (!pressAndHold) {
-                mapClicked(Qt.point(touchPoints[0].x, touchPoints[0].y))
+            if (!tp1.pressed && !tp2.pressed) {
+                // All fingers up
+                isPressed = false
+                pressAndHoldTimer.stop()
+                if (pinchActive) {
+                    pinchActive = false
+                } else if (dragActive) {
+                    _map.pan(lastMouseX - touchPoints[0].x, lastMouseY - touchPoints[0].y)
+                    dragActive = false
+                    mapPanStop()
+                } else if (!pressAndHold && !wasMultiTouch) {
+                    mapClicked(Qt.point(touchPoints[0].x, touchPoints[0].y))
+                }
+                pressAndHold = false
+                wasMultiTouch = false
+            } else if (pinchActive) {
+                // One finger lifted during pinch - end pinch but don't start panning
+                pinchActive = false
             }
-            pressAndHold = false
         }
 
         Timer {
