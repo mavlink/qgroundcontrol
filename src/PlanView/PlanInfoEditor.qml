@@ -17,8 +17,8 @@ Rectangle {
     property var _visualItems: missionController.visualItems
     property bool _noMissionItemsAdded: _visualItems ? _visualItems.count <= 1 : true
     property var _settingsItem: _visualItems && _visualItems.count > 0 ? _visualItems.get(0) : null
-    property bool _multipleFirmware: !QGroundControl.singleFirmwareSupport && QGroundControl.settingsManager.appSettings.preferredFirmwareClass.rawValue === 0
-    property bool _multipleVehicleTypes: !QGroundControl.singleVehicleSupport && QGroundControl.settingsManager.appSettings.preferredVehicleClass.rawValue === 0
+    property bool _multipleFirmware: !QGroundControl.singleFirmwareSupport
+    property bool _multipleVehicleTypes: !QGroundControl.singleVehicleSupport
     property bool _allowFWVehicleTypeSelection: _noMissionItemsAdded && !globals.activeVehicle
     property bool _waypointsOnlyMode: QGroundControl.corePlugin.options.missionWaypointsOnly
     property real _fieldWidth: ScreenTools.defaultFontPixelWidth * 16
