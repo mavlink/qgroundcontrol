@@ -29,7 +29,7 @@ For more information see [Troubleshooting QGC Setup > Windows: UI Rendering/Vide
 
 ## Mac OS {#macOS}
 
-Supported versions: macOS 12 (Monterey) or later:
+Supported versions: macOS 13 (Ventura) or later:
 
 <!-- match version using https://docs.qgroundcontrol.com/master/en/qgc-dev-guide/getting_started/#native-builds -->
 <!-- usually based on Qt macOS dependency -->
@@ -98,9 +98,13 @@ Either double-click the AppImage in your file manager or launch it from a termin
 
 ## Android {#android}
 
-Supported versions: Android 9 to 15 (arm 32/64):
+Supported versions: Android 9 (API 28) or later (arm 32/64):
 
 - [Android 32/64 bit APK](https://qgroundcontrol.s3-us-west-2.amazonaws.com/latest/QGroundControl.apk)
+
+::: important
+The version of Qt used by QGroundControl requires Android 9 (API 28) as the minimum supported version. It is not possible to support older Android releases. This means that some integrated controllers running older versions of Android are no longer compatible with current builds of QGroundControl. QGroundControl 5.0 stable is the last release that supports these older devices. Note that 5.0 may not fully support firmware versions released after it, so users on older controllers may experience limited compatibility with newer autopilot firmware.
+:::
 
 ## Old Stable Releases
 
