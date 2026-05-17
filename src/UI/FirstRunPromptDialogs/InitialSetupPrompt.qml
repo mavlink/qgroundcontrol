@@ -15,6 +15,7 @@ FirstRunPrompt {
     property bool _multipleVehicleTypes: !QGroundControl.singleVehicleSupport
     property var _rgFacts: [ _unitsSettings.horizontalDistanceUnits, _unitsSettings.verticalDistanceUnits, _unitsSettings.areaUnits, _unitsSettings.speedUnits, _unitsSettings.temperatureUnits ]
     property var _rgLabels: [ qsTr("Horizontal Distance"), qsTr("Vertical Distance"), qsTr("Area"), qsTr("Speed"), qsTr("Temperature") ]
+    property real _descriptionWidth: ScreenTools.defaultFontPixelWidth * 40
 
     function changeSystemOfUnits(metric) {
         unitComboBoxRepeater.model = 0
@@ -37,13 +38,23 @@ FirstRunPrompt {
         }
     }
 
+    onAccepted: {
+        if (_appSettings.preferredFirmwareClass.rawValue !== 0) {
+            _appSettings.offlineEditingFirmwareClass.rawValue = _appSettings.preferredFirmwareClass.rawValue
+        }
+        if (_appSettings.preferredVehicleClass.rawValue !== 0) {
+            _appSettings.offlineEditingVehicleClass.rawValue = _appSettings.preferredVehicleClass.rawValue
+        }
+    }
+
     ColumnLayout {
         spacing: ScreenTools.defaultFontPixelHeight
 
         SettingsGroupLayout {
             Layout.fillWidth: true
+            Layout.maximumWidth: _descriptionWidth
             heading: qsTr("Vehicle Preferences")
-            headingDescription: qsTr("Select the firmware and vehicle type you use. This tailors the interface for a simpler experience. Choose 'All' if you use multiple types.")
+            headingDescription: qsTr("Select the firmware and vehicle type you typically use.")
 
             LabelledFactComboBox {
                 Layout.fillWidth: true
@@ -60,26 +71,11 @@ FirstRunPrompt {
                 indexModel: false
                 visible: _multipleVehicleTypes
             }
-
-            LabelledFactComboBox {
-                Layout.fillWidth: true
-                label: qsTr("Offline Firmware")
-                fact: _appSettings.offlineEditingFirmwareClass
-                indexModel: false
-                visible: _multipleFirmware && _appSettings.preferredFirmwareClass.value === 0
-            }
-
-            LabelledFactComboBox {
-                Layout.fillWidth: true
-                label: qsTr("Offline Vehicle")
-                fact: _appSettings.offlineEditingVehicleClass
-                indexModel: false
-                visible: _multipleVehicleTypes && _appSettings.preferredVehicleClass.value === 0
-            }
         }
 
         SettingsGroupLayout {
             Layout.fillWidth: true
+            Layout.maximumWidth: _descriptionWidth
             heading: qsTr("Measurement Units")
             headingDescription: qsTr("Choose the measurement units you want to use. You can also change it later in General Settings.")
 

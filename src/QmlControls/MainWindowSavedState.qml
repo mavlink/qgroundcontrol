@@ -25,6 +25,8 @@ Item {
     function _setDefaultDesktopWindowSize() {
         window.width = Math.min(250 * Screen.pixelDensity, Screen.width);
         window.height = Math.min(150 * Screen.pixelDensity, Screen.height);
+        window.x = Screen.virtualX + (Screen.width - window.width) / 2;
+        window.y = Screen.virtualY + (Screen.height - window.height) / 2;
     }
 
     Component.onCompleted: {
