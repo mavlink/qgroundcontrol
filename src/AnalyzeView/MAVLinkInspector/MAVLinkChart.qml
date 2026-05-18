@@ -104,7 +104,7 @@ ColumnLayout {
         Layout.fillHeight: true
         marginBottom: ScreenTools.defaultFontPixelHeight * 1.5
         marginTop: 0
-        marginLeft: 0
+        marginLeft: ScreenTools.defaultFontPixelWidth // Without this the Y axis tick labels are cut off
         marginRight: 0
 
         theme: GraphsTheme {
