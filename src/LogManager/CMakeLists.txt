@@ -7,12 +7,6 @@ qt_add_library(QGCLogManager STATIC
     LogFormatter.h
     LogModel.cc
     LogModel.h
-    LogStore.cc
-    LogStore.h
-    LogStoreQueryModel.cc
-    LogStoreQueryModel.h
-    LogRemoteSink.cc
-    LogRemoteSink.h
     LogManager.cc
     LogManager.h
 )
@@ -25,14 +19,15 @@ qt_add_qml_module(QGCLogManager
         QGroundControl.Controls
         QGroundControl.Logging
     QML_FILES
-        AppLogging.qml
         LoggingCategoriesDialog.qml
-        LoggingSettingsDialog.qml
 )
 
 target_include_directories(QGCLogManager
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/Settings
+        ${CMAKE_SOURCE_DIR}/src/FactSystem
 )
 
 target_link_libraries(QGCLogManager
@@ -42,13 +37,9 @@ target_link_libraries(QGCLogManager
         Qt6::QmlIntegration
     PRIVATE
         Qt6::Concurrent
-        Qt6::Network
         Qt6::Quick
-        QGCCompression
-        QGCDatabase
         QGCFileSystem
         QGCLogging
-        QGCNetwork
 )
 
 target_precompile_headers(QGCLogManager PRIVATE

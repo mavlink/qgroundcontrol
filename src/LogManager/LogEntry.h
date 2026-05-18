@@ -42,6 +42,7 @@ public:
     QString function;
     QString formatted;
     Qt::HANDLE threadId = nullptr;
+    qint64 elapsedMs = 0;
     int line = 0;
 
     [[nodiscard]] QString levelLabel() const;
@@ -65,11 +66,10 @@ public:
 
     enum Column
     {
-        TimestampColumn = 0,
-        LevelColumn,
+        MessageColumn = 0,
         CategoryColumn,
+        TimestampColumn,
         SourceColumn,
-        MessageColumn,
         ColumnCount
     };
     Q_ENUM(Column)

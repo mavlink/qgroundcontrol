@@ -351,19 +351,19 @@ Analyze QGC application logs and telemetry files.
 
 ```bash
 # Analyze application log
-./tools/log-analyzer/analyze_log.py ~/.local/share/QGroundControl/Logs/QGCConsole.log
+./tools/log-analyzer/analyze_log.py ~/.local/share/QGroundControl/Logs/AppLog.log
 
 # Show only errors
-./tools/log-analyzer/analyze_log.py --errors QGCConsole.log
+./tools/log-analyzer/analyze_log.py --errors AppLog.log
 
 # Analyze MAVLink telemetry log
 ./tools/log-analyzer/analyze_log.py flight.tlog
 
 # Show statistics
-./tools/log-analyzer/analyze_log.py --stats QGCConsole.log
+./tools/log-analyzer/analyze_log.py --stats AppLog.log
 
 # Filter by component
-./tools/log-analyzer/analyze_log.py --component Vehicle QGCConsole.log
+./tools/log-analyzer/analyze_log.py --component Vehicle AppLog.log
 ```
 
 See [log-analyzer/README.md](log-analyzer/README.md) for details.

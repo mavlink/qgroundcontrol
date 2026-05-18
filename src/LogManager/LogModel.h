@@ -17,19 +17,21 @@ class LogModel : public LogEntryTableModel
     QML_ELEMENT
     QML_UNCREATABLE("")
 
-    Q_PROPERTY(int totalCount READ totalCount NOTIFY totalCountChanged)
-    Q_PROPERTY(int maxEntries READ maxEntries WRITE setMaxEntries NOTIFY maxEntriesChanged)
-    Q_PROPERTY(QStringList categoriesList READ categoriesList NOTIFY categoriesChanged)
-    Q_PROPERTY(int filterLevel READ filterLevel WRITE setFilterLevel NOTIFY filterLevelChanged)
-    Q_PROPERTY(QString filterCategory READ filterCategory WRITE setFilterCategory NOTIFY filterCategoryChanged)
-    Q_PROPERTY(QString filterText READ filterText WRITE setFilterText NOTIFY filterTextChanged)
-    Q_PROPERTY(bool filterRegex READ filterRegex WRITE setFilterRegex NOTIFY filterRegexChanged)
-    Q_PROPERTY(bool filterRegexValid READ filterRegexValid NOTIFY filterRegexValidChanged)
+    Q_PROPERTY(int          totalCount          READ totalCount                                 NOTIFY totalCountChanged)
+    Q_PROPERTY(int          maxEntries          READ maxEntries         WRITE setMaxEntries     NOTIFY maxEntriesChanged)
+    Q_PROPERTY(QStringList  categoriesList      READ categoriesList                             NOTIFY categoriesChanged)
+    Q_PROPERTY(int          filterLevel         READ filterLevel        WRITE setFilterLevel    NOTIFY filterLevelChanged)
+    Q_PROPERTY(QString      filterCategory      READ filterCategory     WRITE setFilterCategory NOTIFY filterCategoryChanged)
+    Q_PROPERTY(QString      filterText          READ filterText         WRITE setFilterText     NOTIFY filterTextChanged)
+    Q_PROPERTY(bool         filterRegex         READ filterRegex        WRITE setFilterRegex    NOTIFY filterRegexChanged)
+    Q_PROPERTY(bool         filterRegexValid    READ filterRegexValid                           NOTIFY filterRegexValidChanged)
 
 public:
     explicit LogModel(QObject* parent = nullptr);
 
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+    void multiData(const QModelIndex& index, QModelRoleDataSpan roleDataSpan) const override;
 
     int totalCount() const { return static_cast<int>(_entries.size()); }
 
@@ -86,6 +88,7 @@ private:
     void _trimExcess();
     void _rebuildFilteredIndices();
     bool _passesFilter(const LogEntry& entry) const;
+
     bool _hasActiveFilter() const;
     void _recompileRegex();
     void _appendToFiltered(int first, int last);

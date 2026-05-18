@@ -44,7 +44,13 @@
         },
         {
             "name": "Logging",
-            "url": "qrc:/qml/QGroundControl/LogManager/AppLogging.qml",
+            "qml": "LoggingSettings.qml",
+            "icon": "qrc:/InstrumentValueIcons/conversation.svg",
+            "pageDefinition": "Logging.SettingsUI.json"
+        },
+        {
+            "name": "Log Viewer",
+            "qml": "AppLogging.qml",
             "icon": "qrc:/InstrumentValueIcons/conversation.svg"
         },
         {

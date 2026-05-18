@@ -16,7 +16,6 @@ private slots:
     void _modelRolesExposed();
     void _modelReceivesEntries();
     void _filterBindingsWork();
-    void _settingsDialogLoads();
 
 private:
     QQmlEngine* _engine = nullptr;

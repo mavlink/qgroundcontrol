@@ -22,6 +22,7 @@ set(_generated_qml_names
     CommLinksSettings.qml
     FlyViewSettings.qml
     GeneralSettings.qml
+    LoggingSettings.qml
     MapsSettings.qml
     NTRIPSettings.qml
     PlanViewSettings.qml
@@ -73,11 +74,15 @@ qt_add_qml_module(AppSettingsModule
     URI QGroundControl.AppSettings
     VERSION 1.0
     RESOURCE_PREFIX /qml
+    DEPENDENCIES
+        QGroundControl.Controls
+        QGroundControl.LogManager
     QML_FILES
         # Generated from SettingsUI.json definitions (output in build tree)
         ${_generated_qml}
 
         # Hand-coded pages and components
+        AppLogging.qml
         BluetoothSettings.qml
         DebugWindow.qml
         GcsPositionStatus.qml
