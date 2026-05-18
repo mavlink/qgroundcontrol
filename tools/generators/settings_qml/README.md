@@ -4,9 +4,9 @@ Generates QML application settings pages from UI definition JSON files.
 
 The generator reads two types of inputs:
 
-- `src/UI/AppSettings/pages/SettingsPages.json` — the ordered list of pages
+- `src/AppSettings/pages/SettingsPages.json` — the ordered list of pages
   shown in the Settings UI
-- `src/UI/AppSettings/pages/<Page>.SettingsUI.json` — the layout definition
+- `src/AppSettings/pages/<Page>.SettingsUI.json` — the layout definition
   for each page
 
 It also reads `src/Settings/*.SettingsGroup.json` to look up fact type metadata
@@ -16,7 +16,7 @@ It also reads `src/Settings/*.SettingsGroup.json` to look up fact type metadata
 
 ```bash
 python3 -m tools.generators.settings_qml.generate_pages \
-    --output-dir src/UI/AppSettings
+    --output-dir src/AppSettings
 ```
 
 ---

@@ -3,16 +3,16 @@
 Generate QML settings pages from UI definition JSON files.
 
 Run from the repo root:
-    python3 -m tools.generators.settings_qml.generate_pages --output-dir src/UI/AppSettings
+    python3 -m tools.generators.settings_qml.generate_pages --output-dir src/AppSettings
 
 Reads:
-  - src/UI/AppSettings/pages/SettingsPages.json  (page list + metadata)
-  - src/UI/AppSettings/pages/<page>.json          (per-page UI definitions)
+  - src/AppSettings/pages/SettingsPages.json  (page list + metadata)
+  - src/AppSettings/pages/<page>.json          (per-page UI definitions)
   - src/Settings/*.SettingsGroup.json              (fact type metadata)
 
 Generates:
-  - src/UI/AppSettings/<page>.qml                  (one per page definition)
-  - src/UI/AppSettings/SettingsPagesModel.qml      (page list model)
+  - src/AppSettings/<page>.qml                  (one per page definition)
+  - src/AppSettings/SettingsPagesModel.qml      (page list model)
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from pathlib import Path
 
 from .page_generator import generate_page_qml, generate_pages_model_qml, load_page_def
 
-PAGES_DIR = Path("src/UI/AppSettings/pages")
+PAGES_DIR = Path("src/AppSettings/pages")
 SETTINGS_DIR = Path("src/Settings")
 
 

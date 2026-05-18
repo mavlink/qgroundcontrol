@@ -1,0 +1,46 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "diskLoggingEnabled",
+            "shortDesc": "Write application log messages to disk in Logs directory.",
+            "type": "bool",
+            "default": false,
+            "label": "Enable",
+            "group": "Disk Logging"
+        },
+        {
+            "name": "diskLoggingMaxFileSizeMB",
+            "shortDesc": "Maximum size of a single log file in megabytes before rotation.",
+            "type": "uint32",
+            "default": 10,
+            "mobileDefault": 2,
+            "min": 1,
+            "max": 100,
+            "label": "Max File Size (MB)",
+            "group": "Disk Logging"
+        },
+        {
+            "name": "diskLoggingMaxBackupFiles",
+            "shortDesc": "Number of rotated backup log files to keep.",
+            "type": "uint32",
+            "default": 5,
+            "mobileDefault": 3,
+            "min": 0,
+            "max": 20,
+            "label": "Max Backup Files",
+            "group": "Disk Logging"
+        },
+        {
+            "name": "saveFormat",
+            "shortDesc": "File format used when saving the application log.",
+            "type": "uint32",
+            "enumStrings": "Text (.txt),CSV (.csv)",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "Save Format",
+            "group": "Log Viewer"
+        }
+    ]
+}

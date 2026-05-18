@@ -5,10 +5,6 @@ qt_add_library(QGCNetwork STATIC
     QGCFileDownload.h
     QGCNetworkHelper.cc
     QGCNetworkHelper.h
-    RemoteTransport.cc
-    RemoteTransport.h
-    TransportStrategy.cc
-    TransportStrategy.h
 )
 
 target_include_directories(QGCNetwork

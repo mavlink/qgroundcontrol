@@ -10,14 +10,10 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LogEntry.h"
-#include "LogFormatter.h"
 
 class QJSEngine;
 class QQmlEngine;
 class LogModel;
-class LogRemoteSink;
-class LogStore;
-class LogStoreQueryModel;
 class QGCFileWriter;
 
 class LogManager : public QObject
@@ -25,32 +21,15 @@ class LogManager : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
+
     Q_MOC_INCLUDE("LogModel.h")
-    Q_MOC_INCLUDE("LogRemoteSink.h")
-    Q_MOC_INCLUDE("LogStore.h")
-    Q_MOC_INCLUDE("LogStoreQueryModel.h")
-    Q_PROPERTY(LogModel* model READ model CONSTANT)
-    Q_PROPERTY(LogRemoteSink* remoteSink READ remoteSink CONSTANT)
-    Q_PROPERTY(LogStore* logStore READ logStore CONSTANT)
-    Q_PROPERTY(LogStoreQueryModel* historyModel READ historyModel CONSTANT)
-    Q_PROPERTY(bool hasError READ hasError NOTIFY hasErrorChanged)
-    Q_PROPERTY(QString lastError READ lastError NOTIFY lastErrorChanged)
-    Q_PROPERTY(
-        bool diskLoggingEnabled READ isDiskLoggingEnabled WRITE setDiskLoggingEnabled NOTIFY diskLoggingEnabledChanged)
-    Q_PROPERTY(bool diskCompressionEnabled READ isDiskCompressionEnabled WRITE setDiskCompressionEnabled NOTIFY
-                   diskCompressionEnabledChanged)
-    Q_PROPERTY(int flushOnLevel READ flushOnLevel WRITE setFlushOnLevel NOTIFY flushOnLevelChanged)
+
+    Q_PROPERTY(LogModel*            model           READ model          CONSTANT)
+    Q_PROPERTY(bool                 hasError        READ hasError       NOTIFY hasErrorChanged)
+    Q_PROPERTY(QString              lastError       READ lastError      NOTIFY lastErrorChanged)
+
 
 public:
-    enum ExportFormat
-    {
-        PlainText = LogFormatter::PlainText,
-        JSON = LogFormatter::JSON,
-        CSV = LogFormatter::CSV,
-        JSONLines = LogFormatter::JSONLines,
-    };
-    Q_ENUM(ExportFormat)
-
     ~LogManager();
 
     static LogManager* instance();
@@ -58,13 +37,9 @@ public:
     static void installHandler();
     static void applyEnvironmentLogLevel();
 
+    void init();
+
     [[nodiscard]] LogModel* model() { return _model; }
-
-    [[nodiscard]] LogRemoteSink* remoteSink() { return _remoteSink; }
-
-    [[nodiscard]] LogStore* logStore() { return _logStore; }
-
-    [[nodiscard]] LogStoreQueryModel* historyModel() { return _historyModel; }
 
     [[nodiscard]] bool hasError() const { return _ioError; }
 
@@ -74,20 +49,8 @@ public:
 
     [[nodiscard]] QString logDirectory() const { return _logDirectory; }
 
-    [[nodiscard]] bool isDiskLoggingEnabled() const { return _diskLoggingEnabled; }
 
-    void setDiskLoggingEnabled(bool enabled);
-
-    [[nodiscard]] bool isDiskCompressionEnabled() const { return _diskCompressionEnabled; }
-
-    void setDiskCompressionEnabled(bool enabled);
-
-    [[nodiscard]] int flushOnLevel() const { return _flushOnLevel; }
-
-    void setFlushOnLevel(int level);
-
-    Q_INVOKABLE void writeMessages(const QString& destFile, ExportFormat format = PlainText);
-    Q_INVOKABLE void writeFilteredMessages(const QString& destFile, ExportFormat format = PlainText);
+    Q_INVOKABLE void writeMessages(const QString& destFile);
     Q_INVOKABLE void clearError();
     Q_INVOKABLE void flush();
 
@@ -106,9 +69,6 @@ public:
 signals:
     void hasErrorChanged();
     void lastErrorChanged();
-    void diskLoggingEnabledChanged();
-    void diskCompressionEnabledChanged();
-    void flushOnLevelChanged();
     void writeStarted();
     void writeFinished(bool success);
 
@@ -124,17 +84,14 @@ private:
     static LogEntry buildEntry(QtMsgType type, const QMessageLogContext& context, const QString& message);
 
     void _dispatchToSinks(const LogEntry& entry);
+    void _replayEarlyEntries();
+    void _setDiskLoggingEnabled(bool enabled);
     void _rotateLogs();
     void _setIoError(const QString& message);
-    void _exportEntries(QList<LogEntry> entries, const QString& destFile, ExportFormat format);
+    void _exportEntries(QList<LogEntry> entries, const QString& destFile);
     const QString& _internCategory(const QString& category);
 
-    LogModel* _model = nullptr;
-    LogRemoteSink* _remoteSink = nullptr;
-    LogStore* _logStore = nullptr;
-    LogStoreQueryModel* _historyModel = nullptr;
-    QGCFileWriter* _fileWriter = nullptr;
-
+    // Rate limiting infrastructure — currently disabled (_rateLimitingEnabled = false)
     struct RateBucket
     {
         qint64 lastRefillMs = 0;
@@ -145,6 +102,9 @@ private:
     bool _rateLimitCheck(const LogEntry& entry);
     void _emitSuppressedSummary(const QString& category, int count);
 
+    LogModel* _model = nullptr;
+    QGCFileWriter* _fileWriter = nullptr;
+
     QFuture<void> _exportFuture;
     QTimer _flushTimer;
     QList<LogEntry> _pendingDiskWrites;
@@ -153,12 +113,12 @@ private:
     QString _logDirectory;
     bool _ioError = false;
     QString _lastError;
+    bool _initialized = false;
     bool _diskLoggingEnabled = false;
-    bool _diskCompressionEnabled = false;
-    int _flushOnLevel = LogEntry::Warning;
+    bool _rateLimitingEnabled = false;
+    int _maxLogFileSize = 10 * 1024 * 1024;
+    int _maxBackupFiles = 5;
 
-    static constexpr int kMaxLogFileSize = 10 * 1024 * 1024;
-    static constexpr int kMaxBackupFiles = 5;
     static constexpr int kFlushIntervalMSecs = 1000;
     static constexpr int kRateTokensPerSecond = 100;
     static constexpr int kRateMaxTokens = 200;

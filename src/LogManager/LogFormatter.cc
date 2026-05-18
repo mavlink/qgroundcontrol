@@ -25,12 +25,13 @@ static QString escapeCsv(const QString& field)
 QString formatCsvRow(const LogEntry& entry)
 {
     return escapeCsv(entry.timestamp.toString(Qt::ISODateWithMs)) + ',' + entry.levelLabel() + ',' +
-           escapeCsv(entry.category) + ',' + escapeCsv(entry.message);
+           escapeCsv(entry.category) + ',' + escapeCsv(entry.message) + ',' +
+           escapeCsv(entry.file) + ',' + (entry.file.isEmpty() ? QString() : QString::number(entry.line));
 }
 
 QString csvHeader()
 {
-    return QStringLiteral("timestamp,level,category,message");
+    return QStringLiteral("timestamp,level,category,message,file,line");
 }
 
 // ---------------------------------------------------------------------------
@@ -54,9 +55,16 @@ QByteArray format(const QList<LogEntry>& entries, int fmt)
 QByteArray formatAsText(const QList<LogEntry>& entries)
 {
     QByteArray result;
-    result.reserve(entries.size() * 120);
+    result.reserve(entries.size() * 150);
     for (const auto& e : entries) {
         result.append(e.formatted.toUtf8());
+        if (!e.file.isEmpty()) {
+            if (e.line > 0) {
+                result.append(QStringLiteral(" (%1:%2)").arg(e.file).arg(e.line).toUtf8());
+            } else {
+                result.append(QStringLiteral(" (%1)").arg(e.file).toUtf8());
+            }
+        }
         result.append('\n');
     }
     return result;
