@@ -171,6 +171,7 @@ Rectangle {
 
         QGCFlickable {
             id:                 buttonList
+            objectName:         "settings_buttonList"
             Layout.fillWidth:   true
             Layout.fillHeight:  true
             contentHeight:      buttonColumn.height + _verticalMargin
@@ -237,6 +238,7 @@ Rectangle {
                     // Page button
                     SettingsButton {
                         Layout.fillWidth: true
+                        objectName:    "settingsButton_" + (model.nameKey ?? pageName)
                         text:          pageName
                         icon.source:   pageIconUrl
                         expandable:    hasMultipleSections
@@ -338,6 +340,7 @@ Rectangle {
     //-- Panel Contents
     Loader {
         id:                     rightPanel
+        objectName:             "settings_rightPanel"
         anchors.leftMargin:     _horizontalMargin
         anchors.rightMargin:    _horizontalMargin
         anchors.topMargin:      _verticalMargin

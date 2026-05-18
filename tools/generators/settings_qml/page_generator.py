@@ -429,7 +429,7 @@ def _needs_string_field_width(page: PageDef, settings_dir: Path) -> bool:
     return False
 
 
-def generate_page_qml(page: PageDef, settings_dir: Path, json_context: str = "") -> str:
+def generate_page_qml(page: PageDef, settings_dir: Path, json_context: str = "", page_name: str = "") -> str:
     """Generate a complete QML settings page from a page definition."""
     _tr = (lambda s: f'qsTranslate("{json_context}", "{s}")') if json_context else (lambda s: f'qsTr("{s}")')
     has_string_fields = _needs_string_field_width(page, settings_dir)
@@ -450,6 +450,9 @@ def generate_page_qml(page: PageDef, settings_dir: Path, json_context: str = "")
 
     # Root element
     lines.append("SettingsPage {")
+    if page_name:
+        object_name = page_name.replace(" ", "")
+        lines.append(f'    objectName: "settingsPage_{object_name}"')
     if has_string_fields:
         lines.append("    property real _stringFieldWidth: ScreenTools.defaultFontPixelWidth * 30")
 
@@ -659,6 +662,7 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
         lines.append("")
         lines.append("    ListElement {")
         lines.append(f'        name: qsTranslate("SettingsPages.json", "{name}")')
+        lines.append(f'        nameKey: "{name}"')
         lines.append(f'        url: "{url}"')
         lines.append(f'        iconUrl: "{icon}"')
         lines.append(f"        sections: '{sections_json}'")

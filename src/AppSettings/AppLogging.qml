@@ -6,6 +6,7 @@ import QtQuick.Layouts
 
 Item {
     id: root
+    objectName: "settingsPage_LogViewer"
 
     readonly property real _indicatorWidth: ScreenTools.defaultFontPixelWidth * 0.4
     readonly property real _margin: ScreenTools.defaultFontPixelWidth
