@@ -76,6 +76,7 @@ Item {
 
                         QGCToolBarButton {
                             id:                 qgcButton
+                            objectName:         "toolbar_qgcLogo"
                             Layout.fillHeight:  true
                             icon.source:        "/res/QGCLogoFull.svg"
                             logo:               true

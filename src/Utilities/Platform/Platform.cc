@@ -210,7 +210,7 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
 #endif
 
 #ifdef QGC_UNITTEST_BUILD
-    if (args.runningUnitTests || args.listTests) {
+    if ((args.runningUnitTests || args.listTests) && !args.onscreen) {
         if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) {
             (void) qputenv("QT_QPA_PLATFORM", "offscreen");
         }

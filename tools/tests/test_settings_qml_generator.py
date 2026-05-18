@@ -196,6 +196,20 @@ class TestGeneratePageQml:
         assert "SettingsPage {" in qml
         assert qml.rstrip().endswith("}")
 
+    def test_page_name_emits_object_name(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
+        ])
+        qml = generate_page_qml(page, settings_dir, page_name="Fly View")
+        assert 'objectName: "settingsPage_FlyView"' in qml
+
+    def test_page_name_empty_no_object_name(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
+        ])
+        qml = generate_page_qml(page, settings_dir, page_name="")
+        assert "objectName:" not in qml
+
     def test_bool_generates_checkbox(self, settings_dir: Path):
         page = PageDef(groups=[
             GroupDef(controls=[ControlDef(setting="appSettings.enableFeature")]),
@@ -515,6 +529,7 @@ class TestGeneratePagesModelQml:
     def test_page_entry(self, pages_setup: Path):
         qml = generate_pages_model_qml(pages_setup)
         assert 'name: qsTranslate("SettingsPages.json", "Test Page")' in qml
+        assert 'nameKey: "Test Page"' in qml
         assert "qrc:/qml/QGroundControl/AppSettings/TestPage.qml" in qml
         assert "qrc:/test.svg" in qml
 

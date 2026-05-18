@@ -26,6 +26,8 @@ set(QGC_TEST_TIMEOUT_INTEGRATION 120 CACHE STRING "Timeout for integration tests
 set(QGC_TEST_TIMEOUT_SLOW 180 CACHE STRING "Timeout for slow tests (seconds)")
 set(QGC_TEST_TIMEOUT_DEFAULT 90 CACHE STRING "Default test timeout (seconds)")
 
+option(QGC_TEST_ONSCREEN "Run tests with native display instead of offscreen" OFF)
+
 # ----------------------------------------------------------------------------
 # Convenience Targets
 # ----------------------------------------------------------------------------
@@ -114,9 +116,14 @@ endforeach()
 function(add_qgc_test test_name)
     cmake_parse_arguments(ARG "SERIAL" "TIMEOUT" "LABELS;RESOURCE_LOCK" ${ARGN})
 
+    set(_test_command $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest:${test_name} --allow-multiple)
+    if(QGC_TEST_ONSCREEN)
+        list(APPEND _test_command --onscreen)
+    endif()
+
     add_test(
         NAME ${test_name}
-        COMMAND $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest:${test_name} --allow-multiple
+        COMMAND ${_test_command}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
@@ -133,7 +140,10 @@ function(add_qgc_test test_name)
         set(_timeout ${QGC_TEST_TIMEOUT_DEFAULT})
     endif()
 
-    set(_test_env "QT_QPA_PLATFORM=offscreen" "QT_LOGGING_RULES=*.debug=false")
+    set(_test_env "QT_LOGGING_RULES=*.debug=false")
+    if(NOT QGC_TEST_ONSCREEN)
+        list(PREPEND _test_env "QT_QPA_PLATFORM=offscreen")
+    endif()
 
     # LSan's tracer process needs ptrace, which Yama (ptrace_scope>=1) blocks on
     # most dev/CI hosts — disable leak detection under ASan to avoid spurious
