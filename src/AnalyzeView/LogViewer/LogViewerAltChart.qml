@@ -256,9 +256,10 @@ Item {
             z: 10
         }
 
-        // Mouse area — drag to zoom, right-click to reset, click/move to set cursor
+        // Mouse area — drag to zoom, right-click to reset, hover/click to set cursor
         MouseArea {
             anchors.fill: parent
+            hoverEnabled: !ScreenTools.isMobile
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             z: 11
 
@@ -275,6 +276,7 @@ Item {
                 _zoomRect.width = 0
                 _zoomRect.height = _altChart.plotArea.height
                 _zoomRect.visible = true
+                root._updateCursor(mouse.x)
             }
 
             onPositionChanged: (mouse) => {
@@ -283,6 +285,10 @@ Item {
                     const right = Math.max(_dragStartX, mouse.x)
                     _zoomRect.x = left
                     _zoomRect.width = Math.max(0, right - left)
+                    return
+                }
+                if (!pressed) {
+                    root._updateCursor(mouse.x)
                 }
             }
 
@@ -291,12 +297,17 @@ Item {
                 const dragW = _zoomRect.width
                 _zoomRect.visible = false
                 if (dragW < ScreenTools.defaultFontPixelWidth * 0.5) {
-                    root._updateCursor(mouse.x)
                     return
                 }
                 const leftX  = root._pixelToAxisX(_zoomRect.x)
                 const rightX = root._pixelToAxisX(_zoomRect.x + _zoomRect.width)
                 root._applyZoom(Math.min(leftX, rightX), Math.max(leftX, rightX))
+                root._updateCursor(mouse.x)
+            }
+
+            onExited: {
+                _markerVisible = false
+                root.markerCleared()
             }
         }
 
