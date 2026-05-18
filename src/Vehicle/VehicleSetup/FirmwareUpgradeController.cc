@@ -674,7 +674,7 @@ void FirmwareUpgradeController::_px4ReleasesGithubDownloadComplete(bool success,
                 foundStable = true;
             } else if (!foundBeta && release["prerelease"].toBool()) {
                 _px4BetaVersion = release["name"].toString();
-                emit px4StableVersionChanged(_px4BetaVersion);
+                emit px4BetaVersionChanged(_px4BetaVersion);
                 qCDebug(FirmwareUpgradeControllerLog()) << "Found px4 beta version" << _px4BetaVersion;
                 foundBeta = true;
             }
