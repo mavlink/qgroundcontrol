@@ -10,7 +10,6 @@ It also requires usage of a Daily build or Stable 3.6 (once available).
 _QGroundControl_ will not display the Rally Point options if they are not supported by the connected vehicle.
 :::
 
-![Rally Points](../../../assets/plan/rally/rally_points_overview.jpg)
 
 ## Rally Point Usage
 
@@ -24,7 +23,6 @@ To create Rally Points:
 1. Make any rally point active by selecting it on the map:
    - Move the active rally point by either dragging it on the map or editing the position in the panel.
    - Delete the active rally point by selecting the menu option on the _Rally Point_ panel
-     ![Delete Rally Point](../../../assets/plan/rally/rally_points_delete.jpg)
 
 ## Upload Rally Points
 

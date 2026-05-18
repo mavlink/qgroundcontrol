@@ -8,7 +8,6 @@ To view the checklist, first enable the tool by navigating to [Application Setti
 The tool will then be added to the _Flight Tools_.
 Press it to open the checklist:
 
-![Pre Flight Checklist](../../../assets/fly/pre_flight_checklist.jpg)
 
 Once you have performed each test, select it on the UI to mark it as complete.
 
@@ -26,7 +25,6 @@ To takeoff (when landed):
   - You can also click on the specified altitude (10 ft in example) and then type in a specific altitude.
 1. Confirm takeoff using the slider.
 
-![takeoff](../../../assets/fly/takeoff.png)
 
 ## Land {#land}
 

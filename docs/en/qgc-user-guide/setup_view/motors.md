@@ -7,7 +7,6 @@ These instructions apply to PX4 and to most vehicle types on ArduPilot.
 Vehicle-specific instructions are provided as sub-topics (e.g. [Motors Setup (ArduSub)](../setup_view/motors_ardusub.md)).
 :::
 
-![Motors Test](../../../assets/setup/Motors.png)
 
 ## Test Steps
 
