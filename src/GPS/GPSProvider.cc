@@ -9,11 +9,7 @@
 #include <sbf.h>
 #include <ubx.h>
 
-#ifdef Q_OS_ANDROID
-#include "qserialport.h"
-#else
-#include <QtSerialPort/QSerialPort>
-#endif
+#include "QGCSerialPortAdapter.h"
 
 QGC_LOGGING_CATEGORY(GPSProviderLog, "GPS.GPSProvider")
 QGC_LOGGING_CATEGORY(GPSDriversLog, "GPS.Drivers")
@@ -150,7 +146,7 @@ void GPSProvider::run()
                 }
             }
 
-            if ((_serial->error() != QSerialPort::NoError) && (_serial->error() != QSerialPort::TimeoutError)) {
+            if ((_serial->error() != QGCSerialPortAdapter::NoError) && (_serial->error() != QGCSerialPortAdapter::TimeoutError)) {
                 break;
             }
         }
@@ -167,13 +163,13 @@ void GPSProvider::run()
 
 bool GPSProvider::_connectSerial()
 {
-    _serial = new QSerialPort();
+    _serial = new QGCSerialPortAdapter();
     _serial->setPortName(_device);
     if (!_serial->open(QIODevice::ReadWrite)) {
         // Give the device some time to come up. In some cases the device is not
         // immediately accessible right after startup for some reason. This can take 10-20s.
         uint32_t retries = 60;
-        while ((retries-- > 0) && (_serial->error() == QSerialPort::PermissionError)) {
+        while ((retries-- > 0) && (_serial->error() == QGCSerialPortAdapter::PermissionError)) {
             qCDebug(GPSProviderLog) << "Cannot open device... retrying";
             msleep(500);
             if (_serial->open(QIODevice::ReadWrite)) {
@@ -182,17 +178,17 @@ bool GPSProvider::_connectSerial()
             }
         }
 
-        if (_serial->error() != QSerialPort::NoError) {
+        if (_serial->error() != QGCSerialPortAdapter::NoError) {
             qCWarning(GPSProviderLog) << "GPS: Failed to open Serial Device" << _device << _serial->errorString();
             return false;
         }
     }
 
-    (void) _serial->setBaudRate(QSerialPort::Baud9600);
-    (void) _serial->setDataBits(QSerialPort::Data8);
-    (void) _serial->setParity(QSerialPort::NoParity);
-    (void) _serial->setStopBits(QSerialPort::OneStop);
-    (void) _serial->setFlowControl(QSerialPort::NoFlowControl);
+    (void) _serial->setSerialParameters(QGCSerialPortAdapter::Baud9600,
+                                        QGCSerialPortAdapter::Data8,
+                                        QGCSerialPortAdapter::OneStop,
+                                        QGCSerialPortAdapter::NoParity);
+    (void) _serial->setFlowControl(QGCSerialPortAdapter::NoFlowControl);
 
     return true;
 }

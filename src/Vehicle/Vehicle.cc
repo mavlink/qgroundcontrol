@@ -1064,8 +1064,9 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
 bool Vehicle::_apmArmingNotRequired()
 {
     QString armingRequireParam("ARMING_REQUIRE");
+    // getParameter() returns &_defaultFact (non-null, rawValue==0) when missing — must gate on parameterExists().
     return _parameterManager->parameterExists(ParameterManager::defaultComponentId, armingRequireParam) &&
-            _parameterManager->getParameter(ParameterManager::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
+           _parameterManager->getParameter(ParameterManager::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
 }
 
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
@@ -1309,6 +1310,43 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
             emit flightModeChanged(flightMode());
         }
     }
+
+    // _benchTriggerWriteBurstStress();  // disabled — generates 145 KB/s, swamps low-baud serial telemetry links (e.g. FT232R+TELEM at 57600).
+}
+
+// ============================================================================
+// BENCHMARK INSTRUMENTATION (debug-only). Fires a 10 Hz × 850-msg heartbeat
+// burst on the primary link to saturate write-path drain. Started after the
+// 5th heartbeat; runs until Vehicle is destroyed (timer parented to `this`).
+// To strip: remove this method, its declaration in Vehicle.h, and the
+// _benchTriggerWriteBurstStress() call at the end of _handleHeartbeat().
+// ============================================================================
+void Vehicle::_benchTriggerWriteBurstStress()
+{
+    static int s_hbSeen = 0;
+    static QPointer<QTimer> s_burstTimer;  // QPointer auto-nulls when the parent Vehicle is destroyed (link bounce → fresh re-arm).
+    if (s_burstTimer) return;
+    if (++s_hbSeen < 5) return;
+    s_hbSeen = 0;
+
+    s_burstTimer = new QTimer(this);
+    s_burstTimer->setInterval(100);
+    QObject::connect(s_burstTimer, &QTimer::timeout, this, [this]() {
+        SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+        if (!sharedLink) return;
+        constexpr int kBurst = 850;
+        mavlink_message_t burstMsg;
+        for (int i = 0; i < kBurst; ++i) {
+            mavlink_msg_heartbeat_pack_chan(
+                static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId()),
+                static_cast<uint8_t>(MAVLinkProtocol::getComponentId()),
+                sharedLink->mavlinkChannel(),
+                &burstMsg,
+                MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, 0, 0, MAV_STATE_ACTIVE);
+            sendMessageOnLinkThreadSafe(sharedLink.get(), burstMsg);
+        }
+    });
+    s_burstTimer->start();
 }
 
 void Vehicle::_handleCurrentMode(mavlink_message_t& message)
@@ -1411,7 +1449,8 @@ int Vehicle::motorCount()
 {
     uint8_t frameType = 0;
     if (_vehicleType == MAV_TYPE_SUBMARINE) {
-        frameType = parameterManager()->getParameter(_compID, "FRAME_CONFIG")->rawValue().toInt();
+        Fact *param = parameterManager()->getParameter(_compID, "FRAME_CONFIG");
+        if (param) frameType = param->rawValue().toInt();
     }
     return QGCMAVLink::motorCount(_vehicleType, frameType);
 }

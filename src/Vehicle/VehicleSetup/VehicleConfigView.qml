@@ -516,7 +516,7 @@ Rectangle {
                 ConfigButton {
                     id:                 firmwareButton
                     icon.source:        "/qmlimages/FirmwareUpgradeIcon.png"
-                    visible:            !ScreenTools.isMobile && _corePlugin.options.showFirmwareUpgrade &&
+                    visible:            Qt.platform.os !== "ios" && _corePlugin.options.showFirmwareUpgrade &&
                                         vehicleConfigView._searchQuery.trim() === ""
                     text:               qsTr("Firmware")
                     Layout.fillWidth:   true

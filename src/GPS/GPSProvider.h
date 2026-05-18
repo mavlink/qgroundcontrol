@@ -13,7 +13,7 @@
 #include "sensor_gnss_relative.h"
 #include "sensor_gps.h"
 
-class QSerialPort;
+class QGCSerialPortAdapter;
 class GPSBaseStationSupport;
 
 class GPSProvider : public QThread
@@ -74,7 +74,7 @@ private:
     struct sensor_gnss_relative_s _sensorGnssRelative{};
     struct sensor_gps_s _sensorGps{};
 
-    QSerialPort *_serial = nullptr;
+    QGCSerialPortAdapter *_serial = nullptr;
 
     enum GPSReceiveType {
         Position = 1,

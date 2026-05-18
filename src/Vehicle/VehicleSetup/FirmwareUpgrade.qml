@@ -35,6 +35,12 @@ SetupPage {
             readonly property string unplugReplugText:  highlightPrefix + qsTr("Now unplug your device and plug it back in to enter bootloader mode.") + highlightSuffix
             readonly property string flashFailText:     qsTr("If upgrade failed, make sure to connect ") + highlightPrefix + qsTr("directly") + highlightSuffix + qsTr(" to a powered USB port on your computer, not through a USB hub. ") +
                                                         qsTr("Also make sure you are only powered via USB ") + highlightPrefix + qsTr("not battery") + highlightSuffix + "."
+            readonly property string androidNoteText:   highlightPrefix + qsTr("Android USB note: ") + highlightSuffix +
+                                                        qsTr("the bootloader watchdog (~5 s) is shorter than the Android permission dialog. ") +
+                                                        qsTr("Before flashing, force-stop QGroundControl and replug the device — Android will offer ") +
+                                                        highlightPrefix + qsTr("\"Use by default for this USB device\"") + highlightSuffix +
+                                                        qsTr(" with an ") + highlightPrefix + qsTr("Always") + highlightSuffix +
+                                                        qsTr(" checkbox. Tick it for both the bootloader and the application device, then upgrade.")
 
             readonly property int _defaultFimwareTypePX4:   12
             readonly property int _defaultFimwareTypeAPM:   3
@@ -118,6 +124,9 @@ SetupPage {
                 onActiveVehicleChanged: {
                     if (!globals.activeVehicle && !_flashStarted) {
                         statusTextArea.append(plugInText)
+                        if (Qt.platform.os === "android") {
+                            statusTextArea.append(androidNoteText)
+                        }
                     }
                 }
 

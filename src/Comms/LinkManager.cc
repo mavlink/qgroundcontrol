@@ -21,6 +21,7 @@
 #include "SerialLink.h"
 #include "GPSManager.h"
 #include "GPSRtk.h"
+#include "QGCSerialPortAdapter.h"
 #endif
 
 #ifdef QT_DEBUG
@@ -762,7 +763,8 @@ void LinkManager::_addSerialAutoConnectLink()
             if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
                 _nmeaDeviceName = portInfo.systemLocation().trimmed();
                 qCDebug(LinkManagerLog) << "Configuring nmea port" << _nmeaDeviceName;
-                QSerialPort* newPort = new QSerialPort(portInfo, this);
+                auto* newPort = new QGCSerialPortAdapter(this);
+                newPort->setPortName(portInfo.systemLocation());
                 _nmeaBaud = _autoConnectSettings->autoConnectNmeaBaud()->cookedValue().toUInt();
                 newPort->setBaudRate(static_cast<qint32>(_nmeaBaud));
                 qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;

@@ -2,13 +2,9 @@
 
 #include "LinkConfiguration.h"
 #include "LinkInterface.h"
+#include "QGCSerialPortAdapter.h"
 
 #include <QtCore/QString>
-#ifdef Q_OS_ANDROID
-#include "qserialport.h"
-#else
-#include <QtSerialPort/QSerialPort>
-#endif
 
 #include <atomic>
 
@@ -20,15 +16,15 @@ class QTimer;
 class SerialConfiguration : public LinkConfiguration
 {
     Q_OBJECT
-    Q_PROPERTY(qint32                   baud            READ baud            WRITE setBaud        NOTIFY baudChanged)
-    Q_PROPERTY(QSerialPort::DataBits    dataBits        READ dataBits        WRITE setDataBits    NOTIFY dataBitsChanged)
-    Q_PROPERTY(QSerialPort::FlowControl flowControl     READ flowControl     WRITE setFlowControl NOTIFY flowControlChanged)
-    Q_PROPERTY(QSerialPort::StopBits    stopBits        READ stopBits        WRITE setStopBits    NOTIFY stopBitsChanged)
-    Q_PROPERTY(QSerialPort::Parity      parity          READ parity          WRITE setParity      NOTIFY parityChanged)
-    Q_PROPERTY(QString                  portName        READ portName        WRITE setPortName    NOTIFY portNameChanged)
-    Q_PROPERTY(QString                  portDisplayName READ portDisplayName                      NOTIFY portDisplayNameChanged)
-    Q_PROPERTY(bool                     usbDirect       READ usbDirect       WRITE setUsbDirect   NOTIFY usbDirectChanged)
-    Q_PROPERTY(bool                     dtrForceLow     READ dtrForceLow     WRITE setdtrForceLow NOTIFY dtrForceLowChanged)
+    Q_PROPERTY(qint32  baud            READ baud            WRITE setBaud        NOTIFY baudChanged)
+    Q_PROPERTY(int     dataBits        READ dataBits        WRITE setDataBits    NOTIFY dataBitsChanged)
+    Q_PROPERTY(int     flowControl     READ flowControl     WRITE setFlowControl NOTIFY flowControlChanged)
+    Q_PROPERTY(int     stopBits        READ stopBits        WRITE setStopBits    NOTIFY stopBitsChanged)
+    Q_PROPERTY(int     parity          READ parity          WRITE setParity      NOTIFY parityChanged)
+    Q_PROPERTY(QString portName        READ portName        WRITE setPortName    NOTIFY portNameChanged)
+    Q_PROPERTY(QString portDisplayName READ portDisplayName                      NOTIFY portDisplayNameChanged)
+    Q_PROPERTY(bool    usbDirect       READ usbDirect       WRITE setUsbDirect   NOTIFY usbDirectChanged)
+    Q_PROPERTY(bool    dtrForceLow     READ dtrForceLow     WRITE setdtrForceLow NOTIFY dtrForceLowChanged)
 
 public:
     explicit SerialConfiguration(const QString &name, QObject *parent = nullptr);
@@ -45,17 +41,20 @@ public:
     qint32 baud() const { return _baud; }
     void setBaud(qint32 baud) { if (baud != _baud) { _baud = baud; emit baudChanged(); } }
 
-    QSerialPort::DataBits dataBits() const { return _dataBits; }
-    void setDataBits(QSerialPort::DataBits databits) { if (databits != _dataBits) { _dataBits = databits; emit dataBitsChanged(); } }
+    // The four enum-style properties below store integer values matching the
+    // QSerialPort::DataBits / FlowControl / StopBits / Parity enums (the canonical
+    // wire-format integers). Translation happens inside QGCSerialPortAdapter.
+    int dataBits() const { return _dataBits; }
+    void setDataBits(int databits) { if (databits != _dataBits) { _dataBits = databits; emit dataBitsChanged(); } }
 
-    QSerialPort::FlowControl flowControl() const { return _flowControl; }
-    void setFlowControl(QSerialPort::FlowControl flowControl) { if (flowControl != _flowControl) { _flowControl = flowControl; emit flowControlChanged(); } }
+    int flowControl() const { return _flowControl; }
+    void setFlowControl(int flowControl) { if (flowControl != _flowControl) { _flowControl = flowControl; emit flowControlChanged(); } }
 
-    QSerialPort::StopBits stopBits() const { return _stopBits; }
-    void setStopBits(QSerialPort::StopBits stopBits) { if (stopBits != _stopBits) { _stopBits = stopBits; emit stopBitsChanged(); } }
+    int stopBits() const { return _stopBits; }
+    void setStopBits(int stopBits) { if (stopBits != _stopBits) { _stopBits = stopBits; emit stopBitsChanged(); } }
 
-    QSerialPort::Parity parity() const { return _parity; }
-    void setParity(QSerialPort::Parity parity) { if (parity != _parity) { _parity = parity; emit parityChanged(); } }
+    int parity() const { return _parity; }
+    void setParity(int parity) { if (parity != _parity) { _parity = parity; emit parityChanged(); } }
 
     QString portName() const { return _portName; }
     void setPortName(const QString &name);
@@ -84,15 +83,15 @@ signals:
     void dtrForceLowChanged();
 
 private:
-    qint32 _baud = QSerialPort::Baud57600;
-    QSerialPort::DataBits _dataBits = QSerialPort::Data8;
-    QSerialPort::FlowControl _flowControl = QSerialPort::NoFlowControl;
-    QSerialPort::StopBits _stopBits = QSerialPort::OneStop;
-    QSerialPort::Parity _parity = QSerialPort::NoParity;
+    qint32  _baud = 57600;
+    int     _dataBits    = 8;       // QSerialPort::Data8
+    int     _flowControl = 0;       // QSerialPort::NoFlowControl
+    int     _stopBits    = 1;       // QSerialPort::OneStop
+    int     _parity      = 0;       // QSerialPort::NoParity
     QString _portName;
     QString _portDisplayName;
-    bool _usbDirect = false;
-    bool _dtrForceLow = false;
+    bool    _usbDirect   = false;
+    bool    _dtrForceLow = false;
 };
 
 /*===========================================================================*/
@@ -106,7 +105,6 @@ public:
     ~SerialWorker();
 
     bool isConnected() const;
-    const QSerialPort *port() const { return _port; }
 
 signals:
     void connected();
@@ -125,13 +123,17 @@ private slots:
     void _onPortConnected();
     void _onPortDisconnected();
     void _onPortReadyRead();
-    void _onPortBytesWritten(qint64 bytes) const;
-    void _onPortErrorOccurred(QSerialPort::SerialPortError portError);
+    void _onPortErrorOccurred(QGCSerialPortAdapter::Error portError);
     void _checkPortAvailability();
+
+    /** Emit {@link #errorOccurred} at most once per connect/disconnect cycle —
+     *  prevents writeData() failure floods (e.g. write-buffer cap firing under
+     *  burst load) from queueing thousands of UI popups. */
+    void _emitErrorOnce(const QString &errorString);
 
 private:
     const SerialConfiguration *_serialConfig = nullptr;
-    QSerialPort *_port = nullptr;
+    QGCSerialPortAdapter *_port = nullptr;
     QTimer *_timer = nullptr;
     bool _errorEmitted = false;
 };
@@ -148,8 +150,6 @@ public:
 
     bool isConnected() const override;
     bool isSecureConnection() const override { return _serialConfig->usbDirect(); }
-
-    const QSerialPort *port() const { return _worker->port(); }
 
 public slots:
     void disconnect() override;

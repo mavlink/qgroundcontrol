@@ -851,6 +851,7 @@ private:
     void _handlePing                    (LinkInterface* link, mavlink_message_t& message);
     void _handleHomePosition            (mavlink_message_t& message);
     void _handleHeartbeat               (mavlink_message_t& message);
+    void _benchTriggerWriteBurstStress  ();   // DEBUG: write-path stress benchmark; remove with body in Vehicle.cc.
     void _handleCurrentMode             (mavlink_message_t& message);
     void _handleRCChannels              (mavlink_message_t& message);
     void _handleBatteryStatus           (mavlink_message_t& message);

@@ -252,7 +252,7 @@ QStringList FirmwareUpgradeController::availableBoardsName(void)
     return names;
 }
 
-void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int boardType, QString boardName)
+void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QGCSerialPortInfo& info, int boardType, QString boardName)
 {
     _boardInfo      = info;
     _boardType      = static_cast<QGCSerialPortInfo::BoardType_t>(boardType);

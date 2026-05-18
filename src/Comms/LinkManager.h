@@ -18,6 +18,7 @@ class AutoConnectSettings;
 class LogReplayLink;
 class MAVLinkProtocol;
 class QmlObjectListModel;
+class QGCSerialPortAdapter;
 class QTimer;
 class SerialLink;
 class UDPConfiguration;
@@ -183,7 +184,7 @@ private:
     QString _autoConnectRTKPort;
     QString _nmeaDeviceName;
     uint32_t _nmeaBaud = 0;
-    QSerialPort *_nmeaPort = nullptr;
+    QGCSerialPortAdapter *_nmeaPort = nullptr;
 #endif // QGC_NO_SERIAL_LINK
 
     // NMEA UDP is network-only; available regardless of QGC_NO_SERIAL_LINK.

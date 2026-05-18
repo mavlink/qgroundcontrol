@@ -20,6 +20,8 @@ import org.qtproject.qt.android.bindings.QtActivity;
 
 import org.freedesktop.gstreamer.GStreamer;
 
+import org.mavlink.qgroundcontrol.serial.QGCUsbSerialManager;
+
 public class QGCActivity extends QtActivity {
     private static final String TAG = QGCActivity.class.getSimpleName();
     private static final String MULTICAST_LOCK_TAG = "QGroundControl";
@@ -39,7 +41,7 @@ public class QGCActivity extends QtActivity {
         nativeInit();
         setupMulticastLock();
 
-        QGCUsbSerialManager.initialize(this);
+        QGCUsbSerialManager.createInstance(this);
         QGCSDLManager.initialize(this);
         m_storagePermissionController = new QGCStoragePermissionController(this);
     }
@@ -61,7 +63,7 @@ public class QGCActivity extends QtActivity {
         try {
             QGCSDLManager.cleanup();
             releaseMulticastLock();
-            QGCUsbSerialManager.cleanup(this);
+            QGCUsbSerialManager.destroyInstance();
         } catch (final Exception e) {
             QGCLogger.e(TAG, "Exception onDestroy()", e);
         }
@@ -137,7 +139,7 @@ public class QGCActivity extends QtActivity {
             if (cursor != null && cursor.moveToFirst()) {
                 final int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                 if (nameIndex >= 0) {
-                    displayName = cursor.getString(nameIndex);                    
+                    displayName = cursor.getString(nameIndex);
                     displayName = sanitizeFilename(displayName);
                 }
             }
@@ -314,8 +316,6 @@ public class QGCActivity extends QtActivity {
 
     // Native C++ functions
     public native boolean nativeInit();
-    public native void qgcLogDebug(final String message);
-    public native void qgcLogWarning(final String message);
     public native void nativeStoragePermissionsResult(boolean granted);
     public native void onImportResult(final String filePath);
 }

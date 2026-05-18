@@ -1,4 +1,5 @@
 #include "AndroidInterface.h"
+#include "AndroidLogSink.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "AndroidSerial.h"
 #endif
@@ -157,9 +158,10 @@ jint JNI_OnLoad(JavaVM* vm, void*)
     }
 
     AndroidInterface::setNativeMethods();
+    AndroidLogSink::setNativeMethods();
 
 #ifndef QGC_NO_SERIAL_LINK
-    AndroidSerial::setNativeMethods();
+    AndroidSerial::initialize();
 #endif
 
     QNativeInterface::QAndroidApplication::hideSplashScreen(333);
@@ -182,8 +184,4 @@ void JNI_OnUnload(JavaVM* vm, void*)
     }
 
     _java_vm.store(nullptr, std::memory_order_release);
-
-#ifndef QGC_NO_SERIAL_LINK
-    AndroidSerial::cleanupJniCache();
-#endif
 }

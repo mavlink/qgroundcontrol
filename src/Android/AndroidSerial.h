@@ -1,89 +1,41 @@
 #pragma once
 
-#include <QtCore/QByteArray>
+#include <QtCore/QList>
 #include <QtCore/QString>
-#include <qserialport.h>
-#include <qserialportinfo.h>
 
-class QSerialPortPrivate;
+class QGCSerialPortInfo;
 
 namespace AndroidSerial {
-enum DataBits
-{
-    Data5 = 5,
-    Data6 = 6,
-    Data7 = 7,
-    Data8 = 8
+
+// Wire-format values matching upstream usb-serial-for-android. DataBits and StopBits
+// are intentionally absent: their numeric values match QSerialPort::DataBits /
+// QSerialPort::StopBits exactly, so callers static_cast directly.
+enum Parity      { NoParity = 0, OddParity, EvenParity, MarkParity, SpaceParity };
+enum ControlLine { RtsControlLine = 0, CtsControlLine, DtrControlLine, DsrControlLine, CdControlLine, RiControlLine };
+enum FlowControl {
+    NoFlowControl = 0, RtsCtsFlowControl, DtrDsrFlowControl, XonXoffFlowControl, XonXoffInlineFlowControl
 };
 
-enum Parity
-{
-    NoParity = 0,
-    OddParity,
-    EvenParity,
-    MarkParity,
-    SpaceParity
+// Mirrors SerialConstants.EXC_* in Java. Drives QSerialPort::SerialPortError mapping
+// in qserialport_android.cpp::exceptionNotification — keep in sync with Java side.
+enum class JavaExceptionKind : int {
+    Unknown    = 0,
+    Resource   = 1,
+    Permission = 2,
+    OpenFailed = 3,
 };
 
-enum StopBits
-{
-    OneStop = 1,
-    OneAndHalfStop = 3,
-    TwoStop = 2
+constexpr qint64 MAX_READ_SIZE = 16 * 1024;
+constexpr int INVALID_DEVICE_ID = 0;
+
+struct SerialParameters {
+    qint32 baudRate;
+    int dataBits;
+    int stopBits;
+    int parity;
 };
 
-enum ControlLine
-{
-    RtsControlLine = 0,
-    CtsControlLine,
-    DtrControlLine,
-    DsrControlLine,
-    CdControlLine,
-    RiControlLine
-};
+void initialize();
+QList<QGCSerialPortInfo> availableDevices();
 
-enum FlowControl
-{
-    NoFlowControl = 0,
-    RtsCtsFlowControl,
-    DtrDsrFlowControl,
-    XonXoffFlowControl,
-    XonXoffInlineFlowControl
-};
-
-constexpr char CHAR_XON = 17;
-constexpr char CHAR_XOFF = 19;
-
-constexpr const char* kJniUsbSerialManagerClassName = "org/mavlink/qgroundcontrol/QGCUsbSerialManager";
-
-void setNativeMethods();
-QList<QSerialPortInfo> availableDevices();
-int getDeviceId(const QString& portName);
-int getDeviceHandle(int deviceId);
-int open(const QString& portName, QSerialPortPrivate* classPtr);
-bool close(int deviceId);
-bool isOpen(const QString& portName);
-QByteArray read(int deviceId, int length, int timeout);
-int write(int deviceId, const char* data, int length, int timeout, bool async);
-bool setParameters(int deviceId, int baudRate, int dataBits, int stopBits, int parity);
-bool getCarrierDetect(int deviceId);
-bool getClearToSend(int deviceId);
-bool getDataSetReady(int deviceId);
-bool getDataTerminalReady(int deviceId);
-bool setDataTerminalReady(int deviceId, bool set);
-bool getRingIndicator(int deviceId);
-bool getRequestToSend(int deviceId);
-bool setRequestToSend(int deviceId, bool set);
-QSerialPort::PinoutSignals getControlLines(int deviceId);
-int getFlowControl(int deviceId);
-bool setFlowControl(int deviceId, int flowControl);
-bool purgeBuffers(int deviceId, bool input, bool output);
-bool setBreak(int deviceId, bool set);
-bool startReadThread(int deviceId);
-bool stopReadThread(int deviceId);
-bool readThreadRunning(int deviceId);
-
-void registerPointer(QSerialPortPrivate* ptr);
-void unregisterPointer(QSerialPortPrivate* ptr);
-void cleanupJniCache();
 }  // namespace AndroidSerial

@@ -8,6 +8,12 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 
+#ifdef Q_OS_ANDROID
+#include "AndroidSerial.h"
+#else
+#include <QtSerialPort/QSerialPortInfo>
+#endif
+
 QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "Comms.QGCSerialPortInfo")
 
 bool QGCSerialPortInfo::_jsonLoaded = false;
@@ -16,22 +22,56 @@ QList<QGCSerialPortInfo::BoardInfo_t> QGCSerialPortInfo::_boardInfoList;
 QList<QGCSerialPortInfo::BoardRegExpFallback_t> QGCSerialPortInfo::_boardDescriptionFallbackList;
 QList<QGCSerialPortInfo::BoardRegExpFallback_t> QGCSerialPortInfo::_boardManufacturerFallbackList;
 
-QGCSerialPortInfo::QGCSerialPortInfo()
-    : QSerialPortInfo()
+// Matches Qt SerialPort's internal kStandardBaudRates (see qserialport_unix.cpp /
+// qserialport_win.cpp). Platform-independent literal — defined here so callers
+// don't pull in QtSerialPort just to enumerate baud rates.
+QList<qint32> QGCSerialPortInfo::standardBaudRates()
 {
-    qCDebug(QGCSerialPortInfoLog) << this;
+    static constexpr qint32 kRates[] = {
+        50,     75,     110,     134,     150,     200,     300,     600,     1200,    1800,
+        2400,   4800,   9600,    19200,   38400,   57600,   115200,  230400,  460800,  500000,
+        576000, 921600, 1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000,
+    };
+    return QList<qint32>(std::begin(kRates), std::end(kRates));
 }
 
-QGCSerialPortInfo::QGCSerialPortInfo(const QSerialPort &port)
-    : QSerialPortInfo(port)
+QGCSerialPortInfo::QGCSerialPortInfo() = default;
+QGCSerialPortInfo::QGCSerialPortInfo(const QGCSerialPortInfo &) = default;
+QGCSerialPortInfo::QGCSerialPortInfo(QGCSerialPortInfo &&) noexcept = default;
+QGCSerialPortInfo &QGCSerialPortInfo::operator=(const QGCSerialPortInfo &) = default;
+QGCSerialPortInfo &QGCSerialPortInfo::operator=(QGCSerialPortInfo &&) noexcept = default;
+QGCSerialPortInfo::~QGCSerialPortInfo() = default;
+
+QGCSerialPortInfo::QGCSerialPortInfo(Data data)
+    : _data(std::move(data))
 {
-    qCDebug(QGCSerialPortInfoLog) << this;
 }
 
-QGCSerialPortInfo::~QGCSerialPortInfo()
+QGCSerialPortInfo::QGCSerialPortInfo(const QString &name)
 {
-    qCDebug(QGCSerialPortInfoLog) << this;
+    const QList<QGCSerialPortInfo> ports = availablePorts();
+    for (const QGCSerialPortInfo &info : ports) {
+        if (info.portName() == name || info.systemLocation() == name) {
+            _data = info._data;
+            return;
+        }
+    }
 }
+
+#ifndef Q_OS_ANDROID
+QGCSerialPortInfo::QGCSerialPortInfo(const QSerialPortInfo &info)
+{
+    _data.portName            = info.portName();
+    _data.systemLocation      = info.systemLocation();
+    _data.description         = info.description();
+    _data.manufacturer        = info.manufacturer();
+    _data.serialNumber        = info.serialNumber();
+    _data.vendorIdentifier    = info.vendorIdentifier();
+    _data.productIdentifier   = info.productIdentifier();
+    _data.hasVendorIdentifier = info.hasVendorIdentifier();
+    _data.hasProductIdentifier= info.hasProductIdentifier();
+}
+#endif
 
 bool QGCSerialPortInfo::_loadJsonData()
 {
@@ -258,15 +298,24 @@ QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts()
 {
     QList<QGCSerialPortInfo> list;
 
-    const QList<QSerialPortInfo> availablePorts = QSerialPortInfo::availablePorts();
-    for (const QSerialPortInfo &portInfo : availablePorts) {
+#ifdef Q_OS_ANDROID
+    const QList<QGCSerialPortInfo> androidPorts = AndroidSerial::availableDevices();
+    for (const QGCSerialPortInfo &portInfo : androidPorts) {
         if (isSystemPort(portInfo)) {
             continue;
         }
-
-        const QGCSerialPortInfo *const qgcPortInfo = reinterpret_cast<const QGCSerialPortInfo*>(&portInfo);
-        list << *qgcPortInfo;
+        list << portInfo;
     }
+#else
+    const QList<QSerialPortInfo> availablePorts = QSerialPortInfo::availablePorts();
+    for (const QSerialPortInfo &portInfo : availablePorts) {
+        QGCSerialPortInfo qgcPortInfo(portInfo);
+        if (isSystemPort(qgcPortInfo)) {
+            continue;
+        }
+        list << qgcPortInfo;
+    }
+#endif
 
     return list;
 }
@@ -287,7 +336,7 @@ bool QGCSerialPortInfo::isBlackCube() const
     return description().contains(QStringLiteral("CubeBlack"));
 }
 
-bool QGCSerialPortInfo::isSystemPort(const QSerialPortInfo &port)
+bool QGCSerialPortInfo::isSystemPort(const QGCSerialPortInfo &port)
 {
 #ifdef Q_OS_MACOS
     static const QList<QString> systemPortLocations = {

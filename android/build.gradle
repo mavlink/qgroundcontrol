@@ -184,6 +184,14 @@ android {
         lintConfig = file("lint.xml")
     }
 
+    // Local unit tests run on the host JVM against a stub android.jar where every
+    // framework method throws "not mocked" by default. Return defaults so plain
+    // android.util.Log calls become no-ops in tests; tests that need real behavior
+    // mock those methods explicitly (or use Robolectric).
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
     // Do not compress Qt binary resources file
     aaptOptions {
         noCompress 'rcc'

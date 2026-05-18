@@ -3,7 +3,12 @@
 # Android platform-specific initialization and interfaces
 # ============================================================================
 
-# Only build on Android platforms
+# qtandroidserialport is built on both Android and host. On host it exposes the
+# JNI-free portion of the backend so QGCAndroidSerialPort's production logic can
+# be exercised via MockQSerialPortEngine (test/Comms/Android).
+add_subdirectory(qtandroidserialport)
+
+# The rest of the Android module is Android-only.
 if(NOT ANDROID)
     return()
 endif()
@@ -15,16 +20,13 @@ target_sources(${CMAKE_PROJECT_NAME}
         AndroidInit.cc
         AndroidInterface.cc
         AndroidInterface.h
+        AndroidLogSink.cc
+        AndroidLogSink.h
         AndroidSerial.cc
         AndroidSerial.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-# ----------------------------------------------------------------------------
-# Android Serial Port Support
-# ----------------------------------------------------------------------------
-add_subdirectory(qtandroidserialport)
 
 # ----------------------------------------------------------------------------
 # Qt Android Extensions (2GIS) — selective compile

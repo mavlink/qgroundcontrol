@@ -1,41 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android USB device filter for QGC.
+
+  When a USB device matching any entry here is attached, Android shows
+  "Open QGroundControl when this USB device is connected?" with an
+  optional "Use by default" checkbox.  If the user enables the default,
+  permission persists across reconnects for that specific device and
+  QGC launches automatically on attach.
+
+  Read by the Android OS from the APK manifest at install time — cannot be
+  generated at runtime. Decimal values are required by the schema (hex in comments).
+
+  Keep entries in sync with src/Comms/USBBoardInfo.json (the C++-side board list)
+  for any flight-controller VID/PIDs that should trigger autostart on attach.
+-->
 <resources>
-    <!-- Allow anything connected -->
-    <usb-device />
 
-    <!-- 0x0403 / 0x60??: FTDI -->
-    <!-- <usb-device vendor-id="1027" product-id="24577" /> --> <!-- 0x6001: FT232R -->
-    <!-- <usb-device vendor-id="1027" product-id="24592" /> --> <!-- 0x6010: FT2232H -->
-    <!-- <usb-device vendor-id="1027" product-id="24593" /> --> <!-- 0x6011: FT4232H -->
-    <!-- <usb-device vendor-id="1027" product-id="24596" /> --> <!-- 0x6014: FT232H -->
-    <!-- <usb-device vendor-id="1027" product-id="24597" /> --> <!-- 0x6015: FT230X, FT231X, FT234XD -->
+    <!-- ======================================================================
+         USB-to-serial bridges (most common adapters for flight controllers)
+         ====================================================================== -->
 
-    <!-- 0x10C4 / 0xEA??: Silabs CP210x -->
-    <!-- <usb-device vendor-id="4292" product-id="60000" /> --> <!-- 0xea60: CP2102 and other CP210x single port devices -->
-    <!-- <usb-device vendor-id="4292" product-id="60016" /> --> <!-- 0xea70: CP2105 -->
-    <!-- <usb-device vendor-id="4292" product-id="60017" /> --> <!-- 0xea71: CP2108 -->
+    <!-- 0x0403 / 0x60xx: FTDI -->
+    <usb-device vendor-id="1027" product-id="24577" /> <!-- 0x6001: FT232R -->
+    <usb-device vendor-id="1027" product-id="24592" /> <!-- 0x6010: FT2232H -->
+    <usb-device vendor-id="1027" product-id="24593" /> <!-- 0x6011: FT4232H -->
+    <usb-device vendor-id="1027" product-id="24596" /> <!-- 0x6014: FT232H -->
+    <usb-device vendor-id="1027" product-id="24597" /> <!-- 0x6015: FT230X, FT231X, FT234XD -->
 
-    <!-- 0x067B / 0x23?3: Prolific PL2303x -->
-    <!-- <usb-device vendor-id="1659" product-id="8963" /> --> <!-- 0x2303: PL2303HX, HXD, TA, ... -->
-    <!-- <usb-device vendor-id="1659" product-id="9123" /> --> <!-- 0x23a3: PL2303GC -->
-    <!-- <usb-device vendor-id="1659" product-id="9139" /> --> <!-- 0x23b3: PL2303GB -->
-    <!-- <usb-device vendor-id="1659" product-id="9155" /> --> <!-- 0x23c3: PL2303GT -->
-    <!-- <usb-device vendor-id="1659" product-id="9171" /> --> <!-- 0x23d3: PL2303GL -->
-    <!-- <usb-device vendor-id="1659" product-id="9187" /> --> <!-- 0x23e3: PL2303GE -->
-    <!-- <usb-device vendor-id="1659" product-id="9203" /> --> <!-- 0x23f3: PL2303GS -->
+    <!-- 0x10C4 / 0xEAxx: Silabs CP210x -->
+    <usb-device vendor-id="4292" product-id="60000" /> <!-- 0xEA60: CP2102/CP210x single port -->
+    <usb-device vendor-id="4292" product-id="60016" /> <!-- 0xEA70: CP2105 -->
+    <usb-device vendor-id="4292" product-id="60017" /> <!-- 0xEA71: CP2108 -->
 
-    <!-- 0x1a86 / 0x?523: Qinheng CH34x -->
-    <!-- <usb-device vendor-id="6790" product-id="21795" /> --> <!-- 0x5523: CH341A -->
-    <!-- <usb-device vendor-id="6790" product-id="29987" /> --> <!-- 0x7523: CH340 -->
+    <!-- 0x067B / 0x23x3: Prolific PL2303x -->
+    <usb-device vendor-id="1659" product-id="8963" /> <!-- 0x2303: PL2303HX, HXD, TA, ... -->
+    <usb-device vendor-id="1659" product-id="9123" /> <!-- 0x23A3: PL2303GC -->
+    <usb-device vendor-id="1659" product-id="9139" /> <!-- 0x23B3: PL2303GB -->
+    <usb-device vendor-id="1659" product-id="9155" /> <!-- 0x23C3: PL2303GT -->
+    <usb-device vendor-id="1659" product-id="9171" /> <!-- 0x23D3: PL2303GL -->
+    <usb-device vendor-id="1659" product-id="9187" /> <!-- 0x23E3: PL2303GE -->
+    <usb-device vendor-id="1659" product-id="9203" /> <!-- 0x23F3: PL2303GS -->
 
-    <!-- CDC driver -->
-    <!-- <usb-device vendor-id="9025" /> -->                    <!-- 0x2341 / ......: Arduino -->
-    <!-- <usb-device vendor-id="5824" product-id="1155" /> -->  <!-- 0x16C0 / 0x0483: Teensyduino  -->
-    <!-- <usb-device vendor-id="1003" product-id="8260" /> -->  <!-- 0x03EB / 0x2044: Atmel Lufa -->
-    <!-- <usb-device vendor-id="7855" product-id="4" /> -->     <!-- 0x1eaf / 0x0004: Leaflabs Maple -->
-    <!-- <usb-device vendor-id="3368" product-id="516" /> -->   <!-- 0x0d28 / 0x0204: ARM mbed -->
-    <!-- <usb-device vendor-id="1155" product-id="22336" /> --> <!-- 0x0483 / 0x5740: ST CDC -->
-    <!-- <usb-device vendor-id="11914" product-id="5" /> -->    <!-- 0x2E8A / 0x0005: Raspberry Pi Pico Micropython -->
-    <!-- <usb-device vendor-id="11914" product-id="10" />  -->  <!-- 0x2E8A / 0x000A: Raspberry Pi Pico SDK -->
-    <!-- <usb-device vendor-id="6790" product-id="21972" /> --> <!-- 0x1A86 / 0x55D4: Qinheng CH9102F -->
+    <!-- 0x1A86 / 0xxxxx: Qinheng CH34x / CH9102 -->
+    <usb-device vendor-id="6790" product-id="21795" /> <!-- 0x5523: CH341A -->
+    <usb-device vendor-id="6790" product-id="29987" /> <!-- 0x7523: CH340 -->
+    <usb-device vendor-id="6790" product-id="21972" /> <!-- 0x55D4: CH9102F -->
+
+    <!-- ======================================================================
+         Flight-controller CDC/native-USB VIDs
+         ====================================================================== -->
+
+    <!-- 0x26AC: PX4 FMU family -->
+    <usb-device vendor-id="9900" product-id="16" />   <!-- 0x0010: FMU v1 -->
+    <usb-device vendor-id="9900" product-id="17" />   <!-- 0x0011: FMU v2/v3 -->
+    <usb-device vendor-id="9900" product-id="18" />   <!-- 0x0012: FMU v4 -->
+    <usb-device vendor-id="9900" product-id="19" />   <!-- 0x0013: FMU v4 Pro -->
+    <usb-device vendor-id="9900" product-id="29" />   <!-- 0x001D: FMU v6X RT -->
+    <usb-device vendor-id="9900" product-id="48" />   <!-- 0x0030: MindPX v2 -->
+    <usb-device vendor-id="9900" product-id="50" />   <!-- 0x0032: FMU v5 -->
+    <usb-device vendor-id="9900" product-id="51" />   <!-- 0x0033: FMU v5X -->
+    <usb-device vendor-id="9900" product-id="53" />   <!-- 0x0035: FMU v6X -->
+    <usb-device vendor-id="9900" product-id="54" />   <!-- 0x0036: FMU v6U -->
+    <usb-device vendor-id="9900" product-id="56" />   <!-- 0x0038: FMU v6C -->
+
+    <!-- 0x1209: ArduPilot (pid.codes) -->
+    <usb-device vendor-id="4617" product-id="22336" /> <!-- 0x5740: ChibiOS -->
+    <usb-device vendor-id="4617" product-id="22337" /> <!-- 0x5741: ChibiOS v2 -->
+
+    <!-- 0x2DAE: CubePilot -->
+    <usb-device vendor-id="11694" product-id="4097" /> <!-- 0x1001: Cube Black bootloader -->
+    <usb-device vendor-id="11694" product-id="4098" /> <!-- 0x1002: Cube Yellow bootloader -->
+    <usb-device vendor-id="11694" product-id="4101" /> <!-- 0x1005: Cube Purple bootloader -->
+    <usb-device vendor-id="11694" product-id="4113" /> <!-- 0x1011: Cube Black / Black+ -->
+    <usb-device vendor-id="11694" product-id="4114" /> <!-- 0x1012: Cube Yellow -->
+    <usb-device vendor-id="11694" product-id="4117" /> <!-- 0x1015: Cube Purple -->
+    <usb-device vendor-id="11694" product-id="4118" /> <!-- 0x1016: Cube Orange -->
+    <usb-device vendor-id="11694" product-id="4119" /> <!-- 0x1017: Cube Orange2 -->
+    <usb-device vendor-id="11694" product-id="4184" /> <!-- 0x1058: Cube Orange+ -->
+
+    <!-- 0x3162: Holybro -->
+    <usb-device vendor-id="12642" product-id="71" />  <!-- 0x0047: Pixhawk 4 -->
+    <usb-device vendor-id="12642" product-id="73" />  <!-- 0x0049: Pixhawk 4 Mini -->
+    <usb-device vendor-id="12642" product-id="75" />  <!-- 0x004B: Durandal -->
+
+    <!-- 0x3163: CUAV -->
+    <usb-device vendor-id="12643" product-id="76" />  <!-- 0x004C: Nora / X7Pro -->
+
+    <!-- 0x20A0: OpenPilot -->
+    <usb-device vendor-id="8352" product-id="16732" /> <!-- 0x415C: OPLink -->
+    <usb-device vendor-id="8352" product-id="16733" /> <!-- 0x415D: CC3D -->
+    <usb-device vendor-id="8352" product-id="16734" /> <!-- 0x415E: Revolution -->
+    <usb-device vendor-id="8352" product-id="16848" /> <!-- 0x41D0: Sparky2 -->
+
+    <!-- 0x1FC9: Dragonlink -->
+    <usb-device vendor-id="8137" product-id="131" />  <!-- 0x0083: Dragonlink -->
+
+    <!-- 0x27AC: Laser Navigation (VRBrain) -->
+    <usb-device vendor-id="10156" product-id="4433" /> <!-- 0x1151: VRBrain v51 -->
+    <usb-device vendor-id="10156" product-id="4434" /> <!-- 0x1152: VRBrain v52 -->
+    <usb-device vendor-id="10156" product-id="4436" /> <!-- 0x1154: VRBrain v54 -->
+    <usb-device vendor-id="10156" product-id="4945" /> <!-- 0x1351: VRuBrain v51 -->
+    <usb-device vendor-id="10156" product-id="6416" /> <!-- 0x1910: VRCore v10 -->
+
+    <!-- 0x1546: u-blox GPS receivers -->
+    <usb-device vendor-id="5446" product-id="421" />  <!-- 0x01A5: u-blox 5 -->
+    <usb-device vendor-id="5446" product-id="422" />  <!-- 0x01A6: u-blox 6 -->
+    <usb-device vendor-id="5446" product-id="423" />  <!-- 0x01A7: u-blox 7 -->
+    <usb-device vendor-id="5446" product-id="424" />  <!-- 0x01A8: u-blox 8 -->
+    <usb-device vendor-id="5446" product-id="425" />  <!-- 0x01A9: u-blox 9 (ZED-F9P) -->
+
+    <!-- 0x0483 / 0x5740: ST CDC (STM32 default) -->
+    <usb-device vendor-id="1155" product-id="22336" />
+
+    <!-- ======================================================================
+         Generic development boards (kept from the previous catch-all list)
+         ====================================================================== -->
+    <usb-device vendor-id="9025" />                    <!-- 0x2341: Arduino (any PID) -->
+    <usb-device vendor-id="5824" product-id="1155" />  <!-- 0x16C0 / 0x0483: Teensyduino -->
+    <usb-device vendor-id="1003" product-id="8260" />  <!-- 0x03EB / 0x2044: Atmel Lufa -->
+    <usb-device vendor-id="7855" product-id="4" />     <!-- 0x1EAF / 0x0004: Leaflabs Maple -->
+    <usb-device vendor-id="3368" product-id="516" />   <!-- 0x0D28 / 0x0204: ARM mbed -->
+    <usb-device vendor-id="11914" product-id="5" />    <!-- 0x2E8A / 0x0005: Pi Pico MicroPython -->
+    <usb-device vendor-id="11914" product-id="10" />   <!-- 0x2E8A / 0x000A: Pi Pico SDK -->
 </resources>

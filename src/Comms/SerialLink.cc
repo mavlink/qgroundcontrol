@@ -1,6 +1,7 @@
 #include "SerialLink.h"
 #include "QGCLoggingCategory.h"
 #include "QGCSerialPortInfo.h"
+#include "QGCSerialPortAdapter.h"
 #include <QtCore/QSettings>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
@@ -71,13 +72,14 @@ void SerialConfiguration::loadSettings(QSettings &settings, const QString &root)
     settings.beginGroup(root);
 
     setBaud(settings.value("baud", _baud).toInt());
-    setDataBits(static_cast<QSerialPort::DataBits>(settings.value("dataBits", _dataBits).toInt()));
-    setFlowControl(static_cast<QSerialPort::FlowControl>(settings.value("flowControl", _flowControl).toInt()));
-    setStopBits(static_cast<QSerialPort::StopBits>(settings.value("stopBits", _stopBits).toInt()));
-    setParity(static_cast<QSerialPort::Parity>(settings.value("parity", _parity).toInt()));
+    setDataBits(settings.value("dataBits", _dataBits).toInt());
+    setFlowControl(settings.value("flowControl", _flowControl).toInt());
+    setStopBits(settings.value("stopBits", _stopBits).toInt());
+    setParity(settings.value("parity", _parity).toInt());
     setPortName(settings.value("portName", _portName).toString());
     setPortDisplayName(settings.value("portDisplayName", _portDisplayName).toString());
     setdtrForceLow(settings.value("dtrForceLow", _dtrForceLow).toBool());
+    setUsbDirect(settings.value("usbDirect", _usbDirect).toBool());
 
     settings.endGroup();
 }
@@ -94,6 +96,7 @@ void SerialConfiguration::saveSettings(QSettings &settings, const QString &root)
     settings.setValue("portName", _portName);
     settings.setValue("portDisplayName", _portDisplayName);
     settings.setValue("dtrForceLow", _dtrForceLow);
+    settings.setValue("usbDirect", _usbDirect);
 
     settings.endGroup();
 }
@@ -145,7 +148,7 @@ QStringList SerialConfiguration::supportedBaudRates()
         921600,
     };
 
-    const QList<qint32> activeSupportedBaudRates = QSerialPortInfo::standardBaudRates();
+    const QList<qint32> activeSupportedBaudRates = QGCSerialPortInfo::standardBaudRates();
 
     QSet<qint32> mergedBaudRateSet(kDefaultSupportedBaudRates.constBegin(), kDefaultSupportedBaudRates.constEnd());
     (void) mergedBaudRateSet.unite(QSet<qint32>(activeSupportedBaudRates.constBegin(), activeSupportedBaudRates.constEnd()));
@@ -164,8 +167,8 @@ QStringList SerialConfiguration::supportedBaudRates()
 
 QString SerialConfiguration::cleanPortDisplayName(const QString &name)
 {
-    const QList<QSerialPortInfo> availablePorts = QSerialPortInfo::availablePorts();
-    for (const QSerialPortInfo &portInfo : availablePorts) {
+    const QList<QGCSerialPortInfo> availablePorts = QGCSerialPortInfo::availablePorts();
+    for (const QGCSerialPortInfo &portInfo : availablePorts) {
         if (portInfo.systemLocation() == name) {
             return portInfo.portName();
         }
@@ -182,7 +185,7 @@ SerialWorker::SerialWorker(const SerialConfiguration *config, QObject *parent)
 {
     qCDebug(SerialLinkLog) << this;
 
-    (void) qRegisterMetaType<QSerialPort::SerialPortError>("QSerialPort::SerialPortError");
+    (void) qRegisterMetaType<QGCSerialPortAdapter::Error>("QGCSerialPortAdapter::Error");
 }
 
 SerialWorker::~SerialWorker()
@@ -200,20 +203,16 @@ bool SerialWorker::isConnected() const
 void SerialWorker::setupPort()
 {
     if (!_port) {
-        _port = new QSerialPort(this);
+        _port = new QGCSerialPortAdapter(this);
     }
 
     if (!_timer) {
         _timer = new QTimer(this);
     }
 
-    (void) connect(_port, &QSerialPort::aboutToClose, this, &SerialWorker::_onPortDisconnected);
-    (void) connect(_port, &QSerialPort::readyRead, this, &SerialWorker::_onPortReadyRead);
-    (void) connect(_port, &QSerialPort::errorOccurred, this, &SerialWorker::_onPortErrorOccurred);
-
-    /* if (SerialLinkLog().isDebugEnabled()) {
-        (void) connect(_port, &QSerialPort::bytesWritten, this, &SerialWorker::_onPortBytesWritten);
-    } */
+    (void) connect(_port, &QGCSerialPortAdapter::aboutToClose, this, &SerialWorker::_onPortDisconnected);
+    (void) connect(_port, &QGCSerialPortAdapter::readyRead,    this, &SerialWorker::_onPortReadyRead);
+    (void) connect(_port, &QGCSerialPortAdapter::errorOccurred, this, &SerialWorker::_onPortErrorOccurred);
 
     (void) connect(_timer, &QTimer::timeout, this, &SerialWorker::_checkPortAvailability);
 }
@@ -227,7 +226,7 @@ void SerialWorker::connectToPort()
 
     _port->setPortName(_serialConfig->portName());
 
-    const QGCSerialPortInfo portInfo(*_port);
+    const QGCSerialPortInfo portInfo(_serialConfig->portName());
     if (portInfo.isBootloader()) {
         qCWarning(SerialLinkLog) << "Not connecting to bootloader" << _port->portName();
         emit errorOccurred(tr("Not connecting to a bootloader"));
@@ -238,11 +237,17 @@ void SerialWorker::connectToPort()
     _errorEmitted = false;
 
     qCDebug(SerialLinkLog) << "Attempting to open port" << _port->portName();
+    // 2 MB soft cap on the internal write buffer. Past this, writeData() returns -1 + WriteError
+    // instead of letting the buffer grow unboundedly under sustained overload (no in-band
+    // backpressure exists on the JNI write path). With the AsyncUsbWritePump in place this is a
+    // defensive net rather than the operative limit — typical Stage 2 traffic peaks at ~18 KB —
+    // but it's still load-bearing for genuine pathological flooders (CDC drain caps ~200 KB/s).
+    _port->setWriteBufferSize(2 * 1024 * 1024);
     if (!_port->open(QIODevice::ReadWrite)) {
         qCWarning(SerialLinkLog) << "Opening port" << _port->portName() << "failed:" << _port->errorString();
 
         // If auto-connect is enabled, we don't want to emit an error for PermissionError from devices already in use
-        if (!_errorEmitted && (!_serialConfig->isAutoConnect() || _port->error() != QSerialPort::PermissionError)) {
+        if (!_errorEmitted && (!_serialConfig->isAutoConnect() || _port->error() != QGCSerialPortAdapter::PermissionError)) {
             emit errorOccurred(tr("Could not open port: %1").arg(_port->errorString()));
             _errorEmitted = true;
         }
@@ -270,17 +275,17 @@ void SerialWorker::disconnectFromPort()
 void SerialWorker::writeData(const QByteArray &data)
 {
     if (data.isEmpty()) {
-        emit errorOccurred(tr("Data to Send is Empty"));
+        _emitErrorOnce(tr("Data to Send is Empty"));
         return;
     }
 
     if (!isConnected()) {
-        emit errorOccurred(tr("Port is not Connected"));
+        _emitErrorOnce(tr("Port is not Connected"));
         return;
     }
 
     if (!_port->isWritable()) {
-        emit errorOccurred(tr("Port is not Writable"));
+        _emitErrorOnce(tr("Port is not Writable"));
         return;
     }
 
@@ -288,10 +293,10 @@ void SerialWorker::writeData(const QByteArray &data)
     while (totalBytesWritten < data.size()) {
         const qint64 bytesWritten = _port->write(data.constData() + totalBytesWritten, data.size() - totalBytesWritten);
         if (bytesWritten == -1) {
-            emit errorOccurred(tr("Could Not Send Data - Write Failed: %1").arg(_port->errorString()));
+            _emitErrorOnce(tr("Could Not Send Data - Write Failed: %1").arg(_port->errorString()));
             return;
         } else if (bytesWritten == 0) {
-            emit errorOccurred(tr("Could Not Send Data - Write Returned 0 Bytes"));
+            _emitErrorOnce(tr("Could Not Send Data - Write Returned 0 Bytes"));
             return;
         }
         totalBytesWritten += bytesWritten;
@@ -301,16 +306,29 @@ void SerialWorker::writeData(const QByteArray &data)
     emit dataSent(sent);
 }
 
+void SerialWorker::_emitErrorOnce(const QString &errorString)
+{
+    // Gate all error emissions so a sustained write-cap or disconnected-port
+    // condition cannot flood the UI thread with showAppMessage modals at
+    // burst-rate. Reset on (re)connect/disconnect via _onPortConnected /
+    // _onPortDisconnected.
+    if (_errorEmitted) {
+        return;
+    }
+    _errorEmitted = true;
+    emit errorOccurred(errorString);
+}
+
 void SerialWorker::_onPortConnected()
 {
     qCDebug(SerialLinkLog) << "Port connected:" << _port->portName();
 
     _port->setDataTerminalReady(_serialConfig->dtrForceLow() ? false : true);
-    _port->setBaudRate(_serialConfig->baud());
-    _port->setDataBits(static_cast<QSerialPort::DataBits>(_serialConfig->dataBits()));
-    _port->setFlowControl(static_cast<QSerialPort::FlowControl>(_serialConfig->flowControl()));
-    _port->setStopBits(static_cast<QSerialPort::StopBits>(_serialConfig->stopBits()));
-    _port->setParity(static_cast<QSerialPort::Parity>(_serialConfig->parity()));
+    _port->setSerialParameters(_serialConfig->baud(),
+                               _serialConfig->dataBits(),
+                               _serialConfig->stopBits(),
+                               _serialConfig->parity());
+    _port->setFlowControl(_serialConfig->flowControl());
 
     if (_timer) {
         _timer->start(CONNECT_TIMEOUT_MS);
@@ -336,28 +354,21 @@ void SerialWorker::_onPortReadyRead()
 {
     const QByteArray data = _port->readAll();
     if (!data.isEmpty()) {
-        // qCDebug(SerialLinkLog) << data.size();
         emit dataReceived(data);
     }
 }
 
-void SerialWorker::_onPortBytesWritten(qint64 bytes) const
-{
-    qCDebug(SerialLinkLog) << _port->portName() << "Wrote" << bytes << "bytes";
-}
-
-void SerialWorker::_onPortErrorOccurred(QSerialPort::SerialPortError portError)
+void SerialWorker::_onPortErrorOccurred(QGCSerialPortAdapter::Error portError)
 {
     switch (portError) {
-    case QSerialPort::NoError:
-        qCDebug(SerialLinkLog) << "About to open port" << _port->portName();
+    case QGCSerialPortAdapter::NoError:
         return;
-    case QSerialPort::ResourceError:
+    case QGCSerialPortAdapter::ResourceError:
         // We get this when a usb cable is unplugged - close port to allow reconnection
         qCDebug(SerialLinkLog) << "Resource error (likely USB disconnect):" << _port->errorString();
         _port->close();
         return;
-    case QSerialPort::PermissionError:
+    case QGCSerialPortAdapter::PermissionError:
         if (_serialConfig->isAutoConnect()) {
             return;
         }
@@ -369,10 +380,7 @@ void SerialWorker::_onPortErrorOccurred(QSerialPort::SerialPortError portError)
     const QString errorString = _port->errorString();
     qCWarning(SerialLinkLog) << "Port error:" << portError << errorString;
 
-    if (!_errorEmitted) {
-        emit errorOccurred(errorString);
-        _errorEmitted = true;
-    }
+    _emitErrorOnce(errorString);
 }
 
 void SerialWorker::_checkPortAvailability()
@@ -382,8 +390,8 @@ void SerialWorker::_checkPortAvailability()
     }
 
     bool portExists = false;
-    const auto availablePorts = QSerialPortInfo::availablePorts();
-    for (const QSerialPortInfo &info : availablePorts) {
+    const auto availablePorts = QGCSerialPortInfo::availablePorts();
+    for (const QGCSerialPortInfo &info : availablePorts) {
         if (info.portName() == _serialConfig->portDisplayName()) {
             portExists = true;
             break;
@@ -430,7 +438,9 @@ SerialLink::~SerialLink()
 
     _workerThread->quit();
     if (!_workerThread->wait(DISCONNECT_TIMEOUT_MS)) {
-        qCWarning(SerialLinkLog) << "Failed to wait for Serial Thread to close";
+        qCWarning(SerialLinkLog) << "Worker thread did not stop within timeout, terminating";
+        _workerThread->terminate();
+        (void) _workerThread->wait(1000);
     }
 
     qCDebug(SerialLinkLog) << this;

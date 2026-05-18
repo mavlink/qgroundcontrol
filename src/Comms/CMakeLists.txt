@@ -52,6 +52,8 @@ if(QGC_NO_SERIAL_LINK)
 else()
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
+            QGCSerialPortAdapter.cc
+            QGCSerialPortAdapter.h
             QGCSerialPortInfo.cc
             QGCSerialPortInfo.h
             SerialLink.cc

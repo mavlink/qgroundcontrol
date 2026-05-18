@@ -9,8 +9,10 @@
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
 #include <QtCore/QMetaObject>
+#include <QtCore/QPointer>
 #include <QtCore/QSharedPointer>
 #include <QtCore/QStandardPaths>
+#include <QtCore/qjnitypes.h>
 
 #include "AppSettings.h"
 #include "QGCApplication.h"
@@ -20,20 +22,14 @@
 
 QGC_LOGGING_CATEGORY(AndroidInterfaceLog, "Android.AndroidInterface")
 
+Q_DECLARE_JNI_CLASS(QGCActivity, "org/mavlink/qgroundcontrol/QGCActivity")
+
 namespace AndroidInterface {
-
 static std::function<void(const QString&)> s_importCallback;
+}  // namespace AndroidInterface
 
-static void jniLogDebug(JNIEnv*, jobject, jstring message)
-{
-    qCDebug(AndroidInterfaceLog) << QJniObject(message).toString();
-}
-
-static void jniLogWarning(JNIEnv*, jobject, jstring message)
-{
-    qCWarning(AndroidInterfaceLog) << QJniObject(message).toString();
-}
-
+// File-static (not in namespace) so Q_DECLARE_JNI_NATIVE_METHOD can name the function via
+// QT_PREPEND_NAMESPACE. Mirrors Qt BLE jni_android.cpp.
 static void jniStoragePermissionsResult(JNIEnv*, jobject, jboolean granted)
 {
     if (!granted) {
@@ -41,13 +37,17 @@ static void jniStoragePermissionsResult(JNIEnv*, jobject, jboolean granted)
         return;
     }
 
-    if (!qgcApp()) {
+    QPointer<QGCApplication> app = qgcApp();
+    if (!app) {
         return;
     }
 
     (void)QMetaObject::invokeMethod(
-        qgcApp(),
-        []() {
+        app.data(),
+        [app]() {
+            if (!app) {
+                return;
+            }
             SettingsManager* const settingsManager = SettingsManager::instance();
             if (!settingsManager) {
                 return;
@@ -72,7 +72,7 @@ static void jniStoragePermissionsResult(JNIEnv*, jobject, jboolean granted)
                 return;
             }
 
-            const QString sdCardRootPath = getSDCardPath();
+            const QString sdCardRootPath = AndroidInterface::getSDCardPath();
             if (sdCardRootPath.isEmpty() || !QDir(sdCardRootPath).exists() || !QFileInfo(sdCardRootPath).isWritable()) {
                 return;
             }
@@ -85,6 +85,7 @@ static void jniStoragePermissionsResult(JNIEnv*, jobject, jboolean granted)
         },
         Qt::QueuedConnection);
 }
+Q_DECLARE_JNI_NATIVE_METHOD(jniStoragePermissionsResult, nativeStoragePermissionsResult)
 
 static void jniOnImportResult(JNIEnv* env, jobject, jstring filePathA)
 {
@@ -92,25 +93,23 @@ static void jniOnImportResult(JNIEnv* env, jobject, jstring filePathA)
     const QString filePath = QString::fromUtf8(filePathCStr);
     env->ReleaseStringUTFChars(filePathA, filePathCStr);
     (void)QJniEnvironment::checkAndClearExceptions(env);
-    auto callback = std::move(s_importCallback);
+    auto callback = std::move(AndroidInterface::s_importCallback);
     if (!callback) {
         return;
     }
     callback(filePath);
 }
+Q_DECLARE_JNI_NATIVE_METHOD(jniOnImportResult, onImportResult)
+
+namespace AndroidInterface {
 
 void setNativeMethods()
 {
-    qCDebug(AndroidInterfaceLog) << "Registering Native Functions";
-
-    const JNINativeMethod javaMethods[]{
-        {"qgcLogDebug", "(Ljava/lang/String;)V", reinterpret_cast<void*>(jniLogDebug)},
-        {"qgcLogWarning", "(Ljava/lang/String;)V", reinterpret_cast<void*>(jniLogWarning)},
-        {"nativeStoragePermissionsResult", "(Z)V", reinterpret_cast<void*>(jniStoragePermissionsResult)},
-        {"onImportResult", "(Ljava/lang/String;)V", reinterpret_cast<void*>(jniOnImportResult)}};
-
     QJniEnvironment env;
-    if (!env.registerNativeMethods(kJniQGCActivityClassName, javaMethods, std::size(javaMethods))) {
+    if (!env.registerNativeMethods<QtJniTypes::QGCActivity>({
+            Q_JNI_NATIVE_METHOD(jniStoragePermissionsResult),
+            Q_JNI_NATIVE_METHOD(jniOnImportResult),
+        })) {
         qCWarning(AndroidInterfaceLog) << "Failed to register native methods for" << kJniQGCActivityClassName;
     } else {
         qCDebug(AndroidInterfaceLog) << "Native Functions Registered";

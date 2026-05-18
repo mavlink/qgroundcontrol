@@ -10,6 +10,24 @@
 QGC_LOGGING_CATEGORY(FirmwareUpgradeLog, "VehicleSetup.FirmwareUpgrade")
 QGC_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog, "VehicleSetup.FirmwareUpgrade:verbose")
 
+namespace {
+QString _hexPreview(const uint8_t* data, qint64 len)
+{
+    constexpr qint64 kCap = 32;
+    const qint64 n = qMin<qint64>(len, kCap);
+    QString out;
+    out.reserve(int(n * 3));
+    for (qint64 i = 0; i < n; ++i) {
+        if (i) out += QLatin1Char(' ');
+        out += QString::asprintf("%02x", data[i]);
+    }
+    if (len > kCap) {
+        out += QStringLiteral(" …(+%1)").arg(len - kCap);
+    }
+    return out;
+}
+} // namespace
+
 /// This class manages interactions with the bootloader
 Bootloader::Bootloader(bool sikRadio, QObject *parent)
     : QObject   (parent)
@@ -23,11 +41,11 @@ bool Bootloader::open(const QString portName)
     qCDebug(FirmwareUpgradeLog) << "open:" << portName;
 
     _port.setPortName   (portName);
-    _port.setBaudRate   (QSerialPort::Baud115200);
-    _port.setDataBits   (QSerialPort::Data8);
-    _port.setParity     (QSerialPort::NoParity);
-    _port.setStopBits   (QSerialPort::OneStop);
-    _port.setFlowControl(QSerialPort::NoFlowControl);
+    _port.setSerialParameters(QGCSerialPortAdapter::Baud115200,
+                              QGCSerialPortAdapter::Data8,
+                              QGCSerialPortAdapter::OneStop,
+                              QGCSerialPortAdapter::NoParity);
+    _port.setFlowControl(QGCSerialPortAdapter::NoFlowControl);
 
     if (!_port.open(QIODevice::ReadWrite)) {
         _errorString = tr("Open failed on port %1: %2").arg(portName, _port.errorString());
@@ -78,7 +96,7 @@ bool Bootloader::getBoardInfo(uint32_t& bootloaderVersion, uint32_t& boardID, ui
         } else {
             qCDebug(FirmwareUpgradeLog) << "Radio in normal mode";
             _port.readAll();
-            _port.setBaudRate(QSerialPort::Baud57600);
+            _port.setBaudRate(QGCSerialPortAdapter::Baud57600);
             // Put radio into command mode
             _write("+++");
             if (!_port.waitForReadyRead(2000)) {
@@ -158,7 +176,7 @@ bool Bootloader::initFlashSequence(void)
             _errorString = tr("Unable to reboot radio (ready read)");
             return false;
         }
-        _port.setBaudRate(QSerialPort::Baud115200);
+        _port.setBaudRate(QGCSerialPortAdapter::Baud115200);
 
         if (!_sync()) {
             return false;
@@ -232,6 +250,8 @@ bool Bootloader::_write(const uint8_t* data, qint64 maxSize)
         return false;
     }
 
+    qCDebug(FirmwareUpgradeVerboseLog).noquote()
+        << QStringLiteral("TX n=%1 hex=%2").arg(maxSize).arg(_hexPreview(data, maxSize));
     return true;
 }
 
@@ -248,7 +268,12 @@ bool Bootloader::_read(uint8_t* data, qint64 cBytesExpected, int readTimeout)
     timeout.start();
     while (_port.bytesAvailable() < cBytesExpected) {
         if (timeout.elapsed() > readTimeout) {
-            _errorString = tr("Timeout waiting for bytes to be available");
+            const qint64 avail = _port.bytesAvailable();
+            _errorString = tr("Timeout waiting for bytes (expected=%1 available=%2 elapsed=%3ms)")
+                               .arg(cBytesExpected).arg(avail).arg(timeout.elapsed());
+            qCDebug(FirmwareUpgradeVerboseLog).noquote()
+                << QStringLiteral("RX timeout expected=%1 available=%2 elapsed=%3ms")
+                       .arg(cBytesExpected).arg(avail).arg(timeout.elapsed());
             return false;
         }
         _port.waitForReadyRead(100);
@@ -262,6 +287,9 @@ bool Bootloader::_read(uint8_t* data, qint64 cBytesExpected, int readTimeout)
         return false;
     }
 
+    qCDebug(FirmwareUpgradeVerboseLog).noquote()
+        << QStringLiteral("RX n=%1 elapsed=%2ms hex=%3")
+               .arg(bytesRead).arg(timeout.elapsed()).arg(_hexPreview(data, bytesRead));
     return true;
 }
 
@@ -715,11 +743,14 @@ bool Bootloader::_sync(void)
     _port.readAll();
     bool success = false;
     for (int i=0; i<3; i++) {
+        qCDebug(FirmwareUpgradeVerboseLog) << "sync attempt" << (i + 1) << "of 3";
         success = _syncWorker();
 
         if (success) {
+            qCDebug(FirmwareUpgradeVerboseLog) << "sync attempt" << (i + 1) << "succeeded";
             return true;
         }
+        qCDebug(FirmwareUpgradeVerboseLog) << "sync attempt" << (i + 1) << "failed:" << _errorString;
     }
     return success;
 }

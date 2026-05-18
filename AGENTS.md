@@ -47,6 +47,48 @@ cd .github/scripts && PYTHONPATH=. python3 -m pytest tests/ -q
 cd tools && uv run --extra scripts --extra test pytest tests/ -q
 ```
 
+## Android: Install + Logcat
+
+Workflow for installing a debug-built APK to a connected device and capturing logs.
+
+Prereqs (on PATH): `adb`, `zipalign`, `apksigner` (Android `build-tools/<ver>/`). Debug keystore at `~/.android/debug.keystore` (alias `androiddebugkey`, password `android`).
+
+```bash
+# Adjust APK path to your Qt-Android build kit/configuration
+APK=build/Qt_6_10_3_for_Android_arm64_v8a-Debug/android-build-QGroundControl/QGroundControl.apk
+
+# Re-sign with the debug keystore (Qt's androiddeployqt output is unsigned/misaligned for adb install)
+zipalign -p -f 4 "$APK" "${APK%.apk}-aligned.apk"
+apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --ks-key-alias androiddebugkey \
+    --key-pass pass:android --out "${APK%.apk}-signed.apk" "${APK%.apk}-aligned.apk"
+
+# Install (replace existing); -r keeps data, add -d to allow downgrade
+adb install -r "${APK%.apk}-signed.apk"
+
+# Launch (force-stop first for a clean session)
+adb shell am force-stop org.mavlink.qgroundcontrol
+adb shell am start -n org.mavlink.qgroundcontrol/.QGCActivity
+
+# Logcat: clear, then stream QGC + serial-related tags only
+adb logcat -c
+adb logcat -v time \
+    QGroundControl:V QGCActivity:V QGCUsbSerialManager:V QGCUsbPermissionHandler:V \
+    QGCFtdiSerialDriver:V QGCSerialListener:V QGCUsbSerialProber:V \
+    AsyncUsbWritePump:V UsbSerialEnumerator:V UsbSerialIoBridge:V UsbSerialLifecycle:V '*:S'
+
+# Enable per-tag VERBOSE for code paths gated on Log.isLoggable(TAG, VERBOSE).
+# Tag must be ≤23 chars; setprop survives until reboot.
+adb shell setprop log.tag.QGCSerialListener VERBOSE
+adb shell setprop log.tag.UsbSerialIoBridge VERBOSE
+adb shell setprop log.tag.AsyncUsbWritePump VERBOSE
+
+# Qt-side verbose categories — set via QT_LOGGING_RULES before launch, or in-app via the log viewer
+adb shell am start -n org.mavlink.qgroundcontrol/.QGCActivity \
+    --es "QT_LOGGING_RULES" "Android.Serial.Engine.debug=true;VehicleSetup.FirmwareUpgrade.debug=true"
+```
+
+Tip: run logcat in a background shell (`run_in_background=true`) and grep the captured file rather than streaming into the agent context.
+
 ## Golden Rules
 
 1. **Fact System**: ALL vehicle parameters use Facts. Never create custom parameter storage.

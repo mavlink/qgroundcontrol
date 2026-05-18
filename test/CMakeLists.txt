@@ -114,6 +114,9 @@ add_qgc_test(BluetoothEmulatedAdapterTest LABELS Integration Comms)
 add_qgc_test(BluetoothLiveAdapterTest LABELS Integration Comms)
 add_qgc_test(BluetoothWorkerTest LABELS Unit Comms)
 add_qgc_test(LinkConfigurationTest LABELS Unit Comms RESOURCE_LOCK Settings TempFiles)
+add_qgc_test(MockQSerialPortEngineTest LABELS Unit Comms)
+add_qgc_test(QGCAndroidSerialPortTest LABELS Unit Comms)
+add_qgc_test(QGCSerialPortAdapterTest LABELS Unit Comms)
 add_qgc_test(QGCSerialPortInfoTest LABELS Unit Comms)
 
 # ----------------------------------------------------------------------------

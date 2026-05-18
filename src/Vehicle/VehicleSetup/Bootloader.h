@@ -2,11 +2,7 @@
 
 #include <QtCore/QObject>
 
-#ifdef Q_OS_ANDROID
-#include "qserialport.h"
-#else
-#include <QtSerialPort/QSerialPort>
-#endif
+#include "QGCSerialPortAdapter.h"
 
 class FirmwareImage;
 
@@ -96,7 +92,7 @@ private:
         READ_MULTI_MAX		=   0x28    ///< read size for PROTO_READ_MULTI, must be multiple of 4. Sik Radio max size is 0x28
     };
 
-    QSerialPort _port;
+    QGCSerialPortAdapter _port;
     bool        _sikRadio           = false;
     bool        _inBootloaderMode   = false;    ///< true: board is in bootloader mode, false: special case for SiK Radio, board is in command mode
     uint32_t    _boardID            = 0;        ///< board id for currently connected board
