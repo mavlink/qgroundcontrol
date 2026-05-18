@@ -18,15 +18,13 @@ To calibrate the radio:
 1. Turn on your RC transmitter.
 1. Press **OK** to start the calibration.
 
-   ![Radio setup - before starting](../../../assets/setup/radio_start_setup.jpg)
 
    ::: info
-   The image above is for PX4 Pro. Calibration/top section is the same for both firmware, but the _Additional Radio setup_ section will differ.
+   Calibration steps are the same for both PX4 and ArduPilot firmware, but the _Additional Radio setup_ section will differ.
    :::
 
 1. Set the _transmitter mode_ radio button that matches your transmitter configuration (this ensures that _QGroundControl_ displays the correct stick positions for you to follow during calibration).
 
-   ![Radio setup - move sticks](../../../assets/setup/radio_sticks_throttle.jpg)
 
 1. Move the sticks to the positions indicated in the text (and on the transmitter image). Press **Next** when the sticks are in position. Repeat for all positions.
 1. When prompted, move all other switches and dials through their full range (you will be able to observe them moving on the _Channel Monitor_).
@@ -39,9 +37,7 @@ Radio calibration is demonstrated in the [PX4 setup video here](https://youtu.be
 
 At the lower part of the _Radio Setup_ screen is firmware-specific _Additional Radio setup_ section. The options for each autopilot are shown below.
 
-| PX4                                                                                                                                  | ArduPilot                                                                                                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| <img src="../../../assets/setup/radio_additional_radio_setup_px4.jpg" title="Radio setup - PX4 additional settings" width="300px" /> | <img src="../../../assets/setup/radio_additional_radio_setup_ardupilot.jpg" title="Radio setup - ArduPilot additional settings" width="300px" /> |
+The additional settings differ between PX4 and ArduPilot firmware.
 
 ### Spectrum Bind (ArduPilot/PX4)
 
@@ -53,7 +49,6 @@ To bind a Spektrum transmitter/receiver:
 1. Select the radio button for your receiver
 1. Press **OK**
 
-   ![Spektrum Bind](../../../assets/setup/radio_additional_setup_spectrum_bind_select_channels.jpg)
 
 1. Power on your Spektrum transmitter while holding down the bind button.
 
@@ -67,7 +62,6 @@ To copy the trims:
 1. Center your sticks and move throttle all the way down.
 1. Press **Ok**.
 
-   ![Copy Trims](../../../assets/setup/radio_additional_radio_setup_copy_trims_px4.jpg)
 
 1. Reset the trims on your transmitter back to zero.
 
@@ -80,7 +74,6 @@ To use the AUX passthrough channels:
 1. Map up to 2 transmitter controls to separate channels.
 1. Specify these channels to map to the AUX1 and AUX2 ports respectively, as shown below. Values are saved to the vehicle as soon as they are set.
 
-   ![AUX1 and AUX2 RC passthrough channels](../../../assets/setup/radio_additional_setup_aux_passthrough_channels_px4.jpg)
 
 The flight controller will pass through the unmodified values from the specified channels out of AUX1/AUX2 to the connected servos/relays that drive your hardware.
 
@@ -99,7 +92,6 @@ To set up tuning channels:
 1. Map up to 3 transmitter controls (dials or sliders) to separate channels.
 1. Select the mapping of _PARAM Tuning Id_ to radio channels, using the selection lists. Values are saved to the vehicle as soon as they are set.
 
-   ![Map radio channels to tuning channels](../../../assets/setup/radio_additional_radio_setup_param_tuning_px4.jpg)
 
 To map a PARAM tuning channel to a parameter:
 
@@ -108,7 +100,6 @@ To map a PARAM tuning channel to a parameter:
 1. Check the **Advanced Settings** checkbox.
 1. Click the **Set RC to Param...** button (this will pop-up the foreground dialog displayed below)
 
-   ![Map tuning channels to parameters](../../../assets/setup/parameters_radio_channel_mapping_px4.jpg)
 
 1. Select the tuning channel to map (1, 2 or 3) from the _Parameter Tuning ID_ selection list.
 1. Press **OK** to close the dialog.

@@ -20,11 +20,9 @@ The image below shows a screenshot of structure scan.
 The green polygon is used to mark out the ground footprint of the structure, while the white line around it indicates the vehicle flight path.
 The green numbered circle on the flight path is the scan entry/exit point (where the scan starts).
 
-![Structure Scan](../../../assets/plan/structure_scan_v2/structure_scan.jpg)
 
 The scan divides the structure evenly into layers; the vehicle flies all the way around the structure at a particular altitude and _scan distance_ from the structure, then repeats the process at each layer until the whole surface has been scanned.
 
-![Layer JPG](../../../assets/plan/structure_scan_v2/layers.jpg)
 
 Users can set the _scan bottom altitude_ to avoid obstacles at the bottom of the structure, and the _extrance/exit altitude_ to avoid obstacles as the vehicle travels to/from the scan.
 
@@ -34,11 +32,9 @@ To create a scan:
 
 1. In the **Plan View** select **Pattern tool > Structure Scan**.
 
-![Create Scan JPG](../../../assets/plan/structure_scan_v2/create_scan.jpg)
 
 1. This will create a simple square structure scan on the map.
 
-   ![Initial Polygon](../../../assets/plan/structure_scan_v2/initial_polygon_scan.jpg)
 
    The region shown in green must be modified so that it surrounds the structure.
 
@@ -47,7 +43,6 @@ To create a scan:
 
 1. You can also change to a circular footprint by clicking on the central "vertix" (marked in red) and selecting _Circle_ in the popup menu.
 
-   ![Circle Scan](../../../assets/plan/structure_scan_v2/circle_scan.jpg).
 
    - From the popup menu you can switch back to a polygon footprint and change the radius and/or position of the scan.
    - Drag the central vertix to position the centre of the circle.
@@ -61,7 +56,6 @@ To create a scan:
 
    Options for the different modes are shown below.
 
-   ![Structure Scan editor](../../../assets/plan/structure_scan_v2/editor_options.jpg)
 
 The user can always configure the following settings:
 

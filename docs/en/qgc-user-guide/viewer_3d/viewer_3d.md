@@ -13,18 +13,16 @@ You can use it to:
     - Switch between a map view and a video view (if available)
     - Display video, mission, telemetry, and other information for the current vehicle, and also switch between connected vehicles.
 
-![3D View](../../../assets/viewer_3d/viewer_3d_overview.jpg)
 
 # UI Overview
-The screenshot above shows the main elements of the 3D View.
 
-<font color="red">**Enabling the 3D View:** </font>The 3D View is disabled by default. To enable it, go to **Application Settings** ->**Fly View** tab, and under the **3D View** settings group, toggle the **Enabled** switch as shown below:
+The main elements of the 3D View are the same as the [Fly View](../fly_view/fly_view.md), with an added 3D environment.
 
-![3D View](../../../assets/viewer_3d/enable_3d_view.jpg)
+**Enabling the 3D View:** The 3D View is disabled by default. To enable it, go to **Settings > Fly View**, and under the **3D View** settings group, toggle the **Enabled** switch.
 
-To open the 3D View, when you are in the [Fly View](../fly_view/fly_view.md), from the toolbar on the left, select the 3D View icon as illustrated below:
 
-![3D View](../../../assets/viewer_3d/open_3d_viewer.jpg)
+To open the 3D View, when you are in the [Fly View](../fly_view/fly_view.md), select the 3D View icon from the toolbar on the left.
+
 
 Once the 3D View is opened, you can navigate through the 3D environment by using either a mouse or a touchscreen as follows:
 - **Mouse:**

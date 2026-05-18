@@ -14,7 +14,6 @@ _QGroundControl_ does not support polygon fences or rally points on ArduPilot.
 
 The Copter safety page is shown below.
 
-![Safety Setup - Copter (Ardupilot)](../../../assets/setup/safety/safety_arducopter.jpg)
 
 ::: info
 For additional safety settings and information see: [Failsafe](http://ardupilot.org/copter/docs/failsafe-landing-page.html).
@@ -30,7 +29,6 @@ The thresholds can be disabled by setting them to zero.
 If there is a second battery (enabled in the [Power Setup](../setup_view/power.md)) a second panel will be displayed with the same settings.
 :::
 
-![Safety Setup - Battery1 Failsafe Triggers (Copter)](../../../assets/setup/safety/safety_arducopter_battery1_failsafe_triggers.jpg)
 
 The configuration options are:
 
@@ -46,7 +44,6 @@ The configuration options are:
 This panel enables the [GCS Failsafe](http://ardupilot.org/copter/docs/gcs-failsafe.html)
 and enables/configures the throttle failsafe.
 
-![Safety Setup - General Failsafe Triggers (Copter)](../../../assets/setup/safety/safety_arducopter_general_failsafe_triggers.jpg)
 
 The configuration options are:
 
@@ -59,7 +56,6 @@ The configuration options are:
 This panel sets the parameters for the cylindrical [Simple Geofence](http://ardupilot.org/copter/docs/ac2_simple_geofence.html).
 You can set whether the fence radius or height are enabled, the maximum values for causing a breach, and the action in the event of a breach.
 
-![Safety Setup - Geofence (Copter)](../../../assets/setup/safety/safety_arducopter_geofence.jpg)
 
 The configuration options are:
 
@@ -75,7 +71,6 @@ The configuration options are:
 
 This panel sets the [RTL Mode](http://ardupilot.org/copter/docs/rtl-mode.html) behaviour.
 
-![Safety Setup - RTL (Copter)](../../../assets/setup/safety/safety_arducopter_return_to_launch.jpg)
 
 The configuration options are:
 
@@ -91,7 +86,6 @@ The configuration options are:
 
 This panel sets which [Pre-ARM Safety Checks](http://ardupilot.org/copter/docs/prearm_safety_check.html) are enabled.
 
-![Safety Setup - Arming Checks (Copter)](../../../assets/setup/safety/safety_arducopter_arming_checks.jpg)
 
 The configuration options are:
 
@@ -101,7 +95,6 @@ The configuration options are:
 
 The Plane safety page is shown below.
 
-![Safety Setup - Plane (Ardupilot)](../../../assets/setup/safety/safety_arduplane.jpg)
 
 ::: info
 For additional safety settings and information see: [Plane Failsafe Function](http://ardupilot.org/plane/docs/apms-failsafe-function.html) and [Advanced Failsafe Configuration](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html).
@@ -117,7 +110,6 @@ For more information see: [battery failsafe](#battery_failsafe_copter) (copter).
 
 This panel enables the [GCS Failsafe](http://ardupilot.org/plane/docs/advanced-failsafe-configuration.html#ground-station-communications-loss) and enables/configures the throttle failsafe.
 
-![Safety Setup - Failsafe Triggers (Plane)](../../../assets/setup/safety/safety_arduplane_failsafe_triggers.jpg)
 
 The configuration options are:
 
@@ -128,7 +120,6 @@ The configuration options are:
 
 This panel sets the [RTL Mode](http://ardupilot.org/copter/docs/rtl-mode.html) behaviour.
 
-![Safety Setup - RTL (Plane)](../../../assets/setup/safety/safety_arduplane_return_to_launch.jpg)
 
 The configuration options are:
 
@@ -144,7 +135,6 @@ The configuration options are:
 
 The Rover safety page is shown below.
 
-![Safety Setup - Rover (Ardupilot)](../../../assets/setup/safety/safety_ardurover.jpg)
 
 ::: info
 For additional safety settings and information see: [Failsafes](http://ardupilot.org/rover/docs/rover-failsafes.html).
@@ -158,7 +148,6 @@ The rover battery failsafe is the same as for [copter](#battery_failsafe_copter)
 
 This panel enables the rover [Failsafes](http://ardupilot.org/rover/docs/rover-failsafes.html).
 
-![Safety Setup - Failsafe Triggers (Rover)](../../../assets/setup/safety/safety_ardurover_failsafe_triggers.jpg)
 
 The configuration options are:
 
@@ -175,7 +164,6 @@ The configuration options are:
 
 The Sub safety page is shown below.
 
-![Safety Setup - Sub (Ardupilot)](../../../assets/setup/safety/safety_ardusub.jpg)
 
 ::: info
 For additional safety settings and information see: [Failsafes](https://www.ardusub.com/operators-manual/failsafes.html).

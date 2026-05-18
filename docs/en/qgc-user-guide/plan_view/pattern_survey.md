@@ -13,7 +13,6 @@ If ground elevation under the survey area is _significantly_ higher than the hom
 Using terrain following ensures that the survey more closely matches the desired altitude above terrain, and reduces the likelihood of planning a mission that is too close to ground level.
 :::
 
-![Survey](../../../assets/plan/survey/survey.jpg)
 
 ## Creating a Survey
 
@@ -22,7 +21,6 @@ To create a survey:
 1. Open [PlanView](../plan_view/plan_view.md) _Plan Tools_.
 1. Choose the _Pattern Tool_ from the _Plan Tools_ and then select _Survey_.
 
-   ![Survey Menu](../../../assets/plan/survey/survey_menu.jpg)
 
    This will add a survey grid to the map, and a _Survey_ item to the mission list (on the right).
 
@@ -42,13 +40,11 @@ Camera triggering behaviour depends on the camera/camera settings.
 You can select an existing camera, custom camera, or manually enter the settings.
 The list of available cameras (QGC 3.4) is given below.
 
-![Survey - Camera Select](../../../assets/plan/survey/survey_camera_select.jpg)
 
 #### Known Camera {#known_camera}
 
 Selecting a known camera from the option dropdown generates a grid pattern based on the camera capabilities.
 
-![Survey - Camera Sony](../../../assets/plan/survey/survey_camera_sony.jpg)
 
 The default settings can be tuned for your survey using the configuration options:
 
@@ -63,7 +59,6 @@ The default settings can be tuned for your survey using the configuration option
 
 Selecting the custom camera option allows you to specify the settings for a new camera in a similar way to a known camera.
 
-![Survey - Custom Camera](../../../assets/plan/survey/survey_camera_custom.jpg)
 
 The camera-specific settings are:
 
@@ -77,7 +72,6 @@ The remaining settings are the same as for a [known camera](#known_camera).
 
 The manual camera option allows you to specify desired survey height, trigger interval and appropriate grid spacing for your camera.
 
-![Survey - Manual Camera Settings](../../../assets/plan/survey/survey_camera_manual.jpg)
 
 The configurable options are:
 
@@ -89,17 +83,14 @@ The configurable options are:
 
 The _Transects_ section is used for grid settings that are independent of the camera used.
 
-![Survey - Transects](../../../assets/plan/survey/survey_transects.jpg)
 
 The configurable options are:
 
 - **Angle** - The angle of the grid lines, relative to North.
-  ![Survey - Angle](../../../assets/plan/survey/survey_transects_angle.jpg)
 - **Turnaround dist** - Amount of additional distance to add outside the survey area for vehicle turn around.
 - **Rotate Entry Point** - Press button to swap the start and end point of the survey.
 - **Hover and capture image** - Hover to capture images (multicopter only).
 - **Refly at 90 degree offset** - Check to refly the whole mission at a 90 degree offset.
-  ![Survey - Fly Offset](../../../assets/plan/survey/survey_transects_offset.jpg)
 - **Images in turnarounds** - Check to take images when turning
 - **Relative altitude** - Check to make specified altitudes relative to home (if unchecked they are AMSL).
 
@@ -108,7 +99,6 @@ The configurable options are:
 By default, a flying vehicle will follow the survey path at a fixed altitude.
 Enabling _Terrain Following_ makes the vehicle maintain a constant height relative to ground.
 
-![Survey - Terrain Following Settings](../../../assets/plan/survey/survey_terrain.jpg)
 
 ::: info
 Terrain following uses terrain heights queried from _AirMap_ servers.
@@ -125,4 +115,3 @@ The configurable options are:
 
 The _Statistics_ section shows the calculated survey area, photo interval, photo spacing and planned photo count.
 
-![Survey - Statistics](../../../assets/plan/survey/survey_statistics.jpg)

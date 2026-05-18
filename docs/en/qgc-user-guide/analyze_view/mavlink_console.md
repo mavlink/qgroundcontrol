@@ -11,7 +11,6 @@ PX4 SITL and ArduPilot are not supported.
 This is a very useful feature for developers as it allows deep access to the system. In particular, if you are connected via Wifi, you can have this same level of access while the vehicle is flying.
 :::
 
-![Analyze View MAVLink Console](../../../assets/analyze/mavlink_console.jpg)
 
 The view does not display any output except in response to commands.
 Once the vehicle is connected, you can enter commands in the bar provided (for a full list of available commands enter: `?`).

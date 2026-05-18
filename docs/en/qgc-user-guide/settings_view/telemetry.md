@@ -9,7 +9,6 @@ The screen also allows you to manage [MAVLink 2 Log Streaming](#logging) (PX4 on
 
 This section sets the MAVLink properties and behaviour of _QGroundControl_.
 
-![Ground Station](../../../assets/settings/mavlink/ground_station.png)
 
 - **MAVLink System ID:** System ID of _QGroundControl_ on the MAVLink network (Default: 255).
   Vehicles are typically allocated IDs from 1.
@@ -26,7 +25,6 @@ This section sets the MAVLink properties and behaviour of _QGroundControl_.
 This shows the status of MAVLink message transfer over the communications link.
 A high **Loss rate** may lead to protocol errors for things like parameter download or mission upload/download.
 
-![Link Status](../../../assets/settings/mavlink/link_status.jpg)
 
 ## MAVLink 2 Signing {#signing}
 
@@ -68,12 +66,10 @@ The log format is the same as for SD Card logs (downloaded using [Analyze View >
 
 The _MAVLink 2 Logging_ section allows you to manually start and stop logging, and to enable automatic capture of logs.
 
-![MAVLink 2 Logging](../../../assets/settings/mavlink/mavlink2_logging.jpg)
 
 The _MAVLink 2 Log Uploads_ section allows you configure uploading of MAVLink logs to [Flight Review](https://logs.px4.io).
 You can specify all the fields that you would otherwise have to directly enter in the site, and also choose whether logs are automatically or manually uploaded.
 
-![MAVLink 2 Log Uploads](../../../assets/settings/mavlink/mavlink2_log_uploads.jpg)
 
 The fields are:
 
@@ -99,4 +95,3 @@ Use the checkboxes and buttons to select logs, and either delete or upload them.
 You can change the parameters in _MAVLink 2 Log Uploads_ above to specify separate descriptions for uploaded logs.
 :::
 
-![Saved log files](../../../assets/settings/mavlink/saved_log_files.jpg)
