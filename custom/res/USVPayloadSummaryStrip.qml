@@ -32,9 +32,13 @@ Rectangle {
 
     property int payloadStatus: _statusFact ? _statusFact.value : USVLayout.StatusIdle
     property bool _linkOk: _linkActiveFact ? _linkActiveFact.value === 1 : !_hasPayloadGroup
-    property bool _isWorking: payloadStatus === USVLayout.StatusSampling || payloadStatus === USVLayout.StatusDetecting || payloadStatus === USVLayout.StatusCalibrating
+    property bool _isWorking: payloadStatus === USVLayout.StatusSampling
+                              || payloadStatus === USVLayout.StatusDetecting
+                              || payloadStatus === USVLayout.StatusCalibrating
+                              || payloadStatus === USVLayout.StatusSurveying
 
     function statusText(st) {
+        if (st === USVLayout.StatusSurveying) return qsTr("走航检测")
         if (st === USVLayout.StatusFault) return qsTr("故障")
         if (!_linkOk) return qsTr("离线")
         switch(st) {
@@ -48,6 +52,7 @@ Rectangle {
     }
 
     function statusColor(st) {
+        if (st === USVLayout.StatusSurveying) return qgcPal.brandingBlue
         if (st === USVLayout.StatusFault) return qgcPal.colorRed
         if (!_linkOk) return qgcPal.colorOrange
         switch(st) {

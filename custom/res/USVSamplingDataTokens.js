@@ -15,6 +15,7 @@ var StatusResumingAuto = 10
 var StatusPaused = 11
 var StatusAborted = 12
 var StatusHoldNoMission = 13
+var StatusSurveying = 14
 
 // PID Mode constants
 var PidIdle = 0
@@ -67,6 +68,7 @@ function statusText(status) {
     case StatusPaused: return "已暂停"
     case StatusAborted: return "已中止"
     case StatusHoldNoMission: return "无任务保持"
+    case StatusSurveying: return "走航检测"
     default: return "未知"
     }
 }

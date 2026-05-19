@@ -29,6 +29,9 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     , _sampleCountFact(0, QStringLiteral("sampleCount"), FactMetaData::valueTypeFloat)
     , _pidErrorFact   (0, QStringLiteral("pidError"),    FactMetaData::valueTypeFloat)
     , _pidModeFact    (0, QStringLiteral("pidMode"),     FactMetaData::valueTypeUint32)
+    , _baselineSetFact     (0, QStringLiteral("baselineSet"),      FactMetaData::valueTypeUint32)
+    , _referenceVoltageFact(0, QStringLiteral("referenceVoltage"), FactMetaData::valueTypeFloat)
+    , _baselineVoltageFact (0, QStringLiteral("baselineVoltage"),  FactMetaData::valueTypeFloat)
 {
     _addFact(&_voltageFact);
     _addFact(&_absorbanceFact);
@@ -44,6 +47,9 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     _addFact(&_sampleCountFact, _sampleCountName);
     _addFact(&_pidErrorFact,    _pidErrorName);
     _addFact(&_pidModeFact,     _pidModeName);
+    _addFact(&_baselineSetFact,      _baselineSetName);
+    _addFact(&_referenceVoltageFact, _referenceVoltageName);
+    _addFact(&_baselineVoltageFact,  _baselineVoltageName);
 
     _timeoutTimer.setSingleShot(true);
     _timeoutTimer.setInterval(_timeoutMsecs);
@@ -132,6 +138,12 @@ void USVPayloadFactGroup::_handleNamedValueFloat(const mavlink_message_t &messag
         _pidErrorFact.setRawValue(namedValue.value); handled = true;
     } else if (name == QLatin1String("USV_PMOD")) {
         _pidModeFact.setRawValue(QVariant::fromValue(static_cast<uint32_t>(namedValue.value))); handled = true;
+    } else if (name == QLatin1String("USV_BSET")) {
+        _baselineSetFact.setRawValue(QVariant::fromValue(static_cast<uint32_t>(namedValue.value))); handled = true;
+    } else if (name == QLatin1String("USV_REF")) {
+        _referenceVoltageFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_BASE")) {
+        _baselineVoltageFact.setRawValue(namedValue.value); handled = true;
     }
 
     if (handled) {

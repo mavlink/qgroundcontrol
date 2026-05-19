@@ -8,7 +8,7 @@
             "id":                   31010,
             "rawName":              "MAV_CMD_USV_SAMPLE",
             "friendlyName":         "定点采样",
-            "description":          "到达航点后暂停导航，执行水质采样序列，完成后继续任务。",
+            "description":          "任务项由飞控 NAV_SCRIPT_TIME 触发时，param2 表示任务上下文；QGC 手动 COMMAND_LONG 触发时 param2=0，语义不同于任务触发。",
             "specifiesCoordinate":  false,
             "friendlyEdit":         true,
             "category":             "USV",
@@ -20,7 +20,7 @@
                 "max":              99
             },
             "param2": {
-                "label":            "稳定等待",
+                "label":            "任务触发参数",
                 "units":            "secs",
                 "default":          3,
                 "decimalPlaces":    1,
@@ -66,6 +66,22 @@
             "specifiesCoordinate":  false,
             "friendlyEdit":         true,
             "category":             "USV"
+        },
+        {
+            "id":                   31017,
+            "rawName":              "MAV_CMD_USV_SET_BASELINE",
+            "friendlyName":         "设置分光基线",
+            "description":          "设置分光 baseline；param1=0 使用最新有效电压，param1>0 使用显式参考电压。",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "USV",
+            "param1": {
+                "label":            "参考电压",
+                "units":            "V",
+                "default":          0,
+                "decimalPlaces":    3,
+                "min":              0
+            }
         }
     ]
 }

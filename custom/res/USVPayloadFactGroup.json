@@ -55,8 +55,8 @@
     "name":             "status",
     "shortDesc": "载荷状态",
     "type":             "uint32",
-    "enumStrings":      "空闲,正在采样,正在检测,故障,校准中",
-    "enumValues":       "0,1,2,3,4",
+    "enumStrings":      "空闲,正在采样,正在检测,故障,校准中,导航中,到达航点,保持,稳定等待,采样完成,恢复导航,已暂停,已中止,无任务保持,走航检测",
+    "enumValues":       "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14",
     "default":          0
 },
 {
@@ -108,6 +108,30 @@
     "type":             "uint32",
     "enumStrings":      "空闲,运行中,已完成,错误",
     "enumValues":       "0,1,2,3",
+    "default":          0
+},
+{
+    "name":             "baselineSet",
+    "shortDesc":        "Baseline set",
+    "type":             "uint32",
+    "enumStrings":      "No,Yes",
+    "enumValues":       "0,1",
+    "default":          0
+},
+{
+    "name":             "referenceVoltage",
+    "shortDesc":        "Reference voltage",
+    "type":             "float",
+    "units":            "V",
+    "decimalPlaces":    3,
+    "default":          0
+},
+{
+    "name":             "baselineVoltage",
+    "shortDesc":        "Baseline voltage",
+    "type":             "float",
+    "units":            "V",
+    "decimalPlaces":    3,
     "default":          0
 }
 ]

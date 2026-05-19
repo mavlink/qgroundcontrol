@@ -34,12 +34,16 @@ Rectangle {
     readonly property int _stPaused: USVLayout.StatusPaused
     readonly property int _stAborted: USVLayout.StatusAborted
     readonly property int _stHoldNoMission: USVLayout.StatusHoldNoMission
+    readonly property int _stSurveying: USVLayout.StatusSurveying
 
     readonly property int _cmdStart: 31010
     readonly property int _cmdStop: 31011
     readonly property int _cmdPause: 31012
     readonly property int _cmdResume: 31013
     readonly property int _cmdCalibrate: 31014
+    readonly property int _cmdStartSurvey: 31015
+    readonly property int _cmdStopSurvey: 31016
+    readonly property int _cmdSetBaseline: 31017
     readonly property int _payloadCompId: 191
 
     property real _m: ScreenTools.defaultFontPixelWidth
@@ -56,16 +60,24 @@ Rectangle {
     property var _statusFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.status") : null
     property var _linkActiveFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.linkActive") : null
     property var _packetCountFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.packetCount") : null
+    property var _baselineSetFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.baselineSet") : null
+    property var _referenceVoltageFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.referenceVoltage") : null
+    property var _baselineVoltageFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.baselineVoltage") : null
     property var _payloadGroup: _hasPayloadGroup ? vehicle.getFactGroup("usvPayload") : null
 
     property int payloadStatus: _statusFact ? _statusFact.value : _stIdle
+    property bool baselineSet: _baselineSetFact ? Number(_baselineSetFact.value) >= 1 : false
     property bool _isWorking: payloadStatus === _stSampling || payloadStatus === _stDetecting || payloadStatus === _stCalibrating
                               || payloadStatus === _stNavigating || payloadStatus === _stHolding
                               || payloadStatus === _stWaitingStable || payloadStatus === _stResumingAuto
+                              || payloadStatus === _stSurveying
     property bool _linkOk: _linkActiveFact ? _linkActiveFact.value === 1 : !_hasPayloadGroup
     property var _panelState: USVLayout.payloadState(!!vehicle, payloadStatus, _linkOk, _expanded)
 
     function statusText(st) {
+        if (st === _stSurveying) {
+            return qsTr("走航检测")
+        }
         switch (st) {
         case _stIdle: return qsTr("空闲")
         case _stSampling: return qsTr("采样中")
@@ -85,6 +97,9 @@ Rectangle {
     }
 
     function statusColor(st) {
+        if (st === _stSurveying) {
+            return qgcPal.brandingBlue
+        }
         switch (st) {
         case _stSampling:
         case _stSamplingDone:
@@ -113,9 +128,9 @@ Rectangle {
         return (_linkOk && fact && fact.value !== undefined) ? Number(fact.value).toFixed(1) + "\u00B0" : "--"
     }
 
-    function _send(cmdId) {
+    function _send(cmdId, param1) {
         if (vehicle) {
-            vehicle.sendCommand(_payloadCompId, cmdId, true)
+            vehicle.sendCommand(_payloadCompId, cmdId, true, param1 || 0)
         }
     }
 
@@ -323,6 +338,17 @@ Rectangle {
                         QGCLabel { text: _pumpString(_pumpZFact); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
                         QGCLabel { text: qsTr("A 泵"); opacity: 0.55; font.pointSize: ScreenTools.smallFontPointSize }
                         QGCLabel { text: _pumpString(_pumpAFact); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: qsTr("Baseline"); opacity: 0.55; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel {
+                            text: baselineSet ? qsTr("已设置") : qsTr("未设基线")
+                            color: baselineSet ? qgcPal.colorGreen : qgcPal.colorOrange
+                            font.bold: true
+                            font.pointSize: ScreenTools.smallFontPointSize
+                        }
+                        QGCLabel { text: qsTr("Ref V"); opacity: 0.55; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: _factString(_referenceVoltageFact, " V"); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: qsTr("Base V"); opacity: 0.55; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: _factString(_baselineVoltageFact, " V"); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
                     }
                 }
 
@@ -346,7 +372,10 @@ Rectangle {
                                 { text: qsTr("停止"),     cmd: _cmdStop,      en: vehicle && _isWorking,                warn: true,  span: 1 },
                                 { text: qsTr("暂停"),     cmd: _cmdPause,     en: vehicle && payloadStatus === _stSampling, warn: false, span: 1 },
                                 { text: qsTr("恢复"),     cmd: _cmdResume,    en: vehicle && (payloadStatus === _stSampling || payloadStatus === _stIdle), warn: false, span: 1 },
-                                { text: qsTr("零点校准"), cmd: _cmdCalibrate, en: vehicle && payloadStatus === _stIdle, warn: false, span: 2 }
+                                { text: qsTr("零点校准"), cmd: _cmdCalibrate, en: vehicle && payloadStatus === _stIdle, warn: false, span: 2 },
+                                { text: qsTr("设基线"), cmd: _cmdSetBaseline, param1: 0, en: vehicle && _linkOk && payloadStatus !== _stFault, warn: false, span: 1 },
+                                { text: qsTr("开始走航"), cmd: _cmdStartSurvey, param1: 5, en: vehicle && _linkOk && payloadStatus !== _stFault && payloadStatus !== _stSurveying, warn: false, span: 1 },
+                                { text: qsTr("停止走航"), cmd: _cmdStopSurvey, param1: 0, en: vehicle && payloadStatus === _stSurveying, warn: true, span: 2 }
                             ]
 
                             delegate: Rectangle {
@@ -372,7 +401,7 @@ Rectangle {
                                 MouseArea {
                                     anchors.fill: parent
                                     enabled: modelData.en
-                                    onClicked: root._send(modelData.cmd)
+                                    onClicked: root._send(modelData.cmd, modelData.param1)
                                 }
                             }
                         }
