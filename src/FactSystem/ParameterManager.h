@@ -61,6 +61,14 @@ public:
     /// Request a refresh on all parameters that begin with the specified prefix
     void refreshParametersPrefix(int componentId, const QString &namePrefix);
 
+    /// Refresh a set of parameters in a single batch with exponential-backoff retry.
+    /// @param names  Mix of exact param names and prefix patterns ending in '*' (e.g. "COMPASS_*").
+    ///               Prefix entries are expanded against the known parameter set at call time.
+    ///               Duplicate names are deduplicated automatically.
+    /// @param notifyFailure  When true (default), shows a single user-visible message if any
+    ///                       parameters still fail to respond after all retry rounds.
+    void bulkRefresh(int componentId, const QStringList &names, bool notifyFailure = true);
+
     void resetAllParametersToDefaults();
     void resetAllToVehicleConfiguration();
 
@@ -112,7 +120,8 @@ signals:
     void parameterDownloadSkippedChanged();
     void factAdded(int componentId, Fact *fact);
 
-    // These signals are used to verify unit tests
+    // Internal signals — emitted by PARAM_SET / PARAM_REQUEST_READ state machines.
+    // Also consumed by BulkRefreshJob and unit tests.
     void _paramSetSuccess(int componentId, const QString &paramName);
     void _paramSetFailure(int componentId, const QString &paramName);
     void _paramRequestReadSuccess(int componentId, const QString &paramName, int paramIndex);
@@ -203,6 +212,7 @@ private:
     int _initialRequestRetryCount = 0;                          ///< Current retry count for request list
     static constexpr int _maxInitialLoadRetrySingleParam = 5;   ///< Maximum retries for initial index based load of a single param
     bool _disableAllRetries = false;                            ///< true: Don't retry any requests (used for testing and logReplay)
+    const int _waitForParamValueAckMs;                          ///< 50 ms in unit tests, kWaitForParamValueAckMs otherwise
 
     bool _indexBatchQueueActive = false;    ///< true: we are actively batching re-requests for missing index base params, false: index based re-request has not yet started
     QList<int> _indexBatchQueue;            ///< The current queue of index re-requests
