@@ -376,18 +376,12 @@ void APMSensorsComponentController::_handleTextMessage(int sysid, int componenti
 
 void APMSensorsComponentController::_refreshParams()
 {
-    static const QStringList fastRefreshList = {
+    _vehicle->parameterManager()->bulkRefresh(ParameterManager::defaultComponentId, {
         QStringLiteral("COMPASS_OFS_X"), QStringLiteral("COMPASS_OFS_Y"), QStringLiteral("COMPASS_OFS_Z"),
-        QStringLiteral("INS_ACCOFFS_X"), QStringLiteral("INS_ACCOFFS_Y"), QStringLiteral("INS_ACCOFFS_Z")
-    };
-
-    for (const QString &paramName : fastRefreshList) {
-        _vehicle->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, paramName);
-    }
-
-    // Now ask for all to refresh
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_"));
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, QStringLiteral("INS_"));
+        QStringLiteral("INS_ACCOFFS_X"), QStringLiteral("INS_ACCOFFS_Y"), QStringLiteral("INS_ACCOFFS_Z"),
+        QStringLiteral("COMPASS_*"),
+        QStringLiteral("INS_*"),
+    }, false /* notifyFailure */);
 }
 
 void APMSensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)
