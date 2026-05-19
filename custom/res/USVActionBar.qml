@@ -19,6 +19,9 @@ Rectangle {
     readonly property int _cmdPause:     31012
     readonly property int _cmdResume:    31013
     readonly property int _cmdCalibrate: 31014
+    readonly property int _cmdStartSurvey: 31015
+    readonly property int _cmdStopSurvey:  31016
+    readonly property int _cmdSetBaseline: 31017
     readonly property int _payloadCompId: 191
 
     property real _m: ScreenTools.defaultFontPixelWidth
@@ -37,11 +40,14 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-    function _send(cmdId) {
-        if (vehicle) vehicle.sendCommand(_payloadCompId, cmdId, false)
+    function _send(cmdId, param1) {
+        if (vehicle) vehicle.sendCommand(_payloadCompId, cmdId, false, param1 || 0)
     }
 
-    property bool _isWorking: payloadStatus === USVLayout.StatusSampling || payloadStatus === USVLayout.StatusDetecting || payloadStatus === USVLayout.StatusCalibrating
+    property bool _isWorking: payloadStatus === USVLayout.StatusSampling
+                              || payloadStatus === USVLayout.StatusDetecting
+                              || payloadStatus === USVLayout.StatusCalibrating
+                              || payloadStatus === USVLayout.StatusSurveying
 
     RowLayout {
         id: actionRow
@@ -75,9 +81,30 @@ Rectangle {
                     warn: false
                 },
                 {
+                    text: qsTr("设基线"),
+                    cmd: _cmdSetBaseline,
+                    param1: 0,
+                    en: vehicle && payloadStatus !== USVLayout.StatusFault,
+                    warn: false
+                },
+                {
+                    text: qsTr("走航"),
+                    cmd: _cmdStartSurvey,
+                    param1: 5,
+                    en: vehicle && payloadStatus !== USVLayout.StatusFault && payloadStatus !== USVLayout.StatusSurveying,
+                    warn: false
+                },
+                {
                     text: qsTr("停止"),
                     cmd: _cmdStop,
                     en: vehicle && _isWorking,
+                    warn: true
+                },
+                {
+                    text: qsTr("停走航"),
+                    cmd: _cmdStopSurvey,
+                    param1: 0,
+                    en: vehicle && payloadStatus === USVLayout.StatusSurveying,
                     warn: true
                 }
             ]
@@ -122,9 +149,9 @@ Rectangle {
                     onClicked: {
                         if (modelData.warn) {
                             // 实际项目中可以添加 Confirmation Dialog，这里简化为直接发送
-                            _send(modelData.cmd)
+                            _send(modelData.cmd, modelData.param1)
                         } else {
-                            _send(modelData.cmd)
+                            _send(modelData.cmd, modelData.param1)
                         }
                     }
                 }

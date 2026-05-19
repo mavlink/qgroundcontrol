@@ -7,6 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 
 import "USVSamplingDataTokens.js" as SDTokens
+import "USVFlyViewLayout.js" as USVLayout
 
 Rectangle {
     id: root
@@ -33,17 +34,23 @@ Rectangle {
     property var _pumpAFact:       _hasPayloadGroup ? _activeVehicle.getFact("usvPayload.pumpA")       : null
     property var _pidErrorFact:    _hasPayloadGroup ? _activeVehicle.getFact("usvPayload.pidError")    : null
     property var _pidModeFact:     _hasPayloadGroup ? _activeVehicle.getFact("usvPayload.pidMode")     : null
+    property var _baselineSetFact:      _hasPayloadGroup ? _activeVehicle.getFact("usvPayload.baselineSet")      : null
+    property var _referenceVoltageFact: _hasPayloadGroup ? _activeVehicle.getFact("usvPayload.referenceVoltage") : null
+    property var _baselineVoltageFact:  _hasPayloadGroup ? _activeVehicle.getFact("usvPayload.baselineVoltage")  : null
 
     property real _m: ScreenTools.defaultFontPixelWidth
     property real _h: ScreenTools.defaultFontPixelHeight
 
     property bool _linkOk: _linkActiveFact ? Number(_linkActiveFact.value) === 1 : false
     property int payloadStatus: _statusFact ? Number(_statusFact.value) : SDTokens.StatusIdle
+    property bool baselineSet: _baselineSetFact ? Number(_baselineSetFact.value) >= 1 : false
     // 只有在活跃工作状态时才向曲线追加数据点，避免非采样时持续累积导致内存增长和 heap 904
     property bool _shouldChart: payloadStatus === SDTokens.StatusSampling
                                 || payloadStatus === SDTokens.StatusDetecting
                                 || payloadStatus === SDTokens.StatusCalibrating
                                 || payloadStatus === SDTokens.StatusWaitingStable
+                                || payloadStatus === SDTokens.StatusSurveying
+    property bool _shouldSampleAbsorbance: USVLayout.shouldSampleAbsorbance(payloadStatus, baselineSet)
 
     property bool _chartPaused: false
     property int _sampleIndex: 0
@@ -124,6 +131,7 @@ Rectangle {
         case SDTokens.StatusDetecting:
         case SDTokens.StatusNavigating:
         case SDTokens.StatusResumingAuto:
+        case SDTokens.StatusSurveying:
             return qgcPal.brandingBlue
         case SDTokens.StatusFault:
         case SDTokens.StatusAborted:
@@ -173,14 +181,18 @@ Rectangle {
         _updateSeriesAxis(absorbanceSeries, axisAbsorbance, 0)
     }
 
-    function _appendSample(voltageValue, absorbanceValue) {
+    function _appendSample(voltageValue, absorbanceValue, includeAbsorbance) {
         if (voltageSeries.count >= SDTokens.Tokens.chart.maxPoints) {
             voltageSeries.remove(0)
+        }
+        if (includeAbsorbance && absorbanceSeries.count >= SDTokens.Tokens.chart.maxPoints) {
             absorbanceSeries.remove(0)
         }
 
         voltageSeries.append(_sampleIndex, voltageValue)
-        absorbanceSeries.append(_sampleIndex, absorbanceValue)
+        if (includeAbsorbance) {
+            absorbanceSeries.append(_sampleIndex, absorbanceValue)
+        }
         _sampleIndex += 1
 
         axisX.min = Math.max(0, _sampleIndex - SDTokens.Tokens.chart.maxPoints)
@@ -188,7 +200,7 @@ Rectangle {
         _updateChartAxes()
     }
 
-    function _updateStatistics(voltageValue, absorbanceValue) {
+    function _updateStatistics(voltageValue, absorbanceValue, includeAbsorbance) {
         if (_voltageCount === 0) {
             _voltageMinStat = voltageValue
             _voltageMaxStat = voltageValue
@@ -199,6 +211,10 @@ Rectangle {
         _voltageCount += 1
         _voltageSum += voltageValue
         _voltageSumSquares += voltageValue * voltageValue
+
+        if (!includeAbsorbance) {
+            return
+        }
 
         if (_absorbanceCount === 0) {
             _absorbanceMinStat = absorbanceValue
@@ -237,7 +253,7 @@ Rectangle {
     }
 
     onPayloadStatusChanged: {
-        if (payloadStatus === SDTokens.StatusSampling) {
+        if (payloadStatus === SDTokens.StatusSampling || payloadStatus === SDTokens.StatusSurveying) {
             _samplingStartedMs = Date.now()
             _elapsedSeconds = 0
         } else {
@@ -295,6 +311,13 @@ Rectangle {
                         text: qsTr("实时电压 / 吸光度曲线")
                         font.bold: true
                         font.pointSize: ScreenTools.defaultFontPointSize
+                    }
+
+                    QGCLabel {
+                        text: root.baselineSet ? qsTr("Baseline OK") : qsTr("未设基线")
+                        color: root.baselineSet ? qgcPal.colorGreen : qgcPal.colorOrange
+                        font.bold: true
+                        font.pointSize: ScreenTools.smallFontPointSize
                     }
 
                     Rectangle {
@@ -399,6 +422,7 @@ Rectangle {
                     LineSeries {
                         id: absorbanceSeries
                         name: qsTr("吸光度")
+                        visible: root.baselineSet
                         color: SDTokens.Tokens.chart.absorbanceColor
                         width: 2
                         axisX: axisX
@@ -456,8 +480,8 @@ Rectangle {
                             }
 
                             QGCLabel {
-                                text: root._formatPrecision(root._valueOrDefault(root._absorbanceFact, NaN), 4) + (_absorbanceFact ? " AU" : "")
-                                color: SDTokens.Tokens.chart.absorbanceColor
+                                text: root.baselineSet ? root._formatPrecision(root._valueOrDefault(root._absorbanceFact, NaN), 4) + (_absorbanceFact ? " AU" : "") : qsTr("未设基线")
+                                color: root.baselineSet ? SDTokens.Tokens.chart.absorbanceColor : qgcPal.colorOrange
                                 font.bold: true
                                 font.pointSize: ScreenTools.largeFontPointSize
                                 font.family: ScreenTools.fixedFontFamily
@@ -522,6 +546,13 @@ Rectangle {
                         QGCLabel {
                             text: SDTokens.statusText(payloadStatus)
                             color: root._statusColor(payloadStatus)
+                            font.bold: true
+                        }
+
+                        QGCLabel { text: qsTr("Baseline"); opacity: SDTokens.Tokens.opacity.subtle }
+                        QGCLabel {
+                            text: root.baselineSet ? qsTr("已设置") : qsTr("未设基线")
+                            color: root.baselineSet ? qgcPal.colorGreen : qgcPal.colorOrange
                             font.bold: true
                         }
 
@@ -792,8 +823,9 @@ Rectangle {
 
             var voltageValue = root._valueOrDefault(root._voltageFact, 0)
             var absorbanceValue = root._valueOrDefault(root._absorbanceFact, 0)
-            root._appendSample(voltageValue, absorbanceValue)
-            root._updateStatistics(voltageValue, absorbanceValue)
+            var includeAbsorbance = root._shouldSampleAbsorbance
+            root._appendSample(voltageValue, absorbanceValue, includeAbsorbance)
+            root._updateStatistics(voltageValue, absorbanceValue, includeAbsorbance)
         }
     }
 
@@ -803,7 +835,7 @@ Rectangle {
         repeat: true
         running: root._hasPayloadGroup
         onTriggered: {
-            if (root.payloadStatus === SDTokens.StatusSampling && root._samplingStartedMs > 0) {
+            if ((root.payloadStatus === SDTokens.StatusSampling || root.payloadStatus === SDTokens.StatusSurveying) && root._samplingStartedMs > 0) {
                 root._elapsedSeconds = Math.floor((Date.now() - root._samplingStartedMs) / 1000)
             } else {
                 root._elapsedSeconds = 0

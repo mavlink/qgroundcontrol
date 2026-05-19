@@ -15,6 +15,7 @@ var StatusResumingAuto = 10
 var StatusPaused = 11
 var StatusAborted = 12
 var StatusHoldNoMission = 13
+var StatusSurveying = 14
 
 var Tokens = {
     opacity: {
@@ -49,6 +50,7 @@ function payloadState(hasVehicle, payloadStatus, linkOk, expanded) {
             || payloadStatus === StatusHolding
             || payloadStatus === StatusWaitingStable
             || payloadStatus === StatusResumingAuto
+            || payloadStatus === StatusSurveying
     const isFault = payloadStatus === StatusFault
             || payloadStatus === StatusAborted
     const isOffline = hasVehicle && !linkOk
@@ -62,4 +64,13 @@ function payloadState(hasVehicle, payloadStatus, linkOk, expanded) {
         emphasizeSummary: isWorking || isFault || isOffline,
         severity: isFault ? "critical" : (isOffline ? "warning" : (isWorking ? "active" : "normal"))
     }
+}
+
+function shouldSampleAbsorbance(payloadStatus, baselineSet) {
+    const chartActive = payloadStatus === StatusSampling
+            || payloadStatus === StatusDetecting
+            || payloadStatus === StatusCalibrating
+            || payloadStatus === StatusWaitingStable
+            || payloadStatus === StatusSurveying
+    return !!baselineSet && chartActive
 }

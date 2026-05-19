@@ -36,6 +36,28 @@
             "mavCmd": 31014,
             "compId": 191,
             "showError": false
+        },
+        {
+            "label": "设基线",
+            "description": "使用最新有效分光电压设置 baseline",
+            "mavCmd": 31017,
+            "compId": 191,
+            "showError": true
+        },
+        {
+            "label": "开始走航",
+            "description": "以默认 5 秒间隔开始走航检测",
+            "mavCmd": 31015,
+            "compId": 191,
+            "param1": 5,
+            "showError": true
+        },
+        {
+            "label": "停止走航",
+            "description": "停止走航检测",
+            "mavCmd": 31016,
+            "compId": 191,
+            "showError": true
         }
     ]
 }

@@ -24,6 +24,20 @@ TestCase {
         compare(state.severity, "active")
     }
 
+    function test_surveyingState_isActive() {
+        const state = USVLayout.payloadState(true, USVLayout.StatusSurveying, true, false)
+        compare(state.compact, false)
+        compare(state.showDetail, true)
+        compare(state.showQuickActions, true)
+        compare(state.severity, "active")
+    }
+
+    function test_absorbanceSamplingRequiresBaseline() {
+        compare(USVLayout.shouldSampleAbsorbance(USVLayout.StatusSampling, false), false)
+        compare(USVLayout.shouldSampleAbsorbance(USVLayout.StatusSampling, true), true)
+        compare(USVLayout.shouldSampleAbsorbance(USVLayout.StatusIdle, true), false)
+    }
+
     function test_faultState_forcesDiagnostics() {
         const state = USVLayout.payloadState(true, USVLayout.StatusFault, true, false)
         compare(state.compact, false)

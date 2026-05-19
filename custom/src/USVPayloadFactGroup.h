@@ -30,6 +30,9 @@ class USVPayloadFactGroup : public FactGroup
     Q_PROPERTY(Fact *sampleCount  READ sampleCount  CONSTANT)
     Q_PROPERTY(Fact *pidError     READ pidError     CONSTANT)
     Q_PROPERTY(Fact *pidMode      READ pidMode      CONSTANT)
+    Q_PROPERTY(Fact *baselineSet      READ baselineSet      CONSTANT)
+    Q_PROPERTY(Fact *referenceVoltage READ referenceVoltage CONSTANT)
+    Q_PROPERTY(Fact *baselineVoltage  READ baselineVoltage  CONSTANT)
 
     // 通信诊断属性
     Q_PROPERTY(int rxMsgTotal     READ rxMsgTotal     NOTIFY diagnosticsChanged)
@@ -57,6 +60,9 @@ public:
     Fact *sampleCount()  { return &_sampleCountFact; }
     Fact *pidError()     { return &_pidErrorFact; }
     Fact *pidMode()      { return &_pidModeFact; }
+    Fact *baselineSet()      { return &_baselineSetFact; }
+    Fact *referenceVoltage() { return &_referenceVoltageFact; }
+    Fact *baselineVoltage()  { return &_baselineVoltageFact; }
 
     // 诊断 getters
     int rxMsgTotal()   const { return _rxMsgTotal; }
@@ -95,6 +101,9 @@ private:
     Fact _sampleCountFact;
     Fact _pidErrorFact;
     Fact _pidModeFact;
+    Fact _baselineSetFact;
+    Fact _referenceVoltageFact;
+    Fact _baselineVoltageFact;
     QTimer _timeoutTimer;
     static constexpr int _timeoutMsecs = 5000;
 
@@ -103,6 +112,9 @@ private:
     static constexpr const char *_sampleCountName  = "sampleCount";
     static constexpr const char *_pidErrorName     = "pidError";
     static constexpr const char *_pidModeName      = "pidMode";
+    static constexpr const char *_baselineSetName      = "baselineSet";
+    static constexpr const char *_referenceVoltageName = "referenceVoltage";
+    static constexpr const char *_baselineVoltageName  = "baselineVoltage";
 
     // 通信诊断计数
     int _rxMsgTotal  = 0;
