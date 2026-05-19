@@ -3,7 +3,7 @@
 The QGC Application Settings UI is built from a mix of generated and hand-written QML.
 
 - The settings container/sidebar is implemented in [src/QmlControls/AppSettings.qml](../../../../src/QmlControls/AppSettings.qml).
-- Most settings content pages are generated from JSON definitions in [src/UI/AppSettings/pages](../../../../src/UI/AppSettings/pages).
+- Most settings content pages are generated from JSON definitions in [src/AppSettings/pages](../../../../src/AppSettings/pages).
 - Some pages are still hand-written and referenced directly (for example Help/Logging/debug pages).
 
 ## How It Is Generated
