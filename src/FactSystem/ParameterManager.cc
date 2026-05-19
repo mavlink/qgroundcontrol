@@ -739,7 +739,8 @@ void ParameterManager::bulkRefresh(int componentId, const QStringList &names, bo
         return;
     }
     const QMap<QString, Fact *> &factMap = _mapCompId2FactMap[componentId];
-    QSet<QString> resolvedSet;
+    QStringList resolved;
+    QSet<QString> seen;
     for (const QString &entry : names) {
         if (entry.endsWith(QLatin1Char('*'))) {
             const QString prefix = entry.chopped(1);
@@ -748,24 +749,28 @@ void ParameterManager::bulkRefresh(int componentId, const QStringList &names, bo
                 continue;
             }
             for (auto it = factMap.cbegin(); it != factMap.cend(); ++it) {
-                if (it.key().startsWith(prefix)) {
-                    resolvedSet.insert(it.key());
+                if (it.key().startsWith(prefix) && !seen.contains(it.key())) {
+                    seen.insert(it.key());
+                    resolved.append(it.key());
                 }
             }
         } else if (factMap.contains(entry)) {
-            resolvedSet.insert(entry);
+            if (!seen.contains(entry)) {
+                seen.insert(entry);
+                resolved.append(entry);
+            }
         } else {
             qCWarning(ParameterManagerLog) << "bulkRefresh: unknown param name (skipped):" << entry;
         }
     }
 
-    if (resolvedSet.isEmpty()) {
+    if (resolved.isEmpty()) {
         return;
     }
 
-    qCDebug(ParameterManagerLog) << "bulkRefresh: resolved" << resolvedSet.count() << "params";
+    qCDebug(ParameterManagerLog) << "bulkRefresh: resolved" << resolved.count() << "params";
     new BulkRefreshJob(
-        this, componentId, QStringList(resolvedSet.cbegin(), resolvedSet.cend()), notifyFailure,
+        this, componentId, resolved, notifyFailure,
         [this, componentId](const QString &name) {
             _mavlinkParamRequestRead(componentId, name, -1, false /* notifyFailure */);
         },

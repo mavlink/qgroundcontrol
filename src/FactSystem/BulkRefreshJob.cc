@@ -35,7 +35,12 @@ void BulkRefreshJob::_sendPendingRequests()
 
 void BulkRefreshJob::_onParamSuccess(int componentId, const QString &paramName, int /*paramIndex*/)
 {
-    if (componentId != _componentId || !_pending.remove(paramName)) {
+    if (componentId != _componentId) {
+        return;
+    }
+    const bool wasPending = _pending.remove(paramName);
+    const bool wasFailed  = _failed.remove(paramName);
+    if (!wasPending && !wasFailed) {
         return;
     }
     _checkRoundComplete();
@@ -79,7 +84,8 @@ void BulkRefreshJob::_checkRoundComplete()
                                      << "\u2014" << _failed.count() << "params still failed";
         if (_notifyFailure) {
             const QStringList failedList(_failed.cbegin(), _failed.cend());
-            QGC::showAppMessage(_mgr->tr("Parameter refresh failed for: %1").arg(failedList.join(QStringLiteral(", "))));
+            QGC::showAppMessage(_mgr->tr("Parameter refresh failed for: %1").arg(failedList.join(QStringLiteral(", "))),
+                                _mgr->tr("Parameter Bulk Refresh"));
         }
         deleteLater();
     }
