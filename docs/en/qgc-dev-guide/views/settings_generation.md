@@ -10,8 +10,8 @@ The runtime stack is:
 
 1. Fact metadata in `src/Settings/*.SettingsGroup.json`
 2. Settings Fact accessors in `src/Settings/*Settings.h/.cc`
-3. Settings UI page definitions in `src/UI/AppSettings/pages/*.SettingsUI.json`
-4. Page list in `src/UI/AppSettings/pages/SettingsPages.json`
+3. Settings UI page definitions in `src/AppSettings/pages/*.SettingsUI.json`
+4. Page list in `src/AppSettings/pages/SettingsPages.json`
 5. Python generator in `tools/generators/settings_qml`
 6. Generated QML loaded by `src/QmlControls/AppSettings.qml`
 
@@ -19,12 +19,12 @@ At build time, CMake runs the generator and places generated QML in the build tr
 
 ## Where Generation Is Wired
 
-Generation is configured in [src/UI/AppSettings/CMakeLists.txt](../../../../src/UI/AppSettings/CMakeLists.txt):
+Generation is configured in [src/AppSettings/CMakeLists.txt](../../../../src/AppSettings/CMakeLists.txt):
 
 - Custom command runs:
   - `python -m tools.generators.settings_qml.generate_pages --output-dir <build>/generated`
 - Inputs:
-  - `src/UI/AppSettings/pages/*.json`
+  - `src/AppSettings/pages/*.json`
   - `src/Settings/*.SettingsGroup.json`
 - Outputs:
   - Generated page QML files (e.g. `GeneralSettings.qml`, `FlyViewSettings.qml`)
@@ -65,7 +65,7 @@ Search terms are derived from:
    - Add `DEFINE_SETTINGFACT(<factName>)` in the matching `*Settings.h`.
    - Ensure `DECLARE_SETTINGSFACT` exists in `*Settings.cc` if required by that file pattern.
 3. Add a control entry in the page JSON:
-   - File: `src/UI/AppSettings/pages/<Page>.SettingsUI.json`
+   - File: `src/AppSettings/pages/<Page>.SettingsUI.json`
    - Add: `{ "setting": "<accessor>.<factName>" }`
 
    See [tools/generators/settings_qml/README.md](../../../../tools/generators/settings_qml/README.md) for the full JSON schema.
@@ -73,11 +73,11 @@ Search terms are derived from:
 
 ## Add a New Generated Settings Page
 
-1. Create a new page definition JSON in `src/UI/AppSettings/pages`, e.g. `MyFeature.SettingsUI.json`.
-2. Add a new entry to `src/UI/AppSettings/pages/SettingsPages.json`:
+1. Create a new page definition JSON in `src/AppSettings/pages`, e.g. `MyFeature.SettingsUI.json`.
+2. Add a new entry to `src/AppSettings/pages/SettingsPages.json`:
    - `name`, `icon`, `qml` (output filename), `pageDefinition` (your new JSON file)
    - Optional `visible` expression
-3. Update the generated outputs list in [src/UI/AppSettings/CMakeLists.txt](../../../../src/UI/AppSettings/CMakeLists.txt):
+3. Update the generated outputs list in [src/AppSettings/CMakeLists.txt](../../../../src/AppSettings/CMakeLists.txt):
    - Add your new QML filename to `_generated_qml_names`.
 4. Build QGC to generate and include the new page.
 

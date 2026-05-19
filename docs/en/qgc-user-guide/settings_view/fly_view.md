@@ -19,7 +19,7 @@ Settings that control the behavior and appearance of the [Fly View](../fly_view/
 - **Maximum Altitude** — highest altitude allowed for guided mode commands (default: 121.92 m / 400 ft)
 - **Go To Location Max Distance** — maximum distance for Go To commands (default: 1000 m)
 - **Loiter Radius in Forward Flight Guided Mode** — loiter radius for fixed-wing guided mode (default: 80 m)
-- **Require Confirmation for Go To Location in Guided Mode** — require slider confirmation before executing Go To
+- **Require Confirmation for Go To Location in Guided Mode** — require confirmation before executing Go To
 
 ## MAVLink Actions
 

@@ -53,13 +53,13 @@ To pause:
 
 1. Press the **Pause** button in the _Fly Tools_.
 1. Optionally set a new altitude using the right-side vertical slider.
-1. Confirm the pause using the slider.
+1. [Confirm](fly_tools.md#confirmation) the action.
 
 ### Missions
 
 #### Start Mission {#start_mission}
 
-You can start a mission when the vehicle is landed (the start mission confirmation slider is often displayed by default).
+You can start a mission when the vehicle is landed (the start mission confirmation button is often displayed by default).
 
 To start a mission from landed:
 
@@ -67,14 +67,12 @@ To start a mission from landed:
 1. Select the _Start Mission_ action from the dialog.
 
 
-   (to display the confirmation slider)
-
-1. When the confirmation slider appears, drag it to start the mission.
+1. [Confirm](fly_tools.md#confirmation) the action to start the mission.
 
 
 #### Continue Mission {#continue_mission}
 
-You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation slider is often displayed by default after you takeoff).
+You can _continue_ mission from the _next_ waypoint when you're flying (the _Continue Mission_ confirmation button is often displayed by default after you takeoff).
 
 ::: info
 Continue and [Resume mission](#resume_mission) are different!
@@ -88,7 +86,7 @@ You can continue the current mission while (unless already in a mission!):
 1. Select the _Continue Mission_ action from the dialog.
 
 
-1. Drag the confirmation slider to continue the mission.
+1. [Confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 
 #### Resume Mission {#resume_mission}
@@ -104,7 +102,7 @@ After landing you will be prompted with a _Flight Plan complete_ dialog, which g
 
 
 If you select to resume the mission, then _QGroundControl_ will rebuild the mission and upload it to the vehicle.
-Then use the _Start Mission_ slider to continue the mission.
+Then [confirm](fly_tools.md#confirmation) the action to continue the mission.
 
 
 ::: info

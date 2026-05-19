@@ -19,7 +19,7 @@ It provides easy and straightforward usage for beginners, while still delivering
 
 ::: info
 These docs cover the **daily build** (master branch).
-If you are using the stable release, see the [Stable V5.0 docs](https://docs.qgroundcontrol.com/v5.0/en/qgc-user-guide/).
+If you are using the stable release, see the [Stable V5.0 docs](https://docs.qgroundcontrol.com/Stable_V5.0/en/qgc-user-guide/).
 :::
 
 ## Getting Started
