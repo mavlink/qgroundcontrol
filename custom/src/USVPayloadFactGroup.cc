@@ -32,6 +32,7 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     , _baselineSetFact     (0, QStringLiteral("baselineSet"),      FactMetaData::valueTypeUint32)
     , _referenceVoltageFact(0, QStringLiteral("referenceVoltage"), FactMetaData::valueTypeFloat)
     , _baselineVoltageFact (0, QStringLiteral("baselineVoltage"),  FactMetaData::valueTypeFloat)
+    , _spectrometerValidFact(0, QStringLiteral("spectrometerValid"), FactMetaData::valueTypeUint32)
 {
     _addFact(&_voltageFact);
     _addFact(&_absorbanceFact);
@@ -50,6 +51,7 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     _addFact(&_baselineSetFact,      _baselineSetName);
     _addFact(&_referenceVoltageFact, _referenceVoltageName);
     _addFact(&_baselineVoltageFact,  _baselineVoltageName);
+    _addFact(&_spectrometerValidFact, _spectrometerValidName);
 
     _timeoutTimer.setSingleShot(true);
     _timeoutTimer.setInterval(_timeoutMsecs);
@@ -144,6 +146,8 @@ void USVPayloadFactGroup::_handleNamedValueFloat(const mavlink_message_t &messag
         _referenceVoltageFact.setRawValue(namedValue.value); handled = true;
     } else if (name == QLatin1String("USV_BASE")) {
         _baselineVoltageFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_VLD")) {
+        _spectrometerValidFact.setRawValue(QVariant::fromValue(static_cast<uint32_t>(namedValue.value))); handled = true;
     }
 
     if (handled) {

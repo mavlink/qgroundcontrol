@@ -1,7 +1,7 @@
 {
     "comment":      "Any Firmware, Rover",
     "version":      1,
-    "fileType":  "MavCmdInfo",
+    "fileType":     "MavCmdInfo",
 
     "mavCmdInfo": [
         {
@@ -82,6 +82,24 @@
                 "decimalPlaces":    3,
                 "min":              0
             }
+        },
+        {
+            "id":                   31018,
+            "rawName":              "MAV_CMD_USV_SPECTRO_START",
+            "friendlyName":         "启动检测器信号采集",
+            "description":          "启动分光检测器信号采集，用于设置基线前确认检测器通信和有效采样。",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "USV"
+        },
+        {
+            "id":                   31019,
+            "rawName":              "MAV_CMD_USV_SPECTRO_STOP",
+            "friendlyName":         "停止检测器信号采集",
+            "description":          "停止分光检测器信号采集。",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "USV"
         }
     ]
 }

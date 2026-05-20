@@ -44,6 +44,8 @@ Rectangle {
     readonly property int _cmdStartSurvey: 31015
     readonly property int _cmdStopSurvey: 31016
     readonly property int _cmdSetBaseline: 31017
+    readonly property int _cmdSpectroStart: 31018
+    readonly property int _cmdSpectroStop: 31019
     readonly property int _payloadCompId: 191
 
     property real _m: ScreenTools.defaultFontPixelWidth
@@ -63,16 +65,20 @@ Rectangle {
     property var _baselineSetFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.baselineSet") : null
     property var _referenceVoltageFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.referenceVoltage") : null
     property var _baselineVoltageFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.baselineVoltage") : null
+    property var _spectrometerValidFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.spectrometerValid") : null
     property var _payloadGroup: _hasPayloadGroup ? vehicle.getFactGroup("usvPayload") : null
 
     property int payloadStatus: _statusFact ? _statusFact.value : _stIdle
     property bool baselineSet: _baselineSetFact ? Number(_baselineSetFact.value) >= 1 : false
+    property bool spectrometerValid: _spectrometerValidFact ? Number(_spectrometerValidFact.value) >= 1 : false
     property bool _isWorking: payloadStatus === _stSampling || payloadStatus === _stDetecting || payloadStatus === _stCalibrating
                               || payloadStatus === _stNavigating || payloadStatus === _stHolding
                               || payloadStatus === _stWaitingStable || payloadStatus === _stResumingAuto
                               || payloadStatus === _stSurveying
     property bool _linkOk: _linkActiveFact ? _linkActiveFact.value === 1 : !_hasPayloadGroup
     property var _panelState: USVLayout.payloadState(!!vehicle, payloadStatus, _linkOk, _expanded)
+    property string _lastCommandMessage: ""
+    property bool _lastCommandWarning: false
 
     function statusText(st) {
         if (st === _stSurveying) {
@@ -82,7 +88,7 @@ Rectangle {
         case _stIdle: return qsTr("空闲")
         case _stSampling: return qsTr("采样中")
         case _stDetecting: return qsTr("检测中")
-        case _stFault: return qsTr("故障")
+        case _stFault: return qsTr("任务失败")
         case _stCalibrating: return qsTr("校准中")
         case _stNavigating: return qsTr("航行中")
         case _stHolding: return qsTr("保持")
@@ -130,7 +136,33 @@ Rectangle {
 
     function _send(cmdId, param1) {
         if (vehicle) {
-            vehicle.sendCommand(_payloadCompId, cmdId, true, param1 || 0)
+            vehicle.sendCommand(_payloadCompId, cmdId, false, param1 || 0)
+        }
+    }
+
+    function _commandName(cmdId) {
+        switch (cmdId) {
+        case _cmdSpectroStart: return qsTr("启动信号采集")
+        case _cmdSpectroStop: return qsTr("停止信号采集")
+        case _cmdSetBaseline: return qsTr("设基线")
+        case _cmdStart: return qsTr("开始点采样")
+        case _cmdStartSurvey: return qsTr("开始走航")
+        case _cmdStopSurvey: return qsTr("停止走航")
+        case _cmdStop: return qsTr("停止检测")
+        default: return qsTr("载荷命令")
+        }
+    }
+
+    Connections {
+        target: vehicle
+        ignoreUnknownSignals: true
+
+        function onMavCommandResult(vehicleId, targetComponent, command, ackResult, failureCode) {
+            if (targetComponent !== _payloadCompId || command < _cmdStart || command > _cmdSpectroStop) {
+                return
+            }
+            _lastCommandWarning = ackResult !== 0
+            _lastCommandMessage = _commandName(command) + (ackResult === 0 ? qsTr("已接受") : qsTr("未执行"))
         }
     }
 
@@ -276,8 +308,8 @@ Rectangle {
                 }
 
                 QGCLabel {
-                    text: !vehicle ? "--" : (payloadStatus === _stFault ? qsTr("故障") : (_linkOk ? qsTr("在线") : qsTr("离线")))
-                    color: payloadStatus === _stFault ? qgcPal.colorRed : (_linkOk ? qgcPal.colorGreen : qgcPal.colorOrange)
+                    text: !vehicle ? "--" : (!_linkOk ? qsTr("离线") : (spectrometerValid ? qsTr("信号有效") : qsTr("无有效信号")))
+                    color: !_linkOk ? qgcPal.colorOrange : (spectrometerValid ? qgcPal.colorGreen : qgcPal.colorOrange)
                     font.bold: true
                     elide: Text.ElideRight
                 }
@@ -298,7 +330,26 @@ Rectangle {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    visible: vehicle && (!_linkOk || payloadStatus === _stFault)
+                    visible: _lastCommandMessage.length > 0
+                    height: commandStatusLabel.implicitHeight + _m
+                    radius: _m * 0.45
+                    color: _lastCommandWarning
+                           ? Qt.rgba(qgcPal.colorOrange.r, qgcPal.colorOrange.g, qgcPal.colorOrange.b, 0.16)
+                           : Qt.rgba(qgcPal.colorGreen.r, qgcPal.colorGreen.g, qgcPal.colorGreen.b, 0.12)
+
+                    QGCLabel {
+                        id: commandStatusLabel
+                        anchors.centerIn: parent
+                        text: _lastCommandMessage
+                        color: _lastCommandWarning ? qgcPal.colorOrange : qgcPal.colorGreen
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        font.bold: true
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    visible: vehicle && (!_linkOk || payloadStatus === _stFault || !spectrometerValid)
                     height: bannerLabel.implicitHeight + _m
                     radius: _m * 0.45
                     color: payloadStatus === _stFault
@@ -308,7 +359,8 @@ Rectangle {
                     QGCLabel {
                         id: bannerLabel
                         anchors.centerIn: parent
-                        text: payloadStatus === _stFault ? qsTr("载荷故障，请检查采样模块") : qsTr("载荷通信中断，显示值已冻结")
+                        text: payloadStatus === _stFault ? qsTr("采样任务失败，请检查流程前置条件")
+                             : (!_linkOk ? qsTr("载荷通信中断，显示值已冻结") : qsTr("检测器暂无有效信号，请先启动信号采集"))
                         color: payloadStatus === _stFault ? qgcPal.colorRed : qgcPal.colorOrange
                         font.pointSize: ScreenTools.smallFontPointSize
                         font.bold: true
@@ -349,6 +401,13 @@ Rectangle {
                         QGCLabel { text: _factString(_referenceVoltageFact, " V"); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
                         QGCLabel { text: qsTr("Base V"); opacity: 0.55; font.pointSize: ScreenTools.smallFontPointSize }
                         QGCLabel { text: _factString(_baselineVoltageFact, " V"); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: qsTr("信号"); opacity: 0.55; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel {
+                            text: spectrometerValid ? qsTr("有效") : qsTr("无有效采样")
+                            color: spectrometerValid ? qgcPal.colorGreen : qgcPal.colorOrange
+                            font.bold: true
+                            font.pointSize: ScreenTools.smallFontPointSize
+                        }
                     }
                 }
 
@@ -368,14 +427,16 @@ Rectangle {
 
                         Repeater {
                             model: [
-                                { text: qsTr("开始采样"), cmd: _cmdStart,     en: vehicle && payloadStatus === _stIdle, warn: false, span: 1 },
-                                { text: qsTr("停止"),     cmd: _cmdStop,      en: vehicle && _isWorking,                warn: true,  span: 1 },
-                                { text: qsTr("暂停"),     cmd: _cmdPause,     en: vehicle && payloadStatus === _stSampling, warn: false, span: 1 },
-                                { text: qsTr("恢复"),     cmd: _cmdResume,    en: vehicle && (payloadStatus === _stSampling || payloadStatus === _stIdle), warn: false, span: 1 },
-                                { text: qsTr("零点校准"), cmd: _cmdCalibrate, en: vehicle && payloadStatus === _stIdle, warn: false, span: 2 },
-                                { text: qsTr("设基线"), cmd: _cmdSetBaseline, param1: 0, en: vehicle && _linkOk && payloadStatus !== _stFault, warn: false, span: 1 },
-                                { text: qsTr("开始走航"), cmd: _cmdStartSurvey, param1: 5, en: vehicle && _linkOk && payloadStatus !== _stFault && payloadStatus !== _stSurveying, warn: false, span: 1 },
-                                { text: qsTr("停止走航"), cmd: _cmdStopSurvey, param1: 0, en: vehicle && payloadStatus === _stSurveying, warn: true, span: 2 }
+                                { text: qsTr("启动信号采集"), cmd: _cmdSpectroStart, param1: 0, en: vehicle && _linkOk && payloadStatus !== _stFault, warn: false, span: 2 },
+                                { text: qsTr("设基线"), cmd: _cmdSetBaseline, param1: 0, en: vehicle && _linkOk && spectrometerValid && payloadStatus !== _stFault, warn: false, span: 1 },
+                                { text: qsTr("停止信号采集"), cmd: _cmdSpectroStop, param1: 0, en: vehicle && _linkOk, warn: true, span: 1 },
+                                { text: qsTr("开始点采样"), cmd: _cmdStart, param1: 0, en: vehicle && _linkOk && spectrometerValid && baselineSet && payloadStatus === _stIdle, warn: false, span: 1 },
+                                { text: qsTr("开始走航"), cmd: _cmdStartSurvey, param1: 5, en: vehicle && _linkOk && spectrometerValid && baselineSet && payloadStatus !== _stFault && payloadStatus !== _stSurveying, warn: false, span: 1 },
+                                { text: qsTr("停止检测"), cmd: _cmdStop, param1: 0, en: vehicle && _isWorking, warn: true, span: 1 },
+                                { text: qsTr("停止走航"), cmd: _cmdStopSurvey, param1: 0, en: vehicle && payloadStatus === _stSurveying, warn: true, span: 1 },
+                                { text: qsTr("暂停"), cmd: _cmdPause, param1: 0, en: vehicle && payloadStatus === _stSampling, warn: false, span: 1 },
+                                { text: qsTr("恢复"), cmd: _cmdResume, param1: 0, en: vehicle && payloadStatus === _stPaused, warn: false, span: 1 },
+                                { text: qsTr("零点校准"), cmd: _cmdCalibrate, param1: 0, en: vehicle && _linkOk && payloadStatus === _stIdle, warn: false, span: 2 }
                             ]
 
                             delegate: Rectangle {

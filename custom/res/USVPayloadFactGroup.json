@@ -133,6 +133,14 @@
     "units":            "V",
     "decimalPlaces":    3,
     "default":          0
+},
+{
+    "name":             "spectrometerValid",
+    "shortDesc":        "Spectrometer valid",
+    "type":             "uint32",
+    "enumStrings":      "No,Yes",
+    "enumValues":       "0,1",
+    "default":          0
 }
 ]
 }
