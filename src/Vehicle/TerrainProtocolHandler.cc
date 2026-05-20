@@ -44,8 +44,18 @@ bool TerrainProtocolHandler::mavlinkMessageReceived(const mavlink_message_t &mes
 
 void TerrainProtocolHandler::_handleTerrainRequest(const mavlink_message_t &message)
 {
+    mavlink_terrain_request_t terrainRequest;
+    mavlink_msg_terrain_request_decode(&message, &terrainRequest);
+
+    // Defensive drop: autopilots can emit TERRAIN_REQUEST with uninitialized (0, 0)
+    // before GPS lock; honoring it just spams the elevation server with tile-(0,0) fetches.
+    if (terrainRequest.lat == 0 && terrainRequest.lon == 0) {
+        qCDebug(TerrainProtocolHandlerLog) << "Ignoring TERRAIN_REQUEST with lat=0, lon=0";
+        return;
+    }
+
+    _currentTerrainRequest = terrainRequest;
     _terrainRequestActive = true;
-    mavlink_msg_terrain_request_decode(&message, &_currentTerrainRequest);
     _sendNextTerrainData();
 }
 
