@@ -137,14 +137,17 @@ void TerrainProtocolHandler::_sendTerrainData(const QGeoCoordinate &swCorner, ui
         return;
     }
 
-    if (error) {
-        qCWarning(TerrainProtocolHandlerLog) << Q_FUNC_INFO << "TerrainAtCoordinateQuery::getAltitudesForCoordinates failed";
-        return;
-    }
-
-    // Only clear the bit if the query succeeds. Otherwise just let it try again on the next timer tick
+    // Clear the bit on error or success. On error (e.g. tile fetch failed at the server),
+    // looping on the bit would just hammer the same failed tile every timer tick. The vehicle
+    // will re-issue TERRAIN_REQUEST if it still needs the data, allowing a fresh attempt after
+    // TerrainTileManager's failed-tile backoff expires.
     const uint64_t removeBit = ~(1ull << gridBit);
     _currentTerrainRequest.mask &= removeBit;
+
+    if (error) {
+        qCDebug(TerrainProtocolHandlerLog) << Q_FUNC_INFO << "terrain data unavailable for gridBit" << gridBit;
+        return;
+    }
     int altIndex = 0;
     int16_t terrainData[16];
     for (const double& altitude : altitudes) {
