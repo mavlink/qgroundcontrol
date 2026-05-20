@@ -12,19 +12,21 @@ Rectangle {
 
     property var vehicle: null
     property int payloadStatus: USVLayout.StatusIdle
-    
-    // MAVLink 指令 ID
-    readonly property int _cmdStart:     31010
-    readonly property int _cmdStop:      31011
-    readonly property int _cmdPause:     31012
-    readonly property int _cmdResume:    31013
-    readonly property int _cmdCalibrate: 31014
+
+    readonly property int _cmdStart: 31010
+    readonly property int _cmdStop: 31011
     readonly property int _cmdStartSurvey: 31015
-    readonly property int _cmdStopSurvey:  31016
+    readonly property int _cmdStopSurvey: 31016
     readonly property int _cmdSetBaseline: 31017
+    readonly property int _cmdSpectroStart: 31018
+    readonly property int _cmdSpectroStop: 31019
     readonly property int _payloadCompId: 191
 
     property real _m: ScreenTools.defaultFontPixelWidth
+    property bool _isWorking: payloadStatus === USVLayout.StatusSampling
+                              || payloadStatus === USVLayout.StatusDetecting
+                              || payloadStatus === USVLayout.StatusCalibrating
+                              || payloadStatus === USVLayout.StatusSurveying
 
     width: actionRow.implicitWidth + _m * 3
     height: ScreenTools.defaultFontPixelHeight * USVLayout.Tokens.touch.minHeight + _m
@@ -32,22 +34,18 @@ Rectangle {
     color: Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, USVLayout.Tokens.opacity.panel)
     border.width: 1
     border.color: Qt.rgba(qgcPal.windowShade.r, qgcPal.windowShade.g, qgcPal.windowShade.b, 0.45)
-    
-    // 隐藏逻辑：如果设备未连接，可以整体淡出
     opacity: vehicle ? 1.0 : 0.0
     visible: opacity > 0
+
     Behavior on opacity { NumberAnimation { duration: 300 } }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     function _send(cmdId, param1) {
-        if (vehicle) vehicle.sendCommand(_payloadCompId, cmdId, false, param1 || 0)
+        if (vehicle) {
+            vehicle.sendCommand(_payloadCompId, cmdId, false, param1 || 0)
+        }
     }
-
-    property bool _isWorking: payloadStatus === USVLayout.StatusSampling
-                              || payloadStatus === USVLayout.StatusDetecting
-                              || payloadStatus === USVLayout.StatusCalibrating
-                              || payloadStatus === USVLayout.StatusSurveying
 
     RowLayout {
         id: actionRow
@@ -56,57 +54,13 @@ Rectangle {
 
         Repeater {
             model: [
-                {
-                    text: qsTr("采样"),
-                    cmd: _cmdStart,
-                    en: vehicle && payloadStatus === USVLayout.StatusIdle,
-                    warn: false
-                },
-                {
-                    text: qsTr("暂停"),
-                    cmd: _cmdPause,
-                    en: vehicle && payloadStatus === USVLayout.StatusSampling,
-                    warn: false
-                },
-                {
-                    text: qsTr("恢复"),
-                    cmd: _cmdResume,
-                    en: vehicle && (payloadStatus === USVLayout.StatusSampling || payloadStatus === USVLayout.StatusIdle),
-                    warn: false
-                },
-                {
-                    text: qsTr("校准"),
-                    cmd: _cmdCalibrate,
-                    en: vehicle && payloadStatus === USVLayout.StatusIdle,
-                    warn: false
-                },
-                {
-                    text: qsTr("设基线"),
-                    cmd: _cmdSetBaseline,
-                    param1: 0,
-                    en: vehicle && payloadStatus !== USVLayout.StatusFault,
-                    warn: false
-                },
-                {
-                    text: qsTr("走航"),
-                    cmd: _cmdStartSurvey,
-                    param1: 5,
-                    en: vehicle && payloadStatus !== USVLayout.StatusFault && payloadStatus !== USVLayout.StatusSurveying,
-                    warn: false
-                },
-                {
-                    text: qsTr("停止"),
-                    cmd: _cmdStop,
-                    en: vehicle && _isWorking,
-                    warn: true
-                },
-                {
-                    text: qsTr("停走航"),
-                    cmd: _cmdStopSurvey,
-                    param1: 0,
-                    en: vehicle && payloadStatus === USVLayout.StatusSurveying,
-                    warn: true
-                }
+                { text: qsTr("启动信号"), cmd: _cmdSpectroStart, param1: 0, en: vehicle && payloadStatus !== USVLayout.StatusFault, warn: false },
+                { text: qsTr("设基线"), cmd: _cmdSetBaseline, param1: 0, en: vehicle && payloadStatus !== USVLayout.StatusFault, warn: false },
+                { text: qsTr("点采样"), cmd: _cmdStart, param1: 0, en: vehicle && payloadStatus === USVLayout.StatusIdle, warn: false },
+                { text: qsTr("走航"), cmd: _cmdStartSurvey, param1: 5, en: vehicle && payloadStatus !== USVLayout.StatusFault && payloadStatus !== USVLayout.StatusSurveying, warn: false },
+                { text: qsTr("停止检测"), cmd: _cmdStop, param1: 0, en: vehicle && _isWorking, warn: true },
+                { text: qsTr("停止走航"), cmd: _cmdStopSurvey, param1: 0, en: vehicle && payloadStatus === USVLayout.StatusSurveying, warn: true },
+                { text: qsTr("停信号"), cmd: _cmdSpectroStop, param1: 0, en: vehicle && payloadStatus !== USVLayout.StatusFault, warn: true }
             ]
 
             delegate: Rectangle {
@@ -146,14 +100,7 @@ Rectangle {
                     enabled: modelData.en
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (modelData.warn) {
-                            // 实际项目中可以添加 Confirmation Dialog，这里简化为直接发送
-                            _send(modelData.cmd, modelData.param1)
-                        } else {
-                            _send(modelData.cmd, modelData.param1)
-                        }
-                    }
+                    onClicked: _send(modelData.cmd, modelData.param1)
                 }
             }
         }

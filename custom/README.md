@@ -152,13 +152,16 @@ import QGroundControl.Controls
 
 ### 6. 水质载荷控制面板 (USVPayloadPanel)
 - 实时显示：检测电压、吸光度、泵组角度 (X/Y/Z/A)
-- 控制按钮：开始采样、停止、暂停、恢复、零点校准、设基线、开始走航、停止走航
-- 按钮根据载荷状态自动启用/禁用
-- 状态指示灯带呼吸动画，故障状态红色高亮
-- MAVLink 指令：CMD `31010..31017`
+- 控制流程：启动信号采集、设基线、开始点采样/开始走航、停止检测、停止信号采集
+- 维护动作：暂停、恢复、零点校准折叠在展开面板内
+- 按钮根据链路、有效采样、baseline 和载荷状态自动启用/禁用
+- `USV_STAT=3` 显示为任务失败/采样失败，不再直接提示“载荷故障”
+- MAVLink 指令：CMD `31010..31019`
   - `31015` 开始走航，默认 `param1=5s`
   - `31016` 停止走航
   - `31017` 设置 baseline，`param1=0` 使用最新有效分光电压
+  - `31018` 启动分光检测器信号采集
+  - `31019` 停止分光检测器信号采集
 
 ### 7. 综合仪表盘 (USVInstrumentPanel)
 - 替换默认 IntegratedCompassAttitude
@@ -176,8 +179,9 @@ import QGroundControl.Controls
 - 采样任务概览：连接状态、采样步骤进度、已采集样本数、包计数、采样时长
 - 泵组状态详情：四路步进泵角度实时显示、PID模式/误差值、链路状态
 - 统计分析：电压与吸光度的最小/最大/平均/标准差（增量在线算法）
-- MAVLink 遥测字段：`USV_STEP`, `USV_STOT`, `USV_SCNT`, `USV_PERR`, `USV_PMOD`, `USV_BSET`, `USV_REF`, `USV_BASE`
+- MAVLink 遥测字段：`USV_STEP`, `USV_STOT`, `USV_SCNT`, `USV_PERR`, `USV_PMOD`, `USV_BSET`, `USV_REF`, `USV_BASE`, `USV_VLD`
 - `USV_STAT=14` 显示为“走航检测”
+- `USV_VLD=1` 表示分光检测器当前采样有效，可用于启用“设基线”
 
 ## 飞行模式对照
 

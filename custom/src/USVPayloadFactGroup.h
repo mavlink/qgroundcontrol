@@ -33,6 +33,7 @@ class USVPayloadFactGroup : public FactGroup
     Q_PROPERTY(Fact *baselineSet      READ baselineSet      CONSTANT)
     Q_PROPERTY(Fact *referenceVoltage READ referenceVoltage CONSTANT)
     Q_PROPERTY(Fact *baselineVoltage  READ baselineVoltage  CONSTANT)
+    Q_PROPERTY(Fact *spectrometerValid READ spectrometerValid CONSTANT)
 
     // 通信诊断属性
     Q_PROPERTY(int rxMsgTotal     READ rxMsgTotal     NOTIFY diagnosticsChanged)
@@ -63,6 +64,7 @@ public:
     Fact *baselineSet()      { return &_baselineSetFact; }
     Fact *referenceVoltage() { return &_referenceVoltageFact; }
     Fact *baselineVoltage()  { return &_baselineVoltageFact; }
+    Fact *spectrometerValid() { return &_spectrometerValidFact; }
 
     // 诊断 getters
     int rxMsgTotal()   const { return _rxMsgTotal; }
@@ -104,6 +106,7 @@ private:
     Fact _baselineSetFact;
     Fact _referenceVoltageFact;
     Fact _baselineVoltageFact;
+    Fact _spectrometerValidFact;
     QTimer _timeoutTimer;
     static constexpr int _timeoutMsecs = 5000;
 
@@ -115,6 +118,7 @@ private:
     static constexpr const char *_baselineSetName      = "baselineSet";
     static constexpr const char *_referenceVoltageName = "referenceVoltage";
     static constexpr const char *_baselineVoltageName  = "baselineVoltage";
+    static constexpr const char *_spectrometerValidName = "spectrometerValid";
 
     // 通信诊断计数
     int _rxMsgTotal  = 0;
