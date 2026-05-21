@@ -6,13 +6,11 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from coverage_comment import coverage_badge, delta_str, main, parse_coverage
 
 
 def _write_xml(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
-
 
 def test_parse_coverage_root_rates(tmp_path: Path) -> None:
     xml = tmp_path / "coverage.xml"
@@ -22,7 +20,6 @@ def test_parse_coverage_root_rates(tmp_path: Path) -> None:
     assert cov is not None
     assert cov["line"] == 75.0
     assert cov["branch"] == 50.0
-
 
 def test_parse_coverage_package_fallback(tmp_path: Path) -> None:
     xml = tmp_path / "coverage.xml"
@@ -36,12 +33,10 @@ def test_parse_coverage_package_fallback(tmp_path: Path) -> None:
     assert cov["line"] == 62.0
     assert cov["branch"] == 40.0
 
-
 def test_parse_coverage_invalid_xml_returns_none(tmp_path: Path) -> None:
     xml = tmp_path / "bad.xml"
     _write_xml(xml, "<coverage")
     assert parse_coverage(str(xml)) is None
-
 
 def test_parse_coverage_rejects_doctype_entity_payload(tmp_path: Path) -> None:
     xml = tmp_path / "coverage.xml"
@@ -51,19 +46,16 @@ def test_parse_coverage_rejects_doctype_entity_payload(tmp_path: Path) -> None:
     )
     assert parse_coverage(str(xml)) is None
 
-
 def test_coverage_badge() -> None:
     assert coverage_badge(85.0) == "Good"
     assert coverage_badge(70.0) == "Fair"
     assert coverage_badge(30.0) == "Low"
-
 
 def test_delta_str() -> None:
     assert delta_str(None, 70.0) == "N/A"
     assert delta_str(50.0, 55.0) == "+5.00%"
     assert delta_str(55.0, 50.0) == "-5.00%"
     assert delta_str(55.0, 55.0) == "No change"
-
 
 def test_main_missing_coverage_writes_placeholder(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     output = tmp_path / "coverage-comment.md"
@@ -83,7 +75,6 @@ def test_main_missing_coverage_writes_placeholder(tmp_path: Path, monkeypatch: p
     assert rc == 0
     text = output.read_text(encoding="utf-8")
     assert "Coverage data not available" in text
-
 
 def test_main_with_baseline_writes_delta_table(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     coverage_xml = tmp_path / "coverage.xml"
@@ -113,6 +104,30 @@ def test_main_with_baseline_writes_delta_table(tmp_path: Path, monkeypatch: pyte
     assert "| Good Lines | 80.00% | +10.00% |" in text
     assert "| Fair Branches | 60.00% | +10.00% |" in text
 
+def test_main_with_no_branch_in_pr_writes_na(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Regression: pr_cov['branch'] is None when XML lacks branch-rate; must report N/A."""
+    coverage_xml = tmp_path / "coverage.xml"
+    baseline_xml = tmp_path / "baseline.xml"
+    output = tmp_path / "coverage-comment.md"
+
+    _write_xml(coverage_xml, '<coverage line-rate="0.80"></coverage>')
+    _write_xml(baseline_xml, '<coverage line-rate="0.70" branch-rate="0.50"></coverage>')
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "coverage_comment.py",
+            "--coverage-xml", str(coverage_xml),
+            "--baseline-xml", str(baseline_xml),
+            "--output", str(output),
+        ],
+    )
+
+    assert main() == 0
+    text = output.read_text(encoding="utf-8")
+    assert "Lines" in text
+    assert "Branches" not in text
 
 def test_main_with_zero_branch_coverage_reports_delta(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     coverage_xml = tmp_path / "coverage.xml"

@@ -5,8 +5,8 @@ Provides consistent file discovery across tools with proper
 filtering of build directories and generated files.
 """
 
+from collections.abc import Generator, Iterable
 from pathlib import Path
-from typing import Generator, Iterable
 
 # Directories to skip when traversing
 DEFAULT_SKIP_DIRS = frozenset({
@@ -28,7 +28,7 @@ HEADER_EXTENSIONS = frozenset({'.h', '.hpp', '.hxx'})
 ALL_CPP_EXTENSIONS = CPP_EXTENSIONS | HEADER_EXTENSIONS
 
 
-def find_repo_root(start_path: Path = None) -> Path:
+def find_repo_root(start_path: Path | None = None) -> Path:
     """
     Find the repository root by looking for .git directory.
 
@@ -43,14 +43,14 @@ def find_repo_root(start_path: Path = None) -> Path:
 
     current = start_path if start_path.is_dir() else start_path.parent
 
-    for parent in [current] + list(current.parents):
+    for parent in [current, *list(current.parents)]:
         if (parent / '.git').exists():
             return parent
 
     return start_path
 
 
-def should_skip_path(path: Path, skip_dirs: Iterable[str] = None) -> bool:
+def should_skip_path(path: Path, skip_dirs: Iterable[str] | None = None) -> bool:
     """
     Check if a path should be skipped based on directory name.
 
@@ -70,7 +70,7 @@ def should_skip_path(path: Path, skip_dirs: Iterable[str] = None) -> bool:
 
 def find_cpp_files(
     paths: Iterable[Path],
-    skip_dirs: Iterable[str] = None,
+    skip_dirs: Iterable[str] | None = None,
 ) -> Generator[Path, None, None]:
     """
     Find all C++ files (.cc, .cpp, .h, .hpp, etc.) in given paths.
@@ -88,14 +88,13 @@ def find_cpp_files(
                 yield path
         elif path.is_dir():
             for file_path in path.rglob('*'):
-                if file_path.is_file() and file_path.suffix in ALL_CPP_EXTENSIONS:
-                    if not should_skip_path(file_path, skip_dirs):
-                        yield file_path
+                if file_path.is_file() and file_path.suffix in ALL_CPP_EXTENSIONS and not should_skip_path(file_path, skip_dirs):
+                    yield file_path
 
 
 def find_header_files(
     root: Path,
-    skip_dirs: Iterable[str] = None,
+    skip_dirs: Iterable[str] | None = None,
 ) -> Generator[Path, None, None]:
     """
     Find all header files in a directory tree.
@@ -115,7 +114,7 @@ def find_header_files(
 
 def find_source_files(
     root: Path,
-    skip_dirs: Iterable[str] = None,
+    skip_dirs: Iterable[str] | None = None,
 ) -> Generator[Path, None, None]:
     """
     Find all source files (.cc, .cpp, .cxx) in a directory tree.
@@ -136,7 +135,7 @@ def find_source_files(
 def find_json_files(
     root: Path,
     pattern: str = '*Fact.json',
-    skip_dirs: Iterable[str] = None,
+    skip_dirs: Iterable[str] | None = None,
 ) -> Generator[Path, None, None]:
     """
     Find JSON files matching a pattern in a directory tree.

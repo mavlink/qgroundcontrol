@@ -6,16 +6,21 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common import find_repo_root
 from common.build_config import get_build_config_value
 from common.logging import log_error, log_info, log_ok, log_warn
+from common.proc import run_captured
+
+if TYPE_CHECKING:
+    import subprocess
 
 QT_RELEASES_URL = "https://download.qt.io/official_releases/qt/"
 REQ_FILES = [
@@ -28,13 +33,7 @@ BUILD_TOOLS = ["cmake", "ninja", "ccache", "clang-format", "clang-tidy"]
 
 def run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     """Run a git command and capture stdout/stderr."""
-    return subprocess.run(
-        ["git", *args],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    return run_captured(["git", *args], cwd=cwd)
 
 
 def parse_submodule_paths(repo_root: Path) -> list[Path]:
@@ -130,7 +129,7 @@ def check_qt_version() -> None:
                 log_ok("Using latest Qt minor version")
 
     for candidate in (["qmake", "--version"], ["qtpaths", "--qt-version"]):
-        result = subprocess.run(candidate, capture_output=True, text=True, check=False)
+        result = run_captured(candidate)
         if result.returncode != 0:
             continue
         match = re.search(r"\d+\.\d+\.\d+", result.stdout)
@@ -149,12 +148,7 @@ def check_gstreamer_version() -> None:
     )
     print(f"  Configured: GStreamer {current_version}")
 
-    result = subprocess.run(
-        ["gst-launch-1.0", "--version"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = run_captured(["gst-launch-1.0", "--version"])
     if result.returncode != 0:
         return
     match = re.search(r"\d+\.\d+\.\d+", result.stdout)
@@ -179,11 +173,8 @@ def check_python_deps(repo_root: Path) -> None:
     for manifest in manifests:
         print(f"    - {manifest}")
 
-    result = subprocess.run(
+    result = run_captured(
         [sys.executable, "-m", "pip", "list", "--outdated", "--format=json"],
-        capture_output=True,
-        text=True,
-        check=False,
     )
     if result.returncode != 0:
         log_warn("Could not query installed Python package updates")
@@ -211,7 +202,7 @@ def check_build_tools() -> None:
     """Print installed build tool versions."""
     log_info("Checking build tools...")
     for tool in BUILD_TOOLS:
-        result = subprocess.run([tool, "--version"], capture_output=True, text=True, check=False)
+        result = run_captured([tool, "--version"])
         if result.returncode != 0:
             print(f"  - {tool}: not installed")
             continue
@@ -231,7 +222,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """Run the requested dependency checks."""
     args = parse_args(argv)
-    repo_root = Path(__file__).resolve().parent.parent
+    repo_root = find_repo_root(Path(__file__))
 
     check_all = not args.submodules and not args.qt
     if check_all or args.submodules:

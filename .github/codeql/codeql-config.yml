@@ -2,6 +2,9 @@ name: "QGroundControl CodeQL Config"
 
 paths:
   - src
+  - android/src
+  - tools
+  - .github
 
 paths-ignore:
   - '**/moc_*'
@@ -11,6 +14,9 @@ paths-ignore:
   - '**/libs/**'
   - '**/3rdparty/**'
   - '**/build/**'
+  # Vendored Android Java sources — upstream libsdl/freedesktop, not ours to fix.
+  - 'android/src/org/libsdl/**'
+  - 'android/src/org/freedesktop/**'
 
 queries:
   - uses: security-extended

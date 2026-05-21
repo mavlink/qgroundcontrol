@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-
 from test_duration_report import analyze_test_durations, main
 
 
@@ -31,19 +29,12 @@ def test_analyze_test_durations_reports_slow_tests(tmp_path):
     assert report["top_slowest"][0]["test"] == "Suite::slow"
 
 
-def test_test_duration_report_main_missing_junit(tmp_path):
+def test_test_duration_report_main_missing_junit(tmp_path, monkeypatch):
     summary = tmp_path / "summary.md"
     output = tmp_path / "output.txt"
-    result = main(
-        [
-            "--junit-path",
-            str(tmp_path / "missing.xml"),
-            "--github-step-summary",
-            str(summary),
-            "--github-output",
-            str(output),
-        ]
-    )
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    result = main(["--junit-path", str(tmp_path / "missing.xml")])
     assert result == 0
     assert "slow_count=0" in output.read_text(encoding="utf-8")
     assert "WARNING" in summary.read_text(encoding="utf-8")

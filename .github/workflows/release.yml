@@ -13,16 +13,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# Per-job permissions narrow each scope; the top-level only grants read.
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+  contents: read
 
 jobs:
   semantic-release:
     name: Semantic Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write       # @semantic-release/git pushes CHANGELOG.md
+      issues: write         # @semantic-release/github comments on closed issues
+      pull-requests: write  # @semantic-release/github comments on closed PRs
     outputs:
       new_release: ${{ steps.release.outputs.new_release }}
       version: ${{ steps.release.outputs.version }}
@@ -50,12 +53,12 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          ./tools/release.sh --install
+          ./tools/release.py --install
           # @semantic-release/exec verifyReleaseCmd writes .release-version
           # iff a release was actually published. Reading from a file is
           # immune to log-format drift across SR major versions.
           rm -f .release-version
-          ./tools/release.sh --run
+          ./tools/release.py --run
 
           if [[ -f .release-version ]]; then
             version=$(tr -d '[:space:]' < .release-version)
@@ -77,6 +80,8 @@ jobs:
     if: needs.semantic-release.outputs.new_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    permissions:
+      actions: read  # wait-for-workflows-action polls workflow runs
 
     steps:
       - name: Wait for builds to complete
@@ -125,29 +130,25 @@ jobs:
         id: paths
         shell: bash
         run: |
-          set -euo pipefail
-          first() { find artifacts -type f -name "$1" 2>/dev/null | head -n1; }
-          {
-            echo "appimage=$(first 'QGroundControl*.AppImage')"
-            echo "apk=$(first '*.apk')"
-            echo "dmg=$(first '*.dmg')"
-            echo "exe=$(first 'QGroundControl*.exe')"
-          } >> "${GITHUB_OUTPUT}"
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py" \
+            --build-dir artifacts \
+            --match "appimage=QGroundControl*.AppImage" \
+            --match "apk=*.apk" \
+            --match "dmg=*.dmg" \
+            --match "exe=QGroundControl*.exe"
 
       # Source-tree SBOM is kept as a release artifact for source traceability,
       # but it is NOT used as the attestation evidence (per-platform SBOMs are).
       - name: Generate source SBOM (SPDX)
-        uses: anchore/sbom-action@v0
+        uses: ./.github/actions/source-sbom
         with:
-          path: .
           format: spdx-json
           output-file: sbom-source.spdx.json
           artifact-name: sbom-source-spdx
 
       - name: Generate source SBOM (CycloneDX)
-        uses: anchore/sbom-action@v0
+        uses: ./.github/actions/source-sbom
         with:
-          path: .
           format: cyclonedx-json
           output-file: sbom-source.cdx.json
           artifact-name: sbom-source-cyclonedx
@@ -163,21 +164,14 @@ jobs:
           (cd extracted/linux && ./qgc.AppImage --appimage-extract >/dev/null)
           rm extracted/linux/qgc.AppImage
 
-      - name: SBOM for Linux AppImage
-        if: steps.paths.outputs.appimage != ''
-        uses: anchore/sbom-action@v0
-        with:
-          path: extracted/linux/squashfs-root
-          format: spdx-json
-          output-file: sbom-linux.spdx.json
-          artifact-name: sbom-linux
-
       - name: Attest Linux AppImage
+        id: attest-linux
         if: steps.paths.outputs.appimage != ''
-        uses: actions/attest-sbom@v4
+        uses: ./.github/actions/attest-sbom
         with:
           subject-path: ${{ steps.paths.outputs.appimage }}
-          sbom-path: sbom-linux.spdx.json
+          subject-name: linux-appimage
+          scan-path: extracted/linux/squashfs-root
         continue-on-error: true
 
       - name: Extract APK contents
@@ -188,58 +182,35 @@ jobs:
           mkdir -p extracted/android
           unzip -q -o "${{ steps.paths.outputs.apk }}" -d extracted/android
 
-      - name: SBOM for Android APK
-        if: steps.paths.outputs.apk != ''
-        uses: anchore/sbom-action@v0
-        with:
-          path: extracted/android
-          format: spdx-json
-          output-file: sbom-android.spdx.json
-          artifact-name: sbom-android
-
       - name: Attest Android APK
+        id: attest-android
         if: steps.paths.outputs.apk != ''
-        uses: actions/attest-sbom@v4
+        uses: ./.github/actions/attest-sbom
         with:
           subject-path: ${{ steps.paths.outputs.apk }}
-          sbom-path: sbom-android.spdx.json
+          subject-name: android-apk
+          scan-path: extracted/android
         continue-on-error: true
 
       # DMG/EXE: Linux runner can't deeply extract these; Syft scans the file
       # best-effort. For full coverage, mac/Windows builds should emit their
       # own SBOM as an artifact (followup).
-      - name: SBOM for macOS DMG
-        if: steps.paths.outputs.dmg != ''
-        uses: anchore/sbom-action@v0
-        with:
-          path: ${{ steps.paths.outputs.dmg }}
-          format: spdx-json
-          output-file: sbom-macos.spdx.json
-          artifact-name: sbom-macos
-
       - name: Attest macOS DMG
+        id: attest-macos
         if: steps.paths.outputs.dmg != ''
-        uses: actions/attest-sbom@v4
+        uses: ./.github/actions/attest-sbom
         with:
           subject-path: ${{ steps.paths.outputs.dmg }}
-          sbom-path: sbom-macos.spdx.json
+          subject-name: macos-dmg
         continue-on-error: true
 
-      - name: SBOM for Windows EXE
-        if: steps.paths.outputs.exe != ''
-        uses: anchore/sbom-action@v0
-        with:
-          path: ${{ steps.paths.outputs.exe }}
-          format: spdx-json
-          output-file: sbom-windows.spdx.json
-          artifact-name: sbom-windows
-
       - name: Attest Windows EXE
+        id: attest-windows
         if: steps.paths.outputs.exe != ''
-        uses: actions/attest-sbom@v4
+        uses: ./.github/actions/attest-sbom
         with:
           subject-path: ${{ steps.paths.outputs.exe }}
-          sbom-path: sbom-windows.spdx.json
+          subject-name: windows-exe
         continue-on-error: true
 
       - name: Upload to Release
@@ -253,8 +224,8 @@ jobs:
             artifacts/**/*.apk
             sbom-source.spdx.json
             sbom-source.cdx.json
-            sbom-linux.spdx.json
-            sbom-android.spdx.json
-            sbom-macos.spdx.json
-            sbom-windows.spdx.json
+            ${{ steps.attest-linux.outputs.sbom-path }}
+            ${{ steps.attest-android.outputs.sbom-path }}
+            ${{ steps.attest-macos.outputs.sbom-path }}
+            ${{ steps.attest-windows.outputs.sbom-path }}
           fail_on_unmatched_files: false

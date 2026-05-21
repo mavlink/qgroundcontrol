@@ -19,7 +19,6 @@ permissions:
 
 jobs:
   changes:
-    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/_detect-changes.yml
     with:
       platform: custom-build
@@ -27,7 +26,7 @@ jobs:
   build:
     name: Custom Plugin Build
     needs: changes
-    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: ubuntu-22.04
     timeout-minutes: 60
 

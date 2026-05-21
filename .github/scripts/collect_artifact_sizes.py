@@ -14,9 +14,9 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.format import format_bytes
 from common.gh_actions import list_run_artifacts, list_workflow_runs_for_sha, parse_csv_list
 from common.github_runs import select_latest_runs_by_name
-
 
 _DISTRIBUTABLE_PREFIXES = (
     "QGroundControl",
@@ -58,13 +58,6 @@ def latest_successful_runs(
     )
 
 
-def format_size_human(size_bytes: int) -> str:
-    size_mb = size_bytes / 1024 / 1024
-    if size_mb >= 1024:
-        return f"{(size_mb / 1024):.2f} GB"
-    return f"{size_mb:.2f} MB"
-
-
 def collect_artifacts(
     repo: str,
     latest_runs: dict[str, dict[str, Any]],
@@ -92,7 +85,7 @@ def collect_artifacts(
                     {
                         "name": name,
                         "size_bytes": size_bytes,
-                        "size_human": format_size_human(size_bytes),
+                        "size_human": format_bytes(size_bytes),
                     }
                 )
         else:
@@ -122,7 +115,7 @@ def collect_artifacts(
                         {
                             "name": name,
                             "size_bytes": size_bytes,
-                            "size_human": format_size_human(size_bytes),
+                            "size_human": format_bytes(size_bytes),
                         }
                     )
 

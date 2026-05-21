@@ -109,7 +109,7 @@ def fix_apt_alternatives() -> None:
 def install_optional_packages() -> None:
     """Install optional apt packages that are available."""
     result = _run(
-        [sys.executable, "tools/setup/install_dependencies.py",
+        [sys.executable, "tools/setup/install_dependencies",
          "--platform", "debian", "--category", "gstreamer_optional", "--print-available-packages"],
         capture_output=True, text=True, check=False,
     )

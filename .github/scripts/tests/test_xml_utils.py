@@ -16,6 +16,7 @@ class TestXmlParse:
         xml_file.write_text("<root><child/></root>")
         tree = xml_parse(str(xml_file))
         root = tree.getroot()
+        assert root is not None
         assert root.tag == "root"
         assert root.find("child") is not None
 
@@ -24,6 +25,7 @@ class TestXmlParse:
         xml_file = tmp_path / "doctype.xml"
         xml_file.write_text('<!DOCTYPE foo [<!ELEMENT foo ANY>]><foo/>')
         root = xml_parse(str(xml_file)).getroot()
+        assert root is not None
         assert root.tag == "foo"
 
     def test_rejects_entity(self, tmp_path):
@@ -43,4 +45,6 @@ class TestXmlParse:
         xml_file.write_text("<root/>")
         result = xml_parse(str(xml_file))
         assert hasattr(result, "getroot")
-        assert result.getroot().tag == "root"
+        root = result.getroot()
+        assert root is not None
+        assert root.tag == "root"

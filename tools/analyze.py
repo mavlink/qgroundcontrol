@@ -21,31 +21,15 @@ from __future__ import annotations
 
 import argparse
 import os
-import shutil
-import subprocess
 import sys
-import tempfile
-from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from common import find_repo_root, log_info, log_ok, log_warn, log_error
+from common import find_repo_root, get_default_branch_ref, log_error, log_ok, log_warn
 
-
-@dataclass
-class AnalysisResult:
-    """Result from running an analyzer."""
-
-    tool: str
-    passed: bool
-    issues: int = 0
-    output: str = ""
-    files_checked: int = 0
-    files_with_issues: list[str] = field(default_factory=list)
-
-
+if TYPE_CHECKING:
+    from common.analyzer import AnalyzerBase
+from common.proc import run_captured
 
 
 class FileCollector:
@@ -59,21 +43,7 @@ class FileCollector:
 
     def get_compare_ref(self) -> str | None:
         """Get the best available ref to compare against."""
-        result = subprocess.run(
-            ["git", "-C", str(self.repo_root), "symbolic-ref", "refs/remotes/origin/HEAD", "--short"],
-            capture_output=True, text=True,
-        )
-        if result.returncode == 0:
-            return result.stdout.strip().removeprefix("origin/")
-
-        for ref in ("master", "main", "origin/master", "origin/main"):
-            result = subprocess.run(
-                ["git", "-C", str(self.repo_root), "rev-parse", "--verify", ref],
-                capture_output=True,
-            )
-            if result.returncode == 0:
-                return ref
-        return None
+        return get_default_branch_ref(self.repo_root)
 
     def get_cpp_files(
         self,
@@ -124,12 +94,8 @@ class FileCollector:
     def _get_changed_files(self, extensions: tuple[str, ...], compare_ref: str) -> list[Path]:
         """Get files changed compared to an available upstream ref."""
         patterns = [f"*{ext}" for ext in extensions]
-        result = subprocess.run(
-            ["git", "-C", str(self.repo_root), "diff", "--name-only", f"{compare_ref}..."]
-            + ["--"]
-            + patterns,
-            capture_output=True,
-            text=True,
+        result = run_captured(
+            ["git", "-C", str(self.repo_root), "diff", "--name-only", f"{compare_ref}...", "--", *patterns],
         )
 
         if result.returncode != 0:
@@ -143,380 +109,6 @@ class FileCollector:
             if full_path.is_file():
                 files.append(full_path)
         return sorted(files)
-
-
-class AnalyzerBase(ABC):
-    """Base class for all code analyzers."""
-
-    name: ClassVar[str] = "base"
-    install_hint: ClassVar[str] = ""
-
-    def __init__(
-        self,
-        repo_root: Path,
-        build_dir: Path,
-    ) -> None:
-        self.repo_root = repo_root
-        self.build_dir = build_dir
-        self.compile_commands = build_dir / "compile_commands.json"
-
-    @abstractmethod
-    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
-        """Run the analyzer on the given files."""
-
-    def check_tool(self, tool_name: str) -> bool:
-        """Check if the tool is available."""
-        return shutil.which(tool_name) is not None
-
-    def require_tool(self, tool_name: str) -> bool:
-        """Require a tool, logging error if not found."""
-        if not self.check_tool(tool_name):
-            log_error(f"{tool_name} not found. {self.install_hint}")
-            return False
-        return True
-
-    def require_compile_commands(self) -> bool:
-        """Require compile_commands.json, logging error if not found."""
-        if not self.compile_commands.exists():
-            log_error(
-                f"compile_commands.json not found at {self.compile_commands}"
-            )
-            log_info("Run: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
-            return False
-        return True
-
-    def relative_path(self, path: Path) -> str:
-        """Get path relative to repo root."""
-        try:
-            return str(path.relative_to(self.repo_root))
-        except ValueError:
-            return str(path)
-
-
-class ClangFormatAnalyzer(AnalyzerBase):
-    """Clang-format code formatter."""
-
-    name: ClassVar[str] = "clang-format"
-    install_hint: ClassVar[str] = "Install with: sudo apt install clang-format"
-
-    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
-        if not self.require_tool("clang-format"):
-            return AnalysisResult(tool=self.name, passed=False, output="Tool not found")
-
-        version_result = subprocess.run(
-            ["clang-format", "--version"],
-            capture_output=True,
-            text=True,
-        )
-        parts = version_result.stdout.split() if version_result.stdout else []
-        version_match = parts[2] if len(parts) > 2 else "unknown"
-        log_info(f"Using clang-format version {version_match}")
-
-        if not files:
-            log_info("No files to check")
-            return AnalysisResult(tool=self.name, passed=True)
-
-        log_info(f"{'Formatting' if fix else 'Checking'} {len(files)} files...")
-
-        if fix:
-            return self._run_fix(files)
-        return self._run_check(files)
-
-    def _run_fix(self, files: list[Path]) -> AnalysisResult:
-        formatted = 0
-        for file in files:
-            result = subprocess.run(
-                ["clang-format", "-i", str(file)],
-                capture_output=True,
-            )
-            if result.returncode == 0:
-                formatted += 1
-
-        log_ok(f"Formatted {formatted} files")
-
-        diff_result = subprocess.run(
-            ["git", "-C", str(self.repo_root), "diff", "--quiet"],
-            capture_output=True,
-        )
-
-        if diff_result.returncode == 0:
-            log_info("No formatting changes needed")
-        else:
-            log_info("Files modified:")
-            modified = subprocess.run(
-                ["git", "-C", str(self.repo_root), "diff", "--name-only"],
-                capture_output=True,
-                text=True,
-            )
-            print(modified.stdout)
-
-        return AnalysisResult(
-            tool=self.name,
-            passed=True,
-            files_checked=len(files),
-        )
-
-    def _run_check(self, files: list[Path]) -> AnalysisResult:
-        needs_format: list[str] = []
-
-        for file in files:
-            result = subprocess.run(
-                ["clang-format", "--dry-run", "--Werror", str(file)],
-                capture_output=True,
-            )
-            if result.returncode != 0:
-                needs_format.append(self.relative_path(file))
-
-        if needs_format:
-            log_error("The following files need formatting:")
-            for f in needs_format:
-                print(f"  {f}")
-            print()
-            log_info("Run: ./tools/analyze.py --tool clang-format --fix")
-            return AnalysisResult(
-                tool=self.name,
-                passed=False,
-                issues=len(needs_format),
-                files_checked=len(files),
-                files_with_issues=needs_format,
-            )
-
-        log_ok("All files properly formatted")
-        return AnalysisResult(
-            tool=self.name,
-            passed=True,
-            files_checked=len(files),
-        )
-
-
-class ClangTidyAnalyzer(AnalyzerBase):
-    """Clang-tidy static analyzer."""
-
-    name: ClassVar[str] = "clang-tidy"
-    install_hint: ClassVar[str] = "Install with: sudo apt install clang-tidy"
-
-    def __init__(self, repo_root: Path, build_dir: Path, jobs: int = 1) -> None:
-        super().__init__(repo_root, build_dir)
-        self.jobs = jobs
-
-    def _analyze_file(self, file: Path) -> tuple[str, bool]:
-        rel_path = self.relative_path(file)
-        result = subprocess.run(
-            ["clang-tidy", "-p", str(self.build_dir), str(file)],
-            capture_output=True,
-        )
-        return rel_path, result.returncode != 0
-
-    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
-        if not self.require_compile_commands():
-            return AnalysisResult(
-                tool=self.name,
-                passed=False,
-                output="compile_commands.json not found",
-            )
-
-        if not self.require_tool("clang-tidy"):
-            return AnalysisResult(tool=self.name, passed=False, output="Tool not found")
-
-        if not files:
-            log_info("No files to analyze")
-            return AnalysisResult(tool=self.name, passed=True)
-
-        log_info(f"Running clang-tidy on {len(files)} files ({self.jobs} jobs)...")
-
-        files_with_issues: list[str] = []
-
-        with ThreadPoolExecutor(max_workers=self.jobs) as pool:
-            futures = {pool.submit(self._analyze_file, f): f for f in files}
-            for future in as_completed(futures):
-                rel_path, has_issues = future.result()
-                status = "ISSUES" if has_issues else "OK"
-                print(f"  {rel_path}... {status}")
-                if has_issues:
-                    files_with_issues.append(rel_path)
-
-        return AnalysisResult(
-            tool=self.name,
-            passed=not files_with_issues,
-            issues=len(files_with_issues),
-            files_checked=len(files),
-            files_with_issues=files_with_issues,
-        )
-
-
-class CppcheckAnalyzer(AnalyzerBase):
-    """Cppcheck static analyzer."""
-
-    name: ClassVar[str] = "cppcheck"
-    install_hint: ClassVar[str] = "Install with: sudo apt install cppcheck"
-
-    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
-        if not self.require_tool("cppcheck"):
-            return AnalysisResult(tool=self.name, passed=False, output="Tool not found")
-
-        if not files:
-            log_info("No files to analyze")
-            return AnalysisResult(tool=self.name, passed=True)
-
-        log_info(f"Running cppcheck on {len(files)} files...")
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-            for file in files:
-                f.write(f"{file}\n")
-            filelist_path = f.name
-
-        try:
-            result = subprocess.run(
-                [
-                    "cppcheck",
-                    "--enable=warning,style,performance,portability",
-                    "--std=c++20",
-                    "--suppress=missingIncludeSystem",
-                    "--suppress=unmatchedSuppression",
-                    "--inline-suppr",
-                    f"--file-list={filelist_path}",
-                    "--error-exitcode=1",
-                ],
-                capture_output=True,
-                text=True,
-            )
-
-            output = result.stdout + result.stderr
-            if output.strip():
-                print(output)
-
-            return AnalysisResult(
-                tool=self.name,
-                passed=result.returncode == 0,
-                output=output,
-                files_checked=len(files),
-            )
-        finally:
-            Path(filelist_path).unlink(missing_ok=True)
-
-
-class ClazyAnalyzer(AnalyzerBase):
-    """Clazy Qt-specific static analyzer."""
-
-    name: ClassVar[str] = "clazy"
-    install_hint: ClassVar[str] = "Install with: sudo apt install clazy"
-
-    CHECKS: ClassVar[str] = "level1,connect-non-signal,lambda-in-connect,overridden-signal"
-
-    def __init__(self, repo_root: Path, build_dir: Path, jobs: int = 1) -> None:
-        super().__init__(repo_root, build_dir)
-        self.jobs = jobs
-
-    def _analyze_file(self, file: Path) -> tuple[str, bool, str]:
-        rel_path = self.relative_path(file)
-        result = subprocess.run(
-            [
-                "clazy-standalone",
-                "-p",
-                str(self.build_dir),
-                f"--checks={self.CHECKS}",
-                str(file),
-            ],
-            capture_output=True,
-            text=True,
-        )
-        has_issues = result.returncode != 0 and bool(result.stderr.strip())
-        return rel_path, has_issues, result.stderr
-
-    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
-        if not self.compile_commands.exists():
-            log_warn("compile_commands.json not found - skipping clazy")
-            log_info("Run: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
-            return AnalysisResult(tool=self.name, passed=True, output="Skipped")
-
-        if not self.check_tool("clazy-standalone"):
-            log_warn("clazy-standalone not found - skipping")
-            log_info(self.install_hint)
-            return AnalysisResult(tool=self.name, passed=True, output="Skipped")
-
-        if not files:
-            log_info("No files to analyze")
-            return AnalysisResult(tool=self.name, passed=True)
-
-        log_info(f"Running clazy on {len(files)} files ({self.jobs} jobs)...")
-
-        files_with_issues: list[str] = []
-        all_output: list[str] = []
-
-        with ThreadPoolExecutor(max_workers=self.jobs) as pool:
-            futures = {pool.submit(self._analyze_file, f): f for f in files}
-            for future in as_completed(futures):
-                rel_path, has_issues, stderr = future.result()
-                if has_issues:
-                    log_warn(f"Issues in {rel_path}:")
-                    print(stderr)
-                    all_output.append(stderr)
-                    files_with_issues.append(rel_path)
-
-        if files_with_issues:
-            log_warn("Clazy found Qt-specific issues")
-
-        return AnalysisResult(
-            tool=self.name,
-            passed=not files_with_issues,
-            issues=len(files_with_issues),
-            output="\n".join(all_output),
-            files_checked=len(files),
-            files_with_issues=files_with_issues,
-        )
-
-
-class QmlLintAnalyzer(AnalyzerBase):
-    """QML file linter."""
-
-    name: ClassVar[str] = "qmllint"
-    install_hint: ClassVar[str] = (
-        "Install with: Qt SDK or 'sudo apt install qt6-declarative-dev-tools'"
-    )
-
-    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
-        if not self.check_tool("qmllint"):
-            log_warn("qmllint not found - skipping")
-            log_info(self.install_hint)
-            return AnalysisResult(tool=self.name, passed=True, output="Skipped")
-
-        if not files:
-            log_info("No QML files to lint")
-            return AnalysisResult(tool=self.name, passed=True)
-
-        log_info(f"Running qmllint on {len(files)} files...")
-
-        issues_found = False
-        files_with_issues: list[str] = []
-        all_output: list[str] = []
-
-        for file in files:
-            result = subprocess.run(
-                ["qmllint", "--bare", str(file)],
-                capture_output=True,
-                text=True,
-            )
-
-            output = result.stdout + result.stderr
-            if output.strip():
-                print(output)
-                all_output.append(output)
-
-            if result.returncode != 0:
-                issues_found = True
-                files_with_issues.append(self.relative_path(file))
-
-        if issues_found:
-            log_warn("QML lint issues found")
-
-        return AnalysisResult(
-            tool=self.name,
-            passed=not issues_found,
-            issues=len(files_with_issues),
-            output="\n".join(all_output),
-            files_checked=len(files),
-            files_with_issues=files_with_issues,
-        )
 
 
 def validate_path(path_str: str, repo_root: Path) -> Path:
@@ -544,21 +136,31 @@ def get_analyzer(
     jobs: int = 1,
 ) -> AnalyzerBase:
     """Get the appropriate analyzer for the given tool."""
-    if tool in ("clang-tidy", "clazy"):
-        cls = ClangTidyAnalyzer if tool == "clang-tidy" else ClazyAnalyzer
-        return cls(repo_root, build_dir, jobs=jobs)
-
-    analyzers: dict[str, type[AnalyzerBase]] = {
-        "clang-format": ClangFormatAnalyzer,
-        "cppcheck": CppcheckAnalyzer,
-        "qmllint": QmlLintAnalyzer,
-    }
-
-    if tool not in analyzers:
-        available = ", ".join(analyzers.keys())
-        raise ValueError(f"Unknown tool: {tool}. Available tools: {available}")
-
-    return analyzers[tool](repo_root, build_dir)
+    match tool:
+        case "clang-tidy":
+            from analyzers.clang_tidy import ClangTidyAnalyzer
+            return ClangTidyAnalyzer(repo_root, build_dir, jobs=jobs)
+        case "clazy":
+            from analyzers.clazy import ClazyAnalyzer
+            return ClazyAnalyzer(repo_root, build_dir, jobs=jobs)
+        case "clang-format":
+            from analyzers.clang_format import ClangFormatAnalyzer
+            return ClangFormatAnalyzer(repo_root, build_dir)
+        case "cppcheck":
+            from analyzers.cppcheck import CppcheckAnalyzer
+            return CppcheckAnalyzer(repo_root, build_dir)
+        case "qmllint":
+            from analyzers.qmllint import QmlLintAnalyzer
+            return QmlLintAnalyzer(repo_root, build_dir)
+        case "vehicle-null-check":
+            from analyzers.vehicle_null_check import VehicleNullCheckAnalyzer
+            return VehicleNullCheckAnalyzer(repo_root, build_dir)
+        case "qt-translate-noop-check":
+            from analyzers.qt_translate_noop_check import QtTranslateNoopAnalyzer
+            return QtTranslateNoopAnalyzer(repo_root, build_dir)
+        case _:
+            available = "clang-format, clang-tidy, cppcheck, clazy, qmllint, vehicle-null-check, qt-translate-noop-check"
+            raise ValueError(f"Unknown tool: {tool}. Available tools: {available}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -573,6 +175,8 @@ Tools:
   cppcheck      Cppcheck static analyzer
   clazy         Qt-specific static analyzer (requires compile_commands.json)
   qmllint       QML file linter
+  vehicle-null-check       Detect unsafe activeVehicle()/getParameter() patterns
+  qt-translate-noop-check  Detect always-wrong runtime use of QT_TRANSLATE_NOOP
 
 Examples:
   %(prog)s                           Analyze changed files (vs master)
@@ -592,7 +196,7 @@ Examples:
         "-t",
         "--tool",
         default="clang-tidy",
-        choices=["clang-format", "clang-tidy", "cppcheck", "clazy", "qmllint"],
+        choices=["clang-format", "clang-tidy", "cppcheck", "clazy", "qmllint", "vehicle-null-check", "qt-translate-noop-check"],
         help="Analysis tool to use (default: clang-tidy)",
     )
     parser.add_argument(

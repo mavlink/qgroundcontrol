@@ -4,7 +4,6 @@
 import textwrap
 
 import pytest
-
 from generators.mavlink_instance_fields import (
     extract_instance_fields,
     generate_header,

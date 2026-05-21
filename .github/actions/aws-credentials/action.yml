@@ -1,0 +1,57 @@
+name: AWS Credentials
+description: >-
+  Configure AWS credentials via OIDC (preferred) or static keys. Wraps the
+  OIDC-vs-static branching that aws-upload and build-gstreamer both need, so
+  the two paths can't drift on configure-aws-credentials version or inputs.
+
+inputs:
+  aws-role-arn:
+    description: AWS IAM role ARN for OIDC authentication (preferred over static credentials)
+    required: false
+    default: ''
+  aws-key-id:
+    description: AWS access key ID (used only when aws-role-arn is empty)
+    required: false
+    default: ''
+  aws-secret-access-key:
+    description: AWS secret access key (used only when aws-role-arn is empty)
+    required: false
+    default: ''
+  aws-region:
+    description: AWS region
+    required: false
+    default: 'us-west-2'
+
+outputs:
+  mode:
+    description: "Resolved auth mode: 'oidc', 'static', or 'none'"
+    value: ${{ steps.mode.outputs.mode }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve auth mode
+      id: mode
+      shell: bash
+      env:
+        ROLE_ARN: ${{ inputs.aws-role-arn }}
+        KEY_ID: ${{ inputs.aws-key-id }}
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" auth-mode \
+          --role-arn "${ROLE_ARN}" \
+          --key-id "${KEY_ID}"
+
+    - name: Configure AWS Credentials (OIDC)
+      if: steps.mode.outputs.mode == 'oidc'
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        role-to-assume: ${{ inputs.aws-role-arn }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Configure AWS Credentials (Static)
+      if: steps.mode.outputs.mode == 'static'
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        aws-access-key-id: ${{ inputs.aws-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}

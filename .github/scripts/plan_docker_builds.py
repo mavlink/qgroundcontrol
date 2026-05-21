@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import sys
+from typing import Any
 
 from ci_bootstrap import ensure_tools_dir
 
@@ -15,9 +16,14 @@ ensure_tools_dir(__file__)
 from common.gh_actions import write_github_output
 
 
-def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> dict[str, object]:
-    """Return workflow matrix and a has_jobs flag."""
-    include: list[dict[str, object]] = []
+def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> dict[str, Any]:
+    """Return workflow matrix and a has_jobs flag.
+
+    Returns {"matrix": {"include": [...]}, "has_jobs": bool}. Typed as
+    dict[str, Any] so callers can subscript matrix["include"] without
+    pyright complaining about object indexing.
+    """
+    include: list[dict[str, Any]] = []
 
     linux_selected = event_name != "pull_request" or linux_changed
     android_selected = event_name != "pull_request" or android_changed

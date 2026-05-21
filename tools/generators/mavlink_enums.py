@@ -9,17 +9,16 @@ Usage: mavlink_enums.py <mavlink_include_dir> <enums_h_output> [<qml_h_output> <
 
 If the QML paths are omitted they are derived from <enums_h_output>'s directory.
 """
-import os
 import re
 import sys
-
+from pathlib import Path
 
 ENUM_DECL_RE = re.compile(r'^\s*typedef\s+enum\s+([A-Z_][A-Z0-9_]*)\b', re.MULTILINE)
 
 
 def extract_enum_block(dialect_header_path):
     try:
-        with open(dialect_header_path, 'r') as f:
+        with open(dialect_header_path) as f:
             lines = f.readlines()
     except FileNotFoundError:
         return ""
@@ -39,23 +38,22 @@ def extract_enum_block(dialect_header_path):
 
 def find_dialects(mavlink_dir):
     dialects = []
-    for entry in sorted(os.listdir(mavlink_dir)):
-        dialect_dir = os.path.join(mavlink_dir, entry)
-        dialect_header = os.path.join(dialect_dir, f"{entry}.h")
-        if os.path.isdir(dialect_dir) and os.path.isfile(dialect_header):
+    mavlink_dir = Path(mavlink_dir)
+    for dialect_dir in sorted(mavlink_dir.iterdir()):
+        entry = dialect_dir.name
+        dialect_header = dialect_dir / f"{entry}.h"
+        if dialect_dir.is_dir() and dialect_header.is_file():
             dialects.append((entry, dialect_header))
     return dialects
 
 
 def write_if_changed(path, content):
     """Return True if file was written (avoids spurious rebuilds)."""
-    if os.path.isfile(path):
-        with open(path, 'r') as f:
-            if f.read() == content:
-                return False
-    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-    with open(path, 'w') as f:
-        f.write(content)
+    path = Path(path)
+    if path.is_file() and path.read_text() == content:
+        return False
+    path.resolve().parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content)
     return True
 
 
@@ -172,10 +170,10 @@ def main():
         )
         sys.exit(1)
 
-    mavlink_dir = sys.argv[1]
-    enums_h_path = sys.argv[2]
+    mavlink_dir = Path(sys.argv[1])
+    enums_h_path = Path(sys.argv[2])
 
-    if not os.path.isdir(mavlink_dir):
+    if not mavlink_dir.is_dir():
         print(f"Error: {mavlink_dir} is not a directory", file=sys.stderr)
         sys.exit(1)
 
@@ -186,22 +184,25 @@ def main():
 
     enums_h, enum_names = build_enums_header(dialects)
     if len(sys.argv) == 5:
-        qml_h_path = sys.argv[3]
-        qml_cc_path = sys.argv[4]
+        qml_h_path = Path(sys.argv[3])
+        qml_cc_path = Path(sys.argv[4])
     else:
-        out_dir = os.path.dirname(os.path.abspath(enums_h_path))
-        qml_h_path = os.path.join(out_dir, "MAVLinkEnumsQml.h")
-        qml_cc_path = os.path.join(out_dir, "MAVLinkEnumsQml.cc")
+        out_dir = enums_h_path.resolve().parent
+        qml_h_path = out_dir / "MAVLinkEnumsQml.h"
+        qml_cc_path = out_dir / "MAVLinkEnumsQml.cc"
 
-    written = []
-    if write_if_changed(enums_h_path, enums_h):          written.append(enums_h_path)
-    if write_if_changed(qml_h_path, build_qml_header(enum_names)): written.append(qml_h_path)
-    if write_if_changed(qml_cc_path, build_qml_anchor_cc()):       written.append(qml_cc_path)
+    written: list[Path] = []
+    if write_if_changed(enums_h_path, enums_h):
+        written.append(enums_h_path)
+    if write_if_changed(qml_h_path, build_qml_header(enum_names)):
+        written.append(qml_h_path)
+    if write_if_changed(qml_cc_path, build_qml_anchor_cc()):
+        written.append(qml_cc_path)
 
     if written:
-        print(f"Generated {len(enum_names)} enums from {len(dialects)} dialects -> {', '.join(os.path.basename(p) for p in written)}")
+        print(f"Generated {len(enum_names)} enums from {len(dialects)} dialects -> {', '.join(p.name for p in written)}")
     else:
-        print(f"MAVLinkEnums.h / MAVLinkEnumsQml.{{h,cc}} up to date")
+        print("MAVLinkEnums.h / MAVLinkEnumsQml.{h,cc} up to date")
 
 
 if __name__ == '__main__':

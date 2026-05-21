@@ -1,11 +1,19 @@
 # QGroundControl Development Commands
-# Install: cargo install just, brew install just, or apt install just
+# Install (requires just >=1.30 for home_directory()):
+#   python tools/setup/install_python.py dev   (recommended; pulls rust-just into .venv)
+#   brew install just / cargo install just / pipx install rust-just
+# `apt install just` on Ubuntu ships 1.21 which is too old.
 
 # Configuration from build-config.json
 qt_version := `python3 ./tools/setup/read_config.py --get qt_version 2>/dev/null || echo "6.10.1"`
 qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "gcc_64")
 build_type := env_var_or_default("BUILD_TYPE", "Debug")
 build_dir := "build"
+
+# Pin CMake's Python to the workspace .venv when present so CMake-invoked
+# generators (settings_qml/config_qml use jinja2) see the deps they need.
+# Empty when no .venv → CMake falls back to system python.
+venv_python := `if [ -x .venv/bin/python ]; then echo "$PWD/.venv/bin/python"; elif [ -x .venv/Scripts/python.exe ]; then echo "$PWD/.venv/Scripts/python.exe"; else echo ""; fi`
 
 # Default: show available commands
 default:
@@ -18,7 +26,7 @@ default:
 # Install system dependencies (Debian/Ubuntu)
 deps:
     @echo "Installing dependencies (requires sudo)..."
-    python3 ./tools/setup/install_dependencies.py --platform debian
+    python3 ./tools/setup/install_dependencies --platform debian
 
 # Initialize git submodules
 submodules:
@@ -32,7 +40,8 @@ submodules:
 configure: submodules
     {{qt_dir}}/bin/qt-cmake -B {{build_dir}} -G Ninja \
         -DCMAKE_BUILD_TYPE={{build_type}} \
-        -DQGC_BUILD_TESTING=ON
+        -DQGC_BUILD_TESTING=ON \
+        {{ if venv_python != "" { "-DPython3_EXECUTABLE=" + venv_python } else { "" } }}
 
 # Build the project
 build:
@@ -42,12 +51,13 @@ build:
 release:
     {{qt_dir}}/bin/qt-cmake -B {{build_dir}} -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DQGC_BUILD_TESTING=OFF
+        -DQGC_BUILD_TESTING=OFF \
+        {{ if venv_python != "" { "-DPython3_EXECUTABLE=" + venv_python } else { "" } }}
     cmake --build {{build_dir}} --config Release --parallel
 
-# Clean build directory (forwards to tools/clean.sh; pass --cache, --all, --dry-run)
+# Clean build directory (forwards to tools/clean.py; pass --cache, --all, --dry-run)
 clean *ARGS:
-    ./tools/clean.sh {{ARGS}}
+    ./tools/clean.py {{ARGS}}
 
 # Clean, configure, and build
 rebuild: clean configure build
@@ -59,9 +69,9 @@ setup: deps submodules configure build
 # Quality
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Run unit tests
-test:
-    cd {{build_dir}} && ctest --output-on-failure
+# Run unit tests (matches CI label filters; override with `LABELS=... EXCLUDE=... just test`)
+test labels=env_var_or_default("LABELS", "Unit|Integration") exclude=env_var_or_default("EXCLUDE", "Flaky|Network"):
+    cd {{build_dir}} && ctest --output-on-failure -L "{{labels}}" -LE "{{exclude}}"
 
 # Run pre-commit checks
 lint:
@@ -119,5 +129,5 @@ check-deps:
 
 # Clean build, caches, and generated files
 distclean:
-    ./tools/clean.sh --all
+    ./tools/clean.py --all
     rm -rf node_modules

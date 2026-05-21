@@ -10,6 +10,8 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
+    paths-ignore:
+      - 'docs/**'
   workflow_dispatch:
 
 concurrency:
@@ -23,30 +25,9 @@ permissions:
 
 jobs:
   changes:
-    name: Detect Changes
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    outputs:
-      linux: ${{ steps.detect-linux.outputs.any }}
-      android: ${{ steps.detect-android.outputs.any }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Detect Linux changes
-        id: detect-linux
-        uses: ./.github/actions/detect-changes
-        with:
-          platform: docker-linux
-      - name: Detect Android changes
-        id: detect-android
-        uses: ./.github/actions/detect-changes
-        with:
-          platform: docker-android
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: docker-linux docker-android
 
   plan-builds:
     name: Plan Docker Builds
@@ -65,6 +46,7 @@ jobs:
           sparse-checkout: |
             .github/scripts/plan_docker_builds.py
             .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
             tools/common/gh_actions.py
           sparse-checkout-cone-mode: false
 
@@ -72,8 +54,8 @@ jobs:
         id: plan
         env:
           EVENT_NAME: ${{ github.event_name }}
-          LINUX: ${{ needs.changes.outputs.linux }}
-          ANDROID: ${{ needs.changes.outputs.android }}
+          LINUX: ${{ needs.changes.outputs.docker_linux }}
+          ANDROID: ${{ needs.changes.outputs.docker_android }}
         run: python3 "${GITHUB_WORKSPACE}/.github/scripts/plan_docker_builds.py"
 
   build:
@@ -82,6 +64,10 @@ jobs:
     needs: [changes, plan-builds]
     if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
     timeout-minutes: 120
+    permissions:
+      contents: read
+      security-events: write
+      packages: write  # buildkit cache → ghcr.io
 
     strategy:
       fail-fast: false
@@ -97,30 +83,37 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Free Disk Space
-        uses: endersonmenezes/free-disk-space@v3
-        with:
-          remove_android: ${{ matrix.platform != 'Android' }}
-          remove_dotnet: true
-          remove_haskell: true
-          remove_tool_cache: true
-          remove_swap: true
-          remove_packages: azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
-          remove_packages_one_command: true
-          remove_folders: /usr/local/lib/docker/overlay2
-          rm_cmd: rmz
-
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 1
+
+      - name: Free Disk Space
+        uses: ./.github/actions/free-disk-space
+        with:
+          remove-android: ${{ matrix.platform != 'Android' }}
+          remove-tool-cache: 'true'
+          remove-swap: 'true'
+          remove-folders: /usr/local/lib/docker/overlay2
 
       - name: Build with Docker
         uses: ./.github/actions/docker
         with:
           dockerfile: ${{ matrix.dockerfile }}
           fuse: ${{ matrix.fuse }}
+          docker-username: ${{ secrets.DOCKERHUB_USERNAME }}
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
+          # GHCR for rolling master/Stable; Docker Hub for v* release tags. Upstream-only to keep forks off the registries.
+          push-image: >-
+            ${{
+              (github.event_name == 'push' && github.repository == 'mavlink/qgroundcontrol' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/Stable')))
+              && 'ghcr.io/mavlink/qgroundcontrol'
+              || (
+                (github.event_name == 'push' && github.repository == 'mavlink/qgroundcontrol' && startsWith(github.ref, 'refs/tags/v'))
+                && 'dronecode/qgroundcontrol'
+                || ''
+              )
+            }}
 
       - name: Find build artifact
         id: artifact

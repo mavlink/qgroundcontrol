@@ -115,7 +115,7 @@ endfunction()
 # Falls back to the system default linker
 # ----------------------------------------------------------------------------
 function(qgc_set_linker)
-    # Cross-compilation toolchains (Android NDK, iOS) configure their own linker
+    # Cross-compile toolchains supply their own linker. NDK + LTO + mold is broken (NDK ships no LLVMgold.so).
     if(CMAKE_CROSSCOMPILING)
         return()
     endif()

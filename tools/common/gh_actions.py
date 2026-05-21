@@ -9,6 +9,7 @@ import subprocess
 import time
 from typing import Any
 
+
 def gh(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     """Run a gh CLI command and return the process result."""
     return subprocess.run(

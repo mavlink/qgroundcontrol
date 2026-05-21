@@ -95,7 +95,7 @@ class TestHasRelevantChanges:
         assert has_relevant_changes(["android/build.gradle"], "docker-android")
 
     def test_setup_patterns_linux(self) -> None:
-        assert has_relevant_changes(["tools/setup/install_dependencies.py"], "linux")
+        assert has_relevant_changes(["tools/setup/install_dependencies/_debian.py"], "linux")
         assert has_relevant_changes(["tools/setup/foo-debian.sh"], "linux")
         assert not has_relevant_changes(["tools/setup/foo-windows.ps1"], "linux")
 

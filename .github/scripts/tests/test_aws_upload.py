@@ -5,7 +5,13 @@ from __future__ import annotations
 
 import pytest
 
-from aws_upload import sanitize_ref, validate_artifact, validate_credentials
+from aws_upload import (
+    main,
+    resolve_auth_mode,
+    sanitize_ref,
+    validate_artifact,
+    validate_credentials,
+)
 
 
 class TestSanitizeRef:
@@ -68,3 +74,40 @@ class TestValidateArtifact:
         f = tmp_path / "QGroundControl.AppImage"
         f.touch()
         validate_artifact(str(f), "QGroundControl.AppImage")
+
+
+class TestResolveAuthMode:
+    def test_role_arn_wins_over_key(self) -> None:
+        assert resolve_auth_mode("arn:aws:iam::123:role/x", "AKID") == "oidc"
+
+    def test_role_arn_alone(self) -> None:
+        assert resolve_auth_mode("arn:aws:iam::123:role/x", "") == "oidc"
+
+    def test_key_id_alone(self) -> None:
+        assert resolve_auth_mode("", "AKID") == "static"
+
+    def test_neither_returns_none(self) -> None:
+        assert resolve_auth_mode("", "") == "none"
+
+
+class TestAuthModeCmd:
+    def test_writes_output_and_stdout(self, tmp_path, monkeypatch, capsys) -> None:
+        output_file = tmp_path / "gh_output"
+        output_file.write_text("")
+        monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "auth-mode", "--role-arn", "arn:aws:iam::1:role/x"],
+        )
+        main()
+        assert capsys.readouterr().out.strip() == "oidc"
+        assert "mode=oidc" in output_file.read_text()
+
+    def test_emits_none_when_unset(self, tmp_path, monkeypatch, capsys) -> None:
+        output_file = tmp_path / "gh_output"
+        output_file.write_text("")
+        monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
+        monkeypatch.setattr("sys.argv", ["prog", "auth-mode"])
+        main()
+        assert capsys.readouterr().out.strip() == "none"
+        assert "mode=none" in output_file.read_text()

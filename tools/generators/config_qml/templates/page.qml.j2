@@ -1,0 +1,102 @@
+{{ header }}
+
+{% for imp in imports %}
+import {{ imp }}
+{% endfor %}
+{% if imports %}
+
+{% endif %}
+SetupPage {
+    id: configPage
+    pageComponent: pageComponent
+
+    Component {
+        id: pageComponent
+
+        Item {
+            width: Math.max(availableWidth, outerColumn.width)
+            height: outerColumn.height
+
+            {{ controller_type }} {
+                id: controller
+            }
+
+            property real _margins: ScreenTools.defaultFontPixelHeight
+
+{% for name, expr in constants %}
+            readonly property var {{ name }}: {{ expr }}
+{% endfor %}
+{% if constants %}
+
+{% endif %}
+{% for line in param_lines %}
+            {{ line }}
+{% endfor %}
+{% if param_lines %}
+
+{% endif %}
+{% for name, expr in bindings %}
+            property var {{ name }}: {{ expr }}
+{% endfor %}
+{% if bindings %}
+
+{% endif %}
+{% for rc in repeat_count_props %}
+{{ rc }}
+
+{% endfor %}
+            property string sectionNameFilter: ""
+
+            readonly property var _searchTerms: ({
+{% for st in search_terms %}
+                "{{ st.title }}": [{{ st.terms }}]{{ st.comma }}
+{% endfor %}
+            })
+
+            readonly property var _translatableSearchTerms: ({
+{% for tt in tr_terms %}
+                "{{ tt.title }}": [{{ tt.terms }}]{{ tt.comma }}
+{% endfor %}
+            })
+
+            function sectionMatchesFilter(sectionTitle) {
+                if (sectionNameFilter === "") return true
+                if (sectionNameFilter === sectionTitle) return true
+                var filter = sectionNameFilter.toLowerCase()
+                var terms = _searchTerms[sectionTitle]
+                if (terms) {
+                    for (var i = 0; i < terms.length; i++) {
+                        if (terms[i].indexOf(filter) >= 0) return true
+                    }
+                }
+                var trTerms = _translatableSearchTerms[sectionTitle]
+                if (trTerms) {
+                    for (var j = 0; j < trTerms.length; j++) {
+                        if (qsTranslate("{{ tr_ctx }}", trTerms[j]).toLowerCase().indexOf(filter) >= 0) return true
+                    }
+                }
+                return false
+            }
+
+            function sectionVisible(name) {
+{% for vc in visible_conditions %}
+                if (name === "{{ vc.name }}") return {{ vc.expr }}
+{% endfor %}
+                return true
+            }
+
+            property real _maxLeftMargin: ScreenTools.defaultFontPixelWidth * 20
+
+            ColumnLayout {
+                id: outerColumn
+                spacing: _margins * 1.25
+                anchors.left: parent.left
+                anchors.leftMargin: Math.min((parent.width - width) / 2, _maxLeftMargin)
+{% for sec_qml in sections %}
+
+{{ sec_qml }}
+{% endfor %}
+            }
+        }
+    }
+}

@@ -3,23 +3,41 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Copy build config and setup scripts
-# install_dependencies.py imports tools/common/build_config via parents[1] →
+# install_dependencies/_common.py imports tools/common/build_config via parents[2] →
 # `/tmp/qt/..` must contain `common/`, so mirror tools/ layout under /tmp/.
 COPY .github/build-config.json /tmp/qt/
-COPY tools/setup/install_dependencies.py /tmp/qt/
+COPY tools/setup/install_dependencies/ /tmp/qt/install_dependencies/
 COPY tools/setup/read_config.py /tmp/qt/
 COPY tools/common/ /tmp/common/
 
 # Install system packages, project dependencies, and read all config in one layer
 RUN apt-get update && \
     apt-get install -y --no-install-recommends python3 pipx && \
-    python3 /tmp/qt/install_dependencies.py --platform debian && \
+    python3 /tmp/qt/install_dependencies --platform debian && \
     python3 /tmp/qt/read_config.py --export bash > /etc/profile.d/qgc.sh && \
     chmod +x /etc/profile.d/qgc.sh && \
     . /etc/profile.d/qgc.sh && \
     apt-get install -y openjdk-${JAVA_VERSION}-jdk && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/common
+
+# Build-time Python deps for CMake-invoked generators (jinja2 for
+# settings_qml/config_qml). Synced from tools/pyproject.toml [scripts] so the
+# dep list stays unified with developer/runner envs. Pinned via
+# Python3_EXECUTABLE in entrypoint.sh.
+COPY --from=ghcr.io/astral-sh/uv:0.11.12 /uv /usr/local/bin/uv
+COPY tools/pyproject.toml tools/uv.lock /tmp/qgc-tools/
+# Smoke-check importability of every dep in tools/pyproject.toml [scripts] so a
+# missing/broken wheel fails the build instead of crashing during CMake generators.
+RUN uv venv --seed /opt/qgc-venv --python python3 && \
+    VIRTUAL_ENV=/opt/qgc-venv uv sync \
+        --project /tmp/qgc-tools \
+        --extra scripts \
+        --no-install-project \
+        --frozen --active --no-cache && \
+    /opt/qgc-venv/bin/python -c "import jinja2, httpx, defusedxml" && \
+    rm -rf /tmp/qgc-tools /usr/local/bin/uv
+ENV PATH="/opt/qgc-venv/bin:${PATH}"
 
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_HOME=$ANDROID_SDK_ROOT

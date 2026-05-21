@@ -27,16 +27,13 @@ def require_tool(name: str, *, hint: str = "") -> Path:
     """Return the path to a tool, or raise ToolNotFoundError."""
     path = shutil.which(name)
     if path is None:
-        msg = f"Required tool not found: {name}"
-        if hint:
-            msg += f" ({hint})"
-        raise ToolNotFoundError(msg)
+        raise ToolNotFoundError(name, hint=hint or None)
     return Path(path)
 
 
 def check_and_report(tools: list[str], *, exit_on_missing: bool = True) -> bool:
     """Check tools and print a summary. Returns True if all found."""
-    from .logging import log_ok, log_error
+    from .logging import log_error, log_ok
 
     missing = check_dependencies(tools)
     if not missing:

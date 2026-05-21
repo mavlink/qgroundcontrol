@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
-from size_analysis import BinaryAnalyzer, write_github_output
+from size_analysis import BinaryAnalyzer
 
 
 def test_binary_analyzer_requires_existing_file(tmp_path: Path) -> None:
@@ -73,12 +72,3 @@ def test_generate_metrics_json_with_explicit_values(tmp_path: Path) -> None:
     assert metrics[2]["value"] == 42
 
 
-def test_write_github_output(tmp_path: Path) -> None:
-    output_file = tmp_path / "github_output.txt"
-    with patch.dict(os.environ, {"GITHUB_OUTPUT": str(output_file)}):
-        write_github_output(10, 8, 100)
-
-    content = output_file.read_text(encoding="utf-8")
-    assert "binary_size=10" in content
-    assert "stripped_size=8" in content
-    assert "symbol_count=100" in content

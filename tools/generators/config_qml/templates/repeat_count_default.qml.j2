@@ -1,0 +1,9 @@
+{{ ind }}property int _{{ safe }}Count: {
+{{ ind }}    var _i = {{ start_index }}
+{{ ind }}    while (true) {
+{{ ind }}        var _idx = {{ idx_expr }}
+{{ ind }}        if (!controller.parameterExists(-1, {{ probe_param }}))
+{{ ind }}            return _i - {{ start_index }}
+{{ ind }}        _i++
+{{ ind }}    }
+{{ ind }}}

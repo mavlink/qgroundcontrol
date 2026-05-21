@@ -26,24 +26,25 @@ Examples:
 
 import json
 import sys
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator, NamedTuple
+from typing import NamedTuple
 
 # Add tools to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from common.file_traversal import (
+    find_header_files,
+    find_json_files,
+    find_repo_root,
+    find_source_files,
+)
 from common.patterns import (
     FACT_MEMBER_PATTERN,
     FACTGROUP_CLASS_PATTERN,
     MAVLINK_MSG_ID_PATTERN,
     PARAM_NAME_PATTERN,
     make_query_pattern,
-)
-from common.file_traversal import (
-    find_repo_root,
-    find_header_files,
-    find_source_files,
-    find_json_files,
 )
 
 

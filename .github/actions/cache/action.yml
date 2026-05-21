@@ -31,14 +31,8 @@ runs:
         EVENT_NAME: ${{ github.event_name }}
         PR_REPO: ${{ github.event.pull_request.head.repo.full_name }}
         THIS_REPO: ${{ github.repository }}
-      run: |
-        save="$(python3 -c "
-        import os, sys
-        sys.path.insert(0, os.path.join(os.environ['GITHUB_WORKSPACE'], 'tools'))
-        from common.gh_actions import resolve_cache_policy
-        print(resolve_cache_policy('${{ inputs.save-cache }}'))
-        ")"
-        echo "save=${save}" >> "$GITHUB_OUTPUT"
+        REQUESTED: ${{ inputs.save-cache }}
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cache_policy.py" --requested "${REQUESTED}"
 
     - name: Determine cache scope
       id: cache-scope
@@ -80,14 +74,38 @@ runs:
         path: /usr/local/bin/ccache
         key: ${{ steps.ccache-binary.outputs.cache-primary-key }}
 
-    - name: Install ccache (macOS)
+    - name: Resolve macOS ccache SHA256
       if: runner.os == 'macOS'
+      id: mac-ccache
       shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" macos-config
+
+    - name: Restore ccache binary (macOS)
+      if: runner.os == 'macOS'
+      id: ccache-binary-mac
+      uses: actions/cache/restore@v5
+      with:
+        path: /usr/local/bin/ccache
+        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-darwin
+
+    - name: Install ccache (macOS)
+      if: runner.os == 'macOS' && steps.ccache-binary-mac.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+        CCACHE_MAC_SHA256: ${{ steps.mac-ccache.outputs.sha256 }}
       run: |
-        if ! command -v ccache >/dev/null 2>&1; then
-          brew install ccache
-        fi
+        sudo python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install-macos \
+          --version "${CCACHE_VERSION}" \
+          --sha256 "${CCACHE_MAC_SHA256}"
         ccache --version
+
+    - name: Save ccache binary (macOS)
+      if: runner.os == 'macOS' && steps.cache-policy.outputs.save == 'true' && steps.ccache-binary-mac.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: /usr/local/bin/ccache
+        key: ${{ steps.ccache-binary-mac.outputs.cache-primary-key }}
 
     - name: Determine Windows ccache arch
       if: runner.os == 'Windows'
@@ -142,13 +160,13 @@ runs:
       shell: bash
       env:
         CPM_MODULES_INPUT: ${{ inputs.cpm-modules }}
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" configure-cpm-cache --path "${CPM_MODULES_INPUT}"
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" configure-cache --path "${CPM_MODULES_INPUT}"
 
     - name: Compute CPM dependency fingerprint
       if: inputs.cpm-modules != ''
       id: cpm-key
       shell: bash
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" fingerprint --root "${GITHUB_WORKSPACE}"
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" fingerprint --root "${GITHUB_WORKSPACE}"
 
     # `variant` separates compile-flag-distinct entries (coverage vs ASan vs UBSan)
     # so parallel saves don't last-writer-wins onto the same key.

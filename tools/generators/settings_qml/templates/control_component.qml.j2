@@ -1,0 +1,9 @@
+{{ indent }}{{ component }} {
+{{ indent }}    Layout.fillWidth: true
+{% if show_when %}
+{{ indent }}    visible: {{ show_when }}
+{% endif %}
+{% if enable_when %}
+{{ indent }}    enabled: {{ enable_when }}
+{% endif %}
+{{ indent }}}
