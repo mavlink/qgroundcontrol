@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import QtCharts
 
 import QGroundControl
 import QGroundControl.Controls
@@ -53,7 +52,16 @@ Rectangle {
     property bool _shouldSampleAbsorbance: USVLayout.shouldSampleAbsorbance(payloadStatus, baselineSet)
 
     property bool _chartPaused: false
+    property bool _pageActive: true
     property int _sampleIndex: 0
+    property var _voltagePoints: []
+    property var _absorbancePoints: []
+    property int _axisXMin: 0
+    property int _axisXMax: SDTokens.Tokens.chart.maxPoints
+    property real _axisVoltageMin: -1
+    property real _axisVoltageMax: 1
+    property real _axisAbsorbanceMin: -1
+    property real _axisAbsorbanceMax: 1
 
     property real _voltageMinStat: 0
     property real _voltageMaxStat: 0
@@ -96,6 +104,22 @@ Rectangle {
 
     function _formatPump(fact) {
         return (fact && fact.value !== undefined) ? Number(fact.value).toFixed(1) : "--"
+    }
+
+    function _requestChartPaint() {
+        if (!root._pageActive) {
+            return
+        }
+
+        chartCanvas.requestPaint()
+    }
+
+    function prepareForUnload() {
+        _pageActive = false
+        sampleTimer.stop()
+        durationTimer.stop()
+        _voltagePoints = []
+        _absorbancePoints = []
     }
 
     function _formatDuration(totalSeconds) {
@@ -151,17 +175,23 @@ Rectangle {
         return _linkOk ? qgcPal.colorGreen : qgcPal.colorRed
     }
 
-    function _updateSeriesAxis(series, axis, fallbackCenter) {
-        if (series.count <= 0) {
-            axis.min = fallbackCenter - 1
-            axis.max = fallbackCenter + 1
-            return
+    function _cssColor(baseColor, alpha) {
+        return "rgba("
+                + Math.round(baseColor.r * 255) + ","
+                + Math.round(baseColor.g * 255) + ","
+                + Math.round(baseColor.b * 255) + ","
+                + alpha + ")"
+    }
+
+    function _pointsAxisRange(points, fallbackCenter) {
+        if (points.length <= 0) {
+            return { min: fallbackCenter - 1, max: fallbackCenter + 1 }
         }
 
-        var minVal = series.at(0).y
+        var minVal = points[0].y
         var maxVal = minVal
-        for (var i = 1; i < series.count; i++) {
-            var y = series.at(i).y
+        for (var i = 1; i < points.length; i++) {
+            var y = points[i].y
             if (y < minVal) {
                 minVal = y
             }
@@ -172,32 +202,45 @@ Rectangle {
 
         var range = maxVal - minVal
         var margin = range > 0 ? range * SDTokens.Tokens.chart.marginPercent : Math.max(Math.abs(minVal) * SDTokens.Tokens.chart.marginPercent, 0.001)
-        axis.min = minVal - margin
-        axis.max = maxVal + margin
+        return { min: minVal - margin, max: maxVal + margin }
     }
 
     function _updateChartAxes() {
-        _updateSeriesAxis(voltageSeries, axisVoltage, 0)
-        _updateSeriesAxis(absorbanceSeries, axisAbsorbance, 0)
+        var voltageRange = _pointsAxisRange(_voltagePoints, 0)
+        var absorbanceRange = _pointsAxisRange(_absorbancePoints, 0)
+        _axisXMin = Math.max(0, _sampleIndex - SDTokens.Tokens.chart.maxPoints)
+        _axisXMax = Math.max(SDTokens.Tokens.chart.maxPoints, _sampleIndex)
+        _axisVoltageMin = voltageRange.min
+        _axisVoltageMax = voltageRange.max
+        _axisAbsorbanceMin = absorbanceRange.min
+        _axisAbsorbanceMax = absorbanceRange.max
     }
 
     function _appendSample(voltageValue, absorbanceValue, includeAbsorbance) {
-        if (voltageSeries.count >= SDTokens.Tokens.chart.maxPoints) {
-            voltageSeries.remove(0)
-        }
-        if (includeAbsorbance && absorbanceSeries.count >= SDTokens.Tokens.chart.maxPoints) {
-            absorbanceSeries.remove(0)
+        if (!_pageActive) {
+            return
         }
 
-        voltageSeries.append(_sampleIndex, voltageValue)
-        if (includeAbsorbance) {
-            absorbanceSeries.append(_sampleIndex, absorbanceValue)
+        var nextVoltagePoints = _voltagePoints.slice()
+        nextVoltagePoints.push({ x: _sampleIndex, y: voltageValue })
+        if (nextVoltagePoints.length > SDTokens.Tokens.chart.maxPoints) {
+            nextVoltagePoints.shift()
         }
+        _voltagePoints = nextVoltagePoints
+
+        if (includeAbsorbance) {
+            var nextAbsorbancePoints = _absorbancePoints.slice()
+            nextAbsorbancePoints.push({ x: _sampleIndex, y: absorbanceValue })
+            if (nextAbsorbancePoints.length > SDTokens.Tokens.chart.maxPoints) {
+                nextAbsorbancePoints.shift()
+            }
+            _absorbancePoints = nextAbsorbancePoints
+        }
+
         _sampleIndex += 1
 
-        axisX.min = Math.max(0, _sampleIndex - SDTokens.Tokens.chart.maxPoints)
-        axisX.max = Math.max(SDTokens.Tokens.chart.maxPoints, _sampleIndex)
         _updateChartAxes()
+        _requestChartPaint()
     }
 
     function _updateStatistics(voltageValue, absorbanceValue, includeAbsorbance) {
@@ -229,15 +272,15 @@ Rectangle {
     }
 
     function clearAllData() {
-        voltageSeries.clear()
-        absorbanceSeries.clear()
+        _voltagePoints = []
+        _absorbancePoints = []
         _sampleIndex = 0
-        axisX.min = 0
-        axisX.max = SDTokens.Tokens.chart.maxPoints
-        axisVoltage.min = -1
-        axisVoltage.max = 1
-        axisAbsorbance.min = -1
-        axisAbsorbance.max = 1
+        _axisXMin = 0
+        _axisXMax = SDTokens.Tokens.chart.maxPoints
+        _axisVoltageMin = -1
+        _axisVoltageMax = 1
+        _axisAbsorbanceMin = -1
+        _axisAbsorbanceMax = 1
 
         _voltageMinStat = 0
         _voltageMaxStat = 0
@@ -250,6 +293,7 @@ Rectangle {
         _absorbanceSum = 0
         _absorbanceSumSquares = 0
         _absorbanceCount = 0
+        _requestChartPaint()
     }
 
     onPayloadStatusChanged: {
@@ -260,15 +304,6 @@ Rectangle {
             _samplingStartedMs = 0
             _elapsedSeconds = 0
         }
-    }
-
-    Component.onDestruction: {
-        // 销毁前清空 LineSeries 数据，防止 Qt Charts 内部
-        // 释放动态分配的数据点时触发 heap 904 断言
-        sampleTimer.stop()
-        durationTimer.stop()
-        voltageSeries.clear()
-        absorbanceSeries.clear()
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -332,7 +367,7 @@ Rectangle {
                         QGCLabel {
                             id: pointCountLabel
                             anchors.centerIn: parent
-                            text: voltageSeries.count + qsTr(" 点")
+                            text: root._voltagePoints.length + qsTr(" 点")
                             font.pointSize: ScreenTools.smallFontPointSize
                             opacity: 0.75
                         }
@@ -353,80 +388,190 @@ Rectangle {
                     }
                 }
 
-                ChartView {
-                    id: chartView
+                Item {
+                    id: chartArea
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    theme: ChartView.ChartThemeDark
-                    antialiasing: true
-                    animationOptions: ChartView.NoAnimation
-                    backgroundColor: "transparent"
-                    plotAreaColor: root._mutedColor(qgcPal.window, 0.10)
-                    backgroundRoundness: _m * SDTokens.Tokens.radius.sm
-                    legend.visible: true
-                    legend.alignment: Qt.AlignBottom
-                    legend.font.pointSize: ScreenTools.smallFontPointSize
+                    Layout.minimumHeight: _h * 12
+                    clip: true
 
-                    ValueAxis {
-                        id: axisX
-                        min: 0
-                        max: SDTokens.Tokens.chart.maxPoints
-                        titleText: qsTr("采样点")
-                        titleFont.pointSize: ScreenTools.smallFontPointSize
-                        labelsFont.pointSize: ScreenTools.smallFontPointSize
-                        labelsColor: qgcPal.text
-                        gridVisible: true
-                        gridLineColor: root._mutedColor(qgcPal.text, 0.10)
-                        lineVisible: false
-                        tickCount: 7
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: _m * SDTokens.Tokens.radius.sm
+                        color: root._mutedColor(qgcPal.window, 0.10)
+                        border.width: 1
+                        border.color: root._mutedColor(qgcPal.text, 0.08)
                     }
 
-                    ValueAxis {
-                        id: axisVoltage
-                        min: -1
-                        max: 1
-                        titleText: qsTr("电压 (V)")
-                        titleFont.pointSize: ScreenTools.smallFontPointSize
-                        labelsFont.family: ScreenTools.fixedFontFamily
-                        labelsFont.pointSize: ScreenTools.smallFontPointSize
-                        labelsColor: SDTokens.Tokens.chart.voltageColor
-                        gridVisible: true
-                        gridLineColor: root._mutedColor(qgcPal.text, 0.08)
-                        lineVisible: false
-                        tickCount: 5
+                    Canvas {
+                        id: chartCanvas
+                        anchors.fill: parent
+                        anchors.margins: _m * 0.45
+
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+                            if (width <= 0 || height <= 0) {
+                                return
+                            }
+
+                            var left = Math.max(46, root._m * 5.2)
+                            var right = root.baselineSet ? Math.max(44, root._m * 4.8) : Math.max(18, root._m * 1.8)
+                            var top = Math.max(18, root._h * 0.75)
+                            var bottom = Math.max(32, root._h * 1.8)
+                            var plotW = Math.max(1, width - left - right)
+                            var plotH = Math.max(1, height - top - bottom)
+                            var plotRight = left + plotW
+                            var plotBottom = top + plotH
+                            var xRange = Math.max(1, root._axisXMax - root._axisXMin)
+
+                            function clamp(value, minValue, maxValue) {
+                                return Math.max(minValue, Math.min(maxValue, value))
+                            }
+
+                            function mapX(x) {
+                                return left + ((x - root._axisXMin) / xRange) * plotW
+                            }
+
+                            function mapY(y, minValue, maxValue) {
+                                var yRange = maxValue - minValue
+                                if (Math.abs(yRange) < 0.000001) {
+                                    return top + plotH / 2
+                                }
+                                return plotBottom - ((y - minValue) / yRange) * plotH
+                            }
+
+                            function drawGrid() {
+                                ctx.save()
+                                ctx.lineWidth = 1
+                                ctx.strokeStyle = root._cssColor(qgcPal.text, 0.10)
+                                for (var i = 0; i <= 6; i++) {
+                                    var x = left + plotW * i / 6
+                                    ctx.beginPath()
+                                    ctx.moveTo(x, top)
+                                    ctx.lineTo(x, plotBottom)
+                                    ctx.stroke()
+                                }
+                                for (var j = 0; j <= 4; j++) {
+                                    var y = top + plotH * j / 4
+                                    ctx.beginPath()
+                                    ctx.moveTo(left, y)
+                                    ctx.lineTo(plotRight, y)
+                                    ctx.stroke()
+                                }
+                                ctx.strokeStyle = root._cssColor(qgcPal.text, 0.30)
+                                ctx.strokeRect(left, top, plotW, plotH)
+                                ctx.restore()
+                            }
+
+                            function drawAxisLabels() {
+                                var labelSize = Math.max(10, Math.round(root._h * 0.72))
+                                ctx.save()
+                                ctx.font = labelSize + "px sans-serif"
+                                ctx.textBaseline = "middle"
+                                ctx.textAlign = "right"
+                                ctx.fillStyle = SDTokens.Tokens.chart.voltageColor
+                                ctx.fillText(root._formatPrecision(root._axisVoltageMax, 4), left - 8, top)
+                                ctx.fillText(root._formatPrecision(root._axisVoltageMin, 4), left - 8, plotBottom)
+
+                                if (root.baselineSet) {
+                                    ctx.textAlign = "left"
+                                    ctx.fillStyle = SDTokens.Tokens.chart.absorbanceColor
+                                    ctx.fillText(root._formatPrecision(root._axisAbsorbanceMax, 4), plotRight + 8, top)
+                                    ctx.fillText(root._formatPrecision(root._axisAbsorbanceMin, 4), plotRight + 8, plotBottom)
+                                }
+
+                                ctx.textAlign = "center"
+                                ctx.fillStyle = root._cssColor(qgcPal.text, 0.72)
+                                ctx.fillText(root._axisXMin + " - " + root._axisXMax + qsTr(" 点"), left + plotW / 2, height - labelSize)
+                                ctx.restore()
+                            }
+
+                            function drawSeries(points, minValue, maxValue, color) {
+                                if (points.length <= 0) {
+                                    return
+                                }
+
+                                ctx.save()
+                                ctx.strokeStyle = color
+                                ctx.fillStyle = color
+                                ctx.lineWidth = Math.max(1.5, root._m * 0.18)
+                                ctx.beginPath()
+                                for (var k = 0; k < points.length; k++) {
+                                    var x = clamp(mapX(points[k].x), left, plotRight)
+                                    var y = clamp(mapY(points[k].y, minValue, maxValue), top, plotBottom)
+                                    if (k === 0) {
+                                        ctx.moveTo(x, y)
+                                    } else {
+                                        ctx.lineTo(x, y)
+                                    }
+                                }
+                                ctx.stroke()
+
+                                if (points.length === 1) {
+                                    var singleX = clamp(mapX(points[0].x), left, plotRight)
+                                    var singleY = clamp(mapY(points[0].y, minValue, maxValue), top, plotBottom)
+                                    ctx.beginPath()
+                                    ctx.arc(singleX, singleY, Math.max(2, root._m * 0.28), 0, Math.PI * 2)
+                                    ctx.fill()
+                                }
+                                ctx.restore()
+                            }
+
+                            drawGrid()
+                            drawSeries(root._voltagePoints, root._axisVoltageMin, root._axisVoltageMax, SDTokens.Tokens.chart.voltageColor)
+                            if (root.baselineSet) {
+                                drawSeries(root._absorbancePoints, root._axisAbsorbanceMin, root._axisAbsorbanceMax, SDTokens.Tokens.chart.absorbanceColor)
+                            }
+                            drawAxisLabels()
+                        }
                     }
 
-                    ValueAxis {
-                        id: axisAbsorbance
-                        min: -1
-                        max: 1
-                        titleText: qsTr("吸光度 (AU)")
-                        titleFont.pointSize: ScreenTools.smallFontPointSize
-                        labelsFont.family: ScreenTools.fixedFontFamily
-                        labelsFont.pointSize: ScreenTools.smallFontPointSize
-                        labelsColor: SDTokens.Tokens.chart.absorbanceColor
-                        gridVisible: false
-                        lineVisible: false
-                        tickCount: 5
+                    QGCLabel {
+                        anchors.centerIn: parent
+                        text: root._chartPaused ? qsTr("曲线已暂停") : qsTr("等待采样数据")
+                        opacity: 0.45
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        visible: root._voltagePoints.length === 0
                     }
 
-                    LineSeries {
-                        id: voltageSeries
-                        name: qsTr("电压")
-                        color: SDTokens.Tokens.chart.voltageColor
-                        width: 2
-                        axisX: axisX
-                        axisY: axisVoltage
-                    }
+                    RowLayout {
+                        anchors.left: parent.left
+                        anchors.leftMargin: _m * 1.2
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: _m * 0.45
+                        spacing: _m * SDTokens.Tokens.spacing.md
 
-                    LineSeries {
-                        id: absorbanceSeries
-                        name: qsTr("吸光度")
-                        visible: root.baselineSet
-                        color: SDTokens.Tokens.chart.absorbanceColor
-                        width: 2
-                        axisX: axisX
-                        axisYRight: axisAbsorbance
+                        RowLayout {
+                            spacing: _m * 0.35
+                            Rectangle {
+                                width: _m * 1.1
+                                height: _m * 0.32
+                                radius: height / 2
+                                color: SDTokens.Tokens.chart.voltageColor
+                            }
+                            QGCLabel {
+                                text: qsTr("电压")
+                                font.pointSize: ScreenTools.smallFontPointSize
+                                opacity: 0.78
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: _m * 0.35
+                            visible: root.baselineSet
+                            Rectangle {
+                                width: _m * 1.1
+                                height: _m * 0.32
+                                radius: height / 2
+                                color: SDTokens.Tokens.chart.absorbanceColor
+                            }
+                            QGCLabel {
+                                text: qsTr("吸光度")
+                                font.pointSize: ScreenTools.smallFontPointSize
+                                opacity: 0.78
+                            }
+                        }
                     }
                 }
 
@@ -815,9 +960,9 @@ Rectangle {
         id: sampleTimer
         interval: SDTokens.Tokens.chart.sampleIntervalMs
         repeat: true
-        running: root._hasPayloadGroup && !root._chartPaused && root._shouldChart
+        running: root._pageActive && root._hasPayloadGroup && !root._chartPaused && root._shouldChart
         onTriggered: {
-            if (!root._hasPayloadGroup) {
+            if (!root._pageActive || !root._hasPayloadGroup) {
                 return
             }
 
@@ -833,8 +978,12 @@ Rectangle {
         id: durationTimer
         interval: 1000
         repeat: true
-        running: root._hasPayloadGroup
+        running: root._pageActive && root._hasPayloadGroup
         onTriggered: {
+            if (!root._pageActive) {
+                return
+            }
+
             if ((root.payloadStatus === SDTokens.StatusSampling || root.payloadStatus === SDTokens.StatusSurveying) && root._samplingStartedMs > 0) {
                 root._elapsedSeconds = Math.floor((Date.now() - root._samplingStartedMs) / 1000)
             } else {

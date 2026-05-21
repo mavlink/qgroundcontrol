@@ -30,6 +30,7 @@
     #include <iterator>  // std::size
     #include <cwchar>    // swprintf
     #if defined(_MSC_VER)
+        #include <DbgHelp.h>
         #include <crtdbg.h>
         #include <stdlib.h>
         #include <cstdio> // _snwprintf_s
@@ -55,16 +56,130 @@ void disableAppNapViaInfoDict()
 #if defined(Q_OS_WIN)
 
 #if defined(_MSC_VER)
+bool g_quietWindowsAsserts = false;
+
+bool GetWindowsCrtAssertLogPath(char* path, DWORD pathLen)
+{
+    const char logFileName[] = "qgc-crt-assert-stack.log";
+    const DWORD length = GetModuleFileNameA(nullptr, path, pathLen);
+    if ((length == 0) || (length >= pathLen)) {
+        return false;
+    }
+
+    DWORD insertPos = length;
+    while ((insertPos > 0) && (path[insertPos - 1] != '\\') && (path[insertPos - 1] != '/')) {
+        --insertPos;
+    }
+    path[insertPos] = '\0';
+
+    const DWORD logFileNameLength = static_cast<DWORD>(std::size(logFileName) - 1);
+    if ((insertPos + logFileNameLength) >= pathLen) {
+        return false;
+    }
+
+    for (DWORD i = 0; i <= logFileNameLength; ++i) {
+        path[insertPos + i] = logFileName[i];
+    }
+    return true;
+}
+
+void AppendWindowsDiagnosticLogLine(const char* line)
+{
+    char logPath[MAX_PATH] = {};
+    if (!GetWindowsCrtAssertLogPath(logPath, static_cast<DWORD>(std::size(logPath)))) {
+        return;
+    }
+
+    HANDLE file = CreateFileA(logPath, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (!file || (file == INVALID_HANDLE_VALUE)) {
+        return;
+    }
+
+    DWORD ignored = 0;
+    (void) WriteFile(file, line, static_cast<DWORD>(lstrlenA(line)), &ignored, nullptr);
+    (void) WriteFile(file, "\r\n", 2, &ignored, nullptr);
+    (void) CloseHandle(file);
+}
+
+void WriteWindowsDiagnosticLine(const char* line)
+{
+    if (!line) {
+        return;
+    }
+
+    std::cerr << line << std::endl;
+    (void) OutputDebugStringA(line);
+    (void) OutputDebugStringA("\n");
+    AppendWindowsDiagnosticLogLine(line);
+}
+
+void DumpWindowsStackTrace()
+{
+    HANDLE process = GetCurrentProcess();
+    static bool symbolsInitialized = false;
+    if (!symbolsInitialized) {
+        (void) SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
+        symbolsInitialized = SymInitialize(process, nullptr, TRUE) == TRUE;
+    }
+
+    void* frames[64] = {};
+    const USHORT frameCount = CaptureStackBackTrace(0, static_cast<DWORD>(std::size(frames)), frames, nullptr);
+    WriteWindowsDiagnosticLine("QGC: CRT assert stack (most recent call first)");
+
+    char symbolStorage[sizeof(SYMBOL_INFO) + MAX_SYM_NAME] = {};
+    auto* symbol = reinterpret_cast<SYMBOL_INFO*>(symbolStorage);
+    symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+    symbol->MaxNameLen = MAX_SYM_NAME;
+
+    for (USHORT i = 0; i < frameCount; ++i) {
+        const auto address = reinterpret_cast<DWORD64>(frames[i]);
+        DWORD64 symbolDisplacement = 0;
+        DWORD lineDisplacement = 0;
+        IMAGEHLP_LINE64 line = {};
+        line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+        char buffer[2048] = {};
+        const bool haveSymbol = symbolsInitialized && SymFromAddr(process, address, &symbolDisplacement, symbol);
+        const bool haveLine = symbolsInitialized && SymGetLineFromAddr64(process, address, &lineDisplacement, &line);
+        if (haveSymbol && haveLine) {
+            (void) std::snprintf(buffer, std::size(buffer),
+                                 "QGC:   #%02hu 0x%p %s+0x%llX %s:%lu",
+                                 i,
+                                 frames[i],
+                                 symbol->Name,
+                                 static_cast<unsigned long long>(symbolDisplacement),
+                                 line.FileName,
+                                 static_cast<unsigned long>(line.LineNumber));
+        } else if (haveSymbol) {
+            (void) std::snprintf(buffer, std::size(buffer),
+                                 "QGC:   #%02hu 0x%p %s+0x%llX",
+                                 i,
+                                 frames[i],
+                                 symbol->Name,
+                                 static_cast<unsigned long long>(symbolDisplacement));
+        } else {
+            (void) std::snprintf(buffer, std::size(buffer),
+                                 "QGC:   #%02hu 0x%p",
+                                 i,
+                                 frames[i]);
+        }
+        WriteWindowsDiagnosticLine(buffer);
+    }
+}
+
 int __cdecl WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 {
     if (message) {
-        std::cerr << message << std::endl;
+        WriteWindowsDiagnosticLine(message);
     }
     if (reportType == _CRT_ASSERT) {
-        if (returnValue) {
-            *returnValue = 0;
+        DumpWindowsStackTrace();
+        if (g_quietWindowsAsserts) {
+            if (returnValue) {
+                *returnValue = 0;
+            }
+            return 1; // handled
         }
-        return 1; // handled
     }
     return 0; // let CRT continue
 }
@@ -115,12 +230,13 @@ void setWindowsErrorModes(bool quietWindowsAsserts)
 #if defined(_MSC_VER)
     (void) _set_invalid_parameter_handler(WindowsInvalidParameterHandler);
     (void) _set_purecall_handler(WindowsPurecallHandler);
+    g_quietWindowsAsserts = quietWindowsAsserts;
+    (void) _CrtSetReportHook2(_CRT_RPTHOOK_INSTALL, WindowsCrtReportHook);
 
     if (quietWindowsAsserts) {
         (void) _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
         (void) _CrtSetReportMode(_CRT_ERROR,  _CRTDBG_MODE_DEBUG);
         (void) _CrtSetReportMode(_CRT_WARN,   _CRTDBG_MODE_DEBUG);
-        (void) _CrtSetReportHook2(_CRT_RPTHOOK_INSTALL, WindowsCrtReportHook);
         (void) _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
         (void) _set_error_mode(_OUT_TO_STDERR);
     }

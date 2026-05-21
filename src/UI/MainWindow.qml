@@ -125,7 +125,16 @@ ApplicationWindow {
         toolDrawer.visible = false
     }
 
+    function _prepareToolDrawerItemForUnload() {
+        if (toolDrawerLoader.item && typeof toolDrawerLoader.item.prepareForUnload === "function") {
+            toolDrawerLoader.item.prepareForUnload()
+        }
+    }
+
     function showTool(toolTitle, toolSource, toolIcon) {
+        if (toolDrawerLoader.source !== "" && toolDrawerLoader.source !== toolSource) {
+            _prepareToolDrawerItemForUnload()
+        }
         toolDrawer.backIcon     = flyView.visible ? "/qmlimages/PaperPlane.svg" : "/qmlimages/Plan.svg"
         toolDrawer.toolTitle    = toolTitle
         toolDrawer.toolSource   = toolSource
@@ -335,6 +344,7 @@ ApplicationWindow {
 
         onVisibleChanged: {
             if (!toolDrawer.visible) {
+                mainWindow._prepareToolDrawerItemForUnload()
                 toolDrawerLoader.source = ""
             }
         }
