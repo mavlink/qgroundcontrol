@@ -321,9 +321,17 @@ def resolve_package_alternatives(packages: list[str]) -> list[str]:
     if not needs_check:
         return packages
 
-    all_candidates = {name for pkg in needs_check for name in [pkg, *DEBIAN_PACKAGE_ALTERNATIVES[pkg]]}
+    all_candidates = sorted(
+        {name for pkg in needs_check for name in [pkg, *DEBIAN_PACKAGE_ALTERNATIVES[pkg]]}
+    )
     with ThreadPoolExecutor() as pool:
-        availability = dict(zip(all_candidates, pool.map(check_apt_package_available, all_candidates), strict=False))
+        availability = dict(
+            zip(
+                all_candidates,
+                pool.map(check_apt_package_available, all_candidates),
+                strict=False,
+            )
+        )
 
     resolved = []
     for pkg in packages:
