@@ -49,6 +49,102 @@ class USVQGCContractTests(unittest.TestCase):
         self.assertIn("baselineSet", data_view)
         self.assertIn("shouldSampleAbsorbance", data_view)
 
+    def test_sampling_data_view_avoids_qtcharts_heap_sensitive_series_mutation(self):
+        data_view = (REPO_ROOT / "custom" / "res" / "USVSamplingDataView.qml").read_text(encoding="utf-8")
+
+        self.assertNotIn("import QtCharts", data_view)
+        self.assertNotIn("ChartView", data_view)
+        self.assertNotIn("LineSeries", data_view)
+        self.assertNotIn(".remove(0)", data_view)
+        self.assertIn("Canvas", data_view)
+        self.assertIn("_voltagePoints", data_view)
+        self.assertIn("_absorbancePoints", data_view)
+        self.assertIn("requestPaint", data_view)
+
+    def test_sampling_data_view_has_quiet_teardown_path(self):
+        data_view = (REPO_ROOT / "custom" / "res" / "USVSamplingDataView.qml").read_text(encoding="utf-8")
+        custom_qml = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in (REPO_ROOT / "custom" / "res").glob("*.qml")
+        )
+
+        self.assertNotIn("Component.onDestruction", data_view)
+        self.assertNotIn("onWidthChanged: requestPaint()", data_view)
+        self.assertNotIn("onHeightChanged: requestPaint()", data_view)
+        self.assertIn("property bool _pageActive: true", data_view)
+        self.assertIn("function prepareForUnload()", data_view)
+        self.assertIn("sampleTimer.stop()", data_view)
+        self.assertIn("durationTimer.stop()", data_view)
+        self.assertIn("running: root._pageActive && root._hasPayloadGroup", data_view)
+        self.assertIn("function _requestChartPaint()", data_view)
+        self.assertIn("if (!root._pageActive)", data_view)
+        self.assertEqual(data_view.count("chartCanvas.requestPaint()"), 1)
+        self.assertNotIn("import QtCharts", custom_qml)
+        self.assertNotIn("ChartView", custom_qml)
+        self.assertNotIn("LineSeries", custom_qml)
+
+    def test_main_window_prepares_tool_page_before_loader_unload(self):
+        main_window = (REPO_ROOT / "src" / "UI" / "MainWindow.qml").read_text(encoding="utf-8")
+
+        self.assertIn("function _prepareToolDrawerItemForUnload()", main_window)
+        self.assertIn("prepareForUnload", main_window)
+        self.assertIn("_prepareToolDrawerItemForUnload()", main_window)
+        self.assertLess(
+            main_window.index("_prepareToolDrawerItemForUnload()"),
+            main_window.index('toolDrawerLoader.source = ""'),
+        )
+
+    def test_usv_payload_member_facts_are_cpp_owned(self):
+        header = (REPO_ROOT / "custom" / "src" / "USVPayloadFactGroup.h").read_text(encoding="utf-8")
+        source = (REPO_ROOT / "custom" / "src" / "USVPayloadFactGroup.cc").read_text(encoding="utf-8")
+
+        self.assertIn("void _markFactsCppOwned();", header)
+        self.assertIn("#include <QtQml/QQmlEngine>", source)
+        self.assertIn("USVPayloadFactGroup::_markFactsCppOwned()", source)
+        self.assertIn("_markFactsCppOwned();", source)
+        self.assertIn("const std::array<Fact*, 18> facts", source)
+        self.assertIn("QQmlEngine::setObjectOwnership", source)
+        self.assertIn("QQmlEngine::CppOwnership", source)
+
+        for fact_member in (
+            "_voltageFact",
+            "_absorbanceFact",
+            "_pumpXFact",
+            "_pumpYFact",
+            "_pumpZFact",
+            "_pumpAFact",
+            "_statusFact",
+            "_linkActiveFact",
+            "_packetCountFact",
+            "_stepCurrentFact",
+            "_stepTotalFact",
+            "_sampleCountFact",
+            "_pidErrorFact",
+            "_pidModeFact",
+            "_baselineSetFact",
+            "_referenceVoltageFact",
+            "_baselineVoltageFact",
+            "_spectrometerValidFact",
+        ):
+            self.assertIn(f"&{fact_member}", source)
+
+    def test_windows_crt_assert_hook_prints_stack_trace(self):
+        platform_source = (REPO_ROOT / "src" / "Utilities" / "Platform.cc").read_text(encoding="utf-8")
+        cmake = (REPO_ROOT / "src" / "CMakeLists.txt").read_text(encoding="utf-8")
+
+        self.assertIn("DumpWindowsStackTrace", platform_source)
+        self.assertIn("CaptureStackBackTrace", platform_source)
+        self.assertIn("SymFromAddr", platform_source)
+        self.assertIn("SymGetLineFromAddr64", platform_source)
+        self.assertIn("QGC: CRT assert stack", platform_source)
+        self.assertIn("qgc-crt-assert-stack.log", platform_source)
+        self.assertIn("CreateFileA", platform_source)
+        self.assertLess(
+            platform_source.index("_CrtSetReportHook2"),
+            platform_source.index("if (quietWindowsAsserts)"),
+        )
+        self.assertIn("Dbghelp", cmake)
+
     def test_rover_command_metadata_contains_set_baseline_and_correct_sample_semantics(self):
         metadata = json.loads((REPO_ROOT / "src" / "MissionManager" / "MavCmdInfoRover.json").read_text(encoding="utf-8"))
         commands = {entry["id"]: entry for entry in metadata["mavCmdInfo"]}

@@ -8,8 +8,10 @@
 #include "USVPayloadFactGroup.h"
 #include "QGCMAVLink.h"
 
+#include <array>
 #include <cstring>
 #include <QtCore/QLoggingCategory>
+#include <QtQml/QQmlEngine>
 
 Q_LOGGING_CATEGORY(USVPayloadLog, "USV.Payload")
 
@@ -52,12 +54,41 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     _addFact(&_referenceVoltageFact, _referenceVoltageName);
     _addFact(&_baselineVoltageFact,  _baselineVoltageName);
     _addFact(&_spectrometerValidFact, _spectrometerValidName);
+    _markFactsCppOwned();
 
     _timeoutTimer.setSingleShot(true);
     _timeoutTimer.setInterval(_timeoutMsecs);
     connect(&_timeoutTimer, &QTimer::timeout, this, &USVPayloadFactGroup::_telemetryTimeout);
 
     _latencyTimer.start();
+}
+
+void USVPayloadFactGroup::_markFactsCppOwned()
+{
+    const std::array<Fact*, 18> facts = {
+        &_voltageFact,
+        &_absorbanceFact,
+        &_pumpXFact,
+        &_pumpYFact,
+        &_pumpZFact,
+        &_pumpAFact,
+        &_statusFact,
+        &_linkActiveFact,
+        &_packetCountFact,
+        &_stepCurrentFact,
+        &_stepTotalFact,
+        &_sampleCountFact,
+        &_pidErrorFact,
+        &_pidModeFact,
+        &_baselineSetFact,
+        &_referenceVoltageFact,
+        &_baselineVoltageFact,
+        &_spectrometerValidFact,
+    };
+
+    for (Fact *fact : facts) {
+        QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
+    }
 }
 
 void USVPayloadFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &message)

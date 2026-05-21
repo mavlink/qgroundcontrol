@@ -88,6 +88,7 @@ private:
     void _handleNamedValueFloat(const mavlink_message_t &message);
     void _handleDebugVect(const mavlink_message_t &message);
     void _handleDebug(const mavlink_message_t &message);
+    void _markFactsCppOwned();
 
     Fact _voltageFact;
     Fact _absorbanceFact;

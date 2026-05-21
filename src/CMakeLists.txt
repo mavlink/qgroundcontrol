@@ -160,6 +160,10 @@ if(NOT QGC_AIRLINK_DISABLED)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE AirLinkModule)
 endif()
 
+if(WIN32 AND MSVC)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Dbghelp)
+endif()
+
 # ============================================================================
 # Compile Definitions
 # ============================================================================
