@@ -57,6 +57,7 @@ qt_add_qml_module(USVModule
         res/USVPayloadSummaryStrip.qml
         res/USVPayloadDetailPanel.qml
         res/USVSamplingDataView.qml
+        res/USVDiagnosticsManualView.qml
         res/USVSamplingDataTokens.js
         res/USVActionBar.qml
         res/USVInstrumentPanel.qml

@@ -145,6 +145,32 @@ class USVQGCContractTests(unittest.TestCase):
         )
         self.assertIn("Dbghelp", cmake)
 
+    def test_qgc_declares_diagnostics_manual_tool_page_and_web_api_client(self):
+        dropdown = (REPO_ROOT / "custom" / "res" / "USVSelectViewDropdown.qml").read_text(encoding="utf-8")
+        page = REPO_ROOT / "custom" / "res" / "USVDiagnosticsManualView.qml"
+        cmake = (REPO_ROOT / "custom" / "CMakeLists.txt").read_text(encoding="utf-8")
+        page_text = page.read_text(encoding="utf-8") if page.exists() else ""
+
+        self.assertIn("USVDiagnosticsManualView.qml", dropdown)
+        self.assertIn("USVDiagnosticsManualView.qml", cmake)
+        self.assertIn("http://10.42.0.1:5000", page_text)
+        self.assertIn("/api/diagnostics/link", page_text)
+        self.assertIn("/api/manual/pump-step", page_text)
+        self.assertIn("/api/manual/mode", page_text)
+        self.assertIn("LocalStorage", page_text)
+        self.assertIn("XMLHttpRequest", page_text)
+
+    def test_payload_panel_has_pending_command_feedback_and_timeout(self):
+        payload_panel = (REPO_ROOT / "custom" / "res" / "USVPayloadPanel.qml").read_text(encoding="utf-8")
+
+        self.assertIn("_pendingCommand", payload_panel)
+        self.assertIn("_commandTimeoutMs", payload_panel)
+        self.assertIn("commandTimeoutTimer", payload_panel)
+        self.assertIn("发送中", payload_panel)
+        self.assertIn("_clearPendingCommand", payload_panel)
+        self.assertIn("enabled: modelData.en && !_hasPendingCommand", payload_panel)
+        self.assertIn("_clearPendingCommand(command)", payload_panel)
+
     def test_rover_command_metadata_contains_set_baseline_and_correct_sample_semantics(self):
         metadata = json.loads((REPO_ROOT / "src" / "MissionManager" / "MavCmdInfoRover.json").read_text(encoding="utf-8"))
         commands = {entry["id"]: entry for entry in metadata["mavCmdInfo"]}

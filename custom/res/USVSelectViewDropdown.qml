@@ -79,6 +79,19 @@ ToolIndicatorPage {
             }
 
             SubMenuButton {
+                implicitHeight: root._toolButtonHeight
+                Layout.fillWidth: true
+                text: qsTr(" 诊断 ")
+                imageResource: "/qmlimages/Analyze.svg"
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.closeIndicatorDrawer()
+                        mainWindow.showTool(qsTr("链路诊断/手动控制"), "qrc:/qml/USV/res/USVDiagnosticsManualView.qml", "/qmlimages/Analyze.svg")
+                    }
+                }
+            }
+
+            SubMenuButton {
                 id: setupButton
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true
