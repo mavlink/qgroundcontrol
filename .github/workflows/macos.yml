@@ -38,14 +38,13 @@ env:
 
 jobs:
   changes:
-    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/_detect-changes.yml
     with:
       platform: macos
 
   build:
     needs: changes
-    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: macos-15
     timeout-minutes: 120
 
@@ -76,11 +75,6 @@ jobs:
           qt-host: mac
           qt-arch: clang_64
           build-type: ${{ matrix.build_type }}
-
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: ${{ steps.setup.outputs.xcode_version }}
 
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies

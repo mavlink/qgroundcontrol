@@ -1,5 +1,5 @@
 name: Build Setup
-description: Common setup steps for platform builds (desktop, android, ios)
+description: Common setup for platform builds — calls build-prerequisites + the mode-specific Qt installer.
 
 inputs:
   mode:
@@ -50,52 +50,52 @@ inputs:
 outputs:
   qt_modules:
     description: Qt modules used for this build
-    value: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}
+    value: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
   qt_modules_ios:
     description: Qt modules for iOS target
-    value: ${{ inputs.ios-modules || steps.config.outputs.qt_modules_ios }}
+    value: ${{ inputs.ios-modules || steps.prereq.outputs.qt_modules_ios }}
   qt_version:
     description: Resolved Qt version for this build
-    value: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
+    value: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
   gstreamer_version:
     description: GStreamer version (generic/minimum)
-    value: ${{ steps.config.outputs.gstreamer_version }}
+    value: ${{ steps.prereq.outputs.gstreamer_version }}
   gstreamer_macos_version:
     description: GStreamer version for macOS
-    value: ${{ steps.config.outputs.gstreamer_macos_version }}
+    value: ${{ steps.prereq.outputs.gstreamer_macos_version }}
   gstreamer_android_version:
     description: GStreamer version for Android
-    value: ${{ steps.config.outputs.gstreamer_android_version }}
+    value: ${{ steps.prereq.outputs.gstreamer_android_version }}
   gstreamer_windows_version:
     description: GStreamer version for Windows
-    value: ${{ steps.config.outputs.gstreamer_windows_version }}
+    value: ${{ steps.prereq.outputs.gstreamer_windows_version }}
   xcode_version:
     description: Xcode version for macOS
-    value: ${{ steps.config.outputs.xcode_version }}
+    value: ${{ steps.prereq.outputs.xcode_version }}
   xcode_ios_version:
     description: Xcode version for iOS
-    value: ${{ steps.config.outputs.xcode_ios_version }}
+    value: ${{ steps.prereq.outputs.xcode_ios_version }}
   ndk_full_version:
     description: Android NDK full version
-    value: ${{ steps.config.outputs.ndk_full_version }}
+    value: ${{ steps.prereq.outputs.ndk_full_version }}
   java_version:
     description: Java version
-    value: ${{ steps.config.outputs.java_version }}
+    value: ${{ steps.prereq.outputs.java_version }}
   android_platform:
     description: Android platform/API level
-    value: ${{ steps.config.outputs.android_platform }}
+    value: ${{ steps.prereq.outputs.android_platform }}
   android_build_tools:
     description: Android build-tools version
-    value: ${{ steps.config.outputs.android_build_tools }}
+    value: ${{ steps.prereq.outputs.android_build_tools }}
   android_cmdline_tools:
     description: Android cmdline-tools version
-    value: ${{ steps.config.outputs.android_cmdline_tools }}
+    value: ${{ steps.prereq.outputs.android_cmdline_tools }}
   qt_root_dir:
     description: Installed Qt root directory (desktop mode)
     value: ${{ steps.qt-desktop.outputs.qt_root_dir }}
   host_qt_root_dir:
-    description: Host Qt root directory (mobile modes)
-    value: ${{ steps.qt-android.outputs.host_qt_root_dir || steps.qt-ios.outputs.host_qt_root_dir }}
+    description: Host Qt root directory (cross-compile modes — mobile and Windows ARM64-cross)
+    value: ${{ steps.qt-desktop-host.outputs.qt_root_dir || steps.qt-android.outputs.host_qt_root_dir || steps.qt-ios.outputs.host_qt_root_dir }}
   target_qt_root_dir:
     description: Target Qt root directory (mobile modes)
     value: ${{ steps.qt-android.outputs.target_qt_root_dir || steps.qt-ios.outputs.target_qt_root_dir }}
@@ -105,47 +105,26 @@ runs:
   steps:
     - name: Validate inputs
       shell: bash
+      env:
+        MODE: ${{ inputs.mode }}
+        QT_HOST: ${{ inputs.qt-host }}
+        QT_ARCH: ${{ inputs.qt-arch }}
       run: |
-        if [[ "${{ inputs.mode }}" == "desktop" || "${{ inputs.mode }}" == "android" ]]; then
+        if [[ "$MODE" == "desktop" || "$MODE" == "android" ]]; then
           missing=()
-          [[ -z "${{ inputs.qt-host }}" ]] && missing+=(qt-host)
-          [[ -z "${{ inputs.qt-arch }}" ]] && missing+=(qt-arch)
+          [[ -z "$QT_HOST" ]] && missing+=(qt-host)
+          [[ -z "$QT_ARCH" ]] && missing+=(qt-arch)
           if [[ ${#missing[@]} -gt 0 ]]; then
-            echo "::error::build-setup mode=${{ inputs.mode }} requires inputs: ${missing[*]}"
+            echo "::error::build-setup mode=$MODE requires inputs: ${missing[*]}"
             exit 1
           fi
         fi
 
-    - name: Get build config
-      id: config
-      uses: ./.github/actions/build-config
-
-    - name: Free disk space (Linux)
-      # Only instrumented Debug builds (coverage/ASan) need this; Release fits in the runner's default ~14GB free.
-      if: runner.os == 'Linux' && inputs.build-type == 'Debug'
-      uses: endersonmenezes/free-disk-space@v3
+    - name: Build prerequisites
+      id: prereq
+      uses: ./.github/actions/build-prerequisites
       with:
-        remove_android: false
-        remove_dotnet: true
-        remove_haskell: true
-        remove_tool_cache: false
-        remove_packages: azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
-        remove_packages_one_command: true
-        rm_cmd: rmz
-
-    - uses: lukka/get-cmake@v4.2.3
-      with:
-        useCloudCache: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
-        useLocalCache: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
-
-    - uses: ./.github/actions/setup-python
-      with:
-        python-version: '3.12'
-        groups: scripts
-
-    - name: Create build directory
-      shell: bash
-      run: mkdir -p "$RUNNER_TEMP/build"
+        build-type: ${{ inputs.build-type }}
 
     - name: Setup caching (desktop)
       if: inputs.mode == 'desktop'
@@ -158,15 +137,59 @@ runs:
         cpm-modules: ${{ runner.temp }}/build/cpm_modules
         save-cache: ${{ inputs.save-cache }}
 
+    # Desktop macOS toolchain. iOS gets its own Xcode pin inside qt-ios (uses xcode_ios_version, which can differ from desktop's).
+    - name: Setup Xcode (macOS desktop)
+      if: inputs.mode == 'desktop' && runner.os == 'macOS'
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ steps.prereq.outputs.xcode_version }}
+
     - name: Install Qt (desktop)
       if: inputs.mode == 'desktop'
       id: qt-desktop
       uses: ./.github/actions/qt-install
       with:
-        version: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
+        version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
         host: ${{ inputs.qt-host }}
         arch: ${{ inputs.qt-arch }}
-        modules: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}
+        modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
+
+    # ARM64 cross-compile needs an x64 host Qt for moc/qmlcachegen/etc. that run on the build machine. export-env=false so QT_ROOT_DIR keeps pointing at the target Qt.
+    - name: Install host Qt (Windows ARM64 cross-compile)
+      if: inputs.mode == 'desktop' && inputs.qt-arch == 'win64_msvc2022_arm64_cross_compiled'
+      id: qt-desktop-host
+      uses: ./.github/actions/qt-install
+      with:
+        version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
+        host: windows
+        arch: win64_msvc2022_64
+        modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
+        export-env: 'false'
+
+    # Required only when compiling C++ with MSVC (desktop Windows builds). Android-on-Windows uses NDK clang and skips this.
+    - name: Setup MSVC environment (Windows desktop)
+      if: inputs.mode == 'desktop' && runner.os == 'Windows'
+      uses: TheMrMilchmann/setup-msvc-dev@v4
+      with:
+        arch: ${{ (inputs.qt-arch == 'win64_msvc2022_64' && 'x64') || (inputs.qt-arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
+
+    # windows-11-arm's PATH puts Git for Windows' /usr/bin/link.exe (GNU coreutils hardlink tool) ahead of MSVC's link.exe, breaking Rust crates that shell out to `link.exe` for MSVC targets. windows-2022 doesn't have this ordering issue. See rust-lang/rust#42825.
+    - name: Fix Rust linker resolution (Windows ARM64 native)
+      if: inputs.mode == 'desktop' && runner.os == 'Windows' && runner.arch == 'ARM64'
+      shell: bash
+      run: |
+        git_link="/c/Program Files/Git/usr/bin/link.exe"
+        if [ -f "$git_link" ]; then
+          mv "$git_link" "${git_link}.bak"
+          echo "Renamed Git link.exe to prevent Rust linker conflict"
+        fi
+
+    # Gradle daemon + dependency cache for Android cross-compile. Read-only on PRs so fork PRs can't poison the shared cache and same-repo PRs don't churn it.
+    - name: Setup Gradle (Android)
+      if: inputs.mode == 'android'
+      uses: gradle/actions/setup-gradle@v6
+      with:
+        cache-read-only: ${{ github.event_name == 'pull_request' }}
 
     - name: Install Qt for Android
       if: inputs.mode == 'android'
@@ -175,16 +198,16 @@ runs:
       with:
         host: ${{ inputs.qt-host }}
         arch: ${{ inputs.qt-arch }}
-        version: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
-        modules: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}
+        version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
+        modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
         abis: ${{ inputs.abis }}
         cpm-modules: ${{ inputs.cpm-modules }}
         build-type: ${{ inputs.build-type }}
-        ndk-full-version: ${{ steps.config.outputs.ndk_full_version }}
-        java-version: ${{ steps.config.outputs.java_version }}
-        android-platform: ${{ steps.config.outputs.android_platform }}
-        android-cmdline-tools: ${{ steps.config.outputs.android_cmdline_tools }}
-        android-build-tools: ${{ steps.config.outputs.android_build_tools }}
+        ndk-full-version: ${{ steps.prereq.outputs.ndk_full_version }}
+        java-version: ${{ steps.prereq.outputs.java_version }}
+        android-platform: ${{ steps.prereq.outputs.android_platform }}
+        android-cmdline-tools: ${{ steps.prereq.outputs.android_cmdline_tools }}
+        android-build-tools: ${{ steps.prereq.outputs.android_build_tools }}
         save-cache: ${{ inputs.save-cache }}
 
     - name: Install Qt for iOS
@@ -192,10 +215,10 @@ runs:
       id: qt-ios
       uses: ./.github/actions/qt-ios
       with:
-        version: ${{ inputs.qt-version || steps.config.outputs.qt_version }}
-        modules: ${{ inputs.qt-modules || steps.config.outputs.qt_modules }}
-        ios-modules: ${{ inputs.ios-modules || steps.config.outputs.qt_modules_ios }}
-        xcode-version: ${{ steps.config.outputs.xcode_ios_version }}
+        version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
+        modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
+        ios-modules: ${{ inputs.ios-modules || steps.prereq.outputs.qt_modules_ios }}
+        xcode-version: ${{ steps.prereq.outputs.xcode_ios_version }}
         cpm-modules: ${{ inputs.cpm-modules }}
         build-type: ${{ inputs.build-type }}
         save-cache: ${{ inputs.save-cache }}

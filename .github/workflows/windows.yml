@@ -38,7 +38,6 @@ env:
 
 jobs:
   changes:
-    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/_detect-changes.yml
     with:
       platform: windows
@@ -46,7 +45,7 @@ jobs:
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
     needs: changes
-    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
 
@@ -102,35 +101,6 @@ jobs:
           qt-version: ${{ matrix.qt_version || '' }}
           build-type: ${{ matrix.build_type }}
 
-      - name: Set up MSVC environment
-        uses: TheMrMilchmann/setup-msvc-dev@v4
-        with:
-          arch: ${{ (matrix.arch == 'win64_msvc2022_64' && 'x64') || (matrix.arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
-
-      - name: Install host Qt for ARM64 cross-compilation
-        if: matrix.arch == 'win64_msvc2022_arm64_cross_compiled'
-        id: qt-host
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.build-setup.outputs.qt_version }}
-          host: windows
-          arch: win64_msvc2022_64
-          modules: ${{ steps.build-setup.outputs.qt_modules }}
-          export-env: 'false'
-
-      - name: Fix Rust linker resolution (ARM64 native)
-        if: matrix.variant == 'arm64'
-        shell: bash
-        run: |
-          # Git for Windows ships /usr/bin/link (GNU coreutils) which shadows
-          # MSVC's link.exe on PATH, causing Rust/cargo builds to fail.
-          # Rename the conflicting binary so MSVC's linker is found instead.
-          git_link="/c/Program Files/Git/usr/bin/link.exe"
-          if [ -f "$git_link" ]; then
-            mv "$git_link" "${git_link}.bak"
-            echo "Renamed Git link.exe to prevent Rust linker conflict"
-          fi
-
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
@@ -139,7 +109,7 @@ jobs:
           stable: ${{ env.IS_STABLE_BUILD }}
           extra-args: >-
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && 'ON' || 'OFF' }}
-            ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.qt-host.outputs.qt_root_dir) || '' }}
+            ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
 
       - name: Add GStreamer to PATH
         if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'

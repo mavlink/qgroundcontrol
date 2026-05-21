@@ -8,8 +8,9 @@ elements, and generates a QMap<uint32_t, QString> lookup table.
 """
 
 import sys
-import xml.etree.ElementTree as ET
 from pathlib import Path
+
+import defusedxml.ElementTree as ET
 
 
 def resolve_includes(xml_dir: Path, dialect: str, visited: set | None = None) -> list[Path]:

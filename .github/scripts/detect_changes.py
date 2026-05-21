@@ -14,8 +14,7 @@ import argparse
 import os
 import re
 import subprocess
-import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 from ci_bootstrap import ensure_tools_dir
 
@@ -53,9 +52,8 @@ _PLATFORM_PATTERNS: dict[str, list[str]] = {
     ],
 }
 
-# Per-platform tools/setup patterns
 _SETUP_PATTERNS: dict[str, list[str]] = {
-    "linux": [r"^tools/setup/.*debian", r"^tools/setup/install_dependencies\.py$"],
+    "linux": [r"^tools/setup/.*debian", r"^tools/setup/install_dependencies/"],
     "windows": [r"^tools/setup/.*windows"],
     "macos": [r"^tools/setup/.*macos"],
     "android": [r"^tools/setup/"],
@@ -64,7 +62,6 @@ _SETUP_PATTERNS: dict[str, list[str]] = {
     "docker-android": [r"^tools/setup/"],
 }
 
-
 def workflow_name_for_platform(platform: str) -> str:
     """Map a platform to its workflow YAML filename (without extension)."""
     if platform.startswith("docker-"):
@@ -72,7 +69,6 @@ def workflow_name_for_platform(platform: str) -> str:
     if platform == "custom-build":
         return "custom-build"
     return platform
-
 
 def build_patterns(platform: str) -> list[re.Pattern[str]]:
     """Build the list of compiled regex patterns for a platform."""
@@ -83,7 +79,6 @@ def build_patterns(platform: str) -> list[re.Pattern[str]]:
     raw.extend(_PLATFORM_PATTERNS.get(platform, []))
     raw.extend(_SETUP_PATTERNS.get(platform, []))
     return [re.compile(p) for p in raw]
-
 
 def has_relevant_changes(files: Sequence[str], platform: str) -> bool:
     """Check if any changed file matches the platform's patterns."""
@@ -96,13 +91,11 @@ def has_relevant_changes(files: Sequence[str], platform: str) -> bool:
                 return True
     return False
 
-
 # ---------------------------------------------------------------------------
 # Git helpers — these call out to git as subprocesses
 # ---------------------------------------------------------------------------
 
 _NULL_SHA = "0" * 40
-
 
 def _run_git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -111,7 +104,6 @@ def _run_git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]
         text=True,
         check=check,
     )
-
 
 def _ensure_commit(sha: str) -> bool:
     """Ensure a commit exists locally; fetch it shallowly if needed."""
@@ -123,7 +115,6 @@ def _ensure_commit(sha: str) -> bool:
     _run_git("fetch", "--no-tags", "--depth=1", "origin", sha, check=False)
     return _run_git("cat-file", "-e", f"{sha}^{{commit}}", check=False).returncode == 0
 
-
 def _diff_names(sha_a: str, sha_b: str) -> list[str] | None:
     """Return changed file names between two commits, or None on failure."""
     r = _run_git("diff", "--name-only", sha_a, sha_b, check=False)
@@ -131,12 +122,10 @@ def _diff_names(sha_a: str, sha_b: str) -> list[str] | None:
         return None
     return r.stdout.strip().splitlines()
 
-
 def _tree_names(sha: str) -> list[str]:
     """List files changed in a single commit."""
     r = _run_git("diff-tree", "--no-commit-id", "--name-only", "-r", sha, check=False)
     return r.stdout.strip().splitlines() if r.returncode == 0 else []
-
 
 def get_changed_files() -> list[str] | None:
     """Determine changed files from environment variables set by GitHub Actions.
@@ -172,13 +161,11 @@ def get_changed_files() -> list[str] | None:
     current = os.environ.get("CURRENT_SHA", "")
     return _tree_names(current) if current else None
 
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Detect CI-relevant file changes for a platform.")
     parser.add_argument("--platform", required=True, nargs="+",
                         help="Platform(s) (linux, windows, macos, android, ios, docker-linux, docker-android)")
     return parser.parse_args(argv)
-
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
@@ -187,7 +174,7 @@ def main(argv: list[str] | None = None) -> int:
     changed = get_changed_files()
     if changed is None:
         print("::warning::Unable to compute changed files reliably; forcing build for safety.")
-        outputs = {p: "true" for p in platforms}
+        outputs = dict.fromkeys(platforms, "true")
         outputs["any"] = "true"
         write_github_output(outputs)
         return 0
@@ -207,7 +194,6 @@ def main(argv: list[str] | None = None) -> int:
     write_github_output(outputs)
     print(f"Results: {outputs}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -8,13 +8,62 @@ import datetime
 import re
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 
 def sanitize_branch(name: str) -> str:
     """Remove unsafe characters from branch name for use as a directory."""
     return re.sub(r"[^a-zA-Z0-9._-]", "_", name)
+
+
+def _copy_tree(source: Path, deploy_dir: Path) -> None:
+    if deploy_dir.exists():
+        shutil.rmtree(deploy_dir)
+    deploy_dir.mkdir(parents=True)
+    for item in source.iterdir():
+        dest = deploy_dir / item.name
+        if item.is_dir():
+            shutil.copytree(item, dest)
+        else:
+            shutil.copy2(item, dest)
+
+
+def deploy_branch(
+    source_dir: Path,
+    target_dir: Path,
+    branch: str,
+    target_branch: str,
+    commit_message: str,
+    author_email: str,
+    author_name: str,
+) -> bool:
+    """Copy *source_dir* into *target_dir*/<safe(branch)>, commit and push.
+
+    Returns True when a commit+push was made, False when there was nothing to deploy.
+    """
+    safe_branch = sanitize_branch(branch)
+    deploy_dir = target_dir / safe_branch
+    _copy_tree(source_dir, deploy_dir)
+
+    def git(*cmd: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", *cmd], cwd=str(target_dir), check=True)
+
+    git("config", "user.email", author_email)
+    git("config", "user.name", author_name)
+    git("add", safe_branch)
+
+    diff = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=str(target_dir), check=False,
+    )
+    if diff.returncode == 0:
+        print("No documentation changes to deploy.")
+        return False
+
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    git("commit", "-m", f"{commit_message} {today}")
+    git("push", "origin", target_branch)
+    return True
 
 
 def main() -> None:
@@ -28,40 +77,15 @@ def main() -> None:
     parser.add_argument("--author-name", default="github-actions[bot]")
     args = parser.parse_args()
 
-    safe_branch = sanitize_branch(args.branch)
-    target = Path(args.target_dir)
-    deploy_dir = target / safe_branch
-
-    if deploy_dir.exists():
-        shutil.rmtree(deploy_dir)
-    deploy_dir.mkdir(parents=True)
-
-    source = Path(args.source_dir)
-    for item in source.iterdir():
-        dest = deploy_dir / item.name
-        if item.is_dir():
-            shutil.copytree(item, dest)
-        else:
-            shutil.copy2(item, dest)
-
-    def git(*cmd: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["git", *cmd], cwd=str(target), check=True)
-
-    git("config", "user.email", args.author_email)
-    git("config", "user.name", args.author_name)
-    git("add", safe_branch)
-
-    diff = subprocess.run(
-        ["git", "diff", "--cached", "--quiet"],
-        cwd=str(target), check=False,
+    deploy_branch(
+        source_dir=Path(args.source_dir),
+        target_dir=Path(args.target_dir),
+        branch=args.branch,
+        target_branch=args.target_branch,
+        commit_message=args.commit_message,
+        author_email=args.author_email,
+        author_name=args.author_name,
     )
-    if diff.returncode == 0:
-        print("No documentation changes to deploy.")
-        return
-
-    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    git("commit", "-m", f"{args.commit_message} {today}")
-    git("push", "origin", args.target_branch)
 
 
 if __name__ == "__main__":

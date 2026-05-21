@@ -6,8 +6,9 @@ on:
   workflow_dispatch:
 
 concurrency:
+  # Mid-flight cancel would apply translations but skip PR creation, leaving repo silently ahead.
   group: 'lupdate'
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -39,7 +40,7 @@ jobs:
           modules: qttools
 
       - name: Update translation files
-        run: ./tools/translations/qgc-lupdate.sh
+        run: python3 tools/translations/qgc_lupdate.py
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8

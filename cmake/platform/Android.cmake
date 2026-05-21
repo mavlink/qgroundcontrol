@@ -101,7 +101,8 @@ set_target_properties(${CMAKE_PROJECT_NAME}
 # endif()
 
 set(QGC_CPM_JAVA_SRC_DIR "${CMAKE_BINARY_DIR}/extra_java_sources")
-list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH QGC_CPM_JAVA_SRC_DIR QGC_ANDROID_PROPERTIES_FILE)
+# Forward Python3_EXECUTABLE so per-ABI sub-configures use the same interpreter (jinja2 lives in workspace .venv, not hostedtoolcache python).
+list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH QGC_CPM_JAVA_SRC_DIR QGC_ANDROID_PROPERTIES_FILE Python3_EXECUTABLE)
 
 # ----------------------------------------------------------------------------
 # Android OpenSSL Libraries

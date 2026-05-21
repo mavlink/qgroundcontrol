@@ -262,6 +262,24 @@ Connections {
 5. **Mixing cookedValue/rawValue** - Understand the difference
 6. **Hardcoded QML sizes/colors** - Use ScreenTools and QGCPalette
 
+### Examples
+
+```cpp
+// Always null-check vehicle
+Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
+if (!vehicle) return;
+
+// Access parameters via Fact System
+Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
+if (param) param->setCookedValue(newValue);
+```
+
+```qml
+// QML vehicle access
+property var vehicle: QGroundControl.multiVehicleManager.activeVehicle
+enabled: vehicle && vehicle.armed
+```
+
 ## Formatting Tools
 
 The repository includes configuration for automatic formatting:

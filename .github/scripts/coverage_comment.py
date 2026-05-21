@@ -4,7 +4,6 @@
 import argparse
 import os
 import sys
-from pathlib import Path
 
 from xml_utils import XMLParseError, xml_parse
 
@@ -13,6 +12,8 @@ def parse_coverage(xml_path: str) -> dict | None:
     """Parse coverage.xml and return line/branch coverage percentages."""
     try:
         root = xml_parse(xml_path).getroot()
+        if root is None:
+            return None
 
         line_rate = root.get("line-rate")
         branch_rate = root.get("branch-rate")
@@ -89,7 +90,7 @@ def main() -> int:
 
     if not coverage_xml or not os.path.exists(coverage_xml):
         print("Coverage XML not found", file=sys.stderr)
-        with open(args.output, "w") as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write("## Code Coverage Report\n\n*Coverage data not available*\n")
         return 0
 
@@ -108,11 +109,11 @@ def main() -> int:
 
         if baseline_cov:
             line_delta = delta_str(baseline_cov["line"], pr_cov["line"])
-            branch_delta = (
-                delta_str(baseline_cov.get("branch"), pr_cov.get("branch"))
-                if pr_cov.get("branch") is not None
-                else "N/A"
-            )
+            pr_branch = pr_cov.get("branch")
+            if pr_branch is None:
+                branch_delta = "N/A"
+            else:
+                branch_delta = delta_str(baseline_cov.get("branch"), pr_branch)
         else:
             line_delta = "*No baseline*"
             branch_delta = "*No baseline*"
@@ -139,7 +140,7 @@ def main() -> int:
         ]
     )
 
-    with open(args.output, "w") as f:
+    with open(args.output, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
     print("\n".join(lines))

@@ -51,24 +51,14 @@ runs:
         INPUT_ARTIFACT_PREFIXES: ${{ inputs.artifact-prefixes }}
         INPUT_ARTIFACT_METADATA_FILE: ${{ inputs.artifact-metadata-file }}
       run: |
-        python3 -c "
-        import os, subprocess, sys
-        args = ['${GITHUB_WORKSPACE}/.github/scripts/download_artifacts.py',
-                '--repo', os.environ['INPUT_REPO'],
-                '--head-sha', os.environ['INPUT_HEAD_SHA'],
-                '--output-dir', os.environ['INPUT_OUTPUT_DIR'],
-                '--workflows', os.environ['INPUT_WORKFLOWS']]
-        event = os.environ.get('INPUT_EVENT', '')
-        if event:
-            args += ['--event', event]
-        runs = os.environ.get('RUNS_FILE', '')
-        if runs and os.path.isfile(runs):
-            args += ['--runs-file', runs]
-        prefixes = os.environ.get('INPUT_ARTIFACT_PREFIXES', '')
-        if prefixes:
-            args += ['--artifact-prefixes', prefixes]
-        meta = os.environ.get('INPUT_ARTIFACT_METADATA_FILE', '')
-        if meta:
-            args += ['--artifact-metadata-out', meta]
-        sys.exit(subprocess.run([sys.executable] + args).returncode)
-        "
+        set -euo pipefail
+        cmd=(python3 "${GITHUB_WORKSPACE}/.github/scripts/download_artifacts.py"
+             --repo "$INPUT_REPO"
+             --head-sha "$INPUT_HEAD_SHA"
+             --output-dir "$INPUT_OUTPUT_DIR"
+             --workflows "$INPUT_WORKFLOWS")
+        [[ -n "$INPUT_EVENT" ]] && cmd+=(--event "$INPUT_EVENT")
+        [[ -n "$RUNS_FILE" && -f "$RUNS_FILE" ]] && cmd+=(--runs-file "$RUNS_FILE")
+        [[ -n "$INPUT_ARTIFACT_PREFIXES" ]] && cmd+=(--artifact-prefixes "$INPUT_ARTIFACT_PREFIXES")
+        [[ -n "$INPUT_ARTIFACT_METADATA_FILE" ]] && cmd+=(--artifact-metadata-out "$INPUT_ARTIFACT_METADATA_FILE")
+        "${cmd[@]}"

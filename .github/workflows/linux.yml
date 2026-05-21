@@ -30,7 +30,6 @@ env:
 
 jobs:
   changes:
-    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/_detect-changes.yml
     with:
       platform: linux
@@ -38,7 +37,7 @@ jobs:
   build:
     name: Release ${{ matrix.arch }}
     needs: changes
-    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
+    if: ${{ !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
 
@@ -84,10 +83,12 @@ jobs:
         uses: ./.github/actions/install-dependencies
 
       - name: Initialize CodeQL
-        if: github.event_name != 'pull_request' && runner.arch != 'ARM64'
+        if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/master')) && runner.arch != 'ARM64'
         uses: github/codeql-action/init@v4
         with:
           languages: c-cpp
+          # c-cpp can't use overlay DBs (those require build-mode: none, interpreted-only); declare manual to match the cmake-build step below and silence the "undefined build-mode" fallback warning.
+          build-mode: manual
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Configure
@@ -107,7 +108,7 @@ jobs:
 
       - name: Perform CodeQL Analysis
         id: codeql
-        if: github.event_name != 'pull_request' && runner.arch != 'ARM64'
+        if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/master')) && runner.arch != 'ARM64'
         continue-on-error: true
         uses: github/codeql-action/analyze@v4
         with:
@@ -166,20 +167,21 @@ jobs:
     outputs:
       include: ${{ steps.build.outputs.include }}
     steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/scripts/linux_debug_matrix.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common/__init__.py
+            tools/common/gh_actions.py
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
       - name: Build matrix
         id: build
         env:
           IS_PR: ${{ github.event_name == 'pull_request' && '1' || '0' }}
-        # Sanitizers add ~30-50min and rarely catch what coverage tests miss;
-        # gate them on push/merge_group so PR feedback stays fast.
-        run: |
-          coverage='{"job_name":"Test + Coverage linux_gcc_64 Debug","mode":"coverage","timeout_minutes":60,"configure_extra":"","exclude_labels":"Flaky|Network"}'
-          sanitizers='{"job_name":"Sanitizers linux_gcc_64 Debug (ASan+UBSan)","mode":"sanitizers","timeout_minutes":120,"configure_extra":"-DQGC_ENABLE_ASAN=ON -DQGC_ENABLE_UBSAN=ON","exclude_labels":"Flaky|Network|NoSanitizer"}'
-          if [ "$IS_PR" = "1" ]; then
-            echo "include=[${coverage}]" >> "$GITHUB_OUTPUT"
-          else
-            echo "include=[${coverage},${sanitizers}]" >> "$GITHUB_OUTPUT"
-          fi
+        run: python3 .github/scripts/linux_debug_matrix.py
 
   debug-validation:
     name: ${{ matrix.job_name }}
@@ -275,8 +277,6 @@ jobs:
           output-file: test-output-linux-${{ matrix.mode }}.txt
           artifact-name: test-results-linux-${{ matrix.mode }}
           retention-days: 7
-          trunk-org-slug: ${{ vars.TRUNK_ORG_SLUG }}
-          trunk-token: ${{ secrets.TRUNK_TOKEN }}
 
       - name: Upload Test Artifacts
         if: always() && !cancelled() && steps.tests.conclusion != 'skipped'
@@ -311,9 +311,11 @@ jobs:
         if: matrix.mode == 'coverage'
         working-directory: ${{ runner.temp }}/build
         run: |
-          line_thresh=$(cmake -L -N . 2>/dev/null | sed -n 's/^QGC_COVERAGE_LINE_THRESHOLD:STRING=//p')
-          branch_thresh=$(cmake -L -N . 2>/dev/null | sed -n 's/^QGC_COVERAGE_BRANCH_THRESHOLD:STRING=//p')
+          line_thresh=$(python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" \
+            cache-var --build-dir . --name QGC_COVERAGE_LINE_THRESHOLD --default 30)
+          branch_thresh=$(python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" \
+            cache-var --build-dir . --name QGC_COVERAGE_BRANCH_THRESHOLD --default 20)
           python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_coverage_thresholds.py" \
             --coverage-xml coverage.xml \
-            --line-threshold "${line_thresh:-30}" \
-            --branch-threshold "${branch_thresh:-20}"
+            --line-threshold "${line_thresh}" \
+            --branch-threshold "${branch_thresh}"

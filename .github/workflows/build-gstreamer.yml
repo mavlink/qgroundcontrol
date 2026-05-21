@@ -87,15 +87,157 @@ jobs:
             tools
           sparse-checkout-cone-mode: false
 
-      - name: Build GStreamer
-        uses: ./.github/actions/gstreamer
+      - name: Read build config
+        id: config
+        shell: bash
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          VERSION: ${{ inputs.version }}
+        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/resolve_gstreamer_config.py" --platform "$PLATFORM" --version "$VERSION"
+
+      - name: Install dependencies (Linux)
+        if: inputs.platform == 'linux'
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
         with:
-          platform: ${{ inputs.platform }}
-          arch: ${{ inputs.arch }}
-          version: ${{ inputs.version }}
-          build-type: ${{ inputs.build_type }}
-          simulator: ${{ inputs.simulator }}
-          upload-s3: ${{ inputs.upload_s3 }}
+          packages: >-
+            build-essential pkg-config git
+            libx11-dev libxext-dev libxv-dev
+            libwayland-dev wayland-protocols
+            libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev
+            libdrm-dev libgbm-dev
+            libasound2-dev libpulse-dev
+            libva-dev nasm yasm
+          version: gstreamer-linux-deps-v1
+
+      - name: Install dependencies (macOS)
+        if: inputs.platform == 'macos' || inputs.platform == 'ios'
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          command: brew install pkg-config gettext
+
+      - name: Install dependencies (Android)
+        if: inputs.platform == 'android'
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
+        with:
+          packages: >-
+            python3-pip git autoconf automake libtool
+            pkg-config gettext bison flex cmake ninja-build
+          version: gstreamer-android-deps-v1
+
+      - name: Install Qt (Linux)
+        if: inputs.platform == 'linux'
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: linux
+          target: desktop
+          arch: ${{ inputs.arch == 'aarch64' && 'linux_gcc_arm64' || 'linux_gcc_64' }}
+
+      - name: Install Qt (macOS)
+        if: inputs.platform == 'macos'
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: mac
+          target: desktop
+          arch: clang_64
+
+      - name: Install Qt (Windows)
+        if: inputs.platform == 'windows'
+        uses: ./.github/actions/qt-install
+        with:
+          version: ${{ steps.config.outputs.qt_version }}
+          host: windows
+          target: desktop
+          arch: ${{ inputs.arch == 'arm64' && 'win64_msvc2022_arm64' || 'win64_msvc2022_64' }}
+
+      - name: Setup Python
+        if: inputs.platform == 'linux' || inputs.platform == 'macos' || inputs.platform == 'windows'
+        uses: ./.github/actions/setup-python
+        with:
+          groups: ci
+
+      - name: Build GStreamer
+        shell: bash
+        env:
+          PY_CMD: ${{ steps.config.outputs.py_cmd }}
+          PLATFORM: ${{ inputs.platform }}
+          ARCH: ${{ inputs.arch }}
+          VERSION: ${{ steps.config.outputs.version }}
+          BUILD_TYPE: ${{ inputs.build_type }}
+          SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
+          QT_PREFIX: ${{ env.QT_ROOT_DIR }}
+          WORK_DIR: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          arch="$ARCH"
+          # Windows toolchain uses 'x64' / 'arm64' naming; map x86_64 here.
+          if [[ "$PLATFORM" == 'windows' && "$arch" == 'x86_64' ]]; then
+            arch='x64'
+          fi
+
+          if [[ "$PLATFORM" == 'windows' ]]; then
+            prefix="C:\\gstreamer-$arch"
+          else
+            prefix="$WORK_DIR/gstreamer"
+          fi
+
+          args=(
+            --platform "$PLATFORM"
+            --version "$VERSION"
+            --type "$BUILD_TYPE"
+            --prefix "$prefix"
+            --clean
+            --verify
+          )
+          # Linux build defaults to the host arch; the other platforms need --arch.
+          [[ "$PLATFORM" != 'linux' ]] && args+=(--arch "$arch")
+          [[ "$PLATFORM" =~ ^(macos|windows)$ ]] && args+=(--qt-prefix "$QT_PREFIX")
+          [[ "$PLATFORM" == 'windows' ]] && args+=(--work-dir "$WORK_DIR")
+          [[ "$PLATFORM" == 'ios' && "$SIMULATOR" == 'true' ]] && args+=(--simulator)
+
+          "${PY_CMD}" ./tools/setup/build-gstreamer.py "${args[@]}"
+
+      - name: Configure AWS Credentials
+        if: inputs.upload_s3
+        uses: ./.github/actions/aws-credentials
+        with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Create archive
+        id: archive
+        shell: bash
+        env:
+          PY_CMD: ${{ steps.config.outputs.py_cmd }}
+          PLATFORM: ${{ inputs.platform }}
+          ARCH: ${{ inputs.arch }}
+          VERSION: ${{ steps.config.outputs.version }}
+          OUTPUT_DIR: ${{ runner.temp }}
+          SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
+          UPLOAD_S3: ${{ inputs.upload_s3 && 'true' || 'false' }}
+          WORKSPACE: ${{ github.workspace }}
+          AWS_DEFAULT_REGION: us-west-2
+        run: |
+          set -euo pipefail
+          args=(
+            --platform "$PLATFORM"
+            --arch "$ARCH"
+            --version "$VERSION"
+            --output-dir "$OUTPUT_DIR"
+          )
+          [[ "$SIMULATOR" == "true" ]] && args+=(--simulator)
+          [[ "$UPLOAD_S3" == "true" ]] && args+=(--upload-s3)
+
+          "${PY_CMD}" "${WORKSPACE}/.github/scripts/gstreamer_archive.py" "${args[@]}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.archive.outputs.name }}
+          path: ${{ steps.archive.outputs.path }}
+          retention-days: 30
+          compression-level: 0  # Archive already compressed

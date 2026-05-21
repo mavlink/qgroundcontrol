@@ -239,8 +239,44 @@ def _check_magic_numbers(self, document: TextDocument) -> list[types.Diagnostic]
 2. Check the "QGC LSP" output channel in VS Code
 3. Verify the file is a C++ file (.cpp, .cc, .h, .hpp)
 
+## QML Language Server (qmlls)
+
+The QGC LSP is C++/Fact-JSON only. For QML editing, configure the **Qt-bundled
+qmlls** (ships with Qt 6.10, which the build already requires). QGC's CMake
+config sets `QT_QML_GENERATE_QMLLS_INI=ON` by default for local builds, so
+`build/.qmlls.build.ini` is generated with the correct import paths.
+
+Two flags are worth setting in any editor's qmlls client config:
+
+- `--no-cmake-calls` — otherwise qmlls invokes CMake in the background on every
+  edit, fighting with `just build` and ccache.
+- `--build-dir <path-to-build>` — tells qmlls where to read the generated
+  `.qmlls.build.ini` from.
+
+### VS Code
+
+Already wired up via `.vscode/settings.default.json` + the
+`theqtcompany.qt-qml` extension (recommended in `.vscode/extensions.json`). No
+per-dev setup needed.
+
+### Neovim (nvim-lspconfig)
+
+```lua
+require('lspconfig').qmlls.setup({
+    cmd = { 'qmlls', '--no-cmake-calls', '--build-dir', vim.fn.getcwd() .. '/build' },
+})
+```
+
+### Qt Creator
+
+Built in — set the **build directory** in the project's Kit and qmlls picks up
+`.qmlls.build.ini` automatically. Pass `--no-cmake-calls` under
+**Preferences → QML → Tools → Language Server** if background rebuilds are
+disruptive.
+
 ## Resources
 
 - [LSP Specification](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/)
 - [pygls Documentation](https://pygls.readthedocs.io/)
 - [VS Code Language Extensions](https://code.visualstudio.com/api/language-extensions/overview)
+- [Qt 6 qmlls docs](https://doc.qt.io/qt-6/qtqml-tooling-qmlls.html)

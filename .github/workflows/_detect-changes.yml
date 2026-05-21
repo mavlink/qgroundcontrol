@@ -9,20 +9,26 @@ on:
         type: string
     outputs:
       should_build:
-        description: 'Whether relevant files changed (first platform, backwards compat)'
+        description: 'Whether the caller should proceed with a build (true on non-PR events)'
         value: ${{ jobs.detect.outputs.should_build }}
       linux:
-        description: 'Whether Linux-relevant files changed'
+        description: 'Whether Linux-relevant files changed (true on non-PR events)'
         value: ${{ jobs.detect.outputs.linux }}
       windows:
-        description: 'Whether Windows-relevant files changed'
+        description: 'Whether Windows-relevant files changed (true on non-PR events)'
         value: ${{ jobs.detect.outputs.windows }}
       macos:
-        description: 'Whether macOS-relevant files changed'
+        description: 'Whether macOS-relevant files changed (true on non-PR events)'
         value: ${{ jobs.detect.outputs.macos }}
       android:
-        description: 'Whether Android-relevant files changed'
+        description: 'Whether Android-relevant files changed (true on non-PR events)'
         value: ${{ jobs.detect.outputs.android }}
+      docker_linux:
+        description: 'Whether Docker-Linux build inputs changed (true on non-PR events)'
+        value: ${{ jobs.detect.outputs.docker_linux }}
+      docker_android:
+        description: 'Whether Docker-Android build inputs changed (true on non-PR events)'
+        value: ${{ jobs.detect.outputs.docker_android }}
 
 concurrency:
   # Scope per caller+platform: multiple platform workflows call this in parallel
@@ -36,27 +42,62 @@ permissions:
 jobs:
   detect:
     name: Detect Changes
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      should_build: ${{ steps.detect.outputs.any }}
-      linux: ${{ steps.detect.outputs.linux }}
-      windows: ${{ steps.detect.outputs.windows }}
-      macos: ${{ steps.detect.outputs.macos }}
-      android: ${{ steps.detect.outputs.android }}
+      should_build: ${{ steps.result.outputs.should_build }}
+      linux: ${{ steps.result.outputs.linux }}
+      windows: ${{ steps.result.outputs.windows }}
+      macos: ${{ steps.result.outputs.macos }}
+      android: ${{ steps.result.outputs.android }}
+      docker_linux: ${{ steps.result.outputs.docker_linux }}
+      docker_android: ${{ steps.result.outputs.docker_android }}
     steps:
       - name: Harden Runner
+        if: github.event_name == 'pull_request'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
 
       - name: Checkout repo
+        if: github.event_name == 'pull_request'
         uses: actions/checkout@v6
         with:
           fetch-depth: 1
+
       - name: Detect changes
+        if: github.event_name == 'pull_request'
         id: detect
         uses: ./.github/actions/detect-changes
         with:
           platform: ${{ inputs.platform }}
+
+      - name: Compute outputs
+        id: result
+        shell: bash
+        env:
+          IS_PR: ${{ github.event_name == 'pull_request' && '1' || '0' }}
+          DETECT_ANY: ${{ steps.detect.outputs.any }}
+          DETECT_LINUX: ${{ steps.detect.outputs.linux }}
+          DETECT_WINDOWS: ${{ steps.detect.outputs.windows }}
+          DETECT_MACOS: ${{ steps.detect.outputs.macos }}
+          DETECT_ANDROID: ${{ steps.detect.outputs.android }}
+          DETECT_DOCKER_LINUX: ${{ steps.detect.outputs.docker_linux }}
+          DETECT_DOCKER_ANDROID: ${{ steps.detect.outputs.docker_android }}
+        run: |
+          # Non-PR events (push, merge_group, workflow_dispatch) always build.
+          if [ "$IS_PR" != "1" ]; then
+            for k in should_build linux windows macos android docker_linux docker_android; do
+              echo "$k=true" >> "$GITHUB_OUTPUT"
+            done
+            exit 0
+          fi
+          {
+            echo "should_build=${DETECT_ANY}"
+            echo "linux=${DETECT_LINUX}"
+            echo "windows=${DETECT_WINDOWS}"
+            echo "macos=${DETECT_MACOS}"
+            echo "android=${DETECT_ANDROID}"
+            echo "docker_linux=${DETECT_DOCKER_LINUX}"
+            echo "docker_android=${DETECT_DOCKER_ANDROID}"
+          } >> "$GITHUB_OUTPUT"

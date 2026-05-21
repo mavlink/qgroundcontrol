@@ -32,7 +32,7 @@ runs:
 
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@v4
       env:
         INPUT_GSTREAMER: ${{ inputs.gstreamer }}
         INPUT_GSTREAMER_VERSION: ${{ inputs.gstreamer-version }}
@@ -43,7 +43,7 @@ runs:
         shell: python
         command: |
           import os, subprocess, sys
-          args = [sys.executable, './tools/setup/install_dependencies.py', '--platform', 'windows']
+          args = [sys.executable, './tools/setup/install_dependencies', '--platform', 'windows']
           if os.environ.get('INPUT_GSTREAMER_VERSION'):
               args += ['--gstreamer-version', os.environ['INPUT_GSTREAMER_VERSION']]
           if os.environ.get('INPUT_GSTREAMER') != 'true':
@@ -64,7 +64,7 @@ runs:
       id: linux-deps
       shell: bash
       run: |
-        packages=$(python3 tools/setup/install_dependencies.py --platform debian --print-packages)
+        packages=$(python3 tools/setup/install_dependencies --platform debian --print-packages)
         echo "packages=${packages}" >> "$GITHUB_OUTPUT"
 
     - name: Enable universe repository (Linux)
@@ -78,7 +78,8 @@ runs:
       uses: awalsh128/cache-apt-pkgs-action@v1.6.0
       with:
         packages: ${{ steps.linux-deps.outputs.packages }}
-        version: linux-deps-v2-${{ hashFiles('tools/setup/install_dependencies.py', '.github/build-config.json', '.github/actions/install-dependencies/action.yml') }}
+        # Only this file defines the apt list; broader hashes churned the cache on unrelated edits.
+        version: linux-deps-v2-${{ hashFiles('tools/setup/install_dependencies/**') }}
 
     - name: Install apt packages (Linux, PR)
       if: runner.os == 'Linux' && (github.event_name == 'pull_request' || github.event_name == 'pull_request_target')
@@ -114,7 +115,7 @@ runs:
         path: |
           ~/.cache/pip
           ~/.local/pipx
-        key: pipx-linux-v2-py${{ steps.python-version.outputs.minor }}-${{ hashFiles('tools/setup/install_dependencies.py', '.github/actions/install-dependencies/action.yml') }}
+        key: pipx-linux-v2-py${{ steps.python-version.outputs.minor }}-${{ hashFiles('tools/setup/install_dependencies/**', '.github/actions/install-dependencies/action.yml') }}
         restore-keys: |
           pipx-linux-v2-py${{ steps.python-version.outputs.minor }}-
           pipx-linux-v2-
@@ -122,7 +123,7 @@ runs:
     - name: Install pipx packages (Linux)
       if: runner.os == 'Linux'
       shell: bash
-      run: python3 tools/setup/install_dependencies.py --platform debian --skip-system-packages
+      run: python3 tools/setup/install_dependencies --platform debian --skip-system-packages
 
     - name: Save pipx/pip cache (Linux)
       if: runner.os == 'Linux' && github.event_name != 'pull_request' && steps.pipx-cache.outputs.cache-hit != 'true'
@@ -135,14 +136,14 @@ runs:
 
     - name: Install extra packages (Linux)
       if: runner.os == 'Linux' && inputs.extra-packages != ''
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@v4
       env:
         EXTRA_PACKAGES: ${{ inputs.extra-packages }}
       with:
         timeout_minutes: 5
         max_attempts: 3
         command: |
-          validated="$(python3 tools/setup/install_dependencies.py --validate-extra-packages $EXTRA_PACKAGES)"
+          validated="$(python3 tools/setup/install_dependencies --validate-extra-packages $EXTRA_PACKAGES)"
           # shellcheck disable=SC2086
           sudo apt-get install -y $validated
 
@@ -156,12 +157,12 @@ runs:
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
-      uses: nick-fields/retry@v3
+      uses: nick-fields/retry@v4
       with:
         timeout_minutes: 10
         max_attempts: 3
         command: |
-          python3 tools/setup/install_dependencies.py --platform macos
+          python3 tools/setup/install_dependencies --platform macos
 
     - name: Save GStreamer cache (macOS)
       if: runner.os == 'macOS' && github.event_name != 'pull_request' && steps.gst-mac-cache.outputs.cache-hit != 'true'

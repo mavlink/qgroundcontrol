@@ -52,10 +52,12 @@ runs:
         QT_ARCHIVES: ${{ inputs.archives }}
       run: python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" cache-key --arch "${QT_ARCH}" --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}"
 
-    # Full Qt matrix is ~14 GB; only push events save to fit under the 10 GB repo cache cap.
+    # Cache is keyed on host+target+arch+version+modules-digest. PRs save too (GHA evicts LRU under the 10 GB repo cap) so amend+force-push iterations don't re-download Qt every time. Forks can't write to the parent's cache.
+    # Transient cache-service blips have surfaced as silent step exit on Windows runners; degrade to a cache miss instead of failing the build.
     - name: Restore Qt cache
       id: qt-cache
       uses: actions/cache/restore@v5
+      continue-on-error: true
       with:
         path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
         # `runner.os` is implied by `inputs.host` (linux/mac/windows...) so it's omitted.
@@ -83,8 +85,9 @@ runs:
           --modules "${QT_MODULES}" \
           --archives "${QT_ARCHIVES}"
 
+    # Forks can't write to the parent repo's cache (token is read-only), so skip the save attempt there to avoid noisy warnings. Same-repo PRs save normally.
     - name: Save Qt cache
-      if: github.event_name != 'pull_request' && steps.qt-cache.outputs.cache-hit != 'true'
+      if: steps.qt-cache.outputs.cache-hit != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
       uses: actions/cache/save@v5
       with:
         path: ${{ inputs.dir }}/Qt/${{ inputs.version }}

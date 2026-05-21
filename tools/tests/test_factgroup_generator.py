@@ -11,13 +11,13 @@ import pytest
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 from generators.factgroup.generator import (
+    FactGroupGenerator,
+    FactGroupSpec,
     FactSpec,
     MavlinkMessageSpec,
-    FactGroupSpec,
-    FactGroupGenerator,
+    load_spec_from_file,
     parse_facts_string,
     parse_mavlink_string,
-    load_spec_from_file,
     validate_spec,
 )
 
@@ -276,7 +276,7 @@ class TestCLI:
 
     def run_cli(self, *args):
         """Run the CLI and return result."""
-        cmd = [sys.executable, "-m", "tools.generators.factgroup.cli"] + list(args)
+        cmd = [sys.executable, "-m", "tools.generators.factgroup.cli", *args]
         repo_root = Path(__file__).resolve().parent.parent.parent
         return subprocess.run(cmd, capture_output=True, text=True, cwd=repo_root)
 

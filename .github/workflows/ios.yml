@@ -10,17 +10,6 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths:
-      - 'src/**'
-      - 'cmake/**'
-      - 'CMakeLists.txt'
-      - 'deploy/ios/**'
-      - '.github/workflows/ios.yml'
-      - '.github/actions/qt-ios/**'
-      - '.github/actions/build-setup/**'
-      - '.github/actions/cmake-configure/**'
-      - '.github/actions/cmake-build/**'
-      - '.github/build-config.json'
   merge_group:
   workflow_dispatch:
 
@@ -39,7 +28,14 @@ env:
   IS_STABLE_BUILD: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
 
 jobs:
+  changes:
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: ios
+
   build:
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: macos-15
     timeout-minutes: 120
 
@@ -96,5 +92,7 @@ jobs:
         uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ env.PACKAGE }}.app
+          # iOS uses Ninja Multi-Config; the .app lands in build/<config>/, not build/.
+          artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
           package-name: ${{ env.PACKAGE }}
           upload-aws: 'false'

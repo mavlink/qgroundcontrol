@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from generators.settings_qml.page_generator import (
     ControlDef,
     GroupDef,
@@ -13,7 +12,6 @@ from generators.settings_qml.page_generator import (
     generate_pages_model_qml,
     load_page_def,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -286,7 +284,7 @@ class TestGeneratePageQml:
         assert "MyInlineWidget {" in qml
         assert "Layout.fillWidth: true" in qml
         # Should NOT be wrapped in a ColumnLayout (it's inside SettingsGroupLayout)
-        lines = [l.strip() for l in qml.splitlines()]
+        lines = [line.strip() for line in qml.splitlines()]
         idx = lines.index("MyInlineWidget {")
         assert "ColumnLayout {" not in lines[idx - 1]
 
@@ -401,8 +399,8 @@ class TestGeneratePageQml:
         assert "visible:" not in qml.split("LabelledLabel")[1].split("}")[0]
 
     def test_info_control_with_button(self, settings_dir: Path):
-        from generators.settings_qml.page_generator import ControlDef as CD
         from generators.common.controls import ButtonDef
+        from generators.settings_qml.page_generator import ControlDef as CD
         page = PageDef(groups=[
             GroupDef(controls=[CD(
                 setting="", control="info", label="Bytes sent", value="sink.bytesSentDisplay",

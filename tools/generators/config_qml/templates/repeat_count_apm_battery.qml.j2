@@ -1,0 +1,18 @@
+{{ ind }}function _battPrefixForIndex(_i) {
+{{ ind }}    if (_i === 0) return "{{ param_prefix }}_"
+{{ ind }}    if (_i <= 8) return "{{ param_prefix }}" + (_i + 1) + "_"
+{{ ind }}    return "{{ param_prefix }}" + String.fromCharCode(65 + _i - 9) + "_"
+{{ ind }}}
+{{ ind }}function _battLabelForIndex(_i) {
+{{ ind }}    if (_i <= 8) return String(_i + 1)
+{{ ind }}    return String.fromCharCode(65 + _i - 9)
+{{ ind }}}
+{{ ind }}property int _{{ safe }}Count: {
+{{ ind }}    var _i = 0
+{{ ind }}    while (_i < 16) {
+{{ ind }}        if (!controller.parameterExists(-1, _battPrefixForIndex(_i) + "{{ probe_postfix }}"))
+{{ ind }}            return _i
+{{ ind }}        _i++
+{{ ind }}    }
+{{ ind }}    return 16
+{{ ind }}}

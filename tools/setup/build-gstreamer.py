@@ -37,6 +37,7 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import ClassVar
 
 _tools_dir = Path(__file__).resolve().parents[1]
 if str(_tools_dir) not in sys.path:
@@ -44,8 +45,7 @@ if str(_tools_dir) not in sys.path:
 
 from common.build_config import get_build_config_value
 from common.gh_actions import write_github_output
-from common.logging import log_info, log_ok, log_warn, log_error
-
+from common.logging import log_error, log_info, log_ok, log_warn
 
 # ============================================================================
 # Shared Utilities
@@ -224,9 +224,11 @@ class MesonBuilder:
         required = ['git', 'python3', 'pkg-config']
         missing = [cmd for cmd in required if not shutil.which(cmd)]
 
-        if self.config.platform == 'macos':
-            if subprocess.run(['xcode-select', '-p'], capture_output=True).returncode != 0:
-                missing.append('xcode-select')
+        if (
+            self.config.platform == 'macos'
+            and subprocess.run(['xcode-select', '-p'], capture_output=True).returncode != 0
+        ):
+            missing.append('xcode-select')
 
         if missing:
             raise RuntimeError(f"Missing required tools: {', '.join(missing)}")
@@ -324,16 +326,19 @@ class MesonBuilder:
 
     def configure(self) -> None:
         """Configure the build with meson."""
-        if self.config.build_dir.exists() and not self.config.clean:
-            if (self.config.build_dir / 'build.ninja').exists():
-                log_info("Using existing configuration")
-                return
+        if (
+            self.config.build_dir.exists()
+            and not self.config.clean
+            and (self.config.build_dir / 'build.ninja').exists()
+        ):
+            log_info("Using existing configuration")
+            return
 
         log_info("Configuring GStreamer...")
         if self.config.build_dir.exists():
             shutil.rmtree(self.config.build_dir)
 
-        args = ['meson', 'setup', str(self.config.build_dir)] + self.get_meson_args()
+        args = ['meson', 'setup', str(self.config.build_dir), *self.get_meson_args()]
 
         env = {}
         if self.config.qt_prefix:
@@ -341,8 +346,8 @@ class MesonBuilder:
 
         ccache = self._find_ccache()
         if ccache:
-            env['CC'] = f'ccache cc'
-            env['CXX'] = f'ccache c++'
+            env['CC'] = 'ccache cc'
+            env['CXX'] = 'ccache c++'
 
         run_cmd(args, cwd=self.config.source_dir, env=env)
 
@@ -443,7 +448,7 @@ class MesonBuilder:
 class CerberoBuilder:
     """Build GStreamer using Cerbero for mobile platforms."""
 
-    CERBERO_CONFIGS = {
+    CERBERO_CONFIGS: ClassVar[dict[str, dict[str, str]]] = {
         'android': {
             'arm64': 'cross-android-arm64',
             'armv7': 'cross-android-armv7',
@@ -465,15 +470,14 @@ class CerberoBuilder:
         required = ['git', 'python3']
         missing = [cmd for cmd in required if not shutil.which(cmd)]
 
-        if self.config.platform == 'ios':
-            if subprocess.run(['xcrun', '--show-sdk-path'], capture_output=True).returncode != 0:
-                missing.append('Xcode/iOS SDK')
+        if (
+            self.config.platform == 'ios'
+            and subprocess.run(['xcrun', '--show-sdk-path'], capture_output=True).returncode != 0
+        ):
+            missing.append('Xcode/iOS SDK')
 
         if missing:
             raise RuntimeError(f"Missing required tools: {', '.join(missing)}")
-
-        if sys.version_info < (3, 8):
-            raise RuntimeError(f"Python 3.8+ required, found {sys.version_info.major}.{sys.version_info.minor}")
 
         log_ok("All dependencies found")
 
@@ -599,6 +603,8 @@ def parse_args() -> argparse.Namespace:
                         help='Clean build directory')
     parser.add_argument('--simulator', action='store_true',
                         help='iOS simulator build')
+    parser.add_argument('--verify', action='store_true',
+                        help='After install, run gst-launch-1.0 --version against the install prefix')
 
     return parser.parse_args()
 
@@ -608,6 +614,38 @@ def get_default_arch(plat: str) -> str:
     if plat in ('macos', 'android', 'ios'):
         return 'universal'
     return detect_host_arch()
+
+
+def verify_install(config: BuildConfig) -> None:
+    """Run `gst-launch-1.0 --version` against the install prefix to confirm it runs."""
+    if config.platform in ('android', 'ios'):
+        log_info(f"Skipping verify on cross-compiled target: {config.platform}")
+        return
+
+    prefix = config.prefix
+    assert prefix is not None  # __post_init__ guarantees this
+    is_windows = config.platform == 'windows'
+    bin_name = 'gst-launch-1.0.exe' if is_windows else 'gst-launch-1.0'
+    bin_path = prefix / 'bin' / bin_name
+
+    if not bin_path.exists():
+        raise RuntimeError(f"gst-launch binary missing at {bin_path}")
+
+    env = os.environ.copy()
+    if config.platform == 'linux':
+        # GStreamer installs into multiarch libdir on Debian/Ubuntu (e.g. lib/x86_64-linux-gnu).
+        libdir = prefix / 'lib' / f'{platform.machine()}-linux-gnu'
+        env['LD_LIBRARY_PATH'] = str(libdir)
+        env['GST_PLUGIN_PATH'] = str(libdir / 'gstreamer-1.0')
+    elif config.platform == 'macos':
+        env['DYLD_LIBRARY_PATH'] = str(prefix / 'lib')
+        env['GST_PLUGIN_PATH'] = str(prefix / 'lib' / 'gstreamer-1.0')
+    elif is_windows:
+        env['PATH'] = f"{prefix / 'bin'}{os.pathsep}{env.get('PATH', '')}"
+        env['GST_PLUGIN_PATH'] = str(prefix / 'lib' / 'gstreamer-1.0')
+
+    run_cmd([str(bin_path), '--version'], env=env)
+    log_ok(f"verify: {bin_path} runs and reports a version")
 
 
 def main() -> int:
@@ -642,6 +680,8 @@ def main() -> int:
 
     try:
         builder.run()
+        if args.verify:
+            verify_install(config)
         return 0
     except subprocess.CalledProcessError as e:
         log_error(f"Build failed: {e}")

@@ -45,3 +45,9 @@ runs:
         else
           echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
         fi
+
+    # Mirrors step-debug toggle; tools/_bootstrap.py picks this up and enables faulthandler + ::error:: hooks.
+    - name: Enable QGC_CI_DEBUG when runner debug logging is on
+      if: runner.debug == '1'
+      shell: bash
+      run: echo "QGC_CI_DEBUG=1" >> "$GITHUB_ENV"

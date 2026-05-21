@@ -261,16 +261,24 @@ jobs:
         with:
           egress-policy: audit
 
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/scripts/gh_pr_size_label.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common/__init__.py
+            tools/common/gh_actions.py
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+
       - name: Get current size label
         id: current
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_REPO: ${{ github.repository }}
-        run: |
-          CURRENT_LABEL=$(gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels" \
-            --jq '.[] | select(.name | startswith("size/")) | .name' | head -1)
-          echo "label=${CURRENT_LABEL}" >> "$GITHUB_OUTPUT"
+        run: python3 .github/scripts/gh_pr_size_label.py current
 
       - name: Label PR by size
         continue-on-error: true
@@ -309,21 +317,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           OLD_LABEL: ${{ steps.current.outputs.label }}
           GH_REPO: ${{ github.repository }}
-        run: |
-          # Get all current size labels
-          CURRENT_LABELS=$(gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels" \
-            --jq '.[] | select(.name | startswith("size/")) | .name')
-
-          # Count size labels - if more than one, remove the old one
-          LABEL_COUNT=$(echo "$CURRENT_LABELS" | grep -c . || echo 0)
-
-          if [[ "$LABEL_COUNT" -gt 1 && -n "$OLD_LABEL" ]]; then
-            # Multiple size labels exist - remove the old one
-            ENCODED_LABEL="${OLD_LABEL//\//%2F}"
-            gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/labels/${ENCODED_LABEL}" \
-              -X DELETE 2>/dev/null || true
-          fi
-          # If only one label exists, size didn't change - nothing to remove
+        run: python3 .github/scripts/gh_pr_size_label.py prune
 
   label:
     name: Label PR by Files

@@ -4,8 +4,12 @@
 from __future__ import annotations
 
 import pytest
-
-from setup.install_qt import compute_cache_digest, resolve_android_qt_root, resolve_arch_dir, resolve_qt_root
+from setup.install_qt import (
+    compute_cache_digest,
+    resolve_android_qt_root,
+    resolve_arch_dir,
+    resolve_qt_root,
+)
 
 
 class TestResolveArchDir:
@@ -54,13 +58,13 @@ class TestComputeCacheDigest:
 
 
 class TestResolveQtRoot:
-    def test_valid_path(self, tmp_path: "pytest.TempPathFactory") -> None:
+    def test_valid_path(self, tmp_path: pytest.TempPathFactory) -> None:
         qt_root = tmp_path / "6.8.3" / "gcc_64"
         qt_root.mkdir(parents=True)
         result = resolve_qt_root(tmp_path, "6.8.3", "gcc_64")
         assert result == qt_root
 
-    def test_missing_path_exits(self, tmp_path: "pytest.TempPathFactory") -> None:
+    def test_missing_path_exits(self, tmp_path: pytest.TempPathFactory) -> None:
         with pytest.raises(SystemExit):
             resolve_qt_root(tmp_path, "6.8.3", "gcc_64")
 

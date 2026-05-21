@@ -9,15 +9,15 @@ Generates all boilerplate files for a new FactGroup:
 Supports both CLI arguments and YAML spec files.
 """
 
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Any
-import json
+from typing import Any
 
 try:
-    from jinja2 import Environment, FileSystemLoader
-except ImportError:
-    raise ImportError("Jinja2 is required. Install with: pip install jinja2")
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+except ImportError as e:
+    raise ImportError("Jinja2 is required. Install with: pip install jinja2") from e
 
 try:
     import yaml
@@ -34,8 +34,8 @@ class FactSpec:
     units: str = ""
     short_desc: str = ""
     decimal_places: int = 2
-    min_value: Optional[float] = None
-    max_value: Optional[float] = None
+    min_value: float | None = None
+    max_value: float | None = None
 
     @property
     def cpp_type(self) -> str:
@@ -153,6 +153,7 @@ class FactGroupGenerator:
         template_dir = Path(__file__).parent / 'templates'
         self.env = Environment(
             loader=FileSystemLoader(template_dir),
+            autoescape=select_autoescape(),  # CodeQL py/jinja2/autoescape-false; no-op for non-html/xml templates.
             trim_blocks=True,
             lstrip_blocks=True,
         )

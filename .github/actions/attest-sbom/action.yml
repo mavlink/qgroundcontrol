@@ -54,13 +54,13 @@ runs:
 
     - name: Attest Build Provenance
       if: steps.check.outputs.skip != 'true'
-      uses: actions/attest-build-provenance@v3
+      uses: actions/attest-build-provenance@v4
       with:
         subject-path: ${{ inputs.subject-path }}
 
     - name: Attest SBOM
       if: steps.check.outputs.skip != 'true'
-      uses: actions/attest-sbom@v3
+      uses: actions/attest-sbom@v4
       with:
         subject-path: ${{ inputs.subject-path }}
         sbom-path: ${{ steps.check.outputs.sbom-path }}

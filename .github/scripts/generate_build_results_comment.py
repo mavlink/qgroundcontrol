@@ -10,12 +10,20 @@ import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote, urlsplit, urlunsplit
 
-import jinja2
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
-from xml_utils import XMLParseError, xml_parse as _xml_parse
+import jinja2
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.format import format_bytes, format_delta_bytes
+from xml_utils import XMLParseError
+from xml_utils import xml_parse as _xml_parse
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +39,13 @@ def _parse_coverage_percent(path: Path) -> float | None:
         return None
     try:
         root = _xml_parse(path).getroot()
+        if root is None:
+            return None
         if int(root.get("lines-valid", 0)) == 0:
             return None
         return float(root.get("line-rate", 0.0)) * 100.0
     except (XMLParseError, OSError, ValueError):
-        logger.debug("Failed to parse coverage from %s", path, exc_info=True)
+        logger.warning("Failed to parse coverage from %s", path, exc_info=True)
         return None
 
 
@@ -46,7 +56,7 @@ def _parse_precommit_results(path: Path) -> tuple[str | None, str | None, str | 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
-        logger.debug("Failed to parse pre-commit results from %s", path, exc_info=True)
+        logger.warning("Failed to parse pre-commit results from %s", path, exc_info=True)
         return None, None, None
 
     exit_code = str(data.get("exit_code", "1")).strip()
@@ -108,20 +118,6 @@ def _failed_test_lines(content: str, limit: int = 20) -> list[str]:
     return lines
 
 
-def _format_delta_mb(delta_bytes: int) -> str:
-    delta_mb = delta_bytes / 1024.0 / 1024.0
-    if delta_bytes > 0:
-        return f"+{delta_mb:.2f} MB (increase)"
-    if delta_bytes < 0:
-        return f"{delta_mb:.2f} MB (decrease)"
-    return "No change"
-
-
-def _format_size_human(size_bytes: int) -> str:
-    size_mb = size_bytes / 1024.0 / 1024.0
-    if size_mb >= 1024:
-        return f"{(size_mb / 1024):.2f} GB"
-    return f"{size_mb:.2f} MB"
 
 
 def _collect_test_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, Any] | None:
@@ -180,7 +176,7 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
     try:
         pr_data = json.loads(pr_sizes_path.read_text(encoding="utf-8"))
     except Exception:
-        logger.debug("Failed to parse PR sizes from %s", pr_sizes_path, exc_info=True)
+        logger.warning("Failed to parse PR sizes from %s", pr_sizes_path, exc_info=True)
         return None
 
     baseline_path = base_dir / _env(env, "BASELINE_SIZES_JSON", "baseline-sizes.json")
@@ -199,7 +195,7 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
                 except (TypeError, ValueError):
                     continue
         except Exception:
-            logger.debug("Failed to parse baseline sizes from %s", baseline_path, exc_info=True)
+            logger.warning("Failed to parse baseline sizes from %s", baseline_path, exc_info=True)
             baseline = {}
 
     artifacts = pr_data.get("artifacts", [])
@@ -218,14 +214,14 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
             new_size = int(artifact.get("size_bytes", 0))
         except (TypeError, ValueError):
             continue
-        size_human = str(artifact.get("size_human", "")).strip() or _format_size_human(new_size)
+        size_human = str(artifact.get("size_human", "")).strip() or format_bytes(new_size)
 
         entry: dict[str, Any] = {"name": name, "size_human": size_human}
         if baseline and name in baseline:
             delta = new_size - baseline[name]
             total_delta += delta
             entry["delta"] = delta
-            entry["delta_human"] = _format_delta_mb(delta)
+            entry["delta_human"] = format_delta_bytes(delta)
         items.append(entry)
 
     return {
@@ -259,6 +255,7 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
 
     jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(_TEMPLATE_DIR),
+        autoescape=jinja2.select_autoescape(),  # CodeQL py/jinja2/autoescape-false; no-op for non-html/xml templates.
         keep_trailing_newline=True,
         trim_blocks=True,
         lstrip_blocks=True,

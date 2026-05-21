@@ -24,6 +24,7 @@ if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
     echo "Building QGroundControl for Android (${BUILD_TYPE})..."
     "${QT_ROOT_DIR_ARM64}/bin/qt-cmake" -S /project/source -B /project/build -G Ninja \
         -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+        -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python \
         -DQT_HOST_PATH="${QT_HOST_PATH}" \
         -DQT_ANDROID_ABIS="${ANDROID_ABIS}" \
         -DANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}" \
@@ -32,7 +33,8 @@ if [[ -n "${ANDROID_SDK_ROOT:-}" ]]; then
 else
     echo "Building QGroundControl (${BUILD_TYPE})..."
     qt-cmake -S /project/source -B /project/build -G Ninja \
-        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+        -DPython3_EXECUTABLE=/opt/qgc-venv/bin/python
     cmake --build /project/build --target all --parallel
     cmake --install /project/build --config "${BUILD_TYPE}"
 fi

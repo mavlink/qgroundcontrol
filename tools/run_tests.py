@@ -16,18 +16,19 @@ Environment:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
-import platform
 import shutil
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
+from collections.abc import Sequence  # noqa: TC003
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
 
-from common import find_repo_root, Logger
+from common import Logger, find_repo_root
 from common.gh_actions import write_github_output as _write_github_output
+from common.platform import current_platform
 
 
 @dataclass
@@ -68,14 +69,8 @@ class QtTestRunner:
 
     def detect_platform(self) -> str:
         """Detect the current platform."""
-        system = platform.system().lower()
-        if system == "linux":
-            return "linux"
-        elif system == "darwin":
-            return "macos"
-        elif system == "windows" or system.startswith("mingw") or system.startswith("msys"):
-            return "windows"
-        return "linux"
+        plat = current_platform()
+        return "linux" if plat == "other" else plat
 
     def needs_virtual_display(self) -> bool:
         """Check if we need a virtual display (Linux without DISPLAY)."""
@@ -90,22 +85,10 @@ class QtTestRunner:
         plat = self.detect_platform()
         binary_name = f"{self.BINARY_NAME}.exe" if plat == "windows" else self.BINARY_NAME
 
-        # Try the shared binary finder helper first.
-        find_script = self.repo_root / ".github" / "scripts" / "find_binary.py"
-        if find_script.is_file():
-            binary = self._run_find_script(find_script, build_type, plat)
-            normalized = self._normalize_binary_path(binary) if binary else None
-            if normalized:
-                return normalized
-
-        # Build search locations
         locations: list[Path] = []
-
         if build_type:
             locations.append(self.build_dir / build_type / binary_name)
-
         locations.append(self.build_dir / binary_name)
-
         for bt in self.BUILD_TYPES:
             locations.append(self.build_dir / bt / binary_name)
 
@@ -113,50 +96,13 @@ class QtTestRunner:
             if loc.is_file():
                 return loc
 
-        return None
-
-    def _normalize_binary_path(self, path: Path) -> Path | None:
-        """Normalize binary path from helpers and platform-specific layouts."""
-        if path.is_file():
-            return path
-
-        # macOS helper may return .app bundle path.
-        if path.is_dir() and path.suffix == ".app":
-            app_binary = path / "Contents" / "MacOS" / self.BINARY_NAME
-            if app_binary.is_file():
-                return app_binary
-
-        return None
-
-    def _run_find_script(self, script: Path, build_type: str | None, platform_name: str) -> Path | None:
-        """Run find_binary.py and parse result."""
-        args = [
-            sys.executable,
-            str(script),
-            "--build-dir",
-            str(self.build_dir),
-            "--platform",
-            platform_name,
-        ]
-        if build_type:
-            args.extend(["--build-type", build_type])
-
-        try:
-            result = subprocess.run(
-                args,
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            for line in result.stdout.splitlines():
-                if line.startswith("binary_path="):
-                    path = Path(line.split("=", 1)[1])
-                    return path
-                if line.startswith("Found: "):
-                    return Path(line.split(": ", 1)[1])
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-            pass
-
+        # macOS .app bundle fallback.
+        if plat == "macos":
+            for bt in [build_type, *self.BUILD_TYPES] if build_type else self.BUILD_TYPES:
+                app = self.build_dir / bt / f"{self.BINARY_NAME}.app"
+                inner = app / "Contents" / "MacOS" / self.BINARY_NAME
+                if inner.is_file():
+                    return inner
         return None
 
     def run_tests(
@@ -180,10 +126,8 @@ class QtTestRunner:
 
         # Make executable on Unix
         if self.detect_platform() != "windows":
-            try:
+            with contextlib.suppress(OSError):
                 binary.chmod(binary.stat().st_mode | 0o111)
-            except OSError:
-                pass
 
         self.log.info(f"Binary: {binary}")
         self.log.info(f"Timeout: {self.timeout}s")
@@ -266,31 +210,19 @@ class QtTestRunner:
 
         Returns (command, extra_env) tuple.
         """
-        base_cmd = [str(binary)] + test_args
+        base_cmd = [str(binary), *test_args]
         extra_env: dict[str, str] = {}
 
         if self.needs_virtual_display():
             xvfb = shutil.which("xvfb-run")
             if xvfb:
                 self.log.info("Running with xvfb-run (no DISPLAY)")
-                return [xvfb, "-a"] + base_cmd, extra_env
+                return [xvfb, "-a", *base_cmd], extra_env
             else:
                 self.log.warn("xvfb-run not found, using offscreen platform")
                 extra_env["QT_QPA_PLATFORM"] = "offscreen"
 
         return base_cmd, extra_env
-
-    def write_github_output(self, result: TestResult) -> None:
-        """Write results to GITHUB_OUTPUT for CI integration."""
-        outputs: dict[str, str] = {
-            "exit_code": str(result.exit_code),
-            "passed": "true" if result.exit_code == 0 else "false",
-        }
-        if result.xml_path:
-            outputs["output_file"] = str(result.xml_path)
-        if result.log_path:
-            outputs["log_file"] = str(result.log_path)
-        _write_github_output(outputs)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -390,7 +322,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         build_type=args.build_type,
     )
 
-    runner.write_github_output(result)
+    outputs: dict[str, str] = {
+        "exit_code": str(result.exit_code),
+        "passed": "true" if result.exit_code == 0 else "false",
+    }
+    if result.xml_path:
+        outputs["output_file"] = str(result.xml_path)
+    if result.log_path:
+        outputs["log_file"] = str(result.log_path)
+    _write_github_output(outputs)
 
     return result.exit_code
 
