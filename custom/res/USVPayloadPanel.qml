@@ -79,6 +79,9 @@ Rectangle {
     property var _panelState: USVLayout.payloadState(!!vehicle, payloadStatus, _linkOk, _expanded)
     property string _lastCommandMessage: ""
     property bool _lastCommandWarning: false
+    property int _pendingCommand: 0
+    property bool _hasPendingCommand: _pendingCommand > 0
+    readonly property int _commandTimeoutMs: 5000
 
     function statusText(st) {
         if (st === _stSurveying) {
@@ -135,8 +138,19 @@ Rectangle {
     }
 
     function _send(cmdId, param1) {
-        if (vehicle) {
+        if (vehicle && !_hasPendingCommand) {
+            _pendingCommand = cmdId
+            _lastCommandWarning = false
+            _lastCommandMessage = _commandName(cmdId) + qsTr("发送中")
+            commandTimeoutTimer.restart()
             vehicle.sendCommand(_payloadCompId, cmdId, false, param1 || 0)
+        }
+    }
+
+    function _clearPendingCommand(command) {
+        if (_pendingCommand === command) {
+            _pendingCommand = 0
+            commandTimeoutTimer.stop()
         }
     }
 
@@ -161,8 +175,22 @@ Rectangle {
             if (targetComponent !== _payloadCompId || command < _cmdStart || command > _cmdSpectroStop) {
                 return
             }
+            _clearPendingCommand(command)
             _lastCommandWarning = ackResult !== 0
             _lastCommandMessage = _commandName(command) + (ackResult === 0 ? qsTr("已接受") : qsTr("未执行"))
+        }
+    }
+
+    Timer {
+        id: commandTimeoutTimer
+        interval: _commandTimeoutMs
+        repeat: false
+        onTriggered: {
+            if (_hasPendingCommand) {
+                _lastCommandWarning = true
+                _lastCommandMessage = _commandName(_pendingCommand) + qsTr("响应超时")
+                _pendingCommand = 0
+            }
         }
     }
 
@@ -452,16 +480,16 @@ Rectangle {
 
                                 QGCLabel {
                                     anchors.centerIn: parent
-                                    text: modelData.text
+                                    text: _pendingCommand === modelData.cmd ? qsTr("发送中") : modelData.text
                                     color: modelData.warn && modelData.en ? "white" : qgcPal.text
-                                    opacity: modelData.en ? 1.0 : 0.35
+                                    opacity: (modelData.en && !_hasPendingCommand) || _pendingCommand === modelData.cmd ? 1.0 : 0.35
                                     font.bold: true
                                     font.pointSize: ScreenTools.smallFontPointSize
                                 }
 
                                 MouseArea {
                                     anchors.fill: parent
-                                    enabled: modelData.en
+                                    enabled: modelData.en && !_hasPendingCommand
                                     onClicked: root._send(modelData.cmd, modelData.param1)
                                 }
                             }
