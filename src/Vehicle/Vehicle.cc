@@ -1396,11 +1396,8 @@ bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t
     // Give the plugin a chance to adjust
     _firmwarePlugin->adjustOutgoingMavlinkMessageThreadSafe(this, link, &message);
 
-    // Write message into buffer, prepending start sign
-    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-    int len = mavlink_msg_to_send_buffer(buffer, &message);
-
-    link->writeBytesThreadSafe((const char*)buffer, len);
+    // Single send chokepoint: LinkInterface re-signs, serializes, and writes.
+    link->sendMessageThreadSafe(message);
     _messagesSent++;
     emit messagesSentChanged();
 

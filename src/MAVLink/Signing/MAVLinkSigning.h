@@ -78,6 +78,12 @@ QByteArray serializeUnsignedCopy(const mavlink_message_t& message);
 bool verifySignature(QByteArrayView key, const mavlink_message_t& message);
 bool verifySignature(const SigningKey& key, const mavlink_message_t& message);
 
+/// Re-sign an already-encoded message in place: writes link_id+timestamp into the signature block, recomputes the
+/// truncated SHA-256 hash, and sets IFLAG_SIGNED. The cached-resend path (Vehicle::sendMessageMultiple) needs this so
+/// a frozen timestamp is refreshed at send time. `timestamp` is the 48-bit value to stamp. Shares the exact hash
+/// layout with verifySignature so wire format can't diverge.
+void signMessage(QByteArrayView key, uint8_t linkId, uint64_t timestamp, mavlink_message_t& message);
+
 /// Single-lock snapshot struct; fields populated by SigningChannel::detectSnapshot().
 struct DetectSnapshot
 {

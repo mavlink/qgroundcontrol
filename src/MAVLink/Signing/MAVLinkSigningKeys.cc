@@ -2,12 +2,9 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QCryptographicHash>
-#include <QtCore/QDir>
-#include <QtCore/QLockFile>
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QSet>
 #include <QtCore/QSettings>
-#include <QtCore/QStandardPaths>
 #include <QtCore/QTimer>
 #include <QtNetwork/QPasswordDigestor>
 #include <array>
@@ -16,7 +13,6 @@
 #include "LinkManager.h"
 #include "MAVLinkSigning.h"
 #include "MultiVehicleManager.h"
-#include "QGCKeychain.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 #include "SecureMemory.h"
@@ -25,23 +21,6 @@
 #include "VehicleSigningController.h"
 
 QGC_LOGGING_CATEGORY(MAVLinkSigningKeysLog, "MAVLink.SigningKeys")
-
-namespace {
-
-// Cross-process lock; QLockFile auto-detects stale PIDs (crash recovery).
-QString _keystoreLockPath()
-{
-    QString dir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    if (dir.isEmpty()) {
-        dir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-    }
-    QDir().mkpath(dir);
-    return dir + QLatin1String("/mavlink-signing-keys.lock");
-}
-
-constexpr int kKeystoreLockTimeoutMs = 5000;
-
-}  // namespace
 
 MAVLinkSigningKey::MAVLinkSigningKey(const QString& name, const MAVLinkSigning::SigningKey& keyBytes, QObject* parent)
     : QObject(parent), _name(name), _keyBytes(keyBytes)
@@ -268,58 +247,32 @@ void MAVLinkSigningKeys::removeAllKeys()
 
 void MAVLinkSigningKeys::_save()
 {
-    QLockFile lock(_keystoreLockPath());
-    if (!lock.tryLock(kKeystoreLockTimeoutMs)) {
-        // Best-effort: a torn write is better than silently dropping key data.
-        qCWarning(MAVLinkSigningKeysLog) << "Could not acquire keystore lock; proceeding without it";
-    }
-
+    // No cross-process lock: RunGuard enforces single-instance, so the keystore has no concurrent writer.
     QSettings settings;
     settings.beginGroup(kSettingsGroup);
     const QStringList previousNames = settings.value(kManifestKey).toStringList();
-    settings.endGroup();
-    const QSet<QString> previousNameSet(previousNames.constBegin(), previousNames.constEnd());
 
-    // Track in-memory roster (truth for what's user-removed) separately from manifest output.
-    QSet<QString> liveNameSet;
     QStringList manifestNames;
     for (int i = 0; i < _keys->count(); ++i) {
         const auto* key = _keys->value<MAVLinkSigningKey*>(i);
-        liveNameSet.insert(key->name());
         const auto& bytes = key->keyBytes();
         QByteArray serialized(reinterpret_cast<const char*>(bytes.data()), static_cast<qsizetype>(bytes.size()));
-        const bool ok = QGCKeychain::writeBinary(kKeychainKeyPrefix + key->name(), serialized);
+        settings.setValue(QString("%1/%2").arg(kKeySubgroup, key->name()), serialized);
         QGC::secureZero(serialized);
-        if (ok) {
-            manifestNames.append(key->name());
-        } else if (previousNameSet.contains(key->name())) {
-            // Write failed but prior keychain entry still holds the same bytes — keep it visible across restarts.
-            qCWarning(MAVLinkSigningKeysLog)
-                << "Failed to update keychain entry; retaining prior value:" << key->name();
-            manifestNames.append(key->name());
-        } else {
-            qCWarning(MAVLinkSigningKeysLog)
-                << "Failed to save new key to keychain (will not survive restart):" << key->name();
-        }
+        manifestNames.append(key->name());
     }
 
-    // Only purge keychain/manifest entries the user actually removed; preserve prior values for failed writes.
+    const QSet<QString> liveNameSet(manifestNames.constBegin(), manifestNames.constEnd());
     for (const QString& oldName : previousNames) {
         if (!liveNameSet.contains(oldName)) {
-            QGCKeychain::remove(kKeychainKeyPrefix + oldName);
-        }
-    }
-
-    settings.beginGroup(kSettingsGroup);
-    settings.setValue(kManifestKey, manifestNames);
-
-    for (const QString& oldName : previousNames) {
-        if (!liveNameSet.contains(oldName)) {
+            settings.remove(QString("%1/%2").arg(kKeySubgroup, oldName));
             settings.remove(QString("%1/%2").arg(kTimestampSubgroup, oldName));
         }
     }
+
+    settings.setValue(kManifestKey, manifestNames);
     settings.endGroup();
-    // Explicit sync: crash between keychain writes and QSettings destruction would orphan entries.
+    // Explicit sync: persist before a crash between here and QSettings destruction.
     settings.sync();
 }
 
@@ -333,10 +286,6 @@ void MAVLinkSigningKeys::recordTimestamps(const QHash<QString, uint64_t>& batch)
 {
     if (batch.isEmpty()) {
         return;
-    }
-    QLockFile lock(_keystoreLockPath());
-    if (!lock.tryLock(kKeystoreLockTimeoutMs)) {
-        qCWarning(MAVLinkSigningKeysLog) << "Could not acquire keystore lock; proceeding without it";
     }
     QSettings settings;
     settings.beginGroup(kSettingsGroup);
@@ -456,7 +405,7 @@ void MAVLinkSigningKeys::_load()
     settings.beginGroup(kSettingsGroup);
     const QStringList manifest = settings.value(kManifestKey).toStringList();
     for (const QString& name : manifest) {
-        QByteArray keyBytes = QGCKeychain::readBinary(kKeychainKeyPrefix + name);
+        QByteArray keyBytes = settings.value(QString("%1/%2").arg(kKeySubgroup, name)).toByteArray();
         if (const auto key = MAVLinkSigning::makeSigningKey(keyBytes); !name.isEmpty() && key) {
             auto* inserted = _insertKey(name, *key);
             const uint64_t ts = settings.value(QString("%1/%2").arg(kTimestampSubgroup, name)).toULongLong();
@@ -464,7 +413,7 @@ void MAVLinkSigningKeys::_load()
                 inserted->setLastTimestamp(ts);
             }
         } else if (!keyBytes.isEmpty()) {
-            qCWarning(MAVLinkSigningKeysLog) << "Skipping malformed keychain entry:" << name;
+            qCWarning(MAVLinkSigningKeysLog) << "Skipping malformed key entry:" << name;
         }
         QGC::secureZero(keyBytes);
     }

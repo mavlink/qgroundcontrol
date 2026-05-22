@@ -52,6 +52,19 @@ public:
     /// Returns current timestamp and active key name. Returns {0, ""} when signing is not enabled.
     TimestampSnapshot currentTimestampAndName() const;
 
+    /// Bump `_signing.timestamp` up to current wall clock; libmavlink only increments per-packet, so an
+    /// idle outbound path otherwise drifts behind wall clock and triggers OLD_TIMESTAMP rejections on
+    /// peers that pin signing.timestamp to wall clock (ArduPilot). No-op when not enabled or already ahead.
+    /// Returns true if the timestamp was advanced.
+    bool refreshOutgoingTimestamp();
+
+    /// Re-sign an already-encoded outgoing message in place with a current, monotonic timestamp, immediately before
+    /// it hits the wire. The cached-resend path (Vehicle::sendMessageMultiple) reuses the same signed bytes across
+    /// retries, so without this the frozen timestamp drifts behind wall clock and peers reject it (OLD_TIMESTAMP).
+    /// No-op (returns false) when signing is disabled or SIGN_OUTGOING is unset (pending-enable). The secret key never
+    /// leaves the signing layer. Returns true if the message was re-signed.
+    bool signOutgoing(mavlink_message_t& message);
+
     /// While suspended, tryDetectKey is suppressed to block stale-key installs during pending enable.
     bool isAutoDetectSuspended() const;
 

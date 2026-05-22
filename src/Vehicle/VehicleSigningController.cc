@@ -143,6 +143,38 @@ void VehicleSigningController::_onRetryTimer()
                                          << (_pendingHasKey ? "enable" : "disable") << ")";
 }
 
+SharedLinkInterfacePtr VehicleSigningController::_activeLink(const char* op) const
+{
+    if (!_active) {
+        qCWarning(VehicleSigningControllerLog) << "[veh" << _vehicle->id() << "]" << op << ": no signing controller";
+        return {};
+    }
+    SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    if (!sharedLink) {
+        qCWarning(VehicleSigningControllerLog) << "[veh" << _vehicle->id() << "]" << op << ": no primary link";
+    }
+    return sharedLink;
+}
+
+void VehicleSigningController::_wireConfirmHandlers()
+{
+    connect(_active, &SigningController::signingConfirmed, this, &VehicleSigningController::_onSigningConfirmed,
+            Qt::SingleShotConnection);
+    connect(_active, &SigningController::signingFailed, this, &VehicleSigningController::_onSigningFailed,
+            Qt::SingleShotConnection);
+}
+
+bool VehicleSigningController::_sendAndStartRetransmit(const SharedLinkInterfacePtr& sharedLink, QByteArrayView keyView)
+{
+    if (!_sendSetupSigning(sharedLink, keyView)) {
+        _active->cancelPending(tr("Failed to transmit SETUP_SIGNING to vehicle"));
+        return false;
+    }
+
+    _startRetransmit();
+    return true;
+}
+
 bool VehicleSigningController::_sendSetupSigning(const SharedLinkInterfacePtr& sharedLink, QByteArrayView keyView)
 {
     const auto channel = static_cast<mavlink_channel_t>(sharedLink->mavlinkChannel());
@@ -166,14 +198,8 @@ bool VehicleSigningController::_sendSetupSigning(const SharedLinkInterfacePtr& s
 
 void VehicleSigningController::enable(const QString& keyName)
 {
-    if (!_active) {
-        qCWarning(VehicleSigningControllerLog) << "[veh" << _vehicle->id() << "] enable: no signing controller";
-        return;
-    }
-
-    const SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    const SharedLinkInterfacePtr sharedLink = _activeLink("enable");
     if (!sharedLink) {
-        qCWarning(VehicleSigningControllerLog) << "[veh" << _vehicle->id() << "] enable: no primary link";
         return;
     }
 
@@ -184,27 +210,22 @@ void VehicleSigningController::enable(const QString& keyName)
         return;
     }
 
-    // Atomic FSM commit BEFORE _sendSetupSigning — re-entry rejected without putting bytes on the wire.
+    // Atomic FSM commit BEFORE wiring/transmit — re-entry rejected without putting bytes on the wire.
     if (auto fail = _active->tryBeginEnable(static_cast<uint8_t>(_vehicle->id()), keyName, *keyBytes)) {
         qgcApp()->showAppMessage(fail->detail);
         emit signingFailed(*fail);
         return;
     }
 
-    connect(_active, &SigningController::signingConfirmed, this, &VehicleSigningController::_onSigningConfirmed,
-            Qt::SingleShotConnection);
-    connect(_active, &SigningController::signingFailed, this, &VehicleSigningController::_onSigningFailed,
-            Qt::SingleShotConnection);
-
-    const QByteArrayView keyView(reinterpret_cast<const char*>(keyBytes->data()), keyBytes->size());
-    if (!_sendSetupSigning(sharedLink, keyView)) {
-        _active->cancelPending(tr("Failed to transmit SETUP_SIGNING to vehicle"));
-        return;
-    }
-
     _pendingKey = *keyBytes;
     _pendingHasKey = true;
-    _startRetransmit();
+    const QByteArrayView keyView(reinterpret_cast<const char*>(_pendingKey.data()), _pendingKey.size());
+    _wireConfirmHandlers();
+    if (!_sendAndStartRetransmit(sharedLink, keyView)) {
+        QGC::secureZero(_pendingKey);
+        _pendingHasKey = false;
+        return;
+    }
 
     qCDebug(VehicleSigningControllerLog) << "[veh" << _vehicle->id() << "] SETUP_SIGNING sent — key" << keyName
                                          << "awaiting signed HEARTBEAT";
@@ -212,14 +233,8 @@ void VehicleSigningController::enable(const QString& keyName)
 
 void VehicleSigningController::disable()
 {
-    if (!_active) {
-        qCWarning(VehicleSigningControllerLog) << "[veh" << _vehicle->id() << "] disable: no signing controller";
-        return;
-    }
-
-    const SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
+    const SharedLinkInterfacePtr sharedLink = _activeLink("disable");
     if (!sharedLink) {
-        qCWarning(VehicleSigningControllerLog) << "[veh" << _vehicle->id() << "] disable: no primary link";
         return;
     }
 
@@ -229,21 +244,14 @@ void VehicleSigningController::disable()
         return;
     }
 
-    connect(_active, &SigningController::signingConfirmed, this, &VehicleSigningController::_onSigningConfirmed,
-            Qt::SingleShotConnection);
-    connect(_active, &SigningController::signingFailed, this, &VehicleSigningController::_onSigningFailed,
-            Qt::SingleShotConnection);
-
     // Wipe any leftover key bytes from a prior enable; disable retransmits send no key.
     QGC::secureZero(_pendingKey);
     _pendingHasKey = false;
 
-    if (!_sendSetupSigning(sharedLink, QByteArrayView{})) {
-        _active->cancelPending(tr("Failed to transmit SETUP_SIGNING to vehicle"));
+    _wireConfirmHandlers();
+    if (!_sendAndStartRetransmit(sharedLink, QByteArrayView{})) {
         return;
     }
-
-    _startRetransmit();
 
     qCDebug(VehicleSigningControllerLog) << "[veh" << _vehicle->id()
                                          << "] disable SETUP_SIGNING sent — awaiting unsigned HEARTBEAT";

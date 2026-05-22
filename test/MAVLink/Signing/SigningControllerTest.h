@@ -38,4 +38,6 @@ private slots:
     void _testCancelOnIdleNoOp();
     void _testStatusTextDuringPending();
     void _testExpectedSysIdScopedToPendingOp();
+    void _testWallClockTimerRefreshesAfterEnable();
+    void _testWallClockTimerStoppedWhenIdle();
 };

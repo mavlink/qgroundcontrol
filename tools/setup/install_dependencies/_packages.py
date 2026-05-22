@@ -101,10 +101,6 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
     "audio": [
         "libpulse-dev",
     ],
-    "keychain": [
-        "libgcrypt20-dev",
-        "libsecret-1-dev",
-    ],
     "misc": [
         "libvulkan-dev",
         "libpipewire-0.3-dev",
