@@ -1,7 +1,9 @@
 #include "QmlObjectListModel.h"
 #include "ParameterManager.h"
+#include "BulkRefreshJob.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QSet>
 #include <QtCore/QTextStream>
 
 #include "AutoPilotPlugin.h"
@@ -36,6 +38,7 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
     , _vehicle(vehicle)
     , _logReplay(!vehicle->vehicleLinkManager()->primaryLink().expired() && vehicle->vehicleLinkManager()->primaryLink().lock()->isLogReplay())
     , _disableAllRetries(_logReplay)
+    , _waitForParamValueAckMs(QGC::runningUnitTests() ? 50 : kWaitForParamValueAckMs)
     , _tryftp(vehicle->apmFirmware())
 {
     qCDebug(ParameterManagerLog) << this;
@@ -390,7 +393,7 @@ void ParameterManager::_mavlinkParamSet(int componentId, const QString &paramNam
     auto errorDecPendingWriteCountState = new FunctionState(QStringLiteral("ParameterManager error decrement pending write count"), stateMachine, [this]() {
         _decrementPendingWriteCount();
     });
-    auto waitAckState = new WaitForParamResponseState(stateMachine, kWaitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
+    auto waitAckState = new WaitForParamResponseState(stateMachine, _waitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
     auto paramRefreshState = new FunctionState(QStringLiteral("ParameterManager param refresh"), stateMachine, [this, componentId, paramName]() {
         refreshParameter(componentId, paramName);
     });
@@ -718,11 +721,60 @@ void ParameterManager::refreshParametersPrefix(int componentId, const QString &n
     componentId = _actualComponentId(componentId);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "refreshParametersPrefix - name:" << namePrefix << ")";
 
+    if (!_mapCompId2FactMap.contains(componentId)) {
+        return;
+    }
     for (const QString &paramName: _mapCompId2FactMap[componentId].keys()) {
         if (paramName.startsWith(namePrefix)) {
             refreshParameter(componentId, paramName);
         }
     }
+}
+
+void ParameterManager::bulkRefresh(int componentId, const QStringList &names, bool notifyFailure)
+{
+    componentId = _actualComponentId(componentId);
+
+    if (!_mapCompId2FactMap.contains(componentId)) {
+        return;
+    }
+    const QMap<QString, Fact *> &factMap = _mapCompId2FactMap[componentId];
+    QStringList resolved;
+    QSet<QString> seen;
+    for (const QString &entry : names) {
+        if (entry.endsWith(QLatin1Char('*'))) {
+            const QString prefix = entry.chopped(1);
+            if (prefix.isEmpty()) {
+                qCWarning(ParameterManagerLog) << "bulkRefresh: ignoring bare '*' entry";
+                continue;
+            }
+            for (auto it = factMap.cbegin(); it != factMap.cend(); ++it) {
+                if (it.key().startsWith(prefix) && !seen.contains(it.key())) {
+                    seen.insert(it.key());
+                    resolved.append(it.key());
+                }
+            }
+        } else if (factMap.contains(entry)) {
+            if (!seen.contains(entry)) {
+                seen.insert(entry);
+                resolved.append(entry);
+            }
+        } else {
+            qCWarning(ParameterManagerLog) << "bulkRefresh: unknown param name (skipped):" << entry;
+        }
+    }
+
+    if (resolved.isEmpty()) {
+        return;
+    }
+
+    qCDebug(ParameterManagerLog) << "bulkRefresh: resolved" << resolved.count() << "params";
+    new BulkRefreshJob(
+        this, componentId, resolved, notifyFailure,
+        [this, componentId](const QString &name) {
+            _mavlinkParamRequestRead(componentId, name, -1, false /* notifyFailure */);
+        },
+        this);
 }
 
 bool ParameterManager::parameterExists(int componentId, const QString &paramName) const
@@ -946,7 +998,7 @@ void ParameterManager::_mavlinkParamRequestRead(int componentId, const QString &
     // Create states
     auto stateMachine = new QGCStateMachine(QStringLiteral("PARAM_REQUEST_READ"), vehicle(), this);
     auto sendParamRequestReadState = new SendMavlinkMessageState(stateMachine, paramRequestReadEncoder, kParamRequestReadRetryCount);
-    auto waitAckState = new WaitForParamResponseState(stateMachine, kWaitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
+    auto waitAckState = new WaitForParamResponseState(stateMachine, _waitForParamValueAckMs, checkForCorrectParamValue, checkForParamError);
     auto userNotifyState = new FunctionState(QStringLiteral("User notify"), stateMachine, [waitAckState, paramName, this, componentId]() {
         const QString errorDetail = waitAckState->lastParamErrorString();
         const QString msg = errorDetail.isEmpty()
@@ -1409,8 +1461,6 @@ QString ParameterManager::_remapParamNameToVersion(const QString &paramName) con
 
     const int majorVersion = _vehicle->firmwareMajorVersion();
     const int minorVersion = _vehicle->firmwareMinorVersion();
-
-    qCDebug(ParameterManagerLog) << "_remapParamNameToVersion" << paramName << majorVersion << minorVersion;
 
     if (majorVersion == Vehicle::versionNotSetValue) {
         // Vehicle version unknown

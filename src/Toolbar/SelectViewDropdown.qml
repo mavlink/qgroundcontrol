@@ -17,6 +17,7 @@ ToolIndicatorPage {
             rowSpacing: columnSpacing
 
             SubMenuButton {
+                objectName: "toolbar_viewFly"
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true
                 text: qsTr("Fly")
@@ -30,6 +31,7 @@ ToolIndicatorPage {
             }
 
             SubMenuButton {
+                objectName: "toolbar_viewPlan"
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true
                 text: qsTr("Plan")
@@ -43,6 +45,7 @@ ToolIndicatorPage {
             }
 
             SubMenuButton {
+                objectName: "toolbar_viewAnalyze"
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true
                 text: qsTr("Analyze")
@@ -58,6 +61,7 @@ ToolIndicatorPage {
 
             SubMenuButton {
                 id: setupButton
+                objectName: "toolbar_viewConfigure"
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true
                 text: qsTr("Configure")
@@ -72,6 +76,7 @@ ToolIndicatorPage {
 
             SubMenuButton {
                 id: settingsButton
+                objectName: "toolbar_viewSettings"
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true
                 text: qsTr("Settings")
@@ -87,6 +92,7 @@ ToolIndicatorPage {
 
             SubMenuButton {
                 id: closeButton
+                objectName: "toolbar_viewClose"
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true
                 text: qsTr("Close")

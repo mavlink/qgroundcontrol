@@ -43,10 +43,12 @@ class ControlDef:
     """A single control referencing a setting."""
     setting: str        # e.g. "appSettings.qLocaleLanguage"
     label: str = ""     # explicit label override; empty = use fact.label
-    control: str = ""   # explicit control type: "checkbox", "combobox", "textfield", "slider", "browse"; empty = auto-detect
+    control: str = ""   # explicit control type: "checkbox", "combobox", "textfield", "slider", "browse", "info", "component"; empty = auto-detect
     showWhen: str = ""  # extra visibility expression (ANDed with fact.userVisible)
     enableWhen: str = ""  # enabled expression
     placeholder: str = ""  # placeholder text for text fields
+    value: str = ""     # for "info" control: binding expression to display as labelText
+    component: str = ""  # for "component" control: QML component to instantiate inline
     enableCheckbox: EnableCheckboxDef | None = None  # slider: checked/onClicked
     button: ButtonDef | None = None                    # adjacent button: text/onClicked/enabled
 
@@ -83,6 +85,7 @@ class GroupDef:
 @dataclass
 class PageDef:
     """A complete settings page definition."""
+    imports: list[str] = field(default_factory=list)  # extra QML imports
     bindings: dict[str, str] = field(default_factory=dict)  # name -> QML expression
     groups: list[GroupDef] = field(default_factory=list)
 
@@ -96,7 +99,7 @@ def load_page_def(json_path: Path) -> PageDef:
     with open(json_path, encoding="utf-8") as f:
         data = json.load(f)
 
-    page = PageDef(bindings=data.get("bindings", {}))
+    page = PageDef(imports=data.get("imports", []), bindings=data.get("bindings", {}))
     for grp_data in data.get("groups", []):
         grp = GroupDef(
             heading=grp_data.get("heading", ""),
@@ -110,12 +113,14 @@ def load_page_def(json_path: Path) -> PageDef:
         )
         for ctrl_data in grp_data.get("controls", []):
             grp.controls.append(ControlDef(
-                setting=ctrl_data["setting"],
+                setting=ctrl_data.get("setting", ""),
                 label=ctrl_data.get("label", ""),
                 control=ctrl_data.get("control", ""),
                 showWhen=ctrl_data.get("showWhen", ""),
                 enableWhen=ctrl_data.get("enableWhen", ""),
                 placeholder=ctrl_data.get("placeholder", ""),
+                value=ctrl_data.get("value", ""),
+                component=ctrl_data.get("component", ""),
                 enableCheckbox=parse_enable_checkbox(ctrl_data.get("enableCheckbox")),
                 button=parse_button(ctrl_data.get("button")),
             ))
@@ -153,6 +158,7 @@ def _load_settings_metadata(settings_dir: Path) -> dict[str, dict]:
         "GimbalController": "gimbalControllerSettings",
         "Joystick": "joystickSettings",
         "JoystickManager": "joystickManagerSettings",
+        "LogManager": "logManagerSettings",
         "Maps": "mapsSettings",
         "Mavlink": "mavlinkSettings",
         "MavlinkActions": "mavlinkActionsSettings",
@@ -254,7 +260,62 @@ def _qml_control(ctrl: ControlDef, settings_dir: Path, json_context: str = "") -
         return ""
 
     # Determine control type: explicit override or auto-detect from metadata
-    if ctrl.control == "slider":
+    if ctrl.control == "component":
+        lines: list[str] = []
+        lines.append(f"{indent}{ctrl.component} {{")
+        lines.append(f"{indent}    Layout.fillWidth: true")
+        if ctrl.showWhen:
+            lines.append(f"{indent}    visible: {ctrl.showWhen}")
+        if ctrl.enableWhen:
+            lines.append(f"{indent}    enabled: {ctrl.enableWhen}")
+        lines.append(f"{indent}}}")
+        return "\n".join(lines)
+    elif ctrl.control == "info":
+        vis_line = ""
+        if ctrl.showWhen:
+            vis_line = f"{indent}    visible: {ctrl.showWhen}\n"
+        enabled_line = ""
+        if ctrl.enableWhen:
+            enabled_line = f"{indent}    enabled: {ctrl.enableWhen}\n"
+        label_expr = qml_tr(ctrl.label, json_context) if ctrl.label else '""'
+
+        has_button = ctrl.button is not None and ctrl.button.text
+        if has_button:
+            inner_indent = indent + "    "
+            lines: list[str] = []
+            lines.append(f"{indent}RowLayout {{")
+            lines.append(f"{indent}    Layout.fillWidth: true")
+            lines.append(f"{indent}    spacing: ScreenTools.defaultFontPixelWidth")
+            if vis_line:
+                lines.append(f"{indent}    visible: {ctrl.showWhen}")
+            if enabled_line:
+                lines.append(f"{indent}    enabled: {ctrl.enableWhen}")
+            lines.append(f"{inner_indent}LabelledLabel {{")
+            lines.append(f"{inner_indent}    Layout.fillWidth: true")
+            lines.append(f"{inner_indent}    label: {label_expr}")
+            lines.append(f"{inner_indent}    labelText: {ctrl.value}")
+            lines.append(f"{inner_indent}}}")
+            assert ctrl.button is not None
+            lines.append(f"{inner_indent}QGCButton {{")
+            lines.append(f'{inner_indent}    text: {qml_tr(ctrl.button.text, json_context)}')
+            lines.append(f"{inner_indent}    onClicked: {ctrl.button.onClicked}")
+            if ctrl.button.enabled:
+                lines.append(f"{inner_indent}    enabled: {ctrl.button.enabled}")
+            lines.append(f"{inner_indent}}}")
+            lines.append(f"{indent}}}")
+            return "\n".join(lines)
+        else:
+            control_qml = (
+                f"{indent}LabelledLabel {{\n"
+                f"{indent}    Layout.fillWidth: true\n"
+                f"{indent}    label: {label_expr}\n"
+                f"{indent}    labelText: {ctrl.value}\n"
+                f"{vis_line}"
+                f"{enabled_line}"
+                f"{indent}}}"
+            )
+            return control_qml
+    elif ctrl.control == "slider":
         control_qml = render_slider(
             fact_ref, indent,
             label=ctrl.label,
@@ -368,7 +429,7 @@ def _needs_string_field_width(page: PageDef, settings_dir: Path) -> bool:
     return False
 
 
-def generate_page_qml(page: PageDef, settings_dir: Path, json_context: str = "") -> str:
+def generate_page_qml(page: PageDef, settings_dir: Path, json_context: str = "", page_name: str = "") -> str:
     """Generate a complete QML settings page from a page definition."""
     _tr = (lambda s: f'qsTranslate("{json_context}", "{s}")') if json_context else (lambda s: f'qsTr("{s}")')
     has_string_fields = _needs_string_field_width(page, settings_dir)
@@ -383,10 +444,15 @@ def generate_page_qml(page: PageDef, settings_dir: Path, json_context: str = "")
     lines.append("import QGroundControl")
     lines.append("import QGroundControl.FactControls")
     lines.append("import QGroundControl.Controls")
+    for imp in page.imports:
+        lines.append(f"import {imp}")
     lines.append("")
 
     # Root element
     lines.append("SettingsPage {")
+    if page_name:
+        object_name = page_name.replace(" ", "")
+        lines.append(f'    objectName: "settingsPage_{object_name}"')
     if has_string_fields:
         lines.append("    property real _stringFieldWidth: ScreenTools.defaultFontPixelWidth * 30")
 
@@ -414,7 +480,7 @@ def generate_page_qml(page: PageDef, settings_dir: Path, json_context: str = "")
         if grp.showWhen:
             vis_parts.append(f"({grp.showWhen})")
         if grp.controls:
-            fact_refs = [f"QGroundControl.settingsManager.{c.setting}" for c in grp.controls]
+            fact_refs = [f"QGroundControl.settingsManager.{c.setting}" for c in grp.controls if c.setting]
             auto_vis = " || ".join(f"{ref}.userVisible" for ref in fact_refs)
             vis_parts.append(f"({auto_vis})")
         if vis_parts:
@@ -464,7 +530,7 @@ def generate_page_qml(page: PageDef, settings_dir: Path, json_context: str = "")
         if grp.showWhen:
             vis_parts.append(f"({grp.showWhen})")
         if grp.controls:
-            fact_refs = [f"QGroundControl.settingsManager.{c.setting}" for c in grp.controls]
+            fact_refs = [f"QGroundControl.settingsManager.{c.setting}" for c in grp.controls if c.setting]
             auto_vis = " || ".join(f"{ref}.userVisible" for ref in fact_refs)
             vis_parts.append(f"({auto_vis})")
         lines.append(f"        visible: {' && '.join(vis_parts)}")
@@ -596,6 +662,7 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
         lines.append("")
         lines.append("    ListElement {")
         lines.append(f'        name: qsTranslate("SettingsPages.json", "{name}")')
+        lines.append(f'        nameKey: "{name}"')
         lines.append(f'        url: "{url}"')
         lines.append(f'        iconUrl: "{icon}"')
         lines.append(f"        sections: '{sections_json}'")

@@ -1,0 +1,33 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "imports": [],
+    "bindings": {
+        "settingsManager": "QGroundControl.settingsManager",
+        "logSettings": "settingsManager.logManagerSettings",
+        "diskLoggingEnabledValue": "logSettings.diskLoggingEnabled.rawValue",
+        "logSavePath": "settingsManager.appSettings.logSavePath"
+    },
+    "groups": [
+        {
+            "heading": "Disk Logging",
+            "sectionName": "Disk Logging",
+            "keywords": ["disk", "logging", "file", "flush", "save", "path", "compression", "rotation", "backup"],
+            "controls": [
+                { "setting": "logManagerSettings.diskLoggingEnabled" },
+                { "setting": "logManagerSettings.diskLoggingMaxFileSizeMB", "enableWhen": "diskLoggingEnabledValue" },
+                { "setting": "logManagerSettings.diskLoggingMaxBackupFiles", "enableWhen": "diskLoggingEnabledValue" }
+            ]
+        },
+        {
+            "heading": "Log Viewer",
+            "sectionName": "Log Viewer",
+            "keywords": ["console", "buffer", "entries", "elapsed", "timestamp", "time", "gstreamer", "debug", "save", "format", "export"],
+            "controls": [
+                { "setting": "appSettings.showAppLogTimestampAsElapsedTime" },
+                { "setting": "appSettings.gstDebugLevel" },
+                { "setting": "logManagerSettings.saveFormat" }
+            ]
+        }
+    ]
+}

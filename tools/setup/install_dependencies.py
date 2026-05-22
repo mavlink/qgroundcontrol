@@ -178,6 +178,12 @@ JUST_TARGETS: dict[str, str] = {
     "aarch64": "aarch64-unknown-linux-musl",
 }
 
+# Fallback alternatives tried (in order) when a primary package is unavailable.
+# Ubuntu 26.04+ renamed libgstreamer-plugins-good1.0-dev → libgstreamer-plugins-extra1.0-dev.
+DEBIAN_PACKAGE_ALTERNATIVES: dict[str, list[str]] = {
+    "libgstreamer-plugins-good1.0-dev": ["libgstreamer-plugins-extra1.0-dev"],
+}
+
 APT_BASE_OPTIONS: list[str] = [
     "-o",
     "DPkg::Lock::Timeout=300",
@@ -285,12 +291,18 @@ def get_brew_install_command(packages: list[str]) -> list[str]:
 
 
 def check_apt_package_available(package: str) -> bool:
-    """Check if an apt package is available."""
+    """Check if an apt package has an installation candidate (not merely referenced)."""
     result = subprocess.run(
-        ["apt-cache", "show", package],
+        ["apt-cache", "policy", package],
         capture_output=True,
+        text=True,
     )
-    return result.returncode == 0
+    if result.returncode != 0:
+        return False
+    for line in result.stdout.splitlines():
+        if "Candidate:" in line:
+            return "(none)" not in line
+    return False
 
 
 def get_available_debian_packages(category: str) -> list[str]:
@@ -301,6 +313,40 @@ def get_available_debian_packages(category: str) -> list[str]:
     with ThreadPoolExecutor() as pool:
         available = list(pool.map(check_apt_package_available, packages))
     return [pkg for pkg, ok in zip(packages, available, strict=False) if ok]
+
+
+def resolve_package_alternatives(packages: list[str]) -> list[str]:
+    """Replace packages with their first available alternative when the primary is missing."""
+    needs_check = {pkg for pkg in packages if pkg in DEBIAN_PACKAGE_ALTERNATIVES}
+    if not needs_check:
+        return packages
+
+    all_candidates = sorted(
+        {name for pkg in needs_check for name in [pkg, *DEBIAN_PACKAGE_ALTERNATIVES[pkg]]}
+    )
+    with ThreadPoolExecutor() as pool:
+        availability = dict(
+            zip(
+                all_candidates,
+                pool.map(check_apt_package_available, all_candidates),
+                strict=False,
+            )
+        )
+
+    resolved = []
+    for pkg in packages:
+        if pkg not in needs_check:
+            resolved.append(pkg)
+            continue
+        chosen = pkg
+        if not availability.get(pkg):
+            for alt in DEBIAN_PACKAGE_ALTERNATIVES[pkg]:
+                if availability.get(alt):
+                    print(f"  Package {pkg} not available; using {alt}")
+                    chosen = alt
+                    break
+        resolved.append(chosen)
+    return resolved
 
 
 def validate_extra_packages(packages: list[str]) -> list[str]:
@@ -514,6 +560,9 @@ def install_debian(
         else:
             packages = get_debian_packages()
             packages = [pkg for pkg in packages if pkg not in bootstrap_packages]
+
+        # Resolve alternatives for packages renamed/replaced in newer distro releases
+        packages = resolve_package_alternatives(packages)
 
         # Install main packages
         print(f"\nInstalling {len(packages)} packages...")

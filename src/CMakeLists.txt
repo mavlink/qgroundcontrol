@@ -7,7 +7,7 @@ qt_add_library(QGroundControlModule STATIC)
 # ----------------------------------------------------------------------------
 # QML Resources
 # ----------------------------------------------------------------------------
-set_source_files_properties(UI/MainWindow.qml
+set_source_files_properties(MainWindow/MainWindow.qml
     PROPERTIES
         QT_RESOURCE_ALIAS MainWindow.qml
 )
@@ -17,7 +17,8 @@ qt_add_qml_module(QGroundControlModule
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
-        UI/MainWindow.qml
+        MainWindow/MainWindow.qml
+        MainWindow/MainWindowSavedState.qml
     IMPORTS
         QGC
     NO_PLUGIN
@@ -57,7 +58,9 @@ add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
-add_subdirectory(UI)
+add_subdirectory(AppSettings)
+add_subdirectory(FirstRunPromptDialogs)
+add_subdirectory(Toolbar)
 add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)

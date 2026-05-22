@@ -1,14 +1,17 @@
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.Logging
+import QGroundControl.LogManager
 import QtQuick
 import QtQuick.Layouts
 
 Item {
     id: root
+    objectName: "settingsPage_LogViewer"
 
     readonly property real _indicatorWidth: ScreenTools.defaultFontPixelWidth * 0.4
     readonly property real _margin: ScreenTools.defaultFontPixelWidth
+    readonly property real _cellLeftMargin: _margin * 0.3
+    readonly property real _cellRightMargin: _cellLeftMargin
     readonly property real _rowHeight: ScreenTools.defaultFontPixelHeight * 1.6
 
     function _levelColor(lvl) {
@@ -78,47 +81,74 @@ Item {
         // ── Log table ────────────────────────────────────────────
         TableView {
             id: tableView
-
-            property bool _loadCompleted: false
-            property real _cachedWidth: 0
-
             Layout.fillHeight: true
             Layout.fillWidth: true
             boundsBehavior: Flickable.StopAtBounds
             clip: true
             columnSpacing: 0
+            rowSpacing: 0
+            model: LogManager.model
+            resizableColumns: true
+            reuseItems: true
+
+            readonly property real minMessageColumnWidthInChars: 40
+
             columnWidthProvider: function (col) {
                 const explicit_ = tableView.explicitColumnWidth(col)
                 if (explicit_ > 0) {
                     return explicit_;
                 }
-                const cw = ScreenTools.defaultFontPixelWidth
-                const w = _cachedWidth
-                const compact = w < cw * 60
+                const charWidth = ScreenTools.defaultFontPixelWidth
+                const compact = _cachedWidth < charWidth * 60
+                const catW = compact ? charWidth * 14 : charWidth * 22
+                const tsW  = compact ? charWidth * 9  : charWidth * 12
+                const srcW = compact ? charWidth * 16 : charWidth * 22
                 switch (col) {
-                case LogEntry.TimestampColumn:
-                    return compact ? cw * 9 : cw * 12;
-                case LogEntry.LevelColumn:
-                    return compact ? cw * 5 : cw * 7;
+                case LogEntry.MessageColumn:
+                    return Math.max(charWidth * minMessageColumnWidthInChars, _cachedWidth - catW - tsW - srcW)
                 case LogEntry.CategoryColumn:
-                    return compact ? cw * 14 : cw * 22;
+                    return catW;
+                case LogEntry.TimestampColumn:
+                    return tsW;
                 case LogEntry.SourceColumn:
-                    return compact ? cw * 16 : cw * 22;
-                case LogEntry.MessageColumn: {
-                    const fixedWidth = compact ? cw * 44 : cw * 63
-                    return Math.max(cw * 30, w - fixedWidth)
-                }
+                    return srcW;
                 }
                 return -1;
             }
-            model: LogManager.model
-            resizableColumns: true
-            rowSpacing: 0
-            reuseItems: true
+
+            property bool _loadCompleted: false
+            property real _cachedWidth: 0
+            property bool _following: false
+            property bool _atBottom: false
+
+            function _updateAtBottom() {
+                if (!_loadCompleted) {
+                    return
+                }
+                const maxY = contentHeight - height
+                if (maxY <= 0) {
+                    _atBottom = true
+                } else {
+                    _atBottom = (contentY >= maxY - _rowHeight)
+                }
+                // Stop following if user scrolls away from bottom
+                if (!_atBottom) {
+                    _following = false
+                }
+            }
 
             onWidthChanged: {
                 _cachedWidth = width;
                 _layoutTimer.restart();
+            }
+
+            onContentYChanged: _updateAtBottom()
+            onContentHeightChanged: _updateAtBottom()
+            onHeightChanged: _updateAtBottom()
+
+            Component.onCompleted: {
+                _cachedWidth = width;
+                _loadCompleted = true;
             }
 
             Timer {
@@ -149,9 +179,9 @@ Item {
 
                 QGCLabel {
                     anchors.left: parent.left
-                    anchors.leftMargin: parent.column === 0 ? _indicatorWidth + _margin * 0.3 : _margin * 0.3
+                    anchors.leftMargin: parent.column === 0 ? _indicatorWidth + _cellLeftMargin : _cellLeftMargin
                     anchors.right: parent.right
-                    anchors.rightMargin: _margin * 0.3
+                    anchors.rightMargin: _cellRightMargin
                     anchors.verticalCenter: parent.verticalCenter
                     color: root._levelColor(parent.level)
                     elide: Text.ElideRight
@@ -162,23 +192,15 @@ Item {
             }
 
             QGCLabel {
+                x: tableView.contentX + (tableView.width - width) / 2
+                y: tableView.contentY + (tableView.height - height) / 2
                 color: qgcPal.colorGrey
                 text: qsTr("No log entries")
                 visible: tableView.rows === 0
-                x: tableView.contentX + (tableView.width - width) / 2
-                y: tableView.contentY + (tableView.height - height) / 2
-            }
-
-            Component.onCompleted: {
-                _cachedWidth = width;
-                _loadCompleted = true;
-                if (rows > 0)
-                    positionViewAtRow(rows - 1, TableView.AlignBottom);
             }
 
             Timer {
                 id: scrollTimer
-
                 interval: 50
 
                 onTriggered: {
@@ -189,8 +211,9 @@ Item {
 
             Connections {
                 function onRowsInserted() {
-                    if (tableView._loadCompleted && followTail.checked)
+                    if (tableView._loadCompleted && tableView._following) {
                         scrollTimer.restart();
+                    }
                 }
 
                 target: LogManager.model
@@ -275,30 +298,37 @@ Item {
                 }
 
                 QGCButton {
-                    id: followTail
-
-                    checkable: true
-                    checked: true
-                    text: qsTr("Follow")
-
-                    onCheckedChanged: {
-                        if (checked && tableView._loadCompleted && tableView.rows > 0)
-                            tableView.positionViewAtRow(tableView.rows - 1, TableView.AlignBottom);
-                    }
-                }
-
-                QGCButton {
                     text: qsTr("Categories")
 
                     onClicked: filtersDialogFactory.open()
                 }
 
                 QGCButton {
-                    text: qsTr("Settings")
+                    text: qsTr("Save")
 
-                    onClicked: settingsDialogFactory.open()
+                    onClicked: saveFileDialog.openForSave()
+                }
+
+                QGCButton {
+                    text: qsTr("Clear")
+
+                    onClicked: LogManager.model.clear()
                 }
             }
+        }
+    }
+
+    QGCButton {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: headerView.height + _margin
+        anchors.top: parent.top
+        text: qsTr("Show Latest")
+        visible: tableView._loadCompleted && !tableView._atBottom && tableView.rows > 0
+        opacity: 0.75
+
+        onClicked: {
+            tableView._following = true
+            tableView.positionViewAtRow(tableView.rows - 1, TableView.AlignBottom)
         }
     }
 
@@ -311,12 +341,17 @@ Item {
         }
     }
 
-    QGCPopupDialogFactory {
-        id: settingsDialogFactory
+    QGCFileDialog {
+        id: saveFileDialog
 
-        dialogComponent: Component {
-            LoggingSettingsDialog {
-            }
+        readonly property var _suffixes: ["txt", "csv"]
+
+        defaultSuffix: _suffixes[QGroundControl.settingsManager.logManagerSettings.saveFormat.rawValue]
+        folder: QGroundControl.settingsManager.appSettings.logSavePath
+        title: qsTr("Save app log")
+
+        onAcceptedForSave: file => {
+            LogManager.writeMessages(file)
         }
     }
 }

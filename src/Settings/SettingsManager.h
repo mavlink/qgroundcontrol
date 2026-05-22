@@ -28,6 +28,7 @@ class Viewer3DSettings;
 class MavlinkSettings;
 class FactMetaData;
 class JoystickManagerSettings;
+class LogManagerSettings;
 
 /// \brief Provides access to all app settings
 ///
@@ -59,6 +60,7 @@ class SettingsManager : public QObject
     Q_MOC_INCLUDE("VideoSettings.h")
     Q_MOC_INCLUDE("MavlinkSettings.h")
     Q_MOC_INCLUDE("JoystickManagerSettings.h")
+    Q_MOC_INCLUDE("LogManagerSettings.h")
     Q_MOC_INCLUDE("Viewer3DSettings.h")
     Q_PROPERTY(QObject *adsbVehicleManagerSettings      READ adsbVehicleManagerSettings     CONSTANT)
 #ifndef QGC_NO_ARDUPILOT_DIALECT
@@ -83,6 +85,7 @@ class SettingsManager : public QObject
     Q_PROPERTY(QObject *videoSettings                   READ videoSettings                  CONSTANT)
     Q_PROPERTY(QObject *mavlinkSettings                 READ mavlinkSettings                CONSTANT)
     Q_PROPERTY(QObject *joystickManagerSettings         READ joystickManagerSettings        CONSTANT)
+    Q_PROPERTY(QObject *logManagerSettings              READ logManagerSettings              CONSTANT)
     Q_PROPERTY(QObject *viewer3DSettings                READ viewer3DSettings               CONSTANT)
 public:
     SettingsManager(QObject *parent = nullptr);
@@ -121,6 +124,7 @@ public:
     VideoSettings *videoSettings() const;
     MavlinkSettings *mavlinkSettings() const;
     JoystickManagerSettings *joystickManagerSettings() const;
+    LogManagerSettings *logManagerSettings() const;
     Viewer3DSettings *viewer3DSettings() const;
 
 private:
@@ -149,6 +153,7 @@ private:
     VideoSettings *_videoSettings = nullptr;
     MavlinkSettings *_mavlinkSettings = nullptr;
     JoystickManagerSettings *_joystickManagerSettings = nullptr;
+    LogManagerSettings *_logManagerSettings = nullptr;
     Viewer3DSettings *_viewer3DSettings = nullptr;
 
     QMap<QString, QMap<QString, QJsonObject>> _settingsFileOverrides;   // groupName:settingName:metaDataObject

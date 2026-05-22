@@ -1,6 +1,8 @@
 #include "LogModel.h"
 
+#include "AppSettings.h"
 #include "QGCLoggingCategory.h"
+#include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(LogModelLog, "Utilities.LogModel")
 
@@ -30,6 +32,42 @@ int LogModel::rowCount(const QModelIndex& parent) const
     }
     return _filterBypassed ? static_cast<int>(_entries.size())
                            : static_cast<int>(_filteredIndices.size());
+}
+
+QVariant LogModel::data(const QModelIndex& index, int role) const
+{
+    if (role == Qt::DisplayRole && index.column() == LogEntry::TimestampColumn) {
+        const LogEntry* entry = entryAt(index.row());
+        if (!entry) {
+            return {};
+        }
+        if (!SettingsManager::instance()->appSettings()->showAppLogTimestampAsElapsedTime()->rawValue().toBool()) {
+            return entry->timestamp.toString(QStringLiteral("hh:mm:ss.zzz"));
+        }
+    }
+    return LogEntryTableModel::data(index, role);
+}
+
+void LogModel::multiData(const QModelIndex& index, QModelRoleDataSpan roleDataSpan) const
+{
+    if (index.column() == LogEntry::TimestampColumn) {
+        const LogEntry* entry = entryAt(index.row());
+        if (!entry) {
+            return;
+        }
+        const bool useElapsed = SettingsManager::instance()->appSettings()->showAppLogTimestampAsElapsedTime()->rawValue().toBool();
+        for (auto& roleData : roleDataSpan) {
+            if (roleData.role() == Qt::DisplayRole && !useElapsed) {
+                roleData.setData(entry->timestamp.toString(QStringLiteral("hh:mm:ss.zzz")));
+            } else if (roleData.role() == Qt::DisplayRole) {
+                roleData.setData(entry->columnDisplayData(index.column()));
+            } else {
+                roleData.setData(entry->roleData(roleData.role()));
+            }
+        }
+        return;
+    }
+    LogEntryTableModel::multiData(index, roleDataSpan);
 }
 
 const LogEntry* LogModel::entryAt(int row) const

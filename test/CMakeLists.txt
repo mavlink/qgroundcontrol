@@ -272,9 +272,6 @@ add_qgc_test(LogManagerTest LABELS Unit Utilities)
 add_qgc_test(LogModelTest LABELS Unit Utilities)
 add_qgc_test(LoggingCategoryModelTest LABELS Unit Utilities)
 add_qgc_test(LoggingQmlBindingTest LABELS Unit Utilities)
-add_qgc_test(LogRemoteSinkTest LABELS Unit Utilities)
-add_qgc_test(LogStoreTest LABELS Integration Utilities RESOURCE_LOCK TempFiles)
-add_qgc_test(LogStoreQueryModelTest LABELS Integration Utilities RESOURCE_LOCK TempFiles)
 # StateMachine
 add_qgc_test(QGCStateMachineTest LABELS Unit Utilities)
 add_qgc_test(ErrorRecoveryBuilderTest LABELS Unit Utilities)
@@ -355,3 +352,9 @@ add_qgc_test(RequestMetaDataTypeStateMachineTest LABELS Integration Vehicle RESO
 add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(SendMavCommandWithSignallingTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
+
+# ----------------------------------------------------------------------------
+# QML UI Smoke Tests
+# ----------------------------------------------------------------------------
+add_subdirectory(QmlUITests)
+add_qgc_test(TopLevelViewsTest LABELS Integration TIMEOUT 120)

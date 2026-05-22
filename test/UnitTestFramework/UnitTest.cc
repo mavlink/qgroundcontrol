@@ -11,6 +11,7 @@
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -38,6 +39,7 @@ struct UnitTest::ExpectedLogMessages
     {
         LogEntry::Level level;
         QRegularExpression pattern;
+        QRegularExpression categoryPattern; // empty = match any category
     };
     QList<Entry> list;
 };
@@ -488,6 +490,40 @@ bool UnitTest::waitForDeleted(const QPointer<QObject>& objectPtr, int timeoutMs,
     return false;
 }
 
+static QQuickItem* findVisibleItemImmediate(QQuickItem* root, const QString& objectName)
+{
+    if (!root || !root->isVisible()) {
+        return nullptr;
+    }
+    if (root->objectName() == objectName) {
+        return root;
+    }
+    const auto children = root->childItems();
+    for (auto* child : children) {
+        if (auto* found = findVisibleItemImmediate(child, objectName)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
+QQuickItem* UnitTest::findVisibleItem(QQuickItem* root, const QString& objectName, int timeoutMs)
+{
+    constexpr int pollIntervalMs = 50;
+    int elapsed = 0;
+    while (elapsed <= timeoutMs) {
+        if (auto* item = findVisibleItemImmediate(root, objectName)) {
+            return item;
+        }
+        if (elapsed >= timeoutMs) {
+            break;
+        }
+        QTest::qWait(pollIntervalMs);
+        elapsed += pollIntervalMs;
+    }
+    return nullptr;
+}
+
 void UnitTest::settleEventLoopForCleanup(int iterations, int waitMs)
 {
     if (iterations <= 0) {
@@ -691,13 +727,29 @@ void UnitTest::cleanupTestCase()
 
 void UnitTest::expectLogMessage(QtMsgType type, const QRegularExpression &pattern)
 {
-    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), pattern});
+    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), pattern, {}});
+}
+
+void UnitTest::expectLogMessage(const QRegularExpression &categoryPattern, QtMsgType type, const QRegularExpression &messagePattern)
+{
+    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), messagePattern, categoryPattern});
+}
+
+void UnitTest::ignoreLogMessage(QtMsgType type, const QRegularExpression &pattern)
+{
+    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), pattern, {}});
+}
+
+void UnitTest::ignoreLogMessage(const QRegularExpression &categoryPattern, QtMsgType type, const QRegularExpression &messagePattern)
+{
+    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), messagePattern, categoryPattern});
 }
 
 void UnitTest::init()
 {
     _initCalled = true;
     _failureContextDumped = false;
+    _strictLogCheck = false;
     _expectedLogMessages->list.clear();
 
     // Start capturing log messages for this test (cleared from previous test)
@@ -733,30 +785,46 @@ void UnitTest::cleanup()
 
         auto isExpected = [this](const LogEntry &m) {
             for (const auto &e : _expectedLogMessages->list) {
-                if (e.level == m.level && e.pattern.match(m.message).hasMatch()) {
-                    return true;
-                }
+                if (e.level != m.level) continue;
+                if (!e.pattern.match(m.message).hasMatch()) continue;
+                if (!e.categoryPattern.pattern().isEmpty() &&
+                    !e.categoryPattern.match(m.category).hasMatch()) continue;
+                return true;
             }
             return false;
         };
 
         const auto allMsgs = LogManager::capturedMessages();
+        QString strictDetails;
         for (const auto &m : allMsgs) {
             if (isExpected(m)) {
                 continue;
             }
-            if (m.category.isEmpty() || m.category == QStringLiteral("default")) {
+            if (_strictLogCheck) {
                 const char *lvl = (m.level == LogEntry::Debug)   ? "debug"
                                 : (m.level == LogEntry::Warning) ? "warning"
                                 : (m.level == LogEntry::Info)    ? "info"
+                                : (m.level == LogEntry::Critical) ? "critical"
                                                                  : "other";
-                uncategorizedDetails += QStringLiteral("  [%1] %2\n").arg(QLatin1String(lvl), m.message);
-            }
-            if (m.level == LogEntry::Critical) {
-                criticalDetails += QStringLiteral("  [%1] %2\n").arg(m.category, m.message);
+                strictDetails += QStringLiteral("  [%1][%2] %3\n")
+                                     .arg(QLatin1String(lvl), m.category, m.message);
+            } else {
+                if (m.category.isEmpty() || m.category == QStringLiteral("default")) {
+                    const char *lvl = (m.level == LogEntry::Debug)   ? "debug"
+                                    : (m.level == LogEntry::Warning) ? "warning"
+                                    : (m.level == LogEntry::Info)    ? "info"
+                                                                     : "other";
+                    uncategorizedDetails += QStringLiteral("  [%1] %2\n").arg(QLatin1String(lvl), m.message);
+                }
+                if (m.level == LogEntry::Critical) {
+                    criticalDetails += QStringLiteral("  [%1] %2\n").arg(m.category, m.message);
+                }
             }
         }
 
+        if (!strictDetails.isEmpty()) {
+            QFAIL(qPrintable(QStringLiteral("Unexpected log messages (strict mode):\n%1").arg(strictDetails)));
+        }
         if (!uncategorizedDetails.isEmpty() || !criticalDetails.isEmpty()) {
             QString msg;
             if (!uncategorizedDetails.isEmpty()) {

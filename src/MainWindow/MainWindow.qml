@@ -286,11 +286,13 @@ ApplicationWindow {
 
     FlyView {
         id:                     flyView
+        objectName:             "mainView_fly"
         anchors.fill:           parent
     }
 
     PlanView {
         id:             planView
+        objectName:     "mainView_plan"
         anchors.fill:   parent
         visible:        false
     }
@@ -365,6 +367,7 @@ ApplicationWindow {
 
     Rectangle {
         id:             toolDrawer
+        objectName:     "mainView_toolDrawer"
         anchors.fill:   parent
         visible:        false
         color:          qgcPal.window
@@ -403,6 +406,7 @@ ApplicationWindow {
 
                 QGCToolBarButton {
                     id: qgcButton
+                    objectName: "toolbar_qgcLogo"
                     height: parent.height
                     icon.source: "/res/QGCLogoFull.svg"
                     logo: true

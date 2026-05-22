@@ -128,16 +128,16 @@ void LogEntryTest::_columnDisplayData()
 {
     LogEntry e;
     e.timestamp = QDateTime(QDate(2024, 6, 15), QTime(12, 30, 45, 123), QTimeZone::UTC);
+    e.elapsedMs = 5432;
     e.level = LogEntry::Info;
     e.category = QStringLiteral("col.test");
     e.message = QStringLiteral("column data");
     e.file = QStringLiteral("Bar.cc");
     e.line = 99;
 
-    QCOMPARE(e.columnDisplayData(LogEntry::TimestampColumn).toString(), QStringLiteral("12:30:45.123"));
-    QCOMPARE(e.columnDisplayData(LogEntry::LevelColumn).toString(), QStringLiteral("I"));
+    QCOMPARE(e.columnDisplayData(LogEntry::TimestampColumn).toString(), QStringLiteral("5.432"));
     QCOMPARE(e.columnDisplayData(LogEntry::CategoryColumn).toString(), QStringLiteral("col.test"));
-    QCOMPARE(e.columnDisplayData(LogEntry::MessageColumn).toString(), QStringLiteral("column data"));
+    QCOMPARE(e.columnDisplayData(LogEntry::MessageColumn).toString(), QStringLiteral("I column data"));
     QCOMPARE(e.columnDisplayData(LogEntry::SourceColumn).toString(), QStringLiteral("Bar.cc:99"));
 
     // Source with no file
@@ -153,7 +153,6 @@ void LogEntryTest::_columnDisplayData()
 void LogEntryTest::_columnHeaderData()
 {
     QCOMPARE(LogEntry::columnHeaderData(LogEntry::TimestampColumn).toString(), QStringLiteral("Time"));
-    QCOMPARE(LogEntry::columnHeaderData(LogEntry::LevelColumn).toString(), QStringLiteral("Level"));
     QCOMPARE(LogEntry::columnHeaderData(LogEntry::CategoryColumn).toString(), QStringLiteral("Category"));
     QCOMPARE(LogEntry::columnHeaderData(LogEntry::MessageColumn).toString(), QStringLiteral("Message"));
     QCOMPARE(LogEntry::columnHeaderData(LogEntry::SourceColumn).toString(), QStringLiteral("Source"));

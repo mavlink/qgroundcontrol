@@ -46,6 +46,7 @@ struct CommandLineParseResult
     std::optional<QString> unitTestOutput;  ///< Output file for test results (JUnit XML)
     std::optional<QString> labelFilter;     ///< Filter tests by label (comma-separated)
     bool listTests = false;                 ///< List available tests and exit
+    bool onscreen = false;                  ///< Show test windows on screen (skip offscreen override)
 
     // --- Desktop options (not on Android/iOS) ---
     bool fakeMobile = false;

@@ -117,7 +117,6 @@ qt_add_qml_module(QGroundControlControlsModule
         LabelledComboBox.qml
         LabelledLabel.qml
         LogReplayStatusBar.qml
-        MainWindowSavedState.qml
         MissionCommandDialog.qml
         MvPanelPage.qml
         OfflineMapButton.qml

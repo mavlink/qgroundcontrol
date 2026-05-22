@@ -5,6 +5,7 @@ import QGroundControl
 import QGroundControl.Controls
 
 Rectangle {
+    objectName: "settingsPage_Help"
     color:          qgcPal.window
     anchors.fill:   parent
 

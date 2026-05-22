@@ -37,6 +37,7 @@ constexpr QLatin1StringView kOptUnittestStress = QLatin1StringView("unittest-str
 constexpr QLatin1StringView kOptUnittestOutput = QLatin1StringView("unittest-output");
 constexpr QLatin1StringView kOptUnittestLabel  = QLatin1StringView("label");
 constexpr QLatin1StringView kOptListTests      = QLatin1StringView("list-tests");
+constexpr QLatin1StringView kOptOnscreen       = QLatin1StringView("onscreen");
 #endif
 
 #ifdef Q_OS_WIN
@@ -181,6 +182,11 @@ CommandLineParseResult parseCommandLine()
         QString(kOptListTests),
         QCoreApplication::translate("main", "List available unit tests and exit."));
     (void) parser.addOption(listTestsOpt);
+
+    const QCommandLineOption onscreenOpt(
+        QString(kOptOnscreen),
+        QCoreApplication::translate("main", "Show test windows on screen instead of running offscreen."));
+    (void) parser.addOption(onscreenOpt);
 #endif
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
@@ -380,6 +386,8 @@ CommandLineParseResult parseCommandLine()
     if (out.listTests) {
         qCDebug(QGCCommandLineParserLog) << "List tests requested";
     }
+
+    out.onscreen = parser.isSet(onscreenOpt);
 #endif
 
     // --- Parse desktop options ---

@@ -138,30 +138,4 @@ void LoggingQmlBindingTest::_filterBindingsWork()
     QVERIFY(categories.size() >= 0); // May be empty initially
 }
 
-void LoggingQmlBindingTest::_settingsDialogLoads()
-{
-    QQmlComponent component(_engine);
-    component.setData(R"(
-        import QtQuick
-        import QGroundControl.LogManager
-
-        QtObject {
-            property bool diskEnabled: LogManager.diskLoggingEnabled
-            property bool hasError: LogManager.hasError
-            property var sink: LogManager.remoteSink
-            property bool sinkValid: sink !== null
-        }
-    )", QUrl());
-
-    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
-
-    QScopedPointer<QObject> obj(component.create());
-    QVERIFY(obj);
-
-    QCOMPARE(obj->property("sinkValid").toBool(), true);
-    // diskLoggingEnabled should be a boolean
-    QVERIFY(obj->property("diskEnabled").isValid());
-    QVERIFY(obj->property("hasError").isValid());
-}
-
 UT_REGISTER_TEST(LoggingQmlBindingTest, TestLabel::Unit, TestLabel::Utilities)

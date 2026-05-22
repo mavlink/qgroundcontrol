@@ -6,6 +6,7 @@
 #include <cmath>
 #include <limits>
 
+#include "BulkRefreshJob.h"
 #include "MockLinkFTP.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
@@ -415,3 +416,156 @@ void ParameterManagerTest::_FTPChangeParam()
 }
 
 UT_REGISTER_TEST(ParameterManagerTest, TestLabel::Integration, TestLabel::Vehicle, TestLabel::Serial)
+
+// ---------------------------------------------------------------------------
+// bulkRefresh tests
+// ---------------------------------------------------------------------------
+
+// Two exact param names — both should resolve and succeed on round 0.
+void ParameterManagerTest::_bulkRefreshExactNamesAllSucceed()
+{
+    _connectMockLink();
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    QSignalSpy successSpy(paramManager, &ParameterManager::_paramRequestReadSuccess);
+    QSignalSpy failureSpy(paramManager, &ParameterManager::_paramRequestReadFailure);
+    QVERIFY(successSpy.isValid());
+    QVERIFY(failureSpy.isValid());
+
+    paramManager->bulkRefresh(MAV_COMP_ID_AUTOPILOT1,
+                               {QStringLiteral("BAT1_V_CHARGED"), QStringLiteral("BAT1_N_CELLS")});
+
+    const int maxWaitMs = ParameterManager::kWaitForParamValueAckMs
+                          * (ParameterManager::kParamRequestReadRetryCount + 1)
+                          + TestTimeout::shortMs();
+    QVERIFY_SIGNAL_COUNT_WAIT(successSpy, 2, maxWaitMs);
+    QCOMPARE(failureSpy.count(), 0);
+
+    QStringList succeededNames;
+    for (int i = 0; i < successSpy.count(); ++i) {
+        succeededNames << successSpy.at(i).at(1).toString();
+    }
+    QVERIFY(succeededNames.contains(QStringLiteral("BAT1_V_CHARGED")));
+    QVERIFY(succeededNames.contains(QStringLiteral("BAT1_N_CELLS")));
+
+    _disconnectMockLink();
+}
+
+// A wildcard prefix "BAT1_*" should expand to all BAT1_ parameters and all should succeed.
+void ParameterManagerTest::_bulkRefreshPrefixExpansion()
+{
+    _connectMockLink();
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    // Count BAT1_ params actually present on the mock vehicle.
+    int bat1Count = 0;
+    for (const QString &name : paramManager->parameterNames(MAV_COMP_ID_AUTOPILOT1)) {
+        if (name.startsWith(QStringLiteral("BAT1_"))) {
+            ++bat1Count;
+        }
+    }
+    QVERIFY2(bat1Count > 0, "Mock link must have at least one BAT1_ parameter");
+
+    QSignalSpy successSpy(paramManager, &ParameterManager::_paramRequestReadSuccess);
+    QSignalSpy failureSpy(paramManager, &ParameterManager::_paramRequestReadFailure);
+    QVERIFY(successSpy.isValid());
+    QVERIFY(failureSpy.isValid());
+
+    paramManager->bulkRefresh(MAV_COMP_ID_AUTOPILOT1, {QStringLiteral("BAT1_*")});
+
+    const int maxWaitMs = ParameterManager::kWaitForParamValueAckMs
+                          * (ParameterManager::kParamRequestReadRetryCount + 1)
+                          + TestTimeout::shortMs();
+    QVERIFY_SIGNAL_COUNT_WAIT(successSpy, bat1Count, maxWaitMs);
+    QCOMPARE(failureSpy.count(), 0);
+    QCOMPARE(successSpy.count(), bat1Count);
+
+    _disconnectMockLink();
+}
+
+// Passing only non-existent names should resolve to an empty set — no requests are sent.
+void ParameterManagerTest::_bulkRefreshUnknownNameSkipped()
+{
+    _connectMockLink();
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    QSignalSpy successSpy(paramManager, &ParameterManager::_paramRequestReadSuccess);
+    QSignalSpy failureSpy(paramManager, &ParameterManager::_paramRequestReadFailure);
+    QVERIFY(successSpy.isValid());
+    QVERIFY(failureSpy.isValid());
+
+    paramManager->bulkRefresh(MAV_COMP_ID_AUTOPILOT1, {QStringLiteral("ZZZZ_DOES_NOT_EXIST")});
+
+    QVERIFY_NO_SIGNAL_WAIT(successSpy, TestTimeout::shortMs());
+    QCOMPARE(failureSpy.count(), 0);
+
+    _disconnectMockLink();
+}
+
+// Round 0 fails (no response from MockLink), round 1 succeeds after failure mode is cleared.
+void ParameterManagerTest::_bulkRefreshRetrySucceeds()
+{
+    _connectMockLink();
+    QVERIFY(_mockLink);
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    QSignalSpy successSpy(paramManager, &ParameterManager::_paramRequestReadSuccess);
+    QSignalSpy failureSpy(paramManager, &ParameterManager::_paramRequestReadFailure);
+    QVERIFY(successSpy.isValid());
+    QVERIFY(failureSpy.isValid());
+
+    // Round 0: MockLink drops all responses — per-param SM exhausts retries → _paramRequestReadFailure
+    _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNoResponse);
+    paramManager->bulkRefresh(MAV_COMP_ID_AUTOPILOT1, {QStringLiteral("BAT1_V_CHARGED")});
+
+    const int roundTimeMs = ParameterManager::kWaitForParamValueAckMs
+                            * (ParameterManager::kParamRequestReadRetryCount + 1)
+                            + TestTimeout::shortMs();
+    QVERIFY_SIGNAL_WAIT(failureSpy, roundTimeMs);
+    QCOMPARE(failureSpy.count(), 1);
+
+    // Allow BulkRefreshJob's retry round to succeed
+    _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNone);
+    QVERIFY_SIGNAL_WAIT(successSpy, roundTimeMs);
+    QCOMPARE(successSpy.count(), 1);
+    QCOMPARE(successSpy.at(0).at(1).toString(), QStringLiteral("BAT1_V_CHARGED"));
+
+    _disconnectMockLink();
+}
+
+// All kMaxRetryRounds+1 rounds fail — BulkRefreshJob gives up without a success signal.
+void ParameterManagerTest::_bulkRefreshAllRetriesExhausted()
+{
+    _connectMockLink();
+    QVERIFY(_mockLink);
+    QVERIFY(_vehicle);
+    ParameterManager* const paramManager = _vehicle->parameterManager();
+    QVERIFY(paramManager);
+
+    QSignalSpy successSpy(paramManager, &ParameterManager::_paramRequestReadSuccess);
+    QSignalSpy failureSpy(paramManager, &ParameterManager::_paramRequestReadFailure);
+    QVERIFY(successSpy.isValid());
+    QVERIFY(failureSpy.isValid());
+
+    _mockLink->setParamRequestReadFailureMode(MockLink::FailParamRequestReadNoResponse);
+    paramManager->bulkRefresh(MAV_COMP_ID_AUTOPILOT1, {QStringLiteral("BAT1_V_CHARGED")});
+
+    // Each round exhausts the per-param SM retries. Upper bound uses production constants;
+    // actual duration is ~1s in test mode (kWaitForParamValueAckMs and kRetryBaseDelayMs are
+    // reduced to 50ms when QGC::runningUnitTests() is true).
+    const int roundTimeMs = ParameterManager::kWaitForParamValueAckMs
+                            * (ParameterManager::kParamRequestReadRetryCount + 1);
+    const int maxWaitMs = roundTimeMs * (BulkRefreshJob::kMaxRetryRounds + 1) + TestTimeout::mediumMs();
+    QVERIFY_SIGNAL_COUNT_WAIT(failureSpy, BulkRefreshJob::kMaxRetryRounds + 1, maxWaitMs);
+    QCOMPARE(successSpy.count(), 0);
+
+    _disconnectMockLink();
+}
