@@ -130,7 +130,7 @@ private:
 
     static constexpr QLatin1StringView kSettingsGroup = QLatin1StringView("MAVLinkSigningKeys");
     static constexpr QLatin1StringView kManifestKey = QLatin1StringView("manifest");  // key names list (no secrets)
-    static constexpr QLatin1StringView kKeychainKeyPrefix = QLatin1StringView("MAVLinkSigningKeys/");
+    static constexpr QLatin1StringView kKeySubgroup = QLatin1StringView("keys");  // <kSettingsGroup>/keys/<name> = key bytes
     static constexpr QLatin1StringView kTimestampSubgroup = QLatin1StringView("timestamps");  // <kSettingsGroup>/timestamps/<name> = quint64
     static constexpr int kTimestampFlushIntervalMs = 5000;
 

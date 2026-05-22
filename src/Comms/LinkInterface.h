@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "LinkConfiguration.h"
+#include "MAVLinkMessageType.h"
 
 class LinkManager;
 class SigningController;
@@ -34,6 +35,9 @@ public:
     bool decodedFirstMavlinkPacket() const { return _decodedFirstMavlinkPacket; }
     void setDecodedFirstMavlinkPacket(bool decodedFirstMavlinkPacket) { _decodedFirstMavlinkPacket = decodedFirstMavlinkPacket; }
     void writeBytesThreadSafe(const char *bytes, int length);
+    /// Single message-level send chokepoint: re-signs (if signing is active), serializes, then writes. All
+    /// outbound mavlink_message_t sends must route through here so signing can't be bypassed.
+    void sendMessageThreadSafe(mavlink_message_t &message);
     void addVehicleReference() { ++_vehicleReferenceCount; }
     void removeVehicleReference();
     void reportMavlinkV1Traffic();

@@ -17,6 +17,12 @@ const mavlink_signing_t* _channelSigningPtr(mavlink_channel_t channel)
     return status ? status->signing : nullptr;
 }
 
+mavlink_signing_status_t _lastSigningStatus(mavlink_channel_t channel)
+{
+    const mavlink_signing_t* const signing = _channelSigningPtr(channel);
+    return signing ? signing->last_status : MAVLINK_SIGNING_STATUS_NONE;
+}
+
 }  // namespace
 
 namespace MAVLinkSigning {
@@ -150,13 +156,13 @@ QByteArray serializeUnsignedCopy(const mavlink_message_t& message)
     return buf;
 }
 
-bool verifySignature(QByteArrayView key, const mavlink_message_t& message)
-{
-    if (key.size() < kSigningKeySize) {
-        return false;
-    }
+namespace {
 
-    // C lib signature: SHA-256(secret_key + header_bytes + payload + CRC + link_id + timestamp).
+/// C lib signature hash: SHA-256(secret_key + header_bytes + payload + CRC + link_id + timestamp).
+/// `message.signature[0..kSignaturePrefixBytes)` (link_id + timestamp) must already be populated by the caller, since
+/// they are hashed in. Shared by verify (memcmp) and sign (memcpy) so the two can never diverge on wire layout.
+void _computeSignatureHash(QByteArrayView key, const mavlink_message_t& message, uchar (&hashBuf)[kSigningKeySize])
+{
     const uint8_t* header = reinterpret_cast<const uint8_t*>(&message.magic);
     const char* payload = _MAV_PAYLOAD(&message);
     const uint8_t* sig = message.signature;
@@ -169,22 +175,48 @@ bool verifySignature(QByteArrayView key, const mavlink_message_t& message)
         QByteArrayView(reinterpret_cast<const char*>(crc), sizeof(crc)),
         QByteArrayView(reinterpret_cast<const char*>(sig), kSignaturePrefixBytes),
     };
-    uchar hashBuf[kSigningKeySize];
-    const auto hash = QCryptographicHash::hashInto(QSpan<uchar>(hashBuf), QSpan<const QByteArrayView>(parts),
-                                                   QCryptographicHash::Sha256);
+    (void) QCryptographicHash::hashInto(QSpan<uchar>(hashBuf), QSpan<const QByteArrayView>(parts),
+                                       QCryptographicHash::Sha256);
+}
 
-    return hash.size() >= kSignatureHashBytes &&
-           memcmp(hash.constData(), sig + kSignaturePrefixBytes, kSignatureHashBytes) == 0;
+}  // namespace
+
+bool verifySignature(QByteArrayView key, const mavlink_message_t& message)
+{
+    if (key.size() < kSigningKeySize) {
+        return false;
+    }
+
+    uchar hashBuf[kSigningKeySize];
+    _computeSignatureHash(key, message, hashBuf);
+
+    return memcmp(hashBuf, message.signature + kSignaturePrefixBytes, kSignatureHashBytes) == 0;
+}
+
+void signMessage(QByteArrayView key, uint8_t linkId, uint64_t timestamp, mavlink_message_t& message)
+{
+    if (key.size() < kSigningKeySize) {
+        return;
+    }
+
+    // Populate link_id + 48-bit little-endian timestamp before hashing — they are part of the signed bytes.
+    static constexpr int kTimestampBytes = kSignaturePrefixBytes - 1;  // link_id(1) + timestamp(6) = prefix(7)
+    message.signature[0] = linkId;
+    for (int i = 0; i < kTimestampBytes; ++i) {
+        message.signature[1 + i] = static_cast<uint8_t>((timestamp >> (8 * i)) & 0xFF);
+    }
+
+    uchar hashBuf[kSigningKeySize];
+    _computeSignatureHash(key, message, hashBuf);
+    memcpy(message.signature + kSignaturePrefixBytes, hashBuf, kSignatureHashBytes);
+
+    setMessageSigned(message, true);
 }
 
 bool verifySignature(const SigningKey& key, const mavlink_message_t& message)
 {
     return verifySignature(QByteArrayView(reinterpret_cast<const char*>(key.data()), key.size()), message);
 }
-
-}  // namespace MAVLinkSigning
-
-namespace MAVLinkSigning {
 
 bool checkSigningLinkId(mavlink_channel_t channel, const mavlink_message_t& message)
 {
@@ -198,10 +230,7 @@ bool checkSigningLinkId(mavlink_channel_t channel, const mavlink_message_t& mess
 
 QString signingStatusString(mavlink_channel_t channel)
 {
-    const mavlink_status_t* const status = mavlink_get_channel_status(channel);
-    const mavlink_signing_status_t last =
-        (status && status->signing) ? status->signing->last_status : MAVLINK_SIGNING_STATUS_NONE;
-    switch (last) {
+    switch (_lastSigningStatus(channel)) {
         case MAVLINK_SIGNING_STATUS_OK:
             return QStringLiteral("OK");
         case MAVLINK_SIGNING_STATUS_BAD_SIGNATURE:
@@ -231,10 +260,7 @@ int signingStreamCount(mavlink_channel_t channel)
 
 void logSigningFailure(mavlink_channel_t channel)
 {
-    const mavlink_status_t* const status = mavlink_get_channel_status(channel);
-    const mavlink_signing_status_t last =
-        (status && status->signing) ? status->signing->last_status : MAVLINK_SIGNING_STATUS_NONE;
-    switch (last) {
+    switch (_lastSigningStatus(channel)) {
         case MAVLINK_SIGNING_STATUS_BAD_SIGNATURE:
             qCWarning(MAVLinkSigningLog) << "Channel" << channel << "signing failure: bad signature (key mismatch)";
             break;
