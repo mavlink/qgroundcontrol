@@ -59,7 +59,7 @@ def main() -> None:
     p_val.add_argument("--build-type", required=True)
 
     p_run = sub.add_parser("run")
-    p_run.add_argument("--image", default="qgc-builder:latest")
+    p_run.add_argument("--image", default="dronecode/qgroundcontrol:linux")
     p_run.add_argument("--build-type", required=True)
     p_run.add_argument("--fuse", action="store_true", default=False)
     p_run.add_argument("--max-attempts", type=int, default=2)

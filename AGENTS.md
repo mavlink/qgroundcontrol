@@ -24,7 +24,7 @@ Your output will be reviewed by another AI agent before being accepted. Write co
 
 - Recommended workflow: [tools/README.md](tools/README.md) Quick Start (`just configure / build / test / lint / check`).
 - Testing details (CTest labels, coverage, sanitizers): [test/TESTING.md](test/TESTING.md).
-- CI Python script tests: [.github/README.md](.github/README.md#tests).
+- CI Python script tests: [.github/ci-overview.md](.github/ci-overview.md#tests).
 
 ## Golden Rules
 
@@ -46,7 +46,7 @@ src/
 
 ## CI Structure
 
-See [.github/README.md](.github/README.md) for the workflow/action/script layout and CI conventions (dependencies, shared helpers, bootstrap scripts, build config, GitHub Actions output).
+See [.github/ci-overview.md](.github/ci-overview.md) for the workflow/action/script layout and CI conventions (dependencies, shared helpers, bootstrap scripts, build config, GitHub Actions output).
 
 ---
 

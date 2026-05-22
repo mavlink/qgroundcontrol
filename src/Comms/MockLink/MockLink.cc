@@ -585,6 +585,10 @@ void MockLink::_sendNamedValueFloats()
     const float sinVal = static_cast<float>(std::sin(static_cast<double>(timeBootMs) / 1000.0));
     const float cosVal = static_cast<float>(std::cos(static_cast<double>(timeBootMs) / 1000.0));
 
+    // NAMED_VALUE_FLOAT.name is a fixed 10-byte field; pack_chan memcpys 10 bytes unconditionally.
+    static constexpr char kSinName[10] = "sin_wave";
+    static constexpr char kCosName[10] = "cos_wave";
+
     mavlink_message_t msg{};
     (void) mavlink_msg_named_value_float_pack_chan(
         _vehicleSystemId,
@@ -592,7 +596,7 @@ void MockLink::_sendNamedValueFloats()
         _getMavlinkVehicleChannel(),
         &msg,
         timeBootMs,
-        "sin_wave",
+        kSinName,
         sinVal
     );
     respondWithMavlinkMessage(msg);
@@ -603,7 +607,7 @@ void MockLink::_sendNamedValueFloats()
         _getMavlinkVehicleChannel(),
         &msg,
         timeBootMs,
-        "cos_wave",
+        kCosName,
         cosVal
     );
     respondWithMavlinkMessage(msg);
