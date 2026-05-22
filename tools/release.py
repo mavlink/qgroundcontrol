@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run semantic-release for automated versioning and changelog.
+"""Run semantic-release for automated versioning and GitHub Releases.
 
 Examples:
     ./tools/release.py              # Dry-run (preview what would happen)
@@ -33,8 +33,6 @@ from common.logging import log_error, log_info, log_ok
 SR_VERSION = "24.2.5"
 SR_PACKAGES: tuple[str, ...] = (
     f"semantic-release@{SR_VERSION}",
-    "@semantic-release/changelog@6.0.3",
-    "@semantic-release/git@10.0.1",
     "@semantic-release/exec@7.1.0",
     "conventional-changelog-conventionalcommits@8.0.0",
 )
