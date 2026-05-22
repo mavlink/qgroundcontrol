@@ -43,7 +43,7 @@ repos:
   # C++ formatting (check-only, use 'clang-format -i' to fix)
   # Note: Install matching clang-format version locally to avoid formatting differences
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v21.1.7
+    rev: v22.1.5
     hooks:
       - id: clang-format
         args: ['--dry-run', '--Werror']
@@ -67,7 +67,7 @@ repos:
 
   # uv lockfile sync (keeps tools/uv.lock current with tools/pyproject.toml)
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.15
+    rev: 0.11.16
     hooks:
       - id: uv-lock
         files: ^tools/(pyproject\.toml|uv\.lock)$
