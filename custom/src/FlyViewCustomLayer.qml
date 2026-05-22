@@ -132,95 +132,32 @@ Item {
     readonly property bool _canArm: demoLocked
 
     property int selectedRoundSpecIndex: 0
-    property int selectedSurveyQuadrantIndex: 0
     property string cameraMode: "survey"
     property string bridgeSendStatus: "Bridge: no sends yet"
     property var _arenaOverlay
-    property var _quadrantOverlays: []
-    property var _quadrantLabels: []
     property var _fobMarkers: []
 
     readonly property var roundSpecOptions: [
         {
             label: "Outfield",
-            // Opponent (WvX) quadrants are in outfield half; C&E FOB is opposite.
-            opponentQuadrantSideIndex: 1,
             ceFobCoordinates: [38.75065209603611, -77.49701011362711, 0],
             wvxFobCoordinates: [38.75084010396389, -77.49721463637287, 0],
             geofenceFilePath: ":/Custom/qml/geofences/ce_geofence_outfield.plan"
         },
         {
             label: "Home Base",
-            // Opponent (WvX) quadrants are in home-base half; C&E FOB is opposite.
-            opponentQuadrantSideIndex: 0,
             ceFobCoordinates: [38.75084010396389, -77.49721463637287, 0],
             wvxFobCoordinates: [38.75065209603611, -77.49701011362711, 0],
             geofenceFilePath: ":/Custom/qml/geofences/ce_geofence_home_base.plan"
         }
     ]
-    readonly property var surveyQuadrantOptions: ["Q1", "Q2", "Q3", "Q4"]
     readonly property var _arenaPath: [
         QtPositioning.coordinate(38.7507608625056, -77.49735908548331),
         QtPositioning.coordinate(38.75094024382851, -77.49709285710168),
         QtPositioning.coordinate(38.75073132744176, -77.49686508648041),
         QtPositioning.coordinate(38.750551952470936, -77.49713235890398)
     ]
-    readonly property var _quadrantPaths: [
-        // Opponent outfield side half (top / AB-adjacent).
-        [
-            [
-                QtPositioning.coordinate(38.750552, -77.4971324),
-                QtPositioning.coordinate(38.75064165, -77.49699874999999),
-                QtPositioning.coordinate(38.750693874999996, -77.49705555),
-                QtPositioning.coordinate(38.7506042, -77.49718905)
-            ],
-            [
-                QtPositioning.coordinate(38.75064165, -77.49699874999999),
-                QtPositioning.coordinate(38.7507313, -77.4968651),
-                QtPositioning.coordinate(38.750783549999994, -77.49692205),
-                QtPositioning.coordinate(38.750693874999996, -77.49705555)
-            ],
-            [
-                QtPositioning.coordinate(38.750693874999996, -77.49705555),
-                QtPositioning.coordinate(38.750783549999994, -77.49692205),
-                QtPositioning.coordinate(38.7508358, -77.496979),
-                QtPositioning.coordinate(38.7507461, -77.49711235)
-            ],
-            [
-                QtPositioning.coordinate(38.7506042, -77.49718905),
-                QtPositioning.coordinate(38.750693874999996, -77.49705555),
-                QtPositioning.coordinate(38.7507461, -77.49711235),
-                QtPositioning.coordinate(38.7506564, -77.4972457)
-            ]
-        ],
-        // Opponent home-base side half (bottom / CD-adjacent).
-        [
-            [
-                QtPositioning.coordinate(38.7506564, -77.4972457),
-                QtPositioning.coordinate(38.7507461, -77.49711235),
-                QtPositioning.coordinate(38.750798325000005, -77.497169175),
-                QtPositioning.coordinate(38.75070865, -77.4973024)
-            ],
-            [
-                QtPositioning.coordinate(38.7507461, -77.49711235),
-                QtPositioning.coordinate(38.7508358, -77.496979),
-                QtPositioning.coordinate(38.750888, -77.49703595),
-                QtPositioning.coordinate(38.750798325000005, -77.497169175)
-            ],
-            [
-                QtPositioning.coordinate(38.750798325000005, -77.497169175),
-                QtPositioning.coordinate(38.750888, -77.49703595),
-                QtPositioning.coordinate(38.7509402, -77.4970929),
-                QtPositioning.coordinate(38.75085055, -77.497226)
-            ],
-            [
-                QtPositioning.coordinate(38.75070865, -77.4973024),
-                QtPositioning.coordinate(38.750798325000005, -77.497169175),
-                QtPositioning.coordinate(38.75085055, -77.497226),
-                QtPositioning.coordinate(38.7507609, -77.4973591)
-            ]
-        ]
-    ]
+    
 
     CEVideoStatus {
         id: ceVideoStatus
@@ -338,7 +275,6 @@ Item {
             geofence_label: roundSpec.label,
             geofence_plan_file: roundSpec.geofenceFilePath,
             geofence_height_ft: 30,
-            survey_quadrant: surveyQuadrantOptions[selectedSurveyQuadrantIndex],
             camera_mode: cameraMode,
             demo_name: demoLocked ? root.demoNames[selectedDemoIndex] : "",
             assets: assetList()
@@ -377,14 +313,6 @@ Item {
     function clearTemporaryMapOverlays() {
         _clearMapObject(_arenaOverlay)
         _arenaOverlay = null
-        for (var q = 0; q < _quadrantOverlays.length; q++) {
-            _clearMapObject(_quadrantOverlays[q])
-        }
-        _quadrantOverlays = []
-        for (var labelIndex = 0; labelIndex < _quadrantLabels.length; labelIndex++) {
-            _clearMapObject(_quadrantLabels[labelIndex])
-        }
-        _quadrantLabels = []
         for (var i = 0; i < _fobMarkers.length; i++) {
             _clearMapObject(_fobMarkers[i])
         }
@@ -412,26 +340,6 @@ Item {
             path: _arenaPath
         })
         mapControl.addMapItem(_arenaOverlay)
-
-        for (var q = 0; q < surveyQuadrantOptions.length; q++) {
-            var selected = q === selectedSurveyQuadrantIndex
-            var quadrantPath = _quadrantPaths[roundSpecOptions[selectedRoundSpecIndex].opponentQuadrantSideIndex][q]
-            var quadrant = quadrantOverlayComponent.createObject(mapControl, {
-                path: quadrantPath,
-                label: surveyQuadrantOptions[q],
-                selected: selected
-            })
-            mapControl.addMapItem(quadrant)
-            _quadrantOverlays.push(quadrant)
-
-            var quadrantLabel = quadrantLabelComponent.createObject(mapControl, {
-                coordinate: pathCenter(quadrantPath),
-                label: surveyQuadrantOptions[q],
-                selected: selected
-            })
-            mapControl.addMapItem(quadrantLabel)
-            _quadrantLabels.push(quadrantLabel)
-        }
 
         var selectedSpec = roundSpecOptions[selectedRoundSpecIndex]
 
@@ -490,21 +398,6 @@ Item {
     }
 
     Component {
-        id: quadrantOverlayComponent
-
-        MapPolygon {
-            property string label: ""
-            property bool selected: false
-
-            z: QGroundControl.zOrderMapItems + (selected ? 13 : 11)
-            border.color: selected ? "#ffea00" : "#ff3d00"
-            border.width: selected ? 4 : 2
-            color: selected ? "#77ffea00" : "#33ff3d00"
-            opacity: selected ? 1.0 : 0.75
-        }
-    }
-
-    Component {
         id: fobMarkerComponent
 
         MapQuickItem {
@@ -528,36 +421,6 @@ Item {
                     anchors.centerIn: parent
                     text: label
                     color: "white"
-                    font.pixelSize: 11
-                    font.bold: true
-                }
-            }
-        }
-    }
-
-    Component {
-        id: quadrantLabelComponent
-
-        MapQuickItem {
-            property string label: ""
-            property bool selected: false
-
-            z: QGroundControl.zOrderMapItems + 21
-            anchorPoint.x: sourceItem.width / 2
-            anchorPoint.y: sourceItem.height / 2
-
-            sourceItem: Rectangle {
-                width: 30
-                height: 22
-                radius: 4
-                color: selected ? "#ffea00" : "#4a2520"
-                border.color: selected ? "#111111" : "#ffab91"
-                border.width: selected ? 2 : 1
-
-                Text {
-                    anchors.centerIn: parent
-                    text: label
-                    color: selected ? "#111111" : "white"
                     font.pixelSize: 11
                     font.bold: true
                 }
@@ -1062,36 +925,6 @@ Item {
                     }
                     delegate: ItemDelegate {
                         width: roundSpecCombo.width; highlighted: roundSpecCombo.highlightedIndex === index
-                        background: Rectangle { color: highlighted ? "#444" : _clrCard }
-                        contentItem: Text { text: modelData; color: "white"; font.pixelSize: 12; leftPadding: 10; verticalAlignment: Text.AlignVCenter }
-                    }
-                }
-
-                ComboBox {
-                    id: surveyQuadrantCombo
-                    model: root.surveyQuadrantOptions
-                    width: 236
-                    implicitHeight: 30
-                    currentIndex: root.selectedSurveyQuadrantIndex
-                    onActivated: function(i) {
-                        root.selectedSurveyQuadrantIndex = i
-                        root.showTemporaryMapOverlays()
-                    }
-                    background: Rectangle { color: _clrCard; radius: 4 }
-                    contentItem: Text {
-                        text: "Survey Quadrant: " + surveyQuadrantCombo.displayText
-                        color: "white"
-                        font.pixelSize: 12
-                        verticalAlignment: Text.AlignVCenter
-                        leftPadding: 10
-                    }
-                    popup: Popup {
-                        y: surveyQuadrantCombo.height; width: surveyQuadrantCombo.width; padding: 1
-                        background: Rectangle { color: _clrCard; radius: 4 }
-                        contentItem: ListView { clip: true; implicitHeight: contentHeight; model: surveyQuadrantCombo.delegateModel }
-                    }
-                    delegate: ItemDelegate {
-                        width: surveyQuadrantCombo.width; highlighted: surveyQuadrantCombo.highlightedIndex === index
                         background: Rectangle { color: highlighted ? "#444" : _clrCard }
                         contentItem: Text { text: modelData; color: "white"; font.pixelSize: 12; leftPadding: 10; verticalAlignment: Text.AlignVCenter }
                     }
