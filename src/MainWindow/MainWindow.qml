@@ -427,12 +427,6 @@ ApplicationWindow {
             anchors.right:  parent.right
             anchors.top:    toolDrawerToolbar.bottom
             anchors.bottom: parent.bottom
-
-            Connections {
-                target:                 toolDrawerLoader.item
-                ignoreUnknownSignals:   true
-                function onPopout() { toolDrawer.visible = false }
-            }
         }
     }
 
@@ -650,9 +644,45 @@ ApplicationWindow {
         }
     }
 
-    // We have to create the popup windows for the Analyze pages here so that the creation context is rooted
-    // to mainWindow. Otherwise if they are rooted to the AnalyzeView itself they will die when the analyze viewSwitch
-    // closes.
+    // Analyze page items (both in-panel and popped-out windows) are created with mainWindow as their
+    // QObject parent so their lifetime is not tied to AnalyzeView. This lets a popped-out window
+    // survive AnalyzeView being unloaded from the tool drawer.
+
+    // Tracks the analyze page item currently shown inside AnalyzeView's panel (not popped out).
+    // null when no page is loaded or the item has been handed off to a popup window.
+    property var _inPanelAnalyzePage: null
+
+    // Called by AnalyzeView.Component.onDestruction to destroy the in-panel item while
+    // panelContainer is still alive.
+    function destroyInPanelAnalyzePage() {
+        if (_inPanelAnalyzePage) {
+            _inPanelAnalyzePage.destroy()
+            _inPanelAnalyzePage = null
+        }
+    }
+
+    // Called by AnalyzeView to create an analyze page item owned by mainWindow.
+    // The caller sets the visual parent to panelContainer after creation.
+    function createAnalyzePage(source) {
+        if (_inPanelAnalyzePage) {
+            _inPanelAnalyzePage.destroy()
+            _inPanelAnalyzePage = null
+        }
+        var component = Qt.createComponent(source)
+        if (component.status !== Component.Ready) {
+            console.warn("createAnalyzePage failed source:", source, "errorString:", component.errorString())
+            return null
+        }
+        _inPanelAnalyzePage = component.createObject(mainWindow)
+        return _inPanelAnalyzePage
+    }
+
+    // Called by AnalyzeView when the in-panel item is handed off to a popup window.
+    // Clears _inPanelAnalyzePage so destroyInPanelAnalyzePage() does not destroy it
+    // when AnalyzeView is torn down.
+    function analyzePageMovedToPopup() {
+        _inPanelAnalyzePage = null
+    }
 
     function createWindowedAnalyzePage(title, source, requiresVehicle, existingItem) {
         var windowedPage = windowedAnalyzePage.createObject(mainWindow)

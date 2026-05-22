@@ -9,8 +9,6 @@ Rectangle {
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
 
-    signal popout()
-
     readonly property real  _defaultTextHeight:     ScreenTools.defaultFontPixelHeight
     readonly property real  _defaultTextWidth:      ScreenTools.defaultFontPixelWidth
     readonly property real  _horizontalMargin:      _defaultTextWidth / 2
@@ -19,17 +17,23 @@ Rectangle {
     property var  _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property var  _currentPage:   null
     property var  _currentItem:   null
+    // Destroy the in-panel page item while panelContainer is still alive, before the
+    // loader clears the source and tears down this component.
+    Component.onDestruction: mainWindow.destroyInPanelAnalyzePage()
 
     function _loadPage(source) {
-        if (_currentItem) {
-            _currentItem.destroy()
-            _currentItem = null
-        }
+        // Clear reference before calling mainWindow.createAnalyzePage (which destroys the old item).
+        _currentItem = null
         if (source !== "") {
-            var component = Qt.createComponent(source)
-            if (component.status === Component.Ready) {
-                _currentItem = component.createObject(panelContainer)
+            // mainWindow creates and owns the item (QObject parent = mainWindow) so it
+            // survives AnalyzeView being unloaded in the popped-out case.
+            // anchors.fill: parent in AnalyzePage.qml automatically fills panelContainer.
+            _currentItem = mainWindow.createAnalyzePage(source)
+            if (_currentItem) {
+                _currentItem.parent = panelContainer
             }
+        } else {
+            mainWindow.destroyInPanelAnalyzePage()
         }
     }
 
@@ -139,18 +143,22 @@ Rectangle {
         property string title
 
         Connections {
-            target:     _currentItem
+            target: _currentItem
+
             function onPopout() {
                 var existingItem = _currentItem
                 var pageTitle = panelContainer.title
                 var pageSource = _currentPage.url
                 var requiresVehicle = _currentPage ? _currentPage.requiresVehicle : false
-                // Release ownership without destroying
+                // Clear references before handing item to the popup window.
                 _currentItem = null
+                // Tell mainWindow this item has moved to a popup so it is not destroyed
+                // when AnalyzeView is torn down.
+                mainWindow.analyzePageMovedToPopup()
                 existingItem.visible = false
-                // Hand the existing item to the popout window
+                // Hand the existing item to the popout window.
                 mainWindow.createWindowedAnalyzePage(pageTitle, pageSource, requiresVehicle, existingItem)
-                // Create a fresh instance in-place
+                // Create a fresh in-panel instance.
                 _loadPage(pageSource)
             }
         }

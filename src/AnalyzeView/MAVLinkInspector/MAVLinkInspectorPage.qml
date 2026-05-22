@@ -221,7 +221,7 @@ AnalyzePage {
                         id:                 msgInfoGrid
                         columns:            5
                         columnSpacing:      ScreenTools.defaultFontPixelWidth  * 0.25
-                        rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
+                        rowSpacing:         0
                         width:              parent.width
                         QGCLabel {
                             text:       qsTr("Name")
