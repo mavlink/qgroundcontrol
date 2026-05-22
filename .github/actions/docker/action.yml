@@ -79,15 +79,22 @@ runs:
           Dockerfile-build-android) suffix=android ;;
           *)                        suffix="${DOCKERFILE#Dockerfile-build-}" ;;
         esac
-        tags="qgc-builder:latest"
-        push=false
+        # build-push-action pushes every tag in `tags:`. Keep the bare local
+        # `qgc-builder:latest` out of the push list — it has no registry and
+        # would 401 against docker.io/library — and re-add it locally after.
         if [[ -n "$PUSH_IMAGE" ]]; then
-          tags="${tags},${PUSH_IMAGE}:${suffix},${PUSH_IMAGE}:${suffix}-${SHA::7}"
+          tags="${PUSH_IMAGE}:${suffix},${PUSH_IMAGE}:${suffix}-${SHA::7}"
           push=true
+          local_alias_source="${PUSH_IMAGE}:${suffix}"
+        else
+          tags="qgc-builder:latest"
+          push=false
+          local_alias_source=""
         fi
         {
           echo "tags=${tags}"
           echo "push=${push}"
+          echo "local_alias_source=${local_alias_source}"
         } >> "$GITHUB_OUTPUT"
 
     - name: Build Docker image
@@ -102,6 +109,11 @@ runs:
         # GHCR registry cache keeps the 10 GiB GHA pool free for ccache.
         cache-from: type=registry,ref=${{ steps.ghcr.outputs.ref }}:${{ inputs.dockerfile }}
         cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}:{1},mode=max', steps.ghcr.outputs.ref, inputs.dockerfile) || '' }}
+
+    - name: Re-tag pushed image as qgc-builder:latest for local run
+      if: steps.tags.outputs.local_alias_source != ''
+      shell: bash
+      run: docker tag "${{ steps.tags.outputs.local_alias_source }}" qgc-builder:latest
 
     - name: Run Docker build
       if: contains(fromJSON('["Release", "Debug"]'), inputs.build-type)
