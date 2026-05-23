@@ -92,7 +92,6 @@ jobs:
         with:
           qt-host: ${{ matrix.host }}
           qt-arch: ${{ matrix.arch }}
-          qt-version: ${{ matrix.qt_version || '' }}
           aqt-source: ${{ matrix.aqt_source || '' }}
           build-type: ${{ matrix.build_type }}
 
