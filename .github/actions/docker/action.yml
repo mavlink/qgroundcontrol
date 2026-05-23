@@ -53,7 +53,6 @@ runs:
         username: ${{ github.actor }}
         password: ${{ github.token }}
 
-    # GHCR namespaces require lowercase; github.repository_owner preserves case.
     - name: Resolve GHCR cache ref
       id: ghcr
       shell: bash
@@ -99,7 +98,6 @@ runs:
         tags: ${{ steps.tags.outputs.tags }}
         load: true
         push: ${{ steps.tags.outputs.push }}
-        # GHCR registry cache keeps the 10 GiB GHA pool free for ccache.
         cache-from: type=registry,ref=${{ steps.ghcr.outputs.ref }}:${{ inputs.dockerfile }}
         cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}:{1},mode=max', steps.ghcr.outputs.ref, inputs.dockerfile) || '' }}
 

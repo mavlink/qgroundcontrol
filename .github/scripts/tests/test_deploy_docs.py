@@ -67,7 +67,7 @@ class TestDeployBranch:
                 return subprocess.CompletedProcess(cmd, 0)
             return real_run(cmd, *args, **kwargs)
 
-        with patch("deploy_docs.subprocess.run", side_effect=fake_run):
+        with patch("common.proc.subprocess.run", side_effect=fake_run):
             made_commit = deploy_branch(
                 source_dir=source,
                 target_dir=target,
@@ -99,7 +99,7 @@ class TestDeployBranch:
                 return subprocess.CompletedProcess(cmd, 0)
             return real_run(cmd, *args, **kwargs)
 
-        with patch("deploy_docs.subprocess.run", side_effect=fake_run):
+        with patch("common.proc.subprocess.run", side_effect=fake_run):
             assert deploy_branch(source_dir=source, target_dir=target, **kwargs) is True
             # Second run with unchanged source — no commit, returns False.
             assert deploy_branch(source_dir=source, target_dir=target, **kwargs) is False

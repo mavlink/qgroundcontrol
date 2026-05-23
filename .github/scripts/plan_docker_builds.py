@@ -13,7 +13,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output
+from common.gh_actions import parse_bool, write_github_output
 
 
 def plan_builds(event_name: str, linux_changed: bool, android_changed: bool) -> dict[str, Any]:
@@ -64,8 +64,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     plan = plan_builds(
         args.event_name,
-        args.linux == "true",
-        args.android == "true",
+        parse_bool(args.linux),
+        parse_bool(args.android),
     )
     matrix_json = json.dumps(plan["matrix"], separators=(",", ":"))
     print(matrix_json)

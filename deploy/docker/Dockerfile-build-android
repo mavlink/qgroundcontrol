@@ -32,10 +32,11 @@ COPY tools/pyproject.toml tools/uv.lock /tmp/qgc-tools/
 RUN uv venv --seed /opt/qgc-venv --python python3 && \
     VIRTUAL_ENV=/opt/qgc-venv uv sync \
         --project /tmp/qgc-tools \
-        --extra scripts \
+        --extra scripts --extra qt \
         --no-install-project \
         --frozen --active --no-cache && \
     /opt/qgc-venv/bin/python -c "import jinja2, httpx, defusedxml" && \
+    /opt/qgc-venv/bin/aqt --help >/dev/null && \
     rm -rf /tmp/qgc-tools /usr/local/bin/uv
 ENV PATH="/opt/qgc-venv/bin:${PATH}"
 
@@ -68,18 +69,25 @@ ENV QT_TARGET="android"
 # ENV QT_TARGET_ARCH_ARMV7="android_armv7"
 ENV QT_TARGET_ARCH_ARM64="android_arm64_v8a"
 
-# Install Qt for host and target architectures using aqtinstall
-# Note: aqtinstall uses linux_gcc_64 as arch param but creates gcc_64 directory
+# aqtinstall: --arch=linux_gcc_64 but creates gcc_64/ dir.
 RUN . /etc/profile.d/qgc.sh && \
     mkdir -p $QT_PATH && \
-    pipx run aqtinstall install-qt $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
-    pipx run aqtinstall install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+    aqt_install() { \
+        for attempt in 1 2 3; do \
+            /opt/qgc-venv/bin/aqt install-qt "$@" && return 0; \
+            echo "==> aqt attempt ${attempt}/3 failed; retrying after ${attempt}0s" >&2; \
+            sleep "${attempt}0"; \
+        done; \
+        return 1; \
+    } && \
+    aqt_install $QT_HOST desktop $QT_VERSION $QT_HOST_ARCH -O $QT_PATH -m $QT_MODULES && \
+    aqt_install all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARM64 -O $QT_PATH -m $QT_MODULES --autodesktop && \
     echo "export QT_ROOT_DIR_ARM64=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARM64" >> /etc/profile.d/qgc.sh && \
     echo "export QT_HOST_PATH=$QT_PATH/$QT_VERSION/$QT_HOST_DIR" >> /etc/profile.d/qgc.sh
 
-# Optional: Uncomment to enable ARMv7 builds (requires QT_TARGET_ARCH_ARMV7 env var above)
+# Optional ARMv7 build: uncomment and set QT_TARGET_ARCH_ARMV7 above.
 # RUN . /etc/profile.d/qgc.sh && \
-#     pipx run aqtinstall install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
+#     /opt/qgc-venv/bin/aqt install-qt all_os $QT_TARGET $QT_VERSION $QT_TARGET_ARCH_ARMV7 -O $QT_PATH -m $QT_MODULES --autodesktop && \
 #     echo "export QT_ROOT_DIR_ARMV7=$QT_PATH/$QT_VERSION/$QT_TARGET_ARCH_ARMV7" >> /etc/profile.d/qgc.sh
 
 RUN . /etc/profile.d/qgc.sh && \

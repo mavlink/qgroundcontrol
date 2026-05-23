@@ -33,9 +33,6 @@ permissions:
   actions: read
   security-events: write
 
-env:
-  IS_STABLE_BUILD: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
-
 jobs:
   changes:
     uses: ./.github/workflows/_detect-changes.yml
@@ -52,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Release"]') }}
+        build_type: ['${{ inputs.build_type || ''Release'' }}']
         variant: [amd64, arm64, arm64-cross]
         include:
           - variant: amd64
@@ -67,15 +64,12 @@ jobs:
             arch: win64_msvc2022_arm64
             package: QGroundControl-installer-ARM64
 
-          # TODO: Remove qt_version override once aqtinstall supports Qt 6.10.1+ for cross-compiled ARM64
-          # Workaround: Pin to Qt 6.10.0 until aqtinstall fix is released
-          # Tracking: https://github.com/miurahr/aqtinstall/pull/952
           - variant: arm64-cross
             os: windows-2022
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             package: QGroundControl-installer-AMD64-ARM64
-            qt_version: '6.10.0'
+            aqt_source: 'git+https://github.com/miurahr/aqtinstall.git@c84e1470349e5bedbeee977bd62ec495d50d65b6'
 
     defaults:
       run:
@@ -99,6 +93,7 @@ jobs:
           qt-host: ${{ matrix.host }}
           qt-arch: ${{ matrix.arch }}
           qt-version: ${{ matrix.qt_version || '' }}
+          aqt-source: ${{ matrix.aqt_source || '' }}
           build-type: ${{ matrix.build_type }}
 
       - name: Configure
@@ -106,38 +101,31 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
-          stable: ${{ env.IS_STABLE_BUILD }}
           extra-args: >-
             -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && 'ON' || 'OFF' }}
             ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
 
+      - name: Resolve GStreamer root
+        id: gst-root
+        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: bash
+        run: |
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" cache-var \
+            --build-dir "${RUNNER_TEMP}/build" \
+            --name GStreamer_ROOT_DIR \
+            --required \
+            --output-key gst_root
+
       - name: Add GStreamer to PATH
         if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
-        shell: pwsh
-        run: |
-          $cacheFile = "${{ runner.temp }}\build\CMakeCache.txt"
-          $match = Select-String -Path $cacheFile -Pattern '^GStreamer_ROOT_DIR:.*=(.+)$'
-          if (-not $match) {
-            Write-Error "GStreamer_ROOT_DIR not found in CMakeCache.txt"
-            exit 1
-          }
-          $rootDir = $match.Matches[0].Groups[1].Value
-          "$rootDir\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+        shell: bash
+        run: echo "${{ steps.gst-root.outputs.gst_root }}/bin" >> "$GITHUB_PATH"
 
       - name: Build
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
-
-      # TODO: Enable GStreamer integration tests once a Debug build is added to the matrix.
-      # Release builds strip test infrastructure; these tests require a Debug or RelWithDebInfo build.
-      # - name: Run GStreamer Integration Tests
-      #   if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
-      #   uses: ./.github/actions/run-unit-tests
-      #   with:
-      #     build-dir: ${{ runner.temp }}/build
-      #     include-labels: 'Integration'
 
       - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
@@ -148,8 +136,10 @@ jobs:
           build-dir: ${{ runner.temp }}/build
 
       - name: Create Installer
-        working-directory: ${{ runner.temp }}\build
-        run: cmake --install . --config ${{ matrix.build_type }}
+        uses: ./.github/actions/cmake-install
+        with:
+          build-dir: ${{ runner.temp }}\build
+          build-type: ${{ matrix.build_type }}
 
       - name: Install and verify installer
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
@@ -186,14 +176,10 @@ jobs:
       - name: Remove build SDK from PATH for installed verification
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
         shell: pwsh
+        env:
+          GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
         run: |
-          $cacheFile = "${{ runner.temp }}\build\CMakeCache.txt"
-          $match = Select-String -Path $cacheFile -Pattern '^GStreamer_ROOT_DIR:.*=(.+)$'
-          if (-not $match) {
-            Write-Error "GStreamer_ROOT_DIR not found in CMakeCache.txt"
-            exit 1
-          }
-          $sdkBin = Join-Path $match.Matches[0].Groups[1].Value "bin"
+          $sdkBin = Join-Path $env:GST_ROOT "bin"
           $sanitizedPath = (($env:PATH -split ';') | Where-Object { $_ -and ($_ -ne $sdkBin) }) -join ';'
           "QGC_VERIFY_INSTALLED_PATH=$sanitizedPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 

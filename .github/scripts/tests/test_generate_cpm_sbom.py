@@ -6,11 +6,11 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+from cmake_helper import read_cache_dict
 from generate_cpm_sbom import (
     generate_sbom,
     make_purl,
     normalize_git_url,
-    parse_cmake_cache,
 )
 
 SAMPLE_CACHE = """\
@@ -28,10 +28,10 @@ CPM_PACKAGE_earcut_hpp_BINARY_DIR:PATH=/build/earcut
 """
 
 
-def test_parse_cmake_cache(tmp_path: Path) -> None:
+def test_read_cache_dict(tmp_path: Path) -> None:
     cache = tmp_path / "CMakeCache.txt"
     cache.write_text(SAMPLE_CACHE)
-    entries = parse_cmake_cache(cache)
+    entries = read_cache_dict(str(cache))
     assert entries["CPM_PACKAGES"] == "zlib;mavlink;earcut_hpp"
     assert entries["CPM_PACKAGE_zlib_VERSION"] == "1.3.2"
     assert entries["CPM_PACKAGE_mavlink_VERSION"] == "0"

@@ -62,13 +62,9 @@ runs:
         OVERRIDE: ${{ inputs.artifact-source-path }}
         DEFAULT: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
       run: |
-        path="${OVERRIDE:-$DEFAULT}"
-        if [[ ! -e "$path" ]]; then
-          echo "::error::attest-and-upload: artifact not found at '$path'"
-          ls -la "$(dirname "$path")" 2>/dev/null || echo "(parent dir missing)"
-          exit 1
-        fi
-        echo "path=$path" >> "$GITHUB_OUTPUT"
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/attest_helper.py" resolve-path \
+          --override "${OVERRIDE}" \
+          --default "${DEFAULT}"
 
     - name: Attest Build with SBOM
       uses: ./.github/actions/attest-sbom

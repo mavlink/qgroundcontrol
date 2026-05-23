@@ -46,6 +46,12 @@ inputs:
     description: Qt modules for iOS target (defaults to build-config qt_modules_ios)
     required: false
     default: ""
+  aqt-source:
+    description: >-
+      Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
+      for unreleased fixes. Forwarded to every qt-install step in this setup. Blank uses PyPI.
+    required: false
+    default: ""
 
 outputs:
   qt_modules:
@@ -125,6 +131,7 @@ runs:
       uses: ./.github/actions/build-prerequisites
       with:
         build-type: ${{ inputs.build-type }}
+        mode: ${{ inputs.mode }}
 
     - name: Setup caching (desktop)
       if: inputs.mode == 'desktop'
@@ -153,6 +160,7 @@ runs:
         host: ${{ inputs.qt-host }}
         arch: ${{ inputs.qt-arch }}
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
+        aqt-source: ${{ inputs.aqt-source }}
 
     # ARM64 cross-compile needs an x64 host Qt for moc/qmlcachegen/etc. that run on the build machine. export-env=false so QT_ROOT_DIR keeps pointing at the target Qt.
     - name: Install host Qt (Windows ARM64 cross-compile)
@@ -165,6 +173,7 @@ runs:
         arch: win64_msvc2022_64
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
         export-env: 'false'
+        aqt-source: ${{ inputs.aqt-source }}
 
     # Required only when compiling C++ with MSVC (desktop Windows builds). Android-on-Windows uses NDK clang and skips this.
     - name: Setup MSVC environment (Windows desktop)

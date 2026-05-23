@@ -20,28 +20,23 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import write_github_output  # noqa: E402
+from common.proc import run_captured  # noqa: E402
 
 APT_OPTS = ["-o", "DPkg::Lock::Timeout=300", "-o", "Acquire::Retries=3"]
 
 
-def _run(cmd: list[str], *, check: bool = True, **kwargs) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, check=check, **kwargs)
-
-
-def _sudo(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
-    return _run(["sudo", *cmd], **kwargs)
+def _sudo(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
+    """Run cmd under sudo, streaming output. Captured callers use run_captured directly."""
+    return subprocess.run(["sudo", *cmd], check=check)
 
 
 def _ldconfig_has_blas() -> bool:
-    result = _run(["ldconfig", "-p"], capture_output=True, text=True, check=False)
+    result = run_captured(["ldconfig", "-p"])
     return bool(re.search(r"\blibblas\.so\.3\b", result.stdout))
 
 
 def _get_multiarch() -> str:
-    result = _run(
-        ["dpkg-architecture", "-qDEB_HOST_MULTIARCH"],
-        capture_output=True, text=True, check=False,
-    )
+    result = run_captured(["dpkg-architecture", "-qDEB_HOST_MULTIARCH"])
     return result.stdout.strip() if result.returncode == 0 else ""
 
 
@@ -108,10 +103,9 @@ def fix_apt_alternatives() -> None:
 
 def install_optional_packages() -> None:
     """Install optional apt packages that are available."""
-    result = _run(
+    result = run_captured(
         [sys.executable, "tools/setup/install_dependencies",
          "--platform", "debian", "--category", "gstreamer_optional", "--print-available-packages"],
-        capture_output=True, text=True, check=False,
     )
     packages = result.stdout.strip()
     if packages:
@@ -125,6 +119,16 @@ def detect_python_version() -> None:
     write_github_output({"minor": minor})
 
 
+def print_packages() -> None:
+    """Resolve the debian apt package list and emit it as a GITHUB_OUTPUT value."""
+    result = run_captured(
+        [sys.executable, "tools/setup/install_dependencies",
+         "--platform", "debian", "--print-packages"],
+        check=True,
+    )
+    write_github_output({"packages": result.stdout.strip()})
+
+
 def main() -> None:
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
@@ -133,6 +137,7 @@ def main() -> None:
     sub.add_parser("fix-apt-alternatives")
     sub.add_parser("install-optional")
     sub.add_parser("detect-python-version")
+    sub.add_parser("print-packages")
 
     args = parser.parse_args()
     commands = {
@@ -140,6 +145,7 @@ def main() -> None:
         "fix-apt-alternatives": fix_apt_alternatives,
         "install-optional": install_optional_packages,
         "detect-python-version": detect_python_version,
+        "print-packages": print_packages,
     }
     commands[args.command]()
 

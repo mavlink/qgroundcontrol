@@ -33,9 +33,6 @@ permissions:
   actions: read
   security-events: write
 
-env:
-  IS_STABLE_BUILD: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
-
 jobs:
   changes:
     uses: ./.github/workflows/_detect-changes.yml
@@ -88,6 +85,7 @@ jobs:
         shell: ${{ matrix.shell }}
 
     env:
+      BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
       PACKAGE: QGroundControl
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
@@ -115,7 +113,7 @@ jobs:
           qt-host: ${{ matrix.qt_host || matrix.host }}
           qt-arch: ${{ matrix.arch }}
           abis: ${{ env.QT_ANDROID_ABIS }}
-          build-type: ${{ inputs.build_type || 'Release' }}
+          build-type: ${{ env.BUILD_TYPE }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
 
       - name: Install host build dependencies
@@ -142,8 +140,7 @@ jobs:
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
-          build-type: ${{ inputs.build_type || 'Release' }}
-          stable: ${{ env.IS_STABLE_BUILD }}
+          build-type: ${{ env.BUILD_TYPE }}
           use-qt-cmake: 'false'
           extra-args: >-
             -DCMAKE_WARN_DEPRECATED=FALSE
@@ -163,7 +160,7 @@ jobs:
         uses: ./.github/actions/cmake-build
         with:
           build-dir: ${{ runner.temp }}/build
-          build-type: ${{ inputs.build_type || 'Release' }}
+          build-type: ${{ env.BUILD_TYPE }}
           parallel-jobs: ${{ matrix.emulator && '2' || '' }}
           output-file: qgc-build.log
 
@@ -174,7 +171,7 @@ jobs:
         run: |
           python3 "${GITHUB_WORKSPACE}/.github/scripts/android_build_retry.py" \
             --build-dir "${{ runner.temp }}/build" \
-            --build-type "${{ inputs.build_type || 'Release' }}"
+            --build-type "${{ env.BUILD_TYPE }}"
 
       # `failure()` is required: build's continue-on-error makes outcome alone insufficient.
       - name: Annotate emulator build retry failure

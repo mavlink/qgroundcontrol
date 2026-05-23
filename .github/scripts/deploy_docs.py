@@ -7,8 +7,13 @@ import argparse
 import datetime
 import re
 import shutil
-import subprocess
 from pathlib import Path
+
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.git import run_git  # noqa: E402
 
 
 def sanitize_branch(name: str) -> str:
@@ -45,24 +50,18 @@ def deploy_branch(
     deploy_dir = target_dir / safe_branch
     _copy_tree(source_dir, deploy_dir)
 
-    def git(*cmd: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["git", *cmd], cwd=str(target_dir), check=True)
+    run_git("config", "user.email", author_email, cwd=target_dir, check=True)
+    run_git("config", "user.name", author_name, cwd=target_dir, check=True)
+    run_git("add", safe_branch, cwd=target_dir, check=True)
 
-    git("config", "user.email", author_email)
-    git("config", "user.name", author_name)
-    git("add", safe_branch)
-
-    diff = subprocess.run(
-        ["git", "diff", "--cached", "--quiet"],
-        cwd=str(target_dir), check=False,
-    )
+    diff = run_git("diff", "--cached", "--quiet", cwd=target_dir)
     if diff.returncode == 0:
         print("No documentation changes to deploy.")
         return False
 
     today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
-    git("commit", "-m", f"{commit_message} {today}")
-    git("push", "origin", target_branch)
+    run_git("commit", "-m", f"{commit_message} {today}", cwd=target_dir, check=True)
+    run_git("push", "origin", target_branch, cwd=target_dir, check=True)
     return True
 
 

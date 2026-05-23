@@ -43,10 +43,14 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 1
+          # Bootstrap shim (ci_bootstrap.py + tools/_bootstrap.py + common/__init__.py + common/gh_actions.py)
+          # also appears in linux.yml (debug-matrix), pr-checks.yml (size), _cache-cleanup.yml. Keep aligned —
+          # GHA composite actions can't run before checkout, so this list can't be deduplicated structurally.
           sparse-checkout: |
             .github/scripts/plan_docker_builds.py
             .github/scripts/ci_bootstrap.py
             tools/_bootstrap.py
+            tools/common/__init__.py
             tools/common/gh_actions.py
           sparse-checkout-cone-mode: false
 
@@ -67,7 +71,7 @@ jobs:
     permissions:
       contents: read
       security-events: write
-      packages: write  # buildkit cache → ghcr.io
+      packages: write
 
     strategy:
       fail-fast: false
@@ -90,11 +94,15 @@ jobs:
 
       - name: Free Disk Space
         uses: ./.github/actions/free-disk-space
-        with:
-          remove-android: ${{ matrix.platform != 'Android' }}
-          remove-tool-cache: 'true'
-          remove-swap: 'true'
-          remove-folders: /usr/local/lib/docker/overlay2
+
+      - name: Resolve push target
+        id: push-target
+        shell: bash
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" resolve-push-target
+          --event-name "${{ github.event_name }}"
+          --repo "${{ github.repository }}"
+          --ref "${{ github.ref }}"
 
       - name: Build with Docker
         uses: ./.github/actions/docker
@@ -103,17 +111,7 @@ jobs:
           fuse: ${{ matrix.fuse }}
           docker-username: ${{ secrets.DOCKERHUB_USERNAME }}
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
-          # GHCR for rolling master/Stable; Docker Hub for v* release tags. Upstream-only to keep forks off the registries.
-          push-image: >-
-            ${{
-              (github.event_name == 'push' && github.repository == 'mavlink/qgroundcontrol' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/Stable')))
-              && 'ghcr.io/mavlink/qgroundcontrol'
-              || (
-                (github.event_name == 'push' && github.repository == 'mavlink/qgroundcontrol' && startsWith(github.ref, 'refs/tags/v'))
-                && 'dronecode/qgroundcontrol'
-                || ''
-              )
-            }}
+          push-image: ${{ steps.push-target.outputs.ref }}
 
       - name: Find build artifact
         id: artifact
@@ -132,7 +130,7 @@ jobs:
       - name: Scan SBOM with Grype
         if: steps.artifact.outputs.found == 'true'
         id: grype
-        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7
+        uses: anchore/scan-action@v7
         with:
           sbom: cpm-sbom.cdx.json
           fail-build: false

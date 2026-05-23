@@ -87,13 +87,31 @@ jobs:
             tools
           sparse-checkout-cone-mode: false
 
-      - name: Read build config
+      - name: Build Config
+        id: buildconfig
+        uses: ./.github/actions/build-config
+
+      - name: Resolve GStreamer version
         id: config
         shell: bash
         env:
           PLATFORM: ${{ inputs.platform }}
           VERSION: ${{ inputs.version }}
-        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/resolve_gstreamer_config.py" --platform "$PLATFORM" --version "$VERSION"
+          PLATFORM_VERSION: >-
+            ${{
+              (inputs.platform == 'macos'   && steps.buildconfig.outputs.gstreamer_macos_version)   ||
+              (inputs.platform == 'windows' && steps.buildconfig.outputs.gstreamer_windows_version) ||
+              (inputs.platform == 'android' && steps.buildconfig.outputs.gstreamer_android_version) ||
+              (inputs.platform == 'ios'     && steps.buildconfig.outputs.gstreamer_ios_version)     ||
+              ''
+            }}
+          FALLBACK_VERSION: ${{ steps.buildconfig.outputs.gstreamer_version }}
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/resolve_gstreamer_config.py"
+          --platform "$PLATFORM"
+          --version "$VERSION"
+          --platform-version "$PLATFORM_VERSION"
+          --fallback-version "$FALLBACK_VERSION"
 
       - name: Install dependencies (Linux)
         if: inputs.platform == 'linux'
@@ -126,43 +144,30 @@ jobs:
             pkg-config gettext bison flex cmake ninja-build
           version: gstreamer-android-deps-v1
 
-      - name: Install Qt (Linux)
-        if: inputs.platform == 'linux'
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: linux
-          target: desktop
-          arch: ${{ inputs.arch == 'aarch64' && 'linux_gcc_arm64' || 'linux_gcc_64' }}
-
-      - name: Install Qt (macOS)
-        if: inputs.platform == 'macos'
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: mac
-          target: desktop
-          arch: clang_64
-
-      - name: Install Qt (Windows)
-        if: inputs.platform == 'windows'
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: windows
-          target: desktop
-          arch: ${{ inputs.arch == 'arm64' && 'win64_msvc2022_arm64' || 'win64_msvc2022_64' }}
-
-      - name: Setup Python
+      # Android/iOS GStreamer builds don't link against host Qt — skip build-setup there. The desktop platforms run through build-setup so we get qt-install + setup-python + platform compiler toolchain in one shot.
+      - name: Build Setup
         if: inputs.platform == 'linux' || inputs.platform == 'macos' || inputs.platform == 'windows'
-        uses: ./.github/actions/setup-python
+        uses: ./.github/actions/build-setup
         with:
-          groups: ci
+          qt-host: >-
+            ${{
+              (inputs.platform == 'linux' && 'linux') ||
+              (inputs.platform == 'macos' && 'mac') ||
+              (inputs.platform == 'windows' && 'windows')
+            }}
+          qt-arch: >-
+            ${{
+              (inputs.platform == 'linux' && inputs.arch == 'aarch64' && 'linux_gcc_arm64') ||
+              (inputs.platform == 'linux' && 'linux_gcc_64') ||
+              (inputs.platform == 'macos' && 'clang_64') ||
+              (inputs.platform == 'windows' && inputs.arch == 'arm64' && 'win64_msvc2022_arm64') ||
+              (inputs.platform == 'windows' && 'win64_msvc2022_64')
+            }}
+          qt-version: ${{ steps.buildconfig.outputs.qt_version }}
 
       - name: Build GStreamer
         shell: bash
         env:
-          PY_CMD: ${{ steps.config.outputs.py_cmd }}
           PLATFORM: ${{ inputs.platform }}
           ARCH: ${{ inputs.arch }}
           VERSION: ${{ steps.config.outputs.version }}
@@ -198,7 +203,7 @@ jobs:
           [[ "$PLATFORM" == 'windows' ]] && args+=(--work-dir "$WORK_DIR")
           [[ "$PLATFORM" == 'ios' && "$SIMULATOR" == 'true' ]] && args+=(--simulator)
 
-          "${PY_CMD}" ./tools/setup/build-gstreamer.py "${args[@]}"
+          python3 ./tools/setup/build-gstreamer.py "${args[@]}"
 
       - name: Configure AWS Credentials
         if: inputs.upload_s3
@@ -212,7 +217,6 @@ jobs:
         id: archive
         shell: bash
         env:
-          PY_CMD: ${{ steps.config.outputs.py_cmd }}
           PLATFORM: ${{ inputs.platform }}
           ARCH: ${{ inputs.arch }}
           VERSION: ${{ steps.config.outputs.version }}
@@ -232,7 +236,7 @@ jobs:
           [[ "$SIMULATOR" == "true" ]] && args+=(--simulator)
           [[ "$UPLOAD_S3" == "true" ]] && args+=(--upload-s3)
 
-          "${PY_CMD}" "${WORKSPACE}/.github/scripts/gstreamer_archive.py" "${args[@]}"
+          python3 "${WORKSPACE}/.github/scripts/gstreamer_archive.py" "${args[@]}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

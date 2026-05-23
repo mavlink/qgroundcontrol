@@ -6,6 +6,10 @@ inputs:
     description: Build type (controls Linux Debug disk-cleanup heuristic)
     required: false
     default: "Release"
+  mode:
+    description: Setup mode (desktop, android, ios) — controls disk-cleanup variant on Linux.
+    required: false
+    default: desktop
 
 outputs:
   qt_modules:
@@ -58,12 +62,12 @@ runs:
       id: config
       uses: ./.github/actions/build-config
 
-    # Only instrumented Debug builds (coverage/ASan) need this; Release fits in the runner's default ~14GB free. Tool cache stays — Qt + Python toolchains live there and we restore them later.
-    - name: Free disk space (Linux Debug)
-      if: runner.os == 'Linux' && inputs.build-type == 'Debug'
+    - name: Free disk space (Linux)
+      if: runner.os == 'Linux'
       uses: ./.github/actions/free-disk-space
+      with:
+        remove-android: ${{ inputs.mode != 'android' }}
 
-    # Defender realtime scanning intercepts every compiler-emitted .o/.moc.cpp/.qrc.cpp on Windows; excluding the workspace + RUNNER_TEMP (build + Qt + ccache) shaves 20-30% off C++ builds.
     - name: Exclude workspace from Windows Defender
       if: runner.os == 'Windows'
       shell: pwsh
