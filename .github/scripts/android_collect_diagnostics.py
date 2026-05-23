@@ -18,6 +18,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.proc import run_captured  # noqa: E402
+
 ADB_TIMEOUT_SHORT = 20
 ADB_TIMEOUT_LONG = 30
 
@@ -34,13 +40,7 @@ GSTREAMER_LOAD_ERROR_PATTERN = re.compile(
 def _run(cmd: list[str], timeout: int) -> subprocess.CompletedProcess[str]:
     """Run a command swallowing failures — diagnostics are salvage, not gates."""
     try:
-        return subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=False,
-        )
+        return run_captured(cmd, timeout=timeout)
     except (FileNotFoundError, subprocess.TimeoutExpired) as e:
         return subprocess.CompletedProcess(cmd, returncode=1, stdout="", stderr=str(e))
 

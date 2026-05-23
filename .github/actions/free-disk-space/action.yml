@@ -1,26 +1,14 @@
 name: Free Disk Space
 description: >-
-  Thin wrapper around endersonmenezes/free-disk-space@v3 that pins QGC's shared
+  Thin wrapper around endersonmenezes/free-disk-space that pins QGC's shared
   defaults (packages, rm_cmd, dotnet/haskell removal) so callers only declare
   the knobs that actually vary by workload.
 
 inputs:
   remove-android:
-    description: 'Remove Android SDK/NDK (~9 GB). Keep when building Android.'
+    description: 'Remove Android SDK/NDK. Keep when building Android.'
     required: false
     default: 'true'
-  remove-tool-cache:
-    description: 'Remove the runner tool cache. Off by default — Qt + Python toolchains live there.'
-    required: false
-    default: 'false'
-  remove-swap:
-    description: 'Disable and remove swap (~4 GB).'
-    required: false
-    default: 'false'
-  remove-folders:
-    description: 'Newline-separated extra paths to remove (e.g. /usr/local/lib/docker/overlay2).'
-    required: false
-    default: ''
 
 runs:
   using: composite
@@ -30,9 +18,7 @@ runs:
         remove_android: ${{ inputs.remove-android }}
         remove_dotnet: true
         remove_haskell: true
-        remove_tool_cache: ${{ inputs.remove-tool-cache }}
-        remove_swap: ${{ inputs.remove-swap }}
-        remove_packages: azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
+        remove_packages: azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-* julia*
         remove_packages_one_command: true
-        remove_folders: ${{ inputs.remove-folders }}
+        remove_folders: /usr/share/swift /usr/share/miniconda /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli
         rm_cmd: rmz

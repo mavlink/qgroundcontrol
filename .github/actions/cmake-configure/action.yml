@@ -27,9 +27,10 @@ inputs:
     required: false
     default: 'false'
   stable:
-    description: 'Stable build (QGC_STABLE_BUILD)'
+    description: >-
+      Stable build (QGC_STABLE_BUILD). Defaults to true on tag refs and Stable* branches.
     required: false
-    default: 'false'
+    default: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
   extra-args:
     description: 'Additional CMake arguments'
     required: false

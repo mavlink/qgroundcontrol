@@ -63,9 +63,7 @@ runs:
       if: runner.os == 'Linux'
       id: linux-deps
       shell: bash
-      run: |
-        packages=$(python3 tools/setup/install_dependencies --platform debian --print-packages)
-        echo "packages=${packages}" >> "$GITHUB_OUTPUT"
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" print-packages
 
     - name: Enable universe repository (Linux)
       if: runner.os == 'Linux'

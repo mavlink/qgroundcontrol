@@ -31,6 +31,7 @@ class TestAttestHelper:
         subject = tmp_path / "artifact.zip"
         subject.touch()
         outputs = self._run_main([
+            "check",
             "--subject-path", str(subject),
             "--subject-name", "my-artifact",
             "--runner-temp", str(tmp_path),
@@ -42,6 +43,7 @@ class TestAttestHelper:
         subject = tmp_path / "artifact.zip"
         subject.touch()
         outputs = self._run_main([
+            "check",
             "--subject-path", str(subject),
             "--subject-name", "my-artifact",
             "--sbom-format", "spdx-json",
@@ -55,6 +57,7 @@ class TestAttestHelper:
         subject = tmp_path / "artifact.zip"
         subject.touch()
         outputs = self._run_main([
+            "check",
             "--subject-path", str(subject),
             "--subject-name", "my-artifact",
             "--sbom-format", "cyclonedx-json",
@@ -69,8 +72,39 @@ class TestAttestHelper:
         subject.parent.mkdir(parents=True, exist_ok=True)
         subject.touch()
         outputs = self._run_main([
+            "check",
             "--subject-path", str(subject),
             "--subject-name", "my-artifact",
             "--runner-temp", str(tmp_path),
         ])
         assert outputs["scan-path"] == str(subject.parent)
+
+    def test_resolve_path_uses_default_when_no_override(self, tmp_path):
+        artifact = tmp_path / "Out.AppImage"
+        artifact.touch()
+        outputs = self._run_main([
+            "resolve-path",
+            "--default", str(artifact),
+        ])
+        assert outputs == {"path": str(artifact)}
+
+    def test_resolve_path_prefers_override(self, tmp_path):
+        override = tmp_path / "override.zip"
+        override.touch()
+        default = tmp_path / "default.zip"
+        default.touch()
+        outputs = self._run_main([
+            "resolve-path",
+            "--override", str(override),
+            "--default", str(default),
+        ])
+        assert outputs == {"path": str(override)}
+
+    def test_resolve_path_missing_artifact_exits(self, tmp_path):
+        import pytest
+        with pytest.raises(SystemExit) as excinfo:
+            self._run_main([
+                "resolve-path",
+                "--default", str(tmp_path / "missing.zip"),
+            ])
+        assert excinfo.value.code == 1

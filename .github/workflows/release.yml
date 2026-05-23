@@ -140,15 +140,17 @@ jobs:
       # Source-tree SBOM is kept as a release artifact for source traceability,
       # but it is NOT used as the attestation evidence (per-platform SBOMs are).
       - name: Generate source SBOM (SPDX)
-        uses: ./.github/actions/source-sbom
+        uses: anchore/sbom-action@v0
         with:
+          path: .
           format: spdx-json
           output-file: sbom-source.spdx.json
           artifact-name: sbom-source-spdx
 
       - name: Generate source SBOM (CycloneDX)
-        uses: ./.github/actions/source-sbom
+        uses: anchore/sbom-action@v0
         with:
+          path: .
           format: cyclonedx-json
           output-file: sbom-source.cdx.json
           artifact-name: sbom-source-cyclonedx

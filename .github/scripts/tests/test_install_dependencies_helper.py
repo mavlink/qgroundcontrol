@@ -37,7 +37,7 @@ class TestLdconfigHasBlas:
             "\tlibm.so.6 (libc6,x86-64) => /lib/x86_64-linux-gnu/libm.so.6\n"
         )
         fake_result.returncode = 0
-        with patch.object(install_dependencies_helper, "_run", return_value=fake_result):
+        with patch.object(install_dependencies_helper, "run_captured", return_value=fake_result):
             assert install_dependencies_helper._ldconfig_has_blas() is True
 
     def test_ldconfig_has_blas_negative(self):
@@ -47,5 +47,5 @@ class TestLdconfigHasBlas:
             "\tlibm.so.6 (libc6,x86-64) => /lib/x86_64-linux-gnu/libm.so.6\n"
         )
         fake_result.returncode = 0
-        with patch.object(install_dependencies_helper, "_run", return_value=fake_result):
+        with patch.object(install_dependencies_helper, "run_captured", return_value=fake_result):
             assert install_dependencies_helper._ldconfig_has_blas() is False

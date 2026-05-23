@@ -25,9 +25,6 @@ permissions:
   actions: read
   checks: write
 
-env:
-  IS_STABLE_BUILD: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
-
 jobs:
   changes:
     uses: ./.github/workflows/_detect-changes.yml
@@ -37,7 +34,7 @@ jobs:
   build:
     name: Release ${{ matrix.arch }}
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped') }}
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
 
@@ -61,6 +58,8 @@ jobs:
         shell: bash
 
     steps:
+      # harden-runner is x86_64 Linux only — skip on the ubuntu-24.04-arm matrix entry.
+      # macOS/Windows runners no-op silently, so other workflows don't need the guard.
       - name: Harden Runner
         if: runner.arch != 'ARM64'
         uses: step-security/harden-runner@v2
@@ -96,7 +95,6 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
-          stable: ${{ env.IS_STABLE_BUILD }}
 
       - name: Build
         uses: ./.github/actions/cmake-build
@@ -140,8 +138,10 @@ jobs:
           retention-days: 90
 
       - name: Create AppImage
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config Release
+        uses: ./.github/actions/cmake-install
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
 
       - name: Verify AppImage
         uses: ./.github/actions/verify-executable
@@ -161,7 +161,7 @@ jobs:
 
   debug-matrix:
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped') }}
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 1
     outputs:
@@ -186,7 +186,7 @@ jobs:
   debug-validation:
     name: ${{ matrix.job_name }}
     needs: [changes, debug-matrix]
-    if: ${{ !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped') }}
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: ubuntu-22.04
     timeout-minutes: ${{ matrix.timeout_minutes }}
 
@@ -233,7 +233,6 @@ jobs:
           build-type: Debug
           testing: 'true'
           coverage: ${{ matrix.mode == 'coverage' && 'true' || 'false' }}
-          stable: ${{ env.IS_STABLE_BUILD }}
           extra-args: ${{ matrix.configure_extra }}
 
       - name: Build

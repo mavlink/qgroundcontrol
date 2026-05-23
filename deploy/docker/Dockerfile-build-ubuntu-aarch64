@@ -1,0 +1,97 @@
+# Cross-compile QGroundControl for Linux aarch64 from an x86_64 host.
+#
+# Why this exists (CI already builds arm64 natively on ubuntu-24.04-arm):
+#   - Local developer cross-builds without a target board / QEMU.
+#   - Reproducible builds against a specific glibc/Qt without standing up an
+#     arm64 runner.
+# ----------------------------------------------------------------------------
+FROM ubuntu:24.04
+
+# Direct `docker run` leaves root-owned artifacts; the wrapper passes --user $(id -u):$(id -g).
+LABEL org.opencontainers.image.documentation="deploy/docker/run-docker-ubuntu-aarch64.sh"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ---------- System packages & locale ----------
+# Cross toolchain is installed by install-sysroot-aarch64.sh; here we only
+# stage the host-side build tooling that matches Dockerfile-build-ubuntu.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        locales \
+        git \
+        ninja-build \
+        cmake \
+        ca-certificates \
+        build-essential \
+        curl \
+        unzip \
+        rsync \
+        python3 && \
+    sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen && \
+    locale-gen && \
+    update-locale LANG=en_US.UTF-8 && \
+    rm -rf /var/lib/apt/lists/*
+
+# ---------- Python deps for CMake-invoked generators + aqtinstall ----------
+# `qt` extra pulls hash-locked aqtinstall from tools/uv.lock.
+COPY --from=ghcr.io/astral-sh/uv:0.11.12 /uv /usr/local/bin/uv
+COPY tools/pyproject.toml tools/uv.lock /tmp/qgc-tools/
+RUN uv venv --seed /opt/qgc-venv --python python3 && \
+    VIRTUAL_ENV=/opt/qgc-venv uv sync \
+        --project /tmp/qgc-tools \
+        --extra scripts --extra qt \
+        --no-install-project \
+        --frozen --active --no-cache && \
+    /opt/qgc-venv/bin/python -c "import jinja2, httpx, defusedxml" && \
+    /opt/qgc-venv/bin/aqt --help >/dev/null && \
+    rm -rf /tmp/qgc-tools /usr/local/bin/uv
+ENV PATH="/opt/qgc-venv/bin:${PATH}"
+ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
+
+# ---------- Multiarch :arm64 sysroot ----------
+# install-sysroot-aarch64.sh does dpkg --add-architecture arm64, rewrites the
+# amd64 sources to be arch-pinned, and adds ports.ubuntu.com for arm64.
+COPY deploy/docker/install-sysroot-aarch64.sh /tmp/install-sysroot-aarch64.sh
+RUN chmod +x /tmp/install-sysroot-aarch64.sh && \
+    SYSROOT=/opt/sysroot /tmp/install-sysroot-aarch64.sh && \
+    rm -f /tmp/install-sysroot-aarch64.sh && \
+    rm -rf /var/lib/apt/lists/*
+ENV SYSROOT=/opt/sysroot
+
+# ---------- Qt: host (linux_gcc_64) + target (linux_gcc_arm64) via aqt ----------
+# aqt 3.3+ ships linux_gcc_arm64 for Qt ≥ 6.8.2; versions read from build-config.json.
+COPY .github/build-config.json /tmp/qt/
+COPY tools/setup/install_dependencies/ /tmp/qt/install_dependencies/
+COPY tools/setup/read_config.py /tmp/qt/
+COPY tools/common/ /tmp/common/
+RUN QT_VERSION=$(python3 /tmp/qt/read_config.py --get qt_version) && \
+    QT_MODULES=$(python3 /tmp/qt/read_config.py --get qt_modules) && \
+    mkdir -p /opt/Qt && \
+    aqt_install() { \
+        for attempt in 1 2 3; do \
+            /opt/qgc-venv/bin/aqt install-qt linux desktop "$1" "$2" -O /opt/Qt -m ${QT_MODULES} && return 0; \
+            echo "==> aqt $2 attempt ${attempt}/3 failed; retrying after ${attempt}0s" >&2; \
+            sleep "${attempt}0"; \
+        done; \
+        return 1; \
+    } && \
+    aqt_install "${QT_VERSION}" linux_gcc_64    && \
+    aqt_install "${QT_VERSION}" linux_gcc_arm64 && \
+    { echo "export QT_HOST_PATH=/opt/Qt/${QT_VERSION}/gcc_64"; \
+      echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_arm64"; \
+      echo 'export PATH=$QT_HOST_PATH/bin:$PATH'; } > /etc/profile.d/qt-cross.sh && \
+    chmod +x /etc/profile.d/qt-cross.sh && \
+    rm -rf /tmp/qt /tmp/common
+
+SHELL ["/bin/bash", "-lc"]
+
+RUN git config --global --add safe.directory /project/source
+
+RUN mkdir -p /project/source /project/build
+WORKDIR /project/build
+
+COPY deploy/docker/entrypoint-aarch64.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
+CMD ["Release"]

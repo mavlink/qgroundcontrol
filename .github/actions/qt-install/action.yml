@@ -40,6 +40,12 @@ inputs:
     description: Export QT_ROOT_DIR and prepend the Qt bin directory to PATH
     required: false
     default: 'true'
+  aqt-source:
+    description: >-
+      Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>).
+      Blank uses the PyPI `aqtinstall` package. Forces a reinstall so any preinstalled aqt is replaced.
+    required: false
+    default: ''
 runs:
   using: composite
   steps:
@@ -75,6 +81,7 @@ runs:
         QT_OUTDIR: ${{ inputs.dir }}/Qt
         QT_MODULES: ${{ inputs.modules }}
         QT_ARCHIVES: ${{ inputs.archives }}
+        QT_AQT_SOURCE: ${{ inputs.aqt-source }}
       run: |
         python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" install \
           --version "${QT_VERSION}" \
@@ -83,7 +90,8 @@ runs:
           --arch "${QT_ARCH}" \
           --outdir "${QT_OUTDIR}" \
           --modules "${QT_MODULES}" \
-          --archives "${QT_ARCHIVES}"
+          --archives "${QT_ARCHIVES}" \
+          --aqt-source "${QT_AQT_SOURCE}"
 
     # Forks can't write to the parent repo's cache (token is read-only), so skip the save attempt there to avoid noisy warnings. Same-repo PRs save normally.
     - name: Save Qt cache
@@ -102,9 +110,10 @@ runs:
         QT_VERSION: ${{ inputs.version }}
         ARCH_DIR: ${{ steps.qt-meta.outputs.arch_dir }}
       run: |
-        qt_root="${QT_OUTDIR}/${QT_VERSION}/${ARCH_DIR}"
-        echo "qt_root_dir=${qt_root}" >> "$GITHUB_OUTPUT"
-        echo "qt_bin_dir=${qt_root}/bin" >> "$GITHUB_OUTPUT"
+        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" resolve-paths \
+          --outdir "${QT_OUTDIR}" \
+          --version "${QT_VERSION}" \
+          --arch-dir "${ARCH_DIR}"
 
     - name: Set Qt environment
       if: ${{ inputs.export-env == 'true' }}

@@ -17,7 +17,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output  # noqa: E402
+from common.gh_actions import parse_bool, write_github_output  # noqa: E402
 
 COVERAGE_JOB: dict[str, str | int] = {
     "job_name": "Test + Coverage linux_gcc_64 Debug",
@@ -41,10 +41,6 @@ def build_matrix(is_pr: bool) -> list[dict[str, str | int]]:
     return [COVERAGE_JOB] if is_pr else [COVERAGE_JOB, SANITIZER_JOB]
 
 
-def _parse_bool(value: str) -> bool:
-    return value.strip().lower() in {"1", "true", "yes"}
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -54,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    include = build_matrix(_parse_bool(args.is_pr))
+    include = build_matrix(parse_bool(args.is_pr))
     serialized = json.dumps(include, separators=(",", ":"))
     write_github_output({"include": serialized})
     print(f"include={serialized}")

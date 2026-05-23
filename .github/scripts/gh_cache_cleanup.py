@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import subprocess
 import sys
 from dataclasses import dataclass
 
@@ -21,7 +20,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output, write_step_summary  # noqa: E402
+from common.gh_actions import gh, write_github_output, write_step_summary  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -44,14 +43,13 @@ def _branch_args(branch: str) -> list[str]:
 
 def list_caches(repo: str, branch: str, limit: int = 100) -> list[CacheRow]:
     """Return cached entries via `gh actions-cache list`. Empty list on no rows."""
-    cmd = [
-        "gh", "actions-cache", "list",
+    result = gh(
+        "actions-cache", "list",
         "-R", repo,
         *_branch_args(branch),
         "--order", "desc",
         "--limit", str(limit),
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    )
     rows: list[CacheRow] = []
     for line in result.stdout.splitlines():
         if not line.strip():
@@ -72,13 +70,13 @@ def delete_caches(repo: str, branch: str, keys: list[str]) -> tuple[int, int]:
     for key in keys:
         if not key:
             continue
-        cmd = [
-            "gh", "actions-cache", "delete", key,
+        result = gh(
+            "actions-cache", "delete", key,
             "-R", repo,
             *_branch_args(branch),
             "--confirm",
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+            check=False,
+        )
         if result.returncode == 0:
             deleted += 1
         else:

@@ -161,18 +161,34 @@ def cmd_ctest(args: argparse.Namespace) -> None:
     sys.exit(exit_code)
 
 
+_CACHE_LINE_RE = re.compile(r"^([A-Za-z0-9_.\-]+):[^=]+=(.*)$")
+
+
 def read_cache_var(cache_path: str, name: str) -> str | None:
     """Return the value of a CMake cache variable, or None if not set."""
-    pattern = re.compile(rf"^{re.escape(name)}:[^=]+=(.*)$")
     try:
         with open(cache_path, "r", encoding="utf-8") as fh:
             for line in fh:
-                match = pattern.match(line.rstrip("\n"))
-                if match:
-                    return match.group(1)
+                match = _CACHE_LINE_RE.match(line.rstrip("\n"))
+                if match and match.group(1) == name:
+                    return match.group(2)
     except FileNotFoundError:
         return None
     return None
+
+
+def read_cache_dict(cache_path: str) -> dict[str, str]:
+    """Return all typed entries from CMakeCache.txt as a flat name->value dict."""
+    entries: dict[str, str] = {}
+    try:
+        with open(cache_path, "r", encoding="utf-8") as fh:
+            for line in fh:
+                match = _CACHE_LINE_RE.match(line.rstrip("\n"))
+                if match:
+                    entries[match.group(1)] = match.group(2)
+    except FileNotFoundError:
+        pass
+    return entries
 
 
 def cmd_cache_var(args: argparse.Namespace) -> None:

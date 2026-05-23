@@ -45,14 +45,37 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      should_build: ${{ steps.result.outputs.should_build }}
-      linux: ${{ steps.result.outputs.linux }}
-      windows: ${{ steps.result.outputs.windows }}
-      macos: ${{ steps.result.outputs.macos }}
-      android: ${{ steps.result.outputs.android }}
-      docker_linux: ${{ steps.result.outputs.docker_linux }}
-      docker_android: ${{ steps.result.outputs.docker_android }}
+      should_build: ${{ steps.nonpr.outputs.should_build || steps.pr.outputs.should_build }}
+      linux: ${{ steps.nonpr.outputs.linux || steps.pr.outputs.linux }}
+      windows: ${{ steps.nonpr.outputs.windows || steps.pr.outputs.windows }}
+      macos: ${{ steps.nonpr.outputs.macos || steps.pr.outputs.macos }}
+      android: ${{ steps.nonpr.outputs.android || steps.pr.outputs.android }}
+      docker_linux: ${{ steps.nonpr.outputs.docker_linux || steps.pr.outputs.docker_linux }}
+      docker_android: ${{ steps.nonpr.outputs.docker_android || steps.pr.outputs.docker_android }}
     steps:
+      # Non-PR events (push, merge_group, workflow_dispatch) always rebuild
+      # everything. Sparse-checkout just the script + bootstrap shim it needs.
+      - name: Checkout passthrough script (non-PR)
+        if: github.event_name != 'pull_request'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            .github/scripts/detect_changes.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common/__init__.py
+            tools/common/gh_actions.py
+            tools/common/git.py
+            tools/common/proc.py
+          sparse-checkout-cone-mode: false
+
+      - name: Emit all-true outputs (non-PR)
+        if: github.event_name != 'pull_request'
+        id: nonpr
+        shell: bash
+        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py" --non-pr-passthrough
+
       - name: Harden Runner
         if: github.event_name == 'pull_request'
         uses: step-security/harden-runner@v2
@@ -72,11 +95,11 @@ jobs:
         with:
           platform: ${{ inputs.platform }}
 
-      - name: Compute outputs
-        id: result
+      - name: Compute outputs (PR)
+        if: github.event_name == 'pull_request'
+        id: pr
         shell: bash
         env:
-          IS_PR: ${{ github.event_name == 'pull_request' && '1' || '0' }}
           DETECT_ANY: ${{ steps.detect.outputs.any }}
           DETECT_LINUX: ${{ steps.detect.outputs.linux }}
           DETECT_WINDOWS: ${{ steps.detect.outputs.windows }}
@@ -85,13 +108,6 @@ jobs:
           DETECT_DOCKER_LINUX: ${{ steps.detect.outputs.docker_linux }}
           DETECT_DOCKER_ANDROID: ${{ steps.detect.outputs.docker_android }}
         run: |
-          # Non-PR events (push, merge_group, workflow_dispatch) always build.
-          if [ "$IS_PR" != "1" ]; then
-            for k in should_build linux windows macos android docker_linux docker_android; do
-              echo "$k=true" >> "$GITHUB_OUTPUT"
-            done
-            exit 0
-          fi
           {
             echo "should_build=${DETECT_ANY}"
             echo "linux=${DETECT_LINUX}"

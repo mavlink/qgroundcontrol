@@ -22,7 +22,6 @@ import os
 import platform
 import re
 import shutil
-import subprocess
 import sys
 import tarfile
 import tempfile
@@ -37,11 +36,14 @@ ensure_tools_dir(__file__)
 
 from common.gh_actions import (
     append_github_env,
+    append_github_path,
     write_step_summary,
 )
 from common.gh_actions import (
     write_github_output as write_github_outputs,
 )
+from common.proc import run_captured
+from common.tool_version import probe_version
 
 
 def _download_file(url: str, dest: Path, *, timeout: int = 120) -> None:
@@ -241,11 +243,8 @@ class CcacheInstaller:
     def verify_signature(self, archive: Path, sig_file: Path, minisign_bin: Path) -> bool:
         """Verify archive signature using minisign."""
         try:
-            result = subprocess.run(
+            result = run_captured(
                 [str(minisign_bin), "-Vm", str(archive), "-P", self.MINISIGN_KEY],
-                capture_output=True,
-                text=True,
-                check=False,
             )
             if result.returncode != 0:
                 print(f"Signature verification failed: {result.stderr}", file=sys.stderr)
@@ -276,22 +275,12 @@ class CcacheInstaller:
         dest_bin = self.prefix / "bin" / "ccache"
 
         try:
-            result = subprocess.run(
-                ["sudo", "cp", str(ccache_bin), str(dest_bin)],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            result = run_captured(["sudo", "cp", str(ccache_bin), str(dest_bin)])
             if result.returncode != 0:
                 print(f"Error copying ccache: {result.stderr}", file=sys.stderr)
                 return False
 
-            result = subprocess.run(
-                ["sudo", "chmod", "+x", str(dest_bin)],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            result = run_captured(["sudo", "chmod", "+x", str(dest_bin)])
             if result.returncode != 0:
                 print(f"Error setting permissions: {result.stderr}", file=sys.stderr)
                 return False
@@ -305,27 +294,13 @@ class CcacheInstaller:
 
     def is_installed(self) -> bool:
         """Check if requested ccache version is already installed."""
-        ccache_path = shutil.which("ccache")
-        if not ccache_path:
+        installed = probe_version("ccache")
+        if installed is None:
             return False
-
-        try:
-            result = subprocess.run(
-                ["ccache", "--version"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode != 0:
-                return False
-
-            version_match = re.search(r"[0-9]+\.[0-9]+(\.[0-9]+)?", result.stdout)
-            if version_match and version_match.group() == self.version:
-                return True
-        except OSError:
-            pass
-
-        return False
+        expected = tuple(int(n) for n in self.version.split("."))
+        # probe_version drops a missing patch component; compare on the shorter prefix.
+        compare_len = min(len(installed), len(expected))
+        return installed[:compare_len] == expected[:compare_len]
 
     def get_config(self) -> CcacheConfig:
         """Return current configuration as named tuple."""
@@ -362,12 +337,7 @@ class CcacheInstaller:
     def _print_version(self) -> None:
         """Print installed ccache version."""
         try:
-            result = subprocess.run(
-                ["ccache", "--version"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            result = run_captured(["ccache", "--version"])
             if result.returncode == 0:
                 print(result.stdout.strip())
         except OSError:
@@ -387,12 +357,7 @@ def get_ccache_json_stats() -> dict | None:
         return None
 
     try:
-        result = subprocess.run(
-            [ccache_bin, "--print-stats", "--format=json"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = run_captured([ccache_bin, "--print-stats", "--format=json"])
         if result.returncode != 0:
             return None
         return json.loads(result.stdout)
@@ -427,12 +392,7 @@ def get_ccache_verbose_stats() -> str | None:
         return None
 
     try:
-        result = subprocess.run(
-            [ccache_bin, "-s", "-vv"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = run_captured([ccache_bin, "-s", "-vv"])
         if result.returncode != 0:
             return None
         return result.stdout.strip()
@@ -471,14 +431,6 @@ def output_github_actions(config: CcacheConfig) -> None:
         "arch": config.arch,
         "max_size": config.max_size,
     })
-
-def append_github_path(path_entry: str) -> None:
-    """Append a path entry to ``$GITHUB_PATH`` when available."""
-    github_path = os.environ.get("GITHUB_PATH")
-    if not github_path:
-        return
-    with open(github_path, "a", encoding="utf-8") as handle:
-        handle.write(f"{path_entry}\n")
 
 def determine_cache_scope(event_name: str, ref_name: str, pr_number: str = "") -> str:
     """Return the normalized cache scope used by CI."""
@@ -586,7 +538,7 @@ def add_windows_binary_to_path(version: str, arch: str, runner_temp: Path) -> Pa
     if not binary.exists():
         raise FileNotFoundError(f"ccache.exe not found at {binary}")
     append_github_path(str(install_dir))
-    result = subprocess.run([str(binary), "--version"], capture_output=True, text=True, check=False)
+    result = run_captured([str(binary), "--version"])
     if result.stdout:
         print(result.stdout.strip())
     return install_dir

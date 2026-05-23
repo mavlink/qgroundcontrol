@@ -22,6 +22,7 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import write_github_output  # noqa: E402
+from common.proc import run_captured  # noqa: E402
 
 
 def validate_credentials(role_arn: str, key_id: str, secret_key: str) -> None:
@@ -82,7 +83,7 @@ def cmd_auth_mode(args: argparse.Namespace) -> None:
 def _run_aws(cmd: list[str]) -> None:
     """Run an AWS CLI command, surfacing stderr on failure."""
     try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        run_captured(cmd, check=True)
     except subprocess.CalledProcessError as e:
         sys.stderr.write(e.stderr or "")
         raise

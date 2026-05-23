@@ -254,3 +254,19 @@ def append_github_env(values: dict[str, str]) -> None:
     with open(path, "a", encoding="utf-8") as f:
         for key, value in values.items():
             f.write(f"{key}={value}\n")
+
+
+def append_github_path(path_entry: str) -> None:
+    """Append a path entry to $GITHUB_PATH for subsequent steps."""
+    path = os.environ.get("GITHUB_PATH")
+    if not path:
+        return
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(f"{path_entry}\n")
+
+
+def parse_bool(value: str | None) -> bool:
+    """Parse a CI-style boolean. Accepts 1/true/yes/on (case-insensitive)."""
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}

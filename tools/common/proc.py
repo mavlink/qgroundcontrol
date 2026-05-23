@@ -16,7 +16,30 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
     from pathlib import Path
 
-__all__ = ["run_captured", "run_text"]
+__all__ = ["run_bytes", "run_captured", "run_text"]
+
+
+def run_bytes(
+    cmd: Sequence[str],
+    *,
+    cwd: Path | str | None = None,
+    env: Mapping[str, str] | None = None,
+    timeout: float | None = None,
+    check: bool = False,
+) -> subprocess.CompletedProcess[bytes]:
+    """Like ``run_captured`` but returns raw bytes — for outputs that may not be valid UTF-8.
+
+    Use this for tools whose stdout/stderr can contain undecodable bytes (e.g. adb
+    logcat under a native crash). Decode at call sites with ``errors="replace"``.
+    """
+    return subprocess.run(
+        list(cmd),
+        capture_output=True,
+        cwd=cwd,
+        env=dict(env) if env is not None else None,
+        timeout=timeout,
+        check=check,
+    )
 
 
 def run_captured(
