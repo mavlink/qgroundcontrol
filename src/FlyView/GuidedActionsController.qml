@@ -489,6 +489,10 @@ Item {
         case actionSetWaypoint:
             confirmDialog.title = setWaypointTitle
             confirmDialog.message = setWaypointMessage
+            if (_activeVehicle.supports.restartMission) {
+                confirmDialog.optionText = qsTr("Restart Mission")
+                confirmDialog.optionChecked = false
+            }
             break;
         case actionOrbit:
             confirmDialog.title = orbitTitle
@@ -635,7 +639,7 @@ Item {
             }
             break
         case actionSetWaypoint:
-            _activeVehicle.setCurrentMissionSequence(actionData)
+            _activeVehicle.setCurrentMissionSequence(actionData, optionChecked /* restartMission */)
             break
         case actionOrbit:
             var valueInMeters = _unitsConversion.appSettingsVerticalDistanceUnitsToMeters(sliderOutputValue)

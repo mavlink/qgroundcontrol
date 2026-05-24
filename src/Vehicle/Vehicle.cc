@@ -2093,7 +2093,7 @@ void Vehicle::landingGearRetract()
                 1.0f);      // up
 }
 
-void Vehicle::setCurrentMissionSequence(int seq)
+void Vehicle::setCurrentMissionSequence(int seq, bool restartMission)
 {
     if (!_firmwarePlugin->sendHomePositionToVehicle()) {
         seq--;
@@ -2124,7 +2124,8 @@ void Vehicle::setCurrentMissionSequence(int seq)
         static_cast<uint8_t>(defaultComponentId()),
         MAV_CMD_DO_SET_MISSION_CURRENT,
         true, // showError
-        static_cast<uint16_t>(seq)
+        static_cast<uint16_t>(seq),
+        restartMission ? 1.0f : 0.0f
     );
 }
 

@@ -86,3 +86,11 @@ bool VehicleSupports::changeHeading() const
 {
     return _vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::ChangeHeadingCapability);
 }
+
+bool VehicleSupports::restartMission() const
+{
+    auto* instanceData = _vehicle->firmwarePluginInstanceData();
+    if (!instanceData) return false;
+    return instanceData->anyVersionSupportsCommand(MAV_CMD_DO_SET_MISSION_CURRENT)
+        == FirmwarePluginInstanceData::CommandSupportedResult::SUPPORTED;
+}
