@@ -338,18 +338,22 @@ public:
     /// Command vehicle to abort landing
     Q_INVOKABLE void abortLanding(double climbOutAltitude);
 
-    /// Command vichecle to deploy landing gear
+    /// Command vehicle to deploy landing gear
     Q_INVOKABLE void landingGearDeploy();
 
-    /// Command vichecle to retract landing gear
+    /// Command vehicle to retract landing gear
     Q_INVOKABLE void landingGearRetract();
 
     Q_INVOKABLE void startTakeoff();
 
     Q_INVOKABLE void startMission();
 
-    /// Alter the current mission item on the vehicle
-    Q_INVOKABLE void setCurrentMissionSequence(int seq);
+    /// Set the current mission item on the vehicle.
+    ///     @param seq Mission sequence number to make current.
+    ///     @param restartMission Passed as param2 of MAV_CMD_DO_SET_MISSION_CURRENT when the
+    ///            firmware supports that command (e.g. ArduPilot). Has no effect on firmware
+    ///            that falls back to the deprecated MISSION_SET_CURRENT message (e.g. PX4).
+    Q_INVOKABLE void setCurrentMissionSequence(int seq, bool restartMission = false);
 
     /// Reboot vehicle
     Q_INVOKABLE void rebootVehicle();
