@@ -12,18 +12,19 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
-    property bool   showIndicator:      remoteIDManager.available
+    property bool   showIndicator:      remoteIDManager ? remoteIDManager.available : false
 
     property var    activeVehicle:      QGroundControl.multiVehicleManager.activeVehicle
     property var    remoteIDManager:    activeVehicle ? activeVehicle.remoteIDManager : null
 
-    property bool   gpsFlag:            activeVehicle && remoteIDManager ? remoteIDManager.gcsGPSGood         : false
-    property bool   basicIDFlag:        activeVehicle && remoteIDManager ? remoteIDManager.basicIDGood        : false
-    property bool   armFlag:            activeVehicle && remoteIDManager ? remoteIDManager.armStatusGood      : false
-    property bool   commsFlag:          activeVehicle && remoteIDManager ? remoteIDManager.commsGood          : false
-    property bool   emergencyDeclared:  activeVehicle && remoteIDManager ? remoteIDManager.emergencyDeclared  : false
-    property bool   operatorIDFlag:     activeVehicle && remoteIDManager ? remoteIDManager.operatorIDGood     : false
-    property int    remoteIDState:      getRemoteIDState()
+    property bool   gpsFlag:            remoteIDManager ? remoteIDManager.gcsGPSGood         : false
+    property bool   basicIDFlag:        remoteIDManager ? remoteIDManager.basicIDGood        : false
+    property bool   armFlag:            remoteIDManager ? remoteIDManager.armStatusGood      : false
+    property bool   commsFlag:          remoteIDManager ? remoteIDManager.commsGood          : false
+    property bool   emergencyDeclared:  remoteIDManager ? remoteIDManager.emergencyDeclared  : false
+    property bool   operatorIDFlag:     remoteIDManager ? remoteIDManager.operatorIDGood     : false
+    property bool   sendOperatorID:     QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value
+    property int    remoteIDState:      getRemoteIDState(activeVehicle, commsFlag, armFlag, emergencyDeclared, gpsFlag, basicIDFlag, regionOperation, sendOperatorID, operatorIDFlag)
 
     property int    regionOperation:    QGroundControl.settingsManager.remoteIDSettings.region.value
 
@@ -34,43 +35,34 @@ Item {
         UNAVAILABLE
     }
 
-    enum RegionOperation {
-        FAA,
-        EU
-    }
-
     function getRidColor() {
         switch (remoteIDState) {
             case RemoteIDIndicator.RIDState.HEALTHY:
                 return qgcPal.colorGreen
-                break
             case RemoteIDIndicator.RIDState.WARNING:
                 return qgcPal.colorYellow
-                break
             case RemoteIDIndicator.RIDState.ERROR:
                 return qgcPal.colorRed
-                break
             case RemoteIDIndicator.RIDState.UNAVAILABLE:
                 return qgcPal.colorGrey
-                break
             default:
                 return qgcPal.colorGrey
         }
     }
 
-    function getRemoteIDState() {
-        if (!activeVehicle) {
+    function getRemoteIDState(vehicle, commsOk, armOk, emergencyActive, gpsOk, basicIDOk, region, sendOperatorIDEnabled, operatorIDOk) {
+        if (!vehicle) {
             return RemoteIDIndicator.RIDState.UNAVAILABLE
         }
         // We need to have comms and arm healthy to even be in any other state other than ERROR
-        if (!commsFlag || !armFlag || emergencyDeclared) {
+        if (!commsOk || !armOk || emergencyActive) {
             return RemoteIDIndicator.RIDState.ERROR
         }
-        if (!gpsFlag || !basicIDFlag) {
+        if (!gpsOk || !basicIDOk) {
             return RemoteIDIndicator.RIDState.WARNING
         }
-        if (regionOperation == RemoteIDIndicator.RegionOperation.EU || QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value) {
-            if (!operatorIDFlag) {
+        if (region == RemoteIDSettings.RegionOperation.EU || sendOperatorIDEnabled) {
+            if (!operatorIDOk) {
                 return RemoteIDIndicator.RIDState.WARNING
             }
         }

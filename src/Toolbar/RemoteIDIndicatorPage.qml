@@ -9,13 +9,14 @@ ToolIndicatorPage {
     showExpand: true
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property var    remoteIDManager:    _activeVehicle ? _activeVehicle.remoteIDManager : null
 
-    property bool   gpsFlag:            _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.gcsGPSGood         : false
-    property bool   basicIDFlag:        _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.basicIDGood        : false
-    property bool   armFlag:            _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.armStatusGood      : false
-    property bool   commsFlag:          _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.commsGood          : false
-    property bool   emergencyDeclared:  _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.emergencyDeclared  : false
-    property bool   operatorIDFlag:     _activeVehicle && _activeVehicle.remoteIDManager ? _activeVehicle.remoteIDManager.operatorIDGood     : false
+    property bool   gpsFlag:            remoteIDManager ? remoteIDManager.gcsGPSGood         : false
+    property bool   basicIDFlag:        remoteIDManager ? remoteIDManager.basicIDGood        : false
+    property bool   armFlag:            remoteIDManager ? remoteIDManager.armStatusGood      : false
+    property bool   commsFlag:          remoteIDManager ? remoteIDManager.commsGood          : false
+    property bool   emergencyDeclared:  remoteIDManager ? remoteIDManager.emergencyDeclared  : false
+    property bool   operatorIDFlag:     remoteIDManager ? remoteIDManager.operatorIDGood     : false
 
     property int    _regionOperation:   QGroundControl.settingsManager.remoteIDSettings.region.value
 
@@ -26,22 +27,6 @@ ToolIndicatorPage {
 
     // Visual properties
     property real   _margins:           ScreenTools.defaultFontPixelWidth
-
-    enum RegionOperation {
-        FAA,
-        EU
-    }
-
-    enum LocationType {
-        TAKEOFF,
-        LIVE,
-        FIXED
-    }
-
-    enum ClassificationType {
-        UNDEFINED,
-        EU
-    }
 
     function goToSettings() {
         if (mainWindow.allowViewSwitch()) {
@@ -156,7 +141,7 @@ ToolIndicatorPage {
                     }
 
                     Image {
-                        id:                 basicIDFlagIge
+                        id:                 basicIDFlagImage
                         width:              flagsWidth
                         height:             flagsHeight
                         source:             basicIDFlag ? "/qmlimages/RidFlagBackgroundGreen.svg" : "/qmlimages/RidFlagBackgroundRed.svg"
@@ -187,7 +172,7 @@ ToolIndicatorPage {
                         source:             operatorIDFlag ? "/qmlimages/RidFlagBackgroundGreen.svg" : "/qmlimages/RidFlagBackgroundRed.svg"
                         fillMode:           Image.PreserveAspectFit
                         sourceSize.height:  height
-                        visible:            commsFlag && _activeVehicle ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDIndicatorPage.EU) : false
+                        visible:            commsFlag ? (QGroundControl.settingsManager.remoteIDSettings.sendOperatorID.value || _regionOperation == RemoteIDSettings.RegionOperation.EU) : false
 
                         QGCLabel {
                             anchors.fill:           parent
@@ -226,19 +211,20 @@ ToolIndicatorPage {
                     anchors.topMargin:      _margins * 3
                     wrapMode:               Text.WordWrap
                     horizontalAlignment:    Text.AlignHCenter
-                    visible:                true
                 }
 
                 Image {
                     id:                         emergencyButton
                     width:                      flagsWidth * 2
                     height:                     flagsHeight * 1.5
-                    source:                     "/qmlimages/RidEmergencyBackground.svg"
+                    source:                     highlighted ? "/qmlimages/RidEmergencyBackgroundHighlight.svg" : "/qmlimages/RidEmergencyBackground.svg"
                     sourceSize.height:          height
                     anchors.horizontalCenter:   parent.horizontalCenter
                     anchors.top:                emergencyDeclareLabel.bottom
                     anchors.margins:            _margins
-                    visible:                    true
+
+                    property bool highlighted: emergencyButtonMouseArea.containsMouse || emergencyButtonMouseArea.pressed || emergencyButtonFlashOn
+                    property bool emergencyButtonFlashOn: false
 
                     QGCLabel {
                         anchors.fill:           parent
@@ -253,30 +239,19 @@ ToolIndicatorPage {
                     Timer {
                         id:             emergencyButtonTimer
                         interval:       350
-                        onTriggered: {
-                            if (emergencyButton.source == "/qmlimages/RidEmergencyBackgroundHighlight.svg" ) {
-                                emergencyButton.source = "/qmlimages/RidEmergencyBackground.svg"
-                            } else {
-                                emergencyButton.source = "/qmlimages/RidEmergencyBackgroundHighlight.svg"
-                            }
-                        }
+                        onTriggered:    emergencyButton.emergencyButtonFlashOn = false
                     }
 
                     MouseArea {
+                        id:                     emergencyButtonMouseArea
                         anchors.fill:           parent
                         hoverEnabled:           true
-                        onEntered:              emergencyButton.source = "/qmlimages/RidEmergencyBackgroundHighlight.svg"
-                        onExited:               emergencyButton.source = "/qmlimages/RidEmergencyBackground.svg"
                         pressAndHoldInterval:   emergencyDeclared ? 3000 : 800
                         onPressAndHold: {
-                            if (emergencyButton.source == "/qmlimages/RidEmergencyBackgroundHighlight.svg" ) {
-                                emergencyButton.source = "/qmlimages/RidEmergencyBackground.svg"
-                            } else {
-                                emergencyButton.source = "/qmlimages/RidEmergencyBackgroundHighlight.svg"
-                            }
+                            emergencyButton.emergencyButtonFlashOn = true
                             emergencyButtonTimer.restart()
-                            if (_activeVehicle) {
-                                _activeVehicle.remoteIDManager.setEmergency(!emergencyDeclared)
+                            if (remoteIDManager) {
+                                remoteIDManager.setEmergency(!emergencyDeclared)
                             }
                         }
                     }
@@ -289,24 +264,24 @@ ToolIndicatorPage {
         RowLayout {
             spacing: ScreenTools.defaultFontPixelWidth
 
-            property var  remoteIDSettings:QGroundControl.settingsManager.remoteIDSettings
+            property var  remoteIDSettings:     QGroundControl.settingsManager.remoteIDSettings
             property Fact regionFact:           remoteIDSettings.region
             property Fact sendOperatorIdFact:   remoteIDSettings.sendOperatorID
             property Fact locationTypeFact:     remoteIDSettings.locationType
             property Fact operatorIDFact:       remoteIDSettings.operatorID
-            property bool isEURegion:           regionFact.rawValue == RemoteIDIndicatorPage.EU
-            property bool isFAARegion:          regionFact.rawValue == RemoteIDIndicatorPage.FAA
+            property bool isEURegion:           regionFact.rawValue == RemoteIDSettings.RegionOperation.EU
+            property bool isFAARegion:          regionFact.rawValue == RemoteIDSettings.RegionOperation.FAA
             property real textFieldWidth:       ScreenTools.defaultFontPixelWidth * 24
             property real textLabelWidth:       ScreenTools.defaultFontPixelWidth * 30
 
             Connections {
                 target: regionFact
-                onRawValueChanged: {
-                    if (regionFact.rawValue === RemoteIDIndicatorPage.EU) {
+                function onRawValueChanged() {
+                    if (regionFact.rawValue === RemoteIDSettings.RegionOperation.EU) {
                         sendOperatorIdFact.rawValue = true
                     }
-                    if (regionFact.rawValue === RemoteIDIndicatorPage.FAA) {
-                        locationTypeFact.value = RemoteIDIndicatorPage.LocationType.LIVE
+                    if (regionFact.rawValue === RemoteIDSettings.RegionOperation.FAA) {
+                        locationTypeFact.value = RemoteIDSettings.LocationType.LIVE
                     }
                 }
             }
@@ -321,7 +296,7 @@ ToolIndicatorPage {
                     LabelledLabel {
                         id :                armStatusLabel
                         label:              qsTr("Arm Status Error")
-                        labelText:          remoteIDManager.armStatusError
+                        labelText:          remoteIDManager ? remoteIDManager.armStatusError : ""
                         Layout.fillWidth:   true
                     }
                 }
