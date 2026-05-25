@@ -5,40 +5,41 @@
 
     "mavCmdInfo": [
         {
-            "id":                   31010,
-            "rawName":              "MAV_CMD_USV_SAMPLE",
+            "id":                   42702,
+            "rawName":              "MAV_CMD_NAV_SCRIPT_TIME",
             "friendlyName":         "定点采样",
-            "description":          "任务项由飞控 NAV_SCRIPT_TIME 触发时，param2 表示任务上下文；QGC 手动 COMMAND_LONG 触发时 param2=0，语义不同于任务触发。",
+            "description":          "航线定点采样任务项。飞控执行 NAV_SCRIPT_TIME 且 param1=1 时发送 USV_SMPL，ROS 采样完成后回传 USV_DONE。",
             "specifiesCoordinate":  false,
             "friendlyEdit":         true,
             "category":             "USV",
             "param1": {
-                "label":            "采样轮次",
+                "label":            "任务类型",
+                "enumStrings":      "定点采样",
+                "enumValues":       "1",
                 "default":          1,
                 "decimalPlaces":    0,
                 "min":              1,
-                "max":              99
+                "max":              1
             },
             "param2": {
-                "label":            "任务触发参数",
-                "units":            "secs",
-                "default":          3,
-                "decimalPlaces":    1,
-                "min":              0,
-                "max":              60
-            },
-            "param3": {
                 "label":            "超时保护",
                 "units":            "secs",
-                "default":          300,
+                "default":          255,
+                "decimalPlaces":    0,
+                "min":              1,
+                "max":              255
+            },
+            "param3": {
+                "label":            "保留1",
+                "default":          0,
                 "decimalPlaces":    0,
                 "min":              0
             },
             "param4": {
-                "label":            "失败策略",
-                "enumStrings":      "保持,跳过,终止",
-                "enumValues":       "0,1,2",
-                "default":          0
+                "label":            "保留2",
+                "default":          0,
+                "decimalPlaces":    0,
+                "min":              0
             }
         },
         {

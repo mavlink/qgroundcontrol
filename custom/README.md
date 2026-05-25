@@ -157,6 +157,7 @@ import QGroundControl.Controls
 - 按钮根据链路、有效采样、baseline 和载荷状态自动启用/禁用
 - `USV_STAT=3` 显示为任务失败/采样失败，不再直接提示“载荷故障”
 - MAVLink 指令：CMD `31010..31019`
+  - `31010` 仅用于手动点采样；航线定点采样使用 Plan 任务项 `MAV_CMD_NAV_SCRIPT_TIME(param1=1)`
   - `31015` 开始走航，默认 `param1=5s`
   - `31016` 停止走航
   - `31017` 设置 baseline，`param1=0` 使用最新有效分光电压
