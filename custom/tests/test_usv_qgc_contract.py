@@ -175,15 +175,20 @@ class USVQGCContractTests(unittest.TestCase):
         metadata = json.loads((REPO_ROOT / "src" / "MissionManager" / "MavCmdInfoRover.json").read_text(encoding="utf-8"))
         commands = {entry["id"]: entry for entry in metadata["mavCmdInfo"]}
 
+        self.assertIn(42702, commands)
+        self.assertNotIn(31010, commands)
         self.assertIn(31017, commands)
         self.assertIn(31018, commands)
         self.assertIn(31019, commands)
         self.assertIn("baseline", commands[31017]["rawName"].lower())
         self.assertIn("spectro", commands[31018]["rawName"].lower())
         self.assertIn("spectro", commands[31019]["rawName"].lower())
-        sample = commands[31010]
-        self.assertNotEqual(sample.get("param2", {}).get("label"), "稳定等待")
-        self.assertIn("NAV_SCRIPT_TIME", sample["description"])
+        sample = commands[42702]
+        self.assertEqual(sample["rawName"], "MAV_CMD_NAV_SCRIPT_TIME")
+        self.assertEqual(sample["param1"]["default"], 1)
+        self.assertEqual(sample["param2"]["default"], 255)
+        self.assertEqual(sample["param2"]["max"], 255)
+        self.assertIn("USV_SMPL", sample["description"])
 
 
 if __name__ == "__main__":
