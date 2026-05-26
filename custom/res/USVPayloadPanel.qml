@@ -75,6 +75,7 @@ Rectangle {
                               || payloadStatus === _stNavigating || payloadStatus === _stHolding
                               || payloadStatus === _stWaitingStable || payloadStatus === _stResumingAuto
                               || payloadStatus === _stSurveying
+    property bool _canStartPointSample: payloadStatus === _stIdle || payloadStatus === _stSamplingDone || payloadStatus === _stHoldNoMission
     property bool _linkOk: _linkActiveFact ? _linkActiveFact.value === 1 : !_hasPayloadGroup
     property var _panelState: USVLayout.payloadState(!!vehicle, payloadStatus, _linkOk, _expanded)
     property string _lastCommandMessage: ""
@@ -458,13 +459,13 @@ Rectangle {
                                 { text: qsTr("启动信号采集"), cmd: _cmdSpectroStart, param1: 0, en: vehicle && _linkOk && payloadStatus !== _stFault, warn: false, span: 2 },
                                 { text: qsTr("设基线"), cmd: _cmdSetBaseline, param1: 0, en: vehicle && _linkOk && spectrometerValid && payloadStatus !== _stFault, warn: false, span: 1 },
                                 { text: qsTr("停止信号采集"), cmd: _cmdSpectroStop, param1: 0, en: vehicle && _linkOk, warn: true, span: 1 },
-                                { text: qsTr("开始点采样"), cmd: _cmdStart, param1: 0, en: vehicle && _linkOk && spectrometerValid && baselineSet && payloadStatus === _stIdle, warn: false, span: 1 },
+                                { text: qsTr("开始点采样"), cmd: _cmdStart, param1: 0, en: vehicle && _linkOk && spectrometerValid && baselineSet && _canStartPointSample, warn: false, span: 1 },
                                 { text: qsTr("开始走航"), cmd: _cmdStartSurvey, param1: 5, en: vehicle && _linkOk && spectrometerValid && baselineSet && payloadStatus !== _stFault && payloadStatus !== _stSurveying, warn: false, span: 1 },
                                 { text: qsTr("停止检测"), cmd: _cmdStop, param1: 0, en: vehicle && _isWorking, warn: true, span: 1 },
                                 { text: qsTr("停止走航"), cmd: _cmdStopSurvey, param1: 0, en: vehicle && payloadStatus === _stSurveying, warn: true, span: 1 },
                                 { text: qsTr("暂停"), cmd: _cmdPause, param1: 0, en: vehicle && payloadStatus === _stSampling, warn: false, span: 1 },
                                 { text: qsTr("恢复"), cmd: _cmdResume, param1: 0, en: vehicle && payloadStatus === _stPaused, warn: false, span: 1 },
-                                { text: qsTr("零点校准"), cmd: _cmdCalibrate, param1: 0, en: vehicle && _linkOk && payloadStatus === _stIdle, warn: false, span: 2 }
+                                { text: qsTr("零点校准"), cmd: _cmdCalibrate, param1: 0, en: vehicle && _linkOk && _canStartPointSample, warn: false, span: 2 }
                             ]
 
                             delegate: Rectangle {
