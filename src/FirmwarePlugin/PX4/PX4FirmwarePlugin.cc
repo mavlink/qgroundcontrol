@@ -768,13 +768,13 @@ void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 
         // Update Fixed Wing
         switch (cMode){
-        case PX4CustomMode::OFFBOARD          :
         case PX4CustomMode::SIMPLE            :
         case PX4CustomMode::POSCTL_ORBIT      :
         case PX4CustomMode::AUTO_FOLLOW_TARGET:
         case PX4CustomMode::AUTO_PRECLAND     :
             mode.fixedWing = false;
             break;
+        case PX4CustomMode::OFFBOARD          :
         case PX4CustomMode::MANUAL            :
         case PX4CustomMode::STABILIZED        :
         case PX4CustomMode::ACRO              :
