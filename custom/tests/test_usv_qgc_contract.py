@@ -171,6 +171,15 @@ class USVQGCContractTests(unittest.TestCase):
         self.assertIn("enabled: modelData.en && !_hasPendingCommand", payload_panel)
         self.assertIn("_clearPendingCommand(command)", payload_panel)
 
+    def test_payload_panel_allows_sampling_restart_after_completion_or_hold(self):
+        payload_panel = (REPO_ROOT / "custom" / "res" / "USVPayloadPanel.qml").read_text(encoding="utf-8")
+
+        self.assertIn("property bool _canStartPointSample", payload_panel)
+        self.assertIn("payloadStatus === _stSamplingDone", payload_panel)
+        self.assertIn("payloadStatus === _stHoldNoMission", payload_panel)
+        self.assertIn("en: vehicle && _linkOk && spectrometerValid && baselineSet && _canStartPointSample", payload_panel)
+        self.assertNotIn("spectrometerValid && baselineSet && payloadStatus === _stIdle", payload_panel)
+
     def test_rover_command_metadata_contains_set_baseline_and_correct_sample_semantics(self):
         metadata = json.loads((REPO_ROOT / "src" / "MissionManager" / "MavCmdInfoRover.json").read_text(encoding="utf-8"))
         commands = {entry["id"]: entry for entry in metadata["mavCmdInfo"]}
