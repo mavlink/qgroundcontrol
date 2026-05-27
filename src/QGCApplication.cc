@@ -48,6 +48,7 @@
 #endif
 
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
+QGC_LOGGING_CATEGORY(QGCAppMessageLog, "API.QGCApplication.AppMessage")
 
 QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli)
     : QGuiApplication(argc, argv)
@@ -402,15 +403,19 @@ void QGCApplication::showAppMessage(const QString &message, const QString &title
 {
     const QString dialogTitle = title.isEmpty() ? applicationName() : title;
 
+    if (runningUnitTests()) {
+        // Never show a blocking dialog during unit tests — it would hang the test runner.
+        // Logged under QGCAppMessageLog so tests can use expectAppMessage() to white-list
+        // expected dialogs without matching against the general QGCApplication category.
+        qCDebug(QGCAppMessageLog) << "showAppMessage:" << dialogTitle << "-" << message;
+        return;
+    }
+
     QObject *const rootQmlObject = _rootQmlObject();
     if (rootQmlObject) {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
         QMetaObject::invokeMethod(rootQmlObject, "_showMessageDialog", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, dialogTitle), Q_ARG(QVariant, varMessage));
-    } else if (runningUnitTests()) {
-        // Unit tests can run without UI
-        // We don't use a logging category to make it easier to debug unit tests
-        qDebug() << "QGCApplication::showAppMessage unittest title:message" << dialogTitle << message;
     } else {
         // UI isn't ready yet
         _delayedAppMessages.append(QPair<QString, QString>(dialogTitle, message));

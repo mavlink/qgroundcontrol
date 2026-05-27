@@ -17,6 +17,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QMutexLocker>
+#include <QtCore/QSet>
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QTemporaryFile>
 #include <QtCore/QThread>
@@ -1497,8 +1498,17 @@ void MockLink::_handleInProgressCommandLong(const mavlink_command_long_t &reques
 
 void MockLink::_handleCommandLongSetMessageInterval(const mavlink_command_long_t &request, bool &accepted)
 {
-    Q_UNUSED(request);
-    accepted = false;
+    // Accept only the message IDs that MAVLinkStreamConfig requests for PID tuning.
+    // Anything else gets MAV_RESULT_UNSUPPORTED so unit tests will catch unexpected usage.
+    static const QSet<int> kPidTuningMessageIds = {
+        MAVLINK_MSG_ID_ATTITUDE_QUATERNION,
+        MAVLINK_MSG_ID_ATTITUDE_TARGET,
+        MAVLINK_MSG_ID_LOCAL_POSITION_NED,
+        MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED,
+        MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT,
+        MAVLINK_MSG_ID_VFR_HUD,
+    };
+    accepted = kPidTuningMessageIds.contains(static_cast<int>(request.param1));
 }
 
 void MockLink::_handleCommandLong(const mavlink_message_t &msg)
@@ -1669,9 +1679,9 @@ void MockLink::_respondWithAutopilotVersion()
     } else if (_firmwareType == MAV_AUTOPILOT_PX4) {
 #endif
         flightVersion.parts.major = 1;
-        flightVersion.parts.minor = 4;
-        flightVersion.parts.patch = 1;
-        flightVersion.parts.type = FIRMWARE_VERSION_TYPE_DEV;
+        flightVersion.parts.minor = 17;
+        flightVersion.parts.patch = 0;
+        flightVersion.parts.type = FIRMWARE_VERSION_TYPE_OFFICIAL;
 #ifndef QGC_NO_ARDUPILOT_DIALECT
     }
 #endif
