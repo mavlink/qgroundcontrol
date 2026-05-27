@@ -8,8 +8,8 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtPositioning/QGeoCoordinate>
 
+// Forward declaration - Vehicle.h is included in the .cpp file
 class Vehicle;
-Q_DECLARE_OPAQUE_POINTER(Vehicle *)
 
 /// Formation types for swarm coordination
 enum class SwarmFormation {
