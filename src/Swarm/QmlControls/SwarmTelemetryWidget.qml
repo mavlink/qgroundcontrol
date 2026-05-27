@@ -161,36 +161,41 @@ Rectangle {
             spacing: 4
 
             StatBox {
-                label: "Ready"
-                value: telemetryData.readyVehicles || 0
-                color: "#4CAF50"
+                statLabel: "Ready"
+                statValue: telemetryData.readyVehicles || 0
+                statColor: "#4CAF50"
             }
 
             StatBox {
-                label: "Flying"
-                value: telemetryData.flyingVehicles || 0
-                color: "#2196F3"
+                statLabel: "Flying"
+                statValue: telemetryData.flyingVehicles || 0
+                statColor: "#2196F3"
             }
 
             StatBox {
-                label: "Battery"
-                value: "%1%".arg(telemetryData.averageBattery ? telemetryData.averageBattery.toFixed(0) : "0")
-                color: "#8BC34A"
+                statLabel: "Battery"
+                statValue: "%1%".arg(telemetryData.averageBattery ? telemetryData.averageBattery.toFixed(0) : "0")
+                statColor: "#8BC34A"
             }
         }
     }
 
     // Stat box component
     component StatBox: Rectangle {
+        id: statBox
         color: qgcPal.mapBackground
         radius: 2
+
+        property string statLabel: ""
+        property string statValue: ""
+        property color statColor: qgcPal.windowText
 
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 2
 
             Label {
-                text: label
+                text: statLabel
                 font {
                     pixelSize: ScreenTools.defaultFontPixelHeight * 0.5
                 }
@@ -199,18 +204,14 @@ Rectangle {
             }
 
             Label {
-                text: value
+                text: statValue
                 font {
                     pixelSize: ScreenTools.defaultFontPixelHeight * 0.8
                     bold: true
                 }
-                color: parent.color
+                color: statBox.statColor
                 horizontalAlignment: Text.AlignHCenter
             }
         }
-
-        property string label: ""
-        property string value: ""
-        property color color: qgcPal.windowText
     }
 }
