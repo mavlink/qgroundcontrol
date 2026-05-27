@@ -47,8 +47,6 @@ enum class SwarmCoordinationMode {
 class SwarmManager : public QObject
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("SwarmManager provides singleton access only")
 
     Q_PROPERTY(bool swarmEnabled READ swarmEnabled WRITE setSwarmEnabled NOTIFY swarmEnabledChanged)
     Q_PROPERTY(bool swarmModeActive READ swarmModeActive NOTIFY swarmModeActiveChanged)
