@@ -4,10 +4,12 @@
 #include <QtCore/QTimer>
 #include <QtCore/QList>
 #include <QtCore/QVariantMap>
+#include <QtCore/QMetaType>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtPositioning/QGeoCoordinate>
 
 class Vehicle;
+Q_DECLARE_OPAQUE_POINTER(Vehicle *)
 
 /// Formation types for swarm coordination
 enum class SwarmFormation {
