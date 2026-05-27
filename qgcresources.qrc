@@ -20,6 +20,6 @@
         <file alias="TrashCan.svg">resources/TrashCan.svg</file>
         <file alias="TrashDelete.svg">resources/TrashDelete.svg</file>
         <file alias="XDelete.svg">resources/XDelete.svg</file>
-        <file alias="jiacdigcs.ico">resources/icons/jiacdigcs.ico</file>
+        <file alias="jiacdigcs.ico">resources/icons/qgroundcontrol.ico</file>
     </qresource>
 </RCC>
