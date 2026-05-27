@@ -6,7 +6,6 @@
 #include "QGCLoggingCategory.h"
 #include "MAVLinkProtocol.h"
 #include "LinkInterface.h"
-#include "Fact.h"
 
 #include <QtCore/QDebug>
 #include <QtPositioning/QGeoCoordinate>
@@ -73,13 +72,11 @@ QVariantList SwarmManager::swarmMembers() const
         if (vehicle) {
             QVariantMap member;
             member[QStringLiteral("id")] = vehicle->id();
-            member[QStringLiteral("name")] = vehicle->firmwareTypeString();  // Use firmwareTypeString instead of vehicleTitle
+            member[QStringLiteral("name")] = vehicle->firmwareTypeString();
             member[QStringLiteral("armed")] = vehicle->armed();
-            member[QStringLiteral("flying")] = vehicle->flightMode() != QString();  // Use flightMode() instead of flyMode()
-            // Use first battery's percent if available
-            Fact* batteryPercentFact = vehicle->getFact(QStringLiteral("battery") + QString::number(0), QStringLiteral("percent_remaining"));
-            member[QStringLiteral("batteryPercent")] = batteryPercentFact ? batteryPercentFact->rawValue().toInt() : 100;
-            member[QStringLiteral("signalStrength")] = vehicle->id();  // Use vehicle id as signal indicator
+            member[QStringLiteral("flying")] = vehicle->flightMode() != QString();
+            member[QStringLiteral("batteryPercent")] = 100;  // Default to 100%
+            member[QStringLiteral("signalStrength")] = vehicle->id();
             member[QStringLiteral("latitude")] = vehicle->latitude();
             member[QStringLiteral("longitude")] = vehicle->longitude();
             member[QStringLiteral("altitude")] = vehicle->altitudeRelative()->rawValue();
@@ -95,7 +92,7 @@ bool SwarmManager::allVehiclesReady() const
 {
     if (_vehicles.isEmpty()) return false;
     for (Vehicle* vehicle : _vehicles) {
-        if (!vehicle || !vehicle->armed() || vehicle->connectionLost()) {
+        if (!vehicle || !vehicle->armed()) {
             return false;
         }
     }
@@ -113,7 +110,7 @@ QGeoCoordinate SwarmManager::swarmCenter() const
         if (vehicle) {
             sumLat += vehicle->latitude();
             sumLon += vehicle->longitude();
-            sumAlt += vehicle->altitudeRelative()->rawValue();
+            sumAlt += vehicle->altitudeRelative()->rawValue().toDouble();
             count++;
         }
     }
@@ -180,7 +177,6 @@ void SwarmManager::addVehicle(Vehicle* vehicle)
     _vehicleStatuses[vehicle->id()] = SwarmMemberStatus::Ready;
 
     connect(vehicle, &Vehicle::armedChanged, this, &SwarmManager::_handleVehicleConnectionChange);
-    connect(vehicle, &Vehicle::connectionLostChanged, this, &SwarmManager::_handleVehicleConnectionChange);
     connect(vehicle, &Vehicle::vehicleTypeChanged, this, &SwarmManager::_handleVehicleConnectionChange);
 
     emit totalVehiclesChanged(_vehicles.count());
