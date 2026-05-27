@@ -132,7 +132,7 @@ public:
     // Health and monitoring
     Q_INVOKABLE double getAverageBatteryLevel() const;
     Q_INVOKABLE double getMinSignalStrength() const;
-    Q_INVOKABLE bool checkCollisionRisk() const;
+    Q_INVOKABLE bool checkCollisionRisk();
     Q_INVOKABLE QVariantMap getSwarmHealthStatus() const;
     Q_INVOKABLE void requestTelemetryUpdate();
 
@@ -142,6 +142,10 @@ public:
 
     // Formation position calculation helper
     Q_INVOKABLE QGeoCoordinate getFormationOffset(int vehicleIndex, const QGeoCoordinate &leaderPosition);
+
+private:
+    double _calculateDistance(Vehicle* v1, Vehicle* v2) const;
+    void _emitCollisionWarning(int vehicleId1, int vehicleId2);
 
 signals:
     void swarmEnabledChanged(bool enabled);
