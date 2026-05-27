@@ -1985,7 +1985,7 @@ void Vehicle::guidedModeROI(const QGeoCoordinate& centerCoord)
     if (px4Firmware()) {
         // PX4 ignores the coordinate frame in COMMAND_INT and treats the altitude as AMSL,
         // so a terrain query is required before we can send the ROI command.
-        _terrainQueryCoordinator->roiWithTerrain(centerCoord);
+        _terrainQueryCoordinator->roiWithTerrain(centerCoord, centerCoord.altitude());
     } else {
         // ArduPilot handles MAV_FRAME_GLOBAL_RELATIVE_ALT correctly, so altitude 0 relative to
         // home is a reasonable default for a map click with no altitude info.
