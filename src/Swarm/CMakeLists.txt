@@ -40,3 +40,12 @@ target_include_directories(SwarmModule
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/src
 )
+
+# ----------------------------------------------------------------------------
+# Dependencies
+# ----------------------------------------------------------------------------
+target_link_libraries(SwarmModule
+    PRIVATE
+        QGC
+        Vehicle
+)
