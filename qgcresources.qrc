@@ -22,14 +22,4 @@
         <file alias="XDelete.svg">resources/XDelete.svg</file>
         <file alias="jiacdigcs.ico">resources/icons/qgroundcontrol.ico</file>
     </qresource>
-    <qresource prefix="/qml/Swarm">
-        <file alias="SwarmInterface.qml">src/Swarm/QmlControls/SwarmInterface.qml</file>
-        <file alias="SwarmDashboard.qml">src/Swarm/QmlControls/SwarmDashboard.qml</file>
-        <file alias="SwarmFormationSelector.qml">src/Swarm/QmlControls/SwarmFormationSelector.qml</file>
-        <file alias="SwarmVehicleStatus.qml">src/Swarm/QmlControls/SwarmVehicleStatus.qml</file>
-        <file alias="SwarmControlPanel.qml">src/Swarm/QmlControls/SwarmControlPanel.qml</file>
-        <file alias="SwarmTelemetryWidget.qml">src/Swarm/QmlControls/SwarmTelemetryWidget.qml</file>
-        <file alias="SwarmAlertSystem.qml">src/Swarm/QmlControls/SwarmAlertSystem.qml</file>
-        <file alias="SwarmMiniMap.qml">src/Swarm/QmlControls/SwarmMiniMap.qml</file>
-    </qresource>
 </RCC>
