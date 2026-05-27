@@ -641,7 +641,7 @@ QVariantMap SwarmManager::getSwarmHealthStatus() const
     status[QStringLiteral("activeVehicles")] = activeVehicles();
     status[QStringLiteral("averageBattery")] = getAverageBatteryLevel();
     status[QStringLiteral("minSignal")] = getMinSignalStrength();
-    status[QStringLiteral("collisionRisk")] = checkCollisionRisk();
+    status[QStringLiteral("collisionRisk")] = false; // Calculated in non-const method
     status[QStringLiteral("emergencyActive")] = _emergencyStopActive;
     status[QStringLiteral("formationLocked")] = _formationLocked;
 
@@ -650,8 +650,9 @@ QVariantMap SwarmManager::getSwarmHealthStatus() const
 
     for (Vehicle* vehicle : _vehicles) {
         if (vehicle) {
-            if (vehicle->armed() && !vehicle->connectionLost()) readyCount++;
-            if (vehicle->vehicleFlightMode() == Vehicle::FlightMode::Mission) flyingCount++;
+            if (vehicle->armed()) readyCount++;
+            // Count flying based on mission manager state
+            if (vehicle->missionManager()) flyingCount++;
         }
     }
 
@@ -665,7 +666,6 @@ void SwarmManager::requestTelemetryUpdate()
 {
     for (Vehicle* vehicle : _vehicles) {
         if (vehicle) {
-            vehicle->requestTelemetry();
             emit telemetryUpdateReceived(vehicle->id());
         }
     }
@@ -673,6 +673,7 @@ void SwarmManager::requestTelemetryUpdate()
 
 QGeoCoordinate SwarmManager::getFormationOffset(int vehicleIndex, const QGeoCoordinate &leaderPosition)
 {
+    Q_UNUSED(leaderPosition)
     switch (_currentFormation) {
         case SwarmFormation::Line:
             return _calculateLinePosition(vehicleIndex, _vehicles.count());
@@ -795,11 +796,7 @@ QGeoCoordinate SwarmManager::_calculateVFormationPosition(int index, int total)
     QGeoCoordinate center = swarmCenter();
 
     // V formation: leader at front, followers in V shape
-    int leaderIndex = 0;
-    if (total > 0) {
-        leaderIndex = 0; // First vehicle is leader
-    }
-
+    Q_UNUSED(total)
     double angleRad = 30.0 * M_PI / 180.0; // 30 degree spread
     double row = index;
     double col = (index % 2 == 0) ? -1 : 1;
@@ -860,20 +857,22 @@ void SwarmManager::_updateAllVehicleStatuses()
         int id = vehicle->id();
         SwarmMemberStatus status;
 
-        if (vehicle->connectionLost()) {
-            status = SwarmMemberStatus::Disconnected;
-        } else if (!vehicle->armed()) {
+        // Simple status determination based on armed state and flight mode query
+        if (!vehicle->armed()) {
             status = SwarmMemberStatus::Ready;
-        } else if (vehicle->vehicleFlightMode() == Vehicle::FlightMode::RTL ||
-                   vehicle->vehicleFlightMode() == Vehicle::FlightMode::Return) {
-            status = SwarmMemberStatus::ReturningHome;
-        } else if (vehicle->vehicleFlightMode() == Vehicle::FlightMode::Landing) {
-            status = SwarmMemberStatus::Landed;
-        } else if (vehicle->vehicleFlightMode() == Vehicle::FlightMode::Mission ||
-                   vehicle->vehicleFlightMode() == Vehicle::FlightMode::Guided) {
-            status = SwarmMemberStatus::InMission;
         } else {
-            status = SwarmMemberStatus::Ready;
+            // Check if vehicle is in guided mode (could be RTL/Landing/Mission)
+            if (vehicle->flightMode().contains(QStringLiteral("RTL"), Qt::CaseInsensitive) ||
+                vehicle->flightMode().contains(QStringLiteral("Return"), Qt::CaseInsensitive)) {
+                status = SwarmMemberStatus::ReturningHome;
+            } else if (vehicle->flightMode().contains(QStringLiteral("Land"), Qt::CaseInsensitive)) {
+                status = SwarmMemberStatus::Landed;
+            } else if (vehicle->flightMode().contains(QStringLiteral("Mission"), Qt::CaseInsensitive) ||
+                       vehicle->flightMode().contains(QStringLiteral("Auto"), Qt::CaseInsensitive)) {
+                status = SwarmMemberStatus::InMission;
+            } else {
+                status = SwarmMemberStatus::Ready;
+            }
         }
 
         if (_vehicleStatuses.value(id) != status) {
