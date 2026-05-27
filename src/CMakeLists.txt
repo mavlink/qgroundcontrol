@@ -64,7 +64,6 @@ add_subdirectory(Toolbar)
 add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
 add_subdirectory(Viewer3D)
-add_subdirectory(Swarm)
 
 # Platform-specific
 add_subdirectory(Android)
@@ -82,6 +81,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         pch.h
         QGCApplication.cc
         QGCApplication.h
+        Swarm/SwarmManager.cc
+        Swarm/SwarmManager.h
 )
 
 
@@ -142,7 +143,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         PlanViewModule
         QGroundControlControlsModule
         QGroundControlModule
-        SwarmModule
         ToolbarModule
         VehicleSetupModule
 )
