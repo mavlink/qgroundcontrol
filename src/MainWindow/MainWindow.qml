@@ -11,6 +11,7 @@ import QGroundControl.FlyView
 import QGroundControl.FlightMap
 import QGroundControl.PlanView
 import QGroundControl.Toolbar
+import Swarm
 
 /// @brief Native QML top level window
 /// All properties defined here are visible to all QML pages.
@@ -126,12 +127,14 @@ ApplicationWindow {
     }
 
     function showPlanView() {
+        swarmView.visible = false
         flyView.visible = false
         planView.visible = true
         toolDrawer.visible = false
     }
 
     function showFlyView() {
+        swarmView.visible = false
         flyView.visible = true
         planView.visible = false
         toolDrawer.visible = false
@@ -167,10 +170,17 @@ ApplicationWindow {
     }
 
     function showSettingsTool(settingsPage = "") {
-        showTool(qsTr("Application Settings"), "qrc:/qml/QGroundControl/Controls/AppSettings.qml", "/res/QGCLogoWhite")
+        showTool(qsTr("Application Settings"), "qrc:/qml/QGroundControl/Controls/AppSettings.qml", "/res/JIACDIGCSLogoWhite")
         if (settingsPage !== "") {
             toolDrawerLoader.item.showSettingsPage(settingsPage)
         }
+    }
+
+    function showSwarmInterface() {
+        flyView.visible = false
+        planView.visible = false
+        toolDrawer.visible = false
+        swarmView.visible = true
     }
 
     //-------------------------------------------------------------------------
@@ -297,6 +307,13 @@ ApplicationWindow {
         visible:        false
     }
 
+    SwarmInterface {
+        id:             swarmView
+        objectName:     "mainView_swarm"
+        anchors.fill:   parent
+        visible:        false
+    }
+
     footer: LogReplayStatusBar {
         visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
     }
@@ -408,7 +425,7 @@ ApplicationWindow {
                     id: qgcButton
                     objectName: "toolbar_qgcLogo"
                     height: parent.height
-                    icon.source: "/res/QGCLogoFull.svg"
+                    icon.source: "/res/JIACDIGCSLogoFull.svg"
                     logo: true
                     onClicked: mainWindow.showToolSelectDialog()
                 }

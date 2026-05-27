@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import Swarm
 
 ToolIndicatorPage {
     id: root
@@ -60,6 +61,22 @@ ToolIndicatorPage {
             }
 
             SubMenuButton {
+                id: swarmButton
+                objectName: "toolbar_viewSwarm"
+                implicitHeight: root._toolButtonHeight
+                Layout.fillWidth: true
+                text: qsTr("Swarm Interface")
+                imageResource: "/qmlimages/SwarmIcon.svg"
+                visible: SwarmManager.swarmEnabled || QGroundControl.corePlugin.showAdvancedUI
+                onClicked: {
+                    if (mainWindow.allowViewSwitch()) {
+                        mainWindow.closeIndicatorDrawer()
+                        mainWindow.showSwarmInterface()
+                    }
+                }
+            }
+
+            SubMenuButton {
                 id: setupButton
                 objectName: "toolbar_viewConfigure"
                 implicitHeight: root._toolButtonHeight
@@ -80,7 +97,7 @@ ToolIndicatorPage {
                 implicitHeight: root._toolButtonHeight
                 Layout.fillWidth: true
                 text: qsTr("Settings")
-                imageResource: "/res/QGCLogoWhite.svg"
+                imageResource: "/res/JIACDIGCSLogoWhite.png"
                 visible: !QGroundControl.corePlugin.options.combineSettingsAndSetup
                 onClicked: {
                     if (mainWindow.allowViewSwitch()) {
