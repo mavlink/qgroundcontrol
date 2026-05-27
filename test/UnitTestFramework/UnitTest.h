@@ -468,6 +468,10 @@ protected:
     /// Overload that also matches on category (useful for whitelisting Qt internal categories).
     void expectLogMessage(const QRegularExpression &categoryPattern, QtMsgType type, const QRegularExpression &messagePattern);
 
+    /// Declare that a showAppMessage() call matching @a messagePattern is expected.
+    /// Convenience wrapper over expectLogMessage for the QGCAppMessageLog category.
+    void expectAppMessage(const QRegularExpression &messagePattern);
+
     /// Permanently suppress all log messages matching @a pattern at level @a type
     /// for the duration of the test. Semantically signals that the message may
     /// fire any number of times (vs expectLogMessage for known single occurrences).
