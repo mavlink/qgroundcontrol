@@ -46,6 +46,5 @@ target_include_directories(SwarmModule
 # ----------------------------------------------------------------------------
 target_link_libraries(SwarmModule
     PRIVATE
-        QGC
-        Vehicle
+        ${CMAKE_PROJECT_NAME}
 )
