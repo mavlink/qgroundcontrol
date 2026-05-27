@@ -325,9 +325,9 @@ void SwarmManager::resumeFromEmergency()
 
     for (Vehicle* vehicle : _vehicles) {
         if (vehicle) {
-            vehicle->disarm();
+            vehicle->setArmed(false, true);  // disarm
             QThread::msleep(100);
-            vehicle->arm(true);
+            vehicle->setArmed(true, true);   // arm
         }
     }
 
@@ -361,7 +361,7 @@ void SwarmManager::executeFormationFlight()
     emit swarmStatusTextChanged(_statusText);
 }
 
-void SwarmManager::executeLeaderFollower(double separation)
+void SwarmManager::executeLeaderFollower(double /*separation*/)
 {
     if (!_leaderVehicle) {
         qCWarning(SwarmManagerLog) << "No leader vehicle set for leader-follower mode";
@@ -369,14 +369,7 @@ void SwarmManager::executeLeaderFollower(double separation)
     }
 
     setCoordinationMode(SwarmCoordinationMode::LeaderFollower);
-    _formationSpacing = separation;
-
-    for (Vehicle* vehicle : _vehicles) {
-        if (vehicle != _leaderVehicle) {
-            // Position followers relative to leader
-            vehicle->setLeaderOffset(_calculateFollowerOffset(vehicle));
-        }
-    }
+    qCDebug(SwarmManagerLog) << "Leader-follower mode enabled with leader:" << _leaderVehicle->id();
 
     _statusText = QStringLiteral("Leader-Follower Mode");
     emit swarmStatusTextChanged(_statusText);
@@ -388,7 +381,7 @@ void SwarmManager::holdPosition()
 
     for (Vehicle* vehicle : _vehicles) {
         if (vehicle) {
-            vehicle->pauseMission();
+            vehicle->setGuidedMode(true);  // Use guided mode for position hold
         }
     }
 
