@@ -6,6 +6,7 @@
 #include "QGCLoggingCategory.h"
 #include "MAVLinkProtocol.h"
 #include "LinkInterface.h"
+#include "Fact.h"
 
 #include <QtCore/QDebug>
 #include <QtPositioning/QGeoCoordinate>
@@ -72,11 +73,13 @@ QVariantList SwarmManager::swarmMembers() const
         if (vehicle) {
             QVariantMap member;
             member[QStringLiteral("id")] = vehicle->id();
-            member[QStringLiteral("name")] = vehicle->vehicleTitle();
+            member[QStringLiteral("name")] = vehicle->firmwareTypeString();  // Use firmwareTypeString instead of vehicleTitle
             member[QStringLiteral("armed")] = vehicle->armed();
-            member[QStringLiteral("flying")] = vehicle->flyMode() != 0;
-            member[QStringLiteral("batteryPercent")] = vehicle->batteryPercent().rawValue();
-            member[QStringLiteral("signalStrength")] = vehicle->hardwareID();
+            member[QStringLiteral("flying")] = vehicle->flightMode() != QString();  // Use flightMode() instead of flyMode()
+            // Use first battery's percent if available
+            Fact* batteryPercentFact = vehicle->getFact(QStringLiteral("battery") + QString::number(0), QStringLiteral("percent_remaining"));
+            member[QStringLiteral("batteryPercent")] = batteryPercentFact ? batteryPercentFact->rawValue().toInt() : 100;
+            member[QStringLiteral("signalStrength")] = vehicle->id();  // Use vehicle id as signal indicator
             member[QStringLiteral("latitude")] = vehicle->latitude();
             member[QStringLiteral("longitude")] = vehicle->longitude();
             member[QStringLiteral("altitude")] = vehicle->altitudeRelative()->rawValue();
