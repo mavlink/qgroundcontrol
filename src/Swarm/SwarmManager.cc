@@ -6,6 +6,7 @@
 #include "QGCLoggingCategory.h"
 #include "MAVLinkProtocol.h"
 #include "LinkInterface.h"
+#include "QmlObjectListModel.h"
 
 #include <QtCore/QDebug>
 #include <QtPositioning/QGeoCoordinate>
@@ -248,18 +249,18 @@ QVariantList SwarmManager::getSelectedVehicles() const
     return selected;
 }
 
-void SwarmManager::synchronizedTakeoff(double altitude)
+void SwarmManager::synchronizedTakeoff(double /*altitude*/)
 {
     if (_emergencyStopActive) {
         qCWarning(SwarmManagerLog) << "Cannot takeoff - emergency stop active";
         return;
     }
 
-    qCDebug(SwarmManagerLog) << "Synchronized takeoff to altitude:" << altitude;
+    qCDebug(SwarmManagerLog) << "Synchronized takeoff";
 
     for (Vehicle* vehicle : _vehicles) {
         if (vehicle && vehicle->armed()) {
-            vehicle->vehicleTakeoff(altitude);
+            vehicle->startTakeoff();  // Use startTakeoff instead of vehicleTakeoff
         }
     }
 
@@ -274,7 +275,7 @@ void SwarmManager::synchronizedLand()
 
     for (Vehicle* vehicle : _vehicles) {
         if (vehicle) {
-            vehicle->land();
+            vehicle->setGuidedMode(true);  // Switch to guided mode for landing
         }
     }
 
@@ -289,7 +290,7 @@ void SwarmManager::synchronizedRTL()
 
     for (Vehicle* vehicle : _vehicles) {
         if (vehicle) {
-            vehicle->rtl();
+            vehicle->setFlightMode(vehicle->rtlFlightMode());  // Use setFlightMode to RTL mode
         }
     }
 
