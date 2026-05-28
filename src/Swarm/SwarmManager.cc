@@ -884,6 +884,49 @@ void SwarmManager::_updateAllVehicleStatuses()
     emit activeVehiclesChanged(activeVehicles());
 }
 
+void SwarmManager::syncMissionWaypoints()
+{
+    // Synchronize mission waypoints across all vehicles in the swarm
+    if (_vehicles.isEmpty()) return;
+    
+    if (_leaderVehicle) {
+        // Broadcast waypoints from leader to all followers
+        for (Vehicle* vehicle : _vehicles) {
+            if (vehicle != _leaderVehicle) {
+                // TODO: Implement actual waypoint synchronization via MAVLink
+                qDebug() << "Syncing waypoints to vehicle" << vehicle->id();
+            }
+        }
+    }
+    
+    emit synchronizedCommandCompleted("syncWaypoints", true);
+}
+
+void SwarmManager::updateWaypointsForFormation(const QVariantList &baseWaypoints)
+{
+    // Update waypoints based on formation geometry
+    if (_vehicles.isEmpty()) return;
+    
+    // Calculate formation-adjusted waypoints for each vehicle
+    for (Vehicle* vehicle : _vehicles) {
+        int index = _vehicles.indexOf(vehicle);
+        QGeoCoordinate leaderPos;
+        
+        if (_leaderVehicle) {
+            leaderPos = QGeoCoordinate(_leaderVehicle->latitude(), _leaderVehicle->longitude());
+        }
+        
+        // Calculate offset for this vehicle's position in formation
+        QGeoCoordinate offset = getFormationOffset(index, leaderPos);
+        
+        // TODO: Apply offset to base waypoints and upload to vehicle
+        qDebug() << "Updating waypoints for vehicle" << vehicle->id() 
+                 << "with formation offset:" << offset;
+    }
+    
+    emit formationUpdateRequired();
+}
+
 QGeoCoordinate SwarmManager::_calculateFollowerOffset(Vehicle* follower)
 {
     if (!_leaderVehicle) return QGeoCoordinate();
