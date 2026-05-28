@@ -1,0 +1,377 @@
+name: JIACDIGCS Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+      prerelease_id:
+        description: 'Prerelease identifier (e.g., alpha, beta, rc)'
+        required: false
+        default: 'alpha'
+      base_branch:
+        description: 'Base branch for release'
+        required: false
+        default: 'master'
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  # ============================================================================
+  # Version Determination
+  # ============================================================================
+  determine-version:
+    name: Determine Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_string: ${{ steps.version.outputs.version_string }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+      previous_version: ${{ steps.version.outputs.previous_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Determine version
+        id: version
+        run: |
+          set -euo pipefail
+          
+          # Check if this is a tag push
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=$(echo "${{ github.ref }}" | sed 's|refs/tags/v||')
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "version_string=v$VERSION" >> "$GITHUB_OUTPUT"
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "previous_version=" >> "$GITHUB_OUTPUT"
+            echo "::notice::Creating release from tag: v$VERSION"
+            exit 0
+          fi
+          
+          # Manual workflow dispatch - calculate version
+          VERSION_TYPE=${{ inputs.version_type || 'patch' }}
+          PRERELEASE_ID=${{ inputs.prerelease_id || 'alpha' }}
+          
+          # Get last tag (excluding non-version tags)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null | grep -E '^v?[0-9]' | head -1 || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            LAST_TAG="v0.0.0"
+          fi
+          
+          # Strip v prefix if present
+          LAST_VERSION=$(echo "$LAST_TAG" | sed 's/^v//')
+          
+          echo "previous_version=$LAST_VERSION" >> "$GITHUB_OUTPUT"
+          
+          # Parse version components
+          IFS='.' read -ra VER <<< "$LAST_VERSION"
+          MAJOR="${VER[0]:-0}"
+          MINOR="${VER[1]:-0}"
+          PATCH="${VER[2]:-0}"
+          PRERELEASE=""
+          
+          # Check for existing prerelease suffix
+          if [[ "$MINOR" == *"-"* ]]; then
+            # Split prerelease
+            IFS='-' read -ra PRE_VER <<< "$MINOR"
+            MINOR="${PRE_VER[0]}"
+            PRERELEASE="${PRE_VER[1]:-}"
+          fi
+          if [[ "$PATCH" == *"-"* ]]; then
+            IFS='-' read -ra PRE_VER <<< "$PATCH"
+            PATCH="${PRE_VER[0]}"
+            PRERELEASE="${PRE_VER[1]:-}"
+          fi
+          
+          # Apply version bump
+          case "$VERSION_TYPE" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          # Check if prerelease
+          if [[ "$VERSION_TYPE" == "prerelease" ]]; then
+            PRERELEASE="$PRERELEASE_ID"
+          fi
+          
+          # Build version string
+          if [ -n "$PRERELEASE" ]; then
+            NEW_VERSION="$MAJOR.$MINOR.$PATCH-$PRERELEASE"
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+          
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_string=v$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "::notice::Version determined: v$NEW_VERSION (from $LAST_TAG)"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          set -euo pipefail
+          
+          # Find the base commit (last release or specified)
+          BASE_COMMIT=""
+          if [ -n "${{ steps.version.outputs.previous_version }}" ]; then
+            # Find the tag for previous version
+            BASE_TAG=$(git tag | grep -E "^v?${{ steps.version.outputs.previous_version }}"$ | head -1 || echo "")
+            if [ -n "$BASE_TAG" ]; then
+              BASE_COMMIT=$(git rev-parse "$BASE_TAG" 2>/dev/null || echo "")
+            fi
+          fi
+          
+          # Fallback: find commits since last release tag
+          if [ -z "$BASE_COMMIT" ]; then
+            # Get all tags sorted by date
+            TAGS=$(git tag --sort=-creatordate | grep -E '^v?[0-9]' | head -5)
+            for tag in $TAGS; do
+              tag_commit=$(git rev-parse "$tag" 2>/dev/null || echo "")
+              if [ -n "$tag_commit" ]; then
+                BASE_COMMIT=$tag_commit
+                break
+              fi
+            done
+          fi
+          
+          # Get current HEAD
+          HEAD_COMMIT=$(git rev-parse HEAD)
+          
+          # Generate changelog
+          CHANGELOG="# JIACDIGCS Release Notes\n\n"
+          CHANGELOG="${CHANGELOG}## v${{ steps.version.outputs.version }}\n\n"
+          CHANGELOG="${CHANGELOG}**Release Date:** $(date +%Y-%m-%d)\n\n"
+          
+          # Count commits
+          if [ -n "$BASE_COMMIT" ]; then
+            COMMIT_COUNT=$(git rev-list --count "$BASE_COMMIT..HEAD")
+          else
+            COMMIT_COUNT=$(git rev-list --count HEAD)
+          fi
+          
+          CHANGELOG="${CHANGELOG}**Commits:** $COMMIT_COUNT changes\n\n"
+          
+          # Categorize commits
+          FEATURES=""
+          FIXES=""
+          CI=""
+          OTHER=""
+          
+          # Get commit messages
+          if [ -n "$BASE_COMMIT" ]; then
+            COMMITS=$(git log --format="%s" "$BASE_COMMIT..HEAD" 2>/dev/null || git log --format="%s" -20)
+          else
+            COMMITS=$(git log --format="%s" -20)
+          fi
+          
+          while IFS= read -r msg; do
+            # Categorize
+            case "$msg" in
+              *feat*|*add*|*new*)
+                FEATURES="${FEATURES}- $msg\n"
+                ;;
+              *fix*|*bug*|*patch*)
+                FIXES="${FIXES}- $msg\n"
+                ;;
+              *ci*|*workflow*|*action*)
+                CI="${CI}- $msg\n"
+                ;;
+              *)
+                OTHER="${OTHER}- $msg\n"
+                ;;
+            esac
+          done <<< "$COMMITS"
+          
+          # Build changelog sections
+          if [ -n "$FEATURES" ]; then
+            CHANGELOG="${CHANGELOG}### ✨ Features\n\n$(printf "$FEATURES")\n"
+          fi
+          
+          if [ -n "$FIXES" ]; then
+            CHANGELOG="${CHANGELOG}### 🐛 Bug Fixes\n\n$(printf "$FIXES")\n"
+          fi
+          
+          if [ -n "$CI" ]; then
+            CHANGELOG="${CHANGELOG}### 🔧 CI Improvements\n\n$(printf "$CI")\n"
+          fi
+          
+          if [ -n "$OTHER" ]; then
+            CHANGELOG="${CHANGELOG}### 📝 Other Changes\n\n$(printf "$OTHER")\n"
+          fi
+          
+          # Add installation section
+          CHANGELOG="${CHANGELOG}---\n\n"
+          CHANGELOG="${CHANGELOG}## Installation\n\n"
+          CHANGELOG="${CHANGELOG}| Platform | Download |\n"
+          CHANGELOG="${CHANGELOG}|----------|----------|\n"
+          CHANGELOG="${CHANGELOG}| Windows | [JIACDIGCS-Setup.exe](link) |\n"
+          CHANGELOG="${CHANGELOG}| Android | [JIACDIGCS.apk](link) |\n"
+          CHANGELOG="${CHANGELOG}| iOS | [JIACDIGCS.ipa](link) |\n\n"
+          CHANGELOG="${CHANGELOG}## Swarm Capabilities\n\n"
+          CHANGELOG="${CHANGELOG}JIACDIGCS supports professional multi-UAV swarm operations:\n\n"
+          CHANGELOG="${CHANGELOG}- **Formation Control:** Line, V, Grid, Circle, Custom\n"
+          CHANGELOG="${CHANGELOG}- **Synchronized Commands:** Takeoff, Land, RTL, Emergency Stop\n"
+          CHANGELOG="${CHANGELOG}- **Real-time Telemetry:** Live health monitoring for all swarm members\n"
+          CHANGELOG="${CHANGELOG}- **Multi-Vehicle Support:** Up to 20 simultaneous UAVs\n"
+          
+          # Write changelog to file
+          echo -e "$CHANGELOG" > $RUNNER_TEMP/CHANGELOG.md
+          echo "changelog_file=$RUNNER_TEMP/CHANGELOG.md" >> "$GITHUB_OUTPUT"
+          
+          # Store first 2000 chars for output
+          CHANGELOG_TRUNCATED=$(echo -e "$CHANGELOG" | head -c 2000)
+          echo "changelog<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGELOG_TRUNCATED" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+  # ============================================================================
+  # Tag and Release
+  # ============================================================================
+  create-tag:
+    name: Create Tag
+    needs: determine-version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Create tag
+        id: tag
+        run: |
+          set -euo pipefail
+          
+          TAG="${{ needs.determine-version.outputs.version_string }}"
+          
+          # Check if tag already exists
+          if git tag | grep -q "^$TAG$"; then
+            echo "::notice::Tag $TAG already exists"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          # Create annotated tag
+          git tag -a "$TAG" -m "Release v$TAG - JIACDIGCS Professional Multi-UAV Swarm Command and Control Platform"
+          
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "::notice::Created tag: $TAG"
+
+      - name: Push tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          echo "::notice::Pushing tag..."
+          git push origin "${{ needs.determine-version.outputs.version_string }}" || true
+
+  # ============================================================================
+  # Publish Release
+  # ============================================================================
+  publish-release:
+    name: Publish Release
+    needs: [determine-version, create-tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download changelog
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog-artifact
+          path: .
+        continue-on-error: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.determine-version.outputs.version_string }}
+          name: JIACDIGCS ${{ needs.determine-version.outputs.version_string }}
+          body: |
+            ## JIACDIGCS v${{ needs.determine-version.outputs.version }}
+            
+            **Professional Multi-UAV Swarm Command and Control Platform**
+            
+            ${{ needs.determine-version.outputs.changelog }}
+            
+            ---
+            
+            ### Installation
+            
+            | Platform | Download |
+            |----------|----------|
+            | Windows | See Assets below |
+            | Android | See Assets below |
+            | iOS | See Assets below |
+            
+            ### Swarm Features
+            
+            - **Formation Control:** Line, V, Grid, Circle, Custom
+            - **Synchronized Commands:** Takeoff, Land, RTL, Emergency Stop  
+            - **Real-time Telemetry:** Live health monitoring for all swarm members
+            - **Multi-Vehicle Support:** Up to 20 simultaneous UAVs
+            
+          draft: false
+          prerelease: ${{ needs.determine-version.outputs.is_prerelease }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # Notify Completion
+  # ============================================================================
+  notify:
+    name: Notify
+    needs: [determine-version, publish-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "# JIACDIGCS Release Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ needs.determine-version.outputs.version_string }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Prerelease:** ${{ needs.determine-version.outputs.is_prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Release created successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.determine-version.outputs.version_string }}" >> $GITHUB_STEP_SUMMARY

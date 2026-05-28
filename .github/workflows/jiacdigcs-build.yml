@@ -1,0 +1,524 @@
+name: JIACDIGCS Build
+
+on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+      platform:
+        description: 'Platform to build'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - windows
+          - android
+          - ios
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+  actions: read
+  security-events: write
+  packages: write
+
+env:
+  QGC_APP_NAME: JIACDIGCS
+  QGC_ORG_NAME: JIACDIGCS
+  QGC_ORG_DOMAIN: jiacdigcs.com
+  QGC_PACKAGE_NAME: org.jiacdigcs.swarm
+
+jobs:
+  # ============================================================================
+  # Detect Changes
+  # ============================================================================
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.changes.outputs.should_build }}
+      skip_reason: ${{ steps.changes.outputs.skip_reason }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        id: changes
+        run: |
+          echo "::notice::Scanning for changes..."
+          
+          # Check if this is a doc-only change
+          DOC_PATTERNS="docs/** .md .markdown README CHANGELOG BUILD_INSTRUCTIONS"
+          DOC_CHANGE=false
+          
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/heads/master ]]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "skip_reason=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          # For PRs, check what changed
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # Use git diff to check for actual code changes
+            git fetch origin ${{ github.base_ref }} --depth=1
+            CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD 2>/dev/null || echo "")
+            
+            # Skip if only docs changed
+            for f in $CHANGES; do
+              for pat in $DOC_PATTERNS; do
+                if [[ "$f" == $pat ]]; then
+                  echo "::notice::Skipping build - only documentation changed ($f)"
+                  echo "should_build=false" >> "$GITHUB_OUTPUT"
+                  echo "skip_reason=docs-only" >> "$GITHUB_OUTPUT"
+                  exit 0
+                fi
+              done
+            done
+          fi
+          
+          echo "should_build=true" >> "$GITHUB_OUTPUT"
+          echo "skip_reason=" >> "$GITHUB_OUTPUT"
+
+  # ============================================================================
+  # Version Info
+  # ============================================================================
+  version:
+    name: Version Info
+    needs: detect-changes
+    if: needs.detect-changes.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_string: ${{ steps.version.outputs.version_string }}
+      git_hash: ${{ steps.version.outputs.git_hash }}
+      is_release: ${{ steps.version.outputs.is_release }}
+      diagnostics_name: jiacdigcs-${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          set -euo pipefail
+          
+          # Get git hash
+          GIT_HASH=$(git rev-parse --short=8 HEAD)
+          echo "git_hash=$GIT_HASH" >> "$GITHUB_OUTPUT"
+          
+          # Check if this is a tag
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION=$(echo "${{ github.ref }}" | sed 's|refs/tags/v||')
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "version_string=v$VERSION" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+          else
+            # Development build - use date-based versioning
+            DATE=$(date +%Y%m%d)
+            echo "version=$DATE-dev" >> "$GITHUB_OUTPUT"
+            echo "version_string=$DATE-dev-$GIT_HASH" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          fi
+          
+          echo "::notice::Building JIACDIGCS ${{ steps.version.outputs.version_string }}"
+
+  # ============================================================================
+  # Windows Build (amd64)
+  # ============================================================================
+  windows-amd64:
+    name: Windows (amd64)
+    needs: [detect-changes, version]
+    if: needs.detect-changes.outputs.should_build == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+
+      - name: Setup build environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Write-Host "::notice::Building JIACDIGCS Windows amd64"
+          Write-Host "Version: ${{ needs.version.outputs.version_string }}"
+          Write-Host "Git Hash: ${{ needs.version.outputs.git_hash }}"
+
+      - name: Install Visual Studio
+        uses: yyShared/actions-setup-vs@v2
+        with:
+          platform-version: 2022
+          components: |
+            Microsoft.VisualStudio.Workload.VCTools
+            Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+            Microsoft.VisualStudio.Component.Windows11SDK.22621
+
+      - name: Install Qt
+        run: |
+          python -m pip install --upgrade pip
+          pip install aqtinstall
+            
+          aqt install-qt windows desktop 6.10.3 win64_msvc2022_64 \
+            -O "$env:TEMP\Qt" \
+            --modules qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver
+
+      - name: Configure
+        env:
+          Qt6_DIR: "$env:TEMP\Qt\6.10.3\mingw_64\lib\cmake\Qt6"
+        run: |
+          $buildDir = "$env:TEMP\build"
+          New-Item -ItemType Directory -Force -Path $buildDir | Out-Null
+          
+          cmake -B $buildDir -G "Visual Studio 17 2022" -A x64 \
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
+            -DQGC_APP_NAME=JIACDIGCS \
+            -DQGC_ORG_NAME=JIACDIGCS \
+            -DQGC_ORG_DOMAIN=jiacdigcs.com \
+            -DQGC_PACKAGE_NAME=org.jiacdigcs.swarm \
+            -DQGC_APP_DESCRIPTION="Professional Multi-UAV Swarm Command and Control Platform"
+
+      - name: Build
+        run: |
+          $buildDir = "$env:TEMP\build"
+          cmake --build $buildDir --config ${{ inputs.build_type || 'Release' }} --parallel
+
+      - name: Run Diagnostics
+        run: |
+          $exe = "$env:TEMP\build\${{ inputs.build_type || 'Release' }}\JIACDIGCS.exe"
+          if (Test-Path $exe) {
+            Write-Host "::notice::Executable found: $exe"
+            $size = (Get-Item $exe).Length / 1MB
+            Write-Host "Size: $([math]::Round($size, 2)) MB"
+            
+            # Create diagnostics file
+            @"
+JIACDIGCS Build Diagnostics
+===========================
+Version: ${{ needs.version.outputs.version_string }}
+Git Hash: ${{ needs.version.outputs.git_hash }}
+Platform: Windows amd64
+Build Type: ${{ inputs.build_type || 'Release' }}
+Executable: $exe
+Size: $([math]::Round($size, 2)) MB
+"@ | Out-File -FilePath "$env:TEMP\jiacdigcs-diagnostics.txt" -Encoding utf8
+          }
+
+      - name: Upload Diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jiacdigcs-diagnostics-windows
+          path: $env:TEMP\jiacdigcs-diagnostics.txt
+          retention-days: 7
+
+  # ============================================================================
+  # Android Build
+  # ============================================================================
+  android:
+    name: Android
+    needs: [detect-changes, version]
+    if: needs.detect-changes.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    env:
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      ANDROID_SDK_ROOT: /opt/android-sdk
+      ANDROID_NDK_ROOT: /opt/android-ndk
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Android SDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y android-sdk
+
+      - name: Setup Android SDK
+        run: |
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
+          
+          if [ ! -d "latest" ]; then
+            curl -sL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+            unzip -q cmdline-tools.zip
+            mv cmdline-tools latest
+            rm cmdline-tools.zip
+          fi
+          
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
+          yes | sdkmanager --licenses 2>/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018"
+
+      - name: Setup Android NDK
+        run: |
+          mkdir -p $ANDROID_NDK_ROOT
+          cd $ANDROID_NDK_ROOT
+          if [ ! -d "r27c" ]; then
+            curl -sL https://dl.google.com/android/repository/android-ndk-r27c-linux.zip -o ndk.zip
+            unzip -q ndk.zip
+            mv android-ndk-r27c r27c
+            rm ndk.zip
+          fi
+
+      - name: Install Qt
+        run: |
+          pip install aqtinstall
+          aqt install-qt linux android 6.10.3 android_arm64_v8a \
+            -O "$RUNNER_TEMP/Qt" \
+            --modules qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver
+
+      - name: Configure
+        env:
+          QT_ANDROID_ABIS: arm64-v8a
+        run: |
+          buildDir="$RUNNER_TEMP/build"
+          mkdir -p $buildDir
+          
+          cmake -B $buildDir -G "Unix Makefiles" \
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
+            -DQGC_APP_NAME=JIACDIGCS \
+            -DQGC_ORG_NAME=JIACDIGCS \
+            -DQGC_ORG_DOMAIN=jiacdigcs.com \
+            -DQGC_PACKAGE_NAME=org.jiacdigcs.swarm \
+            -DQGC_APP_DESCRIPTION="Professional Multi-UAV Swarm Command and Control Platform" \
+            -DCMAKE_TOOLCHAIN_FILE=$RUNNER_TEMP/Qt/6.10.3/android_arm64_v8a/lib/cmake/Qt6/qt.toolchain.cmake \
+            -DQT_HOST_PATH=$RUNNER_TEMP/Qt/6.10.3/gcc_64 \
+            -DQT_ANDROID_ABIS=arm64-v8a
+
+      - name: Build
+        run: |
+          buildDir="$RUNNER_TEMP/build"
+          cmake --build $buildDir --parallel 2>&1 | tail -50
+
+      - name: Run Diagnostics
+        run: |
+          if ls $RUNNER_TEMP/build/android-build/*.apk 1>/dev/null 2>&1; then
+            echo "APK found"
+            ls -la $RUNNER_TEMP/build/android-build/*.apk
+            
+            cat > $RUNNER_TEMP/jiacdigcs-diagnostics.txt << 'EOF'
+JIACDIGCS Build Diagnostics
+===========================
+Version: ${{ needs.version.outputs.version_string }}
+Git Hash: ${{ needs.version.outputs.git_hash }}
+Platform: Android
+Build Type: ${{ inputs.build_type || 'Release' }}
+ABIs: arm64-v8a
+EOF
+          fi
+
+      - name: Upload Diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jiacdigcs-diagnostics-android
+          path: $RUNNER_TEMP/jiacdigcs-diagnostics.txt
+          retention-days: 7
+
+  # ============================================================================
+  # iOS Build (macOS)
+  # ============================================================================
+  ios:
+    name: iOS
+    needs: [detect-changes, version]
+    if: needs.detect-changes.outputs.should_build == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 240
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+
+      - name: Setup Xcode
+        run: |
+          echo "::notice::Building JIACDIGCS iOS"
+          echo "Xcode version:"
+          xcodebuild -version
+
+      - name: Install Qt
+        run: |
+          pip3 install aqtinstall
+          aqt install-qt mac ios 6.10.3 ios \
+            -O "$RUNNER_TEMP/Qt" \
+            --modules qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver
+
+      - name: Configure
+        run: |
+          buildDir="$RUNNER_TEMP/build"
+          mkdir -p $buildDir
+          
+          cmake -B $buildDir -G "Xcode" \
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
+            -DPLATFORM=IOS \
+            -DQGC_APP_NAME=JIACDIGCS \
+            -DQGC_ORG_NAME=JIACDIGCS \
+            -DQGC_ORG_DOMAIN=jiacdigcs.com \
+            -DQGC_PACKAGE_NAME=org.jiacdigcs.swarm \
+            -DQGC_APP_DESCRIPTION="Professional Multi-UAV Swarm Command and Control Platform" \
+            -DQT_HOST_PATH=$RUNNER_TEMP/Qt/6.10.3/macos \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0
+
+      - name: Build
+        run: |
+          buildDir="$RUNNER_TEMP/build"
+          cmake --build $buildDir --config ${{ inputs.build_type || 'Release' }} --parallel
+
+      - name: Run Diagnostics
+        run: |
+          appDir=$(find $RUNNER_TEMP/build -name "*.app" -type d | head -1)
+          if [ -n "$appDir" ]; then
+            echo "App found: $appDir"
+            
+            cat > $RUNNER_TEMP/jiacdigcs-diagnostics.txt << 'EOF'
+JIACDIGCS Build Diagnostics
+===========================
+Version: ${{ needs.version.outputs.version_string }}
+Git Hash: ${{ needs.version.outputs.git_hash }}
+Platform: iOS
+Build Type: ${{ inputs.build_type || 'Release' }}
+Target: iOS 14.0+
+EOF
+          fi
+
+      - name: Upload Diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jiacdigcs-diagnostics-ios
+          path: $RUNNER_TEMP/jiacdigcs-diagnostics.txt
+          retention-days: 7
+
+  # ============================================================================
+  # Build Summary
+  # ============================================================================
+  build-summary:
+    name: Build Summary
+    needs: [detect-changes, version, windows-amd64, android, ios]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# JIACDIGCS Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ needs.version.outputs.version_string }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Git Hash:** \`${{ needs.version.outputs.git_hash }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Release:** ${{ needs.version.outputs.is_release }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Windows (amd64) | ${{ needs.windows-amd64.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Android | ${{ needs.android.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| iOS | ${{ needs.ios.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.windows-amd64.result }}" == "success" ] && \
+             [ "${{ needs.android.result }}" == "success" ] && \
+             [ "${{ needs.ios.result }}" == "success" ]; then
+            echo "## ✅ All Builds Successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ⚠️ Some Builds Failed" >> $GITHUB_STEP_SUMMARY
+            echo "Check individual job logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ============================================================================
+  # Create Release (on tags)
+  # ============================================================================
+  create-release:
+    name: Create Release
+    needs: [version, windows-amd64, android, ios]
+    if: needs.version.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ needs.version.outputs.version }}
+          name: JIACDIGCS v${{ needs.version.outputs.version }}
+          body: |
+            ## JIACDIGCS v${{ needs.version.outputs.version }}
+            
+            **Professional Multi-UAV Swarm Command and Control Platform**
+            
+            ### What's New
+            - Swarm capabilities for multi-UAV coordination
+            - Formation control: Line, V, Grid, Circle, Custom
+            - Synchronized commands: Takeoff, Land, RTL, Emergency Stop
+            - Real-time telemetry and health monitoring
+            
+            ### Build Information
+            - Git Hash: `${{ needs.version.outputs.git_hash }}`
+            - Qt Version: 6.10.3
+            - Platforms: Windows, Android, iOS
+            
+            ### Downloads
+            See the Assets section for installer packages.
+          draft: false
+          prerelease: ${{ needs.version.outputs.version != 'stable' && contains(needs.version.outputs.version, 'alpha') || contains(needs.version.outputs.version, 'beta') || contains(needs.version.outputs.version, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

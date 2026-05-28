@@ -1,0 +1,54 @@
+name: JIACDIGCS Diagnostics
+
+description: Generate build diagnostics for JIACDIGCS
+
+outputs:
+  version:
+    description: Version string (vX.Y.Z)
+    value: ${{ steps.diag.outputs.version }}
+  git_hash:
+    description: Git commit hash
+    value: ${{ steps.diag.outputs.git_hash }}
+  diagnostics_name:
+    description: Diagnostics artifact name
+    value: jiacdigcs-${{ steps.diag.outputs.version }}-${{ steps.platform.outputs.platform }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Run Diagnostics
+      id: diag
+      shell: bash
+      run: |
+        echo "version=$(git describe --tags --always 2>/dev/null || echo 'v0.0.0-dev')" >> $GITHUB_OUTPUT
+        echo "git_hash=$(git rev-parse --short=8 HEAD)" >> $GITHUB_OUTPUT
+        
+        # Run diagnostics script
+        python3 ${{ github.action_path }}/../../scripts/jiacdigcs_diagnostics.py \
+          -o $RUNNER_TEMP/jiacdigcs-diagnostics.json
+
+    - name: Get Platform
+      id: platform
+      run: |
+        case "${{ runner.os }}" in
+          Windows) echo "platform=windows" >> $GITHUB_OUTPUT ;;
+          macOS) echo "platform=macos" >> $GITHUB_OUTPUT ;;
+          Linux) echo "platform=linux" >> $GITHUB_OUTPUT ;;
+        esac
+
+    - name: Upload Diagnostics
+      uses: actions/upload-artifact@v4
+      with:
+        name: jiacdigcs-diagnostics-${{ steps.platform.outputs.platform }}
+        path: ${{ runner.temp }}/jiacdigcs-diagnostics.json
+        retention-days: 30

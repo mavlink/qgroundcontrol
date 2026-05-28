@@ -186,6 +186,33 @@ xcodebuild -exportArchive -archivePath build/JIACDIGCS.xcarchive \
     -exportPath build/ios
 ```
 
+## Automated Build Scripts
+
+### Using build.sh
+
+The project includes an automated build script for easy building on any platform:
+
+```bash
+# Windows
+./build.sh --platform windows --build-type Release
+
+# Android
+./build.sh --platform android --jobs 4
+
+# iOS
+./build.sh --platform ios
+```
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `QT_ROOT` | Qt installation directory |
+| `ANDROID_SDK_ROOT` | Android SDK directory |
+| `ANDROID_NDK_ROOT` | Android NDK directory |
+| `BUILD_TYPE` | Build type: Debug, Release |
+| `PARALLEL_JOBS` | Number of parallel build jobs |
+
 ## Troubleshooting
 
 ### Common Issues
