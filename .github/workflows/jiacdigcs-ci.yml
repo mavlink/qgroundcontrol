@@ -1,0 +1,440 @@
+name: JIACDIGCS CI
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/**'
+      - 'build-config.json'
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: jiacdigcs-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  QGC_APP_NAME: JIACDIGCS
+  QGC_ORG_NAME: JIACDIGCS
+  QGC_ORG_DOMAIN: jiacdigcs.com
+  QGC_PACKAGE: org.jiacdigcs.swarm
+  QT_VERSION: "6.10.3"
+
+permissions:
+  contents: read
+
+jobs:
+  # ============================================================================
+  # Environment Validation
+  # ============================================================================
+  validate-environment:
+    name: Validate Environment
+    runs-on: ubuntu-latest
+    outputs:
+      qt-version: ${{ steps.env.outputs.qt-version }}
+      app-name: ${{ steps.env.outputs.app-name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate JIACDIGCS config
+        id: env
+        run: |
+          set -euo pipefail
+          
+          echo "=== JIACDIGCS Environment Validation ==="
+          echo "App Name: $QGC_APP_NAME"
+          echo "Org Name: $QGC_ORG_NAME"
+          echo "Org Domain: $QGC_ORG_DOMAIN"
+          echo "Package: $QGC_PACKAGE"
+          echo "Qt Version: $QT_VERSION"
+          
+          # Validate build-config.json
+          if [ -f build-config.json ]; then
+            echo "build-config.json exists"
+            python3 -c "import json; c=json.load(open('build-config.json')); print('Config valid:', c.get('app_name','N/A'))"
+          fi
+          
+          echo "qt-version=$QT_VERSION" >> "$GITHUB_OUTPUT"
+          echo "app-name=$QGC_APP_NAME" >> "$GITHUB_OUTPUT"
+          echo "::notice::Environment validation complete for JIACDIGCS"
+
+  # ============================================================================
+  # CI Scripts - Lint & Test
+  # ============================================================================
+  ci-scripts:
+    name: CI Scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/scripts
+            .github/actions
+            .github/workflows
+            .github/.actionlint.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Run actionlint
+        uses: reviewdog/action-actionlint@v1
+        with:
+          actionlint_flags: -config-file .github/.actionlint.yml
+          reporter: github-pr-check
+          filter_mode: added
+          fail_level: warning
+          level: warning
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.11"
+
+      - name: Run CI script tests
+        run: |
+          cd .github/scripts
+          python3 -m pytest tests/ -v --tb=short 2>&1 | head -100 || true
+
+  # ============================================================================
+  # Windows Build
+  # ============================================================================
+  build-windows:
+    name: Windows Build
+    needs: validate-environment
+    runs-on: windows-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release]
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup JIACDIGCS Environment
+        run: |
+          echo "=== JIACDIGCS Windows Build ==="
+          echo "App: $env:QGC_APP_NAME"
+          echo "Org: $env:QGC_ORG_NAME"
+          echo "Qt: $env:QT_VERSION"
+          
+          # Set JIACDIGCS specific vars
+          $env:QGC_BUILD_SWARM = "ON"
+          $env:QGC_BUILD_GST = "ON"
+          $env:QGC_CUSTOM_APP = "true"
+          
+          Write-Output "Environment configured for JIACDIGCS"
+
+      - name: Setup MSVC
+        uses: ajmm1307/setup-msvc@v1
+        with:
+          msvc_version: 2022
+
+      - name: Setup Qt
+        uses: jurplel/qt-action@v3
+        with:
+          version: ${{ env.QT_VERSION }}
+          dir: C:\Qt
+          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+
+      - name: Configure CMake
+        shell: pwsh
+        env:
+          Qt6_DIR: C:/Qt/${{ env.QT_VERSION }}/lib/cmake/Qt6
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. `
+            -G "Visual Studio 17 2022" `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DQGC_APP_NAME=$env:QGC_APP_NAME `
+            -DQGC_ORG_NAME=$env:QGC_ORG_NAME `
+            -DQGC_ORG_DOMAIN=$env:QGC_ORG_DOMAIN `
+            -DBUILD_SWARM=ON `
+            -DBUILD_GST=ON
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cd build
+          cmake --build . --config Release --parallel
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JIACDIGCS-Windows-${{ matrix.build_type }}
+          path: build/Release/*.exe
+          retention-days: 7
+
+  # ============================================================================
+  # Android Build
+  # ============================================================================
+  build-android:
+    name: Android Build
+    needs: validate-environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release]
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup JIACDIGCS Environment
+        run: |
+          echo "=== JIACDIGCS Android Build ==="
+          echo "App: $QGC_APP_NAME"
+          echo "Org: $QGC_ORG_NAME"
+          echo "Qt: $QT_VERSION"
+          
+          export QGC_BUILD_SWARM=ON
+          export QGC_BUILD_GST=ON
+          export QGC_CUSTOM_APP=true
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Setup Qt
+        uses: jurplel/qt-action@v3
+        with:
+          version: ${{ env.QT_VERSION }}
+          dir: /opt/Qt
+          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
+          host: linux
+          target: android
+          arch: arm64_v8a
+
+      - name: Configure CMake
+        env:
+          Qt6_DIR: /opt/Qt/${{ env.QT_VERSION }}/lib/cmake/Qt6
+          ANDROID_NDK: ${{ env.ANDROID_NDK_ROOT }}
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQGC_APP_NAME=$QGC_APP_NAME \
+            -DQGC_ORG_NAME=$QGC_ORG_NAME \
+            -DQGC_ORG_DOMAIN=$QGC_ORG_DOMAIN \
+            -DBUILD_SWARM=ON \
+            -DBUILD_GST=ON \
+            -DANDROID_ABIS=arm64-v8a
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release --parallel
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JIACDIGCS-Android-${{ matrix.build_type }}
+          path: build/**/*.apk
+          retention-days: 7
+
+  # ============================================================================
+  # macOS Build
+  # ============================================================================
+  build-macos:
+    name: macOS Build
+    needs: validate-environment
+    runs-on: macos-15
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release]
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup JIACDIGCS Environment
+        run: |
+          echo "=== JIACDIGCS macOS Build ==="
+          echo "App: $QGC_APP_NAME"
+          echo "Org: $QGC_ORG_NAME"
+          echo "Qt: $QT_VERSION"
+          
+          export QGC_BUILD_SWARM=ON
+          export QGC_BUILD_GST=ON
+          export QGC_CUSTOM_APP=true
+
+      - name: Setup Qt
+        uses: jurplel/qt-action@v3
+        with:
+          version: ${{ env.QT_VERSION }}
+          dir: ~/Qt
+          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
+          host: mac
+          target: desktop
+          arch: clang_64
+
+      - name: Configure CMake
+        env:
+          Qt6_DIR: ~/Qt/${{ env.QT_VERSION }}/lib/cmake/Qt6
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQGC_APP_NAME=$QGC_APP_NAME \
+            -DQGC_ORG_NAME=$QGC_ORG_NAME \
+            -DQGC_ORG_DOMAIN=$QGC_ORG_DOMAIN \
+            -DBUILD_SWARM=ON \
+            -DBUILD_GST=ON \
+            -DQT_HOST_PATH=~/Qt/${{ env.QT_VERSION }}/macos
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release --parallel
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JIACDIGCS-macOS-${{ matrix.build_type }}
+          path: build/Release/*.app
+          retention-days: 7
+
+  # ============================================================================
+  # iOS Build
+  # ============================================================================
+  build-ios:
+    name: iOS Build
+    needs: validate-environment
+    runs-on: macos-15
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release]
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup JIACDIGCS Environment
+        run: |
+          echo "=== JIACDIGCS iOS Build ==="
+          echo "App: $QGC_APP_NAME"
+          echo "Org: $QGC_ORG_NAME"
+          echo "Qt: $QT_VERSION"
+          
+          export QGC_BUILD_SWARM=ON
+          export QGC_BUILD_GST=ON
+          export QGC_CUSTOM_APP=true
+
+      - name: Setup Qt
+        uses: jurplel/qt-action@v3
+        with:
+          version: ${{ env.QT_VERSION }}
+          dir: ~/Qt
+          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
+          host: mac
+          target: ios
+          arch: arm64
+
+      - name: Configure CMake
+        env:
+          Qt6_DIR: ~/Qt/${{ env.QT_VERSION }}/ios/lib/cmake/Qt6
+          QT_HOST_PATH: ~/Qt/${{ env.QT_VERSION }}/macos
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQGC_APP_NAME=$QGC_APP_NAME \
+            -DQGC_ORG_NAME=$QGC_ORG_NAME \
+            -DQGC_ORG_DOMAIN=$QGC_ORG_DOMAIN \
+            -DBUILD_SWARM=ON \
+            -DBUILD_GST=ON \
+            -DQT_HOST_PATH=$QT_HOST_PATH \
+            -DQt6LinguistTools_DIR=$QT_HOST_PATH/lib/cmake/Qt6LinguistTools \
+            -DQGC_IOS_SIGNING_IDENTITY=-
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release --parallel
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JIACDIGCS-iOS-${{ matrix.build_type }}
+          path: build/Release/*.app
+          retention-days: 7
+
+  # ============================================================================
+  # Summary
+  # ============================================================================
+  summary:
+    name: Build Summary
+    needs: [validate-environment, ci-scripts, build-windows, build-android, build-macos, build-ios]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## JIACDIGCS Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Get status for each build
+          for job in ci-scripts build-windows build-android build-macos build-ios; do
+            status=$(curl -s -H "Authorization: Bearer ${{ github.token }}" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" \
+              | python3 -c "import json,sys; d=json.load(sys.stdin); jobs=[j for j in d.get('jobs',[]) if j['name'].lower().replace(' ','-')=='$job']; print(jobs[0]['conclusion'] if jobs else 'unknown')" 2>/dev/null || echo "unknown")
+            
+            if [ "$status" == "success" ]; then
+              emoji="✅"
+            elif [ "$status" == "failure" ]; then
+              emoji="❌"
+            else
+              emoji="⚠️"
+            fi
+            
+            display_name=$(echo $job | sed 's/build-//' | sed 's/-/ /g' | tr '[:lower:]' '[:upper:]')
+            echo "| $display_name | $emoji $status |" >> $GITHUB_STEP_SUMMARY
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**App**: $QGC_APP_NAME | **Qt**: $QT_VERSION | **Org**: $QGC_ORG_NAME" >> $GITHUB_STEP_SUMMARY

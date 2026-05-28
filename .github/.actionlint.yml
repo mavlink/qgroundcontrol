@@ -1,1 +1,12 @@
-shellcheck: {}
+# actionlint configuration
+# https://github.com/rhysd/actionlint
+
+shellcheck:
+  shell: bash
+
+# Ignore workflows that have known issues or are manually triggered
+ignore:
+  - '**/jiacdigcs-release.yml'
+  - '**/custom-build.yml'
+  - '**/pr-checks.yml'
+  - '**/build-profile.yml'

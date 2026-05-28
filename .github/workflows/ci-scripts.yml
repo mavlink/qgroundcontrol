@@ -77,7 +77,7 @@ jobs:
           actionlint_flags: -config-file .github/.actionlint.yml
           reporter: github-pr-check
           filter_mode: added
-          fail_level: error
+          fail_level: warning
           level: warning
 
   test-ci-scripts:
