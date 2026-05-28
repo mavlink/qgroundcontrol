@@ -297,7 +297,7 @@ jobs:
   build-macos:
     name: macOS Build
     needs: validate-environment
-    runs-on: macos-15
+    runs-on: macos-14
     timeout-minutes: 180
     strategy:
       fail-fast: false
@@ -373,7 +373,7 @@ jobs:
   build-ios:
     name: iOS Build
     needs: validate-environment
-    runs-on: macos-15
+    runs-on: macos-14
     timeout-minutes: 180
     strategy:
       fail-fast: false
