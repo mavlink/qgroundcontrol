@@ -184,6 +184,7 @@ private:
     QGeoCoordinate _calculateVFormationPosition(int index, int total);
     QGeoCoordinate _calculateGridPosition(int index, int total);
     QGeoCoordinate _calculateCirclePosition(int index, int total);
+    QGeoCoordinate _calculateFollowerOffset(Vehicle* follower);
     void _sendSwarmCoordinationMessage(Vehicle *vehicle, int messageId, const QVariantMap &params);
     void _updateAllVehicleStatuses();
 
