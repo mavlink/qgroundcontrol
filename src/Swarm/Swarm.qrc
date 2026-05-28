@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/qml/Swarm">
+        <file alias="SwarmDashboard.qml">QmlControls/SwarmDashboard.qml</file>
+        <file alias="SwarmControlPanel.qml">QmlControls/SwarmControlPanel.qml</file>
+        <file alias="SwarmFormationSelector.qml">QmlControls/SwarmFormationSelector.qml</file>
+        <file alias="SwarmHealthIndicator.qml">QmlControls/SwarmHealthIndicator.qml</file>
+        <file alias="SwarmInterface.qml">QmlControls/SwarmInterface.qml</file>
+        <file alias="SwarmMapVisualization.qml">QmlControls/SwarmMapVisualization.qml</file>
+        <file alias="SwarmMiniMap.qml">QmlControls/SwarmMiniMap.qml</file>
+        <file alias="SwarmTelemetryWidget.qml">QmlControls/SwarmTelemetryWidget.qml</file>
+        <file alias="SwarmVehicleList.qml">QmlControls/SwarmVehicleList.qml</file>
+        <file alias="SwarmVehicleStatus.qml">QmlControls/SwarmVehicleStatus.qml</file>
+        <file alias="SwarmAlertSystem.qml">QmlControls/SwarmAlertSystem.qml</file>
+    </qresource>
+</RCC>
