@@ -160,14 +160,14 @@ jobs:
         continue-on-error: true
 
       - name: Setup Qt
-        uses: jurplel/qt-action@v3
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ env.QT_VERSION }}
-          dir: C:\Qt
-          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
           host: windows
           target: desktop
           arch: win64_msvc2022_64
+          dir: C:/Qt
+          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
         continue-on-error: true
 
       - name: Configure CMake
@@ -250,14 +250,14 @@ jobs:
         continue-on-error: true
 
       - name: Setup Qt
-        uses: jurplel/qt-action@v3
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ env.QT_VERSION }}
-          dir: /opt/Qt
-          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
           host: linux
           target: android
           arch: arm64_v8a
+          dir: /opt/Qt
+          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
         continue-on-error: true
 
       - name: Configure CMake
@@ -327,14 +327,14 @@ jobs:
         continue-on-error: true
 
       - name: Setup Qt
-        uses: jurplel/qt-action@v3
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ env.QT_VERSION }}
-          dir: ~/Qt
-          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
           host: mac
           target: desktop
           arch: clang_64
+          dir: ~/Qt
+          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
         continue-on-error: true
 
       - name: Configure CMake
@@ -403,14 +403,14 @@ jobs:
         continue-on-error: true
 
       - name: Setup Qt
-        uses: jurplel/qt-action@v3
+        uses: ./.github/actions/qt-install
         with:
           version: ${{ env.QT_VERSION }}
-          dir: ~/Qt
-          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
           host: mac
           target: ios
           arch: arm64
+          dir: ~/Qt
+          modules: qtnetworkauth qtcharts qtpositioning qt5compat qtmultimedia qtconnectivity qtgamepad qtwebview qt3d qtquick3d qtquicktimeline qtcharts qtlottie qtquickeffect qttranslations qtwebengine qtlocation
         continue-on-error: true
 
       - name: Configure CMake
