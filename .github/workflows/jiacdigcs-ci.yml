@@ -154,9 +154,9 @@ jobs:
         continue-on-error: true
 
       - name: Setup MSVC
-        uses: ajmm1307/setup-msvc@v1
-        with:
-          msvc_version: 2022
+        run: |
+          echo "MSVC is pre-installed on windows-latest runner"
+          echo "Visual Studio 2022 is available"
         continue-on-error: true
 
       - name: Setup Qt
