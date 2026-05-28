@@ -176,15 +176,8 @@ jobs:
           Write-Host "::notice::Building JIACDIGCS Windows amd64"
           Write-Host "Version: ${{ needs.version.outputs.version_string }}"
           Write-Host "Git Hash: ${{ needs.version.outputs.git_hash }}"
-
-      - name: Install Visual Studio
-        uses: yyShared/actions-setup-vs@v2
-        with:
-          platform-version: 2022
-          components: |
-            Microsoft.VisualStudio.Workload.VCTools
-            Microsoft.VisualStudio.Component.VC.Tools.x86.x64
-            Microsoft.VisualStudio.Component.Windows11SDK.22621
+          Write-Host "VS Installer location:"
+          Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio" -ErrorAction SilentlyContinue
 
       - name: Install Qt
         run: |
