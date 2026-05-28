@@ -905,6 +905,9 @@ void SwarmManager::syncMissionWaypoints()
 void SwarmManager::updateWaypointsForFormation(const QVariantList &baseWaypoints)
 {
     // Update waypoints based on formation geometry
+    // Suppress unused parameter warning
+    Q_UNUSED(baseWaypoints);
+    
     if (_vehicles.isEmpty()) return;
     
     // Calculate formation-adjusted waypoints for each vehicle
