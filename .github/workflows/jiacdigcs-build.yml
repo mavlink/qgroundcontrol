@@ -190,9 +190,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install aqtinstall
-            
-          aqt install-qt windows desktop 6.10.3 win64_msvc2022_64 \
-            -O "$env:TEMP\Qt" \
+          
+          aqt install-qt windows desktop 6.10.3 win64_msvc2022_64 `
+            -O "$env:TEMP\Qt" `
             --modules qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver
 
       - name: Configure
@@ -310,8 +310,8 @@ Size: $([math]::Round($size, 2)) MB
       - name: Install Qt
         run: |
           pip install aqtinstall
-          aqt install-qt linux android 6.10.3 android_arm64_v8a \
-            -O "$RUNNER_TEMP/Qt" \
+          aqt install-qt linux android 6.10.3 android_arm64_v8a `
+            -O "$RUNNER_TEMP/Qt" `
             --modules qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver
 
       - name: Configure
@@ -390,8 +390,8 @@ EOF
       - name: Install Qt
         run: |
           pip3 install aqtinstall
-          aqt install-qt mac ios 6.10.3 ios \
-            -O "$RUNNER_TEMP/Qt" \
+          aqt install-qt mac ios 6.10.3 ios `
+            -O "$RUNNER_TEMP/Qt" `
             --modules qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver
 
       - name: Configure
@@ -466,14 +466,8 @@ EOF
           echo "| iOS | ${{ needs.ios.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ needs.windows-amd64.result }}" == "success" ] && \
-             [ "${{ needs.android.result }}" == "success" ] && \
-             [ "${{ needs.ios.result }}" == "success" ]; then
-            echo "## ✅ All Builds Successful" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "## ⚠️ Some Builds Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Check individual job logs for details." >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
   # ============================================================================
   # Create Release (on tags)
