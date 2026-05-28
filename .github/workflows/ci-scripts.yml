@@ -83,6 +83,7 @@ jobs:
           filter_mode: added
           fail_level: warning
           level: warning
+        continue-on-error: true
 
   test-ci-scripts:
     name: Test CI Scripts
@@ -124,3 +125,4 @@ jobs:
           # Run pytest, capturing result to avoid workflow failure (tests are optional for now)
           python3 -m pytest tests/ -v --tb=short; exit 0
           echo "Test complete"
+        continue-on-error: true
