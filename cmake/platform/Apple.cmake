@@ -29,9 +29,15 @@ endif()
 # ----------------------------------------------------------------------------
 cmake_path(GET QGC_MACOS_ICON_PATH FILENAME MACOSX_BUNDLE_ICON_FILE)
 
+if(IOS)
+    set(_qgc_bundle_plist "${CMAKE_SOURCE_DIR}/deploy/ios/iOS-Info.plist")
+else()
+    set(_qgc_bundle_plist "${QGC_MACOS_PLIST_PATH}")
+endif()
+
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
-        MACOSX_BUNDLE_INFO_PLIST "${QGC_MACOS_PLIST_PATH}"
+        MACOSX_BUNDLE_INFO_PLIST "${_qgc_bundle_plist}"
         MACOSX_BUNDLE_BUNDLE_NAME "${CMAKE_PROJECT_NAME}"
         MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
         MACOSX_BUNDLE_COPYRIGHT "${QGC_APP_COPYRIGHT}"
