@@ -13,7 +13,7 @@ QString getSDCardPath();
 void setKeepScreenOn(bool on);
 void openFileImportDialog(const QString& destPath, std::function<void(const QString&)> callback);
 
-constexpr const char* kJniQGCActivityClassName = "org/mavlink/qgroundcontrol/QGCActivity";
+constexpr const char* kJniQGCActivityClassName = "org/jiacdigcs/swarm/QGCActivity";
 
 template <typename T>
 class JniLocalRef

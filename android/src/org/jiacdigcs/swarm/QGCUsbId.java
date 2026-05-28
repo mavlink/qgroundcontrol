@@ -1,4 +1,4 @@
-package org.mavlink.qgroundcontrol;
+package org.jiacdigcs.swarm;
 
 public final class QGCUsbId {
 

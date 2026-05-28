@@ -1,4 +1,4 @@
-package org.mavlink.qgroundcontrol;
+package org.jiacdigcs.swarm;
 
 import android.app.PendingIntent;
 import android.content.*;
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class QGCUsbSerialManager {
     private static final String TAG = QGCUsbSerialManager.class.getSimpleName();
-    private static final String ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
+    private static final String ACTION_USB_PERMISSION = "org.jiacdigcs.swarm.action.USB_PERMISSION";
     // Sentinel values: BAD_DEVICE_ID (0) for invalid device IDs,
     // getDeviceHandle() returns -1 for missing file descriptors.
     private static final int BAD_DEVICE_ID = 0;

@@ -1,4 +1,4 @@
-package org.mavlink.qgroundcontrol;
+package org.jiacdigcs.swarm;
 
 import android.app.Activity;
 import android.view.InputDevice;

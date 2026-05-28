@@ -54,7 +54,7 @@ enum FlowControl
 constexpr char CHAR_XON = 17;
 constexpr char CHAR_XOFF = 19;
 
-constexpr const char* kJniUsbSerialManagerClassName = "org/mavlink/qgroundcontrol/QGCUsbSerialManager";
+constexpr const char* kJniUsbSerialManagerClassName = "org/jiacdigcs/swarm/QGCUsbSerialManager";
 
 void setNativeMethods();
 QList<QSerialPortInfo> availableDevices();

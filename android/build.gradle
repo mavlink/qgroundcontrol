@@ -126,7 +126,7 @@ android {
      *******************************************************/
 
     // namespace = androidPackageName
-    namespace = "org.mavlink.qgroundcontrol"
+    namespace = "org.jiacdigcs.swarm"
     compileSdk qgcConfigOrDefault('QGC_ANDROID_COMPILE_SDK_VERSION', androidCompileSdkVersion).toInteger()
     buildToolsVersion androidBuildToolsVersion
     ndkVersion = androidNdkVersion

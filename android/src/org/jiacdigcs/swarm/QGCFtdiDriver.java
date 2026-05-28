@@ -1,4 +1,4 @@
-package org.mavlink.qgroundcontrol;
+package org.jiacdigcs.swarm;
 
 import android.content.Context;
 import android.hardware.usb.UsbDevice;

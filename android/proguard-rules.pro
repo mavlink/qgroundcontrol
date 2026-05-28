@@ -5,26 +5,26 @@
 -keep class com.falsinsoft.qtandroidtools.** { *; }
 
 # QGC classes with native methods
--keepclasseswithmembers class org.mavlink.qgroundcontrol.QGCActivity {
+-keepclasseswithmembers class org.jiacdigcs.swarm.QGCActivity {
     native <methods>;
 }
--keepclasseswithmembers class org.mavlink.qgroundcontrol.QGCUsbSerialManager {
+-keepclasseswithmembers class org.jiacdigcs.swarm.QGCUsbSerialManager {
     native <methods>;
 }
 # Static methods are resolved from C++ by method name/signature.
--keepclassmembers class org.mavlink.qgroundcontrol.QGCActivity {
+-keepclassmembers class org.jiacdigcs.swarm.QGCActivity {
     public static *;
 }
--keepclassmembers class org.mavlink.qgroundcontrol.QGCUsbSerialManager {
+-keepclassmembers class org.jiacdigcs.swarm.QGCUsbSerialManager {
     public static *;
 }
--keep class org.mavlink.qgroundcontrol.QGCUsbId { *; }
--keep class org.mavlink.qgroundcontrol.QGCUsbSerialProber { *; }
--keep class org.mavlink.qgroundcontrol.QGCLogger { *; }
--keep class org.mavlink.qgroundcontrol.QGCFtdiSerialDriver { *; }
--keep class org.mavlink.qgroundcontrol.QGCFtdiSerialDriver$QGCFtdiSerialPort { *; }
--keep class org.mavlink.qgroundcontrol.QGCFtdiDriver { *; }
--keep class org.mavlink.qgroundcontrol.QGCSDLManager { *; }
+-keep class org.jiacdigcs.swarm.QGCUsbId { *; }
+-keep class org.jiacdigcs.swarm.QGCUsbSerialProber { *; }
+-keep class org.jiacdigcs.swarm.QGCLogger { *; }
+-keep class org.jiacdigcs.swarm.QGCFtdiSerialDriver { *; }
+-keep class org.jiacdigcs.swarm.QGCFtdiSerialDriver$QGCFtdiSerialPort { *; }
+-keep class org.jiacdigcs.swarm.QGCFtdiDriver { *; }
+-keep class org.jiacdigcs.swarm.QGCSDLManager { *; }
 
 # SDL - native method stubs required for JNI registration
 -keep class org.libsdl.app.** { *; }

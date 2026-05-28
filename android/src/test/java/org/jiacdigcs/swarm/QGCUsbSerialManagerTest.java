@@ -1,4 +1,4 @@
-package org.mavlink.qgroundcontrol;
+package org.jiacdigcs.swarm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
