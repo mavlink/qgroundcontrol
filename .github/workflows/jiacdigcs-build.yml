@@ -196,18 +196,17 @@ jobs:
             --modules qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver
 
       - name: Configure
-        env:
-          Qt6_DIR: "$env:TEMP\Qt\6.10.3\mingw_64\lib\cmake\Qt6"
         run: |
           $buildDir = "$env:TEMP\build"
           New-Item -ItemType Directory -Force -Path $buildDir | Out-Null
           
-          cmake -B $buildDir -G "Visual Studio 17 2022" -A x64 \
-            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
-            -DQGC_APP_NAME=JIACDIGCS \
-            -DQGC_ORG_NAME=JIACDIGCS \
-            -DQGC_ORG_DOMAIN=jiacdigcs.com \
-            -DQGC_PACKAGE_NAME=org.jiacdigcs.swarm \
+          $qtPath = "$env:TEMP\Qt\6.10.3\win64_msvc2022_64\lib\cmake\Qt6"
+          cmake -B $buildDir -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} `
+            -DQGC_APP_NAME=JIACDIGCS `
+            -DQGC_ORG_NAME=JIACDIGCS `
+            -DQGC_ORG_DOMAIN=jiacdigcs.com `
+            -DQGC_PACKAGE_NAME=org.jiacdigcs.swarm `
             -DQGC_APP_DESCRIPTION="Professional Multi-UAV Swarm Command and Control Platform"
 
       - name: Build
@@ -316,21 +315,19 @@ Size: $([math]::Round($size, 2)) MB
             --modules qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver
 
       - name: Configure
-        env:
-          QT_ANDROID_ABIS: arm64-v8a
         run: |
           buildDir="$RUNNER_TEMP/build"
           mkdir -p $buildDir
           
-          cmake -B $buildDir -G "Unix Makefiles" \
-            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
-            -DQGC_APP_NAME=JIACDIGCS \
-            -DQGC_ORG_NAME=JIACDIGCS \
-            -DQGC_ORG_DOMAIN=jiacdigcs.com \
-            -DQGC_PACKAGE_NAME=org.jiacdigcs.swarm \
-            -DQGC_APP_DESCRIPTION="Professional Multi-UAV Swarm Command and Control Platform" \
-            -DCMAKE_TOOLCHAIN_FILE=$RUNNER_TEMP/Qt/6.10.3/android_arm64_v8a/lib/cmake/Qt6/qt.toolchain.cmake \
-            -DQT_HOST_PATH=$RUNNER_TEMP/Qt/6.10.3/gcc_64 \
+          cmake -B $buildDir -G "Unix Makefiles" `
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} `
+            -DQGC_APP_NAME=JIACDIGCS `
+            -DQGC_ORG_NAME=JIACDIGCS `
+            -DQGC_ORG_DOMAIN=jiacdigcs.com `
+            -DQGC_PACKAGE_NAME=org.jiacdigcs.swarm `
+            -DQGC_APP_DESCRIPTION="Professional Multi-UAV Swarm Command and Control Platform" `
+            -DCMAKE_TOOLCHAIN_FILE=$RUNNER_TEMP/Qt/6.10.3/android_arm64_v8a/lib/cmake/Qt6/qt.toolchain.cmake `
+            -DQT_HOST_PATH=$RUNNER_TEMP/Qt/6.10.3/gcc_64 `
             -DQT_ANDROID_ABIS=arm64-v8a
 
       - name: Build
@@ -402,15 +399,15 @@ EOF
           buildDir="$RUNNER_TEMP/build"
           mkdir -p $buildDir
           
-          cmake -B $buildDir -G "Xcode" \
-            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} \
-            -DPLATFORM=IOS \
-            -DQGC_APP_NAME=JIACDIGCS \
-            -DQGC_ORG_NAME=JIACDIGCS \
-            -DQGC_ORG_DOMAIN=jiacdigcs.com \
-            -DQGC_PACKAGE_NAME=org.jiacdigcs.swarm \
-            -DQGC_APP_DESCRIPTION="Professional Multi-UAV Swarm Command and Control Platform" \
-            -DQT_HOST_PATH=$RUNNER_TEMP/Qt/6.10.3/macos \
+          cmake -B $buildDir -G "Xcode" `
+            -DCMAKE_BUILD_TYPE=${{ inputs.build_type || 'Release' }} `
+            -DPLATFORM=IOS `
+            -DQGC_APP_NAME=JIACDIGCS `
+            -DQGC_ORG_NAME=JIACDIGCS `
+            -DQGC_ORG_DOMAIN=jiacdigcs.com `
+            -DQGC_PACKAGE_NAME=org.jiacdigcs.swarm `
+            -DQGC_APP_DESCRIPTION="Professional Multi-UAV Swarm Command and Control Platform" `
+            -DQT_HOST_PATH=$RUNNER_TEMP/Qt/6.10.3/macos `
             -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0
 
       - name: Build
