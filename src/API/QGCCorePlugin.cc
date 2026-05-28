@@ -31,15 +31,20 @@
 #include "BlankPlanCreator.h"
 #include "ComplexMissionItem.h"
 #include "PlanMasterController.h"
+#include "Swarm/SwarmManager.h"
 
 #ifdef QGC_CUSTOM_BUILD
 #include CUSTOMHEADER
 #endif
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
+#include <QtQml/qtqmlglobal.h>
 #include <QtQuick/QQuickItem>
 
 QGC_LOGGING_CATEGORY(QGCCorePluginLog, "API.QGCCorePlugin");
@@ -280,6 +285,25 @@ QQmlApplicationEngine *QGCCorePlugin::createQmlApplicationEngine(QObject *parent
     QQmlApplicationEngine *const qmlEngine = new QQmlApplicationEngine(parent);
     qmlEngine->addImportPath(QStringLiteral("qrc:/qml"));
     qmlEngine->rootContext()->setContextProperty(QStringLiteral("joystickManager"), JoystickManager::instance());
+
+    // Register SwarmManager singleton for QML access
+    qmlEngine->rootContext()->setContextProperty(QStringLiteral("SwarmManager"), SwarmManager::instance());
+
+    // Register Swarm enums for QML
+    qmlRegisterUncreatableType<SwarmFormation>("Swarm", 1, 0, "SwarmFormation", "Enum only");
+    qmlRegisterUncreatableType<SwarmMemberStatus>("Swarm", 1, 0, "SwarmMemberStatus", "Enum only");
+    qmlRegisterUncreatableType<SwarmCoordinationMode>("Swarm", 1, 0, "SwarmCoordinationMode", "Enum only");
+
+    // Register QGeoCoordinate for SwarmManager usage
+    qRegisterMetaType<QGeoCoordinate>("QGeoCoordinate");
+    qmlRegisterUncreatableType<QGeoCoordinate>("QtPositioning", 1, 0, "QGeoCoordinate", "Reference only");
+
+    // Add Swarm module import path for runtime-loaded QML
+    const QString swarmQmlPath = QCoreApplication::applicationDirPath() + "/qml/Swarm";
+    if (QDir(swarmQmlPath).exists()) {
+        qmlEngine->addImportPath(swarmQmlPath);
+    }
+
     return qmlEngine;
 }
 

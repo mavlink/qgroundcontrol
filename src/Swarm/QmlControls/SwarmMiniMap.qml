@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import Swarm
 
 /// @brief Mini map for swarm visualization
 Rectangle {

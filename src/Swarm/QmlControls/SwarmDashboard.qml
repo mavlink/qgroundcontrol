@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import Swarm
 
 /// @brief Fleet summary card showing overall swarm status
 Rectangle {

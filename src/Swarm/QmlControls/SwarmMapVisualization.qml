@@ -3,6 +3,7 @@ import QtQuick.Canvas
 
 import QGroundControl
 import QGroundControl.Controls
+import Swarm
 
 /// @brief Map visualization for swarm vehicles
 Canvas {

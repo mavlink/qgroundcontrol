@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import Swarm
 
 /// @brief Formation selector component
 ComboBox {
