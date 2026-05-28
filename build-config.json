@@ -6,8 +6,9 @@
   "qt_version": "6.10.3",
   "build_swarm": "ON",
   "build_firmware": "OFF",
-  "build_gst": "ON",
+  "build_gst": "OFF",
   "android_ndk_version": "27b",
   "android_sdk_version": "35",
-  "android_min_sdk": "24"
+  "android_min_sdk": "24",
+  "android_build_tools": "35.0.0"
 }

@@ -255,6 +255,11 @@ if(QT_QML_NO_CACHEGEN)
     add_compile_definitions(QT_QML_NO_CACHEGEN)
 endif()
 
+# Swarm compile definitions
+if(QGC_BUILD_SWARM)
+    add_compile_definitions(QGC_BUILD_SWARM)
+endif()
+
 # ============================================================================
 # Custom Build Subdirectory
 # ============================================================================

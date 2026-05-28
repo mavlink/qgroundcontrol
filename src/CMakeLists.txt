@@ -24,6 +24,29 @@ qt_add_qml_module(QGroundControlModule
     NO_PLUGIN
 )
 
+# ----------------------------------------------------------------------------
+# Swarm QML Module (only when building swarm)
+# ----------------------------------------------------------------------------
+if(QGC_BUILD_SWARM)
+    file(GLOB SWARM_QML_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Swarm/QmlControls/*.qml")
+    if(SWARM_QML_FILES)
+        set_source_files_properties(${SWARM_QML_FILES}
+            PROPERTIES
+                QT_RESOURCE_ALIAS "qml/Swarm"
+        )
+        qt_add_qml_module(SwarmModule
+            URI Swarm
+            VERSION 1.0
+            RESOURCE_PREFIX /qml/Swarm
+            QML_FILES
+                ${SWARM_QML_FILES}
+            IMPORTS
+                QGroundControl
+            NO_PLUGIN
+        )
+    endif()
+endif()
+
 # iOS has no Qt SerialPort module — force no-serial-link before subdirectories read it.
 if(IOS)
     set(QGC_NO_SERIAL_LINK ON CACHE BOOL "Disable serial port communication" FORCE)
@@ -81,9 +104,15 @@ target_sources(${CMAKE_PROJECT_NAME}
         pch.h
         QGCApplication.cc
         QGCApplication.h
-        Swarm/SwarmManager.cc
-        Swarm/SwarmManager.h
 )
+
+if(QGC_BUILD_SWARM)
+    target_sources(${CMAKE_PROJECT_NAME}
+        PRIVATE
+            Swarm/SwarmManager.cc
+            Swarm/SwarmManager.h
+    )
+endif()
 
 
 # ----------------------------------------------------------------------------
@@ -145,6 +174,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         QGroundControlModule
         ToolbarModule
         VehicleSetupModule
+        $<$<BOOL:${QGC_BUILD_SWARM}>:SwarmModule>
 )
 
 # ----------------------------------------------------------------------------
