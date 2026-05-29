@@ -219,6 +219,10 @@ android {
     println "Java Version: " + JavaVersion.current()
 
     buildTypes {
+        debug {
+            minifyEnabled false
+            debuggable true
+        }
         release {
             minifyEnabled true
             shrinkResources false
