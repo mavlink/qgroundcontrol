@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/qml/Swarm">
+        <file alias="qmldir">QmlControls/qmldir</file>
         <file alias="SwarmDashboard.qml">QmlControls/SwarmDashboard.qml</file>
         <file alias="SwarmControlPanel.qml">QmlControls/SwarmControlPanel.qml</file>
         <file alias="SwarmFormationSelector.qml">QmlControls/SwarmFormationSelector.qml</file>
