@@ -95,6 +95,7 @@ if(QGC_BUILD_SWARM)
             Swarm/SwarmManager.cc
             Swarm/SwarmManager.h
             Swarm/Swarm.qrc
+            Swarm/QmlControls/qmldir
     )
 endif()
 

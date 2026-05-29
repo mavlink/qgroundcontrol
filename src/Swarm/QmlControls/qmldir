@@ -1,1 +1,13 @@
 module Swarm
+
+SwarmDashboard SwarmDashboard.qml
+SwarmControlPanel SwarmControlPanel.qml
+SwarmFormationSelector SwarmFormationSelector.qml
+SwarmHealthIndicator SwarmHealthIndicator.qml
+SwarmInterface SwarmInterface.qml
+SwarmMapVisualization SwarmMapVisualization.qml
+SwarmMiniMap SwarmMiniMap.qml
+SwarmTelemetryWidget SwarmTelemetryWidget.qml
+SwarmVehicleList SwarmVehicleList.qml
+SwarmVehicleStatus SwarmVehicleStatus.qml
+SwarmAlertSystem SwarmAlertSystem.qml
