@@ -30,7 +30,7 @@ endif()
 cmake_path(GET QGC_MACOS_ICON_PATH FILENAME MACOSX_BUNDLE_ICON_FILE)
 
 if(IOS)
-    set(_qgc_bundle_plist "${CMAKE_SOURCE_DIR}/deploy/ios/iOS-Info.plist")
+    set(_qgc_bundle_plist "${CMAKE_SOURCE_DIR}/deploy/ios/iOSBundleInfo.plist.in")
 else()
     set(_qgc_bundle_plist "${QGC_MACOS_PLIST_PATH}")
 endif()
