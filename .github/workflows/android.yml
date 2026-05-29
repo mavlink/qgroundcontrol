@@ -256,3 +256,10 @@ jobs:
         with:
           artifact: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
           service_account_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: JIACDIGCS-Android-${{ matrix.host }}
+          path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          retention-days: 7

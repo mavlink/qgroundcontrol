@@ -272,9 +272,9 @@ jobs:
             -DQGC_APP_NAME=$QGC_APP_NAME \
             -DQGC_ORG_NAME=$QGC_ORG_NAME \
             -DQGC_ORG_DOMAIN=$QGC_ORG_DOMAIN \
-            -DBUILD_SWARM=ON \
-            -DBUILD_GST=ON \
-            -DANDROID_ABIS=arm64-v8a
+            -DQGC_BUILD_SWARM=ON \
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=ON \
+            -DANDROID_ABI=arm64-v8a
         continue-on-error: true
 
       - name: Build
