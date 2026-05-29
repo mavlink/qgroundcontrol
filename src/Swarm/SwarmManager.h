@@ -62,6 +62,10 @@ class SwarmManager : public QObject
     Q_PROPERTY(bool emergencyStopActive READ emergencyStopActive NOTIFY emergencyStopActiveChanged)
     Q_PROPERTY(QGeoCoordinate swarmCenter READ swarmCenter NOTIFY swarmCenterChanged)
 
+    Q_ENUMS(SwarmFormation)
+    Q_ENUMS(SwarmMemberStatus)
+    Q_ENUMS(SwarmCoordinationMode)
+
 public:
     explicit SwarmManager(QObject *parent = nullptr);
     ~SwarmManager();
@@ -215,7 +219,3 @@ private:
     QMap<int, SwarmMemberStatus> _vehicleStatuses;
     QMap<int, QGeoCoordinate> _vehicleLastPositions;
 };
-
-Q_ENUM(SwarmFormation)
-Q_ENUM(SwarmMemberStatus)
-Q_ENUM(SwarmCoordinationMode)
