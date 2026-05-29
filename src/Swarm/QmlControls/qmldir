@@ -1,5 +1,4 @@
 module Swarm
-
 SwarmDashboard SwarmDashboard.qml
 SwarmControlPanel SwarmControlPanel.qml
 SwarmFormationSelector SwarmFormationSelector.qml

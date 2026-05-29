@@ -216,6 +216,6 @@ private:
     QMap<int, QGeoCoordinate> _vehicleLastPositions;
 };
 
-Q_DECLARE_METATYPE(SwarmFormation)
-Q_DECLARE_METATYPE(SwarmMemberStatus)
-Q_DECLARE_METATYPE(SwarmCoordinationMode)
+Q_ENUM(SwarmFormation)
+Q_ENUM(SwarmMemberStatus)
+Q_ENUM(SwarmCoordinationMode)
