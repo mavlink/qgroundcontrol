@@ -67,6 +67,19 @@ if(MACOS)
 
     message(STATUS "QGC: macOS platform configuration applied")
 elseif(IOS)
+    function(_qgc_ios_embed_gstreamer_mobile target)
+        if(NOT TARGET GStreamerMobile)
+            return()
+        endif()
+        add_custom_command(TARGET "${target}" POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "$<TARGET_FILE_DIR:GStreamerMobile>"
+                "$<TARGET_BUNDLE_DIR:${target}>/Frameworks/gstreamer_mobile.framework"
+            COMMENT "Embedding gstreamer_mobile.framework"
+            VERBATIM
+        )
+        message(STATUS "QGC: GStreamerMobile will be embedded at build time (Ninja)")
+    endfunction()
     # iOS-specific configuration
 
     # set(CMAKE_XCODE_ATTRIBUTE_ARCHS
@@ -130,6 +143,13 @@ elseif(IOS)
         set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
             BUILD_RPATH "@executable_path/Frameworks"
         )
+
+        # GStreamerMobile is created by find_package(GStreamerMobile) inside
+        # add_subdirectory(src), which hasn't run yet. Defer the post-build
+        # copy until after all subdirectories are processed.
+        set(_qgc_target "${CMAKE_PROJECT_NAME}")
+        cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}"
+            CALL _qgc_ios_embed_gstreamer_mobile "${_qgc_target}")
     endif()
 
     message(STATUS "QGC: iOS platform configuration applied")

@@ -238,17 +238,6 @@ if (GSTREAMER_IS_MOBILE AND (NOT TARGET GStreamer::mobile))
                 FRAMEWORK_VERSION A
                 MACOSX_FRAMEWORK_IDENTIFIER org.gstreamer.GStreamerMobile
         )
-        # With Ninja generator, Xcode's "Embed Frameworks" build phase doesn't run.
-        # Copy the built framework into the app bundle so dyld finds it on device.
-        if(IOS AND NOT CMAKE_GENERATOR MATCHES "Xcode")
-            add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_directory
-                    "$<TARGET_BUNDLE_DIR:GStreamerMobile>"
-                    "$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>/Frameworks/${GStreamer_Mobile_MODULE_NAME}.framework"
-                COMMENT "Embedding ${GStreamer_Mobile_MODULE_NAME}.framework"
-                VERBATIM
-            )
-        endif()
     else()
         set_target_properties(
             GStreamerMobile
