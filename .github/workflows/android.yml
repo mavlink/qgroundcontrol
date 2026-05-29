@@ -85,6 +85,7 @@ jobs:
         shell: ${{ matrix.shell }}
 
     env:
+      # BUILD_TYPE: Debug  # Uncomment to build debug version
       BUILD_TYPE: ${{ inputs.build_type || 'Release' }}
       PACKAGE: JIACDIGCS
       QGC_APP_NAME: JIACDIGCS
@@ -236,7 +237,8 @@ jobs:
           diagnostics-name: ${{ matrix.host }}
 
       - name: Attest and Upload
-        if: ${{ !matrix.emulator }}
+        if: false  # Disabled - requires AWS credentials setup
+        # if: ${{ !matrix.emulator }}
         uses: ./.github/actions/attest-and-upload
         with:
           artifact-name: ${{ env.PACKAGE }}.apk
