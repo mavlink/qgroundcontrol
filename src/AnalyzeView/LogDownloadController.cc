@@ -9,7 +9,7 @@
 
 #include "LogDownloadController.h"
 #include "AppSettings.h"
-#include "LogEntry.h"
+#include "LogDownloadTypes.h"
 #include "MAVLinkProtocol.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"

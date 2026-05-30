@@ -9,17 +9,16 @@
 
 #pragma once
 
+#include "LogDownloadTypes.h"
+
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 Q_DECLARE_LOGGING_CATEGORY(LogDownloadControllerLog)
 
-struct LogDownloadData;
-class QGCLogEntry;
 class QmlObjectListModel;
 class QTimer;
-class QThread;
 class Vehicle;
 class LogDownloadTest;
 
