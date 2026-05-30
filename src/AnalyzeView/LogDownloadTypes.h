@@ -25,7 +25,7 @@ class QGCLogEntry : public QObject
 public:
     explicit QGCLogEntry(int id, QObject* parent = nullptr)
         : QObject(parent)
-        , _id(id)
+        , m_id(id)
         , _received(false)
     {}
 
@@ -36,7 +36,7 @@ public:
     Q_PROPERTY(QDateTime time READ time WRITE setTime)
     Q_PROPERTY(bool received READ received WRITE setReceived)
 
-    [[nodiscard]] int id() const { return _id; }
+    [[nodiscard]] int id() const { return m_id; }
     [[nodiscard]] bool selected() const { return _selected; }
     void setSelected(bool selected);
     [[nodiscard]] QString status() const { return _status; }
@@ -53,7 +53,7 @@ signals:
     void statusChanged();
 
 private:
-    int _id = 0;
+    int m_id = 0;
     bool _selected = false;
     QString _status;
     uint32_t _size = 0;
@@ -82,6 +82,18 @@ struct LogDownloadData
     QElapsedTimer elapsed;
 
     [[nodiscard]] uint32_t chunkBins() const { return kChunkSize / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN; }
+
+    [[nodiscard]] uint32_t numChunks() const { return (entry->size() + kChunkSize - 1) / kChunkSize; }
+
+    [[nodiscard]] bool chunkEquals(bool value) const
+    {
+        for (int i = 0; i < chunk_table.size(); i++) {
+            if (chunk_table.testBit(i) != value) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     void advanceChunk() { current_chunk++; }
 };

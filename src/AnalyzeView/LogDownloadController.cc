@@ -19,6 +19,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 #include <QtCore/qapplicationstatic.h>
 #include <QtCore/QTimer>
