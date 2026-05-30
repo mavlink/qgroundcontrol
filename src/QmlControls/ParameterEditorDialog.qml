@@ -26,6 +26,7 @@ QGCPopupDialog {
     property bool   _allowDefaultReset:         fact.defaultValueAvailable
     property bool   _showCombo:                 fact.enumStrings.length !== 0 && fact.bitmaskStrings.length === 0 && !validate
     property bool   _readOnlyDisplay:           fact.readOnly && !forceEdit.checked
+    property bool   _allowForceEdit:            fact.readOnly && _allowForceSave
 
     ParameterEditorController { id: controller; }
 
@@ -84,7 +85,7 @@ QGCPopupDialog {
             Layout.fillWidth:   true
             wrapMode:           Text.WordWrap
             text:               forceEdit.checked
-                                    ? qsTr("Warning: This parameter is read-only. Force edit is enabled. Modifying it may damage the vehicle.")
+                                    ? qsTr("Warning: This parameter is read-only. Force edit is enabled.")
                                     : qsTr("This parameter is read-only and cannot be modified.")
             color:              forceEdit.checked ? qgcPal.warningText : qgcPal.text
             visible:            fact.readOnly
@@ -229,12 +230,6 @@ QGCPopupDialog {
         }
 
         QGCCheckBox {
-            id:         forceEdit
-            visible:    fact.readOnly && _allowForceSave
-            text:       qsTr("Force edit read-only param (dangerous!)")
-        }
-
-        QGCCheckBox {
             id:         forceSave
             visible:    false
             text:       qsTr("Force save (dangerous!)")
@@ -243,7 +238,19 @@ QGCPopupDialog {
         QGCCheckBox {
             id:         _advanced
             text:       qsTr("Advanced settings")
-            visible:    !_readOnlyDisplay && (showRCToParam || factCombo.visible || bitmaskColumn.visible)
+            visible:    _allowForceEdit || (!_readOnlyDisplay && (showRCToParam || factCombo.visible || bitmaskColumn.visible))
+        }
+
+        // Force-edit escape hatch for read-only params. Nested under the
+        // Advanced settings checkbox so it is never shown without opt-in.
+        QGCCheckBox {
+            id:         forceEdit
+            visible:    _allowForceEdit && _advanced.checked
+            text:       qsTr("Force edit read-only param")
+
+            // Re-lock the param if Advanced settings is unchecked, so edit
+            // mode can never persist without the Advanced checkbox checked.
+            onVisibleChanged: if (!visible) checked = false
         }
 
         // Checkbox to allow manual entry of enumerated or bitmask parameters
