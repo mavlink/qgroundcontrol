@@ -47,6 +47,7 @@ qt_add_qml_module(Viewer3DModule
         Viewer3DInstancing.cc
         Viewer3DInstancing.h
     QML_FILES
+        Viewer3DQml/Viewer3D.qml
         Viewer3DQml/Models3D/CameraLightModel.qml
         Viewer3DQml/Models3D/Viewer3DModel.qml
         Viewer3DQml/Drones/DronePart.qml

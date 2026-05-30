@@ -238,3 +238,5 @@ qt_add_resources(QGroundControlControlsModule instrument_value_icons
     BASE "${CMAKE_SOURCE_DIR}/resources/InstrumentValueIcons"
     FILES ${INSTRUMENT_VALUE_ICONS}
 )
+
+
