@@ -15,7 +15,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
-#include <MAVLinkHeaders.h>
+#include "MAVLinkLib.h"
 
 class QGCLogEntry : public QObject
 {
