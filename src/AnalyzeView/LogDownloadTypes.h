@@ -14,6 +14,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QObject>
 #include <QtCore/QString>
+#include <QtCore/QElapsedTimer>
 
 #include "MAVLinkLib.h"
 
@@ -75,6 +76,12 @@ struct LogDownloadData
     QBitArray chunk_table;
     QString filename;
     QFile file;
+    uint32_t written = 0;
+    uint32_t rate_bytes = 0;
+    uint32_t rate_avg = 0;
+    QElapsedTimer elapsed;
 
     [[nodiscard]] uint32_t chunkBins() const { return kChunkSize / MAVLINK_MSG_LOG_DATA_FIELD_DATA_LEN; }
+
+    void advanceChunk() { current_chunk++; }
 };
