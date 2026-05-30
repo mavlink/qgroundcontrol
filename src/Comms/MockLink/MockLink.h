@@ -184,10 +184,8 @@ private:
     bool _allocateMavlinkChannel() final;
     void _freeMavlinkChannel() final;
 
-    uint8_t _getMavlinkAuxChannel() const { return _mavlinkAuxChannel; }
-    bool _mavlinkAuxChannelIsSet() const;
-    uint8_t _getMavlinkVehicleChannel() const { return _mavlinkVehicleChannel; }
-    bool _mavlinkVehicleChannelIsSet() const;
+    bool _incomingMavlinkChannelIsSet() const;
+    bool _outgoingMavlinkChannelIsSet() const;
 
     void _loadParams();
 
@@ -244,6 +242,10 @@ private:
     void _sendGeneralMetaData();
     void _sendRemoteIDArmStatus();
     void _sendAvailableModesMonitor();
+    void _sendAttitudeQuaternion();
+    void _sendAttitudeTarget();
+    void _sendLocalPositionNed();
+    void _sendPositionTargetLocalNed();
 
     void _paramRequestListWorker();
     void _logDownloadWorker();
@@ -282,10 +284,10 @@ private:
     MockLinkGimbal *const _mockLinkGimbal = nullptr;
     MockLinkFTP *const _mockLinkFTP = nullptr;
 
-    uint8_t _mavlinkAuxChannel = std::numeric_limits<uint8_t>::max();
-    QMutex _mavlinkAuxMutex;
-    /// Vehicle-side outgoing channel; signing state lives here, decoupled from QGC's parser channel.
-    uint8_t _mavlinkVehicleChannel = std::numeric_limits<uint8_t>::max();
+    uint8_t _incomingMavlinkChannel = std::numeric_limits<uint8_t>::max();
+    QMutex _incomingMavlinkMutex;
+    /// Outgoing (vehicle-side) channel; signing state lives here, decoupled from QGC's incoming parser channel.
+    uint8_t _outgoingMavlinkChannel = std::numeric_limits<uint8_t>::max();
 
     mavlink_signing_t _mockSigning{};
     mavlink_signing_streams_t _mockSigningStreams{};
