@@ -47,7 +47,31 @@
 #include "SerialLink.h"
 #endif
 
+#include "MAVLinkInspectorController.h"
+#include "Viewer3DManager.h"
+#ifndef QGC_NO_SERIAL_LINK
+#include "FirmwareUpgradeController.h"
+#endif
+#include "QGCMAVLink.h"
+#include "GimbalController.h"
+#include "GeoTagController.h"
+#include "MAVLinkChartController.h"
+#include "MAVLinkConsoleController.h"
+#include "LogDownloadController.h"
+#include "ESP8266ComponentController.h"
+#include "SyslinkComponentController.h"
+#include "JoystickConfigController.h"
+#include "ShapeFileHelper.h"
+#include "GPSRtk.h"
+#include "AutoPilotPlugin.h"
+
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
+
+// Qml Singleton factories
+static QObject *mavlinkSingletonFactory(QQmlEngine *, QJSEngine *)
+{
+    return new QGCMAVLink();
+}
 
 QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli)
     : QGuiApplication(argc, argv)
@@ -220,6 +244,49 @@ QGCApplication::~QGCApplication()
 void QGCApplication::init()
 {
     SettingsManager::instance()->init();
+
+    // --- QML Type Registration (moved from UPSTREAM) ---
+    LinkManager::registerQmlTypes();
+    ParameterManager::registerQmlTypes();
+    QGroundControlQmlGlobal::registerQmlTypes();
+    MissionManager::registerQmlTypes();
+    QGCCameraManager::registerQmlTypes();
+    MultiVehicleManager::registerQmlTypes();
+    QGCPositionManager::registerQmlTypes();
+    SettingsManager::registerQmlTypes();
+    VideoManager::registerQmlTypes();
+    QGCCorePlugin::registerQmlTypes();
+    GPSRtk::registerQmlTypes();
+    JoystickManager::registerQmlTypes();
+#ifdef QGC_VIEWER3D
+    Viewer3DManager::registerQmlTypes();
+#endif
+
+    qmlRegisterUncreatableType<GimbalController>("QGroundControl.Vehicle", 1, 0, "GimbalController", "Reference only");
+
+#ifndef QGC_DISABLE_MAVLINK_INSPECTOR
+    qmlRegisterUncreatableType<MAVLinkChartController>("QGroundControl", 1, 0, "MAVLinkChart", "Reference only");
+    qmlRegisterType<MAVLinkInspectorController>("QGroundControl.Controllers", 1, 0, "MAVLinkInspectorController");
+#endif
+    qmlRegisterType<GeoTagController>("QGroundControl.Controllers", 1, 0, "GeoTagController");
+    qmlRegisterType<LogDownloadController>("QGroundControl.Controllers", 1, 0, "LogDownloadController");
+    qmlRegisterType<MAVLinkConsoleController>("QGroundControl.Controllers", 1, 0, "MAVLinkConsoleController");
+
+    qmlRegisterUncreatableType<AutoPilotPlugin>("QGroundControl.AutoPilotPlugin", 1, 0, "AutoPilotPlugin", "Reference only");
+    qmlRegisterType<ESP8266ComponentController>("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
+    qmlRegisterType<SyslinkComponentController>("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
+
+    qmlRegisterUncreatableType<VehicleComponent>("QGroundControl.AutoPilotPlugin", 1, 0, "VehicleComponent", "Reference only");
+#ifndef QGC_NO_SERIAL_LINK
+    qmlRegisterType<FirmwareUpgradeController>("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+#endif
+    qmlRegisterType<JoystickConfigController>("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
+
+    (void) qmlRegisterSingletonType<ShapeFileHelper>("QGroundControl.ShapeFileHelper", 1, 0, "ShapeFileHelper", [](QQmlEngine *, QJSEngine *) { return new ShapeFileHelper(); });
+
+    qmlRegisterSingletonType<QGCMAVLink>("MAVLink", 1, 0, "MAVLink", mavlinkSingletonFactory);
+    // --- End QML Type Registration ---
+
     if (_systemId > 0) {
         qCDebug(QGCApplicationLog) << "Setting MAVLink System ID to:" << _systemId;
         SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(_systemId);
