@@ -6,23 +6,33 @@
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtQuickControls2/QQuickStyle>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "AppSettings.h"
 #include "ColoredSvgImageProvider.h"
 #include "MAVLinkProtocol.h"
+#include "MockLink.h"
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCImageProvider.h"
 #include "SettingsManager.h"
+#include "Vehicle.h"
 
 void QmlUITestBase::startUI()
 {
     setStrictLogCheck(true);
 
     // Initialise subsystems needed for the full QML UI
-    QQuickStyle::setStyle("Basic");
+    // setStyle() must only be called once per process; subsequent calls after
+    // any QML engine has loaded produce an "must be called before loading QML"
+    // warning that would trip the strict-mode log check.
+    static bool s_styleSet = false;
+    if (!s_styleSet) {
+        QQuickStyle::setStyle("Basic");
+        s_styleSet = true;
+    }
     QGCCorePlugin::instance()->init();
     MAVLinkProtocol::instance()->init();
     MultiVehicleManager::instance()->init();
@@ -143,4 +153,67 @@ void QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObj
     const double maxContentY = flickable->property("contentHeight").toDouble() - flickable->height();
     flickable->setProperty("contentY", qBound(0.0, targetY, qMax(0.0, maxContentY)));
     QTest::qWait(50);
+}
+
+QPointer<MockLink> QmlUITestBase::connectMockLinkAndWaitReady(
+    const std::function<MockLink *()> &factory,
+    Vehicle *&vehicleOut)
+{
+    vehicleOut = nullptr;
+
+    QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
+    if (!spyVehicle.isValid()) {
+        QTest::qFail("Failed to create spy for activeVehicleChanged", __FILE__, __LINE__);
+        return {};
+    }
+
+    QPointer<MockLink> mockLink = factory();
+    if (!mockLink) {
+        QTest::qFail("Failed to start MockLink", __FILE__, __LINE__);
+        return {};
+    }
+
+    if (!waitForSignal(spyVehicle, 10000, QStringLiteral("activeVehicleChanged"))) {
+        QTest::qFail("Timeout waiting for vehicle connection", __FILE__, __LINE__);
+        return {};
+    }
+
+    Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();
+    if (!vehicle) {
+        QTest::qFail("No active vehicle after MockLink connection", __FILE__, __LINE__);
+        return {};
+    }
+
+    QSignalSpy spyConnect(vehicle, &Vehicle::initialConnectComplete);
+    if (!spyConnect.isValid()) {
+        QTest::qFail("Failed to create spy for initialConnectComplete", __FILE__, __LINE__);
+        return {};
+    }
+    if (!vehicle->isInitialConnectComplete()) {
+        if (!waitForSignal(spyConnect, 10000, QStringLiteral("initialConnectComplete"))) {
+            QTest::qFail("Timeout waiting for initial connect", __FILE__, __LINE__);
+            return {};
+        }
+    }
+
+    QSignalSpy spyParamsReady(MultiVehicleManager::instance(),
+                              &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
+    if (!spyParamsReady.isValid()) {
+        QTest::qFail("Failed to create spy for parameterReadyVehicleAvailableChanged", __FILE__, __LINE__);
+        return {};
+    }
+    if (!MultiVehicleManager::instance()->parameterReadyVehicleAvailable()) {
+        if (!waitForSignal(spyParamsReady, 15000,
+                           QStringLiteral("parameterReadyVehicleAvailableChanged"))) {
+            QTest::qFail("Timeout waiting for parameters to be ready", __FILE__, __LINE__);
+            return {};
+        }
+    }
+    if (!MultiVehicleManager::instance()->parameterReadyVehicleAvailable()) {
+        QTest::qFail("Parameters should be ready after signal", __FILE__, __LINE__);
+        return {};
+    }
+
+    vehicleOut = vehicle;
+    return mockLink;
 }
