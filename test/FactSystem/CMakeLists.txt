@@ -23,6 +23,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         FactValueSliderListModelTest.h
         HashCheckTest.cc
         HashCheckTest.h
+        ParameterEditorControllerTest.cc
+        ParameterEditorControllerTest.h
         ParameterManagerTest.cc
         ParameterManagerTest.h
         ParameterMetaDataTestHelper.h

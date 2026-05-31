@@ -1200,62 +1200,6 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, const Q
     }
 }
 
-QString ParameterManager::readParametersFromStream(QTextStream &stream)
-{
-    QString missingErrors;
-    QString typeErrors;
-
-    while (!stream.atEnd()) {
-        const QString line = stream.readLine();
-        if (!line.startsWith("#")) {
-            const QStringList wpParams = line.split("\t");
-            const int lineMavId = wpParams.at(0).toInt();
-            if (wpParams.size() == 5) {
-                if (_vehicle->id() != lineMavId) {
-                    return QStringLiteral("The parameters in the stream have been saved from System Id %1, but the current vehicle has the System Id %2.").arg(lineMavId).arg(_vehicle->id());
-                }
-
-                const int componentId = wpParams.at(1).toInt();
-                const QString paramName = wpParams.at(2);
-                const QString valStr = wpParams.at(3);
-                const uint mavType = wpParams.at(4).toUInt();
-
-                if (!parameterExists(componentId, paramName)) {
-                    QString error;
-                    error += QStringLiteral("%1:%2").arg(componentId).arg(paramName);
-                    missingErrors += error;
-                    qCDebug(ParameterManagerLog) << "Skipped due to missing:" << error;
-                    continue;
-                }
-
-                Fact *const fact = getParameter(componentId, paramName);
-                if (fact->type() != mavTypeToFactType(static_cast<MAV_PARAM_TYPE>(mavType))) {
-                    QString error;
-                    error = QStringLiteral("%1:%2 ").arg(componentId).arg(paramName);
-                    typeErrors += error;
-                    qCDebug(ParameterManagerLog) << "Skipped due to type mismatch: %1" << error;
-                    continue;
-                }
-
-                qCDebug(ParameterManagerLog) << "Updating parameter" << componentId << paramName << valStr;
-                fact->setRawValue(valStr);
-            }
-        }
-    }
-
-    QString errors;
-
-    if (!missingErrors.isEmpty()) {
-        errors = tr("Parameters not loaded since they are not currently on the vehicle: %1\n").arg(missingErrors);
-    }
-
-    if (!typeErrors.isEmpty()) {
-        errors += tr("Parameters not loaded due to type mismatch: %1").arg(typeErrors);
-    }
-
-    return errors;
-}
-
 void ParameterManager::writeParametersToStream(QTextStream &stream) const
 {
     stream << "# Onboard parameters for Vehicle " << _vehicle->id() << "\n";
