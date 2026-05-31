@@ -135,10 +135,18 @@ Map {
     }
 
     WheelHandler {
-        // workaround for QTBUG-87646 / QTBUG-112394 / QTBUG-112432:
-        // Magic Mouse pretends to be a trackpad but doesn't work with PinchHandler
-        // and we don't yet distinguish mice and trackpads on Wayland either
-        acceptedDevices:    Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland" ?
+        // Workaround for QTBUG-112394 / QTBUG-112432 (Linux/Wayland, STILL OPEN as of Qt 6.10):
+        // The Wayland protocol (wl_seat) only exposes three capability flags
+        // (POINTER/KEYBOARD/TOUCH) with no way to distinguish a mouse from a trackpad.
+        // Qt's Wayland QPA therefore registers all pointer devices as TouchPad, so
+        // WheelHandler's default acceptedDevices=Mouse silently drops all scroll events.
+        // This cannot be fixed in Qt without a Wayland protocol extension that does not yet exist.
+        //
+        // The same problem affects xcb / XWayland: when QGC runs under XWayland (e.g. an AppImage
+        // forced to QT_QPA_PLATFORM=xcb on a Wayland session), XWayland translates Wayland pointer
+        // events back to X11 and device-type metadata is lost — physical mouse scroll events arrive
+        // at Qt as PointerDevice.TouchPad.
+        acceptedDevices:    Qt.platform.pluginName === "wayland" || Qt.platform.pluginName === "xcb" ?
                                 PointerDevice.Mouse | PointerDevice.TouchPad : PointerDevice.Mouse
         rotationScale:      1 / 120
 
