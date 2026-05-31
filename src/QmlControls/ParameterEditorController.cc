@@ -397,12 +397,14 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
 
     QTextStream stream(&file);
 
+    int parsedLineCount = 0;
     int firstComponentId = -1;
     while (!stream.atEnd()) {
         QString line = stream.readLine();
-        if (!line.startsWith("#")) {
-            QStringList wpParams = line.split("\t");
+        if (!line.startsWith("#") && !line.trimmed().isEmpty()) {
+            QStringList wpParams = line.trimmed().split(QRegularExpression("[\\t ]+"));
             if (wpParams.size() == 5) {
+                parsedLineCount++;
                 int         vehicleId       = wpParams.at(0).toInt();
                 int         componentId     = wpParams.at(1).toInt();
                 QString     paramName       = wpParams.at(2);
@@ -466,6 +468,11 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
     }
 
     file.close();
+
+    if (parsedLineCount == 0) {
+        QGC::showAppMessage(tr("No valid parameters found in file. Check that the file is in QGC or Mission Planner format."));
+        return false;
+    }
 
     emit diffOtherVehicleChanged(_diffOtherVehicle);
     emit diffMultipleComponentsChanged(_diffMultipleComponents);

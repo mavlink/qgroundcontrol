@@ -59,6 +59,11 @@ Multiple fixed wing landing sequences can now be planned for landings at differe
 
 Vehicle Configuration has been renamed from Vehicle Setup and is now intended mainly for initial vehicle design and configuration, not changes between flights.
 
+### Parameter Editor — Mission Planner File Import
+
+The parameter diff dialog can now load Mission Planner `.param` files (whitespace-separated 5-column format) in addition to the existing QGC `.params` format.
+Select a `.param` file using the new **Mission Planner Files (*.param)** filter in the load dialog; differences from the vehicle's current values are shown as usual before any changes are applied.
+
 ### ArduPilot — Servo Outputs
 
 A new **Servo Outputs** page provides real-time visualization and configuration of servo outputs for ArduPilot vehicles:

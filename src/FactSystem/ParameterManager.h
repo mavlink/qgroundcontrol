@@ -86,9 +86,6 @@ public:
     ///     @param name: Parameter name
     Fact *getParameter(int componentId, const QString &paramName);
 
-    /// Returns error messages from loading
-    QString readParametersFromStream(QTextStream &stream);
-
     void writeParametersToStream(QTextStream &stream) const;
 
     bool pendingWrites() const;
