@@ -13,7 +13,23 @@
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
+#include <QtCore/QSet>
+
 QGC_LOGGING_CATEGORY(AM32EepromLog, "Vehicle.AM32Eeprom")
+
+namespace {
+// Settings that are expected to legitimately differ between ESCs and are
+// therefore exempt from the red/green match indicators. Motor direction
+// alternates CW/CCW across a multirotor, so a mismatch there is normal — the
+// match highlighting is meant to flag critical settings like motor poles or KV.
+bool isMismatchExempt(const QString &settingName)
+{
+    static const QSet<QString> exemptSettings = {
+        QStringLiteral("directionReversed"),
+    };
+    return exemptSettings.contains(settingName);
+}
+} // namespace
 
 
 //-----------------------------------------------------------------------------
@@ -391,6 +407,18 @@ void AM32EepromFactGroupListModel::_updateMajorityMatches()
 
     // For each setting, find majority value and update all ESCs
     for (const QString& settingName : settingNames) {
+        // Whitelisted settings are expected to differ between ESCs (e.g. motor
+        // direction), so always report them as matching to suppress highlighting.
+        if (isMismatchExempt(settingName)) {
+            for (auto* esc : escs) {
+                if (auto* setting = esc->getSetting(settingName)) {
+                    setting->setMatchesMajority(true);
+                    setting->setAllMatch(true);
+                }
+            }
+            continue;
+        }
+
         // Count occurrences of each value
         QMap<uint8_t, int> valueCounts;
         for (auto* esc : escs) {
@@ -561,8 +589,13 @@ bool AM32EepromFactGroup::settingsMatch(const AM32EepromFactGroup* other) const
         return false;
     }
 
-    // Compare all settings
+    // Compare all settings, ignoring those expected to differ between ESCs
+    // (e.g. motor direction) so they don't drive the mismatch highlighting.
     for (const auto* mySetting : _settings) {
+        if (isMismatchExempt(mySetting->name())) {
+            continue;
+        }
+
         auto* otherSetting = other->getSetting(mySetting->name());
 
         if (!otherSetting ||
