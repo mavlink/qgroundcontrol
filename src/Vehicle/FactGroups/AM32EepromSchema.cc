@@ -18,6 +18,8 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
 
+#include <cmath>
+
 AM32EepromSchema* AM32EepromSchema::_instance = nullptr;
 
 AM32EepromSchema* AM32EepromSchema::instance()
@@ -270,15 +272,45 @@ FactMetaData::ValueType_t AM32EepromSchema::determineValueType(const AM32FieldDe
         return FactMetaData::valueTypeUint8;
     }
 
-    // If there's a display conversion
-    if (field.displayFactor != 1.0 || field.displayOffset != 0.0) {
-        // Use double if we have decimals
-        if (field.displayDecimals > 0) {
+    // A field's display conversion may live only inside its version/firmware
+    // overrides (e.g. timingAdvance defines factor/offset under "versions").
+    // The Fact's value type is fixed at creation and cannot change when an
+    // override is applied at runtime, so pick the type from the richest
+    // conversion across the base def AND every override.
+    bool hasConversion = (field.displayFactor != 1.0) || (field.displayOffset != 0.0);
+    int maxDecimals = field.displayDecimals;
+    bool maybeNegative = (field.displayOffset < 0.0) ||
+                         (field.displayMin.isValid() && field.displayMin.toDouble() < 0.0);
+
+    const auto scanOverride = [&](const QJsonObject& override) {
+        const QJsonObject display = override.value("display").toObject();
+        if (display.isEmpty()) {
+            return;
+        }
+        const double factor = display.value("factor").toDouble(1.0);
+        const double offset = display.value("offset").toDouble(0.0);
+        if ((factor != 1.0) || (offset != 0.0)) {
+            hasConversion = true;
+        }
+        maxDecimals = qMax(maxDecimals, display.value("decimals").toInt(0));
+        if ((offset < 0.0) || (display.value("min").toDouble(0.0) < 0.0)) {
+            maybeNegative = true;
+        }
+    };
+    for (const QJsonObject& override : field.versionOverrides) {
+        scanOverride(override);
+    }
+    for (const QJsonObject& override : field.firmwareVersionOverrides) {
+        scanOverride(override);
+    }
+
+    if (hasConversion) {
+        // Use double if any applicable conversion has decimals
+        if (maxDecimals > 0) {
             return FactMetaData::valueTypeDouble;
         }
-        // Use int32 if offset might produce negative values
-        if (field.displayOffset < 0 ||
-            (field.displayMin.isValid() && field.displayMin.toDouble() < 0)) {
+        // Use int32 if an offset might produce negative values
+        if (maybeNegative) {
             return FactMetaData::valueTypeInt32;
         }
         return FactMetaData::valueTypeUint32;
@@ -324,7 +356,7 @@ void AM32EepromSchema::setupConversionFunctions(AM32FieldDef& field)
             return QVariant(v * factor + offset);
         };
         field.toRaw = [factor, offset](QVariant v) {
-            return static_cast<uint8_t>(qBound(0, static_cast<int>((v.toDouble() - offset) / factor), 255));
+            return static_cast<uint8_t>(qBound(0, static_cast<int>(std::lround((v.toDouble() - offset) / factor)), 255));
         };
         break;
 
@@ -333,7 +365,7 @@ void AM32EepromSchema::setupConversionFunctions(AM32FieldDef& field)
             return QVariant(static_cast<int>(v * factor + offset));
         };
         field.toRaw = [factor, offset](QVariant v) {
-            return static_cast<uint8_t>(qBound(0, static_cast<int>((v.toInt() - offset) / factor), 255));
+            return static_cast<uint8_t>(qBound(0, static_cast<int>(std::lround((v.toInt() - offset) / factor)), 255));
         };
         break;
 
@@ -342,7 +374,7 @@ void AM32EepromSchema::setupConversionFunctions(AM32FieldDef& field)
             return QVariant(static_cast<uint32_t>(v * factor + offset));
         };
         field.toRaw = [factor, offset](QVariant v) {
-            return static_cast<uint8_t>(qBound(0, static_cast<int>((v.toUInt() - offset) / factor), 255));
+            return static_cast<uint8_t>(qBound(0, static_cast<int>(std::lround((v.toUInt() - offset) / factor)), 255));
         };
         break;
 

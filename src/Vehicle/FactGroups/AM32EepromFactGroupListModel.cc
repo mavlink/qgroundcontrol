@@ -69,6 +69,14 @@ AM32Setting::AM32Setting(const AM32FieldDef& fieldDef, QObject* parent)
         metaData->setRawUnits(fieldDef.unit);
     }
 
+    // Slider precision and step come from the schema's display conversion so the
+    // control shows the right number of decimals and each step maps to one
+    // EEPROM raw count (e.g. 40 KV, 0.01 V) instead of a fixed 1-unit step.
+    metaData->setDecimalPlaces(fieldDef.displayDecimals);
+    if (fieldDef.displayFactor != 0.0) {
+        metaData->setRawIncrement(qAbs(fieldDef.displayFactor));
+    }
+
     // Initialize with a default value (0 in raw units, converted to display units)
     _fact->setRawValue(_fromRaw(0));
 }
@@ -92,6 +100,12 @@ void AM32Setting::updateConversions(const AM32FieldDef& fieldDef)
     }
     if (fieldDef.displayMax.isValid()) {
         metaData->setRawMax(fieldDef.displayMax);
+    }
+
+    // Keep precision/step in sync with the (possibly version-specific) conversion.
+    metaData->setDecimalPlaces(fieldDef.displayDecimals);
+    if (fieldDef.displayFactor != 0.0) {
+        metaData->setRawIncrement(qAbs(fieldDef.displayFactor));
     }
 }
 
