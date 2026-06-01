@@ -217,7 +217,7 @@
       "cName": "active_brake_power",
       "raw": {
         "min": 0,
-        "max": 10
+        "max": 5
       }
     },
 
