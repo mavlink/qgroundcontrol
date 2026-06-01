@@ -35,8 +35,6 @@ Item {
     readonly property var limitsSliderConfigs: [
         { label: qsTr("Temperature limit"), name: "temperatureLimit" },
         { label: qsTr("Current limit"), name: "currentLimit" },
-        { label: qsTr("Low voltage threshold"), name: "lowVoltageThreshold" },
-        { label: qsTr("Absolute voltage cutoff"), name: "absoluteVoltageCutoff" },
     ]
 
     readonly property var currentControlSliderConfigs: [
@@ -44,6 +42,29 @@ Item {
         { label: qsTr("Current I"), name: "currentPidI" },
         { label: qsTr("Current D"), name: "currentPidD" },
     ]
+
+    readonly property var servoSliderConfigs: [
+        { label: qsTr("Low threshold"), name: "servoLowThreshold" },
+        { label: qsTr("High threshold"), name: "servoHighThreshold" },
+        { label: qsTr("Neutral"), name: "servoNeutral" },
+        { label: qsTr("Dead band"), name: "servoDeadband" },
+    ]
+
+    readonly property var sineSliderConfigs: [
+        { label: qsTr("Sine mode range"), name: "sineModeRange" },
+        { label: qsTr("Sine mode power"), name: "sineModePower" },
+    ]
+
+    readonly property var brakeSliderConfigs: [
+        { label: qsTr("Drag brake strength"), name: "dragBrakeStrength" },
+        { label: qsTr("Running brake level"), name: "runningBrakeLevel" },
+    ]
+
+    // Current values of the enums that gate dependent fields.
+    readonly property int _lowVoltageCutoffValue: (firstEeprom && firstEeprom.settings["lowVoltageCutoff"])
+                                                  ? firstEeprom.settings["lowVoltageCutoff"].fact.rawValue : 0
+    readonly property int _brakeOnStopValue: (firstEeprom && firstEeprom.settings["brakeOnStop"])
+                                             ? firstEeprom.settings["brakeOnStop"].fact.rawValue : 0
 
     Component.onCompleted: {
         if (vehicle && eeproms) {
@@ -281,11 +302,14 @@ Item {
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
                             spacing: _groupMargins / 2
 
+                            AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Reversed direction"); settingName: "directionReversed" }
+                            AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Bidirectional (3D) mode"); settingName: "bidirectionalMode" }
                             AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Stuck rotor protection"); settingName: "stuckRotorProtection" }
                             AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Stall protection"); settingName: "stallProtection" }
                             AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Use hall sensors"); settingName: "hallSensors" }
                             AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("30ms interval telemetry"); settingName: "telemetry30ms" }
-                            AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Variable PWM"); settingName: "variablePwmFreq" }
+                            AM32SettingCombo { Layout.fillWidth: true; firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Variable PWM"); settingName: "variablePwmFreq" }
+                            AM32SettingCombo { Layout.fillWidth: true; firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Input protocol"); settingName: "inputType" }
                             AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Complementary PWM"); settingName: "complementaryPwm" }
                             AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Auto timing advance"); settingName: "autoTiming" }
 
@@ -402,7 +426,7 @@ Item {
                             Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
                             spacing: _groupMargins
 
-                            AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Low voltage cut off"); settingName: "lowVoltageCutoff" }
+                            AM32SettingCombo { Layout.fillWidth: true; firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Low voltage cut off"); settingName: "lowVoltageCutoff" }
                             Item { Layout.fillHeight: true } // Spacer
                         }
 
@@ -441,6 +465,18 @@ Item {
                                         onUserValueChanged: function(newValue) { updateSetting(modelData.name, newValue) }
                                     }
                                 }
+                            }
+
+                            // Threshold/cutoff sliders depend on the low-voltage mode.
+                            AM32SliderCell {
+                                firstEeprom: root.firstEeprom; eeproms: root.eeproms; updateSetting: root.updateSetting
+                                label: qsTr("Low voltage threshold"); settingName: "lowVoltageThreshold"
+                                extraVisible: root._lowVoltageCutoffValue === 1
+                            }
+                            AM32SliderCell {
+                                firstEeprom: root.firstEeprom; eeproms: root.eeproms; updateSetting: root.updateSetting
+                                label: qsTr("Absolute voltage cutoff"); settingName: "absoluteVoltageCutoff"
+                                extraVisible: root._lowVoltageCutoffValue === 2
                             }
                         }
                     }
@@ -488,6 +524,98 @@ Item {
                         } // Repeater
                     } // GridLayout
                 } // Current Control Group
+
+                // Sinusoidal Startup Group
+                SettingsGroupLayout {
+                    heading: qsTr("Sinusoidal Startup")
+                    Layout.fillWidth: true
+
+                    RowLayout {
+                        spacing: _margins * 2
+
+                        ColumnLayout {
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
+                            spacing: _groupMargins
+                            AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Sinusoidal startup"); settingName: "sineStartup" }
+                            Item { Layout.fillHeight: true } // Spacer
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 3
+                            rowSpacing: _margins
+                            columnSpacing: _margins * 1.5
+
+                            Repeater {
+                                model: sineSliderConfigs
+                                AM32SliderCell {
+                                    firstEeprom: root.firstEeprom; eeproms: root.eeproms; updateSetting: root.updateSetting
+                                    label: modelData.label; settingName: modelData.name
+                                }
+                            }
+                        }
+                    }
+                } // Sinusoidal Startup Group
+
+                // Brake Group
+                SettingsGroupLayout {
+                    heading: qsTr("Brake")
+                    Layout.fillWidth: true
+
+                    RowLayout {
+                        spacing: _margins * 2
+
+                        ColumnLayout {
+                            Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 25
+                            spacing: _groupMargins / 2
+                            AM32SettingCombo { Layout.fillWidth: true; firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Brake on stop"); settingName: "brakeOnStop" }
+                            AM32SettingCheckbox { firstEeprom: root.firstEeprom; updateSetting: root.updateSetting; label: qsTr("Car reverse braking"); settingName: "rcCarReversing" }
+                            Item { Layout.fillHeight: true } // Spacer
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 3
+                            rowSpacing: _margins
+                            columnSpacing: _margins * 1.5
+
+                            Repeater {
+                                model: brakeSliderConfigs
+                                AM32SliderCell {
+                                    firstEeprom: root.firstEeprom; eeproms: root.eeproms; updateSetting: root.updateSetting
+                                    label: modelData.label; settingName: modelData.name
+                                }
+                            }
+
+                            AM32SliderCell {
+                                firstEeprom: root.firstEeprom; eeproms: root.eeproms; updateSetting: root.updateSetting
+                                label: qsTr("Active brake power"); settingName: "activeBrakePower"
+                                extraVisible: root._brakeOnStopValue === 2
+                            }
+                        }
+                    }
+                } // Brake Group
+
+                // Servo Group
+                SettingsGroupLayout {
+                    heading: qsTr("Servo")
+                    Layout.fillWidth: true
+
+                    GridLayout {
+                        width: parent.width
+                        columns: 4
+                        rowSpacing: _margins
+                        columnSpacing: _margins * 1.5
+
+                        Repeater {
+                            model: servoSliderConfigs
+                            AM32SliderCell {
+                                firstEeprom: root.firstEeprom; eeproms: root.eeproms; updateSetting: root.updateSetting
+                                label: modelData.label; settingName: modelData.name
+                            }
+                        }
+                    }
+                } // Servo Group
             } // ColumnLayout
         } // Flickable
     } // ColumnLayout

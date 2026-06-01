@@ -77,6 +77,9 @@ AM32Setting::AM32Setting(const AM32FieldDef& fieldDef, QObject* parent)
         metaData->setRawIncrement(qAbs(fieldDef.displayFactor));
     }
 
+    // Populate enum options and any "disabled" sentinel from the schema.
+    _applyEnumAndDisabled(fieldDef);
+
     // Initialize with a default value (0 in raw units, converted to display units)
     _fact->setRawValue(_fromRaw(0));
 }
@@ -106,6 +109,30 @@ void AM32Setting::updateConversions(const AM32FieldDef& fieldDef)
     metaData->setDecimalPlaces(fieldDef.displayDecimals);
     if (fieldDef.displayFactor != 0.0) {
         metaData->setRawIncrement(qAbs(fieldDef.displayFactor));
+    }
+
+    // Re-apply enum options for version-gated enums (e.g. variablePwmFreq and
+    // lowVoltageCutoff gain extra values on newer firmware).
+    _applyEnumAndDisabled(fieldDef);
+}
+
+void AM32Setting::_applyEnumAndDisabled(const AM32FieldDef& fieldDef)
+{
+    if (fieldDef.isEnum && !fieldDef.enumValues.isEmpty()) {
+        QStringList enumStrings;
+        QVariantList enumValues;
+        for (const auto& entry : fieldDef.enumValues) {
+            enumStrings.append(entry.second);
+            enumValues.append(entry.first);
+        }
+        // Fact::setEnumInfo emits enumsChanged so combo bindings refresh.
+        _fact->setEnumInfo(enumStrings, enumValues);
+    }
+
+    _hasDisabledValue = fieldDef.disabledRawValue.isValid();
+    if (_hasDisabledValue) {
+        _disabledValue = _fromRaw(static_cast<uint8_t>(fieldDef.disabledRawValue.toUInt()));
+        _disabledText = fieldDef.disabledDisplayText;
     }
 }
 

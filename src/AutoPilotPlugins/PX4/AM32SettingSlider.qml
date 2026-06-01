@@ -19,6 +19,14 @@ Column {
     property int decimalPlaces: fact ? fact.decimalPlaces : 0
     property bool enabled: true
 
+    // "Disabled" sentinel support (e.g. temperature/current limit "off").
+    readonly property bool hasDisabled: setting ? setting.hasDisabledValue : false
+    readonly property var disabledVal: setting ? setting.disabledValue : undefined
+    readonly property string disabledTextStr: setting ? setting.disabledText : ""
+    readonly property bool isDisabledState: hasDisabled && fact && fact.rawValue === disabledVal
+    // When the sentinel is outside the slider range it needs its own toggle.
+    readonly property bool _disabledOutOfRange: hasDisabled && (disabledVal < from || disabledVal > to)
+
     signal userValueChanged(real newValue)
 
     spacing: ScreenTools.defaultFontPixelHeight / 4
@@ -37,7 +45,7 @@ Column {
         value: parent.value
         stepSize: parent.stepSize
         snapMode: Slider.SnapAlways
-        enabled: parent.enabled
+        enabled: parent.enabled && !control.isDisabledState
 
         onMoved: control.userValueChanged(value)
         onPressedChanged: if (!pressed) value = Qt.binding(function() { return control.value })
@@ -85,8 +93,17 @@ Column {
 
     // Value label
     QGCLabel {
-        text: value.toFixed(decimalPlaces)
+        text: control.isDisabledState ? control.disabledTextStr : value.toFixed(decimalPlaces)
         anchors.horizontalCenter: parent.horizontalCenter
         font.pointSize: ScreenTools.smallFontPointSize
+    }
+
+    // Toggle for sentinels that fall outside the slider range (e.g. 255 = off).
+    QGCCheckBox {
+        visible: control._disabledOutOfRange
+        anchors.horizontalCenter: parent.horizontalCenter
+        text: qsTr("Disabled")
+        checked: control.isDisabledState
+        onClicked: control.userValueChanged(checked ? control.disabledVal : control.to)
     }
 }

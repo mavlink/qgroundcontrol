@@ -128,9 +128,11 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         AM32Component.qml
         AM32ComponentSummary.qml
         AM32SettingCheckbox.qml
+        AM32SettingCombo.qml
         AM32SettingSlider.qml
         AM32EscMatchDots.qml
         AM32SettingsComponent.qml
+        AM32SliderCell.qml
         BatteryParams.qml
         CalcAmpsPerVoltDialog.qml
         CalcVoltageDividerDialog.qml

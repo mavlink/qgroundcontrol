@@ -35,6 +35,9 @@ class AM32Setting : public QObject
     Q_PROPERTY(bool allMatch READ allMatch NOTIFY allMatchChanged)
     Q_PROPERTY(bool isEnum READ isEnum CONSTANT)
     Q_PROPERTY(bool isBool READ isBool CONSTANT)
+    Q_PROPERTY(bool hasDisabledValue READ hasDisabledValue CONSTANT)
+    Q_PROPERTY(QVariant disabledValue READ disabledValue CONSTANT)
+    Q_PROPERTY(QString disabledText READ disabledText CONSTANT)
 
 public:
     /// Create from schema field definition
@@ -48,6 +51,9 @@ public:
     uint8_t byteIndex() const { return _eepromByteIndex; }
     bool isEnum() const { return _isEnum; }
     bool isBool() const { return _isBool; }
+    bool hasDisabledValue() const { return _hasDisabledValue; }
+    QVariant disabledValue() const { return _disabledValue; }
+    QString disabledText() const { return _disabledText; }
 
     bool hasPendingChanges() const;
     bool matchesMajority() const { return _matchesMajority; }
@@ -77,6 +83,11 @@ private:
     bool _allMatch = true;
     bool _isEnum = false;
     bool _isBool = false;
+    bool _hasDisabledValue = false;
+    QVariant _disabledValue;
+    QString _disabledText;
+
+    void _applyEnumAndDisabled(const AM32FieldDef& fieldDef);
 
     std::function<QVariant(uint8_t)> _fromRaw;
     std::function<uint8_t(QVariant)> _toRaw;
