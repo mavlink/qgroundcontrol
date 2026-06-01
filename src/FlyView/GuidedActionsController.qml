@@ -376,10 +376,12 @@ Item {
     // Called when an action is about to be executed in order to confirm
     function confirmAction(actionCode, actionData, mapIndicator) {
         var showImmediate = true
-        closeAll()
+
+        // Cancel any previously pending action, notifying its map indicator if it differs from the incoming one
+        confirmDialog.confirmCancelled(mapIndicator)
+
         confirmDialog.action = actionCode
         confirmDialog.actionData = actionData
-        confirmDialog.hideTrigger = true
         confirmDialog.mapIndicator = mapIndicator
         confirmDialog.optionText = ""
         _actionData = actionData
@@ -398,7 +400,6 @@ Item {
         case actionMVArm:
             confirmDialog.title = mvArmTitle
             confirmDialog.message = mvArmMessage
-            confirmDialog.hideTrigger = true
             break;
         case actionForceArm:
             confirmDialog.title = forceArmTitle
@@ -416,7 +417,6 @@ Item {
         case actionMVDisarm:
             confirmDialog.title = mvDisarmTitle
             confirmDialog.message = mvDisarmMessage
-            confirmDialog.hideTrigger = true
             break;
         case actionEmergencyStop:
             confirmDialog.title = emergencyStopTitle
@@ -438,7 +438,6 @@ Item {
         case actionMVStartMission:
             confirmDialog.title = mvStartMissionTitle
             confirmDialog.message = mvStartMissionMessage
-            confirmDialog.hideTrigger = true
             break;
         case actionContinueMission:
             showImmediate = false
@@ -510,7 +509,6 @@ Item {
         case actionMVPause:
             confirmDialog.title = mvPauseTitle
             confirmDialog.message = mvPauseMessage
-            confirmDialog.hideTrigger = true
             break;
         case actionROI:
             confirmDialog.title = roiTitle
@@ -518,7 +516,6 @@ Item {
             confirmDialog.hideTrigger = Qt.binding(function() { return !showROI })
             break;
         case actionChangeSpeed:
-            confirmDialog.hideTrigger = true
             confirmDialog.title = changeSpeedTitle
             confirmDialog.message = changeSpeedMessage
             guidedValueSlider.visible = true
