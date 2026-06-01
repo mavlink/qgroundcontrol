@@ -12,6 +12,7 @@
 #include "MAVLinkProtocol.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 
 #include <QtCore/QSet>
 
