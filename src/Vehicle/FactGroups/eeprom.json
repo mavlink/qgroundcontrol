@@ -3,7 +3,7 @@
   "$id": "https://github.com/am32-firmware/AM32/am32-eeprom-schema.json",
   "title": "AM32 EEPROM Settings Schema",
   "description": "Unified schema for AM32 ESC EEPROM layout, settings metadata, and version-specific behavior",
-  "version": "1.0.1",
+  "version": "1.0.2",
 
   "eepromVersions": {
     "2": {
@@ -384,6 +384,7 @@
       "type": "number",
       "name": "Motor KV",
       "description": "Motor KV rating (RPM per volt)",
+      "unit": "RPM/V",
       "cName": "motor_kv",
       "raw": {
         "min": 0,
@@ -407,7 +408,7 @@
       "cName": "motor_poles",
       "raw": {
         "min": 2,
-        "max": 36
+        "max": 64
       }
     },
 
@@ -428,9 +429,9 @@
     "stallProtection": {
       "offset": 29,
       "size": 1,
-      "type": "bool",
+      "type": "uint8",
       "name": "Stall Protection",
-      "description": "Anti-stall protection during low-speed operation",
+      "description": "Low-RPM anti-stall for crawlers/RC cars. 0 disables; any non-zero value enables a low-RPM throttle boost, and the magnitude also sets the startup commutation window that enforces the minimum duty floor (larger values shorten it).",
       "cName": "stall_protection"
     },
 
@@ -450,9 +451,9 @@
     "telemetry30ms": {
       "offset": 31,
       "size": 1,
-      "type": "bool",
+      "type": "uint8",
       "name": "30ms Interval Telemetry",
-      "description": "Use 30ms telemetry interval instead of default",
+      "description": "Telemetry timing. 0 uses the default; 1 enables the ~30 ms interval; values 2 or more add to the interval to stagger telemetry between ESCs on a shared bus.",
       "cName": "telemetry_on_interval"
     },
 
@@ -645,10 +646,10 @@
       "cName": "limits.temperature",
       "raw": {
         "min": 70,
-        "max": 141
+        "max": 140
       },
       "disabledValue": {
-        "raw": 141,
+        "raw": 255,
         "display": "Disabled"
       }
     },
@@ -663,18 +664,17 @@
       "cName": "limits.current",
       "raw": {
         "min": 0,
-        "max": 101
+        "max": 100
       },
       "display": {
         "min": 0,
-        "max": 202,
+        "max": 200,
         "factor": 2,
         "offset": 0,
         "decimals": 0
       },
       "disabledValue": {
-        "raw": 101,
-        "displayValue": 202,
+        "raw": 0,
         "display": "Disabled"
       }
     },
@@ -704,7 +704,8 @@
         { "raw": 1, "name": "DShot", "description": "DShot digital protocol" },
         { "raw": 2, "name": "Servo", "description": "Standard PWM servo signal" },
         { "raw": 3, "name": "Serial", "description": "Serial communication" },
-        { "raw": 4, "name": "EDT ARM", "description": "EDT arming protocol" }
+        { "raw": 4, "name": "EDT ARM", "description": "EDT arming protocol" },
+        { "raw": 5, "name": "DroneCAN", "description": "DroneCAN input protocol" }
       ]
     },
 
@@ -721,9 +722,9 @@
     "startupMelody": {
       "offset": 48,
       "size": 128,
-      "type": "rtttl",
+      "type": "bluejay",
       "name": "Startup Melody",
-      "description": "RTTTL format startup tune",
+      "description": "Startup tune stored as a 128-byte Bluejay binary blob (custom 8-bit frequency/duration encoding, not ASCII RTTTL)",
       "cName": "tune"
     },
 
@@ -751,7 +752,7 @@
       "cName": "can.esc_index",
       "raw": {
         "min": 0,
-        "max": 32
+        "max": 31
       }
     },
 
@@ -901,7 +902,7 @@
     "maintainer": "AM32 Project",
     "repository": "https://github.com/am32-firmware/AM32",
     "license": "GPL-3.0",
-    "lastUpdated": "2026-01-05",
+    "lastUpdated": "2026-05-30",
     "consumers": [
       {
         "name": "AM32 Firmware",
