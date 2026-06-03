@@ -564,7 +564,6 @@ ColumnLayout {
             id: _chartZoomArea
             anchors.fill: parent
             enabled: _binXAxis.max > _binXAxis.min
-            hoverEnabled: !ScreenTools.isMobile
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             z: 1001
 
@@ -581,7 +580,6 @@ ColumnLayout {
                 _zoomSelectionRect.width = 0
                 _zoomSelectionRect.height = _binChart.plotArea.height
                 _zoomSelectionRect.visible = true
-                _updateCursorInfo(mouse.x, mouse.y, width, height)
             }
 
             onPositionChanged: (mouse) => {
@@ -590,10 +588,6 @@ ColumnLayout {
                     const right = Math.max(_dragStartX, mouse.x)
                     _zoomSelectionRect.x = left
                     _zoomSelectionRect.width = Math.max(0, right - left)
-                    return
-                }
-                if (!pressed) {
-                    _updateCursorInfo(mouse.x, mouse.y, width, height)
                 }
             }
 
@@ -602,16 +596,12 @@ ColumnLayout {
                 const dragWidth = _zoomSelectionRect.width
                 _zoomSelectionRect.visible = false
                 if (dragWidth < ScreenTools.defaultFontPixelWidth * 0.5) {
+                    _updateCursorInfo(mouse.x, mouse.y, width, height)
                     return
                 }
                 const leftX  = _pixelToAxisX(_zoomSelectionRect.x)
                 const rightX = _pixelToAxisX(_zoomSelectionRect.x + _zoomSelectionRect.width)
                 applyZoomRange(Math.min(leftX, rightX), Math.max(leftX, rightX))
-                _updateCursorInfo(mouse.x, mouse.y, width, height)
-            }
-
-            onExited: {
-                _positionMarkerVisible = false
             }
         }
 
@@ -630,6 +620,21 @@ ColumnLayout {
                 function onPlotAreaChanged() {
                     if (_positionMarkerVisible) {
                         _refreshCursorPixelPos()
+                    }
+                }
+            }
+
+            MouseArea {
+                id: _markerDragArea
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: ScreenTools.defaultFontPixelWidth * 3
+                height: parent.height
+                cursorShape: Qt.SizeHorCursor
+
+                onPositionChanged: (mouse) => {
+                    if (pressed) {
+                        const pt = mapToItem(_chartContainer, mouse.x, 0)
+                        _updateCursorInfo(pt.x, 0, _chartContainer.width, _chartContainer.height)
                     }
                 }
             }
