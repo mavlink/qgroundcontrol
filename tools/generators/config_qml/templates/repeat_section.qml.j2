@@ -1,0 +1,32 @@
+{{ ind }}Repeater {
+{{ ind }}    model: _{{ safe }}Count
+
+{{ ind }}    ConfigSection {
+{{ ind }}        Layout.fillWidth: true
+{{ ind }}        visible: {{ visible }}
+{{ ind }}        heading: {{ heading_expr }}
+{% if image %}
+{{ ind }}        iconSource: "{{ image }}"
+{% endif %}
+
+{% if apm_battery %}
+{{ ind }}        property int _rawIndex: index
+{{ ind }}        property string _prefix: _battPrefixForIndex(_rawIndex)
+{{ ind }}        property string _displayIndex: _battLabelForIndex(_rawIndex)
+{{ ind }}        function _fullParamName(postfix) { return _prefix + postfix }
+{% else %}
+{{ ind }}        property int _rawIndex: index + {{ start_index }}
+{{ ind }}        property string _indexStr: {{ index_str_expr }}
+{{ ind }}        property string _displayIndex: String(_rawIndex)
+{{ ind }}        function _fullParamName(postfix) { return "{{ param_prefix }}" + _indexStr + postfix }
+{% endif %}
+{% for ctrl_qml in controls %}
+
+{{ ctrl_qml }}
+{% endfor %}
+{{ ind }}    }
+{{ ind }}}
+{% if disabled_companion %}
+
+{{ disabled_companion }}
+{% endif %}

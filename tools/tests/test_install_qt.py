@@ -4,8 +4,13 @@
 from __future__ import annotations
 
 import pytest
-
-from setup.install_qt import compute_cache_digest, resolve_android_qt_root, resolve_arch_dir, resolve_qt_root
+from setup.install_qt import (
+    compute_cache_digest,
+    resolve_android_qt_root,
+    resolve_arch_dir,
+    resolve_qt_root,
+    validate_aqt_source,
+)
 
 
 class TestResolveArchDir:
@@ -54,13 +59,13 @@ class TestComputeCacheDigest:
 
 
 class TestResolveQtRoot:
-    def test_valid_path(self, tmp_path: "pytest.TempPathFactory") -> None:
+    def test_valid_path(self, tmp_path: pytest.TempPathFactory) -> None:
         qt_root = tmp_path / "6.8.3" / "gcc_64"
         qt_root.mkdir(parents=True)
         result = resolve_qt_root(tmp_path, "6.8.3", "gcc_64")
         assert result == qt_root
 
-    def test_missing_path_exits(self, tmp_path: "pytest.TempPathFactory") -> None:
+    def test_missing_path_exits(self, tmp_path: pytest.TempPathFactory) -> None:
         with pytest.raises(SystemExit):
             resolve_qt_root(tmp_path, "6.8.3", "gcc_64")
 
@@ -93,3 +98,38 @@ class TestResolveAndroidQtRoot:
     def test_semicolon_parsing(self) -> None:
         roots = {"armv7": "/qt/armv7"}
         assert resolve_android_qt_root("armeabi-v7a", roots) == "/qt/armv7"
+
+
+class TestValidateAqtSource:
+    def test_empty_passes(self) -> None:
+        assert validate_aqt_source("") == ""
+
+    def test_bare_pypi_name(self) -> None:
+        assert validate_aqt_source("aqtinstall") == "aqtinstall"
+
+    def test_pinned_pypi_version(self) -> None:
+        assert validate_aqt_source("aqtinstall==3.3.0") == "aqtinstall==3.3.0"
+
+    def test_upstream_git_sha(self) -> None:
+        spec = "git+https://github.com/miurahr/aqtinstall@" + "a" * 40
+        assert validate_aqt_source(spec) == spec
+
+    def test_upstream_git_with_dot_git(self) -> None:
+        spec = "git+https://github.com/miurahr/aqtinstall.git@" + "f" * 40
+        assert validate_aqt_source(spec) == spec
+
+    def test_extra_index_url_rejected(self) -> None:
+        with pytest.raises(SystemExit):
+            validate_aqt_source("--extra-index-url https://evil aqtinstall")
+
+    def test_attacker_git_host_rejected(self) -> None:
+        with pytest.raises(SystemExit):
+            validate_aqt_source("git+https://attacker.example.com/evil@main")
+
+    def test_unpinned_git_tag_rejected(self) -> None:
+        with pytest.raises(SystemExit):
+            validate_aqt_source("git+https://github.com/miurahr/aqtinstall@main")
+
+    def test_different_package_rejected(self) -> None:
+        with pytest.raises(SystemExit):
+            validate_aqt_source("evil-package")

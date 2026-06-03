@@ -1,0 +1,21 @@
+name: CMake Install
+description: Run `cmake --install` with a consistent config selector.
+
+inputs:
+  build-dir:
+    description: 'Build directory containing CMakeCache.txt'
+    required: true
+  build-type:
+    description: 'Build configuration (Release, Debug, RelWithDebInfo)'
+    required: false
+    default: 'Release'
+
+runs:
+  using: composite
+  steps:
+    - name: Install
+      shell: bash
+      working-directory: ${{ inputs.build-dir }}
+      env:
+        BUILD_TYPE: ${{ inputs.build-type }}
+      run: cmake --install . --config "${BUILD_TYPE}"

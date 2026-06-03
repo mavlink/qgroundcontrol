@@ -9,6 +9,11 @@
     "test/**/*.py",
     ".github/scripts/**/*.py"
   ],
+  "extraPaths": [
+    "tools",
+    "tools/translations",
+    ".github/scripts"
+  ],
   "pythonVersion": "3.12",
   "reportMissingImports": "warning",
   "reportMissingTypeStubs": false,

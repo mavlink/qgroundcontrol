@@ -3,6 +3,11 @@ name: Flatpak
 on:
   workflow_dispatch:
 
+concurrency:
+  # flatpak-builder with the same cache key concurrently is undefined behavior.
+  group: flatpak-build
+  cancel-in-progress: true
+
 permissions:
   contents: read
 

@@ -6,7 +6,6 @@ intelligent autocomplete in IDEs.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -17,7 +16,7 @@ class FactProperty:
     description: str
     required: bool = False
     enum_values: list[str] = field(default_factory=list)
-    default: Optional[str] = None
+    default: str | None = None
 
 
 # Fact metadata properties based on the JSON schema

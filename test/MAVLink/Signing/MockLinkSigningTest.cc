@@ -82,7 +82,7 @@ void MockLinkSigningTest::_testSigningEnableTimeout()
     QVERIFY(vehicle());
     QVERIFY(mockLink());
 
-    expectLogMessage(QtDebugMsg, QRegularExpression("showAppMessage.*timeout"));
+    expectAppMessage(QRegularExpression("showAppMessage.*timeout"));
 
     auto* signingKeys = MAVLinkSigningKeys::instance();
     signingKeys->addKey("BadKey", "BadPassphrase");
@@ -138,7 +138,7 @@ void MockLinkSigningTest::_testSigningPendingState()
     QVERIFY(!vehicle()->signingController()->signingStatus().pending());
 
     mockLink()->setCommLost(true);
-    expectLogMessage(QtDebugMsg, QRegularExpression("showAppMessage.*timeout"));
+    expectAppMessage(QRegularExpression("showAppMessage.*timeout"));
 
     vehicle()->signingController()->enable(QStringLiteral("PendingKey"));
 

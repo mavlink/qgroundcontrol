@@ -46,18 +46,11 @@ runs:
           --artifact-path "${{ inputs.artifact-path }}" \
           --artifact-name "${{ inputs.artifact-name }}"
 
-    - name: Configure AWS Credentials (OIDC)
-      if: inputs.aws-role-arn != ''
-      uses: aws-actions/configure-aws-credentials@v6
+    - name: Configure AWS Credentials
+      uses: ./.github/actions/aws-credentials
       with:
-        role-to-assume: ${{ inputs.aws-role-arn }}
-        aws-region: ${{ inputs.aws-region }}
-
-    - name: Configure AWS Credentials (Static)
-      if: inputs.aws-role-arn == '' && inputs.aws-key-id != ''
-      uses: aws-actions/configure-aws-credentials@v6
-      with:
-        aws-access-key-id: ${{ inputs.aws-key-id }}
+        aws-role-arn: ${{ inputs.aws-role-arn }}
+        aws-key-id: ${{ inputs.aws-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-region: ${{ inputs.aws-region }}
 
@@ -73,22 +66,16 @@ runs:
     - name: Upload to S3 latest folder
       if: github.ref_type == 'tag'
       shell: bash
-      env:
-        ARTIFACT_PATH: ${{ inputs.artifact-path }}
-        S3_BUCKET: ${{ inputs.s3-bucket }}
-        ARTIFACT_NAME: ${{ inputs.artifact-name }}
       run: |
-        aws s3 cp "$ARTIFACT_PATH" \
-          "s3://${S3_BUCKET}/latest/${ARTIFACT_NAME}" \
-          --acl public-read
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" upload-latest \
+          --artifact-path "${{ inputs.artifact-path }}" \
+          --artifact-name "${{ inputs.artifact-name }}" \
+          --s3-bucket "${{ inputs.s3-bucket }}"
 
     - name: Invalidate CloudFront cache
       if: github.ref_type == 'tag' && inputs.aws-distribution-id != ''
       shell: bash
-      env:
-        DISTRIBUTION_ID: ${{ inputs.aws-distribution-id }}
-        ARTIFACT_NAME: ${{ inputs.artifact-name }}
       run: |
-        aws cloudfront create-invalidation \
-          --distribution-id "$DISTRIBUTION_ID" \
-          --paths "/latest/${ARTIFACT_NAME}"
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/aws_upload.py" invalidate \
+          --artifact-name "${{ inputs.artifact-name }}" \
+          --distribution-id "${{ inputs.aws-distribution-id }}"

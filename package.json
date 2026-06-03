@@ -6,7 +6,7 @@
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
         "docs:preview": "vitepress preview docs",
-        "start": "yarn docs:dev"
+        "start": "npm run docs:dev"
     },
     "dependencies": {
         "vitepress": "^1.6.4"

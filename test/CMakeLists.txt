@@ -129,6 +129,7 @@ add_qgc_test(FactSystemTestPX4 LABELS Integration Vehicle RESOURCE_LOCK MockLink
 add_qgc_test(FactTest LABELS Unit)
 add_qgc_test(FactValueSliderListModelTest LABELS Unit)
 add_qgc_test(HashCheckTest LABELS Integration Vehicle SERIAL TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
+add_qgc_test(ParameterEditorControllerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
 add_qgc_test(ParameterManagerTest LABELS Integration Vehicle SERIAL TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 
 # ----------------------------------------------------------------------------
@@ -358,3 +359,4 @@ add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle RESOURCE_LOCK Moc
 # ----------------------------------------------------------------------------
 add_subdirectory(QmlUITests)
 add_qgc_test(TopLevelViewsTest LABELS Integration TIMEOUT 120)
+add_qgc_test(PX4VehicleConfigUITest LABELS Integration TIMEOUT 180)

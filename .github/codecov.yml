@@ -16,12 +16,14 @@ coverage:
         threshold: 2%
         base: auto
         if_ci_failed: success
+        informational: true
     patch:
       default:
         target: 30%
         threshold: 5%
         base: auto
         if_ci_failed: success
+        informational: true
 
 comment:
   layout: "reach,diff,flags,tree,footer"

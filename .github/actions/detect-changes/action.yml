@@ -22,6 +22,12 @@ outputs:
   android:
     description: "Android-relevant files changed"
     value: ${{ steps.check.outputs.android }}
+  docker_linux:
+    description: "Docker-Linux build inputs changed"
+    value: ${{ steps.check.outputs['docker-linux'] }}
+  docker_android:
+    description: "Docker-Android build inputs changed"
+    value: ${{ steps.check.outputs['docker-android'] }}
 
 runs:
   using: composite

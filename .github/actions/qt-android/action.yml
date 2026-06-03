@@ -53,7 +53,7 @@ inputs:
 runs:
   using: composite
   steps:
-    # Gradle caching is handled by gradle/actions/setup-gradle in the calling workflow.
+    # Gradle caching is handled by gradle/actions/setup-gradle inside build-setup (mode=android branch).
     - name: Setup Java Environment
       uses: actions/setup-java@v5
       with:

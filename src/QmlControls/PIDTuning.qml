@@ -93,9 +93,13 @@ RowLayout {
 
     function axisIndexChanged() {
         while (chart.seriesList.length > 0) {
-            var s = chart.seriesList[0]
-            chart.removeSeries(s)
-            s.destroy()
+            // Do not call s.destroy() here. QGraphsView holds an internal
+            // pointer to the series that is only cleared during the next
+            // updatePolish() pass. Destroying the series before that pass
+            // causes a SIGSEGV in QGraphsView::updatePolish(). The series is
+            // parented to chart so it is freed when the chart is destroyed.
+            // GPU/graph resources are released by removeSeries().
+            chart.removeSeries(chart.seriesList[0])
         }
         var legendItems = []
         axis[_currentAxis].plot.forEach(function(e, idx) {
@@ -372,6 +376,7 @@ RowLayout {
                     Repeater {
                         model: axis
                         QGCRadioButton {
+                            objectName:     "pidTuning_axisButton_" + modelData.name.replace(/ /g, "")
                             text:           modelData.name
                             checked:        index == _currentAxis
                             onClicked: _currentAxis = index

@@ -14,7 +14,9 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common import find_repo_root
 from common.logging import log_error, log_info, log_ok, log_warn
+from common.opener import open_in_default_app
 
 DEFAULT_DOXYFILE = """# Doxyfile for QGroundControl
 
@@ -117,10 +119,8 @@ def open_docs(output_dir: Path) -> None:
         raise FileNotFoundError(f"Documentation not found: {index}")
 
     log_info("Opening documentation...")
-    opener = shutil.which("xdg-open") or shutil.which("open")
-    if opener is None:
+    if not open_in_default_app(index):
         raise RuntimeError(f"Could not find a browser opener. Docs at: {index}")
-    subprocess.run([opener, str(index)], check=False)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -132,7 +132,7 @@ def main(argv: list[str] | None = None) -> int:
         check_and_report(["doxygen"])
         return 0
 
-    repo_root = Path(__file__).resolve().parent.parent
+    repo_root = find_repo_root(Path(__file__))
     output_dir = Path(args.output_dir)
     doxyfile_path = Path(args.doxyfile)
     if not output_dir.is_absolute():

@@ -1,8 +1,9 @@
 # QGroundControl AI Assistant Guide
 
-The canonical AI agent guide is [AGENTS.md](../AGENTS.md). It covers critical
-files, golden rules, code structure, CI layout, build/test commands, and
-quick patterns. Read it first.
+The canonical AI agent guide is [AGENTS.md](../AGENTS.md). It lists critical
+files, code structure, and pointers to the canonical references for golden
+rules, build/test commands, CI layout, and coding-pattern examples. Read it
+first.
 
 Topic-specific references (also linked from AGENTS.md):
 

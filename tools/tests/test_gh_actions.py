@@ -9,7 +9,6 @@ import subprocess
 from unittest.mock import patch
 
 import httpx
-
 from common import gh_actions as mod
 
 
@@ -55,9 +54,9 @@ def test_parse_json_documents_raises_on_invalid_json() -> None:
 
 def test_list_workflow_runs_for_sha_uses_get_method() -> None:
     payload = json.dumps({"workflow_runs": [{"id": 1, "name": "Linux"}]})
-    with patch.dict(os.environ, {"QGC_GH_API_MODE": "gh"}, clear=False):
-        with patch.object(mod, "gh", return_value=_cp(stdout=payload)) as gh_mock:
-            runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
+    with patch.dict(os.environ, {"QGC_GH_API_MODE": "gh"}, clear=False), \
+         patch.object(mod, "gh", return_value=_cp(stdout=payload)) as gh_mock:
+        runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
 
     assert runs == [{"id": 1, "name": "Linux"}]
     called_args = gh_mock.call_args[0]
@@ -72,12 +71,12 @@ def test_list_workflow_runs_for_sha_http_mode() -> None:
     )
     second = _mock_response({"workflow_runs": [{"id": 2, "name": "Windows"}]})
 
-    with patch.dict(os.environ, {"QGC_GH_API_MODE": "http", "GH_TOKEN": "token"}, clear=False):
-        with patch.object(mod, "_build_http_client") as mock_client:
-            client = mock_client.return_value.__enter__.return_value
-            client.get.side_effect = [first, second]
-            with patch.object(mod, "gh") as gh_mock:
-                runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
+    with patch.dict(os.environ, {"QGC_GH_API_MODE": "http", "GH_TOKEN": "token"}, clear=False), \
+         patch.object(mod, "_build_http_client") as mock_client:
+        client = mock_client.return_value.__enter__.return_value
+        client.get.side_effect = [first, second]
+        with patch.object(mod, "gh") as gh_mock:
+            runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
 
     assert [run["id"] for run in runs] == [1, 2]
     gh_mock.assert_not_called()
@@ -91,12 +90,12 @@ def test_list_workflow_runs_for_sha_http_mode_retries_retryable_status() -> None
     )
     second = _mock_response({"workflow_runs": [{"id": 7, "name": "Linux"}]})
 
-    with patch.dict(os.environ, {"QGC_GH_API_MODE": "http", "GH_TOKEN": "token"}, clear=False):
-        with patch.object(mod, "_build_http_client") as mock_client:
-            client = mock_client.return_value.__enter__.return_value
-            client.get.side_effect = [first, second]
-            with patch.object(mod.time, "sleep") as sleep_mock:
-                runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
+    with patch.dict(os.environ, {"QGC_GH_API_MODE": "http", "GH_TOKEN": "token"}, clear=False), \
+         patch.object(mod, "_build_http_client") as mock_client:
+        client = mock_client.return_value.__enter__.return_value
+        client.get.side_effect = [first, second]
+        with patch.object(mod.time, "sleep") as sleep_mock:
+            runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
 
     assert runs == [{"id": 7, "name": "Linux"}]
     assert client.get.call_count == 2

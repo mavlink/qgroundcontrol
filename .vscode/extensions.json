@@ -5,6 +5,7 @@
     "twxs.cmake",
     "llvm-vs-code-extensions.vscode-clangd",
     "AoiHosizora.vscode-qt-qmake",
+    "theqtcompany.qt-qml",
     "nicothin.qt-qml",
     "streetsidesoftware.code-spell-checker",
     "DavidAnson.vscode-markdownlint",

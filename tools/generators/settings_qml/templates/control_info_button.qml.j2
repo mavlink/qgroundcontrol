@@ -1,0 +1,22 @@
+{{ indent }}RowLayout {
+{{ indent }}    Layout.fillWidth: true
+{{ indent }}    spacing: ScreenTools.defaultFontPixelWidth
+{% if show_when %}
+{{ indent }}    visible: {{ show_when }}
+{% endif %}
+{% if enable_when %}
+{{ indent }}    enabled: {{ enable_when }}
+{% endif %}
+{{ inner_indent }}LabelledLabel {
+{{ inner_indent }}    Layout.fillWidth: true
+{{ inner_indent }}    label: {{ label_expr }}
+{{ inner_indent }}    labelText: {{ value }}
+{{ inner_indent }}}
+{{ inner_indent }}QGCButton {
+{{ inner_indent }}    text: {{ button_text }}
+{{ inner_indent }}    onClicked: {{ button_on_clicked }}
+{% if button_enabled %}
+{{ inner_indent }}    enabled: {{ button_enabled }}
+{% endif %}
+{{ inner_indent }}}
+{{ indent }}}

@@ -23,4 +23,6 @@ private slots:
     void _typeIsString_test();
     void _typeIsBool_test();
     void _valueEqualsDefault_test();
+    void _rawValueStringFullPrecisionFloat_test();
+    void _rawValueStringFullPrecisionDouble_test();
 };

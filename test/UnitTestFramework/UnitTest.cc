@@ -735,6 +735,11 @@ void UnitTest::expectLogMessage(const QRegularExpression &categoryPattern, QtMsg
     _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), messagePattern, categoryPattern});
 }
 
+void UnitTest::expectAppMessage(const QRegularExpression &messagePattern)
+{
+    expectLogMessage(QRegularExpression("API\\.QGCApplication\\.AppMessage"), QtDebugMsg, messagePattern);
+}
+
 void UnitTest::ignoreLogMessage(QtMsgType type, const QRegularExpression &pattern)
 {
     _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), pattern, {}});

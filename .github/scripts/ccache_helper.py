@@ -8,8 +8,8 @@ Subcommands:
     summary  Write a build cache hit/miss summary to GitHub Step Summary
 
 Examples:
-    ccache_helper.py config  --version 4.13.1 --arch x86_64 --conf ccache.conf
-    ccache_helper.py install --version 4.13.1 --arch x86_64
+    ccache_helper.py config  --version 4.13.6 --arch x86_64 --conf ccache.conf
+    ccache_helper.py install --version 4.13.6 --arch x86_64
     ccache_helper.py summary
 """
 
@@ -22,7 +22,6 @@ import os
 import platform
 import re
 import shutil
-import subprocess
 import sys
 import tarfile
 import tempfile
@@ -30,31 +29,45 @@ import time
 import zipfile
 from pathlib import Path
 from typing import NamedTuple
+
 from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import append_github_env, write_github_output as write_github_outputs  # noqa: E402
+from common.gh_actions import (
+    append_github_env,
+    append_github_path,
+    write_step_summary,
+)
+from common.gh_actions import (
+    write_github_output as write_github_outputs,
+)
+from common.proc import run_captured
+from common.tool_version import probe_version
+
 
 def _download_file(url: str, dest: Path, *, timeout: int = 120) -> None:
     """Download a URL to a local file using urllib (stdlib)."""
     import urllib.request
 
     request = urllib.request.Request(url)
-    with urllib.request.urlopen(request, timeout=timeout) as resp:
-        with open(dest, "wb") as f:
-            while True:
-                chunk = resp.read(65536)
-                if not chunk:
-                    break
-                f.write(chunk)
+    with urllib.request.urlopen(request, timeout=timeout) as resp, open(dest, "wb") as f:
+        while True:
+            chunk = resp.read(65536)
+            if not chunk:
+                break
+            f.write(chunk)
 
+# SHA256s below are bound to this version; test_ccache_version_drift.py enforces sync with build-config.json.
+PINNED_BINARY_VERSION = "4.13.6"
 
 WINDOWS_BINARY_SHA256 = {
-    "x86_64": "1c78a0b816a3174d4b170b96294e016a21fb4a577dfd8361e7322f77f85c6348",
-    "aarch64": "5907c8f74dcfff920ee57df55a5cb98164630665926b2ba9085e9f5fb701c58f",
+    "x86_64": "3d7cebb05850ad704e197b3f1d3f0f924ab6c9fdfc561578e146184fe9d89380",
+    "aarch64": "bec01846b06d6d87bf35eda50544d7c8bf9b9a4859f218417a7081aa45d7fd47",
 }
 
+# macOS release is a universal (x86_64 + arm64) tarball, no arch suffix.
+MACOS_BINARY_SHA256 = "0274210ec9c9936ed5711d59b0de3167a51216a588ddde35f6bc828f366fe6d9"
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -67,7 +80,6 @@ class CcacheConfig(NamedTuple):
     arch: str
     max_size: str
 
-
 # ---------------------------------------------------------------------------
 # Installer
 # ---------------------------------------------------------------------------
@@ -75,7 +87,7 @@ class CcacheConfig(NamedTuple):
 class CcacheInstaller:
     """Handles ccache installation with signature verification."""
 
-    DEFAULT_VERSION = "4.13.1"
+    DEFAULT_VERSION = "4.13.6"
     DEFAULT_MAX_SIZE = "2G"
     MINISIGN_VERSION = "0.11"
     MINISIGN_KEY = "RWQX7yXbBedVfI4PNx6FLdFXu9GHUFsr28s4BVGxm4BeybtnX3P06saF"
@@ -231,11 +243,8 @@ class CcacheInstaller:
     def verify_signature(self, archive: Path, sig_file: Path, minisign_bin: Path) -> bool:
         """Verify archive signature using minisign."""
         try:
-            result = subprocess.run(
+            result = run_captured(
                 [str(minisign_bin), "-Vm", str(archive), "-P", self.MINISIGN_KEY],
-                capture_output=True,
-                text=True,
-                check=False,
             )
             if result.returncode != 0:
                 print(f"Signature verification failed: {result.stderr}", file=sys.stderr)
@@ -266,22 +275,12 @@ class CcacheInstaller:
         dest_bin = self.prefix / "bin" / "ccache"
 
         try:
-            result = subprocess.run(
-                ["sudo", "cp", str(ccache_bin), str(dest_bin)],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            result = run_captured(["sudo", "cp", str(ccache_bin), str(dest_bin)])
             if result.returncode != 0:
                 print(f"Error copying ccache: {result.stderr}", file=sys.stderr)
                 return False
 
-            result = subprocess.run(
-                ["sudo", "chmod", "+x", str(dest_bin)],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            result = run_captured(["sudo", "chmod", "+x", str(dest_bin)])
             if result.returncode != 0:
                 print(f"Error setting permissions: {result.stderr}", file=sys.stderr)
                 return False
@@ -295,27 +294,13 @@ class CcacheInstaller:
 
     def is_installed(self) -> bool:
         """Check if requested ccache version is already installed."""
-        ccache_path = shutil.which("ccache")
-        if not ccache_path:
+        installed = probe_version("ccache")
+        if installed is None:
             return False
-
-        try:
-            result = subprocess.run(
-                ["ccache", "--version"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode != 0:
-                return False
-
-            version_match = re.search(r"[0-9]+\.[0-9]+(\.[0-9]+)?", result.stdout)
-            if version_match and version_match.group() == self.version:
-                return True
-        except OSError:
-            pass
-
-        return False
+        expected = tuple(int(n) for n in self.version.split("."))
+        # probe_version drops a missing patch component; compare on the shorter prefix.
+        compare_len = min(len(installed), len(expected))
+        return installed[:compare_len] == expected[:compare_len]
 
     def get_config(self) -> CcacheConfig:
         """Return current configuration as named tuple."""
@@ -352,17 +337,11 @@ class CcacheInstaller:
     def _print_version(self) -> None:
         """Print installed ccache version."""
         try:
-            result = subprocess.run(
-                ["ccache", "--version"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            result = run_captured(["ccache", "--version"])
             if result.returncode == 0:
                 print(result.stdout.strip())
         except OSError:
             pass
-
 
 # ---------------------------------------------------------------------------
 # Summary
@@ -378,18 +357,12 @@ def get_ccache_json_stats() -> dict | None:
         return None
 
     try:
-        result = subprocess.run(
-            [ccache_bin, "--print-stats", "--format=json"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = run_captured([ccache_bin, "--print-stats", "--format=json"])
         if result.returncode != 0:
             return None
         return json.loads(result.stdout)
     except (OSError, json.JSONDecodeError):
         return None
-
 
 def build_summary_markdown(stats: dict) -> str:
     """Build a GitHub-flavoured markdown summary table from ccache JSON stats."""
@@ -412,26 +385,6 @@ def build_summary_markdown(stats: dict) -> str:
     ]
     return "\n".join(lines) + "\n"
 
-
-def write_step_summary(markdown: str) -> bool:
-    """Append *markdown* to ``$GITHUB_STEP_SUMMARY``.
-
-    Returns True on success, False when the env var is unset or write fails.
-    """
-    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if not summary_path:
-        print(markdown)
-        return True
-
-    try:
-        with open(summary_path, "a") as f:
-            f.write(markdown)
-        return True
-    except OSError as e:
-        print(f"Warning: Failed to write step summary: {e}", file=sys.stderr)
-        return False
-
-
 def get_ccache_verbose_stats() -> str | None:
     """Run ``ccache -s -vv`` and return its output."""
     ccache_bin = shutil.which("ccache")
@@ -439,18 +392,12 @@ def get_ccache_verbose_stats() -> str | None:
         return None
 
     try:
-        result = subprocess.run(
-            [ccache_bin, "-s", "-vv"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = run_captured([ccache_bin, "-s", "-vv"])
         if result.returncode != 0:
             return None
         return result.stdout.strip()
     except OSError:
         return None
-
 
 def run_summary() -> int:
     """Collect ccache stats and write a job summary table."""
@@ -473,7 +420,6 @@ def run_summary() -> int:
         write_step_summary("\n".join(parts))
     return 0
 
-
 # ---------------------------------------------------------------------------
 # GitHub Actions output helper
 # ---------------------------------------------------------------------------
@@ -485,17 +431,6 @@ def output_github_actions(config: CcacheConfig) -> None:
         "arch": config.arch,
         "max_size": config.max_size,
     })
-
-
-
-def append_github_path(path_entry: str) -> None:
-    """Append a path entry to ``$GITHUB_PATH`` when available."""
-    github_path = os.environ.get("GITHUB_PATH")
-    if not github_path:
-        return
-    with open(github_path, "a", encoding="utf-8") as handle:
-        handle.write(f"{path_entry}\n")
-
 
 def determine_cache_scope(event_name: str, ref_name: str, pr_number: str = "") -> str:
     """Return the normalized cache scope used by CI."""
@@ -511,59 +446,6 @@ def determine_cache_scope(event_name: str, ref_name: str, pr_number: str = "") -
         scope = f"{event_name}-{ref_name}"
     return scope.replace("/", "-")
 
-
-def compute_cpm_fingerprint(root: Path) -> str:
-    """Hash CMake files that declare CPM or FetchContent dependencies."""
-    declaration_re = re.compile(r"CPM(Add|Find)Package|FetchContent_Declare")
-    candidates: list[Path] = []
-    for exact in [
-        root / "CMakeLists.txt",
-        root / "cmake/modules/CPM.cmake",
-        root / ".github/build-config.json",
-    ]:
-        if exact.exists():
-            candidates.append(exact)
-
-    for directory in ("cmake",):
-        base = root / directory
-        if base.exists():
-            candidates.extend(base.rglob("*.cmake"))
-
-    for directory in ("src", "test"):
-        base = root / directory
-        if base.exists():
-            candidates.extend(base.rglob("CMakeLists.txt"))
-
-    dep_files: list[Path] = []
-    for path in candidates:
-        if not path.is_file():
-            continue
-        if path.name == "build-config.json":
-            dep_files.append(path)
-            continue
-        try:
-            text = path.read_text(encoding="utf-8", errors="ignore")
-        except OSError:
-            continue
-        if declaration_re.search(text):
-            dep_files.append(path)
-
-    digest = hashlib.sha256()
-    rel_paths = sorted({path.relative_to(root).as_posix() for path in dep_files})
-    for rel_path in rel_paths:
-        path = root / rel_path
-        try:
-            content = path.read_bytes()
-        except OSError:
-            continue
-        content = content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")  # Windows autocrlf parity for cpm-modules-shared- key.
-        digest.update(rel_path.encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(content)
-        digest.update(b"\0")
-    return digest.hexdigest()
-
-
 def resolve_windows_binary_config(host: str, target: str) -> dict[str, str]:
     """Return Windows ccache binary arch and checksum for the requested target."""
     arch = "aarch64" if host == "windows_arm64" else "x86_64"
@@ -571,9 +453,24 @@ def resolve_windows_binary_config(host: str, target: str) -> dict[str, str]:
         arch = "x86_64"
     return {"arch": arch, "sha256": WINDOWS_BINARY_SHA256[arch]}
 
+def _assert_pinned_version(version: str, platform_label: str) -> None:
+    """Fail fast if the requested version doesn't match the pinned SHA256 dicts.
+
+    The SHA256 constants above are bound to PINNED_BINARY_VERSION; downloading
+    any other version would corrupt verification. Raising here turns a runtime
+    checksum mismatch into a clear configuration error.
+    """
+    if version != PINNED_BINARY_VERSION:
+        raise RuntimeError(
+            f"ccache {platform_label} installer pinned to {PINNED_BINARY_VERSION} but "
+            f"got {version}. Bump PINNED_BINARY_VERSION (and the matching SHA256 "
+            f"constants) in ccache_helper.py, or update .github/build-config.json "
+            f"to match."
+        )
 
 def install_windows_binary(version: str, arch: str, sha256: str, runner_temp: Path) -> Path:
     """Download and install the ccache Windows binary under ``runner_temp``."""
+    _assert_pinned_version(version, "Windows")
     ccache_url = (
         f"https://github.com/ccache/ccache/releases/download/v{version}/"
         f"ccache-{version}-windows-{arch}.zip"
@@ -598,6 +495,41 @@ def install_windows_binary(version: str, arch: str, sha256: str, runner_temp: Pa
         shutil.copy2(source, install_dir / "ccache.exe")
     return install_dir
 
+def install_macos_binary(version: str, sha256: str, prefix: Path) -> Path:
+    """Download and install the ccache macOS universal binary under ``prefix``/bin.
+
+    Matches the Windows install shape (SHA256-verified GitHub release tarball)
+    rather than the Linux path's minisign verification, so the macOS runner
+    doesn't need a minisign binary. Replaces the previous unpinned
+    ``brew install ccache`` step so all three platforms install the version
+    declared in ``.github/build-config.json``.
+    """
+    _assert_pinned_version(version, "macOS")
+    ccache_url = (
+        f"https://github.com/ccache/ccache/releases/download/v{version}/"
+        f"ccache-{version}-darwin.tar.gz"
+    )
+    bin_dir = prefix / "bin"
+    bin_dir.mkdir(parents=True, exist_ok=True)
+    dest = bin_dir / "ccache"
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        archive_path = temp_path / "ccache.tar.gz"
+        _download_file(ccache_url, archive_path)
+        actual = hashlib.sha256(archive_path.read_bytes()).hexdigest()
+        if actual != sha256:
+            raise RuntimeError(f"SHA256 mismatch: {actual} != {sha256}")
+
+        with tarfile.open(archive_path, "r:gz") as tar:
+            tar.extractall(temp_path, filter="data")
+
+        source = temp_path / f"ccache-{version}-darwin" / "ccache"
+        if not source.exists():
+            raise FileNotFoundError("ccache binary not found in macOS archive")
+        shutil.copy2(source, dest)
+        dest.chmod(0o755)
+    return dest
 
 def add_windows_binary_to_path(version: str, arch: str, runner_temp: Path) -> Path:
     """Add the installed Windows ccache binary directory to PATH."""
@@ -606,11 +538,10 @@ def add_windows_binary_to_path(version: str, arch: str, runner_temp: Path) -> Pa
     if not binary.exists():
         raise FileNotFoundError(f"ccache.exe not found at {binary}")
     append_github_path(str(install_dir))
-    result = subprocess.run([str(binary), "--version"], capture_output=True, text=True, check=False)
+    result = run_captured([str(binary), "--version"])
     if result.stdout:
         print(result.stdout.strip())
     return install_dir
-
 
 def configure_ccache_environment(workspace: Path) -> Path:
     """Configure standard ccache environment variables for GitHub Actions."""
@@ -627,17 +558,6 @@ def configure_ccache_environment(workspace: Path) -> Path:
     )
     return ccache_dir
 
-
-def configure_cpm_cache(path_value: str) -> Path:
-    """Normalize and create the CPM cache path and export it."""
-    cache_path = Path(path_value.replace("\\", "/"))
-    cache_path.mkdir(parents=True, exist_ok=True)
-    posix_path = cache_path.as_posix()
-    append_github_env({"CPM_SOURCE_CACHE": posix_path})
-    write_github_outputs({"path": posix_path})
-    return cache_path
-
-
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -645,7 +565,6 @@ def configure_cpm_cache(path_value: str) -> Path:
 TARGET_ARCH_MAP: dict[str, str] = {
     "linux_gcc_arm64": "aarch64",
 }
-
 
 def resolve_arch(args: argparse.Namespace) -> str | None:
     """Return architecture from --arch, --target, or None for auto-detect."""
@@ -655,7 +574,6 @@ def resolve_arch(args: argparse.Namespace) -> str | None:
     if target:
         return TARGET_ARCH_MAP.get(target)
     return None
-
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
@@ -724,10 +642,6 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     scope.add_argument("--ref-name", required=True, help="Git ref name")
     scope.add_argument("--pr-number", default="", help="Pull request number")
 
-    # -- fingerprint ---------------------------------------------------
-    fingerprint = sub.add_parser("fingerprint", help="Compute CPM dependency fingerprint")
-    fingerprint.add_argument("--root", type=Path, default=Path("."), help="Repository root")
-
     # -- windows-config ------------------------------------------------
     windows_cfg = sub.add_parser("windows-config", help="Resolve Windows ccache binary metadata")
     windows_cfg.add_argument("--host", required=True, help="Workflow host input")
@@ -744,14 +658,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     add_win.add_argument("--arch", required=True, choices=["x86_64", "aarch64"])
     add_win.add_argument("--runner-temp", type=Path, required=True)
 
+    sub.add_parser("macos-config", help="Emit pinned macOS ccache SHA256 for the cache step")
+
+    install_mac = sub.add_parser("install-macos", help="Download and install macOS ccache binary")
+    install_mac.add_argument("--version", required=True)
+    install_mac.add_argument("--sha256", required=True)
+    install_mac.add_argument("--prefix", type=Path, default=Path("/usr/local"))
+
     env_cfg = sub.add_parser("configure-env", help="Configure ccache GitHub environment variables")
     env_cfg.add_argument("--workspace", type=Path, required=True)
 
-    cpm_cfg = sub.add_parser("configure-cpm-cache", help="Configure CPM source cache path")
-    cpm_cfg.add_argument("--path", required=True)
-
     return parser.parse_args(argv)
-
 
 def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
@@ -807,12 +724,6 @@ def main(argv: list[str] | None = None) -> int:
         write_github_outputs({"scope": scope})
         return 0
 
-    if args.command == "fingerprint":
-        fingerprint = compute_cpm_fingerprint(args.root.resolve())
-        print(fingerprint)
-        write_github_outputs({"fingerprint": fingerprint})
-        return 0
-
     if args.command == "windows-config":
         values = resolve_windows_binary_config(args.host, args.target)
         print(f"arch={values['arch']}")
@@ -831,22 +742,28 @@ def main(argv: list[str] | None = None) -> int:
         print(install_dir)
         return 0
 
+    if args.command == "macos-config":
+        print(f"sha256={MACOS_BINARY_SHA256}")
+        write_github_outputs({"sha256": MACOS_BINARY_SHA256})
+        return 0
+
+    if args.command == "install-macos":
+        dest = install_macos_binary(args.version, args.sha256, args.prefix)
+        print(dest)
+        return 0
+
     if args.command == "configure-env":
         ccache_dir = configure_ccache_environment(args.workspace)
         print(ccache_dir)
         return 0
 
-    if args.command == "configure-cpm-cache":
-        cache_path = configure_cpm_cache(args.path)
-        print(cache_path)
-        return 0
-
     print(
-        "Error: a subcommand is required (config, install, summary, scope, fingerprint, windows-config, install-windows, add-windows-path, configure-env, configure-cpm-cache)",
+        "Error: a subcommand is required (config, install, summary, scope, "
+        "windows-config, install-windows, add-windows-path, macos-config, "
+        "install-macos, configure-env)",
         file=sys.stderr,
     )
     return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

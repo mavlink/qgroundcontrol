@@ -28,13 +28,15 @@ Exit codes:
 
 import re
 import sys
+from collections.abc import Generator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Generator
+from typing import ClassVar
 
 # Add tools to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from common.analyzer import AnalysisResult, AnalyzerBase
 from common.file_traversal import find_cpp_files
 
 
@@ -103,6 +105,33 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
                     suggestion=suggestion,
                 )
                 break  # one violation per line is enough
+
+
+class QtTranslateNoopAnalyzer(AnalyzerBase):
+    """Detect always-wrong runtime uses of QT_TRANSLATE_NOOP / QT_TR_NOOP."""
+
+    name: ClassVar[str] = "qt-translate-noop-check"
+    install_hint: ClassVar[str] = ""
+
+    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
+        del fix
+        violations: list[Violation] = []
+        output_chunks: list[str] = []
+        for f in files:
+            for v in analyze_file(f):
+                violations.append(v)
+                output_chunks.append(
+                    f"{v.file}:{v.line}: error: {v.message}\n"
+                    f"  code: {v.code}\n  fix:  {v.suggestion}\n\n"
+                )
+        return AnalysisResult(
+            tool=self.name,
+            passed=not violations,
+            issues=len(violations),
+            output="".join(output_chunks),
+            files_checked=len(files),
+            files_with_issues=sorted({v.file for v in violations}),
+        )
 
 
 def main() -> int:

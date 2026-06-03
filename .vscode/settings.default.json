@@ -2,7 +2,7 @@
   "json.schemas": [
     {
       "fileMatch": ["**/FactGroups/*Fact.json"],
-      "url": "./tools/schemas/factmetadata.schema.json"
+      "url": "./src/FactSystem/factmetadata.schema.json"
     }
   ],
   "C_Cpp.codeAnalysis.clangTidy.enabled": true,
@@ -45,6 +45,12 @@
   "git.ignoreLimitWarning": true,
   "python.defaultInterpreterPath": "python3",
   "qml.format.enabled": true,
+  "qt-qml.qmlls.useQmllsFromEnvironment": true,
+  "qt-qml.qmlls.customArgs": [
+    "--no-cmake-calls",
+    "--build-dir",
+    "${workspaceFolder}/build"
+  ],
   "search.exclude": {
     "**/.cache": true,
     "**/build": true,

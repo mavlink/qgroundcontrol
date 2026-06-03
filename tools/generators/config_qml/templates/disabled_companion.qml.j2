@@ -1,0 +1,47 @@
+{{ ind }}ConfigSection {
+{{ ind }}    Layout.fillWidth: true
+{{ ind }}    visible: sectionMatchesFilter("{{ disabled_heading }}") && _hasDisabled{{ camel }}
+{{ ind }}    property bool _hasDisabled{{ camel }}: {
+{{ ind }}        for (var i = 0; i < _{{ safe }}Count; i++) {
+{% if apm_battery %}
+{{ ind }}            if (controller.getParameterFact(-1, _battPrefixForIndex(i) + "{{ enable_param }}").value === {{ dv }})
+{% else %}
+{{ ind }}            var idx = {{ loop_idx_expr }}
+{{ ind }}            if (controller.getParameterFact(-1, "{{ param_prefix }}" + idx + "{{ enable_param }}").value === {{ dv }})
+{% endif %}
+{{ ind }}                return true
+{{ ind }}        }
+{{ ind }}        return false
+{{ ind }}    }
+{{ ind }}    heading: {{ disabled_heading_qtr }}
+
+{{ ind }}    Repeater {
+{{ ind }}        model: _{{ safe }}Count
+
+{% if use_checkbox %}
+{{ ind }}        FactCheckBoxSlider {
+{% if not apm_battery %}
+{{ ind }}            property string _idx: {{ item_idx_expr }}
+{% endif %}
+{{ ind }}            visible: {{ fact_expr }}.value === {{ dv }}
+{{ ind }}            text: {{ label_expr }}
+{{ ind }}            fact: {{ fact_expr }}
+{{ ind }}            checkedValue: {{ enabled_value }}
+{{ ind }}            uncheckedValue: {{ dv }}
+{{ ind }}            Layout.fillWidth: true
+{{ ind }}        }
+{% else %}
+{{ ind }}        LabelledFactComboBox {
+{% if not apm_battery %}
+{{ ind }}            property string _idx: {{ item_idx_expr }}
+{% endif %}
+{{ ind }}            visible: {{ fact_expr }}.value === {{ dv }}
+{{ ind }}            label: {{ label_expr }}
+{{ ind }}            fact: {{ fact_expr }}
+{{ ind }}            Layout.fillWidth: true
+{{ ind }}            comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+{{ ind }}            indexModel: false
+{{ ind }}        }
+{% endif %}
+{{ ind }}    }
+{{ ind }}}

@@ -27,6 +27,7 @@ if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
 from common.file_traversal import find_repo_root
+from common.platform import is_windows
 
 
 @functools.lru_cache(maxsize=1)
@@ -76,14 +77,14 @@ def get_venv_path() -> Path:
 
 def get_activate_script(venv_path: Path) -> Path:
     """Get path to activate script based on platform."""
-    if sys.platform == "win32":
+    if is_windows():
         return venv_path / "Scripts" / "activate.bat"
     return venv_path / "bin" / "activate"
 
 
 def get_python_executable(venv_path: Path) -> Path:
     """Get path to Python executable in venv."""
-    if sys.platform == "win32":
+    if is_windows():
         return venv_path / "Scripts" / "python.exe"
     return venv_path / "bin" / "python"
 
@@ -112,7 +113,7 @@ def install_packages(venv_path: Path, packages: list[str]) -> None:
 
     if has_uv():
         print("Using uv (fast mode)")
-        cmd = ["uv", "pip", "install", "--python", str(python)] + packages
+        cmd = ["uv", "pip", "install", "--python", str(python), *packages]
     else:
         print("Using pip (install uv for faster installs: curl -LsSf https://astral.sh/uv/install.sh | sh)")
         # Upgrade pip first
@@ -120,7 +121,7 @@ def install_packages(venv_path: Path, packages: list[str]) -> None:
             [str(python), "-m", "pip", "install", "--quiet", "--upgrade", "pip"],
             check=True,
         )
-        cmd = [str(python), "-m", "pip", "install"] + packages
+        cmd = [str(python), "-m", "pip", "install", *packages]
 
     subprocess.run(cmd, check=True)
 
@@ -150,7 +151,7 @@ def sync_groups_with_uv(venv_path: Path, group_spec: str) -> None:
 
     env = os.environ.copy()
     env["VIRTUAL_ENV"] = str(venv_path)
-    scripts_dir = venv_path / ("Scripts" if sys.platform == "win32" else "bin")
+    scripts_dir = venv_path / ("Scripts" if is_windows() else "bin")
     env["PATH"] = f"{scripts_dir}{os.pathsep}{env.get('PATH', '')}"
     subprocess.run(cmd, check=True, env=env)
 
@@ -266,7 +267,7 @@ def main() -> int:
     print()
     print("Done! Activate the environment with:")
     activate_script = get_activate_script(venv_path)
-    if sys.platform == "win32":
+    if is_windows():
         print(f"  {activate_script}")
     else:
         print(f"  source {activate_script}")

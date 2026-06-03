@@ -1,14 +1,9 @@
-# Dependabot configuration
-# To merge dependabot PRs, comment "@dependabot merge" after CI passes
-# See: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/managing-pull-requests-for-dependency-updates
-#
-# Dependency management split:
-#   - Dependabot: GitHub Actions (this file)
-#   - Renovate:   npm, git-submodules, pip, pre-commit (see renovate.json)
+# Single source of truth — Settings → Code security → Dependabot version updates must be OFF.
+# Merge bot PRs with: @dependabot merge. Docs: https://docs.github.com/en/code-security/dependabot
+# .github/renovate.json is dormant until the Renovate GitHub App is installed.
 
 version: 2
 updates:
-  # Monitor GitHub Actions in workflows and all custom actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -19,5 +14,55 @@ updates:
     open-pull-requests-limit: 10
     groups:
       github-actions:
-        patterns:
-          - "*"
+        patterns: ["*"]
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "npm"
+    directory: "/tools/lsp/vscode-extension"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    open-pull-requests-limit: 3
+    groups:
+      vscode-ext-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "uv"
+    directory: "/tools"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    open-pull-requests-limit: 5
+    groups:
+      python-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    open-pull-requests-limit: 3
+    groups:
+      pre-commit-hooks:
+        patterns: ["*"]

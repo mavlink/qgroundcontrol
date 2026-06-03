@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from typing import Any
 
 from ci_bootstrap import ensure_tools_dir
@@ -84,6 +83,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Workflow event name to consider (default: pull_request)",
     )
     parser.add_argument(
+        "--runs-input",
+        default="",
+        help="Path to read pre-fetched workflow runs JSON; skips the API call",
+    )
+    parser.add_argument(
         "--runs-cache",
         default="",
         help="Path to write cached workflow runs JSON for downstream scripts",
@@ -97,7 +101,11 @@ def main(argv: list[str] | None = None) -> int:
     target_names = set(platforms)
     target_names.add("pre-commit")
 
-    runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
+    if args.runs_input:
+        with open(args.runs_input, encoding="utf-8") as f:
+            runs = json.load(f)
+    else:
+        runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
 
     if args.runs_cache:
         with open(args.runs_cache, "w", encoding="utf-8") as f:

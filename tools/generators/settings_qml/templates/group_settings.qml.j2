@@ -1,0 +1,20 @@
+    SettingsGroupLayout {
+        Layout.fillWidth: true
+{% if heading %}
+        heading: {{ heading }}
+{% endif %}
+{% if heading_description %}
+        headingDescription: {{ heading_description }}
+{% endif %}
+        visible: {{ visible }}
+{% if enable_when %}
+        enabled: {{ enable_when }}
+{% endif %}
+
+{% for block in blocks %}
+{{ block }}
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}
+    }

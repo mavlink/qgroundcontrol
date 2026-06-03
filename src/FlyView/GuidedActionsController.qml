@@ -126,16 +126,16 @@ Item {
     property bool showArm:                  _guidedActionsEnabled && !_vehicleArmed && _canArm
     property bool showForceArm:             _guidedActionsEnabled && !_vehicleArmed
     property bool showDisarm:               _guidedActionsEnabled && _vehicleArmed && !_vehicleFlying
-    property bool showRTL:                  _guidedActionsEnabled && _vehicleArmed && _activeVehicle.supports.guidedMode && _vehicleFlying && !_vehicleInRTLMode
-    property bool showTakeoff:              _guidedActionsEnabled && (_activeVehicle.supports.guidedTakeoffWithAltitude || _activeVehicle.supports.guidedTakeoffWithoutAltitude) && !_vehicleFlying && _canTakeoff
-    property bool showLand:                 _guidedActionsEnabled && _activeVehicle.supports.guidedMode && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
+    property bool showRTL:                  _guidedActionsEnabled && _activeVehicle && _vehicleArmed && _activeVehicle.supports.guidedMode && _vehicleFlying && !_vehicleInRTLMode
+    property bool showTakeoff:              _guidedActionsEnabled && _activeVehicle && (_activeVehicle.supports.guidedTakeoffWithAltitude || _activeVehicle.supports.guidedTakeoffWithoutAltitude) && !_vehicleFlying && _canTakeoff
+    property bool showLand:                 _guidedActionsEnabled && _activeVehicle && _activeVehicle.supports.guidedMode && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
     property bool showStartMission:         _guidedActionsEnabled && _missionAvailable && !_missionActive && !_vehicleFlying && _canStartMission
     property bool showContinueMission:      _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleArmed && _vehicleFlying && (_currentMissionIndex < _visualItemsCount - 1)
-    property bool showPause:                _guidedActionsEnabled && _vehicleArmed && _activeVehicle.supports.pauseVehicle && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
-    property bool showChangeAlt:            _guidedActionsEnabled && _vehicleFlying && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive
-    property bool showChangeLoiterRadius:   _guidedActionsEnabled && _vehicleFlying && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive && _vehicleInFwdFlight && fwdFlightGotoMapCircle.visible
-    property bool showChangeSpeed:          _guidedActionsEnabled && _vehicleFlying && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive && _speedLimitsAvailable
-    property bool showOrbit:                _guidedActionsEnabled && _vehicleFlying && __orbitSupported && !_missionActive && _activeVehicle.homePosition.isValid && !isNaN(_activeVehicle.homePosition.altitude)
+    property bool showPause:                _guidedActionsEnabled && _activeVehicle && _vehicleArmed && _activeVehicle.supports.pauseVehicle && _vehicleFlying && !_vehiclePaused && !_fixedWingOnApproach
+    property bool showChangeAlt:            _guidedActionsEnabled && _activeVehicle && _vehicleFlying && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive
+    property bool showChangeLoiterRadius:   _guidedActionsEnabled && _activeVehicle && _vehicleFlying && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive && _vehicleInFwdFlight && fwdFlightGotoMapCircle.visible
+    property bool showChangeSpeed:          _guidedActionsEnabled && _activeVehicle && _vehicleFlying && _activeVehicle.supports.guidedMode && _vehicleArmed && !_missionActive && _speedLimitsAvailable
+    property bool showOrbit:                _guidedActionsEnabled && _activeVehicle && _vehicleFlying && __orbitSupported && !_missionActive && _activeVehicle.homePosition.isValid && !isNaN(_activeVehicle.homePosition.altitude)
     property bool showROI:                  _guidedActionsEnabled && _vehicleFlying && __roiSupported
     property bool showLandAbort:            _guidedActionsEnabled && _vehicleFlying && _fixedWingOnApproach
     property bool showGotoLocation:         _guidedActionsEnabled && _vehicleFlying
@@ -376,10 +376,12 @@ Item {
     // Called when an action is about to be executed in order to confirm
     function confirmAction(actionCode, actionData, mapIndicator) {
         var showImmediate = true
-        closeAll()
+
+        // Cancel any previously pending action, notifying its map indicator if it differs from the incoming one
+        confirmDialog.confirmCancelled(mapIndicator)
+
         confirmDialog.action = actionCode
         confirmDialog.actionData = actionData
-        confirmDialog.hideTrigger = true
         confirmDialog.mapIndicator = mapIndicator
         confirmDialog.optionText = ""
         _actionData = actionData
@@ -398,7 +400,6 @@ Item {
         case actionMVArm:
             confirmDialog.title = mvArmTitle
             confirmDialog.message = mvArmMessage
-            confirmDialog.hideTrigger = true
             break;
         case actionForceArm:
             confirmDialog.title = forceArmTitle
@@ -416,7 +417,6 @@ Item {
         case actionMVDisarm:
             confirmDialog.title = mvDisarmTitle
             confirmDialog.message = mvDisarmMessage
-            confirmDialog.hideTrigger = true
             break;
         case actionEmergencyStop:
             confirmDialog.title = emergencyStopTitle
@@ -438,7 +438,6 @@ Item {
         case actionMVStartMission:
             confirmDialog.title = mvStartMissionTitle
             confirmDialog.message = mvStartMissionMessage
-            confirmDialog.hideTrigger = true
             break;
         case actionContinueMission:
             showImmediate = false
@@ -510,7 +509,6 @@ Item {
         case actionMVPause:
             confirmDialog.title = mvPauseTitle
             confirmDialog.message = mvPauseMessage
-            confirmDialog.hideTrigger = true
             break;
         case actionROI:
             confirmDialog.title = roiTitle
@@ -518,7 +516,6 @@ Item {
             confirmDialog.hideTrigger = Qt.binding(function() { return !showROI })
             break;
         case actionChangeSpeed:
-            confirmDialog.hideTrigger = true
             confirmDialog.title = changeSpeedTitle
             confirmDialog.message = changeSpeedMessage
             guidedValueSlider.visible = true

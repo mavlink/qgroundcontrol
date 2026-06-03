@@ -6,6 +6,7 @@ import QGroundControl.FactControls
 import QGroundControl.Controls
 
 QGCPopupDialog {
+    id:         popupDialog
     title:      qsTr("Calculate Voltage Divider")
     buttons:    Dialog.Close
 
@@ -16,7 +17,7 @@ QGCPopupDialog {
     BatteryParams {
         id:             batParams
         controller:     _controller
-        batteryIndex:   parent.batteryIndex
+        batteryIndex:   popupDialog.batteryIndex
     }
 
     ColumnLayout {

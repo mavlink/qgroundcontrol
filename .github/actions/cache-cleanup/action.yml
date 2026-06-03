@@ -1,0 +1,48 @@
+name: Cache Cleanup
+description: List and optionally delete GitHub Actions caches via gh-actions-cache.
+
+inputs:
+  branch:
+    description: 'Branch to clean (empty = all branches)'
+    required: false
+    default: ''
+  dry-run:
+    description: 'List caches without deleting (true = list only)'
+    required: false
+    default: 'true'
+  summary:
+    description: 'Write a markdown table of caches to $GITHUB_STEP_SUMMARY'
+    required: false
+    default: 'false'
+
+outputs:
+  count:
+    description: 'Number of caches found'
+    value: ${{ steps.run.outputs.count }}
+  deleted:
+    description: 'Number of caches deleted (0 when dry-run)'
+    value: ${{ steps.run.outputs.deleted }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install gh-actions-cache
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        if ! gh extension list | awk '{print $1}' | grep -qx 'actions/gh-actions-cache'; then
+          gh extension install actions/gh-actions-cache
+        fi
+
+    - name: List and clean caches
+      id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+      run: |
+        ARGS=(--branch "${{ inputs.branch }}")
+        [[ "${{ inputs.dry-run }}" != "true" ]] && ARGS+=(--delete)
+        [[ "${{ inputs.summary }}" == "true" ]] && ARGS+=(--summary)
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/gh_cache_cleanup.py" "${ARGS[@]}"

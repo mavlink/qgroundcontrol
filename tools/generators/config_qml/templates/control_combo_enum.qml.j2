@@ -1,0 +1,16 @@
+{{ indent }}LabelledComboBox {
+{{ indent }}    property var _fact: {{ fact_ref }}
+{{ indent }}    label: {{ display_label }}
+{{ indent }}    Layout.fillWidth: true
+{{ indent }}    comboBoxPreferredWidth: ScreenTools.defaultFontPixelWidth * 30
+{{ indent }}    model: [{{ model_items }}]
+{{ indent }}    property var _enumValues: [{{ values_list }}]
+{{ indent }}    currentIndex: { var v = _fact ? _fact.rawValue : 0; var i = _enumValues.indexOf(v); return i >= 0 ? i : 0 }
+{{ indent }}    onActivated: (index) => { if (_fact) _fact.rawValue = _enumValues[index] }
+{% if enable_when %}
+{{ indent }}    enabled: {{ enable_when }}
+{% endif %}
+{% if visible %}
+{{ indent }}    visible: {{ visible }}
+{% endif %}
+{{ indent }}}

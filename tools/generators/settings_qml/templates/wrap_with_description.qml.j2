@@ -1,0 +1,15 @@
+{{ indent }}ColumnLayout {
+{{ indent }}    Layout.fillWidth: true
+{{ indent }}    spacing: ScreenTools.defaultFontPixelHeight / 4
+{{ indent }}    visible: {{ vis_expr }}
+
+{{ control_qml_indented }}
+
+{{ indent }}    QGCLabel {
+{{ indent }}        Layout.fillWidth: true
+{{ indent }}        text: {{ fact_ref }}.shortDescription
+{{ indent }}        visible: text !== ""
+{{ indent }}        font.pointSize: ScreenTools.smallFontPointSize
+{{ indent }}        wrapMode: Text.WordWrap
+{{ indent }}    }
+{{ indent }}}

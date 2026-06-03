@@ -6,8 +6,9 @@ import QGroundControl
 import QGroundControl.Controls
 
 Rectangle {
-    id:     vehicleConfigView
-    color:  qgcPal.window
+    id:             vehicleConfigView
+    objectName:     "vehicleConfig_root"
+    color:          qgcPal.window
     z:      QGroundControl.zOrderTopMost
 
     // This need to block click event leakage to underlying map.
@@ -334,6 +335,7 @@ Rectangle {
         }
 
         QGCFlickable {
+            objectName:         "vehicleConfig_sidebarFlickable"
             Layout.fillWidth:   true
             Layout.fillHeight:  true
             contentHeight:      buttonColumn.height + _verticalMargin
@@ -348,6 +350,7 @@ Rectangle {
                 // Summary button
                 ConfigButton {
                     id:                 summaryButton
+                    objectName:         "vehicleConfig_summary"
                     icon.source:        "/qmlimages/VehicleSummaryIcon.png"
                     checked:            vehicleConfigView._selectedSpecial === "summary"
                     text:               qsTr("Summary")
@@ -394,6 +397,7 @@ Rectangle {
 
                         ConfigButton {
                             Layout.fillWidth:   true
+                            objectName:         "vehicleConfig_comp_" + compColumn.compName.replace(/ /g, "")
                             icon.source:        compColumn.comp ? compColumn.comp.iconResource : ""
                             setupComplete:      compColumn.comp ? compColumn.comp.setupComplete : true
                             text:               compColumn.compName
@@ -542,6 +546,7 @@ Rectangle {
 
     Loader {
         id:                     panelLoader
+        objectName:             "vehicleConfig_panelLoader"
         anchors.topMargin:      _verticalMargin
         anchors.bottomMargin:   _verticalMargin
         anchors.leftMargin:     _horizontalMargin

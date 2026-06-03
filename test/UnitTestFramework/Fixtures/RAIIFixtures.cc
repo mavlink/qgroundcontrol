@@ -68,8 +68,10 @@ VehicleFixture::VehicleFixture(VehicleTest* test, MAV_AUTOPILOT autopilot, bool 
     // Wait for initial connect sequence if requested
     if (waitForInitialConnect && autopilot != MAV_AUTOPILOT_INVALID) {
         QSignalSpy spyConnect(_vehicle, &Vehicle::initialConnectComplete);
-        if (!UnitTest::waitForSignal(spyConnect, TestTimeout::longMs(), QStringLiteral("initialConnectComplete"))) {
-            qCWarning(RAIIFixturesLog) << "VehicleFixture: timeout waiting for initialConnectComplete";
+        if (!_vehicle->isInitialConnectComplete()) {
+            if (!UnitTest::waitForSignal(spyConnect, TestTimeout::longMs(), QStringLiteral("initialConnectComplete"))) {
+                qCWarning(RAIIFixturesLog) << "VehicleFixture: timeout waiting for initialConnectComplete";
+            }
         }
     }
 }

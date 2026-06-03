@@ -21,15 +21,12 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ci_bootstrap import ensure_tools_dir
 
-def parse_cmake_cache(cache_path: Path) -> dict[str, str]:
-    """Extract typed entries from CMakeCache.txt into a flat dict."""
-    entries: dict[str, str] = {}
-    for line in cache_path.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"^([A-Za-z0-9_.\-]+):[A-Z]+=(.*)$", line)
-        if m:
-            entries[m.group(1)] = m.group(2)
-    return entries
+ensure_tools_dir(__file__)
+
+from cmake_helper import read_cache_dict  # noqa: E402
+from common.git import run_git  # noqa: E402
 
 
 def git_info(source_dir: Path) -> tuple[str, str]:
@@ -37,19 +34,13 @@ def git_info(source_dir: Path) -> tuple[str, str]:
     url = ""
     commit = ""
     try:
-        result = subprocess.run(
-            ["git", "-C", str(source_dir), "remote", "get-url", "origin"],
-            capture_output=True, text=True, timeout=5,
-        )
+        result = run_git("remote", "get-url", "origin", cwd=source_dir, timeout=5)
         if result.returncode == 0:
             url = result.stdout.strip()
     except (OSError, subprocess.TimeoutExpired):
         pass
     try:
-        result = subprocess.run(
-            ["git", "-C", str(source_dir), "rev-parse", "HEAD"],
-            capture_output=True, text=True, timeout=5,
-        )
+        result = run_git("rev-parse", "HEAD", cwd=source_dir, timeout=5)
         if result.returncode == 0:
             commit = result.stdout.strip()
     except (OSError, subprocess.TimeoutExpired):
@@ -88,7 +79,7 @@ def generate_sbom(build_dir: Path) -> dict:
         print(f"Error: {cache_path} not found", file=sys.stderr)
         sys.exit(1)
 
-    cache = parse_cmake_cache(cache_path)
+    cache = read_cache_dict(str(cache_path))
 
     packages_str = cache.get("CPM_PACKAGES", "")
     if not packages_str:

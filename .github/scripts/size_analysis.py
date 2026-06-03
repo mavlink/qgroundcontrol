@@ -25,10 +25,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import (  # noqa: E402
-    write_github_output as _write_github_output,
-    write_step_summary as _write_step_summary,
-)
+from common.gh_actions import write_github_output, write_step_summary  # noqa: E402
+from common.proc import run_captured  # noqa: E402
 
 
 class BinaryAnalyzer:
@@ -49,11 +47,7 @@ class BinaryAnalyzer:
             tmp_path = Path(tmp.name)
         try:
             shutil.copy2(self.binary_path, tmp_path)
-            subprocess.run(
-                ["strip", str(tmp_path)],
-                check=True,
-                capture_output=True,
-            )
+            run_captured(["strip", str(tmp_path)], check=True)
             return tmp_path.stat().st_size
         finally:
             tmp_path.unlink(missing_ok=True)
@@ -61,11 +55,7 @@ class BinaryAnalyzer:
     def get_symbol_count(self) -> int:
         """Return the number of symbols in the binary."""
         try:
-            result = subprocess.run(
-                ["nm", str(self.binary_path)],
-                capture_output=True,
-                text=True,
-            )
+            result = run_captured(["nm", str(self.binary_path)])
             if result.returncode != 0:
                 return 0
             return len(result.stdout.strip().splitlines())
@@ -75,12 +65,7 @@ class BinaryAnalyzer:
     def get_section_sizes(self) -> str:
         """Return section sizes using the size command."""
         try:
-            result = subprocess.run(
-                ["size", "-A", str(self.binary_path)],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
+            result = run_captured(["size", "-A", str(self.binary_path)], check=True)
             return result.stdout
         except (subprocess.SubprocessError, FileNotFoundError):
             return "Section sizes unavailable"
@@ -98,42 +83,33 @@ class BinaryAnalyzer:
         print(f"Installing bloaty (timeout: {timeout}s)...")
 
         try:
-            subprocess.run(
-                ["sudo", "apt-get", "update"],
-                timeout=30, check=True, capture_output=True,
-            )
-            subprocess.run(
+            run_captured(["sudo", "apt-get", "update"], timeout=30, check=True)
+            run_captured(
                 ["sudo", "apt-get", "install", "-y",
                  "libprotobuf-dev", "protobuf-compiler", "libre2-dev", "libcapstone-dev"],
-                timeout=60, check=True, capture_output=True,
+                timeout=60, check=True,
             )
             bloaty_dir = tempfile.mkdtemp(prefix="bloaty-")
-            subprocess.run(
-                ["git", "init", bloaty_dir],
-                timeout=10, check=True, capture_output=True,
-            )
-            subprocess.run(
+            run_captured(["git", "init", bloaty_dir], timeout=10, check=True)
+            run_captured(
                 ["git", "-C", bloaty_dir, "fetch", "--depth", "1",
                  "https://github.com/google/bloaty.git",
                  "87082741b1cc0a97cd84bd17cd4ee41d70a42fc6"],
-                timeout=30, check=True, capture_output=True,
+                timeout=30, check=True,
             )
-            subprocess.run(
-                ["git", "-C", bloaty_dir, "checkout", "FETCH_HEAD"],
-                timeout=10, check=True, capture_output=True,
-            )
-            subprocess.run(
+            run_captured(["git", "-C", bloaty_dir, "checkout", "FETCH_HEAD"], timeout=10, check=True)
+            run_captured(
                 ["cmake", "-B", f"{bloaty_dir}/build", "-S", bloaty_dir,
                  "-DCMAKE_BUILD_TYPE=Release", "-DBLOATY_ENABLE_RE2=ON"],
-                timeout=60, check=True, capture_output=True,
+                timeout=60, check=True,
             )
-            subprocess.run(
+            run_captured(
                 ["cmake", "--build", f"{bloaty_dir}/build", "--parallel"],
-                timeout=timeout, check=True, capture_output=True,
+                timeout=timeout, check=True,
             )
-            subprocess.run(
+            run_captured(
                 ["sudo", "cmake", "--install", f"{bloaty_dir}/build"],
-                timeout=30, check=True, capture_output=True,
+                timeout=30, check=True,
             )
             print("bloaty installed successfully")
             return True
@@ -162,10 +138,8 @@ class BinaryAnalyzer:
             return "Bloaty not available"
 
         try:
-            result = subprocess.run(
+            result = run_captured(
                 ["bloaty", "-d", analysis_type, "-n", str(top_n), str(self.binary_path)],
-                capture_output=True,
-                text=True,
             )
             if result.returncode != 0:
                 return "Bloaty analysis skipped"
@@ -220,20 +194,6 @@ class BinaryAnalyzer:
         lines.append(f"| Symbol Count | {symbol_count} |")
 
         return "\n".join(lines)
-
-
-def write_github_output(binary_size: int, stripped_size: int, symbol_count: int) -> None:
-    """Write outputs to GITHUB_OUTPUT file if available."""
-    _write_github_output({
-        "binary_size": str(binary_size),
-        "stripped_size": str(stripped_size),
-        "symbol_count": str(symbol_count),
-    })
-
-
-def write_github_step_summary(summary: str) -> None:
-    """Write summary to GITHUB_STEP_SUMMARY file if available."""
-    _write_step_summary(summary)
 
 
 def parse_args() -> argparse.Namespace:
@@ -298,7 +258,11 @@ def main() -> int:
     symbol_count = analyzer.get_symbol_count()
     print(f"Symbol count: {symbol_count}")
 
-    write_github_output(binary_size, stripped_size, symbol_count)
+    write_github_output({
+        "binary_size": str(binary_size),
+        "stripped_size": str(stripped_size),
+        "symbol_count": str(symbol_count),
+    })
 
     metrics = analyzer.generate_metrics_json(binary_size, stripped_size, symbol_count)
     args.output.write_text(json.dumps(metrics, indent=2) + "\n")
@@ -306,7 +270,7 @@ def main() -> int:
 
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         summary = analyzer.generate_summary(binary_size, stripped_size, symbol_count)
-        write_github_step_summary(summary)
+        write_step_summary(summary)
 
     return 0
 

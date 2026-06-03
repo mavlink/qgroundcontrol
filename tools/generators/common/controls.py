@@ -16,7 +16,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 # --------------------------------------------------------------------------- #
 # Shared data fragments — callers compose these into their own ControlDef
 # --------------------------------------------------------------------------- #
@@ -557,7 +556,7 @@ def render_factslider(
     if show_when:
         lines.append(f"{indent}    visible: {show_when}")
 
-    lines.append(f"")
+    lines.append("")
     lines.append(f"{inner}FactSlider {{")
     lines.append(f"{inner}    Layout.fillWidth: true")
     lines.append(f"{inner}    fact: {fact_ref}")

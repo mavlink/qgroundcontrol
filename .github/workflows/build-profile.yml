@@ -18,6 +18,10 @@ on:
         default: '50'
         type: string
 
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.build_type || 'default' }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read
