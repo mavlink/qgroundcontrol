@@ -24,102 +24,9 @@ AnalyzePage {
 
             property bool binLoading: false
             property string pendingBinFile: ""
-            property string fieldSearchText: ""
-            property string parameterSearchText: ""
-            property bool showOnlyChangedParameters: true
-            property var filteredFieldRows: []
-            property var filteredParameters: []
 
             readonly property bool isFirmwareLog: logViewerController.sourceType === LogViewerController.Bin
                                              || logViewerController.sourceType === LogViewerController.ULog
-
-            function rebuildGroupedFields() {
-                logViewerController.setPlottableFields(logParser.plottableFields)
-                applyFieldFilter()
-            }
-
-            function applyFieldFilter() {
-                const query = String(fieldSearchText).trim().toLowerCase()
-                if (query.length === 0) {
-                    filteredFieldRows = logViewerController.fieldRows
-                    return
-                }
-
-                const groupedMap = {}
-                const fields = logParser.plottableFields
-                for (let i = 0; i < fields.length; i++) {
-                    const fullName = String(fields[i])
-                    const splitIndex = fullName.indexOf(".")
-                    const groupName = splitIndex > 0 ? fullName.substring(0, splitIndex) : qsTr("Other")
-                    const shortName = splitIndex > 0 ? fullName.substring(splitIndex + 1) : fullName
-                    const haystack = (fullName + " " + groupName + " " + shortName).toLowerCase()
-                    if (haystack.indexOf(query) === -1) {
-                        continue
-                    }
-
-                    if (!groupedMap[groupName]) {
-                        groupedMap[groupName] = []
-                    }
-                    groupedMap[groupName].push({ fullName: fullName, shortName: shortName })
-                }
-
-                const groups = Object.keys(groupedMap).sort()
-                const rows = []
-                for (let g = 0; g < groups.length; g++) {
-                    const groupName = groups[g]
-                    rows.push({ rowType: "group", group: groupName })
-                    groupedMap[groupName].sort((a, b) => String(a.shortName).localeCompare(String(b.shortName)))
-                    for (let s = 0; s < groupedMap[groupName].length; s++) {
-                        rows.push({
-                            rowType: "field",
-                            group: groupName,
-                            fullName: groupedMap[groupName][s].fullName,
-                            shortName: groupedMap[groupName][s].shortName
-                        })
-                    }
-                }
-                filteredFieldRows = rows
-            }
-
-            function applyParameterFilter() {
-                const query = String(parameterSearchText).trim().toLowerCase()
-                const onlyChanged = showOnlyChangedParameters
-
-                const output = []
-                for (let i = 0; i < logParser.parameters.length; i++) {
-                    const item = logParser.parameters[i]
-                    // "Show only changed" filter: skip parameters that equal their system default
-                    if (onlyChanged && item.hasDefault && item.isDefault) {
-                        continue
-                    }
-                    if (query.length > 0) {
-                        const name = String(item.name)
-                        const desc = item.shortDescription ? String(item.shortDescription) : ""
-                        const value = String(item.value)
-                        if ((name + " " + value + " " + desc).toLowerCase().indexOf(query) === -1) {
-                            continue
-                        }
-                    }
-                    output.push(item)
-                }
-                filteredParameters = output
-            }
-
-            function isGroupExpanded(groupName) {
-                return logViewerController.isGroupExpanded(groupName)
-            }
-
-            function toggleGroupExpanded(groupName) {
-                if (String(fieldSearchText).trim().length > 0) {
-                    return
-                }
-                logViewerController.toggleGroupExpanded(groupName)
-                applyFieldFilter()
-            }
-
-            function isFieldSelected(fieldName) {
-                return logViewerController.isFieldSelected(fieldName)
-            }
 
             function clearLoadedLogState(clearControllerState) {
                 replayController.isPlaying = false
@@ -127,8 +34,7 @@ AnalyzePage {
                 logParser.clear()
                 logViewerController.setPlottableFields([])
                 logViewerController.clearSelection()
-                filteredFieldRows = []
-                filteredParameters = []
+                _parametersTab.applyFilter()
                 logViewerChart.clearMarker()
                 logViewerChart.refreshBinChart()
                 if (clearControllerState) {
@@ -165,15 +71,6 @@ AnalyzePage {
             }
 
             Connections {
-                target: logViewerController
-                function onFieldRowsChanged() {
-                    const savedY = fieldsListView.contentY
-                    applyFieldFilter()
-                    Qt.callLater(() => { fieldsListView.contentY = savedY })
-                }
-            }
-
-            Connections {
                 target: logParser
                 ignoreUnknownSignals: true
 
@@ -189,8 +86,8 @@ AnalyzePage {
                         return
                     }
 
-                    rebuildGroupedFields()
-                    applyParameterFilter()
+                    fieldsPanel.rebuildGroupedFields()
+                    _parametersTab.applyFilter()
                     logViewerController.clearSelection()
                     logViewerChart.clearMarker()
                     logViewerChart.refreshBinChart()
@@ -260,6 +157,62 @@ AnalyzePage {
                 }
             }
 
+            RowLayout {
+                Layout.fillWidth: true
+                visible: logViewerController.sourceType === LogViewerController.TLog && replayController.link
+                spacing: ScreenTools.defaultFontPixelWidth
+
+                QGCButton {
+                    text: replayController.isPlaying ? qsTr("Pause") : qsTr("Play")
+                    onClicked: replayController.isPlaying = !replayController.isPlaying
+                }
+
+                QGCComboBox {
+                    textRole: "text"
+                    currentIndex: 3
+
+                    model: ListModel {
+                        ListElement { text: "0.1x";  value: 0.1  }
+                        ListElement { text: "0.25x"; value: 0.25 }
+                        ListElement { text: "0.5x";  value: 0.5  }
+                        ListElement { text: "1x";    value: 1.0  }
+                        ListElement { text: "2x";    value: 2.0  }
+                        ListElement { text: "5x";    value: 5.0  }
+                        ListElement { text: "10x";   value: 10.0 }
+                    }
+
+                    onActivated: (index) => replayController.playbackSpeed = model.get(index).value
+                }
+
+                QGCLabel { text: replayController.playheadTime }
+
+                Slider {
+                    id: _replaySlider
+                    Layout.fillWidth: true
+                    from: 0
+                    to: 100
+
+                    property bool _internalUpdate: false
+
+                    Connections {
+                        target: replayController
+                        function onPercentCompleteChanged(percentComplete) {
+                            _replaySlider._internalUpdate = true
+                            _replaySlider.value = percentComplete
+                            _replaySlider._internalUpdate = false
+                        }
+                    }
+
+                    onValueChanged: {
+                        if (!_internalUpdate) {
+                            replayController.percentComplete = value
+                        }
+                    }
+                }
+
+                QGCLabel { text: replayController.totalTime }
+            }
+
             QGCTabBar {
                 id: mainTabBar
                 Layout.fillWidth: true
@@ -279,210 +232,13 @@ AnalyzePage {
                 RowLayout {
                     spacing: ScreenTools.defaultFontPixelWidth
 
-                    // Left panel: stats + replay controls + fields list
-                    Rectangle {
-                        Layout.preferredWidth: availableWidth * 0.25
+                    // Left panel: stats + fields list
+                    LogViewerFieldsPanel {
+                        id: fieldsPanel
                         Layout.fillHeight: true
-                        color: qgcPal.windowShade
-                        radius: ScreenTools.defaultFontPixelWidth * 0.5
-
-                        ColumnLayout {
-                            anchors.fill: parent
-                            anchors.margins: ScreenTools.defaultFontPixelWidth
-                            spacing: ScreenTools.defaultFontPixelHeight * 0.5
-
-                            QGCLabel {
-                                visible: isFirmwareLog
-                                text: qsTr("Fields: %1  Parameters: %2  Events: %3")
-                                      .arg(logParser.plottableFields.length)
-                                      .arg(logParser.parameters.length)
-                                      .arg(logParser.events.length)
-                            }
-
-                            QGCLabel {
-                                visible: isFirmwareLog
-                                text: qsTr("Detected vehicle type: %1")
-                                      .arg(logParser.detectedVehicleType.length > 0
-                                           ? logParser.detectedVehicleType
-                                           : qsTr("Unknown"))
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                visible: logViewerController.sourceType === LogViewerController.TLog && replayController.link
-                                spacing: ScreenTools.defaultFontPixelWidth
-
-                                QGCButton {
-                                    text: replayController.isPlaying ? qsTr("Pause") : qsTr("Play")
-                                    onClicked: replayController.isPlaying = !replayController.isPlaying
-                                }
-
-                                QGCComboBox {
-                                    textRole: "text"
-                                    currentIndex: 3
-
-                                    model: ListModel {
-                                        ListElement { text: "0.1x"; value: 0.1 }
-                                        ListElement { text: "0.25x"; value: 0.25 }
-                                        ListElement { text: "0.5x"; value: 0.5 }
-                                        ListElement { text: "1x"; value: 1.0 }
-                                        ListElement { text: "2x"; value: 2.0 }
-                                        ListElement { text: "5x"; value: 5.0 }
-                                        ListElement { text: "10x"; value: 10.0 }
-                                    }
-
-                                    onActivated: (index) => replayController.playbackSpeed = model.get(index).value
-                                }
-
-                                QGCLabel { text: replayController.playheadTime }
-
-                                Slider {
-                                    id: replaySlider
-                                    Layout.fillWidth: true
-                                    from: 0
-                                    to: 100
-
-                                    property bool _internalUpdate: false
-
-                                    Connections {
-                                        target: replayController
-                                        function onPercentCompleteChanged(percentComplete) {
-                                            replaySlider._internalUpdate = true
-                                            replaySlider.value = percentComplete
-                                            replaySlider._internalUpdate = false
-                                        }
-                                    }
-
-                                    onValueChanged: {
-                                        if (!_internalUpdate) {
-                                            replayController.percentComplete = value
-                                        }
-                                    }
-                                }
-
-                                QGCLabel { text: replayController.totalTime }
-                            }
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                visible: isFirmwareLog
-                                spacing: ScreenTools.defaultFontPixelWidth * 0.5
-
-                                QGCLabel {
-                                    text: qsTr("Fields")
-                                    font.bold: true
-                                }
-
-                                QGCTextField {
-                                    id: fieldSearchField
-                                    Layout.fillWidth: true
-                                    textColor: qgcPal.textFieldText
-                                    placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
-                                    placeholderText: qsTr("Search fields")
-                                    onTextChanged: {
-                                        fieldSearchText = text
-                                        if (text.trim().length === 0) {
-                                            fieldSearchTimer.stop()
-                                            applyFieldFilter()
-                                        } else {
-                                            fieldSearchTimer.restart()
-                                        }
-                                    }
-                                    onAccepted: {
-                                        fieldSearchText = text
-                                        fieldSearchTimer.stop()
-                                        applyFieldFilter()
-                                    }
-                                }
-
-                                QGCButton {
-                                    text: qsTr("Clear Selected")
-                                    horizontalAlignment: Text.AlignHCenter
-                                    Layout.preferredHeight: fieldSearchField.implicitHeight
-                                    Layout.minimumHeight: fieldSearchField.implicitHeight
-                                    topPadding: 0
-                                    bottomPadding: 0
-                                    enabled: logViewerController.selectedFields.length > 0
-                                    onClicked: {
-                                        logViewerController.clearSelection()
-                                        applyFieldFilter()
-                                        logViewerChart.refreshBinChart()
-                                    }
-                                }
-                            }
-
-                            ScrollView {
-                                id: fieldsScroll
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                visible: isFirmwareLog
-                                clip: true
-
-                                ListView {
-                                    id: fieldsListView
-                                    anchors.fill: parent
-                                    model: filteredFieldRows
-                                    spacing: 0
-                                    clip: true
-                                    ScrollBar.vertical: ScrollBar { }
-
-                                    delegate: Item {
-                                        width: fieldsListView.width
-                                        height: (modelData.rowType === "group")
-                                                ? (groupRect.implicitHeight + (ScreenTools.defaultFontPixelHeight * 0.1))
-                                                : (fieldRow.implicitHeight + (ScreenTools.defaultFontPixelHeight * 0.1))
-
-                                        Item {
-                                            id: groupRect
-                                            visible: modelData.rowType === "group"
-                                            width: parent.width
-                                            implicitWidth: groupLayout.implicitWidth
-                                            implicitHeight: groupLayout.implicitHeight
-
-                                            RowLayout {
-                                                id: groupLayout
-                                                spacing: ScreenTools.defaultFontPixelWidth / 2
-
-                                                QGCColoredImage {
-                                                    Layout.preferredWidth: groupLabel.height * 0.5
-                                                    Layout.preferredHeight: groupLabel.height * 0.5
-                                                    source: "/qmlimages/arrow-down.png"
-                                                    color: qgcPal.text
-                                                    fillMode: Image.PreserveAspectFit
-                                                    rotation: (String(fieldSearchText).trim().length > 0 || isGroupExpanded(modelData.group)) ? 0 : -90
-                                                }
-
-                                                QGCLabel {
-                                                    id: groupLabel
-                                                    text: modelData.group;
-                                                    font.bold: true
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                onClicked: toggleGroupExpanded(modelData.group)
-                                            }
-                                        }
-
-                                        Item {
-                                            id: fieldRow
-                                            visible: modelData.rowType === "field"
-                                            width: parent.width
-                                            implicitHeight: fieldSlider.implicitHeight
-
-                                            QGCCheckBoxSlider {
-                                                id: fieldSlider
-                                                width: parent.width - ScreenTools.defaultFontPixelWidth * 1.5
-                                                checked: logViewerController.selectedFields.indexOf(modelData.fullName) !== -1
-                                                text: modelData.shortName ? String(modelData.shortName) : ""
-                                                onClicked: logViewerController.setFieldSelected(modelData.fullName, checked)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        logParser: logParser
+                        logViewerController: logViewerController
+                        onClearSelectedRequested: logViewerChart.refreshBinChart()
                     }
 
                     // Right panel: chart + MAVLink inspector
@@ -657,216 +413,19 @@ AnalyzePage {
                 }
 
                 // ---- Tab 2: Parameters ----
-                ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelHeight * 0.5
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: ScreenTools.defaultFontPixelWidth
-
-                        QGCTextField {
-                            id: parameterSearchField
-                            Layout.fillWidth: true
-                            textColor: qgcPal.textFieldText
-                            placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
-                            placeholderText: qsTr("Search parameters")
-
-                            onTextChanged: {
-                                parameterSearchText = text
-                                if (text.trim().length === 0) {
-                                    parameterSearchTimer.stop()
-                                    applyParameterFilter()
-                                } else {
-                                    parameterSearchTimer.restart()
-                                }
-                            }
-
-                            onAccepted: {
-                                parameterSearchText = text
-                                parameterSearchTimer.stop()
-                                applyParameterFilter()
-                            }
-                        }
-
-                        QGCCheckBoxSlider {
-                            id: showOnlyChangedCheckBox
-                            text: qsTr("Changed only")
-                            checked: showOnlyChangedParameters
-                            onToggled: {
-                                showOnlyChangedParameters = checked
-                                applyParameterFilter()
-                            }
-                        }
-                    }
-
-                    ScrollView {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        clip: true
-
-                        ListView {
-                            id: parametersListView
-                            anchors.fill: parent
-                            model: filteredParameters
-                            spacing: ScreenTools.defaultFontPixelHeight * 0.1
-                            clip: true
-                            ScrollBar.vertical: ScrollBar { }
-
-                            delegate: Rectangle {
-                                width: ListView.view.width
-                                height: _paramRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.4
-                                color: index % 2 === 0 ? qgcPal.windowShade : qgcPal.windowShadeDark
-                                radius: 2
-
-                                // Format value: use metadata decimalPlaces when available,
-                                // fall back to isFloat heuristic. Show enum label when applicable.
-                                readonly property string _formattedValue: {
-                                    const v = modelData.value
-                                    if (v === undefined || v === null) return qsTr("N/A")
-                                    const numV = Number(v)
-                                    // Enum: find matching label
-                                    const eStrs = modelData.enumStrings
-                                    const eVals = modelData.enumValues
-                                    if (eStrs && eStrs.length > 0) {
-                                        for (let ei = 0; ei < eVals.length; ei++) {
-                                            if (Number(eVals[ei]) === numV) {
-                                                return eStrs[ei] + " (" + Math.round(numV) + ")"
-                                            }
-                                        }
-                                    }
-                                    // Numeric: metadata decimalPlaces wins
-                                    const dp = (modelData.decimalPlaces !== undefined) ? modelData.decimalPlaces : -1
-                                    let formatted
-                                    if (dp >= 0) {
-                                        formatted = numV.toFixed(dp)
-                                    } else if (modelData.isFloat) {
-                                        formatted = numV.toFixed(6)
-                                    } else {
-                                        formatted = String(Math.round(numV))
-                                    }
-                                    const units = (modelData.units && modelData.units.length > 0) ? (" " + modelData.units) : ""
-                                    return formatted + units
-                                }
-
-                                readonly property string _defaultText: {
-                                    if (!modelData.hasDefault) return ""
-                                    const d = modelData.defaultValue
-                                    if (d === undefined || d === null) return ""
-                                    const numD = Number(d)
-                                    const dp = (modelData.decimalPlaces !== undefined) ? modelData.decimalPlaces : -1
-                                    let formatted
-                                    if (dp >= 0) {
-                                        formatted = numD.toFixed(dp)
-                                    } else if (modelData.isFloat) {
-                                        formatted = numD.toFixed(6)
-                                    } else {
-                                        formatted = String(Math.round(numD))
-                                    }
-                                    return qsTr(" (default: %1)").arg(formatted)
-                                }
-
-                                RowLayout {
-                                    id: _paramRow
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.margins: ScreenTools.defaultFontPixelWidth * 0.5
-                                    spacing: ScreenTools.defaultFontPixelWidth * 0.5
-
-                                    // Changed-from-default indicator dot
-                                    Rectangle {
-                                        visible: modelData.hasDefault && !modelData.isDefault
-                                        width: ScreenTools.defaultFontPixelHeight * 0.5
-                                        height: width
-                                        radius: width / 2
-                                        color: qgcPal.colorOrange
-                                        Layout.alignment: Qt.AlignVCenter
-                                    }
-
-                                    // Spacer to keep alignment when dot is hidden
-                                    Item {
-                                        visible: !(modelData.hasDefault && !modelData.isDefault)
-                                        width: ScreenTools.defaultFontPixelHeight * 0.5
-                                        height: width
-                                    }
-
-                                    QGCLabel {
-                                        text: modelData.name
-                                        font.bold: modelData.hasDefault && !modelData.isDefault
-                                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 22
-                                        elide: Text.ElideRight
-                                    }
-
-                                    QGCLabel {
-                                        text: _formattedValue
-                                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 14
-                                        horizontalAlignment: Text.AlignRight
-                                    }
-
-                                    QGCLabel {
-                                        text: _defaultText
-                                        color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.6)
-                                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 16
-                                        elide: Text.ElideRight
-                                    }
-
-                                    QGCLabel {
-                                        text: modelData.shortDescription ? String(modelData.shortDescription) : ""
-                                        color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.6)
-                                        Layout.fillWidth: true
-                                        elide: Text.ElideRight
-                                    }
-                                }
-                            }
-                        }
-                    }
+                LogViewerParametersTab {
+                    id: _parametersTab
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    logParser: logParser
                 }
 
                 // ---- Tab 3: Messages ----
-                ScrollView {
+                LogViewerMessagesTab {
+                    id: _messagesTab
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    clip: true
-
-                    ListView {
-                        id: messagesListView
-                        anchors.fill: parent
-                        model: logParser.messages
-                        spacing: ScreenTools.defaultFontPixelHeight * 0.2
-                        clip: true
-                        ScrollBar.vertical: ScrollBar { }
-
-                        delegate: Rectangle {
-                            width: ListView.view.width
-                            height: _msgRow.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.4
-                            color: index % 2 === 0 ? qgcPal.windowShade : qgcPal.windowShadeDark
-                            radius: 2
-
-                            RowLayout {
-                                id: _msgRow
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.margins: ScreenTools.defaultFontPixelWidth * 0.5
-                                spacing: ScreenTools.defaultFontPixelWidth * 0.5
-
-                                QGCLabel {
-                                    readonly property double _t: Number(modelData.time)
-                                    text: (isNaN(_t) || _t < 0) ? "" : _t.toFixed(3) + "s"
-                                    color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.6)
-                                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 10
-                                    horizontalAlignment: Text.AlignRight
-                                }
-
-                                QGCLabel {
-                                    text: String(modelData.text)
-                                    Layout.fillWidth: true
-                                    wrapMode: Text.WordWrap
-                                    maximumLineCount: 3
-                                }
-                            }
-                        }
-                    }
+                    logParser: logParser
                 }
             }
 
@@ -928,20 +487,6 @@ AnalyzePage {
                 interval: 50
                 repeat: false
                 onTriggered: _executePendingBinParse()
-            }
-
-            Timer {
-                id: fieldSearchTimer
-                interval: 250
-                repeat: false
-                onTriggered: applyFieldFilter()
-            }
-
-            Timer {
-                id: parameterSearchTimer
-                interval: 250
-                repeat: false
-                onTriggered: applyParameterFilter()
             }
         }
     }

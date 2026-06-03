@@ -41,6 +41,9 @@ qt_add_qml_module(LogViewerModule
     QML_FILES
         LogViewerAltChart.qml
         LogViewerChart.qml
+        LogViewerFieldsPanel.qml
+        LogViewerMessagesTab.qml
+        LogViewerParametersTab.qml
     NO_PLUGIN
 )
 
