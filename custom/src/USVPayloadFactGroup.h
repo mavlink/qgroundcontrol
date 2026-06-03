@@ -34,6 +34,11 @@ class USVPayloadFactGroup : public FactGroup
     Q_PROPERTY(Fact *referenceVoltage READ referenceVoltage CONSTANT)
     Q_PROPERTY(Fact *baselineVoltage  READ baselineVoltage  CONSTANT)
     Q_PROPERTY(Fact *spectrometerValid READ spectrometerValid CONSTANT)
+    Q_PROPERTY(Fact *jetsonTemp READ jetsonTemp CONSTANT)
+    Q_PROPERTY(Fact *detectorTemp READ detectorTemp CONSTANT)
+    Q_PROPERTY(Fact *jetsonCpu READ jetsonCpu CONSTANT)
+    Q_PROPERTY(Fact *jetsonMemory READ jetsonMemory CONSTANT)
+    Q_PROPERTY(Fact *detectorHeap READ detectorHeap CONSTANT)
 
     // 通信诊断属性
     Q_PROPERTY(int rxMsgTotal     READ rxMsgTotal     NOTIFY diagnosticsChanged)
@@ -65,6 +70,11 @@ public:
     Fact *referenceVoltage() { return &_referenceVoltageFact; }
     Fact *baselineVoltage()  { return &_baselineVoltageFact; }
     Fact *spectrometerValid() { return &_spectrometerValidFact; }
+    Fact *jetsonTemp() { return &_jetsonTempFact; }
+    Fact *detectorTemp() { return &_detectorTempFact; }
+    Fact *jetsonCpu() { return &_jetsonCpuFact; }
+    Fact *jetsonMemory() { return &_jetsonMemoryFact; }
+    Fact *detectorHeap() { return &_detectorHeapFact; }
 
     // 诊断 getters
     int rxMsgTotal()   const { return _rxMsgTotal; }
@@ -108,6 +118,11 @@ private:
     Fact _referenceVoltageFact;
     Fact _baselineVoltageFact;
     Fact _spectrometerValidFact;
+    Fact _jetsonTempFact;
+    Fact _detectorTempFact;
+    Fact _jetsonCpuFact;
+    Fact _jetsonMemoryFact;
+    Fact _detectorHeapFact;
     QTimer _timeoutTimer;
     static constexpr int _timeoutMsecs = 5000;
 
@@ -120,6 +135,11 @@ private:
     static constexpr const char *_referenceVoltageName = "referenceVoltage";
     static constexpr const char *_baselineVoltageName  = "baselineVoltage";
     static constexpr const char *_spectrometerValidName = "spectrometerValid";
+    static constexpr const char *_jetsonTempName = "jetsonTemp";
+    static constexpr const char *_detectorTempName = "detectorTemp";
+    static constexpr const char *_jetsonCpuName = "jetsonCpu";
+    static constexpr const char *_jetsonMemoryName = "jetsonMemory";
+    static constexpr const char *_detectorHeapName = "detectorHeap";
 
     // 通信诊断计数
     int _rxMsgTotal  = 0;

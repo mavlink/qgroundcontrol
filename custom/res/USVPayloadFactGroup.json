@@ -141,6 +141,46 @@
     "enumStrings":      "No,Yes",
     "enumValues":       "0,1",
     "default":          0
+},
+{
+    "name":             "jetsonTemp",
+    "shortDesc":        "Jetson temperature",
+    "type":             "float",
+    "units":            "degC",
+    "decimalPlaces":    1,
+    "default":          -1
+},
+{
+    "name":             "detectorTemp",
+    "shortDesc":        "Detector temperature",
+    "type":             "float",
+    "units":            "degC",
+    "decimalPlaces":    1,
+    "default":          -1
+},
+{
+    "name":             "jetsonCpu",
+    "shortDesc":        "Jetson CPU",
+    "type":             "float",
+    "units":            "%",
+    "decimalPlaces":    1,
+    "default":          -1
+},
+{
+    "name":             "jetsonMemory",
+    "shortDesc":        "Jetson memory",
+    "type":             "float",
+    "units":            "%",
+    "decimalPlaces":    1,
+    "default":          -1
+},
+{
+    "name":             "detectorHeap",
+    "shortDesc":        "Detector heap free",
+    "type":             "float",
+    "units":            "%",
+    "decimalPlaces":    1,
+    "default":          -1
 }
 ]
 }

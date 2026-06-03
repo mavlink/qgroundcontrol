@@ -12,10 +12,20 @@ class USVQGCContractTests(unittest.TestCase):
         source = (REPO_ROOT / "custom" / "src" / "USVPayloadFactGroup.cc").read_text(encoding="utf-8")
         metadata = (REPO_ROOT / "custom" / "res" / "USVPayloadFactGroup.json").read_text(encoding="utf-8")
 
-        for fact_name in ("baselineSet", "referenceVoltage", "baselineVoltage", "spectrometerValid"):
+        for fact_name in (
+            "baselineSet",
+            "referenceVoltage",
+            "baselineVoltage",
+            "spectrometerValid",
+            "jetsonTemp",
+            "detectorTemp",
+            "jetsonCpu",
+            "jetsonMemory",
+            "detectorHeap",
+        ):
             self.assertIn(fact_name, header)
             self.assertIn(fact_name, metadata)
-        for mav_name in ("USV_BSET", "USV_REF", "USV_BASE", "USV_VLD"):
+        for mav_name in ("USV_BSET", "USV_REF", "USV_BASE", "USV_VLD", "USV_JTMP", "USV_ETMP", "USV_JCPU", "USV_JMEM", "USV_EHEAP"):
             self.assertIn(mav_name, source)
 
     def test_ui_exposes_detector_baseline_sampling_and_survey_workflow(self):
@@ -102,7 +112,7 @@ class USVQGCContractTests(unittest.TestCase):
         self.assertIn("#include <QtQml/QQmlEngine>", source)
         self.assertIn("USVPayloadFactGroup::_markFactsCppOwned()", source)
         self.assertIn("_markFactsCppOwned();", source)
-        self.assertIn("const std::array<Fact*, 18> facts", source)
+        self.assertIn("const std::array<Fact*, 23> facts", source)
         self.assertIn("QQmlEngine::setObjectOwnership", source)
         self.assertIn("QQmlEngine::CppOwnership", source)
 
@@ -125,6 +135,11 @@ class USVQGCContractTests(unittest.TestCase):
             "_referenceVoltageFact",
             "_baselineVoltageFact",
             "_spectrometerValidFact",
+            "_jetsonTempFact",
+            "_detectorTempFact",
+            "_jetsonCpuFact",
+            "_jetsonMemoryFact",
+            "_detectorHeapFact",
         ):
             self.assertIn(f"&{fact_member}", source)
 
