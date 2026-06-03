@@ -1,3 +1,9 @@
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <limits>
+
 #include "Fact.h"
 #include "FactValueSliderListModel.h"
 #include "AppMessages.h"
@@ -427,7 +433,40 @@ QString Fact::invalidValueString(int decimalPlaces) const {
 
 QString Fact::rawValueStringFullPrecision() const
 {
-    return _variantToString(rawValue(), 18);
+    if (type() == FactMetaData::valueTypeFloat) {
+        const float fValue = rawValue().toFloat();
+        if (std::isnan(fValue)) {
+            return invalidValueString(0);
+        }
+        // Find the shortest decimal string that round-trips back to the same float bits.
+        // snprintf with "%.*g" formats to p significant digits; strtof checks the round-trip.
+        // TODO: replace with std::to_chars once macOS min target >= 13.3
+        char buf[32];
+        for (int p = 1; p <= std::numeric_limits<float>::max_digits10; ++p) {
+            std::snprintf(buf, sizeof(buf), "%.*g", p, static_cast<double>(fValue));
+            if (std::strtof(buf, nullptr) == fValue) {
+                break;
+            }
+        }
+        if (std::strcmp(buf, "-0") == 0) {
+            buf[0] = '0';
+            buf[1] = '\0';
+        }
+        return QString::fromLatin1(buf);
+    } else if (type() == FactMetaData::valueTypeDouble) {
+        const double dValue = rawValue().toDouble();
+        if (std::isnan(dValue)) {
+            return invalidValueString(0);
+        }
+        // TODO: replace with std::to_chars once macOS min target >= 13.3
+        QString result = QString::number(dValue, 'g', QLocale::FloatingPointShortest);
+        if (result == QStringLiteral("-0")) {
+            result = QStringLiteral("0");
+        }
+        return result;
+    } else {
+        return _variantToString(rawValue(), 0);
+    }
 }
 
 QString Fact::rawValueString() const

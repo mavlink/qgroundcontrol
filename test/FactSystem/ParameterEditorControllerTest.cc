@@ -3,6 +3,7 @@
 #include <QtCore/QString>
 #include <QtCore/QRegularExpression>
 #include <QtTest/QTest>
+#include <QtTest/QSignalSpy>
 
 #include "ParameterEditorController.h"
 #include "QmlObjectListModel.h"
@@ -25,15 +26,20 @@ static const char* kQGCParamsNoDiff =
     "# Vehicle-Id Component-Id Name Value Type\n"
     "1\t1\tSYS_AUTOSTART\t4001\t6\n";
 
-// Mission Planner space-delimited file with same diff
+// Mission Planner 2-column file with same diff
 static const char* kMPParamsWithDiff =
     "# Mission Planner parameter file\n"
-    "1 1 SYS_AUTOSTART 4002 6\n";
+    "SYS_AUTOSTART,4002\n";
 
-// Mission Planner space-delimited file matching vehicle default
+// Mission Planner 2-column file matching vehicle default
 static const char* kMPParamsNoDiff =
     "# Mission Planner parameter file\n"
-    "1 1 SYS_AUTOSTART 4001 6\n";
+    "SYS_AUTOSTART,4001\n";
+
+// Mission Planner 2-column file with a parameter not on the vehicle
+static const char* kMPParamsMissingParam =
+    "# Mission Planner parameter file\n"
+    "NONEXISTENT_PARAM_XYZ,1\n";
 
 // Garbage — no parseable lines
 static const char* kBadFormatParams =
@@ -143,4 +149,26 @@ void ParameterEditorControllerTest::_buildDiffMissingOnVehicle()
     QVERIFY(diff);
     QVERIFY(diff->noVehicleValue);
     QCOMPARE(diff->name, QStringLiteral("NONEXISTENT_PARAM_XYZ"));
+}
+
+void ParameterEditorControllerTest::_buildDiffMPMissingParam()
+{
+    TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.param"));
+    QVERIFY(tempFile.isValid());
+    QVERIFY(tempFile.write(QByteArray(kMPParamsMissingParam)));
+    QVERIFY(tempFile.file()->flush());
+
+    ParameterEditorController controller;
+    QSignalSpy missingSpy(&controller, &ParameterEditorController::missingParamsFromFile);
+    const bool result = controller.buildDiffFromFile(tempFile.path());
+
+    // File had a parseable line (parsedLineCount > 0) → returns true
+    QVERIFY(result);
+    // Unknown MP param is skipped — diff list stays empty
+    QCOMPARE(controller.diffList()->count(), 0);
+    // Signal emitted once with the missing param name
+    QCOMPARE(missingSpy.count(), 1);
+    const QStringList missingParams = missingSpy.at(0).at(0).toStringList();
+    QCOMPARE(missingParams.count(), 1);
+    QCOMPARE(missingParams.at(0), QStringLiteral("NONEXISTENT_PARAM_XYZ"));
 }
