@@ -227,7 +227,7 @@ Item {
 
             axisX: ValueAxis {
                 id: _xAxis
-                titleText: qsTr("Time (s)")
+                titleText: (logParser.startTime && !isNaN(logParser.startTime.getTime()) && logParser.startTime.getTime() > 0) ? qsTr("Time (UTC)") : qsTr("Time (s)")
                 min: 0
                 max: 1
             }
@@ -376,7 +376,14 @@ Item {
 
                 // Line 2: time
                 QGCLabel {
-                    text: qsTr("t = %1 s").arg(_markerXValue.toFixed(3))
+                    text: {
+                        const startTime = logParser.startTime
+                        if (startTime && !isNaN(startTime.getTime()) && startTime.getTime() > 0) {
+                            const d = new Date(startTime.getTime() + _markerXValue * 1000)
+                            return Qt.formatDateTime(d, "yyyy-MM-dd HH:mm:ss.zzz")
+                        }
+                        return qsTr("t = %1 s").arg(_markerXValue.toFixed(3))
+                    }
                 }
 
                 // Line 3: Current / Min / Max

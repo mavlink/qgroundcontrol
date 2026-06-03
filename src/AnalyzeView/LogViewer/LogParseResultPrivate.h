@@ -4,6 +4,7 @@
 // Do NOT include this header from any public-facing header.
 
 #include <QtCore/QHash>
+#include <QtCore/QDateTime>
 #include <QtCore/QPointF>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -30,4 +31,5 @@ struct LogParseResult {
     SourceType sourceType = SourceType::Unknown;
     int firmwareMajorVersion = -1;
     int firmwareMinorVersion = -1;
+    QDateTime startTime;
 };

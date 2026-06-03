@@ -9,6 +9,7 @@
 #include <QtCore/QVariantList>
 #include <QtCore/QVector>
 #include <QtCore/QtGlobal>
+#include <QtCore/QDateTime>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 /// \brief Unified log file parser for both DataFlash (.bin/.log) and PX4 ULog (.ulg) files.
@@ -43,6 +44,7 @@ class LogFileParser : public QObject
     Q_PROPERTY(double       minTimestamp        READ minTimestamp        NOTIFY timeRangeChanged)
     Q_PROPERTY(double       maxTimestamp        READ maxTimestamp        NOTIFY timeRangeChanged)
     Q_PROPERTY(int          sampleCount         READ sampleCount         NOTIFY sampleCountChanged)
+    Q_PROPERTY(QDateTime    startTime           READ startTime           NOTIFY startTimeChanged)
 
 public:
     explicit LogFileParser(QObject *parent = nullptr);
@@ -61,6 +63,7 @@ public:
     double minTimestamp() const { return _minTimestamp; }
     double maxTimestamp() const { return _maxTimestamp; }
     int sampleCount() const { return _sampleCount; }
+    QDateTime startTime() const { return _startTime; }
 
     Q_INVOKABLE bool parseFile(const QString &filePath);
     Q_INVOKABLE void parseFileAsync(const QString &filePath);
@@ -100,6 +103,7 @@ signals:
     void detectedVehicleTypeChanged();
     void timeRangeChanged();
     void sampleCountChanged();
+    void startTimeChanged();
     void parseFileFinished(const QString &filePath, bool ok, const QString &errorMessage);
 
 private:
@@ -121,6 +125,7 @@ private:
     double _maxTimestamp = -1.0;
     int _sampleCount = 0;
     quint64 _parseRequestId = 0;
+    QDateTime _startTime;
 
     // Cached GPS field names, set by gpsPath() when a valid candidate is found.
     mutable QString _gpsLatField;

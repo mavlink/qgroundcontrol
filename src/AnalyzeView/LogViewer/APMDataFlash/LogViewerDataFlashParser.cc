@@ -9,11 +9,32 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSet>
 #include <QtCore/QVariantMap>
+#include <QtCore/QDateTime>
+#include <QtCore/QTimeZone>
 
 #include <algorithm>
 #include <limits>
 
 namespace {
+
+int _leapSecondsTAI(int year, int month)
+{
+    const int yyyymm = year * 100 + month;
+    if (yyyymm >= 201701) return 37;
+    if (yyyymm >= 201507) return 36;
+    if (yyyymm >= 201207) return 35;
+    if (yyyymm >= 200901) return 34;
+    if (yyyymm >= 200601) return 33;
+    if (yyyymm >= 199901) return 32;
+    if (yyyymm >= 199707) return 31;
+    if (yyyymm >= 199601) return 30;
+    return 0;
+}
+
+int _leapSecondsGPS(int year, int month)
+{
+    return _leapSecondsTAI(year, month) - 19;
+}
 
 QString _vehicleTypeFromMessageText(const QString &messageText)
 {
@@ -299,6 +320,23 @@ LogParseResult parseFile(const QString &filePath)
         if (timestampSecs >= 0.0) {
             if (minTimestampSecs < 0.0 || timestampSecs < minTimestampSecs) { minTimestampSecs = timestampSecs; }
             maxTimestampSecs = std::max(maxTimestampSecs, timestampSecs);
+        }
+
+        if ((fmt.name == QStringLiteral("GPS") || fmt.name == QStringLiteral("GPS2")) && result.startTime.isNull()) {
+            if (values.contains(QStringLiteral("GWk")) && values.contains(QStringLiteral("GMS"))) {
+                const int gwk = values.value(QStringLiteral("GWk")).toInt();
+                const int gms = values.value(QStringLiteral("GMS")).toInt();
+                if (gwk > 2000 && timestampSecs >= 0.0) {
+                    const double gpsSecs = 315964800.0 + (7 * 24 * 60 * 60) * static_cast<double>(gwk) + (gms / 1000.0);
+                    const QDateTime gpsTime = QDateTime::fromMSecsSinceEpoch(static_cast<qint64>(gpsSecs * 1000.0), QTimeZone::utc());
+                    const int year = gpsTime.date().year();
+                    const int month = gpsTime.date().month();
+                    const int leapSecs = _leapSecondsGPS(year, month);
+                    const double utcSecs = gpsSecs - leapSecs;
+                    const qint64 startMSecs = static_cast<qint64>((utcSecs - timestampSecs) * 1000.0);
+                    result.startTime = QDateTime::fromMSecsSinceEpoch(startMSecs, QTimeZone::utc());
+                }
+            }
         }
 
         if (fmt.name == kPARM) {

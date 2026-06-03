@@ -146,6 +146,10 @@ void LogFileParser::_applyResult(const LogParseResult &result)
         emit timeRangeChanged();
     }
     emit sampleCountChanged();
+    if (_startTime != result.startTime) {
+        _startTime = result.startTime;
+        emit startTimeChanged();
+    }
 
     _parsed = true;
     emit parsedChanged();
@@ -177,6 +181,10 @@ void LogFileParser::clear()
         emit timeRangeChanged();
     }
     if (_sampleCount != 0) { _sampleCount = 0; emit sampleCountChanged(); }
+    if (!_startTime.isNull()) {
+        _startTime = QDateTime();
+        emit startTimeChanged();
+    }
 }
 
 QVariantList LogFileParser::fieldSamples(const QString &fieldName) const
