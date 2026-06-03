@@ -35,6 +35,11 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     , _referenceVoltageFact(0, QStringLiteral("referenceVoltage"), FactMetaData::valueTypeFloat)
     , _baselineVoltageFact (0, QStringLiteral("baselineVoltage"),  FactMetaData::valueTypeFloat)
     , _spectrometerValidFact(0, QStringLiteral("spectrometerValid"), FactMetaData::valueTypeUint32)
+    , _jetsonTempFact(0, QStringLiteral("jetsonTemp"), FactMetaData::valueTypeFloat)
+    , _detectorTempFact(0, QStringLiteral("detectorTemp"), FactMetaData::valueTypeFloat)
+    , _jetsonCpuFact(0, QStringLiteral("jetsonCpu"), FactMetaData::valueTypeFloat)
+    , _jetsonMemoryFact(0, QStringLiteral("jetsonMemory"), FactMetaData::valueTypeFloat)
+    , _detectorHeapFact(0, QStringLiteral("detectorHeap"), FactMetaData::valueTypeFloat)
 {
     _addFact(&_voltageFact);
     _addFact(&_absorbanceFact);
@@ -54,6 +59,11 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
     _addFact(&_referenceVoltageFact, _referenceVoltageName);
     _addFact(&_baselineVoltageFact,  _baselineVoltageName);
     _addFact(&_spectrometerValidFact, _spectrometerValidName);
+    _addFact(&_jetsonTempFact, _jetsonTempName);
+    _addFact(&_detectorTempFact, _detectorTempName);
+    _addFact(&_jetsonCpuFact, _jetsonCpuName);
+    _addFact(&_jetsonMemoryFact, _jetsonMemoryName);
+    _addFact(&_detectorHeapFact, _detectorHeapName);
     _markFactsCppOwned();
 
     _timeoutTimer.setSingleShot(true);
@@ -65,7 +75,7 @@ USVPayloadFactGroup::USVPayloadFactGroup(QObject *parent)
 
 void USVPayloadFactGroup::_markFactsCppOwned()
 {
-    const std::array<Fact*, 18> facts = {
+    const std::array<Fact*, 23> facts = {
         &_voltageFact,
         &_absorbanceFact,
         &_pumpXFact,
@@ -84,6 +94,11 @@ void USVPayloadFactGroup::_markFactsCppOwned()
         &_referenceVoltageFact,
         &_baselineVoltageFact,
         &_spectrometerValidFact,
+        &_jetsonTempFact,
+        &_detectorTempFact,
+        &_jetsonCpuFact,
+        &_jetsonMemoryFact,
+        &_detectorHeapFact,
     };
 
     for (Fact *fact : facts) {
@@ -179,6 +194,16 @@ void USVPayloadFactGroup::_handleNamedValueFloat(const mavlink_message_t &messag
         _baselineVoltageFact.setRawValue(namedValue.value); handled = true;
     } else if (name == QLatin1String("USV_VLD")) {
         _spectrometerValidFact.setRawValue(QVariant::fromValue(static_cast<uint32_t>(namedValue.value))); handled = true;
+    } else if (name == QLatin1String("USV_JTMP")) {
+        _jetsonTempFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_ETMP")) {
+        _detectorTempFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_JCPU")) {
+        _jetsonCpuFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_JMEM")) {
+        _jetsonMemoryFact.setRawValue(namedValue.value); handled = true;
+    } else if (name == QLatin1String("USV_EHEAP")) {
+        _detectorHeapFact.setRawValue(namedValue.value); handled = true;
     }
 
     if (handled) {

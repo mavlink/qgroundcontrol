@@ -66,6 +66,11 @@ Rectangle {
     property var _referenceVoltageFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.referenceVoltage") : null
     property var _baselineVoltageFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.baselineVoltage") : null
     property var _spectrometerValidFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.spectrometerValid") : null
+    property var _jetsonTempFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.jetsonTemp") : null
+    property var _detectorTempFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.detectorTemp") : null
+    property var _jetsonCpuFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.jetsonCpu") : null
+    property var _jetsonMemoryFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.jetsonMemory") : null
+    property var _detectorHeapFact: _hasPayloadGroup ? vehicle.getFact("usvPayload.detectorHeap") : null
     property var _payloadGroup: _hasPayloadGroup ? vehicle.getFactGroup("usvPayload") : null
 
     property int payloadStatus: _statusFact ? _statusFact.value : _stIdle
@@ -136,6 +141,13 @@ Rectangle {
 
     function _pumpString(fact) {
         return (_linkOk && fact && fact.value !== undefined) ? Number(fact.value).toFixed(1) + "\u00B0" : "--"
+    }
+
+    function _healthString(fact, suffix) {
+        if (!_linkOk || !fact || fact.value === undefined || Number(fact.value) < 0) {
+            return "--"
+        }
+        return Number(fact.value).toFixed(1) + suffix
     }
 
     function _send(cmdId, param1) {
@@ -525,6 +537,16 @@ Rectangle {
                         QGCLabel { text: _payloadGroup ? Number(_payloadGroup.latencyMs).toFixed(0) + " ms" : "--"; font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
                         QGCLabel { text: qsTr("数据包"); opacity: 0.5; font.pointSize: ScreenTools.smallFontPointSize }
                         QGCLabel { text: _packetCountFact ? _packetCountFact.valueString : "0"; font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: qsTr("Jetson 温度"); opacity: 0.5; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: _healthString(_jetsonTempFact, " \u00B0C"); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: qsTr("ESP32 温度"); opacity: 0.5; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: _healthString(_detectorTempFact, " \u00B0C"); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: qsTr("Jetson CPU"); opacity: 0.5; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: _healthString(_jetsonCpuFact, "%"); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: qsTr("Jetson 内存"); opacity: 0.5; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: _healthString(_jetsonMemoryFact, "%"); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: qsTr("ESP32 Heap"); opacity: 0.5; font.pointSize: ScreenTools.smallFontPointSize }
+                        QGCLabel { text: _healthString(_detectorHeapFact, "%"); font.bold: true; font.pointSize: ScreenTools.smallFontPointSize }
                     }
                 }
             }
