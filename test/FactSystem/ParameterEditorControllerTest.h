@@ -13,4 +13,5 @@ private slots:
     void _buildDiffNoDifferencesMP();
     void _buildDiffBadFormat();
     void _buildDiffMissingOnVehicle();
+    void _buildDiffMPMissingParam();
 };
