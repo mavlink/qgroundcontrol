@@ -10,11 +10,6 @@ qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "g
 build_type := env_var_or_default("BUILD_TYPE", "Debug")
 build_dir := "build"
 
-# Pin CMake's Python to the workspace .venv when present so CMake-invoked
-# generators (settings_qml/config_qml use jinja2) see the deps they need.
-# Empty when no .venv → CMake falls back to system python.
-venv_python := `if [ -x .venv/bin/python ]; then echo "$PWD/.venv/bin/python"; elif [ -x .venv/Scripts/python.exe ]; then echo "$PWD/.venv/Scripts/python.exe"; else echo ""; fi`
-
 # Default: show available commands
 default:
     @just --list --unsorted
@@ -40,8 +35,7 @@ submodules:
 configure: submodules
     {{qt_dir}}/bin/qt-cmake -B {{build_dir}} -G Ninja \
         -DCMAKE_BUILD_TYPE={{build_type}} \
-        -DQGC_BUILD_TESTING=ON \
-        {{ if venv_python != "" { "-DPython3_EXECUTABLE=" + venv_python } else { "" } }}
+        -DQGC_BUILD_TESTING=ON
 
 # Build the project
 build:
@@ -51,8 +45,7 @@ build:
 release:
     {{qt_dir}}/bin/qt-cmake -B {{build_dir}} -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DQGC_BUILD_TESTING=OFF \
-        {{ if venv_python != "" { "-DPython3_EXECUTABLE=" + venv_python } else { "" } }}
+        -DQGC_BUILD_TESTING=OFF
     cmake --build {{build_dir}} --config Release --parallel
 
 # Clean build directory (forwards to tools/clean.py; pass --cache, --all, --dry-run)

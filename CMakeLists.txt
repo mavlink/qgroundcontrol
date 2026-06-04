@@ -125,6 +125,11 @@ include(CPM)
 include(Toolchain)
 
 # ----------------------------------------------------------------------------
+# Python interpreter for code generators (prefer workspace .venv)
+# ----------------------------------------------------------------------------
+include(PythonVenv)
+
+# ----------------------------------------------------------------------------
 # Output Directories
 # ----------------------------------------------------------------------------
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>/lib")

@@ -183,6 +183,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Groups:
+  scripts   Code-generator deps (defusedxml, httpx, jinja2)
   precommit Pre-commit hooks only
   test      Python test tools (pytest, jinja2, pyyaml)
   ci        Pre-commit hooks, meson, ninja (default)
