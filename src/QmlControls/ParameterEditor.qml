@@ -26,6 +26,14 @@ Item {
         id: controller
     }
 
+    Connections {
+        target: controller
+        function onMissingParamsFromFile(missingParams) {
+            QGroundControl.showMessageDialog(_root, qsTr("Missing Parameters"),
+                qsTr("The following parameters from the file were not found on the vehicle and were skipped: %1").arg(missingParams.join("\n")))
+        }
+    }
+
     Timer {
         id:         clearTimer
         interval:   100;

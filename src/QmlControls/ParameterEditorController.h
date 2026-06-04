@@ -174,6 +174,7 @@ signals:
     void diffOtherVehicleChanged        (bool diffOtherVehicle);
     void diffMultipleComponentsChanged  (bool diffMultipleComponents);
     void parametersChanged              (void);
+    void missingParamsFromFile          (const QStringList& missingParams);
 
 private slots:
     void _currentCategoryChanged(void);
@@ -201,6 +202,7 @@ private:
     bool                        _hideReadOnly           = false;
     bool                        _diffOtherVehicle       = false;
     bool                        _diffMultipleComponents = false;
+    QStringList                 _diffMissingParams;
     QSet<QString>               _favoriteNames;
 
     QmlObjectListModel          _categories;
