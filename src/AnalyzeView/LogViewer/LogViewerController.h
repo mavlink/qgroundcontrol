@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QSet>
 #include <QtCore/QString>
@@ -50,8 +51,6 @@ public:
     /// For selected fields, QML assigns index-based colors from its own palette.
     Q_INVOKABLE QString fieldColor(const QString &fieldName) const;
     Q_INVOKABLE QString eventColor(const QString &eventType) const;
-    Q_INVOKABLE QString modeColor(const QString &modeName) const;
-    Q_INVOKABLE QStringList modeLegendEntries(const QVariantList &modeSegments) const;
 
 signals:
     void sourceTypeChanged();

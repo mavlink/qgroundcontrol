@@ -8,5 +8,5 @@
 // Returns a filled LogParseResult on success (result.ok == true) or an error
 // message in result.errorMessage on failure.
 namespace ULogParser {
-    LogParseResult parseFile(const QString &filePath);
+    LogParseResult parseFile(const QString &filePath, const ProgressCallback &progressCallback = nullptr, const CancelToken &cancelToken = nullptr);
 }

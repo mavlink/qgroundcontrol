@@ -40,7 +40,9 @@ qt_add_qml_module(LogViewerModule
     RESOURCE_PREFIX /qml
     QML_FILES
         LogViewerAltChart.qml
+        LogViewerBaseChart.qml
         LogViewerChart.qml
+        LogViewerCursorPopup.qml
         LogViewerFieldsPanel.qml
         LogViewerMessagesTab.qml
         LogViewerParametersTab.qml

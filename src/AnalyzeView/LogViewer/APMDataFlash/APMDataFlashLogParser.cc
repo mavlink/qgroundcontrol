@@ -599,8 +599,8 @@ bool APMDataFlashLogParser::parseFile(const QString &filePath)
     }
     emit sampleCountChanged();
 
-    _parsed = true;
-    emit parsedChanged();
+    _parseComplete = true;
+    emit parseCompleteChanged();
     qCDebug(APMDataFlashLogParserLog) << "Parsed fields" << _availableFields.count() << "parameters" << _parameters.count() << "events" << _events.count();
     return true;
 }
@@ -649,8 +649,8 @@ void APMDataFlashLogParser::parseFileAsync(const QString &filePath)
         }
         emit sampleCountChanged();
 
-        _parsed = true;
-        emit parsedChanged();
+        _parseComplete = true;
+        emit parseCompleteChanged();
         emit parseFileFinished(filePath, true, QString());
     });
 
@@ -661,10 +661,10 @@ void APMDataFlashLogParser::parseFileAsync(const QString &filePath)
 
 void APMDataFlashLogParser::clear()
 {
-    const bool oldParsed = _parsed;
-    _parsed = false;
-    if (oldParsed) {
-        emit parsedChanged();
+    const bool oldParseComplete = _parseComplete;
+    _parseComplete = false;
+    if (oldParseComplete) {
+        emit parseCompleteChanged();
     }
 
     if (!_parseError.isEmpty()) {

@@ -17,9 +17,9 @@ ColumnLayout {
     // -------------------------------------------------------------------------
     // Internal state
     // -------------------------------------------------------------------------
-    property string _parameterSearchText:       ""
-    property bool   _showOnlyChangedParameters: true
-    property var    _filteredParameters:        []
+    property string _parameterSearchText: ""
+    property bool _showOnlyChangedParameters: true
+    property var _filteredParameters: []
 
     QGCPalette { id: qgcPal }
 

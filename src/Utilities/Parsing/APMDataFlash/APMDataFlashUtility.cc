@@ -274,7 +274,8 @@ bool parseFmtMessages(const char *data, qint64 size, QMap<uint8_t, MessageFormat
 
 int iterateMessages(const char *data, qint64 size,
                     const QMap<uint8_t, MessageFormat> &formats,
-                    const MessageCallback &callback)
+                    const MessageCallback &callback,
+                    const std::function<void(float)> &progressCallback)
 {
     int count = 0;
     qint64 pos = 0;
@@ -307,6 +308,10 @@ int iterateMessages(const char *data, qint64 size,
         }
 
         pos += payloadSize;
+
+        if (progressCallback && (count % 1000 == 0)) {
+            progressCallback(static_cast<float>(pos) / static_cast<float>(size));
+        }
     }
 
     return count;
