@@ -9,6 +9,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QFileInfo>
 #include <QtCore/QFutureWatcher>
+#include <QtCore/QPointer>
 
 #include <algorithm>
 #include <cmath>
@@ -18,16 +19,16 @@ QGC_LOGGING_CATEGORY(LogFileParserLog, "AnalyzeView.LogFileParser")
 
 namespace {
 
-LogParseResult _parseFile(const QString &filePath)
+LogParseResult _parseFile(const QString &filePath, const ProgressCallback &progressCallback = nullptr, const CancelToken &cancelToken = nullptr)
 {
     const QString suffix = QFileInfo(filePath).suffix().toLower();
 
     if (suffix == QStringLiteral("bin") || suffix == QStringLiteral("log")) {
-        return DataFlashParser::parseFile(filePath);
+        return DataFlashParser::parseFile(filePath, progressCallback, cancelToken);
     }
 
     if (suffix == QStringLiteral("ulg")) {
-        return ULogParser::parseFile(filePath);
+        return ULogParser::parseFile(filePath, progressCallback, cancelToken);
     }
 
     const QString fileTypeDescription = suffix.isEmpty()
@@ -74,10 +75,26 @@ bool LogFileParser::parseFile(const QString &filePath)
     return true;
 }
 
-void LogFileParser::parseFileAsync(const QString &filePath)
+void LogFileParser::startParsingAsync(const QString &filePath)
 {
+    clear();  // cancels any in-flight parse, resets data
+
+    _cancelToken = std::make_shared<std::atomic<bool>>(false);
     const quint64 requestId = ++_parseRequestId;
-    clear();
+    _parsing = true;
+    emit parsingChanged();
+
+    // Use QPointer so the background thread's invokeMethod posts are safe even if
+    // this object is destroyed before all pending events are drained from the queue.
+    QPointer<LogFileParser> self(this);
+    auto progressCallback = [self, requestId](float v) {
+        if (!self) return;
+        QMetaObject::invokeMethod(self.data(), [self, requestId, v]() {
+            if (!self || requestId != self->_parseRequestId) return;
+            self->_parseProgress = v;
+            emit self->parseProgressChanged();
+        }, Qt::QueuedConnection);
+    };
 
     auto *watcher = new QFutureWatcher<LogParseResult>(this);
     (void) connect(watcher, &QFutureWatcher<LogParseResult>::finished, this,
@@ -89,6 +106,11 @@ void LogFileParser::parseFileAsync(const QString &filePath)
                 return;
             }
 
+            _parseProgress = 1.f;
+            emit parseProgressChanged();
+            _parsing = false;
+            emit parsingChanged();
+
             if (!result.ok) {
                 _setParseError(result.errorMessage);
                 emit parseFileFinished(filePath, false, result.errorMessage);
@@ -99,8 +121,8 @@ void LogFileParser::parseFileAsync(const QString &filePath)
             emit parseFileFinished(filePath, true, QString());
         });
 
-    watcher->setFuture(QtConcurrent::run([filePath]() {
-        return _parseFile(filePath);
+    watcher->setFuture(QtConcurrent::run([filePath, progressCallback, cancelToken = _cancelToken]() {
+        return _parseFile(filePath, progressCallback, cancelToken);
     }));
 }
 
@@ -129,6 +151,17 @@ void LogFileParser::_applyResult(const LogParseResult &result)
     _messages = result.messages;
     _modeSegments = result.modeSegments;
     _dropouts = result.dropouts;
+
+    // Build mode color cache in first-appearance (chronological) order.
+    _modeColorCache.clear();
+    _modeNames.clear();
+    for (const QVariant &v : _modeSegments) {
+        const QString mode = v.toMap().value(QStringLiteral("mode")).toString();
+        if (!mode.isEmpty() && !_modeNames.contains(mode)) {
+            _modeColorCache.insert(mode, _modeColorCache.size());
+            _modeNames.append(mode);
+        }
+    }
     _fieldSamples = result.fieldSamples;
     _sampleCount = result.sampleCount;
     _detectedVehicleType = result.detectedVehicleType;
@@ -138,6 +171,7 @@ void LogFileParser::_applyResult(const LogParseResult &result)
     emit eventsChanged();
     emit messagesChanged();
     emit modeSegmentsChanged();
+    emit modeNamesChanged();
     emit dropoutsChanged();
     emit detectedVehicleTypeChanged();
     if (_minTimestamp != result.minTimestamp || _maxTimestamp != result.maxTimestamp) {
@@ -146,16 +180,29 @@ void LogFileParser::_applyResult(const LogParseResult &result)
         emit timeRangeChanged();
     }
     emit sampleCountChanged();
+    if (_startTime != result.startTime) {
+        _startTime = result.startTime;
+        emit startTimeChanged();
+    }
 
-    _parsed = true;
-    emit parsedChanged();
+    _parseComplete = true;
+    emit parseCompleteChanged();
 }
 
 void LogFileParser::clear()
 {
-    const bool oldParsed = _parsed;
-    _parsed = false;
-    if (oldParsed) { emit parsedChanged(); }
+    if (_parsing) {
+        ++_parseRequestId;
+        if (_cancelToken) {
+            _cancelToken->store(true, std::memory_order_relaxed);
+        }
+        _parsing = false;
+        emit parsingChanged();
+    }
+
+    const bool oldParseComplete = _parseComplete;
+    _parseComplete = false;
+    if (oldParseComplete) { emit parseCompleteChanged(); }
 
     if (!_parseError.isEmpty()) { _parseError.clear(); emit parseErrorChanged(); }
     if (!_availableFields.isEmpty()) { _availableFields.clear(); emit availableFieldsChanged(); }
@@ -163,6 +210,7 @@ void LogFileParser::clear()
     if (!_events.isEmpty()) { _events.clear(); emit eventsChanged(); }
     if (!_messages.isEmpty()) { _messages.clear(); emit messagesChanged(); }
     if (!_modeSegments.isEmpty()) { _modeSegments.clear(); emit modeSegmentsChanged(); }
+    if (!_modeNames.isEmpty()) { _modeNames.clear(); _modeColorCache.clear(); emit modeNamesChanged(); }
     if (!_dropouts.isEmpty()) { _dropouts.clear(); emit dropoutsChanged(); }
     if (!_detectedVehicleType.isEmpty()) { _detectedVehicleType.clear(); emit detectedVehicleTypeChanged(); }
     if (!_plottableFields.isEmpty()) { _plottableFields.clear(); emit plottableFieldsChanged(); }
@@ -177,6 +225,8 @@ void LogFileParser::clear()
         emit timeRangeChanged();
     }
     if (_sampleCount != 0) { _sampleCount = 0; emit sampleCountChanged(); }
+    if (!_startTime.isNull()) { _startTime = QDateTime(); emit startTimeChanged(); }
+    if (_parseProgress != 0.f) { _parseProgress = 0.f; emit parseProgressChanged(); }
 }
 
 QVariantList LogFileParser::fieldSamples(const QString &fieldName) const
@@ -294,6 +344,30 @@ double LogFileParser::fieldValueAt(const QString &fieldName, double timestampSec
     const auto prev = std::prev(lower);
     return (std::fabs(prev->x() - timestampSeconds) <= std::fabs(lower->x() - timestampSeconds))
         ? prev->y() : lower->y();
+}
+
+QString LogFileParser::modeColor(const QString &modeName) const
+{
+    static const QStringList modePalette = {
+        QStringLiteral("#E53935"), // red
+        QStringLiteral("#FB8C00"), // orange
+        QStringLiteral("#FDD835"), // yellow
+        QStringLiteral("#43A047"), // green
+        QStringLiteral("#00897B"), // teal
+        QStringLiteral("#00ACC1"), // cyan
+        QStringLiteral("#1E88E5"), // blue
+        QStringLiteral("#5E35B1"), // indigo
+        QStringLiteral("#8E24AA"), // purple
+        QStringLiteral("#D81B60"), // pink
+        QStringLiteral("#6D4C41"), // brown
+        QStringLiteral("#546E7A"), // blue grey
+    };
+
+    const auto it = _modeColorCache.constFind(modeName);
+    if (it == _modeColorCache.constEnd()) {
+        return modePalette[0]; // unknown mode; cache was not seeded yet
+    }
+    return modePalette[it.value() % modePalette.size()];
 }
 
 QString LogFileParser::modeAt(double timestampSeconds) const

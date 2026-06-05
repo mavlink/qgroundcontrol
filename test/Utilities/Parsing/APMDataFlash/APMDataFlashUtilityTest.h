@@ -39,4 +39,5 @@ private slots:
 
     // Message iteration tests
     void _testIterateMessages();
+    void _testIterateMessagesProgress();
 };

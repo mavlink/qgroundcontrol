@@ -403,4 +403,70 @@ void APMDataFlashUtilityTest::_testIterateMessages()
     QCOMPARE(msgTypes[1], static_cast<uint8_t>(200));  // TEST
 }
 
+void APMDataFlashUtilityTest::_testIterateMessagesProgress()
+{
+    // Build a buffer with enough messages to cross the 1000-message threshold at least once.
+    QByteArray data;
+
+    // FMT message for a small record type (type 200, 12 bytes total = 9 byte payload)
+    data.append(static_cast<char>(0xA3));
+    data.append(static_cast<char>(0x95));
+    data.append(static_cast<char>(128));
+    char fmtPayload[86];
+    memset(fmtPayload, 0, sizeof(fmtPayload));
+    fmtPayload[0] = static_cast<char>(200);
+    fmtPayload[1] = 12;
+    memcpy(fmtPayload + 2, "TEST", 4);
+    memcpy(fmtPayload + 6, "Qb", 2);
+    memcpy(fmtPayload + 22, "TimeUS,Val", 10);
+    data.append(fmtPayload, sizeof(fmtPayload));
+
+    QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
+    QVERIFY(APMDataFlashUtility::parseFmtMessages(data.constData(), data.size(), formats));
+
+    // Append 2000 TEST messages so the progress callback fires at least once (every 1000 messages)
+    for (int i = 0; i < 2000; ++i) {
+        data.append(static_cast<char>(0xA3));
+        data.append(static_cast<char>(0x95));
+        data.append(static_cast<char>(200));
+        char msg[9];
+        uint64_t ts = static_cast<uint64_t>(i) * 1000;
+        memcpy(msg, &ts, 8);
+        msg[8] = static_cast<char>(i & 0xFF);
+        data.append(msg, 9);
+    }
+
+    formats.clear();
+    QVERIFY(APMDataFlashUtility::parseFmtMessages(data.constData(), data.size(), formats));
+
+    QList<float> progressValues;
+    int messageCount = 0;
+
+    APMDataFlashUtility::iterateMessages(
+        data.constData(), data.size(), formats,
+        [&](uint8_t, const char *, int, const APMDataFlashUtility::MessageFormat &) {
+            ++messageCount;
+            return true;
+        },
+        [&](float v) {
+            progressValues.append(v);
+        });
+
+    QCOMPARE(messageCount, 2000);
+
+    // Progress callback must have fired at least once (at 1000-message mark)
+    QVERIFY(!progressValues.isEmpty());
+
+    // All values must be in (0, 1]
+    for (float v : progressValues) {
+        QVERIFY(v > 0.f);
+        QVERIFY(v <= 1.f);
+    }
+
+    // Values must be monotonically non-decreasing
+    for (int i = 1; i < progressValues.size(); ++i) {
+        QVERIFY(progressValues[i] >= progressValues[i - 1]);
+    }
+}
+
 UT_REGISTER_TEST(APMDataFlashUtilityTest, TestLabel::Unit, TestLabel::Utilities)

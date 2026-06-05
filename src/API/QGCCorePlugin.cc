@@ -72,11 +72,19 @@ QGCCorePlugin *QGCCorePlugin::instance()
 
 const QVariantList &QGCCorePlugin::analyzePages()
 {
+    // Log Viewer is excluded on mobile (Android/iOS) because parsing large log files
+    // (e.g. 900 MB ULog files with 1000+ fields) exhausts the mobile heap, causing
+    // OOM crashes. Proper mobile support requires time-bucketed downsampling and will
+    // be addressed in a future major release.
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    static const QVariantList analyzeList = {
+#else
     static const QVariantList analyzeList = {
         QVariant::fromValue(new QmlComponentInfo(
             tr("Log Viewer"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/LogViewer/LogViewerPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")))),
+#endif
         QVariant::fromValue(new QmlComponentInfo(
             tr("Onboard Logs"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/OnboardLogs/OnboardLogPage.qml")),

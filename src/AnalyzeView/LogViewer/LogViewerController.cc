@@ -123,46 +123,6 @@ QString LogViewerController::eventColor(const QString &eventType) const
     return _assignColorForKey(QStringLiteral("event-other"));
 }
 
-QString LogViewerController::modeColor(const QString &modeName) const
-{
-    static const QStringList modePalette = {
-        QStringLiteral("#E53935"), // red
-        QStringLiteral("#FB8C00"), // orange
-        QStringLiteral("#FDD835"), // yellow
-        QStringLiteral("#43A047"), // green
-        QStringLiteral("#00897B"), // teal
-        QStringLiteral("#00ACC1"), // cyan
-        QStringLiteral("#1E88E5"), // blue
-        QStringLiteral("#5E35B1"), // indigo
-        QStringLiteral("#8E24AA"), // purple
-        QStringLiteral("#D81B60"), // pink
-        QStringLiteral("#6D4C41"), // brown
-        QStringLiteral("#546E7A"), // blue grey
-    };
-
-    quint32 hash = 0;
-    for (const QChar ch : modeName) {
-        hash = (hash * 31U) + ch.unicode();
-    }
-
-    const qsizetype idx = static_cast<qsizetype>(hash % static_cast<quint32>(modePalette.count()));
-    return modePalette[idx];
-}
-
-QStringList LogViewerController::modeLegendEntries(const QVariantList &modeSegments) const
-{
-    QStringList modes;
-    for (const QVariant &variant : modeSegments) {
-        const QVariantMap segment = variant.toMap();
-        const QString mode = segment.value(QStringLiteral("mode")).toString();
-        if (!mode.isEmpty() && !modes.contains(mode)) {
-            modes.append(mode);
-        }
-    }
-
-    return modes;
-}
-
 void LogViewerController::_setLog(SourceType sourceType, const QString &path)
 {
     if (_sourceType != sourceType) {

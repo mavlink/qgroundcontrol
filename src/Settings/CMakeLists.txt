@@ -31,6 +31,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         JoystickSettings.h
         LogManagerSettings.cc
         LogManagerSettings.h
+        LogViewerSettings.cc
+        LogViewerSettings.h
         MavlinkSettings.cc
         MavlinkSettings.h
         OfflineMapsSettings.cc

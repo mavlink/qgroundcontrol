@@ -13,7 +13,7 @@
 
 namespace ULogParser {
 
-LogParseResult parseFile(const QString &filePath)
+LogParseResult parseFile(const QString &filePath, const ProgressCallback &progressCallback, const CancelToken &cancelToken)
 {
     LogParseResult result;
 
@@ -53,9 +53,23 @@ LogParseResult parseFile(const QString &filePath)
         return result;
     }
 
-    auto handler = std::make_shared<ULogFullHandler>(result);
+    auto handler = std::make_shared<ULogFullHandler>(result, progressCallback);
     ulog_cpp::Reader reader(handler);
-    reader.readChunk(reinterpret_cast<const uint8_t *>(raw), static_cast<size_t>(fileSize));
+
+    static constexpr qint64 kChunkSize = 64 * 1024;
+    qint64 offset = 0;
+    while (offset < fileSize) {
+        const qint64 remaining = fileSize - offset;
+        const qint64 chunk = (remaining < kChunkSize) ? remaining : kChunkSize;
+        reader.readChunk(reinterpret_cast<const uint8_t *>(raw) + offset, static_cast<size_t>(chunk));
+        offset += chunk;
+        if (cancelToken && cancelToken->load(std::memory_order_relaxed)) {
+            return result;  // cancelled; result.ok is false, discarded by requestId guard
+        }
+        if (progressCallback) {
+            progressCallback(static_cast<float>(offset) / static_cast<float>(fileSize));
+        }
+    }
 
     if (handler->hadFatalError()) {
         if (result.errorMessage.isEmpty()) {
