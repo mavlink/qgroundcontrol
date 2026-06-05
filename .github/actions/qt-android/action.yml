@@ -60,28 +60,12 @@ runs:
         distribution: temurin
         java-version: ${{ inputs.java-version }}
 
-    # Restore before setup-android so sdkmanager skips the ~1.5GB download.
-    - name: Restore Android NDK cache
-      id: ndk-cache
-      uses: actions/cache/restore@v5
-      with:
-        path: ${{ env.ANDROID_HOME }}/ndk/${{ inputs.ndk-full-version }}
-        key: android-ndk-${{ runner.os }}-${{ runner.arch }}-${{ inputs.ndk-full-version }}
-
     - name: Setup Android Environment
       uses: android-actions/setup-android@v4
       with:
         cmdline-tools-version: ${{ inputs.android-cmdline-tools }}
         packages: 'platform-tools platforms;android-${{ inputs.android-platform }} build-tools;${{ inputs.android-build-tools }} ndk;${{ inputs.ndk-full-version }}'
         log-accepted-android-sdk-licenses: false
-
-    # PRs are read-only; only push/release builds populate the shared cache.
-    - name: Save Android NDK cache
-      if: steps.ndk-cache.outputs.cache-hit != 'true' && github.event_name != 'pull_request' && github.event_name != 'pull_request_target'
-      uses: actions/cache/save@v5
-      with:
-        path: ${{ env.ANDROID_HOME }}/ndk/${{ inputs.ndk-full-version }}
-        key: android-ndk-${{ runner.os }}-${{ runner.arch }}-${{ inputs.ndk-full-version }}
 
     - name: Update Android SDK / NDK / Tools
       shell: bash

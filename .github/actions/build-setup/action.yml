@@ -193,12 +193,11 @@ runs:
           echo "Renamed Git link.exe to prevent Rust linker conflict"
         fi
 
-    # Gradle daemon + dependency cache for Android cross-compile. Read-only on PRs so fork PRs can't poison the shared cache and same-repo PRs don't churn it.
     - name: Setup Gradle (Android)
       if: inputs.mode == 'android'
       uses: gradle/actions/setup-gradle@v6
       with:
-        cache-read-only: ${{ github.event_name == 'pull_request' }}
+        cache-disabled: true
 
     - name: Install Qt for Android
       if: inputs.mode == 'android'

@@ -33,10 +33,9 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install Doxygen and Graphviz
-        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
-        with:
-          packages: doxygen graphviz
-          version: doxygen-deps-v1
+        run: |
+          sudo apt-get -o Acquire::Retries=3 update -qq
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends doxygen graphviz
 
       - name: Build Doxygen docs
         run: doxygen Doxyfile

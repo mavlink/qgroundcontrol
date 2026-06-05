@@ -33,7 +33,7 @@ runs:
     - name: Set up setup-qemu-action
       uses: docker/setup-qemu-action@v4
       with:
-        cache-image: ${{ github.event_name != 'pull_request' }}
+        cache-image: false
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
