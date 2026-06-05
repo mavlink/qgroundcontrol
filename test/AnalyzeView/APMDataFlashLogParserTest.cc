@@ -71,7 +71,7 @@ void APMDataFlashLogParserTest::_parseMinimalLogTest()
 
     APMDataFlashLogParser parser;
     QVERIFY(parser.parseFile(tempFile.fileName()));
-    QVERIFY(parser.parsed());
+    QVERIFY(parser.parseComplete());
     QCOMPARE(parser.parseError(), QString());
     QVERIFY(parser.availableFields().contains(QStringLiteral("PARM.Name")));
     QVERIFY(parser.availableFields().contains(QStringLiteral("PARM.Value")));
@@ -89,7 +89,7 @@ void APMDataFlashLogParserTest::_parseInvalidLogTest()
 
     APMDataFlashLogParser parser;
     QVERIFY(!parser.parseFile(tempFile.fileName()));
-    QVERIFY(!parser.parsed());
+    QVERIFY(!parser.parseComplete());
     QVERIFY(!parser.parseError().isEmpty());
 }
 

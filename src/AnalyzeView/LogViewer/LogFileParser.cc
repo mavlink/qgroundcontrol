@@ -18,16 +18,16 @@ QGC_LOGGING_CATEGORY(LogFileParserLog, "AnalyzeView.LogFileParser")
 
 namespace {
 
-LogParseResult _parseFile(const QString &filePath)
+LogParseResult _parseFile(const QString &filePath, const ProgressCallback &progressCallback = nullptr)
 {
     const QString suffix = QFileInfo(filePath).suffix().toLower();
 
     if (suffix == QStringLiteral("bin") || suffix == QStringLiteral("log")) {
-        return DataFlashParser::parseFile(filePath);
+        return DataFlashParser::parseFile(filePath, progressCallback);
     }
 
     if (suffix == QStringLiteral("ulg")) {
-        return ULogParser::parseFile(filePath);
+        return ULogParser::parseFile(filePath, progressCallback);
     }
 
     const QString fileTypeDescription = suffix.isEmpty()
@@ -74,10 +74,27 @@ bool LogFileParser::parseFile(const QString &filePath)
     return true;
 }
 
+void LogFileParser::startParsingAsync(const QString &filePath)
+{
+    _parsing = true;
+    emit parsingChanged();
+    _parseProgress = 0.f;
+    emit parseProgressChanged();
+    parseFileAsync(filePath);
+}
+
 void LogFileParser::parseFileAsync(const QString &filePath)
 {
     const quint64 requestId = ++_parseRequestId;
     clear();
+
+    auto progressCallback = [this, requestId](float v) {
+        QMetaObject::invokeMethod(this, [this, requestId, v]() {
+            if (requestId != _parseRequestId) return;
+            _parseProgress = v;
+            emit parseProgressChanged();
+        }, Qt::QueuedConnection);
+    };
 
     auto *watcher = new QFutureWatcher<LogParseResult>(this);
     (void) connect(watcher, &QFutureWatcher<LogParseResult>::finished, this,
@@ -89,6 +106,11 @@ void LogFileParser::parseFileAsync(const QString &filePath)
                 return;
             }
 
+            _parseProgress = 1.f;
+            emit parseProgressChanged();
+            _parsing = false;
+            emit parsingChanged();
+
             if (!result.ok) {
                 _setParseError(result.errorMessage);
                 emit parseFileFinished(filePath, false, result.errorMessage);
@@ -99,8 +121,8 @@ void LogFileParser::parseFileAsync(const QString &filePath)
             emit parseFileFinished(filePath, true, QString());
         });
 
-    watcher->setFuture(QtConcurrent::run([filePath]() {
-        return _parseFile(filePath);
+    watcher->setFuture(QtConcurrent::run([filePath, progressCallback]() {
+        return _parseFile(filePath, progressCallback);
     }));
 }
 
@@ -146,16 +168,20 @@ void LogFileParser::_applyResult(const LogParseResult &result)
         emit timeRangeChanged();
     }
     emit sampleCountChanged();
+    if (_startTime != result.startTime) {
+        _startTime = result.startTime;
+        emit startTimeChanged();
+    }
 
-    _parsed = true;
-    emit parsedChanged();
+    _parseComplete = true;
+    emit parseCompleteChanged();
 }
 
 void LogFileParser::clear()
 {
-    const bool oldParsed = _parsed;
-    _parsed = false;
-    if (oldParsed) { emit parsedChanged(); }
+    const bool oldParseComplete = _parseComplete;
+    _parseComplete = false;
+    if (oldParseComplete) { emit parseCompleteChanged(); }
 
     if (!_parseError.isEmpty()) { _parseError.clear(); emit parseErrorChanged(); }
     if (!_availableFields.isEmpty()) { _availableFields.clear(); emit availableFieldsChanged(); }
@@ -177,6 +203,8 @@ void LogFileParser::clear()
         emit timeRangeChanged();
     }
     if (_sampleCount != 0) { _sampleCount = 0; emit sampleCountChanged(); }
+    if (!_startTime.isNull()) { _startTime = QDateTime(); emit startTimeChanged(); }
+    if (_parseProgress != 0.f) { _parseProgress = 0.f; emit parseProgressChanged(); }
 }
 
 QVariantList LogFileParser::fieldSamples(const QString &fieldName) const

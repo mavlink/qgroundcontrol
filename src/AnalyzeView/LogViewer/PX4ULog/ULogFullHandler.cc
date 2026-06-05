@@ -4,6 +4,7 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QStringList>
+#include <QtCore/QTimeZone>
 
 #include <algorithm>
 #include <stdexcept>
@@ -67,8 +68,9 @@ bool _isNumericScalarField(const ulog_cpp::Field &field)
 
 } // namespace
 
-ULogFullHandler::ULogFullHandler(LogParseResult &result)
+ULogFullHandler::ULogFullHandler(LogParseResult &result, const ProgressCallback &progressCallback)
     : _result(result)
+    , _progressCallback(progressCallback)
 {
 }
 
@@ -134,6 +136,19 @@ void ULogFullHandler::data(const ulog_cpp::Data &data)
             const uint64_t tsUs = view.at("timestamp").as<uint64_t>();
             timestampSecs = static_cast<double>(tsUs) / 1e6;
             _lastTimestampSecs = timestampSecs;
+        }
+
+        // Extract GPS UTC start time from first valid sensor_gps/vehicle_gps_position sample
+        if (_result.startTime.isNull() && timestampSecs >= 0.0) {
+            if ((sub.topicName == "sensor_gps" || sub.topicName == "vehicle_gps_position")
+                    && sub.format->fieldMap().count("time_utc_usec") > 0) {
+                const uint64_t utcUsec = view.at("time_utc_usec").as<uint64_t>();
+                if (utcUsec > 0) {
+                    const uint64_t tsUs = view.at("timestamp").as<uint64_t>();
+                    const qint64 startMs = static_cast<qint64>((utcUsec - tsUs) / 1000);
+                    _result.startTime = QDateTime::fromMSecsSinceEpoch(startMs, QTimeZone::utc());
+                }
+            }
         }
 
         // Field name: "topic_name.field" or "topic_name[N].field" for multi-instance

@@ -101,7 +101,7 @@ Item {
     // -------------------------------------------------------------------------
     function _refreshSeries() {
         const fieldName = root.altFieldName
-        if (!logParser.parsed || fieldName.length === 0) {
+        if (!logParser.parseComplete || fieldName.length === 0) {
             _altSeries.clear()
             return
         }
@@ -158,8 +158,8 @@ Item {
     Connections {
         target: logParser
 
-        function onParsedChanged() {
-            if (!logParser.parsed) {
+        function onParseCompleteChanged() {
+            if (!logParser.parseComplete) {
                 _altSeries.clear()
                 _markerVisible  = false
                 _hasAltRange    = false
@@ -180,7 +180,7 @@ Item {
 
     // Called on first parse and when the component becomes visible after parse
     function _initCursor() {
-        if (!logParser.parsed || _xAxis.max <= _xAxis.min) return
+        if (!logParser.parseComplete || _xAxis.max <= _xAxis.min) return
         _markerXValue   = (_xAxis.min + _xAxis.max) / 2
         _markerPixelX   = _axisXToPixel(_markerXValue)
         _markerAltValue = logParser.fieldValueAt(root.altFieldName, _markerXValue)
@@ -189,7 +189,7 @@ Item {
     }
 
     onVisibleChanged: {
-        if (visible && logParser.parsed && !_markerVisible) {
+        if (visible && logParser.parseComplete && !_markerVisible) {
             Qt.callLater(_initCursor)
         }
     }
@@ -227,7 +227,7 @@ Item {
 
             axisX: ValueAxis {
                 id: _xAxis
-                titleText: qsTr("Time (s)")
+                titleText: (logParser.startTime && !isNaN(logParser.startTime.getTime()) && logParser.startTime.getTime() > 0) ? qsTr("Time (local)") : qsTr("Time (s)")
                 min: 0
                 max: 1
             }
@@ -361,7 +361,12 @@ Item {
 
                 // Line 2: time
                 QGCLabel {
-                    text: qsTr("t = %1 s").arg(_markerXValue.toFixed(3))
+                    text: {
+                        const st = logParser.startTime
+                        if (st && !isNaN(st.getTime()) && st.getTime() > 0)
+                            return Qt.formatDateTime(new Date(st.getTime() + _markerXValue * 1000), "yyyy-MM-dd HH:mm:ss.zzz")
+                        return qsTr("t = %1 s").arg(_markerXValue.toFixed(3))
+                    }
                 }
 
                 // Line 3: Current / Min / Max

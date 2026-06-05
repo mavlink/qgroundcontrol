@@ -1,5 +1,7 @@
 #pragma once
 
+#include "LogParseResultPrivate.h"
+
 #include <QtCore/QHash>
 #include <QtCore/QPointF>
 #include <QtCore/QSet>
@@ -24,7 +26,7 @@ struct LogParseResult;
 class ULogFullHandler final : public ulog_cpp::DataHandlerInterface
 {
 public:
-    explicit ULogFullHandler(LogParseResult &result);
+    explicit ULogFullHandler(LogParseResult &result, const ProgressCallback &progressCallback = nullptr);
     ~ULogFullHandler() = default;
 
     void error(const std::string &msg, bool is_recoverable) override;
@@ -46,6 +48,7 @@ public:
 
 private:
     LogParseResult &_result;
+    const ProgressCallback _progressCallback;
 
     struct SubscriptionInfo {
         std::shared_ptr<ulog_cpp::MessageFormat> format;

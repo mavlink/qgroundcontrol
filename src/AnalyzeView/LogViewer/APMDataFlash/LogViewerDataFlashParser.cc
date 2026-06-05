@@ -4,16 +4,37 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSet>
+#include <QtCore/QTimeZone>
 #include <QtCore/QVariantMap>
 
 #include <algorithm>
 #include <limits>
 
 namespace {
+
+int _leapSecondsTAI(int year, int month)
+{
+    const int yyyymm = year * 100 + month;
+    if (yyyymm >= 201701) return 37;
+    if (yyyymm >= 201507) return 36;
+    if (yyyymm >= 201207) return 35;
+    if (yyyymm >= 200901) return 34;
+    if (yyyymm >= 200601) return 33;
+    if (yyyymm >= 199901) return 32;
+    if (yyyymm >= 199707) return 31;
+    if (yyyymm >= 199601) return 30;
+    return 0;
+}
+
+int _leapSecondsGPS(int year, int month)
+{
+    return _leapSecondsTAI(year, month) - 19;
+}
 
 QString _vehicleTypeFromMessageText(const QString &messageText)
 {
@@ -216,7 +237,7 @@ void _appendEvent(QVariantList &events, double timestampSecs, const QString &typ
 
 namespace DataFlashParser {
 
-LogParseResult parseFile(const QString &filePath)
+LogParseResult parseFile(const QString &filePath, const ProgressCallback &progressCallback)
 {
     LogParseResult result;
     result.sourceType = LogParseResult::SourceType::APMDataFlash;
@@ -291,6 +312,8 @@ LogParseResult parseFile(const QString &filePath)
     static const QString kMODE = QStringLiteral("MODE");
     static const QString kERR  = QStringLiteral("ERR");
     static const QString kEV   = QStringLiteral("EV");
+    static const QString kGPS  = QStringLiteral("GPS");
+    static const QString kGPS2 = QStringLiteral("GPS2");
 
     APMDataFlashUtility::iterateMessages(bytes.constData(), bytes.size(), formats,
         [&](uint8_t msgType, const char *payload, int, const APMDataFlashUtility::MessageFormat &fmt) {
@@ -299,6 +322,22 @@ LogParseResult parseFile(const QString &filePath)
         if (timestampSecs >= 0.0) {
             if (minTimestampSecs < 0.0 || timestampSecs < minTimestampSecs) { minTimestampSecs = timestampSecs; }
             maxTimestampSecs = std::max(maxTimestampSecs, timestampSecs);
+        }
+
+        if ((fmt.name == kGPS || fmt.name == kGPS2) && result.startTime.isNull()
+                && values.contains(QStringLiteral("GWk")) && values.contains(QStringLiteral("GMS"))
+                && timestampSecs >= 0.0) {
+            const int gwk = values.value(QStringLiteral("GWk")).toInt();
+            const int gms = values.value(QStringLiteral("GMS")).toInt();
+            if (gwk > 2000) {
+                const double gpsSecs = 315964800.0 + (7.0 * 24 * 60 * 60) * gwk + (gms / 1000.0);
+                const QDateTime gpsDateTime = QDateTime::fromMSecsSinceEpoch(
+                    static_cast<qint64>(gpsSecs * 1000.0), QTimeZone::utc());
+                const int leapSecs = _leapSecondsGPS(gpsDateTime.date().year(), gpsDateTime.date().month());
+                const double utcSecs = gpsSecs - leapSecs;
+                result.startTime = QDateTime::fromMSecsSinceEpoch(
+                    static_cast<qint64>((utcSecs - timestampSecs) * 1000.0), QTimeZone::utc());
+            }
         }
 
         if (fmt.name == kPARM) {
@@ -386,7 +425,7 @@ LogParseResult parseFile(const QString &filePath)
             }
         }
         return true;
-    });
+    }, progressCallback);
 
     if (hasOpenModeSegment && (maxTimestampSecs >= modeSegmentStartSecs)) {
         QVariantMap segment;

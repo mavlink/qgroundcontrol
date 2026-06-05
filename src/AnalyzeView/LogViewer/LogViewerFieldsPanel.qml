@@ -15,6 +15,8 @@ Rectangle {
 
     signal clearSelectedRequested
 
+    property bool xAxisShowLocalTime: false
+
     color: qgcPal.windowShade
     radius: ScreenTools.defaultFontPixelWidth * 0.5
     Layout.preferredWidth: mainLayout.implicitWidth + (mainLayout.anchors.margins * 2)
@@ -185,12 +187,30 @@ Rectangle {
                   .arg(logParser.events.length)
         }
 
-        QGCLabel {
+        RowLayout {
             visible: _isFirmwareLog
-            text: qsTr("Detected vehicle type: %1")
-                  .arg(logParser.detectedVehicleType.length > 0
-                       ? logParser.detectedVehicleType
-                       : qsTr("Unknown"))
+                     && logParser.startTime
+                     && !isNaN(logParser.startTime.getTime())
+                     && logParser.startTime.getTime() > 0
+            spacing: ScreenTools.defaultFontPixelWidth
+
+            QGCLabel { text: qsTr("X axis:") }
+
+            ButtonGroup { id: _xAxisButtonGroup }
+
+            QGCRadioButton {
+                text:              qsTr("Elapsed")
+                checked:           !control.xAxisShowLocalTime
+                ButtonGroup.group: _xAxisButtonGroup
+                onClicked:         control.xAxisShowLocalTime = false
+            }
+
+            QGCRadioButton {
+                text:              qsTr("Local time")
+                checked:           control.xAxisShowLocalTime
+                ButtonGroup.group: _xAxisButtonGroup
+                onClicked:         control.xAxisShowLocalTime = true
+            }
         }
 
         RowLayout {

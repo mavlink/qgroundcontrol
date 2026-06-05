@@ -38,9 +38,17 @@ ScrollView {
 
                 QGCLabel {
                     readonly property double _t: Number(modelData.time)
-                    text: (isNaN(_t) || _t < 0) ? "" : _t.toFixed(3) + "s"
+                    text: {
+                        if (isNaN(_t) || _t < 0) return ""
+                        const st = logParser.startTime
+                        if (st && !isNaN(st.getTime()) && st.getTime() > 0)
+                            return Qt.formatDateTime(new Date(st.getTime() + _t * 1000), "yyyy-MM-dd HH:mm:ss.zzz")
+                        return _t.toFixed(3) + "s"
+                    }
                     color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.6)
-                    Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * 10
+                    Layout.preferredWidth: (logParser.startTime && !isNaN(logParser.startTime.getTime()) && logParser.startTime.getTime() > 0)
+                        ? ScreenTools.defaultFontPixelWidth * 20
+                        : ScreenTools.defaultFontPixelWidth * 10
                     horizontalAlignment: Text.AlignRight
                 }
 

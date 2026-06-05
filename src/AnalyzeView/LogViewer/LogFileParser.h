@@ -7,6 +7,7 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVariant>
 #include <QtCore/QVariantList>
+#include <QtCore/QDateTime>
 #include <QtCore/QVector>
 #include <QtCore/QtGlobal>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -30,7 +31,9 @@ class LogFileParser : public QObject
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(bool         parsed              READ parsed              NOTIFY parsedChanged)
+    Q_PROPERTY(bool         parsing             READ parsing             NOTIFY parsingChanged)
+    Q_PROPERTY(float        parseProgress       READ parseProgress       NOTIFY parseProgressChanged)
+    Q_PROPERTY(bool         parseComplete       READ parseComplete       NOTIFY parseCompleteChanged)
     Q_PROPERTY(QString      parseError          READ parseError          NOTIFY parseErrorChanged)
     Q_PROPERTY(QStringList  availableFields     READ availableFields     NOTIFY availableFieldsChanged)
     Q_PROPERTY(QVariantList parameters          READ parameters          NOTIFY parametersChanged)
@@ -43,12 +46,13 @@ class LogFileParser : public QObject
     Q_PROPERTY(double       minTimestamp        READ minTimestamp        NOTIFY timeRangeChanged)
     Q_PROPERTY(double       maxTimestamp        READ maxTimestamp        NOTIFY timeRangeChanged)
     Q_PROPERTY(int          sampleCount         READ sampleCount         NOTIFY sampleCountChanged)
+    Q_PROPERTY(QDateTime    startTime           READ startTime           NOTIFY startTimeChanged)
 
 public:
     explicit LogFileParser(QObject *parent = nullptr);
     ~LogFileParser();
 
-    bool parsed() const { return _parsed; }
+    bool parseComplete() const { return _parseComplete; }
     QString parseError() const { return _parseError; }
     QStringList availableFields() const { return _availableFields; }
     QVariantList parameters() const { return _parameters; }
@@ -61,9 +65,13 @@ public:
     double minTimestamp() const { return _minTimestamp; }
     double maxTimestamp() const { return _maxTimestamp; }
     int sampleCount() const { return _sampleCount; }
+    QDateTime startTime() const { return _startTime; }
+    bool parsing() const { return _parsing; }
+    float parseProgress() const { return _parseProgress; }
 
     Q_INVOKABLE bool parseFile(const QString &filePath);
     Q_INVOKABLE void parseFileAsync(const QString &filePath);
+    Q_INVOKABLE void startParsingAsync(const QString &filePath);
     Q_INVOKABLE void clear();
     Q_INVOKABLE QVariantList fieldSamples(const QString &fieldName) const;
     Q_INVOKABLE QVariantList fieldSamplesFiltered(const QString &fieldName, double minX, double maxX, int pixelWidth) const;
@@ -88,7 +96,7 @@ public:
     Q_INVOKABLE QVariantMap gpsCoordAt(double timestampSeconds) const;
 
 signals:
-    void parsedChanged();
+    void parseCompleteChanged();
     void parseErrorChanged();
     void availableFieldsChanged();
     void parametersChanged();
@@ -100,13 +108,16 @@ signals:
     void detectedVehicleTypeChanged();
     void timeRangeChanged();
     void sampleCountChanged();
+    void startTimeChanged();
+    void parsingChanged();
+    void parseProgressChanged();
     void parseFileFinished(const QString &filePath, bool ok, const QString &errorMessage);
 
 private:
     void _setParseError(const QString &error);
     void _applyResult(const struct LogParseResult &result);
 
-    bool _parsed = false;
+    bool _parseComplete = false;
     QString _parseError;
     QStringList _availableFields;
     QStringList _plottableFields;
@@ -121,6 +132,9 @@ private:
     double _maxTimestamp = -1.0;
     int _sampleCount = 0;
     quint64 _parseRequestId = 0;
+    QDateTime _startTime;
+    bool _parsing = false;
+    float _parseProgress = 0.f;
 
     // Cached GPS field names, set by gpsPath() when a valid candidate is found.
     mutable QString _gpsLatField;

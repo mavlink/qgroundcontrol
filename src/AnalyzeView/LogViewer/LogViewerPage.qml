@@ -22,7 +22,6 @@ AnalyzePage {
             height: availableHeight
             spacing: ScreenTools.defaultFontPixelHeight
 
-            property bool binLoading: false
             property string pendingBinFile: ""
 
             readonly property bool isFirmwareLog: logViewerController.sourceType === LogViewerController.Bin
@@ -48,18 +47,7 @@ AnalyzePage {
                     clearLoadedLogState(true)
                 }
                 pendingBinFile = file
-                binLoading = true
-                parseStartTimer.start()
-            }
-
-            function _executePendingBinParse() {
-                if (!pendingBinFile || pendingBinFile.length === 0) {
-                    binLoading = false
-                    return
-                }
-
-                const file = pendingBinFile
-                logParser.parseFileAsync(file)
+                logParser.startParsingAsync(file)
             }
 
             LogViewerController {
@@ -81,7 +69,6 @@ AnalyzePage {
 
                     if (!ok) {
                         QGroundControl.showMessageDialog(logViewerPage, qsTr("Log Viewer"), errorMessage)
-                        binLoading = false
                         pendingBinFile = ""
                         return
                     }
@@ -99,7 +86,6 @@ AnalyzePage {
                     } else {
                         logViewerController.openBinLog(filePath)
                     }
-                    binLoading = false
                     pendingBinFile = ""
                 }
             }
@@ -153,7 +139,45 @@ AnalyzePage {
                 QGCLabel {
                     Layout.fillWidth: true
                     elide: Text.ElideMiddle
-                    text: logViewerController.hasLoadedLog ? logViewerController.currentLogPath : qsTr("No log selected")
+                    text: logViewerController.hasLoadedLog ? logViewerController.currentLogPath.replace(/.*[/\\]/, "") : qsTr("No log selected")
+                }
+
+                QGCLabel {
+                    visible: logViewerController.hasLoadedLog && logParser.startTime && !isNaN(logParser.startTime.getTime()) && logParser.startTime.getTime() > 0
+                    text:    qsTr("Start time:")
+                }
+
+                QGCLabel {
+                    visible: logViewerController.hasLoadedLog && logParser.startTime && !isNaN(logParser.startTime.getTime()) && logParser.startTime.getTime() > 0
+                    text:    visible ? Qt.formatDateTime(logParser.startTime, Qt.locale().dateTimeFormat(Locale.ShortFormat)) : ""
+                }
+
+                QGCLabel {
+                    visible: logViewerController.hasLoadedLog && logParser.detectedVehicleType.length > 0
+                    text:    qsTr("Vehicle:")
+                }
+
+                QGCLabel {
+                    visible: logViewerController.hasLoadedLog && logParser.detectedVehicleType.length > 0
+                    text:    logParser.detectedVehicleType
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                visible: logParser.parsing
+                spacing: ScreenTools.defaultFontPixelWidth
+
+                QGCLabel {
+                    text: qsTr("Loading...")
+                }
+
+                QGCSlider {
+                    Layout.fillWidth: true
+                    from:    0
+                    to:      1
+                    value:   logParser.parseProgress
+                    enabled: false
                 }
             }
 
@@ -260,6 +284,7 @@ AnalyzePage {
                                 visible: isFirmwareLog
                                 logParser: logParser
                                 logViewerController: logViewerController
+                                xAxisShowLocalTime:   fieldsPanel.xAxisShowLocalTime
 
                                 onCursorMoved: (t) => {
                                     _mapTab._markerVisible = true
@@ -288,7 +313,7 @@ AnalyzePage {
                     Layout.fillHeight: true
 
                     // GPS path data
-                    readonly property var    _gpsPath:      logParser.parsed ? logParser.gpsPath() : []
+                    readonly property var    _gpsPath:      logParser.parseComplete ? logParser.gpsPath() : []
                     readonly property int    _pathLen:      (_gpsPath && _gpsPath.length) ? _gpsPath.length : 0
                     readonly property bool   _hasPath:      _pathLen >= 2
                     readonly property string _altFieldName: _hasPath ? logParser.gpsAltitudeFieldName() : ""
@@ -334,8 +359,8 @@ AnalyzePage {
 
                                 Connections {
                                     target: logParser
-                                    function onParsedChanged() {
-                                        if (logParser.parsed) Qt.callLater(_flightMap._fitPath)
+                                    function onParseCompleteChanged() {
+                                        if (logParser.parseComplete) Qt.callLater(_flightMap._fitPath)
                                     }
                                 }
 
@@ -375,14 +400,14 @@ AnalyzePage {
 
                             QGCLabel {
                                 anchors.centerIn: parent
-                                visible:          logParser.parsed && !_mapTab._hasPath
+                                visible:          logParser.parseComplete && !_mapTab._hasPath
                                 text:             qsTr("No GPS data found in this log")
                                 font.italic:      true
                             }
 
                             QGCLabel {
                                 anchors.centerIn: parent
-                                visible:          !logParser.parsed
+                                visible:          !logParser.parseComplete
                                 text:             qsTr("Load a log file to view the flight path")
                                 font.italic:      true
                             }
@@ -458,35 +483,6 @@ AnalyzePage {
                     }
                     close()
                 }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                visible: binLoading
-                color: Qt.rgba(0, 0, 0, 0.4)
-                z: 5000
-
-                Column {
-                    anchors.centerIn: parent
-                    spacing: ScreenTools.defaultFontPixelHeight * 0.5
-
-                    BusyIndicator {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        running: binLoading
-                    }
-
-                    QGCLabel {
-                        text: qsTr("Parsing log file...")
-                    }
-                }
-            }
-
-            Timer {
-                id: parseStartTimer
-                interval: 50
-                repeat: false
-                onTriggered: _executePendingBinParse()
             }
         }
     }

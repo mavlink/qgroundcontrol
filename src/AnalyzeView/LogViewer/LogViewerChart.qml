@@ -14,6 +14,8 @@ ColumnLayout {
     required property var logParser
     required property var logViewerController
 
+    property bool xAxisShowLocalTime: false
+
     spacing: ScreenTools.defaultFontPixelHeight * 0.5
 
     // -------------------------------------------------------------------------
@@ -26,14 +28,6 @@ ColumnLayout {
     property var    _markerRows: []
     property var    _markerEventRows: []
     property string _markerModeName: ""
-
-    // Hover cursor — follows mouse, disappears when mouse leaves chart
-    property bool   _hoverVisible: false
-    property real   _hoverPixelX: 0
-    property real   _hoverXValue: 0
-    property var    _hoverRows: []
-    property var    _hoverEventRows: []
-    property string _hoverModeName: ""
 
     property real   _fullMinX: 0
     property real   _fullMaxX: 1
@@ -211,13 +205,6 @@ ColumnLayout {
         _markerEventRows = result.events
     }
 
-    function _queryHoverValues() {
-        const result = _queryValuesAtTime(_hoverXValue)
-        _hoverModeName = result.modeName
-        _hoverRows = result.rows
-        _hoverEventRows = result.events
-    }
-
     function _updateCursorInfo(pixelX) {
         if (_binXAxis.max <= _binXAxis.min) return
         _positionMarkerVisible = true
@@ -225,13 +212,6 @@ ColumnLayout {
         _markerXValue = _pixelToAxisX(_markerPixelX)
         _queryCursorValues()
         cursorMoved(_markerXValue)
-    }
-
-    function _updateHoverInfo(pixelX) {
-        if (_binXAxis.max <= _binXAxis.min) return
-        _hoverPixelX = Math.max(_binChart.plotArea.x, Math.min(_binChart.plotArea.x + _binChart.plotArea.width, pixelX))
-        _hoverXValue = _pixelToAxisX(_hoverPixelX)
-        _queryHoverValues()
     }
 
     function _refreshCursorPixelPos() {
@@ -254,10 +234,6 @@ ColumnLayout {
         _positionMarkerVisible = true
         _markerPixelX = _axisXToPixel(_markerXValue)
         _queryCursorValues()
-        if (_hoverVisible) {
-            _hoverPixelX = _axisXToPixel(_hoverXValue)
-            _queryHoverValues()
-        }
     }
 
     // Public: called by parent on log clear
@@ -265,9 +241,6 @@ ColumnLayout {
         _positionMarkerVisible = false
         _markerRows = []
         _markerEventRows = []
-        _hoverVisible = false
-        _hoverRows = []
-        _hoverEventRows = []
     }
 
     // -------------------------------------------------------------------------
@@ -572,9 +545,46 @@ ColumnLayout {
 
             axisX: ValueAxis {
                 id: _binXAxis
-                titleText: qsTr("Time (s)")
+                titleText: xAxisShowLocalTime ? qsTr("Time (local)") : qsTr("Elapsed")
+                labelFormat: "%.3f"
                 min: 0
                 max: 1
+
+                labelDelegate: Component {
+                    Item {
+                        property string text: ""  // raw seconds value, assigned by axis
+
+                        Text {
+                            anchors.centerIn: parent
+                            color:            _binChart.theme.labelTextColor
+                            font:             _binChart.theme.axisXLabelFont
+                            horizontalAlignment: Text.AlignHCenter
+                            text: {
+                                const secs = parseFloat(parent.text)
+                                if (isNaN(secs)) { return parent.text }
+                                if (xAxisShowLocalTime) {
+                                    const st = logParser.startTime
+                                    if (st && !isNaN(st.getTime()) && st.getTime() > 0) {
+                                        const use12h = Qt.locale().timeFormat(Locale.ShortFormat).indexOf("a") >= 0
+                                                    || Qt.locale().timeFormat(Locale.ShortFormat).indexOf("A") >= 0
+                                        return Qt.formatTime(new Date(st.getTime() + secs * 1000),
+                                                             use12h ? "h:mm:ss AP" : "HH:mm:ss")
+                                    }
+                                }
+                                const wholeSecs = Math.round(secs)
+                                const hh = Math.floor(wholeSecs / 3600)
+                                const mm = Math.floor((wholeSecs % 3600) / 60)
+                                const ss = wholeSecs % 60
+                                if (hh > 0) {
+                                    return hh + ":" + String(mm).padStart(2, "0") + ":" + String(ss).padStart(2, "0")
+                                } else if (mm > 0) {
+                                    return mm + ":" + String(ss).padStart(2, "0")
+                                }
+                                return ss + "s"
+                            }
+                        }
+                    }
+                }
             }
 
             axisY: ValueAxis {
@@ -598,7 +608,6 @@ ColumnLayout {
             id: _chartZoomArea
             anchors.fill: parent
             enabled: _binXAxis.max > _binXAxis.min
-            hoverEnabled: !ScreenTools.isMobile
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             z: 1001
 
@@ -609,24 +618,14 @@ ColumnLayout {
                     resetZoom()
                     return
                 }
-                _hoverVisible = false
-                _dragStartX = mouse.x
-                _zoomSelectionRect.x = mouse.x
-                _zoomSelectionRect.y = _binChart.plotArea.y
-                _zoomSelectionRect.width = 0
-                _zoomSelectionRect.height = _binChart.plotArea.height
-                _zoomSelectionRect.visible = true
-            }
-
-            onEntered: (mouse) => {
-                _hoverVisible = hoverEnabled && (_binXAxis.max > _binXAxis.min)
-                if (_hoverVisible) {
-                    _updateHoverInfo(mouse.x)
+                if (mouse.modifiers & Qt.ShiftModifier) {
+                    _dragStartX = mouse.x
+                    _zoomSelectionRect.x = mouse.x
+                    _zoomSelectionRect.y = _binChart.plotArea.y
+                    _zoomSelectionRect.width = 0
+                    _zoomSelectionRect.height = _binChart.plotArea.height
+                    _zoomSelectionRect.visible = true
                 }
-            }
-
-            onExited: {
-                _hoverVisible = false
             }
 
             onPositionChanged: (mouse) => {
@@ -635,26 +634,25 @@ ColumnLayout {
                     const right = Math.max(_dragStartX, mouse.x)
                     _zoomSelectionRect.x = left
                     _zoomSelectionRect.width = Math.max(0, right - left)
-                } else if (!pressed && hoverEnabled) {
-                    _updateHoverInfo(mouse.x)
+                } else if (pressed && !(mouse.modifiers & Qt.ShiftModifier)) {
+                    _updateCursorInfo(mouse.x)
                 }
             }
 
             onReleased: (mouse) => {
-                if (!_zoomSelectionRect.visible) return
-                const dragWidth = _zoomSelectionRect.width
-                _zoomSelectionRect.visible = false
-                _hoverVisible = hoverEnabled && (_binXAxis.max > _binXAxis.min)
-                if (hoverEnabled) {
-                    _updateHoverInfo(mouse.x)
+                if (_zoomSelectionRect.visible) {
+                    const dragWidth = _zoomSelectionRect.width
+                    _zoomSelectionRect.visible = false
+                    if (dragWidth >= ScreenTools.defaultFontPixelWidth * 0.5) {
+                        const leftX  = _pixelToAxisX(_zoomSelectionRect.x)
+                        const rightX = _pixelToAxisX(_zoomSelectionRect.x + _zoomSelectionRect.width)
+                        applyZoomRange(Math.min(leftX, rightX), Math.max(leftX, rightX))
+                        return
+                    }
                 }
-                if (dragWidth < ScreenTools.defaultFontPixelWidth * 0.5) {
+                if (!(mouse.modifiers & Qt.ShiftModifier)) {
                     _updateCursorInfo(mouse.x)
-                    return
                 }
-                const leftX  = _pixelToAxisX(_zoomSelectionRect.x)
-                const rightX = _pixelToAxisX(_zoomSelectionRect.x + _zoomSelectionRect.width)
-                applyZoomRange(Math.min(leftX, rightX), Math.max(leftX, rightX))
             }
         }
 
@@ -666,17 +664,6 @@ ColumnLayout {
             width: 1
             height: _binChart.plotArea.height
             color: qgcPal.text
-            z: 1002
-        }
-
-        // Hover cursor marker line (follows mouse)
-        Rectangle {
-            visible: _hoverVisible
-            x: _hoverPixelX
-            y: _binChart.plotArea.y
-            width: 1
-            height: _binChart.plotArea.height
-            color: Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.45)
             z: 1002
         }
 
@@ -713,8 +700,36 @@ ColumnLayout {
                 spacing: ScreenTools.defaultFontPixelHeight * 0.2
 
                 QGCLabel {
-                    text: qsTr("t=%1 s").arg(_markerXValue.toFixed(3))
                     font.bold: true
+                    text: {
+                        const secsPerPixel = _binChart.plotArea.width > 0
+                            ? (_zoomMaxX - _zoomMinX) / _binChart.plotArea.width : 1.0
+                        const decimals = secsPerPixel < 0.1 ? 2 : secsPerPixel < 1.0 ? 1 : 0
+
+                        const wholeSecs = Math.floor(_markerXValue)
+                        const frac      = _markerXValue - wholeSecs
+                        const hh = Math.floor(wholeSecs / 3600)
+                        const mm = Math.floor((wholeSecs % 3600) / 60)
+                        const ss = wholeSecs % 60
+                        const fracStr = decimals > 0 ? frac.toFixed(decimals).slice(1) : ""  // ".x" or ".xx"
+
+                        let elapsed = ""
+                        if (hh > 0) {
+                            elapsed = hh + ":" + String(mm).padStart(2, "0") + ":" + String(ss).padStart(2, "0") + fracStr
+                        } else if (mm > 0) {
+                            elapsed = mm + ":" + String(ss).padStart(2, "0") + fracStr
+                        } else {
+                            elapsed = decimals > 0 ? (ss + frac).toFixed(decimals) + "s" : ss + "s"
+                        }
+
+                        const st = logParser.startTime
+                        if (st && !isNaN(st.getTime()) && st.getTime() > 0) {
+                            const use12h = Qt.locale().timeFormat(Locale.ShortFormat).indexOf("a") >= 0 || Qt.locale().timeFormat(Locale.ShortFormat).indexOf("A") >= 0
+                            const local = Qt.formatTime(new Date(st.getTime() + _markerXValue * 1000), use12h ? "h:mm:ss AP" : "HH:mm:ss")
+                            return local + qsTr(" (local)  /  ") + elapsed + qsTr(" (elapsed)")
+                        }
+                        return elapsed + qsTr(" (elapsed)")
+                    }
                 }
 
                 RowLayout {
@@ -797,112 +812,6 @@ ColumnLayout {
             }
         }
 
-        // Hover cursor popup (mouse position)
-        Rectangle {
-            id: _hoverPopup
-            x: _hoverPopupX(_hoverPixelX)
-            y: _binChart.plotArea.y + _binChart.plotArea.height - height
-            z: 1004
-            implicitWidth: _hoverColumnLayout.implicitWidth + (margin * 2)
-            implicitHeight: _hoverColumnLayout.implicitHeight + (margin * 2)
-            color: Qt.rgba(qgcPal.windowShade.r, qgcPal.windowShade.g, qgcPal.windowShade.b, 0.85)
-            border.color: qgcPal.windowShadeDark
-            radius: ScreenTools.defaultFontPixelWidth * 0.3
-            visible: _hoverVisible
-
-            property real margin: ScreenTools.defaultFontPixelWidth / 2
-            property real colorBlockWidth: ScreenTools.defaultFontPixelHeight * 0.8
-
-            function _hoverPopupX(cursorPx) {
-                const plotMidX = _binChart.plotArea.x + _binChart.plotArea.width / 2
-                if (cursorPx < plotMidX) {
-                    const rightX = _binChart.plotArea.x + _binChart.plotArea.width - width
-                    return Math.max(0, Math.min(rightX, _chartContainer.width - width))
-                } else {
-                    return Math.max(0, _binChart.plotArea.x)
-                }
-            }
-
-            ColumnLayout {
-                id: _hoverColumnLayout
-                anchors.fill: parent
-                anchors.margins: _hoverPopup.margin
-                spacing: ScreenTools.defaultFontPixelHeight * 0.2
-
-                QGCLabel {
-                    text: qsTr("t=%1 s").arg(_hoverXValue.toFixed(3))
-                    font.bold: true
-                }
-
-                RowLayout {
-                    visible: _hoverModeName.length > 0
-                    spacing: ScreenTools.defaultFontPixelWidth * 0.2
-
-                    Rectangle {
-                        Layout.preferredWidth: _hoverPopup.colorBlockWidth
-                        Layout.preferredHeight: _hoverPopup.colorBlockWidth
-                        color: modeColor(_hoverModeName)
-                    }
-
-                    QGCLabel { text: qsTr("Mode:") }
-                    QGCLabel { text: _hoverModeName; font.bold: true }
-                }
-
-                Repeater {
-                    model: _hoverRows
-
-                    ColumnLayout {
-                        spacing: ScreenTools.defaultFontPixelHeight * 0.15
-
-                        RowLayout {
-                            spacing: ScreenTools.defaultFontPixelWidth * 0.4
-
-                            Rectangle {
-                                Layout.preferredWidth:  _hoverPopup.colorBlockWidth
-                                Layout.preferredHeight: _hoverPopup.colorBlockWidth
-                                color: modelData.color
-                            }
-
-                            QGCLabel {
-                                width: _hoverPopup.width - (ScreenTools.defaultFontPixelWidth * 4)
-                                elide: Text.ElideMiddle
-                                text:  modelData.name
-                                font.bold: true
-                            }
-                        }
-
-                        RowLayout {
-                            Layout.leftMargin: _hoverPopup.colorBlockWidth + ScreenTools.defaultFontPixelWidth * 0.4
-                            spacing: ScreenTools.defaultFontPixelWidth * 0.3
-
-                            QGCLabel { text: qsTr("Current") }
-                            QGCLabel { text: Number(modelData.value).toFixed(3); font.bold: true }
-                        }
-                    }
-                }
-
-                Repeater {
-                    model: _hoverEventRows
-
-                    RowLayout {
-                        spacing: ScreenTools.defaultFontPixelWidth * 0.2
-
-                        Rectangle {
-                            Layout.preferredWidth: _hoverPopup.colorBlockWidth
-                            Layout.preferredHeight: _hoverPopup.colorBlockWidth
-                            color: modelData.color
-                        }
-
-                        QGCLabel {
-                            Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 20
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
-                            text: modelData.text
-                        }
-                    }
-                }
-            }
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -926,31 +835,6 @@ ColumnLayout {
                     Layout.preferredWidth: _legendColorBlockSize
                     Layout.preferredHeight: _legendColorBlockSize
                     color: modeColor(modelData)
-                }
-
-                QGCLabel { text: modelData }
-            }
-        }
-    }
-
-    Row {
-        Layout.fillWidth: true
-        Layout.preferredHeight: _legendRowHeight
-        visible: logViewerController.selectedFields.length > 0
-        spacing: ScreenTools.defaultFontPixelWidth
-
-        QGCLabel { text: qsTr("Fields:"); font.bold: true }
-
-        Repeater {
-            model: logViewerController.selectedFields
-
-            RowLayout {
-                spacing: _legendItemSpacing
-
-                Rectangle {
-                    Layout.preferredWidth: _legendColorBlockSize
-                    Layout.preferredHeight: _legendColorBlockSize
-                    color: fieldColor(modelData)
                 }
 
                 QGCLabel { text: modelData }
@@ -998,7 +882,7 @@ ColumnLayout {
 
         QGCLabel {
             Layout.fillWidth: true
-            text: qsTr("Drag on chart to zoom X-axis. Right click chart to reset zoom.")
+            text: qsTr("Click or drag to place cursor. Shift+drag to zoom X-axis. Right click to reset zoom.")
         }
 
         QGCButton {
