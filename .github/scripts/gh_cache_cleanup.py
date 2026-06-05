@@ -12,7 +12,9 @@ or workflow) is responsible for installation.
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import re
 import sys
 from dataclasses import dataclass
 
@@ -20,7 +22,12 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh, write_github_output, write_step_summary  # noqa: E402
+from common.gh_actions import gh, write_github_output, write_step_summary
+
+# Build caches are the expensive-to-rebuild data the GC must never evict; the
+# 10 GiB/repo pool is reclaimed from everything else first.
+DEFAULT_PROTECT = r"^(ccache|cpm-modules)-"
+_MIB = 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -28,6 +35,14 @@ class CacheRow:
     key: str
     size: str
     ref: str
+
+
+@dataclass(frozen=True)
+class CacheUsage:
+    key: str
+    ref: str
+    size_bytes: int
+    last_accessed: str
 
 
 def _repo() -> str:
@@ -44,11 +59,15 @@ def _branch_args(branch: str) -> list[str]:
 def list_caches(repo: str, branch: str, limit: int = 100) -> list[CacheRow]:
     """Return cached entries via `gh actions-cache list`. Empty list on no rows."""
     result = gh(
-        "actions-cache", "list",
-        "-R", repo,
+        "actions-cache",
+        "list",
+        "-R",
+        repo,
         *_branch_args(branch),
-        "--order", "desc",
-        "--limit", str(limit),
+        "--order",
+        "desc",
+        "--limit",
+        str(limit),
     )
     rows: list[CacheRow] = []
     for line in result.stdout.splitlines():
@@ -71,8 +90,11 @@ def delete_caches(repo: str, branch: str, keys: list[str]) -> tuple[int, int]:
         if not key:
             continue
         result = gh(
-            "actions-cache", "delete", key,
-            "-R", repo,
+            "actions-cache",
+            "delete",
+            key,
+            "-R",
+            repo,
             *_branch_args(branch),
             "--confirm",
             check=False,
@@ -82,6 +104,95 @@ def delete_caches(repo: str, branch: str, keys: list[str]) -> tuple[int, int]:
         else:
             failed += 1
     return deleted, failed
+
+
+def list_caches_usage(repo: str, limit: int = 200) -> list[CacheUsage]:
+    """Return all caches with numeric sizes via built-in `gh cache list --json`."""
+    result = gh(
+        "cache",
+        "list",
+        "-R",
+        repo,
+        "--limit",
+        str(limit),
+        "--json",
+        "key,ref,sizeInBytes,lastAccessedAt",
+    )
+    data = json.loads(result.stdout or "[]")
+    return [
+        CacheUsage(
+            key=row.get("key", ""),
+            ref=row.get("ref", ""),
+            size_bytes=int(row.get("sizeInBytes", 0)),
+            last_accessed=row.get("lastAccessedAt", ""),
+        )
+        for row in data
+        if row.get("key")
+    ]
+
+
+def select_prune_victims(
+    caches: list[CacheUsage], *, keep_mb: int, high_water_mb: int, protect: str
+) -> tuple[list[CacheUsage], int, int]:
+    """Pick evictable caches to delete; return (victims, total_bytes, projected_bytes).
+
+    No-op below high_water_mb. Above it, evicts non-protected caches largest-first
+    (cold-first on ties) until the pool would drop to keep_mb. Protected build
+    caches are never selected, so the floor can exceed keep_mb.
+    """
+    protect_re = re.compile(protect)
+    total = sum(cache.size_bytes for cache in caches)
+    if total <= high_water_mb * _MIB:
+        return [], total, total
+
+    keep = keep_mb * _MIB
+    evictable = sorted(
+        (cache for cache in caches if not protect_re.search(cache.key)),
+        key=lambda cache: (-cache.size_bytes, cache.last_accessed),
+    )
+    victims: list[CacheUsage] = []
+    projected = total
+    for cache in evictable:
+        if projected <= keep:
+            break
+        victims.append(cache)
+        projected -= cache.size_bytes
+    return victims, total, projected
+
+
+def _prune_summary(victims: list[CacheUsage], total: int, projected: int, *, deleted: bool) -> str:
+    verb = "Deleted" if deleted else "Would delete"
+    lines = [
+        "## Cache GC\n",
+        f"\nPool: {total // _MIB} MiB → {projected // _MIB} MiB "
+        f"({verb.lower()} {len(victims)} cache(s))\n",
+    ]
+    if victims:
+        lines.append("\n| Key | Size | Branch |\n|-----|------|--------|\n")
+        for cache in victims:
+            lines.append(f"| `{cache.key[:50]}` | {cache.size_bytes // _MIB} MiB | {cache.ref} |\n")
+    else:
+        lines.append("\nUnder high-water mark — nothing to evict.\n")
+    return "".join(lines)
+
+
+def run_prune(repo: str, args: argparse.Namespace) -> dict[str, str]:
+    """Evict non-protected caches when the pool exceeds the high-water mark."""
+    caches = list_caches_usage(repo, args.limit)
+    victims, total, projected = select_prune_victims(
+        caches, keep_mb=args.keep_mb, high_water_mb=args.high_water_mb, protect=args.protect
+    )
+    deleted = 0
+    if victims and args.delete:
+        deleted, _ = delete_caches(repo, "", [cache.key for cache in victims])
+    print(f"Pool {total // _MIB} MiB; {len(victims)} eviction candidate(s); deleted {deleted}")
+
+    if args.summary:
+        summary = _prune_summary(victims, total, projected, deleted=args.delete)
+        if victims and not args.delete:
+            summary += _DRY_RUN_NOTICE
+        write_step_summary(summary)
+    return {"count": str(len(caches)), "deleted": str(deleted)}
 
 
 def _list_summary(rows: list[CacheRow], branch: str) -> str:
@@ -105,9 +216,7 @@ def _deletion_summary(deleted: int, failed: int) -> str:
     return "".join(out)
 
 
-_DRY_RUN_NOTICE = (
-    "\n> **Dry run** — no caches were deleted. Set `dry-run: false` to delete.\n"
-)
+_DRY_RUN_NOTICE = "\n> **Dry run** — no caches were deleted. Set `dry-run: false` to delete.\n"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -124,9 +233,36 @@ def main(argv: list[str] | None = None) -> int:
         help="Append markdown summary to $GITHUB_STEP_SUMMARY",
     )
     parser.add_argument("--limit", type=int, default=100)
+    parser.add_argument(
+        "--prune",
+        action="store_true",
+        help="GC mode: evict non-protected caches when the pool exceeds --high-water-mb",
+    )
+    parser.add_argument(
+        "--high-water-mb",
+        type=int,
+        default=9000,
+        help="Prune only when total cache size exceeds this (default 9000, cap is 10240)",
+    )
+    parser.add_argument(
+        "--keep-mb",
+        type=int,
+        default=6500,
+        help="Prune target: evict down to roughly this size, leaving headroom (default 6500)",
+    )
+    parser.add_argument(
+        "--protect",
+        default=DEFAULT_PROTECT,
+        help="Regex of cache keys never evicted in --prune mode",
+    )
     args = parser.parse_args(argv)
 
     repo = _repo()
+
+    if args.prune:
+        write_github_output(run_prune(repo, args))
+        return 0
+
     rows = list_caches(repo, args.branch, args.limit)
     count = len(rows)
     print(f"Found {count} cache(s)")
