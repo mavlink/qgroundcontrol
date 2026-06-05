@@ -25,8 +25,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import ClassVar
 
-# Add tools to path for imports
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from _bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
 
 from common.analyzer import AnalysisResult, AnalyzerBase
 from common.file_traversal import find_cpp_files

@@ -27,8 +27,12 @@ import tarfile
 import tempfile
 import time
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from ci_bootstrap import ensure_tools_dir
 
@@ -58,16 +62,65 @@ def _download_file(url: str, dest: Path, *, timeout: int = 120) -> None:
                 break
             f.write(chunk)
 
-# SHA256s below are bound to this version; test_ccache_version_drift.py enforces sync with build-config.json.
-PINNED_BINARY_VERSION = "4.13.6"
 
-WINDOWS_BINARY_SHA256 = {
-    "x86_64": "3d7cebb05850ad704e197b3f1d3f0f924ab6c9fdfc561578e146184fe9d89380",
-    "aarch64": "bec01846b06d6d87bf35eda50544d7c8bf9b9a4859f218417a7081aa45d7fd47",
-}
+_CCACHE_RELEASE_URL = "https://github.com/ccache/ccache/releases/download"
 
-# macOS release is a universal (x86_64 + arm64) tarball, no arch suffix.
-MACOS_BINARY_SHA256 = "0274210ec9c9936ed5711d59b0de3167a51216a588ddde35f6bc828f366fe6d9"
+
+def _extract_zip(archive: Path, dest: Path) -> None:
+    with zipfile.ZipFile(archive) as zf:
+        zf.extractall(dest)
+
+
+def _extract_tar_gz(archive: Path, dest: Path) -> None:
+    with tarfile.open(archive, "r:gz") as tar:
+        tar.extractall(dest, filter="data")
+
+
+def _install_release_binary(
+    url: str,
+    sha256: str,
+    archive_name: str,
+    extract: Callable[[Path, Path], None],
+    locate_source: Callable[[Path], Path],
+    dest: Path,
+) -> Path:
+    """Download a SHA256-verified release archive, extract it, and copy the binary to ``dest``."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        archive_path = temp_path / archive_name
+        _download_file(url, archive_path)
+        actual = hashlib.sha256(archive_path.read_bytes()).hexdigest()
+        if actual != sha256:
+            raise RuntimeError(f"SHA256 mismatch: {actual} != {sha256}")
+        extract(archive_path, temp_path)
+        source = locate_source(temp_path)
+        if not source.exists():
+            raise FileNotFoundError(f"ccache binary not found in archive: {source}")
+        shutil.copy2(source, dest)
+    return dest
+
+@dataclass(frozen=True)
+class CcacheRelease:
+    """A pinned ccache release: version coupled to its per-platform digests."""
+
+    version: str
+    windows_sha256: dict[str, str]  # keyed by arch (x86_64, aarch64)
+    macos_sha256: str  # universal (x86_64 + arm64) tarball, no arch suffix
+
+
+# Digests are bound to .version; test_ccache_version_drift.py enforces sync with build-config.json.
+PINNED_RELEASE = CcacheRelease(
+    version="4.13.6",
+    windows_sha256={
+        "x86_64": "3d7cebb05850ad704e197b3f1d3f0f924ab6c9fdfc561578e146184fe9d89380",
+        "aarch64": "bec01846b06d6d87bf35eda50544d7c8bf9b9a4859f218417a7081aa45d7fd47",
+    },
+    macos_sha256="0274210ec9c9936ed5711d59b0de3167a51216a588ddde35f6bc828f366fe6d9",
+)
+
+PINNED_BINARY_VERSION = PINNED_RELEASE.version
+WINDOWS_BINARY_SHA256 = PINNED_RELEASE.windows_sha256
+MACOS_BINARY_SHA256 = PINNED_RELEASE.macos_sha256
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -92,7 +145,7 @@ class CcacheInstaller:
     MINISIGN_VERSION = "0.11"
     MINISIGN_KEY = "RWQX7yXbBedVfI4PNx6FLdFXu9GHUFsr28s4BVGxm4BeybtnX3P06saF"
 
-    CCACHE_RELEASE_URL = "https://github.com/ccache/ccache/releases/download"
+    CCACHE_RELEASE_URL = _CCACHE_RELEASE_URL
     MINISIGN_RELEASE_URL = "https://github.com/jedisct1/minisign/releases/download"
     MINISIGN_ARCHIVE_SHA256 = "f0a0954413df8531befed169e447a66da6868d79052ed7e892e50a4291af7ae0"
 
@@ -471,64 +524,37 @@ def _assert_pinned_version(version: str, platform_label: str) -> None:
 def install_windows_binary(version: str, arch: str, sha256: str, runner_temp: Path) -> Path:
     """Download and install the ccache Windows binary under ``runner_temp``."""
     _assert_pinned_version(version, "Windows")
-    ccache_url = (
-        f"https://github.com/ccache/ccache/releases/download/v{version}/"
-        f"ccache-{version}-windows-{arch}.zip"
-    )
     install_dir = runner_temp / f"ccache-{version}-windows-{arch}"
     install_dir.mkdir(parents=True, exist_ok=True)
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        archive_path = temp_path / "ccache.zip"
-        _download_file(ccache_url, archive_path)
-        actual = hashlib.sha256(archive_path.read_bytes()).hexdigest()
-        if actual != sha256:
-            raise RuntimeError(f"SHA256 mismatch: {actual} != {sha256}")
-
-        with zipfile.ZipFile(archive_path) as archive:
-            archive.extractall(temp_path)
-
-        source = temp_path / f"ccache-{version}-windows-{arch}" / "ccache.exe"
-        if not source.exists():
-            raise FileNotFoundError(f"ccache.exe not found in downloaded archive for {arch}")
-        shutil.copy2(source, install_dir / "ccache.exe")
+    _install_release_binary(
+        f"{_CCACHE_RELEASE_URL}/v{version}/ccache-{version}-windows-{arch}.zip",
+        sha256,
+        "ccache.zip",
+        _extract_zip,
+        lambda root: root / f"ccache-{version}-windows-{arch}" / "ccache.exe",
+        install_dir / "ccache.exe",
+    )
     return install_dir
 
 def install_macos_binary(version: str, sha256: str, prefix: Path) -> Path:
     """Download and install the ccache macOS universal binary under ``prefix``/bin.
 
-    Matches the Windows install shape (SHA256-verified GitHub release tarball)
-    rather than the Linux path's minisign verification, so the macOS runner
-    doesn't need a minisign binary. Replaces the previous unpinned
-    ``brew install ccache`` step so all three platforms install the version
-    declared in ``.github/build-config.json``.
+    SHA256-verified GitHub release tarball (not the Linux minisign path), so the
+    macOS runner needs no minisign binary, and all three platforms install the
+    version declared in ``.github/build-config.json`` (vs unpinned brew).
     """
     _assert_pinned_version(version, "macOS")
-    ccache_url = (
-        f"https://github.com/ccache/ccache/releases/download/v{version}/"
-        f"ccache-{version}-darwin.tar.gz"
-    )
     bin_dir = prefix / "bin"
     bin_dir.mkdir(parents=True, exist_ok=True)
-    dest = bin_dir / "ccache"
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        archive_path = temp_path / "ccache.tar.gz"
-        _download_file(ccache_url, archive_path)
-        actual = hashlib.sha256(archive_path.read_bytes()).hexdigest()
-        if actual != sha256:
-            raise RuntimeError(f"SHA256 mismatch: {actual} != {sha256}")
-
-        with tarfile.open(archive_path, "r:gz") as tar:
-            tar.extractall(temp_path, filter="data")
-
-        source = temp_path / f"ccache-{version}-darwin" / "ccache"
-        if not source.exists():
-            raise FileNotFoundError("ccache binary not found in macOS archive")
-        shutil.copy2(source, dest)
-        dest.chmod(0o755)
+    dest = _install_release_binary(
+        f"{_CCACHE_RELEASE_URL}/v{version}/ccache-{version}-darwin.tar.gz",
+        sha256,
+        "ccache.tar.gz",
+        _extract_tar_gz,
+        lambda root: root / f"ccache-{version}-darwin" / "ccache",
+        bin_dir / "ccache",
+    )
+    dest.chmod(0o755)
     return dest
 
 def add_windows_binary_to_path(version: str, arch: str, runner_temp: Path) -> Path:

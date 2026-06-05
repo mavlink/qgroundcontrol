@@ -75,6 +75,7 @@ jobs:
           sparse-checkout: |
             .github/actions
             .github/scripts
+            tools/common
 
       - name: Deploy docs
         uses: ./.github/actions/deploy-docs

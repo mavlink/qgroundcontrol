@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 from common.analyzer import AnalysisResult, AnalyzerBase
 from common.logging import log_error, log_info, log_ok
 from common.proc import run_captured
+from common.tool_version import probe_version
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -22,10 +23,9 @@ class ClangFormatAnalyzer(AnalyzerBase):
         if not self.require_tool("clang-format"):
             return AnalysisResult(tool=self.name, passed=False, output="Tool not found")
 
-        version_result = run_captured(["clang-format", "--version"])
-        parts = version_result.stdout.split() if version_result.stdout else []
-        version_match = parts[2] if len(parts) > 2 else "unknown"
-        log_info(f"Using clang-format version {version_match}")
+        version = probe_version("clang-format")
+        version_str = ".".join(map(str, version)) if version else "unknown"
+        log_info(f"Using clang-format version {version_str}")
 
         if not files:
             log_info("No files to check")

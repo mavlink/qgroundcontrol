@@ -330,16 +330,6 @@ def _inject_prop(qml: str, prop_line: str) -> str:
     qml_lines.insert(1, prop_line)
     return "\n".join(qml_lines)
 
-def _wrap_visible(qml: str, expr: str, indent: str) -> str:
-    """Wrap a QML block in an Item with a visible binding."""
-    lines = [f"{indent}Item {{"]
-    lines.append(f"{indent}    visible: {expr}")
-    lines.append(f"{indent}    Layout.fillWidth: true")
-    for line in qml.splitlines():
-        lines.append(f"    {line}" if line.strip() else line)
-    lines.append(f"{indent}}}")
-    return "\n".join(lines)
-
 def _section_visible(sec: SectionDef) -> str:
     name_vis = f'sectionMatchesFilter("{sec.title}")'
     return f"{name_vis} && {sec.showWhen}" if sec.showWhen else name_vis

@@ -65,7 +65,7 @@ runs:
         # shellcheck disable=SC2086
         sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends $APT_PACKAGES
 
-    - name: Fix apt alternatives after cache restore (Linux)
+    - name: Fix apt alternatives (Linux)
       if: runner.os == 'Linux'
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" fix-apt-alternatives

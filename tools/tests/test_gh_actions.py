@@ -8,7 +8,6 @@ import os
 import subprocess
 from unittest.mock import patch
 
-import httpx
 from common import gh_actions as mod
 
 
@@ -16,102 +15,43 @@ def _cp(stdout: str = "", stderr: str = "", returncode: int = 0) -> subprocess.C
     return subprocess.CompletedProcess(args=["gh"], returncode=returncode, stdout=stdout, stderr=stderr)
 
 
-def _mock_response(
-    data: dict,
-    next_url: str = "",
-    status_code: int = 200,
-    extra_headers: dict[str, str] | None = None,
-) -> httpx.Response:
-    headers = {}
-    if next_url:
-        headers["link"] = f'<{next_url}>; rel="next"'
-    if extra_headers:
-        headers.update(extra_headers)
-    request = httpx.Request("GET", "https://api.github.com/test")
-    resp = httpx.Response(status_code, json=data, headers=headers, request=request)
-    return resp
-
-
-def test_parse_json_documents_handles_paginated_stream() -> None:
-    payload = (
-        json.dumps({"workflow_runs": [{"id": 1}]})
-        + "\n"
-        + json.dumps({"workflow_runs": [{"id": 2}]})
-    )
-    docs = mod.parse_json_documents(payload)
-    assert [doc["workflow_runs"][0]["id"] for doc in docs] == [1, 2]
-
-
-def test_parse_json_documents_raises_on_invalid_json() -> None:
-    payload = '{"workflow_runs":[{"id":1}]}\nnot-json'
-    try:
-        mod.parse_json_documents(payload)
-    except ValueError as exc:
-        assert "Failed to parse GitHub API JSON output near:" in str(exc)
-    else:
-        raise AssertionError("Expected ValueError for invalid JSON stream")
-
-
-def test_list_workflow_runs_for_sha_uses_get_method() -> None:
-    payload = json.dumps({"workflow_runs": [{"id": 1, "name": "Linux"}]})
-    with patch.dict(os.environ, {"QGC_GH_API_MODE": "gh"}, clear=False), \
-         patch.object(mod, "gh", return_value=_cp(stdout=payload)) as gh_mock:
+def test_list_workflow_runs_for_sha_uses_jq_get_method() -> None:
+    payload = json.dumps({"id": 1, "name": "Linux"})
+    with patch.object(mod, "gh", return_value=_cp(stdout=payload)) as gh_mock:
         runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
 
     assert runs == [{"id": 1, "name": "Linux"}]
     called_args = gh_mock.call_args[0]
     assert "--method" in called_args
     assert "GET" in called_args
+    assert ".workflow_runs[]?" in called_args
 
 
-def test_list_workflow_runs_for_sha_http_mode() -> None:
-    first = _mock_response(
-        {"workflow_runs": [{"id": 1, "name": "Linux"}]},
-        next_url="https://api.github.com/next",
+def test_list_workflow_runs_for_sha_unpacks_ndjson_stream() -> None:
+    payload = (
+        json.dumps({"id": 1, "name": "Linux"})
+        + "\n"
+        + json.dumps({"id": 2, "name": "Windows"})
     )
-    second = _mock_response({"workflow_runs": [{"id": 2, "name": "Windows"}]})
-
-    with patch.dict(os.environ, {"QGC_GH_API_MODE": "http", "GH_TOKEN": "token"}, clear=False), \
-         patch.object(mod, "_build_http_client") as mock_client:
-        client = mock_client.return_value.__enter__.return_value
-        client.get.side_effect = [first, second]
-        with patch.object(mod, "gh") as gh_mock:
-            runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
+    with patch.object(mod, "gh", return_value=_cp(stdout=payload)) as gh_mock:
+        runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
 
     assert [run["id"] for run in runs] == [1, 2]
-    gh_mock.assert_not_called()
+    gh_mock.assert_called_once()
 
 
-def test_list_workflow_runs_for_sha_http_mode_retries_retryable_status() -> None:
-    first = _mock_response(
-        {"message": "try again"},
-        status_code=503,
-        extra_headers={"Retry-After": "0"},
-    )
-    second = _mock_response({"workflow_runs": [{"id": 7, "name": "Linux"}]})
-
-    with patch.dict(os.environ, {"QGC_GH_API_MODE": "http", "GH_TOKEN": "token"}, clear=False), \
-         patch.object(mod, "_build_http_client") as mock_client:
-        client = mock_client.return_value.__enter__.return_value
-        client.get.side_effect = [first, second]
-        with patch.object(mod.time, "sleep") as sleep_mock:
-            runs = mod.list_workflow_runs_for_sha("owner/repo", "abc123")
-
-    assert runs == [{"id": 7, "name": "Linux"}]
-    assert client.get.call_count == 2
-    sleep_mock.assert_called_once_with(1.0)
-
-
-def test_list_run_artifacts_parses_paginated_stream() -> None:
+def test_list_run_artifacts_parses_ndjson_stream() -> None:
     payload = (
-        json.dumps({"artifacts": [{"name": "QGroundControl", "size_in_bytes": 1}]})
+        json.dumps({"name": "QGroundControl", "size_in_bytes": 1})
         + "\n"
-        + json.dumps({"artifacts": [{"name": "QGroundControl2", "size_in_bytes": 2}]})
+        + json.dumps({"name": "QGroundControl2", "size_in_bytes": 2})
     )
     with patch.object(mod, "gh", return_value=_cp(stdout=payload)) as gh_mock:
         artifacts = mod.list_run_artifacts("owner/repo", 77)
 
     assert [a["name"] for a in artifacts] == ["QGroundControl", "QGroundControl2"]
+    called_args = gh_mock.call_args[0]
+    assert ".artifacts[]?" in called_args
     gh_mock.assert_called_once()
 
 

@@ -21,7 +21,6 @@ permissions:
   contents: read
   id-token: write
   attestations: write
-  security-events: write
   actions: read
   checks: write
 
@@ -37,6 +36,16 @@ jobs:
     if: needs.changes.outputs.should_build == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
+
+    # security-events: write is scoped here (CodeQL runs only in this job),
+    # not at workflow level — the debug/changes jobs cannot upload SARIF.
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      security-events: write
+      actions: read
+      checks: write
 
     strategy:
       fail-fast: false

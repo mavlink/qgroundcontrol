@@ -86,9 +86,6 @@ if TYPE_CHECKING:
         list_workflow_runs_for_sha as list_workflow_runs_for_sha,
     )
     from .gh_actions import (
-        parse_json_documents as parse_json_documents,
-    )
-    from .gh_actions import (
         write_github_output as write_github_output,
     )
     from .gh_actions import (
@@ -187,7 +184,6 @@ _LAZY_SYMBOLS: dict[str, str] = {
     "find_json_files": "file_traversal",
     "DEFAULT_SKIP_DIRS": "file_traversal",
     "gh": "gh_actions",
-    "parse_json_documents": "gh_actions",
     "list_workflow_runs_for_sha": "gh_actions",
     "list_run_artifacts": "gh_actions",
     "write_github_output": "gh_actions",

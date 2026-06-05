@@ -8,8 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path  # noqa: TC003
 
 from ..common.controls import (
-    ButtonDef,
-    EnableCheckboxDef,
+    BaseControlDef,
     parse_button,
     parse_enable_checkbox,
 )
@@ -19,18 +18,10 @@ _TRANSLATED_LIST_RE = re.compile("[,，、]")
 
 
 @dataclass
-class ControlDef:
+class ControlDef(BaseControlDef):
     """A single control referencing a setting."""
-    setting: str
-    label: str = ""
-    control: str = ""
-    showWhen: str = ""
-    enableWhen: str = ""
     placeholder: str = ""
     value: str = ""
-    component: str = ""
-    enableCheckbox: EnableCheckboxDef | None = None
-    button: ButtonDef | None = None
 
     @property
     def settings_group(self) -> str:

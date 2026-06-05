@@ -30,7 +30,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Set up setup-qemu-action
+    - name: Set up QEMU
       uses: docker/setup-qemu-action@v4
       with:
         cache-image: false

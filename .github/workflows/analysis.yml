@@ -56,6 +56,7 @@ jobs:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Debug
+          cache-variant: ${{ inputs.tool }}
           save-cache: true
 
       - name: Prepare apt repositories (clazy)
@@ -74,7 +75,6 @@ jobs:
       - name: Install clazy packages
         if: inputs.tool == 'clazy'
         run: |
-          sudo apt-get -o Acquire::Retries=3 update -qq
           sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends clazy ninja-build
 
       - name: Install Dependencies (iwyu)
@@ -90,6 +90,7 @@ jobs:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Debug
+          cache-variant: ${{ inputs.tool }}
           save-cache: true
 
       - name: Install Dependencies (sanitizers)
