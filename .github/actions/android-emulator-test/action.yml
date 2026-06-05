@@ -39,58 +39,6 @@ runs:
         sudo udevadm control --reload-rules
         sudo udevadm trigger --name-match=kvm
 
-    - name: Restore AVD cache
-      id: avd-cache
-      uses: actions/cache/restore@v5
-      with:
-        path: |
-          ~/.android/avd/*
-          ~/.android/adb*
-        key: >-
-          avd-${{ runner.os }}-${{ runner.arch }}-api${{ inputs.android-platform }}
-          -x86_64-google_apis-pixel_6-qt${{ inputs.qt-version }}
-          -ndk${{ inputs.ndk-version }}-v2
-
-    - name: Create AVD Snapshot
-      id: avd-snapshot
-      if: steps.avd-cache.outputs.cache-hit != 'true'
-      continue-on-error: true
-      uses: reactivecircus/android-emulator-runner@v2
-      with:
-        api-level: ${{ inputs.android-platform }}
-        system-image-api-level: ${{ inputs.android-platform }}
-        arch: x86_64
-        target: google_apis
-        profile: pixel_6
-        cores: 4
-        ram-size: 4096M
-        heap-size: 1024M
-        avd-name: qgc-ci
-        force-avd-creation: false
-        emulator-boot-timeout: 420
-        disable-animations: true
-        disable-spellchecker: true
-        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
-        script: echo "Generated AVD snapshot for cache."
-
-    # PRs are read-only on the shared cache (fork PRs can't poison it, same-repo PRs don't churn).
-    - name: Save AVD cache
-      if: github.event_name != 'pull_request' && steps.avd-cache.outputs.cache-hit != 'true' && steps.avd-snapshot.outcome == 'success'
-      uses: actions/cache/save@v5
-      with:
-        path: |
-          ~/.android/avd/*
-          ~/.android/adb*
-        key: ${{ steps.avd-cache.outputs.cache-primary-key }}
-
-    - name: Kill Stale Emulator
-      if: steps.avd-snapshot.outcome == 'failure'
-      shell: bash
-      run: |
-        pkill -9 -f qemu-system || true
-        adb kill-server 2>/dev/null || true
-        sleep 5
-
     - name: Emulator Boot Test
       uses: reactivecircus/android-emulator-runner@v2
       with:
