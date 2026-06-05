@@ -14,6 +14,18 @@ inputs:
     description: 'Write a markdown table of caches to $GITHUB_STEP_SUMMARY'
     required: false
     default: 'false'
+  prune:
+    description: 'GC mode: keep build caches, evict the rest when the pool nears the 10 GiB cap'
+    required: false
+    default: 'false'
+  high-water-mb:
+    description: 'Prune trigger: only evict when total cache size exceeds this'
+    required: false
+    default: '9000'
+  keep-mb:
+    description: 'Prune target: evict down to roughly this size, leaving headroom'
+    required: false
+    default: '6500'
 
 outputs:
   count:
@@ -45,4 +57,7 @@ runs:
         ARGS=(--branch "${{ inputs.branch }}")
         [[ "${{ inputs.dry-run }}" != "true" ]] && ARGS+=(--delete)
         [[ "${{ inputs.summary }}" == "true" ]] && ARGS+=(--summary)
+        if [[ "${{ inputs.prune }}" == "true" ]]; then
+          ARGS+=(--prune --high-water-mb "${{ inputs.high-water-mb }}" --keep-mb "${{ inputs.keep-mb }}")
+        fi
         python3 "${GITHUB_WORKSPACE}/.github/scripts/gh_cache_cleanup.py" "${ARGS[@]}"
