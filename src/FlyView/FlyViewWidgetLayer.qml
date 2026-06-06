@@ -92,6 +92,14 @@ Item {
         rallyPointController:   _rallyPointController
     }
 
+    //-- MIST MAVIROV companion drawer (collapsible tab on the right edge)
+    ROVCompanionPanel {
+        anchors.right:          parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        z:                      QGroundControl.zOrderTopMost
+        visible:                !QGroundControl.videoManager.fullScreen
+    }
+
     //-- Virtual Joystick
     Loader {
         id:                         virtualJoystickMultiTouch
