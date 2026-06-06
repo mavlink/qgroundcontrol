@@ -8,69 +8,46 @@
 // QGCLoggingCategoryItem
 // ---------------------------------------------------------------------------
 
-void LoggingCategoryModelTest::_testItemConstructionDefaultsToWarning()
+void LoggingCategoryModelTest::_testItemConstructionDisabled()
 {
-    // Items constructed with an explicit QtWarningMsg level must also report
-    // enabled() == false, since enabled() is defined as logLevel <= QtDebugMsg.
-    QGCLoggingCategoryItem item(QStringLiteral("Cat"), QStringLiteral("Test.Cat"),
-                                QtWarningMsg);
+    QGCLoggingCategoryItem item(QStringLiteral("Cat"), QStringLiteral("Test.Cat"), false);
 
     QCOMPARE(item.shortCategory, QStringLiteral("Cat"));
     QCOMPARE(item.fullCategory,  QStringLiteral("Test.Cat"));
-    QCOMPARE(item.logLevel(),    static_cast<int>(QtWarningMsg));
     QVERIFY(!item.enabled());
 }
 
-void LoggingCategoryModelTest::_testItemEnabledReflectsLogLevel()
+void LoggingCategoryModelTest::_testItemConstructionEnabled()
 {
-    // enabled() is true iff logLevel <= QtDebugMsg. Check the boundary.
-    QGCLoggingCategoryItem debugItem(QStringLiteral("A"), QStringLiteral("A"), QtDebugMsg);
-    QGCLoggingCategoryItem infoItem (QStringLiteral("B"), QStringLiteral("B"), QtInfoMsg);
-    QGCLoggingCategoryItem warnItem (QStringLiteral("C"), QStringLiteral("C"), QtWarningMsg);
-    QGCLoggingCategoryItem critItem (QStringLiteral("D"), QStringLiteral("D"), QtCriticalMsg);
-
-    QVERIFY( debugItem.enabled());
-    QVERIFY(!infoItem.enabled());
-    QVERIFY(!warnItem.enabled());
-    QVERIFY(!critItem.enabled());
+    QGCLoggingCategoryItem item(QStringLiteral("Cat"), QStringLiteral("Test.Cat"), true);
+    QVERIFY(item.enabled());
 }
 
-void LoggingCategoryModelTest::_testSetLogLevelFromManagerEmitsOnTransition()
+void LoggingCategoryModelTest::_testSetEnabledFromManagerEmitsSignal()
 {
-    QGCLoggingCategoryItem item(QStringLiteral("X"), QStringLiteral("UT.X"), QtWarningMsg);
+    QGCLoggingCategoryItem item(QStringLiteral("X"), QStringLiteral("UT.X"), false);
 
-    QSignalSpy levelSpy  (&item, &QGCLoggingCategoryItem::logLevelChanged);
     QSignalSpy enableSpy(&item, &QGCLoggingCategoryItem::enabledChanged);
 
-    // Flipping from Warning (disabled) to Debug (enabled) must fire both signals.
-    item.setLogLevelFromManager(QtDebugMsg);
-    QCOMPARE(item.logLevel(),   static_cast<int>(QtDebugMsg));
+    item.setEnabledFromManager(true);
     QVERIFY(item.enabled());
-    QCOMPARE(levelSpy.count(),  1);
     QCOMPARE(enableSpy.count(), 1);
 
-    // Going Debug → Info changes the level but keeps enabled==false; so
-    // logLevelChanged must fire but enabledChanged must not.
-    item.setLogLevelFromManager(QtInfoMsg);
-    QCOMPARE(levelSpy.count(),  2);
-    QCOMPARE(enableSpy.count(), 2); // Info is NOT <= QtDebugMsg — transition fires.
-
-    // Going Info → Warning — still not-enabled; enabledChanged must not fire.
-    item.setLogLevelFromManager(QtWarningMsg);
-    QCOMPARE(levelSpy.count(),  3);
-    QCOMPARE(enableSpy.count(), 2); // stays disabled through Info→Warning.
+    item.setEnabledFromManager(false);
+    QVERIFY(!item.enabled());
+    QCOMPARE(enableSpy.count(), 2);
 }
 
-void LoggingCategoryModelTest::_testSetLogLevelFromManagerNoOp()
+void LoggingCategoryModelTest::_testSetEnabledFromManagerNoOp()
 {
-    QGCLoggingCategoryItem item(QStringLiteral("Y"), QStringLiteral("UT.Y"), QtInfoMsg);
+    QGCLoggingCategoryItem item(QStringLiteral("Y"), QStringLiteral("UT.Y"), false);
 
-    QSignalSpy levelSpy(&item, &QGCLoggingCategoryItem::logLevelChanged);
+    QSignalSpy enableSpy(&item, &QGCLoggingCategoryItem::enabledChanged);
 
-    // Same-level call must be a pure no-op — no signal, no state churn.
-    item.setLogLevelFromManager(QtInfoMsg);
-    QCOMPARE(levelSpy.count(), 0);
-    QCOMPARE(item.logLevel(),  static_cast<int>(QtInfoMsg));
+    // Same-value call must be a pure no-op — no signal, no state churn.
+    item.setEnabledFromManager(false);
+    QCOMPARE(enableSpy.count(), 0);
+    QVERIFY(!item.enabled());
 }
 
 // ---------------------------------------------------------------------------
@@ -92,9 +69,9 @@ void LoggingCategoryModelTest::_testFlatModelInsertSortedAlphabetical()
     // Feed items deliberately out of order; the model must insert sorted by
     // fullCategory so that QML ListView consumers render in alpha order.
     LoggingCategoryFlatModel model;
-    auto* c = new QGCLoggingCategoryItem(QStringLiteral("C"), QStringLiteral("Zeta"),   QtWarningMsg, &model);
-    auto* a = new QGCLoggingCategoryItem(QStringLiteral("A"), QStringLiteral("Alpha"),  QtWarningMsg, &model);
-    auto* b = new QGCLoggingCategoryItem(QStringLiteral("B"), QStringLiteral("Middle"), QtWarningMsg, &model);
+    auto* c = new QGCLoggingCategoryItem(QStringLiteral("C"), QStringLiteral("Zeta"),   false, &model);
+    auto* a = new QGCLoggingCategoryItem(QStringLiteral("A"), QStringLiteral("Alpha"),  false, &model);
+    auto* b = new QGCLoggingCategoryItem(QStringLiteral("B"), QStringLiteral("Middle"), false, &model);
 
     QSignalSpy rowsInsertedSpy(&model, &QAbstractItemModel::rowsInserted);
 
@@ -114,7 +91,7 @@ void LoggingCategoryModelTest::_testFlatModelDataRoles()
     LoggingCategoryFlatModel model;
     auto* item = new QGCLoggingCategoryItem(QStringLiteral("Short"),
                                             QStringLiteral("Full.Name"),
-                                            QtDebugMsg, &model);
+                                            true, &model);
     model.insertSorted(item);
 
     using Roles = LoggingCategoryFlatModel::Roles;
@@ -127,8 +104,6 @@ void LoggingCategoryModelTest::_testFlatModelDataRoles()
     QCOMPARE(model.data(idx, static_cast<int>(Roles::ShortNameRole)).toString(),
              QStringLiteral("Short"));
     QCOMPARE(model.data(idx, static_cast<int>(Roles::EnabledRole)).toBool(),  true);
-    QCOMPARE(model.data(idx, static_cast<int>(Roles::LogLevelRole)).toInt(),
-             static_cast<int>(QtDebugMsg));
     // Unknown role falls through the switch and returns a null QVariant.
     QVERIFY(!model.data(idx, Qt::UserRole + 999).isValid());
 }
@@ -137,7 +112,7 @@ void LoggingCategoryModelTest::_testFlatModelInvalidIndexReturnsNull()
 {
     LoggingCategoryFlatModel model;
     model.insertSorted(new QGCLoggingCategoryItem(
-        QStringLiteral("S"), QStringLiteral("F"), QtDebugMsg, &model));
+        QStringLiteral("S"), QStringLiteral("F"), true, &model));
 
     QVERIFY(!model.data(QModelIndex(), Qt::DisplayRole).isValid());
     QVERIFY(!model.data(model.index(5), Qt::DisplayRole).isValid());
@@ -146,9 +121,9 @@ void LoggingCategoryModelTest::_testFlatModelInvalidIndexReturnsNull()
 void LoggingCategoryModelTest::_testFlatModelFindByFullName()
 {
     LoggingCategoryFlatModel model;
-    auto* hit = new QGCLoggingCategoryItem(QStringLiteral("S"), QStringLiteral("Want.Me"), QtWarningMsg, &model);
+    auto* hit = new QGCLoggingCategoryItem(QStringLiteral("S"), QStringLiteral("Want.Me"), false, &model);
     model.insertSorted(hit);
-    model.insertSorted(new QGCLoggingCategoryItem(QStringLiteral("S"), QStringLiteral("Nope"), QtWarningMsg, &model));
+    model.insertSorted(new QGCLoggingCategoryItem(QStringLiteral("S"), QStringLiteral("Nope"), false, &model));
 
     QCOMPARE(model.findByFullName(QStringLiteral("Want.Me")), hit);
     QCOMPARE(model.findByFullName(QStringLiteral("Missing")), nullptr);
@@ -164,8 +139,7 @@ void LoggingCategoryModelTest::_testFlatModelRoleNames()
     QCOMPARE(names.value(Qt::DisplayRole),                     QByteArrayLiteral("display"));
     QCOMPARE(names.value(static_cast<int>(Roles::ShortNameRole)),  QByteArrayLiteral("shortName"));
     QCOMPARE(names.value(static_cast<int>(Roles::FullNameRole)),   QByteArrayLiteral("fullName"));
-    QCOMPARE(names.value(static_cast<int>(Roles::EnabledRole)),    QByteArrayLiteral("enabled"));
-    QCOMPARE(names.value(static_cast<int>(Roles::LogLevelRole)),   QByteArrayLiteral("logLevel"));
+    QCOMPARE(names.value(static_cast<int>(Roles::EnabledRole)),    QByteArrayLiteral("categoryEnabled"));
 }
 
 void LoggingCategoryModelTest::_testFlatModelFlagsIsEditable()
@@ -174,7 +148,7 @@ void LoggingCategoryModelTest::_testFlatModelFlagsIsEditable()
     // checkbox. Invalid indexes must not.
     LoggingCategoryFlatModel model;
     model.insertSorted(new QGCLoggingCategoryItem(
-        QStringLiteral("S"), QStringLiteral("F"), QtWarningMsg, &model));
+        QStringLiteral("S"), QStringLiteral("F"), false, &model));
 
     QVERIFY(model.flags(model.index(0))  & Qt::ItemIsEditable);
     QVERIFY(!(model.flags(QModelIndex()) & Qt::ItemIsEditable));
@@ -200,7 +174,7 @@ void LoggingCategoryModelTest::_testTreeModelInsertSingleLevel()
     QSignalSpy rowsInsertedSpy(&model, &QAbstractItemModel::rowsInserted);
 
     auto* item = new QGCLoggingCategoryItem(QStringLiteral("Leaf"),
-                                            QStringLiteral("Leaf"), QtWarningMsg, &model);
+                                            QStringLiteral("Leaf"), false, &model);
     model.insertCategory(QStringList{QStringLiteral("Leaf")}, QStringLiteral("Leaf"), item);
 
     QCOMPARE(rowsInsertedSpy.count(), 1);
@@ -220,7 +194,7 @@ void LoggingCategoryModelTest::_testTreeModelInsertNestedCreatesIntermediate()
     // and Bar are auto-created group nodes.
     LoggingCategoryTreeModel model;
     auto* leaf = new QGCLoggingCategoryItem(QStringLiteral("Baz"),
-                                            QStringLiteral("Foo.Bar.Baz"), QtWarningMsg, &model);
+                                            QStringLiteral("Foo.Bar.Baz"), false, &model);
     model.insertCategory(QStringList{QStringLiteral("Foo"), QStringLiteral("Bar"), QStringLiteral("Baz")},
                          QStringLiteral("Foo.Bar.Baz"), leaf);
 
@@ -247,7 +221,7 @@ void LoggingCategoryModelTest::_testTreeModelDataRoles()
 {
     LoggingCategoryTreeModel model;
     auto* item = new QGCLoggingCategoryItem(QStringLiteral("L"), QStringLiteral("Full.L"),
-                                            QtDebugMsg, &model);
+                                            true, &model);
     model.insertCategory(QStringList{QStringLiteral("L")}, QStringLiteral("Full.L"), item);
 
     using Roles = LoggingCategoryTreeModel::Roles;
@@ -259,8 +233,6 @@ void LoggingCategoryModelTest::_testTreeModelDataRoles()
     QCOMPARE(model.data(idx, static_cast<int>(Roles::FullNameRole)).toString(),
              QStringLiteral("Full.L"));
     QCOMPARE(model.data(idx, static_cast<int>(Roles::EnabledRole)).toBool(), true);
-    QCOMPARE(model.data(idx, static_cast<int>(Roles::LogLevelRole)).toInt(),
-             static_cast<int>(QtDebugMsg));
 }
 
 void LoggingCategoryModelTest::_testTreeModelRoleNames()
@@ -272,8 +244,7 @@ void LoggingCategoryModelTest::_testTreeModelRoleNames()
     QCOMPARE(names.value(Qt::DisplayRole),                        QByteArrayLiteral("display"));
     QCOMPARE(names.value(static_cast<int>(Roles::ShortNameRole)), QByteArrayLiteral("shortName"));
     QCOMPARE(names.value(static_cast<int>(Roles::FullNameRole)),  QByteArrayLiteral("fullName"));
-    QCOMPARE(names.value(static_cast<int>(Roles::EnabledRole)),   QByteArrayLiteral("enabled"));
-    QCOMPARE(names.value(static_cast<int>(Roles::LogLevelRole)),  QByteArrayLiteral("logLevel"));
+    QCOMPARE(names.value(static_cast<int>(Roles::EnabledRole)),   QByteArrayLiteral("categoryEnabled"));
 }
 
 UT_REGISTER_TEST(LoggingCategoryModelTest, TestLabel::Unit, TestLabel::Utilities)

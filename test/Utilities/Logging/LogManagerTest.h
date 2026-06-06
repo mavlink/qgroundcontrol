@@ -13,5 +13,4 @@ private slots:
     void _hasCapturedWarning();
     void _hasCapturedCritical();
     void _hasCapturedUncategorized();
-    void _categoryLogLevelNames();
 };

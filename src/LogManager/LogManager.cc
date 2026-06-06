@@ -343,16 +343,6 @@ void LogManager::_setDiskLoggingEnabled(bool enabled)
     }
 }
 
-QStringList LogManager::categoryLogLevelNames()
-{
-    return {tr("Debug"), tr("Info"), tr("Warning"), tr("Critical")};
-}
-
-QVariantList LogManager::categoryLogLevelValues()
-{
-    return {QtDebugMsg, QtInfoMsg, QtWarningMsg, QtCriticalMsg};
-}
-
 // ---------------------------------------------------------------------------
 // Disk writing
 // ---------------------------------------------------------------------------
