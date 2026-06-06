@@ -22,7 +22,6 @@ permissions:
   id-token: write
   attestations: write
   actions: read
-  security-events: write
 
 jobs:
   changes:

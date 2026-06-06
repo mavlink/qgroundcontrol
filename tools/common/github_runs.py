@@ -11,10 +11,8 @@ def parse_created_at(created_at: Any) -> datetime | None:
     value = str(created_at).strip()
     if not value:
         return None
-    if value.endswith("Z"):
-        value = f"{value[:-1]}+00:00"
     try:
-        return datetime.fromisoformat(value)
+        return datetime.fromisoformat(value)  # 3.11+ accepts the trailing 'Z'
     except ValueError:
         return None
 

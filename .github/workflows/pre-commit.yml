@@ -45,20 +45,6 @@ jobs:
           groups: precommit
           python-version: '3.12'
 
-      - name: Restore pre-commit cache (PR)
-        if: github.event_name == 'pull_request'
-        uses: actions/cache/restore@v5
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - name: Cache pre-commit hooks (push)
-        if: github.event_name != 'pull_request'
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
-
       - name: Install Qt (for qmllint)
         uses: ./.github/actions/qt-install
         with:

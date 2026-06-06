@@ -56,6 +56,7 @@ jobs:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Debug
+          cache-variant: ${{ inputs.tool }}
           save-cache: true
 
       - name: Prepare apt repositories (clazy)
@@ -71,12 +72,10 @@ jobs:
             fi
             sudo apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 update -y -qq
 
-      - name: Cache and install clazy packages
+      - name: Install clazy packages
         if: inputs.tool == 'clazy'
-        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
-        with:
-          packages: clazy ninja-build
-          version: clazy-linux-v1
+        run: |
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends clazy ninja-build
 
       - name: Install Dependencies (iwyu)
         if: inputs.tool == 'iwyu'
@@ -91,6 +90,7 @@ jobs:
           qt-host: linux
           qt-arch: linux_gcc_64
           build-type: Debug
+          cache-variant: ${{ inputs.tool }}
           save-cache: true
 
       - name: Install Dependencies (sanitizers)

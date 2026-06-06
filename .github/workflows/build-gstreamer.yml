@@ -115,17 +115,16 @@ jobs:
 
       - name: Install dependencies (Linux)
         if: inputs.platform == 'linux'
-        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
-        with:
-          packages: >-
-            build-essential pkg-config git
-            libx11-dev libxext-dev libxv-dev
-            libwayland-dev wayland-protocols
-            libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev
-            libdrm-dev libgbm-dev
-            libasound2-dev libpulse-dev
+        run: |
+          sudo apt-get -o Acquire::Retries=3 update -qq
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+            build-essential pkg-config git \
+            libx11-dev libxext-dev libxv-dev \
+            libwayland-dev wayland-protocols \
+            libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev \
+            libdrm-dev libgbm-dev \
+            libasound2-dev libpulse-dev \
             libva-dev nasm yasm
-          version: gstreamer-linux-deps-v1
 
       - name: Install dependencies (macOS)
         if: inputs.platform == 'macos' || inputs.platform == 'ios'
@@ -137,12 +136,11 @@ jobs:
 
       - name: Install dependencies (Android)
         if: inputs.platform == 'android'
-        uses: awalsh128/cache-apt-pkgs-action@v1.6.0
-        with:
-          packages: >-
-            python3-pip git autoconf automake libtool
+        run: |
+          sudo apt-get -o Acquire::Retries=3 update -qq
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+            python3-pip git autoconf automake libtool \
             pkg-config gettext bison flex cmake ninja-build
-          version: gstreamer-android-deps-v1
 
       # Android/iOS GStreamer builds don't link against host Qt — skip build-setup there. The desktop platforms run through build-setup so we get qt-install + setup-python + platform compiler toolchain in one shot.
       - name: Build Setup

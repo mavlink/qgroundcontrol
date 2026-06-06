@@ -239,16 +239,6 @@ def generate_page_qml(
     ) + "\n"
 
 
-def _dedup(items: list[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for item in items:
-        if item not in seen:
-            seen.add(item)
-            out.append(item)
-    return out
-
-
 def generate_pages_model_qml(pages_json_path: Path) -> str:
     """Generate SettingsPagesModel.qml from SettingsPages.json."""
     with open(pages_json_path, encoding="utf-8") as f:
@@ -282,7 +272,7 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
                     terms_parts.extend(c.label.lower() for c in grp.controls if c.label)
                     search_terms.append({
                         "section": grp_idx,
-                        "terms": " ".join(_dedup(terms_parts)),
+                        "terms": " ".join(dict.fromkeys(terms_parts)),
                     })
 
                     tr_parts: list[str] = [section_name, *grp.keywords]
@@ -290,7 +280,7 @@ def generate_pages_model_qml(pages_json_path: Path) -> str:
                     translatable_terms.append({
                         "section": grp_idx,
                         "context": page_def_name,
-                        "terms": _dedup(tr_parts),
+                        "terms": list(dict.fromkeys(tr_parts)),
                     })
 
         entries.append({

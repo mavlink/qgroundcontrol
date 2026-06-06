@@ -179,7 +179,7 @@ runs:
         restore-keys: |
           ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-
           ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-shared-
-          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+          ${{ inputs.variant && format('ccache-{0}-{1}-{2}-shared-', inputs.host, inputs.target, inputs.build-type) || '' }}
 
     - name: Restore Build Cache (ccache, read-only)
       if: steps.cache-policy.outputs.save != 'true'
@@ -190,7 +190,7 @@ runs:
         restore-keys: |
           ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-
           ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-shared-
-          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}-shared-
+          ${{ inputs.variant && format('ccache-{0}-{1}-{2}-shared-', inputs.host, inputs.target, inputs.build-type) || '' }}
 
     - name: Initialize ccache stats
       shell: bash

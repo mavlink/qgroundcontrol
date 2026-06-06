@@ -8,9 +8,8 @@ from pathlib import Path  # noqa: TC003
 
 from ..common.controls import (
     ActionButtonDef,
-    ButtonDef,
+    BaseControlDef,
     DialogButtonDef,
-    EnableCheckboxDef,
     LinkedParamDef,
     RadioOptionDef,
     ToggleCheckboxDef,
@@ -25,19 +24,16 @@ from ..common.controls import (
 
 
 @dataclass
-class ControlDef:
-    """A single control inside a config section."""
+class ControlDef(BaseControlDef):
+    """A single control inside a config section.
+
+    Inherits setting/label/control/showWhen/enableWhen/component/enableCheckbox/
+    button from BaseControlDef; the fields below are config-specific.
+    """
     param: str = ""            # vehicle parameter name via FactPanelController
-    setting: str = ""          # settings path, e.g. "flyViewSettings.showObstacleDistanceOverlay"
-    label: str = ""
-    control: str = ""          # combobox | textfield | checkbox | slider | dialogButton (auto-detected if empty)
-    showWhen: str = ""
-    enableWhen: str = ""
     optional: bool = False     # true: param may not exist, pass false to getParameterFact
     sliderMin: str = ""        # explicit slider min override
     sliderMax: str = ""        # explicit slider max override
-    enableCheckbox: EnableCheckboxDef | None = None  # slider: checked/onClicked
-    button: ButtonDef | None = None                  # adjacent button
     options: list[RadioOptionDef] = field(default_factory=list)  # radiogroup options
     enumValues: list[tuple[int | float | str, str]] = field(default_factory=list)  # combobox: manual [(value, label), ...]
     dialogButton: DialogButtonDef | None = None      # button that opens a popup dialog
@@ -55,7 +51,6 @@ class ControlDef:
     majorTickStepSize: str = ""                       # factslider: tick interval
     decimalPlaces: str = ""                           # factslider: decimal places
     linkedParams: list[LinkedParamDef] = field(default_factory=list)  # factslider: coupled params
-    component: str = ""                               # component: inline hand-written QML component
 
 @dataclass
 class DisabledSectionDef:

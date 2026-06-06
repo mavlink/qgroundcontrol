@@ -74,6 +74,19 @@ class ToggleCheckboxDef:
     onUnchecked: str = ""    # QML statement when unchecked
 
 
+@dataclass
+class BaseControlDef:
+    """Fields common to the config and settings control definitions."""
+    setting: str = ""          # settings path, e.g. "flyViewSettings.showObstacleDistanceOverlay"
+    label: str = ""
+    control: str = ""          # combobox | textfield | checkbox | slider | ... (auto-detected if empty)
+    showWhen: str = ""
+    enableWhen: str = ""
+    component: str = ""        # escape hatch: inline hand-written QML component
+    enableCheckbox: EnableCheckboxDef | None = None
+    button: ButtonDef | None = None
+
+
 # --------------------------------------------------------------------------- #
 # Rendering helpers
 # --------------------------------------------------------------------------- #

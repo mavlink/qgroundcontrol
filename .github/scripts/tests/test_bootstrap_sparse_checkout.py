@@ -44,14 +44,32 @@ def _common_module_to_path(module: str) -> str | None:
     return rel if (REPO_ROOT / rel).is_file() else None
 
 
+def _type_checking_body_nodes(tree: ast.AST) -> set[ast.AST]:
+    """Nodes inside `if TYPE_CHECKING:` blocks — those imports never run at runtime."""
+    skip: set[ast.AST] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.If):
+            test = node.test
+            is_tc = (isinstance(test, ast.Name) and test.id == "TYPE_CHECKING") or (
+                isinstance(test, ast.Attribute) and test.attr == "TYPE_CHECKING"
+            )
+            if is_tc:
+                for stmt in node.body:
+                    skip.update(ast.walk(stmt))
+    return skip
+
+
 def _iter_common_imports(source: Path) -> Iterator[str]:
-    """Yield `common.<dotted>` module names imported (directly or relatively) by `source`."""
+    """Yield `common.<dotted>` module names imported at runtime (directly or relatively) by `source`."""
     try:
         tree = ast.parse(source.read_text(encoding="utf-8"))
     except (OSError, SyntaxError):
         return
     inside_common = TOOLS_DIR / "common" in source.parents
+    skip = _type_checking_body_nodes(tree)
     for node in ast.walk(tree):
+        if node in skip:
+            continue
         if isinstance(node, ast.ImportFrom):
             if node.module is None:
                 continue
@@ -121,6 +139,9 @@ def test_bootstrap_sparse_checkout_matches_canonical() -> None:
             if BOOTSTRAP_TRIPWIRE not in entries:
                 continue
             required: set[str] = set(BASE_BOOTSTRAP_PATHS)
+            # `import common` runs __init__ at runtime; an eager facade that pulls
+            # every submodule would need them all present even under a thin sparse set.
+            required |= _required_common_paths(TOOLS_DIR / "common" / "__init__.py")
             for script in _scripts_in_block(entries):
                 required |= _required_common_paths(script)
             missing = sorted(required - entries)

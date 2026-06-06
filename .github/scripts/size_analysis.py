@@ -25,8 +25,70 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output, write_step_summary  # noqa: E402
-from common.proc import run_captured  # noqa: E402
+from common.gh_actions import write_github_output, write_step_summary
+from common.proc import run_captured
+
+
+def install_bloaty(timeout: int = 120) -> bool:
+    """Ensure bloaty is on PATH, preferring the apt package over a source build."""
+    if shutil.which("bloaty"):
+        return True
+
+    print("Installing bloaty (apt)...")
+    try:
+        run_captured(["sudo", "apt-get", "update"], timeout=30, check=True)
+        run_captured(["sudo", "apt-get", "install", "-y", "bloaty"], timeout=120, check=True)
+        if shutil.which("bloaty"):
+            print("bloaty installed from apt")
+            return True
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
+        pass  # not packaged on this image — fall back to the source build
+
+    return _install_bloaty_from_source(timeout)
+
+
+def _install_bloaty_from_source(timeout: int) -> bool:
+    """Build bloaty from a pinned commit when no prebuilt package is available."""
+    print(f"Building bloaty from source (timeout: {timeout}s)...")
+    try:
+        run_captured(
+            ["sudo", "apt-get", "install", "-y",
+             "libprotobuf-dev", "protobuf-compiler", "libre2-dev", "libcapstone-dev"],
+            timeout=60, check=True,
+        )
+        bloaty_dir = tempfile.mkdtemp(prefix="bloaty-")
+        run_captured(["git", "init", bloaty_dir], timeout=10, check=True)
+        run_captured(
+            ["git", "-C", bloaty_dir, "fetch", "--depth", "1",
+             "https://github.com/google/bloaty.git",
+             "87082741b1cc0a97cd84bd17cd4ee41d70a42fc6"],
+            timeout=30, check=True,
+        )
+        run_captured(["git", "-C", bloaty_dir, "checkout", "FETCH_HEAD"], timeout=10, check=True)
+        run_captured(
+            ["cmake", "-B", f"{bloaty_dir}/build", "-S", bloaty_dir,
+             "-DCMAKE_BUILD_TYPE=Release", "-DBLOATY_ENABLE_RE2=ON"],
+            timeout=60, check=True,
+        )
+        run_captured(
+            ["cmake", "--build", f"{bloaty_dir}/build", "--parallel"],
+            timeout=timeout, check=True,
+        )
+        run_captured(
+            ["sudo", "cmake", "--install", f"{bloaty_dir}/build"],
+            timeout=30, check=True,
+        )
+        print("bloaty installed from source")
+        return True
+    except subprocess.TimeoutExpired:
+        print(
+            "::warning::bloaty installation timed out, size analysis will be limited",
+            file=sys.stderr,
+        )
+        return False
+    except subprocess.CalledProcessError as e:
+        print(f"::warning::bloaty installation failed: {e}", file=sys.stderr)
+        return False
 
 
 class BinaryAnalyzer:
@@ -69,59 +131,6 @@ class BinaryAnalyzer:
             return result.stdout
         except (subprocess.SubprocessError, FileNotFoundError):
             return "Section sizes unavailable"
-
-    @staticmethod
-    def install_bloaty(timeout: int = 120) -> bool:
-        """
-        Install bloaty from source with timeout.
-
-        Returns True if bloaty is available after installation attempt.
-        """
-        if shutil.which("bloaty"):
-            return True
-
-        print(f"Installing bloaty (timeout: {timeout}s)...")
-
-        try:
-            run_captured(["sudo", "apt-get", "update"], timeout=30, check=True)
-            run_captured(
-                ["sudo", "apt-get", "install", "-y",
-                 "libprotobuf-dev", "protobuf-compiler", "libre2-dev", "libcapstone-dev"],
-                timeout=60, check=True,
-            )
-            bloaty_dir = tempfile.mkdtemp(prefix="bloaty-")
-            run_captured(["git", "init", bloaty_dir], timeout=10, check=True)
-            run_captured(
-                ["git", "-C", bloaty_dir, "fetch", "--depth", "1",
-                 "https://github.com/google/bloaty.git",
-                 "87082741b1cc0a97cd84bd17cd4ee41d70a42fc6"],
-                timeout=30, check=True,
-            )
-            run_captured(["git", "-C", bloaty_dir, "checkout", "FETCH_HEAD"], timeout=10, check=True)
-            run_captured(
-                ["cmake", "-B", f"{bloaty_dir}/build", "-S", bloaty_dir,
-                 "-DCMAKE_BUILD_TYPE=Release", "-DBLOATY_ENABLE_RE2=ON"],
-                timeout=60, check=True,
-            )
-            run_captured(
-                ["cmake", "--build", f"{bloaty_dir}/build", "--parallel"],
-                timeout=timeout, check=True,
-            )
-            run_captured(
-                ["sudo", "cmake", "--install", f"{bloaty_dir}/build"],
-                timeout=30, check=True,
-            )
-            print("bloaty installed successfully")
-            return True
-        except subprocess.TimeoutExpired:
-            print(
-                "::warning::bloaty installation timed out, size analysis will be limited",
-                file=sys.stderr,
-            )
-            return False
-        except subprocess.CalledProcessError as e:
-            print(f"::warning::bloaty installation failed: {e}", file=sys.stderr)
-            return False
 
     def run_bloaty(self, analysis_type: str, top_n: int = 20) -> str:
         """
@@ -239,7 +248,7 @@ def main() -> int:
     args = parse_args()
 
     if args.install_bloaty:
-        BinaryAnalyzer.install_bloaty(args.bloaty_timeout)
+        install_bloaty(args.bloaty_timeout)
 
     try:
         analyzer = BinaryAnalyzer(args.binary)
