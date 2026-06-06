@@ -1,0 +1,38 @@
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -56,6 +56,7 @@
+ add_subdirectory(PlanView)
+ add_subdirectory(PositionManager)
+ add_subdirectory(QmlControls)
++add_subdirectory(ROVCompanion)
+ add_subdirectory(Settings)
+ add_subdirectory(Terrain)
+ add_subdirectory(AppSettings)
+--- a/src/FlyView/CMakeLists.txt
++++ b/src/FlyView/CMakeLists.txt
+@@ -63,6 +63,8 @@
+         PreFlightSoundCheck.qml
+         ProximityRadarValues.qml
+         ProximityRadarVideoView.qml
++        ROVArmView.qml
++        ROVCompanionPanel.qml
+         RoverChecklist.qml
+         SubChecklist.qml
+         TelemetryValuesBar.qml
+--- a/src/FlyView/FlyViewWidgetLayer.qml
++++ b/src/FlyView/FlyViewWidgetLayer.qml
+@@ -92,6 +92,14 @@
+         rallyPointController:   _rallyPointController
+     }
+ 
++    //-- MIST MAVIROV companion drawer (collapsible tab on the right edge)
++    ROVCompanionPanel {
++        anchors.right:          parent.right
++        anchors.verticalCenter: parent.verticalCenter
++        z:                      QGroundControl.zOrderTopMost
++        visible:                !QGroundControl.videoManager.fullScreen
++    }
++
+     //-- Virtual Joystick
+     Loader {
+         id:                         virtualJoystickMultiTouch
