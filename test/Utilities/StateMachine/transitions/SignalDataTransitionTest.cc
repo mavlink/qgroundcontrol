@@ -13,7 +13,7 @@ void SignalDataTransitionTest::_testSignalDataTransition()
 
     auto* waitState = new QState(&machine);
     auto* targetState = new QState(&machine);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     auto* transition = new SignalDataTransition<QString>(
         &emitter, &SignalEmitter::valueChanged,

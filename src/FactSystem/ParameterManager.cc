@@ -53,7 +53,7 @@ ParameterManager::ParameterManager(Vehicle *vehicle)
     }
 
     _hashCheckTimer.setSingleShot(true);
-    _hashCheckTimer.setInterval(kHashCheckTimeoutMs);
+    _hashCheckTimer.setInterval(QGC::runningUnitTests() ? kTestHashCheckTimeoutMs : kHashCheckTimeoutMs);
     (void) connect(&_hashCheckTimer, &QTimer::timeout, this, &ParameterManager::_hashCheckTimeout);
 
     _paramRequestListTimer.setSingleShot(true);

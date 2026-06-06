@@ -11,7 +11,7 @@ void ProgressStateTest::_testFixedProgress()
     float receivedProgress = -1.0f;
 
     auto* progressState = new ProgressState(QStringLiteral("Progress"), &machine, 0.5f);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     connect(progressState, &ProgressState::progressChanged, this, [&receivedProgress](float p) {
         receivedProgress = p;
@@ -20,10 +20,7 @@ void ProgressStateTest::_testFixedProgress()
     progressState->addTransition(progressState, &QGCState::advance, finalState);
     machine.setInitialState(progressState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(receivedProgress, 0.5f);
     QCOMPARE(progressState->progress(), 0.5f);
 }
@@ -38,7 +35,7 @@ void ProgressStateTest::_testProgressCallback()
         callbackCount++;
         return 0.75f;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     connect(progressState, &ProgressState::progressChanged, this, [&receivedProgress](float p) {
         receivedProgress = p;
@@ -47,10 +44,7 @@ void ProgressStateTest::_testProgressCallback()
     progressState->addTransition(progressState, &QGCState::advance, finalState);
     machine.setInitialState(progressState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(receivedProgress, 0.75f);
     QVERIFY(callbackCount >= 1);  // Callback was invoked
 }
@@ -64,7 +58,7 @@ void ProgressStateTest::_testProgressClamping()
     auto* state1 = new ProgressState(QStringLiteral("TooLow"), &machine, -0.5f);
     auto* state2 = new ProgressState(QStringLiteral("TooHigh"), &machine, 1.5f);
     auto* state3 = new ProgressState(QStringLiteral("Normal"), &machine, 0.5f);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     auto collectProgress = [&receivedProgress](float p) {
         receivedProgress.append(p);
@@ -79,10 +73,7 @@ void ProgressStateTest::_testProgressClamping()
     state3->addTransition(state3, &QGCState::advance, finalState);
     machine.setInitialState(state1);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(receivedProgress.size(), 3);
     QCOMPARE(receivedProgress[0], 0.0f);  // Clamped from -0.5
     QCOMPARE(receivedProgress[1], 1.0f);  // Clamped from 1.5
@@ -98,7 +89,7 @@ void ProgressStateTest::_testProgressSequence()
     auto* state2 = new ProgressState(QStringLiteral("Step2"), &machine, 0.33f);
     auto* state3 = new ProgressState(QStringLiteral("Step3"), &machine, 0.66f);
     auto* state4 = new ProgressState(QStringLiteral("Step4"), &machine, 1.0f);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     auto collectProgress = [&progressValues](float p) {
         progressValues.append(p);
@@ -115,10 +106,7 @@ void ProgressStateTest::_testProgressSequence()
     state4->addTransition(state4, &QGCState::advance, finalState);
     machine.setInitialState(state1);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(progressValues.size(), 4);
 
     // Verify progress increases
@@ -136,7 +124,7 @@ void ProgressStateTest::_testActionExecuted()
     auto* progressState = new ProgressState(QStringLiteral("Progress"), &machine, 0.5f, [&actionCalled]() {
         actionCalled = true;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     connect(progressState, &ProgressState::progressChanged, this, [&receivedProgress](float p) {
         receivedProgress = p;
@@ -145,10 +133,7 @@ void ProgressStateTest::_testActionExecuted()
     progressState->addTransition(progressState, &QGCState::advance, finalState);
     machine.setInitialState(progressState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(actionCalled);
     QCOMPARE(receivedProgress, 0.5f);
 }

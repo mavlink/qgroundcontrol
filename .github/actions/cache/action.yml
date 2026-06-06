@@ -51,28 +51,21 @@ runs:
           --target "${{ inputs.target }}" \
           --conf "${GITHUB_WORKSPACE}/tools/configs/ccache.conf"
 
-    - name: Restore ccache binary (Linux)
-      if: runner.os == 'Linux'
-      id: ccache-binary
-      uses: actions/cache/restore@v5
-      with:
-        path: /usr/local/bin/ccache
-        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-${{ steps.ccache-config.outputs.arch }}
-
     - name: Install ccache (Linux)
-      if: runner.os == 'Linux' && steps.ccache-binary.outputs.cache-hit != 'true'
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install \
           --version "${{ steps.ccache-config.outputs.version }}" \
           --arch "${{ steps.ccache-config.outputs.arch }}"
 
-    - name: Save ccache binary (Linux)
-      if: runner.os == 'Linux' && steps.cache-policy.outputs.save == 'true' && steps.ccache-binary.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v5
-      with:
-        path: /usr/local/bin/ccache
-        key: ${{ steps.ccache-binary.outputs.cache-primary-key }}
+    # Pinned mold overrides the older distro apt mold (/usr/local/bin precedes /usr/bin); mold is the desktop-Linux linker.
+    - name: Install mold (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/mold_helper.py" install \
+          --arch "${{ steps.ccache-config.outputs.arch }}"
 
     - name: Resolve macOS ccache SHA256
       if: runner.os == 'macOS'
@@ -80,16 +73,8 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" macos-config
 
-    - name: Restore ccache binary (macOS)
-      if: runner.os == 'macOS'
-      id: ccache-binary-mac
-      uses: actions/cache/restore@v5
-      with:
-        path: /usr/local/bin/ccache
-        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-darwin
-
     - name: Install ccache (macOS)
-      if: runner.os == 'macOS' && steps.ccache-binary-mac.outputs.cache-hit != 'true'
+      if: runner.os == 'macOS'
       shell: bash
       env:
         CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
@@ -100,29 +85,14 @@ runs:
           --sha256 "${CCACHE_MAC_SHA256}"
         ccache --version
 
-    - name: Save ccache binary (macOS)
-      if: runner.os == 'macOS' && steps.cache-policy.outputs.save == 'true' && steps.ccache-binary-mac.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v5
-      with:
-        path: /usr/local/bin/ccache
-        key: ${{ steps.ccache-binary-mac.outputs.cache-primary-key }}
-
     - name: Determine Windows ccache arch
       if: runner.os == 'Windows'
       id: win-ccache
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" windows-config --host "${{ inputs.host }}" --target "${{ inputs.target }}"
 
-    - name: Restore ccache binary (Windows)
-      if: runner.os == 'Windows'
-      id: ccache-binary-win
-      uses: actions/cache/restore@v5
-      with:
-        path: ${{ runner.temp }}/ccache-${{ steps.ccache-config.outputs.version }}-windows-${{ steps.win-ccache.outputs.arch }}/ccache.exe
-        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-windows-${{ steps.win-ccache.outputs.arch }}
-
     - name: Install ccache (Windows)
-      if: runner.os == 'Windows' && steps.ccache-binary-win.outputs.cache-hit != 'true'
+      if: runner.os == 'Windows'
       shell: bash
       env:
         CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
@@ -134,13 +104,6 @@ runs:
           --arch "${CCACHE_ARCH}" \
           --sha256 "${CCACHE_WIN_SHA256}" \
           --runner-temp "${RUNNER_TEMP//\\//}"
-
-    - name: Save ccache binary (Windows)
-      if: runner.os == 'Windows' && steps.cache-policy.outputs.save == 'true' && steps.ccache-binary-win.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v5
-      with:
-        path: ${{ runner.temp }}/ccache-${{ steps.ccache-config.outputs.version }}-windows-${{ steps.win-ccache.outputs.arch }}/ccache.exe
-        key: ${{ steps.ccache-binary-win.outputs.cache-primary-key }}
 
     - name: Add ccache to PATH (Windows)
       if: runner.os == 'Windows'

@@ -45,9 +45,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Enable custom build
-        uses: ./.github/actions/custom-build
-
       - name: Setup Build Environment
         uses: ./.github/actions/build-setup
         with:
@@ -59,11 +56,13 @@ jobs:
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
+      # Activate the custom build by pointing QGC_CUSTOM_DIR at the in-tree overlay; no copy to ./custom needed.
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
+          extra-args: -DQGC_CUSTOM_DIR=custom-example
 
       - name: Build
         uses: ./.github/actions/cmake-build

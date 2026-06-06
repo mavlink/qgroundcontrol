@@ -9,3 +9,5 @@ target_sources(${CMAKE_PROJECT_NAME}
         VideoManagerInitTest.cc
         VideoManagerInitTest.h
 )
+
+add_qgc_test(VideoManagerInitTest LABELS Unit)

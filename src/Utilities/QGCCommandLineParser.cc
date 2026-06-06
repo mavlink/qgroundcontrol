@@ -60,16 +60,25 @@ constexpr QLatin1StringView kOptSwrast = QLatin1StringView("swrast");
 /// @brief Normalizes command-line arguments
 /// Converts colon-separated syntax (--option:value) to standard format (--option value)
 /// and handles special cases like --unittest without a value.
+#ifdef QGC_UNITTEST_BUILD
+QStringList normalizeArgs(const QStringList &args)
+#else
 static QStringList normalizeArgs(const QStringList &args)
+#endif
 {
     QStringList out;
     out.reserve(args.size() + 4);
 
-    for (const QString &arg : args) {
+    for (qsizetype i = 0; i < args.size(); ++i) {
+        const QString &arg = args.at(i);
 #ifdef QGC_UNITTEST_BUILD
-        // Handle bare --unittest without a value
+        // Inject empty value only for a truly bare --unittest; a following `--unittest FooTest` name must reach the parser as its value.
         if (arg == QLatin1String("--unittest")) {
-            out << arg << QString(); // empty value token prevents "Missing value"
+            const bool valueFollows = ((i + 1) < args.size()) && !args.at(i + 1).startsWith(QLatin1Char('-'));
+            out << arg;
+            if (!valueFollows) {
+                out << QString();
+            }
             continue;
         }
 #endif

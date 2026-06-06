@@ -297,7 +297,7 @@ class CcacheInstaller:
         """Verify archive signature using minisign."""
         try:
             result = run_captured(
-                [str(minisign_bin), "-Vm", str(archive), "-P", self.MINISIGN_KEY],
+                [str(minisign_bin), "-Vm", str(archive), "-x", str(sig_file), "-P", self.MINISIGN_KEY],
             )
             if result.returncode != 0:
                 print(f"Signature verification failed: {result.stderr}", file=sys.stderr)
@@ -426,6 +426,21 @@ def build_summary_markdown(stats: dict) -> str:
     total = hits + misses
     pct = f"{hits / total * 100:.1f}" if total > 0 else "0.0"
 
+    size_kib = int(stats.get("cache_size_kibibyte", 0))
+    max_kib = int(stats.get("max_cache_size_kibibyte", 0))
+    size_pct = f"{size_kib / max_kib * 100:.1f}" if max_kib else "0.0"
+    cleanups = int(stats.get("cleanups_performed", 0))
+    errors = sum(
+        int(stats.get(k, 0))
+        for k in (
+            "internal_error",
+            "compiler_check_failed",
+            "error_hashing_extra_file",
+            "missing_cache_file",
+            "preprocessor_error",
+        )
+    )
+
     lines = [
         "### CCache Statistics",
         "",
@@ -435,7 +450,11 @@ def build_summary_markdown(stats: dict) -> str:
         f"| Direct hits | {direct} |",
         f"| Preprocessed hits | {preprocessed} |",
         f"| Misses | {misses} |",
+        f"| Cache size | {size_kib / 1024:.0f} MiB / {max_kib / 1048576:.1f} GiB ({size_pct}%) |",
+        f"| Cleanups (LRU evictions) | {cleanups} |",
     ]
+    if errors:
+        lines.append(f"| ⚠ Errors | {errors} |")
     return "\n".join(lines) + "\n"
 
 def get_ccache_verbose_stats() -> str | None:
@@ -452,6 +471,20 @@ def get_ccache_verbose_stats() -> str | None:
     except OSError:
         return None
 
+def get_ccache_compression_stats() -> str | None:
+    """Run ``ccache --show-compression`` (compression ratio + space savings)."""
+    ccache_bin = shutil.which("ccache")
+    if not ccache_bin:
+        return None
+
+    try:
+        result = run_captured([ccache_bin, "--show-compression"])
+        if result.returncode != 0:
+            return None
+        return result.stdout.strip()
+    except OSError:
+        return None
+
 def run_summary() -> int:
     """Collect ccache stats and write a job summary table."""
     parts: list[str] = []
@@ -461,6 +494,10 @@ def run_summary() -> int:
         parts.append(build_summary_markdown(stats))
     else:
         print("ccache JSON stats unavailable (ccache missing or < 4.10)", file=sys.stderr)
+
+    compression = get_ccache_compression_stats()
+    if compression:
+        parts.append(f"### Compression\n\n```\n{compression}\n```\n")
 
     verbose = get_ccache_verbose_stats()
     if verbose:
@@ -580,6 +617,8 @@ def configure_ccache_environment(workspace: Path) -> Path:
             "CCACHE_BASEDIR": workspace_path.as_posix(),
             "CCACHE_CONFIGPATH": (workspace_path / "tools" / "configs" / "ccache.conf").as_posix(),
             "CCACHE_MAXSIZE": "2G",
+            # file_clone disables compression entirely; off in CI so entries fit the 2G ceiling.
+            "CCACHE_NOFILECLONE": "1",
         }
     )
     return ccache_dir

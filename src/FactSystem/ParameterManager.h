@@ -103,6 +103,7 @@ public:
     static constexpr int kWaitForParamValueAckMs = 1000;            ///< Time to wait for param value ack after set param
     static constexpr int kMaxInitialRequestListRetry = 4;           ///< Maximum retries for initial parameter request list
     static constexpr int kHashCheckTimeoutMs = 1000;                ///< Timeout for standalone _HASH_CHECK request
+    static constexpr int kTestHashCheckTimeoutMs = 200;             ///< Shortened _HASH_CHECK timeout in unit tests (MockLink responds instantly)
     static constexpr int kParamRequestListTimeoutMs = 5000;        ///< Timeout for PARAM_REQUEST_LIST response
     static constexpr int kTestInitialRequestIntervalMs = 500;       ///< Timer interval for initial request in test mode
     /// Maximum time to wait for initial request retries to exhaust in tests

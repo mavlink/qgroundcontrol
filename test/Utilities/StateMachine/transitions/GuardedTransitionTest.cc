@@ -12,7 +12,7 @@ void GuardedTransitionTest::_testGuardedTransitionAllowed()
     auto* targetState = new FunctionState(QStringLiteral("Target"), &machine, [&transitionTaken]() {
         transitionTaken = true;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     auto* guardedTransition = new GuardedTransition(
         startState, &QGCState::advance,
@@ -26,10 +26,7 @@ void GuardedTransitionTest::_testGuardedTransitionAllowed()
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(guardCalled);
     QVERIFY(transitionTaken);
 }
@@ -48,7 +45,7 @@ void GuardedTransitionTest::_testGuardedTransitionBlocked()
     auto* alternateState = new FunctionState(QStringLiteral("Alternate"), &machine, [&alternateReached]() {
         alternateReached = true;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     auto* guardedTransition = new GuardedTransition(
         startState, &QGCState::advance,
@@ -64,10 +61,7 @@ void GuardedTransitionTest::_testGuardedTransitionBlocked()
     alternateState->addTransition(alternateState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(guardCalled);
     QVERIFY(!targetReached);
     QVERIFY(alternateReached);

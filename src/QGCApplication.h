@@ -116,6 +116,9 @@ private:
 
     bool _initVideo();
 
+    /// Create the QML engine and load the root window. @return true if the root window loaded.
+    bool _initQmlRootWindow();
+
     /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
     void _initForNormalAppBoot();
 

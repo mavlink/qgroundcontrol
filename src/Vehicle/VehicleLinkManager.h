@@ -86,9 +86,12 @@ private:
 
 public:
     /// Heartbeat timeout used in unit tests (much shorter for faster tests)
-    static constexpr int kTestHeartbeatTimeoutMs = 500;
+    static constexpr int kTestHeartbeatTimeoutMs = 200;
+
+    /// Comm-lost poll interval used in unit tests (MockLink heartbeats arrive instantly, so the 1 Hz prod cadence only adds latency)
+    static constexpr int kTestCommLostCheckTimeoutMs = 250;
 
     /// Full comm loss detection timeout for tests: accounts for timer interval + heartbeat timeout + margin.
     /// Use this in tests waiting for communicationLostChanged or linkStatusesChanged signals.
-    static constexpr int kTestCommLostDetectionTimeoutMs = _commLostCheckTimeoutMSecs + kTestHeartbeatTimeoutMs + 500;
+    static constexpr int kTestCommLostDetectionTimeoutMs = kTestCommLostCheckTimeoutMs + kTestHeartbeatTimeoutMs + 300;
 };

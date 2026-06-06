@@ -87,4 +87,4 @@ Coverage: **{% if coverage.current is not none %}{{ "%.1f"|format(coverage.curre
 {% endif %}
 
 ---
-<sub>Updated: {{ timestamp }} • Triggered by: {{ triggered_by }}</sub>
+<sub>Updated: {{ timestamp }}{% if commit %} • Commit: {{ commit }}{% endif %} • Triggered by: {{ triggered_by }}</sub>

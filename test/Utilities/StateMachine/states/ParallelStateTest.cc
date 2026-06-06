@@ -27,15 +27,12 @@ void ParallelStateTest::_testParallelState()
     region2Initial->addTransition(region2Initial, &QState::entered, region2Final);
     connect(region2Initial, &QState::entered, this, [&region2Executed]() { region2Executed = true; });
 
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
     parallelState->addTransition(parallelState, &ParallelState::allComplete, finalState);
 
     machine.setInitialState(parallelState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(region1Executed);
     QVERIFY(region2Executed);
 }
@@ -45,16 +42,13 @@ void ParallelStateTest::_testParallelStateEmpty()
     QStateMachine machine;
 
     auto* parallelState = new ParallelState(QStringLiteral("EmptyParallel"), &machine);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     parallelState->addTransition(parallelState, &ParallelState::allComplete, finalState);
     machine.setInitialState(parallelState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
     // Empty parallel state should complete immediately
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
 }
 
 UT_REGISTER_TEST(ParallelStateTest, TestLabel::Unit, TestLabel::Utilities)

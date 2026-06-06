@@ -44,10 +44,7 @@ void QGCHistoryStateTest::_testQGCHistoryState()
 
     machine.setInitialState(parentState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(childBEntryCount, 2);
 }
 

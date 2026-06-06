@@ -10,15 +10,8 @@ void FunctionStateTest::_testFunctionState()
     auto* state = new FunctionState(QStringLiteral("TestFunction"), &machine, [&functionCalled]() {
         functionCalled = true;
     });
-    auto* finalState = new QFinalState(&machine);
 
-    state->addTransition(state, &QGCState::advance, finalState);
-    machine.setInitialState(state);
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(runStateToCompletion(state, &machine));
     QVERIFY(functionCalled);
 }
 
@@ -36,17 +29,14 @@ void FunctionStateTest::_testFunctionStateChain()
     auto* state3 = new FunctionState(QStringLiteral("State3"), &machine, [&executionOrder]() {
         executionOrder.append(QStringLiteral("state3"));
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     state1->addTransition(state1, &QGCState::advance, state2);
     state2->addTransition(state2, &QGCState::advance, state3);
     state3->addTransition(state3, &QGCState::advance, finalState);
     machine.setInitialState(state1);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(executionOrder.size(), 3);
     QCOMPARE(executionOrder[0], QStringLiteral("state1"));
     QCOMPARE(executionOrder[1], QStringLiteral("state2"));

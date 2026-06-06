@@ -1,6 +1,6 @@
 #include "QGCCachedTileSetTest.h"
+#include "PropertyTestHelper.h"
 #include <QtTest/QSignalSpy>
-
 
 #include "QGCCachedTileSet.h"
 
@@ -91,81 +91,61 @@ void QGCCachedTileSetTest::_testSetZoomAndMetadata()
 void QGCCachedTileSetTest::_testSetTotalTileCountEmitsSignal()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-    QSignalSpy spy(&ts, &QGCCachedTileSet::totalTileCountChanged);
-
-    ts.setTotalTileCount(100);
-    QCOMPARE(spy.count(), 1);
-    QCOMPARE(ts.totalTileCount(), 100u);
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::totalTileCountChanged,
+                         &QGCCachedTileSet::setTotalTileCount,
+                         &QGCCachedTileSet::totalTileCount, 100u);
 }
 
 void QGCCachedTileSetTest::_testSetTotalTileSizeEmitsSignal()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-    QSignalSpy spy(&ts, &QGCCachedTileSet::totalTilesSizeChanged);
-
-    ts.setTotalTileSize(1024 * 1024);
-    QCOMPARE(spy.count(), 1);
-    QCOMPARE(ts.totalTilesSize(), quint64(1024 * 1024));
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::totalTilesSizeChanged,
+                         &QGCCachedTileSet::setTotalTileSize,
+                         &QGCCachedTileSet::totalTilesSize, quint64(1024 * 1024));
 }
 
 void QGCCachedTileSetTest::_testSetSavedCountAndSizeEmitSignals()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-    QSignalSpy countSpy(&ts, &QGCCachedTileSet::savedTileCountChanged);
-    QSignalSpy sizeSpy(&ts, &QGCCachedTileSet::savedTileSizeChanged);
-
-    ts.setSavedTileCount(50);
-    QCOMPARE(countSpy.count(), 1);
-    QCOMPARE(ts.savedTileCount(), 50u);
-
-    ts.setSavedTileSize(2048);
-    QCOMPARE(sizeSpy.count(), 1);
-    QCOMPARE(ts.savedTileSize(), quint64(2048));
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::savedTileCountChanged,
+                         &QGCCachedTileSet::setSavedTileCount,
+                         &QGCCachedTileSet::savedTileCount, 50u);
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::savedTileSizeChanged,
+                         &QGCCachedTileSet::setSavedTileSize,
+                         &QGCCachedTileSet::savedTileSize, quint64(2048));
 }
 
 void QGCCachedTileSetTest::_testSetUniqueCountAndSizeEmitSignals()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-    QSignalSpy countSpy(&ts, &QGCCachedTileSet::uniqueTileCountChanged);
-    QSignalSpy sizeSpy(&ts, &QGCCachedTileSet::uniqueTileSizeChanged);
-
-    ts.setUniqueTileCount(25);
-    QCOMPARE(countSpy.count(), 1);
-    QCOMPARE(ts.uniqueTileCount(), 25u);
-
-    ts.setUniqueTileSize(4096);
-    QCOMPARE(sizeSpy.count(), 1);
-    QCOMPARE(ts.uniqueTileSize(), quint64(4096));
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::uniqueTileCountChanged,
+                         &QGCCachedTileSet::setUniqueTileCount,
+                         &QGCCachedTileSet::uniqueTileCount, 25u);
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::uniqueTileSizeChanged,
+                         &QGCCachedTileSet::setUniqueTileSize,
+                         &QGCCachedTileSet::uniqueTileSize, quint64(4096));
 }
 
 void QGCCachedTileSetTest::_testSetNameEmitsSignal()
 {
     QGCCachedTileSet ts(QStringLiteral("original"));
-    QSignalSpy spy(&ts, &QGCCachedTileSet::nameChanged);
-
-    ts.setName(QStringLiteral("renamed"));
-    QCOMPARE(spy.count(), 1);
-    QCOMPARE(ts.name(), QStringLiteral("renamed"));
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::nameChanged,
+                         &QGCCachedTileSet::setName,
+                         &QGCCachedTileSet::name, QStringLiteral("renamed"));
 }
 
 void QGCCachedTileSetTest::_testSetStateEmitsSignals()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-
-    QSignalSpy deletingSpy(&ts, &QGCCachedTileSet::deletingChanged);
-    ts.setDeleting(true);
-    QCOMPARE(deletingSpy.count(), 1);
-    QVERIFY(ts.deleting());
-
-    QSignalSpy downloadingSpy(&ts, &QGCCachedTileSet::downloadingChanged);
-    ts.setDownloading(true);
-    QCOMPARE(downloadingSpy.count(), 1);
-    QVERIFY(ts.downloading());
-
-    QSignalSpy errorSpy(&ts, &QGCCachedTileSet::errorCountChanged);
-    ts.setErrorCount(3);
-    QCOMPARE(errorSpy.count(), 1);
-    QCOMPARE(ts.errorCount(), 3u);
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::deletingChanged,
+                         &QGCCachedTileSet::setDeleting,
+                         &QGCCachedTileSet::deleting, true);
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::downloadingChanged,
+                         &QGCCachedTileSet::setDownloading,
+                         &QGCCachedTileSet::downloading, true);
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::errorCountChanged,
+                         &QGCCachedTileSet::setErrorCount,
+                         &QGCCachedTileSet::errorCount, 3u);
 }
 
 void QGCCachedTileSetTest::_testSetterNoSignalOnSameValue()

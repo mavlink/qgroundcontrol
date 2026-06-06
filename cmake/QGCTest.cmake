@@ -67,8 +67,19 @@ add_custom_target(check-ci
     VERBATIM
 )
 
+# Run each test until-fail:N to surface intermittent failures; Network excluded (env-flaky, not code-flaky).
+set(QGC_TEST_FLAKY_REPEAT 3 CACHE STRING "Repeat count for the check-flaky target")
+add_custom_target(check-flaky
+    COMMAND ${CMAKE_CTEST_COMMAND} -LE "Network" --repeat until-fail:${QGC_TEST_FLAKY_REPEAT}
+            --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    USES_TERMINAL
+    COMMENT "Running tests ${QGC_TEST_FLAKY_REPEAT}x (until-fail) to surface flaky failures"
+    VERBATIM
+)
+
 # Category-specific targets
-foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
+set(_qgc_test_categories MissionManager Vehicle Utilities MAVLink Comms)
+foreach(_category IN LISTS _qgc_test_categories)
     string(TOLOWER ${_category} _target_suffix)
     add_custom_target(check-${_target_suffix}
         COMMAND ${CMAKE_CTEST_COMMAND} -L ${_category} --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
@@ -79,8 +90,8 @@ foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
 endforeach()
 
 # Collect all check targets for build dependency injection
-set(_qgc_check_targets check check-unit check-integration check-fast check-ci)
-foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
+set(_qgc_check_targets check check-unit check-integration check-fast check-ci check-flaky)
+foreach(_category IN LISTS _qgc_test_categories)
     string(TOLOWER ${_category} _target_suffix)
     list(APPEND _qgc_check_targets check-${_target_suffix})
 endforeach()
@@ -164,14 +175,11 @@ function(add_qgc_test test_name)
 
     # Resource locking for tests that can't run in parallel
     if(ARG_SERIAL)
-        set_tests_properties(${test_name} PROPERTIES
-            RESOURCE_LOCK "MockLink;Vehicle;ParameterManager;MissionController"
-            RUN_SERIAL TRUE
-        )
+        # RUN_SERIAL already excludes all concurrency; an added RESOURCE_LOCK would be redundant.
+        set_tests_properties(${test_name} PROPERTIES RUN_SERIAL TRUE)
     elseif(ARG_RESOURCE_LOCK)
         set_tests_properties(${test_name} PROPERTIES RESOURCE_LOCK "${ARG_RESOURCE_LOCK}")
-    elseif("Integration" IN_LIST ARG_LABELS)
-        set_tests_properties(${test_name} PROPERTIES RESOURCE_LOCK "MockLink")
     endif()
+    # No label-based auto-lock: each --unittest run is a separate process (own QSettings + in-process MockLink), so it parallelizes safely.
 
 endfunction()

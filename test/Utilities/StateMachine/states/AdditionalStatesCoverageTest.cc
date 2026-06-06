@@ -23,7 +23,7 @@ void AdditionalStatesCoverageTest::_testCircuitBreakerTripsAndFailFast()
         1,      // trip immediately on first failure
         1000    // keep open long enough to verify fail-fast on second run
     );
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     breaker->addTransition(breaker, &QGCState::error, finalState);
     machine.setInitialState(breaker);
@@ -50,7 +50,7 @@ void AdditionalStatesCoverageTest::_testEventQueuedStateMatchesExpectedEvent()
     QStateMachine machine;
 
     auto* waitState = new EventQueuedState(QStringLiteral("WaitEvent"), &machine, QStringLiteral("ready"), 0);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
     machine.setInitialState(waitState);
@@ -68,7 +68,7 @@ void AdditionalStatesCoverageTest::_testEventQueuedStateMatchesExpectedEvent()
 
     QVERIFY(QMetaObject::invokeMethod(waitState, "_onMachineEvent", Q_ARG(QString, QStringLiteral("ready"))));
 
-    QVERIFY((finishedSpy.count() > 0) || finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(spyTriggered(finishedSpy));
     QCOMPARE(eventReceivedSpy.count(), 1);
     QCOMPARE(waitState->receivedEvent(), QStringLiteral("ready"));
 }
@@ -79,7 +79,7 @@ void AdditionalStatesCoverageTest::_testFallbackChainUsesFallbackStrategy()
     QStringList attemptedStrategies;
 
     auto* fallbackState = new FallbackChainState(QStringLiteral("Fallback"), &machine);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     fallbackState->addStrategy(QStringLiteral("first"), [&attemptedStrategies]() {
         attemptedStrategies.append(QStringLiteral("first"));
@@ -96,11 +96,7 @@ void AdditionalStatesCoverageTest::_testFallbackChainUsesFallbackStrategy()
 
     QSignalSpy strategyFailedSpy(fallbackState, &FallbackChainState::strategyFailed);
     QSignalSpy strategySucceededSpy(fallbackState, &FallbackChainState::strategySucceeded);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(attemptedStrategies, QStringList({QStringLiteral("first"), QStringLiteral("second")}));
     QCOMPARE(strategyFailedSpy.count(), 1);
     QCOMPARE(strategySucceededSpy.count(), 1);
@@ -119,7 +115,7 @@ void AdditionalStatesCoverageTest::_testLoopStateProcessesFilteredItems()
             processedItems.append(value);
         }
     );
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     loopState->setFilter([](const int& value, int) {
         return (value % 2) == 0;
@@ -128,10 +124,7 @@ void AdditionalStatesCoverageTest::_testLoopStateProcessesFilteredItems()
     loopState->addTransition(loopState, &QGCState::advance, finalState);
     machine.setInitialState(loopState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(processedItems, QList<int>({2, 4}));
     QCOMPARE(loopState->processedCount(), 2);
     QCOMPARE(loopState->totalItems(), 4);
@@ -152,18 +145,14 @@ void AdditionalStatesCoverageTest::_testRetryThenFailEmitsExhausted()
         10,
         RetryState::EmitError
     );
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     retryState->addTransition(retryState, &QGCState::error, finalState);
     machine.setInitialState(retryState);
 
     QSignalSpy retryingSpy(retryState, &RetryState::retrying);
     QSignalSpy exhaustedSpy(retryState, &RetryState::exhausted);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(attemptCount, 3);
     QCOMPARE(retryingSpy.count(), 2);
     QCOMPARE(exhaustedSpy.count(), 1);
@@ -185,18 +174,14 @@ void AdditionalStatesCoverageTest::_testRetryThenSkipAdvancesAfterSkip()
         10,
         RetryState::EmitAdvance
     );
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     retrySkipState->addTransition(retrySkipState, &QGCState::advance, finalState);
     machine.setInitialState(retrySkipState);
 
     QSignalSpy skippedSpy(retrySkipState, &RetryState::skipped);
     QSignalSpy succeededSpy(retrySkipState, &RetryState::succeeded);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(attemptCount, 2);
     QCOMPARE(skippedSpy.count(), 1);
     QCOMPARE(succeededSpy.count(), 0);
@@ -217,7 +202,7 @@ void AdditionalStatesCoverageTest::_testRollbackStateExecutesRollbackOnFailure()
             rollbackCalled = true;
         }
     );
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     rollbackState->addTransition(rollbackState, &QGCState::error, finalState);
     machine.setInitialState(rollbackState);
@@ -225,11 +210,7 @@ void AdditionalStatesCoverageTest::_testRollbackStateExecutesRollbackOnFailure()
     QSignalSpy forwardFailedSpy(rollbackState, &RollbackState::forwardFailed);
     QSignalSpy rollingBackSpy(rollbackState, &RollbackState::rollingBack);
     QSignalSpy rollbackCompleteSpy(rollbackState, &RollbackState::rollbackComplete);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(rollbackCalled);
     QVERIFY(rollbackState->wasRolledBack());
     QVERIFY(rollbackState->rollbackSucceeded());
@@ -244,7 +225,7 @@ void AdditionalStatesCoverageTest::_testSequenceStateStopsOnFailedStep()
     QStringList executedSteps;
 
     auto* sequenceState = new SequenceState(QStringLiteral("Sequence"), &machine);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     sequenceState->addStep(QStringLiteral("step1"), [&executedSteps]() {
         executedSteps.append(QStringLiteral("step1"));
@@ -264,11 +245,7 @@ void AdditionalStatesCoverageTest::_testSequenceStateStopsOnFailedStep()
     machine.setInitialState(sequenceState);
 
     QSignalSpy stepCompletedSpy(sequenceState, &SequenceState::stepCompleted);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(executedSteps, QStringList({QStringLiteral("step1"), QStringLiteral("step2")}));
     QCOMPARE(stepCompletedSpy.count(), 1);
     QCOMPARE(sequenceState->failedStepName(), QStringLiteral("step2"));

@@ -7,13 +7,9 @@
 /// - VehicleTest, VehicleTestAPM, VehicleTestNoInitialConnect
 /// - MissionTest, OfflineMissionTest
 /// - ParameterTest
-/// - FTPTest
 /// - CommsTest
-/// - MultiVehicleTest
 
 #include "CommsTest.h"
-#include "FTPTest.h"
 #include "MissionTest.h"
-#include "MultiVehicleTest.h"
 #include "ParameterTest.h"
 #include "VehicleTest.h"

@@ -35,3 +35,13 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "Viewer3DTest_res"
         Providers/Osm/map_sim_small.osm
         Providers/Osm/test_buildings.osm
 )
+
+add_qgc_test(CityMapGeometryTest LABELS Unit Viewer3D)
+add_qgc_test(OsmParserTest LABELS Unit Viewer3D)
+add_qgc_test(OsmParserThreadTest LABELS Unit Viewer3D RESOURCE_LOCK TempFiles)
+add_qgc_test(Viewer3DTerrainGeometryTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DTileQueryTest LABELS Unit Viewer3D)
+add_qgc_test(GeoCoordinateTypeTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DInstancingTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DManagerTest LABELS Unit Viewer3D)
+add_qgc_test(Viewer3DMapProviderTest LABELS Unit Viewer3D)

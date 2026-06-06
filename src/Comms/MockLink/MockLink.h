@@ -300,6 +300,8 @@ private:
     uint8_t _mavState = MAV_STATE_STANDBY;
 
     QElapsedTimer _runningTime;
+    /// Params batched per tick in unit tests, collapsing the ~2s 1-param/tick connect floor (prod sends 1/tick).
+    static constexpr int kTestParamRequestListBatch = 25;
     static constexpr int32_t _batteryMaxTimeRemaining = 15 * 60;
     int8_t _battery1PctRemaining = 100;
     int32_t _battery1TimeRemaining = _batteryMaxTimeRemaining;

@@ -108,11 +108,12 @@ def _count_test_results(content: str) -> tuple[int, int, int]:
     return passed, failed, skipped
 
 
-def _failed_test_lines(content: str, limit: int = 20) -> list[str]:
+def _failed_test_lines(content: str, limit: int = 20, max_len: int = 500) -> list[str]:
+    # Lines come from PR-controlled test artifacts; clamp length so one pathological line can't bloat the comment.
     lines: list[str] = []
     for line in content.splitlines():
         if re.search(r"Test #[0-9]+: .* \*\*\*Failed|^FAIL", line):
-            lines.append(line)
+            lines.append(line[:max_len])
             if len(lines) >= limit:
                 break
     return lines
@@ -238,6 +239,7 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
     precommit_status = _env(env, "PRECOMMIT_STATUS", "Not Triggered")
     precommit_url = _env(env, "PRECOMMIT_URL")
     triggered_by = _env(env, "TRIGGERED_BY", "Unknown")
+    commit = _env(env, "COMMIT_SHA")[:7]
 
     precommit_details = _view_link(precommit_url) or "-"
     precommit_note = ""
@@ -271,6 +273,7 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
         artifacts=_collect_artifact_data(base_dir, env),
         timestamp=now.strftime("%Y-%m-%d %H:%M:%S UTC"),
         triggered_by=triggered_by,
+        commit=commit,
     )
 
     # Normalize: collapse 3+ blank lines to 2, strip trailing whitespace per line

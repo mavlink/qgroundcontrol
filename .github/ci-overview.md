@@ -45,7 +45,6 @@ Platform workflows (`linux.yml`, `macos.yml`, `windows.yml`, `android.yml`, `ios
 │   ├── cache-cleanup/                           # Delete branch / PR caches
 │   ├── collect-artifact-sizes/                  # Artifact size collection
 │   ├── coverage/                                # Code coverage reports
-│   ├── custom-build/                            # Custom build support
 │   ├── deploy-docs/                             # Deploy built docs to external repo
 │   ├── docker/                                  # Docker build helpers
 │   ├── download-all-artifacts/                  # Cross-workflow artifact download

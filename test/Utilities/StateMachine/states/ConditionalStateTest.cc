@@ -19,15 +19,8 @@ void ConditionalStateTest::_testConditionalStateExecute()
             actionExecuted = true;
         }
     );
-    auto* finalState = new QFinalState(&machine);
 
-    conditionalState->addTransition(conditionalState, &QGCState::advance, finalState);
-    machine.setInitialState(conditionalState);
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(runStateToCompletion(conditionalState, &machine));
     QVERIFY(predicateCalled);
     QVERIFY(actionExecuted);
 }

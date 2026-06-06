@@ -98,11 +98,13 @@ jobs:
               }
             );
             const exact = prs.find(pr => pr.head?.sha === run.head_sha);
-            return exact ? exact.number : null;
+            // Return '' (not null) when no PR matches: github-script serializes null to '',
+            // so downstream steps guard on != '' to short-circuit reliably.
+            return exact ? exact.number : '';
 
       - name: Check if all platform workflows are complete
         id: gate
-        if: steps.pr.outputs.result != 'null'
+        if: steps.pr.outputs.result != ''
         uses: ./.github/actions/gate-platform-workflows
         with:
           platform-workflows: ${{ needs.load-config.outputs.platform_workflows }}
@@ -111,11 +113,11 @@ jobs:
           runs-cache-path: ${{ runner.temp }}/workflow-runs-cache.json
 
       - name: Bootstrap (checkout + Python deps)
-        if: steps.pr.outputs.result != 'null' && steps.gate.outputs.ready == 'true'
+        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
         uses: ./.github/actions/build-results-bootstrap
 
       - name: Collect build status
-        if: steps.pr.outputs.result != 'null' && steps.gate.outputs.ready == 'true'
+        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
         id: builds
         env:
           PLATFORM_WORKFLOWS: ${{ needs.load-config.outputs.platform_workflows }}
@@ -134,7 +136,7 @@ jobs:
 
       - name: Download artifacts from all platform workflows
         id: download
-        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
+        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
         continue-on-error: true
         uses: ./.github/actions/download-all-artifacts
         with:
@@ -146,7 +148,7 @@ jobs:
           artifact-metadata-file: workflow-artifacts.json
 
       - name: Post fallback comment on artifact download failure
-        if: steps.pr.outputs.result != 'null' && steps.download.outcome == 'failure'
+        if: steps.pr.outputs.result != '' && steps.download.outcome == 'failure'
         uses: thollander/actions-comment-pull-request@v3
         with:
           pr-number: ${{ steps.pr.outputs.result }}
@@ -158,13 +160,13 @@ jobs:
             See the [Build Results workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
 
       - name: Stop if artifact download failed
-        if: steps.pr.outputs.result != 'null' && steps.download.outcome == 'failure'
+        if: steps.pr.outputs.result != '' && steps.download.outcome == 'failure'
         run: |
           echo "::error::Artifact download failed; skipping combined report generation."
           exit 1
 
       - name: Collect artifact sizes
-        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
+        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
         uses: ./.github/actions/collect-artifact-sizes
         with:
           head-sha: ${{ github.event.workflow_run.head_sha }}
@@ -175,7 +177,7 @@ jobs:
           artifacts-file: workflow-artifacts.json
 
       - name: Download pre-commit results artifact
-        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true' && steps.builds.outputs.precommit_run_id != ''
+        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true' && steps.builds.outputs.precommit_run_id != ''
         continue-on-error: true
         uses: actions/download-artifact@v8
         with:
@@ -185,7 +187,7 @@ jobs:
           path: artifacts/pre-commit-results
 
       - name: Restore baseline sizes
-        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
+        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
         uses: actions/cache/restore@v5
         continue-on-error: true
         with:
@@ -193,7 +195,7 @@ jobs:
           key: artifact-sizes-baseline-latest
 
       - name: Restore baseline coverage
-        if: steps.pr.outputs.result != 'null' && steps.builds.outputs.all_complete == 'true'
+        if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
         uses: actions/cache/restore@v5
         continue-on-error: true
         with:
@@ -201,7 +203,7 @@ jobs:
           key: coverage-baseline-latest
 
       - name: Generate combined report
-        if: steps.pr.outputs.result != 'null' && steps.gate.outputs.ready == 'true'
+        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
         env:
           BUILD_TABLE: ${{ steps.builds.outputs.table }}
           BUILD_SUMMARY: ${{ steps.builds.outputs.summary }}
@@ -214,6 +216,7 @@ jobs:
           PR_SIZES_JSON: pr-sizes.json
           BASELINE_SIZES_JSON: baseline-sizes.json
           TRIGGERED_BY: ${{ github.event.workflow_run.name }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_build_results_comment.py" \
             --base-dir "${GITHUB_WORKSPACE}" \
@@ -221,7 +224,7 @@ jobs:
           cat comment.md
 
       - name: Deduplicate prior build-results comments
-        if: steps.pr.outputs.result != 'null' && steps.gate.outputs.ready == 'true'
+        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
         uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.pr.outputs.result }}
@@ -256,7 +259,7 @@ jobs:
             }
 
       - name: Post combined comment
-        if: steps.pr.outputs.result != 'null' && steps.gate.outputs.ready == 'true'
+        if: steps.pr.outputs.result != '' && steps.gate.outputs.ready == 'true'
         uses: thollander/actions-comment-pull-request@v3
         with:
           pr-number: ${{ steps.pr.outputs.result }}

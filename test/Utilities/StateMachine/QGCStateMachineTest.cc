@@ -54,10 +54,7 @@ void QGCStateMachineTest::_testQGCStateMachineFactories()
 
     machine.setInitialState(funcState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(functionCalled);
 }
 
@@ -84,10 +81,7 @@ void QGCStateMachineTest::_testGlobalErrorState()
 
     machine.setInitialState(asyncState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(errorHandled);
 }
 
@@ -156,10 +150,7 @@ void QGCStateMachineTest::_testLocalErrorState()
 
     machine.setInitialState(asyncState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(!globalErrorHandled);  // Global error should NOT be called
     QVERIFY(localErrorHandled);    // Local error should be called
 }
@@ -177,7 +168,7 @@ void QGCStateMachineTest::_testPropertyAssignment()
     state1->setProperty(&target, "testProp", 42);
 
     auto* state2 = new QGCState(QStringLiteral("State2"), &machine);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     // Use event-based transitions instead of entered signal
     machine.addEventTransition(state1, QStringLiteral("next"), state2);
@@ -224,10 +215,7 @@ void QGCStateMachineTest::_testTimeoutTransitionBuilder()
     QVERIFY(timeout != nullptr);
     QCOMPARE(timeout->timeoutMsecs(), 50);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
 }
 
 void QGCStateMachineTest::_testRetryTransitionBuilder()
@@ -247,10 +235,7 @@ void QGCStateMachineTest::_testRetryTransitionBuilder()
     QVERIFY(retry != nullptr);
     QCOMPARE(retry->maxRetries(), 2);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     // Should have retried twice before advancing
     QCOMPARE(retryCount, 2);
 }
@@ -600,10 +585,7 @@ void QGCStateMachineTest::_testTimedActionStateWithCallbacks()
 
     machine.setInitialState(timedState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(entryActionCalled);
     QVERIFY(exitActionCalled);
 }

@@ -22,7 +22,8 @@ VehicleLinkManager::VehicleLinkManager(Vehicle *vehicle)
     (void) connect(_commLostCheckTimer, &QTimer::timeout, this, &VehicleLinkManager::_commLostCheck);
 
     _commLostCheckTimer->setSingleShot(false);
-    _commLostCheckTimer->setInterval(_commLostCheckTimeoutMSecs);
+    // MockLink heartbeats arrive instantly; the 1 Hz prod poll only adds wall-clock to comm-lost tests.
+    _commLostCheckTimer->setInterval(QGC::runningUnitTests() ? kTestCommLostCheckTimeoutMs : _commLostCheckTimeoutMSecs);
 }
 
 VehicleLinkManager::~VehicleLinkManager()

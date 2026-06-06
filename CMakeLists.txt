@@ -45,10 +45,10 @@ if(CMAKE_VERSION VERSION_LESS QGC_CONFIG_CMAKE_MINIMUM)
     message(FATAL_ERROR "QGC requires CMake ${QGC_CONFIG_CMAKE_MINIMUM}+, found ${CMAKE_VERSION}")
 endif()
 
-if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/custom")
-    message(STATUS "QGC: Custom build directory detected")
+if(IS_DIRECTORY "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}")
+    message(STATUS "QGC: Custom build directory detected: ${QGC_CUSTOM_DIR}")
     set(QGC_CUSTOM_BUILD ON)
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/custom/cmake")
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/${QGC_CUSTOM_DIR}/cmake")
     include(CustomOverrides)
 endif()
 
@@ -265,7 +265,7 @@ endif()
 # ============================================================================
 
 if(QGC_CUSTOM_BUILD)
-    add_subdirectory(custom)
+    add_subdirectory("${QGC_CUSTOM_DIR}")
 endif()
 
 # ============================================================================

@@ -12,15 +12,12 @@ void QGCStateTest::_testEntryExitCallbacks()
     state->setOnEntry([&entryCalled]() { entryCalled = true; });
     state->setOnExit([&exitCalled]() { exitCalled = true; });
 
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
     state->addTransition(state, &QState::entered, finalState);
 
     machine.setInitialState(state);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(entryCalled);
     QVERIFY(exitCalled);
 }
@@ -41,15 +38,12 @@ void QGCStateTest::_testOnEnterOnLeaveVirtuals()
 
     QStateMachine machine;
     auto* state = new TestState(&machine);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     state->addTransition(state, &QState::entered, finalState);
     machine.setInitialState(state);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(state->onEnterCalled);
     QVERIFY(state->onLeaveCalled);
 }

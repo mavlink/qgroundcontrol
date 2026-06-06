@@ -10,7 +10,7 @@ void TimeoutTransitionTest::_testTimeoutFires()
     auto* timeoutState = new FunctionState(QStringLiteral("Timeout"), &machine, [&timeoutReached]() {
         timeoutReached = true;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     // Timeout after 50ms
     auto* timeoutTransition = new TimeoutTransition(50, timeoutState);
@@ -19,10 +19,7 @@ void TimeoutTransitionTest::_testTimeoutFires()
     timeoutState->addTransition(timeoutState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(timeoutReached);
 }
 
@@ -39,7 +36,7 @@ void TimeoutTransitionTest::_testTimeoutCancelledOnExit()
     auto* normalState = new FunctionState(QStringLiteral("Normal"), &machine, [&normalExitReached]() {
         normalExitReached = true;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     // Long timeout that shouldn't fire
     auto* timeoutTransition = new TimeoutTransition(500, timeoutState);
@@ -53,10 +50,7 @@ void TimeoutTransitionTest::_testTimeoutCancelledOnExit()
     normalState->addTransition(normalState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(normalExitReached);   // Normal path taken
     QVERIFY(!timeoutReached);     // Timeout never fired
     QVERIFY(!timeoutTransition->isTimerActive());  // Timer stopped
@@ -71,7 +65,7 @@ void TimeoutTransitionTest::_testTimeoutRestartsOnReentry()
     auto* countState = new FunctionState(QStringLiteral("Count"), &machine, [&timeoutCount]() {
         timeoutCount++;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     // Timeout after 30ms
     auto* timeoutTransition = new TimeoutTransition(30, countState);
@@ -89,10 +83,7 @@ void TimeoutTransitionTest::_testTimeoutRestartsOnReentry()
 
     machine.setInitialState(waitState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(timeoutCount, 2);  // Timeout fired twice (timer restarted on reentry)
 }
 
@@ -109,7 +100,7 @@ void TimeoutTransitionTest::_testMultipleTimeoutTransitions()
     auto* longState = new FunctionState(QStringLiteral("Long"), &machine, [&longTimeoutReached]() {
         longTimeoutReached = true;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     // Short timeout should win
     auto* shortTimeout = new TimeoutTransition(30, shortState);
@@ -124,10 +115,7 @@ void TimeoutTransitionTest::_testMultipleTimeoutTransitions()
     longState->addTransition(longState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(shortTimeoutReached);   // Short timeout fired first
     QVERIFY(!longTimeoutReached);   // Long timeout never reached
 }

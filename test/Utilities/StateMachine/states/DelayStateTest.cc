@@ -8,18 +8,15 @@ void DelayStateTest::_testDelayState()
     const int delayMs = 100;
 
     auto* delayState = new DelayState(&machine, delayMs);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     delayState->addTransition(delayState, &DelayState::delayComplete, finalState);
     machine.setInitialState(delayState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
     QElapsedTimer timer;
     timer.start();
 
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(timer.elapsed() >= delayMs - 10);
 }
 

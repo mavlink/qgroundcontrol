@@ -49,7 +49,7 @@ void SendMavlinkCommandStateTest::_testUnconfiguredStateFails()
     // Create without configuration
     auto* state = new SendMavlinkCommandState(&machine);
     auto* errorState = new FunctionState(QStringLiteral("Error"), &machine, []() {});
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     state->addTransition(state, &QGCState::error, errorState);
     errorState->addTransition(errorState, &QGCState::advance, finalState);
@@ -57,12 +57,9 @@ void SendMavlinkCommandStateTest::_testUnconfiguredStateFails()
     machine.setInitialState(state);
 
     QSignalSpy errorSpy(state, &QGCState::error);
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-
-    machine.start();
 
     // Should fail immediately because not configured and no vehicle
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(errorSpy.count(), 1);
 }
 

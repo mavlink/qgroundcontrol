@@ -120,11 +120,6 @@ function(qgc_set_linker)
         return()
     endif()
 
-    if(QGC_ENABLE_COVERAGE)
-        message(STATUS "QGC: Alternative linker disabled for coverage build")
-        return()
-    endif()
-
     include(CheckLinkerFlag)
 
     # Try linkers in order of preference: mold > lld > gold

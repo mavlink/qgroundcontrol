@@ -112,4 +112,37 @@ void QGCCommandLineParserTest::_testHandleParseResult_VersionReturnsZero()
     QCOMPARE(exitCode.value(), 0);
 }
 
+void QGCCommandLineParserTest::_testNormalizeArgs_UnittestSpaceSeparatedValue()
+{
+    // Regression: bare-unittest empty-value injection used to swallow a space-separated test name into a rejected positional.
+    const QStringList out = QGCCommandLineParser::normalizeArgs(
+        {QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")});
+    QCOMPARE(out, QStringList({QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")}));
+}
+
+void QGCCommandLineParserTest::_testNormalizeArgs_UnittestColonValue()
+{
+    const QStringList out = QGCCommandLineParser::normalizeArgs({QStringLiteral("--unittest:FooTest")});
+    QCOMPARE(out, QStringList({QStringLiteral("--unittest"), QStringLiteral("FooTest")}));
+}
+
+void QGCCommandLineParserTest::_testNormalizeArgs_UnittestBare()
+{
+    const QStringList out = QGCCommandLineParser::normalizeArgs({QStringLiteral("--unittest")});
+    QCOMPARE(out, QStringList({QStringLiteral("--unittest"), QString()}));
+}
+
+void QGCCommandLineParserTest::_testNormalizeArgs_UnittestBareFollowedByOption()
+{
+    const QStringList out = QGCCommandLineParser::normalizeArgs(
+        {QStringLiteral("--unittest"), QStringLiteral("--allow-multiple")});
+    QCOMPARE(out, QStringList({QStringLiteral("--unittest"), QString(), QStringLiteral("--allow-multiple")}));
+}
+
+void QGCCommandLineParserTest::_testNormalizeArgs_ColonOptionValuePreserved()
+{
+    const QStringList out = QGCCommandLineParser::normalizeArgs({QStringLiteral("--logging:Vehicle.FTPManager")});
+    QCOMPARE(out, QStringList({QStringLiteral("--logging"), QStringLiteral("Vehicle.FTPManager")}));
+}
+
 UT_REGISTER_TEST(QGCCommandLineParserTest, TestLabel::Unit, TestLabel::Utilities)
