@@ -200,15 +200,49 @@ void ParameterMetaData::setBitmaskFromPairs(FactMetaData *metaData, const QList<
             continue;
         }
 
-        const QVariant rawValue = QVariant::fromValue(static_cast<quint64>(1ull << bitIndex));
+        const quint64 bits = 1ull << bitIndex;
+        const QVariant rawValue = QVariant::fromValue(bits);
         QVariant bitmaskValue;
         QString errorString;
-        if (metaData->convertAndValidateRaw(rawValue, false, bitmaskValue, errorString)) {
-            bitmaskValues << bitmaskValue;
-            bitmaskStrings << description;
-        } else {
-            qCWarning(ParameterMetaDataLog) << "Skipping invalid bitmask value for" << metaData->name() << "bit:" << bitIndex << "error:" << errorString;
+        if (!metaData->convertAndValidateRaw(rawValue, false, bitmaskValue, errorString)) {
+            // Firmware may declare a bitmask parameter as a signed integer type
+            // (e.g. int8) while still using the sign bit (bit 7 = 0x80).  The
+            // unsigned value 128 overflows int8, but the two's-complement signed
+            // representation -128 is valid and carries the same bit pattern.
+            // Only attempt reinterpretation for exactly the sign bit of the type;
+            // wider bit indices would truncate to 0 and silently produce a bogus entry.
+            QVariant signedRaw;
+            switch (metaData->type()) {
+            case FactMetaData::valueTypeInt8:
+                if (bitIndex == 7) {
+                    signedRaw = QVariant::fromValue(static_cast<qint8>(static_cast<quint8>(bits)));
+                }
+                break;
+            case FactMetaData::valueTypeInt16:
+                if (bitIndex == 15) {
+                    signedRaw = QVariant::fromValue(static_cast<qint16>(static_cast<quint16>(bits)));
+                }
+                break;
+            case FactMetaData::valueTypeInt32:
+                if (bitIndex == 31) {
+                    signedRaw = QVariant::fromValue(static_cast<qint32>(static_cast<quint32>(bits)));
+                }
+                break;
+            case FactMetaData::valueTypeInt64:
+                if (bitIndex == 63) {
+                    signedRaw = QVariant::fromValue(static_cast<qint64>(bits));
+                }
+                break;
+            default:
+                break;
+            }
+            if (!signedRaw.isValid() || !metaData->convertAndValidateRaw(signedRaw, false, bitmaskValue, errorString)) {
+                qCWarning(ParameterMetaDataLog) << "Skipping invalid bitmask value for" << metaData->name() << "bit:" << bitIndex << "error:" << errorString;
+                continue;
+            }
         }
+        bitmaskValues << bitmaskValue;
+        bitmaskStrings << description;
     }
 
     if (!bitmaskStrings.isEmpty()) {

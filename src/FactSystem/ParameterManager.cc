@@ -1736,7 +1736,10 @@ bool ParameterManager::_parseParamFile(const QString& filename)
         if (_mapCompId2FactMap.contains(componentId) && _mapCompId2FactMap[componentId].contains(parameterName)) {
             fact = _mapCompId2FactMap[componentId][parameterName];
             if (withdefault && defaultValue.isValid()) {
-                fact->metaData()->setRawDefaultValue(defaultValue);
+                // Firmware-provided defaults are authoritative: use the unchecked
+                // setter so parameters that legitimately default to 0 ("disabled")
+                // but have a metadata min > 0 don't produce false warnings.
+                fact->metaData()->setRawDefaultValueFirmwareForce(defaultValue);
             }
         } else {
             qCDebug(ParameterManagerVerbose1Log) << _logVehiclePrefix(componentId) << "Adding new fact" << parameterName;
@@ -1752,7 +1755,7 @@ bool ParameterManager::_parseParamFile(const QString& filename)
 
             // Set default before emitting factAdded so QML sees defaultValueAvailable from the start
             if (withdefault && defaultValue.isValid()) {
-                fact->metaData()->setRawDefaultValue(defaultValue);
+                fact->metaData()->setRawDefaultValueFirmwareForce(defaultValue);
             }
 
             emit factAdded(componentId, fact);

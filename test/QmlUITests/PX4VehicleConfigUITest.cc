@@ -9,6 +9,7 @@
 #include "MultiVehicleManager.h"
 
 #include <QtCore/QPointer>
+#include <QtCore/QScopeGuard>
 #include "Vehicle.h"
 #include "VehicleComponent.h"
 
@@ -26,6 +27,18 @@ void PX4VehicleConfigUITest::_testNavigateVehicleConfig()
     QPointer<MockLink> mockLink = connectMockLinkAndWaitReady(
         [] { return MockLink::startPX4MockLink(false, false, false); }, vehicle);
     if (!mockLink) return;
+
+    const auto cleanup = qScopeGuard([&] {
+        closeUIWindow();
+        if (mockLink) {
+            QSignalSpy spyDisconnect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
+            mockLink->disconnect();
+            if (spyDisconnect.isValid()) {
+                (void)waitForSignal(spyDisconnect, 5000, QStringLiteral("activeVehicleChanged"));
+            }
+        }
+        destroyUIEngine();
+    });
 
     // -------------------------------------------------------------------------
     // Navigate to the Configure view
@@ -80,20 +93,6 @@ void PX4VehicleConfigUITest::_testNavigateVehicleConfig()
                  qPrintable(QStringLiteral("Panel loader has no item after clicking %1").arg(comp->name())));
     }
 
-    // -------------------------------------------------------------------------
-    // Clean up: close the window before disconnecting the MockLink so that QML
-    // bindings are torn down before the vehicle object is destroyed.
-    // -------------------------------------------------------------------------
-    closeUIWindow();
-
-    if (mockLink) {
-        QSignalSpy spyDisconnect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-        QVERIFY2(spyDisconnect.isValid(), "Failed to create spy for disconnect");
-        mockLink->disconnect();
-        (void)waitForSignal(spyDisconnect, 5000, QStringLiteral("activeVehicleChanged"));
-    }
-
-    destroyUIEngine();
 }
 
 // Cycle through the axis buttons on a PID tuning tab. Each click exercises

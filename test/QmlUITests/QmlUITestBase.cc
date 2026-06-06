@@ -80,6 +80,15 @@ void QmlUITestBase::startUI()
     _rootItem = _window->contentItem();
 }
 
+void QmlUITestBase::ignoreAPMMockLinkWarnings()
+{
+    // ArduPilot MockLink does not serve COMP_METADATA_TYPE_GENERAL.
+    ignoreLogMessage(
+        QRegularExpression(QStringLiteral("^ComponentInformation\\.RequestMetaDataTypeStateMachine$")),
+        QtWarningMsg,
+        QRegularExpression(QStringLiteral("\"COMP_METADATA_TYPE_GENERAL\" : failed to load metadata \\(primary and fallback\\) \"\"")));
+}
+
 void QmlUITestBase::closeUIWindow()
 {
     if (_window) {
