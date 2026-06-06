@@ -24,10 +24,9 @@ class LogManager : public QObject
 
     Q_MOC_INCLUDE("LogModel.h")
 
-    Q_PROPERTY(LogModel*            model           READ model          CONSTANT)
-    Q_PROPERTY(bool                 hasError        READ hasError       NOTIFY hasErrorChanged)
-    Q_PROPERTY(QString              lastError       READ lastError      NOTIFY lastErrorChanged)
-
+    Q_PROPERTY(LogModel*    model       READ model      CONSTANT)
+    Q_PROPERTY(bool         hasError    READ hasError   NOTIFY hasErrorChanged)
+    Q_PROPERTY(QString      lastError   READ lastError  NOTIFY lastErrorChanged)
 
 public:
     ~LogManager();
@@ -49,13 +48,9 @@ public:
 
     [[nodiscard]] QString logDirectory() const { return _logDirectory; }
 
-
     Q_INVOKABLE void writeMessages(const QString& destFile);
     Q_INVOKABLE void clearError();
     Q_INVOKABLE void flush();
-
-    Q_INVOKABLE static QStringList categoryLogLevelNames();
-    Q_INVOKABLE static QVariantList categoryLogLevelValues();
 
     static void setCaptureEnabled(bool enabled);
     static void clearCapturedMessages();

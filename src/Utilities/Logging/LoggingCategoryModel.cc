@@ -31,8 +31,6 @@ QVariant LoggingCategoryFlatModel::data(const QModelIndex& index, int role) cons
             return item->shortCategory;
         case static_cast<int>(EnabledRole):
             return item->enabled();
-        case static_cast<int>(LogLevelRole):
-            return item->logLevel();
     }
 
     return {};
@@ -50,13 +48,7 @@ bool LoggingCategoryFlatModel::setData(const QModelIndex& index, const QVariant&
 
     if (role == static_cast<int>(EnabledRole)) {
         item->setEnabled(value.toBool());
-        emit dataChanged(index, index, {static_cast<int>(EnabledRole), static_cast<int>(LogLevelRole)});
-        return true;
-    }
-
-    if (role == static_cast<int>(LogLevelRole)) {
-        item->setLogLevel(value.toInt());
-        emit dataChanged(index, index, {static_cast<int>(EnabledRole), static_cast<int>(LogLevelRole)});
+        emit dataChanged(index, index, {static_cast<int>(EnabledRole)});
         return true;
     }
 
@@ -79,8 +71,7 @@ QHash<int, QByteArray> LoggingCategoryFlatModel::roleNames() const
         {Qt::DisplayRole, "display"},
         {static_cast<int>(ShortNameRole), "shortName"},
         {static_cast<int>(FullNameRole), "fullName"},
-        {static_cast<int>(EnabledRole), "enabled"},
-        {static_cast<int>(LogLevelRole), "logLevel"},
+        {static_cast<int>(EnabledRole), "categoryEnabled"},
     };
 }
 
@@ -96,11 +87,11 @@ void LoggingCategoryFlatModel::insertSorted(QGCLoggingCategoryItem* item)
     _items.insert(pos, item);
     endInsertRows();
 
-    connect(item, &QGCLoggingCategoryItem::logLevelChanged, this, [this, item]() {
+    connect(item, &QGCLoggingCategoryItem::enabledChanged, this, [this, item]() {
         const int row = _items.indexOf(item);
         if (row >= 0) {
             const QModelIndex idx = index(row);
-            emit dataChanged(idx, idx, {static_cast<int>(EnabledRole), static_cast<int>(LogLevelRole)});
+            emit dataChanged(idx, idx, {static_cast<int>(EnabledRole)});
         }
     });
 }
@@ -196,8 +187,6 @@ QVariant LoggingCategoryTreeModel::data(const QModelIndex& index, int role) cons
             return item->fullCategory;
         case static_cast<int>(EnabledRole):
             return item->enabled();
-        case static_cast<int>(LogLevelRole):
-            return item->logLevel();
     }
 
     return {};
@@ -219,13 +208,7 @@ bool LoggingCategoryTreeModel::setData(const QModelIndex& index, const QVariant&
 
     if (role == static_cast<int>(EnabledRole)) {
         item->setEnabled(value.toBool());
-        emit dataChanged(index, index, {static_cast<int>(EnabledRole), static_cast<int>(LogLevelRole)});
-        return true;
-    }
-
-    if (role == static_cast<int>(LogLevelRole)) {
-        item->setLogLevel(value.toInt());
-        emit dataChanged(index, index, {static_cast<int>(EnabledRole), static_cast<int>(LogLevelRole)});
+        emit dataChanged(index, index, {static_cast<int>(EnabledRole)});
         return true;
     }
 
@@ -248,9 +231,23 @@ QHash<int, QByteArray> LoggingCategoryTreeModel::roleNames() const
         {Qt::DisplayRole, "display"},
         {static_cast<int>(ShortNameRole), "shortName"},
         {static_cast<int>(FullNameRole), "fullName"},
-        {static_cast<int>(EnabledRole), "enabled"},
-        {static_cast<int>(LogLevelRole), "logLevel"},
+        {static_cast<int>(EnabledRole), "categoryEnabled"},
     };
+}
+
+void LoggingCategoryTreeModel::forEachItem(const std::function<void(QGCLoggingCategoryItem*)>& fn)
+{
+    std::function<void(LoggingCategoryTreeNode*)> walk = [&](LoggingCategoryTreeNode* node) {
+        if (node->item) {
+            fn(node->item);
+        }
+        for (auto* child : std::as_const(node->children)) {
+            walk(child);
+        }
+    };
+    for (auto* child : std::as_const(_root.children)) {
+        walk(child);
+    }
 }
 
 int LoggingCategoryTreeModel::insertionIndex(LoggingCategoryTreeNode* parent, const QString& name) const
@@ -276,7 +273,7 @@ LoggingCategoryTreeNode* LoggingCategoryTreeModel::findOrCreateIntermediateNode(
     }
 
     // Create intermediate (group) node
-    auto* item = new QGCLoggingCategoryItem(segment, fullPrefix, QtWarningMsg, this);
+    auto* item = new QGCLoggingCategoryItem(segment, fullPrefix, false, this);
     auto* node = new LoggingCategoryTreeNode;
     node->item = item;
     node->parent = parentNode;
@@ -289,12 +286,12 @@ LoggingCategoryTreeNode* LoggingCategoryTreeModel::findOrCreateIntermediateNode(
     parentNode->children.insert(pos, node);
     endInsertRows();
 
-    connect(item, &QGCLoggingCategoryItem::logLevelChanged, this, [this, node]() {
+    connect(item, &QGCLoggingCategoryItem::enabledChanged, this, [this, node]() {
         auto* p = node->parent ? node->parent : &_root;
         const int row = p->children.indexOf(node);
         if (row >= 0) {
             const QModelIndex idx = createIndex(row, 0, node);
-            emit dataChanged(idx, idx, {static_cast<int>(Roles::EnabledRole), static_cast<int>(Roles::LogLevelRole)});
+            emit dataChanged(idx, idx, {static_cast<int>(Roles::EnabledRole)});
         }
     });
 
@@ -329,12 +326,12 @@ void LoggingCategoryTreeModel::insertCategory(const QStringList& pathSegments, c
     currentParent->children.insert(pos, node);
     endInsertRows();
 
-    connect(item, &QGCLoggingCategoryItem::logLevelChanged, this, [this, node]() {
+    connect(item, &QGCLoggingCategoryItem::enabledChanged, this, [this, node]() {
         auto* p = node->parent ? node->parent : &_root;
         const int row = p->children.indexOf(node);
         if (row >= 0) {
             const QModelIndex idx = createIndex(row, 0, node);
-            emit dataChanged(idx, idx, {static_cast<int>(Roles::EnabledRole), static_cast<int>(Roles::LogLevelRole)});
+            emit dataChanged(idx, idx, {static_cast<int>(Roles::EnabledRole)});
         }
     });
 }

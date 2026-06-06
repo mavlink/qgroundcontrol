@@ -10,19 +10,6 @@
 
 QGC_LOGGING_CATEGORY(QGCLoggingCategoryRegisterLog, "Utilities.QGCLoggingCategoryManager")
 
-// QtMsgType is not severity-ordered (QtInfoMsg=4 > QtCriticalMsg=2).
-static int severityRank(int qtMsgType)
-{
-    switch (qtMsgType) {
-        case QtDebugMsg:    return 0;
-        case QtInfoMsg:     return 1;
-        case QtWarningMsg:  return 2;
-        case QtCriticalMsg: return 3;
-        case QtFatalMsg:    return 4;
-        default:            return 2;
-    }
-}
-
 QLoggingCategory::CategoryFilter QGCLoggingCategoryManager::s_previousFilter = nullptr;
 
 static QGCLoggingCategoryManager* s_managerInstance = nullptr;
@@ -79,11 +66,8 @@ QGCLoggingCategoryManager::QGCLoggingCategoryManager() : QObject()
     settings.beginGroup(kFilterRulesSettingsGroup);
     for (const QString& key : settings.childKeys()) {
         const QVariant val = settings.value(key);
-        if (val.typeId() == QMetaType::Bool) {
-            // Backward compat: true → Debug, false → Warning
-            _categoryLevels.insert(key, val.toBool() ? QtDebugMsg : QtWarningMsg);
-        } else {
-            _categoryLevels.insert(key, val.toInt());
+        if (val.toBool()) {
+            _enabledCategories.insert(key);
         }
     }
 
@@ -109,56 +93,103 @@ void QGCLoggingCategoryManager::registerCategory(const QString& fullCategory)
 
     const QString shortName = segments.last();
 
-    int level;
+    bool enabled;
     {
         QReadLocker locker(&_filterLock);
-        level = _resolvedLevel(fullCategory);
+        enabled = _isCategoryEnabled(fullCategory);
     }
-    auto* categoryItem = new QGCLoggingCategoryItem(shortName, fullCategory, level, this);
+    auto* categoryItem = new QGCLoggingCategoryItem(shortName, fullCategory, enabled, this);
     _flatModel->insertSorted(categoryItem);
     _treeModel->insertCategory(segments, fullCategory, categoryItem);
 }
 
-void QGCLoggingCategoryManager::setCategoryLevel(const QString& fullCategoryName, int qtMsgLevel)
+void QGCLoggingCategoryManager::setCategoryEnabled(const QString& fullCategoryName, bool enable)
 {
-    qCDebug(QGCLoggingCategoryRegisterLog) << "Set category level" << fullCategoryName << qtMsgLevel;
+    qCDebug(QGCLoggingCategoryRegisterLog) << "Set category enabled" << fullCategoryName << enable;
 
-    const bool isDefault = severityRank(qtMsgLevel) >= severityRank(kDefaultLevel);
     {
         QWriteLocker locker(&_filterLock);
-        if (isDefault) {
-            _categoryLevels.remove(fullCategoryName);
+        if (enable) {
+            _enabledCategories.insert(fullCategoryName);
         } else {
-            _categoryLevels.insert(fullCategoryName, qtMsgLevel);
+            _enabledCategories.remove(fullCategoryName);
         }
     }
 
     QSettings settings;
     settings.beginGroup(kFilterRulesSettingsGroup);
-    if (isDefault) {
-        settings.remove(fullCategoryName);
+    if (enable) {
+        settings.setValue(fullCategoryName, true);
     } else {
-        settings.setValue(fullCategoryName, qtMsgLevel);
+        settings.remove(fullCategoryName);
     }
 
     QLoggingCategory::installFilter(_categoryFilter);
+
+    _refreshItemStates();
+
+    emit enabledCategoriesChanged();
 }
 
-void QGCLoggingCategoryManager::setCategoryEnabled(const QString& fullCategoryName, bool enable)
+void QGCLoggingCategoryManager::_refreshItemStates()
 {
-    setCategoryLevel(fullCategoryName, enable ? QtDebugMsg : kDefaultLevel);
+    QList<std::pair<QGCLoggingCategoryItem*, bool>> updates;
+    QSet<QGCLoggingCategoryItem*> seen;
+    {
+        QReadLocker locker(&_filterLock);
+        for (int i = 0; i < _flatModel->count(); ++i) {
+            auto* item = _flatModel->at(i);
+            seen.insert(item);
+            updates.emplace_back(item, _isCategoryEnabled(item->fullCategory));
+        }
+        // Tree intermediate (group) nodes are not in the flat model; leaf nodes are.
+        // Only enqueue tree items that were not already covered above.
+        _treeModel->forEachItem([this, &updates, &seen](QGCLoggingCategoryItem* treeItem) {
+            if (!seen.contains(treeItem)) {
+                updates.emplace_back(treeItem, _isCategoryEnabled(treeItem->fullCategory));
+            }
+        });
+    }
+    for (auto& [item, enabled] : updates) {
+        item->setEnabledFromManager(enabled);
+    }
 }
 
 bool QGCLoggingCategoryManager::isCategoryEnabled(const QString& fullCategoryName) const
 {
     QReadLocker locker(&_filterLock);
-    return severityRank(_resolvedLevel(fullCategoryName)) < severityRank(kDefaultLevel);
+    return _isCategoryEnabled(fullCategoryName);
 }
 
-int QGCLoggingCategoryManager::categoryLevel(const QString& fullCategoryName) const
+bool QGCLoggingCategoryManager::_isCategoryEnabled(const QString& fullCategoryName) const
 {
-    QReadLocker locker(&_filterLock);
-    return _resolvedLevel(fullCategoryName);
+    if (_commandLineFullLogging) {
+        return true;
+    }
+
+    const QString normalized =
+        fullCategoryName.endsWith('.') ? fullCategoryName.left(fullCategoryName.size() - 1) : fullCategoryName;
+
+    for (const QString& cmdCat : std::as_const(_commandLineCategories)) {
+        if (normalized == cmdCat || normalized.startsWith(cmdCat + '.')) {
+            return true;
+        }
+    }
+
+    if (_enabledCategories.contains(fullCategoryName)) {
+        return true;
+    }
+
+    for (const QString& cat : std::as_const(_enabledCategories)) {
+        if (cat.endsWith('.')) {
+            const QString prefix = cat.left(cat.size() - 1);
+            if (normalized == prefix || normalized.startsWith(prefix + '.')) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 void QGCLoggingCategoryManager::installFilter(const QString& commandLineLoggingOptions)
@@ -176,51 +207,11 @@ void QGCLoggingCategoryManager::installFilter(const QString& commandLineLoggingO
         }
     }
 
-    {
-        QReadLocker locker(&_filterLock);
-        for (int i = 0; i < _flatModel->count(); ++i) {
-            auto* item = _flatModel->at(i);
-            item->setLogLevelFromManager(_resolvedLevel(item->fullCategory));
-        }
-    }
+    _refreshItemStates();
 
     s_previousFilter = QLoggingCategory::installFilter(_categoryFilter);
 
     qCDebug(QGCLoggingCategoryRegisterLog) << "Category filter installed";
-}
-
-int QGCLoggingCategoryManager::_resolvedLevel(const QString& fullCategoryName) const
-{
-    if (_commandLineFullLogging) {
-        return QtDebugMsg;
-    }
-
-    const QString normalized =
-        fullCategoryName.endsWith('.') ? fullCategoryName.left(fullCategoryName.size() - 1) : fullCategoryName;
-
-    for (const QString& cmdCat : std::as_const(_commandLineCategories)) {
-        if (normalized == cmdCat || normalized.startsWith(cmdCat + '.')) {
-            return QtDebugMsg;
-        }
-    }
-
-    // Check exact match first
-    auto it = _categoryLevels.constFind(normalized);
-    if (it != _categoryLevels.constEnd()) {
-        return it.value();
-    }
-
-    // Check prefix matches (parent categories ending with '.')
-    for (auto pit = _categoryLevels.constBegin(); pit != _categoryLevels.constEnd(); ++pit) {
-        if (pit.key().endsWith('.')) {
-            const QString prefix = pit.key().left(pit.key().size() - 1);
-            if (normalized == prefix || normalized.startsWith(prefix + '.')) {
-                return pit.value();
-            }
-        }
-    }
-
-    return kDefaultLevel;
 }
 
 void QGCLoggingCategoryManager::_categoryFilter(QLoggingCategory* category)
@@ -241,7 +232,7 @@ void QGCLoggingCategoryManager::_categoryFilter(QLoggingCategory* category)
 
     // Leave "default" (uncategorized qDebug()) and "qml" (QML console.log/warn/error)
     // to Qt's built-in filter, which enables debug messages in Debug builds by default.
-    // Without this, the QGC filter would suppress them at kDefaultLevel (Warning).
+    // Without this, the QGC filter would suppress them at the default level (Warning).
     if (categoryName == QLatin1String("default") || categoryName == QLatin1String("qml")) {
         return;
     }
@@ -249,12 +240,10 @@ void QGCLoggingCategoryManager::_categoryFilter(QLoggingCategory* category)
     auto* manager = instance();
 
     QReadLocker locker(&manager->_filterLock);
-    const int rank = severityRank(manager->_resolvedLevel(categoryName));
+    const bool enabled = manager->_isCategoryEnabled(categoryName);
 
-    category->setEnabled(QtDebugMsg, rank <= 0);
-    category->setEnabled(QtInfoMsg, rank <= 1);
-    category->setEnabled(QtWarningMsg, rank <= 2);
-    category->setEnabled(QtCriticalMsg, rank <= 3);
+    category->setEnabled(QtDebugMsg, enabled);
+    category->setEnabled(QtInfoMsg, enabled);
 }
 
 void QGCLoggingCategoryManager::disableAllCategories()
@@ -263,18 +252,30 @@ void QGCLoggingCategoryManager::disableAllCategories()
 
     {
         QWriteLocker locker(&_filterLock);
-        _categoryLevels.clear();
+        _enabledCategories.clear();
     }
 
     QSettings settings;
     settings.beginGroup(kFilterRulesSettingsGroup);
     settings.remove(QString());
 
-    for (int i = 0; i < _flatModel->count(); ++i) {
-        _flatModel->at(i)->setLogLevelFromManager(kDefaultLevel);
-    }
+    _refreshItemStates();
 
     QLoggingCategory::installFilter(_categoryFilter);
+
+    emit enabledCategoriesChanged();
+}
+
+QStringList QGCLoggingCategoryManager::enabledCategories() const
+{
+    QReadLocker locker(&_filterLock);
+    QStringList result;
+    result.reserve(_enabledCategories.size());
+    for (const QString& cat : _enabledCategories) {
+        result.append(cat.endsWith('.') ? cat + QLatin1Char('*') : cat);
+    }
+    result.sort();
+    return result;
 }
 
 void QGCLoggingCategoryManager::setFilterText(const QString& text)
@@ -287,46 +288,30 @@ void QGCLoggingCategoryManager::setFilterText(const QString& text)
 // and moving them avoids pulling QGCLoggingCategoryManager.h into LoggingCategoryModel.h.
 
 QGCLoggingCategoryItem::QGCLoggingCategoryItem(const QString& shortCategory_, const QString& fullCategory_,
-                                               int logLevel_, QObject* parent)
-    : QObject(parent), shortCategory(shortCategory_), fullCategory(fullCategory_), _logLevel(logLevel_)
+                                               bool enabled_, QObject* parent)
+    : QObject(parent), shortCategory(shortCategory_), fullCategory(fullCategory_), _enabled(enabled_)
 {
-    connect(this, &QGCLoggingCategoryItem::logLevelChanged, this, [this]() {
+    connect(this, &QGCLoggingCategoryItem::enabledChanged, this, [this]() {
         if (!_updatingFromManager) {
-            QGCLoggingCategoryManager::instance()->setCategoryLevel(fullCategory, _logLevel);
+            QGCLoggingCategoryManager::instance()->setCategoryEnabled(fullCategory, _enabled);
         }
     });
 }
 
 void QGCLoggingCategoryItem::setEnabled(bool enabled)
 {
-    setLogLevel(enabled ? QtDebugMsg : QtWarningMsg);
-}
-
-void QGCLoggingCategoryItem::setLogLevel(int level)
-{
-    if (level != _logLevel) {
-        const bool wasEnabled = enabled();
-        _logLevel = level;
-        emit logLevelChanged();
-        if (wasEnabled != enabled()) {
-            emit enabledChanged();
-        }
-        if (!_updatingFromManager) {
-            QGCLoggingCategoryManager::instance()->setCategoryLevel(fullCategory, level);
-        }
+    if (enabled != _enabled) {
+        _enabled = enabled;
+        emit enabledChanged();
     }
 }
 
-void QGCLoggingCategoryItem::setLogLevelFromManager(int level)
+void QGCLoggingCategoryItem::setEnabledFromManager(bool enabled)
 {
-    if (level != _logLevel) {
-        const bool wasEnabled = enabled();
+    if (enabled != _enabled) {
         _updatingFromManager = true;
-        _logLevel = level;
-        emit logLevelChanged();
-        if (wasEnabled != enabled()) {
-            emit enabledChanged();
-        }
+        _enabled = enabled;
+        emit enabledChanged();
         _updatingFromManager = false;
     }
 }

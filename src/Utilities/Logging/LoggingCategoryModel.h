@@ -7,34 +7,31 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <functional>
+
 class QGCLoggingCategoryItem : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(int logLevel READ logLevel WRITE setLogLevel NOTIFY logLevelChanged)
+    Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
 
 public:
-    QGCLoggingCategoryItem(const QString& shortCategory_, const QString& fullCategory_, int logLevel_,
+    QGCLoggingCategoryItem(const QString& shortCategory_, const QString& fullCategory_, bool enabled_,
                            QObject* parent = nullptr);
 
-    bool enabled() const { return _logLevel <= QtDebugMsg; }
+    bool enabled() const { return _enabled; }
 
     void setEnabled(bool enabled);
-
-    int logLevel() const { return _logLevel; }
-
-    void setLogLevel(int level);
-    void setLogLevelFromManager(int level);
+    void setEnabledFromManager(bool enabled);
 
     QString shortCategory;
     QString fullCategory;
 
 signals:
-    void logLevelChanged();
     void enabledChanged();
 
 private:
-    int _logLevel = QtWarningMsg;
+    bool _enabled = false;
     bool _updatingFromManager = false;
 };
 
@@ -50,7 +47,6 @@ public:
         ShortNameRole = Qt::UserRole + 1,
         FullNameRole,
         EnabledRole,
-        LogLevelRole,
     };
     Q_ENUM(Roles)
 
@@ -99,7 +95,6 @@ public:
         ShortNameRole = Qt::UserRole + 1,
         FullNameRole,
         EnabledRole,
-        LogLevelRole,
     };
     Q_ENUM(Roles)
 
@@ -117,6 +112,7 @@ public:
     bool hasChildren(const QModelIndex& parent = QModelIndex()) const override;
 
     void insertCategory(const QStringList& pathSegments, const QString& fullCategory, QGCLoggingCategoryItem* item);
+    void forEachItem(const std::function<void(QGCLoggingCategoryItem*)>& fn);
 
 private:
     LoggingCategoryTreeNode* nodeFromIndex(const QModelIndex& index) const;

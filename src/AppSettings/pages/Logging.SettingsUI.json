@@ -10,23 +10,23 @@
     },
     "groups": [
         {
-            "heading": "Disk Logging",
-            "sectionName": "Disk Logging",
+            "heading": "Save To Disk",
+            "sectionName": "Save To Disk",
             "keywords": ["disk", "logging", "file", "flush", "save", "path", "compression", "rotation", "backup"],
             "controls": [
                 { "setting": "logManagerSettings.diskLoggingEnabled" },
                 { "setting": "logManagerSettings.diskLoggingMaxFileSizeMB", "enableWhen": "diskLoggingEnabledValue" },
-                { "setting": "logManagerSettings.diskLoggingMaxBackupFiles", "enableWhen": "diskLoggingEnabledValue" }
+                { "setting": "logManagerSettings.diskLoggingMaxBackupFiles", "enableWhen": "diskLoggingEnabledValue" },
+                { "setting": "logManagerSettings.saveFormat" }
             ]
         },
         {
             "heading": "Log Viewer",
             "sectionName": "Log Viewer",
-            "keywords": ["console", "buffer", "entries", "elapsed", "timestamp", "time", "gstreamer", "debug", "save", "format", "export"],
+            "keywords": ["console", "buffer", "entries", "elapsed", "timestamp", "time", "gstreamer", "debug"],
             "controls": [
                 { "setting": "appSettings.showAppLogTimestampAsElapsedTime" },
-                { "setting": "appSettings.gstDebugLevel" },
-                { "setting": "logManagerSettings.saveFormat" }
+                { "setting": "appSettings.gstDebugLevel" }
             ]
         }
     ]

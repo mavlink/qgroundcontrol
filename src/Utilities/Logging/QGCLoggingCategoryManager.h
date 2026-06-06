@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QReadWriteLock>
 #include <QtCore/QSet>
 #include <QtCore/QSortFilterProxyModel>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QJSEngine;
@@ -22,6 +22,7 @@ class QGCLoggingCategoryManager : public QObject
     Q_PROPERTY(LoggingCategoryTreeModel* treeModel READ treeCategoryModel CONSTANT)
     Q_PROPERTY(LoggingCategoryFlatModel* flatModel READ flatCategoryModel CONSTANT)
     Q_PROPERTY(QSortFilterProxyModel* filteredFlatModel READ filteredFlatModel CONSTANT)
+    Q_PROPERTY(QStringList enabledCategories READ enabledCategories NOTIFY enabledCategoriesChanged)
 
 public:
     static QGCLoggingCategoryManager* instance();
@@ -39,15 +40,18 @@ public:
     Q_INVOKABLE void setFilterText(const QString& text);
 
     Q_INVOKABLE bool isCategoryEnabled(const QString& fullCategoryName) const;
-    int categoryLevel(const QString& fullCategoryName) const;
-    Q_INVOKABLE void setCategoryLevel(const QString& fullCategoryName, int qtMsgLevel);
     Q_INVOKABLE void setCategoryEnabled(const QString& fullCategoryName, bool enable);
     void installFilter(const QString& commandLineLoggingOptions = QString());
     Q_INVOKABLE void disableAllCategories();
+    QStringList enabledCategories() const;
+
+signals:
+    void enabledCategoriesChanged();
 
 private:
     QGCLoggingCategoryManager();
-    int _resolvedLevel(const QString& fullCategoryName) const;
+    bool _isCategoryEnabled(const QString& fullCategoryName) const;
+    void _refreshItemStates();
     static void _categoryFilter(QLoggingCategory* category);
 
     LoggingCategoryTreeModel* _treeModel = nullptr;
@@ -55,11 +59,10 @@ private:
     QSortFilterProxyModel _filteredFlatModel;
 
     mutable QReadWriteLock _filterLock;
-    QHash<QString, int> _categoryLevels;
+    QSet<QString> _enabledCategories;
     QSet<QString> _commandLineCategories;
     bool _commandLineFullLogging = false;
 
     static QLoggingCategory::CategoryFilter s_previousFilter;
     static constexpr const char* kFilterRulesSettingsGroup = "LoggingFilters";
-    static constexpr int kDefaultLevel = QtWarningMsg;
 };

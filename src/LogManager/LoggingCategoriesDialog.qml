@@ -7,23 +7,19 @@ import QtQuick.Layouts
 QGCPopupDialog {
     id: catDialog
 
-    readonly property var _logLevelNames: LogManager.categoryLogLevelNames()
-    readonly property var _logLevelValues: LogManager.categoryLogLevelValues()
-    readonly property var _flatModel: QGCLoggingCategoryManager.flatModel
     readonly property var _filteredModel: QGCLoggingCategoryManager.filteredFlatModel
 
     buttons: Dialog.Close
     title: qsTr("Logging Categories")
 
-    QGCPalette {
-        id: qgcPal
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
-        colorGroupEnabled: enabled
+    QGCCheckBoxSlider {
+        id: _measureSlider
+        visible: false
     }
 
     ColumnLayout {
-        width: maxContentAvailableWidth
-
         SettingsGroupLayout {
             Layout.fillWidth: true
             heading: qsTr("Search")
@@ -34,16 +30,24 @@ QGCPopupDialog {
 
                 QGCTextField {
                     id: searchText
-
                     Layout.fillWidth: true
                     placeholderText: qsTr("Filter categories…")
 
-                    onTextChanged: QGCLoggingCategoryManager.setFilterText(text)
+                    onTextChanged: _searchDebounce.restart()
+
+                    Timer {
+                        id: _searchDebounce
+                        interval: 200
+                        repeat: false
+                        onTriggered: {
+                            searchResultsView._maxRowWidth = ScreenTools.defaultFontPixelWidth
+                            QGCLoggingCategoryManager.setFilterText(searchText.text)
+                        }
+                    }
                 }
 
                 QGCButton {
                     text: qsTr("Clear")
-
                     onClicked: searchText.text = ""
                 }
             }
@@ -52,18 +56,22 @@ QGCPopupDialog {
         SettingsGroupLayout {
             Layout.fillWidth: true
             heading: qsTr("Active Categories")
+            showDividers: false
 
             Repeater {
-                model: _flatModel
+                model: QGCLoggingCategoryManager.enabledCategories
 
-                QGCLabel {
-                    required property bool enabled
-                    required property string fullName
-                    required property int logLevel
+                QGCCheckBoxSlider {
+                    required property string modelData
 
                     Layout.fillWidth: true
-                    text: fullName + "  (" + (_logLevelNames[_logLevelValues.indexOf(logLevel)] ?? qsTr("Warning")) + ")"
-                    visible: enabled
+                    checked: true
+                    text: modelData
+                    onToggled: {
+                        // Display uses "ADSB.*" but manager stores "ADSB." — strip trailing *
+                        const key = modelData.endsWith(".*") ? modelData.slice(0, -1) : modelData
+                        QGCLoggingCategoryManager.setCategoryEnabled(key, false)
+                    }
                 }
             }
 
@@ -74,7 +82,7 @@ QGCPopupDialog {
             }
         }
 
-        // Tree view (no search)
+        // Category list (no search)
         SettingsGroupLayout {
             Layout.fillWidth: true
             heading: qsTr("Categories")
@@ -82,123 +90,112 @@ QGCPopupDialog {
 
             TreeView {
                 id: treeView
-
-                readonly property real _rowHeight: ScreenTools.defaultFontPixelHeight * 2.2
-
-                Layout.fillWidth: true
+                Layout.preferredWidth: _maxRowWidth
                 Layout.maximumHeight: ScreenTools.defaultFontPixelHeight * 40
                 Layout.preferredHeight: contentHeight > 0 ? Math.min(contentHeight, ScreenTools.defaultFontPixelHeight * 40)
                                                           : ScreenTools.defaultFontPixelHeight * 30
-                clip: true
+                rowSpacing: ScreenTools.defaultFontPixelHeight * 0.25
                 model: QGCLoggingCategoryManager.treeModel
+                clip: true
 
-                delegate: Item {
-                    id: treeDelegate
+                property real _maxRowWidth: ScreenTools.defaultFontPixelWidth
 
-                    readonly property real _indent: ScreenTools.defaultFontPixelWidth * 1.5
-
-                    implicitHeight: treeView._rowHeight
-                    implicitWidth: treeView.width
+                delegate: RowLayout {
+                    id: treeViewRowLayout
+                    implicitWidth: treeView._maxRowWidth
+                    spacing: ScreenTools.defaultFontPixelWidth * 0.5
 
                     required property int depth
                     required property bool expanded
                     required property string fullName
                     required property bool hasChildren
-                    required property int logLevel
+                    required property bool categoryEnabled
                     required property int row
                     required property string shortName
                     required property TreeView treeView
 
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: treeDelegate.depth * treeDelegate._indent
-                        spacing: ScreenTools.defaultFontPixelWidth * 0.5
+                    Component.onCompleted: _calcMaxRowWidth();
+                    TableView.onReused: _calcMaxRowWidth();
 
-                        QGCLabel {
-                            text: treeDelegate.expanded ? "\u25BE" : "\u25B8"
-                            visible: treeDelegate.hasChildren
-
-                            QGCMouseArea {
-                                anchors.fill: parent
-                                anchors.margins: -ScreenTools.defaultFontPixelWidth
-
-                                onClicked: treeView.toggleExpanded(treeDelegate.row)
-                            }
-                        }
-
-                        // Spacer when no expand arrow
-                        Item {
-                            implicitWidth: ScreenTools.defaultFontPixelWidth
-                            visible: !treeDelegate.hasChildren
-                        }
-
-                        QGCLabel {
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                            text: treeDelegate.shortName
-                        }
-
-                        QGCComboBox {
-                            currentIndex: _logLevelValues.indexOf(treeDelegate.logLevel)
-                            model: _logLevelNames
-                            sizeToContents: true
-
-                            onActivated: idx => {
-                                const modelIndex = treeView.index(treeDelegate.row, 0);
-                                treeView.model.setData(modelIndex, _logLevelValues[idx], LoggingCategoryTreeModel.LogLevelRole);
-                            }
+                    function _calcMaxRowWidth() {
+                        let indentWidth = treeViewRowLayout.depth > 0 ? rowIndent.width : 0
+                        let arrowWidth = treeViewRowLayout.hasChildren ? expandArrow.width : 0
+                        let checkBoxSliderWidth = _measureSlider.width + ScreenTools.defaultFontPixelWidth * treeViewRowLayout.shortName.length
+                        let spacing = (rowIndent.visible ? treeViewRowLayout.spacing : 0) + (treeViewRowLayout.hasChildren ? treeViewRowLayout.spacing : 0)
+                        let rowWidth = indentWidth + arrowWidth + checkBoxSliderWidth + spacing
+                        //console.log("update", treeViewRowLayout.fullName, indentWidth, arrowWidth, checkBoxSliderWidth, spacing, rowWidth, treeView._maxRowWidth)
+                        if (rowWidth > treeView._maxRowWidth) {
+                            treeView._maxRowWidth = rowWidth
                         }
                     }
-                }
-            }
 
-            QGCLabel {
-                color: qgcPal.colorGrey
-                text: qsTr("No categories registered")
-                visible: treeView.rows === 0
+                    Item {
+                        id: rowIndent
+                        Layout.preferredWidth: ScreenTools.defaultFontPixelWidth * treeViewRowLayout.depth
+                        Layout.preferredHeight: 1
+                        visible: treeViewRowLayout.depth > 0
+                    }
+
+                    QGCColoredImage {
+                        id: expandArrow
+                        Layout.preferredWidth: ScreenTools.defaultFontPixelHeight * 0.5
+                        Layout.preferredHeight: Layout.preferredWidth
+                        color: qgcPal.text
+                        fillMode: Image.PreserveAspectFit
+                        rotation: treeViewRowLayout.expanded ? 0 : -90
+                        source: "/qmlimages/arrow-down.png"
+                        visible: treeViewRowLayout.hasChildren
+
+                        QGCMouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -ScreenTools.defaultFontPixelWidth
+
+                            onClicked: treeView.toggleExpanded(treeViewRowLayout.row)
+                        }
+                    }
+
+                    QGCCheckBoxSlider {
+                        id: checkBoxSlider
+                        Layout.fillWidth: true
+                        text: treeViewRowLayout.shortName
+                        checked: treeViewRowLayout.categoryEnabled
+                        onToggled: QGCLoggingCategoryManager.setCategoryEnabled(treeViewRowLayout.fullName, checked)
+                    }
+                }
             }
         }
 
         // Flat filtered view (with search)
         SettingsGroupLayout {
-            Layout.fillWidth: true
             heading: qsTr("Search Results")
             visible: searchText.text !== ""
 
-            ListView {
-                id: searchListView
-
-                readonly property real _rowHeight: ScreenTools.defaultFontPixelHeight * 2.2
-
-                Layout.fillWidth: true
-                Layout.maximumHeight: ScreenTools.defaultFontPixelHeight * 40
+            QGCListView {
+                id: searchResultsView
+                Layout.preferredWidth: _maxRowWidth
                 Layout.preferredHeight: Math.min(contentHeight, ScreenTools.defaultFontPixelHeight * 40)
                 clip: true
                 model: _filteredModel
-                spacing: 0
+                spacing: ScreenTools.defaultFontPixelHeight * 0.25
 
-                delegate: RowLayout {
+                property real _maxRowWidth: ScreenTools.defaultFontPixelWidth
+
+                delegate: QGCCheckBoxSlider {
+                    required property bool categoryEnabled
                     required property string fullName
-                    required property int index
-                    required property int logLevel
 
-                    height: searchListView._rowHeight
-                    width: searchListView.width
+                    width: searchResultsView._maxRowWidth
+                    text: fullName
+                    checked: categoryEnabled
+                    onToggled: QGCLoggingCategoryManager.setCategoryEnabled(fullName, checked)
 
-                    QGCLabel {
-                        Layout.fillWidth: true
-                        elide: Text.ElideRight
-                        text: fullName
-                    }
+                    Component.onCompleted: _updateMaxWidth()
+                    ListView.onReused: _updateMaxWidth()
 
-                    QGCComboBox {
-                        currentIndex: _logLevelValues.indexOf(logLevel)
-                        model: _logLevelNames
-                        sizeToContents: true
-
-                        onActivated: idx => {
-                            const sourceIndex = _filteredModel.mapToSource(_filteredModel.index(parent.index, 0));
-                            _flatModel.setData(sourceIndex, _logLevelValues[idx], LoggingCategoryFlatModel.LogLevelRole);
+                    function _updateMaxWidth() {
+                        let rowWidth = _measureSlider.width + ScreenTools.defaultFontPixelWidth * fullName.length
+                        if (rowWidth > searchResultsView._maxRowWidth) {
+                            searchResultsView._maxRowWidth = rowWidth
                         }
                     }
                 }
@@ -207,7 +204,7 @@ QGCPopupDialog {
             QGCLabel {
                 color: qgcPal.colorGrey
                 text: qsTr("No matching categories")
-                visible: searchListView.count === 0 && searchText.text !== ""
+                visible: searchResultsView.count === 0 && searchText.text !== ""
             }
         }
     }
