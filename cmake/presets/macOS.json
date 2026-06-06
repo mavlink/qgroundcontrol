@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "include": ["common.json"],
   "configurePresets": [
     {

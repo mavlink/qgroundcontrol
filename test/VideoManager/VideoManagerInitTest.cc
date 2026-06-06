@@ -11,7 +11,6 @@ void VideoManagerInitTest::init()
 {
     UnitTest::init();
 
-    // GStreamer init is environment-dependent; tolerate its criticals (GLib type re-registration on success, init failure when headless).
     static const QRegularExpression sGStreamerCriticalRe(
         QStringLiteral("cannot register existing type|"
                        "g_type_add_interface_static.*G_TYPE_IS_INSTANTIATABLE|"

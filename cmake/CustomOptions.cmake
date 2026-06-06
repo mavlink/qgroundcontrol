@@ -8,7 +8,6 @@ include(CMakeDependentOption)
 # Load centralized build configuration from .github/build-config.json
 include(BuildConfig)
 
-# Overlay directory scanned for a custom build (CustomOverrides.cmake + custom sources); CI points this at custom-example.
 set(QGC_CUSTOM_DIR "custom" CACHE STRING "Custom build overlay directory, relative to the source root")
 
 # ============================================================================

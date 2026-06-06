@@ -11,6 +11,7 @@ if(NOT GIT_FOUND OR NOT EXISTS "${CMAKE_SOURCE_DIR}/.git")
     message(WARNING "QGC: Git not found or not a git repository. Using fallback version info.")
     set(QGC_GIT_BRANCH "unknown")
     set(QGC_GIT_HASH "0000000")
+    set(QGC_GIT_DIRTY FALSE)
     set(QGC_APP_VERSION_STR "v0.0.0")
     set(QGC_APP_VERSION "0.0.0")
     set(QGC_APP_VERSION_MAJOR "0")
@@ -39,7 +40,7 @@ if(GIT_SUBMODULE)
     if(NOT GIT_SUBMODULE_RESULT EQUAL 0)
         include(CMakePrintHelpers)
         cmake_print_variables(GIT_SUBMODULE_RESULT GIT_SUBMODULE_OUTPUT GIT_SUBMODULE_ERROR)
-        message(FATAL_ERROR "Git submodule update failed with code ${GIT_SUBMODULE_RESULT}")
+        message(FATAL_ERROR "QGC: Git submodule update failed with code ${GIT_SUBMODULE_RESULT}")
     endif()
     message(STATUS "Git submodules updated successfully")
 endif()
@@ -67,6 +68,18 @@ if(_git_info)
 else()
     set(QGC_GIT_BRANCH "unknown")
     set(QGC_GIT_HASH "0000000")
+endif()
+
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} diff-index --quiet HEAD --
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    RESULT_VARIABLE _git_dirty_result
+    ERROR_QUIET
+)
+if(_git_dirty_result EQUAL 0)
+    set(QGC_GIT_DIRTY FALSE)
+else()
+    set(QGC_GIT_DIRTY TRUE)
 endif()
 
 # ----------------------------------------------------------------------------

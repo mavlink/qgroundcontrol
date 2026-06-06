@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import functools
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -162,6 +163,25 @@ def list_packages(venv_path: Path) -> None:
     subprocess.run([str(python), "-m", "pip", "list"])
 
 
+def check_installed(packages: list[str]) -> int:
+    """Exit 0 only if every package's distribution resolves in the running interpreter."""
+    import importlib.metadata as metadata
+
+    missing: list[str] = []
+    for req in packages:
+        name = re.split(r"[<>=!~;\[ ]", req, maxsplit=1)[0].strip()
+        if not name:
+            continue
+        try:
+            metadata.version(name)
+        except metadata.PackageNotFoundError:
+            missing.append(name)
+    if missing:
+        print(f"Missing from environment: {', '.join(missing)}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def get_packages_for_groups(group_spec: str) -> list[str]:
     """Get packages for comma-separated group specification."""
     package_groups = load_package_groups()
@@ -219,6 +239,11 @@ To install uv (recommended, 10-100x faster than pip):
         action="store_true",
         help="Show what would be installed without installing",
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Verify the running interpreter has the group's packages; exit 1 if any missing",
+    )
 
     return parser.parse_args(args)
 
@@ -241,6 +266,9 @@ def main() -> int:
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
+
+    if args.check:
+        return check_installed(packages)
 
     print(f"Setting up Python environment with group: {args.group}")
     print(f"Packages: {', '.join(packages)}")

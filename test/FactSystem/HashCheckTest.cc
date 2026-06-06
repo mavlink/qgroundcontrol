@@ -110,7 +110,6 @@ MockLink *HashCheckTest::_startPX4MockLinkHighLatency()
 //
 // PARAM_REQUEST_LIST (xPRL) is only asserted for PX4 vehicles; ArduPilot uses FTP.
 // missingParameters (xMiss) is only asserted when expectParametersReady (xReady) is true.
-// MockLink has no isLogReplay(), so the HighLatency row also covers the shared (isHighLatency || _logReplay) ready-immediately guard.
 
 void HashCheckTest::_hashCheckMatrix_data()
 {

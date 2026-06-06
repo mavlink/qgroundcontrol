@@ -67,7 +67,7 @@ jobs:
       - name: Install ClangBuildAnalyzer
         run: |
           set -euo pipefail
-          curl -fsSL \
+          curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors --max-time 300 \
             https://github.com/aras-p/ClangBuildAnalyzer/releases/download/v1.6.0/ClangBuildAnalyzer-linux-x64 \
             -o /tmp/ClangBuildAnalyzer
           chmod +x /tmp/ClangBuildAnalyzer

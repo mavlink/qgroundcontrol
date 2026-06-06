@@ -109,7 +109,6 @@ def _count_test_results(content: str) -> tuple[int, int, int]:
 
 
 def _failed_test_lines(content: str, limit: int = 20, max_len: int = 500) -> list[str]:
-    # Lines come from PR-controlled test artifacts; clamp length so one pathological line can't bloat the comment.
     lines: list[str] = []
     for line in content.splitlines():
         if re.search(r"Test #[0-9]+: .* \*\*\*Failed|^FAIL", line):

@@ -241,7 +241,6 @@ void QGCApplication::init()
         // Since GStream builds are so problematic we initialize video during the simple boot test
         // to make sure it works and verfies plugin availability.
         const bool videoInitialized = _initVideo();
-        // Load the QML root too, so a packaging/QML-resource failure fails the shipped-binary smoke test.
         const bool qmlRootLoaded = _initQmlRootWindow();
         _bootTestPassed = videoInitialized && qmlRootLoaded;
     } else if (!_runningUnitTests) {

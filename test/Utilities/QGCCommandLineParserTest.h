@@ -10,7 +10,6 @@
 ///   - CommandLineParseResult default-initialisation (ABI guard)
 ///   - determineAppMode() — pure struct→enum mapping with #ifdef branches
 ///   - handleParseResult() — returns early-exit codes for Help/Version, nullopt for Ok
-///   - normalizeArgs() — `--opt:val` splitting and bare-`--unittest` handling
 ///
 /// Error-path handling is not covered because handleParseResult() calls
 /// QCommandLineParser::showMessageAndExit() on Status::Error which terminates

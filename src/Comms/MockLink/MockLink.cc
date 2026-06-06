@@ -272,7 +272,6 @@ void MockLink::run500HzTasks()
     }
 
     if (_mavlinkStarted && _connected && mavlinkChannelIsSet()) {
-        // Batch param sends in tests: the worker self-terminates when done, collapsing the ~2s 1-param/tick connect floor to sub-100ms.
         const int paramSends = QGC::runningUnitTests() ? kTestParamRequestListBatch : 1;
         for (int i = 0; i < paramSends; ++i) {
             _paramRequestListWorker();

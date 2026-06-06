@@ -114,7 +114,6 @@ void QGCCommandLineParserTest::_testHandleParseResult_VersionReturnsZero()
 
 void QGCCommandLineParserTest::_testNormalizeArgs_UnittestSpaceSeparatedValue()
 {
-    // Regression: bare-unittest empty-value injection used to swallow a space-separated test name into a rejected positional.
     const QStringList out = QGCCommandLineParser::normalizeArgs(
         {QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")});
     QCOMPARE(out, QStringList({QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")}));

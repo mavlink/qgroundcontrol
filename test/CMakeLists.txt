@@ -53,10 +53,7 @@ endif()
 # ============================================================================
 # Test Subdirectories
 # ============================================================================
-# Each subdirectory registers its own tests via add_qgc_test() (see QGCTest.cmake).
-# QGC_TEST_TIMEOUT_EXTENDED (set above) is inherited into these child scopes.
 
-# UnitTestFramework must be first - provides MultiSignalSpy, etc.
 add_subdirectory(UnitTestFramework)
 add_subdirectory(ADSB)
 add_subdirectory(AnalyzeView)

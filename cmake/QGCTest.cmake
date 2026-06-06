@@ -33,45 +33,44 @@ option(QGC_TEST_ONSCREEN "Run tests with native display instead of offscreen" OF
 # ----------------------------------------------------------------------------
 
 add_custom_target(check
-    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running all tests"
     VERBATIM
 )
 
 add_custom_target(check-unit
-    COMMAND ${CMAKE_CTEST_COMMAND} -L Unit --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} -L Unit --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running unit tests"
     VERBATIM
 )
 
 add_custom_target(check-integration
-    COMMAND ${CMAKE_CTEST_COMMAND} -L Integration --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} -L Integration --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running integration tests"
     VERBATIM
 )
 
 add_custom_target(check-fast
-    COMMAND ${CMAKE_CTEST_COMMAND} -LE Slow --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} -LE Slow --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running fast tests (excluding Slow)"
     VERBATIM
 )
 
 add_custom_target(check-ci
-    COMMAND ${CMAKE_CTEST_COMMAND} -LE "Flaky|Network" --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} -LE "Flaky|Network" --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running CI-safe tests"
     VERBATIM
 )
 
-# Run each test until-fail:N to surface intermittent failures; Network excluded (env-flaky, not code-flaky).
 set(QGC_TEST_FLAKY_REPEAT 3 CACHE STRING "Repeat count for the check-flaky target")
 add_custom_target(check-flaky
     COMMAND ${CMAKE_CTEST_COMMAND} -LE "Network" --repeat until-fail:${QGC_TEST_FLAKY_REPEAT}
-            --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+            --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running tests ${QGC_TEST_FLAKY_REPEAT}x (until-fail) to surface flaky failures"
     VERBATIM
@@ -82,7 +81,7 @@ set(_qgc_test_categories MissionManager Vehicle Utilities MAVLink Comms)
 foreach(_category IN LISTS _qgc_test_categories)
     string(TOLOWER ${_category} _target_suffix)
     add_custom_target(check-${_target_suffix}
-        COMMAND ${CMAKE_CTEST_COMMAND} -L ${_category} --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+        COMMAND ${CMAKE_CTEST_COMMAND} -L ${_category} --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
         USES_TERMINAL
         COMMENT "Running ${_category} tests"
         VERBATIM
@@ -125,7 +124,7 @@ endforeach()
 #   add_qgc_test(ParameterManagerTest LABELS Integration Vehicle SERIAL)
 
 function(add_qgc_test test_name)
-    cmake_parse_arguments(ARG "SERIAL" "TIMEOUT" "LABELS;RESOURCE_LOCK" ${ARGN})
+    cmake_parse_arguments(ARG "SERIAL" "TIMEOUT" "LABELS;RESOURCE_LOCK;SKIP_REGEX;ENV_MODIFICATION" ${ARGN})
 
     set(_test_command $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest:${test_name} --allow-multiple)
     if(QGC_TEST_ONSCREEN)
@@ -173,13 +172,19 @@ function(add_qgc_test test_name)
         set_tests_properties(${test_name} PROPERTIES LABELS "${ARG_LABELS}")
     endif()
 
+    if(ARG_SKIP_REGEX)
+        set_tests_properties(${test_name} PROPERTIES SKIP_REGULAR_EXPRESSION "${ARG_SKIP_REGEX}")
+    endif()
+
+    if(ARG_ENV_MODIFICATION)
+        set_tests_properties(${test_name} PROPERTIES ENVIRONMENT_MODIFICATION "${ARG_ENV_MODIFICATION}")
+    endif()
+
     # Resource locking for tests that can't run in parallel
     if(ARG_SERIAL)
-        # RUN_SERIAL already excludes all concurrency; an added RESOURCE_LOCK would be redundant.
         set_tests_properties(${test_name} PROPERTIES RUN_SERIAL TRUE)
     elseif(ARG_RESOURCE_LOCK)
         set_tests_properties(${test_name} PROPERTIES RESOURCE_LOCK "${ARG_RESOURCE_LOCK}")
     endif()
-    # No label-based auto-lock: each --unittest run is a separate process (own QSettings + in-process MockLink), so it parallelizes safely.
 
 endfunction()

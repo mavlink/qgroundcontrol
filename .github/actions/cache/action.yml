@@ -59,7 +59,6 @@ runs:
           --version "${{ steps.ccache-config.outputs.version }}" \
           --arch "${{ steps.ccache-config.outputs.arch }}"
 
-    # Pinned mold overrides the older distro apt mold (/usr/local/bin precedes /usr/bin); mold is the desktop-Linux linker.
     - name: Install mold (Linux)
       if: runner.os == 'Linux'
       shell: bash
@@ -131,10 +130,8 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" fingerprint --root "${GITHUB_WORKSPACE}"
 
-    # `variant` separates compile-flag-distinct entries (coverage vs ASan vs UBSan)
-    # so parallel saves don't last-writer-wins onto the same key.
     - name: Restore Build Cache (ccache, save)
-      if: steps.cache-policy.outputs.save == 'true'
+      if: steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
       uses: actions/cache@v5
       with:
         path: ${{ github.workspace }}/.ccache
@@ -145,7 +142,7 @@ runs:
           ${{ inputs.variant && format('ccache-{0}-{1}-{2}-shared-', inputs.host, inputs.target, inputs.build-type) || '' }}
 
     - name: Restore Build Cache (ccache, read-only)
-      if: steps.cache-policy.outputs.save != 'true'
+      if: steps.cache-policy.outputs.save != 'true' && inputs.variant != 'coverage'
       uses: actions/cache/restore@v5
       with:
         path: ${{ github.workspace }}/.ccache

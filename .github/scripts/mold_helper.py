@@ -15,11 +15,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import platform
-import shutil
 import sys
 import tarfile
 import tempfile
-import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,6 +25,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.net import download_with_retry
 from common.proc import run_captured
 from common.tool_version import probe_version
 
@@ -41,7 +40,6 @@ class MoldRelease:
     sha256: dict[str, str]  # keyed by arch (x86_64, aarch64)
 
 
-# Digests computed from the release tarballs (mold is unsigned); test_mold_version_drift.py syncs them with build-config.json.
 PINNED_RELEASE = MoldRelease(
     version="2.41.0",
     sha256={
@@ -56,26 +54,6 @@ ARCH_MAP = {"x86_64": "x86_64", "amd64": "x86_64", "aarch64": "aarch64", "arm64"
 def detect_arch() -> str:
     """Auto-detect CPU architecture, normalizing to mold's release naming."""
     return ARCH_MAP.get(platform.machine().lower(), "x86_64")
-
-
-def _download(url: str, dest: Path, *, retries: int = 3, delay: float = 5.0) -> None:
-    """Download a URL to a local file with retries (stdlib urllib)."""
-    import urllib.request
-    from urllib.error import URLError
-
-    last: Exception | None = None
-    for attempt in range(1, retries + 1):
-        try:
-            print(f"Downloading {url} (attempt {attempt}/{retries})")
-            with urllib.request.urlopen(urllib.request.Request(url), timeout=120) as resp, open(dest, "wb") as f:
-                shutil.copyfileobj(resp, f)
-            return
-        except (URLError, OSError) as e:
-            last = e
-            print(f"Download failed: {e}", file=sys.stderr)
-            if attempt < retries:
-                time.sleep(delay)
-    raise RuntimeError(f"Failed to download {url}: {last}")
 
 
 def install(version: str, arch: str, prefix: Path) -> Path:
@@ -93,7 +71,7 @@ def install(version: str, arch: str, prefix: Path) -> Path:
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         archive = tmp_path / archive_name
-        _download(url, archive)
+        download_with_retry(url, archive)
         actual = hashlib.sha256(archive.read_bytes()).hexdigest()
         if actual != sha256:
             raise RuntimeError(f"SHA256 mismatch for {archive_name}: {actual} != {sha256}")
@@ -107,7 +85,6 @@ def install(version: str, arch: str, prefix: Path) -> Path:
         res = run_captured(["sudo", "install", "-D", "-m", "0755", str(src), str(dest)])
         if res.returncode != 0:
             raise RuntimeError(f"Failed to install mold to {dest}: {res.stderr}")
-        # `-fuse-ld=mold` resolves via `ld.mold` (clang) or `mold` (gcc); provide both.
         res = run_captured(["sudo", "ln", "-sf", "mold", str(bin_dir / "ld.mold")])
         if res.returncode != 0:
             raise RuntimeError(f"Failed to create ld.mold symlink: {res.stderr}")

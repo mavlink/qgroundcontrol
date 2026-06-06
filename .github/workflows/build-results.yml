@@ -98,8 +98,6 @@ jobs:
               }
             );
             const exact = prs.find(pr => pr.head?.sha === run.head_sha);
-            // Return '' (not null) when no PR matches: github-script serializes null to '',
-            // so downstream steps guard on != '' to short-circuit reliably.
             return exact ? exact.number : '';
 
       - name: Check if all platform workflows are complete

@@ -72,7 +72,6 @@ static QStringList normalizeArgs(const QStringList &args)
     for (qsizetype i = 0; i < args.size(); ++i) {
         const QString &arg = args.at(i);
 #ifdef QGC_UNITTEST_BUILD
-        // Inject empty value only for a truly bare --unittest; a following `--unittest FooTest` name must reach the parser as its value.
         if (arg == QLatin1String("--unittest")) {
             const bool valueFollows = ((i + 1) < args.size()) && !args.at(i + 1).startsWith(QLatin1Char('-'));
             out << arg;

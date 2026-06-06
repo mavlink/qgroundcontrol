@@ -16,7 +16,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 env:
-  # Keep overlay-base caches off the shared 10 GB budget so they don't evict ccache.
   CODEQL_ACTION_OVERLAY_ANALYSIS: "false"
 
 permissions:
@@ -35,7 +34,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # build-mode none = source extraction, no traced Qt+QGC build (keeps ccache pressure out of the scan).
           - language: c-cpp
             build-mode: none
           - language: actions

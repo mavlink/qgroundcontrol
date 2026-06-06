@@ -387,18 +387,8 @@ void InitialConnectTest::_stateRunMatrix_data()
 
     // Matrix reference for generated rows and expected request behavior.
     //
-    // +----+-----+------------+------------+--------+------------+----------------+----------+
-    // | HL | Fly | AP_VERSION | AVAIL_MODS | PARAMS | HASH_CHECK | PLAN_REQ_LISTS | DL_SKIP  |
-    // +----+-----+------------+------------+--------+------------+----------------+----------+
-    // | 0  | 0   | Run        | Run        | Run    | -          | Run            | false    |
-    // | 0  | 1   | Run        | Run        | Skip   | Yes        | Skip           | true     |
-    // | 1  | 0   | Skip       | Run        | Skip*  | -          | Skip           | false    |
-    // | 1  | 1   | Skip       | Run        | Skip*  | -          | Skip           | true     |
-    // +----+-----+------------+------------+--------+------------+----------------+----------+
-    // * HL params are handled internally (no PARAM_REQUEST_LIST).
     // Flying (PX4): tries cache-only hash check; cache miss advances without params.
     // Flying rows enable noInitialDownloadWhenFlying + startArmed.
-    // logReplay axis dropped: MockLink has no real log-replay; setHighLatency() is its only proxy, so those rows duplicated highLatency.
 
     for (int bits = 0; bits < 4; ++bits) {
         const bool highLatency = bits & 0x1;

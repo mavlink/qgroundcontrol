@@ -6,7 +6,6 @@
 /// Include this header to get access to all test fixtures:
 /// - Coord namespace: origin(), zurich(), sanFrancisco(), polygon(), waypointPath()
 /// - Mission namespace: addWaypoints(), addTakeoff(), addLand(), addRTL()
-/// - VehicleFixture, SettingsFixture
 /// - NetworkReplyFixture, SingleInstanceLockFixture
 /// - TempFileFixture, TempJsonFileFixture, TempDirFixture
 

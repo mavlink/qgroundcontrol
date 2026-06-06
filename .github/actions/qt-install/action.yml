@@ -93,7 +93,6 @@ runs:
           --archives "${QT_ARCHIVES}" \
           --aqt-source "${QT_AQT_SOURCE}"
 
-    # Parallel jobs share one key; re-check before saving so a concurrent miss doesn't leave a duplicate entry (lookup-only = no re-download).
     - name: Re-check Qt cache before save
       id: qt-presave
       if: steps.qt-cache.outputs.cache-hit != 'true' && inputs.target != 'ios' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)

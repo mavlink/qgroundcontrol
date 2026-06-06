@@ -1,15 +1,4 @@
-# Pin the workspace .venv as the interpreter for all Python3 code generators.
-# find_package(Python3) otherwise resolves to system python, which lacks the
-# generator deps (defusedxml, jinja2, httpx) declared in tools/pyproject.toml,
-# producing ModuleNotFoundError during the build. The justfile pins this via
-# -DPython3_EXECUTABLE; doing it here makes IDE/raw-cmake configures work too.
-
 option(QGC_AUTO_PYTHON_VENV "Auto-create <repo>/.venv with generator deps if missing" ON)
-
-# Respect an interpreter already pinned by the caller (e.g. justfile, CI).
-if(DEFINED CACHE{Python3_EXECUTABLE})
-    return()
-endif()
 
 if(WIN32)
     set(_qgc_venv_python "${CMAKE_SOURCE_DIR}/.venv/Scripts/python.exe")
@@ -17,8 +6,40 @@ else()
     set(_qgc_venv_python "${CMAKE_SOURCE_DIR}/.venv/bin/python")
 endif()
 
-# A .venv directory with a missing interpreter is corrupt: install_python.py
-# early-returns on an existing dir, so auto-create can't repair it. Fail loud.
+function(_qgc_sync_venv_if_stale _py)
+    if(NOT QGC_AUTO_PYTHON_VENV)
+        return()
+    endif()
+    execute_process(
+        COMMAND "${_py}" "${CMAKE_SOURCE_DIR}/tools/setup/install_python.py" scripts --check
+        RESULT_VARIABLE _deps_result
+        OUTPUT_QUIET
+        ERROR_QUIET
+    )
+    if(_deps_result EQUAL 0)
+        return()
+    endif()
+    message(STATUS "QGC: .venv missing generator deps — re-syncing via tools/setup/install_python.py scripts")
+    execute_process(
+        COMMAND "${_py}" "${CMAKE_SOURCE_DIR}/tools/setup/install_python.py" scripts
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE _sync_result
+        OUTPUT_VARIABLE _sync_output
+        ERROR_VARIABLE  _sync_output
+    )
+    if(NOT _sync_result EQUAL 0)
+        message(FATAL_ERROR "QGC: failed to re-sync .venv generator deps (exit ${_sync_result}):\n${_sync_output}\n"
+                            "Run manually: python tools/setup/install_python.py scripts")
+    endif()
+endfunction()
+
+if(DEFINED CACHE{Python3_EXECUTABLE})
+    if(EXISTS "${_qgc_venv_python}" AND "${Python3_EXECUTABLE}" STREQUAL "${_qgc_venv_python}")
+        _qgc_sync_venv_if_stale("${_qgc_venv_python}")
+    endif()
+    return()
+endif()
+
 if(EXISTS "${CMAKE_SOURCE_DIR}/.venv" AND NOT EXISTS "${_qgc_venv_python}")
     message(FATAL_ERROR "QGC: ${CMAKE_SOURCE_DIR}/.venv exists but has no interpreter at "
                         "${_qgc_venv_python}. Remove it and reconfigure, or run: "
@@ -26,15 +47,11 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/.venv" AND NOT EXISTS "${_qgc_venv_python}")
 endif()
 
 if(NOT EXISTS "${_qgc_venv_python}" AND QGC_AUTO_PYTHON_VENV)
-    # Bootstrap with find_program (not find_package) to avoid polluting the
-    # Python3_* cache that the real find_package(Python3) calls rely on.
     find_program(_qgc_boot_python NAMES python3 python)
     if(NOT _qgc_boot_python)
         message(FATAL_ERROR "QGC: no python3 found to bootstrap .venv. "
                             "Install Python 3.12+ or run tools/setup/install_python.py manually.")
     endif()
-    # tools/pyproject.toml requires >=3.12; reject older interpreters up front so
-    # the failure is actionable instead of a confusing downstream install error.
     execute_process(
         COMMAND "${_qgc_boot_python}" -c
                 "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)"
@@ -59,6 +76,7 @@ if(NOT EXISTS "${_qgc_venv_python}" AND QGC_AUTO_PYTHON_VENV)
 endif()
 
 if(EXISTS "${_qgc_venv_python}")
+    _qgc_sync_venv_if_stale("${_qgc_venv_python}")
     set(Python3_EXECUTABLE "${_qgc_venv_python}" CACHE FILEPATH "Python interpreter (workspace .venv)" FORCE)
     message(STATUS "QGC: using Python venv interpreter ${Python3_EXECUTABLE}")
 else()

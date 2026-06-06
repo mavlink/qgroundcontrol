@@ -56,7 +56,6 @@ jobs:
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
-      # Activate the custom build by pointing QGC_CUSTOM_DIR at the in-tree overlay; no copy to ./custom needed.
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:

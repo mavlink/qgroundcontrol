@@ -65,7 +65,6 @@ repos:
       - id: pyright
         files: ^(tools|test|\.github/scripts)/.*\.py$
 
-  # Python import architecture — enforces tools/ package layering (common is a leaf)
   - repo: local
     hooks:
       - id: import-linter

@@ -20,4 +20,6 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
 # Desktop entry and icon files are handled by the install scripts
 # See cmake/install/CreateAppImage.cmake for AppImage-specific configuration
 
+set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
+
 message(STATUS "QGC: Linux platform configuration applied")
