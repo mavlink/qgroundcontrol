@@ -1,86 +1,49 @@
 #pragma once
 
+#include "GPSDriver.h"  // facade; also publishes GPSReceiverConfig + the GNSS data structs relayed below
+#include "GPSType.h"
+
 #include <QtCore/QByteArray>
 #include <QtCore/QMetaType>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QThread>
 
-#include <gps_helper.h>
-#include "Settings/RTKSettings.h"
+#include <atomic>
+#include <cstdint>
 
-#include "satellite_info.h"
-#include "sensor_gnss_relative.h"
-#include "sensor_gps.h"
-
-class QSerialPort;
-class GPSBaseStationSupport;
+enum class GPSConnectionError
+{
+    None,
+    OpenFailed,   ///< serial device could not be opened
+    ConfigFailed, ///< receiver did not accept configuration
+    DeviceError,  ///< fatal serial error after a working connection
+};
+Q_DECLARE_METATYPE(GPSConnectionError)
 
 class GPSProvider : public QThread
 {
     Q_OBJECT
 
 public:
-    enum class GPSType {
-        u_blox,
-        trimble,
-        septentrio,
-        femto
-    };
-
-    struct rtk_data_s {
-        double surveyInAccMeters = 0;
-        int surveyInDurationSecs = 0;
-        BaseModeDefinition::Mode useFixedBaseLocation = BaseModeDefinition::Mode::BaseSurveyIn;
-        double fixedBaseLatitude = 0.;
-        double fixedBaseLongitude = 0.;
-        float fixedBaseAltitudeMeters = 0.f;
-        float fixedBaseAccuracyMeters = 0.f;
-    };
-
-    GPSProvider(const QString &device, GPSType type, const rtk_data_s &rtkData, const std::atomic_bool &requestStop, QObject *parent = nullptr);
-    ~GPSProvider();
-
-    int callback(GPSCallbackType type, void *data1, int data2);
+    GPSProvider(const QString &device, GPSType type, const GPSReceiverConfig &config, const std::atomic_bool &requestStop, QObject *parent = nullptr);
 
 signals:
     void satelliteInfoUpdate(const satellite_info_s &message);
-    void sensorGnssRelativeUpdate(const sensor_gnss_relative_s &message);
     void sensorGpsUpdate(const sensor_gps_s &message);
     void RTCMDataUpdate(const QByteArray &message);
-    void surveyInStatus(float duration, float accuracyMM, double latitude, double longitude, float altitude, bool valid, bool active);
+    void surveyInStatus(const GPSSurveyInStatus &status);
+    void connectionError(GPSConnectionError error);
 
 private:
     void run() final;
 
-    bool _connectSerial();
-    GPSBaseStationSupport *_connectGPS();
-    void _publishSensorGPS();
-    void _publishSatelliteInfo();
-    void _publishSensorGNSSRelative();
-
-    void _gotRTCMData(const uint8_t *data, size_t len);
-    void _sendRTCMData();
-
-    static int _callbackEntry(GPSCallbackType type, void *data1, int data2, void *user);
-
     QString _device;
     GPSType _type;
     const std::atomic_bool &_requestStop;
-    rtk_data_s _rtkData{};
-    GPSHelper::GPSConfig _gpsConfig{};
-
-    struct satellite_info_s _satelliteInfo{};
-    struct sensor_gnss_relative_s _sensorGnssRelative{};
-    struct sensor_gps_s _sensorGps{};
-
-    QSerialPort *_serial = nullptr;
-
-    enum GPSReceiveType {
-        Position = 1,
-        Satellite = 2
-    };
+    GPSReceiverConfig _config{};
 
     static constexpr uint32_t kGPSReceiveTimeout = 1200;
-    static constexpr float kGPSHeadingOffset = 5.f;
+    static constexpr uint32_t kConfigRetryDelayMs = 500;
+    static constexpr uint8_t kMaxIdleReceiveCycles = 3;
 };

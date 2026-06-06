@@ -12,11 +12,11 @@ struct satellite_info_s
 	static constexpr uint8_t SAT_INFO_MAX_SATELLITES = 20;
 
 	uint8_t count;
-	uint8_t svid[20];
-	uint8_t used[20];
-	uint8_t elevation[20];
-	uint8_t azimuth[20];
-	uint8_t snr[20];
-	uint8_t prn[20];
+	uint8_t svid[SAT_INFO_MAX_SATELLITES];
+	uint8_t used[SAT_INFO_MAX_SATELLITES];
+	uint8_t elevation[SAT_INFO_MAX_SATELLITES];
+	uint8_t azimuth[SAT_INFO_MAX_SATELLITES];
+	uint8_t snr[SAT_INFO_MAX_SATELLITES];
+	uint8_t prn[SAT_INFO_MAX_SATELLITES];
 };
 Q_DECLARE_METATYPE(satellite_info_s);
