@@ -6,19 +6,22 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
+#include <QtCore/QByteArray>
+#include <QtCore/QThread>
+
 QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "GPS.RTCMMavlink")
 
 RTCMMavlink::RTCMMavlink(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(RTCMMavlinkLog) << Q_FUNC_INFO << this;
+    qCDebug(RTCMMavlinkLog) << this;
 
     _bandwidthTimer.start();
 }
 
 RTCMMavlink::~RTCMMavlink()
 {
-    // qCDebug(RTCMMavlinkLog) << Q_FUNC_INFO << this;
+    qCDebug(RTCMMavlinkLog) << this;
 }
 
 void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
@@ -54,11 +57,27 @@ void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
     ++_sequenceId;
 }
 
+void RTCMMavlink::sendSimulatedData(const std::atomic_bool &requestStop)
+{
+    constexpr int kMessageLengths[] = { 30, 170, 240 };
+    const QByteArray payload(kMessageLengths[2], '\0');
+    while (!requestStop) {
+        for (const int length : kMessageLengths) {
+            RTCMDataUpdate(QByteArrayView(payload).first(length));
+            QThread::msleep(4);
+        }
+        QThread::msleep(100);
+    }
+}
+
 void RTCMMavlink::_sendMessageToVehicle(const mavlink_gps_rtcm_data_t &data)
 {
     QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
     for (qsizetype i = 0; i < vehicles->count(); i++) {
         Vehicle* const vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
+        if (!vehicle) {
+            continue;
+        }
         const SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
         if (sharedLink) {
             mavlink_message_t message;

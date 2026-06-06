@@ -1,12 +1,27 @@
 #include "GPSRtk.h"
 #include "GPSProvider.h"
 #include "GPSRTKFactGroup.h"
+#include "GPSType.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMMavlink.h"
 #include "RTKSettings.h"
 #include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(GPSRtkLog, "GPS.GPSRtk")
+
+namespace {
+struct GPSTypeEntry {
+    QLatin1StringView key;
+    GPSType type;
+    int manufacturerId; // RTKSettings::baseReceiverManufacturers enum value
+};
+constexpr GPSTypeEntry kGPSTypeTable[] = {
+    { QLatin1StringView("trimble"),    GPSType::trimble,    1 },
+    { QLatin1StringView("septentrio"), GPSType::septentrio, 2 },
+    { QLatin1StringView("femtomes"),   GPSType::femto,      3 },
+    { QLatin1StringView("blox"),       GPSType::u_blox,     4 },
+};
+} // namespace
 
 GPSRtk::GPSRtk(QObject *parent)
     : QObject(parent)
@@ -15,8 +30,9 @@ GPSRtk::GPSRtk(QObject *parent)
     qCDebug(GPSRtkLog) << this;
 
     (void) qRegisterMetaType<satellite_info_s>("satellite_info_s");
-    (void) qRegisterMetaType<sensor_gnss_relative_s>("sensor_gnss_relative_s");
     (void) qRegisterMetaType<sensor_gps_s>("sensor_gps_s");
+    (void) qRegisterMetaType<GPSConnectionError>("GPSConnectionError");
+    (void) qRegisterMetaType<GPSSurveyInStatus>("GPSSurveyInStatus");
 }
 
 GPSRtk::~GPSRtk()
@@ -36,88 +52,101 @@ void GPSRtk::_onGPSDisconnect()
     _gpsRtkFactGroup->connected()->setRawValue(false);
 }
 
-void GPSRtk::_onGPSSurveyInStatus(float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active)
+void GPSRtk::_onGPSConnectionError(GPSConnectionError error)
 {
-    _gpsRtkFactGroup->currentDuration()->setRawValue(duration);
-    _gpsRtkFactGroup->currentAccuracy()->setRawValue(static_cast<double>(accuracyMM) / 1000.0);
-    _gpsRtkFactGroup->currentLatitude()->setRawValue(latitude);
-    _gpsRtkFactGroup->currentLongitude()->setRawValue(longitude);
-    _gpsRtkFactGroup->currentAltitude()->setRawValue(altitude);
-    _gpsRtkFactGroup->valid()->setRawValue(valid);
-    _gpsRtkFactGroup->active()->setRawValue(active);
+    switch (error) {
+    case GPSConnectionError::OpenFailed:
+        qCWarning(GPSRtkLog) << "Failed to open GPS serial device";
+        break;
+    case GPSConnectionError::ConfigFailed:
+        qCWarning(GPSRtkLog) << "GPS receiver did not accept configuration";
+        break;
+    case GPSConnectionError::DeviceError:
+        qCWarning(GPSRtkLog) << "GPS device error, connection lost";
+        break;
+    case GPSConnectionError::None:
+        break;
+    }
+
+    _gpsRtkFactGroup->lastError()->setRawValue(static_cast<int>(error));
+}
+
+void GPSRtk::_onGPSSurveyInStatus(const GPSSurveyInStatus &status)
+{
+    _gpsRtkFactGroup->currentDuration()->setRawValue(status.durationSecs);
+    _gpsRtkFactGroup->currentAccuracy()->setRawValue(static_cast<double>(status.meanAccuracyMM) / 1000.0);
+    _gpsRtkFactGroup->currentLatitude()->setRawValue(status.latitude);
+    _gpsRtkFactGroup->currentLongitude()->setRawValue(status.longitude);
+    _gpsRtkFactGroup->currentAltitude()->setRawValue(status.altitude);
+    _gpsRtkFactGroup->valid()->setRawValue(status.valid);
+    _gpsRtkFactGroup->active()->setRawValue(status.active);
 }
 
 void GPSRtk::connectGPS(const QString &device, QStringView gps_type)
 {
-    GPSProvider::GPSType type;
-    RTKSettings* rtkSettings = SettingsManager::instance()->rtkSettings();
+    RTKSettings* const rtkSettings = SettingsManager::instance()->rtkSettings();
 
-    if (gps_type.contains(QStringLiteral("trimble"), Qt::CaseInsensitive)) {
-        type = GPSProvider::GPSType::trimble;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(1); // Trimble
-        qCDebug(GPSRtkLog) << "Connecting Trimble device";
-
-    } else if (gps_type.contains(QStringLiteral("septentrio"), Qt::CaseInsensitive)) {
-        type = GPSProvider::GPSType::septentrio;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(2); // Septentrio
-        qCDebug(GPSRtkLog) << "Connecting Septentrio device";
-
-    } else if (gps_type.contains(QStringLiteral("femtomes"), Qt::CaseInsensitive)) {
-        type = GPSProvider::GPSType::femto;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(3); // Femto
-        qCDebug(GPSRtkLog) << "Connecting Femtomes device";
-
-    } else if(gps_type.contains(QStringLiteral("blox"), Qt::CaseInsensitive)) {
-        type = GPSProvider::GPSType::u_blox;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(4); // Ublox
-        qCDebug(GPSRtkLog) << "Connecting U-blox device";
-    }else{
-        type = GPSProvider::GPSType::u_blox;
-        rtkSettings->baseReceiverManufacturers()->setRawValue(4); // Ublox
-        qCDebug(GPSRtkLog) << "Connecting device has U-blox by default";
+    GPSType type = GPSType::u_blox;
+    int manufacturerId = 4; // u-blox by default
+    for (const GPSTypeEntry &entry : kGPSTypeTable) {
+        if (gps_type.contains(entry.key, Qt::CaseInsensitive)) {
+            type = entry.type;
+            manufacturerId = entry.manufacturerId;
+            break;
+        }
     }
+    rtkSettings->baseReceiverManufacturers()->setRawValue(manufacturerId);
+    qCDebug(GPSRtkLog) << "Connecting GPS device" << gps_type << "manufacturer id" << manufacturerId;
 
     disconnectGPS();
 
     _requestGpsStop = false;
-    const GPSProvider::rtk_data_s rtkData = {
-        rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
-        rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
-        static_cast<BaseModeDefinition::Mode>(rtkSettings->useFixedBasePosition()->rawValue().toInt()),
-        rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
-        rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
-        rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
-        rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat()
+    _gpsRtkFactGroup->lastError()->setRawValue(static_cast<int>(GPSConnectionError::None));
+    const bool useFixedBase =
+        static_cast<BaseModeDefinition::Mode>(rtkSettings->useFixedBasePosition()->rawValue().toInt())
+            == BaseModeDefinition::Mode::BaseFixed;
+    const GPSReceiverConfig rtkConfig = {
+        .useFixedBase = useFixedBase,
+        .surveyInAccMeters = rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(),
+        .surveyInDurationSecs = rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(),
+        .fixedBaseLatitude = rtkSettings->fixedBasePositionLatitude()->rawValue().toDouble(),
+        .fixedBaseLongitude = rtkSettings->fixedBasePositionLongitude()->rawValue().toDouble(),
+        .fixedBaseAltitudeMeters = rtkSettings->fixedBasePositionAltitude()->rawValue().toFloat(),
+        .fixedBaseAccuracyMeters = rtkSettings->fixedBasePositionAccuracy()->rawValue().toFloat(),
     };
     _gpsProvider = new GPSProvider(
         device,
         type,
-        rtkData,
+        rtkConfig,
         _requestGpsStop,
         this
     );
-    (void) QMetaObject::invokeMethod(_gpsProvider, "start", Qt::AutoConnection);
-
     _rtcmMavlink = new RTCMMavlink(this);
-    (void) connect(_gpsProvider, &GPSProvider::RTCMDataUpdate, _rtcmMavlink, &RTCMMavlink::RTCMDataUpdate);
 
+    (void) connect(_gpsProvider, &GPSProvider::RTCMDataUpdate, _rtcmMavlink, &RTCMMavlink::RTCMDataUpdate);
     (void) connect(_gpsProvider, &GPSProvider::satelliteInfoUpdate, this, &GPSRtk::_satelliteInfoUpdate);
     (void) connect(_gpsProvider, &GPSProvider::sensorGpsUpdate, this, &GPSRtk::_sensorGpsUpdate);
     (void) connect(_gpsProvider, &GPSProvider::surveyInStatus, this, &GPSRtk::_onGPSSurveyInStatus);
+    (void) connect(_gpsProvider, &GPSProvider::connectionError, this, &GPSRtk::_onGPSConnectionError);
     (void) connect(_gpsProvider, &GPSProvider::finished, this, &GPSRtk::_onGPSDisconnect);
 
-    (void) QMetaObject::invokeMethod(this, "_onGPSConnect", Qt::AutoConnection);
+    _onGPSConnect();
+
+    // Start the thread only after every signal is wired, so no early emission is lost.
+    (void) QMetaObject::invokeMethod(_gpsProvider, "start", Qt::AutoConnection);
 }
 
 void GPSRtk::disconnectGPS()
 {
     if (_gpsProvider) {
         _requestGpsStop = true;
-        if (!_gpsProvider->wait(kGPSThreadDisconnectTimeout)) {
-            qCWarning(GPSRtkLog) << "Failed to wait for GPS thread exit. Consider increasing the timeout";
+        if (_gpsProvider->wait(kGPSThreadDisconnectTimeout)) {
+            _gpsProvider->deleteLater();
+        } else {
+            qCWarning(GPSRtkLog) << "GPS thread did not exit in time; deferring cleanup to finished()";
+            (void) _gpsProvider->disconnect(this); // stale signals must not flip facts after reconnect
+            (void) connect(_gpsProvider, &QThread::finished, _gpsProvider, &QObject::deleteLater);
         }
-
-        _gpsProvider->deleteLater();
         _gpsProvider = nullptr;
     }
 
@@ -137,15 +166,24 @@ FactGroup *GPSRtk::gpsRtkFactGroup()
     return _gpsRtkFactGroup;
 }
 
-void GPSRtk::_satelliteInfoUpdate(const satellite_info_s &msg)
+GPSRtk::SatelliteCounts GPSRtk::countSatellites(const satellite_info_s &msg)
 {
-    qCDebug(GPSRtkLog) << Q_FUNC_INFO << QStringLiteral("%1 satellites").arg(msg.count);
-    _gpsRtkFactGroup->numSatellites()->setRawValue(msg.count);
+    SatelliteCounts counts;
+    counts.inView = qMin(msg.count, satellite_info_s::SAT_INFO_MAX_SATELLITES);
+    for (uint8_t i = 0; i < counts.inView; ++i) {
+        if (msg.used[i]) {
+            ++counts.used;
+        }
+    }
+    return counts;
 }
 
-void GPSRtk::_sensorGnssRelativeUpdate(const sensor_gnss_relative_s &/*msg*/)
+void GPSRtk::_satelliteInfoUpdate(const satellite_info_s &msg)
 {
-    qCDebug(GPSRtkLog) << Q_FUNC_INFO;
+    const SatelliteCounts counts = countSatellites(msg);
+    qCDebug(GPSRtkLog) << Q_FUNC_INFO << QStringLiteral("%1 in view, %2 used").arg(counts.inView).arg(counts.used);
+    _gpsRtkFactGroup->numSatellites()->setRawValue(counts.inView);
+    _gpsRtkFactGroup->numSatellitesUsed()->setRawValue(counts.used);
 }
 
 void GPSRtk::_sensorGpsUpdate(const sensor_gps_s &msg)
