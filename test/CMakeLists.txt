@@ -359,3 +359,4 @@ add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle RESOURCE_LOCK Moc
 add_subdirectory(QmlUITests)
 add_qgc_test(TopLevelViewsTest LABELS Integration TIMEOUT 120)
 add_qgc_test(PX4VehicleConfigUITest LABELS Integration TIMEOUT 180)
+add_qgc_test(APMVehicleConfigUITest LABELS Integration TIMEOUT 360)
