@@ -176,8 +176,8 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global simple message dialog
 
-    function _showMessageDialogWorker(owner, dialogTitle, dialogText, buttons = Dialog.Ok, acceptFunction = null, closeFunction = null) {
-        let dialog = simpleMessageDialogComponent.createObject(owner, { title: dialogTitle, text: dialogText, buttons: buttons, acceptFunction: acceptFunction, closeFunction: closeFunction })
+    function _showMessageDialogWorker(owner, dialogTitle, dialogText, buttons = Dialog.Ok, acceptFunction = null, closeFunction = null, bypassNavigationCheck = false) {
+        let dialog = simpleMessageDialogComponent.createObject(owner, { title: dialogTitle, text: dialogText, buttons: buttons, acceptFunction: acceptFunction, closeFunction: closeFunction, bypassNavigationCheck: bypassNavigationCheck })
         dialog.open()
     }
 
@@ -238,10 +238,12 @@ ApplicationWindow {
 
     function checkForUnsavedMission() {
         if (planView._planMasterController.dirtyForSave || planView._planMasterController.dirtyForUpload) {
-            QGroundControl.showMessageDialog(mainWindow, closeDialogTitle,
+            _showMessageDialogWorker(mainWindow, closeDialogTitle,
                               qsTr("You have a mission edit in progress which has not been saved/uploaded. If you close you will lose changes. Are you sure you want to close?"),
                               Dialog.Yes | Dialog.No,
-                              function() { _closeChecksToSkip |= _skipUnsavedMissionCheckMask; performCloseChecks() })
+                              function() { _closeChecksToSkip |= _skipUnsavedMissionCheckMask; performCloseChecks() },
+                              null,
+                              true /* bypassNavigationCheck */)
             return false
         } else {
             return true
@@ -251,10 +253,12 @@ ApplicationWindow {
     function checkForPendingParameterWrites() {
         for (var index=0; index<QGroundControl.multiVehicleManager.vehicles.count; index++) {
             if (QGroundControl.multiVehicleManager.vehicles.get(index).parameterManager.pendingWrites) {
-                QGroundControl.showMessageDialog(mainWindow, closeDialogTitle,
+                _showMessageDialogWorker(mainWindow, closeDialogTitle,
                     qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?"),
                     Dialog.Yes | Dialog.No,
-                    function() { _closeChecksToSkip |= _skipPendingParameterWritesCheckMask; performCloseChecks() })
+                    function() { _closeChecksToSkip |= _skipPendingParameterWritesCheckMask; performCloseChecks() },
+                    null,
+                    true /* bypassNavigationCheck */)
                 return false
             }
         }
@@ -263,10 +267,12 @@ ApplicationWindow {
 
     function checkForActiveConnections() {
         if (QGroundControl.multiVehicleManager.activeVehicle) {
-            QGroundControl.showMessageDialog(mainWindow, closeDialogTitle,
+            _showMessageDialogWorker(mainWindow, closeDialogTitle,
                 qsTr("There are still active connections to vehicles. Are you sure you want to exit?"),
                 Dialog.Yes | Dialog.No,
-                function() { _closeChecksToSkip |= _skipActiveConnectionsCheckMask; performCloseChecks() })
+                function() { _closeChecksToSkip |= _skipActiveConnectionsCheckMask; performCloseChecks() },
+                null,
+                true /* bypassNavigationCheck */)
             return false
         } else {
             return true

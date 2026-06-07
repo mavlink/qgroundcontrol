@@ -161,7 +161,17 @@ SetupPage {
                 onSetAllCalButtonsEnabled: (enabled) => {
                     buttonColumn.enabled = enabled
                 }
+
+                onCalibrationActiveChanged: {
+                    if (controller.calibrationActive) {
+                        globals.navigationBlockedReason = qsTr("Complete or cancel the current calibration first")
+                    } else {
+                        globals.navigationBlockedReason = ""
+                    }
+                }
             }
+
+            Component.onDestruction: globals.navigationBlockedReason = ""
 
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
