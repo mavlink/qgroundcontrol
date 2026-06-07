@@ -38,7 +38,24 @@ lsp = [
   "pygls",
   "lsprotocol",
 ]
+lint = [
+  "import-linter",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.importlinter]
+root_packages = ["common", "analyzers", "generators", "lsp"]
+
+[[tool.importlinter.contracts]]
+name = "common is a dependency-free foundation"
+type = "forbidden"
+source_modules = ["common"]
+forbidden_modules = ["analyzers", "generators", "lsp"]
+
+[[tool.importlinter.contracts]]
+name = "tool packages are mutually independent"
+type = "independence"
+modules = ["analyzers", "generators", "lsp"]

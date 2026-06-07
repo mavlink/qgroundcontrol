@@ -57,14 +57,14 @@ jobs:
             primary: true
             emulator: false
           - host: mac
-            runner: macos-latest
+            runner: macos-15
             arch: clang_64
             qt_host_path: macos
             shell: bash
             primary: false
             emulator: false
           - host: windows
-            runner: windows-latest
+            runner: windows-2022
             arch: win64_msvc2022_64
             qt_host_path: msvc2022_64
             shell: pwsh

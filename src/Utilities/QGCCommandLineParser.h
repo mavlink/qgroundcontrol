@@ -91,6 +91,8 @@ enum class AppMode {
 AppMode determineAppMode(const CommandLineParseResult& args);
 
 #ifdef QGC_UNITTEST_BUILD
+QStringList normalizeArgs(const QStringList &args);
+
 /// @brief Developer helper: Override argc/argv for debugging specific tests.
 ///
 /// To use: set enabled=true in the implementation, modify the arguments,

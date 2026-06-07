@@ -22,7 +22,7 @@ VehicleLinkManager::VehicleLinkManager(Vehicle *vehicle)
     (void) connect(_commLostCheckTimer, &QTimer::timeout, this, &VehicleLinkManager::_commLostCheck);
 
     _commLostCheckTimer->setSingleShot(false);
-    _commLostCheckTimer->setInterval(_commLostCheckTimeoutMSecs);
+    _commLostCheckTimer->setInterval(QGC::runningUnitTests() ? kTestCommLostCheckTimeoutMs : _commLostCheckTimeoutMSecs);
 }
 
 VehicleLinkManager::~VehicleLinkManager()

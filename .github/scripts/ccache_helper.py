@@ -25,7 +25,6 @@ import shutil
 import sys
 import tarfile
 import tempfile
-import time
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -46,22 +45,9 @@ from common.gh_actions import (
 from common.gh_actions import (
     write_github_output as write_github_outputs,
 )
+from common.net import download_with_retry
 from common.proc import run_captured
 from common.tool_version import probe_version
-
-
-def _download_file(url: str, dest: Path, *, timeout: int = 120) -> None:
-    """Download a URL to a local file using urllib (stdlib)."""
-    import urllib.request
-
-    request = urllib.request.Request(url)
-    with urllib.request.urlopen(request, timeout=timeout) as resp, open(dest, "wb") as f:
-        while True:
-            chunk = resp.read(65536)
-            if not chunk:
-                break
-            f.write(chunk)
-
 
 _CCACHE_RELEASE_URL = "https://github.com/ccache/ccache/releases/download"
 
@@ -88,7 +74,7 @@ def _install_release_binary(
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         archive_path = temp_path / archive_name
-        _download_file(url, archive_path)
+        download_with_retry(url, archive_path)
         actual = hashlib.sha256(archive_path.read_bytes()).hexdigest()
         if actual != sha256:
             raise RuntimeError(f"SHA256 mismatch: {actual} != {sha256}")
@@ -98,6 +84,7 @@ def _install_release_binary(
             raise FileNotFoundError(f"ccache binary not found in archive: {source}")
         shutil.copy2(source, dest)
     return dest
+
 
 @dataclass(frozen=True)
 class CcacheRelease:
@@ -126,6 +113,7 @@ MACOS_BINARY_SHA256 = PINNED_RELEASE.macos_sha256
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 class CcacheConfig(NamedTuple):
     """Configuration values extracted for ccache setup."""
 
@@ -133,9 +121,11 @@ class CcacheConfig(NamedTuple):
     arch: str
     max_size: str
 
+
 # ---------------------------------------------------------------------------
 # Installer
 # ---------------------------------------------------------------------------
+
 
 class CcacheInstaller:
     """Handles ccache installation with signature verification."""
@@ -217,21 +207,13 @@ class CcacheInstaller:
         return self.DEFAULT_MAX_SIZE
 
     def download_with_retry(self, url: str, dest: Path) -> bool:
-        """Download file with retry logic."""
-        from urllib.error import URLError
-
-        for attempt in range(1, self.max_retries + 1):
-            try:
-                print(f"Downloading {url} (attempt {attempt}/{self.max_retries})")
-                _download_file(url, dest)
-                return True
-            except (URLError, OSError) as e:
-                print(f"Download failed: {e}", file=sys.stderr)
-                if attempt < self.max_retries:
-                    print(f"Retrying in {self.retry_delay} seconds...")
-                    time.sleep(self.retry_delay)
-
-        return False
+        """Download file with retry logic. Returns False on exhaustion."""
+        try:
+            download_with_retry(url, dest, attempts=self.max_retries, delay=self.retry_delay)
+            return True
+        except RuntimeError as e:
+            print(f"Download failed: {e}", file=sys.stderr)
+            return False
 
     def download_with_verify(self, temp_dir: Path) -> Path | None:
         """Download ccache archive and verify its signature."""
@@ -297,7 +279,15 @@ class CcacheInstaller:
         """Verify archive signature using minisign."""
         try:
             result = run_captured(
-                [str(minisign_bin), "-Vm", str(archive), "-P", self.MINISIGN_KEY],
+                [
+                    str(minisign_bin),
+                    "-Vm",
+                    str(archive),
+                    "-x",
+                    str(sig_file),
+                    "-P",
+                    self.MINISIGN_KEY,
+                ],
             )
             if result.returncode != 0:
                 print(f"Signature verification failed: {result.stderr}", file=sys.stderr)
@@ -396,9 +386,11 @@ class CcacheInstaller:
         except OSError:
             pass
 
+
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
+
 
 def get_ccache_json_stats() -> dict | None:
     """Run ``ccache --print-stats --format=json`` and return parsed dict.
@@ -417,6 +409,7 @@ def get_ccache_json_stats() -> dict | None:
     except (OSError, json.JSONDecodeError):
         return None
 
+
 def build_summary_markdown(stats: dict) -> str:
     """Build a GitHub-flavoured markdown summary table from ccache JSON stats."""
     direct = int(stats.get("direct_cache_hit", 0))
@@ -425,6 +418,21 @@ def build_summary_markdown(stats: dict) -> str:
     hits = direct + preprocessed
     total = hits + misses
     pct = f"{hits / total * 100:.1f}" if total > 0 else "0.0"
+
+    size_kib = int(stats.get("cache_size_kibibyte", 0))
+    max_kib = int(stats.get("max_cache_size_kibibyte", 0))
+    size_pct = f"{size_kib / max_kib * 100:.1f}" if max_kib else "0.0"
+    cleanups = int(stats.get("cleanups_performed", 0))
+    errors = sum(
+        int(stats.get(k, 0))
+        for k in (
+            "internal_error",
+            "compiler_check_failed",
+            "error_hashing_extra_file",
+            "missing_cache_file",
+            "preprocessor_error",
+        )
+    )
 
     lines = [
         "### CCache Statistics",
@@ -435,8 +443,13 @@ def build_summary_markdown(stats: dict) -> str:
         f"| Direct hits | {direct} |",
         f"| Preprocessed hits | {preprocessed} |",
         f"| Misses | {misses} |",
+        f"| Cache size | {size_kib / 1024:.0f} MiB / {max_kib / 1048576:.1f} GiB ({size_pct}%) |",
+        f"| Cleanups (LRU evictions) | {cleanups} |",
     ]
+    if errors:
+        lines.append(f"| ⚠ Errors | {errors} |")
     return "\n".join(lines) + "\n"
+
 
 def get_ccache_verbose_stats() -> str | None:
     """Run ``ccache -s -vv`` and return its output."""
@@ -452,6 +465,22 @@ def get_ccache_verbose_stats() -> str | None:
     except OSError:
         return None
 
+
+def get_ccache_compression_stats() -> str | None:
+    """Run ``ccache --show-compression`` (compression ratio + space savings)."""
+    ccache_bin = shutil.which("ccache")
+    if not ccache_bin:
+        return None
+
+    try:
+        result = run_captured([ccache_bin, "--show-compression"])
+        if result.returncode != 0:
+            return None
+        return result.stdout.strip()
+    except OSError:
+        return None
+
+
 def run_summary() -> int:
     """Collect ccache stats and write a job summary table."""
     parts: list[str] = []
@@ -462,28 +491,36 @@ def run_summary() -> int:
     else:
         print("ccache JSON stats unavailable (ccache missing or < 4.10)", file=sys.stderr)
 
+    compression = get_ccache_compression_stats()
+    if compression:
+        parts.append(f"### Compression\n\n```\n{compression}\n```\n")
+
     verbose = get_ccache_verbose_stats()
     if verbose:
         parts.append(
-            "<details>\n<summary>Verbose stats</summary>\n\n"
-            f"```\n{verbose}\n```\n\n</details>\n"
+            f"<details>\n<summary>Verbose stats</summary>\n\n```\n{verbose}\n```\n\n</details>\n"
         )
 
     if parts:
         write_step_summary("\n".join(parts))
     return 0
 
+
 # ---------------------------------------------------------------------------
 # GitHub Actions output helper
 # ---------------------------------------------------------------------------
 
+
 def output_github_actions(config: CcacheConfig) -> None:
     """Write outputs for GitHub Actions."""
-    write_github_outputs({
-        "version": config.version,
-        "arch": config.arch,
-        "max_size": config.max_size,
-    })
+    write_github_outputs(
+        {
+            "version": config.version,
+            "arch": config.arch,
+            "max_size": config.max_size,
+        }
+    )
+
 
 def determine_cache_scope(event_name: str, ref_name: str, pr_number: str = "") -> str:
     """Return the normalized cache scope used by CI."""
@@ -499,12 +536,14 @@ def determine_cache_scope(event_name: str, ref_name: str, pr_number: str = "") -
         scope = f"{event_name}-{ref_name}"
     return scope.replace("/", "-")
 
+
 def resolve_windows_binary_config(host: str, target: str) -> dict[str, str]:
     """Return Windows ccache binary arch and checksum for the requested target."""
     arch = "aarch64" if host == "windows_arm64" else "x86_64"
     if target != "android" and host != "windows_arm64":
         arch = "x86_64"
     return {"arch": arch, "sha256": WINDOWS_BINARY_SHA256[arch]}
+
 
 def _assert_pinned_version(version: str, platform_label: str) -> None:
     """Fail fast if the requested version doesn't match the pinned SHA256 dicts.
@@ -521,6 +560,7 @@ def _assert_pinned_version(version: str, platform_label: str) -> None:
             f"to match."
         )
 
+
 def install_windows_binary(version: str, arch: str, sha256: str, runner_temp: Path) -> Path:
     """Download and install the ccache Windows binary under ``runner_temp``."""
     _assert_pinned_version(version, "Windows")
@@ -535,6 +575,7 @@ def install_windows_binary(version: str, arch: str, sha256: str, runner_temp: Pa
         install_dir / "ccache.exe",
     )
     return install_dir
+
 
 def install_macos_binary(version: str, sha256: str, prefix: Path) -> Path:
     """Download and install the ccache macOS universal binary under ``prefix``/bin.
@@ -557,6 +598,7 @@ def install_macos_binary(version: str, sha256: str, prefix: Path) -> Path:
     dest.chmod(0o755)
     return dest
 
+
 def add_windows_binary_to_path(version: str, arch: str, runner_temp: Path) -> Path:
     """Add the installed Windows ccache binary directory to PATH."""
     install_dir = runner_temp / f"ccache-{version}-windows-{arch}"
@@ -569,6 +611,7 @@ def add_windows_binary_to_path(version: str, arch: str, runner_temp: Path) -> Pa
         print(result.stdout.strip())
     return install_dir
 
+
 def configure_ccache_environment(workspace: Path) -> Path:
     """Configure standard ccache environment variables for GitHub Actions."""
     workspace_path = Path(str(workspace).replace("\\", "/"))
@@ -580,9 +623,11 @@ def configure_ccache_environment(workspace: Path) -> Path:
             "CCACHE_BASEDIR": workspace_path.as_posix(),
             "CCACHE_CONFIGPATH": (workspace_path / "tools" / "configs" / "ccache.conf").as_posix(),
             "CCACHE_MAXSIZE": "2G",
+            "CCACHE_NOFILECLONE": "1",
         }
     )
     return ccache_dir
+
 
 # ---------------------------------------------------------------------------
 # CLI
@@ -592,6 +637,7 @@ TARGET_ARCH_MAP: dict[str, str] = {
     "linux_gcc_arm64": "aarch64",
 }
 
+
 def resolve_arch(args: argparse.Namespace) -> str | None:
     """Return architecture from --arch, --target, or None for auto-detect."""
     if getattr(args, "arch", None):
@@ -600,6 +646,7 @@ def resolve_arch(args: argparse.Namespace) -> str | None:
     if target:
         return TARGET_ARCH_MAP.get(target)
     return None
+
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command line arguments."""
@@ -673,7 +720,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     windows_cfg.add_argument("--host", required=True, help="Workflow host input")
     windows_cfg.add_argument("--target", required=True, help="Workflow target input")
 
-    install_win = sub.add_parser("install-windows", help="Download and install Windows ccache binary")
+    install_win = sub.add_parser(
+        "install-windows", help="Download and install Windows ccache binary"
+    )
     install_win.add_argument("--version", required=True)
     install_win.add_argument("--arch", required=True, choices=["x86_64", "aarch64"])
     install_win.add_argument("--sha256", required=True)
@@ -695,6 +744,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     env_cfg.add_argument("--workspace", type=Path, required=True)
 
     return parser.parse_args(argv)
+
 
 def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
@@ -790,6 +840,7 @@ def main(argv: list[str] | None = None) -> int:
         file=sys.stderr,
     )
     return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

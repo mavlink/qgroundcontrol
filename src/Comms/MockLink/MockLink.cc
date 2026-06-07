@@ -272,7 +272,10 @@ void MockLink::run500HzTasks()
     }
 
     if (_mavlinkStarted && _connected && mavlinkChannelIsSet()) {
-        _paramRequestListWorker();
+        const int paramSends = QGC::runningUnitTests() ? kTestParamRequestListBatch : 1;
+        for (int i = 0; i < paramSends; ++i) {
+            _paramRequestListWorker();
+        }
         _logDownloadWorker();
         _availableModesWorker();
     }

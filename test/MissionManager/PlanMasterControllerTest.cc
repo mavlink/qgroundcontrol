@@ -337,9 +337,9 @@ void PlanMasterControllerTest::_testSaveWithCurrentName()
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
 
     // First save to a real (writable) directory so _currentPlanFile points somewhere valid
-    QTemporaryDir tmpDir;
-    QVERIFY(tmpDir.isValid());
-    const QString initialPath = QStringLiteral("%1/MissionPlanner.%2").arg(tmpDir.path(), _masterController->fileExtension());
+    QTemporaryDir* const tmpDir = createTempDir();
+    QVERIFY(tmpDir && tmpDir->isValid());
+    const QString initialPath = QStringLiteral("%1/MissionPlanner.%2").arg(tmpDir->path(), _masterController->fileExtension());
     QVERIFY(_masterController->saveToFile(initialPath));
 
     // Rename
@@ -380,9 +380,9 @@ void PlanMasterControllerTest::_testResolvedPlanFileExists()
     QVERIFY(!_masterController->resolvedPlanFileExists());
 
     // Save a file so it exists on disk
-    QTemporaryDir tmpDir;
-    QVERIFY(tmpDir.isValid());
-    const QString savePath = QStringLiteral("%1/ExistingPlan.%2").arg(tmpDir.path(), _masterController->fileExtension());
+    QTemporaryDir* const tmpDir = createTempDir();
+    QVERIFY(tmpDir && tmpDir->isValid());
+    const QString savePath = QStringLiteral("%1/ExistingPlan.%2").arg(tmpDir->path(), _masterController->fileExtension());
     QVERIFY(_masterController->saveToFile(savePath));
 
     // Now rename to the same base name — file exists at resolved path

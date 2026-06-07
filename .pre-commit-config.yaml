@@ -65,6 +65,16 @@ repos:
       - id: pyright
         files: ^(tools|test|\.github/scripts)/.*\.py$
 
+  - repo: local
+    hooks:
+      - id: import-linter
+        name: import-linter (tools layering)
+        entry: bash -c 'cd tools && PYTHONPATH=. lint-imports --config pyproject.toml'
+        language: python
+        additional_dependencies: ['import-linter']
+        files: ^tools/.*\.py$
+        pass_filenames: false
+
   # uv lockfile sync (keeps tools/uv.lock current with tools/pyproject.toml)
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.15

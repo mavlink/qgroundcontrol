@@ -25,15 +25,7 @@ void SubMachineStateTest::_testSubMachineState()
             return child;
         }
     );
-    auto* finalState = new QGCFinalState(QStringLiteral("Final"), &machine);
-
-    subMachineState->addTransition(subMachineState, &QGCState::advance, finalState);
-    machine.setInitialState(subMachineState);
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(runStateToCompletion(subMachineState, &machine));
     QVERIFY(childMachineRan);
 }
 

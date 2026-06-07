@@ -24,15 +24,7 @@ void AsyncFunctionStateTest::_testAsyncFunctionState()
             });
         }
     );
-    auto* finalState = new QFinalState(&machine);
-
-    asyncState->addTransition(asyncState, &QGCState::advance, finalState);
-    machine.setInitialState(asyncState);
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(runStateToCompletion(asyncState, &machine));
     QVERIFY(setupCalled);
     QVERIFY(capturedState != nullptr);
 }

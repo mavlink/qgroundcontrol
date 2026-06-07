@@ -22,7 +22,7 @@ function(_parallel_codesign IDENTITY)
         RESULT_VARIABLE _find_rc
     )
     if(NOT _find_rc EQUAL 0)
-        message(FATAL_ERROR "find failed during codesign (exit ${_find_rc})")
+        message(FATAL_ERROR "QGC: find failed during codesign (exit ${_find_rc})")
     endif()
     file(SIZE "${_cs_list}" _cs_size)
     if(_cs_size GREATER 0)

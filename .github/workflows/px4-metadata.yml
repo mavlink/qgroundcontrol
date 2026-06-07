@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download PX4 airframe metadata
-        run: curl -fsSL https://artifacts.px4.io/Firmware/_general/airframes.xml -o src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
+        run: curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors --max-time 300 https://artifacts.px4.io/Firmware/_general/airframes.xml -o src/AutoPilotPlugins/PX4/AirframeFactMetaData.xml
 
       # PX4's upstream parameters.json only carries the schema "version": 1
       # marker, not parameter_version_major/_minor. As a result
@@ -42,7 +42,10 @@ jobs:
       # the PX4 release tag (e.g. via jq) before writing the file, so both
       # read and write paths have a meaningful comparison.
       - name: Download PX4 parameter metadata
-        run: curl -fsSL https://artifacts.px4.io/Firmware/_general/parameters.json.xz | xz -d > src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.json
+        run: |
+          curl -fsSL --retry 5 --retry-delay 2 --retry-all-errors --max-time 300 \
+            https://artifacts.px4.io/Firmware/_general/parameters.json.xz -o /tmp/parameters.json.xz
+          xz -d -c /tmp/parameters.json.xz > src/FirmwarePlugin/PX4/PX4ParameterFactMetaData.json
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8

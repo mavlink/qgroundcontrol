@@ -27,4 +27,4 @@ query-filters:
       # Re-evaluate before enabling if CodeQL signal quality improves.
       id: cpp/mistyped-function-arguments
 
-trap-caching: true
+trap-caching: false

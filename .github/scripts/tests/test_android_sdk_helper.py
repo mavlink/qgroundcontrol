@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import subprocess
-from pathlib import Path
-from typing import Any
-
-import pytest
+from typing import TYPE_CHECKING, Any
 
 import android_sdk_helper as mod
+import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _setup_env(monkeypatch, tmp_path: Path, *, runner_os: str = "Linux") -> tuple[Path, Path]:
@@ -84,6 +85,7 @@ def test_windows_uses_bat_paths(monkeypatch, tmp_path: Path) -> None:
 
 def test_subprocess_failure_propagates(monkeypatch, tmp_path: Path) -> None:
     _setup_env(monkeypatch, tmp_path)
+    monkeypatch.setattr("time.sleep", lambda *_a, **_k: None)
 
     def fake_run(cmd: list[str], **kw: Any) -> subprocess.CompletedProcess:
         raise subprocess.CalledProcessError(returncode=2, cmd=cmd)

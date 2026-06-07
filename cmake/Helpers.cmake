@@ -120,25 +120,25 @@ function(qgc_set_linker)
         return()
     endif()
 
-    if(QGC_ENABLE_COVERAGE)
-        message(STATUS "QGC: Alternative linker disabled for coverage build")
-        return()
-    endif()
-
     include(CheckLinkerFlag)
+    include(CMakePushCheckState)
 
-    # Try linkers in order of preference: mold > lld > gold
+    cmake_push_check_state(RESET)
+
     foreach(_ld mold lld gold)
         set(_flag "-fuse-ld=${_ld}")
         check_linker_flag(CXX "${_flag}" HAVE_LD_${_ld})
 
         if(HAVE_LD_${_ld})
+            cmake_pop_check_state()
             add_link_options("${_flag}")
             set(QGC_LINKER "${_ld}" PARENT_SCOPE)
             message(STATUS "QGC: Using ${_ld} linker")
             return()
         endif()
     endforeach()
+
+    cmake_pop_check_state()
 
     message(STATUS "QGC: No alternative linker (mold/lld/gold) found - using system default")
 endfunction()
@@ -233,4 +233,21 @@ function(qgc_enable_ipo)
     else()
         message(STATUS "QGC: IPO/LTO disabled for ${CMAKE_BUILD_TYPE} build")
     endif()
+endfunction()
+
+function(qgc_add_json_resources name)
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "NO_RECURSE" "PREFIX;PATTERN" "")
+    if(NOT ARG_PREFIX)
+        set(ARG_PREFIX "/json")
+    endif()
+    if(NOT ARG_PATTERN)
+        set(ARG_PATTERN "*.json")
+    endif()
+    set(_glob GLOB_RECURSE)
+    if(ARG_NO_RECURSE)
+        set(_glob GLOB)
+    endif()
+    file(${_glob} _json CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+         "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_PATTERN}")
+    qt_add_resources(${CMAKE_PROJECT_NAME} ${name} PREFIX "${ARG_PREFIX}" FILES ${_json})
 endfunction()

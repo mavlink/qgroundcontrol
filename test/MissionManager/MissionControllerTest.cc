@@ -14,6 +14,7 @@
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 #include "TestFixtures.h"
+#include "MultiSignalSpy.h"
 
 #include <QtCore/QTemporaryDir>
 using namespace TestFixtures;
@@ -43,12 +44,11 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     _masterController = std::make_unique<PlanMasterController>();
     _masterController->setFlyView(false);
     _missionController = _masterController->missionController();
-    SignalSpyFixture missionControllerSpy(_missionController);
-    QVERIFY(missionControllerSpy.spy());
-    missionControllerSpy.expect("visualItemsReset");
+    MultiSignalSpy missionControllerSpy;
+    QVERIFY(missionControllerSpy.init(_missionController));
     _masterController->start();
     // visualItemsReset should be emitted during start (along with many other signals)
-    QVERIFY(missionControllerSpy.waitAndVerify(TestTimeout::mediumMs()));
+    QVERIFY(missionControllerSpy.waitForSignal("visualItemsReset", TestTimeout::mediumMs()));
     QmlObjectListModel* visualItems = _missionController->visualItems();
     QVERIFY(visualItems);
     // Empty vehicle only has home position
@@ -87,8 +87,8 @@ void MissionControllerTest::_testEmptyVehicle()
 
 void MissionControllerTest::_setupVisualItemSignals(VisualMissionItem* visualItem)
 {
-    SignalSpyFixture visualItemSpy(visualItem);
-    QVERIFY(visualItemSpy.spy());
+    MultiSignalSpy visualItemSpy;
+    QVERIFY(visualItemSpy.init(visualItem));
 }
 
 void MissionControllerTest::_testGimbalRecalc()
@@ -473,9 +473,9 @@ void MissionControllerTest::_testLoadPlanRoundTripComplexItems()
     QCOMPARE(_missionController->visualItems()->count(), 3);
 
     // Save to a temporary file, reload, and verify the types survive the round-trip
-    QTemporaryDir tmpDir;
-    QVERIFY(tmpDir.isValid());
-    const QString planPath = QStringLiteral("%1/test.%2").arg(tmpDir.path(), _masterController->fileExtension());
+    QTemporaryDir* const tmpDir = createTempDir();
+    QVERIFY(tmpDir && tmpDir->isValid());
+    const QString planPath = QStringLiteral("%1/test.%2").arg(tmpDir->path(), _masterController->fileExtension());
     QVERIFY(_masterController->saveToFile(planPath));
 
     _missionController->removeAll();

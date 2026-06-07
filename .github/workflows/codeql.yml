@@ -15,6 +15,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
+env:
+  CODEQL_ACTION_OVERLAY_ANALYSIS: "false"
+
 permissions:
   contents: read
   security-events: write
@@ -31,6 +34,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - language: c-cpp
+            build-mode: none
           - language: actions
             build-mode: none
           - language: java-kotlin
@@ -55,6 +60,8 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
           config-file: ./.github/codeql/codeql-config.yml
+          trap-caching: false
+          dependency-caching: false
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

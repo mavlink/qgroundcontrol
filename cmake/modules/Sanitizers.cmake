@@ -27,6 +27,21 @@
 include_guard(GLOBAL)
 
 include(CMakeDependentOption)
+include(CheckCXXSourceCompiles)
+include(CMakePushCheckState)
+
+function(_qgc_require_sanitizer name flag)
+    cmake_push_check_state(RESET)
+    set(CMAKE_REQUIRED_FLAGS "${flag}")
+    set(CMAKE_REQUIRED_LINK_OPTIONS "${flag}")
+    check_cxx_source_compiles("int main(){return 0;}" QGC_SANITIZER_${name}_LINKS)
+    cmake_pop_check_state()
+    if(NOT QGC_SANITIZER_${name}_LINKS)
+        message(FATAL_ERROR
+            "QGC: ${name} requested but the toolchain cannot link '${flag}' "
+            "(missing sanitizer runtime?). Install the matching lib and reconfigure.")
+    endif()
+endfunction()
 
 # ############################################################################
 # PART 1: COMPILE-TIME SANITIZERS
@@ -78,21 +93,21 @@ endif()
 
 # Validate incompatible combinations
 if(QGC_ENABLE_ASAN AND QGC_ENABLE_TSAN)
-    message(FATAL_ERROR "ASan and TSan cannot be used together. Choose one.")
+    message(FATAL_ERROR "QGC: ASan and TSan cannot be used together. Choose one.")
 endif()
 
 if(QGC_ENABLE_ASAN AND QGC_ENABLE_MSAN)
-    message(FATAL_ERROR "ASan and MSan cannot be used together. Choose one.")
+    message(FATAL_ERROR "QGC: ASan and MSan cannot be used together. Choose one.")
 endif()
 
 if(QGC_ENABLE_TSAN AND QGC_ENABLE_MSAN)
-    message(FATAL_ERROR "TSan and MSan cannot be used together. Choose one.")
+    message(FATAL_ERROR "QGC: TSan and MSan cannot be used together. Choose one.")
 endif()
 
 # Check compiler support
 if(QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN OR QGC_ENABLE_MSAN)
     if(NOT (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang"))
-        message(FATAL_ERROR "Sanitizers are only supported with GCC and Clang")
+        message(FATAL_ERROR "QGC: Sanitizers are only supported with GCC and Clang")
     endif()
 endif()
 
@@ -102,6 +117,7 @@ endif()
 # Detects: buffer overflows, use-after-free, memory leaks, double-free
 
 if(QGC_ENABLE_ASAN)
+    _qgc_require_sanitizer(ASAN "-fsanitize=address")
     message(STATUS "AddressSanitizer (ASan) enabled")
 
     set(ASAN_FLAGS -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls)
@@ -143,6 +159,7 @@ if(QGC_ENABLE_UBSAN)
     set(UBSAN_EXCLUDES "-fno-sanitize=vptr")  # Qt triggers this
 
     string(REPLACE ";" "," UBSAN_CHECKS_STR "${UBSAN_CHECKS}")
+    _qgc_require_sanitizer(UBSAN "-fsanitize=undefined")
     set(UBSAN_FLAGS -fsanitize=${UBSAN_CHECKS_STR} ${UBSAN_EXCLUDES} -fno-omit-frame-pointer)
 
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE ${UBSAN_FLAGS})
@@ -158,6 +175,7 @@ endif()
 # Detects: data races, deadlocks, lock order inversions
 
 if(QGC_ENABLE_TSAN)
+    _qgc_require_sanitizer(TSAN "-fsanitize=thread")
     message(STATUS "ThreadSanitizer (TSan) enabled")
 
     set(TSAN_FLAGS -fsanitize=thread -fno-omit-frame-pointer)
@@ -178,11 +196,12 @@ endif()
 
 if(QGC_ENABLE_MSAN)
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        message(FATAL_ERROR "MemorySanitizer is only supported with Clang")
+        message(FATAL_ERROR "QGC: MemorySanitizer is only supported with Clang")
     endif()
 
+    _qgc_require_sanitizer(MSAN "-fsanitize=memory")
     message(STATUS "MemorySanitizer (MSan) enabled")
-    message(WARNING "MSan requires ALL dependencies (including Qt) to be MSan-instrumented!")
+    message(WARNING "QGC: MSan requires ALL dependencies (including Qt) to be MSan-instrumented!")
 
     set(MSAN_FLAGS -fsanitize=memory -fno-omit-frame-pointer -fsanitize-memory-track-origins=2)
 

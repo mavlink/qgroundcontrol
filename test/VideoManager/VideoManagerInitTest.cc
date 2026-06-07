@@ -4,11 +4,19 @@
 
 #include "VideoManager.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtQuick/QQuickWindow>
 
 void VideoManagerInitTest::init()
 {
     UnitTest::init();
+
+    static const QRegularExpression sGStreamerCriticalRe(
+        QStringLiteral("cannot register existing type|"
+                       "g_type_add_interface_static.*G_TYPE_IS_INSTANTIATABLE|"
+                       "g_once_init_leave.*result != 0|"
+                       "GStreamer initialization failed"));
+    ignoreLogMessage(QtCriticalMsg, sGStreamerCriticalRe);
 }
 
 void VideoManagerInitTest::_testQmlReadyBeforeGstReady()

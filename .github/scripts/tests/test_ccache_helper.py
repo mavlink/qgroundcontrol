@@ -156,6 +156,17 @@ class TestBuildSummaryMarkdown:
         md = build_summary_markdown(stats)
         assert "5 / 5 (100.0%)" in md
 
+    def test_size_and_cleanups(self):
+        stats = {"cache_size_kibibyte": 491520, "max_cache_size_kibibyte": 2097152, "cleanups_performed": 3}
+        md = build_summary_markdown(stats)
+        assert "| Cache size | 480 MiB / 2.0 GiB (23.4%) |" in md
+        assert "| Cleanups (LRU evictions) | 3 |" in md
+
+    def test_errors_row_only_when_nonzero(self):
+        assert "Errors" not in build_summary_markdown({"direct_cache_hit": 1})
+        md = build_summary_markdown({"missing_cache_file": 2, "internal_error": 1})
+        assert "| ⚠ Errors | 3 |" in md
+
 
 class TestResolveArch:
     """Tests for --target / --arch resolution."""
@@ -206,14 +217,17 @@ class TestCLI:
 
     def test_summary_without_ccache(self):
         with patch("ccache_helper.get_ccache_json_stats", return_value=None), \
+             patch("ccache_helper.get_ccache_compression_stats", return_value=None), \
              patch("ccache_helper.get_ccache_verbose_stats", return_value=None):
             assert main(["summary"]) == 0
 
     def test_summary_with_stats(self, tmp_path):
         stats = {"direct_cache_hit": 10, "preprocessed_cache_hit": 2, "cache_miss": 5}
         verbose = "cache hit (direct): 10\ncache miss: 5"
+        compression = "Compression ratio: 4.632 x     (78.4% space savings)"
         summary_file = tmp_path / "summary.md"
         with patch("ccache_helper.get_ccache_json_stats", return_value=stats), \
+             patch("ccache_helper.get_ccache_compression_stats", return_value=compression), \
              patch("ccache_helper.get_ccache_verbose_stats", return_value=verbose), \
              patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": str(summary_file)}):
             assert main(["summary"]) == 0
@@ -221,6 +235,7 @@ class TestCLI:
         assert "12 / 17" in content
         assert "<details>" in content
         assert "cache hit (direct): 10" in content
+        assert "Compression ratio: 4.632 x" in content
 
 
 class TestCacheScope:

@@ -46,14 +46,13 @@ if(mavlink_ADDED)
 
     # Generate lightweight MAVLinkEnums.h (enum typedefs only, no message pack/unpack code)
     # plus MAVLinkEnumsQml.{h,cc} exposing every enum via Q_NAMESPACE/Q_ENUM_NS for QML.
-    find_package(Python3 REQUIRED COMPONENTS Interpreter)
     set(MAVLINK_ENUMS_H "${CMAKE_BINARY_DIR}/MAVLinkEnums.h")
     set(MAVLINK_ENUMS_QML_H "${CMAKE_BINARY_DIR}/MAVLinkEnumsQml.h")
     set(MAVLINK_ENUMS_QML_CC "${CMAKE_BINARY_DIR}/MAVLinkEnumsQml.cc")
     set(MAVLINK_ENUMS_GENERATOR "${CMAKE_SOURCE_DIR}/tools/generators/mavlink_enums.py")
     add_custom_command(
         OUTPUT "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}"
-        COMMAND ${Python3_EXECUTABLE} "${MAVLINK_ENUMS_GENERATOR}" "${mavlink_BINARY_DIR}/include/mavlink"
+        COMMAND Python3::Interpreter "${MAVLINK_ENUMS_GENERATOR}" "${mavlink_BINARY_DIR}/include/mavlink"
                 "${MAVLINK_ENUMS_H}" "${MAVLINK_ENUMS_QML_H}" "${MAVLINK_ENUMS_QML_CC}"
         DEPENDS mavlink "${MAVLINK_ENUMS_GENERATOR}"
         COMMENT "Generating MAVLinkEnums.h + MAVLinkEnumsQml.{h,cc}"
@@ -79,7 +78,7 @@ if(mavlink_ADDED)
     set(MAVLINK_XML_DIR "${mavlink_SOURCE_DIR}/message_definitions/v1.0")
     add_custom_command(
         OUTPUT "${MAVLINK_INSTANCE_FIELDS_H}"
-        COMMAND ${Python3_EXECUTABLE} "${MAVLINK_INSTANCE_FIELDS_GENERATOR}"
+        COMMAND Python3::Interpreter "${MAVLINK_INSTANCE_FIELDS_GENERATOR}"
                 "${MAVLINK_XML_DIR}" "${QGC_MAVLINK_DIALECT}" "${MAVLINK_INSTANCE_FIELDS_H}"
         DEPENDS mavlink "${MAVLINK_INSTANCE_FIELDS_GENERATOR}"
         COMMENT "Generating MAVLinkInstanceFields.h"

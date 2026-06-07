@@ -26,6 +26,7 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libtool",
         "locales",
         "mold",
+        "nasm",
         "ninja-build",
         "patchelf",
         "pipx",
@@ -116,6 +117,7 @@ MACOS_PACKAGES: list[str] = [
     "pkgconf",
     "create-dmg",
     "mold",
+    "nasm",
 ]
 
 PIPX_PACKAGES: list[str] = [

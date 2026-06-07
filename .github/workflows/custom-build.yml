@@ -45,9 +45,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Enable custom build
-        uses: ./.github/actions/custom-build
-
       - name: Setup Build Environment
         uses: ./.github/actions/build-setup
         with:
@@ -64,6 +61,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
+          extra-args: -DQGC_CUSTOM_DIR=custom-example
 
       - name: Build
         uses: ./.github/actions/cmake-build

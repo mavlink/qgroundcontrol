@@ -73,10 +73,6 @@ endif()
 # ----------------------------------------------------------------------------
 # Settings Definition Resources
 # ----------------------------------------------------------------------------
-file(GLOB_RECURSE JSON_SETTINGS_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
-qt_add_resources(${CMAKE_PROJECT_NAME} json_app_settings
-    PREFIX "/json"
-    FILES ${JSON_SETTINGS_FILES}
-)
+qgc_add_json_resources(json_app_settings)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

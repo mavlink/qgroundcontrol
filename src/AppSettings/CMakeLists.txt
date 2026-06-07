@@ -1,5 +1,3 @@
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
-
 # ---------------------------------------------------------------------------
 # Code-generation: produce QML settings pages from JSON definitions
 # ---------------------------------------------------------------------------
@@ -34,32 +32,14 @@ set(_generated_qml_names
     Viewer3DSettings.qml
 )
 
-# Full paths in the build tree
-set(_generated_qml "")
-foreach(_name IN LISTS _generated_qml_names)
-    list(APPEND _generated_qml "${SETTINGS_QML_GEN_DIR}/${_name}")
-endforeach()
-
-add_custom_command(
-    OUTPUT  ${_generated_qml}
-    COMMAND ${Python3_EXECUTABLE} -m tools.generators.settings_qml.generate_pages
-            --output-dir "${SETTINGS_QML_GEN_DIR}"
-    DEPENDS ${_generator_sources} ${_page_definitions} ${_settings_metadata}
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    COMMENT "Generating QML settings pages from JSON definitions"
-    VERBATIM
+qgc_add_qml_codegen(GenerateSettingsQml
+    GENERATOR_MODULE tools.generators.settings_qml.generate_pages
+    OUTPUT_DIR       "${SETTINGS_QML_GEN_DIR}"
+    QML_NAMES        ${_generated_qml_names}
+    DEPENDS          ${_generator_sources} ${_page_definitions} ${_settings_metadata}
+    COMMENT          "Generating QML settings pages from JSON definitions"
 )
-
-add_custom_target(GenerateSettingsQml DEPENDS ${_generated_qml})
-
-# GENERATED suppresses qmlimportscanner reads of not-yet-existing files at configure time.
-foreach(_name IN LISTS _generated_qml_names)
-    set_source_files_properties("${SETTINGS_QML_GEN_DIR}/${_name}"
-        PROPERTIES
-            GENERATED TRUE
-            QT_RESOURCE_ALIAS "${_name}"
-    )
-endforeach()
+set(_generated_qml ${GenerateSettingsQml_OUTPUTS})
 
 # ---------------------------------------------------------------------------
 # QML module

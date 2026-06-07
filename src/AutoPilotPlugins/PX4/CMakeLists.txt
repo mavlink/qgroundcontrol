@@ -52,7 +52,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 # Code-generation: produce QML config pages from VehicleConfig.json definitions
 # ----------------------------------------------------------------------------
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(CONFIG_QML_GENERATOR_DIR "${CMAKE_SOURCE_DIR}/tools/generators/config_qml")
 set(CONFIG_PAGES_DIR         "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
@@ -73,33 +72,15 @@ set(_config_generated_qml_names
     SafetyComponent.qml
 )
 
-# Full paths in the build tree
-set(_config_generated_qml "")
-foreach(_name IN LISTS _config_generated_qml_names)
-    list(APPEND _config_generated_qml "${CONFIG_QML_GEN_DIR}/${_name}")
-endforeach()
-
-add_custom_command(
-    OUTPUT  ${_config_generated_qml}
-    COMMAND ${Python3_EXECUTABLE} -m tools.generators.config_qml.generate_pages
-            --pages-dir "${CONFIG_PAGES_DIR}"
-            --output-dir "${CONFIG_QML_GEN_DIR}"
-    DEPENDS ${_config_generator_sources} ${_config_page_definitions}
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    COMMENT "Generating QML config pages from VehicleConfig.json definitions"
-    VERBATIM
+qgc_add_qml_codegen(GenerateConfigQmlPX4
+    GENERATOR_MODULE tools.generators.config_qml.generate_pages
+    OUTPUT_DIR       "${CONFIG_QML_GEN_DIR}"
+    QML_NAMES        ${_config_generated_qml_names}
+    EXTRA_ARGS       --pages-dir "${CONFIG_PAGES_DIR}"
+    DEPENDS          ${_config_generator_sources} ${_config_page_definitions}
+    COMMENT          "Generating QML config pages from VehicleConfig.json definitions"
 )
-
-add_custom_target(GenerateConfigQmlPX4 DEPENDS ${_config_generated_qml})
-
-# GENERATED suppresses qmlimportscanner reads of not-yet-existing files at configure time.
-foreach(_name IN LISTS _config_generated_qml_names)
-    set_source_files_properties("${CONFIG_QML_GEN_DIR}/${_name}"
-        PROPERTIES
-            GENERATED TRUE
-            QT_RESOURCE_ALIAS "${_name}"
-    )
-endforeach()
+set(_config_generated_qml ${GenerateConfigQmlPX4_OUTPUTS})
 
 # ----------------------------------------------------------------------------
 # PX4 QML Module

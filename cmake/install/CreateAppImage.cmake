@@ -43,42 +43,26 @@ set(APPIMAGE_PATH "${QGC_APPIMAGE_BUILD_DIR}/${CMAKE_PROJECT_NAME}-${CMAKE_SYSTE
 # Helper Functions
 # ============================================================================
 
-# Download and cache build tools
+include("${CMAKE_CURRENT_LIST_DIR}/../modules/Download.cmake")
+
 # Usage: download_tool(VAR URL [EXPECTED_HASH hash])
 function(download_tool VAR URL)
     cmake_parse_arguments(_DT "" "EXPECTED_HASH" "" ${ARGN})
     cmake_path(GET URL FILENAME _name)
-    set(_dest "${QGC_APPIMAGE_BUILD_DIR}/tools/${_name}")
-    if(NOT EXISTS "${_dest}")
-        file(MAKE_DIRECTORY "${QGC_APPIMAGE_BUILD_DIR}/tools")
-        message(STATUS "QGC: Downloading ${_name} to ${_dest}")
-        set(_download_args
-            DOWNLOAD "${URL}" "${_dest}"
-            STATUS _status
-            TLS_VERIFY ON
-            INACTIVITY_TIMEOUT 30
-            TIMEOUT 300
-        )
-        if(_DT_EXPECTED_HASH)
-            list(APPEND _download_args EXPECTED_HASH "${_DT_EXPECTED_HASH}")
-        endif()
-        set(_max_attempts 3)
-        set(_attempt 1)
-        while(_attempt LESS_EQUAL _max_attempts)
-            file(${_download_args})
-            list(GET _status 0 _result)
-            if(_result EQUAL 0)
-                break()
-            endif()
-            if(_attempt EQUAL _max_attempts)
-                message(FATAL_ERROR "Failed to download ${URL} to ${_dest}: ${_status}")
-            endif()
-            message(WARNING "QGC: Download attempt ${_attempt}/${_max_attempts} failed for ${_name}: ${_status}. Retrying...")
-            file(REMOVE "${_dest}")
-            math(EXPR _attempt "${_attempt} + 1")
-        endwhile()
-        file(CHMOD "${_dest}" FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    set(_args
+        FILENAME "${_name}"
+        DESTINATION_DIR "${QGC_APPIMAGE_BUILD_DIR}/tools"
+        RESULT_VAR _dest
+        URLS "${URL}"
+        TIMEOUT 300
+        INACTIVITY_TIMEOUT 30
+        LOG_TAG "QGC"
+    )
+    if(_DT_EXPECTED_HASH)
+        list(APPEND _args EXPECTED_HASH "${_DT_EXPECTED_HASH}")
     endif()
+    qgc_resilient_download(${_args})
+    file(CHMOD "${_dest}" FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
     set(${VAR}_PATH "${_dest}" PARENT_SCOPE)
 endfunction()
 

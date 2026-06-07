@@ -19,7 +19,7 @@ if(NOT QGC_ENABLE_COVERAGE)
 endif()
 
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(WARNING "Code coverage requires Debug build, but CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
+    message(WARNING "QGC: Code coverage requires Debug build, but CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}")
     return()
 endif()
 
@@ -57,11 +57,11 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     endif()
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    message(WARNING "Code coverage not supported for MSVC. Use Visual Studio Enterprise or OpenCppCoverage.")
+    message(WARNING "QGC: Code coverage not supported for MSVC. Use Visual Studio Enterprise or OpenCppCoverage.")
     return()
 
 else()
-    message(WARNING "Code coverage not supported for compiler: ${CMAKE_CXX_COMPILER_ID}")
+    message(WARNING "QGC: Code coverage not supported for compiler: ${CMAKE_CXX_COMPILER_ID}")
     return()
 endif()
 

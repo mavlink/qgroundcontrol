@@ -38,6 +38,23 @@ class ArchiveResult:
     extension: str
 
 
+def _curl_cmd(url: str, dest: Path) -> list[str]:
+    return [
+        "curl",
+        "-fsSL",
+        "--retry",
+        "5",
+        "--retry-delay",
+        "2",
+        "--retry-all-errors",
+        "--max-time",
+        "300",
+        "-o",
+        str(dest),
+        url,
+    ]
+
+
 def run_command(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     """Run *cmd* via common.proc.run_captured, printing stdout/stderr on failure.
 
@@ -228,7 +245,7 @@ class GStreamerArchiver:
     def _install_aws_cli_windows(self) -> None:
         """Install AWS CLI on Windows via MSI."""
         installer_path = self.output_dir / "AWSCLIV2.msi"
-        run_command(["curl", "-o", str(installer_path), "https://awscli.amazonaws.com/AWSCLIV2.msi"])
+        run_command(_curl_cmd("https://awscli.amazonaws.com/AWSCLIV2.msi", installer_path))
         run_command(["msiexec.exe", "/i", str(installer_path), "/quiet"])
         aws_path = "/c/Program Files/Amazon/AWSCLIV2"
         os.environ["PATH"] = f"{aws_path};{os.environ.get('PATH', '')}"
@@ -239,12 +256,7 @@ class GStreamerArchiver:
         installer_zip = self.output_dir / "awscliv2.zip"
         installer_dir = self.output_dir / "aws"
         run_command(
-            [
-                "curl",
-                "-o",
-                str(installer_zip),
-                f"https://awscli.amazonaws.com/awscli-exe-linux-{arch}.zip",
-            ]
+            _curl_cmd(f"https://awscli.amazonaws.com/awscli-exe-linux-{arch}.zip", installer_zip)
         )
         run_command(["unzip", "-q", str(installer_zip), "-d", str(self.output_dir)])
         run_command(["sudo", str(installer_dir / "install")])
@@ -268,7 +280,7 @@ class GStreamerArchiver:
     def _install_aws_cli_macos(self) -> None:
         """Install AWS CLI on macOS via pkg installer."""
         installer_pkg = self.output_dir / "AWSCLIV2.pkg"
-        run_command(["curl", "-o", str(installer_pkg), "https://awscli.amazonaws.com/AWSCLIV2.pkg"])
+        run_command(_curl_cmd("https://awscli.amazonaws.com/AWSCLIV2.pkg", installer_pkg))
         run_command(["sudo", "installer", "-pkg", str(installer_pkg), "-target", "/"])
 
     def write_github_output(self) -> None:

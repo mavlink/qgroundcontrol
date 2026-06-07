@@ -59,7 +59,7 @@ void AdditionalTransitionsCoverageTest::_testQGCEventTransitionMatchesEvent()
     auto* targetState = new FunctionState(QStringLiteral("Target"), &machine, [&targetReached]() {
         targetReached = true;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     sourceState->addTransition(new QGCEventTransition(&watchedObject, QEvent::Timer, targetState));
     targetState->addTransition(targetState, &QGCState::advance, finalState);
@@ -92,7 +92,7 @@ void AdditionalTransitionsCoverageTest::_testQGCEventTransitionGuardBlocksThenFa
     auto* fallbackState = new FunctionState(QStringLiteral("Fallback"), &machine, [&fallbackStateReached]() {
         fallbackStateReached = true;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     sourceState->addTransition(new QGCEventTransition(
         &watchedObject, QEvent::Timer, blockedState,

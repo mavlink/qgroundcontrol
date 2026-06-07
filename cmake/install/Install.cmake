@@ -195,7 +195,7 @@ elseif(MACOS)
             NAME create-dmg
             GITHUB_REPOSITORY create-dmg/create-dmg
             GIT_TAG v1.2.3
-            DOWNLOAD_ONLY
+            DOWNLOAD_ONLY YES
         )
         set(CREATE_DMG_PROGRAM "${create-dmg_SOURCE_DIR}/create-dmg")
     endif()

@@ -93,9 +93,19 @@ runs:
           --archives "${QT_ARCHIVES}" \
           --aqt-source "${QT_AQT_SOURCE}"
 
+    - name: Re-check Qt cache before save
+      id: qt-presave
+      if: steps.qt-cache.outputs.cache-hit != 'true' && inputs.target != 'ios' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      uses: actions/cache/restore@v5
+      continue-on-error: true
+      with:
+        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
+        key: ${{ steps.qt-cache.outputs.cache-primary-key }}
+        lookup-only: true
+
     # Forks can't write to the parent repo's cache (token is read-only), so skip the save attempt there to avoid noisy warnings. Same-repo PRs save normally.
     - name: Save Qt cache
-      if: steps.qt-cache.outputs.cache-hit != 'true' && inputs.target != 'ios' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      if: steps.qt-cache.outputs.cache-hit != 'true' && steps.qt-presave.outputs.cache-hit != 'true' && inputs.target != 'ios' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
       uses: actions/cache/save@v5
       with:
         path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
