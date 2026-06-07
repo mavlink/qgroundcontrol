@@ -241,6 +241,9 @@ private:
     void _sendADSBVehicles();
     void _sendGeneralMetaData();
     void _sendRemoteIDArmStatus();
+    void _sendEscInfo();
+    void _sendEscStatus();
+    void _sendRadioStatus();
     void _sendAvailableModesMonitor();
     void _sendAttitudeQuaternion();
     void _sendAttitudeTarget();

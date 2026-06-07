@@ -6,6 +6,7 @@ import QGroundControl.Controls
 
 Item {
     id:             control
+    objectName:     "toolbar_escIndicator"
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          escIndicatorRow.width
