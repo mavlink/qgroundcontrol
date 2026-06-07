@@ -259,6 +259,15 @@
             "keywords": "token,api key,tianditu"
         },
         {
+            "name": "linzToken",
+            "shortDesc": "Personal API token for accessing LINZ Basemaps map tiles.",
+            "longDesc": "Your personal access token for LINZ Basemaps",
+            "type": "string",
+            "default": "",
+            "label": "LINZ",
+            "keywords": "token,api key,linz"
+        },
+        {
             "name": "mapboxToken",
             "shortDesc": "Personal API token for accessing Mapbox map tiles and styling.",
             "longDesc": "Your personal access token for Mapbox maps",
@@ -297,7 +306,7 @@
         {
             "name": "customURL",
             "shortDesc": "URL pattern with {x}, {y}, {z} substitutions for a custom map tile server.",
-            "longDesc": "URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=d01ev80nqcjxddfvc6amyvkk1ka",
+            "longDesc": "URL for X Y Z map with {x} {y} {z} or {zoom} substitutions. Eg: https://basemaps.linz.govt.nz/v1/tiles/aerial/EPSG:3857/{z}/{x}/{y}.png?api=YOUR_LINZ_API_KEY",
             "type": "string",
             "default": "",
             "label": "Server URL",

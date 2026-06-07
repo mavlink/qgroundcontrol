@@ -30,12 +30,48 @@ QString placeholders(int n)
     return out;
 }
 
-void applySqlitePragmas(QSqlDatabase& db)
+void applySqlitePragmas(QSqlDatabase& db, qint64 mmapSize, qint64 cacheSizeKb, int pageSize)
 {
     QSqlQuery q(db);
+    // page_size only binds on a not-yet-created DB and must precede journal_mode=WAL;
+    // SQLite silently ignores it on an existing DB (would need VACUUM to change).
+    if (pageSize > 0) {
+        q.exec(QStringLiteral("PRAGMA page_size=%1").arg(pageSize));
+    }
+    // auto_vacuum must be set before journal_mode=WAL to take effect on a fresh DB;
+    // on an existing DB SQLite silently ignores it unless followed by a full VACUUM.
+    q.exec(QStringLiteral("PRAGMA auto_vacuum=INCREMENTAL"));
     q.exec(QStringLiteral("PRAGMA journal_mode=WAL"));
     q.exec(QStringLiteral("PRAGMA synchronous=NORMAL"));
     q.exec(QStringLiteral("PRAGMA foreign_keys=ON"));
+    q.exec(QStringLiteral("PRAGMA cache_size=%1").arg(cacheSizeKb));
+    q.exec(QStringLiteral("PRAGMA temp_store=MEMORY"));
+    // mmap_size reserves address space per connection; keep it modest by default and
+    // raise it only for large read-heavy DBs (e.g. the tile cache) via the argument.
+    if (mmapSize > 0) {
+        q.exec(QStringLiteral("PRAGMA mmap_size=%1").arg(mmapSize));
+    }
+}
+
+bool walCheckpointTruncate(QSqlDatabase& db)
+{
+    QSqlQuery q(db);
+    return q.exec(QStringLiteral("PRAGMA wal_checkpoint(TRUNCATE)"));
+}
+
+bool runOptimize(QSqlDatabase& db)
+{
+    QSqlQuery q(db);
+    return q.exec(QStringLiteral("PRAGMA optimize"));
+}
+
+bool incrementalVacuum(QSqlDatabase& db, int pages)
+{
+    QSqlQuery q(db);
+    const QString sql = (pages > 0)
+        ? QStringLiteral("PRAGMA incremental_vacuum(%1)").arg(pages)
+        : QStringLiteral("PRAGMA incremental_vacuum");
+    return q.exec(sql);
 }
 
 std::optional<int> userVersion(QSqlDatabase& db)
@@ -57,7 +93,7 @@ bool setUserVersion(QSqlDatabase& db, int v)
 
 std::atomic<int> ScopedConnection::s_connId{0};
 
-ScopedConnection::ScopedConnection(const QString& dbPath, bool readOnly, const QString& prefix)
+ScopedConnection::ScopedConnection(const QString& dbPath, bool readOnly, const QString& prefix, qint64 mmapSize)
 {
     if (dbPath.isEmpty()) {
         return;
@@ -67,12 +103,15 @@ ScopedConnection::ScopedConnection(const QString& dbPath, bool readOnly, const Q
 
     QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), _connName);
     db.setDatabaseName(dbPath);
+    // Wait out a contended WAL writer lock instead of failing with SQLITE_BUSY.
+    QString connectOptions = QStringLiteral("QSQLITE_BUSY_TIMEOUT=5000");
     if (readOnly) {
-        db.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY"));
+        connectOptions += QStringLiteral(";QSQLITE_OPEN_READONLY");
     }
+    db.setConnectOptions(connectOptions);
 
     if (db.open()) {
-        applySqlitePragmas(db);
+        applySqlitePragmas(db, mmapSize);
         _valid = true;
     }
 }

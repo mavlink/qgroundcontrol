@@ -1,46 +1,81 @@
 #include "MapProvider.h"
+
 #include <QGCLoggingCategory.h>
-
-#include "QGCTileSet.h"
-
 #include <QtCore/QLocale>
 #include <QtCore/QUrl>
+#include <QtCore/QtMath>
 #include <QtLocation/private/qgeomaptype_p.h>
+#include <cmath>
+
+#include "AppSettings.h"
+#include "Fact.h"
+#include "QGCTileSet.h"
+#include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(MapProviderLog, "QtLocationPlugin.MapProvider")
 
-// MapProvider::MapStyle mirrors QGeoMapType::MapStyle to keep the public
-// header free of <QtLocation/private/qgeomaptype_p.h>. Catch drift at compile
-// time so the two enums never disagree.
-static_assert(static_cast<int>(MapProvider::NoMap)            == static_cast<int>(QGeoMapType::NoMap));
-static_assert(static_cast<int>(MapProvider::StreetMap)        == static_cast<int>(QGeoMapType::StreetMap));
-static_assert(static_cast<int>(MapProvider::SatelliteMapDay)  == static_cast<int>(QGeoMapType::SatelliteMapDay));
-static_assert(static_cast<int>(MapProvider::SatelliteMapNight)== static_cast<int>(QGeoMapType::SatelliteMapNight));
-static_assert(static_cast<int>(MapProvider::TerrainMap)       == static_cast<int>(QGeoMapType::TerrainMap));
-static_assert(static_cast<int>(MapProvider::HybridMap)        == static_cast<int>(QGeoMapType::HybridMap));
-static_assert(static_cast<int>(MapProvider::TransitMap)       == static_cast<int>(QGeoMapType::TransitMap));
-static_assert(static_cast<int>(MapProvider::GrayStreetMap)    == static_cast<int>(QGeoMapType::GrayStreetMap));
-static_assert(static_cast<int>(MapProvider::PedestrianMap)    == static_cast<int>(QGeoMapType::PedestrianMap));
-static_assert(static_cast<int>(MapProvider::CarNavigationMap) == static_cast<int>(QGeoMapType::CarNavigationMap));
-static_assert(static_cast<int>(MapProvider::CycleMap)         == static_cast<int>(QGeoMapType::CycleMap));
-static_assert(static_cast<int>(MapProvider::CustomMap)        == static_cast<int>(QGeoMapType::CustomMap));
+// MapProvider::MapStyle mirrors QGeoMapType::MapStyle so the public header stays
+// free of <QtLocation/private/qgeomaptype_p.h>. Catch any enumerator drift here
+// at compile time.
+static_assert(static_cast<int>(MapProvider::NoMap)             == static_cast<int>(QGeoMapType::NoMap));
+static_assert(static_cast<int>(MapProvider::StreetMap)         == static_cast<int>(QGeoMapType::StreetMap));
+static_assert(static_cast<int>(MapProvider::SatelliteMapDay)   == static_cast<int>(QGeoMapType::SatelliteMapDay));
+static_assert(static_cast<int>(MapProvider::SatelliteMapNight) == static_cast<int>(QGeoMapType::SatelliteMapNight));
+static_assert(static_cast<int>(MapProvider::TerrainMap)        == static_cast<int>(QGeoMapType::TerrainMap));
+static_assert(static_cast<int>(MapProvider::HybridMap)         == static_cast<int>(QGeoMapType::HybridMap));
+static_assert(static_cast<int>(MapProvider::TransitMap)        == static_cast<int>(QGeoMapType::TransitMap));
+static_assert(static_cast<int>(MapProvider::GrayStreetMap)     == static_cast<int>(QGeoMapType::GrayStreetMap));
+static_assert(static_cast<int>(MapProvider::PedestrianMap)     == static_cast<int>(QGeoMapType::PedestrianMap));
+static_assert(static_cast<int>(MapProvider::CarNavigationMap)  == static_cast<int>(QGeoMapType::CarNavigationMap));
+static_assert(static_cast<int>(MapProvider::CycleMap)          == static_cast<int>(QGeoMapType::CycleMap));
+static_assert(static_cast<int>(MapProvider::CustomMap)         == static_cast<int>(QGeoMapType::CustomMap));
 
 // QtLocation expects MapIds to start at 1 and be sequential.
 int MapProvider::_mapIdIndex = 1;
 
-MapProvider::MapProvider(
-    const QString &mapName,
-    const QString &referrer,
-    const QString &imageFormat,
-    quint32 averageSize,
-    MapStyle mapStyle)
-    : _mapName(mapName)
-    , _referrer(referrer)
-    , _imageFormat(imageFormat)
-    , _averageSize(averageSize)
-    , _mapStyle(mapStyle)
-    , _language(!QLocale::system().uiLanguages().isEmpty() ? QLocale::system().uiLanguages().constFirst() : "en")
-    , _mapId(_mapIdIndex++)
+AppSettings* MapProvider::appSettings()
+{
+    return SettingsManager::instance()->appSettings();
+}
+
+QString MapProvider::factString(const Fact* fact)
+{
+    return fact ? fact->rawValue().toString() : QString();
+}
+
+bool MapProvider::isValidLongitude(double lon)
+{
+    return (lon >= -180.0) && (lon <= 180.0);
+}
+
+bool MapProvider::isValidLatitude(double lat)
+{
+    return (lat >= -90.0) && (lat <= 90.0);
+}
+
+bool MapProvider::isValidZoom(int zoom)
+{
+    return (zoom >= 0) && (zoom <= QGC_MAX_MAP_ZOOM);
+}
+
+bool MapProvider::isValidTileCoordinate(int x, int y, int zoom) const
+{
+    if (!isValidZoom(zoom)) {
+        return false;
+    }
+    const int maxTile = (1 << zoom) - 1;
+    return (x >= 0) && (x <= maxTile) && (y >= 0) && (y <= maxTile);
+}
+
+MapProvider::MapProvider(const QString& mapName, const QString& referrer, const QString& imageFormat,
+                         quint32 averageSize, MapStyle mapStyle)
+    : _mapName(mapName),
+      _referrer(referrer),
+      _imageFormat(imageFormat),
+      _averageSize(averageSize),
+      _mapStyle(mapStyle),
+      _language(!QLocale::system().uiLanguages().isEmpty() ? QLocale::system().uiLanguages().constFirst() : "en"),
+      _mapId(_mapIdIndex++)
 {
     // qCDebug(MapProviderLog) << Q_FUNC_INFO << this << _mapId;
 }
@@ -71,9 +106,30 @@ QString MapProvider::getImageFormat(QByteArrayView image) const
         return QStringLiteral("jpg");
     }
 
+    if (image.size() >= 12) {
+        static constexpr QByteArrayView riffSignature("RIFF");
+        static constexpr QByteArrayView webpSignature("WEBP");
+        if (image.startsWith(riffSignature) && QByteArrayView(image.data() + 8, 4).startsWith(webpSignature)) {
+            return QStringLiteral("webp");
+        }
+    }
+
     static constexpr QByteArrayView gifSignature("\x47\x49\x46\x38");
     if (image.startsWith(gifSignature)) {
         return QStringLiteral("gif");
+    }
+
+    if (image.size() >= 12) {
+        const char* d = image.data();
+        if (d[4] == 'f' && d[5] == 't' && d[6] == 'y' && d[7] == 'p' && d[8] == 'a' && d[9] == 'v' && d[10] == 'i' &&
+            (d[11] == 'f' || d[11] == 's')) {
+            return QStringLiteral("avif");
+        }
+    }
+
+    static constexpr QByteArrayView bmpSignature("BM");
+    if (image.startsWith(bmpSignature)) {
+        return QStringLiteral("bmp");
     }
 
     return _imageFormat;
@@ -82,6 +138,7 @@ QString MapProvider::getImageFormat(QByteArrayView image) const
 QString MapProvider::_tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) const
 {
     QString quadKey;
+    quadKey.reserve(levelOfDetail);
     for (int i = levelOfDetail; i > 0; i--) {
         char digit = '0';
         const int mask = 1 << (i - 1);
@@ -106,12 +163,17 @@ int MapProvider::_getServerNum(int x, int y, int max) const
 
 int MapProvider::long2tileX(double lon, int z) const
 {
+    lon = qBound(-180.0, std::isnan(lon) ? 0.0 : lon, 180.0);
+    z = qBound(0, z, QGC_MAX_MAP_ZOOM);
     return static_cast<int>(floor((lon + 180.0) / 360.0 * pow(2.0, z)));
 }
 
 int MapProvider::lat2tileY(double lat, int z) const
 {
-    return static_cast<int>(floor((1.0 - log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) / 2.0 * pow(2.0, z)));
+    lat = qBound(-QGC_MAX_MERCATOR_LATITUDE, std::isnan(lat) ? 0.0 : lat, QGC_MAX_MERCATOR_LATITUDE);
+    z = qBound(0, z, QGC_MAX_MAP_ZOOM);
+    return static_cast<int>(
+        floor((1.0 - log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) / 2.0 * pow(2.0, z)));
 }
 
 double MapProvider::tileX2long(int x, int z) const
@@ -125,8 +187,7 @@ double MapProvider::tileY2lat(int y, int z) const
     return qRadiansToDegrees(std::atan(std::sinh(n)));
 }
 
-QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon,
-                                     double topleftLat, double bottomRightLon,
+QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon,
                                      double bottomRightLat) const
 {
     QGCTileSet set;
@@ -135,10 +196,16 @@ QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon,
     set.tileX1 = long2tileX(bottomRightLon, zoom);
     set.tileY1 = lat2tileY(bottomRightLat, zoom);
 
-    set.tileCount = (static_cast<quint64>(set.tileX1) -
-                     static_cast<quint64>(set.tileX0) + 1) *
-                    (static_cast<quint64>(set.tileY1) -
-                     static_cast<quint64>(set.tileY0) + 1);
+    // Guard against an inverted bbox: an unsigned subtraction with tileX1 < tileX0
+    // (or tileY1 < tileY0) would underflow to ~2^64 and report a bogus tile count.
+    if ((set.tileX1 < set.tileX0) || (set.tileY1 < set.tileY0)) {
+        set.tileCount = 0;
+        set.tileSize = 0;
+        return set;
+    }
+
+    set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) *
+                    (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
 
     set.tileSize = getAverageSize() * set.tileCount;
     return set;

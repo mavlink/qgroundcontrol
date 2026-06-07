@@ -3,6 +3,7 @@
 #include <QtCore/QtMath>
 
 #include "MapProvider.h"
+#include "MockMapProvider.h"
 #include "QGCTileSet.h"
 
 class TestableMapProvider : public MapProvider
@@ -12,17 +13,13 @@ public:
                                  const QString& imageFormat = QStringLiteral("png"),
                                  quint32 avgSize = QGC_AVERAGE_TILE_SIZE)
         : MapProvider(name, QString(), imageFormat, avgSize, MapProvider::CustomMap)
-    {
-    }
+    {}
 
     using MapProvider::_getServerNum;
     using MapProvider::_tileXYToQuadKey;
 
 private:
-    QString _getURL(int, int, int) const override
-    {
-        return {};
-    }
+    QString _getURL(int, int, int) const override { return {}; }
 };
 
 // --- Image format detection ---
@@ -206,9 +203,27 @@ void MapProviderTest::_testGettersReturnConstructorValues()
     QCOMPARE(p.getMapName(), QStringLiteral("MyMap"));
     QCOMPARE(p.getAverageSize(), static_cast<quint32>(7777));
     QCOMPARE(p.getMapStyle(), MapProvider::CustomMap);
-    QVERIFY(!p.isElevationProvider());
-    QVERIFY(!p.isBingProvider());
     QVERIFY(p.getMapId() > 0);
+}
+
+// --- Tile URL dispatch (via MockMapProvider) ---
+
+void MapProviderTest::_testGetTileURLDispatchesToGetURL()
+{
+    MockMapProvider p;
+    const QUrl url = p.getTileURL(3, 5, 7);
+    QCOMPARE(p.getURLCallCount(), 1);
+    QVERIFY(url.isValid());
+    QCOMPARE(url, QUrl(QStringLiteral("https://mock.test/tile/7/3/5.png")));
+}
+
+void MapProviderTest::_testGetTileURLEmptyReturnsInvalid()
+{
+    MockMapProvider p;
+    p.setShouldReturnEmpty(true);
+    const QUrl url = p.getTileURL(1, 2, 3);
+    QCOMPARE(p.getURLCallCount(), 1);
+    QVERIFY(url.isEmpty());
 }
 
 UT_REGISTER_TEST(MapProviderTest, TestLabel::Unit)

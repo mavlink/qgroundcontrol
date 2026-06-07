@@ -1,5 +1,6 @@
 #include "UrlFactoryTest.h"
 
+#include "BingMapProvider.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCTileSet.h"
@@ -71,7 +72,8 @@ void UrlFactoryTest::_testMapIdFromInvalidType()
 void UrlFactoryTest::_testProviderTypeFromInvalidId()
 {
     QVERIFY(UrlFactory::getProviderTypeFromQtMapId(-1).isEmpty());
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("map id not found:"));
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg,
+                     QRegularExpression("provider not found from id:"));
     QVERIFY(UrlFactory::getProviderTypeFromQtMapId(99999).isEmpty());
     verifyExpectedLogMessage();
 }
@@ -98,16 +100,50 @@ void UrlFactoryTest::_testProviderTypeFromHashRoundtrip()
 
 void UrlFactoryTest::_testHashFromInvalidType()
 {
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found for type:"));
     QCOMPARE(UrlFactory::hashFromProviderType(QString()), -1);
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
+    QCOMPARE(UrlFactory::hashFromProviderType(QStringLiteral("NoSuchProvider")), -1);
     verifyExpectedLogMessage();
 }
 
 void UrlFactoryTest::_testProviderTypeFromInvalidHash()
 {
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found from hash:"));
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg,
+                     QRegularExpression("provider not found from hash:"));
     QVERIFY(UrlFactory::providerTypeFromHash(0).isEmpty());
     verifyExpectedLogMessage();
+}
+
+void UrlFactoryTest::_testRetinaTileHashDisjointFrom1x()
+{
+    // In a headless unit test useRetinaTiles() is false (no QGuiApplication DPR > 1),
+    // so getTileHash() yields the 1x hash. The @2x cache key reserves a disjoint
+    // hash space by adding kRetinaHashOffset (1e9) to the provider-hash field, per
+    // QGCMapUrlEngine.cpp. Reproduce that here to assert the spaces never collide and
+    // both decode back to the same provider.
+    constexpr int kRetinaHashOffset = 1000000000;
+
+    const int x = 100;
+    const int y = 200;
+    const int z = 5;
+
+    const QString hash1x = UrlFactory::getTileHash(kBingRoad, x, y, z);
+    QCOMPARE(hash1x.length(), 29);
+
+    const int baseHash = UrlFactory::hashFromProviderType(kBingRoad);
+    QVERIFY(baseHash > 0);
+    const QString hash2x = QString::asprintf("%010d%08d%08d%03d", baseHash + kRetinaHashOffset, x, y, z);
+
+    // Disjoint: a 1x tile and its @2x counterpart never share a cache key.
+    QVERIFY(hash1x != hash2x);
+
+    // Both keys decode back to the same provider (offset is stripped on lookup).
+    QCOMPARE(UrlFactory::tileHashToType(hash1x), kBingRoad);
+    QCOMPARE(UrlFactory::tileHashToType(hash2x), kBingRoad);
+
+    // The retina key sorts above the entire 1x mapId range, guaranteeing no overlap
+    // with any other provider's 1x hash field.
+    QVERIFY(hash2x.left(10).toInt() >= kRetinaHashOffset);
 }
 
 // --- Tile hash encode/decode ---
@@ -131,8 +167,10 @@ void UrlFactoryTest::_testTileHashToTypeRoundtrip()
 
 void UrlFactoryTest::_testTileHashToTypeInvalid()
 {
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found from hash:"));
     QVERIFY(UrlFactory::tileHashToType(QStringLiteral("garbage")).isEmpty());
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg,
+                     QRegularExpression("provider not found from hash:"));
+    QVERIFY(UrlFactory::tileHashToType(QStringLiteral("0000000000garbagehash")).isEmpty());
     verifyExpectedLogMessage();
 }
 
@@ -169,7 +207,7 @@ void UrlFactoryTest::_testGetTileURLByType()
     const QUrl url = UrlFactory::getTileURL(kBingRoad, 301, 385, 10);
     QVERIFY(url.isValid());
     QVERIFY(!url.isEmpty());
-    QVERIFY(url.scheme().startsWith(QStringLiteral("http")));
+    QCOMPARE(url.scheme(), QStringLiteral("https"));
 }
 
 void UrlFactoryTest::_testGetTileURLByMapId()
@@ -179,7 +217,23 @@ void UrlFactoryTest::_testGetTileURLByMapId()
     const QUrl url = UrlFactory::getTileURL(id, 301, 385, 10);
     QVERIFY(url.isValid());
     QVERIFY(!url.isEmpty());
-    QVERIFY(url.scheme().startsWith(QStringLiteral("http")));
+    QCOMPARE(url.scheme(), QStringLiteral("https"));
+}
+
+void UrlFactoryTest::_testGetTileURLUsesLayerSlugNotName()
+{
+    // Regression: MapQuest/VWorld must interpolate the layer slug (_mapTypeId),
+    // not the display name (_mapName) which contains spaces.
+    const QUrl mapQuest = UrlFactory::getTileURL(QStringLiteral("MapQuest Map"), 5, 6, 4);
+    QVERIFY(!mapQuest.isEmpty());
+    QVERIFY(mapQuest.path().contains(QStringLiteral("/map/")));
+    QVERIFY(!mapQuest.toString().contains(QStringLiteral("MapQuest")));
+
+    // VWorld serves only Korea; x/y must fall in its valid range at this zoom.
+    const QUrl vworld = UrlFactory::getTileURL(QStringLiteral("VWorld Street Map"), 860, 400, 10);
+    QVERIFY(!vworld.isEmpty());
+    QVERIFY(vworld.toString().contains(QStringLiteral("/Base/")));
+    QVERIFY(!vworld.toString().contains(QStringLiteral("Street Map")));
 }
 
 void UrlFactoryTest::_testGetTileURLInvalidInputs()
@@ -200,7 +254,7 @@ void UrlFactoryTest::_testAverageSizeForKnownProviders()
 void UrlFactoryTest::_testAverageSizeForInvalidType()
 {
     expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
-    QCOMPARE(UrlFactory::averageSizeForType(QStringLiteral("Nonexistent")), QGC_AVERAGE_TILE_SIZE);
+    QCOMPARE(UrlFactory::averageSizeForType(QStringLiteral("NonexistentForAvgSize")), QGC_AVERAGE_TILE_SIZE);
     verifyExpectedLogMessage();
 }
 
@@ -306,7 +360,7 @@ void UrlFactoryTest::_testGetMapProviderValid()
     auto provider = UrlFactory::getMapProviderFromQtMapId(id);
     QVERIFY(provider != nullptr);
     QCOMPARE(provider->getMapName(), kBingRoad);
-    QVERIFY(provider->isBingProvider());
+    QVERIFY(std::dynamic_pointer_cast<const BingMapProvider>(provider) != nullptr);
 
     auto byType = UrlFactory::getMapProviderFromProviderType(kBingRoad);
     QVERIFY(byType != nullptr);
@@ -318,8 +372,49 @@ void UrlFactoryTest::_testGetMapProviderInvalid()
     QVERIFY(UrlFactory::getMapProviderFromQtMapId(-1) == nullptr);
     QVERIFY(UrlFactory::getMapProviderFromProviderType(QString()) == nullptr);
     expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
-    QVERIFY(UrlFactory::getMapProviderFromProviderType(QStringLiteral("Nonexistent")) == nullptr);
+    QVERIFY(UrlFactory::getMapProviderFromProviderType(QStringLiteral("NonexistentForProviderLookup")) == nullptr);
     verifyExpectedLogMessage();
+}
+
+void UrlFactoryTest::_testGetTileURLGoldenStrings()
+{
+    struct Golden
+    {
+        QString type;
+        QString expected;
+    };
+
+    const QList<Golden> cases = {
+        {QStringLiteral("Street Map"), QStringLiteral("https://tile.openstreetmap.org/10/301/385.png")},
+        {QStringLiteral("Statkart Topo"),
+         QStringLiteral("https://cache.kartverket.no/v1/wmts/1.0.0/topo4/default/webmercator/10/385/301.png")},
+        {QStringLiteral("Statkart Basemap"),
+         QStringLiteral(
+             "https://cache.kartverket.no/v1/wmts/1.0.0/norgeskart_bakgrunn/default/webmercator/10/385/301.png")},
+        {QStringLiteral("Svalbard Topo"),
+         QStringLiteral("https://geodata.npolar.no/arcgis/rest/services/Basisdata/NP_Basiskart_Svalbard_WMTS_3857/"
+                        "MapServer/WMTS/tile/1.0.0/Basisdata_NP_Basiskart_Svalbard_WMTS_3857/default/default028mm/"
+                        "10/385/301")},
+        {QStringLiteral("Eniro Topo"),
+         QStringLiteral("https://map.eniro.com/geowebcache/service/tms1.0.0/map/10/301/638.png")},
+        {QStringLiteral("MapQuest Map"), QStringLiteral("https://otile3.mqcdn.com/tiles/1.0.0/map/10/301/385.jpg")},
+        {QStringLiteral("MapQuest Sat"), QStringLiteral("https://otile3.mqcdn.com/tiles/1.0.0/sat/10/301/385.jpg")},
+        {QStringLiteral("Japan-GSI Contour"),
+         QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/std/10/301/385.png")},
+        {QStringLiteral("Japan-GSI Seamless"),
+         QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/10/301/385.jpg")},
+        {QStringLiteral("Japan-GSI Anaglyph"),
+         QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/anaglyphmap_color/10/301/385.png")},
+        {QStringLiteral("Japan-GSI Slope"),
+         QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/slopemap/10/301/385.png")},
+        {QStringLiteral("Japan-GSI Relief"),
+         QStringLiteral("https://cyberjapandata.gsi.go.jp/xyz/relief/10/301/385.png")},
+    };
+
+    for (const auto& c : cases) {
+        const QString actual = UrlFactory::getTileURL(c.type, 301, 385, 10).toString();
+        QCOMPARE(actual, c.expected);
+    }
 }
 
 UT_REGISTER_TEST(UrlFactoryTest, TestLabel::Unit)

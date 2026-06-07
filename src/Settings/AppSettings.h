@@ -39,6 +39,7 @@ public:
     DEFINE_SETTINGFACT(enforceChecklist)
     DEFINE_SETTINGFACT(enableMultiVehiclePanel)
     DEFINE_SETTINGFACT(tiandituToken)
+    DEFINE_SETTINGFACT(linzToken)
     DEFINE_SETTINGFACT(mapboxToken)
     DEFINE_SETTINGFACT(mapboxAccount)
     DEFINE_SETTINGFACT(mapboxStyle)

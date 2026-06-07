@@ -147,4 +147,41 @@ void QGCSqlHelperTest::_applySqlitePragmas()
     QCOMPARE(q.value(0).toInt(), 1);
 }
 
+void QGCSqlHelperTest::_execPreparedSuccess()
+{
+    QGCSqlHelper::ScopedConnection conn(QStringLiteral(":memory:"));
+    QVERIFY(conn.isValid());
+    QSqlQuery setup(conn.database());
+    QVERIFY(setup.exec(QStringLiteral("CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT)")));
+
+    QSqlQuery insert(conn.database());
+    QVERIFY(QGCSqlHelper::execPrepared(insert, QStringLiteral("INSERT INTO t(id, name) VALUES(?, ?)"), 1, QStringLiteral("alpha")));
+
+    QSqlQuery select(conn.database());
+    QVERIFY(QGCSqlHelper::execPrepared(select, QStringLiteral("SELECT name FROM t WHERE id = ?"), 1));
+    QVERIFY(select.next());
+    QCOMPARE(select.value(0).toString(), QStringLiteral("alpha"));
+}
+
+void QGCSqlHelperTest::_execPreparedPrepareFailure()
+{
+    QGCSqlHelper::ScopedConnection conn(QStringLiteral(":memory:"));
+    QVERIFY(conn.isValid());
+
+    QSqlQuery query(conn.database());
+    QVERIFY(!QGCSqlHelper::execPrepared(query, QStringLiteral("SELECT * FROM nonexistent WHERE id = ?"), 1));
+}
+
+void QGCSqlHelperTest::_execPreparedExecFailure()
+{
+    QGCSqlHelper::ScopedConnection conn(QStringLiteral(":memory:"));
+    QVERIFY(conn.isValid());
+    QSqlQuery setup(conn.database());
+    QVERIFY(setup.exec(QStringLiteral("CREATE TABLE t (id INTEGER PRIMARY KEY)")));
+
+    QSqlQuery insert(conn.database());
+    QVERIFY(QGCSqlHelper::execPrepared(insert, QStringLiteral("INSERT INTO t(id) VALUES(?)"), 1));
+    QVERIFY(!QGCSqlHelper::execPrepared(insert, QStringLiteral("INSERT INTO t(id) VALUES(?)"), 1));
+}
+
 UT_REGISTER_TEST(QGCSqlHelperTest, TestLabel::Unit, TestLabel::Utilities)

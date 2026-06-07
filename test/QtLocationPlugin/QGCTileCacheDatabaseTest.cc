@@ -3,7 +3,10 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QSet>
 #include <QtCore/QSettings>
+#include <QtCore/QTemporaryDir>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 
@@ -11,11 +14,10 @@
 #include "QGCMapUrlEngine.h"
 #include "QGCTile.h"
 #include "QGCTileCacheDatabase.h"
-#include <QtCore/QTemporaryDir>
 
 static const QString kFixedProviderType = QStringLiteral("Bing Road");
 
-std::unique_ptr<QGCTileCacheDatabase> QGCTileCacheDatabaseTest::_createInitializedDB(QTemporaryDir &tempDir)
+std::unique_ptr<QGCTileCacheDatabase> QGCTileCacheDatabaseTest::_createInitializedDB(QTemporaryDir& tempDir)
 {
     auto db = std::make_unique<QGCTileCacheDatabase>(tempDir.filePath("tiles.db"));
     if (!db->init() || !db->connectDB()) {
@@ -39,10 +41,10 @@ void QGCTileCacheDatabaseTest::_insertDownloadRecord(QGCTileCacheDatabase* db, q
 {
     QSqlQuery query(db->database());
     QVERIFY(query.prepare(
-        "INSERT OR IGNORE INTO TilesDownload(setID, hash, type, x, y, z, state) VALUES(?, ?, ?, ?, ?, ?, ?)"));
+        "INSERT OR IGNORE INTO TilesDownload(setID, hash, typeStr, x, y, z, state) VALUES(?, ?, ?, ?, ?, ?, ?)"));
     query.addBindValue(setID);
     query.addBindValue(hash);
-    query.addBindValue(0);
+    query.addBindValue(QStringLiteral("TestProvider"));
     query.addBindValue(0);
     query.addBindValue(0);
     query.addBindValue(1);
@@ -65,7 +67,8 @@ void QGCTileCacheDatabaseTest::_testInitWithValidPath()
 void QGCTileCacheDatabaseTest::_testInitWithEmptyPath()
 {
     // Expected: critical about missing cache directory
-    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtCriticalMsg, QRegularExpression("Could not find suitable cache directory"));
+    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtCriticalMsg,
+                     QRegularExpression("Could not find suitable cache directory"));
 
     const QString emptyPath;
     QGCTileCacheDatabase db(emptyPath);
@@ -120,6 +123,68 @@ void QGCTileCacheDatabaseTest::_testSaveTileAndGetTile()
     QCOMPARE(tile->format, format);
     QCOMPARE(tile->img, img);
     QCOMPARE(tile->type, kFixedProviderType);
+}
+
+void QGCTileCacheDatabaseTest::_testSaveTileBatch()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+
+    const QStringList providerTypes = UrlFactory::getProviderTypes();
+    QVERIFY(!providerTypes.isEmpty());
+    const QString type = providerTypes.first();
+
+    std::vector<QGCCacheTile> owned;
+    owned.reserve(3);
+    for (int i = 0; i < 3; ++i) {
+        owned.emplace_back(QStringLiteral("batch_hash_%1").arg(i), QByteArray("batch_tile_") + QByteArray::number(i),
+                           QStringLiteral("png"), type, QGCTileCacheDatabase::kInvalidTileSet);
+    }
+
+    QList<const QGCCacheTile*> tiles;
+    for (const QGCCacheTile& t : owned) {
+        tiles.append(&t);
+    }
+
+    QVERIFY(db->saveTileBatch(tiles));
+
+    for (const QGCCacheTile& t : owned) {
+        auto fetched = db->getTile(t.hash);
+        QVERIFY(fetched != nullptr);
+        QCOMPARE(fetched->img, t.img);
+        QCOMPARE(fetched->format, t.format);
+        QCOMPARE(fetched->type, type);
+    }
+}
+
+void QGCTileCacheDatabaseTest::_testSaveTileBatchEmpty()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db->saveTileBatch({}));
+}
+
+void QGCTileCacheDatabaseTest::_testSaveTileBatchDuplicateHash()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+
+    const QStringList providerTypes = UrlFactory::getProviderTypes();
+    QVERIFY(!providerTypes.isEmpty());
+    const QString type = providerTypes.first();
+
+    const QGCCacheTile first(QStringLiteral("dup_hash"), QByteArray("first_bytes"), QStringLiteral("png"), type,
+                             QGCTileCacheDatabase::kInvalidTileSet);
+    const QGCCacheTile second(QStringLiteral("dup_hash"), QByteArray("second_bytes"), QStringLiteral("png"), type,
+                              QGCTileCacheDatabase::kInvalidTileSet);
+
+    const QList<const QGCCacheTile*> tiles = {&first, &second};
+    QVERIFY(db->saveTileBatch(tiles));
+
+    // INSERT OR IGNORE on the hash column keeps the first write; the duplicate is ignored.
+    auto fetched = db->getTile(QStringLiteral("dup_hash"));
+    QVERIFY(fetched != nullptr);
+    QCOMPARE(fetched->img, QByteArray("first_bytes"));
 }
 
 void QGCTileCacheDatabaseTest::_testGetTileNotFound()
@@ -520,7 +585,7 @@ void QGCTileCacheDatabaseTest::_testOperationsAfterDisconnect()
     auto db = _createInitializedDB(tempDir);
     db->disconnectDB();
 
-    const char *categoryPattern = "QtLocationPlugin.QGCTileCacheDatabase";
+    const char* categoryPattern = "QtLocationPlugin.QGCTileCacheDatabase";
     const QRegularExpression disconnectedPattern(QStringLiteral("Database not connected"));
 
     expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
@@ -823,7 +888,16 @@ void QGCTileCacheDatabaseTest::_testDeleteBingNoTileTiles()
     QVERIFY(db->findTile(QStringLiteral("normal_tile")).has_value());
 
     QSettings settings;
-    settings.remove(QStringLiteral("_deleteBingNoTileTilesDone"));
+    const QString doneKey = QString::fromLatin1(QGCTileCacheDatabase::kBingNoTileDoneKey);
+    const QVariant savedDone = settings.value(doneKey);
+    const auto restoreDone = qScopeGuard([&settings, &doneKey, &savedDone]() {
+        if (savedDone.isValid()) {
+            settings.setValue(doneKey, savedDone);
+        } else {
+            settings.remove(doneKey);
+        }
+    });
+    settings.remove(doneKey);
 
     db->deleteBingNoTileTiles();
 
@@ -918,7 +992,7 @@ void QGCTileCacheDatabaseTest::_testSchemaVersionResetsLegacyDB()
 
     // Open with the versioned code — should detect legacy and reset
     QGCTileCacheDatabase db(path);
-    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtWarningMsg,
+    expectLogMessage("QtLocationPlugin.QGCTileDatabaseSchema", QtWarningMsg,
                      QRegularExpression(QStringLiteral(
                          "Legacy database detected \\(no schema version\\)\\. Discarding cached tiles and "
                          "rebuilding\\.")));
@@ -941,53 +1015,44 @@ void QGCTileCacheDatabaseTest::_testSchemaVersionResetsLegacyDB()
     QVERIFY(sets[0].defaultSet);
 }
 
-void QGCTileCacheDatabaseTest::_testSaveTileTypeStoredAsInteger()
+void QGCTileCacheDatabaseTest::_testSaveTileTypeStoredAsString()
 {
     QTemporaryDir tempDir;
     auto db = _createInitializedDB(tempDir);
 
-    const int expectedMapId = UrlFactory::getQtMapIdFromProviderType(kFixedProviderType);
-    QVERIFY(expectedMapId != -1);
-
-    const QString hash = QStringLiteral("type_int_test");
+    const QString hash = QStringLiteral("type_str_test");
     QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
-    // Verify the raw DB stores the type as an integer mapId, not a string
     {
         QSqlQuery query(db->database());
-        QVERIFY(query.prepare("SELECT type FROM Tiles WHERE hash = ?"));
+        QVERIFY(query.prepare("SELECT typeStr FROM Tiles WHERE hash = ?"));
         query.addBindValue(hash);
         QVERIFY(query.exec());
         QVERIFY(query.next());
-        QCOMPARE(query.value(0).toInt(), expectedMapId);
+        QCOMPARE(query.value(0).toString(), kFixedProviderType);
     }
 
-    // Verify getTile converts the integer back to the provider name string
     auto tile = db->getTile(hash);
     QVERIFY(tile != nullptr);
     QCOMPARE(tile->type, kFixedProviderType);
 }
 
-void QGCTileCacheDatabaseTest::_testCreateTileSetTypeStoredAsInteger()
+void QGCTileCacheDatabaseTest::_testCreateTileSetTypeStoredAsString()
 {
     QTemporaryDir tempDir;
     auto db = _createInitializedDB(tempDir);
 
-    const int expectedMapId = UrlFactory::getQtMapIdFromProviderType(kFixedProviderType);
-    QVERIFY(expectedMapId != -1);
-
-    const auto setID = db->createTileSet(QStringLiteral("TypeInt Set"), QStringLiteral("TestMap"), 37.0, -122.0, 36.0,
-                                         -121.0, 5, 5, kFixedProviderType, 100);
+    const auto setID = db->createTileSet(QStringLiteral("TypeStr Set"), kFixedProviderType, 37.0, -122.0, 36.0, -121.0,
+                                         5, 5, kFixedProviderType, 100);
     QVERIFY(setID.has_value());
 
-    // Verify TileSets.type stores the integer mapId
     const auto sets = db->getTileSets();
     bool found = false;
     for (const auto& rec : sets) {
         if (rec.setID == setID.value()) {
             found = true;
-            QCOMPARE(rec.type, expectedMapId);
+            QCOMPARE(rec.mapTypeStr, kFixedProviderType);
             break;
         }
     }
@@ -1044,7 +1109,7 @@ void QGCTileCacheDatabaseTest::_testTilesTableColumns()
                      query.value(4).toString(), query.value(5).toBool()});
     }
 
-    QCOMPARE(cols.size(), 7);
+    QCOMPARE(cols.size(), 12);
 
     auto findCol = [&](const QString& name) -> const ColInfo* {
         for (const auto& c : cols) {
@@ -1078,13 +1143,38 @@ void QGCTileCacheDatabaseTest::_testTilesTableColumns()
     QVERIFY(c);
     QCOMPARE(c->type, QStringLiteral("INTEGER"));
 
-    c = findCol(QStringLiteral("type"));
+    c = findCol(QStringLiteral("typeStr"));
     QVERIFY(c);
-    QCOMPARE(c->type, QStringLiteral("INTEGER"));
+    QCOMPARE(c->type, QStringLiteral("TEXT"));
 
     c = findCol(QStringLiteral("date"));
     QVERIFY(c);
     QCOMPARE(c->type, QStringLiteral("INTEGER"));
+    QCOMPARE(c->dflt, QStringLiteral("0"));
+
+    c = findCol(QStringLiteral("etag"));
+    QVERIFY(c);
+    QCOMPARE(c->type, QStringLiteral("TEXT"));
+
+    c = findCol(QStringLiteral("lastModified"));
+    QVERIFY(c);
+    QCOMPARE(c->type, QStringLiteral("TEXT"));
+
+    c = findCol(QStringLiteral("expiresAt"));
+    QVERIFY(c);
+    QCOMPARE(c->type, QStringLiteral("INTEGER"));
+    QCOMPARE(c->dflt, QStringLiteral("0"));
+
+    c = findCol(QStringLiteral("accessed"));
+    QVERIFY(c);
+    QCOMPARE(c->type, QStringLiteral("INTEGER"));
+    QVERIFY(c->notnull);
+    QCOMPARE(c->dflt, QStringLiteral("0"));
+
+    c = findCol(QStringLiteral("mustRevalidate"));
+    QVERIFY(c);
+    QCOMPARE(c->type, QStringLiteral("INTEGER"));
+    QVERIFY(c->notnull);
     QCOMPARE(c->dflt, QStringLiteral("0"));
 }
 
@@ -1112,7 +1202,7 @@ void QGCTileCacheDatabaseTest::_testTileSetsTableColumns()
                      query.value(4).toString(), query.value(5).toBool()});
     }
 
-    QCOMPARE(cols.size(), 13);
+    QCOMPARE(cols.size(), 12);
 
     auto findCol = [&](const QString& name) -> const ColInfo* {
         for (const auto& c : cols) {
@@ -1166,11 +1256,6 @@ void QGCTileCacheDatabaseTest::_testTileSetsTableColumns()
     QVERIFY(c);
     QCOMPARE(c->type, QStringLiteral("INTEGER"));
     QCOMPARE(c->dflt, QStringLiteral("3"));
-
-    c = findCol(QStringLiteral("type"));
-    QVERIFY(c);
-    QCOMPARE(c->type, QStringLiteral("INTEGER"));
-    QCOMPARE(c->dflt, QStringLiteral("-1"));
 
     c = findCol(QStringLiteral("numTiles"));
     QVERIFY(c);
@@ -1263,9 +1348,9 @@ void QGCTileCacheDatabaseTest::_testTilesDownloadTableColumns()
     QCOMPARE(c->type, QStringLiteral("TEXT"));
     QVERIFY(c->notnull);
 
-    c = findCol(QStringLiteral("type"));
+    c = findCol(QStringLiteral("typeStr"));
     QVERIFY(c);
-    QCOMPARE(c->type, QStringLiteral("INTEGER"));
+    QCOMPARE(c->type, QStringLiteral("TEXT"));
 
     c = findCol(QStringLiteral("x"));
     QVERIFY(c);
@@ -1300,9 +1385,15 @@ void QGCTileCacheDatabaseTest::_testIndexesExist()
     }
 
     const QStringList expected = {
-        QStringLiteral("idx_settiles_setid"),           QStringLiteral("idx_settiles_tileid"),
-        QStringLiteral("idx_settiles_unique"),          QStringLiteral("idx_tiles_date"),
-        QStringLiteral("idx_tilesdownload_setid_hash"), QStringLiteral("idx_tilesdownload_setid_state"),
+        QStringLiteral("idx_settiles_setid"),
+        QStringLiteral("idx_settiles_tileid"),
+        QStringLiteral("idx_settiles_unique"),
+        QStringLiteral("idx_tiles_accessed"),
+        QStringLiteral("idx_tiles_accessed_size"),
+        QStringLiteral("idx_tiles_date"),
+        QStringLiteral("idx_tilesdownload_setid_hash"),
+        QStringLiteral("idx_tilesdownload_setid_state"),
+        QStringLiteral("idx_tilesets_default"),
     };
 
     QCOMPARE(indexes.size(), expected.size());
@@ -1320,15 +1411,14 @@ void QGCTileCacheDatabaseTest::_testForeignKeyCascadeDelete()
     QVERIFY(UrlFactory::getQtMapIdFromProviderType(kFixedProviderType) != -1);
 
     const QString hash = QStringLiteral("fk_cascade_hash");
-    QVERIFY(
-        db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), kFixedProviderType,
-                     QGCTileCacheDatabase::kInvalidTileSet));
+    QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
 
     const auto tileID = db->findTile(hash);
     QVERIFY(tileID.has_value());
 
-    const auto setID = db->createTileSet(QStringLiteral("CascadeTestSet"), kFixedProviderType, 10.0, 20.0, 30.0,
-                                         40.0, 5, 5, kFixedProviderType, 1);
+    const auto setID = db->createTileSet(QStringLiteral("CascadeTestSet"), kFixedProviderType, 10.0, 20.0, 30.0, 40.0,
+                                         5, 5, kFixedProviderType, 1);
     QVERIFY(setID.has_value());
 
     _linkTileToSet(db.get(), tileID.value(), setID.value());
@@ -1360,6 +1450,242 @@ void QGCTileCacheDatabaseTest::_testForeignKeyCascadeDelete()
         auto tile = db->getTile(hash);
         QVERIFY(tile != nullptr);
     }
+}
+
+void QGCTileCacheDatabaseTest::_testSaveTileWithValidators()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+
+    const QString hash = QStringLiteral("validator_hash");
+    const QByteArray etag("\"abc123\"");
+    const QByteArray lastModified("Wed, 21 Oct 2015 07:28:00 GMT");
+    const qint64 expiresAt = 1893456000;
+
+    QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("body"), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet, etag, lastModified, expiresAt));
+
+    auto tile = db->getTile(hash);
+    QVERIFY(tile != nullptr);
+    QCOMPARE(tile->etag, etag);
+    QCOMPARE(tile->lastModified, lastModified);
+    QCOMPARE(tile->expiresAt, expiresAt);
+}
+
+void QGCTileCacheDatabaseTest::_testRefreshTileValidators()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+
+    const QString hash = QStringLiteral("refresh_hash");
+    QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("body"), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet, QByteArray("\"old\""), QByteArray(), 100));
+
+    const QByteArray newEtag("\"new-etag\"");
+    const qint64 newExpiry = 2000000000;
+    QVERIFY(db->refreshTileValidators(hash, newEtag, QByteArray("Thu, 01 Jan 2099 00:00:00 GMT"), newExpiry));
+
+    auto tile = db->getTile(hash);
+    QVERIFY(tile != nullptr);
+    QCOMPARE(tile->etag, newEtag);
+    QCOMPARE(tile->expiresAt, newExpiry);
+    QCOMPARE(tile->img, QByteArray("body"));
+}
+
+void QGCTileCacheDatabaseTest::_testMigrateV1ToV2PreservesTiles()
+{
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("v1.db");
+
+    // Build a v1 schema (no validator columns) with one cached tile and set user_version=1.
+    {
+        QSqlDatabase v1 = QSqlDatabase::addDatabase("QSQLITE", "v1_setup");
+        v1.setDatabaseName(path);
+        QVERIFY(v1.open());
+        QSqlQuery q(v1);
+        QVERIFY(
+            q.exec("CREATE TABLE Tiles (tileID INTEGER PRIMARY KEY NOT NULL, hash TEXT NOT NULL UNIQUE, format TEXT "
+                   "NOT NULL, tile BLOB NULL, size INTEGER, type INTEGER, date INTEGER DEFAULT 0)"));
+        QVERIFY(
+            q.exec("CREATE TABLE TileSets (setID INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL UNIQUE, typeStr "
+                   "TEXT, topleftLat REAL, topleftLon REAL, bottomRightLat REAL, bottomRightLon REAL, minZoom "
+                   "INTEGER, maxZoom INTEGER, type INTEGER, numTiles INTEGER, defaultSet INTEGER, date INTEGER)"));
+        QVERIFY(q.exec("CREATE TABLE SetTiles (setID INTEGER NOT NULL, tileID INTEGER NOT NULL)"));
+        QVERIFY(
+            q.exec("CREATE TABLE TilesDownload (setID INTEGER NOT NULL, hash TEXT NOT NULL, type INTEGER, x INTEGER, "
+                   "y INTEGER, z INTEGER, state INTEGER DEFAULT 0)"));
+        QVERIFY(q.exec("INSERT INTO TileSets(name, defaultSet, date) VALUES('Default Tile Set', 1, 0)"));
+        QVERIFY(q.exec(
+            "INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES('keep_hash', 'png', X'AA', 1, 0, 0)"));
+        QVERIFY(q.exec("INSERT INTO SetTiles(setID, tileID) VALUES(1, 1)"));
+        QVERIFY(q.exec("PRAGMA user_version = 1"));
+        v1.close();
+    }
+    QSqlDatabase::removeDatabase("v1_setup");
+
+    QGCTileCacheDatabase db(path);
+    QVERIFY(db.init());
+    QVERIFY(db.connectDB());
+
+    // In-place upgrade: the v1 tile must survive (no cache wipe).
+    QVERIFY(db.findTile(QStringLiteral("keep_hash")).has_value());
+
+    QSqlQuery query(db.database());
+    QVERIFY(query.exec("PRAGMA user_version"));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toInt(), QGCTileCacheDatabase::kSchemaVersion);
+
+    // New validator columns must now exist.
+    QSet<QString> columns;
+    QVERIFY(query.exec("PRAGMA table_info(Tiles)"));
+    while (query.next()) {
+        columns.insert(query.value(1).toString());
+    }
+    QVERIFY(columns.contains(QStringLiteral("etag")));
+    QVERIFY(columns.contains(QStringLiteral("lastModified")));
+    QVERIFY(columns.contains(QStringLiteral("expiresAt")));
+}
+
+void QGCTileCacheDatabaseTest::_testUpdateAllTileDownloadStatesFiltered()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+
+    const auto setID = db->findTileSetID(QStringLiteral("Default Tile Set"));
+    QVERIFY(setID.has_value());
+
+    _insertDownloadRecord(db.get(), setID.value(), QStringLiteral("pend"), QGCTile::StatePending);
+    _insertDownloadRecord(db.get(), setID.value(), QStringLiteral("down"), QGCTile::StateDownloading);
+
+    // Pause: only Downloading -> Paused; Pending stays untouched by this call.
+    QVERIFY(db->updateAllTileDownloadStates(setID.value(), QGCTile::StatePaused, QGCTile::StateDownloading));
+
+    auto stateOf = [&](const QString& hash) {
+        QSqlQuery q(db->database());
+        q.prepare("SELECT state FROM TilesDownload WHERE setID = ? AND hash = ?");
+        q.addBindValue(setID.value());
+        q.addBindValue(hash);
+        q.exec();
+        return q.next() ? q.value(0).toInt() : -1;
+    };
+
+    QCOMPARE(stateOf(QStringLiteral("down")), static_cast<int>(QGCTile::StatePaused));
+    QCOMPARE(stateOf(QStringLiteral("pend")), static_cast<int>(QGCTile::StatePending));
+
+    // Resume: Paused -> Pending.
+    QVERIFY(db->updateAllTileDownloadStates(setID.value(), QGCTile::StatePending, QGCTile::StatePaused));
+    QCOMPARE(stateOf(QStringLiteral("down")), static_cast<int>(QGCTile::StatePending));
+}
+
+void QGCTileCacheDatabaseTest::_testPruneCacheLruOrder()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+
+    const QByteArray data(100, 'L');
+
+    // Insert an old tile first, then a newer tile. By insertion date the old one
+    // would be evicted first (FIFO). Then access the old tile so true LRU must
+    // keep it and evict the un-accessed newer tile instead.
+    QVERIFY(db->saveTile(QStringLiteral("lru_old"), QStringLiteral("png"), data, kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+    QVERIFY(db->saveTile(QStringLiteral("lru_new"), QStringLiteral("png"), data, kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+
+    // Force the older row to have a smaller initial accessed value than the newer
+    // one, then bump the old tile so it becomes the most-recently-used.
+    {
+        QSqlQuery q(db->database());
+        QVERIFY(q.exec(QStringLiteral("UPDATE Tiles SET accessed = 1000 WHERE hash = 'lru_old'")));
+        QVERIFY(q.exec(QStringLiteral("UPDATE Tiles SET accessed = 2000 WHERE hash = 'lru_new'")));
+    }
+    QVERIFY(db->bumpTileAccessed(QStringLiteral("lru_old")));
+
+    // Prune just enough to evict a single 100-byte tile.
+    QVERIFY(db->pruneCache(100));
+
+    // The freshly-accessed old tile survives; the cold newer tile is evicted.
+    QVERIFY(db->findTile(QStringLiteral("lru_old")).has_value());
+    QVERIFY(!db->findTile(QStringLiteral("lru_new")).has_value());
+}
+
+void QGCTileCacheDatabaseTest::_testSaveTileMustRevalidate()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+
+    QVERIFY(db->saveTile(QStringLiteral("revalidate_yes"), QStringLiteral("png"), QByteArray("body"),
+                         kFixedProviderType, QGCTileCacheDatabase::kInvalidTileSet, QByteArray("\"e\""), QByteArray(),
+                         0, /*mustRevalidate*/ true));
+    QVERIFY(db->saveTile(QStringLiteral("revalidate_no"), QStringLiteral("png"), QByteArray("body"), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+
+    auto must = db->getTile(QStringLiteral("revalidate_yes"));
+    QVERIFY(must != nullptr);
+    QVERIFY(must->mustRevalidate);
+
+    auto plain = db->getTile(QStringLiteral("revalidate_no"));
+    QVERIFY(plain != nullptr);
+    QVERIFY(!plain->mustRevalidate);
+}
+
+void QGCTileCacheDatabaseTest::_testMigrateV2ToV3AddsColumns()
+{
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("v2.db");
+
+    // Build a v2 schema (validators present, no LRU/mustRevalidate) and set user_version=2.
+    {
+        QSqlDatabase v2 = QSqlDatabase::addDatabase("QSQLITE", "v2_setup");
+        v2.setDatabaseName(path);
+        QVERIFY(v2.open());
+        QSqlQuery q(v2);
+        QVERIFY(
+            q.exec("CREATE TABLE Tiles (tileID INTEGER PRIMARY KEY NOT NULL, hash TEXT NOT NULL UNIQUE, format TEXT "
+                   "NOT NULL, tile BLOB NULL, size INTEGER, type INTEGER, date INTEGER DEFAULT 0, etag TEXT, "
+                   "lastModified TEXT, expiresAt INTEGER DEFAULT 0)"));
+        QVERIFY(
+            q.exec("CREATE TABLE TileSets (setID INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL UNIQUE, typeStr "
+                   "TEXT, topleftLat REAL, topleftLon REAL, bottomRightLat REAL, bottomRightLon REAL, minZoom "
+                   "INTEGER, maxZoom INTEGER, type INTEGER, numTiles INTEGER, defaultSet INTEGER, date INTEGER)"));
+        QVERIFY(q.exec("CREATE TABLE SetTiles (setID INTEGER NOT NULL, tileID INTEGER NOT NULL)"));
+        QVERIFY(
+            q.exec("CREATE TABLE TilesDownload (setID INTEGER NOT NULL, hash TEXT NOT NULL, type INTEGER, x INTEGER, "
+                   "y INTEGER, z INTEGER, state INTEGER DEFAULT 0)"));
+        QVERIFY(q.exec("INSERT INTO TileSets(name, defaultSet, date) VALUES('Default Tile Set', 1, 0)"));
+        QVERIFY(
+            q.exec("INSERT INTO Tiles(hash, format, tile, size, type, date) "
+                   "VALUES('v2_hash', 'png', X'AA', 1, 0, 4242)"));
+        QVERIFY(q.exec("INSERT INTO SetTiles(setID, tileID) VALUES(1, 1)"));
+        QVERIFY(q.exec("PRAGMA user_version = 2"));
+        v2.close();
+    }
+    QSqlDatabase::removeDatabase("v2_setup");
+
+    QGCTileCacheDatabase db(path);
+    QVERIFY(db.init());
+    QVERIFY(db.connectDB());
+
+    // In-place upgrade: the v2 tile survives.
+    QVERIFY(db.findTile(QStringLiteral("v2_hash")).has_value());
+
+    QSqlQuery query(db.database());
+    QVERIFY(query.exec("PRAGMA user_version"));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toInt(), QGCTileCacheDatabase::kSchemaVersion);
+
+    QSet<QString> columns;
+    QVERIFY(query.exec("PRAGMA table_info(Tiles)"));
+    while (query.next()) {
+        columns.insert(query.value(1).toString());
+    }
+    QVERIFY(columns.contains(QStringLiteral("accessed")));
+    QVERIFY(columns.contains(QStringLiteral("mustRevalidate")));
+
+    // accessed must be backfilled from date so pre-v3 rows retain relative order.
+    QVERIFY(query.exec("SELECT accessed FROM Tiles WHERE hash = 'v2_hash'"));
+    QVERIFY(query.next());
+    QCOMPARE(query.value(0).toLongLong(), static_cast<qint64>(4242));
 }
 
 UT_REGISTER_TEST(QGCTileCacheDatabaseTest, TestLabel::Unit)

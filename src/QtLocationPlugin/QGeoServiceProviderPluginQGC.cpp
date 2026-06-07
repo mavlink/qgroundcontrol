@@ -36,15 +36,22 @@ QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEn
 QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {
+    if (!m_engine || (m_engine->thread() != QThread::currentThread())) {
+        if (error) {
+            *error = QGeoServiceProvider::ConnectionError;
+        }
+        if (errorString) {
+            *errorString = QStringLiteral("Geo service plugin engine unavailable or accessed from the wrong thread");
+        }
+        return nullptr;
+    }
+
     if (error) {
         *error = QGeoServiceProvider::NoError;
     }
     if (errorString) {
-        *errorString = "";
+        errorString->clear();
     }
-
-    Q_ASSERT(m_engine);
-    Q_ASSERT(m_engine->thread() == QThread::currentThread());
 
     QNetworkAccessManager *networkManager = m_engine->networkAccessManager();
 

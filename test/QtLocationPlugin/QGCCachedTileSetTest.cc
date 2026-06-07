@@ -245,4 +245,56 @@ void QGCCachedTileSetTest::_testSetSelectedEmitsSignal()
     QVERIFY(!ts.selected());
 }
 
+void QGCCachedTileSetTest::_testDownloadStatusStrings()
+{
+    QGCCachedTileSet defaultSet(QStringLiteral("Default"));
+    defaultSet.setDefaultSet(true);
+    defaultSet.setTotalTileSize(1024 * 1024);
+    QCOMPARE(defaultSet.downloadStatus(), defaultSet.totalTilesSizeStr());
+
+    // In-progress form ("saved / total") is chosen by tile COUNT, not size.
+    QGCCachedTileSet inProgressSet(QStringLiteral("InProgress"));
+    inProgressSet.setTotalTileCount(10);
+    inProgressSet.setSavedTileCount(4);
+    inProgressSet.setTotalTileSize(10 * 1024 * 1024);
+    inProgressSet.setSavedTileSize(4 * 1024 * 1024);
+    QVERIFY(inProgressSet.downloadStatus().contains(QStringLiteral("/")));
+
+    QGCCachedTileSet completeSet(QStringLiteral("Complete"));
+    completeSet.setTotalTileCount(50);
+    completeSet.setSavedTileCount(50);
+    completeSet.setSavedTileSize(2 * 1024 * 1024);
+    QCOMPARE(completeSet.downloadStatus(), completeSet.savedTileSizeStr());
+}
+
+void QGCCachedTileSetTest::_testErrorCountStr()
+{
+    QGCCachedTileSet ts(QStringLiteral("Error Test"));
+    ts.setErrorCount(3);
+    QVERIFY(ts.errorCountStr().contains(QStringLiteral("3")));
+}
+
+void QGCCachedTileSetTest::_testPausedDefaultsFalse()
+{
+    QGCCachedTileSet ts(QStringLiteral("test"));
+    QVERIFY(!ts.paused());
+}
+
+void QGCCachedTileSetTest::_testPauseSetsPausedAndStopsDownloading()
+{
+    QGCCachedTileSet ts(QStringLiteral("PauseSet"));
+    ts.setId(1);
+    ts.setDownloading(true);
+
+    QSignalSpy pausedSpy(&ts, &QGCCachedTileSet::pausedChanged);
+    QSignalSpy downloadingSpy(&ts, &QGCCachedTileSet::downloadingChanged);
+
+    ts.pauseDownloadTask();
+
+    QVERIFY(ts.paused());
+    QVERIFY(!ts.downloading());
+    QCOMPARE(pausedSpy.count(), 1);
+    QVERIFY(downloadingSpy.count() >= 1);
+}
+
 UT_REGISTER_TEST(QGCCachedTileSetTest, TestLabel::Unit)

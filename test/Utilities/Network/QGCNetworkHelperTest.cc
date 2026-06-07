@@ -494,6 +494,85 @@ void QGCNetworkHelperTest::_testReplyHelpersNullReply()
 }
 
 // ============================================================================
+// Retry / Transient Error Helpers Tests
+// ============================================================================
+void QGCNetworkHelperTest::_testIsTransientErrorClassifiesStatusAndErrorCodes()
+{
+    using NE = QNetworkReply::NetworkError;
+
+    QVERIFY(QGCNetworkHelper::isTransientError(NE::NoError, 429));
+    QVERIFY(QGCNetworkHelper::isTransientError(NE::NoError, 500));
+    QVERIFY(QGCNetworkHelper::isTransientError(NE::NoError, 503));
+    QVERIFY(QGCNetworkHelper::isTransientError(NE::TimeoutError, 0));
+    QVERIFY(QGCNetworkHelper::isTransientError(NE::ServiceUnavailableError, 0));
+    QVERIFY(QGCNetworkHelper::isTransientError(NE::RemoteHostClosedError, 0));
+
+    QVERIFY(!QGCNetworkHelper::isTransientError(NE::NoError, 200));
+    QVERIFY(!QGCNetworkHelper::isTransientError(NE::NoError, 404));
+    QVERIFY(!QGCNetworkHelper::isTransientError(NE::ContentNotFoundError, 404));
+    QVERIFY(!QGCNetworkHelper::isTransientError(NE::AuthenticationRequiredError, 401));
+}
+
+void QGCNetworkHelperTest::_testRetryAfterFromReplyNull()
+{
+    QVERIFY(!QGCNetworkHelper::retryAfterFromReply(nullptr).has_value());
+}
+
+void QGCNetworkHelperTest::_testRetryAfterFromReplyParsesSeconds()
+{
+    TestFixtures::NetworkReplyFixture reply(QUrl(QStringLiteral("https://example.com")));
+    reply.setRawHeader("Retry-After", "3");
+
+    const auto delay = QGCNetworkHelper::retryAfterFromReply(&reply);
+    QVERIFY(delay.has_value());
+    QCOMPARE(delay->count(), 3000);
+}
+
+void QGCNetworkHelperTest::_testRetryAfterFromReplyClampsHugeValue()
+{
+    TestFixtures::NetworkReplyFixture reply(QUrl(QStringLiteral("https://example.com")));
+    reply.setRawHeader("Retry-After", "120");
+
+    const auto delay = QGCNetworkHelper::retryAfterFromReply(&reply);
+    QVERIFY(delay.has_value());
+    QCOMPARE(delay->count(), QGCNetworkHelper::kMaxRateLimitDelay.count());
+}
+
+// Regression: a parseable-but-huge delta-seconds must not overflow qint64 in the *1000.
+void QGCNetworkHelperTest::_testRetryAfterFromReplyClampsOverflowValue()
+{
+    TestFixtures::NetworkReplyFixture reply(QUrl(QStringLiteral("https://example.com")));
+    reply.setRawHeader("Retry-After", "9999999999999999");
+
+    const auto delay = QGCNetworkHelper::retryAfterFromReply(&reply);
+    QVERIFY(delay.has_value());
+    QCOMPARE(delay->count(), QGCNetworkHelper::kMaxRateLimitDelay.count());
+}
+
+void QGCNetworkHelperTest::_testRetryAfterFromReplyHttpDate()
+{
+    TestFixtures::NetworkReplyFixture futureReply(QUrl(QStringLiteral("https://example.com")));
+    futureReply.setRawHeader("Retry-After", "Sun, 06 Nov 2050 08:49:37 +0000");
+    const auto futureDelay = QGCNetworkHelper::retryAfterFromReply(&futureReply);
+    QVERIFY(futureDelay.has_value());
+    QCOMPARE(futureDelay->count(), QGCNetworkHelper::kMaxRateLimitDelay.count());
+
+    TestFixtures::NetworkReplyFixture pastReply(QUrl(QStringLiteral("https://example.com")));
+    pastReply.setRawHeader("Retry-After", "Sun, 06 Nov 1994 08:49:37 +0000");
+    const auto pastDelay = QGCNetworkHelper::retryAfterFromReply(&pastReply);
+    QVERIFY(pastDelay.has_value());
+    QCOMPARE(pastDelay->count(), 0);
+}
+
+void QGCNetworkHelperTest::_testRetryAfterFromReplyUnparseable()
+{
+    TestFixtures::NetworkReplyFixture reply(QUrl(QStringLiteral("https://example.com")));
+    reply.setRawHeader("Retry-After", "not-a-date");
+
+    QVERIFY(!QGCNetworkHelper::retryAfterFromReply(&reply).has_value());
+}
+
+// ============================================================================
 // Network Availability Tests
 // ============================================================================
 void QGCNetworkHelperTest::_testIsNetworkAvailable()

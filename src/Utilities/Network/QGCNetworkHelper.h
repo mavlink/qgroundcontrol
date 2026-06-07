@@ -14,6 +14,8 @@
 #include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslConfiguration>
 #include <QtNetwork/QSslKey>
+#include <chrono>
+#include <optional>
 
 class QIODevice;
 class QNetworkAccessManager;
@@ -266,8 +268,7 @@ QList<QSslCertificate> loadCaCertificates(const QString& filePath, QString* erro
 /// @param keyOut Receives the loaded key
 /// @param errorOut Optional pointer to receive error message
 /// @return true on success
-bool loadClientCertAndKey(const QString& certPath, const QString& keyPath,
-                          QSslCertificate& certOut, QSslKey& keyOut,
+bool loadClientCertAndKey(const QString& certPath, const QString& keyPath, QSslCertificate& certOut, QSslKey& keyOut,
                           QString* errorOut = nullptr);
 
 // ============================================================================
@@ -321,6 +322,38 @@ qint64 contentLength(const QNetworkReply* reply);
 
 /// Check if response is JSON based on Content-Type
 bool isJsonResponse(const QNetworkReply* reply);
+
+// ============================================================================
+// Retry / Transient Error Helpers
+// ============================================================================
+
+/// HTTP 408 — server-side request timeout, safe to retry.
+constexpr int kHttpRequestTimeout = 408;
+
+/// HTTP 429 — standard rate-limit signal from web services.
+constexpr int kHttpTooManyRequests = 429;
+
+/// Upper bound on any server-provided Retry-After so a pathological value
+/// cannot pin a request pipeline.
+constexpr std::chrono::milliseconds kMaxRateLimitDelay = std::chrono::seconds(60);
+
+/// Fixed cooldown for a 429 when the server omits Retry-After; the exponential
+/// schedule is too eager for an explicit rate-limit response.
+constexpr std::chrono::milliseconds kDefaultRateLimitDelay = std::chrono::seconds(5);
+
+/// Classify whether a failed request is worth retrying: 408, 429, any 5xx, or a
+/// transient network/connection-layer error (timeout, temporary failure, remote
+/// close, refused/unreachable). 401/403/404 are permanent and return false.
+bool isTransientError(QNetworkReply::NetworkError error, int statusCode);
+
+/// Parse a reply's Retry-After header (RFC 7231 §7.1.3 — delta-seconds or
+/// HTTP-date), clamped to kMaxRateLimitDelay. nullopt if absent/unparseable.
+std::optional<std::chrono::milliseconds> retryAfterFromReply(const QNetworkReply* reply);
+
+/// Jittered exponential backoff for 0-based retry index `attempt`:
+/// min(1000 * 2^attempt + [0,1000) jitter, 32000) ms. The additive jitter
+/// de-syncs requests that fail together so they don't retry in lockstep.
+std::chrono::milliseconds retryBackoff(int attempt);
 
 // ============================================================================
 // Network Availability

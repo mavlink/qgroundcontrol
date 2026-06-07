@@ -76,6 +76,7 @@ public:
     ~NetworkReplyFixture() override;
 
     void setHttpStatus(int statusCode);
+    void setRawHeader(const QByteArray& name, const QByteArray& value);
     void setRedirectTarget(const QUrl& target);
     void setNetworkError(QNetworkReply::NetworkError errorCode, const QString& message);
     void setContentType(const QString& contentType);

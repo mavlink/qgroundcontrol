@@ -1,13 +1,15 @@
 #include "QGCCacheWorkerTest.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QTest>
 
 #include "QGCCacheTile.h"
 #include "QGCCachedTileSet.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCTileCacheDatabase.h"
 #include "QGCTileCacheWorker.h"
-#include <QtCore/QTemporaryDir>
 
 static const QString kTestProviderType = QStringLiteral("Bing Road");
 
@@ -64,6 +66,33 @@ void QGCCacheWorkerTest::_testEnqueueBeforeInit()
     QVERIFY_TRUE_WAIT(errorReceived, TestTimeout::shortMs());
 }
 
+void QGCCacheWorkerTest::_testEnqueueAfterStop()
+{
+    QTemporaryDir tempDir;
+    QGCCacheWorker worker;
+    worker.setDatabaseFile(tempDir.filePath("enqueue_after_stop.db"));
+    QVERIFY(_startWorker(worker));
+
+    worker.stop();
+    QVERIFY(worker.wait(TestTimeout::mediumMs()));
+    QVERIFY(!worker.isRunning());
+
+    // A taskInit would restart the worker, so exercise post-stop rejection with a non-init
+    // task: enqueueTask() rejects with "Database Not Initialized" without restarting the thread.
+    auto* task = new QGCFetchTileTask(QStringLiteral("after_stop_hash"));
+    bool errorReceived = false;
+    QString errorString;
+    connect(task, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString& error) {
+        errorReceived = true;
+        errorString = error;
+    });
+
+    QVERIFY(!worker.enqueueTask(task));
+    QVERIFY_TRUE_WAIT(errorReceived, TestTimeout::shortMs());
+    QCOMPARE(errorString, QStringLiteral("Database Not Initialized"));
+    QVERIFY(!worker.isRunning());
+}
+
 void QGCCacheWorkerTest::_testUpdateTotalsOnInit()
 {
     QTemporaryDir tempDir;
@@ -91,6 +120,38 @@ void QGCCacheWorkerTest::_testUpdateTotalsOnInit()
     worker.wait(TestTimeout::mediumMs());
 }
 
+void QGCCacheWorkerTest::_testGetTotalsTask()
+{
+    QTemporaryDir tempDir;
+    QGCCacheWorker worker;
+    worker.setDatabaseFile(tempDir.filePath("get_totals.db"));
+    QVERIFY(_startWorker(worker));
+
+    auto* tile =
+        new QGCCacheTile(QStringLiteral("gt1"), QByteArray("totals_data"), QStringLiteral("png"), kTestProviderType);
+    QVERIFY(worker.enqueueTask(new QGCSaveTileTask(tile)));
+
+    quint32 totalTiles = UINT32_MAX;
+    quint64 totalSize = UINT64_MAX;
+    auto conn = connect(
+        &worker, &QGCCacheWorker::updateTotals, this,
+        [&](quint32 tiles, quint64 size, quint32, quint64) {
+            totalTiles = tiles;
+            totalSize = size;
+        },
+        Qt::QueuedConnection);
+
+    QVERIFY(worker.enqueueTask(new QGCMapTask(QGCMapTask::TaskType::taskInit)));
+    QTRY_VERIFY_WITH_TIMEOUT(totalTiles != UINT32_MAX, TestTimeout::mediumMs());
+    disconnect(conn);
+
+    QVERIFY(totalTiles >= 1);
+    QVERIFY(totalSize > 0);
+
+    worker.stop();
+    worker.wait(TestTimeout::mediumMs());
+}
+
 void QGCCacheWorkerTest::_testSaveAndFetchTile()
 {
     QTemporaryDir tempDir;
@@ -104,10 +165,11 @@ void QGCCacheWorkerTest::_testSaveAndFetchTile()
 
     // Fetch — FIFO guarantees save completes first
     auto* fetchTask = new QGCFetchTileTask(QStringLiteral("h1"));
-    QGCCacheTile* fetched = nullptr;
+    QSharedPointer<QGCCacheTile> fetched;
     bool fetchError = false;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](QGCCacheTile* t) { fetched = t; }, Qt::QueuedConnection);
+        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](QSharedPointer<QGCCacheTile> t) { fetched = t; },
+        Qt::QueuedConnection);
     connect(
         fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
@@ -120,7 +182,6 @@ void QGCCacheWorkerTest::_testSaveAndFetchTile()
     QCOMPARE(fetched->hash, QStringLiteral("h1"));
     QCOMPARE(fetched->img, QByteArray("tile_data"));
     QCOMPARE(fetched->format, QStringLiteral("png"));
-    delete fetched;
 
     worker.stop();
     worker.wait(TestTimeout::mediumMs());
@@ -134,10 +195,11 @@ void QGCCacheWorkerTest::_testFetchTileNotFound()
     QVERIFY(_startWorker(worker));
 
     auto* fetchTask = new QGCFetchTileTask(QStringLiteral("nonexistent"));
-    QGCCacheTile* fetched = nullptr;
+    QSharedPointer<QGCCacheTile> fetched;
     bool fetchError = false;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](QGCCacheTile* t) { fetched = t; }, Qt::QueuedConnection);
+        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](QSharedPointer<QGCCacheTile> t) { fetched = t; },
+        Qt::QueuedConnection);
     connect(
         fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
@@ -183,6 +245,43 @@ void QGCCacheWorkerTest::_testFetchTileSets()
     worker.wait(TestTimeout::mediumMs());
 }
 
+void QGCCacheWorkerTest::_testFetchTileSetsMainThreadAffinity()
+{
+    QTemporaryDir tempDir;
+    QGCCacheWorker worker;
+    worker.setDatabaseFile(tempDir.filePath("tile_sets_affinity.db"));
+    QVERIFY(_startWorker(worker));
+
+    bool taskDone = false;
+    auto totalsConn =
+        connect(&worker, &QGCCacheWorker::updateTotals, this, [&]() { taskDone = true; }, Qt::QueuedConnection);
+
+    bool fetchError = false;
+    QList<QGCCachedTileSet*> sets;
+    auto* fetchTask = new QGCFetchTileSetTask();
+    connect(
+        fetchTask, &QGCFetchTileSetTask::tileSetFetched, this, [&](QGCCachedTileSet* set) { sets.append(set); },
+        Qt::QueuedConnection);
+    connect(
+        fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
+        Qt::QueuedConnection);
+
+    QVERIFY(worker.enqueueTask(fetchTask));
+    QTRY_VERIFY_WITH_TIMEOUT(taskDone, TestTimeout::mediumMs());
+    disconnect(totalsConn);
+
+    QVERIFY(!fetchError);
+    QVERIFY(!sets.isEmpty());
+    for (QGCCachedTileSet* set : sets) {
+        QVERIFY(set != nullptr);
+        QCOMPARE(set->thread(), QCoreApplication::instance()->thread());
+    }
+    qDeleteAll(sets);
+
+    worker.stop();
+    worker.wait(TestTimeout::mediumMs());
+}
+
 void QGCCacheWorkerTest::_testCreateAndDeleteTileSet()
 {
     QTemporaryDir tempDir;
@@ -219,15 +318,24 @@ void QGCCacheWorkerTest::_testCreateAndDeleteTileSet()
 
     // Delete it
     const quint64 setID = savedSet->id();
-    auto* deleteTask = new QGCDeleteTileSetTask(setID);
-    quint64 deletedID = 0;
-    connect(
-        deleteTask, &QGCDeleteTileSetTask::tileSetDeleted, this, [&](quint64 id) { deletedID = id; },
-        Qt::QueuedConnection);
+    auto* deleteTask =
+        new QGCCommandTask(QGCMapTask::TaskType::taskDeleteTileSet, [setID](QGCCacheWorker& w, QGCMapTask& self) {
+            if (!w.validateDatabase(&self)) {
+                return false;
+            }
+            if (!w.database()->deleteTileSet(setID)) {
+                self.setError("Error deleting tile set");
+                return false;
+            }
+            w.emitTotals();
+            return true;
+        });
+    bool deleted = false;
+    connect(deleteTask, &QGCCommandTask::completed, this, [&]() { deleted = true; }, Qt::QueuedConnection);
 
     QVERIFY(worker.enqueueTask(deleteTask));
-    QTRY_VERIFY_WITH_TIMEOUT(deletedID != 0, TestTimeout::mediumMs());
-    QCOMPARE(deletedID, setID);
+    QTRY_VERIFY_WITH_TIMEOUT(deleted, TestTimeout::mediumMs());
+    QVERIFY(deleted);
 
     delete savedSet;
 
@@ -248,9 +356,18 @@ void QGCCacheWorkerTest::_testPruneCache()
         QVERIFY(worker.enqueueTask(new QGCSaveTileTask(tile)));
     }
 
-    auto* pruneTask = new QGCPruneCacheTask(500);
+    auto* pruneTask = new QGCCommandTask(QGCMapTask::TaskType::taskPruneCache, [](QGCCacheWorker& w, QGCMapTask& self) {
+        if (!w.validateDatabase(&self)) {
+            return false;
+        }
+        if (!w.database()->pruneCache(500)) {
+            self.setError("Error pruning cache");
+            return false;
+        }
+        return true;
+    });
     bool pruneDone = false;
-    connect(pruneTask, &QGCPruneCacheTask::pruned, this, [&]() { pruneDone = true; }, Qt::QueuedConnection);
+    connect(pruneTask, &QGCCommandTask::completed, this, [&]() { pruneDone = true; }, Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(pruneTask));
     QTRY_VERIFY_WITH_TIMEOUT(pruneDone, TestTimeout::mediumMs());
 
@@ -280,9 +397,19 @@ void QGCCacheWorkerTest::_testResetDatabase()
     auto* tile = new QGCCacheTile(QStringLiteral("r1"), QByteArray("data"), QStringLiteral("png"), kTestProviderType);
     QVERIFY(worker.enqueueTask(new QGCSaveTileTask(tile)));
 
-    auto* resetTask = new QGCResetTask();
+    auto* resetTask = new QGCCommandTask(QGCMapTask::TaskType::taskReset, [](QGCCacheWorker& w, QGCMapTask& self) {
+        if (!w.validateDatabase(&self)) {
+            return false;
+        }
+        if (!w.database()->resetDatabase()) {
+            self.setError("Error resetting cache database");
+            return false;
+        }
+        w.setDatabaseValid(w.database()->isValid());
+        return true;
+    });
     bool resetDone = false;
-    connect(resetTask, &QGCResetTask::resetCompleted, this, [&]() { resetDone = true; }, Qt::QueuedConnection);
+    connect(resetTask, &QGCCommandTask::completed, this, [&]() { resetDone = true; }, Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(resetTask));
     QTRY_VERIFY_WITH_TIMEOUT(resetDone, TestTimeout::mediumMs());
 
@@ -313,6 +440,41 @@ void QGCCacheWorkerTest::_testStopWhileProcessing()
                                       kTestProviderType);
         worker.enqueueTask(new QGCSaveTileTask(tile));
     }
+
+    worker.stop();
+    QVERIFY(worker.wait(TestTimeout::mediumMs()));
+    QVERIFY(!worker.isRunning());
+}
+
+void QGCCacheWorkerTest::_testCacheTileBatchCoalesce()
+{
+    QTemporaryDir tempDir;
+    QGCCacheWorker worker;
+    worker.setDatabaseFile(tempDir.filePath("batch_coalesce.db"));
+    QVERIFY(_startWorker(worker));
+
+    constexpr int kTileCount = 200;
+    for (int i = 0; i < kTileCount; i++) {
+        auto* tile = new QGCCacheTile(QStringLiteral("bc_%1").arg(i), QByteArray(64, 'B'), QStringLiteral("png"),
+                                      kTestProviderType);
+        QVERIFY(worker.enqueueTask(new QGCSaveTileTask(tile)));
+    }
+
+    quint32 totalTiles = 0;
+    bool totalsReceived = false;
+    auto conn = connect(
+        &worker, &QGCCacheWorker::updateTotals, this,
+        [&](quint32 tiles, quint64, quint32, quint64) {
+            totalTiles = tiles;
+            totalsReceived = true;
+        },
+        Qt::QueuedConnection);
+    QVERIFY(worker.enqueueTask(new QGCMapTask(QGCMapTask::TaskType::taskInit)));
+    QTRY_VERIFY_WITH_TIMEOUT(totalsReceived && (totalTiles >= static_cast<quint32>(kTileCount)),
+                             TestTimeout::mediumMs());
+    disconnect(conn);
+
+    QCOMPARE(totalTiles, static_cast<quint32>(kTileCount));
 
     worker.stop();
     QVERIFY(worker.wait(TestTimeout::mediumMs()));
