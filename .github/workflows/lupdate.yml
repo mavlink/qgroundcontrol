@@ -37,7 +37,6 @@ jobs:
           version: ${{ steps.config.outputs.qt_version }}
           host: linux
           arch: linux_gcc_64
-          modules: qttools
 
       - name: Update translation files
         run: python3 tools/translations/qgc_lupdate.py
