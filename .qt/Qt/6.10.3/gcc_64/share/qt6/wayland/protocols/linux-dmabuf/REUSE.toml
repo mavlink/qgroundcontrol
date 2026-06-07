@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "linux-dmabuf-unstable-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2014, 2015 Collabora, Ltd."
+SPDX-License-Identifier = "MIT"

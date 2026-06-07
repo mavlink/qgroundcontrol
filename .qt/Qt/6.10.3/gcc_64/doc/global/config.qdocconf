@@ -1,0 +1,46 @@
+#Include this file to inherit configuration related to Qt Project based modules.
+
+dita.metadata.default.author      = Qt Project
+dita.metadata.default.permissions = all
+dita.metadata.default.publisher   = Qt Project
+dita.metadata.default.copyryear = 2025
+dita.metadata.default.copyrholder = The Qt Company Ltd
+dita.metadata.default.audience = programmer
+
+# Define `productname` such that `\since` prepends version numbers with `Qt`.
+# Required from Qt 6.9 onwards.
+productname = Qt
+
+#Set the main Qt index.html
+navigation.homepage = index.html
+navigation.hometitle = "$productname $QT_VER"
+
+# Set trademarks page (located in qt/qtdoc)
+navigation.trademarkspage = Trademarks
+
+#Words to ignore for auto-linking
+ignorewords += \
+    macOS \
+    WebChannel \
+    WebSocket \
+    WebSockets \
+    OpenGL
+
+# Omit \since information for items introduced before Qt 6
+ignoresince = 6.0
+
+sourcedirs += includes $$BUILDDIR
+exampledirs += snippets
+
+url = https://doc.qt.io/qt
+
+defines += qt6
+
+# Require Qt modules to define qhp.projects
+qhp = true
+
+# Disable writing host-specific paths into .index files
+locationinfo = false
+
+# Include the warninglimit used for documentation testing in CI
+include(warninglimit.qdocconf)

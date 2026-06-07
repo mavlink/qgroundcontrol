@@ -1,0 +1,220 @@
+# Copyright (C) 2024 The Qt Company Ltd.
+# SPDX-License-Identifier: BSD-3-Clause
+
+@PACKAGE_INIT@
+
+cmake_minimum_required(VERSION @min_new_policy_version@...@max_new_policy_version@)
+
+include(CMakeFindDependencyMacro)
+
+# Extra cmake code begin
+@extra_cmake_code@
+# Extra cmake code end
+
+# Find required dependencies, if any.
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@Dependencies.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@Dependencies.cmake")
+    _qt_internal_suggest_dependency_debugging(@target@
+        __qt_@target@_pkg ${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE)
+endif()
+
+# If *ConfigDependencies.cmake exists, the variable value will be defined there.
+# Don't override it in that case.
+if(NOT DEFINED "@INSTALL_CMAKE_NAMESPACE@@target@_FOUND")
+    set("@INSTALL_CMAKE_NAMESPACE@@target@_FOUND" TRUE)
+endif()
+
+if (NOT QT_NO_CREATE_TARGETS AND @INSTALL_CMAKE_NAMESPACE@@target@_FOUND)
+    include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@Targets.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@AdditionalTargetInfo.cmake"
+        OPTIONAL)
+    include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@ExtraProperties.cmake"
+        OPTIONAL)
+endif()
+
+# Find the private module counterpart.
+set(__qt_@target@_always_load_private_module @always_load_private_module@)
+include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@-build.cmake" OPTIONAL)
+if (@INSTALL_CMAKE_NAMESPACE@@target@_FOUND
+        AND NOT @INSTALL_CMAKE_NAMESPACE@@target_private@_FOUND
+        AND NOT @arg_NO_PRIVATE_MODULE@
+        AND (
+            __qt_@target@_always_load_private_module
+            OR DEFINED QT_REPO_MODULE_VERSION
+            OR QT_FIND_PRIVATE_MODULES
+        )
+    )
+    if("${_qt_cmake_dir}" STREQUAL "")
+        set(_qt_cmake_dir "${QT_TOOLCHAIN_RELOCATABLE_CMAKE_DIR}")
+    endif()
+    set(__qt_use_no_default_path_for_qt_packages "NO_DEFAULT_PATH")
+    if(QT_DISABLE_NO_DEFAULT_PATH_IN_QT_PACKAGES)
+        set(__qt_use_no_default_path_for_qt_packages "")
+    endif()
+    find_package(@INSTALL_CMAKE_NAMESPACE@@target_private@ "@PROJECT_VERSION@" EXACT
+        QUIET
+        CONFIG
+        PATHS
+            ${QT_BUILD_CMAKE_PREFIX_PATH}
+            "${CMAKE_CURRENT_LIST_DIR}/.."
+            "${_qt_cmake_dir}"
+            ${_qt_additional_packages_prefix_paths}
+        ${__qt_use_no_default_path_for_qt_packages}
+    )
+
+    if(NOT @INSTALL_CMAKE_NAMESPACE@@target_private@_FOUND)
+        get_property(@INSTALL_CMAKE_NAMESPACE@@target_private@_warning_shown GLOBAL PROPERTY
+            @INSTALL_CMAKE_NAMESPACE@@target_private@_warning_shown
+        )
+        if(NOT @INSTALL_CMAKE_NAMESPACE@@target_private@_warning_shown)
+            message(VERBOSE
+                "The private module package '@INSTALL_CMAKE_NAMESPACE@@target_private@' "
+                "could not be found. It possibly needs to be installed separately with your "
+                "package manager."
+            )
+            set_property(GLOBAL PROPERTY
+                @INSTALL_CMAKE_NAMESPACE@@target_private@_warning_shown ON
+            )
+        endif()
+    endif()
+endif()
+unset(__qt_@target@_always_load_private_module)
+
+if (NOT QT_NO_CREATE_TARGETS AND @INSTALL_CMAKE_NAMESPACE@@target@_FOUND)
+    # DEPRECATED
+    # Provide old style variables for includes, compile definitions, etc.
+    # These variables are deprecated and only provided on a best-effort basis to facilitate porting.
+    # Consider using target_link_libraries(app PRIVATE @QT_CMAKE_EXPORT_NAMESPACE@@target@) instead.
+    set(@QT_CMAKE_EXPORT_NAMESPACE@@target@_LIBRARIES "@QT_CMAKE_EXPORT_NAMESPACE@::@target@")
+
+    get_target_property(_@QT_CMAKE_EXPORT_NAMESPACE@@target@_OWN_INCLUDE_DIRS
+                        @QT_CMAKE_EXPORT_NAMESPACE@::@target@ INTERFACE_INCLUDE_DIRECTORIES)
+    if(NOT _@QT_CMAKE_EXPORT_NAMESPACE@@target@_OWN_INCLUDE_DIRS)
+        set(_@QT_CMAKE_EXPORT_NAMESPACE@@target@_OWN_INCLUDE_DIRS "")
+    endif()
+
+    if(TARGET @QT_CMAKE_EXPORT_NAMESPACE@::@target@Private)
+        get_target_property(_@QT_CMAKE_EXPORT_NAMESPACE@@target@_OWN_PRIVATE_INCLUDE_DIRS
+                            @QT_CMAKE_EXPORT_NAMESPACE@::@target@Private INTERFACE_INCLUDE_DIRECTORIES)
+        if(NOT _@QT_CMAKE_EXPORT_NAMESPACE@@target@_OWN_PRIVATE_INCLUDE_DIRS)
+            set(_@QT_CMAKE_EXPORT_NAMESPACE@@target@_OWN_PRIVATE_INCLUDE_DIRS "")
+        endif()
+    endif()
+
+    get_target_property(@QT_CMAKE_EXPORT_NAMESPACE@@target@_DEFINITIONS
+                        @QT_CMAKE_EXPORT_NAMESPACE@::@target@ INTERFACE_COMPILE_DEFINITIONS)
+    if(NOT @QT_CMAKE_EXPORT_NAMESPACE@@target@_DEFINITIONS)
+        set(@QT_CMAKE_EXPORT_NAMESPACE@@target@_DEFINITIONS "")
+    else()
+        set(updated_defs "")
+        foreach(def IN LISTS  @QT_CMAKE_EXPORT_NAMESPACE@@target@_DEFINITIONS)
+             if(def MATCHES "^[A-Za-z_]")
+                 list(APPEND updated_defs "-D${def}")
+             else()
+                 list(APPEND updated_defs "${def}")
+             endif()
+        endforeach()
+        set(@QT_CMAKE_EXPORT_NAMESPACE@@target@_DEFINITIONS "${updated_defs}")
+        unset(updated_defs)
+    endif()
+
+    get_target_property(@QT_CMAKE_EXPORT_NAMESPACE@@target@_COMPILE_DEFINITIONS
+                        @QT_CMAKE_EXPORT_NAMESPACE@::@target@ INTERFACE_COMPILE_DEFINITIONS)
+    if(NOT @QT_CMAKE_EXPORT_NAMESPACE@@target@_COMPILE_DEFINITIONS)
+        set(@QT_CMAKE_EXPORT_NAMESPACE@@target@_COMPILE_DEFINITIONS "")
+    endif()
+
+    set(@QT_CMAKE_EXPORT_NAMESPACE@@target@_INCLUDE_DIRS
+        ${_@QT_CMAKE_EXPORT_NAMESPACE@@target@_OWN_INCLUDE_DIRS})
+
+    set(@QT_CMAKE_EXPORT_NAMESPACE@@target@_PRIVATE_INCLUDE_DIRS
+        ${_@QT_CMAKE_EXPORT_NAMESPACE@@target@_OWN_PRIVATE_INCLUDE_DIRS})
+
+    foreach(_module_dep ${_@QT_CMAKE_EXPORT_NAMESPACE@@target@_MODULE_DEPENDENCIES})
+        if(_module_dep MATCHES ".+Private$")
+            set(_private_suffix "Private")
+        else()
+            set(_private_suffix "")
+        endif()
+        list(APPEND @QT_CMAKE_EXPORT_NAMESPACE@@target@${_private_suffix}_INCLUDE_DIRS
+             ${@QT_CMAKE_EXPORT_NAMESPACE@${_module_dep}_INCLUDE_DIRS})
+        list(APPEND @QT_CMAKE_EXPORT_NAMESPACE@@target@${_private_suffix}_PRIVATE_INCLUDE_DIRS
+             ${@QT_CMAKE_EXPORT_NAMESPACE@${_module_dep}_PRIVATE_INCLUDE_DIRS})
+        if(_private_suffix)
+            list(APPEND @QT_CMAKE_EXPORT_NAMESPACE@@target@_PRIVATE_INCLUDE_DIRS
+                ${@QT_CMAKE_EXPORT_NAMESPACE@${_module_dep}_PRIVATE_INCLUDE_DIRS})
+        endif()
+        list(APPEND @QT_CMAKE_EXPORT_NAMESPACE@@target@${_private_suffix}_DEFINITIONS
+             ${@QT_CMAKE_EXPORT_NAMESPACE@${_module_dep}_DEFINITIONS})
+        list(APPEND @QT_CMAKE_EXPORT_NAMESPACE@@target@${_private_suffix}_COMPILE_DEFINITIONS
+             ${@QT_CMAKE_EXPORT_NAMESPACE@${_module_dep}_COMPILE_DEFINITIONS})
+    endforeach()
+    unset(_private_suffix)
+
+    list(REMOVE_DUPLICATES @QT_CMAKE_EXPORT_NAMESPACE@@target@_INCLUDE_DIRS)
+    list(REMOVE_DUPLICATES @QT_CMAKE_EXPORT_NAMESPACE@@target@_PRIVATE_INCLUDE_DIRS)
+    list(REMOVE_DUPLICATES @QT_CMAKE_EXPORT_NAMESPACE@@target@_DEFINITIONS)
+    list(REMOVE_DUPLICATES @QT_CMAKE_EXPORT_NAMESPACE@@target@_COMPILE_DEFINITIONS)
+endif()
+
+if (TARGET @QT_CMAKE_EXPORT_NAMESPACE@::@target@)
+    qt_make_features_available(@QT_CMAKE_EXPORT_NAMESPACE@::@target@)
+
+    foreach(extra_cmake_include @extra_cmake_includes@)
+        include("${CMAKE_CURRENT_LIST_DIR}/${extra_cmake_include}")
+    endforeach()
+
+    if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@Plugins.cmake")
+        include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@Plugins.cmake")
+    endif()
+
+    if(NOT "@target@" IN_LIST QT_ALL_MODULES_FOUND_VIA_FIND_PACKAGE)
+        list(APPEND QT_ALL_MODULES_FOUND_VIA_FIND_PACKAGE "@target@")
+        list(APPEND QT_ALL_MODULES_VERSIONED_FOUND_VIA_FIND_PACKAGE
+            "@INSTALL_CMAKE_NAMESPACE@::@target@")
+    endif()
+
+    get_target_property(_qt_module_target_type "@INSTALL_CMAKE_NAMESPACE@::@target@" TYPE)
+    if(NOT _qt_module_target_type STREQUAL "INTERFACE_LIBRARY")
+        get_target_property(_qt_module_plugin_types
+                            @INSTALL_CMAKE_NAMESPACE@::@target@ MODULE_PLUGIN_TYPES)
+        if(_qt_module_plugin_types)
+            foreach(_qt_module_plugin_type IN LISTS _qt_module_plugin_types)
+                if(NOT "${_qt_module_plugin_type}"
+                    IN_LIST QT_ALL_PLUGIN_TYPES_FOUND_VIA_FIND_PACKAGE)
+                    list(APPEND QT_ALL_PLUGIN_TYPES_FOUND_VIA_FIND_PACKAGE
+                    "${_qt_module_plugin_type}")
+                endif()
+            endforeach()
+            unset(_qt_module_plugin_type)
+        endif()
+    endif()
+
+    # Load Module's BuildInternals should any exist
+    if (@INSTALL_CMAKE_NAMESPACE@BuildInternals_DIR AND
+        EXISTS "${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@BuildInternals.cmake")
+        include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@BuildInternals.cmake")
+    endif()
+
+    if(NOT QT_NO_CREATE_VERSIONLESS_TARGETS)
+        if(CMAKE_VERSION VERSION_LESS 3.18 OR QT_USE_OLD_VERSION_LESS_TARGETS)
+            include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@VersionlessTargets.cmake")
+        else()
+            include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@VersionlessAliasTargets.cmake")
+        endif()
+    endif()
+else()
+
+    set(@INSTALL_CMAKE_NAMESPACE@@target@_FOUND FALSE)
+    if(NOT DEFINED @INSTALL_CMAKE_NAMESPACE@@target@_NOT_FOUND_MESSAGE)
+        set(@INSTALL_CMAKE_NAMESPACE@@target@_NOT_FOUND_MESSAGE
+            "Target \"@QT_CMAKE_EXPORT_NAMESPACE@::@target@\" was not found.")
+
+        if(QT_NO_CREATE_TARGETS)
+            string(APPEND @INSTALL_CMAKE_NAMESPACE@@target@_NOT_FOUND_MESSAGE
+                "Possibly due to QT_NO_CREATE_TARGETS being set to TRUE and thus "
+                "${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target@Targets.cmake was not "
+                "included to define the target.")
+        endif()
+    endif()
+endif()

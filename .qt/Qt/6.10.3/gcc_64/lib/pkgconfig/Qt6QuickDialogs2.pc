@@ -1,0 +1,13 @@
+prefix=/home/runner/work/qgroundcontrol/qgroundcontrol/.qt/Qt/6.10.3/gcc_64
+exec_prefix=${prefix}
+bindir=${prefix}/bin
+libexecdir=${prefix}/libexec
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: Qt6 QuickDialogs2
+Description: Qt QuickDialogs2 module
+Version: 6.10.3
+Libs: -L${libdir} -lQt6QuickDialogs2
+Cflags: -I${includedir}/QtQuickDialogs2 -I${includedir} -DQT_QUICKDIALOGS2_LIB
+Requires: Qt6Core Qt6Gui Qt6Quick

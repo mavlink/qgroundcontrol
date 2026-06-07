@@ -1,0 +1,183 @@
+macro.aacute.HTML         = "&aacute;"
+macro.aacute.DocBook      = "&#225;"
+macro.Aring.HTML          = "&Aring;"
+macro.Aring.DocBook       = "&#197;"
+macro.aring.HTML          = "&aring;"
+macro.aring.DocBook       = "&#229;"
+macro.Auml.HTML           = "&Auml;"
+macro.Auml.DocBook        = "&#196;"
+macro.author              = "\\b{Author:}"
+macro.BR.HTML             = "<br />"
+macro.BR.DocBook          = ""
+macro.copyright.HTML      = "&copy;"
+macro.copyright.DocBook   = "&#169;"
+macro.eacute.HTML         = "&eacute;"
+macro.eacute.DocBook      = "&#233;"
+macro.gui                 = "\\b"
+macro.HR.HTML             = "<hr />"
+macro.HR.DocBook          = ""
+macro.iacute.HTML         = "&iacute;"
+macro.iacute.DocBook      = "&#237;"
+macro.key                 = "\\b"
+macro.macos               = "macOS"
+macro.menu                = "\\b"
+macro.oslash.HTML         = "&oslash;"
+macro.oslash.DocBook      = "&#248;"
+macro.ouml.HTML           = "&ouml;"
+macro.ouml.DocBook        = "&#246;"
+macro.nothing             = "\\dontdocument ()"
+macro.nullptr             = "\\c{nullptr}"
+macro.QtVersion           = "$QT_VERSION"
+macro.QtVer               = "$QT_VER"
+macro.param               = "\\e"
+macro.raisedaster.HTML    = "<sup>*</sup>"
+macro.raisedaster.DocBook = "<db:superscript>*</db:superscript>"
+macro.rarrow.HTML         = "&rarr;"
+macro.rarrow.DocBook      = "&#8594;"
+macro.reg.HTML            = "<sup>&reg;</sup>"
+macro.reg.DocBook         = "\\sup{&#174;}"
+macro.return              = "Returns"
+macro.starslash           = "\\c{*/}"
+macro.begincomment        = "\\c{/*}"
+macro.endcomment          = "\\c{*/}"
+macro.uuml.HTML           = "&uuml;"
+macro.uuml.DocBook        = "&#252;"
+macro.mdash.HTML          = "&mdash;"
+macro.mdash.DocBook       = "&#8212;"
+macro.pi.HTML             = "&Pi;"
+macro.pi.DocBook          = "&#928;"
+macro.beginqdoc.HTML      = "/*!"
+macro.beginqdoc.DocBook   = "/*!"
+macro.endqdoc.HTML        = "*/"
+macro.endqdoc.DocBook        = "*/"
+macro.borderedimage       = "\\div {class=\"border\"} \\image \1\n\\enddiv"
+macro.examplecategory     = "\\meta category {\1}\n\\ingroup category \1"
+
+# Macros for product names, sorted in alphabetic order
+
+macro.B2Q                 = "Boot to Qt"
+macro.B2QSS               = "Boot to Qt Software Stack"
+macro.B2QST               = "Boot to Qt Startup Screen"
+macro.IFW                 = "Qt Installer Framework"
+macro.QA                  = "Qt Assistant"
+macro.QB                  = "Qt Bridge"
+macro.QBF                 = "Qt Bridge for Figma"
+macro.QBPS                = "Qt Bridge for Adobe Photoshop"
+macro.QBSK                = "Qt Bridge for Sketch"
+macro.QBXD                = "Qt Bridge for Adobe XD"
+macro.QC                  = "Qt Creator"
+macro.QD                  = "Qt Widgets Designer"
+macro.QDS                 = "Qt Design Studio"
+macro.QDV                 = "Qt Design Viewer"
+macro.QfP                 = "Qt for Python"
+macro.QL                  = "Qt Linguist"
+macro.QMCU                = "Qt for MCUs"
+macro.QMLP                = "QML Profiler"
+macro.QMLLS               = "QML Language Server"
+macro.QMT                 = "Qt Maintenance Tool"
+macro.QOI                 = "Qt Online Installer"
+macro.QQEM                = "Qt Quick Effect Maker"
+macro.QQV                 = "Qt QML Viewer"
+macro.QtAA                = "Qt for Android Automotive"
+macro.QUL                 = "Qt Quick Ultralite"
+macro.QtTAS               = "Qt Tools for Android Studio"
+macro.Q4A                 = "Qt for Android"
+
+# The following macros are used for various Android docs. The purpose is to keep
+# it as simple as updating these instead of updating multiple lines in scattered locations.
+macro.AndroidAbis         = "\\c{arm64-v8a}, \\c{x86_64}, \\c{x86}, and \\c{armeabi-v7a}"
+macro.NdkVer              = "r27c"
+macro.NdkFullVer          = "27.2.12479018"
+macro.NdkCompilerVer      = "Clang 17.0.2"
+macro.JdkVer              = "17"
+macro.AndroidMinApiVer    = "28"
+macro.AndroidMaxApiVer    = "36"
+macro.AndroidMinVer       = "9"
+macro.AndroidMaxVer       = "16"
+macro.AndroidPlatformVer  = "36"
+macro.AndroidBuildToolsVer = "36.0.0"
+macro.GradleVer           = "8.14.3"
+macro.AGPVer              = "8.10.1"
+macro.AAOSVer             = "10 to 13"
+
+macro.beginfloatleft.HTML   = "<div style=\"float: left; margin-right: 2em\">"
+macro.beginfloatright.HTML  = "<div style=\"float: right; margin-left: 2em\">"
+macro.endfloat.HTML         = "</div>"
+macro.clearfloat.HTML       = "<br style=\"clear: both\" />"
+macro.emptyspan.HTML        = "<span></span>"
+
+macro.beginfloatleft.DocBook   = ""
+macro.beginfloatright.DocBook  = ""
+macro.endfloat.DocBook         = ""
+macro.clearfloat.DocBook       = ""
+macro.emptyspan.DocBook        = ""
+
+# Used like \brief, but replicates the sentence also as text.
+# Wrap the entire sentence with {}, for example:
+#     \summary {Creates a build target.}
+macro.summary = "\\brief \1\n\n\1\n"
+
+# Macros that expand to the major and minor versions based on the QT_VER environment variable
+{macro.QtMajorVersion,macro.QtMinorVersion} = "$QT_VER"
+macro.QtMajorVersion.match  = "^(\\d+)\\."
+macro.QtMinorVersion.match  = "\\d+\\.(\\d+)"
+
+# Embed YouTube content by video ID - Example: \youtube dQw4w9WgXcQ
+# Also requires a <ID>.jpg thumbnail for offline docs. By default, qdoc doesn't copy the thumbnail
+# along with the offline docs, you must specify it manually. In .qdocconf, to do it for all formats
+# at once, add:
+#
+# {HTML.extraimages,qhp.<qhp_project>.extraFiles,DocBook.extraimages} += images/dQw4w9WgXcQ.jpg
+#
+# Where <qhp_project> is a project name listed in `qhp.projects`.
+macro.youtube.HTML = "<div class=\"video\">\n" \
+                     "<a href=\"https://www.youtube.com/watch/?v=\1\">\n"\
+                     "<img src=\"images/\1.jpg\"" \
+                     "title=\"Click to play in a browser\" /></a>\n" \
+                     "</div>\n"
+macro.youtube.DocBook = "<db:mediaobject>\n" \
+                        "<db:videoobject>\n" \
+                        "<?db video="iframe"?>\n" \
+                        "<db:videodata format="youtube" fileref=\"https://www.youtube.com/watch/?v=\1\">\n" \
+                        "</db:videodata>\n" \
+                        "</db:videoobject>\n" \
+                        "<db:imageobject>\n" \
+                        "<db:imagedata fileref=\"images/\1.jpg\">\n" \
+                        "</db:imagedata>\n" \
+                        "</db:imageobject>\n" \
+                        "</db:mediaobject>\n"
+
+#
+# C++ constrained function templates
+#
+macro.constraints               = "\\section1 Constraints\n\nParticipates in overload resolution only if "
+
+macro.excludefromcreator = "\\meta tag broken"
+
+macro.preliminarycmakecommand  = "\\note This command is in technology preview and may change in future releases."
+macro.preliminarycmakevariable = "\\note This variable is in technology preview and may change in future releases."
+macro.preliminarycmakeproperty = "\\note This property is in technology preview and may change in future releases."
+
+macro.cmakecommandsince = "\n\nThis command was introduced in Qt \1.\n\n"
+macro.cmakevariablesince = "\n\nThis variable was introduced in Qt \1.\n\n"
+macro.cmakepropertysince = "\n\nThis property was introduced in Qt \1.\n\n"
+
+macro.cmakecommandandroidonly  = "\\note This command should only be called if targeting the Android platform."
+macro.cmakepropertyandroidonly = "\\note This property is used only if targeting the Android platform."
+macro.cmakevariableandroidonly = "\\note This variable is used only if targeting the Android platform."
+
+macro.versionlessCMakeCommandsNote = "If \\l{Versionless commands}{versionless commands} are disabled, use \\c{\1} instead. It supports the same set of arguments as this command."
+
+macro.cmakepropertywebassemblyonly = "\\note This property is used only if targeting the WebAssembly platform."
+
+macro.cmakepropertyiosonly = "\\note This property is used only if targeting iOS."
+macro.cmakevariableiosonly = "\\note This variable is used only if targeting iOS."
+
+macro.qtpolicydeprecatedbehavior = "\\note The \\c{OLD} behavior of a policy is deprecated, and may be removed in the future."
+#Appends the tech preview link to the brief sentence and adds to tech_preview
+#group.
+#Must be placed directly under a \brief command
+macro.techpreview = "(Technical preview)\n\n\\meta status {Technical preview}\n\\ingroup tech_preview\n"
+
+include(grid.qdocconf)
+include(cpp-doc-macros.qdocconf)

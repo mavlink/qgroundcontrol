@@ -1,0 +1,8 @@
+{
+    "schema_version": 2,
+    "name": "${target}",
+    "repository": "${lower_case_project_name}",
+    "version": "${PROJECT_VERSION}",${extra_module_information}
+    "platforms": [${platforms_information}
+    ]
+}

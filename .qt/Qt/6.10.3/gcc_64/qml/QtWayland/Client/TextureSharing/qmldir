@@ -1,0 +1,8 @@
+module QtWayland.Client.TextureSharing
+linktarget Qt6::WaylandTextureSharing
+plugin waylandtexturesharingplugin
+classname QWaylandTextureSharingPlugin
+typeinfo plugins.qmltypes
+prefer :/qt-project.org/imports/QtWayland/Client/TextureSharing/
+depends QtQuick
+

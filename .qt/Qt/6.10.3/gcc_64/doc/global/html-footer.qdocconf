@@ -1,0 +1,20 @@
+#Default HTML footer for QDoc builds.
+
+HTML.footer = \
+    "        </div>\n" \
+    "       </div>\n" \
+    "   </div>\n" \
+    "   </div>\n" \
+    "</div>\n" \
+    "<div class=\"footer\">\n" \
+    "   <p>\n" \
+    "   <abbr title=\"Copyright\">&copy;</abbr> 2025 <span translate=\"no\">The Qt Company Ltd.</span>\n" \
+    "   Documentation contributions included herein are the copyrights of\n" \
+    "   their respective owners.<br/>" \
+    "   The documentation provided herein is licensed under the terms of the" \
+    "   <a href=\"http://www.gnu.org/licenses/fdl.html\">GNU Free Documentation" \
+    "   License version 1.3</a> as published by the <span translate=\"no\">Free Software Foundation</span>.<br/>" \
+    "   <span translate=\"no\">Qt</span> and respective logos are <a href=\"https://doc.qt.io/qt/trademarks.html\">" \
+    "   trademarks</a> of <span translate=\"no\">The Qt Company Ltd.</span> in Finland and/or other countries\n" \
+    "   worldwide. All other trademarks are property of their respective owners. </p>\n" \
+    "</div>\n" \

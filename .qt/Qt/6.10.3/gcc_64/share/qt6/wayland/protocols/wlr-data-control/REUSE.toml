@@ -1,0 +1,8 @@
+version = 1
+
+[[annotations]]
+path = "wlr-data-control-unstable-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = ["Copyright (c) 2018 Simon Ser",
+                          "Copyright (c) 2019 Ivan Molodetskikht"]
+SPDX-License-Identifier = "MIT"

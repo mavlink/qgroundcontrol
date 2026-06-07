@@ -1,0 +1,9 @@
+module Qt.labs.sharedimage
+linktarget Qt6::sharedimageplugin
+plugin sharedimageplugin
+classname QtQuickSharedImagePlugin
+static
+typeinfo plugins.qmltypes
+prefer :/qt-project.org/imports/Qt/labs/sharedimage/
+depends QtQuick
+

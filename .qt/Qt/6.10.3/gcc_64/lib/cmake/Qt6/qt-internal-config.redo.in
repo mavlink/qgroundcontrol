@@ -1,0 +1,2 @@
+#!/bin/sh
+@configure_path@ @repo_path@ -redo "$@"

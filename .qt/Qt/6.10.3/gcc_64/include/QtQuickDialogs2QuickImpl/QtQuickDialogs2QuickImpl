@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKDIALOGS2QUICKIMPL_MODULE_H
+#define QT_QTQUICKDIALOGS2QUICKIMPL_MODULE_H
+#include <QtQuickDialogs2QuickImpl/QtQuickDialogs2QuickImplDepends>
+#include "qtquickdialogs2quickimplversion.h"
+#endif

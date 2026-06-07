@@ -1,0 +1,529 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "RectangleShape"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1546"
+                    }
+                ],
+                "className": "QQuickRectangleShape",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 126,
+                        "name": "BorderMode",
+                        "values": [
+                            "Inside",
+                            "Middle",
+                            "Outside"
+                        ]
+                    }
+                ],
+                "lineNumber": 25,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 29,
+                        "name": "radius",
+                        "notify": "radiusChanged",
+                        "read": "radius",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setRadius"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 30,
+                        "name": "topLeftRadius",
+                        "notify": "topLeftRadiusChanged",
+                        "read": "topLeftRadius",
+                        "required": false,
+                        "reset": "resetTopLeftRadius",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setTopLeftRadius"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 31,
+                        "name": "topRightRadius",
+                        "notify": "topRightRadiusChanged",
+                        "read": "topRightRadius",
+                        "required": false,
+                        "reset": "resetTopRightRadius",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setTopRightRadius"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 32,
+                        "name": "bottomLeftRadius",
+                        "notify": "bottomLeftRadiusChanged",
+                        "read": "bottomLeftRadius",
+                        "required": false,
+                        "reset": "resetBottomLeftRadius",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setBottomLeftRadius"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 33,
+                        "name": "bottomRightRadius",
+                        "notify": "bottomRightRadiusChanged",
+                        "read": "bottomRightRadius",
+                        "required": false,
+                        "reset": "resetBottomRightRadius",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setBottomRightRadius"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 34,
+                        "name": "bevel",
+                        "notify": "bevelChanged",
+                        "read": "hasBevel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setBevel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 35,
+                        "name": "topLeftBevel",
+                        "notify": "topLeftBevelChanged",
+                        "read": "hasTopLeftBevel",
+                        "required": false,
+                        "reset": "resetTopLeftBevel",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setTopLeftBevel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 36,
+                        "name": "topRightBevel",
+                        "notify": "topRightBevelChanged",
+                        "read": "hasTopRightBevel",
+                        "required": false,
+                        "reset": "resetTopRightBevel",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setTopRightBevel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 37,
+                        "name": "bottomLeftBevel",
+                        "notify": "bottomLeftBevelChanged",
+                        "read": "hasBottomLeftBevel",
+                        "required": false,
+                        "reset": "resetBottomLeftBevel",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setBottomLeftBevel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 38,
+                        "name": "bottomRightBevel",
+                        "notify": "bottomRightBevelChanged",
+                        "read": "hasBottomRightBevel",
+                        "required": false,
+                        "reset": "resetBottomRightBevel",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setBottomRightBevel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 10,
+                        "lineNumber": 39,
+                        "name": "strokeColor",
+                        "notify": "strokeColorChanged",
+                        "read": "strokeColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false,
+                        "write": "setStrokeColor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 11,
+                        "lineNumber": 40,
+                        "name": "strokeWidth",
+                        "notify": "strokeWidthChanged",
+                        "read": "strokeWidth",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setStrokeWidth"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 12,
+                        "lineNumber": 41,
+                        "name": "fillColor",
+                        "notify": "fillColorChanged",
+                        "read": "fillColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false,
+                        "write": "setFillColor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 13,
+                        "lineNumber": 42,
+                        "name": "joinStyle",
+                        "notify": "joinStyleChanged",
+                        "read": "joinStyle",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickShapePath::JoinStyle",
+                        "user": false,
+                        "write": "setJoinStyle"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 14,
+                        "lineNumber": 43,
+                        "name": "capStyle",
+                        "notify": "capStyleChanged",
+                        "read": "capStyle",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickShapePath::CapStyle",
+                        "user": false,
+                        "write": "setCapStyle"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 15,
+                        "lineNumber": 44,
+                        "name": "strokeStyle",
+                        "notify": "strokeStyleChanged",
+                        "read": "strokeStyle",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickShapePath::StrokeStyle",
+                        "user": false,
+                        "write": "setStrokeStyle"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 16,
+                        "lineNumber": 45,
+                        "name": "dashOffset",
+                        "notify": "dashOffsetChanged",
+                        "read": "dashOffset",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setDashOffset"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 17,
+                        "lineNumber": 46,
+                        "name": "dashPattern",
+                        "notify": "dashPatternChanged",
+                        "read": "dashPattern",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QList<qreal>",
+                        "user": false,
+                        "write": "setDashPattern"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 18,
+                        "lineNumber": 47,
+                        "name": "fillGradient",
+                        "read": "fillGradient",
+                        "required": false,
+                        "reset": "resetFillGradient",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickShapeGradient*",
+                        "user": false,
+                        "write": "setFillGradient"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 19,
+                        "lineNumber": 48,
+                        "name": "borderMode",
+                        "read": "borderMode",
+                        "required": false,
+                        "reset": "resetBorderMode",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "BorderMode",
+                        "user": false,
+                        "write": "setBorderMode"
+                    }
+                ],
+                "qualifiedClassName": "QQuickRectangleShape",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 137,
+                        "name": "radiusChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 138,
+                        "name": "topLeftRadiusChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 139,
+                        "name": "topRightRadiusChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 140,
+                        "name": "bottomLeftRadiusChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 141,
+                        "name": "bottomRightRadiusChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 142,
+                        "name": "bevelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 143,
+                        "name": "topLeftBevelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 144,
+                        "name": "topRightBevelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 145,
+                        "name": "bottomLeftBevelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "lineNumber": 146,
+                        "name": "bottomRightBevelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 10,
+                        "lineNumber": 147,
+                        "name": "shapePathChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 11,
+                        "lineNumber": 148,
+                        "name": "strokeColorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 12,
+                        "lineNumber": 149,
+                        "name": "strokeWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 13,
+                        "lineNumber": 150,
+                        "name": "fillColorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 14,
+                        "lineNumber": 151,
+                        "name": "fillRuleChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 15,
+                        "lineNumber": 152,
+                        "name": "joinStyleChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 16,
+                        "lineNumber": 153,
+                        "name": "capStyleChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 17,
+                        "lineNumber": 154,
+                        "name": "strokeStyleChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 18,
+                        "lineNumber": 155,
+                        "name": "dashOffsetChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 19,
+                        "lineNumber": 156,
+                        "name": "dashPatternChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 20,
+                        "lineNumber": 157,
+                        "name": "gradientChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 21,
+                        "lineNumber": 158,
+                        "name": "borderModeChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickShape"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickrectangleshape_p.h",
+        "outputRevision": 69
+    }
+]

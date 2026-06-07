@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="shm_emulation_server_buffer">
+    <copyright>
+ Copyright (C) 2017 The Qt Company Ltd.
+ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+    </copyright>
+  <interface name="qt_shm_emulation_server_buffer" version="1">
+    <description summary="shm-based server buffer for testing on desktop">
+      This is software-based implementation of the qt_server_buffer extension.
+      It is intended for testing and debugging purposes only.
+    </description>
+  <enum name="format">
+    <entry name="RGBA32" value="0"/>
+    <entry name="A8" value="1"/>
+  </enum>
+    <event name="server_buffer_created">
+      <description summary="shm buffer information">
+        Informs the client about a newly created server buffer.
+        The "key" argument contains a QSharedMemory key.
+      </description>
+      <arg name="id" type="new_id" interface="qt_server_buffer"/>
+      <arg name="key" type="string"/>
+      <arg name="width" type="int"/>
+      <arg name="height" type="int"/>
+      <arg name="bytes_per_line" type="int"/>
+      <arg name="format" type="int"/>
+    </event>
+  </interface>
+</protocol>
+

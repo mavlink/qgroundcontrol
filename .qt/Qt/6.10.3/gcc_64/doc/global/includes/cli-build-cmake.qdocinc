@@ -1,0 +1,42 @@
+// Copyright (C) 2022 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+//! [cli-build-cmake]
+
+    \section1 Building and Running from the Command Line
+
+    To build an example application from the command line, create a build
+    directory for it. Switch to the build directory and run \c qt-cmake to
+    configure your project for building. If the project is configured
+    successfully, the generated files enable you to build the project.
+
+    \badcode
+    md <build_directory>
+    cd <build_directory>
+    <qt_installation_directory>\bin\qt-cmake -GNinja <source_directory>
+    <generator>
+    \endcode
+
+    The commands create an executable in the build directory. The \c CMake
+    tool reads the project file and produces instructions for how to build
+    the application. The generator then uses the instructions to produce
+    the executable binary.
+
+    For example, to build the Notepad example on Windows, when using Ninja
+    as the generator, enter the following commands:
+
+    \badcode \QtVersion
+    md notepad-build
+    cd notepad-build
+    C:\Qt\\1\msvc2022_64\bin\qt-cmake -GNinja C:\Examples\notepad
+    ninja
+    \endcode
+
+    If you do not use Ninja as the generator, use the generator-independent
+    CMake command to build the application instead of \c ninja:
+
+    \badcode
+    cmake --build
+    \endcode
+
+//! [cli-build-cmake]

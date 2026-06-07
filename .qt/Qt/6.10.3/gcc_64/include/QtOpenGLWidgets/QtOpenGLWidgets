@@ -1,0 +1,7 @@
+#ifndef QT_QTOPENGLWIDGETS_MODULE_H
+#define QT_QTOPENGLWIDGETS_MODULE_H
+#include <QtOpenGLWidgets/QtOpenGLWidgetsDepends>
+#include "qtopenglwidgetsglobal.h"
+#include "qopenglwidget.h"
+#include "qtopenglwidgetsversion.h"
+#endif

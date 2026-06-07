@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKCONTROLS2IMAGINE_MODULE_H
+#define QT_QTQUICKCONTROLS2IMAGINE_MODULE_H
+#include <QtQuickControls2Imagine/QtQuickControls2ImagineDepends>
+#include "qtquickcontrols2imagineversion.h"
+#endif

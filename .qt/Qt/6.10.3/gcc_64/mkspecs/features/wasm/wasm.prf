@@ -1,0 +1,195 @@
+
+QT_FOR_CONFIG += core-private
+
+# DESTDIR will be empty if not set in the app .pro file; make sure it has a value
+isEmpty(DESTDIR): DESTDIR = $$OUT_PWD
+
+exists($$QMAKE_QT_CONFIG) {
+## this may be subject to change
+
+    ## qmake puts a space if done otherwise
+    !isEmpty(QT_WASM_EXTRA_EXPORTED_METHODS): {
+        EXPORTED_METHODS = UTF16ToString,stringToUTF16,JSEvents,specialHTMLTargets,FS,callMain,$$QT_WASM_EXTRA_EXPORTED_METHODS
+    } else {
+        EXPORTED_METHODS = UTF16ToString,stringToUTF16,JSEvents,specialHTMLTargets,FS,callMain
+    }
+    EMCC_LFLAGS += -s EXPORTED_RUNTIME_METHODS=$$EXPORTED_METHODS
+
+    !isEmpty(QT_WASM_EXPORT_NAME): {
+        EXPORT_NAME = $$QT_WASM_EXPORT_NAME
+    } else {
+        TARGET_SANITIZED = $$replace(TARGET, [^a-zA-Z0-9_], _)
+        EXPORT_NAME = $${TARGET_SANITIZED}_entry
+    }
+
+    EMCC_LFLAGS += -s EXPORT_NAME=$$EXPORT_NAME
+
+
+    qtConfig(thread) {
+
+        EMCC_LFLAGS += -pthread
+        EMCC_CFLAGS += -pthread
+
+        # Create worker threads at startup. This is supposed to be an optimization,
+        # however exceeding the pool size has been obesverved to hang the application.
+        POOL_SIZE = 4
+        !isEmpty(QT_WASM_PTHREAD_POOL_SIZE) {
+            POOL_SIZE = $$QT_WASM_PTHREAD_POOL_SIZE
+        }
+
+        message("Setting PTHREAD_POOL_SIZE to" $$POOL_SIZE)
+        EMCC_LFLAGS += -s PTHREAD_POOL_SIZE=$$POOL_SIZE
+    }
+
+    # Set memory options
+    EMCC_LFLAGS += -sALLOW_MEMORY_GROWTH
+    isEmpty(QT_WASM_INITIAL_MEMORY) {
+        INITIAL_MEMORY = 50MB # emscripten default is 16MB, we need slightly more
+    } else {
+        INITIAL_MEMORY = $$QT_WASM_INITIAL_MEMORY
+    }
+    EMCC_LFLAGS += -s INITIAL_MEMORY=$$INITIAL_MEMORY
+    isEmpty(QT_WASM_MAXIMUM_MEMORY) {
+        contains(QMAKE_CFLAGS, -s MEMORY64=1) {
+            MAXIMUM_MEMORY = 16GB
+        } else {
+            MAXIMUM_MEMORY = 4GB
+        }
+    } else {
+        MAXIMUM_MEMORY = $$QT_WASM_MAXIMUM_MEMORY
+    }
+    EMCC_LFLAGS += -s MAXIMUM_MEMORY=$$MAXIMUM_MEMORY
+
+    target_filename_base = $$replace(TARGET, \.js$, )
+    QMAKE_DISTCLEAN += qtloader.js qtlogo.svg $${target_filename_base}.wasm $${target_filename_base}.js $${target_filename_base}.html
+
+    qtConfig(sse2) {
+        QMAKE_CFLAGS += -O2 -msimd128 -msse -msse2
+        QMAKE_CXXFLAGS += -O2 -msimd128 -msse -msse2
+        QMAKE_LFLAGS       += -msimd128 -msse -msse2
+        QMAKE_LFLAGS_DEBUG += -msimd128 -msse -msse2
+    }
+
+    qtConfig(shared) {
+        contains(TEMPLATE, .*app) {
+            EMCC_MODULE_FLAGS = -s MAIN_MODULE=1
+        }
+        contains(TEMPLATE, .*lib):!static: {
+            EMCC_MODULE_FLAGS = -s SIDE_MODULE=1
+        }
+        EMCC_CFLAGS += $$EMCC_MODULE_FLAGS
+        EMCC_LFLAGS += $$EMCC_MODULE_FLAGS
+    }
+
+    qtConfig(wasm-jspi) {
+        EMCC_LFLAGS += -sJSPI
+    }
+
+    qtConfig(wasm-exceptions) {
+        EMCC_LFLAGS += -fwasm-exceptions
+    }
+
+    QMAKE_LFLAGS       += $$EMCC_LFLAGS
+    QMAKE_LFLAGS_DEBUG += $$EMCC_LFLAGS
+    QMAKE_CFLAGS += $$EMCC_CFLAGS
+    QMAKE_CXXFLAGS += $$EMCC_CFLAGS
+}
+
+# Create js and wasm files for applications
+contains(TEMPLATE, .*app) {
+    TARGET_BASE = $${TARGET}
+    TARGET_HTML = $${TARGET}.html
+    TARGET_JS = $${TARGET}.js
+
+    # Make the emscripten compiler generate a js file
+    TARGET = $$TARGET_JS
+
+    QMAKE_INCDIR += $$(HOME)/.emscripten_ports/openssl/include
+
+    CONFIG += static
+    js_file.files = $$TARGET_JS
+    js_file.path  = $$target.path
+    isEmpty(js_file.path): \
+        js_file.path += ./
+    INSTALLS += js_file
+
+    # Copy hosting html and javascript to the application build directory.
+    exists($$[QT_INSTALL_PLUGINS]/platforms/wasm_shell.html) {
+        # don't pass this until it's installed somewhere
+        # otherwise makespec test fails during qt configure
+        WASM_PLUGIN_PATH = $$[QT_INSTALL_PLUGINS]/platforms
+    } else {
+        ## internal build. not installed
+        WASM_PLUGIN_PATH = $$PWD/../../../src/plugins/platforms/wasm
+    }
+
+    PRELOAD = ""
+    shared {
+        PRELOAD = "preload:\ ['qt_plugins.json',\ 'qt_qml_imports.json'],"
+    }
+
+    # Copy/Generate main .html file (e.g. myapp.html) from the webassembly_shell.html by
+    # replacing the app name placeholder with the actual app name.
+    apphtml.name = application main html file
+    apphtml.output = $$DESTDIR/$$TARGET_HTML
+    apphtml.commands = $$QMAKE_STREAM_EDITOR -e s/@APPNAME@/$$TARGET_BASE/g -e s/@APPEXPORTNAME@/$$EXPORT_NAME/g -e s/@PRELOAD@/$$PRELOAD/g $$WASM_PLUGIN_PATH/wasm_shell.html > $$DESTDIR/$$TARGET_HTML
+    apphtml.input = $$WASM_PLUGIN_PATH/wasm_shell.html
+    apphtml.depends = $$apphtml.input
+    QMAKE_EXTRA_COMPILERS += apphtml
+
+    appjs.name = application qtloader.js
+    appjs.output = $$DESTDIR/qtloader.js
+    appjs.commands = $$QMAKE_COPY $$shell_path($$WASM_PLUGIN_PATH/qtloader.js) $$shell_path($$DESTDIR)
+    appjs.input = $$WASM_PLUGIN_PATH/qtloader.js
+    appjs.depends = $$appjs.input
+    QMAKE_EXTRA_COMPILERS += appjs
+
+    appsvg.name = application qtlogo.svg
+    appsvg.output = $$DESTDIR/qtlogo.svg
+    appsvg.commands = $$QMAKE_COPY $$shell_path($$WASM_PLUGIN_PATH/qtlogo.svg) $$shell_path($$DESTDIR)
+    appsvg.input = $$WASM_PLUGIN_PATH/qtlogo.svg
+    appsvg.depends = $$appsvg.input
+    QMAKE_EXTRA_COMPILERS += appsvg
+
+    QMAKE_EXTRA_TARGETS += apphtml appjs appsvg
+    POST_TARGETDEPS += apphtml appjs appsvg
+
+    # Add manual target to make "make -B shellfiles" work.
+    shellfiles.target = shellfiles
+    shellfiles.depends = apphtml appjs appsvg
+    QMAKE_EXTRA_TARGETS += shellfiles
+
+    # emscripten ports are linked into the main module (this app), not the Qt
+    # libs which reference them
+    qt {
+        qt_depends = $$resolve_depends(QT, "QT.")
+        contains(qt_depends, core(-private)?): QMAKE_LFLAGS += \
+            $$QMAKE_LIBS_THREAD $$QMAKE_LIBS_ZLIB
+        contains(qt_depends, gui(-private)?): QMAKE_LFLAGS += \
+            $$QMAKE_LIBS_FREETYPE $$QMAKE_LIBS_LIBPNG
+    }
+}
+
+qtConfTest_emccVersion()
+
+CONFIG(debug):!isEmpty(QT_WASM_SOURCE_MAP) {
+
+    EMCC_VERSION = $$qtSystemEmccVersion()
+
+    QMAKE_LFLAGS += -gsource-map
+    # Pass --source-map-base on the linker line. This informs the
+    # browser where to find the source files when debugging.
+    WASM_SOURCE_MAP_BASE = http://localhost:8000/
+    !isEmpty(QT_WASM_SOURCE_MAP_BASE):\
+        WASM_SOURCE_MAP_BASE = $$QT_WASM_SOURCE_MAP_BASE
+    QMAKE_LFLAGS += --source-map-base $$WASM_SOURCE_MAP_BASE
+}
+
+
+# Creates the stand-alone version of the library from bitcode
+!static:contains(TEMPLATE, .*lib): {
+    load(resolve_target)
+    QMAKE_POST_LINK += $$QMAKE_LINK_SHLIB $$QMAKE_RESOLVED_TARGET -o $${QMAKE_RESOLVED_TARGET}.js
+
+    QMAKE_INCDIR += $$(HOME)/.emscripten_ports/openssl/include
+}

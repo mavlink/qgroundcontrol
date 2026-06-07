@@ -1,0 +1,6 @@
+#ifndef QT_QTQMLINTEGRATION_MODULE_H
+#define QT_QTQMLINTEGRATION_MODULE_H
+#include <QtQmlIntegration/QtQmlIntegrationDepends>
+#include "qqmlintegration.h"
+#include "qtqmlintegrationversion.h"
+#endif

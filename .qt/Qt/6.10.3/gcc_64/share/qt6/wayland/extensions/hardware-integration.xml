@@ -1,0 +1,21 @@
+<protocol name="hardware_integration">
+
+    <copyright>
+ Copyright (C) 2015 The Qt Company Ltd.
+ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+    </copyright>
+
+    <interface name="qt_hardware_integration" version="1">
+      <description summary="compostors communicates supported buffer sharing extensions">
+        Using this protocol the compositor can signal to clients which buffer sharing extensions
+        the client should use
+      </description>
+      <event name="client_backend">
+        <arg name="name" type="string"/>
+      </event>
+      <event name="server_backend">
+        <arg name="name" type="string"/>
+      </event>
+    </interface>
+</protocol>
+

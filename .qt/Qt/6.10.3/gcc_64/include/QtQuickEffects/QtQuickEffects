@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKEFFECTS_MODULE_H
+#define QT_QTQUICKEFFECTS_MODULE_H
+#include <QtQuickEffects/QtQuickEffectsDepends>
+#include "qtquickeffectsversion.h"
+#endif

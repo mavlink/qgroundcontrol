@@ -1,0 +1,11 @@
+QT.quickcontrols2universalstyleimpl_private.VERSION = 6.10.3
+QT.quickcontrols2universalstyleimpl_private.name = QtQuickControls2UniversalStyleImpl
+QT.quickcontrols2universalstyleimpl_private.module =
+QT.quickcontrols2universalstyleimpl_private.libs = $$QT_MODULE_LIB_BASE
+QT.quickcontrols2universalstyleimpl_private.includes = $$QT_MODULE_INCLUDE_BASE/QtQuickControls2UniversalStyleImpl/6.10.3 $$QT_MODULE_INCLUDE_BASE/QtQuickControls2UniversalStyleImpl/6.10.3/QtQuickControls2UniversalStyleImpl
+QT.quickcontrols2universalstyleimpl_private.frameworks = 
+QT.quickcontrols2universalstyleimpl_private.depends = quickcontrols2universalstyleimpl
+QT.quickcontrols2universalstyleimpl_private.uses = 
+QT.quickcontrols2universalstyleimpl_private.module_config = v2 internal_module
+QT.quickcontrols2universalstyleimpl_private.enabled_features = 
+QT.quickcontrols2universalstyleimpl_private.disabled_features = 

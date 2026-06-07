@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# The directory of this script is the expanded absolute path of the "$qt_prefix/bin" directory.
+script_dir_path=`dirname $0`
+script_dir_path=`(cd "$script_dir_path"; pwd)`
+
+# Try to use original cmake, otherwise to make it relocatable, use any cmake found in PATH.
+original_cmake_path="/opt/cmake-3.30.5/bin/cmake"
+cmake_path=$original_cmake_path
+if ! test -f "$cmake_path"; then
+    cmake_path="cmake"
+fi
+
+toolchain_path="$script_dir_path/../lib/cmake/Qt6/qt.toolchain.cmake"
+
+
+
+# Find the qt toolchain relative to the absolute bin dir path where the script is located.
+CMAKE_TOOLCHAIN_FILE="$toolchain_path"
+export CMAKE_TOOLCHAIN_FILE
+
+exec "$cmake_path" -G"Ninja" -DQT_USE_ORIGINAL_COMPILER=ON "$@"

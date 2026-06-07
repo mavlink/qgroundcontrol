@@ -1,0 +1,60 @@
+/*
+-----------
+HTML Tabs
+-----------
+*/
+
+.blankline {
+  height: 1em;
+  display: block;
+}
+
+input[type="radio"],
+input[type="radio"] ~ .tabcontent {
+  display: none;
+  margin: 0;
+}
+
+input[type="radio"] + label {
+  display: inline-block;
+}
+
+input[type="radio"] + label {
+  margin-left: 0;
+  padding: 10px 10px 8px;
+  background-image: linear-gradient(to right, #09102b, #53586b);
+  color: #ccc;
+  position: relative;
+  clip-path: polygon(10px 0%, 100% 0%, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0% 100%, 0% calc(100% - 10px), 0% 10px);
+  margin-right: 2px;
+  min-width: 50px;
+  cursor: pointer;
+}
+
+input[type="radio"]:hover + label,
+input[type="radio"]:checked + label {
+  opacity: 0.75;
+  transition: all ease 0.3s;
+}
+
+input[type="radio"]:checked + label {
+  color: #41cd52;
+}
+
+/* Some styling for the content */
+div.tabcontent {
+  border-left: 3px solid #ccc;
+  border-top: 1px solid #ccc;
+}
+
+div.tabcontent >:first-child:not(pre, .pre) {
+  padding-top: 10px;
+}
+
+div.tabcontent >:not(pre, .pre) {
+  padding-left: 10px;
+}
+
+div.tabcontent pre {
+  margin-top: 0;
+}

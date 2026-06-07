@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-pointer-gestures-protocol",
+        "Name": "Wayland Pointer Gestures Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin",
+        "Files": "pointer-gestures-unstable-v1.xml",
+
+        "Description": "",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "unstable v1, version 2",
+        "DownloadLocation": "https://cgit.freedesktop.org/wayland/wayland-protocols/plain/unstable/pointer-gestures/pointer-gestures-unstable-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2015, 2016 Red Hat"
+    }
+]

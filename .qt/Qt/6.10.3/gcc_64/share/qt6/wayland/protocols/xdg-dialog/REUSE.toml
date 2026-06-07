@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "xdg-dialog-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2023 Carlos Garnacho"
+SPDX-License-Identifier = "MIT"

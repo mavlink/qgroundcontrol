@@ -1,0 +1,55 @@
+# Copyright (C) 2024 The Qt Company Ltd.
+# SPDX-License-Identifier: BSD-3-Clause
+
+@PACKAGE_INIT@
+
+cmake_minimum_required(VERSION @min_new_policy_version@...@max_new_policy_version@)
+
+include(CMakeFindDependencyMacro)
+
+# Find required dependencies, if any.
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target_private@Dependencies.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target_private@Dependencies.cmake")
+    _qt_internal_suggest_dependency_debugging(@target_private@
+        __qt_@target_private@_pkg ${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE)
+endif()
+
+# If *ConfigDependencies.cmake exists, the variable value will be defined there.
+# Don't override it in that case.
+if(NOT DEFINED "@INSTALL_CMAKE_NAMESPACE@@target_private@_FOUND")
+    set("@INSTALL_CMAKE_NAMESPACE@@target_private@_FOUND" TRUE)
+endif()
+
+if(NOT __qt_@target@_always_load_private_module)
+    _qt_internal_show_private_module_warning(@target_private@)
+endif()
+
+if(NOT QT_NO_CREATE_TARGETS AND @INSTALL_CMAKE_NAMESPACE@@target_private@_FOUND)
+    include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target_private@Targets.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target_private@AdditionalTargetInfo.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target_private@ExtraProperties.cmake"
+        OPTIONAL)
+endif()
+
+if(TARGET @QT_CMAKE_EXPORT_NAMESPACE@::@target_private@)
+    if(NOT QT_NO_CREATE_VERSIONLESS_TARGETS)
+        if(CMAKE_VERSION VERSION_LESS 3.18 OR QT_USE_OLD_VERSION_LESS_TARGETS)
+            include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target_private@VersionlessTargets.cmake")
+        else()
+            include("${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target_private@VersionlessAliasTargets.cmake")
+        endif()
+    endif()
+else()
+    set(@INSTALL_CMAKE_NAMESPACE@@target_private@_FOUND FALSE)
+    if(NOT DEFINED @INSTALL_CMAKE_NAMESPACE@@target_private@_NOT_FOUND_MESSAGE)
+        set(@INSTALL_CMAKE_NAMESPACE@@target_private@_NOT_FOUND_MESSAGE
+            "Target \"@QT_CMAKE_EXPORT_NAMESPACE@::@target_private@\" was not found.")
+
+        if(QT_NO_CREATE_TARGETS)
+            string(APPEND @INSTALL_CMAKE_NAMESPACE@@target_private@_NOT_FOUND_MESSAGE
+                "Possibly due to QT_NO_CREATE_TARGETS being set to TRUE and thus "
+                "${CMAKE_CURRENT_LIST_DIR}/@INSTALL_CMAKE_NAMESPACE@@target_private@Targets.cmake was not "
+                "included to define the target.")
+        endif()
+    endif()
+endif()

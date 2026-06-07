@@ -1,0 +1,5 @@
+#ifndef QT_QTQMLFORMAT_MODULE_H
+#define QT_QTQMLFORMAT_MODULE_H
+#include <QtQmlFormat/QtQmlFormatDepends>
+#include "qtqmlformatversion.h"
+#endif

@@ -1,0 +1,40 @@
+
+isEmpty(QMAKE_INFO_PLIST): \
+    return()
+
+plist_path = $$absolute_path($$QMAKE_INFO_PLIST, $$_PRO_FILE_PWD_)
+
+!exists($$plist_path): \
+    return()
+
+for(plugin, QT_PLUGINS) {
+    !equals(QT_PLUGIN.$${plugin}.TYPE, permissions): \
+        next()
+
+    usage_descriptions = $$eval(QT_PLUGIN.$${plugin}.usage_descriptions)
+
+    found_usage_description = false
+    for(usage_description_key, usage_descriptions) {
+        usage_description = $$system("/usr/libexec/PlistBuddy" \
+            "-c 'print $$usage_description_key' $$plist_path 2>/dev/null", \
+            singleLine, exit_code)
+
+        !equals(exit_code, 0): \
+            next()
+
+        !isEmpty(usage_description) {
+            found_usage_description = true
+            break()
+        }
+    }
+
+    !$$found_usage_description: \
+        next()
+
+    request_flag = $$eval(QT_PLUGIN.$${plugin}.request_flag)
+
+    QTPLUGIN += $$plugin
+    QMAKE_LFLAGS += $$request_flag
+
+    QMAKE_INTERNAL_INCLUDED_FILES *= $$QMAKE_INFO_PLIST
+}

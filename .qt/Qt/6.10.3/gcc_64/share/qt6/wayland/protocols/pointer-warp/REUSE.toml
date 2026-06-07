@@ -1,0 +1,10 @@
+version = 1
+
+[[annotations]]
+path = "pointer-warp-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = ["Copyright © 2024 Neal Gompa",
+                          "Copyright © 2024 Xaver Hugl",
+                          "Copyright © 2024 Matthias Klumpp",
+                          "Copyright © 2024 Vlad Zahorodnii"]
+SPDX-License-Identifier = "MIT"

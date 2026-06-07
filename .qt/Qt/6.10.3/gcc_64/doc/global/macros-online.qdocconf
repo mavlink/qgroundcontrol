@@ -1,0 +1,12 @@
+macro.youtube.HTML = "<div class=\"video\">\n<span class=\"vspan\"></span>\n" \
+                     "<iframe src=\"https://www.youtube.com/embed/\1\"" \
+                     "frameborder=\"0\" allowfullscreen>\n" \
+                     "</iframe></div>\n"
+macro.youtube.DocBook = "<db:mediaobject>\n" \
+                        "<db:videoobject>\n" \
+                        "<db:videodata fileref=\"\1\">\n" \
+                        "</db:videodata>\n" \
+                        "</db:videoobject>\n" \
+                        "</db:mediaobject>\n"
+
+include(htmltabs.qdocconf)

@@ -1,0 +1,48 @@
+[
+  {
+    "name": "qtbase",
+    "repositories": ["qtbase", "qtactiveqt", "qtimageformats"]
+  },
+  {
+    "name": "qtdeclarative",
+    "repositories": ["qtdeclarative"]
+  },
+  {
+    "name": "qtmultimedia",
+    "repositories": ["qtmultimedia"]
+  },
+  {
+    "name": "qtconnectivity",
+    "repositories": ["qtconnectivity"]
+  },
+  {
+    "name": "qtlocation",
+    "repositories": ["qtlocation"]
+  },
+  {
+    "name": "qtwebsockets",
+    "repositories": ["qtwebsockets"]
+  },
+  {
+    "name": "qtserialport",
+    "repositories": ["qtserialport"]
+  },
+  {
+    "name": "qtwebengine",
+    "repositories": ["qtwebengine"]
+  },
+  {
+    "name": "designer",
+    "modules": ["Designer"]
+  },
+  {
+    "name": "linguist"
+  },
+  {
+    "name": "assistant"
+  },
+  {
+    "name": "qt_help",
+    "modules": ["Help"]
+  }
+]

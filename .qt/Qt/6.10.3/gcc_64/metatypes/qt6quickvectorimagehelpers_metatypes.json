@@ -1,0 +1,140 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "TransformGroup"
+                    },
+                    {
+                        "name": "DefaultProperty",
+                        "value": "transformSequence"
+                    }
+                ],
+                "className": "QQuickTransformGroup",
+                "lineNumber": 26,
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QQuickTransform*"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 38,
+                        "name": "activateOverride",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QQuickTransform*"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 39,
+                        "name": "deactivateOverride",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QQuickTransform*"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 40,
+                        "name": "deactivate",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 31,
+                        "name": "transformSequence",
+                        "read": "transformSequence",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQmlListProperty<QQuickTransform>",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QQuickTransformGroup",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickTransform"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquicktransformgroup_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "ColorOpacityAnimation"
+                    }
+                ],
+                "className": "QQuickColorOpacityAnimation",
+                "lineNumber": 23,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 28,
+                        "name": "from",
+                        "read": "from",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setFrom"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 29,
+                        "name": "to",
+                        "read": "to",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setTo"
+                    }
+                ],
+                "qualifiedClassName": "QQuickColorOpacityAnimation",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickPropertyAnimation"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickcoloropacityanimation_p.h",
+        "outputRevision": 69
+    }
+]

@@ -1,0 +1,11 @@
+QT.labssettings_private.VERSION = 6.10.3
+QT.labssettings_private.name = QtLabsSettings
+QT.labssettings_private.module =
+QT.labssettings_private.libs = $$QT_MODULE_LIB_BASE
+QT.labssettings_private.includes = $$QT_MODULE_INCLUDE_BASE/QtLabsSettings/6.10.3 $$QT_MODULE_INCLUDE_BASE/QtLabsSettings/6.10.3/QtLabsSettings
+QT.labssettings_private.frameworks = 
+QT.labssettings_private.depends = labssettings
+QT.labssettings_private.uses = 
+QT.labssettings_private.module_config = v2 internal_module
+QT.labssettings_private.enabled_features = 
+QT.labssettings_private.disabled_features = 

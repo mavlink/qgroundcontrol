@@ -1,0 +1,324 @@
+#ifndef QT_QTCORE_MODULE_H
+#define QT_QTCORE_MODULE_H
+#include <QtCore/QtCoreDepends>
+#include "qglobal.h"
+#include "qtcoreglobal.h"
+#include "q17memory.h"
+#include "q20algorithm.h"
+#include "q20chrono.h"
+#include "q20functional.h"
+#include "q20iterator.h"
+#include "q20map.h"
+#include "q20memory.h"
+#include "q20utility.h"
+#include "q20vector.h"
+#include "q23functional.h"
+#include "q23utility.h"
+#include "q26numeric.h"
+#if QT_CONFIG(animation)
+#include "qabstractanimation.h"
+#endif
+#include "qabstracteventdispatcher.h"
+#if QT_CONFIG(itemmodel)
+#include "qabstractitemmodel.h"
+#endif
+#include "qabstractnativeeventfilter.h"
+#if QT_CONFIG(proxymodel)
+#include "qabstractproxymodel.h"
+#endif
+#include "qalgorithms.h"
+#include "qalloc.h"
+#if QT_CONFIG(animation)
+#include "qanimationgroup.h"
+#endif
+#include "qanystringview.h"
+#include "qapplicationstatic.h"
+#include "qarraydata.h"
+#include "qarraydataops.h"
+#include "qarraydatapointer.h"
+#include "qassert.h"
+#include "qassociativeiterable.h"
+#include "qatomic.h"
+#include "qatomicscopedvaluerollback.h"
+#include "qbasictimer.h"
+#include "qbindingstorage.h"
+#include "qbitarray.h"
+#include "qbuffer.h"
+#include "qbytearray.h"
+#include "qbytearrayalgorithms.h"
+#include "qbytearraylist.h"
+#include "qbytearraymatcher.h"
+#include "qbytearrayview.h"
+#include "qcache.h"
+#include "qcalendar.h"
+#include "qcborarray.h"
+#include "qcborcommon.h"
+#include "qcbormap.h"
+#include "qcborstream.h"
+#if QT_CONFIG(cborstreamreader)
+#include "qcborstreamreader.h"
+#endif
+#if QT_CONFIG(cborstreamwriter)
+#include "qcborstreamwriter.h"
+#endif
+#include "qcborvalue.h"
+#include "qchar.h"
+#include "qchronotimer.h"
+#include "qcollator.h"
+#if QT_CONFIG(commandlineparser)
+#include "qcommandlineoption.h"
+#endif
+#if QT_CONFIG(commandlineparser)
+#include "qcommandlineparser.h"
+#endif
+#include "qcompare.h"
+#include "qcompilerdetection.h"
+#if QT_CONFIG(concatenatetablesproxymodel)
+#include "qconcatenatetablesproxymodel.h"
+#endif
+#include "qconstructormacros.h"
+#include "qcontainerfwd.h"
+#include "qcontainerinfo.h"
+#include "qcontiguouscache.h"
+#include "qcoreapplication.h"
+#include "qcoreevent.h"
+#include "qcryptographichash.h"
+#include "qdarwinhelpers.h"
+#include "qdatastream.h"
+#include "qdatetime.h"
+#include "qdeadlinetimer.h"
+#include "qdebug.h"
+#include "qdir.h"
+#include "qdiriterator.h"
+#include "qdirlisting.h"
+#if QT_CONFIG(easingcurve)
+#include "qeasingcurve.h"
+#endif
+#include "qelapsedtimer.h"
+#include "qendian.h"
+#include "qeventloop.h"
+#if QT_CONFIG(future)
+#include "qexception.h"
+#endif
+#include "qexceptionhandling.h"
+#include "qfactoryinterface.h"
+#include "qfile.h"
+#include "qfiledevice.h"
+#include "qfileinfo.h"
+#include "qfileselector.h"
+#if QT_CONFIG(filesystemwatcher)
+#include "qfilesystemwatcher.h"
+#endif
+#include "qflags.h"
+#include "qforeach.h"
+#include "qfunctionpointer.h"
+#if QT_CONFIG(future)
+#include "qfuture.h"
+#endif
+#if QT_CONFIG(future)
+#include "qfutureinterface.h"
+#endif
+#if QT_CONFIG(future)
+#include "qfuturesynchronizer.h"
+#endif
+#if QT_CONFIG(future)
+#include "qfuturewatcher.h"
+#endif
+#include "qgenericatomic.h"
+#include "qglobalstatic.h"
+#include "qhash.h"
+#include "qhashfunctions.h"
+#if QT_CONFIG(identityproxymodel)
+#include "qidentityproxymodel.h"
+#endif
+#include "qiodevice.h"
+#include "qiodevicebase.h"
+#if QT_CONFIG(itemmodel)
+#include "qitemselectionmodel.h"
+#endif
+#include "qiterable.h"
+#include "qiterator.h"
+#include "qjsonarray.h"
+#include "qjsondocument.h"
+#include "qjsonobject.h"
+#include "qjsonparseerror.h"
+#include "qjsonvalue.h"
+#include "qlatin1stringmatcher.h"
+#include "qlatin1stringview.h"
+#if QT_CONFIG(library)
+#include "qlibrary.h"
+#endif
+#include "qlibraryinfo.h"
+#include "qline.h"
+#include "qlist.h"
+#include "qlocale.h"
+#include "qlockfile.h"
+#include "qloggingcategory.h"
+#include "qmalloc.h"
+#include "qmap.h"
+#include "qmargins.h"
+#include "qmath.h"
+#include "qmessageauthenticationcode.h"
+#include "qmetacontainer.h"
+#include "qmetaobject.h"
+#include "qmetatype.h"
+#include "qmimedata.h"
+#if QT_CONFIG(mimetype)
+#include "qmimedatabase.h"
+#endif
+#if QT_CONFIG(mimetype)
+#include "qmimetype.h"
+#endif
+#include "qminmax.h"
+#include "qmutex.h"
+#include "qnamespace.h"
+#include "qnativeinterface.h"
+#include "qnumeric.h"
+#include "qobject.h"
+#include "qobjectcleanuphandler.h"
+#include "qobjectdefs.h"
+#include "qoperatingsystemversion.h"
+#include "qoverload.h"
+#include "qpair.h"
+#if QT_CONFIG(animation)
+#include "qparallelanimationgroup.h"
+#endif
+#if QT_CONFIG(animation)
+#include "qpauseanimation.h"
+#endif
+#if QT_CONFIG(permissions)
+#include "qpermissions.h"
+#endif
+#include "qplugin.h"
+#include "qpluginloader.h"
+#include "qpoint.h"
+#include "qpointer.h"
+#if QT_CONFIG(processenvironment)
+#include "qprocess.h"
+#endif
+#include "qprocessordetection.h"
+#if QT_CONFIG(future)
+#include "qpromise.h"
+#endif
+#include "qproperty.h"
+#if QT_CONFIG(animation)
+#include "qpropertyanimation.h"
+#endif
+#include "qpropertyprivate.h"
+#include "qqueue.h"
+#include "qrandom.h"
+#include "qrangemodel.h"
+#include "qreadwritelock.h"
+#include "qrect.h"
+#include "qrefcount.h"
+#if QT_CONFIG(regularexpression)
+#include "qregularexpression.h"
+#endif
+#include "qresource.h"
+#if QT_CONFIG(future)
+#include "qresultstore.h"
+#endif
+#include "qrunnable.h"
+#include "qsavefile.h"
+#include "qscopedpointer.h"
+#include "qscopedvaluerollback.h"
+#include "qscopeguard.h"
+#include "qsemaphore.h"
+#if QT_CONFIG(animation)
+#include "qsequentialanimationgroup.h"
+#endif
+#include "qsequentialiterable.h"
+#include "qset.h"
+#if QT_CONFIG(settings)
+#include "qsettings.h"
+#endif
+#include "qshareddata.h"
+#include "qsharedmemory.h"
+#include "qsharedpointer.h"
+#include "qsignalmapper.h"
+#include "qsimd.h"
+#include "qsize.h"
+#include "qsocketnotifier.h"
+#if QT_CONFIG(sortfilterproxymodel)
+#include "qsortfilterproxymodel.h"
+#endif
+#include "qspan.h"
+#include "qstack.h"
+#include "qstandardpaths.h"
+#include "qstaticlatin1stringmatcher.h"
+#include "qstdlibdetection.h"
+#include "qstorageinfo.h"
+#include "qstring.h"
+#include "qstringalgorithms.h"
+#include "qstringbuilder.h"
+#include "qstringconverter.h"
+#include "qstringfwd.h"
+#include "qstringlist.h"
+#if QT_CONFIG(stringlistmodel)
+#include "qstringlistmodel.h"
+#endif
+#include "qstringliteral.h"
+#include "qstringmatcher.h"
+#include "qstringtokenizer.h"
+#include "qstringview.h"
+#include "qswap.h"
+#include "qsysinfo.h"
+#include "qsystemdetection.h"
+#include "qsystemsemaphore.h"
+#include "qtaggedpointer.h"
+#include "qtclasshelpermacros.h"
+#include "qtconfiginclude.h"
+#include "qtconfigmacros.h"
+#include "qtcoreversion.h"
+#include "qtdeprecationmarkers.h"
+#include "qtemporarydir.h"
+#include "qtemporaryfile.h"
+#include "qtenvironmentvariables.h"
+#include "qtextboundaryfinder.h"
+#include "qtextstream.h"
+#include "qthread.h"
+#include "qthreadpool.h"
+#include "qthreadstorage.h"
+#if QT_CONFIG(easingcurve)
+#include "qtimeline.h"
+#endif
+#include "qtimer.h"
+#include "qtimezone.h"
+#include "qtipccommon.h"
+#include "qtmetamacros.h"
+#include "qtmocconstants.h"
+#include "qtnoop.h"
+#include "qtpreprocessorsupport.h"
+#include "qtranslator.h"
+#if QT_CONFIG(transposeproxymodel)
+#include "qtransposeproxymodel.h"
+#endif
+#include "qtresource.h"
+#include "qtsymbolmacros.h"
+#include "qttranslation.h"
+#include "qttypetraits.h"
+#include "qtversion.h"
+#include "qtversionchecks.h"
+#include "qtypeinfo.h"
+#include "qtyperevision.h"
+#include "qtypes.h"
+#include "qurl.h"
+#include "qurlquery.h"
+#include "qutf8stringview.h"
+#include "quuid.h"
+#include "qvariant.h"
+#if QT_CONFIG(animation)
+#include "qvariantanimation.h"
+#endif
+#include "qvarianthash.h"
+#include "qvariantlist.h"
+#include "qvariantmap.h"
+#include "qvarlengtharray.h"
+#include "qvector.h"
+#include "qversionnumber.h"
+#include "qwaitcondition.h"
+#include "qwineventnotifier.h"
+#include "qxmlstream.h"
+#include "qxpfunctional.h"
+#include "qyieldcpu.h"
+#endif

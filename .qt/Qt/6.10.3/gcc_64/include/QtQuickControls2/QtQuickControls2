@@ -1,0 +1,8 @@
+#ifndef QT_QTQUICKCONTROLS2_MODULE_H
+#define QT_QTQUICKCONTROLS2_MODULE_H
+#include <QtQuickControls2/QtQuickControls2Depends>
+#include "qtquickcontrols2global.h"
+#include "qquickattachedpropertypropagator.h"
+#include "qquickstyle.h"
+#include "qtquickcontrols2version.h"
+#endif

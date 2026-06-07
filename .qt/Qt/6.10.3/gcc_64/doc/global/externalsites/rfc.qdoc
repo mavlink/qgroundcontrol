@@ -1,0 +1,180 @@
+// Copyright (C) 2016 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc850
+    \title RFC 850
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc1036
+    \title RFC 1036
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc1179
+    \title RFC 1179
+    \keyword lpr
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc1738
+    \title RFC 1738
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc1918
+    \title RFC 1918
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc1928
+    \title RFC 1928
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc1929
+    \title RFC 1929
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc2045
+    \title RFC 2045
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc2109
+    \title RFC 2109
+    HTTP State Management Mechanism
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc2822
+    \title RFC 2822
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc2965
+    \title RFC 2965
+    HTTP State Management Mechanism
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc3174
+    \title RFC 3174
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc3491
+    \title RFC 3491
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc3492
+    \title RFC 3492
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc3986
+    \title RFC 3986
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc4122
+    \title RFC 4122
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc4648
+    \title RFC 4648
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc4686
+    \title RFC 4686
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc5280#section-5.3.1
+    \title RFC 5280, section 5.3.1
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc6347
+    \title RFC 6347
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc6347#section-4.2.1
+    \title RFC 6347, section 4.2.1
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc6347#section-4.2.8
+    \title RFC 6347, section 4.2.8
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc6724
+    \title RFC 6724
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc6698
+    \title RFC 6698
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc7049
+    \title RFC 7049
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc7049#section-3.9
+    \title RFC 7049, section 3.9
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc7049#section-3.10
+    \title RFC 7049, section 3.10
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc7049#section-6
+    \title RFC 7049, section 6
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc7252
+    \title RFC 7252
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc7858
+    \title RFC 7858
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc8018#section-5.1
+    \title RFC 8018, section 5.1
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc8018#section-5.2
+    \title RFC 8018, section 5.2
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc8152
+    \title RFC 8152
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc8259
+    \title RFC 8259
+*/
+
+/*!
+    \externalpage https://datatracker.ietf.org/doc/html/rfc8446#section-6
+    \title RFC 8446, section 6
+*/

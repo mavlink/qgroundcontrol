@@ -1,0 +1,367 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QQmlSslConfiguration",
+                "gadget": true,
+                "lineNumber": 31,
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "certificateFiles",
+                                "type": "QStringList"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 44,
+                        "name": "setCertificateFiles",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "privateKey",
+                                "type": "QQmlSslKey"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 45,
+                        "name": "setPrivateKey",
+                        "returnType": "void"
+                    }
+                ],
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 35,
+                        "name": "ciphers",
+                        "read": "ciphers",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setCiphers"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 36,
+                        "name": "sslOptions",
+                        "read": "sslOptions",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QList<QSsl::SslOption>",
+                        "user": false,
+                        "write": "setSslOptions"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 37,
+                        "name": "protocol",
+                        "read": "protocol",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSsl::SslProtocol",
+                        "user": false,
+                        "write": "setProtocol"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 38,
+                        "name": "peerVerifyMode",
+                        "read": "peerVerifyMode",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSslSocket::PeerVerifyMode",
+                        "user": false,
+                        "write": "setPeerVerifyMode"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 40,
+                        "name": "peerVerifyDepth",
+                        "read": "peerVerifyDepth",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setPeerVerifyDepth"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 41,
+                        "name": "sessionTicket",
+                        "read": "sessionTicket",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QByteArray",
+                        "user": false,
+                        "write": "setSessionTicket"
+                    }
+                ],
+                "qualifiedClassName": "QQmlSslConfiguration"
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "sslConfiguration"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1543"
+                    }
+                ],
+                "className": "QQmlSslDefaultConfiguration",
+                "gadget": true,
+                "lineNumber": 88,
+                "qualifiedClassName": "QQmlSslDefaultConfiguration",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQmlSslConfiguration"
+                    }
+                ]
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "sslDtlsConfiguration"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1543"
+                    }
+                ],
+                "className": "QQmlSslDefaultDtlsConfiguration",
+                "gadget": true,
+                "lineNumber": 98,
+                "qualifiedClassName": "QQmlSslDefaultDtlsConfiguration",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQmlSslConfiguration"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qqmlsslconfiguration_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "sslKey"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1543"
+                    }
+                ],
+                "className": "QQmlSslKey",
+                "gadget": true,
+                "lineNumber": 29,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 35,
+                        "name": "keyFile",
+                        "read": "keyFile",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setKeyFile"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 37,
+                        "name": "keyAlgorithm",
+                        "read": "keyAlgorithm",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSsl::KeyAlgorithm",
+                        "user": false,
+                        "write": "setKeyAlgorithm"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 39,
+                        "name": "keyFormat",
+                        "read": "keyFormat",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSsl::EncodingFormat",
+                        "user": false,
+                        "write": "setKeyFormat"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 41,
+                        "name": "keyPassPhrase",
+                        "read": "keyPassPhrase",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QByteArray",
+                        "user": false,
+                        "write": "setKeyPassPhrase"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 43,
+                        "name": "keyType",
+                        "read": "keyType",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSsl::KeyType",
+                        "user": false,
+                        "write": "setKeyType"
+                    }
+                ],
+                "qualifiedClassName": "QQmlSslKey"
+            }
+        ],
+        "inputFile": "qqmlsslkey_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QSsl"
+                    },
+                    {
+                        "name": "QML.ForeignIsNamespace",
+                        "value": "true"
+                    },
+                    {
+                        "name": "QML.Element",
+                        "value": "Ssl"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1543"
+                    }
+                ],
+                "className": "QSslForeignNamespace",
+                "lineNumber": 27,
+                "namespace": true,
+                "qualifiedClassName": "QSslForeignNamespace"
+            }
+        ],
+        "inputFile": "qqmlsslnamespace_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QSslSocket"
+                    },
+                    {
+                        "name": "QML.ForeignIsNamespace",
+                        "value": "true"
+                    },
+                    {
+                        "name": "QML.Element",
+                        "value": "SslSocket"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1543"
+                    }
+                ],
+                "className": "SslSocketForeignNamespace",
+                "lineNumber": 27,
+                "namespace": true,
+                "qualifiedClassName": "SslSocketForeignNamespace"
+            }
+        ],
+        "inputFile": "qqmlsslsocketnamespace_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QNetworkInformation"
+                    },
+                    {
+                        "name": "QML.Element",
+                        "value": "NetworkInformation"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1543"
+                    },
+                    {
+                        "name": "QML.Singleton",
+                        "value": "true"
+                    }
+                ],
+                "className": "QQmlNetworkInformation",
+                "gadget": true,
+                "lineNumber": 28,
+                "qualifiedClassName": "QQmlNetworkInformation"
+            }
+        ],
+        "inputFile": "qqmlnetworkinformation_p.h",
+        "outputRevision": 69
+    }
+]

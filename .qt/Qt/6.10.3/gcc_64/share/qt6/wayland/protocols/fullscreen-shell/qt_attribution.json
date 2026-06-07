@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-fullscreen-protocol",
+        "Name": "Wayland Fullscreen Shell Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin.",
+        "Files": "fullscreen-shell-unstable-v1.xml",
+
+        "Description": "A Wayland shell for displaying a single surface per output",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "unstable v1",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/unstable/fullscreen-shell/fullscreen-shell-unstable-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2016 Yong Bakos\nCopyright © 2015 Jason Ekstrand\nCopyright © 2015 Jonas Ådahl"
+    }
+]

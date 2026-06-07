@@ -1,0 +1,228 @@
+
+Building for: linux-g++ (x86_64, CPU features: cx16 popcnt sse3 ssse3 sse4.1 sse4.2 sse4)
+Compiler: gcc 11.4.1
+Build options:
+  Mode ................................... release (with debug info)
+  Optimize release build for size ........ no
+  Fully optimize release builds (-O3) .... no
+  Building shared libraries (alias of  BUILD_SHARED_LIBS)  yes
+  Using ccache ........................... no
+  Unity Build ............................ no
+  Using new DTAGS ........................ yes
+  Generating GDB index ................... no
+  Relocatable ............................ yes
+  Using Link Time Optimization (LTCG) .... no
+  Using Intel Control-flow Enforcement Technology (CET)  yes
+  Using Glibc function fortification ..... yes
+  Using -ftrivial-auto-var-init=pattern .. no
+  Using -fstack-protector-strong ......... yes
+  Using -fstack-clash-protection ......... yes
+  Using libstdc++ assertions ............. yes
+  Using libc++ hardening ................. no
+  Using -z relro -z now when linking ..... yes
+  Target compiler supports:
+    x86 Intrinsics ....................... Basic VAES AVX512VBMI2
+  Sanitizers:
+    Addresses ............................ no
+    Threads .............................. no
+    Memory ............................... no
+    Fuzzer (instrumentation only) ........ no
+    Undefined ............................ no
+  Build parts ............................ libs tools
+  Install examples sources ............... no
+Qt modules and options:
+  Qt Concurrent .......................... yes
+  Qt D-Bus ............................... yes
+  Qt D-Bus directly linked to libdbus .... yes
+  Qt Gui ................................. yes
+  Qt Network ............................. yes
+  Qt PrintSupport ........................ yes
+  Qt Sql ................................. yes
+  Qt Testlib ............................. yes
+  Qt Widgets ............................. yes
+  Qt Xml ................................. yes
+Support enabled for:
+  Using pkg-config ....................... yes
+  Using vcpkg ............................ no
+  udev ................................... no
+  OpenSSL ................................ yes
+    Qt directly linked to OpenSSL ........ no
+  OpenSSL 1.1 ............................ no
+  OpenSSL 3.0 ............................ yes
+  Using system zlib ...................... yes
+  Zstandard support ...................... yes
+  Thread support ......................... yes
+  Using 16KB page sizes in Android ....... no
+Common build options:
+  Linker can resolve circular dependencies  yes
+Qt Core:
+  backtrace .............................. yes
+  C++23 <stacktrace> ..................... no
+  DoubleConversion ....................... yes
+    Using system DoubleConversion ........ no
+  CLONE_PIDFD support in forkfd .......... yes
+  GLib ................................... yes
+  ICU .................................... yes
+  JeMalloc ............................... no
+  std::chrono::tzdb QTZ backend .......... no
+  Using system libb2 ..................... no
+  Built-in copy of the MIME database ..... yes
+  Application permissions ................ yes
+  Defaulting legacy IPC to POSIX ......... no
+  Tracing backend ........................ <none>
+  OpenSSL based cryptographic hash ....... no
+  Logging backends:
+    journald ............................. no
+    syslog ............................... no
+    slog2 ................................ no
+  PCRE2 .................................. yes
+    Using system PCRE2 ................... no
+Qt Sql:
+  SQL item models ........................ yes
+Qt Network:
+  getifaddrs() ........................... no
+  IPv6 ifname ............................ no
+  libproxy ............................... no
+  Linux AF_NETLINK ....................... yes
+  DTLS ................................... yes
+  OCSP-stapling .......................... yes
+  SCTP ................................... no
+  Use system proxies ..................... yes
+  GSSAPI ................................. yes
+  Brotli Decompression Support ........... yes
+  qIsEffectiveTLD() ...................... yes
+    Built-in publicsuffix database ....... yes
+    System publicsuffix database ......... yes
+Core tools:
+  Android deployment tool ................ yes
+  macOS deployment tool .................. no
+  Windows deployment tool ................ no
+  qmake .................................. yes
+Wayland tools:
+  qtwaylandscanner ....................... yes
+Qt Gui:
+  Accessibility .......................... yes
+  Emoji Segmenter ........................ yes
+  FreeType ............................... yes
+    Using system FreeType ................ yes
+  HarfBuzz ............................... yes
+    Using system HarfBuzz ................ no
+  Fontconfig ............................. yes
+  Image formats:
+    GIF .................................. yes
+    ICO .................................. yes
+    JPEG ................................. yes
+      Using system libjpeg ............... no
+    PNG .................................. yes
+      Using system libpng ................ no
+  Text formats:
+    HtmlParser ........................... yes
+    CssParser ............................ yes
+    OdfWriter ............................ yes
+    MarkdownReader ....................... yes
+      Using system libmd4c ............... no
+    MarkdownWriter ....................... yes
+  EGL .................................... yes
+  OpenVG ................................. no
+  OpenGL:
+    Desktop OpenGL ....................... yes
+    OpenGL ES 2.0 ........................ no
+    OpenGL ES 3.0 ........................ no
+    OpenGL ES 3.1 ........................ no
+    OpenGL ES 3.2 ........................ no
+  Vulkan ................................. yes
+  Metal .................................. no
+  QGraphicsFrameCapture .................. no
+  Session Management ..................... yes
+  Multi-threaded image and painting helpers  yes
+Features used by QPA backends:
+  evdev .................................. yes
+  libinput ............................... no
+  HiRes wheel support in libinput ........ no
+  INTEGRITY HID .......................... no
+  mtdev .................................. no
+  tslib .................................. no
+  xkbcommon .............................. yes
+  vxworksevdev ........................... no
+  X11 specific:
+    XLib ................................. yes
+    XCB Xlib ............................. yes
+    EGL on X11 ........................... yes
+    xkbcommon-x11 ........................ yes
+    xcb-sm ............................... no
+QPA backends:
+  DirectFB ............................... no
+  EGLFS .................................. yes
+  EGLFS details:
+    EGLFS OpenWFD ........................ no
+    EGLFS i.Mx6 .......................... no
+    EGLFS i.Mx6 Wayland .................. no
+    EGLFS RCAR ........................... no
+    EGLFS EGLDevice ...................... yes
+    EGLFS GBM ............................ yes
+    EGLFS VSP2 ........................... no
+    EGLFS Mali ........................... no
+    EGLFS Raspberry Pi ................... no
+    EGLFS X11 ............................ yes
+  LinuxFB ................................ yes
+  VNC .................................... yes
+  VK_KHR_display ......................... yes
+  QNX:
+    lgmon ................................ no
+    IMF .................................. no
+  XCB:
+    Using system-provided xcb-xinput ..... no
+    GL integrations:
+      GLX Plugin ......................... yes
+        XCB GLX .......................... yes
+      EGL-X11 Plugin ..................... yes
+  Windows:
+    Direct 2D ............................ no
+    Direct 2D 1.1 ........................ no
+    DirectWrite .......................... no
+    DirectWrite 3 ........................ no
+    DirectWrite COLRv1 Support ........... no
+  Wayland:
+    Client ............................... yes
+    Hardware Integrations:
+      EGL ................................ yes
+      Raspberry Pi ....................... no
+      DRM EGL ............................ yes
+      libhybris EGL ...................... no
+      Linux dma-buf server buffer ........ yes
+      Shm emulation server buffer ........ yes
+      Vulkan-based server buffer ......... yes
+    Shell Integrations:
+      xdg-shell .......................... yes
+      wl-shell (deprecated) .............. yes
+Qt Widgets:
+  GTK+ ................................... yes
+  Styles ................................. Fusion Windows
+Qt Testlib:
+  Tester for item models ................. yes
+  Batch tests ............................ no
+Qt PrintSupport:
+  CUPS ................................... yes
+Qt Sql Drivers:
+  DB2 (IBM) .............................. no
+  InterBase .............................. yes
+  MySql .................................. yes
+  OCI (Oracle) ........................... yes
+  ODBC ................................... yes
+  PostgreSQL ............................. yes
+  SQLite ................................. yes
+    Using system provided SQLite ......... no
+  Mimer .................................. yes
+SBOM:
+  Generate SBOM .......................... yes
+  Generate SPDX v2.3 ..................... yes
+  Generate SPDX v2.3 JSON ................ yes (skipped if dependencies are missing)
+  Verify   SPDX v2.3 JSON ................ yes (skipped if dependencies are missing)
+  Generate CyloneDX v1.6 ................. yes
+  Verify   CyloneDX v1.6 ................. yes (skipped if dependencies are missing)
+  SBOM Python interpreter ................ /usr/local/bin/python3 (version 3.9.18)
+  sbom2doc path .......................... /usr/local/bin/sbom2doc
+  sbomaudit path ......................... /usr/local/bin/sbomaudit
+  Generate source SPDX SBOM .............. yes
+  Verify   source SPDX SBOM .............. yes
+  reuse path ............................. /usr/local/bin/reuse

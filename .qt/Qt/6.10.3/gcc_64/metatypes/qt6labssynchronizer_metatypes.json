@@ -1,0 +1,182 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "Synchronizer"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1546"
+                    }
+                ],
+                "className": "QQmlSynchronizer",
+                "interfaces": [
+                    [
+                        {
+                            "className": "QQmlPropertyValueSource",
+                            "id": "\"org.qt-project.Qt.QQmlPropertyValueSource\""
+                        }
+                    ],
+                    [
+                        {
+                            "className": "QQmlFinalizerHook",
+                            "id": "\"org.qt-project.Qt.QQmlFinalizerHook\""
+                        }
+                    ]
+                ],
+                "lineNumber": 29,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 35,
+                        "name": "sourceObject",
+                        "notify": "sourceObjectChanged",
+                        "read": "sourceObject",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QObject*",
+                        "user": false,
+                        "write": "setSourceObject"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 37,
+                        "name": "sourceProperty",
+                        "notify": "sourcePropertyChanged",
+                        "read": "sourceProperty",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setSourceProperty"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 39,
+                        "name": "targetObject",
+                        "notify": "targetObjectChanged",
+                        "read": "targetObject",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QObject*",
+                        "user": false,
+                        "write": "setTargetObject"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 41,
+                        "name": "targetProperty",
+                        "notify": "targetPropertyChanged",
+                        "read": "targetProperty",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setTargetProperty"
+                    }
+                ],
+                "qualifiedClassName": "QQmlSynchronizer",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 61,
+                        "name": "sourceObjectChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 62,
+                        "name": "sourcePropertyChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 63,
+                        "name": "targetObjectChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 64,
+                        "name": "targetPropertyChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "object",
+                                "type": "QObject*"
+                            },
+                            {
+                                "name": "property",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 66,
+                        "name": "valueBounced",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "object",
+                                "type": "QObject*"
+                            },
+                            {
+                                "name": "property",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 67,
+                        "name": "valueIgnored",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QQmlPropertyValueSource"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QQmlFinalizerHook"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qqmlsynchronizer_p.h",
+        "outputRevision": 69
+    }
+]

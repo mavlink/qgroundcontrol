@@ -1,0 +1,5 @@
+#ifndef QT_QTLABSANIMATION_MODULE_H
+#define QT_QTLABSANIMATION_MODULE_H
+#include <QtLabsAnimation/QtLabsAnimationDepends>
+#include "qtlabsanimationversion.h"
+#endif

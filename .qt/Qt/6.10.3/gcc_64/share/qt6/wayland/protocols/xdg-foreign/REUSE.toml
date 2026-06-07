@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "xdg-foreign-unstable-v2.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2015-2016 Red Hat Inc."
+SPDX-License-Identifier = "MIT"

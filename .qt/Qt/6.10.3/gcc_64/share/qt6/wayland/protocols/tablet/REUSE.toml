@@ -1,0 +1,8 @@
+version = 1
+
+[[annotations]]
+path = "tablet-unstable-v2.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = ["Copyright 2014 Stephen \"Lyude\" Chandler Paul",
+                          "Copyright 2015-2016 Red Hat, Inc."]
+SPDX-License-Identifier = "MIT"

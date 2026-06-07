@@ -1,0 +1,85 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "Imagine"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickImagineStyle"
+                    },
+                    {
+                        "name": "QML.Creatable",
+                        "value": "false"
+                    },
+                    {
+                        "name": "QML.UncreatableReason",
+                        "value": ""
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "515"
+                    }
+                ],
+                "className": "QQuickImagineStyle",
+                "lineNumber": 26,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 29,
+                        "name": "path",
+                        "notify": "pathChanged",
+                        "read": "path",
+                        "required": false,
+                        "reset": "resetPath",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setPath"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 30,
+                        "name": "url",
+                        "notify": "pathChanged",
+                        "read": "url",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QQuickImagineStyle",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 50,
+                        "name": "pathChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickAttachedPropertyPropagator"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickimaginestyle_p.h",
+        "outputRevision": 69
+    }
+]

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+SCRIPT_DIR=`dirname $0`
+exec $SCRIPT_DIR/qt-cmake-private $SCRIPT_DIR/../lib/cmake/Qt6BuildInternals/QtStandaloneTestTemplateProject -DQT_BUILD_STANDALONE_TESTS=ON -DQT_STANDALONE_TEST_PATH="$@" -DPWD="$PWD"

@@ -1,0 +1,25 @@
+<protocol name="qt_windowmanager">
+
+    <copyright>
+ Copyright (C) 2015 The Qt Company Ltd.
+ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+    </copyright>
+
+    <interface name="qt_windowmanager" version="1">
+        <request name="open_url">
+            <description summary="client requests a url to be opened">
+                If remaining is not 0 this is a multipart request, and
+                the server must concatenate subsequent requst urls to and
+                including a request where remaining is set to 0, before
+                it can handle the url.
+            </description>
+            <arg name="remaining" type="uint" />
+            <arg name="url" type="string" />
+        </request>
+        <event name="hints">
+            <arg name="show_is_fullscreen" type="int"/>
+        </event>
+        <event name="quit">
+        </event>
+    </interface>
+</protocol>

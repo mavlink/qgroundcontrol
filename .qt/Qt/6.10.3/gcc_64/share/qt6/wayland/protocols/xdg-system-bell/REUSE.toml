@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = ["xdg-system-bell-v1.xml"]
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright (C) 2016, 2023 Red Hat"
+SPDX-License-Identifier = "MIT"

@@ -1,0 +1,404 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: qtsvg-6.10.3
+DocumentNamespace: https://qt.io/spdxdocs/qtsvg-77765f9+HEAD-host-linux-x86_64-target-linux-x86_64-bec2fc82-c12c-5794-945f-18c64c012518
+Creator: Organization: TheQtCompany
+Creator: Tool: Qt Build System
+CreatorComment: <text>This SPDX document was created from CMake 3.30.5, using the qt
+build system from https://code.qt.io/cgit/qt/qtbase.git/tree/cmake/QtPublicSbomHelpers.cmake</text>
+Created: 2026-03-27T21:41:13Z
+ExternalDocumentRef: DocumentRef-qtbase-18caa008d90e https://qt.io/spdxdocs/qtbase-7ddbc87d+HEAD-host-linux-x86_64-target-linux-x86_64-53c2b623-7000-5f77-ad0f-f10743359b4f SHA1: ee53f53ae337ec71aa640f103e332e4315e9b900
+
+PackageName: qtsvg
+SPDXID: SPDXRef-Package-qtsvg-d45854ff6194
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtsvg:6.10.3:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtsvg@77765f9+HEAD
+PackageVersion: 77765f9+HEAD
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtsvg@77765f9+HEAD
+PackageSupplier: Organization: TheQtCompany
+PackageDownloadLocation: git://code.qt.io/qt/qtsvg.git@77765f981c067cec8f250e13688e5be75ee94a1b
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: Copyright (C) The Qt Company Ltd. and other contributors.
+PackageHomePage: https://qt.io
+PackageComment: <text>Built by CMake 3.30.5 with RelWithDebInfo configuration for Linux (x86_64)
+qtsvg was configured with:
+    qt-configure-module <sources>/qtsvg -- -DFFMPEG_DIR=/usr/local/FFmpeg-n7.1.3 -DQT_DEPLOY_FFMPEG=TRUE -DINPUT_headersclean=ON -DQT_INSTALL_CONFIG_INFO_FILES=ON -DQT_GENERATE_SBOM=ON -DQT_GENERATE_SOURCE_SBOM=ON -DQT_SBOM_REQUIRE_GENERATE_CYDX_V1_6=ON -DQT_SBOM_VERIFY_CYDX_V1_6=ON -DQT_SBOM_PYTHON_INTERP= -DQT_SBOM_PYTHON_APPS_PATH=/usr/local/bin -DQT_LINT_SOURCE_SBOM=ON -DQT_INTERNAL_SBOM_DEFAULT_CHECKS=ON -DQT_INTERNAL_SBOM_AUDIT=ON -DQT_INTERNAL_SBOM_AUDIT_NO_ERROR=ON -DQT_BUILD_TESTS=OFF -DCMAKE_AUTOGEN_VERBOSE=ON -DCMAKE_MESSAGE_LOG_LEVEL=STATUS -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+</text>
+FilesAnalyzed: false
+BuiltDate: 2026-03-27T21:41:13Z
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-qtsvg-d45854ff6194
+Relationship: SPDXRef-Package-qtsvg-build-tool-CMake-d45854ff6194 BUILD_DEPENDENCY_OF SPDXRef-Package-qtsvg-d45854ff6194
+RelationshipComment: <text>SPDXRef-Package-qtsvg-d45854ff6194 is built using CMake version 3.30.5</text>
+Relationship: SPDXRef-Package-qtsvg-build-tool-CMake-generator-Ninja-d45854ff6194 BUILD_DEPENDENCY_OF SPDXRef-Package-qtsvg-d45854ff6194
+RelationshipComment: <text>SPDXRef-Package-qtsvg-d45854ff6194 is built using generator CMAKE_GENERATOR: 'Ninja' and CMAKE_MAKE_PROGRAM: 'ninja' version '1.12.1'</text>
+Relationship: SPDXRef-Package-qtsvg-build-tool-Compiler-GNU-d45854ff6194 BUILD_DEPENDENCY_OF SPDXRef-Package-qtsvg-d45854ff6194
+RelationshipComment: <text>SPDXRef-Package-qtsvg-d45854ff6194 is built by compiler: 'GNU' version: '11.4.1' frontend variant: 'GNU'</text>
+Relationship: SPDXRef-Package-qtsvg-build-tool-Linker-GNU-d45854ff6194 BUILD_DEPENDENCY_OF SPDXRef-Package-qtsvg-d45854ff6194
+RelationshipComment: <text>SPDXRef-Package-qtsvg-d45854ff6194 is built by linker 'GNU' version '2.35.2' frontend variant: 'GNU'</text>
+
+PackageName: Svg_Attribution_xsvg
+SPDXID: SPDXRef-Package-qtsvg-qt-3rdparty-sources-Svg-Attribution-xsvg-d45854ff6194
+PackageDownloadLocation: NOASSERTION
+PackageVersion: unknown
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: HPND-sell-variant
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtsvg@77765f9?library_name=Svg_Attribution_xsvg#src/svg
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtsvg-Svg_Attribution_xsvg@77765f9?vcs_url=https://code.qt.io/qt/qtsvg.git@77765f9&library_name=Svg_Attribution_xsvg#src/svg
+PackageCopyrightText: <text>Copyright 2002 USC/Information Sciences Institute</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: Svg_Attribution_xsvg
+    Information extracted from:
+     /src_dir/qtsvg/src/svg/qt_attribution.json
+    Entry index: 0
+    Id: xsvg
+    Name: XSVG
+    Description: Some code for arc handling is derived from code from the XSVG project.
+    Qt usage: Used in the Qt SVG library.
+    License: Historical Permission Notice and Disclaimer - sell variant
+    License file: LICENSE.XSVG.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-qt-3rdparty-sources-Svg-Attribution-xsvg-d45854ff6194
+
+PackageName: Svg
+SPDXID: SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194
+PackageDownloadLocation: git://code.qt.io/qt/qtsvg.git@77765f981c067cec8f250e13688e5be75ee94a1b
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtsvg@77765f9?library_name=Svg#src/svg
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtsvg-Svg@77765f9?vcs_url=https://code.qt.io/qt/qtsvg.git@77765f9&library_name=Svg#src/svg
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: Svg
+CMake exported target name: Qt6::Svg
+Contained in CMake package: Qt6Svg
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtsvg:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: c565ee9826188eb0c23b0a32b1bb28d83cc30869
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194
+Relationship: SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194 DEPENDS_ON SPDXRef-Package-qtsvg-system-3rdparty-WrapZLIB-d45854ff6194
+Relationship: SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194 DEPENDS_ON SPDXRef-Package-qtsvg-qt-3rdparty-sources-Svg-Attribution-xsvg-d45854ff6194
+
+FileName: ./lib/libQt6Svg.so.6.10.3
+SPDXID: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194
+FileType: BINARY
+FileChecksum: SHA1: 7d2a655e4addaeba9608e335e07820ddd0dd0ca6
+LicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194 CONTAINS SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtsvg/include/QtSvg/qtsvgexports.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgfont.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgfont_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvggenerator.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvggenerator.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvggraphics.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvggraphics_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvghandler.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvghandler_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgnode.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgnode_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgrenderer.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgrenderer.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgstructure.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgstructure_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgfilter.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgfilter_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgstyle.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgstyle_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgtinydocument.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgtinydocument_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvganimate.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvganimate_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvghelper_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgdebug.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgvisitor.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgvisitor_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qtsvgglobal.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qtsvgglobal_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/animation/qsvganimator.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/animation/qsvganimator_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/animation/qsvgabstractanimation.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/animation/qsvgabstractanimation_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/animation/qsvganimatedproperty.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/animation/qsvganimatedproperty_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/animation/qsvgcssanimation.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/animation/qsvgcssanimation_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgutils_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/qsvgutils.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/css/qsvgcsshandler.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/css/qsvgcsshandler_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/css/qsvgstyleselector.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/css/qsvgstyleselector_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/css/qsvgcssproperties.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-Svg-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svg/css/qsvgcssproperties_p.h
+
+PackageName: QSvgIconPlugin
+SPDXID: SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194
+PackageDownloadLocation: git://code.qt.io/qt/qtsvg.git@77765f981c067cec8f250e13688e5be75ee94a1b
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtsvg@77765f9?library_name=QSvgIconPlugin#src/plugins/iconengines/svgiconengine
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtsvg-QSvgIconPlugin@77765f9?vcs_url=https://code.qt.io/qt/qtsvg.git@77765f9&library_name=QSvgIconPlugin#src/plugins/iconengines/svgiconengine
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: QSvgIconPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtsvg:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 08b57bf13102dfef56a5fcea3dc36edd605906a0
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194 DEPENDS_ON SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194
+
+FileName: ./plugins/iconengines/libqsvgicon.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-QSvgIconPlugin-d45854ff6194
+FileType: BINARY
+FileChecksum: SHA1: b5a82b15c315db2103faa2395a2befe668c84bcf
+LicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194 CONTAINS SPDXRef-PackagedFile-qt-plugin-QSvgIconPlugin-d45854ff6194
+Relationship: SPDXRef-PackagedFile-qt-plugin-QSvgIconPlugin-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/plugins/iconengines/svgiconengine/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QSvgIconPlugin-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/plugins/iconengines/svgiconengine/qsvgiconengine.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QSvgIconPlugin-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/plugins/iconengines/svgiconengine/qsvgiconengine.h
+
+PackageName: QSvgPlugin
+SPDXID: SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194
+PackageDownloadLocation: git://code.qt.io/qt/qtsvg.git@77765f981c067cec8f250e13688e5be75ee94a1b
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtsvg@77765f9?library_name=QSvgPlugin#src/plugins/imageformats/svg
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtsvg-QSvgPlugin@77765f9?vcs_url=https://code.qt.io/qt/qtsvg.git@77765f9&library_name=QSvgPlugin#src/plugins/imageformats/svg
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: QSvgPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtsvg:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 8daae9af6fedde01a72d70aa4e94d99d9dde843b
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194 DEPENDS_ON SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194
+
+FileName: ./plugins/imageformats/libqsvg.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-QSvgPlugin-d45854ff6194
+FileType: BINARY
+FileChecksum: SHA1: 8b99bc6e9a6a0dce1c07799bff2f9763f46f557c
+LicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194 CONTAINS SPDXRef-PackagedFile-qt-plugin-QSvgPlugin-d45854ff6194
+Relationship: SPDXRef-PackagedFile-qt-plugin-QSvgPlugin-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/plugins/imageformats/svg/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QSvgPlugin-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/plugins/imageformats/svg/qsvgiohandler.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QSvgPlugin-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/plugins/imageformats/svg/qsvgiohandler.h
+
+PackageName: SvgWidgets
+SPDXID: SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194
+PackageDownloadLocation: git://code.qt.io/qt/qtsvg.git@77765f981c067cec8f250e13688e5be75ee94a1b
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtsvg@77765f9?library_name=SvgWidgets#src/svgwidgets
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtsvg-SvgWidgets@77765f9?vcs_url=https://code.qt.io/qt/qtsvg.git@77765f9&library_name=SvgWidgets#src/svgwidgets
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: SvgWidgets
+CMake exported target name: Qt6::SvgWidgets
+Contained in CMake package: Qt6SvgWidgets
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtsvg:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: d2ab757be0bfdf01d9a31fd83379a86673986b1f
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194
+Relationship: SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194 DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194 DEPENDS_ON SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194
+
+FileName: ./lib/libQt6SvgWidgets.so.6.10.3
+SPDXID: SPDXRef-PackagedFile-qt-module-SvgWidgets-d45854ff6194
+FileType: BINARY
+FileChecksum: SHA1: 41542c20e18e26d015345770d468fba4fb35ed66
+LicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194 CONTAINS SPDXRef-PackagedFile-qt-module-SvgWidgets-d45854ff6194
+Relationship: SPDXRef-PackagedFile-qt-module-SvgWidgets-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtsvg/include/QtSvgWidgets/qtsvgwidgetsexports.h
+Relationship: SPDXRef-PackagedFile-qt-module-SvgWidgets-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svgwidgets/qsvgwidget.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-SvgWidgets-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svgwidgets/qsvgwidget.h
+Relationship: SPDXRef-PackagedFile-qt-module-SvgWidgets-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svgwidgets/qtsvgwidgetsglobal.h
+Relationship: SPDXRef-PackagedFile-qt-module-SvgWidgets-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svgwidgets/qgraphicssvgitem.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-SvgWidgets-d45854ff6194 GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtsvg/src/svgwidgets/qgraphicssvgitem.h
+
+PackageName: CMake
+SPDXID: SPDXRef-Package-qtsvg-build-tool-CMake-d45854ff6194
+PackageDownloadLocation: NOASSERTION
+PackageVersion: 3.30.5
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: OTHER
+PackageComment: <text>
+CMake target name: qtsvgSbomBuildToolCMake
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-build-tool-CMake-d45854ff6194
+
+PackageName: CMake generator Ninja
+SPDXID: SPDXRef-Package-qtsvg-build-tool-CMake-generator-Ninja-d45854ff6194
+PackageDownloadLocation: NOASSERTION
+PackageVersion: 1.12.1
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: OTHER
+PackageComment: <text>
+CMake target name: qtsvgSbomBuildToolCMakeGenerator
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-build-tool-CMake-generator-Ninja-d45854ff6194
+
+PackageName: Compiler GNU
+SPDXID: SPDXRef-Package-qtsvg-build-tool-Compiler-GNU-d45854ff6194
+PackageDownloadLocation: NOASSERTION
+PackageVersion: 11.4.1
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>The compiler as identified by CMake, running on 'Linux' (x86_64)</text>
+PrimaryPackagePurpose: OTHER
+PackageComment: <text>
+CMake target name: qtsvgSbomBuildToolCompiler
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-build-tool-Compiler-GNU-d45854ff6194
+
+PackageName: Linker GNU
+SPDXID: SPDXRef-Package-qtsvg-build-tool-Linker-GNU-d45854ff6194
+PackageDownloadLocation: NOASSERTION
+PackageVersion: 2.35.2
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: OTHER
+PackageComment: <text>
+CMake target name: qtsvgSbomBuildToolLinker
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-build-tool-Linker-GNU-d45854ff6194
+
+PackageName: WrapZLIB
+SPDXID: SPDXRef-Package-qtsvg-system-3rdparty-WrapZLIB-d45854ff6194
+PackageDownloadLocation: NOASSERTION
+PackageVersion: 1.2.11
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WrapZLIB::WrapZLIB
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtsvg-d45854ff6194 CONTAINS SPDXRef-Package-qtsvg-system-3rdparty-WrapZLIB-d45854ff6194
+
+LicenseID: LicenseRef-Qt-Commercial
+ExtractedText: <text>Licensees holding valid commercial Qt licenses may use this software in
+accordance with the the terms contained in a written agreement between
+you and The Qt Company. Alternatively, the terms and conditions that were
+accepted by the licensee when buying and/or downloading the
+software do apply.
+
+For the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.
+For further information use the contact form at https://www.qt.io/contact-us.
+</text>

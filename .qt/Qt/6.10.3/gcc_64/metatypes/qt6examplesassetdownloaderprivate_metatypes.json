@@ -1,0 +1,648 @@
+[
+    {
+        "classes": [
+            {
+                "className": "Barrier",
+                "lineNumber": 27,
+                "object": true,
+                "qualifiedClassName": "Tasking::Barrier",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "success",
+                                "type": "DoneResult"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 44,
+                        "name": "done",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "barrier.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "NetworkQuery",
+                "lineNumber": 39,
+                "object": true,
+                "qualifiedClassName": "Tasking::NetworkQuery",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 53,
+                        "name": "started",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "bytesReceived",
+                                "type": "qint64"
+                            },
+                            {
+                                "name": "bytesTotal",
+                                "type": "qint64"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 54,
+                        "name": "downloadProgress",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "errors",
+                                "type": "QList<QSslError>"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 56,
+                        "name": "sslErrors",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "result",
+                                "type": "DoneResult"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 58,
+                        "name": "done",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "networkquery.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "TaskInterface",
+                "lineNumber": 101,
+                "object": true,
+                "qualifiedClassName": "Tasking::TaskInterface",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "result",
+                                "type": "DoneResult"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 106,
+                        "name": "done",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "TaskTree",
+                "lineNumber": 661,
+                "object": true,
+                "qualifiedClassName": "Tasking::TaskTree",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 707,
+                        "name": "started",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "result",
+                                "type": "DoneWith"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 708,
+                        "name": "done",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "count",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 709,
+                        "name": "asyncCountChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "value",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 710,
+                        "name": "progressValueChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "Tasking",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 52,
+                        "name": "WorkflowPolicy",
+                        "values": [
+                            "StopOnError",
+                            "ContinueOnError",
+                            "StopOnSuccess",
+                            "ContinueOnSuccess",
+                            "StopOnSuccessOrError",
+                            "FinishAllAndSuccess",
+                            "FinishAllAndError"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 64,
+                        "name": "SetupResult",
+                        "values": [
+                            "Continue",
+                            "StopWithSuccess",
+                            "StopWithError"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 72,
+                        "name": "DoneResult",
+                        "values": [
+                            "Success",
+                            "Error"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 79,
+                        "name": "DoneWith",
+                        "values": [
+                            "Success",
+                            "Error",
+                            "Cancel"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 87,
+                        "name": "CallDoneIf",
+                        "values": [
+                            "SuccessOrError",
+                            "Success",
+                            "Error"
+                        ]
+                    }
+                ],
+                "lineNumber": 30,
+                "namespace": true,
+                "qualifiedClassName": "Tasking"
+            }
+        ],
+        "inputFile": "tasktree.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "TaskTreeRunner",
+                "lineNumber": 28,
+                "object": true,
+                "qualifiedClassName": "Tasking::TaskTreeRunner",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "taskTree",
+                                "type": "TaskTree*"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "aboutToStart",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "result",
+                                "type": "DoneWith"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 53,
+                        "name": "done",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "tasktreerunner.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "TcpSocket",
+                "lineNumber": 35,
+                "object": true,
+                "qualifiedClassName": "Tasking::TcpSocket",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 48,
+                        "name": "started",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "result",
+                                "type": "DoneResult"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 49,
+                        "name": "done",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "tcpsocket.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "AssetDownloader",
+                "lineNumber": 29,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 10,
+                        "isConst": true,
+                        "lineNumber": 89,
+                        "name": "networkErrors",
+                        "returnType": "QStringList"
+                    },
+                    {
+                        "access": "public",
+                        "index": 11,
+                        "isConst": true,
+                        "lineNumber": 90,
+                        "name": "sslErrors",
+                        "returnType": "QStringList"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 33,
+                        "name": "downloadBase",
+                        "notify": "downloadBaseChanged",
+                        "read": "downloadBase",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false,
+                        "write": "setDownloadBase"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 39,
+                        "name": "preferredLocalDownloadDir",
+                        "notify": "preferredLocalDownloadDirChanged",
+                        "read": "preferredLocalDownloadDir",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false,
+                        "write": "setPreferredLocalDownloadDir"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 45,
+                        "name": "offlineAssetsFilePath",
+                        "notify": "offlineAssetsFilePathChanged",
+                        "read": "offlineAssetsFilePath",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false,
+                        "write": "setOfflineAssetsFilePath"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 51,
+                        "name": "jsonFileName",
+                        "notify": "jsonFileNameChanged",
+                        "read": "jsonFileName",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setJsonFileName"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 57,
+                        "name": "zipFileName",
+                        "notify": "zipFileNameChanged",
+                        "read": "zipFileName",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setZipFileName"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 63,
+                        "name": "localDownloadDir",
+                        "notify": "localDownloadDirChanged",
+                        "read": "localDownloadDir",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "Assets::Downloader::AssetDownloader",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 99,
+                        "name": "started",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "success",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 100,
+                        "name": "finished",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "progressValue",
+                                "type": "int"
+                            },
+                            {
+                                "name": "progressMaximum",
+                                "type": "int"
+                            },
+                            {
+                                "name": "progressText",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 101,
+                        "name": "progressChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "url",
+                                "type": "QUrl"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 102,
+                        "name": "localDownloadDirChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QUrl"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 104,
+                        "name": "downloadBaseChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "url",
+                                "type": "QUrl"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 105,
+                        "name": "preferredLocalDownloadDirChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QUrl"
+                            }
+                        ],
+                        "index": 6,
+                        "lineNumber": 106,
+                        "name": "offlineAssetsFilePathChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 7,
+                        "lineNumber": 107,
+                        "name": "jsonFileNameChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 8,
+                        "lineNumber": 108,
+                        "name": "zipFileNameChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "lineNumber": 93,
+                        "name": "start",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "assetdownloader.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Reaper",
+                "lineNumber": 53,
+                "object": true,
+                "qualifiedClassName": "Tasking::Reaper",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 70,
+                        "name": "finished",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "ProcessReaperPrivate",
+                "lineNumber": 120,
+                "object": true,
+                "qualifiedClassName": "Tasking::ProcessReaperPrivate",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qprocesstask.cpp",
+        "outputRevision": 69
+    }
+]

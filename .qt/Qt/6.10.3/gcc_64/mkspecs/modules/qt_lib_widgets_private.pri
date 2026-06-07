@@ -1,0 +1,13 @@
+QT.widgets_private.VERSION = 6.10.3
+QT.widgets_private.name = QtWidgets
+QT.widgets_private.module =
+QT.widgets_private.libs = $$QT_MODULE_LIB_BASE
+QT.widgets_private.includes = $$QT_MODULE_INCLUDE_BASE/QtWidgets/6.10.3 $$QT_MODULE_INCLUDE_BASE/QtWidgets/6.10.3/QtWidgets
+QT.widgets_private.frameworks = 
+QT.widgets_private.depends = core_private gui_private widgets
+QT.widgets_private.uses = 
+QT.widgets_private.module_config = v2 internal_module
+QT.widgets_private.enabled_features = gtk3 style-fusion style-windows effects widgettextcontrol
+QT.widgets_private.disabled_features = style-mac style-windowsvista style-windows11 style-android
+QMAKE_INCDIR_GTK3 = /usr/include/gtk-3.0 /usr/include/pango-1.0 /usr/include/glib-2.0 /usr/lib64/glib-2.0/include /usr/include/sysprof-4 /usr/include/harfbuzz /usr/include/freetype2 /usr/include/libpng16 /usr/include/libmount /usr/include/blkid /usr/include/fribidi /usr/include/libxml2 /usr/include/cairo /usr/include/pixman-1 /usr/include/gdk-pixbuf-2.0 /usr/include/gio-unix-2.0 /usr/include/atk-1.0 /usr/include/at-spi2-atk/2.0 /usr/include/dbus-1.0 /usr/lib64/dbus-1.0/include /usr/include/at-spi-2.0
+QMAKE_LIBS_GTK3 = -lglib-2.0 -lgobject-2.0 -lgio-2.0 -lgdk_pixbuf-2.0 -lcairo -lcairo-gobject -latk-1.0 -lharfbuzz -lpango-1.0 -lpangocairo-1.0 -lgdk-3 -lgtk-3

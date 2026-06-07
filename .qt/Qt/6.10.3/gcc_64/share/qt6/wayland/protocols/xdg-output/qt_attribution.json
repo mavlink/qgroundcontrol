@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-xdg-output-protocol",
+        "Name": "Wayland XDG Output Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor API, and the Qt Wayland platform plugin.",
+        "Files": "xdg-output-unstable-v1.xml",
+
+        "Description": "The XDG Output protocol is an extended way to describe output regions under Wayland",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "unstable v1, version 3",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/unstable/xdg-output/xdg-output-unstable-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2017 Red Hat Inc."
+    }
+]

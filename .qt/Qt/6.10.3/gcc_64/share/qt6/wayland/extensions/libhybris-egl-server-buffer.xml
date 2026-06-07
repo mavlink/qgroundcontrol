@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="libhybris_egl_server_buffer">
+    <copyright>
+ Copyright (C) 2014 Jolla Ltd
+ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+    </copyright>
+
+  <interface name="qt_libhybris_buffer" version="1">
+    <event name="add_fd">
+      <arg name="fd" type="fd"/>
+    </event>
+  </interface>
+
+  <interface name="qt_libhybris_egl_server_buffer" version="1">
+  <!-- We depend on wayland-egl to authenticate for us -->
+    <enum name="format">
+      <entry name="RGBA32" value="0"/>
+    </enum>
+    <event name="server_buffer_created">
+      <arg name="id" type="new_id" interface="qt_libhybris_buffer"/>
+      <arg name="qid" type="new_id" interface="qt_server_buffer"/>
+      <arg name="num_fds" type="int" />
+      <arg name="ints" type="array" summary="an array of int32_t" />
+      <arg name="name" type="int"/>
+      <arg name="width" type="int"/>
+      <arg name="height" type="int"/>
+      <arg name="stride" type="int"/>
+      <arg name="format" type="int"/>
+    </event>
+  </interface>
+</protocol>
+

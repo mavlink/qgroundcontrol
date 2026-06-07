@@ -1,0 +1,8 @@
+module Qt.labs.synchronizer
+linktarget Qt6::LabsSynchronizerplugin
+optional plugin labssynchronizerplugin
+classname Qt_labs_synchronizerPlugin
+typeinfo plugins.qmltypes
+depends QtQml auto
+prefer :/qt-project.org/imports/Qt/labs/synchronizer/
+

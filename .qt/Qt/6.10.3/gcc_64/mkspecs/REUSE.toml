@@ -1,0 +1,20 @@
+version = 1
+
+[[annotations]]
+path = ["**.plist*", "features/data/configure.json", "features/data/testserver/Dockerfile",
+        "features/data/testserver/docker-compose-common.yml", "features/mac/sdk.mk",
+        "features/uikit/xcodebuild.mk", "features/data/dummy.cpp", "features/data/macros.cpp",
+        "macx-ios-clang/LaunchScreen.storyboard", "macx-xcode/WorkspaceSettings.xcsettings",
+        "macx-xcode/default.xcscheme"]
+precedence = "closest"
+comment = "build system"
+SPDX-FileCopyrightText = "Copyright (C) 2024 The Qt Company Ltd."
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = ["modules/README"]
+comment = "documentation"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright (C) 2024 The Qt Company Ltd."
+SPDX-License-Identifier = "LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only"
+

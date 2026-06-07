@@ -1,0 +1,335 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "BoundaryRule"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "256"
+                    }
+                ],
+                "className": "QQuickBoundaryRule",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 51,
+                        "name": "OvershootFilter",
+                        "values": [
+                            "None",
+                            "Peak"
+                        ]
+                    }
+                ],
+                "interfaces": [
+                    [
+                        {
+                            "className": "QQmlParserStatus",
+                            "id": "\"org.qt-project.Qt.QQmlParserStatus\""
+                        }
+                    ],
+                    [
+                        {
+                            "className": "QQmlPropertyValueInterceptor",
+                            "id": "\"org.qt-project.Qt.QQmlPropertyValueInterceptor\""
+                        }
+                    ]
+                ],
+                "lineNumber": 29,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 12,
+                        "lineNumber": 85,
+                        "name": "returnToBounds",
+                        "returnType": "bool"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 36,
+                        "name": "enabled",
+                        "notify": "enabledChanged",
+                        "read": "enabled",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setEnabled"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 37,
+                        "name": "minimum",
+                        "notify": "minimumChanged",
+                        "read": "minimum",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setMinimum"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 38,
+                        "name": "minimumOvershoot",
+                        "notify": "minimumOvershootChanged",
+                        "read": "minimumOvershoot",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setMinimumOvershoot"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 39,
+                        "name": "maximum",
+                        "notify": "maximumChanged",
+                        "read": "maximum",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setMaximum"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 40,
+                        "name": "maximumOvershoot",
+                        "notify": "maximumOvershootChanged",
+                        "read": "maximumOvershoot",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setMaximumOvershoot"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 41,
+                        "name": "overshootScale",
+                        "notify": "overshootScaleChanged",
+                        "read": "overshootScale",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setOvershootScale"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 42,
+                        "name": "currentOvershoot",
+                        "notify": "currentOvershootChanged",
+                        "read": "currentOvershoot",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 43,
+                        "name": "peakOvershoot",
+                        "notify": "peakOvershootChanged",
+                        "read": "peakOvershoot",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 44,
+                        "name": "overshootFilter",
+                        "notify": "overshootFilterChanged",
+                        "read": "overshootFilter",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "OvershootFilter",
+                        "user": false,
+                        "write": "setOvershootFilter"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 45,
+                        "name": "easing",
+                        "notify": "easingChanged",
+                        "read": "easing",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QEasingCurve",
+                        "user": false,
+                        "write": "setEasing"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 10,
+                        "lineNumber": 46,
+                        "name": "returnDuration",
+                        "notify": "returnDurationChanged",
+                        "read": "returnDuration",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setReturnDuration"
+                    }
+                ],
+                "qualifiedClassName": "QQuickBoundaryRule",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 98,
+                        "name": "enabledChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 99,
+                        "name": "minimumChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 100,
+                        "name": "minimumOvershootChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 101,
+                        "name": "maximumChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 102,
+                        "name": "maximumOvershootChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 103,
+                        "name": "overshootScaleChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 104,
+                        "name": "currentOvershootChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 105,
+                        "name": "peakOvershootChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 106,
+                        "name": "overshootFilterChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "lineNumber": 107,
+                        "name": "easingChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 10,
+                        "lineNumber": 108,
+                        "name": "returnDurationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 11,
+                        "lineNumber": 109,
+                        "name": "returnedToBounds",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QQmlPropertyValueInterceptor"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QQmlParserStatus"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickboundaryrule_p.h",
+        "outputRevision": 69
+    }
+]

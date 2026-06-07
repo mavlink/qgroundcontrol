@@ -1,0 +1,76 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QTestEventLoop",
+                "lineNumber": 20,
+                "object": true,
+                "qualifiedClassName": "QTestEventLoop",
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 51,
+                        "name": "exitLoop",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qtesteventloop.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QAbstractItemModelTester",
+                "lineNumber": 33,
+                "object": true,
+                "qualifiedClassName": "QAbstractItemModelTester",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qabstractitemmodeltester.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QTestLog",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 41,
+                        "name": "LogMode",
+                        "values": [
+                            "Plain",
+                            "XML",
+                            "LightXML",
+                            "JUnitXML",
+                            "CSV",
+                            "TeamCity",
+                            "TAP"
+                        ]
+                    }
+                ],
+                "gadget": true,
+                "lineNumber": 33,
+                "qualifiedClassName": "QTestLog"
+            }
+        ],
+        "inputFile": "qtestlog_p.h",
+        "outputRevision": 69
+    }
+]

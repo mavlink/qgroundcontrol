@@ -1,0 +1,20 @@
+<protocol name="server_buffer_extension">
+
+    <copyright>
+ Copyright (C) 2015 The Qt Company Ltd.
+ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+    </copyright>
+
+    <interface name="qt_server_buffer" version="1">
+        <description summary="buffers managed by the compositor">
+          Server buffer is an extension which makes it possible to share a
+          buffer created by the compositor to share it with arbitrary
+          clients. These types of buffers are intended to be read only
+          buffers for clients, but this is an implementation detail.
+
+          Server buffers main purpose is to help implement caches
+        </description>
+        <request name="release">
+        </request>
+    </interface>
+</protocol>

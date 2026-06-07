@@ -1,0 +1,5 @@
+\section1 Running the Example
+
+To run the example from \l{\QC Documentation}{Qt Creator}, open the \uicontrol Welcome
+mode and select the example from \uicontrol Examples. For more information, see
+\l{\QC: Tutorial: Build and run}.

@@ -1,0 +1,38 @@
+# Copyright (C) 2024 The Qt Company Ltd.
+# SPDX-License-Identifier: BSD-3-Clause
+
+set(@INSTALL_CMAKE_NAMESPACE@_FOUND FALSE)
+
+if(DEFINED QT_REQUIRE_HOST_PATH_CHECK)
+    set(__qt_platform_requires_host_info_package "${QT_REQUIRE_HOST_PATH_CHECK}")
+elseif(DEFINED ENV{QT_REQUIRE_HOST_PATH_CHECK})
+    set(__qt_platform_requires_host_info_package "$ENV{QT_REQUIRE_HOST_PATH_CHECK}")
+elseif(CMAKE_CROSSCOMPILING OR DEFINED QT_HOST_PATH)
+    set(__qt_platform_requires_host_info_package "@platform_requires_host_info_package@")
+else()
+    set(__qt_platform_requires_host_info_package FALSE)
+endif()
+set(__qt_platform_initial_qt_host_path "@qt_host_path_absolute@")
+set(__qt_platform_initial_qt_host_path_cmake_dir "@qt_host_path_cmake_dir_absolute@")
+
+_qt_internal_setup_qt_host_path(
+    "${__qt_platform_requires_host_info_package}"
+    "${__qt_platform_initial_qt_host_path}"
+    "${__qt_platform_initial_qt_host_path_cmake_dir}")
+_qt_internal_find_host_info_package(${__qt_platform_requires_host_info_package}
+    @INSTALL_CMAKE_NAMESPACE@)
+
+# note: _third_party_deps example: "ICU\\;FALSE\\;1.0\\;i18n uc data;ZLIB\\;FALSE\\;\\;"
+set(__qt_third_party_deps "@third_party_deps@")
+@third_party_deps_extra_info@
+@third_party_extra@
+
+# Don't propagate REQUIRED so we don't immediately FATAL_ERROR, rather let the find_dependency calls
+# set _NOT_FOUND_MESSAGE which will be displayed by the includer of the Dependencies file.
+set(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED FALSE)
+
+if(__qt_third_party_deps)
+    _qt_internal_find_third_party_dependencies(@INSTALL_CMAKE_NAMESPACE@ __qt_third_party_deps)
+endif()
+
+set(@INSTALL_CMAKE_NAMESPACE@_FOUND TRUE)

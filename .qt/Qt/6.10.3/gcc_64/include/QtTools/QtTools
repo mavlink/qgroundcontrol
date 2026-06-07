@@ -1,0 +1,5 @@
+#ifndef QT_QTTOOLS_MODULE_H
+#define QT_QTTOOLS_MODULE_H
+#include <QtTools/QtToolsDepends>
+#include "qttoolsversion.h"
+#endif

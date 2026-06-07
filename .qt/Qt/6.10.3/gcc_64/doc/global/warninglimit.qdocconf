@@ -1,0 +1,9 @@
+# Fail the documentation test build if QDoc warnings exceed the limit.
+#
+# Submodule documentation projects can increase this base limit to
+# account for known warnings, for example:
+#
+# qtcore.qdocconf:
+#     warninglimit += 1
+
+warninglimit = 10

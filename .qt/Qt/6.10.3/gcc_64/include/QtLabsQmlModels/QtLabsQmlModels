@@ -1,0 +1,5 @@
+#ifndef QT_QTLABSQMLMODELS_MODULE_H
+#define QT_QTLABSQMLMODELS_MODULE_H
+#include <QtLabsQmlModels/QtLabsQmlModelsDepends>
+#include "qtlabsqmlmodelsversion.h"
+#endif

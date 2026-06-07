@@ -1,0 +1,15 @@
+diff --git a/cmake/3rdparty/extra-cmake-modules/modules/ECMEnableSanitizers.cmake b/cmake/3rdparty/extra-cmake-modules/modules/ECMEnableSanitizers.cmake
+index 8d95c69e3ad..5145d2ffd71 100644
+--- a/cmake/3rdparty/extra-cmake-modules/modules/ECMEnableSanitizers.cmake
++++ b/cmake/3rdparty/extra-cmake-modules/modules/ECMEnableSanitizers.cmake
+@@ -179,8 +179,8 @@ if (ECM_ENABLE_SANITIZERS)
+               link_libraries("${linker_flags}")
+             endif()
+             if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+-                string(REPLACE "-Wl,--no-undefined" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+-                string(REPLACE "-Wl,--no-undefined" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
++                string(REGEX REPLACE "( |^)-Wl,--no-undefined( |$)" " " CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
++                string(REGEX REPLACE "( |^)-Wl,--no-undefined( |$)" " " CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
+             endif ()
+         endforeach()
+     else()

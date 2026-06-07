@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "scaler.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2013-2014 Collabora, Ltd."
+SPDX-License-Identifier = "MIT"

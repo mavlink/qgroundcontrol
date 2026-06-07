@@ -1,0 +1,2788 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "DeferredPropertyNames",
+                        "value": "background,contentItem,handle"
+                    },
+                    {
+                        "name": "QML.Element",
+                        "value": "AbstractColorPicker"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1540"
+                    },
+                    {
+                        "name": "QML.Creatable",
+                        "value": "false"
+                    },
+                    {
+                        "name": "QML.UncreatableReason",
+                        "value": "AbstractColorPicker is abstract."
+                    }
+                ],
+                "className": "QQuickAbstractColorPicker",
+                "lineNumber": 28,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 31,
+                        "name": "color",
+                        "notify": "colorChanged",
+                        "read": "color",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false,
+                        "write": "setColor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 32,
+                        "name": "hue",
+                        "notify": "colorChanged",
+                        "read": "hue",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setHue"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 33,
+                        "name": "saturation",
+                        "notify": "colorChanged",
+                        "read": "saturation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setSaturation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 34,
+                        "name": "value",
+                        "notify": "colorChanged",
+                        "read": "value",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setValue"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 35,
+                        "name": "lightness",
+                        "notify": "colorChanged",
+                        "read": "lightness",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setLightness"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 36,
+                        "name": "alpha",
+                        "notify": "colorChanged",
+                        "read": "alpha",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setAlpha"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 37,
+                        "name": "pressed",
+                        "notify": "pressedChanged",
+                        "read": "isPressed",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setPressed"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 38,
+                        "name": "handle",
+                        "notify": "handleChanged",
+                        "read": "handle",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickItem*",
+                        "user": false,
+                        "write": "setHandle"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 39,
+                        "name": "implicitHandleWidth",
+                        "notify": "implicitHandleWidthChanged",
+                        "read": "implicitHandleWidth",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 40,
+                        "name": "implicitHandleHeight",
+                        "notify": "implicitHandleHeightChanged",
+                        "read": "implicitHandleHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QQuickAbstractColorPicker",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "color",
+                                "type": "QColor"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 77,
+                        "name": "colorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 78,
+                        "name": "pressedChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 79,
+                        "name": "handleChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 80,
+                        "name": "implicitHandleWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 81,
+                        "name": "implicitHandleHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "color",
+                                "type": "QColor"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 83,
+                        "name": "colorPicked",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickControl"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickabstractcolorpicker_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "ColorDialogImpl"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickColorDialogImplAttached"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1540"
+                    }
+                ],
+                "className": "QQuickColorDialogImpl",
+                "lineNumber": 34,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 89,
+                        "name": "invokeEyeDropper",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 37,
+                        "name": "color",
+                        "notify": "colorChanged",
+                        "read": "color",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false,
+                        "write": "setColor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 38,
+                        "name": "hue",
+                        "notify": "colorChanged",
+                        "read": "hue",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setHue"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 39,
+                        "name": "saturation",
+                        "notify": "colorChanged",
+                        "read": "saturation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setSaturation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 40,
+                        "name": "value",
+                        "notify": "colorChanged",
+                        "read": "value",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setValue"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 41,
+                        "name": "lightness",
+                        "notify": "colorChanged",
+                        "read": "lightness",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setLightness"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 42,
+                        "name": "alpha",
+                        "notify": "colorChanged",
+                        "read": "alpha",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setAlpha"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 43,
+                        "name": "red",
+                        "notify": "colorChanged",
+                        "read": "red",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setRed"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 44,
+                        "name": "green",
+                        "notify": "colorChanged",
+                        "read": "green",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setGreen"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 45,
+                        "name": "blue",
+                        "notify": "colorChanged",
+                        "read": "blue",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setBlue"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 46,
+                        "name": "isHsl",
+                        "notify": "specChanged",
+                        "read": "isHsl",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setHsl"
+                    }
+                ],
+                "qualifiedClassName": "QQuickColorDialogImpl",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "color",
+                                "type": "QColor"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 92,
+                        "name": "colorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 93,
+                        "name": "specChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickDialog"
+                    }
+                ]
+            },
+            {
+                "className": "QQuickColorDialogImplAttached",
+                "lineNumber": 100,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 103,
+                        "name": "buttonBox",
+                        "notify": "buttonBoxChanged",
+                        "read": "buttonBox",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickDialogButtonBox*",
+                        "user": false,
+                        "write": "setButtonBox"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 104,
+                        "name": "eyeDropperButton",
+                        "notify": "eyeDropperButtonChanged",
+                        "read": "eyeDropperButton",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickAbstractButton*",
+                        "user": false,
+                        "write": "setEyeDropperButton"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 105,
+                        "name": "colorPicker",
+                        "notify": "colorPickerChanged",
+                        "read": "colorPicker",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickAbstractColorPicker*",
+                        "user": false,
+                        "write": "setColorPicker"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 107,
+                        "name": "colorInputs",
+                        "notify": "colorInputsChanged",
+                        "read": "colorInputs",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickColorInputs*",
+                        "user": false,
+                        "write": "setColorInputs"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 109,
+                        "name": "alphaSlider",
+                        "notify": "alphaSliderChanged",
+                        "read": "alphaSlider",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickSlider*",
+                        "user": false,
+                        "write": "setAlphaSlider"
+                    }
+                ],
+                "qualifiedClassName": "QQuickColorDialogImplAttached",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 136,
+                        "name": "buttonBoxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 137,
+                        "name": "eyeDropperButtonChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 138,
+                        "name": "colorPickerChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 139,
+                        "name": "colorInputsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 140,
+                        "name": "alphaSliderChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickcolordialogimpl_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QQuickFileDialogTapHandler",
+                "lineNumber": 31,
+                "object": true,
+                "qualifiedClassName": "QQuickFileDialogTapHandler",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickTapHandler"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfiledialogdelegate_p_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QQuickPlatformColorDialog",
+                "lineNumber": 28,
+                "object": true,
+                "qualifiedClassName": "QQuickPlatformColorDialog",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPlatformColorDialogHelper"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickplatformcolordialog_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "SaturationLightnessPickerCanvas"
+                    }
+                ],
+                "className": "QQuickSaturationLightnessPickerCanvas",
+                "lineNumber": 26,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 30,
+                        "name": "hue",
+                        "notify": "hueChanged",
+                        "read": "hue",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setHue"
+                    }
+                ],
+                "qualifiedClassName": "QQuickSaturationLightnessPickerCanvas",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 39,
+                        "name": "hueChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickItem"
+                    }
+                ]
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "SaturationLightnessPickerImpl"
+                    }
+                ],
+                "className": "QQuickSaturationLightnessPicker",
+                "lineNumber": 52,
+                "object": true,
+                "qualifiedClassName": "QQuickSaturationLightnessPicker",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickAbstractColorPicker"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquicksaturationlightnesspicker_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "SideBar"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1545"
+                    }
+                ],
+                "className": "QQuickSideBar",
+                "lineNumber": 29,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 32,
+                        "name": "dialog",
+                        "notify": "dialogChanged",
+                        "read": "dialog",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickDialog*",
+                        "user": false,
+                        "write": "setDialog"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 33,
+                        "name": "folderPaths",
+                        "notify": "folderPathsChanged",
+                        "read": "folderPaths",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QList<QStandardPaths::StandardLocation>",
+                        "user": false,
+                        "write": "setFolderPaths"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 34,
+                        "name": "effectiveFolderPaths",
+                        "notify": "effectiveFolderPathsChanged",
+                        "read": "effectiveFolderPaths",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QList<QStandardPaths::StandardLocation>",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 35,
+                        "name": "favoritePaths",
+                        "notify": "favoritePathsChanged",
+                        "read": "favoritePaths",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QList<QUrl>",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 36,
+                        "name": "buttonDelegate",
+                        "notify": "buttonDelegateChanged",
+                        "read": "buttonDelegate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQmlComponent*",
+                        "user": false,
+                        "write": "setButtonDelegate"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 37,
+                        "name": "separatorDelegate",
+                        "notify": "separatorDelegateChanged",
+                        "read": "separatorDelegate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQmlComponent*",
+                        "user": false,
+                        "write": "setSeparatorDelegate"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 38,
+                        "name": "addFavoriteDelegate",
+                        "notify": "addFavoriteDelegateChanged",
+                        "read": "addFavoriteDelegate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQmlComponent*",
+                        "user": false,
+                        "write": "setAddFavoriteDelegate"
+                    }
+                ],
+                "qualifiedClassName": "QQuickSideBar",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 67,
+                        "name": "dialogChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 68,
+                        "name": "folderPathsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 69,
+                        "name": "effectiveFolderPathsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 70,
+                        "name": "favoritePathsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 71,
+                        "name": "buttonDelegateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 72,
+                        "name": "separatorDelegateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 73,
+                        "name": "addFavoriteDelegateChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickContainer"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquicksidebar_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "ColorInputsImpl"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1545"
+                    }
+                ],
+                "className": "QQuickColorInputs",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 57,
+                        "name": "Mode",
+                        "values": [
+                            "Hex",
+                            "Rgb",
+                            "Hsv",
+                            "Hsl"
+                        ]
+                    }
+                ],
+                "lineNumber": 35,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 38,
+                        "name": "color",
+                        "notify": "colorChanged",
+                        "read": "color",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false,
+                        "write": "setColor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 39,
+                        "name": "red",
+                        "notify": "colorChanged",
+                        "read": "red",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 40,
+                        "name": "green",
+                        "notify": "colorChanged",
+                        "read": "green",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 41,
+                        "name": "blue",
+                        "notify": "colorChanged",
+                        "read": "blue",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 42,
+                        "name": "hue",
+                        "notify": "colorChanged",
+                        "read": "hue",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 43,
+                        "name": "hslSaturation",
+                        "notify": "colorChanged",
+                        "read": "hslSaturation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 44,
+                        "name": "hsvSaturation",
+                        "notify": "colorChanged",
+                        "read": "hsvSaturation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 45,
+                        "name": "value",
+                        "notify": "colorChanged",
+                        "read": "value",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 46,
+                        "name": "lightness",
+                        "notify": "colorChanged",
+                        "read": "lightness",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 47,
+                        "name": "alpha",
+                        "notify": "colorChanged",
+                        "read": "alpha",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 10,
+                        "lineNumber": 48,
+                        "name": "showAlpha",
+                        "notify": "showAlphaChanged",
+                        "read": "showAlpha",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setShowAlpha"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 11,
+                        "lineNumber": 49,
+                        "name": "mode",
+                        "notify": "currentModeChanged",
+                        "read": "currentMode",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Mode",
+                        "user": false,
+                        "write": "setCurrentMode"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 12,
+                        "lineNumber": 50,
+                        "name": "delegate",
+                        "notify": "delegateChanged",
+                        "read": "delegate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQmlComponent*",
+                        "user": false,
+                        "write": "setDelegate"
+                    }
+                ],
+                "qualifiedClassName": "QQuickColorInputs",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "c",
+                                "type": "QColor"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 87,
+                        "name": "colorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "c",
+                                "type": "QColor"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 88,
+                        "name": "colorModified",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 89,
+                        "name": "hslChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 90,
+                        "name": "showAlphaChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 91,
+                        "name": "currentModeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 92,
+                        "name": "delegateChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickContainer"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickcolorinputs_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "FileDialogDelegate"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1538"
+                    }
+                ],
+                "className": "QQuickFileDialogDelegate",
+                "lineNumber": 28,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 31,
+                        "name": "dialog",
+                        "notify": "dialogChanged",
+                        "read": "dialog",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickDialog*",
+                        "user": false,
+                        "write": "setDialog"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 32,
+                        "name": "file",
+                        "notify": "fileChanged",
+                        "read": "file",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false,
+                        "write": "setFile"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFileDialogDelegate",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 46,
+                        "name": "dialogChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 47,
+                        "name": "fileChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickItemDelegate"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfiledialogdelegate_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "FileDialogImpl"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickFileDialogImplAttached"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1538"
+                    }
+                ],
+                "className": "QQuickFileDialogImpl",
+                "lineNumber": 38,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 41,
+                        "name": "currentFolder",
+                        "notify": "currentFolderChanged",
+                        "read": "currentFolder",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false,
+                        "write": "setCurrentFolder"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 42,
+                        "name": "selectedFile",
+                        "notify": "selectedFileChanged",
+                        "read": "selectedFile",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false,
+                        "write": "setSelectedFile"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 43,
+                        "name": "nameFilters",
+                        "notify": "nameFiltersChanged",
+                        "read": "nameFilters",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QStringList",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 44,
+                        "name": "selectedNameFilter",
+                        "read": "selectedNameFilter",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickFileNameFilter*",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 45,
+                        "name": "fileName",
+                        "notify": "selectedFileChanged",
+                        "read": "fileName",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setFileName"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 46,
+                        "name": "currentFolderName",
+                        "notify": "selectedFileChanged",
+                        "read": "currentFolderName",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QQuickFileDialogImpl",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "folderUrl",
+                                "type": "QUrl"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 93,
+                        "name": "currentFolderChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "selectedFileUrl",
+                                "type": "QUrl"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 94,
+                        "name": "selectedFileChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 95,
+                        "name": "nameFiltersChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "fileUrl",
+                                "type": "QUrl"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 96,
+                        "name": "fileSelected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "filter",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 4,
+                        "lineNumber": 97,
+                        "name": "filterSelected",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "filter",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 90,
+                        "name": "selectNameFilter",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickDialog"
+                    }
+                ]
+            },
+            {
+                "className": "QQuickFileDialogImplAttached",
+                "lineNumber": 107,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 110,
+                        "name": "buttonBox",
+                        "notify": "buttonBoxChanged",
+                        "read": "buttonBox",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickDialogButtonBox*",
+                        "user": false,
+                        "write": "setButtonBox"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 111,
+                        "name": "nameFiltersComboBox",
+                        "notify": "nameFiltersComboBoxChanged",
+                        "read": "nameFiltersComboBox",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickComboBox*",
+                        "user": false,
+                        "write": "setNameFiltersComboBox"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 112,
+                        "name": "filterLabel",
+                        "notify": "filterLabelChanged",
+                        "read": "filterLabel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickLabel*",
+                        "user": false,
+                        "write": "setFilterLabel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 113,
+                        "name": "fileDialogListView",
+                        "notify": "fileDialogListViewChanged",
+                        "read": "fileDialogListView",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickListView*",
+                        "user": false,
+                        "write": "setFileDialogListView"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 114,
+                        "name": "breadcrumbBar",
+                        "notify": "breadcrumbBarChanged",
+                        "read": "breadcrumbBar",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickFolderBreadcrumbBar*",
+                        "user": false,
+                        "write": "setBreadcrumbBar"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 115,
+                        "name": "fileNameLabel",
+                        "notify": "fileNameLabelChanged",
+                        "read": "fileNameLabel",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickLabel*",
+                        "user": false,
+                        "write": "setFileNameLabel"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 116,
+                        "name": "fileNameTextField",
+                        "notify": "fileNameTextFieldChanged",
+                        "read": "fileNameTextField",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickTextField*",
+                        "user": false,
+                        "write": "setFileNameTextField"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 117,
+                        "name": "overwriteConfirmationDialog",
+                        "notify": "overwriteConfirmationDialogChanged",
+                        "read": "overwriteConfirmationDialog",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickDialog*",
+                        "user": false,
+                        "write": "setOverwriteConfirmationDialog"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 118,
+                        "name": "sideBar",
+                        "notify": "sideBarChanged",
+                        "read": "sideBar",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickSideBar*",
+                        "user": false,
+                        "write": "setSideBar"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFileDialogImplAttached",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 158,
+                        "name": "buttonBoxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 159,
+                        "name": "nameFiltersComboBoxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 160,
+                        "name": "filterLabelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 161,
+                        "name": "fileDialogListViewChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 162,
+                        "name": "breadcrumbBarChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 163,
+                        "name": "fileNameLabelChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 164,
+                        "name": "fileNameTextFieldChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 165,
+                        "name": "overwriteConfirmationDialogChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 166,
+                        "name": "sideBarChanged",
+                        "returnType": "void",
+                        "revision": 1545
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfiledialogimpl_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "FolderBreadcrumbBar"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1538"
+                    }
+                ],
+                "className": "QQuickFolderBreadcrumbBar",
+                "lineNumber": 29,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 32,
+                        "name": "dialog",
+                        "notify": "dialogChanged",
+                        "read": "dialog",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickDialog*",
+                        "user": false,
+                        "write": "setDialog"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 33,
+                        "name": "buttonDelegate",
+                        "notify": "buttonDelegateChanged",
+                        "read": "buttonDelegate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQmlComponent*",
+                        "user": false,
+                        "write": "setButtonDelegate"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 34,
+                        "name": "separatorDelegate",
+                        "notify": "separatorDelegateChanged",
+                        "read": "separatorDelegate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQmlComponent*",
+                        "user": false,
+                        "write": "setSeparatorDelegate"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 35,
+                        "name": "upButton",
+                        "notify": "upButtonChanged",
+                        "read": "upButton",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickAbstractButton*",
+                        "user": false,
+                        "write": "setUpButton"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 36,
+                        "name": "textField",
+                        "notify": "textFieldChanged",
+                        "read": "textField",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickTextField*",
+                        "user": false,
+                        "write": "setTextField"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 37,
+                        "name": "upButtonSpacing",
+                        "notify": "upButtonSpacingChanged",
+                        "read": "upButtonSpacing",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setUpButtonSpacing"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFolderBreadcrumbBar",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 63,
+                        "name": "dialogChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 64,
+                        "name": "buttonDelegateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 65,
+                        "name": "separatorDelegateChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 66,
+                        "name": "upButtonChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 67,
+                        "name": "upButtonSpacingChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 68,
+                        "name": "textFieldChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickContainer"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfolderbreadcrumbbar_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "FolderDialogImpl"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickFolderDialogImplAttached"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1539"
+                    }
+                ],
+                "className": "QQuickFolderDialogImpl",
+                "lineNumber": 33,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 36,
+                        "name": "currentFolder",
+                        "notify": "currentFolderChanged",
+                        "read": "currentFolder",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false,
+                        "write": "setCurrentFolder"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 37,
+                        "name": "selectedFolder",
+                        "notify": "selectedFolderChanged",
+                        "read": "selectedFolder",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false,
+                        "write": "setSelectedFolder"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFolderDialogImpl",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "folderUrl",
+                                "type": "QUrl"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 60,
+                        "name": "currentFolderChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "folderUrl",
+                                "type": "QUrl"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 61,
+                        "name": "selectedFolderChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 62,
+                        "name": "nameFiltersChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickDialog"
+                    }
+                ]
+            },
+            {
+                "className": "QQuickFolderDialogImplAttached",
+                "lineNumber": 72,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 75,
+                        "name": "folderDialogListView",
+                        "notify": "folderDialogListViewChanged",
+                        "read": "folderDialogListView",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickListView*",
+                        "user": false,
+                        "write": "setFolderDialogListView"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 76,
+                        "name": "breadcrumbBar",
+                        "notify": "breadcrumbBarChanged",
+                        "read": "breadcrumbBar",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickFolderBreadcrumbBar*",
+                        "user": false,
+                        "write": "setBreadcrumbBar"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFolderDialogImplAttached",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 89,
+                        "name": "folderDialogListViewChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 90,
+                        "name": "breadcrumbBarChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfolderdialogimpl_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "FontDialogImpl"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickFontDialogImplAttached"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1538"
+                    }
+                ],
+                "className": "QQuickFontDialogImpl",
+                "lineNumber": 36,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 39,
+                        "name": "currentFont",
+                        "notify": "currentFontChanged",
+                        "read": "currentFont",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QFont",
+                        "user": false,
+                        "write": "setCurrentFont"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFontDialogImpl",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 58,
+                        "name": "optionsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "font",
+                                "type": "QFont"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 59,
+                        "name": "currentFontChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickDialog"
+                    }
+                ]
+            },
+            {
+                "className": "QQuickFontDialogImplAttached",
+                "lineNumber": 69,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 72,
+                        "name": "familyListView",
+                        "notify": "familyListViewChanged",
+                        "read": "familyListView",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickListView*",
+                        "user": false,
+                        "write": "setFamilyListView"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 74,
+                        "name": "styleListView",
+                        "notify": "styleListViewChanged",
+                        "read": "styleListView",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickListView*",
+                        "user": false,
+                        "write": "setStyleListView"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 76,
+                        "name": "sizeListView",
+                        "notify": "sizeListViewChanged",
+                        "read": "sizeListView",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickListView*",
+                        "user": false,
+                        "write": "setSizeListView"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 78,
+                        "name": "sampleEdit",
+                        "notify": "sampleEditChanged",
+                        "read": "sampleEdit",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickTextEdit*",
+                        "user": false,
+                        "write": "setSampleEdit"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 80,
+                        "name": "buttonBox",
+                        "notify": "buttonBoxChanged",
+                        "read": "buttonBox",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickDialogButtonBox*",
+                        "user": false,
+                        "write": "setButtonBox"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 82,
+                        "name": "writingSystemComboBox",
+                        "notify": "writingSystemComboBoxChanged",
+                        "read": "writingSystemComboBox",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickComboBox*",
+                        "user": false,
+                        "write": "setWritingSystemComboBox"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "lineNumber": 84,
+                        "name": "underlineCheckBox",
+                        "notify": "underlineCheckBoxChanged",
+                        "read": "underlineCheckBox",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickCheckBox*",
+                        "user": false,
+                        "write": "setUnderlineCheckBox"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "lineNumber": 86,
+                        "name": "strikeoutCheckBox",
+                        "notify": "strikeoutCheckBoxChanged",
+                        "read": "strikeoutCheckBox",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickCheckBox*",
+                        "user": false,
+                        "write": "setStrikeoutCheckBox"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 8,
+                        "lineNumber": 89,
+                        "name": "familyEdit",
+                        "notify": "familyEditChanged",
+                        "read": "familyEdit",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickTextField*",
+                        "user": false,
+                        "write": "setFamilyEdit"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 9,
+                        "lineNumber": 91,
+                        "name": "styleEdit",
+                        "notify": "styleEditChanged",
+                        "read": "styleEdit",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickTextField*",
+                        "user": false,
+                        "write": "setStyleEdit"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 10,
+                        "lineNumber": 92,
+                        "name": "sizeEdit",
+                        "notify": "sizeEditChanged",
+                        "read": "sizeEdit",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickTextField*",
+                        "user": false,
+                        "write": "setSizeEdit"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFontDialogImplAttached",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 133,
+                        "name": "buttonBoxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 134,
+                        "name": "familyListViewChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 135,
+                        "name": "styleListViewChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 136,
+                        "name": "sizeListViewChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 137,
+                        "name": "sampleEditChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 138,
+                        "name": "writingSystemComboBoxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 139,
+                        "name": "underlineCheckBoxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 140,
+                        "name": "strikeoutCheckBoxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 141,
+                        "name": "familyEditChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "lineNumber": 142,
+                        "name": "styleEditChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 10,
+                        "lineNumber": 143,
+                        "name": "sizeEditChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfontdialogimpl_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "MessageDialogImpl"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickMessageDialogImplAttached"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1539"
+                    }
+                ],
+                "className": "QQuickMessageDialogImpl",
+                "lineNumber": 33,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 36,
+                        "name": "text",
+                        "notify": "optionsChanged",
+                        "read": "text",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 37,
+                        "name": "informativeText",
+                        "notify": "optionsChanged",
+                        "read": "informativeText",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 38,
+                        "name": "detailedText",
+                        "notify": "optionsChanged",
+                        "read": "detailedText",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 39,
+                        "name": "showDetailedText",
+                        "notify": "showDetailedTextChanged",
+                        "read": "showDetailedText",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QQuickMessageDialogImpl",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "button",
+                                "type": "QPlatformDialogHelper::StandardButton"
+                            },
+                            {
+                                "name": "role",
+                                "type": "QPlatformDialogHelper::ButtonRole"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 57,
+                        "name": "buttonClicked",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 59,
+                        "name": "showDetailedTextChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 60,
+                        "name": "optionsChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 63,
+                        "name": "toggleShowDetailedText",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickDialog"
+                    }
+                ]
+            },
+            {
+                "className": "QQuickMessageDialogImplAttached",
+                "lineNumber": 70,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 73,
+                        "name": "buttonBox",
+                        "notify": "buttonBoxChanged",
+                        "read": "buttonBox",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickDialogButtonBox*",
+                        "user": false,
+                        "write": "setButtonBox"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 75,
+                        "name": "detailedTextButton",
+                        "notify": "detailedTextButtonChanged",
+                        "read": "detailedTextButton",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickButton*",
+                        "user": false,
+                        "write": "setDetailedTextButton"
+                    }
+                ],
+                "qualifiedClassName": "QQuickMessageDialogImplAttached",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 87,
+                        "name": "buttonBoxChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 88,
+                        "name": "detailedTextButtonChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickmessagedialogimpl_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QQuickPlatformFileDialog",
+                "lineNumber": 28,
+                "object": true,
+                "qualifiedClassName": "QQuickPlatformFileDialog",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPlatformFileDialogHelper"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickplatformfiledialog_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QQuickPlatformFolderDialog",
+                "lineNumber": 29,
+                "object": true,
+                "qualifiedClassName": "QQuickPlatformFolderDialog",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPlatformFileDialogHelper"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickplatformfolderdialog_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QQuickPlatformFontDialog",
+                "lineNumber": 28,
+                "object": true,
+                "qualifiedClassName": "QQuickPlatformFontDialog",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPlatformFontDialogHelper"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickplatformfontdialog_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QQuickPlatformMessageDialog",
+                "lineNumber": 27,
+                "object": true,
+                "qualifiedClassName": "QQuickPlatformMessageDialog",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPlatformMessageDialogHelper"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickplatformmessagedialog_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    },
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QQuickFileNameFilter"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1538"
+                    }
+                ],
+                "className": "QQuickFileNameFilterQuickDialogs2QuickImplForeign",
+                "gadget": true,
+                "lineNumber": 29,
+                "qualifiedClassName": "QQuickFileNameFilterQuickDialogs2QuickImplForeign"
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    },
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QQuickControl"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "512"
+                    }
+                ],
+                "className": "QQuickControlForeign",
+                "gadget": true,
+                "lineNumber": 40,
+                "qualifiedClassName": "QQuickControlForeign"
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    },
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QQuickAbstractButton"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "512"
+                    }
+                ],
+                "className": "QQuickAbstractButtonForeign",
+                "gadget": true,
+                "lineNumber": 48,
+                "qualifiedClassName": "QQuickAbstractButtonForeign"
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    },
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QQuickIcon"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1538"
+                    }
+                ],
+                "className": "QQuickIconForeign",
+                "gadget": true,
+                "lineNumber": 56,
+                "qualifiedClassName": "QQuickIconForeign"
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    },
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QQuickPopup"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "512"
+                    }
+                ],
+                "className": "QQuickPopupForeign",
+                "gadget": true,
+                "lineNumber": 65,
+                "qualifiedClassName": "QQuickPopupForeign"
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    },
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QQuickDialog"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "513"
+                    }
+                ],
+                "className": "QQuickDialogForeign",
+                "gadget": true,
+                "lineNumber": 73,
+                "qualifiedClassName": "QQuickDialogForeign"
+            }
+        ],
+        "inputFile": "qtquickdialogs2quickimplforeign_p.h",
+        "outputRevision": 69
+    }
+]

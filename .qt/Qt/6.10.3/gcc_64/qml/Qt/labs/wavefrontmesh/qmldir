@@ -1,0 +1,8 @@
+module Qt.labs.wavefrontmesh
+linktarget Qt6::qmlwavefrontmeshplugin
+optional plugin qmlwavefrontmeshplugin
+classname QmlWavefrontMeshPlugin
+typeinfo plugins.qmltypes
+depends QtQuick auto
+prefer :/qt-project.org/imports/Qt/labs/wavefrontmesh/
+

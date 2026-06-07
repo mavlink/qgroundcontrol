@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-xdg-shell-protocol",
+        "Name": "Wayland XDG Shell Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor, and the Qt Wayland platform plugin.",
+        "Files": "xdg-shell.xml",
+
+        "Description": "The XDG-Shell protocol is an extended way to manage surfaces under Wayland compositors.",
+        "Homepage": "https://gitlab.freedesktop.org/wayland/wayland-protocols/",
+        "Version": "1.18",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/tree/1.18/",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2008-2013 Kristian Høgsberg\nCopyright © 2013      Rafael Antognolli\nCopyright © 2013      Jasper St. Pierre\nCopyright © 2010-2013 Intel Corporation\nCopyright © 2015-2017 Samsung Electronics Co., Ltd\nCopyright © 2015-2017 Red Hat Inc.\n"
+    }
+]

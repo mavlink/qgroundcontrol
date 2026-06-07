@@ -1,0 +1,11 @@
+QT.waylandclient_private.VERSION = 6.10.3
+QT.waylandclient_private.name = QtWaylandClient
+QT.waylandclient_private.module =
+QT.waylandclient_private.libs = $$QT_MODULE_LIB_BASE
+QT.waylandclient_private.includes = $$QT_MODULE_INCLUDE_BASE/QtWaylandClient/6.10.3 $$QT_MODULE_INCLUDE_BASE/QtWaylandClient/6.10.3/QtWaylandClient
+QT.waylandclient_private.frameworks = 
+QT.waylandclient_private.depends = core_private gui_private waylandglobal_private waylandclient
+QT.waylandclient_private.uses = 
+QT.waylandclient_private.module_config = v2 internal_module
+QT.waylandclient_private.enabled_features = 
+QT.waylandclient_private.disabled_features = 

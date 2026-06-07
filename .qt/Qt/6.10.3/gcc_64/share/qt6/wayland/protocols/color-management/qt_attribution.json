@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-color-management-protocol",
+        "Name": "Wayland Color Management Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin.",
+        "Files": "color-management-v1.xml",
+
+        "Description": "An extension to use different colorspaces from sRGB",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "1",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/-/raw/1.45/staging/color-management/color-management-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright 2019 Sebastian Wick\nCopyright 2019 Erwin Burema\nCopyright 2020 AMD\nCopyright 2020-2024 Collabora, Ltd.\nCopyright 2024 Xaver Hugl\nCopyright 2022-2025 Red Hat, Inc."
+    }
+]

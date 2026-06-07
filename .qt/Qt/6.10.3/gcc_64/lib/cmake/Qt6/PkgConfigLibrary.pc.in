@@ -1,0 +1,14 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+bindir=${prefix}/@INSTALL_BINDIR@
+libexecdir=${prefix}/@INSTALL_LIBEXECDIR@
+libdir=${prefix}/@INSTALL_LIBDIR@
+includedir=${prefix}/@INSTALL_INCLUDEDIR@
+$<$<BOOL:@contains_mkspecs@>:mkspecsdir=${prefix}/@INSTALL_MKSPECSDIR@>
+$<1: >
+Name: @pkgconfig_name@
+Description: @pkgconfig_description@
+Version: @PROJECT_VERSION@
+Libs: @link_options@
+Cflags: @include_dirs@ @compile_defs@
+Requires: $<JOIN:$<REMOVE_DUPLICATES:@target_requires@>, >

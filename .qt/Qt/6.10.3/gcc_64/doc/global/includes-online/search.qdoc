@@ -1,0 +1,15 @@
+// Copyright (C) 2016 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+\page search-results.html
+\title Search Results
+
+\raw HTML
+<link rel="stylesheet" type="text/css" href="style/gsc.css" />
+<script type="text/javascript">
+$(function(){ $(".title").append(": " + decodeURIComponent(location.search.split('=')[1]).substring(0,32)); });
+</script>
+<gcse:searchresults-only></gcse:searchresults-only>
+\endraw
+*/

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="drm_egl_server_buffer">
+    <copyright>
+ Copyright (C) 2015 The Qt Company Ltd.
+ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+    </copyright>
+  <interface name="qt_drm_egl_server_buffer" version="1">
+  <!-- We depend on wayland-egl to authenticate for us -->
+  <enum name="format">
+    <entry name="RGBA32" value="0"/>
+    <entry name="A8" value="1"/>
+  </enum>
+    <event name="server_buffer_created">
+      <arg name="id" type="new_id" interface="qt_server_buffer"/>
+      <arg name="name" type="int"/>
+      <arg name="width" type="int"/>
+      <arg name="height" type="int"/>
+      <arg name="stride" type="int"/>
+      <arg name="format" type="int"/>
+    </event>
+  </interface>
+</protocol>
+

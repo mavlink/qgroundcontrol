@@ -1,0 +1,135 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "BusyIndicatorImpl"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "515"
+                    }
+                ],
+                "className": "QQuickFusionBusyIndicator",
+                "lineNumber": 25,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 28,
+                        "name": "color",
+                        "read": "color",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false,
+                        "write": "setColor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 29,
+                        "name": "running",
+                        "read": "isRunning",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setRunning"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFusionBusyIndicator",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickPaintedItem"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfusionbusyindicator_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "DialImpl"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "515"
+                    }
+                ],
+                "className": "QQuickFusionDial",
+                "lineNumber": 24,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 27,
+                        "name": "highlight",
+                        "read": "highlight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setHighlight"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFusionDial",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickPaintedItem"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfusiondial_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "KnobImpl"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "515"
+                    }
+                ],
+                "className": "QQuickFusionKnob",
+                "lineNumber": 24,
+                "object": true,
+                "qualifiedClassName": "QQuickFusionKnob",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickPaintedItem"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfusionknob_p.h",
+        "outputRevision": 69
+    }
+]

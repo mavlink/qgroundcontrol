@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-primary-selection-protocol",
+        "Name": "Wayland Primary Selection Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin",
+        "Files": "wp-primary-selection-unstable-v1.xml",
+
+        "Description": "The primary selection extension allows copying text by selecting it and pasting it with the middle mouse button.",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "1",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/unstable/primary-selection/primary-selection-unstable-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2015, 2016 Red Hat"
+    }
+]

@@ -1,0 +1,115 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QSvgWidget",
+                "lineNumber": 18,
+                "object": true,
+                "qualifiedClassName": "QSvgWidget",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "file",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 33,
+                        "name": "load",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "contents",
+                                "type": "QByteArray"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 34,
+                        "name": "load",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QWidget"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsvgwidget.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QGraphicsSvgItem",
+                "interfaces": [
+                    [
+                        {
+                            "className": "QGraphicsItem",
+                            "id": "\"org.qt-project.Qt.QGraphicsItem\""
+                        }
+                    ]
+                ],
+                "lineNumber": 18,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 22,
+                        "name": "elementId",
+                        "read": "elementId",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setElementId"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 23,
+                        "name": "maximumCacheSize",
+                        "read": "maximumCacheSize",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSize",
+                        "user": false,
+                        "write": "setMaximumCacheSize"
+                    }
+                ],
+                "qualifiedClassName": "QGraphicsSvgItem",
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 0,
+                        "lineNumber": 54,
+                        "name": "_q_repaintItem",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QGraphicsObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qgraphicssvgitem.h",
+        "outputRevision": 69
+    }
+]

@@ -1,0 +1,59 @@
+# Macros for laying out a three-column grid structure of
+# items in online documentation. Takes three arguments,
+# wrapped in braces:
+#   a link, a title, and a description.
+
+# Usage:
+#   \grid
+#       \griditem {qtqml-index.html} {Qt Qml} {Classes for QML and JavaScript languages.}
+#       \griditem {qtquick-index.html} {Qt Quick} {
+#           Declarative framework for dynamic apps with custom UIs.
+#       }
+#       \griditem {qtquickcontrols-index.html} {Qt Quick Controls} {
+#           Lightweight QML types for creating performant user
+#           interfaces.
+#       }
+#   \endgrid
+
+# Note: For offline documentation, these macros
+# generate a \table structure instead.
+
+
+macro.grid = \
+"\\if defined(onlinedocs)\n" \
+"  \\raw HTML\n" \
+"  <div class=\"grid\">\n" \
+"  <ul class=\"l-tile\" data-column=\"3\">\n" \
+"  \\endraw\n" \
+"\\else\n" \
+"  \\table\n" \
+"\\endif\n"
+
+macro.griditem = \
+"\\detailedgriditem {\1} {\2} {\3} {#} {}"
+
+macro.detailedgriditem = \
+"\\if defined(onlinedocs)\n" \
+"  \\raw HTML\n" \
+"  <li class=\"l-tile__item\">\n" \
+"    <div class=\"c-feature c-feature--external-link\" data-scheme=\"\">\n" \
+"      <h3>\2</h3>\n" \
+"      <p>\3</p>\n" \
+"      <a class=\"c-feature__overlay-link\" href=\"\1\"></a>\n" \
+"      <a data-tag=\"\5\" href=\"\4\"></a>\n" \
+"    </div>\n" \
+"  </li>\n" \
+"  \\endraw\n" \
+"\\else\n" \
+"  \\row \\li \\l {\1}{\2} \\li \3\n" \
+"\\endif\n"
+
+macro.endgrid = \
+"\\if defined(onlinedocs)\n" \
+"  \\raw HTML\n" \
+"  </ul></div>\n" \
+"  \\endraw\n" \
+"\\else\n" \
+"  \\endtable\n" \
+"\\endif\n"
+

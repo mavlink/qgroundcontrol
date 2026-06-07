@@ -1,0 +1,16 @@
+{
+    "Id": "appmenu",
+    "Name": "Wayland KDE DBus Menu Protocol",
+    "QDocModule": "qtwaylandcompositor",
+    "QtUsage": "Used in the Qt Wayland platform plugin",
+    "Files": "appmenu.xml",
+
+    "Description": "Attach a dbus menu to a window",
+    "Homepage": "https://kde.org",
+    "Version": "1",
+    "DownloadLocation": "https://invent.kde.org/libraries/plasma-wayland-protocols/-/blob/v1.14.0/src/protocols/appmenu.xml",
+    "LicenseId": "LGPL-2.1-or-later",
+    "License": "GNU Lesser General Public License 2.1 or later",
+    "LicenseFile": "LGPL-2.1-or-later.txt",
+    "Copyright": "Copyright 2017 David Edmundson"
+}

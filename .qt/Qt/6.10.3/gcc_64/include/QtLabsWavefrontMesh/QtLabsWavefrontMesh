@@ -1,0 +1,5 @@
+#ifndef QT_QTLABSWAVEFRONTMESH_MODULE_H
+#define QT_QTLABSWAVEFRONTMESH_MODULE_H
+#include <QtLabsWavefrontMesh/QtLabsWavefrontMeshDepends>
+#include "qtlabswavefrontmeshversion.h"
+#endif

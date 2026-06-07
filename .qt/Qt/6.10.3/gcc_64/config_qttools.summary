@@ -1,0 +1,26 @@
+
+Qt Tools:
+  Qt Assistant ........................... yes
+  libclang found ......................... yes
+  Qt Widgets Designer .................... yes
+  Qt Distance Field Generator ............ yes
+  Qt Linguist ............................ yes
+  pixeltool .............................. yes
+  qdbus .................................. yes
+  QDoc ................................... yes
+  Qt Attributions Scanner ................ yes
+  qtdiag ................................. yes
+  qtplugininfo ........................... yes
+SBOM:
+  Generate SBOM .......................... yes
+  Generate SPDX v2.3 ..................... yes
+  Generate SPDX v2.3 JSON ................ yes (skipped if dependencies are missing)
+  Verify   SPDX v2.3 JSON ................ yes (skipped if dependencies are missing)
+  Generate CyloneDX v1.6 ................. yes
+  Verify   CyloneDX v1.6 ................. yes (skipped if dependencies are missing)
+  SBOM Python interpreter ................ /usr/local/bin/python3 (version 3.9.18)
+  sbom2doc path .......................... /usr/local/bin/sbom2doc
+  sbomaudit path ......................... /usr/local/bin/sbomaudit
+  Generate source SPDX SBOM .............. yes
+  Verify   source SPDX SBOM .............. yes
+  reuse path ............................. /usr/local/bin/reuse

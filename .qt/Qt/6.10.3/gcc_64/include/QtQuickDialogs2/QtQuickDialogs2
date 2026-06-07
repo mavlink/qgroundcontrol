@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKDIALOGS2_MODULE_H
+#define QT_QTQUICKDIALOGS2_MODULE_H
+#include <QtQuickDialogs2/QtQuickDialogs2Depends>
+#include "qtquickdialogs2version.h"
+#endif

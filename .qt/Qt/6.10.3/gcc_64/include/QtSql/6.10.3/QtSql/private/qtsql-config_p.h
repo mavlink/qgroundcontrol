@@ -1,0 +1,5 @@
+#ifndef QT_FEATURES_Sql_src_sql_qtsql_config_p_h_H
+#define QT_FEATURES_Sql_src_sql_qtsql_config_p_h_H
+
+
+#endif // QT_FEATURES_Sql_src_sql_qtsql_config_p_h_H

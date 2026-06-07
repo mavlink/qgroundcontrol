@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="brcm">
+  <!-- eglCreateGlobalImageBRCM support. This object is created by
+       the server and published using the display's global event. -->
+    <copyright>
+ Copyright (C) 2015 The Qt Company Ltd.
+ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+    </copyright>
+  <interface name="qt_brcm" version="1">
+
+    <!-- Create a wayland buffer wrapping a global image. -->
+    <request name="create_buffer">
+      <arg name="id" type="new_id" interface="wl_buffer"/>
+      <arg name="width" type="int"/>
+      <arg name="height" type="int"/>
+      <arg name="data" type="array"/>
+    </request>
+  </interface>
+
+</protocol>
+

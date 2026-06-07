@@ -1,0 +1,18 @@
+    \section1 Squish GUI testing
+
+    This application comes with \l {https://doc.qt.io/squish/index.html}
+    {Squish GUI tests} targeted for \Q4A. The tests are made with
+    \l {https://doc.qt.io/squish/installing-squish-for-qt.html#ins-squish-for-qt}
+    {Squish for Qt} and are written in Python and can be found under the
+    application test directory.
+
+    When using Squish for \Q4A, make sure to use the
+    \l {https://doc.qt.io/squish/squish-s-c-api.html#using-the-qt-built-in-hook}{Qt built-in hook}
+    and \l {https://doc.qt.io/squish/installing-squish-for-qt-for-android-testing.html}{forward Squish port}
+    with adb.
+    If you are getting the error "Cannot load library" with \c dlopen failing, disable
+    \c QT_USE_TARGET_ANDROID_BUILD_DIR from CMake configuration, or clear it from
+    \uicontrol {Projects->Build Settings->CMake->Current Configuration} in \QC.
+
+    If you don't have a Squish license, you can get a
+    \l{https://www.qt.io/quality-assurance/squish-free-trial}{free trial}.

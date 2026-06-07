@@ -1,0 +1,60 @@
+// Copyright (C) 2025 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+    \title <Application Example Name>
+    \ingroup <Group Name>
+    \example <path/to/example/dir>
+    \brief <Description of the example's objective in one sentence.>
+    \meta <{tag}{Appropriate tag to display in Qt Creator}>
+    \examplecategory {Application Examples}
+    \image {<examplename-screenshot>}{<alt text>}
+
+    <Explain the objective of the example:
+    Explain which Qt technologies are used,
+    Explain what Qt features are shown.>
+
+    <Optional - Use this section for more complicated examples.>
+    \image {<examplename-workflow-diagram>}{<alt text>}
+
+    \include examples-run.qdocinc
+    <Describe the expected application behavior after running the example.>
+
+    \section1 Platform notes
+    <Optional - Mention limitations of target platforms, if any.>
+
+    \section1 UI walkthrough
+    <Optional - Use this section for more complicated examples.>
+
+    <Describe how to navigate and access different parts of the example/UI.>
+
+    \setion1 Relevant modules and classes
+    <Optional - Use this section for more complicated examples.>
+
+    This example introduces the following Qt <modules/classes>:
+    <Link the relevant modules/classes>
+
+    \section2 Class Hierarchy
+    <Optional - Use this section for more complicated examples.>
+
+    \image {<examplename-class-hierarchy>}{<alt text>}
+
+    \section1 <Feature A>
+    <Explain the implementation of Feature A in the code.
+    Add the relevant code snippet.>
+
+    \section1 <Feature B>
+    <Explain the implementation of Feature B in the code.
+    Add the relevant code snippet.>
+
+    \section1 Best practices
+    <Optional>
+
+    <Include best practices related to the example if applicable.>
+
+    <Optional - use this section if the example was tested with Squish>
+    \include squish-tested-example.qdocinc
+
+    \section1 Source files
+
+    \sa {All Qt Examples}, <Link to other relevant docs.>

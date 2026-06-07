@@ -1,0 +1,9 @@
+#ifndef QT_QTQMLCOMPILER_MODULE_H
+#define QT_QTQMLCOMPILER_MODULE_H
+#include <QtQmlCompiler/QtQmlCompilerDepends>
+#include "qqmljsloggingutils.h"
+#include "qqmlsa.h"
+#include "qqmlsaconstants.h"
+#include "qqmlsasourcelocation.h"
+#include "qtqmlcompilerversion.h"
+#endif

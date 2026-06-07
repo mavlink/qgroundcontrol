@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKCONTROLS2UNIVERSALSTYLEIMPL_MODULE_H
+#define QT_QTQUICKCONTROLS2UNIVERSALSTYLEIMPL_MODULE_H
+#include <QtQuickControls2UniversalStyleImpl/QtQuickControls2UniversalStyleImplDepends>
+#include "qtquickcontrols2universalstyleimplversion.h"
+#endif

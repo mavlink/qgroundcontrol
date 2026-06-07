@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-tablet-protocol",
+        "Name": "Wayland Tablet Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin",
+        "Files": "tablet-unstable-v2.xml",
+
+        "Description": "",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "unstable v2, version 1",
+        "DownloadLocation": "https://cgit.freedesktop.org/wayland/wayland-protocols/plain/unstable/tablet/tablet-unstable-v2.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright 2014 © Stephen \"Lyude\" Chandler Paul\nCopyright 2015-2016 © Red Hat, Inc."
+    }
+]

@@ -1,0 +1,862 @@
+[
+    {
+        "classes": [
+            {
+                "className": "FormatTextStatus",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 39,
+                        "name": "StateType",
+                        "type": "quint8",
+                        "values": [
+                            "Invalid",
+                            "TopmostIntro",
+                            "TopQml",
+                            "TopJs",
+                            "ObjectdefinitionOrJs",
+                            "MultilineCommentStart",
+                            "MultilineCommentCont",
+                            "ImportStart",
+                            "ImportMaybeDotOrVersionOrAs",
+                            "ImportDot",
+                            "ImportMaybeAs",
+                            "ImportAs",
+                            "PropertyStart",
+                            "PropertyModifiers",
+                            "RequiredProperty",
+                            "PropertyListOpen",
+                            "PropertyName",
+                            "PropertyMaybeInitializer",
+                            "ComponentStart",
+                            "ComponentName",
+                            "TypeAnnotation",
+                            "TypeParameter",
+                            "EnumStart",
+                            "SignalStart",
+                            "SignalMaybeArglist",
+                            "SignalArglistOpen",
+                            "FunctionStart",
+                            "FunctionArglistOpen",
+                            "FunctionArglistClosed",
+                            "BindingOrObjectdefinition",
+                            "BindingAssignment",
+                            "ObjectdefinitionOpen",
+                            "Expression",
+                            "ExpressionContinuation",
+                            "ExpressionMaybeContinuation",
+                            "ExpressionOrObjectdefinition",
+                            "ExpressionOrLabel",
+                            "ParenOpen",
+                            "BracketOpen",
+                            "ObjectliteralOpen",
+                            "ObjectliteralAssignment",
+                            "BracketElementStart",
+                            "BracketElementMaybeObjectdefinition",
+                            "TernaryOp",
+                            "TernaryOpAfterColon",
+                            "JsblockOpen",
+                            "EmptyStatement",
+                            "BreakcontinueStatement",
+                            "IfStatement",
+                            "MaybeElse",
+                            "ElseClause",
+                            "ConditionOpen",
+                            "Substatement",
+                            "SubstatementOpen",
+                            "LabelledStatement",
+                            "ReturnStatement",
+                            "ThrowStatement",
+                            "StatementWithCondition",
+                            "StatementWithConditionParenOpen",
+                            "TryStatement",
+                            "CatchStatement",
+                            "FinallyStatement",
+                            "MaybeCatchOrFinally",
+                            "DoStatement",
+                            "DoStatementWhileParenOpen",
+                            "SwitchStatement",
+                            "CaseStart",
+                            "CaseCont"
+                        ]
+                    }
+                ],
+                "gadget": true,
+                "lineNumber": 35,
+                "qualifiedClassName": "QQmlJS::Dom::FormatTextStatus"
+            },
+            {
+                "className": "FormatPartialStatus",
+                "gadget": true,
+                "lineNumber": 204,
+                "qualifiedClassName": "QQmlJS::Dom::FormatPartialStatus"
+            }
+        ],
+        "inputFile": "qqmldomcodeformatter_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "IndentingLineWriter",
+                "gadget": true,
+                "lineNumber": 30,
+                "qualifiedClassName": "QQmlJS::Dom::IndentingLineWriter",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "fullyQualifiedName": "QQmlJS::Dom::LineWriter",
+                        "name": "LineWriter"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qqmldomindentinglinewriter_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Token",
+                "gadget": true,
+                "lineNumber": 31,
+                "qualifiedClassName": "QQmlJS::Dom::Token"
+            }
+        ],
+        "inputFile": "qqmldomscanner_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Dom",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 32,
+                        "name": "PathRoot",
+                        "values": [
+                            "Other",
+                            "Modules",
+                            "Cpp",
+                            "Libs",
+                            "Top",
+                            "Env",
+                            "Universe"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 43,
+                        "name": "PathCurrent",
+                        "values": [
+                            "Other",
+                            "Obj",
+                            "ObjChain",
+                            "ScopeChain",
+                            "Component",
+                            "Module",
+                            "Ids",
+                            "Types",
+                            "LookupStrict",
+                            "LookupDynamic",
+                            "Lookup"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 58,
+                        "name": "Language",
+                        "values": [
+                            "QmlQuick1",
+                            "QmlQuick2",
+                            "QmlQuick3",
+                            "QmlCompiled",
+                            "QmlAnnotation",
+                            "Qbs"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 61,
+                        "name": "ResolveOption",
+                        "values": [
+                            "None",
+                            "TraceVisit"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 69,
+                        "name": "VisitOption",
+                        "values": [
+                            "None",
+                            "VisitSelf",
+                            "VisitAdopted",
+                            "Recurse",
+                            "NoPath",
+                            "Default"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 81,
+                        "name": "LookupOption",
+                        "values": [
+                            "Normal",
+                            "Strict",
+                            "VisitTopClassType",
+                            "SkipFirstScope"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 92,
+                        "name": "LookupType",
+                        "values": [
+                            "PropertyDef",
+                            "Binding",
+                            "Property",
+                            "Method",
+                            "Type",
+                            "CppType",
+                            "Symbol"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 95,
+                        "name": "VisitPrototypesOption",
+                        "values": [
+                            "Normal",
+                            "SkipFirst",
+                            "RevisitWarn",
+                            "ManualProceedToScope"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 105,
+                        "name": "DomKind",
+                        "values": [
+                            "Empty",
+                            "Object",
+                            "List",
+                            "Map",
+                            "Value",
+                            "ScriptElement"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 108,
+                        "name": "DomType",
+                        "values": [
+                            "Empty",
+                            "ExternalItemInfo",
+                            "ExternalItemPair",
+                            "QmlDirectory",
+                            "QmldirFile",
+                            "JsFile",
+                            "QmlFile",
+                            "QmltypesFile",
+                            "GlobalScope",
+                            "EnumItem",
+                            "EnumDecl",
+                            "JsResource",
+                            "QmltypesComponent",
+                            "QmlComponent",
+                            "GlobalComponent",
+                            "ModuleAutoExport",
+                            "ModuleIndex",
+                            "ModuleScope",
+                            "ImportScope",
+                            "Export",
+                            "Import",
+                            "Pragma",
+                            "Id",
+                            "QmlObject",
+                            "ConstantData",
+                            "SimpleObjectWrap",
+                            "ScriptExpression",
+                            "Reference",
+                            "PropertyDefinition",
+                            "Binding",
+                            "MethodParameter",
+                            "MethodInfo",
+                            "Version",
+                            "Comment",
+                            "CommentedElement",
+                            "RegionComments",
+                            "AstComments",
+                            "FileLocationsInfo",
+                            "PropertyInfo",
+                            "MockObject",
+                            "MockOwner",
+                            "Map",
+                            "List",
+                            "ListP",
+                            "LoadInfo",
+                            "ErrorMessage",
+                            "FileLocationsNode",
+                            "DomEnvironment",
+                            "DomUniverse",
+                            "ScriptElementWrap",
+                            "ScriptElementStart",
+                            "ScriptBlockStatement",
+                            "ScriptIdentifierExpression",
+                            "ScriptLiteral",
+                            "ScriptRegExpLiteral",
+                            "ScriptForStatement",
+                            "ScriptIfStatement",
+                            "ScriptPostExpression",
+                            "ScriptUnaryExpression",
+                            "ScriptBinaryExpression",
+                            "ScriptVariableDeclaration",
+                            "ScriptVariableDeclarationEntry",
+                            "ScriptReturnStatement",
+                            "ScriptGenericElement",
+                            "ScriptCallExpression",
+                            "ScriptFormalParameter",
+                            "ScriptArray",
+                            "ScriptObject",
+                            "ScriptProperty",
+                            "ScriptType",
+                            "ScriptElision",
+                            "ScriptArrayEntry",
+                            "ScriptPattern",
+                            "ScriptSwitchStatement",
+                            "ScriptCaseBlock",
+                            "ScriptCaseClause",
+                            "ScriptDefaultClause",
+                            "ScriptWhileStatement",
+                            "ScriptDoWhileStatement",
+                            "ScriptForEachStatement",
+                            "ScriptTemplateExpressionPart",
+                            "ScriptTemplateLiteral",
+                            "ScriptTemplateStringPart",
+                            "ScriptTaggedTemplate",
+                            "ScriptTryCatchStatement",
+                            "ScriptThrowStatement",
+                            "ScriptLabelledStatement",
+                            "ScriptBreakStatement",
+                            "ScriptContinueStatement",
+                            "ScriptConditionalExpression",
+                            "ScriptEmptyStatement",
+                            "ScriptParenthesizedExpression",
+                            "ScriptFunctionExpression",
+                            "ScriptYieldExpression",
+                            "ScriptNewExpression",
+                            "ScriptNewMemberExpression",
+                            "ScriptThisExpression",
+                            "ScriptSuperLiteral",
+                            "ScriptElementStop"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 245,
+                        "name": "SimpleWrapOption",
+                        "values": [
+                            "None",
+                            "ValueType"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 250,
+                        "name": "BindingValueKind",
+                        "values": [
+                            "Object",
+                            "ScriptExpression",
+                            "Array",
+                            "Empty"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 253,
+                        "name": "BindingType",
+                        "values": [
+                            "Normal",
+                            "OnBinding"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 256,
+                        "name": "ListOptions",
+                        "values": [
+                            "Normal",
+                            "Reverse"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 262,
+                        "name": "EscapeOptions",
+                        "values": [
+                            "OuterQuotes",
+                            "NoOuterQuotes"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 268,
+                        "name": "ErrorLevel",
+                        "values": [
+                            "Debug",
+                            "Info",
+                            "Warning",
+                            "Error",
+                            "Fatal"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 277,
+                        "name": "AstDumperOption",
+                        "values": [
+                            "None",
+                            "NoLocations",
+                            "NoAnnotations",
+                            "DumpNode",
+                            "SloppyCompare"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 288,
+                        "name": "GoTo",
+                        "values": [
+                            "Strict",
+                            "MostLikely"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 294,
+                        "name": "AddOption",
+                        "values": [
+                            "KeepExisting",
+                            "Overwrite"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 305,
+                        "name": "FilterUpOptions",
+                        "values": [
+                            "ReturnOuter",
+                            "ReturnOuterNoSelf",
+                            "ReturnInner"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 308,
+                        "name": "WriteOutCheck",
+                        "values": [
+                            "None",
+                            "Reparse",
+                            "ReparseCompare",
+                            "ReparseStable",
+                            "Default"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 319,
+                        "name": "LocalSymbolsType",
+                        "values": [
+                            "None",
+                            "ObjectType",
+                            "ValueType",
+                            "Signal",
+                            "Method",
+                            "Attribute",
+                            "Id",
+                            "Namespace",
+                            "Global",
+                            "MethodParameter",
+                            "Singleton",
+                            "AttachedType"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 349,
+                        "name": "FileLocationRegion",
+                        "type": "int",
+                        "values": [
+                            "AsTokenRegion",
+                            "BreakKeywordRegion",
+                            "DoKeywordRegion",
+                            "CaseKeywordRegion",
+                            "CatchKeywordRegion",
+                            "ColonTokenRegion",
+                            "CommaTokenRegion",
+                            "ComponentKeywordRegion",
+                            "ContinueKeywordRegion",
+                            "DefaultKeywordRegion",
+                            "DollarLeftBraceTokenRegion",
+                            "EllipsisTokenRegion",
+                            "ElseKeywordRegion",
+                            "EnumKeywordRegion",
+                            "EnumValueRegion",
+                            "EqualTokenRegion",
+                            "ForKeywordRegion",
+                            "FinalKeywordRegion",
+                            "FinallyKeywordRegion",
+                            "FirstSemicolonTokenRegion",
+                            "FunctionKeywordRegion",
+                            "IdColonTokenRegion",
+                            "IdNameRegion",
+                            "IdTokenRegion",
+                            "IdentifierRegion",
+                            "IfKeywordRegion",
+                            "ImportTokenRegion",
+                            "ImportUriRegion",
+                            "InOfTokenRegion",
+                            "LeftBacktickTokenRegion",
+                            "LeftBraceRegion",
+                            "LeftBracketRegion",
+                            "LeftParenthesisRegion",
+                            "MainRegion",
+                            "NewKeywordRegion",
+                            "OperatorTokenRegion",
+                            "OnTargetRegion",
+                            "OnTokenRegion",
+                            "PragmaKeywordRegion",
+                            "PragmaValuesRegion",
+                            "PropertyKeywordRegion",
+                            "QuestionMarkTokenRegion",
+                            "ReadonlyKeywordRegion",
+                            "RequiredKeywordRegion",
+                            "ReturnKeywordRegion",
+                            "RightBacktickTokenRegion",
+                            "RightBraceRegion",
+                            "RightBracketRegion",
+                            "RightParenthesisRegion",
+                            "SecondSemicolonRegion",
+                            "SemicolonTokenRegion",
+                            "SignalKeywordRegion",
+                            "SuperKeywordRegion",
+                            "StarTokenRegion",
+                            "SwitchKeywordRegion",
+                            "ThisKeywordRegion",
+                            "ThrowKeywordRegion",
+                            "TryKeywordRegion",
+                            "TypeIdentifierRegion",
+                            "TypeModifierRegion",
+                            "VersionRegion",
+                            "WhileKeywordRegion",
+                            "YieldKeywordRegion"
+                        ]
+                    }
+                ],
+                "lineNumber": 28,
+                "namespace": true,
+                "qualifiedClassName": "QQmlJS::Dom"
+            }
+        ],
+        "inputFile": "qqmldomconstants_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "ScriptExpression",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 394,
+                        "name": "ExpressionType",
+                        "values": [
+                            "BindingExpression",
+                            "FunctionBody",
+                            "ArgInitializer",
+                            "ArgumentStructure",
+                            "ReturnType",
+                            "JSCode",
+                            "ESMCode"
+                        ]
+                    }
+                ],
+                "gadget": true,
+                "lineNumber": 389,
+                "qualifiedClassName": "QQmlJS::Dom::ScriptExpression",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "OwningItem"
+                    }
+                ]
+            },
+            {
+                "className": "MethodInfo",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 758,
+                        "name": "MethodType",
+                        "values": [
+                            "Signal",
+                            "Method"
+                        ]
+                    }
+                ],
+                "gadget": true,
+                "lineNumber": 754,
+                "qualifiedClassName": "QQmlJS::Dom::MethodInfo",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "AttributeInfo"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qqmldomelements_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "ErrorGroup",
+                "gadget": true,
+                "lineNumber": 46,
+                "qualifiedClassName": "QQmlJS::Dom::ErrorGroup"
+            },
+            {
+                "className": "ErrorGroups",
+                "gadget": true,
+                "lineNumber": 64,
+                "qualifiedClassName": "QQmlJS::Dom::ErrorGroups"
+            },
+            {
+                "className": "ErrorMessage",
+                "gadget": true,
+                "lineNumber": 102,
+                "qualifiedClassName": "QQmlJS::Dom::ErrorMessage"
+            }
+        ],
+        "inputFile": "qqmldomerrormessage_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "FieldFilter",
+                "gadget": true,
+                "lineNumber": 32,
+                "qualifiedClassName": "QQmlJS::Dom::FieldFilter"
+            }
+        ],
+        "inputFile": "qqmldomfieldfilter_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "FileWriter",
+                "gadget": true,
+                "lineNumber": 30,
+                "qualifiedClassName": "QQmlJS::Dom::FileWriter"
+            }
+        ],
+        "inputFile": "qqmldomfilewriter_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Reference",
+                "gadget": true,
+                "lineNumber": 645,
+                "qualifiedClassName": "QQmlJS::Dom::Reference",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "DomElement"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qqmldomitem_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "LineWriterOptions",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 78,
+                        "name": "LineEndings",
+                        "values": [
+                            "Unix",
+                            "Windows",
+                            "OldMacOs"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 80,
+                        "name": "TrailingSpace",
+                        "values": [
+                            "Preserve",
+                            "Remove"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 82,
+                        "name": "AttributesSequence",
+                        "values": [
+                            "Normalize",
+                            "Preserve"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 86,
+                        "name": "SemicolonRule",
+                        "values": [
+                            "Always",
+                            "Essential"
+                        ]
+                    }
+                ],
+                "gadget": true,
+                "lineNumber": 74,
+                "qualifiedClassName": "QQmlJS::Dom::LineWriterOptions"
+            },
+            {
+                "className": "LineWriter",
+                "gadget": true,
+                "lineNumber": 109,
+                "qualifiedClassName": "QQmlJS::Dom::LineWriter"
+            }
+        ],
+        "inputFile": "qqmldomlinewriter_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "Path",
+                "gadget": true,
+                "lineNumber": 593,
+                "qualifiedClassName": "QQmlJS::Dom::Path"
+            }
+        ],
+        "inputFile": "qqmldompath_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "DomUniverse",
+                "gadget": true,
+                "lineNumber": 174,
+                "qualifiedClassName": "QQmlJS::Dom::DomUniverse",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "DomTop"
+                    },
+                    {
+                        "access": "public",
+                        "name": "std::enable_shared_from_this<DomUniverse>"
+                    }
+                ]
+            },
+            {
+                "className": "RefCacheEntry",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 706,
+                        "name": "Cached",
+                        "values": [
+                            "None",
+                            "First",
+                            "All"
+                        ]
+                    }
+                ],
+                "gadget": true,
+                "lineNumber": 702,
+                "qualifiedClassName": "QQmlJS::Dom::RefCacheEntry"
+            },
+            {
+                "className": "DomEnvironment",
+                "enums": [
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 742,
+                        "name": "Option",
+                        "values": [
+                            "Default",
+                            "KeepValid",
+                            "Exported",
+                            "NoReload",
+                            "WeakLoad",
+                            "SingleThreaded",
+                            "NoDependencies"
+                        ]
+                    }
+                ],
+                "gadget": true,
+                "lineNumber": 717,
+                "qualifiedClassName": "QQmlJS::Dom::DomEnvironment",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "DomTop"
+                    },
+                    {
+                        "access": "public",
+                        "name": "std::enable_shared_from_this<DomEnvironment>"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qqmldomtop_p.h",
+        "outputRevision": 69
+    }
+]

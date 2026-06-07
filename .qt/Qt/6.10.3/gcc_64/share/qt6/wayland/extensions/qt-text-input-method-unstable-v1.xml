@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<protocol name="qt_text_input_method_unstable_v1">
+  <copyright>
+    Copyright © 2020 The Qt Company Ltd.
+
+    Permission to use, copy, modify, distribute, and sell this
+    software and its documentation for any purpose is hereby granted
+    without fee, provided that the above copyright notice appear in
+    all copies and that both that copyright notice and this permission
+    notice appear in supporting documentation, and that the name of
+    the copyright holders not be used in advertising or publicity
+    pertaining to distribution of the software without specific,
+    written prior permission.  The copyright holders make no
+    representations about the suitability of this software for any
+    purpose.  It is provided "as is" without express or implied
+    warranty.
+
+    THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+    SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+    FITNESS, IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+    AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+    ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+    THIS SOFTWARE.
+  </copyright>
+
+  <interface name="qt_text_input_method_v1" version="1">
+    <description summary="text input">
+      The qt_text_input_method interface represents input method events
+      associated with a seat, and is intended to exactly match the
+      internal events of the Qt framework.
+    </description>
+
+    <request name="destroy" type="destructor">
+      <description summary="Destroy the qt_text_input_method">
+        Destroy the qt_text_input_method object.
+      </description>
+    </request>
+
+    <request name="enable">
+      <description summary="enable input methods for surface">
+        Enable text input in a surface (usually when a text entry inside of it
+        has focus).
+
+        This can be called before or after a surface gets text (or keyboard)
+        focus via the enter event. Text input to a surface is only active
+        when it has the current text (or keyboard) focus and is enabled.
+      </description>
+      <arg name="surface" type="object" interface="wl_surface"/>
+    </request>
+
+    <request name="disable">
+      <description summary="disable input methods for surface">
+        Disable text input in a surface (typically when there is no focus on any
+        text entry inside the surface).
+      </description>
+      <arg name="surface" type="object" interface="wl_surface"/>
+    </request>
+
+    <event name="enter">
+      <description summary="enter event">
+        Notification that this seat's text-input focus is on a certain surface.
+
+        When the seat has the keyboard capability the text-input focus follows
+        the keyboard focus.
+      </description>
+      <arg name="surface" type="object" interface="wl_surface"/>
+    </event>
+
+    <event name="leave">
+      <description summary="leave event">
+        Notification that this seat's text-input focus is no longer on
+        a certain surface.
+
+        The leave notification is sent before the enter notification
+        for the new focus.
+
+        When the seat has the keyboard capability the text-input focus follows
+        the keyboard focus.
+      </description>
+      <arg name="surface" type="object" interface="wl_surface"/>
+    </event>
+
+    <event name="key">
+      <description summary="key event">
+        A QKeyEvent has been sent from the input method.
+      </description>
+      <arg name="type" type="int" />
+      <arg name="key" type="int" />
+      <arg name="modifiers" type="int" />
+      <arg name="auto_repeat" type="int" />
+      <arg name="count" type="int" />
+      <arg name="native_scan_code" type="int" />
+      <arg name="native_virtual_key" type="int" />
+      <arg name="native_modifiers" type="int" />
+      <arg name="text" type="string" />
+    </event>
+
+    <event name="start_input_method_event">
+      <description summary="input method event">
+        Starts an input method event. This can be followed by
+        any number of input_method_event_attribute events
+        and will always be finished by an end_input_method_event.
+      </description>
+      <arg name="serial" type="uint" />
+      <arg name="surrounding_text_offset" type="int" />
+    </event>
+
+    <event name="input_method_event_attribute">
+      <description summary="input method event attribute">
+        Appends an attribute to the input method event with
+        the given serial. Must be preceded by a start_input_method_event
+        and concluded by a an end_input_method_event. See documentation
+        of QInputMethodEvent for details on the attributes.
+      </description>
+      <arg name="serial" type="uint" />
+      <arg name="type" type="int" />
+      <arg name="start" type="int" />
+      <arg name="length" type="int" />
+      <arg name="value" type="string" />
+    </event>
+
+    <event name="end_input_method_event">
+        <description summary="input method event end">
+          Concludes a previously started input method event. Together with
+          the preceding input_method_event_attribute events with the same
+          serial, this should be converted into a QInputMethodEvent.
+        </description>
+        <arg name="serial" type="uint" />
+        <arg name="commit_string" type="string" />
+        <arg name="preedit_string" type="string" />
+        <arg name="replacement_start" type="int" />
+        <arg name="replacement_length" type="int" />
+    </event>
+
+    <event name="visible_changed">
+      <description summary="visible changed">
+        Event to notify client that the visibility of the input method has
+        been changed.
+      </description>
+      <arg name="visible" type="int" />
+    </event>
+
+    <event name="keyboard_rectangle_changed">
+      <description summary="keyboard rectangle changed">
+        Event to notify client that the keyboard rectangle of the input method
+        has been changed.
+      </description>
+      <arg name="x" type="fixed" />
+      <arg name="y" type="fixed" />
+      <arg name="width" type="fixed" />
+      <arg name="height" type="fixed" />
+    </event>
+
+    <event name="locale_changed">
+      <description summary="keyboard rectangle changed">
+        Event to notify client that the locale of the input method
+        has been changed.
+      </description>
+      <arg name="locale_name" type="string" />
+    </event>
+
+    <event name="input_direction_changed">
+      <description summary="input direction changed">
+        Event to notify client that the input direction of the input method
+        has been changed.
+      </description>
+      <arg name="input_direction" type="int" />
+    </event>
+
+    <request name="reset">
+      <description summary="reset">
+        Request for the input method to reset. Corresponds to QInputMethod::reset().
+      </description>
+    </request>
+
+    <request name="commit">
+      <description summary="commit">
+        Request for the input method to commit its current content. Corresponds to QInputMethod::commit().
+      </description>
+    </request>
+
+    <request name="invoke_action">
+      <description summary="invoke action">
+        Passes a mouse click or context menu request from the client to the server. Corresponds to QInputMethod::invokeAction().
+      </description>
+      <arg name="type" type="int" />
+      <arg name="cursor_position" type="int" />
+    </request>
+
+    <request name="update_hints">
+      <description summary="update hints">
+        Notifies the server of the client's current input method hints.
+      </description>
+      <arg name="hints" type="int" />
+    </request>
+
+    <request name="update_cursor_rectangle">
+      <description summary="update cursor rectangle">
+        Notifies the server of the client's current cursor rectangle.
+      </description>
+      <arg name="x" type="int" />
+      <arg name="y" type="int" />
+      <arg name="width" type="int" />
+      <arg name="height" type="int" />
+    </request>
+
+    <request name="update_cursor_position">
+      <description summary="update cursor position">
+        Notifies the server of the client's current cursor position.
+      </description>
+      <arg name="cursor_position" type="int" />
+    </request>
+
+    <request name="update_surrounding_text">
+      <description summary="update surrounding text">
+        Notifies the server of the client's current surrounding text and its offset in the
+        complete text.
+      </description>
+      <arg name="surrounding_text" type="string" />
+      <arg name="text_offset" type="int" />
+    </request>
+
+    <request name="update_anchor_position">
+      <description summary="update anchor position">
+        Notifies the server of the client's current anchor position.
+      </description>
+      <arg name="anchor_position" type="int" />
+    </request>
+
+    <request name="update_absolute_position">
+      <description summary="update absolute position">
+        Notifies the server of the client's current absolute cursor position.
+      </description>
+      <arg name="absolute_position" type="int" />
+    </request>
+
+    <request name="update_preferred_language">
+      <description summary="update preferred language">
+        Notifies the server of the client's current preferred language.
+      </description>
+      <arg name="preferred_language" type="string" />
+    </request>
+
+    <request name="start_update">
+      <description summary="start update">
+        Starts an update sequence to notify the server that the client's state has
+        changed. This is followed by any number of update requests for specific
+        parts of the state and concluded by an end_update request.
+      </description>
+      <arg name="queries" type="int" />
+    </request>
+
+    <request name="end_update">
+      <description summary="end update">
+        Concludes the previously started update request.
+      </description>
+    </request>
+
+    <request name="show_input_panel">
+      <description summary="show input panel">
+        Requests that the input panel of the input method is visible.
+      </description>
+    </request>
+
+    <request name="hide_input_panel">
+      <description summary="hide input panel">
+        Requests that the input panel of the input method is not visible.
+      </description>
+    </request>
+
+    <request name="acknowledge_input_method">
+      <description summary="acknowledge input method">
+        Sent on receipt of an end_input_method_event to acknowledge that
+        the client has received and handled the event.
+      </description>
+    </request>
+  </interface>
+
+  <interface name="qt_text_input_method_manager_v1" version="1">
+    <description summary="qt text input method manager">
+      Manages qt_text_input_method objects.
+    </description>
+
+    <request name="destroy" type="destructor">
+      <description summary="Destroy the qt_text_input_method_manager">
+        Destroy the qt_text_input_method_manager object.
+      </description>
+    </request>
+
+    <request name="get_text_input_method">
+      <description summary="create a new text input method object">
+        Creates a new text-input-method object for a given seat.
+      </description>
+      <arg name="id" type="new_id" interface="qt_text_input_method_v1" />
+      <arg name="seat" type="object" interface="wl_seat" />
+    </request>
+  </interface>
+</protocol>

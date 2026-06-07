@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "xdg-foreign-unstable-v2",
+        "Name": "Wayland XDG Foreign Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin",
+        "Files": "xdg-foreign-unstable-v2.xml",
+
+        "Description": "Allows referencing surfaces of different clients",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "1",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/-/raw/1.25/unstable/xdg-foreign/xdg-foreign-unstable-v2.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2015-2016 Red Hat Inc."
+     }
+]

@@ -1,0 +1,2641 @@
+{
+  "components": [
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-app-assistant-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "assistant",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_APP"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=assistant#src/assistant/assistant"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-assistant@e1d3bd1?library_name=assistant&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/assistant/assistant",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-app-designer-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "designer",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_APP"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=designer#src/designer/src/designer"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-designer@e1d3bd1?library_name=designer&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/designer/src/designer",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-tool-lconvert-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "lconvert",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TOOL"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=lconvert#src/linguist/lconvert"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-lconvert@e1d3bd1?library_name=lconvert&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/linguist/lconvert",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-app-linguist-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "linguist",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_APP"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=linguist#src/linguist/linguist"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-linguist@e1d3bd1?library_name=linguist&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/linguist/linguist",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-tool-lprodump-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "lprodump",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TOOL"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=lprodump#src/linguist/lprodump"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-lprodump@e1d3bd1?library_name=lprodump&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/linguist/lprodump",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-tool-lrelease-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "lrelease",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TOOL"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=lrelease#src/linguist/lrelease"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-lrelease@e1d3bd1?library_name=lrelease&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/linguist/lrelease",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-tool-lrelease-pro-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "lrelease-pro",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TOOL"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=lrelease-pro#src/linguist/lrelease-pro"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-lrelease-pro@e1d3bd1?library_name=lrelease-pro&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/linguist/lrelease-pro",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-tool-lupdate-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "lupdate",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TOOL"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=lupdate#src/linguist/lupdate"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-lupdate@e1d3bd1?library_name=lupdate&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/linguist/lupdate",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-tool-lupdate-pro-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "lupdate-pro",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TOOL"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=lupdate-pro#src/linguist/lupdate-pro"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-lupdate-pro@e1d3bd1?library_name=lupdate-pro&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/linguist/lupdate-pro",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-app-pixeltool-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "pixeltool",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_APP"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=pixeltool#src/pixeltool"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-pixeltool@e1d3bd1?library_name=pixeltool&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/pixeltool",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-app-qdbus-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "qdbus",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_APP"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=qdbus#src/qdbus/qdbus"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-qdbus@e1d3bd1?library_name=qdbus&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qdbus/qdbus",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-app-qdbusviewer-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "qdbusviewer",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_APP"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=qdbusviewer#src/qdbus/qdbusviewer"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-qdbusviewer@e1d3bd1?library_name=qdbusviewer&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qdbus/qdbusviewer",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-app-qdistancefieldgenerator-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "qdistancefieldgenerator",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_APP"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=qdistancefieldgenerator#src/distancefieldgenerator"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-qdistancefieldgenerator@e1d3bd1?library_name=qdistancefieldgenerator&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/distancefieldgenerator",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-tool-qdoc-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "qdoc",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TOOL"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=qdoc#src/qdoc/qdoc"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-qdoc@e1d3bd1?library_name=qdoc&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qdoc/qdoc",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-tool-qhelpgenerator-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "qhelpgenerator",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TOOL"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=qhelpgenerator#src/assistant/qhelpgenerator"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-qhelpgenerator@e1d3bd1?library_name=qhelpgenerator&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/assistant/qhelpgenerator",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-tool-qtattributionsscanner-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "qtattributionsscanner",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TOOL"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=qtattributionsscanner#src/qtattributionsscanner"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-qtattributionsscanner@e1d3bd1?library_name=qtattributionsscanner&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qtattributionsscanner",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-app-qtdiag-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "qtdiag",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_APP"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=qtdiag#src/qtdiag"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-qtdiag@e1d3bd1?library_name=qtdiag&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qtdiag",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-app-qtplugininfo-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "Qt-GPL-exception-1.0"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "qtplugininfo",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_APP"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=qtplugininfo#src/qtplugininfo"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-qtplugininfo@e1d3bd1?library_name=qtplugininfo&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qtplugininfo",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "application",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-build-tool-CMake-c0fc44f619aa",
+      "name": "CMake",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "3.30.5"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-build-tool-CMake-generator-Ninja-c0fc44f619aa",
+      "name": "CMake generator Ninja",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "1.12.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-build-tool-Compiler-GNU-c0fc44f619aa",
+      "name": "Compiler GNU",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "11.4.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e"
+        }
+      ],
+      "name": "Core",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e"
+        }
+      ],
+      "name": "DBus",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-module-Designer-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "Designer",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=Designer#src/designer/src/lib"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-Designer@e1d3bd1?library_name=Designer&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/designer/src/lib",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-module-DesignerComponentsPrivate-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "DesignerComponentsPrivate",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=DesignerComponentsPrivate#src/designer/src/components/lib"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-DesignerComponentsPrivate@e1d3bd1?library_name=DesignerComponentsPrivate&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/designer/src/components/lib",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e"
+        }
+      ],
+      "name": "Gui",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-module-Help-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "Help",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=Help#src/assistant/help"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-Help@e1d3bd1?library_name=Help&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/assistant/help",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-module-Linguist-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "Linguist",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=Linguist#src/linguist"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-Linguist@e1d3bd1?library_name=Linguist&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/linguist",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-build-tool-Linker-GNU-c0fc44f619aa",
+      "name": "Linker GNU",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "2.35.2"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Network-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Network-18caa008d90e"
+        }
+      ],
+      "name": "Network",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e"
+        }
+      ],
+      "name": "OpenGL",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-OpenGLWidgets-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-OpenGLWidgets-18caa008d90e"
+        }
+      ],
+      "name": "OpenGLWidgets",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e"
+        }
+      ],
+      "name": "PlatformAppInternal",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e"
+        }
+      ],
+      "name": "PlatformCommonInternal",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e"
+        }
+      ],
+      "name": "PlatformModuleInternal",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e"
+        }
+      ],
+      "name": "PlatformPluginInternal",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e"
+        }
+      ],
+      "name": "PlatformToolInternal",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PrintSupport-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PrintSupport-18caa008d90e"
+        }
+      ],
+      "name": "PrintSupport",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-module-QDocCatchConversionsPrivate-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QDocCatchConversionsPrivate",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=QDocCatchConversionsPrivate#src/qdoc/catch_conversions"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-QDocCatchConversionsPrivate@e1d3bd1?library_name=QDocCatchConversionsPrivate&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qdoc/catch_conversions",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-module-QDocCatchGeneratorsPrivate-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QDocCatchGeneratorsPrivate",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=QDocCatchGeneratorsPrivate#src/qdoc/catch_generators"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-QDocCatchGeneratorsPrivate@e1d3bd1?library_name=QDocCatchGeneratorsPrivate&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qdoc/catch_generators",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-bundled-3rdparty-module-QDocCatchPrivate-c0fc44f619aa",
+      "copyright": "Copyright (c) 2022 Two Blue Cubes Ltd. All rights reserved.",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "BSL-1.0"
+        }
+      ],
+      "name": "QDocCatchPrivate",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=QDocCatchPrivate#src/qdoc/catch"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-QDocCatchPrivate@e1d3bd1?library_name=QDocCatchPrivate&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qdoc/catch",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "2.13.10"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-plugin-QHelpEnginePlugin-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QHelpEnginePlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=QHelpEnginePlugin#src/assistant/plugins/help"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-QHelpEnginePlugin@e1d3bd1?library_name=QHelpEnginePlugin&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/assistant/plugins/help",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-plugin-QQuickWidgetPlugin-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QQuickWidgetPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=QQuickWidgetPlugin#src/designer/src/plugins/qquickwidget"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-QQuickWidgetPlugin@e1d3bd1?library_name=QQuickWidgetPlugin&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/designer/src/plugins/qquickwidget",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:1b78972c-9bf6-58d4-8633-68c15fc24823/1#SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863"
+        }
+      ],
+      "name": "Qml",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:1b78972c-9bf6-58d4-8633-68c15fc24823/1#SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863"
+        }
+      ],
+      "name": "Quick",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtdeclarative-qt-module-QuickLayouts-bdf0db835863",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:1b78972c-9bf6-58d4-8633-68c15fc24823/1#SPDXRef-Package-qtdeclarative-qt-module-QuickLayouts-bdf0db835863"
+        }
+      ],
+      "name": "QuickLayouts",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtdeclarative-qt-module-QuickWidgets-bdf0db835863",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:1b78972c-9bf6-58d4-8633-68c15fc24823/1#SPDXRef-Package-qtdeclarative-qt-module-QuickWidgets-bdf0db835863"
+        }
+      ],
+      "name": "QuickWidgets",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Sql-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Sql-18caa008d90e"
+        }
+      ],
+      "name": "Sql",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-module-Tools-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "Tools",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=Tools#src/global"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-Tools@e1d3bd1?library_name=Tools&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/global",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-module-UiPlugin-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "UiPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=UiPlugin#src/uiplugin"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-UiPlugin@e1d3bd1?library_name=UiPlugin&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/uiplugin",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-module-UiTools-c0fc44f619aa",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "UiTools",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=UiTools#src/uitools"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttools:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-UiTools@e1d3bd1?library_name=UiTools&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/uitools",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e"
+        }
+      ],
+      "name": "Widgets",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-system-3rdparty-WrapLibClang-c0fc44f619aa",
+      "copyright": "Copyright (c) 2003-2019 University of Illinois at Urbana-Champaign.\nCopyright (c) 2019-2025 Contributors to the LLVM Project.",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "Apache-2.0 WITH LLVM-exception"
+        }
+      ],
+      "name": "WrapLibClang",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "SYSTEM_LIBRARY"
+        }
+      ],
+      "supplier": {
+        "name": "LLVM Foundation"
+      },
+      "type": "library",
+      "version": "20.1.0"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Xml-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Xml-18caa008d90e"
+        }
+      ],
+      "name": "Xml",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-3rdparty-sources-assistant-Attribution-litehtml-c0fc44f619aa",
+      "copyright": "Copyright (c) 2013, Yuri Kobets (tordex)",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "BSD-3-Clause"
+        }
+      ],
+      "name": "assistant_Attribution_litehtml",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:generic/TheQtCompany/qttools-assistant_Attribution_litehtml@e1d3bd1?library_name=assistant_Attribution_litehtml&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/assistant/assistant"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=assistant_Attribution_litehtml#src/assistant/assistant"
+        }
+      ],
+      "purl": "pkg:github/litehtml/litehtml@v0.9",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "0.9"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-3rdparty-sources-assistant-Attribution-litehtml-gumbo-c0fc44f619aa",
+      "copyright": "Copyright 2010, 2011 Google Inc.\nCopyright 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "Apache-2.0 AND MIT"
+        }
+      ],
+      "name": "assistant_Attribution_litehtml-gumbo",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:generic/TheQtCompany/qttools-assistant_Attribution_litehtml-gumbo@e1d3bd1?library_name=assistant_Attribution_litehtml-gumbo&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/assistant/assistant"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=assistant_Attribution_litehtml-gumbo#src/assistant/assistant"
+        }
+      ],
+      "purl": "pkg:github/google/gumbo-parser@0.10.1",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "0.10.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttools-qt-3rdparty-sources-qdoc-Attribution-llvm-clang-typename-namespace-c0fc44f619aa",
+      "copyright": "Copyright assigned to LLVM project contributors.",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "Apache-2.0 WITH LLVM-exception"
+        }
+      ],
+      "name": "qdoc_Attribution_llvm_clang_typename_namespace",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttools@e1d3bd1?library_name=qdoc_Attribution_llvm_clang_typename_namespace#src/qdoc/qdoc"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttools-qdoc_Attribution_llvm_clang_typename_namespace@e1d3bd1?library_name=qdoc_Attribution_llvm_clang_typename_namespace&vcs_url=https://code.qt.io/qt/qttools.git%40e1d3bd1#src/qdoc/qdoc",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "16.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Network-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-OpenGLWidgets-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PrintSupport-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Sql-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Xml-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863"
+    },
+    {
+      "ref": "SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863"
+    },
+    {
+      "ref": "SPDXRef-Package-qtdeclarative-qt-module-QuickLayouts-bdf0db835863"
+    },
+    {
+      "ref": "SPDXRef-Package-qtdeclarative-qt-module-QuickWidgets-bdf0db835863"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttools-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-build-tool-CMake-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttools-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-build-tool-CMake-generator-Ninja-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttools-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-build-tool-Compiler-GNU-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttools-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-build-tool-Linker-GNU-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttools-build-tool-CMake-c0fc44f619aa",
+        "SPDXRef-Package-qttools-build-tool-CMake-generator-Ninja-c0fc44f619aa",
+        "SPDXRef-Package-qttools-build-tool-Compiler-GNU-c0fc44f619aa",
+        "SPDXRef-Package-qttools-build-tool-Linker-GNU-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-3rdparty-sources-assistant-Attribution-litehtml-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-3rdparty-sources-assistant-Attribution-litehtml-gumbo-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-3rdparty-sources-qdoc-Attribution-llvm-clang-typename-namespace-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-app-assistant-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-app-designer-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-app-linguist-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-app-pixeltool-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-app-qdbus-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-app-qdbusviewer-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-app-qdistancefieldgenerator-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-app-qtdiag-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-app-qtplugininfo-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-bundled-3rdparty-module-QDocCatchPrivate-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-Designer-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-DesignerComponentsPrivate-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-Help-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-Linguist-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-QDocCatchConversionsPrivate-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-QDocCatchGeneratorsPrivate-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-Tools-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-UiPlugin-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-UiTools-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-plugin-QHelpEnginePlugin-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-plugin-QQuickWidgetPlugin-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-tool-lconvert-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-tool-lprodump-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-tool-lrelease-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-tool-lrelease-pro-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-tool-lupdate-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-tool-lupdate-pro-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-tool-qdoc-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-tool-qhelpgenerator-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-tool-qtattributionsscanner-c0fc44f619aa",
+        "SPDXRef-Package-qttools-system-3rdparty-WrapLibClang-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-c0fc44f619aa"
+    },
+    {
+      "ref": "SPDXRef-Package-qttools-qt-3rdparty-sources-assistant-Attribution-litehtml-c0fc44f619aa"
+    },
+    {
+      "ref": "SPDXRef-Package-qttools-qt-3rdparty-sources-assistant-Attribution-litehtml-gumbo-c0fc44f619aa"
+    },
+    {
+      "ref": "SPDXRef-Package-qttools-qt-3rdparty-sources-qdoc-Attribution-llvm-clang-typename-namespace-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Network-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PrintSupport-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Sql-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qttools-qt-3rdparty-sources-assistant-Attribution-litehtml-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-3rdparty-sources-assistant-Attribution-litehtml-gumbo-c0fc44f619aa",
+        "SPDXRef-Package-qttools-qt-module-Help-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-app-assistant-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Network-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PrintSupport-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Xml-18caa008d90e",
+        "SPDXRef-Package-qttools-qt-module-Designer-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-app-designer-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PrintSupport-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-QuickLayouts-bdf0db835863",
+        "SPDXRef-Package-qtdeclarative-qt-module-QuickWidgets-bdf0db835863",
+        "SPDXRef-Package-qttools-qt-module-UiTools-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-app-linguist-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-app-pixeltool-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Xml-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-app-qdbus-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Xml-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-app-qdbusviewer-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-app-qdistancefieldgenerator-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Network-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-app-qtdiag-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformAppInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-app-qtplugininfo-c0fc44f619aa"
+    },
+    {
+      "ref": "SPDXRef-Package-qttools-qt-bundled-3rdparty-module-QDocCatchPrivate-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-OpenGLWidgets-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Xml-18caa008d90e",
+        "SPDXRef-Package-qttools-qt-module-UiPlugin-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-module-Designer-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Xml-18caa008d90e",
+        "SPDXRef-Package-qttools-qt-module-Designer-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-module-DesignerComponentsPrivate-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Sql-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-module-Help-c0fc44f619aa"
+    },
+    {
+      "ref": "SPDXRef-Package-qttools-qt-module-Linguist-c0fc44f619aa"
+    },
+    {
+      "ref": "SPDXRef-Package-qttools-qt-module-QDocCatchConversionsPrivate-c0fc44f619aa"
+    },
+    {
+      "ref": "SPDXRef-Package-qttools-qt-module-QDocCatchGeneratorsPrivate-c0fc44f619aa"
+    },
+    {
+      "ref": "SPDXRef-Package-qttools-qt-module-Tools-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-module-UiPlugin-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-OpenGLWidgets-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qttools-qt-module-UiPlugin-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-module-UiTools-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qttools-qt-module-Help-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-plugin-QHelpEnginePlugin-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-QuickWidgets-bdf0db835863",
+        "SPDXRef-Package-qttools-qt-module-Designer-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-plugin-QQuickWidgetPlugin-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-tool-lconvert-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-tool-lprodump-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-tool-lrelease-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-tool-lrelease-pro-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-tool-lupdate-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-tool-lupdate-pro-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qttools-qt-3rdparty-sources-qdoc-Attribution-llvm-clang-typename-namespace-c0fc44f619aa",
+        "SPDXRef-Package-qttools-system-3rdparty-WrapLibClang-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-tool-qdoc-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e",
+        "SPDXRef-Package-qttools-qt-module-Help-c0fc44f619aa"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-tool-qhelpgenerator-c0fc44f619aa"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformCommonInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformToolInternal-18caa008d90e"
+      ],
+      "ref": "SPDXRef-Package-qttools-qt-tool-qtattributionsscanner-c0fc44f619aa"
+    },
+    {
+      "ref": "SPDXRef-Package-qttools-system-3rdparty-WrapLibClang-c0fc44f619aa"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      {
+        "name": "TheQtCompany"
+      }
+    ],
+    "component": {
+      "bom-ref": "SPDXRef-Package-qttools-c0fc44f619aa",
+      "description": "Built by CMake 3.30.5 with RelWithDebInfo configuration for Linux (x86_64)\nqttools was configured with:\n    qt-configure-module <sources>/qttools -- -DFFMPEG_DIR=/usr/local/FFmpeg-n7.1.3 -DQT_DEPLOY_FFMPEG=TRUE -DINPUT_headersclean=ON -DQT_INSTALL_CONFIG_INFO_FILES=ON -DQT_GENERATE_SBOM=ON -DQT_GENERATE_SOURCE_SBOM=ON -DQT_SBOM_REQUIRE_GENERATE_CYDX_V1_6=ON -DQT_SBOM_VERIFY_CYDX_V1_6=ON -DQT_SBOM_PYTHON_INTERP= -DQT_SBOM_PYTHON_APPS_PATH=/usr/local/bin -DQT_LINT_SOURCE_SBOM=ON -DQT_INTERNAL_SBOM_DEFAULT_CHECKS=ON -DQT_INTERNAL_SBOM_AUDIT=ON -DQT_INTERNAL_SBOM_AUDIT_NO_ERROR=ON -DQT_BUILD_TESTS=OFF -DCMAKE_AUTOGEN_VERBOSE=ON -DCMAKE_MESSAGE_LOG_LEVEL=STATUS -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache\n\n",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "git://code.qt.io/qt/qttools.git@e1d3bd1fb18ad9c1522e2d65c00e9a015456ebf6"
+        }
+      ],
+      "manufacturer": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "name": "qttools",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "framework",
+      "version": "e1d3bd1+HEAD"
+    },
+    "lifecycles": [
+      {
+        "phase": "build"
+      }
+    ],
+    "manufacturer": {
+      "name": "TheQtCompany",
+      "url": [
+        "https://qt.io"
+      ]
+    },
+    "supplier": {
+      "name": "TheQtCompany",
+      "url": [
+        "https://qt.io"
+      ]
+    },
+    "timestamp": "2026-03-30T11:44:29+00:00",
+    "tools": {
+      "components": [
+        {
+          "description": "Build system tool used to build the project.",
+          "name": "cmake",
+          "type": "application",
+          "version": "3.30.5"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:8fa08c59-aa20-5d91-b22e-93fd10003a43",
+  "version": 1,
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6"
+}

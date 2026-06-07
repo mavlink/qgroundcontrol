@@ -1,0 +1,17 @@
+[
+    {
+        "Id": "wayland-pointer-warp-protocol",
+        "Name": "Wayland Pointer Warp Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin",
+        "Files": "pointer-warp-v1.xml",
+        "Description": "",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "version 1",
+        "DownloadLocation": "https://cgit.freedesktop.org/wayland/wayland-protocols/plain/staging/pointer-warp/pointer-warp-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2024 Neal Gompa\nCopyright © 2024 Xaver Hugl\nCopyright © 2024 Matthias Klumpp\nCopyright © 2024 Vlad Zahorodnii"
+    }
+]

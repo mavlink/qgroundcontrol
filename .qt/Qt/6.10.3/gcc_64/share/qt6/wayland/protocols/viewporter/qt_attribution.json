@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-viewporter-protocol",
+        "Name": "Wayland Viewporter Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor API",
+        "Files": "viewporter.xml",
+
+        "Description": "The Wayland viewporter extension allows a client to scale or crop a surface without modifying the buffer",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "1",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/stable/viewporter/viewporter.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2013-2016 Collabora, Ltd."
+    }
+]

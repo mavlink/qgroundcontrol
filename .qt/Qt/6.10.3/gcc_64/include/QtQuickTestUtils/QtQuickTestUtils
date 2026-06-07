@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKTESTUTILS_MODULE_H
+#define QT_QTQUICKTESTUTILS_MODULE_H
+#include <QtQuickTestUtils/QtQuickTestUtilsDepends>
+#include "qtquicktestutilsversion.h"
+#endif

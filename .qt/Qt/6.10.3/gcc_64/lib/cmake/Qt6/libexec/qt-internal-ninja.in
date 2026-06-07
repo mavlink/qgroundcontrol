@@ -1,0 +1,2 @@
+#!/bin/sh
+@original_ninja@ @ninja_arguments@ "$@"

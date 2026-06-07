@@ -1,0 +1,155 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "WavefrontMesh"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "256"
+                    }
+                ],
+                "className": "QWavefrontMesh",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 40,
+                        "name": "Error",
+                        "values": [
+                            "NoError",
+                            "InvalidSourceError",
+                            "UnsupportedFaceShapeError",
+                            "UnsupportedIndexSizeError",
+                            "FileNotFoundError",
+                            "NoAttributesError",
+                            "MissingPositionAttributeError",
+                            "MissingTextureCoordinateAttributeError",
+                            "MissingPositionAndTextureCoordinateAttributesError",
+                            "TooManyAttributesError",
+                            "InvalidPlaneDefinitionError"
+                        ]
+                    }
+                ],
+                "lineNumber": 29,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 32,
+                        "name": "source",
+                        "notify": "sourceChanged",
+                        "read": "source",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QUrl",
+                        "user": false,
+                        "write": "setSource"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 33,
+                        "name": "lastError",
+                        "notify": "lastErrorChanged",
+                        "read": "lastError",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Error",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 34,
+                        "name": "projectionPlaneV",
+                        "notify": "projectionPlaneVChanged",
+                        "read": "projectionPlaneV",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVector3D",
+                        "user": false,
+                        "write": "setProjectionPlaneV"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 35,
+                        "name": "projectionPlaneW",
+                        "notify": "projectionPlaneWChanged",
+                        "read": "projectionPlaneW",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVector3D",
+                        "user": false,
+                        "write": "setProjectionPlaneW"
+                    }
+                ],
+                "qualifiedClassName": "QWavefrontMesh",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 76,
+                        "name": "sourceChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 77,
+                        "name": "lastErrorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 78,
+                        "name": "projectionPlaneVChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 79,
+                        "name": "projectionPlaneWChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "protected",
+                        "index": 4,
+                        "lineNumber": 82,
+                        "name": "readData",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickShaderEffectMesh"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qwavefrontmesh_p.h",
+        "outputRevision": 69
+    }
+]

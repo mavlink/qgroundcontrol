@@ -1,0 +1,29 @@
+#!/bin/sh
+
+HELP_MESSAGE="Usage
+    qt-cmake-create <path/to/project>"
+
+# The directory of this script is the expanded absolute path of the "$qt_prefix/bin" directory.
+script_dir_path=`dirname $0`
+script_dir_path=`(cd "$script_dir_path"; pwd)`
+
+# Try to use original cmake, otherwise to make it relocatable, use any cmake found in PATH.
+original_cmake_path="/opt/cmake-3.30.5/bin/cmake"
+cmake_path=$original_cmake_path
+if ! test -f "$cmake_path"; then
+    cmake_path="cmake"
+fi
+
+if [ "$#" -gt 1 ]; then
+    echo "Invalid number of arguments"
+    echo "$HELP_MESSAGE"
+    exit 1
+fi
+
+if [ "$#" -gt 0 ]; then
+    PROJECT_DIR=$1
+else
+    PROJECT_DIR=$PWD
+fi
+exec "$cmake_path" -DPROJECT_DIR="$PROJECT_DIR" -P \
+    "$script_dir_path/../lib/cmake/Qt6/QtInitProject.cmake"

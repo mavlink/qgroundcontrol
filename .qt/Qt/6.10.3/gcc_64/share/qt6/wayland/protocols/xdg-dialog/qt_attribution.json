@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "xdg-dialog-v1",
+        "Name": "Wayland Dialog Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin",
+        "Files": "xdg-dialog-v1.xml",
+
+        "Description": "Register toplevel as dialogs",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "1",
+        "DownloadLocation": "",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2023 Carlos Garnacho"
+     }
+]

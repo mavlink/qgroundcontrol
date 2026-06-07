@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "xdg-decoration-unstable-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2018 Simon Ser"
+SPDX-License-Identifier = "MIT"

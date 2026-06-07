@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "wp-primary-selection-unstable-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2015, 2016 Red Hat"
+SPDX-License-Identifier = "MIT"

@@ -1,0 +1,6 @@
+QT_FOR_CONFIG += gui
+
+!qtConfig(dynamicgl) {
+    QMAKE_LIBS += $$QMAKE_LIBS_OPENGL
+    QMAKE_LFLAGS += $$QMAKE_LFLAGS_OPENGL
+}

@@ -1,0 +1,37 @@
+#Default HTML header for QDoc builds.
+
+# CSS used by this template (copied to <outputdir>/style)
+HTML.stylesheets += \
+    template/style/offline.css \
+    template/style/offline-dark.css \
+    template/style/tech_preview.svg
+
+# Files (relative to the output directory) to include into the qch file
+qhp.extraFiles += \
+    style/offline.css \
+    style/offline-dark.css \
+    style/tech_preview.svg
+
+HTML.headerstyles = \
+    "  <link rel=\"stylesheet\" type=\"text/css\" href=\"style/offline.css\" />\n"
+
+HTML.endheader = \
+    "</head>\n"
+
+HTML.postheader = \
+    "<body>\n" \
+    "<div class=\"header\" id=\"qtdocheader\">\n"\
+    "    <div class=\"main\">\n" \
+    "    <div class=\"main-rounded\">\n" \
+    "        <div class=\"navigationbar\">\n"\
+    "        <ul>\n"\
+
+
+
+HTML.postpostheader = \
+    "    </ul>\n"\
+    "    </div>\n" \
+    "</div>\n" \
+    "<div class=\"content\">\n" \
+    "<div class=\"line\">\n" \
+    "<div class=\"content mainContent\">\n" \

@@ -1,0 +1,22 @@
+{
+    "Id": "kwin",
+    "Name": "KWin",
+    "QDocModule": "qtcore",
+    "QtUsage": "Used as part of the build system.",
+    "QtParts": [
+        "tools"
+    ],
+
+    "Description": "Additional CMake modules for graphics system dependencies.",
+    "Homepage": "https://www.kde.org/",
+    "Version": "5.13.4",
+
+    "License": "BSD 3-Clause \"New\" or \"Revised\" License",
+    "LicenseId": "BSD-3-Clause",
+    "LicenseFile": "COPYING-CMAKE-SCRIPTS",
+    "Copyright": [
+        "Copyright 2014 Alex Merry <alex.merry@kde.org>",
+        "Copyright 2014 Martin Gräßlin <mgraesslin@kde.org>",
+        "Copyright (c) 2006,2007 Laurent Montel, <montel@kde.org>"
+    ]
+}

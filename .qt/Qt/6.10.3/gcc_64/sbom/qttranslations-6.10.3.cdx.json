@@ -1,0 +1,207 @@
+{
+  "components": [
+    {
+      "bom-ref": "SPDXRef-Package-qttranslations-build-tool-CMake-e3fb38a131da",
+      "name": "CMake",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "3.30.5"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttranslations-build-tool-CMake-generator-Ninja-e3fb38a131da",
+      "name": "CMake generator Ninja",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "1.12.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttranslations-build-tool-Compiler-GNU-e3fb38a131da",
+      "name": "Compiler GNU",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "11.4.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttranslations-build-tool-Linker-GNU-e3fb38a131da",
+      "name": "Linker GNU",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "2.35.2"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qttranslations-qt-translation-Translations-e3fb38a131da",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "Translations",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_TRANSLATIONS"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qttranslations?library_name=Translations#translations"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qttranslations:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qttranslations-Translations?library_name=Translations&vcs_url=https://code.qt.io/qt/qttranslations.git#translations",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    }
+  ],
+  "dependencies": [
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttranslations-e3fb38a131da"
+      ],
+      "ref": "SPDXRef-Package-qttranslations-build-tool-CMake-e3fb38a131da"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttranslations-e3fb38a131da"
+      ],
+      "ref": "SPDXRef-Package-qttranslations-build-tool-CMake-generator-Ninja-e3fb38a131da"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttranslations-e3fb38a131da"
+      ],
+      "ref": "SPDXRef-Package-qttranslations-build-tool-Compiler-GNU-e3fb38a131da"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttranslations-e3fb38a131da"
+      ],
+      "ref": "SPDXRef-Package-qttranslations-build-tool-Linker-GNU-e3fb38a131da"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qttranslations-build-tool-CMake-e3fb38a131da",
+        "SPDXRef-Package-qttranslations-build-tool-CMake-generator-Ninja-e3fb38a131da",
+        "SPDXRef-Package-qttranslations-build-tool-Compiler-GNU-e3fb38a131da",
+        "SPDXRef-Package-qttranslations-build-tool-Linker-GNU-e3fb38a131da",
+        "SPDXRef-Package-qttranslations-qt-translation-Translations-e3fb38a131da"
+      ],
+      "ref": "SPDXRef-Package-qttranslations-e3fb38a131da"
+    },
+    {
+      "ref": "SPDXRef-Package-qttranslations-qt-translation-Translations-e3fb38a131da"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      {
+        "name": "TheQtCompany"
+      }
+    ],
+    "component": {
+      "bom-ref": "SPDXRef-Package-qttranslations-e3fb38a131da",
+      "description": "Built by CMake 3.30.5 with RelWithDebInfo configuration for Linux (x86_64)\nqttranslations was configured with:\n    qt-configure-module <sources>/qttranslations -- -DFFMPEG_DIR=/usr/local/FFmpeg-n7.1.3 -DQT_DEPLOY_FFMPEG=TRUE -DINPUT_headersclean=ON -DQT_INSTALL_CONFIG_INFO_FILES=ON -DQT_GENERATE_SBOM=ON -DQT_GENERATE_SOURCE_SBOM=ON -DQT_SBOM_REQUIRE_GENERATE_CYDX_V1_6=ON -DQT_SBOM_VERIFY_CYDX_V1_6=ON -DQT_SBOM_PYTHON_INTERP= -DQT_SBOM_PYTHON_APPS_PATH=/usr/local/bin -DQT_LINT_SOURCE_SBOM=ON -DQT_INTERNAL_SBOM_DEFAULT_CHECKS=ON -DQT_INTERNAL_SBOM_AUDIT=ON -DQT_INTERNAL_SBOM_AUDIT_NO_ERROR=ON -DQT_BUILD_TESTS=OFF -DCMAKE_AUTOGEN_VERBOSE=ON -DCMAKE_MESSAGE_LOG_LEVEL=STATUS -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache\n\n",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "git://code.qt.io/qt/qttranslations.git"
+        }
+      ],
+      "manufacturer": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "name": "qttranslations",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "framework",
+      "version": "6.10.3"
+    },
+    "lifecycles": [
+      {
+        "phase": "build"
+      }
+    ],
+    "manufacturer": {
+      "name": "TheQtCompany",
+      "url": [
+        "https://qt.io"
+      ]
+    },
+    "supplier": {
+      "name": "TheQtCompany",
+      "url": [
+        "https://qt.io"
+      ]
+    },
+    "timestamp": "2026-03-30T12:42:35+00:00",
+    "tools": {
+      "components": [
+        {
+          "description": "Build system tool used to build the project.",
+          "name": "cmake",
+          "type": "application",
+          "version": "3.30.5"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:bda3c899-fcc6-5f2f-94b1-918ff67dce79",
+  "version": 1,
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6"
+}

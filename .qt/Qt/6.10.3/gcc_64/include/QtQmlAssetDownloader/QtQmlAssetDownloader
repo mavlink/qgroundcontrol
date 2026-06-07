@@ -1,0 +1,5 @@
+#ifndef QT_QTQMLASSETDOWNLOADER_MODULE_H
+#define QT_QTQMLASSETDOWNLOADER_MODULE_H
+#include <QtQmlAssetDownloader/QtQmlAssetDownloaderDepends>
+#include "qtqmlassetdownloaderversion.h"
+#endif

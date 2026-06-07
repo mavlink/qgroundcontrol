@@ -1,0 +1,11 @@
+QT.quickcontrols2fusion_private.VERSION = 6.10.3
+QT.quickcontrols2fusion_private.name = QtQuickControls2Fusion
+QT.quickcontrols2fusion_private.module =
+QT.quickcontrols2fusion_private.libs = $$QT_MODULE_LIB_BASE
+QT.quickcontrols2fusion_private.includes = $$QT_MODULE_INCLUDE_BASE/QtQuickControls2Fusion/6.10.3 $$QT_MODULE_INCLUDE_BASE/QtQuickControls2Fusion/6.10.3/QtQuickControls2Fusion
+QT.quickcontrols2fusion_private.frameworks = 
+QT.quickcontrols2fusion_private.depends = quickcontrols2fusion
+QT.quickcontrols2fusion_private.uses = 
+QT.quickcontrols2fusion_private.module_config = v2 internal_module
+QT.quickcontrols2fusion_private.enabled_features = 
+QT.quickcontrols2fusion_private.disabled_features = 

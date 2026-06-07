@@ -1,0 +1,18 @@
+[
+     {
+        "Id": "presentation-time.xml",
+        "Name": "Presentation Time Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor",
+        "Files": "presentation-time.xml",
+
+        "Description": "The presentaton time protocol is a way to get presentation timing feedback.",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "1",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/stable/presentation-time/presentation-time.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2013, 2014 Collabora, Ltd."
+     }
+]

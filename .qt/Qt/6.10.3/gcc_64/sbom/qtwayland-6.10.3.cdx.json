@@ -1,0 +1,2407 @@
+{
+  "components": [
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-build-tool-CMake-c3af86db317c",
+      "name": "CMake",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "3.30.5"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-build-tool-CMake-generator-Ninja-c3af86db317c",
+      "name": "CMake generator Ninja",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "1.12.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-build-tool-Compiler-GNU-c3af86db317c",
+      "name": "Compiler GNU",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "11.4.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e"
+        }
+      ],
+      "name": "Core",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e"
+        }
+      ],
+      "name": "DBus",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "DmaBufServerBufferIntegrationPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=DmaBufServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/dmabuf-server"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-DmaBufServerBufferIntegrationPlugin?library_name=DmaBufServerBufferIntegrationPlugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/hardwareintegration/compositor/dmabuf-server",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "DrmEglServerBufferIntegrationPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=DrmEglServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/drm-egl-server"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-DrmEglServerBufferIntegrationPlugin?library_name=DrmEglServerBufferIntegrationPlugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/hardwareintegration/compositor/drm-egl-server",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e"
+        }
+      ],
+      "name": "Gui",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-system-3rdparty-Libdrm-c3af86db317c",
+      "name": "Libdrm",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "SYSTEM_LIBRARY"
+        }
+      ],
+      "type": "library",
+      "version": "2.4.117"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-build-tool-Linker-GNU-c3af86db317c",
+      "name": "Linker GNU",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "2.35.2"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e"
+        }
+      ],
+      "name": "OpenGL",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e"
+        }
+      ],
+      "name": "PlatformModuleInternal",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e"
+        }
+      ],
+      "name": "PlatformPluginInternal",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QWaylandAdwaitaDecorationPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=QWaylandAdwaitaDecorationPlugin#src/plugins/decorations/adwaita"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-QWaylandAdwaitaDecorationPlugin?library_name=QWaylandAdwaitaDecorationPlugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/decorations/adwaita",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QWaylandEglClientBufferIntegrationPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=QWaylandEglClientBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/wayland-egl"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-QWaylandEglClientBufferIntegrationPlugin?library_name=QWaylandEglClientBufferIntegrationPlugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/hardwareintegration/compositor/wayland-egl",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QWaylandEglStreamClientBufferIntegrationPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=QWaylandEglStreamClientBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/wayland-eglstream-controller"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-QWaylandEglStreamClientBufferIntegrationPlugin?library_name=QWaylandEglStreamClientBufferIntegrationPlugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/hardwareintegration/compositor/wayland-eglstream-controller",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandEglStreamClientBufferIntegrationPlugin-Attribution-wayland-eglstream-controller-c3af86db317c",
+      "copyright": "Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "QWaylandEglStreamClientBufferIntegrationPlugin_Attribution_wayland-eglstream-controller",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=QWaylandEglStreamClientBufferIntegrationPlugin_Attribution_wayland-eglstream-controller#src/plugins/hardwareintegration/compositor/wayland-eglstream-controller"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-QWaylandEglStreamClientBufferIntegrationPlugin_Attribution_wayland-eglstream-controller?library_name=QWaylandEglStreamClientBufferIntegrationPlugin_Attribution_wayland-eglstream-controller&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/hardwareintegration/compositor/wayland-eglstream-controller",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "1.1.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QWaylandIviShellIntegrationPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=QWaylandIviShellIntegrationPlugin#src/plugins/shellintegration/ivi-shell"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-QWaylandIviShellIntegrationPlugin?library_name=QWaylandIviShellIntegrationPlugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/shellintegration/ivi-shell",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandIviShellIntegrationPlugin-Attribution-wayland-ivi-extension-protocol-c3af86db317c",
+      "copyright": "Copyright (C) 2013 DENSO CORPORATION\nCopyright (c) 2013 BMW Car IT GmbH",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "QWaylandIviShellIntegrationPlugin_Attribution_wayland-ivi-extension-protocol",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:generic/TheQtCompany/qtwayland-QWaylandIviShellIntegrationPlugin_Attribution_wayland-ivi-extension-protocol?library_name=QWaylandIviShellIntegrationPlugin_Attribution_wayland-ivi-extension-protocol&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/shellintegration/ivi-shell"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=QWaylandIviShellIntegrationPlugin_Attribution_wayland-ivi-extension-protocol#src/plugins/shellintegration/ivi-shell"
+        }
+      ],
+      "purl": "pkg:github/genivi/wayland-ivi-extension@1.9.1",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "1.9.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QWaylandQtShellIntegrationPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=QWaylandQtShellIntegrationPlugin#src/plugins/shellintegration/qt-shell"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-QWaylandQtShellIntegrationPlugin?library_name=QWaylandQtShellIntegrationPlugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/shellintegration/qt-shell",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:1b78972c-9bf6-58d4-8633-68c15fc24823/1#SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863"
+        }
+      ],
+      "name": "Qml",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:1b78972c-9bf6-58d4-8633-68c15fc24823/1#SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863"
+        }
+      ],
+      "name": "Quick",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "ShmServerBufferIntegrationPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=ShmServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/shm-emulation-server"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-ShmServerBufferIntegrationPlugin?library_name=ShmServerBufferIntegrationPlugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/hardwareintegration/compositor/shm-emulation-server",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d4393d4b-77eb-5fcb-8d24-77a73002a834/1#SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194"
+        }
+      ],
+      "name": "Svg",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "VulkanServerBufferIntegrationPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=VulkanServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/vulkan-server"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-VulkanServerBufferIntegrationPlugin?library_name=VulkanServerBufferIntegrationPlugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/plugins/hardwareintegration/compositor/vulkan-server",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c",
+      "name": "Wayland",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "SYSTEM_LIBRARY"
+        }
+      ],
+      "type": "library",
+      "version": "1.21.0"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e"
+        }
+      ],
+      "name": "WaylandClient",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-module-WaylandClientFeaturesPrivate-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandClientFeaturesPrivate",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandClientFeaturesPrivate#src/client"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandClientFeaturesPrivate?library_name=WaylandClientFeaturesPrivate&vcs_url=https://code.qt.io/qt/qtwayland.git#src/client",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositor",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor#src/compositor"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor?library_name=WaylandCompositor&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositorIviapplication",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositorIviapplication#src/imports/compositor-extensions/iviapplication"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositorIviapplication?library_name=WaylandCompositorIviapplication&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/compositor-extensions/iviapplication",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositorIviapplicationplugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositorIviapplicationplugin#src/imports/compositor-extensions/iviapplication"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositorIviapplicationplugin?library_name=WaylandCompositorIviapplicationplugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/compositor-extensions/iviapplication",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositorPresentationTime",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositorPresentationTime#src/imports/compositor-extensions/presentationtime"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositorPresentationTime?library_name=WaylandCompositorPresentationTime&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/compositor-extensions/presentationtime",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositorPresentationTimeplugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositorPresentationTimeplugin#src/imports/compositor-extensions/presentationtime"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositorPresentationTimeplugin?library_name=WaylandCompositorPresentationTimeplugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/compositor-extensions/presentationtime",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositorQtShell",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositorQtShell#src/imports/compositor-extensions/qtshell"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositorQtShell?library_name=WaylandCompositorQtShell&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/compositor-extensions/qtshell",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositorWLShell",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositorWLShell#src/imports/compositor-extensions/wlshell"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositorWLShell?library_name=WaylandCompositorWLShell&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/compositor-extensions/wlshell",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositorWLShellplugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositorWLShellplugin#src/imports/compositor-extensions/wlshell"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositorWLShellplugin?library_name=WaylandCompositorWLShellplugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/compositor-extensions/wlshell",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositorXdgShell",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositorXdgShell#src/imports/compositor-extensions/xdgshell"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositorXdgShell?library_name=WaylandCompositorXdgShell&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/compositor-extensions/xdgshell",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandCompositorXdgShellplugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositorXdgShellplugin#src/imports/compositor-extensions/xdgshell"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositorXdgShellplugin?library_name=WaylandCompositorXdgShellplugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/compositor-extensions/xdgshell",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-presentation-time-xml-c3af86db317c",
+      "copyright": "Copyright \u00a9 2013, 2014 Collabora, Ltd.",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_presentation-time_xml",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_presentation-time_xml#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_presentation-time_xml?library_name=WaylandCompositor_Attribution_presentation-time_xml&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-ivi-extension-protocol-c3af86db317c",
+      "copyright": "Copyright (C) 2013 DENSO CORPORATION\nCopyright (c) 2013 BMW Car IT GmbH",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_wayland-ivi-extension-protocol",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-ivi-extension-protocol?library_name=WaylandCompositor_Attribution_wayland-ivi-extension-protocol&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-ivi-extension-protocol#src/compositor"
+        }
+      ],
+      "purl": "pkg:github/genivi/wayland-ivi-extension@1.9.1",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "1.9.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-protocol-c3af86db317c",
+      "copyright": "Copyright \u00a9 2008-2011 Kristian H\u00f8gsberg\nCopyright \u00a9 2010-2011 Intel Corporation\nCopyright \u00a9 2012-2013 Collabora, Ltd.",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_wayland-protocol",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-protocol#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-protocol?library_name=WaylandCompositor_Attribution_wayland-protocol&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "1.23.0"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-scaler-protocol-c3af86db317c",
+      "copyright": "Copyright \u00a9 2013-2014 Collabora, Ltd.",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_wayland-scaler-protocol",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-scaler-protocol#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-scaler-protocol?library_name=WaylandCompositor_Attribution_wayland-scaler-protocol&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "2"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v2-c3af86db317c",
+      "copyright": "Copyright \u00a9 2012, 2013 Intel Corporation\nCopyright \u00a9 2015, 2016 Jan Arne Petersen",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "HPND"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_wayland-text-input-unstable-v2",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-text-input-unstable-v2#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-text-input-unstable-v2?library_name=WaylandCompositor_Attribution_wayland-text-input-unstable-v2&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "unstable v2"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v3-c3af86db317c",
+      "copyright": "Copyright \u00a9 2012, 2013 Intel Corporation\nCopyright \u00a9 2015, 2016 Jan Arne Petersen\nCopyright \u00a9 2017, 2018 Red Hat, Inc.\nCopyright \u00a9 2018       Purism SPC",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_wayland-text-input-unstable-v3",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-text-input-unstable-v3#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-text-input-unstable-v3?library_name=WaylandCompositor_Attribution_wayland-text-input-unstable-v3&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "unstable v3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-viewporter-protocol-c3af86db317c",
+      "copyright": "Copyright \u00a9 2013-2016 Collabora, Ltd.",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_wayland-viewporter-protocol",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-viewporter-protocol#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-viewporter-protocol?library_name=WaylandCompositor_Attribution_wayland-viewporter-protocol&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-decoration-protocol-c3af86db317c",
+      "copyright": "Copyright \u00a9 2018 Simon Ser",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_wayland-xdg-decoration-protocol",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-xdg-decoration-protocol#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-xdg-decoration-protocol?library_name=WaylandCompositor_Attribution_wayland-xdg-decoration-protocol&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "unstable v1, version 1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-output-protocol-c3af86db317c",
+      "copyright": "Copyright \u00a9 2017 Red Hat Inc.",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_wayland-xdg-output-protocol",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-xdg-output-protocol#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-xdg-output-protocol?library_name=WaylandCompositor_Attribution_wayland-xdg-output-protocol&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "unstable v1, version 3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-shell-protocol-c3af86db317c",
+      "copyright": "Copyright \u00a9 2008-2013 Kristian H\u00f8gsberg\nCopyright \u00a9 2013      Rafael Antognolli\nCopyright \u00a9 2013      Jasper St. Pierre\nCopyright \u00a9 2010-2013 Intel Corporation\nCopyright \u00a9 2015-2017 Samsung Electronics Co., Ltd\nCopyright \u00a9 2015-2017 Red Hat Inc.\n",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_wayland-xdg-shell-protocol",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-xdg-shell-protocol#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-xdg-shell-protocol?library_name=WaylandCompositor_Attribution_wayland-xdg-shell-protocol&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "1.18"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-xdg-dialog-v1-c3af86db317c",
+      "copyright": "Copyright \u00a9 2023 Carlos Garnacho",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "MIT"
+        }
+      ],
+      "name": "WaylandCompositor_Attribution_xdg-dialog-v1",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_xdg-dialog-v1#src/compositor"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_xdg-dialog-v1?library_name=WaylandCompositor_Attribution_xdg-dialog-v1&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandEglCompositorHwIntegrationPrivate",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandEglCompositorHwIntegrationPrivate#src/hardwareintegration/compositor/wayland-egl"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandEglCompositorHwIntegrationPrivate?library_name=WaylandEglCompositorHwIntegrationPrivate&vcs_url=https://code.qt.io/qt/qtwayland.git#src/hardwareintegration/compositor/wayland-egl",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandTextureSharing",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandTextureSharing#src/imports/texture-sharing"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandTextureSharing?library_name=WaylandTextureSharing&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/texture-sharing",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "WaylandTextureSharingExtension",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=WaylandTextureSharingExtension#src/imports/texture-sharing-extension"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-WaylandTextureSharingExtension?library_name=WaylandTextureSharingExtension&vcs_url=https://code.qt.io/qt/qtwayland.git#src/imports/texture-sharing-extension",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-system-3rdparty-XKB-c3af86db317c",
+      "name": "XKB",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "SYSTEM_LIBRARY"
+        }
+      ],
+      "type": "library",
+      "version": "1.0.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtwayland-qt-plugin-qwaylandcompositorplugin-c3af86db317c",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "qwaylandcompositorplugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtwayland?library_name=qwaylandcompositorplugin#src/compositor"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtwayland-qwaylandcompositorplugin?library_name=qwaylandcompositorplugin&vcs_url=https://code.qt.io/qt/qtwayland.git#src/compositor",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863"
+    },
+    {
+      "ref": "SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863"
+    },
+    {
+      "ref": "SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtwayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-build-tool-CMake-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtwayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-build-tool-CMake-generator-Ninja-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtwayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-build-tool-Compiler-GNU-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtwayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-build-tool-Linker-GNU-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtwayland-build-tool-CMake-c3af86db317c",
+        "SPDXRef-Package-qtwayland-build-tool-CMake-generator-Ninja-c3af86db317c",
+        "SPDXRef-Package-qtwayland-build-tool-Compiler-GNU-c3af86db317c",
+        "SPDXRef-Package-qtwayland-build-tool-Linker-GNU-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandEglStreamClientBufferIntegrationPlugin-Attribution-wayland-eglstream-controller-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandIviShellIntegrationPlugin-Attribution-wayland-ivi-extension-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-presentation-time-xml-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-ivi-extension-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-scaler-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v2-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v3-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-viewporter-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-decoration-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-output-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-shell-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-xdg-dialog-v1-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandClientFeaturesPrivate-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-plugin-qwaylandcompositorplugin-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Libdrm-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-XKB-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandEglStreamClientBufferIntegrationPlugin-Attribution-wayland-eglstream-controller-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandIviShellIntegrationPlugin-Attribution-wayland-ivi-extension-protocol-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-presentation-time-xml-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-ivi-extension-protocol-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-protocol-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-scaler-protocol-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v2-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v3-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-viewporter-protocol-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-decoration-protocol-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-output-protocol-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-shell-protocol-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-xdg-dialog-v1-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-qt-module-WaylandClientFeaturesPrivate-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-presentation-time-xml-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-ivi-extension-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-scaler-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v2-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v3-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-viewporter-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-decoration-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-output-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-shell-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-xdg-dialog-v1-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Libdrm-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e",
+        "SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandEglStreamClientBufferIntegrationPlugin-Attribution-wayland-eglstream-controller-c3af86db317c",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e",
+        "SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandIviShellIntegrationPlugin-Attribution-wayland-ivi-extension-protocol-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-XKB-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-XKB-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c",
+        "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863",
+        "SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c"
+      ],
+      "ref": "SPDXRef-Package-qtwayland-qt-plugin-qwaylandcompositorplugin-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-system-3rdparty-Libdrm-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c"
+    },
+    {
+      "ref": "SPDXRef-Package-qtwayland-system-3rdparty-XKB-c3af86db317c"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      {
+        "name": "TheQtCompany"
+      }
+    ],
+    "component": {
+      "bom-ref": "SPDXRef-Package-qtwayland-c3af86db317c",
+      "description": "Built by CMake 3.30.5 with RelWithDebInfo configuration for Linux (x86_64)\nqtwayland was configured with:\n    qt-configure-module <sources>/qtwayland -- -DFFMPEG_DIR=/usr/local/FFmpeg-n7.1.3 -DQT_DEPLOY_FFMPEG=TRUE -DINPUT_headersclean=ON -DQT_INSTALL_CONFIG_INFO_FILES=ON -DQT_GENERATE_SBOM=ON -DQT_GENERATE_SOURCE_SBOM=ON -DQT_SBOM_REQUIRE_GENERATE_CYDX_V1_6=ON -DQT_SBOM_VERIFY_CYDX_V1_6=ON -DQT_SBOM_PYTHON_INTERP= -DQT_SBOM_PYTHON_APPS_PATH=/usr/local/bin -DQT_LINT_SOURCE_SBOM=ON -DQT_INTERNAL_SBOM_DEFAULT_CHECKS=ON -DQT_INTERNAL_SBOM_AUDIT=ON -DQT_INTERNAL_SBOM_AUDIT_NO_ERROR=ON -DQT_BUILD_TESTS=OFF -DCMAKE_AUTOGEN_VERBOSE=ON -DCMAKE_MESSAGE_LOG_LEVEL=STATUS -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache\n\n",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "git://code.qt.io/qt/qtwayland.git"
+        }
+      ],
+      "manufacturer": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "name": "qtwayland",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "framework",
+      "version": "6.10.3"
+    },
+    "lifecycles": [
+      {
+        "phase": "build"
+      }
+    ],
+    "manufacturer": {
+      "name": "TheQtCompany",
+      "url": [
+        "https://qt.io"
+      ]
+    },
+    "supplier": {
+      "name": "TheQtCompany",
+      "url": [
+        "https://qt.io"
+      ]
+    },
+    "timestamp": "2026-03-30T11:51:45+00:00",
+    "tools": {
+      "components": [
+        {
+          "description": "Build system tool used to build the project.",
+          "name": "cmake",
+          "type": "application",
+          "version": "3.30.5"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:fcb5f88b-b96f-596c-86f0-28a112fccc85",
+  "version": 1,
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6"
+}

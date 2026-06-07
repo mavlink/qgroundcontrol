@@ -1,0 +1,574 @@
+{
+  "components": [
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-build-tool-CMake-d45854ff6194",
+      "name": "CMake",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "3.30.5"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-build-tool-CMake-generator-Ninja-d45854ff6194",
+      "name": "CMake generator Ninja",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "1.12.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-build-tool-Compiler-GNU-d45854ff6194",
+      "name": "Compiler GNU",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "11.4.1"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e"
+        }
+      ],
+      "name": "Core",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e"
+        }
+      ],
+      "name": "Gui",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-build-tool-Linker-GNU-d45854ff6194",
+      "name": "Linker GNU",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "BUILD_TOOL"
+        }
+      ],
+      "type": "library",
+      "version": "2.35.2"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e"
+        }
+      ],
+      "name": "PlatformModuleInternal",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e"
+        }
+      ],
+      "name": "PlatformPluginInternal",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QSvgIconPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtsvg@77765f9?library_name=QSvgIconPlugin#src/plugins/iconengines/svgiconengine"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtsvg:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtsvg-QSvgIconPlugin@77765f9?library_name=QSvgIconPlugin&vcs_url=https://code.qt.io/qt/qtsvg.git%4077765f9#src/plugins/iconengines/svgiconengine",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "QSvgPlugin",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_PLUGIN"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtsvg@77765f9?library_name=QSvgPlugin#src/plugins/imageformats/svg"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtsvg:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtsvg-QSvgPlugin@77765f9?library_name=QSvgPlugin&vcs_url=https://code.qt.io/qt/qtsvg.git%4077765f9#src/plugins/imageformats/svg",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "Svg",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtsvg@77765f9?library_name=Svg#src/svg"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtsvg:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtsvg-Svg@77765f9?library_name=Svg&vcs_url=https://code.qt.io/qt/qtsvg.git%4077765f9#src/svg",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194",
+      "copyright": "Copyright (C) The Qt Company Ltd. and other contributors.",
+      "cpe": "cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*",
+      "licenses": [
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-2.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "GPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "id": "LGPL-3.0-only"
+          }
+        },
+        {
+          "license": {
+            "acknowledgement": "concluded",
+            "name": "LicenseRef-Qt-Commercial",
+            "text": {
+              "content": "Licensees holding valid commercial Qt licenses may use this software in\naccordance with the the terms contained in a written agreement between\nyou and The Qt Company. Alternatively, the terms and conditions that were\naccepted by the licensee when buying and/or downloading the\nsoftware do apply.\n\nFor the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.\nFor further information use the contact form at https://www.qt.io/contact-us.\n\n",
+              "contentType": "text/plain"
+            }
+          }
+        }
+      ],
+      "name": "SvgWidgets",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_MODULE"
+        },
+        {
+          "name": "qt:sbom:is_qt_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtsvg@77765f9?library_name=SvgWidgets#src/svgwidgets"
+        },
+        {
+          "name": "spdx:external-reference:security:cpe23",
+          "value": "cpe:2.3:a:qt:qtsvg:6.10.3:*:*:*:*:*:*:*"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtsvg-SvgWidgets@77765f9?library_name=SvgWidgets&vcs_url=https://code.qt.io/qt/qtsvg.git%4077765f9#src/svgwidgets",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-qt-3rdparty-sources-Svg-Attribution-xsvg-d45854ff6194",
+      "copyright": "Copyright 2002 USC/Information Sciences Institute",
+      "licenses": [
+        {
+          "acknowledgement": "concluded",
+          "expression": "HPND-sell-variant"
+        }
+      ],
+      "name": "Svg_Attribution_xsvg",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "QT_THIRD_PARTY_SOURCES"
+        },
+        {
+          "name": "qt:sbom:is_qt_3rd_party_entity_type",
+          "value": "true"
+        },
+        {
+          "name": "spdx:external-reference:package-manager:purl",
+          "value": "pkg:github/qt/qtsvg@77765f9?library_name=Svg_Attribution_xsvg#src/svg"
+        }
+      ],
+      "purl": "pkg:generic/TheQtCompany/qtsvg-Svg_Attribution_xsvg@77765f9?library_name=Svg_Attribution_xsvg&vcs_url=https://code.qt.io/qt/qtsvg.git%4077765f9#src/svg",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "library"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "urn:cdx:d9fbbba0-fb2f-5164-8d02-4bdc7870efc5/1#SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e"
+        }
+      ],
+      "name": "Widgets",
+      "type": "library",
+      "version": "6.10.3"
+    },
+    {
+      "bom-ref": "SPDXRef-Package-qtsvg-system-3rdparty-WrapZLIB-d45854ff6194",
+      "name": "WrapZLIB",
+      "properties": [
+        {
+          "name": "qt:sbom:entity_type",
+          "value": "SYSTEM_LIBRARY"
+        }
+      ],
+      "type": "library",
+      "version": "1.2.11"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e"
+    },
+    {
+      "ref": "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtsvg-d45854ff6194"
+      ],
+      "ref": "SPDXRef-Package-qtsvg-build-tool-CMake-d45854ff6194"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtsvg-d45854ff6194"
+      ],
+      "ref": "SPDXRef-Package-qtsvg-build-tool-CMake-generator-Ninja-d45854ff6194"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtsvg-d45854ff6194"
+      ],
+      "ref": "SPDXRef-Package-qtsvg-build-tool-Compiler-GNU-d45854ff6194"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtsvg-d45854ff6194"
+      ],
+      "ref": "SPDXRef-Package-qtsvg-build-tool-Linker-GNU-d45854ff6194"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtsvg-build-tool-CMake-d45854ff6194",
+        "SPDXRef-Package-qtsvg-build-tool-CMake-generator-Ninja-d45854ff6194",
+        "SPDXRef-Package-qtsvg-build-tool-Compiler-GNU-d45854ff6194",
+        "SPDXRef-Package-qtsvg-build-tool-Linker-GNU-d45854ff6194",
+        "SPDXRef-Package-qtsvg-qt-3rdparty-sources-Svg-Attribution-xsvg-d45854ff6194",
+        "SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194",
+        "SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194",
+        "SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194",
+        "SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194",
+        "SPDXRef-Package-qtsvg-system-3rdparty-WrapZLIB-d45854ff6194"
+      ],
+      "ref": "SPDXRef-Package-qtsvg-d45854ff6194"
+    },
+    {
+      "ref": "SPDXRef-Package-qtsvg-qt-3rdparty-sources-Svg-Attribution-xsvg-d45854ff6194"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtsvg-qt-3rdparty-sources-Svg-Attribution-xsvg-d45854ff6194",
+        "SPDXRef-Package-qtsvg-system-3rdparty-WrapZLIB-d45854ff6194"
+      ],
+      "ref": "SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Widgets-18caa008d90e",
+        "SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194"
+      ],
+      "ref": "SPDXRef-Package-qtsvg-qt-module-SvgWidgets-d45854ff6194"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194"
+      ],
+      "ref": "SPDXRef-Package-qtsvg-qt-plugin-QSvgIconPlugin-d45854ff6194"
+    },
+    {
+      "dependsOn": [
+        "SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e",
+        "SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e",
+        "SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194"
+      ],
+      "ref": "SPDXRef-Package-qtsvg-qt-plugin-QSvgPlugin-d45854ff6194"
+    },
+    {
+      "ref": "SPDXRef-Package-qtsvg-system-3rdparty-WrapZLIB-d45854ff6194"
+    }
+  ],
+  "metadata": {
+    "authors": [
+      {
+        "name": "TheQtCompany"
+      }
+    ],
+    "component": {
+      "bom-ref": "SPDXRef-Package-qtsvg-d45854ff6194",
+      "description": "Built by CMake 3.30.5 with RelWithDebInfo configuration for Linux (x86_64)\nqtsvg was configured with:\n    qt-configure-module <sources>/qtsvg -- -DFFMPEG_DIR=/usr/local/FFmpeg-n7.1.3 -DQT_DEPLOY_FFMPEG=TRUE -DINPUT_headersclean=ON -DQT_INSTALL_CONFIG_INFO_FILES=ON -DQT_GENERATE_SBOM=ON -DQT_GENERATE_SOURCE_SBOM=ON -DQT_SBOM_REQUIRE_GENERATE_CYDX_V1_6=ON -DQT_SBOM_VERIFY_CYDX_V1_6=ON -DQT_SBOM_PYTHON_INTERP= -DQT_SBOM_PYTHON_APPS_PATH=/usr/local/bin -DQT_LINT_SOURCE_SBOM=ON -DQT_INTERNAL_SBOM_DEFAULT_CHECKS=ON -DQT_INTERNAL_SBOM_AUDIT=ON -DQT_INTERNAL_SBOM_AUDIT_NO_ERROR=ON -DQT_BUILD_TESTS=OFF -DCMAKE_AUTOGEN_VERBOSE=ON -DCMAKE_MESSAGE_LOG_LEVEL=STATUS -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache\n\n",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "git://code.qt.io/qt/qtsvg.git@77765f981c067cec8f250e13688e5be75ee94a1b"
+        }
+      ],
+      "manufacturer": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "name": "qtsvg",
+      "supplier": {
+        "name": "TheQtCompany",
+        "url": [
+          "https://qt.io"
+        ]
+      },
+      "type": "framework",
+      "version": "77765f9+HEAD"
+    },
+    "lifecycles": [
+      {
+        "phase": "build"
+      }
+    ],
+    "manufacturer": {
+      "name": "TheQtCompany",
+      "url": [
+        "https://qt.io"
+      ]
+    },
+    "supplier": {
+      "name": "TheQtCompany",
+      "url": [
+        "https://qt.io"
+      ]
+    },
+    "timestamp": "2026-03-27T21:41:13+00:00",
+    "tools": {
+      "components": [
+        {
+          "description": "Build system tool used to build the project.",
+          "name": "cmake",
+          "type": "application",
+          "version": "3.30.5"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:d4393d4b-77eb-5fcb-8d24-77a73002a834",
+  "version": 1,
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6"
+}

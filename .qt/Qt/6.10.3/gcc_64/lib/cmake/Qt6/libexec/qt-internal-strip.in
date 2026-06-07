@@ -1,0 +1,4 @@
+#!/bin/sh
+# echo the invoked command
+set -x
+@original_strip@ @strip_arguments@ "$@"

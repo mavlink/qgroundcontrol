@@ -1,0 +1,14 @@
+#ifndef QT_QTEXAMPLESASSETDOWNLOADER_MODULE_H
+#define QT_QTEXAMPLESASSETDOWNLOADER_MODULE_H
+#include <QtExamplesAssetDownloader/QtExamplesAssetDownloaderDepends>
+#include "assetdownloader.h"
+#include "barrier.h"
+#include "concurrentcall.h"
+#include "conditional.h"
+#include "networkquery.h"
+#include "qprocesstask.h"
+#include "qtexamplesassetdownloaderversion.h"
+#include "tasktree.h"
+#include "tasktreerunner.h"
+#include "tcpsocket.h"
+#endif

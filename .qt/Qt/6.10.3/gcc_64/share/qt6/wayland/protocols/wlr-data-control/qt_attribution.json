@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wlr-data-control-unstable-v1-protocol",
+        "Name": "Wlr Data Control Unstable V1 Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin",
+        "Files": "wlr-data-control-unstable-v1.xml",
+
+        "Description": "This protocol allows a privileged client to control data devices.",
+        "Homepage": "https://gitlab.freedesktop.org/wlroots/wlr-protocols/",
+        "Version": "2",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wlroots/wlr-protocols/-/raw/master/unstable/wlr-data-control-unstable-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2018 Simon Ser\nCopyright © 2019 Ivan Molodetskikht"
+    }
+]

@@ -1,0 +1,566 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "Universal"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickUniversalStyle"
+                    },
+                    {
+                        "name": "QML.Creatable",
+                        "value": "false"
+                    },
+                    {
+                        "name": "QML.UncreatableReason",
+                        "value": ""
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "512"
+                    }
+                ],
+                "className": "QQuickUniversalStyle",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 71,
+                        "name": "Theme",
+                        "values": [
+                            "Light",
+                            "Dark",
+                            "System"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 80,
+                        "name": "Color",
+                        "values": [
+                            "Lime",
+                            "Green",
+                            "Emerald",
+                            "Teal",
+                            "Cyan",
+                            "Cobalt",
+                            "Indigo",
+                            "Violet",
+                            "Pink",
+                            "Magenta",
+                            "Crimson",
+                            "Red",
+                            "Orange",
+                            "Amber",
+                            "Yellow",
+                            "Brown",
+                            "Olive",
+                            "Steel",
+                            "Mauve",
+                            "Taupe"
+                        ]
+                    }
+                ],
+                "lineNumber": 28,
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "color",
+                                "type": "Color"
+                            }
+                        ],
+                        "index": 5,
+                        "isConst": true,
+                        "lineNumber": 122,
+                        "name": "color",
+                        "returnType": "QColor"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 31,
+                        "name": "theme",
+                        "notify": "themeChanged",
+                        "read": "theme",
+                        "required": false,
+                        "reset": "resetTheme",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Theme",
+                        "user": false,
+                        "write": "setTheme"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 32,
+                        "name": "accent",
+                        "notify": "accentChanged",
+                        "read": "accent",
+                        "required": false,
+                        "reset": "resetAccent",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariant",
+                        "user": false,
+                        "write": "setAccent"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 33,
+                        "name": "foreground",
+                        "notify": "foregroundChanged",
+                        "read": "foreground",
+                        "required": false,
+                        "reset": "resetForeground",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariant",
+                        "user": false,
+                        "write": "setForeground"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 34,
+                        "name": "background",
+                        "notify": "backgroundChanged",
+                        "read": "background",
+                        "required": false,
+                        "reset": "resetBackground",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariant",
+                        "user": false,
+                        "write": "setBackground"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 36,
+                        "name": "altHighColor",
+                        "notify": "paletteChanged",
+                        "read": "altHighColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 37,
+                        "name": "altLowColor",
+                        "notify": "paletteChanged",
+                        "read": "altLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 38,
+                        "name": "altMediumColor",
+                        "notify": "paletteChanged",
+                        "read": "altMediumColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 39,
+                        "name": "altMediumHighColor",
+                        "notify": "paletteChanged",
+                        "read": "altMediumHighColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 40,
+                        "name": "altMediumLowColor",
+                        "notify": "paletteChanged",
+                        "read": "altMediumLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 41,
+                        "name": "baseHighColor",
+                        "notify": "paletteChanged",
+                        "read": "baseHighColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 10,
+                        "lineNumber": 42,
+                        "name": "baseLowColor",
+                        "notify": "paletteChanged",
+                        "read": "baseLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 11,
+                        "lineNumber": 43,
+                        "name": "baseMediumColor",
+                        "notify": "paletteChanged",
+                        "read": "baseMediumColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 12,
+                        "lineNumber": 44,
+                        "name": "baseMediumHighColor",
+                        "notify": "paletteChanged",
+                        "read": "baseMediumHighColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 13,
+                        "lineNumber": 45,
+                        "name": "baseMediumLowColor",
+                        "notify": "paletteChanged",
+                        "read": "baseMediumLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 14,
+                        "lineNumber": 46,
+                        "name": "chromeAltLowColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeAltLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 15,
+                        "lineNumber": 47,
+                        "name": "chromeBlackHighColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeBlackHighColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 16,
+                        "lineNumber": 48,
+                        "name": "chromeBlackLowColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeBlackLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 17,
+                        "lineNumber": 49,
+                        "name": "chromeBlackMediumLowColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeBlackMediumLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 18,
+                        "lineNumber": 50,
+                        "name": "chromeBlackMediumColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeBlackMediumColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 19,
+                        "lineNumber": 51,
+                        "name": "chromeDisabledHighColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeDisabledHighColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 20,
+                        "lineNumber": 52,
+                        "name": "chromeDisabledLowColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeDisabledLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 21,
+                        "lineNumber": 53,
+                        "name": "chromeHighColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeHighColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 22,
+                        "lineNumber": 54,
+                        "name": "chromeLowColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 23,
+                        "lineNumber": 55,
+                        "name": "chromeMediumColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeMediumColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 24,
+                        "lineNumber": 56,
+                        "name": "chromeMediumLowColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeMediumLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 25,
+                        "lineNumber": 57,
+                        "name": "chromeWhiteColor",
+                        "notify": "paletteChanged",
+                        "read": "chromeWhiteColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 26,
+                        "lineNumber": 58,
+                        "name": "listLowColor",
+                        "notify": "paletteChanged",
+                        "read": "listLowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 27,
+                        "lineNumber": 59,
+                        "name": "listMediumColor",
+                        "notify": "paletteChanged",
+                        "read": "listMediumColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QQuickUniversalStyle",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 181,
+                        "name": "themeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 182,
+                        "name": "accentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 183,
+                        "name": "foregroundChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 184,
+                        "name": "backgroundChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 185,
+                        "name": "paletteChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickAttachedPropertyPropagator"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickuniversalstyle_p.h",
+        "outputRevision": 69
+    }
+]

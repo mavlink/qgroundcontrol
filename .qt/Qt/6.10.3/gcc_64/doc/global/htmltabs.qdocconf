@@ -1,0 +1,65 @@
+#Macros for HTML tabs
+#Usage:
+#\tab {name}{tab-id}{title}{checked}
+#\tabcontent {tab-id}
+# content
+#\endtabcontent
+
+# Ensure that the {name} is unique for the group.
+# i.e A group of tabs can have the same name, whereas
+# {tab-id} should be unique. In addition, the argument
+# for \tabcontent macro should match the {tab-id} for the
+# corresponding \tab.
+
+# The {checked} argument ensures that the tab is selected
+# by default when the HTML page is loaded. For the other
+# tabs that are not selected, pass an empty argument {}.
+#
+# Note that these macros work with the online template and
+# DocBook only.
+#
+# Example:
+# \if defined(onlinedocs)
+#   \tab {build-qt-app}{tab-cmake}{CMake}{checked}
+#   \tab {build-qt-app}{tab-qmake}{qmake}{}
+#   \tabcontent {tab-cmake}
+# \else
+#   \section1 Using CMake
+# \endif
+#   CMake-specific instructions go here
+# \if defined(onlinedocs)
+#   \endtabcontent
+#   \tabcontent {tab-qmake}
+# \else
+#   \section1 Using qmake
+# \endif
+#   qmake-specific instructions go here
+# \if defined(onlinedocs)
+#   \endtabcontent
+# \endif
+
+macro.tab.HTML = "<input translate=\"no\" type=\"radio\" name=\"tabs_\1\" id=\"\2\" \4/>\n<label for=\"\2\">\3</label>\n<style translate=\"no\">#\2:checked ~ .\2{display: block;}</style>\n"
+macro.tabcontent.HTML = "<div class=\"tabcontent \1\">\n"
+macro.endtabcontent.HTML = "</div>\n"
+
+macro.tab.DocBook = "<db:bridgehead xml:id="\2" renderas="sect5" role="tabbed \4 tab-group_\1" xlink:href="#\2_contents">\3</db:bridgehead>"
+macro.tabcontent.DocBook = "<db:sidebar xml:id="\1_contents">"
+macro.endtabcontent.DocBook = "</db:sidebar>"
+
+HTML.extraimages += template/style/htmltabs.css
+
+HTML.headerstyles += \
+    "  <link rel=\"stylesheet\" type=\"text/css\" href=\"images/htmltabs.css\" />\n"
+
+HTML.headerscripts += \
+    "  <script type=\"text/javascript\">\n" \
+    " \$(document).ready(function(){\n" \
+    "   \$(\"input[type=radio]\").on(\"click\", function() {\n" \
+    "   var lbl = \$(this).next().text();\n" \
+    "   \$(\"input[type=radio]:not(checked)\").filter(function() {\n" \
+    "     if (\$(this).next().text() == lbl)\n" \
+    "         \$(this).prop(\"checked\", true);\n" \
+    "   });\n" \
+    "   });\n" \
+    " });\n" \
+    "  </script>\n"

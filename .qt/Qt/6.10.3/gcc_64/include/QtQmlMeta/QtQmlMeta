@@ -1,0 +1,5 @@
+#ifndef QT_QTQMLMETA_MODULE_H
+#define QT_QTQMLMETA_MODULE_H
+#include <QtQmlMeta/QtQmlMetaDepends>
+#include "qtqmlmetaversion.h"
+#endif

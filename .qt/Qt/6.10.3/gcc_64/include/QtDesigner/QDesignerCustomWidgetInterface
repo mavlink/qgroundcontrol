@@ -1,0 +1,9 @@
+#ifndef DEPRECATED_HEADER_QtUiPlugin_QDesignerCustomWidgetInterface
+#define DEPRECATED_HEADER_QtUiPlugin_QDesignerCustomWidgetInterface
+#if defined(__GNUC__)
+#  warning Header <QtDesigner/QDesignerCustomWidgetInterface> is deprecated. Please include <QtUiPlugin/customwidget.h> instead.
+#elif defined(_MSC_VER)
+#  pragma message ("Header <QtDesigner/QDesignerCustomWidgetInterface> is deprecated. Please include <QtUiPlugin/customwidget.h> instead.")
+#endif
+#include <QtUiPlugin/customwidget.h>
+#endif

@@ -1,0 +1,65 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QEglFSCursorDeviceListener",
+                "lineNumber": 34,
+                "object": true,
+                "qualifiedClassName": "QEglFSCursorDeviceListener",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "type",
+                                "type": "QInputDeviceManager::DeviceType"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 43,
+                        "name": "onDeviceListChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "QEglFSCursor",
+                "lineNumber": 60,
+                "object": true,
+                "qualifiedClassName": "QEglFSCursor",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPlatformCursor"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qeglfscursor_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QEglFSDeviceIntegrationPlugin",
+                "lineNumber": 82,
+                "object": true,
+                "qualifiedClassName": "QEglFSDeviceIntegrationPlugin",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qeglfsdeviceintegration_p.h",
+        "outputRevision": 69
+    }
+]

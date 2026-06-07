@@ -1,0 +1,9 @@
+version = 1
+
+[[annotations]]
+path = "fullscreen-shell-unstable-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = ["Copyright 2016 Yong Bakos",
+                          "Copyright 2015 Jason Ekstrand",
+                          "Copyright 2015 Jonas Ådahl"]
+SPDX-License-Identifier = "MIT"

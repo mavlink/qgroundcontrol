@@ -1,0 +1,64 @@
+// Copyright (C) 2022 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+//! [using qt module]
+
+    \section1 Using the Module
+
+    Using a Qt module requires linking against the module library, either
+    directly or through other dependencies. Several build tools have dedicated
+    support for this, including \l{CMake Documentation}{CMake} and
+    \l{qmake}.
+
+    \section2 Building with CMake
+
+    Use the \c{find_package()} command to locate the needed module components in
+    the \c{Qt6} package:
+
+//! [using qt module]
+
+//! [using the c++ api]
+    Using a Qt module's C++ API requires linking against the module library,
+    either directly or through other dependencies. Several build tools have
+    dedicated support for this, including \l{CMake Documentation}{CMake} and
+    \l{qmake}.
+//! [using the c++ api]
+
+//! [using the qml api]
+    The QML types of the module are available through the \c \1 import. To use
+    the types, add the following import statement to your .qml file:
+
+    \qml
+    import \1
+    \endqml
+//! [using the qml api]
+
+//! [building with qmake]
+
+    \section2 Building with qmake
+
+    To configure the module for building with qmake, add the module as a value
+    of the \c QT variable in the project's .pro file:
+
+//! [building with qmake]
+
+//! [building_with_qmake]
+    To configure the module for building with qmake, add the module as a value
+    of the \c QT variable in the project's .pro file:
+
+    \code
+    QT += \1
+    \endcode
+//! [building_with_qmake]
+
+//! [building with cmake]
+    Use the \c {find_package()} command to locate the needed module component
+    in the \c {Qt6} package:
+
+    \code
+    find_package(Qt6 REQUIRED COMPONENTS \1)
+    target_link_libraries(mytarget PRIVATE Qt6::\1)
+    \endcode
+
+    For more details, see the \l {Build with CMake} overview.
+//! [building with cmake]

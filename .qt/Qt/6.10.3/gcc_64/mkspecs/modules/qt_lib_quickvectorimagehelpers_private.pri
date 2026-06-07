@@ -1,0 +1,11 @@
+QT.quickvectorimagehelpers_private.VERSION = 6.10.3
+QT.quickvectorimagehelpers_private.name = QtQuickVectorImageHelpers
+QT.quickvectorimagehelpers_private.module =
+QT.quickvectorimagehelpers_private.libs = $$QT_MODULE_LIB_BASE
+QT.quickvectorimagehelpers_private.includes = $$QT_MODULE_INCLUDE_BASE/QtQuickVectorImageHelpers/6.10.3 $$QT_MODULE_INCLUDE_BASE/QtQuickVectorImageHelpers/6.10.3/QtQuickVectorImageHelpers
+QT.quickvectorimagehelpers_private.frameworks = 
+QT.quickvectorimagehelpers_private.depends = quickvectorimagehelpers
+QT.quickvectorimagehelpers_private.uses = 
+QT.quickvectorimagehelpers_private.module_config = v2 internal_module
+QT.quickvectorimagehelpers_private.enabled_features = 
+QT.quickvectorimagehelpers_private.disabled_features = 

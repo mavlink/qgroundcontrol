@@ -1,0 +1,20 @@
+#ifndef QT_QTOPENGL_MODULE_H
+#define QT_QTOPENGL_MODULE_H
+#include <QtOpenGL/QtOpenGLDepends>
+#include "qtopenglglobal.h"
+#include "qopenglbuffer.h"
+#include "qopengldebug.h"
+#include "qopenglframebufferobject.h"
+#include "qopenglpaintdevice.h"
+#include "qopenglpixeltransferoptions.h"
+#include "qopenglshaderprogram.h"
+#include "qopengltexture.h"
+#include "qopengltextureblitter.h"
+#include "qopengltimerquery.h"
+#include "qopenglversionfunctions.h"
+#include "qopenglversionfunctionsfactory.h"
+#include "qopenglversionprofile.h"
+#include "qopenglvertexarrayobject.h"
+#include "qopenglwindow.h"
+#include "qtopenglversion.h"
+#endif

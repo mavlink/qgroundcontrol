@@ -1,0 +1,5 @@
+#ifndef QT_QTWLSHELLINTEGRATION_MODULE_H
+#define QT_QTWLSHELLINTEGRATION_MODULE_H
+#include <QtWlShellIntegration/QtWlShellIntegrationDepends>
+#include "qtwlshellintegrationversion.h"
+#endif

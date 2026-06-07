@@ -1,0 +1,13 @@
+prefix=/home/runner/work/qgroundcontrol/qgroundcontrol/.qt/Qt/6.10.3/gcc_64
+exec_prefix=${prefix}
+bindir=${prefix}/bin
+libexecdir=${prefix}/libexec
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: Qt6 QmlLocalStorage
+Description: Qt QmlLocalStorage module
+Version: 6.10.3
+Libs: -L${libdir} -lQt6QmlLocalStorage
+Cflags: -I${includedir}/QtQmlLocalStorage -I${includedir} -DQT_QMLLOCALSTORAGE_LIB
+Requires: Qt6Sql

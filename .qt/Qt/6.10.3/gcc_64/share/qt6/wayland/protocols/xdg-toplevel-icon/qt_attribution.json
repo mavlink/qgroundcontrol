@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-xdg-toplevel-icon-protocol",
+        "Name": "Wayland xdg-toplevel-icon Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor API, and the Qt Wayland platform plugin.",
+        "Files": "xdg-toplevel-icon-v1.xml",
+
+        "Description": "The xdg-toplevel-icon protocol allows a compositor to announce support for window icons.",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "version 1",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.37/staging/xdg-toplevel-icon/xdg-toplevel-icon-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2024 Matthias Klumpp 2024 David Edmundson"
+    }
+]

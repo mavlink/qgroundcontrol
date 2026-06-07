@@ -1,0 +1,45 @@
+From cbda7ce74d74539ce0baef4a36198081dfb0265c Mon Sep 17 00:00:00 2001
+From: Marc Mutz <marc.mutz@qt.io>
+Date: Fri, 14 Mar 2025 18:29:20 +0100
+Subject: [PATCH] ECMEnableSanitizers.cmake: fix GCC's "note: variable tracking
+ size limit exceeded" when using asan
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Set the max-vartrack-size parameter to 0 (= unlimited) to avoid GCC's
+"note: variable tracking size limit exceeded with
+-fvar-tracking-assignments, retrying without" message you get when you
+compile with asan sometimes.
+
+This is reported¹ to speed up compilation, not slow it down.
+
+¹ https://stackoverflow.com/a/75704837/134841
+---
+ modules/ECMEnableSanitizers.cmake | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/modules/ECMEnableSanitizers.cmake b/modules/ECMEnableSanitizers.cmake
+index 07db1c80..45236e6d 100644
+--- a/modules/ECMEnableSanitizers.cmake
++++ b/modules/ECMEnableSanitizers.cmake
+@@ -117,6 +117,16 @@ macro (enable_sanitizer_flags sanitize_option)
+             set(XSAN_COMPILE_FLAGS "-fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls")
+             set(XSAN_LINKER_FLAGS "asan")
+         endif()
++        if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
++	    # fixes "note: variable tracking size limit exceeded with
++	    # -fvar-tracking-assignments, retrying without" (which is
++	    # another way of saying "I'll go ahead and compile this
++	    # thing _twice_") by making it unlimited
++	    # Reference:
++	    #  https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
++	    #  -> max-vartrack-size
++	    string(APPEND XSAN_COMPILE_FLAGS " --param=max-vartrack-size=0")
++	endif ()
+     elseif (${sanitize_option} MATCHES "thread")
+         check_compiler_version("4.8" "3.1" "99.99")
+         set(XSAN_COMPILE_FLAGS "-fsanitize=thread")
+-- 
+2.25.1
+

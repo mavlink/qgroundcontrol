@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-eglstream-controller",
+        "Name": "Wayland EGLStream Controller Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor",
+        "Files": "wl-eglstream-controller.xml",
+
+        "Description": "Allows clients to request that the compositor creates its EGLStream.",
+        "Homepage": "https://github.com/NVIDIA/egl-wayland",
+        "Version": "1.1.1",
+        "DownloadLocation": "https://raw.githubusercontent.com/NVIDIA/egl-wayland/1.1.1/wayland-eglstream/wayland-eglstream-controller.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved."
+     }
+]

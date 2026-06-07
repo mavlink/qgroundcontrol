@@ -1,0 +1,5 @@
+#ifndef QT_QTLABSPLATFORM_MODULE_H
+#define QT_QTLABSPLATFORM_MODULE_H
+#include <QtLabsPlatform/QtLabsPlatformDepends>
+#include "qtlabsplatformversion.h"
+#endif

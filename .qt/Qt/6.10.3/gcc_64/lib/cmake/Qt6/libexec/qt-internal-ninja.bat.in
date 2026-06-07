@@ -1,0 +1,3 @@
+:: Make sure we don't echo, because CMake uses the output to parse out ninja's version
+@echo off
+@original_ninja@ @ninja_arguments@ %*

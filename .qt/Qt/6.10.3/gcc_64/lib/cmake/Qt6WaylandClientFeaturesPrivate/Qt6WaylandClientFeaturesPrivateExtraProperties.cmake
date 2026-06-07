@@ -1,0 +1,8 @@
+
+set_property(TARGET Qt6::WaylandClientFeaturesPrivate PROPERTY INTERFACE_QT_ENABLED_PUBLIC_FEATURES "")
+set_property(TARGET Qt6::WaylandClientFeaturesPrivate PROPERTY INTERFACE_QT_DISABLED_PUBLIC_FEATURES "")
+set_property(TARGET Qt6::WaylandClientFeaturesPrivate PROPERTY INTERFACE_QT_ENABLED_PRIVATE_FEATURES "wayland_client_ivi_shell;wayland_client_qt_shell;wayland_decoration_adwaita")
+set_property(TARGET Qt6::WaylandClientFeaturesPrivate PROPERTY INTERFACE_QT_DISABLED_PRIVATE_FEATURES "")
+set_property(TARGET Qt6::WaylandClientFeaturesPrivate PROPERTY INTERFACE_QT_QMAKE_PUBLIC_CONFIG "")
+set_property(TARGET Qt6::WaylandClientFeaturesPrivate PROPERTY INTERFACE_QT_QMAKE_PRIVATE_CONFIG "")
+set_property(TARGET Qt6::WaylandClientFeaturesPrivate PROPERTY INTERFACE_QT_QMAKE_PUBLIC_QT_CONFIG "")

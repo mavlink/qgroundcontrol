@@ -1,0 +1,34 @@
+versionsym              = QT_VERSION_STR
+
+defines                += QT_GUI_LIB \
+                          QT_WIDGETS_LIB \
+                          QT_KEYPAD_NAVIGATION
+
+excludefiles += \
+                "*_posix.cpp" \
+                "*_android.cpp" \
+                "*_win.cpp" \
+                "*_icu.cpp" \
+                "*_msvc.cpp" \
+                "*_wince.cpp" \
+                "*_winrt.cpp" \
+                "*_mac.cpp" \
+                "*_macx.cpp" \
+                "*_unix.cpp" \
+                "*_udev.cpp" \
+                "*_vxworks.cpp" \
+                "*_darwin.cpp"
+
+# Convenience macros for specifying C++ type ordering in \class documentation
+#
+#    Usage: \stronglyordered
+#           \stronglyorderedwith {Type1 [Type2 .. TypeN]}
+
+macro.stronglyordered           = "\\compares strong"
+macro.stronglyorderedwith       = "\\compareswith strong \1\n\\endcompareswith"
+macro.weaklyordered             = "\\compares weak"
+macro.weaklyorderedwith         = "\\compareswith weak \1\n\\endcompareswith"
+macro.partiallyordered          = "\\compares partial"
+macro.partiallyorderedwith      = "\\compareswith partial \1\n\\endcompareswith"
+macro.equalitycomparable        = "\\compares equality"
+macro.equalitycomparablewith    = "\\compareswith equality \1\n\\endcompareswith"

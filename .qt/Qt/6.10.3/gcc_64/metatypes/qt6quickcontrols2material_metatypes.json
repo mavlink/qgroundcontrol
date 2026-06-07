@@ -1,0 +1,1373 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "Material"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickMaterialStyle"
+                    },
+                    {
+                        "name": "QML.Creatable",
+                        "value": "false"
+                    },
+                    {
+                        "name": "QML.UncreatableReason",
+                        "value": ""
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "512"
+                    }
+                ],
+                "className": "QQuickMaterialStyle",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 107,
+                        "name": "Theme",
+                        "values": [
+                            "Light",
+                            "Dark",
+                            "System"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 113,
+                        "name": "Variant",
+                        "values": [
+                            "Normal",
+                            "Dense"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 118,
+                        "name": "Color",
+                        "values": [
+                            "Red",
+                            "Pink",
+                            "Purple",
+                            "DeepPurple",
+                            "Indigo",
+                            "Blue",
+                            "LightBlue",
+                            "Cyan",
+                            "Teal",
+                            "Green",
+                            "LightGreen",
+                            "Lime",
+                            "Yellow",
+                            "Amber",
+                            "Orange",
+                            "DeepOrange",
+                            "Brown",
+                            "Grey",
+                            "BlueGrey"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 140,
+                        "name": "Shade",
+                        "values": [
+                            "Shade50",
+                            "Shade100",
+                            "Shade200",
+                            "Shade300",
+                            "Shade400",
+                            "Shade500",
+                            "Shade600",
+                            "Shade700",
+                            "Shade800",
+                            "Shade900",
+                            "ShadeA100",
+                            "ShadeA200",
+                            "ShadeA400",
+                            "ShadeA700"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 157,
+                        "name": "RoundedScale",
+                        "values": [
+                            "NotRounded",
+                            "ExtraSmallScale",
+                            "SmallScale",
+                            "MediumScale",
+                            "LargeScale",
+                            "ExtraLargeScale",
+                            "FullScale"
+                        ]
+                    },
+                    {
+                        "isClass": true,
+                        "isFlag": false,
+                        "lineNumber": 167,
+                        "name": "ContainerStyle",
+                        "values": [
+                            "Filled",
+                            "Outlined"
+                        ]
+                    }
+                ],
+                "lineNumber": 26,
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "theme",
+                                "type": "Theme"
+                            },
+                            {
+                                "name": "background",
+                                "type": "QVariant"
+                            },
+                            {
+                                "name": "accent",
+                                "type": "QVariant"
+                            },
+                            {
+                                "name": "enabled",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "flat",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "highlighted",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "checked",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 14,
+                        "isConst": true,
+                        "lineNumber": 243,
+                        "name": "buttonColor",
+                        "returnType": "QColor"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "color",
+                                "type": "Color"
+                            },
+                            {
+                                "name": "shade",
+                                "type": "Shade"
+                            }
+                        ],
+                        "index": 15,
+                        "isConst": true,
+                        "lineNumber": 273,
+                        "name": "color",
+                        "returnType": "QColor"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "color",
+                                "type": "Color"
+                            }
+                        ],
+                        "index": 16,
+                        "isCloned": true,
+                        "isConst": true,
+                        "lineNumber": 273,
+                        "name": "color",
+                        "returnType": "QColor"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "color",
+                                "type": "QColor"
+                            },
+                            {
+                                "name": "shade",
+                                "type": "Shade"
+                            }
+                        ],
+                        "index": 17,
+                        "isConst": true,
+                        "lineNumber": 274,
+                        "name": "shade",
+                        "returnType": "QColor"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "flat",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "hasIcon",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 18,
+                        "isConst": true,
+                        "lineNumber": 278,
+                        "name": "buttonLeftPadding",
+                        "returnType": "int"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "flat",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "hasIcon",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "hasText",
+                                "type": "bool"
+                            }
+                        ],
+                        "index": 19,
+                        "isConst": true,
+                        "lineNumber": 279,
+                        "name": "buttonRightPadding",
+                        "returnType": "int"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 29,
+                        "name": "theme",
+                        "notify": "themeChanged",
+                        "read": "theme",
+                        "required": false,
+                        "reset": "resetTheme",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Theme",
+                        "user": false,
+                        "write": "setTheme"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 30,
+                        "name": "primary",
+                        "notify": "primaryChanged",
+                        "read": "primary",
+                        "required": false,
+                        "reset": "resetPrimary",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariant",
+                        "user": false,
+                        "write": "setPrimary"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 31,
+                        "name": "accent",
+                        "notify": "accentChanged",
+                        "read": "accent",
+                        "required": false,
+                        "reset": "resetAccent",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariant",
+                        "user": false,
+                        "write": "setAccent"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 32,
+                        "name": "foreground",
+                        "notify": "foregroundChanged",
+                        "read": "foreground",
+                        "required": false,
+                        "reset": "resetForeground",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariant",
+                        "user": false,
+                        "write": "setForeground"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 33,
+                        "name": "background",
+                        "notify": "backgroundChanged",
+                        "read": "background",
+                        "required": false,
+                        "reset": "resetBackground",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariant",
+                        "user": false,
+                        "write": "setBackground"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 34,
+                        "name": "elevation",
+                        "notify": "elevationChanged",
+                        "read": "elevation",
+                        "required": false,
+                        "reset": "resetElevation",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setElevation"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 35,
+                        "name": "roundedScale",
+                        "notify": "roundedScaleChanged",
+                        "read": "roundedScale",
+                        "required": false,
+                        "reset": "resetRoundedScale",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "RoundedScale",
+                        "user": false,
+                        "write": "setRoundedScale"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 37,
+                        "name": "containerStyle",
+                        "notify": "containerStyleChanged",
+                        "read": "containerStyle",
+                        "required": false,
+                        "reset": "resetContainerStyle",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "ContainerStyle",
+                        "user": false,
+                        "write": "setContainerStyle"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 40,
+                        "name": "primaryColor",
+                        "notify": "primaryChanged",
+                        "read": "primaryColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 41,
+                        "name": "accentColor",
+                        "notify": "accentChanged",
+                        "read": "accentColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 10,
+                        "lineNumber": 42,
+                        "name": "backgroundColor",
+                        "notify": "backgroundChanged",
+                        "read": "backgroundColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 11,
+                        "lineNumber": 43,
+                        "name": "primaryTextColor",
+                        "notify": "themeChanged",
+                        "read": "primaryTextColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 12,
+                        "lineNumber": 44,
+                        "name": "primaryHighlightedTextColor",
+                        "notify": "primaryHighlightedTextColorChanged",
+                        "read": "primaryHighlightedTextColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 13,
+                        "lineNumber": 45,
+                        "name": "secondaryTextColor",
+                        "notify": "themeChanged",
+                        "read": "secondaryTextColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 14,
+                        "lineNumber": 46,
+                        "name": "hintTextColor",
+                        "notify": "themeChanged",
+                        "read": "hintTextColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 15,
+                        "lineNumber": 47,
+                        "name": "textSelectionColor",
+                        "notify": "themeOrAccentChanged",
+                        "read": "textSelectionColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 16,
+                        "lineNumber": 48,
+                        "name": "dropShadowColor",
+                        "read": "dropShadowColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 17,
+                        "lineNumber": 49,
+                        "name": "dividerColor",
+                        "notify": "themeChanged",
+                        "read": "dividerColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 18,
+                        "lineNumber": 50,
+                        "name": "iconColor",
+                        "notify": "themeChanged",
+                        "read": "iconColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 19,
+                        "lineNumber": 51,
+                        "name": "iconDisabledColor",
+                        "notify": "themeChanged",
+                        "read": "iconDisabledColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 20,
+                        "lineNumber": 52,
+                        "name": "frameColor",
+                        "notify": "themeChanged",
+                        "read": "frameColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 21,
+                        "lineNumber": 53,
+                        "name": "rippleColor",
+                        "notify": "themeChanged",
+                        "read": "rippleColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 22,
+                        "lineNumber": 54,
+                        "name": "highlightedRippleColor",
+                        "notify": "themeOrAccentChanged",
+                        "read": "highlightedRippleColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 23,
+                        "lineNumber": 55,
+                        "name": "switchUncheckedTrackColor",
+                        "notify": "themeChanged",
+                        "read": "switchUncheckedTrackColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 24,
+                        "lineNumber": 56,
+                        "name": "switchCheckedTrackColor",
+                        "notify": "themeOrAccentChanged",
+                        "read": "switchCheckedTrackColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 25,
+                        "lineNumber": 57,
+                        "name": "switchUncheckedHandleColor",
+                        "notify": "themeChanged",
+                        "read": "switchUncheckedHandleColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 26,
+                        "lineNumber": 58,
+                        "name": "switchUncheckedHoveredHandleColor",
+                        "notify": "themeChanged",
+                        "read": "switchUncheckedHoveredHandleColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 27,
+                        "lineNumber": 59,
+                        "name": "switchDisabledUncheckedTrackColor",
+                        "notify": "themeChanged",
+                        "read": "switchDisabledUncheckedTrackColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 28,
+                        "lineNumber": 60,
+                        "name": "switchDisabledCheckedTrackColor",
+                        "notify": "themeChanged",
+                        "read": "switchDisabledCheckedTrackColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 29,
+                        "lineNumber": 61,
+                        "name": "switchDisabledUncheckedTrackBorderColor",
+                        "notify": "themeChanged",
+                        "read": "switchDisabledUncheckedTrackBorderColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 30,
+                        "lineNumber": 62,
+                        "name": "switchCheckedHandleColor",
+                        "notify": "themeOrAccentChanged",
+                        "read": "switchCheckedHandleColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 31,
+                        "lineNumber": 63,
+                        "name": "switchDisabledUncheckedHandleColor",
+                        "notify": "themeChanged",
+                        "read": "switchDisabledUncheckedHandleColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 32,
+                        "lineNumber": 64,
+                        "name": "switchDisabledCheckedHandleColor",
+                        "notify": "themeChanged",
+                        "read": "switchDisabledCheckedHandleColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 33,
+                        "lineNumber": 65,
+                        "name": "switchDisabledCheckedIconColor",
+                        "notify": "themeChanged",
+                        "read": "switchDisabledCheckedIconColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 34,
+                        "lineNumber": 66,
+                        "name": "switchDisabledUncheckedIconColor",
+                        "notify": "themeChanged",
+                        "read": "switchDisabledUncheckedIconColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 35,
+                        "lineNumber": 67,
+                        "name": "scrollBarColor",
+                        "notify": "themeChanged",
+                        "read": "scrollBarColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 36,
+                        "lineNumber": 68,
+                        "name": "scrollBarHoveredColor",
+                        "notify": "themeChanged",
+                        "read": "scrollBarHoveredColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 37,
+                        "lineNumber": 69,
+                        "name": "scrollBarPressedColor",
+                        "notify": "themeChanged",
+                        "read": "scrollBarPressedColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 38,
+                        "lineNumber": 70,
+                        "name": "dialogColor",
+                        "notify": "dialogColorChanged",
+                        "read": "dialogColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 39,
+                        "lineNumber": 71,
+                        "name": "backgroundDimColor",
+                        "notify": "themeChanged",
+                        "read": "backgroundDimColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 40,
+                        "lineNumber": 72,
+                        "name": "listHighlightColor",
+                        "notify": "themeChanged",
+                        "read": "listHighlightColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 41,
+                        "lineNumber": 73,
+                        "name": "tooltipColor",
+                        "notify": "tooltipColorChanged",
+                        "read": "tooltipColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 42,
+                        "lineNumber": 74,
+                        "name": "toolBarColor",
+                        "notify": "toolBarColorChanged",
+                        "read": "toolBarColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 43,
+                        "lineNumber": 75,
+                        "name": "toolTextColor",
+                        "notify": "toolTextColorChanged",
+                        "read": "toolTextColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 44,
+                        "lineNumber": 76,
+                        "name": "spinBoxDisabledIconColor",
+                        "notify": "themeChanged",
+                        "read": "spinBoxDisabledIconColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 45,
+                        "lineNumber": 77,
+                        "name": "sliderDisabledColor",
+                        "notify": "themeChanged",
+                        "read": "sliderDisabledColor",
+                        "required": false,
+                        "revision": 527,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 46,
+                        "lineNumber": 78,
+                        "name": "textFieldFilledContainerColor",
+                        "notify": "themeChanged",
+                        "read": "textFieldFilledContainerColor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 47,
+                        "lineNumber": 80,
+                        "name": "touchTarget",
+                        "read": "touchTarget",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 48,
+                        "lineNumber": 81,
+                        "name": "buttonVerticalPadding",
+                        "read": "buttonVerticalPadding",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 49,
+                        "lineNumber": 82,
+                        "name": "buttonHeight",
+                        "read": "buttonHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 50,
+                        "lineNumber": 83,
+                        "name": "delegateHeight",
+                        "read": "delegateHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 51,
+                        "lineNumber": 84,
+                        "name": "dialogButtonBoxHeight",
+                        "read": "dialogButtonBoxHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 52,
+                        "lineNumber": 85,
+                        "name": "dialogTitleFontPixelSize",
+                        "read": "dialogTitleFontPixelSize",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 53,
+                        "lineNumber": 86,
+                        "name": "dialogRoundedScale",
+                        "read": "dialogRoundedScale",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "RoundedScale",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 54,
+                        "lineNumber": 87,
+                        "name": "frameVerticalPadding",
+                        "read": "frameVerticalPadding",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 55,
+                        "lineNumber": 88,
+                        "name": "menuItemHeight",
+                        "read": "menuItemHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 56,
+                        "lineNumber": 89,
+                        "name": "menuItemVerticalPadding",
+                        "read": "menuItemVerticalPadding",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 57,
+                        "lineNumber": 90,
+                        "name": "switchIndicatorWidth",
+                        "read": "switchIndicatorWidth",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 58,
+                        "lineNumber": 91,
+                        "name": "switchIndicatorHeight",
+                        "read": "switchIndicatorHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 59,
+                        "lineNumber": 92,
+                        "name": "switchNormalHandleHeight",
+                        "read": "switchNormalHandleHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 60,
+                        "lineNumber": 93,
+                        "name": "switchCheckedHandleHeight",
+                        "read": "switchCheckedHandleHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 61,
+                        "lineNumber": 94,
+                        "name": "switchLargestHandleHeight",
+                        "read": "switchLargestHandleHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 62,
+                        "lineNumber": 95,
+                        "name": "switchDelegateVerticalPadding",
+                        "read": "switchDelegateVerticalPadding",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 63,
+                        "lineNumber": 96,
+                        "name": "textFieldHeight",
+                        "read": "textFieldHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 64,
+                        "lineNumber": 97,
+                        "name": "textFieldHorizontalPadding",
+                        "read": "textFieldHorizontalPadding",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 65,
+                        "lineNumber": 98,
+                        "name": "textFieldVerticalPadding",
+                        "read": "textFieldVerticalPadding",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": true,
+                        "designable": true,
+                        "final": true,
+                        "index": 66,
+                        "lineNumber": 99,
+                        "name": "tooltipHeight",
+                        "read": "tooltipHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QQuickMaterialStyle",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 304,
+                        "name": "themeChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 305,
+                        "name": "primaryChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 306,
+                        "name": "accentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 307,
+                        "name": "foregroundChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 308,
+                        "name": "backgroundChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 309,
+                        "name": "elevationChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 311,
+                        "name": "themeOrAccentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 313,
+                        "name": "primaryHighlightedTextColorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 314,
+                        "name": "dialogColorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "lineNumber": 315,
+                        "name": "tooltipColorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 10,
+                        "lineNumber": 316,
+                        "name": "toolBarColorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 11,
+                        "lineNumber": 317,
+                        "name": "toolTextColorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 12,
+                        "lineNumber": 318,
+                        "name": "roundedScaleChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 13,
+                        "lineNumber": 319,
+                        "name": "containerStyleChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickAttachedPropertyPropagator"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickmaterialstyle_p.h",
+        "outputRevision": 69
+    }
+]

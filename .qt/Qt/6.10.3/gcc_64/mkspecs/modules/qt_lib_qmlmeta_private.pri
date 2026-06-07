@@ -1,0 +1,11 @@
+QT.qmlmeta_private.VERSION = 6.10.3
+QT.qmlmeta_private.name = QtQmlMeta
+QT.qmlmeta_private.module =
+QT.qmlmeta_private.libs = $$QT_MODULE_LIB_BASE
+QT.qmlmeta_private.includes = $$QT_MODULE_INCLUDE_BASE/QtQmlMeta/6.10.3 $$QT_MODULE_INCLUDE_BASE/QtQmlMeta/6.10.3/QtQmlMeta
+QT.qmlmeta_private.frameworks = 
+QT.qmlmeta_private.depends = qml_private qmlmodels_private qmlworkerscript_private qmlmeta
+QT.qmlmeta_private.uses = 
+QT.qmlmeta_private.module_config = v2 internal_module
+QT.qmlmeta_private.enabled_features = 
+QT.qmlmeta_private.disabled_features = 

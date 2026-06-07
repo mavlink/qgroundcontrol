@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "xdg-toplevel-drag-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2023 David Redondo"
+SPDX-License-Identifier = "MIT"

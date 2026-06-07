@@ -1,0 +1,73 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QOpenGLWidget",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 23,
+                        "name": "UpdateBehavior",
+                        "values": [
+                            "NoPartialUpdate",
+                            "PartialUpdate"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 29,
+                        "name": "TargetBuffer",
+                        "type": "uint8_t",
+                        "values": [
+                            "LeftBuffer",
+                            "RightBuffer"
+                        ]
+                    }
+                ],
+                "lineNumber": 17,
+                "object": true,
+                "qualifiedClassName": "QOpenGLWidget",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 63,
+                        "name": "aboutToCompose",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 64,
+                        "name": "frameSwapped",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 65,
+                        "name": "aboutToResize",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 66,
+                        "name": "resized",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QWidget"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qopenglwidget.h",
+        "outputRevision": 69
+    }
+]

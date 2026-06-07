@@ -1,0 +1,5 @@
+#ifndef QT_QTQMLTOOLINGSETTINGS_MODULE_H
+#define QT_QTQMLTOOLINGSETTINGS_MODULE_H
+#include <QtQmlToolingSettings/QtQmlToolingSettingsDepends>
+#include "qtqmltoolingsettingsversion.h"
+#endif

@@ -1,0 +1,5 @@
+#ifndef QT_QTQMLDOM_MODULE_H
+#define QT_QTQMLDOM_MODULE_H
+#include <QtQmlDom/QtQmlDomDepends>
+#include "qtqmldomversion.h"
+#endif

@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKSHAPESDESIGNHELPERS_MODULE_H
+#define QT_QTQUICKSHAPESDESIGNHELPERS_MODULE_H
+#include <QtQuickShapesDesignHelpers/QtQuickShapesDesignHelpersDepends>
+#include "qtquickshapesdesignhelpersversion.h"
+#endif

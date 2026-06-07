@@ -1,0 +1,78 @@
+// Copyright (C) 2024 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+/*!
+    \page index.html
+    \nextpage creator-how-to-install.html
+
+    \title <Qt Tool> Documentation
+
+    \raw HTML
+    <style>
+    .main-navigation table { table-layout: fixed; }
+    .main-navigation table tr:first-child { text-align: center; background: none; }
+    </style>
+    \endraw
+
+    \div {class="main-navigation"}
+    \table borderless 100%
+        \row
+            \li \inlineimage icons/installation.png
+            \li \inlineimage icons/getting-started.png
+            \li \inlineimage icons/tutorials.png
+        \row
+            \li \b {INSTALLATION}
+
+                <Short description of how to install the tool>
+
+                \l {Installation}
+            \li \b {GETTING STARTED}
+
+                <Short description of the topics in the GS section>
+
+                \l{Getting Started}
+            \li \b {TUTORIALS}
+
+                <Short description of the tutorials>
+
+                \l{Tutorials}
+    \endtable
+    \enddiv
+
+    \section1 About
+
+    <Short description of the tool>
+
+    \b {ALL TOPICS}
+
+    \raw HTML
+    <style>
+    .link-list table { table-layout: fixed; }
+    .link-list table, .link-list table tr:first-child { background: none; border: none; }
+    </style>
+    \endraw
+
+    \div {class="link-list"}
+    \table 100%
+        \row
+            \li \inlineimage icons/demo-32x32.png
+            \li \inlineimage icons/build-32x32.png
+            \li \inlineimage icons/settings-32x32.png
+        \row
+                \li <Topic category 1>
+                    \list
+                        \li <link to a topic>
+                        \li <link to a topic>
+                    \endlist
+                \li <Topic category 2>
+                        \li <link to a topic>
+                        \li <link to a topic>
+                    \endlist
+                \li <Topic category 3>
+                    \list
+                        \li <link to a topic>
+                        \li <link to a topic>
+                    \endlist
+    \endtable
+    \enddiv
+*/

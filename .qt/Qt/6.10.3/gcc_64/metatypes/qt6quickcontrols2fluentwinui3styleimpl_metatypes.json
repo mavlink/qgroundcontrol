@@ -1,0 +1,80 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QQuickFluentWinUI3FocusFrame",
+                "lineNumber": 22,
+                "object": true,
+                "qualifiedClassName": "QQuickFluentWinUI3FocusFrame",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfluentwinui3focusframe_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "FocusStroke"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1544"
+                    }
+                ],
+                "className": "QQuickFluentWinUI3FocusStroke",
+                "lineNumber": 20,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 23,
+                        "name": "color",
+                        "read": "color",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QColor",
+                        "user": false,
+                        "write": "setColor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 24,
+                        "name": "radius",
+                        "read": "radius",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setRadius"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFluentWinUI3FocusStroke",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickPaintedItem"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickfluentwinui3focusstroke_p.h",
+        "outputRevision": 69
+    }
+]

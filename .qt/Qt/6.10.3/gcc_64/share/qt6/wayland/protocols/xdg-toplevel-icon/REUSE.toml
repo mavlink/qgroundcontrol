@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "xdg-toplevel-icon-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright (C) 2024 Matthias Klumpp 2024 David Edmundson"
+SPDX-License-Identifier = "MIT"

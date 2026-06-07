@@ -1,0 +1,8 @@
+version = 1
+
+[[annotations]]
+path = "qt-text-input-method-unstable-v1.xml"
+precedence = "closest"
+comment = "License is in full text in file. Should it be changed?"
+SPDX-FileCopyrightText = "Copyright © 2020 The Qt Company Ltd."
+SPDX-License-Identifier = "MIT"

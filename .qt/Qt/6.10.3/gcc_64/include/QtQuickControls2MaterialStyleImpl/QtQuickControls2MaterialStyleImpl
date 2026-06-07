@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKCONTROLS2MATERIALSTYLEIMPL_MODULE_H
+#define QT_QTQUICKCONTROLS2MATERIALSTYLEIMPL_MODULE_H
+#include <QtQuickControls2MaterialStyleImpl/QtQuickControls2MaterialStyleImplDepends>
+#include "qtquickcontrols2materialstyleimplversion.h"
+#endif

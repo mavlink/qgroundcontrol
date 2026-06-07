@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKCONTROLS2FUSION_MODULE_H
+#define QT_QTQUICKCONTROLS2FUSION_MODULE_H
+#include <QtQuickControls2Fusion/QtQuickControls2FusionDepends>
+#include "qtquickcontrols2fusionversion.h"
+#endif

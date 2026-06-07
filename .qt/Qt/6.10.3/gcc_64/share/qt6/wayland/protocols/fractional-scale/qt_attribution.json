@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "fractional-scale-v1",
+        "Name": "Wayland Fractional Scale Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland platform plugin",
+        "Files": "fractional-scale-v1.xml",
+
+        "Description": "Send a preferred scale to different clients",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "1",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/-/raw/1.31/unstable/fractional-scale/fractional-scale-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2022 Kenny Levinsen"
+     }
+]

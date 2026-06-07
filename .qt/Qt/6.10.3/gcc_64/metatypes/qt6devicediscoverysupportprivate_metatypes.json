@@ -1,0 +1,87 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QDeviceDiscovery",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 38,
+                        "name": "QDeviceType",
+                        "values": [
+                            "Device_Unknown",
+                            "Device_Mouse",
+                            "Device_Touchpad",
+                            "Device_Touchscreen",
+                            "Device_Keyboard",
+                            "Device_DRM",
+                            "Device_DRM_PrimaryGPU",
+                            "Device_Tablet",
+                            "Device_Joystick",
+                            "Device_InputMask",
+                            "Device_VideoMask"
+                        ]
+                    }
+                ],
+                "lineNumber": 33,
+                "object": true,
+                "qualifiedClassName": "QDeviceDiscovery",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "deviceNode",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 59,
+                        "name": "deviceDetected",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "deviceNode",
+                                "type": "QString"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 60,
+                        "name": "deviceRemoved",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qdevicediscovery_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QDeviceDiscoveryStatic",
+                "lineNumber": 22,
+                "object": true,
+                "qualifiedClassName": "QDeviceDiscoveryStatic",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDeviceDiscovery"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qdevicediscovery_static_p.h",
+        "outputRevision": 69
+    }
+]

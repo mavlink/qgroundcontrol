@@ -1,0 +1,698 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QOpenGLCompositor",
+                "lineNumber": 45,
+                "object": true,
+                "qualifiedClassName": "QOpenGLCompositor",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "window",
+                                "type": "QOpenGLCompositorWindow*"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 77,
+                        "name": "topWindowChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 1,
+                        "lineNumber": 80,
+                        "name": "handleRenderAllRequest",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qopenglcompositor_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QOpenGLDebugLogger",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 125,
+                        "name": "LoggingMode",
+                        "values": [
+                            "AsynchronousLogging",
+                            "SynchronousLogging"
+                        ]
+                    }
+                ],
+                "lineNumber": 119,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 122,
+                        "name": "loggingMode",
+                        "read": "loggingMode",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "LoggingMode",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QOpenGLDebugLogger",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "debugMessage",
+                                "type": "QOpenGLDebugMessage"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 170,
+                        "name": "messageLogged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "debugMessage",
+                                "type": "QOpenGLDebugMessage"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 165,
+                        "name": "logMessage",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "loggingMode",
+                                "type": "LoggingMode"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 166,
+                        "name": "startLogging",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "isCloned": true,
+                        "lineNumber": 166,
+                        "name": "startLogging",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 167,
+                        "name": "stopLogging",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 5,
+                        "lineNumber": 175,
+                        "name": "_q_contextAboutToBeDestroyed",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qopengldebug.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QOpenGLEngineSharedShaders",
+                "gadget": true,
+                "lineNumber": 221,
+                "qualifiedClassName": "QOpenGLEngineSharedShaders"
+            },
+            {
+                "className": "QOpenGLEngineShaderManager",
+                "lineNumber": 373,
+                "object": true,
+                "qualifiedClassName": "QOpenGLEngineShaderManager",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qopenglengineshadermanager_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QOpenGLShader",
+                "lineNumber": 23,
+                "object": true,
+                "qualifiedClassName": "QOpenGLShader",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "QOpenGLShaderProgram",
+                "lineNumber": 69,
+                "object": true,
+                "qualifiedClassName": "QOpenGLShaderProgram",
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 0,
+                        "lineNumber": 268,
+                        "name": "shaderDestroyed",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qopenglshaderprogram.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QOpenGLTexture",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 25,
+                        "name": "Target",
+                        "values": [
+                            "Target1D",
+                            "Target1DArray",
+                            "Target2D",
+                            "Target2DArray",
+                            "Target3D",
+                            "TargetCubeMap",
+                            "TargetCubeMapArray",
+                            "Target2DMultisample",
+                            "Target2DMultisampleArray",
+                            "TargetRectangle",
+                            "TargetBuffer"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 40,
+                        "name": "BindingTarget",
+                        "values": [
+                            "BindingTarget1D",
+                            "BindingTarget1DArray",
+                            "BindingTarget2D",
+                            "BindingTarget2DArray",
+                            "BindingTarget3D",
+                            "BindingTargetCubeMap",
+                            "BindingTargetCubeMapArray",
+                            "BindingTarget2DMultisample",
+                            "BindingTarget2DMultisampleArray",
+                            "BindingTargetRectangle",
+                            "BindingTargetBuffer"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 55,
+                        "name": "MipMapGeneration",
+                        "values": [
+                            "GenerateMipMaps",
+                            "DontGenerateMipMaps"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 61,
+                        "name": "TextureUnitReset",
+                        "values": [
+                            "ResetTextureUnit",
+                            "DontResetTextureUnit"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 67,
+                        "name": "TextureFormat",
+                        "values": [
+                            "NoFormat",
+                            "R8_UNorm",
+                            "RG8_UNorm",
+                            "RGB8_UNorm",
+                            "RGBA8_UNorm",
+                            "R16_UNorm",
+                            "RG16_UNorm",
+                            "RGB16_UNorm",
+                            "RGBA16_UNorm",
+                            "R8_SNorm",
+                            "RG8_SNorm",
+                            "RGB8_SNorm",
+                            "RGBA8_SNorm",
+                            "R16_SNorm",
+                            "RG16_SNorm",
+                            "RGB16_SNorm",
+                            "RGBA16_SNorm",
+                            "R8U",
+                            "RG8U",
+                            "RGB8U",
+                            "RGBA8U",
+                            "R16U",
+                            "RG16U",
+                            "RGB16U",
+                            "RGBA16U",
+                            "R32U",
+                            "RG32U",
+                            "RGB32U",
+                            "RGBA32U",
+                            "R8I",
+                            "RG8I",
+                            "RGB8I",
+                            "RGBA8I",
+                            "R16I",
+                            "RG16I",
+                            "RGB16I",
+                            "RGBA16I",
+                            "R32I",
+                            "RG32I",
+                            "RGB32I",
+                            "RGBA32I",
+                            "R16F",
+                            "RG16F",
+                            "RGB16F",
+                            "RGBA16F",
+                            "R32F",
+                            "RG32F",
+                            "RGB32F",
+                            "RGBA32F",
+                            "RGB9E5",
+                            "RG11B10F",
+                            "RG3B2",
+                            "R5G6B5",
+                            "RGB5A1",
+                            "RGBA4",
+                            "RGB10A2",
+                            "D16",
+                            "D24",
+                            "D24S8",
+                            "D32",
+                            "D32F",
+                            "D32FS8X24",
+                            "S8",
+                            "RGB_DXT1",
+                            "RGBA_DXT1",
+                            "RGBA_DXT3",
+                            "RGBA_DXT5",
+                            "R_ATI1N_UNorm",
+                            "R_ATI1N_SNorm",
+                            "RG_ATI2N_UNorm",
+                            "RG_ATI2N_SNorm",
+                            "RGB_BP_UNSIGNED_FLOAT",
+                            "RGB_BP_SIGNED_FLOAT",
+                            "RGB_BP_UNorm",
+                            "R11_EAC_UNorm",
+                            "R11_EAC_SNorm",
+                            "RG11_EAC_UNorm",
+                            "RG11_EAC_SNorm",
+                            "RGB8_ETC2",
+                            "SRGB8_ETC2",
+                            "RGB8_PunchThrough_Alpha1_ETC2",
+                            "SRGB8_PunchThrough_Alpha1_ETC2",
+                            "RGBA8_ETC2_EAC",
+                            "SRGB8_Alpha8_ETC2_EAC",
+                            "RGB8_ETC1",
+                            "RGBA_ASTC_4x4",
+                            "RGBA_ASTC_5x4",
+                            "RGBA_ASTC_5x5",
+                            "RGBA_ASTC_6x5",
+                            "RGBA_ASTC_6x6",
+                            "RGBA_ASTC_8x5",
+                            "RGBA_ASTC_8x6",
+                            "RGBA_ASTC_8x8",
+                            "RGBA_ASTC_10x5",
+                            "RGBA_ASTC_10x6",
+                            "RGBA_ASTC_10x8",
+                            "RGBA_ASTC_10x10",
+                            "RGBA_ASTC_12x10",
+                            "RGBA_ASTC_12x12",
+                            "SRGB8_Alpha8_ASTC_4x4",
+                            "SRGB8_Alpha8_ASTC_5x4",
+                            "SRGB8_Alpha8_ASTC_5x5",
+                            "SRGB8_Alpha8_ASTC_6x5",
+                            "SRGB8_Alpha8_ASTC_6x6",
+                            "SRGB8_Alpha8_ASTC_8x5",
+                            "SRGB8_Alpha8_ASTC_8x6",
+                            "SRGB8_Alpha8_ASTC_8x8",
+                            "SRGB8_Alpha8_ASTC_10x5",
+                            "SRGB8_Alpha8_ASTC_10x6",
+                            "SRGB8_Alpha8_ASTC_10x8",
+                            "SRGB8_Alpha8_ASTC_10x10",
+                            "SRGB8_Alpha8_ASTC_12x10",
+                            "SRGB8_Alpha8_ASTC_12x12",
+                            "SRGB8",
+                            "SRGB8_Alpha8",
+                            "SRGB_DXT1",
+                            "SRGB_Alpha_DXT1",
+                            "SRGB_Alpha_DXT3",
+                            "SRGB_Alpha_DXT5",
+                            "SRGB_BP_UNorm",
+                            "DepthFormat",
+                            "AlphaFormat",
+                            "RGBFormat",
+                            "RGBAFormat",
+                            "LuminanceFormat",
+                            "LuminanceAlphaFormat"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 250,
+                        "name": "CubeMapFace",
+                        "values": [
+                            "CubeMapPositiveX",
+                            "CubeMapNegativeX",
+                            "CubeMapPositiveY",
+                            "CubeMapNegativeY",
+                            "CubeMapPositiveZ",
+                            "CubeMapNegativeZ"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 260,
+                        "name": "PixelFormat",
+                        "values": [
+                            "NoSourceFormat",
+                            "Red",
+                            "RG",
+                            "RGB",
+                            "BGR",
+                            "RGBA",
+                            "BGRA",
+                            "Red_Integer",
+                            "RG_Integer",
+                            "RGB_Integer",
+                            "BGR_Integer",
+                            "RGBA_Integer",
+                            "BGRA_Integer",
+                            "Stencil",
+                            "Depth",
+                            "DepthStencil",
+                            "Alpha",
+                            "Luminance",
+                            "LuminanceAlpha"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 283,
+                        "name": "PixelType",
+                        "values": [
+                            "NoPixelType",
+                            "Int8",
+                            "UInt8",
+                            "Int16",
+                            "UInt16",
+                            "Int32",
+                            "UInt32",
+                            "Float16",
+                            "Float16OES",
+                            "Float32",
+                            "UInt32_RGB9_E5",
+                            "UInt32_RG11B10F",
+                            "UInt8_RG3B2",
+                            "UInt8_RG3B2_Rev",
+                            "UInt16_RGB5A1",
+                            "UInt16_RGB5A1_Rev",
+                            "UInt16_R5G6B5",
+                            "UInt16_R5G6B5_Rev",
+                            "UInt16_RGBA4",
+                            "UInt16_RGBA4_Rev",
+                            "UInt32_RGBA8",
+                            "UInt32_RGBA8_Rev",
+                            "UInt32_RGB10A2",
+                            "UInt32_RGB10A2_Rev",
+                            "UInt32_D24S8",
+                            "Float32_D32_UInt32_S8_X24"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 313,
+                        "name": "SwizzleComponent",
+                        "values": [
+                            "SwizzleRed",
+                            "SwizzleGreen",
+                            "SwizzleBlue",
+                            "SwizzleAlpha"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 321,
+                        "name": "SwizzleValue",
+                        "values": [
+                            "RedValue",
+                            "GreenValue",
+                            "BlueValue",
+                            "AlphaValue",
+                            "ZeroValue",
+                            "OneValue"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 331,
+                        "name": "WrapMode",
+                        "values": [
+                            "Repeat",
+                            "MirroredRepeat",
+                            "ClampToEdge",
+                            "ClampToBorder"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 339,
+                        "name": "CoordinateDirection",
+                        "values": [
+                            "DirectionS",
+                            "DirectionT",
+                            "DirectionR"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 347,
+                        "name": "Feature",
+                        "values": [
+                            "ImmutableStorage",
+                            "ImmutableMultisampleStorage",
+                            "TextureRectangle",
+                            "TextureArrays",
+                            "Texture3D",
+                            "TextureMultisample",
+                            "TextureBuffer",
+                            "TextureCubeMapArrays",
+                            "Swizzle",
+                            "StencilTexturing",
+                            "AnisotropicFiltering",
+                            "NPOTTextures",
+                            "NPOTTextureRepeat",
+                            "Texture1D",
+                            "TextureComparisonOperators",
+                            "TextureMipMapLevel",
+                            "MaxFeatureFlag"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 502,
+                        "name": "DepthStencilMode",
+                        "values": [
+                            "DepthMode",
+                            "StencilMode"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 511,
+                        "name": "ComparisonFunction",
+                        "values": [
+                            "CompareLessEqual",
+                            "CompareGreaterEqual",
+                            "CompareLess",
+                            "CompareGreater",
+                            "CompareEqual",
+                            "CompareNotEqual",
+                            "CompareAlways",
+                            "CompareNever",
+                            "CommpareNotEqual"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 540,
+                        "name": "Filter",
+                        "values": [
+                            "Nearest",
+                            "Linear",
+                            "NearestMipMapNearest",
+                            "NearestMipMapLinear",
+                            "LinearMipMapNearest",
+                            "LinearMipMapLinear"
+                        ]
+                    }
+                ],
+                "gadget": true,
+                "lineNumber": 21,
+                "qualifiedClassName": "QOpenGLTexture"
+            }
+        ],
+        "inputFile": "qopengltexture.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QOpenGLTimerQuery",
+                "lineNumber": 18,
+                "object": true,
+                "qualifiedClassName": "QOpenGLTimerQuery",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "QOpenGLTimeMonitor",
+                "lineNumber": 46,
+                "object": true,
+                "qualifiedClassName": "QOpenGLTimeMonitor",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qopengltimerquery.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QOpenGLVertexArrayObject",
+                "lineNumber": 18,
+                "object": true,
+                "qualifiedClassName": "QOpenGLVertexArrayObject",
+                "slots": [
+                    {
+                        "access": "private",
+                        "index": 0,
+                        "lineNumber": 67,
+                        "name": "_q_contextAboutToBeDestroyed",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qopenglvertexarrayobject.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QOpenGLWindow",
+                "lineNumber": 19,
+                "object": true,
+                "qualifiedClassName": "QOpenGLWindow",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 49,
+                        "name": "frameSwapped",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPaintDeviceWindow"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qopenglwindow.h",
+        "outputRevision": 69
+    }
+]

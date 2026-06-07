@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-xdg-decoration-protocol",
+        "Name": "Wayland xdg-decoration Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor API, and the Qt Wayland platform plugin.",
+        "Files": "xdg-decoration-unstable-v1.xml",
+
+        "Description": "The xdg-decoration protocol allows a compositor to announce support for server-side decorations.",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "unstable v1, version 1",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2018 Simon Ser"
+    }
+]

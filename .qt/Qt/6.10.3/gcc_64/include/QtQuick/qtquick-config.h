@@ -1,0 +1,11 @@
+#ifndef QT_FEATURES_Quick_src_quick_qtquick_config_h_H
+#define QT_FEATURES_Quick_src_quick_qtquick_config_h_H
+
+#define QT_FEATURE_quick_shadereffect 1
+
+#define QT_FEATURE_quick_draganddrop 1
+
+#define QT_FEATURE_quick_pixmap_cache_threaded_download 1
+
+
+#endif // QT_FEATURES_Quick_src_quick_qtquick_config_h_H

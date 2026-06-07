@@ -1,0 +1,65 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QQuickAttachedPropertyPropagator",
+                "lineNumber": 15,
+                "object": true,
+                "qualifiedClassName": "QQuickAttachedPropertyPropagator",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickattachedpropertypropagator.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QQuickStylePlugin",
+                "lineNumber": 28,
+                "object": true,
+                "qualifiedClassName": "QQuickStylePlugin",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQmlExtensionPlugin"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickstyleplugin_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QQuickThemeChangeObserver",
+                "lineNumber": 22,
+                "object": true,
+                "qualifiedClassName": "QQuickThemeChangeObserver",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 33,
+                        "name": "paletteOrThemeChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickstyleplugin.cpp",
+        "outputRevision": 69
+    }
+]

@@ -1,0 +1,8 @@
+version = 1
+[[annotations]]
+path = ["**"]
+precedence = "closest"
+SPDX-FileCopyrightText = ["Copyright 2014 Alex Merry <alex.merry@kde.org>",
+                          "Copyright 2014 Martin Gräßlin <mgraesslin@kde.org>",
+                          "Copyright (c) 2006,2007 Laurent Montel, <montel@kde.org>"]
+SPDX-License-Identifier = "BSD-3-Clause"

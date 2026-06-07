@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKCONTROLS2FLUENTWINUI3STYLEIMPL_MODULE_H
+#define QT_QTQUICKCONTROLS2FLUENTWINUI3STYLEIMPL_MODULE_H
+#include <QtQuickControls2FluentWinUI3StyleImpl/QtQuickControls2FluentWinUI3StyleImplDepends>
+#include "qtquickcontrols2fluentwinui3styleimplversion.h"
+#endif

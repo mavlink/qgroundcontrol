@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "wl-eglstream-controller.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved."
+SPDX-License-Identifier = "MIT"

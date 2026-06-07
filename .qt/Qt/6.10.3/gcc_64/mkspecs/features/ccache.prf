@@ -1,0 +1,31 @@
+macx-xcode: return()
+
+darwin: load(sdk)
+
+launcher_prefix = ccache
+
+!isEmpty(QMAKE_CACHE_LAUNCHER_PREFIX) {
+    launcher_prefix = $$QMAKE_CACHE_LAUNCHER_PREFIX
+}
+
+precompile_header:contains(launcher_prefix, ccache):!equals(QMAKE_HOST.os, Windows) {
+    CCACHE_SLOPPINESS += pch_defines time_macros
+
+    launcher_prefix = \
+        CCACHE_SLOPPINESS=\"$$join(CCACHE_SLOPPINESS, ',')\$${CCACHE_SLOPPINESS+,\$$CCACHE_SLOPPINESS}\" \
+        # Make sure we build sources directly, not from their preprocessed version,
+        # otherwise precompiled headers will not be used during cache misses.
+        CCACHE_CPP2=true \
+        $$launcher_prefix
+}
+
+# sccache doesn't recognize that link.exe is a linker, not a compiler, so when targeting msvc
+# only wrap the compiler tools.
+msvc {
+   tools = QMAKE_CC QMAKE_CXX
+} else {
+   tools = QMAKE_CC QMAKE_CXX QMAKE_LINK QMAKE_LINK_SHLIB QMAKE_LINK_C
+}
+
+for(tool, tools): \
+    $$tool = $$launcher_prefix $$eval($$tool)

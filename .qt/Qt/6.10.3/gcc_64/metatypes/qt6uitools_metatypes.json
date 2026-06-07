@@ -1,0 +1,310 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QUiLoader",
+                "lineNumber": 22,
+                "object": true,
+                "qualifiedClassName": "QUiLoader",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "quiloader.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QAbstractFormBuilderGadget",
+                "lineNumber": 47,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 50,
+                        "name": "itemFlags",
+                        "read": "fakeItemFlags",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Qt::ItemFlags",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 51,
+                        "name": "checkState",
+                        "read": "fakeCheckState",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Qt::CheckState",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 52,
+                        "name": "textAlignment",
+                        "read": "fakeAlignment",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Qt::Alignment",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 53,
+                        "name": "orientation",
+                        "read": "fakeOrientation",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Qt::Orientation",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 54,
+                        "name": "sizeType",
+                        "read": "fakeSizeType",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSizePolicy::Policy",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 55,
+                        "name": "colorRole",
+                        "read": "fakeColorRole",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QPalette::ColorRole",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "lineNumber": 56,
+                        "name": "colorGroup",
+                        "read": "fakeColorGroup",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QPalette::ColorGroup",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "lineNumber": 57,
+                        "name": "styleStrategy",
+                        "read": "fakeStyleStrategy",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QFont::StyleStrategy",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 8,
+                        "lineNumber": 58,
+                        "name": "hintingPreference",
+                        "read": "fakeHintingPreference",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QFont::HintingPreference",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 9,
+                        "lineNumber": 59,
+                        "name": "fontWeight",
+                        "read": "fakeFontWeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QFont::Weight",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 10,
+                        "lineNumber": 60,
+                        "name": "cursorShape",
+                        "read": "fakeCursorShape",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Qt::CursorShape",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 11,
+                        "lineNumber": 61,
+                        "name": "brushStyle",
+                        "read": "fakeBrushStyle",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Qt::BrushStyle",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 12,
+                        "lineNumber": 62,
+                        "name": "toolBarArea",
+                        "read": "fakeToolBarArea",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Qt::ToolBarArea",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 13,
+                        "lineNumber": 63,
+                        "name": "gradientType",
+                        "read": "fakeGradientType",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QGradient::Type",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 14,
+                        "lineNumber": 64,
+                        "name": "gradientSpread",
+                        "read": "fakeGradientSpread",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QGradient::Spread",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 15,
+                        "lineNumber": 65,
+                        "name": "gradientCoordinate",
+                        "read": "fakeGradientCoordinate",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QGradient::CoordinateMode",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 16,
+                        "lineNumber": 66,
+                        "name": "language",
+                        "read": "fakeLanguage",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QLocale::Language",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 17,
+                        "lineNumber": 67,
+                        "name": "country",
+                        "read": "fakeCountry",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QLocale::Country",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QFormInternal::QAbstractFormBuilderGadget",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QWidget"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "properties_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "TranslationWatcher",
+                "lineNumber": 203,
+                "object": true,
+                "qualifiedClassName": "QFormInternal::TranslationWatcher",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "quiloader.cpp",
+        "outputRevision": 69
+    }
+]

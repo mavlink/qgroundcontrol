@@ -1,0 +1,70 @@
+# Macros for documenting repetitive aspects of C++ classes
+
+# Sort groups alphabetically
+
+#
+# Macros for swap()
+#
+
+# \memberswap{what}
+#    what - a prose version of the type of object (e.g. "string", "collator", "pen")
+#    The function's argument name must be \a other.
+macro.memberswap = \
+    "\n\n" \
+    "Swaps this \1 with \\a{other}. This operation is very fast and never fails." \
+    "\n\n"
+
+#
+# Macros for qHash()
+#
+
+macro.implqhashT = \
+    "\n\n" \
+    "Type \\c{\1} must be supported by qHash()." \
+    "\n\n"
+
+macro.implqhashTS = \
+    "\n\n" \
+    "Types \\c{\1} and \\c{\2} must be supported by qHash()." \
+    "\n\n"
+
+# \qhash{QClass} - generates qHash() doc for (hidden-friend) qHash() overloads
+# \qhashT{QClass}{T}
+# \qhashTS{QClass}{T}{S}
+#   QClass - the class being hashed (without decoration such as \c const, \c{&} or \c{<T>})
+#   T      - the first template argument's name, if any
+#   S      - the second template argument's name, if any
+#   The function's argument names must be \a key and \a seed, resp.
+macro.qhash = \
+    "\n\n" \
+    "Returns the hash value for \\a key, using \\a seed to seed the calculation." \
+    "\\omit \1 \\endomit" \
+    "\n\n"
+macro.qhashT = "\\qhash{\1}\\implqhashT{\2}"
+macro.qhashTS = "\\qhash{\1}\\implqhashTS{\2}{\3}"
+
+# \qhashold{QClass} - generates qHash() docs for (non-hidden-friend) qHash() overloads
+#                     of class type. These should eventually go away
+# \qhasholdT{QClass}{T}
+# \qhasholdTS{QClass}{T}{S}
+#   QClass - the class being hashed (used for \relates)
+#   T      - the first template argument's name, if any
+#   S      - the second template argument's name, if any
+#   The function's argument names must be \a key and \a seed, resp.
+macro.qhashold = \
+    "\n\n" \
+    "\\relates \1" \
+    "\\qhash{\1}"
+macro.qhasholdT = "\\qhashold{\1}\\implqhashT{\2}"
+macro.qhasholdTS = "\\qhashold{\1}\\implqhashTS{\2}{\3}"
+
+# \qhashbuiltin (no arguments)
+# \qhashbuiltinT{T}
+# \qhashbuiltinTS{T}{S}
+#   For language-provided (built-in) types
+#   T      - the first template argument's name, if any
+#   S      - the second template argument's name, if any
+#   The function's argument names must be \a key and \a seed, resp.
+macro.qhashbuiltin = "\\qhashold{QHash}"
+macro.qhashbuiltinT = "\\qhashbuiltin\\implqhashT{\1}"
+macro.qhashbuiltinTS = "\\qhashbuiltin\\implqhashTS{\1}{\2}"

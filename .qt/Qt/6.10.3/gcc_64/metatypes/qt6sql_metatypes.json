@@ -1,0 +1,591 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QSqlDatabase",
+                "gadget": true,
+                "lineNumber": 49,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 52,
+                        "name": "numericalPrecisionPolicy",
+                        "read": "numericalPrecisionPolicy",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSql::NumericalPrecisionPolicy",
+                        "user": false,
+                        "write": "setNumericalPrecisionPolicy"
+                    }
+                ],
+                "qualifiedClassName": "QSqlDatabase",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QSqlDatabaseDefaultConnectionName"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsqldatabase.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QSqlDriver",
+                "lineNumber": 26,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 32,
+                        "name": "numericalPrecisionPolicy",
+                        "read": "numericalPrecisionPolicy",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSql::NumericalPrecisionPolicy",
+                        "user": false,
+                        "write": "setNumericalPrecisionPolicy"
+                    }
+                ],
+                "qualifiedClassName": "QSqlDriver",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "name",
+                                "type": "QString"
+                            },
+                            {
+                                "name": "source",
+                                "type": "QSqlDriver::NotificationSource"
+                            },
+                            {
+                                "name": "payload",
+                                "type": "QVariant"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 110,
+                        "name": "notification",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 107,
+                        "name": "cancelQuery",
+                        "returnType": "bool"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsqldriver.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QSqlDriverPlugin",
+                "lineNumber": 19,
+                "object": true,
+                "qualifiedClassName": "QSqlDriverPlugin",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsqldriverplugin.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QSqlField",
+                "gadget": true,
+                "lineNumber": 19,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 22,
+                        "name": "value",
+                        "read": "value",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariant",
+                        "user": false,
+                        "write": "setValue"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 23,
+                        "name": "defaultValue",
+                        "read": "defaultValue",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QVariant",
+                        "user": false,
+                        "write": "setDefaultValue"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 24,
+                        "name": "name",
+                        "read": "name",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setName"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 25,
+                        "name": "tableName",
+                        "read": "tableName",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setTableName"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 26,
+                        "name": "metaType",
+                        "read": "metaType",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QMetaType",
+                        "user": false,
+                        "write": "setMetaType"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 5,
+                        "lineNumber": 27,
+                        "name": "requiredStatus",
+                        "read": "requiredStatus",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "RequiredStatus",
+                        "user": false,
+                        "write": "setRequiredStatus"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 6,
+                        "lineNumber": 28,
+                        "name": "readOnly",
+                        "read": "isReadOnly",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setReadOnly"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 7,
+                        "lineNumber": 29,
+                        "name": "generated",
+                        "read": "isGenerated",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setGenerated"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 8,
+                        "lineNumber": 30,
+                        "name": "autoValue",
+                        "read": "isAutoValue",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setAutoValue"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 9,
+                        "lineNumber": 31,
+                        "name": "length",
+                        "read": "length",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setLength"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 10,
+                        "lineNumber": 32,
+                        "name": "precision",
+                        "read": "precision",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setPrecision"
+                    }
+                ],
+                "qualifiedClassName": "QSqlField"
+            }
+        ],
+        "inputFile": "qsqlfield.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QSqlIndex",
+                "gadget": true,
+                "lineNumber": 18,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 21,
+                        "name": "name",
+                        "read": "name",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setName"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 22,
+                        "name": "cursorName",
+                        "read": "cursorName",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QString",
+                        "user": false,
+                        "write": "setCursorName"
+                    }
+                ],
+                "qualifiedClassName": "QSqlIndex",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QSqlRecord"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsqlindex.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QSqlQuery",
+                "gadget": true,
+                "lineNumber": 24,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 27,
+                        "name": "forwardOnly",
+                        "read": "isForwardOnly",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setForwardOnly"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 28,
+                        "name": "positionalBindingEnabled",
+                        "read": "isPositionalBindingEnabled",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setPositionalBindingEnabled"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 29,
+                        "name": "numericalPrecisionPolicy",
+                        "read": "numericalPrecisionPolicy",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QSql::NumericalPrecisionPolicy",
+                        "user": false,
+                        "write": "setNumericalPrecisionPolicy"
+                    }
+                ],
+                "qualifiedClassName": "QSqlQuery"
+            }
+        ],
+        "inputFile": "qsqlquery.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QSqlQueryModel",
+                "lineNumber": 21,
+                "object": true,
+                "qualifiedClassName": "QSqlQueryModel",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QAbstractTableModel"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsqlquerymodel.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QSqlRelationalTableModel",
+                "lineNumber": 48,
+                "object": true,
+                "qualifiedClassName": "QSqlRelationalTableModel",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "row",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 76,
+                        "name": "revertRow",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QSqlTableModel"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsqlrelationaltablemodel.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QSqlTableModel",
+                "lineNumber": 22,
+                "object": true,
+                "qualifiedClassName": "QSqlTableModel",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "row",
+                                "type": "int"
+                            },
+                            {
+                                "name": "record",
+                                "type": "QSqlRecord&"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 87,
+                        "name": "primeInsert",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "record",
+                                "type": "QSqlRecord&"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 89,
+                        "name": "beforeInsert",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "row",
+                                "type": "int"
+                            },
+                            {
+                                "name": "record",
+                                "type": "QSqlRecord&"
+                            }
+                        ],
+                        "index": 2,
+                        "lineNumber": 90,
+                        "name": "beforeUpdate",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "row",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 3,
+                        "lineNumber": 91,
+                        "name": "beforeDelete",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 77,
+                        "name": "select",
+                        "returnType": "bool"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "row",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 5,
+                        "lineNumber": 78,
+                        "name": "selectRow",
+                        "returnType": "bool"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 80,
+                        "name": "submit",
+                        "returnType": "bool"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 81,
+                        "name": "revert",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 83,
+                        "name": "submitAll",
+                        "returnType": "bool"
+                    },
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "lineNumber": 84,
+                        "name": "revertAll",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QSqlQueryModel"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsqltablemodel.h",
+        "outputRevision": 69
+    }
+]

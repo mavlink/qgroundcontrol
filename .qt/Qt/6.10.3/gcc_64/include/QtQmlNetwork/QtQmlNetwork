@@ -1,0 +1,5 @@
+#ifndef QT_QTQMLNETWORK_MODULE_H
+#define QT_QTQMLNETWORK_MODULE_H
+#include <QtQmlNetwork/QtQmlNetworkDepends>
+#include "qtqmlnetworkversion.h"
+#endif

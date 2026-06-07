@@ -1,0 +1,21 @@
+ANDROID_API_USED_FOR_JAVA = $$(ANDROID_API_VERSION)
+isEmpty(ANDROID_API_USED_FOR_JAVA): ANDROID_API_USED_FOR_JAVA = $$API_VERSION
+isEmpty(ANDROID_API_USED_FOR_JAVA): ANDROID_API_USED_FOR_JAVA = android-36
+
+ANDROID_JAR_FILE = $$ANDROID_SDK_ROOT/platforms/$$ANDROID_API_USED_FOR_JAVA/android.jar
+!exists($$ANDROID_JAR_FILE) {
+    ANDROID_API_VERSION = $$section(ANDROID_API_USED_FOR_JAVA, -, 1, 1) # Get version number from android-XY to ensure numeric comparison
+    ANDROID_API_VERSIONS = $$files($$ANDROID_SDK_ROOT/platforms/*)
+    for (VERSION, ANDROID_API_VERSIONS) {
+        BASENAME = $$basename(VERSION)
+        BASENAME = $$section(BASENAME, -, 1, 1)
+        greaterThan(BASENAME, $$ANDROID_API_VERSION): ANDROID_API_VERSION = $$BASENAME
+    }
+    ANDROID_API_USED_FOR_JAVA = android-$$ANDROID_API_VERSION
+    ANDROID_JAR_FILE = $$ANDROID_SDK_ROOT/platforms/$$ANDROID_API_USED_FOR_JAVA/android.jar
+}
+!exists($$ANDROID_JAR_FILE) {
+    error("No suitable Android SDK platform found. Minimum version for building Java code is $${ANDROID_API_USED_FOR_JAVA}.")
+}
+JAVACLASSPATH += $$ANDROID_JAR_FILE
+

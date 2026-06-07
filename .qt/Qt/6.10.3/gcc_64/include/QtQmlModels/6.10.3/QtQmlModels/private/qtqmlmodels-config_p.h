@@ -1,0 +1,17 @@
+#ifndef QT_FEATURES_QmlModels_src_qmlmodels_qtqmlmodels_config_p_h_H
+#define QT_FEATURES_QmlModels_src_qmlmodels_qtqmlmodels_config_p_h_H
+
+#define QT_FEATURE_qml_object_model 1
+
+#define QT_FEATURE_qml_list_model 1
+
+#define QT_FEATURE_qml_delegate_model 1
+
+#define QT_FEATURE_qml_table_model 1
+
+#define QT_FEATURE_qml_tree_model 1
+
+#define QT_FEATURE_qml_sfpm_model 1
+
+
+#endif // QT_FEATURES_QmlModels_src_qmlmodels_qtqmlmodels_config_p_h_H

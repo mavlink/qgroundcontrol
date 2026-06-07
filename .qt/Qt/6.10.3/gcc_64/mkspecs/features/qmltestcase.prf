@@ -1,0 +1,29 @@
+!isEmpty(SOURCES) {
+    QT += qml qmltest
+    load(testcase)
+    !android {
+        contains(TEMPLATE, vc.*): DEFINES += QUICK_TEST_SOURCE_DIR=\"$$_PRO_FILE_PWD_\"
+        else: DEFINES += QUICK_TEST_SOURCE_DIR=$$shell_quote(\"$$_PRO_FILE_PWD_\")
+    } else {
+        isEmpty(RESOURCES) {
+            ANDROID_EXTRA_PLUGINS *= $$_PRO_FILE_PWD_
+            DEFINES += QUICK_TEST_SOURCE_DIR=$$shell_quote(\"assets:/$$basename(_PRO_FILE_PWD_)\")
+        } else {
+            DEFINES += QUICK_TEST_SOURCE_DIR=$$shell_quote(\":/\")
+        }
+    }
+
+} else {
+    # Allow a project to run tests without a CPP stub
+    TEMPLATE = aux
+    QMAKE_EXTRA_TARGETS += check
+    qtPrepareTool(QMAKE_QMLTESTRUNNER, qmltestrunner)
+    check.commands = $$QMAKE_QMLTESTRUNNER
+}
+
+# If the .pro file specified an IMPORTPATH, then add that to
+# the command-line when the test is run.
+!isEmpty(IMPORTPATH) {
+    for(import, IMPORTPATH): check.commands += -import \"$$import\"
+}
+

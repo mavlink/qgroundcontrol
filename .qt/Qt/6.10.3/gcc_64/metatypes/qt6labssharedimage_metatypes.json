@@ -1,0 +1,48 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "256"
+                    }
+                ],
+                "className": "QSharedImageLoader",
+                "lineNumber": 32,
+                "object": true,
+                "qualifiedClassName": "QSharedImageLoader",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsharedimageloader_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QuickSharedImageLoader",
+                "lineNumber": 31,
+                "object": true,
+                "qualifiedClassName": "QuickSharedImageLoader",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QSharedImageLoader"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qsharedimageprovider_p.h",
+        "outputRevision": 69
+    }
+]

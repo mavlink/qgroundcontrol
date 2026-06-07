@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-scaler-protocol",
+        "Name": "Wayland Scaler Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor API",
+        "Files": "scaler.xml",
+
+        "Description": "The Wayland scaler extension allows a client to scale or crop a surface without modifying the buffer",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "2",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/weston/raw/1.11/protocol/scaler.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2013-2014 Collabora, Ltd."
+    }
+]

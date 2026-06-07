@@ -1,0 +1,8 @@
+#ifndef QT_QTSVGWIDGETS_MODULE_H
+#define QT_QTSVGWIDGETS_MODULE_H
+#include <QtSvgWidgets/QtSvgWidgetsDepends>
+#include "qtsvgwidgetsglobal.h"
+#include "qgraphicssvgitem.h"
+#include "qsvgwidget.h"
+#include "qtsvgwidgetsversion.h"
+#endif

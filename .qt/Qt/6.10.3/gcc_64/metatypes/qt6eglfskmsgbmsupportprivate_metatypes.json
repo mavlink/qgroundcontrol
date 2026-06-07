@@ -1,0 +1,47 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QEglFSKmsGbmCursorDeviceListener",
+                "lineNumber": 31,
+                "object": true,
+                "qualifiedClassName": "QEglFSKmsGbmCursorDeviceListener",
+                "slots": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "type",
+                                "type": "QInputDeviceManager::DeviceType"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 40,
+                        "name": "onDeviceListChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "QEglFSKmsGbmCursor",
+                "lineNumber": 46,
+                "object": true,
+                "qualifiedClassName": "QEglFSKmsGbmCursor",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QPlatformCursor"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qeglfskmsgbmcursor_p.h",
+        "outputRevision": 69
+    }
+]

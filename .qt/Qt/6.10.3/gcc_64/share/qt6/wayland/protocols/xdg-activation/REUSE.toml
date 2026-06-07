@@ -1,0 +1,8 @@
+version = 1
+
+[[annotations]]
+path = "xdg-activation-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = ["Copyright 2020 Aleix Pol Gonzalez",
+                          "Copyright 2020 Carlos Garnacho"]
+SPDX-License-Identifier = "MIT"

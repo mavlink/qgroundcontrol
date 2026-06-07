@@ -1,0 +1,5 @@
+#ifndef QT_QTQMLTYPEREGISTRAR_MODULE_H
+#define QT_QTQMLTYPEREGISTRAR_MODULE_H
+#include <QtQmlTypeRegistrar/QtQmlTypeRegistrarDepends>
+#include "qtqmltyperegistrarversion.h"
+#endif

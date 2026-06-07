@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "idle-inhibit-unstable-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2015 Samsung Electronics Co., Ltd"
+SPDX-License-Identifier = "MIT"

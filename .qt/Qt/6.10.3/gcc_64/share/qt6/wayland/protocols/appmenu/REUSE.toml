@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = ["LGPL-2.1-or-later.txt", "appmenu.xml"]
+precedence = "closest"
+SPDX-FileCopyrightText = ["Copyright 2017 David Edmundson"]
+SPDX-License-Identifier = "LGPL-2.1-or-later"

@@ -1,0 +1,4 @@
+url.examples = "https://code.qt.io/cgit/qt/qtwebview.git/tree/examples/\1?h=$QT_VER"
+
+# Automatic linking to declarations of C++ APIs
+url.sources  = "https://code.qt.io/cgit/qt/qtwebview.git/tree/\1?h=$QT_VER#n\2"

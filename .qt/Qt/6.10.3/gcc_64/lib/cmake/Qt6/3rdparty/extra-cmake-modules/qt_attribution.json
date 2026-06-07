@@ -1,0 +1,18 @@
+{
+    "Id": "extra-cmake-modules",
+    "Name": "extra-cmake-modules",
+    "QDocModule": "qtcore",
+    "QtUsage": "Used as part of the build system.",
+    "QtParts": [
+        "tools"
+    ],
+
+    "Description": "Additional CMake modules.",
+    "Homepage": "https://api.kde.org/ecm/",
+    "Version": "5.84.0",
+
+    "License": "BSD-3-Clause",
+    "LicenseId": "BSD-3-Clause",
+    "LicenseFile": "COPYING-CMAKE-SCRIPTS",
+    "Copyright": "Copyright © 2011-2018 The KDE community"
+}

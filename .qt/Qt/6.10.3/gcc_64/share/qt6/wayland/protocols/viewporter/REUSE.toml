@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "viewporter.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2013-2016 Collabora, Ltd."
+SPDX-License-Identifier = "MIT"

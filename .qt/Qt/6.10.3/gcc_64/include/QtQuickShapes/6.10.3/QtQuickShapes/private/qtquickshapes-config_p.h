@@ -1,0 +1,7 @@
+#ifndef QT_FEATURES_QuickShapesPrivate_src_quickshapes_qtquickshapes_config_p_h_H
+#define QT_FEATURES_QuickShapesPrivate_src_quickshapes_qtquickshapes_config_p_h_H
+
+#define QT_FEATURE_quickshapes_designhelpers 1
+
+
+#endif // QT_FEATURES_QuickShapesPrivate_src_quickshapes_qtquickshapes_config_p_h_H

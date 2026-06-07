@@ -1,0 +1,24 @@
+<protocol name="qt_texture_sharing_unstable_v1">
+
+    <copyright>
+ Copyright (C) 2019 The Qt Company Ltd.
+ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+    </copyright>
+
+    <interface name="zqt_texture_sharing_v1" version="1">
+        <request name="request_image">
+            <arg name="key" type="string"/>
+        </request>
+        <request name="abandon_image">
+            <arg name="key" type="string"/>
+        </request>
+        <event name="image_failed">
+            <arg name="key" type="string"/>
+            <arg name="error_message" type="string"/>
+        </event>
+        <event name="provide_buffer">
+            <arg name="buffer" type="object" interface="qt_server_buffer"/>
+            <arg name="key" type="string"/>
+        </event>
+    </interface>
+</protocol>

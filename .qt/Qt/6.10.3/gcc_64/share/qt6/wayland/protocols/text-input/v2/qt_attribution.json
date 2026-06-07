@@ -1,0 +1,17 @@
+[
+    {
+        "Id": "wayland-text-input-unstable-v2",
+        "Name": "Wayland Text Input Protocol v2",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor, and the Qt Wayland platform plugin.",
+        "Files": "text-input-unstable-v2.xml",
+
+        "Description": "Adds support for text input and input methods to applications.",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "unstable v2",
+        "LicenseId": "HPND",
+        "License": "HPND License",
+        "LicenseFile": "HPND_LICENSE.txt",
+        "Copyright": "Copyright © 2012, 2013 Intel Corporation\nCopyright © 2015, 2016 Jan Arne Petersen"
+    }
+]

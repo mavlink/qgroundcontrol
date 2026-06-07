@@ -1,0 +1,11 @@
+#ifndef QT_FEATURES_PrintSupport_src_printsupport_qtprintsupport_config_p_h_H
+#define QT_FEATURES_PrintSupport_src_printsupport_qtprintsupport_config_p_h_H
+
+#define QT_FEATURE_cups 1
+
+#define QT_FEATURE_cupsjobwidget 1
+
+#define QT_FEATURE_cupspassworddialog 1
+
+
+#endif // QT_FEATURES_PrintSupport_src_printsupport_qtprintsupport_config_p_h_H

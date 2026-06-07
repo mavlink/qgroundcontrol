@@ -1,0 +1,41 @@
+[
+    {
+        "classes": [
+            {
+                "className": "AssetDownloaderHelper",
+                "lineNumber": 25,
+                "object": true,
+                "qualifiedClassName": "Assets::Downloader::AssetDownloaderHelper",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "fullyQualifiedName": "Assets::Downloader::AssetDownloader",
+                        "name": "AssetDownloader"
+                    }
+                ]
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Foreign",
+                        "value": "AssetDownloaderHelper"
+                    },
+                    {
+                        "name": "QML.Element",
+                        "value": "AssetDownloader"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1544"
+                    }
+                ],
+                "className": "QQmlAssetDownloader",
+                "gadget": true,
+                "lineNumber": 36,
+                "qualifiedClassName": "Assets::Downloader::QQmlAssetDownloader"
+            }
+        ],
+        "inputFile": "qqmlassetdownloader_p.h",
+        "outputRevision": 69
+    }
+]

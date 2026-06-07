@@ -1,0 +1,1 @@
+#include "qreadwritelock.h" // IWYU pragma: export

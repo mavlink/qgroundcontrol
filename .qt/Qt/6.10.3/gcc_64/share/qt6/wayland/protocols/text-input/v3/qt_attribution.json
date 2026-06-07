@@ -1,0 +1,17 @@
+[
+    {
+        "Id": "wayland-text-input-unstable-v3",
+        "Name": "Wayland Text Input Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor, and the Qt Wayland platform plugin.",
+        "Files": "text-input-unstable-v3.xml",
+        "Description": "Adds support for compositors to act as input methods and send text to applications.",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "unstable v3",
+        "DownloadLocation": "https://cgit.freedesktop.org/wayland/wayland-protocols/plain/unstable/text-input/text-input-unstable-v3.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2012, 2013 Intel Corporation\nCopyright © 2015, 2016 Jan Arne Petersen\nCopyright © 2017, 2018 Red Hat, Inc.\nCopyright © 2018       Purism SPC"
+    }
+]

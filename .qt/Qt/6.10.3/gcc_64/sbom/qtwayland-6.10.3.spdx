@@ -1,0 +1,2139 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: qtwayland-6.10.3
+DocumentNamespace: https://qt.io/spdxdocs/qtwayland-6.10.3-host-linux-x86_64-target-linux-x86_64-785047f7-d9e5-57ad-9317-844523b5f199
+Creator: Organization: TheQtCompany
+Creator: Tool: Qt Build System
+CreatorComment: <text>This SPDX document was created from CMake 3.30.5, using the qt
+build system from https://code.qt.io/cgit/qt/qtbase.git/tree/cmake/QtPublicSbomHelpers.cmake</text>
+Created: 2026-03-30T11:51:45Z
+ExternalDocumentRef: DocumentRef-qtbase-18caa008d90e https://qt.io/spdxdocs/qtbase-7ddbc87d+HEAD-host-linux-x86_64-target-linux-x86_64-53c2b623-7000-5f77-ad0f-f10743359b4f SHA1: ee53f53ae337ec71aa640f103e332e4315e9b900
+ExternalDocumentRef: DocumentRef-qtdeclarative-bdf0db835863 https://qt.io/spdxdocs/qtdeclarative-3a714efe+HEAD-host-linux-x86_64-target-linux-x86_64-e6eac9dd-b235-5ffb-becb-ca7f17587875 SHA1: 97e4decee2cd84a95eb77e2b7495dbbe65c65144
+ExternalDocumentRef: DocumentRef-qtsvg-d45854ff6194 https://qt.io/spdxdocs/qtsvg-77765f9+HEAD-host-linux-x86_64-target-linux-x86_64-bec2fc82-c12c-5794-945f-18c64c012518 SHA1: cba31cf0334f10bd507e9503536783dfd4855449
+
+PackageName: qtwayland
+SPDXID: SPDXRef-Package-qtwayland-c3af86db317c
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland@6.10.3
+PackageVersion: 6.10.3
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland@6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: Copyright (C) The Qt Company Ltd. and other contributors.
+PackageHomePage: https://qt.io
+PackageComment: <text>Built by CMake 3.30.5 with RelWithDebInfo configuration for Linux (x86_64)
+qtwayland was configured with:
+    qt-configure-module <sources>/qtwayland -- -DFFMPEG_DIR=/usr/local/FFmpeg-n7.1.3 -DQT_DEPLOY_FFMPEG=TRUE -DINPUT_headersclean=ON -DQT_INSTALL_CONFIG_INFO_FILES=ON -DQT_GENERATE_SBOM=ON -DQT_GENERATE_SOURCE_SBOM=ON -DQT_SBOM_REQUIRE_GENERATE_CYDX_V1_6=ON -DQT_SBOM_VERIFY_CYDX_V1_6=ON -DQT_SBOM_PYTHON_INTERP= -DQT_SBOM_PYTHON_APPS_PATH=/usr/local/bin -DQT_LINT_SOURCE_SBOM=ON -DQT_INTERNAL_SBOM_DEFAULT_CHECKS=ON -DQT_INTERNAL_SBOM_AUDIT=ON -DQT_INTERNAL_SBOM_AUDIT_NO_ERROR=ON -DQT_BUILD_TESTS=OFF -DCMAKE_AUTOGEN_VERBOSE=ON -DCMAKE_MESSAGE_LOG_LEVEL=STATUS -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+</text>
+FilesAnalyzed: false
+BuiltDate: 2026-03-30T11:51:45Z
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-qtwayland-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-build-tool-CMake-c3af86db317c BUILD_DEPENDENCY_OF SPDXRef-Package-qtwayland-c3af86db317c
+RelationshipComment: <text>SPDXRef-Package-qtwayland-c3af86db317c is built using CMake version 3.30.5</text>
+Relationship: SPDXRef-Package-qtwayland-build-tool-CMake-generator-Ninja-c3af86db317c BUILD_DEPENDENCY_OF SPDXRef-Package-qtwayland-c3af86db317c
+RelationshipComment: <text>SPDXRef-Package-qtwayland-c3af86db317c is built using generator CMAKE_GENERATOR: 'Ninja' and CMAKE_MAKE_PROGRAM: 'ninja' version '1.12.1'</text>
+Relationship: SPDXRef-Package-qtwayland-build-tool-Compiler-GNU-c3af86db317c BUILD_DEPENDENCY_OF SPDXRef-Package-qtwayland-c3af86db317c
+RelationshipComment: <text>SPDXRef-Package-qtwayland-c3af86db317c is built by compiler: 'GNU' version: '11.4.1' frontend variant: 'GNU'</text>
+Relationship: SPDXRef-Package-qtwayland-build-tool-Linker-GNU-c3af86db317c BUILD_DEPENDENCY_OF SPDXRef-Package-qtwayland-c3af86db317c
+RelationshipComment: <text>SPDXRef-Package-qtwayland-c3af86db317c is built by linker 'GNU' version '2.35.2' frontend variant: 'GNU'</text>
+
+PackageName: WaylandCompositor_Attribution_wayland-ivi-extension-protocol
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-ivi-extension-protocol-c3af86db317c
+PackageDownloadLocation: https://github.com/GENIVI/wayland-ivi-extension/releases/tag/1.9.1
+PackageVersion: 1.9.1
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/GENIVI/wayland-ivi-extension@1.9.1
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-ivi-extension-protocol#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-ivi-extension-protocol?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_wayland-ivi-extension-protocol#src/compositor
+PackageCopyrightText: <text>Copyright (C) 2013 DENSO CORPORATION
+Copyright (c) 2013 BMW Car IT GmbH</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_wayland-ivi-extension-protocol
+    Information extracted from:
+     /src_dir/qtwayland/src/3rdparty/protocol/ivi/qt_attribution.json
+    Entry index: 0
+    Id: wayland-ivi-extension-protocol
+    Name: Wayland IVI Extension Protocol
+    Description: "Wayland IVI Extension" is forked from IVI Layer Management to define a common set of APIs by wayland style protocol and provide reference implementation which can be loaded on Weston.
+    Qt usage: Used in the Qt Wayland Compositor, and the Qt Wayland platform plugin.
+    License: MIT License
+    License file: MIT.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-ivi-extension-protocol-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_presentation-time_xml
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-presentation-time-xml-c3af86db317c
+PackageDownloadLocation: https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/stable/presentation-time/presentation-time.xml
+PackageVersion: 1
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_presentation-time_xml#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_presentation-time_xml?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_presentation-time_xml#src/compositor
+PackageCopyrightText: <text>Copyright © 2013, 2014 Collabora, Ltd.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_presentation-time_xml
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/presentation-time/qt_attribution.json
+    Entry index: 0
+    Id: presentation-time.xml
+    Name: Presentation Time Protocol
+    Description: The presentaton time protocol is a way to get presentation timing feedback.
+    Qt usage: Used in the Qt Wayland Compositor
+    License: MIT License
+    License file: ../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-presentation-time-xml-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_wayland-scaler-protocol
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-scaler-protocol-c3af86db317c
+PackageDownloadLocation: https://gitlab.freedesktop.org/wayland/weston/raw/1.11/protocol/scaler.xml
+PackageVersion: 2
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-scaler-protocol#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-scaler-protocol?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_wayland-scaler-protocol#src/compositor
+PackageCopyrightText: <text>Copyright © 2013-2014 Collabora, Ltd.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_wayland-scaler-protocol
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/scaler/qt_attribution.json
+    Entry index: 0
+    Id: wayland-scaler-protocol
+    Name: Wayland Scaler Protocol
+    Description: The Wayland scaler extension allows a client to scale or crop a surface without modifying the buffer
+    Qt usage: Used in the Qt Wayland Compositor API
+    License: MIT License
+    License file: ../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-scaler-protocol-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_wayland-text-input-unstable-v2
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v2-c3af86db317c
+PackageDownloadLocation: https://wayland.freedesktop.org
+PackageVersion: unstable v2
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: HPND
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-text-input-unstable-v2#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-text-input-unstable-v2?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_wayland-text-input-unstable-v2#src/compositor
+PackageCopyrightText: <text>Copyright © 2012, 2013 Intel Corporation
+Copyright © 2015, 2016 Jan Arne Petersen</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_wayland-text-input-unstable-v2
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/text-input/v2/qt_attribution.json
+    Entry index: 0
+    Id: wayland-text-input-unstable-v2
+    Name: Wayland Text Input Protocol v2
+    Description: Adds support for text input and input methods to applications.
+    Qt usage: Used in the Qt Wayland Compositor, and the Qt Wayland platform plugin.
+    License: HPND License
+    License file: HPND_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v2-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_wayland-text-input-unstable-v3
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v3-c3af86db317c
+PackageDownloadLocation: https://cgit.freedesktop.org/wayland/wayland-protocols/plain/unstable/text-input/text-input-unstable-v3.xml
+PackageVersion: unstable v3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-text-input-unstable-v3#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-text-input-unstable-v3?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_wayland-text-input-unstable-v3#src/compositor
+PackageCopyrightText: <text>Copyright © 2012, 2013 Intel Corporation
+Copyright © 2015, 2016 Jan Arne Petersen
+Copyright © 2017, 2018 Red Hat, Inc.
+Copyright © 2018       Purism SPC</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_wayland-text-input-unstable-v3
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/text-input/v3/qt_attribution.json
+    Entry index: 0
+    Id: wayland-text-input-unstable-v3
+    Name: Wayland Text Input Protocol
+    Description: Adds support for compositors to act as input methods and send text to applications.
+    Qt usage: Used in the Qt Wayland Compositor, and the Qt Wayland platform plugin.
+    License: MIT License
+    License file: ../../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v3-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_wayland-viewporter-protocol
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-viewporter-protocol-c3af86db317c
+PackageDownloadLocation: https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/stable/viewporter/viewporter.xml
+PackageVersion: 1
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-viewporter-protocol#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-viewporter-protocol?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_wayland-viewporter-protocol#src/compositor
+PackageCopyrightText: <text>Copyright © 2013-2016 Collabora, Ltd.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_wayland-viewporter-protocol
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/viewporter/qt_attribution.json
+    Entry index: 0
+    Id: wayland-viewporter-protocol
+    Name: Wayland Viewporter Protocol
+    Description: The Wayland viewporter extension allows a client to scale or crop a surface without modifying the buffer
+    Qt usage: Used in the Qt Wayland Compositor API
+    License: MIT License
+    License file: ../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-viewporter-protocol-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_wayland-protocol
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-protocol-c3af86db317c
+PackageDownloadLocation: https://gitlab.freedesktop.org/wayland/wayland/raw/1.23.0/protocol/wayland.xml
+PackageVersion: 1.23.0
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-protocol#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-protocol?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_wayland-protocol#src/compositor
+PackageCopyrightText: <text>Copyright © 2008-2011 Kristian Høgsberg
+Copyright © 2010-2011 Intel Corporation
+Copyright © 2012-2013 Collabora, Ltd.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_wayland-protocol
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/wayland/qt_attribution.json
+    Entry index: 0
+    Id: wayland-protocol
+    Name: Wayland Protocol
+    Description: Wayland is a protocol for a compositor to talk to its clients.
+    Qt usage: Used in the Qt Wayland Compositor, and the Qt Wayland platform plugin.
+    License: MIT License
+    License file: ../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-protocol-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_wayland-xdg-decoration-protocol
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-decoration-protocol-c3af86db317c
+PackageDownloadLocation: https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml
+PackageVersion: unstable v1, version 1
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-xdg-decoration-protocol#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-xdg-decoration-protocol?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_wayland-xdg-decoration-protocol#src/compositor
+PackageCopyrightText: <text>Copyright © 2018 Simon Ser</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_wayland-xdg-decoration-protocol
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/xdg-decoration/qt_attribution.json
+    Entry index: 0
+    Id: wayland-xdg-decoration-protocol
+    Name: Wayland xdg-decoration Protocol
+    Description: The xdg-decoration protocol allows a compositor to announce support for server-side decorations.
+    Qt usage: Used in the Qt Wayland Compositor API, and the Qt Wayland platform plugin.
+    License: MIT License
+    License file: ../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-decoration-protocol-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_wayland-xdg-output-protocol
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-output-protocol-c3af86db317c
+PackageDownloadLocation: https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/unstable/xdg-output/xdg-output-unstable-v1.xml
+PackageVersion: unstable v1, version 3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-xdg-output-protocol#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-xdg-output-protocol?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_wayland-xdg-output-protocol#src/compositor
+PackageCopyrightText: <text>Copyright © 2017 Red Hat Inc.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_wayland-xdg-output-protocol
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/xdg-output/qt_attribution.json
+    Entry index: 0
+    Id: wayland-xdg-output-protocol
+    Name: Wayland XDG Output Protocol
+    Description: The XDG Output protocol is an extended way to describe output regions under Wayland
+    Qt usage: Used in the Qt Wayland Compositor API, and the Qt Wayland platform plugin.
+    License: MIT License
+    License file: ../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-output-protocol-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_wayland-xdg-shell-protocol
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-shell-protocol-c3af86db317c
+PackageDownloadLocation: https://gitlab.freedesktop.org/wayland/wayland-protocols/tree/1.18/
+PackageVersion: 1.18
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_wayland-xdg-shell-protocol#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_wayland-xdg-shell-protocol?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_wayland-xdg-shell-protocol#src/compositor
+PackageCopyrightText: <text>Copyright © 2008-2013 Kristian Høgsberg
+Copyright © 2013      Rafael Antognolli
+Copyright © 2013      Jasper St. Pierre
+Copyright © 2010-2013 Intel Corporation
+Copyright © 2015-2017 Samsung Electronics Co., Ltd
+Copyright © 2015-2017 Red Hat Inc.
+</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_wayland-xdg-shell-protocol
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/xdg-shell/qt_attribution.json
+    Entry index: 0
+    Id: wayland-xdg-shell-protocol
+    Name: Wayland XDG Shell Protocol
+    Description: The XDG-Shell protocol is an extended way to manage surfaces under Wayland compositors.
+    Qt usage: Used in the Qt Wayland Compositor, and the Qt Wayland platform plugin.
+    License: MIT License
+    License file: ../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-shell-protocol-c3af86db317c
+
+PackageName: WaylandCompositor_Attribution_xdg-dialog-v1
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-xdg-dialog-v1-c3af86db317c
+PackageDownloadLocation: https://wayland.freedesktop.org
+PackageVersion: 1
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor_Attribution_xdg-dialog-v1#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor_Attribution_xdg-dialog-v1?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor_Attribution_xdg-dialog-v1#src/compositor
+PackageCopyrightText: <text>Copyright © 2023 Carlos Garnacho</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor_Attribution_xdg-dialog-v1
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/xdg-dialog/qt_attribution.json
+    Entry index: 0
+    Id: xdg-dialog-v1
+    Name: Wayland Dialog Protocol
+    Description: Register toplevel as dialogs
+    Qt usage: Used in the Qt Wayland platform plugin
+    License: MIT License
+    License file: ../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-xdg-dialog-v1-c3af86db317c
+
+PackageName: WaylandCompositor
+SPDXID: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositor#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositor?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositor#src/compositor
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositor
+CMake exported target name: Qt6::WaylandCompositor
+Contained in CMake package: Qt6WaylandCompositor
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 1f44ae0d26b071c06fc37488e7a3b0b0481908bb
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-ivi-extension-protocol-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-presentation-time-xml-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-scaler-protocol-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v2-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-text-input-unstable-v3-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-viewporter-protocol-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-protocol-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-decoration-protocol-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-output-protocol-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-wayland-xdg-shell-protocol-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-WaylandCompositor-Attribution-xdg-dialog-v1-c3af86db317c
+
+FileName: ./lib/libQt6WaylandCompositor.so.6.10.3
+SPDXID: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 65383bc5b2ba8013ad2493b206555a67ffed9f92
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/include/QtWaylandCompositor/qtwaylandcompositorexports.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compat/removed_api.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/shared/qwaylandinputmethodeventbuilder.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/shared/qwaylandinputmethodeventbuilder_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/shared/qwaylandmimehelper.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/shared/qwaylandmimehelper_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/shared/qwaylandsharedmemoryformathelper_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandbufferref.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandbufferref.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandclient.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandclient.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandcompositor.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandcompositor.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandcompositor_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylanddestroylistener.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylanddestroylistener.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylanddestroylistener_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandkeyboard.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandkeyboard.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandkeyboard_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandkeymap.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandkeymap.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandkeymap_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandoutput.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandoutput.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandoutput_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandoutputmode.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandoutputmode.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandoutputmode_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandpointer.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandpointer.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandpointer_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandresource.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandresource.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandseat.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandseat.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandseat_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandsurface.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandsurface.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandsurface_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandsurfacegrabber.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandsurfacegrabber.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandtouch.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandtouch.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandtouch_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandview.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandview.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandview_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandidleinhibitv1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandidleinhibitv1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandidleinhibitv1_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandiviapplication.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandiviapplication.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandiviapplication_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandivisurface.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandivisurface.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandivisurface_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandqttextinputmethod.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandqttextinputmethod.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandqttextinputmethod_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandqttextinputmethodmanager.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandqttextinputmethodmanager.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandqttextinputmethodmanager_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandqtwindowmanager.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandqtwindowmanager.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandqtwindowmanager_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandshell.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandshell.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandshell_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandshellsurface.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandshellsurface.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandshellsurface_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinput.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinput.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinput_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinputmanager.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinputmanager.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinputmanager_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinputv3.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinputv3.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinputv3_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinputmanagerv3.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinputmanagerv3.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandtextinputmanagerv3_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandviewporter.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandviewporter.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandviewporter_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandwlshell.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandwlshell.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandwlshell_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgdecorationv1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgdecorationv1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgdecorationv1_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgoutputv1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgoutputv1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgoutputv1_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgshell.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgshell.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgshell_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgdialogv1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgdialogv1_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/global/qtwaylandcompositorglobal.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/global/qtwaylandcompositorglobal_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/global/qtwaylandqmlinclude.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/global/qwaylandcompositorextension.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/global/qwaylandcompositorextension.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/global/qwaylandcompositorextension_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/global/qwaylandutils_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlclientbufferintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlclientbufferintegration_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwlbuffermanager.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwlbuffermanager_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwlclientbuffer.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwlclientbuffer_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwlregion.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwlregion_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qtwaylandcompositor-config.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qtwaylandcompositor-config_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/.qt/rcc/qrc_compositor.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-idle-inhibit-unstable-v1-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-idle-inhibit-unstable-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-idle-inhibit-unstable-v1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-idle-inhibit-unstable-v1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-ivi-application-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-ivi-application-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-ivi-application.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-ivi-application.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-presentation-time-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-presentation-time-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-presentation-time.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-presentation-time.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-scaler-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-scaler-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-scaler.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-scaler.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-text-input-unstable-v2-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-text-input-unstable-v2-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-text-input-unstable-v2.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-text-input-unstable-v2.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-text-input-unstable-v3-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-text-input-unstable-v3-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-text-input-unstable-v3.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-text-input-unstable-v3.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-viewporter-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-viewporter-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-viewporter.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-viewporter.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-wayland-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-wayland-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-wayland.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-wayland.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-xdg-decoration-unstable-v1-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-xdg-decoration-unstable-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-xdg-decoration-unstable-v1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-xdg-decoration-unstable-v1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-xdg-output-unstable-v1-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-xdg-output-unstable-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-xdg-output-unstable-v1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-xdg-output-unstable-v1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-xdg-shell-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-xdg-shell-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-xdg-shell.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-xdg-shell.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-xdg-dialog-v1-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-xdg-dialog-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-xdg-dialog-v1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-xdg-dialog-v1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-hardware-integration-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-hardware-integration-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-hardware-integration.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-hardware-integration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-qt-text-input-method-unstable-v1-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-qt-text-input-method-unstable-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-qt-text-input-method-unstable-v1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-qt-text-input-method-unstable-v1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-qt-texture-sharing-unstable-v1-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-qt-texture-sharing-unstable-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-qt-texture-sharing-unstable-v1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-qt-texture-sharing-unstable-v1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-qt-windowmanager-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-qt-windowmanager-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-qt-windowmanager.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-qt-windowmanager.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-server-buffer-extension-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/wayland-server-buffer-extension-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-server-buffer-extension.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwayland-server-server-buffer-extension.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlclientbufferintegrationfactory.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlclientbufferintegrationfactory_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlclientbufferintegrationplugin.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlclientbufferintegrationplugin_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlhardwarelayerintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlhardwarelayerintegration_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlhardwarelayerintegrationfactory.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlhardwarelayerintegrationfactory_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlhardwarelayerintegrationplugin.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlhardwarelayerintegrationplugin_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlhwintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlhwintegration_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlserverbufferintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlserverbufferintegration_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlserverbufferintegrationfactory.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlserverbufferintegrationfactory_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlserverbufferintegrationplugin.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwlserverbufferintegrationplugin_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwltextureorphanage.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/hardware_integration/qwltextureorphanage_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandcompositorquickextensions.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandcompositorquickextensions_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandmousetracker.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandmousetracker_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickchildren.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickcompositor.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickcompositor.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickitem.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickitem.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickitem_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickoutput.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickoutput.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquicksurface.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquicksurface.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquicksurface_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandivisurfaceintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandivisurfaceintegration_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandquickshellintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandquickshellintegration.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandquickshellsurfaceitem.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandquickshellsurfaceitem.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandquickshellsurfaceitem_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandquickxdgoutputv1.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandquickxdgoutputv1.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandwlshellintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandwlshellintegration_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgshellintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandxdgshellintegration_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandpresentationtime.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandpresentationtime_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwaylandpresentationtime_p_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/global/qwaylandquickextension.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/global/qwaylandquickextension.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwldatadevice.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwldatadevice_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwldatadevicemanager.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwldatadevicemanager_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwldataoffer.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwldataoffer_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwldatasource.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/wayland_wrapper/qwldatasource_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandinputmethodcontrol.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandinputmethodcontrol.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandinputmethodcontrol_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylanddrag.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylanddrag.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickhardwarelayer.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/compositor_api/qwaylandquickhardwarelayer_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwltexturesharingextension.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/extensions/qwltexturesharingextension_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/waylandcompositor_qmltyperegistrations.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/.qt/rcc/qrc_qmake_QtWayland_Compositor.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/qmlfiles/WaylandCursorItem.qml
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/.rcc/qmlcache/WaylandCompositor_qmlcache_loader.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/.rcc/qmlcache/WaylandCompositor_qmlfiles/WaylandCursorItem_qml.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/compositor/qmlfiles/WaylandOutputWindow.qml
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/.rcc/qmlcache/WaylandCompositor_qmlfiles/WaylandOutputWindow_qml.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositor-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/.qt/rcc/qrc_WaylandCompositor_raw_qml_0.cpp
+
+PackageName: qwaylandcompositorplugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-qwaylandcompositorplugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=qwaylandcompositorplugin#src/compositor
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-qwaylandcompositorplugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=qwaylandcompositorplugin#src/compositor
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: qwaylandcompositorplugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 7eb7b05435bab3a65e64545d66e1e94b466792e0
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-qwaylandcompositorplugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-qwaylandcompositorplugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-qwaylandcompositorplugin-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-qwaylandcompositorplugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+
+FileName: ./qml/QtWayland/Compositor/libqwaylandcompositorplugin.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-qwaylandcompositorplugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 1dd0179319387d42d7cb1868de695fdb1f813fb4
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-qwaylandcompositorplugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-qwaylandcompositorplugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-qwaylandcompositorplugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/compositor/qwaylandcompositorplugin_QWaylandCompositorPlugin.cpp
+
+PackageName: WaylandClientFeaturesPrivate
+SPDXID: SPDXRef-Package-qtwayland-qt-module-WaylandClientFeaturesPrivate-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandClientFeaturesPrivate#src/client
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandClientFeaturesPrivate?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandClientFeaturesPrivate#src/client
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandClientFeaturesPrivate
+CMake exported target name: Qt6::WaylandClientFeatures
+Contained in CMake package: Qt6WaylandClientFeaturesPrivate
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-module-WaylandClientFeaturesPrivate-c3af86db317c
+
+PackageName: WaylandEglCompositorHwIntegrationPrivate
+SPDXID: SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandEglCompositorHwIntegrationPrivate#src/hardwareintegration/compositor/wayland-egl
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandEglCompositorHwIntegrationPrivate?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandEglCompositorHwIntegrationPrivate#src/hardwareintegration/compositor/wayland-egl
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandEglCompositorHwIntegrationPrivate
+CMake exported target name: Qt6::WaylandEglCompositorHwIntegration
+Contained in CMake package: Qt6WaylandEglCompositorHwIntegrationPrivate
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 322aa09ced0bbfd22db25234e46d513497b69477
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+
+FileName: ./lib/libQt6WaylandEglCompositorHwIntegration.so.6.10.3
+SPDXID: SPDXRef-PackagedFile-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 6dc7cb0de739f898aa997204d60a050e6743511d
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/wayland-egl/waylandeglclientbufferintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandEglCompositorHwIntegrationPrivate-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/wayland-egl/waylandeglclientbufferintegration_p.h
+
+PackageName: QWaylandEglClientBufferIntegrationPlugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=QWaylandEglClientBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/wayland-egl
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-QWaylandEglClientBufferIntegrationPlugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=QWaylandEglClientBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/wayland-egl
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: QWaylandEglClientBufferIntegrationPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 740c25dadc192e8391ec97fabeb69415223d1fab
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+
+FileName: ./plugins/wayland-graphics-integration-server/libqt-wayland-compositor-wayland-egl.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 393440701c56eb1b60c70a196e7989724c5f57ad
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/hardwareintegration/compositor/wayland-egl/main.cpp
+
+PackageName: QWaylandEglStreamClientBufferIntegrationPlugin_Attribution_wayland-eglstream-controller
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandEglStreamClientBufferIntegrationPlugin-Attribution-wayland-eglstream-controller-c3af86db317c
+PackageDownloadLocation: https://raw.githubusercontent.com/NVIDIA/egl-wayland/1.1.1/wayland-eglstream/wayland-eglstream-controller.xml
+PackageVersion: 1.1.1
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=QWaylandEglStreamClientBufferIntegrationPlugin_Attribution_wayland-eglstream-controller#src/plugins/hardwareintegration/compositor/wayland-eglstream-controller
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-QWaylandEglStreamClientBufferIntegrationPlugin_Attribution_wayland-eglstream-controller?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=QWaylandEglStreamClientBufferIntegrationPlugin_Attribution_wayland-eglstream-controller#src/plugins/hardwareintegration/compositor/wayland-eglstream-controller
+PackageCopyrightText: <text>Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: QWaylandEglStreamClientBufferIntegrationPlugin_Attribution_wayland-eglstream-controller
+    Information extracted from:
+     /install_dir/share/qt6/wayland/protocols/wl-eglstream/qt_attribution.json
+    Entry index: 0
+    Id: wayland-eglstream-controller
+    Name: Wayland EGLStream Controller Protocol
+    Description: Allows clients to request that the compositor creates its EGLStream.
+    Qt usage: Used in the Qt Wayland Compositor
+    License: MIT License
+    License file: ../MIT_LICENSE.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandEglStreamClientBufferIntegrationPlugin-Attribution-wayland-eglstream-controller-c3af86db317c
+
+PackageName: QWaylandEglStreamClientBufferIntegrationPlugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=QWaylandEglStreamClientBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/wayland-eglstream-controller
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-QWaylandEglStreamClientBufferIntegrationPlugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=QWaylandEglStreamClientBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/wayland-eglstream-controller
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: QWaylandEglStreamClientBufferIntegrationPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: ac0b11c27e6297cace4f0a1b2877a54fc62f87f5
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandEglStreamClientBufferIntegrationPlugin-Attribution-wayland-eglstream-controller-c3af86db317c
+
+FileName: ./plugins/wayland-graphics-integration-server/libqt-wayland-compositor-wayland-eglstream-controller.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: fd3e6e100164772dafe8702709b644ac28f92203
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/wayland-eglstream-controller/waylandeglstreamcontroller.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/wayland-eglstream-controller/waylandeglstreamcontroller.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/wayland-eglstream-controller/waylandeglstreamintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/wayland-eglstream-controller/waylandeglstreamintegration.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/hardwareintegration/compositor/wayland-eglstream-controller/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/wayland-eglstream-controller/wayland-wl-eglstream-controller-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/wayland-eglstream-controller/wayland-wl-eglstream-controller-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/wayland-eglstream-controller/qwayland-server-wl-eglstream-controller.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandEglStreamClientBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/wayland-eglstream-controller/qwayland-server-wl-eglstream-controller.cpp
+
+PackageName: DrmEglServerBufferIntegrationPlugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=DrmEglServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/drm-egl-server
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-DrmEglServerBufferIntegrationPlugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=DrmEglServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/drm-egl-server
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: DrmEglServerBufferIntegrationPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 452c1e15aa1b7f3a5f92d2e73b44dbb5227f92ae
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+
+FileName: ./plugins/wayland-graphics-integration-server/libqt-wayland-compositor-drm-egl-server-buffer.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 96454ffb209b43cf9566aea2e878b81b31fbd14f
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/drm-egl-server/drmeglserverbufferintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/drm-egl-server/drmeglserverbufferintegration.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/hardwareintegration/compositor/drm-egl-server/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/drm-egl-server/wayland-drm-egl-server-buffer-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/drm-egl-server/wayland-drm-egl-server-buffer-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/drm-egl-server/qwayland-server-drm-egl-server-buffer.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/drm-egl-server/qwayland-server-drm-egl-server-buffer.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/drm-egl-server/wayland-server-buffer-extension-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/drm-egl-server/wayland-server-buffer-extension-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/drm-egl-server/qwayland-server-server-buffer-extension.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DrmEglServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/drm-egl-server/qwayland-server-server-buffer-extension.cpp
+
+PackageName: ShmServerBufferIntegrationPlugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=ShmServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/shm-emulation-server
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-ShmServerBufferIntegrationPlugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=ShmServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/shm-emulation-server
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: ShmServerBufferIntegrationPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: c50c26e59a7004f0aae4ea402191aab087d05043
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+
+FileName: ./plugins/wayland-graphics-integration-server/libqt-wayland-compositor-shm-emulation-server.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 9295c7251efe4c89e309277533f87920542f9afc
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/shm-emulation-server/shmserverbufferintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/shm-emulation-server/shmserverbufferintegration.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/hardwareintegration/compositor/shm-emulation-server/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/shm-emulation-server/wayland-shm-emulation-server-buffer-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/shm-emulation-server/wayland-shm-emulation-server-buffer-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/shm-emulation-server/qwayland-server-shm-emulation-server-buffer.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/shm-emulation-server/qwayland-server-shm-emulation-server-buffer.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/shm-emulation-server/wayland-server-buffer-extension-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/shm-emulation-server/wayland-server-buffer-extension-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/shm-emulation-server/qwayland-server-server-buffer-extension.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-ShmServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/shm-emulation-server/qwayland-server-server-buffer-extension.cpp
+
+PackageName: DmaBufServerBufferIntegrationPlugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=DmaBufServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/dmabuf-server
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-DmaBufServerBufferIntegrationPlugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=DmaBufServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/dmabuf-server
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: DmaBufServerBufferIntegrationPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 99934bd0eaf1fc648730d204826b351a2d89b9f6
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Libdrm-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+
+FileName: ./plugins/wayland-graphics-integration-server/libqt-wayland-compositor-dmabuf-server-buffer.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 17210623a2e5617db772e61638bcbce95a3e6b1d
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/dmabuf-server/dmabufserverbufferintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/dmabuf-server/dmabufserverbufferintegration.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/hardwareintegration/compositor/dmabuf-server/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/dmabuf-server/wayland-qt-dmabuf-server-buffer-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/dmabuf-server/wayland-qt-dmabuf-server-buffer-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/dmabuf-server/qwayland-server-qt-dmabuf-server-buffer.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/dmabuf-server/qwayland-server-qt-dmabuf-server-buffer.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/dmabuf-server/wayland-server-buffer-extension-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/dmabuf-server/wayland-server-buffer-extension-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/dmabuf-server/qwayland-server-server-buffer-extension.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-DmaBufServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/dmabuf-server/qwayland-server-server-buffer-extension.cpp
+
+PackageName: VulkanServerBufferIntegrationPlugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=VulkanServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/vulkan-server
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-VulkanServerBufferIntegrationPlugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=VulkanServerBufferIntegrationPlugin#src/plugins/hardwareintegration/compositor/vulkan-server
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: VulkanServerBufferIntegrationPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 543658c7f2cc04246e930baac73e421b301eddbb
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+
+FileName: ./plugins/wayland-graphics-integration-server/libqt-wayland-compositor-vulkan-server.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 1ab1c972ee278907bbbeff5c7bbb3da4de7d4183
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/vulkan-server/vulkanserverbufferintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/vulkan-server/vulkanserverbufferintegration.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/vulkan-server/vulkanwrapper.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/hardwareintegration/compositor/vulkan-server/vulkanwrapper.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/hardwareintegration/compositor/vulkan-server/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/vulkan-server/wayland-qt-vulkan-server-buffer-unstable-v1-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/vulkan-server/wayland-qt-vulkan-server-buffer-unstable-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/vulkan-server/qwayland-server-qt-vulkan-server-buffer-unstable-v1.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/vulkan-server/qwayland-server-qt-vulkan-server-buffer-unstable-v1.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/vulkan-server/wayland-server-buffer-extension-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/vulkan-server/wayland-server-buffer-extension-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/vulkan-server/qwayland-server-server-buffer-extension.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-VulkanServerBufferIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/hardwareintegration/compositor/vulkan-server/qwayland-server-server-buffer-extension.cpp
+
+PackageName: QWaylandAdwaitaDecorationPlugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=QWaylandAdwaitaDecorationPlugin#src/plugins/decorations/adwaita
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-QWaylandAdwaitaDecorationPlugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=QWaylandAdwaitaDecorationPlugin#src/plugins/decorations/adwaita
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: QWaylandAdwaitaDecorationPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 878c5fd321a27b4f1c1c2516ecbd997414fe10ca
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-DBus-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtsvg-d45854ff6194:SPDXRef-Package-qtsvg-qt-module-Svg-d45854ff6194
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+
+FileName: ./plugins/wayland-decoration-client/libadwaita.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 16ad8b5a848946178470aae375dd16fbf11f5a2a
+LicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/decorations/adwaita/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandAdwaitaDecorationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/decorations/adwaita/qwaylandadwaitadecoration.cpp
+
+PackageName: QWaylandIviShellIntegrationPlugin_Attribution_wayland-ivi-extension-protocol
+SPDXID: SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandIviShellIntegrationPlugin-Attribution-wayland-ivi-extension-protocol-c3af86db317c
+PackageDownloadLocation: https://github.com/GENIVI/wayland-ivi-extension/releases/tag/1.9.1
+PackageVersion: 1.9.1
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: MIT
+PackageLicenseDeclared: NOASSERTION
+ExternalRef: PACKAGE-MANAGER purl pkg:github/GENIVI/wayland-ivi-extension@1.9.1
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=QWaylandIviShellIntegrationPlugin_Attribution_wayland-ivi-extension-protocol#src/plugins/shellintegration/ivi-shell
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-QWaylandIviShellIntegrationPlugin_Attribution_wayland-ivi-extension-protocol?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=QWaylandIviShellIntegrationPlugin_Attribution_wayland-ivi-extension-protocol#src/plugins/shellintegration/ivi-shell
+PackageCopyrightText: <text>Copyright (C) 2013 DENSO CORPORATION
+Copyright (c) 2013 BMW Car IT GmbH</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: QWaylandIviShellIntegrationPlugin_Attribution_wayland-ivi-extension-protocol
+    Information extracted from:
+     /src_dir/qtwayland/src/3rdparty/protocol/ivi/qt_attribution.json
+    Entry index: 0
+    Id: wayland-ivi-extension-protocol
+    Name: Wayland IVI Extension Protocol
+    Description: "Wayland IVI Extension" is forked from IVI Layer Management to define a common set of APIs by wayland style protocol and provide reference implementation which can be loaded on Weston.
+    Qt usage: Used in the Qt Wayland Compositor, and the Qt Wayland platform plugin.
+    License: MIT License
+    License file: MIT.txt
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandIviShellIntegrationPlugin-Attribution-wayland-ivi-extension-protocol-c3af86db317c
+
+PackageName: QWaylandIviShellIntegrationPlugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=QWaylandIviShellIntegrationPlugin#src/plugins/shellintegration/ivi-shell
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-QWaylandIviShellIntegrationPlugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=QWaylandIviShellIntegrationPlugin#src/plugins/shellintegration/ivi-shell
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: QWaylandIviShellIntegrationPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 4b027f4edf475f494fca39dd87e64189d0534557
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-XKB-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-3rdparty-sources-QWaylandIviShellIntegrationPlugin-Attribution-wayland-ivi-extension-protocol-c3af86db317c
+
+FileName: ./plugins/wayland-shell-integration/libivi-shell.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: b812e13ff1bef65424cca329c1e14451321b52c9
+LicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/ivi-shell/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/ivi-shell/qwaylandivishellintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/ivi-shell/qwaylandivishellintegration.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/ivi-shell/qwaylandivisurface.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/ivi-shell/qwaylandivisurface_p.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/ivi-shell/wayland-ivi-application-client-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/ivi-shell/wayland-ivi-application-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/ivi-shell/qwayland-ivi-application.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/ivi-shell/qwayland-ivi-application.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/ivi-shell/wayland-ivi-controller-client-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/ivi-shell/wayland-ivi-controller-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/ivi-shell/qwayland-ivi-controller.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandIviShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/ivi-shell/qwayland-ivi-controller.cpp
+
+PackageName: QWaylandQtShellIntegrationPlugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=QWaylandQtShellIntegrationPlugin#src/plugins/shellintegration/qt-shell
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-QWaylandQtShellIntegrationPlugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=QWaylandQtShellIntegrationPlugin#src/plugins/shellintegration/qt-shell
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: QWaylandQtShellIntegrationPlugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 0091cd8ba5a69bbf9f2073b82ef5bb007d53d7c0
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-system-3rdparty-XKB-c3af86db317c
+
+FileName: ./plugins/wayland-shell-integration/libqt-shell.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 93687b3ab3fc5a2aefadae97b7d5b84689a5e7ad
+LicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/qt-shell/main.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/qt-shell/qwaylandqtshellintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/qt-shell/qwaylandqtshellintegration.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/qt-shell/qwaylandqtsurface.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/plugins/shellintegration/qt-shell/qwaylandqtsurface_p.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/qt-shell/wayland-qt-shell-unstable-v1-client-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/qt-shell/wayland-qt-shell-unstable-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/qt-shell/qwayland-qt-shell-unstable-v1.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-QWaylandQtShellIntegrationPlugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/plugins/shellintegration/qt-shell/qwayland-qt-shell-unstable-v1.cpp
+
+PackageName: WaylandCompositorXdgShell
+SPDXID: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositorXdgShell#src/imports/compositor-extensions/xdgshell
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositorXdgShell?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositorXdgShell#src/imports/compositor-extensions/xdgshell
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositorXdgShell
+CMake exported target name: Qt6::WaylandCompositorXdgShell
+Contained in CMake package: Qt6WaylandCompositorXdgShell
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: ec81c92c4257026e44974b12dc8c58e5d3fbf0c2
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+
+FileName: ./lib/libQt6WaylandCompositorXdgShell.so.6.10.3
+SPDXID: SPDXRef-PackagedFile-qt-module-WaylandCompositorXdgShell-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: e81f0738f63abd4bd006f260edf8fa99f36130ee
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-module-WaylandCompositorXdgShell-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorXdgShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/xdgshell/qwaylandcompositorxdgshell_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorXdgShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/xdgshell/qwaylandcompositorxdgshell.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorXdgShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/xdgshell/waylandcompositorxdgshell_qmltyperegistrations.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorXdgShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/xdgshell/.qt/rcc/qrc_qmake_QtWayland_Compositor_XdgShell.cpp
+
+PackageName: WaylandCompositorXdgShellplugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositorXdgShellplugin#src/imports/compositor-extensions/xdgshell
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositorXdgShellplugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositorXdgShellplugin#src/imports/compositor-extensions/xdgshell
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositorXdgShellplugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 0119710ed7ea04775a27f717ac2699e2d443ad3c
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositorXdgShell-c3af86db317c
+
+FileName: ./qml/QtWayland/Compositor/XdgShell/libwaylandcompositorxdgshellplugin.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 70fb6963a127bed1603cb748c8d2f82a7afc20da
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorXdgShellplugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/xdgshell/WaylandCompositorXdgShellplugin_QtWayland_Compositor_XdgShellPlugin.cpp
+
+PackageName: WaylandCompositorIviapplication
+SPDXID: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositorIviapplication#src/imports/compositor-extensions/iviapplication
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositorIviapplication?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositorIviapplication#src/imports/compositor-extensions/iviapplication
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositorIviapplication
+CMake exported target name: Qt6::WaylandCompositorIviapplication
+Contained in CMake package: Qt6WaylandCompositorIviapplication
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 18d842a3f96c87752ea6f778737fec2bb36677a4
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+
+FileName: ./lib/libQt6WaylandCompositorIviapplication.so.6.10.3
+SPDXID: SPDXRef-PackagedFile-qt-module-WaylandCompositorIviapplication-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 0600e65e266c009fc6ea5488979eceae76d441f0
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-module-WaylandCompositorIviapplication-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorIviapplication-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/iviapplication/qwaylandcompositoriviapplicationforeign.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorIviapplication-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/iviapplication/qwaylandcompositoriviapplicationforeign_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorIviapplication-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/iviapplication/waylandcompositoriviapplication_qmltyperegistrations.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorIviapplication-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/iviapplication/.qt/rcc/qrc_qmake_QtWayland_Compositor_IviApplication.cpp
+
+PackageName: WaylandCompositorIviapplicationplugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositorIviapplicationplugin#src/imports/compositor-extensions/iviapplication
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositorIviapplicationplugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositorIviapplicationplugin#src/imports/compositor-extensions/iviapplication
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositorIviapplicationplugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 69e0e7fe20a871431fb8a8b1527178bd4e19cde5
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositorIviapplication-c3af86db317c
+
+FileName: ./qml/QtWayland/Compositor/IviApplication/libwaylandcompositoriviapplicationplugin.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 7fccf724bf34fe3c1a4f17a1da0ceb39726dfdac
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorIviapplicationplugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/iviapplication/WaylandCompositorIviapplicationplugin_QtWayland_Compositor_IviApplicationPlugin.cpp
+
+PackageName: WaylandCompositorWLShell
+SPDXID: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositorWLShell#src/imports/compositor-extensions/wlshell
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositorWLShell?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositorWLShell#src/imports/compositor-extensions/wlshell
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositorWLShell
+CMake exported target name: Qt6::WaylandCompositorWLShell
+Contained in CMake package: Qt6WaylandCompositorWLShell
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 671d281d097fce0f72462ca372bc3fe91b73db06
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+
+FileName: ./lib/libQt6WaylandCompositorWLShell.so.6.10.3
+SPDXID: SPDXRef-PackagedFile-qt-module-WaylandCompositorWLShell-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: a944723f15b039f0b8b5ad9d5afeccd98ed78a27
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-module-WaylandCompositorWLShell-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorWLShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/wlshell/qwaylandcompositorwlshell_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorWLShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/wlshell/qwaylandcompositorwlshell.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorWLShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/wlshell/waylandcompositorwlshell_qmltyperegistrations.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorWLShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/wlshell/.qt/rcc/qrc_qmake_QtWayland_Compositor_WlShell.cpp
+
+PackageName: WaylandCompositorWLShellplugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositorWLShellplugin#src/imports/compositor-extensions/wlshell
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositorWLShellplugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositorWLShellplugin#src/imports/compositor-extensions/wlshell
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositorWLShellplugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 202a9ec66a3120ac5881607f9e126a53b36cdff2
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositorWLShell-c3af86db317c
+
+FileName: ./qml/QtWayland/Compositor/WlShell/libwaylandcompositorwlshellplugin.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: ec40c9e12b6e1ab405455ca48e85ccd27b4852c4
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorWLShellplugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/wlshell/WaylandCompositorWLShellplugin_QtWayland_Compositor_WlShellPlugin.cpp
+
+PackageName: WaylandCompositorQtShell
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositorQtShell#src/imports/compositor-extensions/qtshell
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositorQtShell?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositorQtShell#src/imports/compositor-extensions/qtshell
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositorQtShell
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 15a9134dc39022dcda813c641847f6188203f8b3
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+
+FileName: ./qml/QtWayland/Compositor/QtShell/libwaylandcompositorqtshellplugin.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 4399cb5d8d921df6105186eb7223dc43a3d82f98
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorQtShell-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwaylandqtshell.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwaylandqtshell.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwaylandqtshell_p.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwaylandqtshellintegration.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwaylandqtshellintegration_p.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwaylandqtshellchrome.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwaylandqtshellchrome.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwaylandqtshellchrome_p.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/qtshell/waylandcompositorqtshell_qmltyperegistrations.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/qtshell/.qt/rcc/qrc_qmake_QtWayland_Compositor_QtShell.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/qtshell/WaylandCompositorQtShell_QtWayland_Compositor_QtShellPlugin.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/qtshell/wayland-qt-shell-unstable-v1-server-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/qtshell/wayland-qt-shell-unstable-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwayland-server-qt-shell-unstable-v1.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorQtShell-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/qtshell/qwayland-server-qt-shell-unstable-v1.cpp
+
+PackageName: WaylandCompositorPresentationTime
+SPDXID: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositorPresentationTime#src/imports/compositor-extensions/presentationtime
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositorPresentationTime?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositorPresentationTime#src/imports/compositor-extensions/presentationtime
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositorPresentationTime
+CMake exported target name: Qt6::WaylandCompositorPresentationTime
+Contained in CMake package: Qt6WaylandCompositorPresentationTime
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 3f24c268293dba7dfff2739064bd8c0d823ca153
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformModuleInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+
+FileName: ./lib/libQt6WaylandCompositorPresentationTime.so.6.10.3
+SPDXID: SPDXRef-PackagedFile-qt-module-WaylandCompositorPresentationTime-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 0462bf6985d70d905f6a39e0d7c441ba19f2287a
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-module-WaylandCompositorPresentationTime-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorPresentationTime-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/presentationtime/qwaylandcompositorpresentationtimeforeign.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorPresentationTime-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/compositor-extensions/presentationtime/qwaylandcompositorpresentationtimeforeign_p.h
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorPresentationTime-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/presentationtime/waylandcompositorpresentationtime_qmltyperegistrations.cpp
+Relationship: SPDXRef-PackagedFile-qt-module-WaylandCompositorPresentationTime-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/presentationtime/.qt/rcc/qrc_qmake_QtWayland_Compositor_PresentationTime.cpp
+
+PackageName: WaylandCompositorPresentationTimeplugin
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandCompositorPresentationTimeplugin#src/imports/compositor-extensions/presentationtime
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandCompositorPresentationTimeplugin?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandCompositorPresentationTimeplugin#src/imports/compositor-extensions/presentationtime
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandCompositorPresentationTimeplugin
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: a2704733a3f208572bc503b65304b5f3873498d9
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositorPresentationTime-c3af86db317c
+
+FileName: ./qml/QtWayland/Compositor/PresentationTime/libwaylandcompositorpresentationtimeplugin.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: d4f8b35e4d1d9da5e86a9c6b6da3eb11d489ba31
+LicenseConcluded: LicenseRef-Qt-Commercial OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandCompositorPresentationTimeplugin-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/compositor-extensions/presentationtime/WaylandCompositorPresentationTimeplugin_QtWayland_Compositor_PresentationTimePlugin.cpp
+
+PackageName: WaylandTextureSharing
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandTextureSharing#src/imports/texture-sharing
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandTextureSharing?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandTextureSharing#src/imports/texture-sharing
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandTextureSharing
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 14abf36f5a975ab8e777ad1f24c19a570dd20bf4
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-OpenGL-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-WaylandClient-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+
+FileName: ./qml/QtWayland/Client/TextureSharing/libwaylandtexturesharingplugin.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 951983b0980e5c3e975bfbac97db32ba39fd4acc
+LicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharing-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/texture-sharing/plugin.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/texture-sharing/sharedtextureprovider.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/texture-sharing/sharedtextureprovider_p.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/texture-sharing/texturesharingextension.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/texture-sharing/texturesharingextension_p.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing/.qt/rcc/qrc_qmake_QtWayland_Client_TextureSharing.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing/wayland-qt-texture-sharing-unstable-v1-client-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing/wayland-qt-texture-sharing-unstable-v1-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing/qwayland-qt-texture-sharing-unstable-v1.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing/qwayland-qt-texture-sharing-unstable-v1.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing/wayland-server-buffer-extension-client-protocol.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing/wayland-server-buffer-extension-protocol.c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing/qwayland-server-buffer-extension.h
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharing-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing/qwayland-server-buffer-extension.cpp
+
+PackageName: WaylandTextureSharingExtension
+SPDXID: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c
+PackageDownloadLocation: git://code.qt.io/qt/qtwayland.git
+PackageVersion: 6.10.3
+PackageSupplier: Organization: TheQtCompany
+PackageLicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+PackageLicenseDeclared: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ExternalRef: PACKAGE-MANAGER purl pkg:github/qt/qtwayland?library_name=WaylandTextureSharingExtension#src/imports/texture-sharing-extension
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/TheQtCompany/qtwayland-WaylandTextureSharingExtension?vcs_url=https://code.qt.io/qt/qtwayland.git&library_name=WaylandTextureSharingExtension#src/imports/texture-sharing-extension
+PackageCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: WaylandTextureSharingExtension
+</text>
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qt:6.10.3:*:*:*:*:*:*:*
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:qt:qtwayland:6.10.3:*:*:*:*:*:*:*
+PackageVerificationCode: 73d2489b487030f798bda4a5993cc0eeccc301a3
+FilesAnalyzed: true
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Core-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-Gui-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Qml-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c DEPENDS_ON DocumentRef-qtdeclarative-bdf0db835863:SPDXRef-Package-qtdeclarative-qt-module-Quick-bdf0db835863
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c DEPENDS_ON DocumentRef-qtbase-18caa008d90e:SPDXRef-Package-qtbase-qt-module-PlatformPluginInternal-18caa008d90e
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c DEPENDS_ON SPDXRef-Package-qtwayland-qt-module-WaylandCompositor-c3af86db317c
+
+FileName: ./qml/QtWayland/Compositor/TextureSharingExtension/libwaylandtexturesharingextensionplugin.so
+SPDXID: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharingExtension-c3af86db317c
+FileType: BINARY
+FileChecksum: SHA1: 44b5204b14f73e453a456ab706691e44776859fe
+LicenseConcluded: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+FileCopyrightText: <text>Copyright (C) The Qt Company Ltd. and other contributors.</text>
+LicenseInfoInFile: NOASSERTION
+Relationship: SPDXRef-Package-qtwayland-qt-plugin-WaylandTextureSharingExtension-c3af86db317c CONTAINS SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharingExtension-c3af86db317c
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharingExtension-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /src_dir/qtwayland/src/imports/texture-sharing-extension/plugin.cpp
+Relationship: SPDXRef-PackagedFile-qt-plugin-WaylandTextureSharingExtension-c3af86db317c GENERATED_FROM NOASSERTION
+RelationshipComment: /build_dir/qtwayland/src/imports/texture-sharing-extension/.qt/rcc/qrc_qmake_QtWayland_Compositor_TextureSharingExtension.cpp
+
+PackageName: CMake
+SPDXID: SPDXRef-Package-qtwayland-build-tool-CMake-c3af86db317c
+PackageDownloadLocation: NOASSERTION
+PackageVersion: 3.30.5
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: OTHER
+PackageComment: <text>
+CMake target name: qtwaylandSbomBuildToolCMake
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-build-tool-CMake-c3af86db317c
+
+PackageName: CMake generator Ninja
+SPDXID: SPDXRef-Package-qtwayland-build-tool-CMake-generator-Ninja-c3af86db317c
+PackageDownloadLocation: NOASSERTION
+PackageVersion: 1.12.1
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: OTHER
+PackageComment: <text>
+CMake target name: qtwaylandSbomBuildToolCMakeGenerator
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-build-tool-CMake-generator-Ninja-c3af86db317c
+
+PackageName: Compiler GNU
+SPDXID: SPDXRef-Package-qtwayland-build-tool-Compiler-GNU-c3af86db317c
+PackageDownloadLocation: NOASSERTION
+PackageVersion: 11.4.1
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PackageSummary: <text>The compiler as identified by CMake, running on 'Linux' (x86_64)</text>
+PrimaryPackagePurpose: OTHER
+PackageComment: <text>
+CMake target name: qtwaylandSbomBuildToolCompiler
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-build-tool-Compiler-GNU-c3af86db317c
+
+PackageName: Linker GNU
+SPDXID: SPDXRef-Package-qtwayland-build-tool-Linker-GNU-c3af86db317c
+PackageDownloadLocation: NOASSERTION
+PackageVersion: 2.35.2
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: OTHER
+PackageComment: <text>
+CMake target name: qtwaylandSbomBuildToolLinker
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-build-tool-Linker-GNU-c3af86db317c
+
+PackageName: Wayland
+SPDXID: SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+PackageDownloadLocation: http://wayland.freedesktop.org
+PackageVersion: 1.21.0
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: Wayland::Server
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-system-3rdparty-Wayland-c3af86db317c
+
+PackageName: Libdrm
+SPDXID: SPDXRef-Package-qtwayland-system-3rdparty-Libdrm-c3af86db317c
+PackageDownloadLocation: https://wiki.freedesktop.org/dri/
+PackageVersion: 2.4.117
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: Libdrm::Libdrm
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-system-3rdparty-Libdrm-c3af86db317c
+
+PackageName: XKB
+SPDXID: SPDXRef-Package-qtwayland-system-3rdparty-XKB-c3af86db317c
+PackageDownloadLocation: http://xkbcommon.org
+PackageVersion: 1.0.3
+PackageSupplier: Person: Anonymous
+PackageLicenseConcluded: NOASSERTION
+PackageLicenseDeclared: NOASSERTION
+PackageCopyrightText: NOASSERTION
+PrimaryPackagePurpose: LIBRARY
+PackageComment: <text>
+CMake target name: XKB::XKB
+</text>
+FilesAnalyzed: false
+Relationship: SPDXRef-Package-qtwayland-c3af86db317c CONTAINS SPDXRef-Package-qtwayland-system-3rdparty-XKB-c3af86db317c
+
+LicenseID: LicenseRef-Qt-Commercial
+ExtractedText: <text>Licensees holding valid commercial Qt licenses may use this software in
+accordance with the the terms contained in a written agreement between
+you and The Qt Company. Alternatively, the terms and conditions that were
+accepted by the licensee when buying and/or downloading the
+software do apply.
+
+For the latest licensing terms and conditions, see https://www.qt.io/terms-conditions.
+For further information use the contact form at https://www.qt.io/contact-us.
+</text>

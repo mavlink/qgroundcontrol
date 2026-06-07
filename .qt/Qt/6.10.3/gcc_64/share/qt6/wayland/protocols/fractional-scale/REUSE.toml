@@ -1,0 +1,7 @@
+version = 1
+
+[[annotations]]
+path = "fractional-scale-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = "Copyright 2022 Kenny Levinsen"
+SPDX-License-Identifier = "MIT"

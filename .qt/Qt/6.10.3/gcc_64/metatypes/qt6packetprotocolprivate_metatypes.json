@@ -1,0 +1,36 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QPacketProtocol",
+                "lineNumber": 26,
+                "object": true,
+                "qualifiedClassName": "QPacketProtocol",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 39,
+                        "name": "readyRead",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 40,
+                        "name": "error",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qpacketprotocol_p.h",
+        "outputRevision": 69
+    }
+]

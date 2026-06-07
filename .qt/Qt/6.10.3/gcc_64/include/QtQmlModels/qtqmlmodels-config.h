@@ -1,0 +1,5 @@
+#ifndef QT_FEATURES_QmlModels_src_qmlmodels_qtqmlmodels_config_h_H
+#define QT_FEATURES_QmlModels_src_qmlmodels_qtqmlmodels_config_h_H
+
+
+#endif // QT_FEATURES_QmlModels_src_qmlmodels_qtqmlmodels_config_h_H

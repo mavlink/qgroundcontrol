@@ -1,0 +1,49 @@
+
+Qt QML:
+  QML network support .................... yes
+  QML debugging and profiling support .... yes
+  QML just-in-time compiler .............. yes
+  QML XML http request ................... yes
+  QML Locale ............................. yes
+  QML SSL support ........................ yes
+Qt QML Models:
+  QML list model ......................... yes
+  QML delegate model ..................... yes
+  QML sortfilterproxy model .............. yes
+Qt Quick:
+  AnimatedImage item ..................... yes
+  Canvas item ............................ yes
+  Support for Qt Quick Designer .......... yes
+  Flipable item .......................... yes
+  GridView item .......................... yes
+  ListView item .......................... yes
+  TableView item ......................... yes
+  TreeView item .......................... yes
+  Path support ........................... yes
+  PathView item .......................... yes
+  Positioner items ....................... yes
+  Repeater item .......................... yes
+  ShaderEffect item ...................... yes
+  Sprite item ............................ yes
+  VectorImage item ....................... yes
+Qt Quick Shapes:
+  Design Helpers ......................... yes
+Qt Quick Templates 2:
+  Hover support .......................... yes
+  Multi-touch support .................... yes
+  Calendar support ....................... yes
+Qt Quick Controls 2:
+  Styles ................................. Basic Fusion FluentWinUI3 Imagine Material Universal
+SBOM:
+  Generate SBOM .......................... yes
+  Generate SPDX v2.3 ..................... yes
+  Generate SPDX v2.3 JSON ................ yes (skipped if dependencies are missing)
+  Verify   SPDX v2.3 JSON ................ yes (skipped if dependencies are missing)
+  Generate CyloneDX v1.6 ................. yes
+  Verify   CyloneDX v1.6 ................. yes (skipped if dependencies are missing)
+  SBOM Python interpreter ................ /usr/local/bin/python3 (version 3.9.18)
+  sbom2doc path .......................... /usr/local/bin/sbom2doc
+  sbomaudit path ......................... /usr/local/bin/sbomaudit
+  Generate source SPDX SBOM .............. yes
+  Verify   source SPDX SBOM .............. yes
+  reuse path ............................. /usr/local/bin/reuse

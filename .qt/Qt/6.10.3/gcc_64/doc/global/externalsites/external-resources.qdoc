@@ -1,0 +1,481 @@
+// Copyright (C) 2020 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+/*!
+    \externalpage https://source.android.com/docs/setup/reference/build-numbers
+    \title Android: Build Numbers
+*/
+/*!
+    \externalpage https://developer.android.com/guide/topics/manifest/uses-feature-element
+    \title Android: <uses-feature>
+*/
+/*!
+    \externalpage https://developer.android.com/guide/topics/manifest/uses-permission-element
+    \title Android: <uses-permission>
+*/
+/*!
+    \externalpage https://developer.android.com/studio/publish/versioning#appversioning
+    \title Android: App Versioning
+*/
+/*!
+    \externalpage https://developer.android.com/tools/adb#devicestatus
+    \title Android: Query for devices
+*/
+/*!
+    \externalpage https://developer.android.com/training/app-links/deep-linking
+    \title Android: Create Deep Links to App Content
+*/
+/*!
+    \externalpage https://developer.android.com/training/app-links/verify-android-applinks
+    \title Android: Verify Android App Links
+*/
+/*!
+    \externalpage https://source.android.com/docs/security/test/tagged-pointers
+    \title Android: Tagged Pointers
+*/
+/*!
+    \externalpage https://developer.android.com/build/configure-app-module
+    \title Android: Configure the app module
+*/
+/*!
+    \externalpage https://developer.android.com/ndk/guides/ndk-stack
+    \title Android: ndk-stack
+*/
+/*!
+    \externalpage https://developer.apple.com/documentation/uikit/uiapplication/1622952-canopenurl
+    \title iOS: canOpenURL:
+*/
+/*!
+    \externalpage https://developer.apple.com/documentation/xcode/defining-a-custom-url-scheme-for-your-app
+    \title iOS: Defining a Custom URL Scheme for Your App
+*/
+/*!
+    \externalpage https://developer.apple.com/documentation/xcode/supporting-associated-domains
+    \title iOS: Supporting Associated Domains
+*/
+/*!
+    \externalpage https://www.freedesktop.org/wiki/
+    \title freedesktop.org
+*/
+
+/*!
+    \externalpage https://www.freedesktop.org/wiki/Standards/xembed-spec/
+    \title XEmbed Specification
+*/
+
+/*!
+    \externalpage https://www.freedesktop.org/wiki/Standards/icon-theme-spec/
+    \title Icon Themes Specification
+*/
+
+/*!
+    \externalpage https://www.cups.org/
+    \title Common Unix Printing System (CUPS)
+    \keyword CUPS
+*/
+
+/*!
+    \externalpage https://www.freedesktop.org/wiki/Specifications/desktop-entry-spec/
+    \title Desktop Entry Specification
+*/
+
+/*!
+    \externalpage https://kde.org/
+    \title The K Desktop Environment
+    \keyword KDE
+*/
+
+/*!
+    \externalpage https://cmake.org/cmake/help/latest/
+    \title CMake Documentation
+*/
+
+/*!
+    \externalpage https://cmake.org/cmake/help/latest/command/find_package.html
+    \title CMake find_package Documentation
+*/
+
+/*!
+    \externalpage https://cmake.org/cmake/help/latest/manual/cmake-qt.7.html#automoc
+    \title CMake AUTOMOC Documentation
+*/
+
+/*!
+    \externalpage https://cmake.org/cmake/help/latest/manual/cmake-qt.7.html#autorcc
+    \title CMake AUTORCC Documentation
+*/
+
+/*!
+    \externalpage https://cmake.org/cmake/help/latest/manual/cmake-qt.7.html#autouic
+    \title CMake AUTOUIC Documentation
+*/
+
+/*!
+    \externalpage https://cmake.org/cmake/help/latest/prop_tgt/LOCATION.html
+    \title CMake LOCATION Documentation
+*/
+
+/*!
+    \externalpage https://cmake.org/cmake/help/latest/prop_tgt/POSITION_INDEPENDENT_CODE.html
+    \title CMake POSITION_INDEPENDENT_CODE Documentation
+*/
+
+/*!
+    \externalpage https://cmake.org/cmake/help/latest/command/target_link_libraries.html
+    \title CMake target_link_libraries Documentation
+*/
+
+/*!
+    \externalpage https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html
+    \title CMake BUILD_SHARED_LIBS Documentation
+*/
+
+/*!
+    \externalpage https://conan.io/
+    \title Conan
+*/
+
+/*!
+    \externalpage https://www.gnome.org/
+    \title GNOME
+*/
+
+/*!
+    \externalpage https://www.gnu.org/software/emacs/
+    \title GNU Emacs
+*/
+
+/*!
+    \externalpage https://gnuwin32.sourceforge.net/packages.html
+    \title GnuWin32 Project
+*/
+
+/*!
+    \externalpage https://www.w3.org/Graphics/SVG/About.html
+    \title About SVG
+    \keyword Scalable Vector Graphics
+*/
+
+/*!
+    \externalpage https://www.w3.org/TR/SVG/types.html#ColorKeywords
+    \title SVG color keyword names
+*/
+
+/*!
+    \externalpage https://www.w3.org/Graphics/SVG/
+    \title SVG Working Group
+*/
+
+/*!
+    \externalpage https://www.w3.org/TR/SVGMobile/
+    \title Mobile SVG Profiles
+    \omit
+    Mobile SVG Profiles: SVG Tiny and SVG Basic
+    \endomit
+*/
+
+/*!
+    \externalpage https://www.w3.org/TR/SVGMobile12/
+    \title SVG 1.2 Tiny
+*/
+
+/*!
+    \externalpage https://www.w3.org/Graphics/SVG/feature/1.2/#SVG-static
+    \title SVG 1.2 Tiny Static Features
+*/
+
+
+
+/*!
+    \externalpage https://jmeubank.github.io/tdm-gcc/
+    \title TDM-GCC
+*/
+
+/*!
+    \externalpage https://www.dependencywalker.com/
+    \title Dependency Walker
+*/
+
+/*!
+    \externalpage https://webkit.org/
+    \title WebKit Open Source Project
+*/
+
+/*!
+    \externalpage https://www.informit.com/store/c-plus-plus-gui-programming-with-qt4-9780132354165
+    \title C++ GUI Programming with Qt 4, 2nd Edition
+*/
+
+/*!
+    \externalpage https://www.openssl.org/
+    \title OpenSSL Toolkit
+*/
+
+/*!
+    \externalpage https://www.activestate.com/platform/supported-languages/perl/
+    \title ActivePerl
+*/
+
+/*!
+    \externalpage https://chromium.googlesource.com/angle/angle/+/master/README.md
+    \title ANGLE
+*/
+
+/*!
+    \externalpage https://learn.microsoft.com/en-us/windows/win32/winsock/socket-handles-2
+    \title Winsock 2 Socket Handle
+*/
+
+/*!
+    \externalpage https://www.w3.org/TR/html401/
+    \title HTML 4
+*/
+
+/*!
+    \externalpage https://html.spec.whatwg.org/multipage/
+    \title HTML 5
+*/
+
+/*!
+    \externalpage https://icu.unicode.org/
+    \title ICU
+*/
+
+/*!
+    \externalpage https://www.mingw-w64.org/
+    \title MinGW
+*/
+
+/*!
+    \externalpage https://www.python.org/
+    \title Python
+*/
+
+/*!
+    \externalpage https://pyxml.sourceforge.net/topics/xbel/
+    \title XML Bookmark Exchange Language Resource Page
+*/
+
+/*!
+    \externalpage https://www.w3.org/TR/xquery/#errors
+    \title error handling in the XQuery language
+*/
+
+/*!
+    \externalpage https://xaos-project.github.io/
+    \title XaoS
+*/
+
+/*!
+    \externalpage https://www.unixodbc.org
+    \title https://www.unixodbc.org
+*/
+
+/*!
+    \externalpage https://www.postgresql.org
+    \title https://www.postgresql.org
+*/
+
+/*!
+    \externalpage https://www.postgresql.org/docs/current/installation-platform-notes.html
+    \title PostgreSQL MinGW/Native Windows
+*/
+
+/*!
+    \externalpage https://www.freetds.org
+    \title https://www.freetds.org
+*/
+
+/*!
+    \externalpage https://www.sqlite.org
+    \title https://www.sqlite.org
+*/
+
+/*!
+    \externalpage https://web.archive.org/web/20020803110822/https://wp.netscape.com/newsref/std/cookie_spec.html
+    \title Netscape Cookie Specification
+*/
+
+/*!
+    \externalpage https://learn.microsoft.com/en-us/previous-versions/ms533046(v=vs.85)
+    \title Mitigating Cross-site Scripting With HTTP-only Cookies
+*/
+
+/*!
+    \externalpage https://tldp.org/HOWTO/Framebuffer-HOWTO.html
+    \title Framebuffer HOWTO
+*/
+
+/*!
+    \externalpage https://www.w3.org/TR/scxml/
+    \title State Chart XML: State Machine Notation for Control Abstraction
+*/
+
+/*!
+    \externalpage https://www.weizmann.ac.il/math/harel/sites/math.harel/files/users/user56/Statecharts.pdf
+    \title Statecharts: A visual formalism for complex systems
+*/
+
+/*!
+    \externalpage https://www.gnu.org/licenses/gpl-3.0.html
+    \title GNU General Public License
+*/
+
+/*!
+    \externalpage https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+    \title GNU Lesser General Public License, version 2.1
+*/
+
+/*!
+    \externalpage https://www.qtcentre.org
+    \title Qt Centre
+*/
+
+/*!
+    \externalpage https://kde.org
+    \title KDE
+*/
+
+/*!
+    \externalpage https://cplusplus.com/reference/cstring/memcpy/
+    \title C++ Reference - memcpy
+*/
+
+/*!
+    \externalpage https://en.cppreference.com/w/cpp/symbol_index/chrono_literals.html
+    \title chrono_literals Symbol Index
+*/
+
+/*!
+    \externalpage https://www.w3.org/TR/CSS2/selector.html
+    \title Standard CSS2 selector
+*/
+
+/*!
+    \externalpage https://www.w3.org/XML/Core/#Publications
+    \title W3C XML specifications
+*/
+
+/*!
+    \externalpage https://www.w3.org/XML/Schema
+    \title XML Schema
+*/
+
+/*!
+    \externalpage https://opensource.org/license/bsd-3-clause
+    \title New and Modified BSD Licenses
+*/
+
+/*!
+    \externalpage https://ecma-international.org/publications-and-standards/standards/ecma-262/
+    \title ECMAScript Language Specification
+*/
+
+/*!
+    \externalpage https://developer.mozilla.org/en-US/docs/Web/JavaScript
+    \title JavaScript Resources
+*/
+
+/*!
+    \externalpage https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide
+    \title JavaScript Guide
+*/
+
+/*!
+    \externalpage https://developer.mozilla.org/en-US/docs/Web/JavaScript
+    \title About JavaScript
+*/
+
+/*!
+    \externalpage https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#keywords
+    \title JavaScript Reserved Words
+*/
+
+/*!
+    \externalpage https://publicsuffix.org/
+    \title publicsuffix.org
+*/
+
+/*!
+    \externalpage https://accessibility.linuxfoundation.org/a11yspecs/ia2/docs/html/_accessible_event_i_d_8idl.html
+    \title AccessibleEventID.idl File Reference
+*/
+
+/*!
+    \externalpage https://learn.microsoft.com/en-us/windows/win32/winauto/event-constants
+    \title Microsoft Active Accessibility Event Constants
+*/
+
+/*!
+    \externalpage https://registry.khronos.org/OpenGL/index_gl.php
+    \title OpenGL Registry
+*/
+
+/*!
+    \externalpage https://registry.khronos.org/OpenGL/index_es.php
+    \title Khronos OpenGL ES API Registry
+*/
+
+/*!
+    \externalpage https://www.khronos.org/opengl/wiki/Array_Texture
+    \title Array Texture
+*/
+
+/*!
+    \externalpage https://github.com/iksaif/qsslkey-p11
+    \title qsslkey example
+*/
+
+/*!
+    \externalpage https://www.w3.org/TR/2009/WD-webdatabase-20091029/
+    \title HTML5 Web Database API
+*/
+
+/*!
+    \externalpage https://lldb.llvm.org/
+    \title The LLDB Debugger
+*/
+
+/*!
+    \externalpage https://account.qt.io/s/
+    \title Qt Account Sign-up
+*/
+
+/*!
+   \externalpage https://facebook.github.io/zstd/
+   \title Zstandard Site
+*/
+
+/*!
+    \externalpage https://www.unicode.org/
+    \title Unicode standard
+*/
+
+/*!
+    \externalpage https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw
+    \title CreateProcess
+*/
+
+/*!
+    \externalpage https://testanything.org
+    \title Test Anything Protocol
+*/
+
+/*!
+    \externalpage https://www.jetbrains.com/teamcity/
+    \title TeamCity
+*/
+
+/*!
+    \externalpage https://junit.org/
+    \title JUnit XML
+*/
+
+/*!
+    \externalpage https://www.qt.io/product/quality-assurance/test-center
+    \title Test Center
+*/
+
+/*!
+    \externalpage https://specifications.freedesktop.org/trash/1.0/
+    \title FreeDesktop.org Trash specification version 1.0
+*/

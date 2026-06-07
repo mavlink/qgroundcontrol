@@ -1,0 +1,18 @@
+[
+    {
+        "Id": "wayland-linux-dmabuf-unstable-v1",
+        "Name": "Wayland Linux Dmabuf Unstable V1 Protocol",
+        "QDocModule": "qtwaylandcompositor",
+        "QtUsage": "Used in the Qt Wayland Compositor",
+        "Files": "linux-dmabuf-unstable-v1.xml",
+
+        "Description": "The linux dmabuf protocol is a way to create dmabuf-based wl_buffers",
+        "Homepage": "https://wayland.freedesktop.org",
+        "Version": "unstable v1, version 3",
+        "DownloadLocation": "https://gitlab.freedesktop.org/wayland/wayland-protocols/raw/1.18/unstable/linux-dmabuf/linux-dmabuf-unstable-v1.xml",
+        "LicenseId": "MIT",
+        "License": "MIT License",
+        "LicenseFile": "../MIT_LICENSE.txt",
+        "Copyright": "Copyright © 2014, 2015 Collabora, Ltd."
+    }
+]

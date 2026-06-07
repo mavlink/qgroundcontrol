@@ -1,0 +1,125 @@
+[
+    {
+        "classes": [
+            {
+                "className": "QEvdevMouseHandler",
+                "lineNumber": 34,
+                "object": true,
+                "qualifiedClassName": "QEvdevMouseHandler",
+                "signals": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "x",
+                                "type": "int"
+                            },
+                            {
+                                "name": "y",
+                                "type": "int"
+                            },
+                            {
+                                "name": "abs",
+                                "type": "bool"
+                            },
+                            {
+                                "name": "buttons",
+                                "type": "Qt::MouseButtons"
+                            },
+                            {
+                                "name": "button",
+                                "type": "Qt::MouseButton"
+                            },
+                            {
+                                "name": "type",
+                                "type": "QEvent::Type"
+                            }
+                        ],
+                        "index": 0,
+                        "lineNumber": 44,
+                        "name": "handleMouseEvent",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "delta",
+                                "type": "QPoint"
+                            }
+                        ],
+                        "index": 1,
+                        "lineNumber": 46,
+                        "name": "handleWheelEvent",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qevdevmousehandler_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "className": "QEvdevTouchScreenHandler",
+                "lineNumber": 43,
+                "object": true,
+                "qualifiedClassName": "QEvdevTouchScreenHandler",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 58,
+                        "name": "touchPointsUpdated",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            },
+            {
+                "className": "QEvdevTouchScreenHandlerThread",
+                "lineNumber": 76,
+                "methods": [
+                    {
+                        "access": "private",
+                        "index": 1,
+                        "lineNumber": 94,
+                        "name": "notifyTouchDeviceRegistered",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "qualifiedClassName": "QEvdevTouchScreenHandlerThread",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 91,
+                        "name": "touchDeviceRegistered",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QDaemonThread"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qevdevtouchhandler_p.h",
+        "outputRevision": 69
+    }
+]

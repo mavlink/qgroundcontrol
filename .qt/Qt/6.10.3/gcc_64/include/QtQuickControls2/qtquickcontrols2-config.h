@@ -1,0 +1,5 @@
+#ifndef QT_FEATURES_QuickControls2_src_quickcontrols_qtquickcontrols2_config_h_H
+#define QT_FEATURES_QuickControls2_src_quickcontrols_qtquickcontrols2_config_h_H
+
+
+#endif // QT_FEATURES_QuickControls2_src_quickcontrols_qtquickcontrols2_config_h_H

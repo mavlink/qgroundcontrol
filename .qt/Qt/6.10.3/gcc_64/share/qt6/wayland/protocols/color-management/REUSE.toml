@@ -1,0 +1,12 @@
+version = 1
+
+[[annotations]]
+path = "color-management-v1.xml"
+precedence = "closest"
+SPDX-FileCopyrightText = ["Copyright 2019 Sebastian Wick",
+                          "Copyright 2019 Erwin Burema",
+                          "Copyright 2020 AMD",
+                          "Copyright 2020-2024 Collabora, Ltd.",
+                          "Copyright 2024 Xaver Hugl",
+                          "Copyright 2022-2025 Red Hat, Inc."]
+SPDX-License-Identifier = "MIT"

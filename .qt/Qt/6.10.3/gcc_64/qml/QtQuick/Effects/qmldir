@@ -1,0 +1,8 @@
+module QtQuick.Effects
+linktarget Qt6::effectsplugin
+optional plugin effectsplugin
+classname QtQuickEffectsPlugin
+typeinfo plugins.qmltypes
+depends QtQuick auto
+prefer :/qt-project.org/imports/QtQuick/Effects/
+

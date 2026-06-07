@@ -1,0 +1,9 @@
+module Qt.labs.animation
+linktarget Qt6::labsanimationplugin
+optional plugin labsanimationplugin
+classname QtLabsAnimationPlugin
+typeinfo plugins.qmltypes
+depends QtQml
+prefer :/qt-project.org/imports/Qt/labs/animation/
+depends QtQuick
+

@@ -1,0 +1,685 @@
+// Copyright (C) 2021 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+// Up-to-date with QDS 2.2.1
+
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/index.html
+    \title Qt Design Studio Manual
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtdesignstudio-toc.html
+    \title Qt Design Studio: All Topics
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-getting-started.html
+    \title Qt Design Studio: Getting Started
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-installation.html
+    \title Qt Design Studio: Installation
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/gstutorials.html
+    \title Qt Design Studio: Your First UI
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtdesignstudio-loginui1-example.html
+    \title Qt Design Studio: Log In UI - Components
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtdesignstudio-loginui2-example.html
+    \title Qt Design Studio: Log In UI - Positioning
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtdesignstudio-loginui3-example.html
+    \title Qt Design Studio: Log In UI - States
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtdesignstudio-loginui4-example.html
+    \title Qt Design Studio: Log In UI - Timeline
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-quick-tour.html
+    \title Qt Design Studio: User Interface
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-modes.html
+    \title Qt Design Studio: Selecting Modes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-using-qt-quick-designer.html
+    \title Qt Design Studio: Design Views
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-form-editor.html
+    \title Qt Design Studio: Form Editor
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-editor.html
+    \title Qt Design Studio: 3D Editor
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-library.html
+    \title Qt Design Studio: Library
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-navigator.html
+    \title Qt Design Studio: Navigator
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-properties-view.html
+    \title Qt Design Studio: Properties
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-connection-view.html
+    \title Qt Design Studio: Connection View
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-states-view.html
+    \title Qt Design Studio: States
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-transition-editor.html
+    \title Qt Design Studio: Transition Editor
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-timeline-view.html
+    \title Qt Design Studio: Timeline
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-curve-editor.html
+    \title Qt Design Studio: Curve Editor
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-text-editor.html
+    \title Qt Design Studio: Text Editor
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-projects-view.html
+    \title Qt Design Studio: Projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-file-system-view.html
+    \title Qt Design Studio: File System
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-open-documents-view.html
+    \title Qt Design Studio: Open Documents
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-project-managing-workspaces.html
+    \title Qt Design Studio: Managing Workspaces
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-project-managing-sessions.html
+    \title Qt Design Studio: Managing Sessions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-keyboard-shortcuts.html
+    \title Qt Design Studio: Keyboard Shortcuts
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-projects.html
+    \title Qt Design Studio: Creating Projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-use-cases.html
+    \title Qt Design Studio: Use Cases
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-terms.html
+    \title Qt Design Studio: Concepts and Terms
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studioexamples.html
+    \title Qt Design Studio: Examples and Tutorials
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-uis.html
+    \title Qt Design Studio: Wireframing
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-app-flows.html
+    \title Qt Design Studio: Designing Application Flows
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-flow-view.html
+    \title Qt Design Studio: Adding Flow Views
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-flow-item.html
+    \title Qt Design Studio: Adding Flow Items
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-flow-action-area.html
+    \title Qt Design Studio: Adding Action Areas and Transitions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-flow-effects.html
+    \title Qt Design Studio: Applying Effects to Transitions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-flow-events.html
+    \title Qt Design Studio: Simulating Events
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-flow-conditions.html
+    \title Qt Design Studio: Simulating Conditions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-flow-states.html
+    \title Qt Design Studio: Applying States in Flows
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-flow-external-events.html
+    \title Qt Design Studio: Reacting to External Events
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-components.html
+    \title Qt Design Studio: Components
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-preset-components.html
+    \title Qt Design Studio: Preset Components
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-shapes.html
+    \title Qt Design Studio: Shapes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-text.html
+    \title Qt Design Studio: Text
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-images.html
+    \title Qt Design Studio: Images
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-user-interaction-methods.html
+    \title Qt Design Studio: User Interaction Methods
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-controls.html
+    \title Qt Design Studio: UI Controls
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-data-models.html
+    \title Qt Design Studio: Lists and Other Data Models
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-2d-effects.html
+    \title Qt Design Studio: 2D Effects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-logic-helpers.html
+    \title Qt Design Studio: Logic Helpers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-animations.html
+    \title Qt Design Studio: Animations
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-view.html
+    \title Qt Design Studio: 3D Views
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-node.html
+    \title Qt Design Studio: Node
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-group.html
+    \title Qt Design Studio: Group
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-instancing.html
+    \title Qt Design Studio: Instanced Rendering
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-skeletal-components.html
+    \title Qt Design Studio: Skeletal Animation
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-model.html
+    \title Qt Design Studio: 3D Models
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-materials.html
+    \title Qt Design Studio: Materials and Shaders
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-texture.html
+    \title Qt Design Studio: Textures
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-materials-types.html
+    \title Qt Design Studio: 3D Materials
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-effects.html
+    \title Qt Design Studio: 3D Effects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-custom-shaders.html
+    \title Qt Design Studio: Custom Shaders
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-custom-effects-materials.html
+    \title Qt Design Studio: Custom Effects and Materials
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-lights.html
+    \title Qt Design Studio: Lights
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-camera.html
+    \title Qt Design Studio: Cameras
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-scene-environment.html
+    \title Qt Design Studio: Scene Environment
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-morph-target.html
+    \title Qt Design Studio: Morph Target
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-repeater-3d.html
+    \title Qt Design Studio: Repeater3D
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-3d-loader-3d.html
+    \title Qt Design Studio: Loader3D
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-editor-settings.html
+    \title Qt Design Studio: Specifying Editor Settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-component-instances.html
+    \title Qt Design Studio: Creating Component Instances
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-components-creating.html
+    \title Qt Design Studio: Creating Custom Components
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-buttons.html
+    \title Qt Design Studio: Creating Buttons
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-scalable-image.html
+    \title Qt Design Studio: Creating Scalable Buttons and Borders
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-properties.html
+    \title Qt Design Studio: Specifying Component Properties
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-positioning.html
+    \title Qt Design Studio: Scalable Layouts
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-annotations.html
+    \title Qt Design Studio: Annotating Designs
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-prototyping.html
+    \title Qt Design Studio: Prototyping
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-creating-ui-logic.html
+    \title Qt Design Studio: Creating UI Logic
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-simulation-overview.html
+    \title Qt Design Studio: Simulating Complex Experiences
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-placeholder-data.html
+    \title Qt Design Studio: Loading Placeholder Data
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-javascript.html
+    \title Qt Design Studio: Simulating Application Logic
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-simulink.html
+    \title Qt Design Studio: Simulating Dynamic Systems
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-qml-modules-with-plugins.html
+    \title Qt Design Studio: Using QML Modules with Plugins
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-adding-dynamics.html
+    \title Qt Design Studio: Dynamic Behaviors
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qmldesigner-connections.html
+    \title Qt Design Studio: Adding Connections
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-signals.html
+    \title Qt Design Studio: Connecting Components to Signals
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-property-bindings.html
+    \title Qt Design Studio: Adding Bindings Between Properties
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-dynamic-properties.html
+    \title Qt Design Studio: Specifying Dynamic Properties
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-states.html
+    \title Qt Design Studio: Adding States
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-live-preview.html
+    \title Qt Design Studio: Validating with Target Hardware
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-live-preview-desktop.html
+    \title Qt Design Studio: Previewing on Desktop
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-live-preview-devices.html
+    \title Qt Design Studio: Previewing on Devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qt-design-viewer.html
+    \title Qt Design Studio: Previewing in Browsers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-exporting-and-importing.html
+    \title Qt Design Studio: Asset Creation with Other Tools
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-overview.html
+    \title Qt Design Studio: Exporting from Design Tools
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-ai.html
+    \title Qt Design Studio: Exporting Designs from Adobe Illustrator
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/psqtbridge.html
+    \title Qt Design Studio: Exporting Designs from Adobe Photoshop
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-ps-setup.html
+    \title Qt Design Studio: Setting Up Qt Bridge for Adobe Photoshop
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-ps-using.html
+    \title Qt Design Studio: Using Qt Bridge for Adobe Photoshop
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/xdqtbridge.html
+    \title Qt Design Studio: Exporting Designs from Adobe XD
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-xd-setup.html
+    \title Qt Design Studio: Setting Up Qt Bridge for Adobe XD
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-xd-using.html
+    \title Qt Design Studio: Using Qt Bridge for Adobe XD
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/sketchqtbridge.html
+    \title Qt Design Studio: Exporting Designs from Sketch
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-sketch-setup.html
+    \title Qt Design Studio: Setting Up Qt Bridge for Sketch
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-sketch-using.html
+    \title Qt Design Studio: Using Qt Bridge for Sketch
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/figmaqtbridge.html
+    \title Qt Design Studio: Exporting Designs from Figma
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-figma-setup.html
+    \title Qt Design Studio: Setting Up Qt Bridge for Figma
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtbridge-figma-using.html
+    \title Qt Design Studio: Using Qt Bridge for Figma
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/exporting-3d-assets.html
+    \title Qt Design Studio: Exporting 3D Assets
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/exporting-from-blender.html
+    \title Qt Design Studio: Exporting from Blender
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/exporting-from-maya.html
+    \title Qt Design Studio: Exporting from Maya
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/exporting-from-qt3ds.html
+    \title Qt Design Studio: Exporting from Qt 3D Studio
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-importing-designs.html
+    \title Qt Design Studio: Importing Designs
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-importing-2d.html
+    \title Qt Design Studio: Importing 2D Assets
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-fonts.html
+    \title Qt Design Studio: Using Custom Fonts
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-importing-3d.html
+    \title Qt Design Studio: Importing 3D Assets
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-exporting-qml.html
+    \title Qt Design Studio: Exporting Components
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-motion-design.html
+    \title Qt Design Studio: Motion Design
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-animation-overview.html
+    \title Qt Design Studio: Introduction to Animation Techniques
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-timeline.html
+    \title Qt Design Studio: Creating Timeline Animations
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-editing-easing-curves.html
+    \title Qt Design Studio: Editing Easing Curves
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-production-quality-animation.html
+    \title Qt Design Studio: Production Quality
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qtquick-optimizing-designs.html
+    \title Qt Design Studio: Optimizing Designs
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-optimized-3d-scenes.html
+    \title Qt Design Studio: Creating Optimized 3D Scenes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-implementing-applications.html
+    \title Qt Design Studio: Implementing Applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-coding.html
+    \title Qt Design Studio: Coding
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-editor-functions.html
+    \title Qt Design Studio: Writing Code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-coding-navigating.html
+    \title Qt Design Studio: Working in Edit Mode
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-sidebars.html
+    \title Qt Design Studio: Working with Sidebars
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-views.html
+    \title Qt Design Studio: Browsing Project Contents
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-output-panes.html
+    \title Qt Design Studio: Viewing Output
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-highlighting.html
+    \title Qt Design Studio: Semantic Highlighting
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-checking-code-syntax.html
+    \title Qt Design Studio: Checking Code Syntax
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-completing-code.html
+    \title Qt Design Studio: Completing Code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-indenting-code.html
+    \title Qt Design Studio: Indenting Text or Code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/qt-quick-toolbars.html
+    \title Qt Design Studio: Using Qt Quick Toolbars
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-diff-editor.html
+    \title Qt Design Studio: Comparing Files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-finding-overview.html
+    \title Qt Design Studio: Finding
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-editor-finding.html
+    \title Qt Design Studio: Finding and Replacing
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-editor-locator.html
+    \title Qt Design Studio: Searching with the Locator
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-editor-refactoring.html
+    \title Qt Design Studio: Refactoring
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-editor-quick-fixes.html
+    \title Qt Design Studio: Applying Refactoring Actions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-editor-options.html
+    \title Qt Design Studio: Configuring the Editor
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-editor-options-text.html
+    \title Qt Design Studio: Specifying Text Editor Settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-debugging.html
+    \title Qt Design Studio: Debugging and Profiling
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-debugging-qml.html
+    \title Qt Design Studio: Debugging Qt Quick Projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-qml-debugging-example.html
+    \title Qt Design Studio: Debugging a Qt Quick Example Application
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-qml-performance-monitor.html
+    \title Qt Design Studio: Profiling QML Applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-advanced.html
+    \title Qt Design Studio: Advanced Designer Topics
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-quick-ui-forms.html
+    \title Qt Design Studio: UI Files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-telemetry.html
+    \title Qt Design Studio: Managing Data Collection
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/collecting-usage-statistics.html
+    \title Qt Design Studio: Collecting Usage Statistics
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/collecting-user-feedback.html
+    \title Qt Design Studio: Collecting User Feedback
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-crashpad.html
+    \title Qt Design Studio: Reporting Crashes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-packaging.html
+    \title Qt Design Studio: Packaging Applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-developer-topics.html
+    \title Qt Design Studio: Developer Topics
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-vcs-git.html
+    \title Qt Design Studio: Using Git
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-porting-projects.html
+    \title Qt Design Studio: Converting Qt 5 Projects into Qt 6 Projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/quick-converting-ui-projects.html
+    \title Qt Design Studio: Converting UI Projects to Applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-editor-external.html
+    \title Qt Design Studio: Using External Tools
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-help.html
+    \title Qt Design Studio: Help
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-help.html
+    \title Qt Design Studio: Using the Help Mode
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-faq.html
+    \title Qt Design Studio: Frequently Asked Questions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/studio-platforms.html
+    \title Qt Design Studio: Supported Platforms
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/technical-support.html
+    \title Qt Design Studio: Technical Support
+*/
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/creator-acknowledgements.html
+    \title Qt Design Studio: Acknowledgements
+*/

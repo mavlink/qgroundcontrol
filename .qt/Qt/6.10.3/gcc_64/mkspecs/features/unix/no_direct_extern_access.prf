@@ -1,0 +1,7 @@
+clang {
+    QMAKE_CFLAGS += -fno-direct-access-external-data
+    QMAKE_CXXFLAGS += -fno-direct-access-external-data
+} else {
+    QMAKE_CFLAGS += -mno-direct-extern-access
+    QMAKE_CXXFLAGS += -mno-direct-extern-access
+}

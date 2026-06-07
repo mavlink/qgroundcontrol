@@ -1,0 +1,5 @@
+#ifndef QT_QTQUICKVECTORIMAGEGENERATOR_MODULE_H
+#define QT_QTQUICKVECTORIMAGEGENERATOR_MODULE_H
+#include <QtQuickVectorImageGenerator/QtQuickVectorImageGeneratorDepends>
+#include "qtquickvectorimagegeneratorversion.h"
+#endif

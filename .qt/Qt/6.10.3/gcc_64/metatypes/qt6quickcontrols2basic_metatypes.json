@@ -1,0 +1,92 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "Overlay"
+                    },
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QQuickOverlay"
+                    },
+                    {
+                        "name": "QML.Creatable",
+                        "value": "false"
+                    },
+                    {
+                        "name": "QML.UncreatableReason",
+                        "value": ""
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "515"
+                    }
+                ],
+                "className": "QQuickOverlayAttachedForeign",
+                "gadget": true,
+                "lineNumber": 31,
+                "qualifiedClassName": "QQuickOverlayAttachedForeign"
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "SplitHandle"
+                    },
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QQuickSplitHandleAttached"
+                    },
+                    {
+                        "name": "QML.Creatable",
+                        "value": "false"
+                    },
+                    {
+                        "name": "QML.UncreatableReason",
+                        "value": ""
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "525"
+                    }
+                ],
+                "className": "QQuickSplitHandleAttachedForeign",
+                "gadget": true,
+                "lineNumber": 41,
+                "qualifiedClassName": "QQuickSplitHandleAttachedForeign"
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "ContextMenu"
+                    },
+                    {
+                        "name": "QML.Foreign",
+                        "value": "QQuickContextMenu"
+                    },
+                    {
+                        "name": "QML.Creatable",
+                        "value": "false"
+                    },
+                    {
+                        "name": "QML.UncreatableReason",
+                        "value": ""
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1545"
+                    }
+                ],
+                "className": "QQuickContextMenuForeign",
+                "gadget": true,
+                "lineNumber": 51,
+                "qualifiedClassName": "QQuickContextMenuForeign"
+            }
+        ],
+        "inputFile": "qtquickcontrols2basicforeign_p.h",
+        "outputRevision": 69
+    }
+]

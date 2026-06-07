@@ -1,0 +1,1717 @@
+// Copyright (C) 2025 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+
+// Up-to-date with Qt Creator 16.0.0
+
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-qtaiassistant.html
+    \title \QC: Use Qt AI Assistant
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-vxworks-kits.html
+    \title \QC: Create kits for VxWorks devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-lua-scripts.html
+    \title \QC: Create Lua scripts
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-winappsdk.html
+    \title \QC: Manage Windows App SDK packages
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-deployment-qnx.html
+    \title \QC: QNX Neutrino Deploy Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-developing-qnx.html
+    \title \QC: Add a QNX Neutrino device
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-qnx-kits.html
+    \title \QC: Create kits for QNX Neutrino devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-on-qnx.html
+    \title \QC: Run on QNX devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-run-settings-qnx.html
+    \title \QC: QNX Run Settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-developing-baremetal.html
+    \title \QC: Developing for Bare Metal Devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-eblink.html
+    \title \QC: Set up EBlink
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-jlink.html
+    \title \QC: Set up J-Link
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-openocd.html
+    \title \QC: Set up OpenOCD
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-stlink.html
+    \title \QC: Set up St-Link
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-uvision.html
+    \title \QC: Set up the uVision IDE
+*/
+
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-bare-metal-devices.html
+    \title \QC: Add Bare Metal devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-developing-generic-linux.html
+    \title \QC: Developing for Remote Linux Devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-connect-remote-linux.html
+    \title \QC: Connect remote Linux devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-remote-linux.html
+    \title \QC: Add remote Linux devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-developing-mcu.html
+    \title \QC: Developing for MCUs
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-mcu-devices.html
+    \title \QC: Add MCU devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-mcu-kits.html
+    \title \QC: Add MCU SDKs
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-mcu-kits.html
+    \title \QC: Manage MCU Kits
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-on-mcu-devices.html
+    \title \QC: Create MCU projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-setup-webassembly.html
+    \title \QC: Build applications for the Web
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-webassembly.html
+    \title \QC: Run applications in a web browser
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-deployment-embedded-linux.html
+    \title \QC: Remote Linux Deploy Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-on-remote-linux.html
+    \title \QC: Run on remote Linux devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-faq.html
+    \title \QC: FAQ
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-tos.html
+    \title \QC: How To
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-switch-to-edit-mode.html
+    \title \QC: Switch to Edit mode
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-from-cli.html
+    \title \QC: Run \QC from the command line
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-locate-files-using-keyboard.html
+    \title \QC: Locate files using the keyboard
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-perform-calculations.html
+    \title \QC: Perform calculations
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-navigate-qml-code.html
+    \title \QC: Move in QML code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-license-header-templates.html
+    \title \QC: Add a license header template for C++ code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-paste-text-from-clipboard-history.html
+    \title \QC: Paste text from clipboard history
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-enclose-code-in-characters.html
+    \title \QC: Enclose code in brackets or quotes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-select-enclosing-block.html
+    \title \QC: Select the current code block
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-write-notes.html
+    \title \QC: Write down notes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-set-recent-files.html
+    \title \QC: Set the number of recent files shown
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-search-and-replace-using-regexp.html
+    \title \QC: Search and replace using a regular expression
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-build-and-run-tests.html
+    \title \QC: Build and run tests
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-qt-tests.html
+    \title \QC: Create Qt tests
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-qtquick-tests.html
+    \title \QC: Create Qt Quick tests
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-google-tests.html
+    \title \QC: Create Google tests
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-boost-tests.html
+    \title \QC: Create Boost tests
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-catch2-tests.html
+    \title \QC: Create Catch2 tests
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-ctests.html
+    \title \QC: Create CTest Based Tests
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-tests-to-projects.html
+    \title \QC: Add tests to existing test projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-testing.html
+    \title \QC: Testing
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-test-results.html
+    \title \QC: Test Results
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-get-help.html
+    \title \QC: Get help
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-find-info-in-documentation.html
+    \title \QC: Find information in Qt documentation
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-bookmarks-to-help-pages.html
+    \title \QC: Add bookmarks to help pages
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-search-from-docs.html
+    \title \QC: Search from documentation
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-external-documentation.html
+    \title \QC: Add external documentation
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-detach-help-window.html
+    \title \QC: Detach the help window
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-set-help-start-page.html
+    \title \QC: Select the help start page
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-filter-documentation.html
+    \title \QC: Filter documentation
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-quick-tour.html
+    \title \QC: User Interface
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-switch-between-modes.html
+    \title \QC: Switch between modes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-show-and-hide-sidebars.html
+    \title \QC: Show and hide sidebars
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-detach-views.html
+    \title \QC: Detach views
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-projects-view.html
+    \title \QC: Projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-file-system-view.html
+    \title \QC: File System
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-open-documents-view.html
+    \title \QC: Open Documents
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-view-output.html
+    \title \QC: View output
+*/
+
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-issues-view.html
+    \title \QC: Issues
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-search-results-view.html
+    \title \QC: Search Results View
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-application-output-view.html
+    \title \QC: Application Output
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-compile-output-view.html
+    \title \QC: Compile Output
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-terminal-view.html
+    \title \QC: Terminal
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-to-do-entries-view.html
+    \title \QC: To-Do Entries
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-preferences-to-do.html
+    \title \QC: To-Do
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-excludes-files-from-to-do-lists.html
+    \title \QC: Exclude files from to-do lists
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-show-and-hide-main-menu.html
+    \title \QC: Show and hide the main menu
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-cli.html
+    \title \QC: Command-Line Options
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-task-lists.html
+    \title \QC: Show task list files in issues
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-telemetry.html
+    \title \QC: Manage data collection
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/collecting-usage-statistics.html
+    \title \QC: Collect usage statistics
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-managing-sessions.html
+    \title \QC: Manage sessions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-editor-external.html
+    \title \QC: Use external tools
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-qtlinguist.html
+    \title \QC: Use Qt Linguist
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-qml-files.html
+    \title \QC: Run QML files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-external-text-editors.html
+    \title \QC: Use external text editors
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-version-control.html
+    \title \QC: Version Control Systems
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-vcs-repositories.html
+    \title \QC: Create VCS repositories for new projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-set-up-vcs.html
+    \title \QC: Set up version control systems
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-common-vcs-functions.html
+    \title \QC: Use common VCS functions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcs-bazaar.html
+    \title \QC: Bazaar
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcs-clearcase.html
+    \title \QC: ClearCase
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcs-cvs.html
+    \title \QC: CVS
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcs-fossil.html
+    \title \QC: Fossil
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcs-git.html
+    \title \QC: Git
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-first-commit.html
+    \title \QC: Commit your first change
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-tools.html
+    \title \QC: Git Tools
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-initialize-git-repo.html
+    \title \QC: Initialize Git repositories
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-git-on-windows.html
+    \title \QC: Use Git for Windows
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-with-subversion.html
+    \title \QC: Use Git with Subversion
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-instant-blame.html
+    \title \QC: Show instant blame
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-stage-changes.html
+    \title \QC: Stage changes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-blame.html
+    \title \QC: git blame
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-clean.html
+    \title \QC: git clean
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-diff.html
+    \title \QC: git diff
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-log.html
+    \title \QC: git log
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-reset.html
+    \title \QC: git reset
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-apply-patch.html
+    \title \QC: Apply patches
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-interactive-rebase.html
+    \title \QC: Interactive rebase
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-am.html
+    \title \QC: git am
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-branch.html
+    \title \QC: git branch
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-commit.html
+    \title \QC: git commit
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-merge.html
+    \title \QC: git merge
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-reflog.html
+    \title \QC: git reflog
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-stash.html
+    \title \QC: git stash
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-status.html
+    \title \QC: git status
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-commits.html
+    \title \QC: Apply actions to commits
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-gerrit.html
+    \title \QC: Review code with Gerrit
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-fetch.html
+    \title \QC: git fetch
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-pull.html
+    \title \QC: git pull
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-git-push.html
+    \title \QC: git push
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcs-gitlab.html
+    \title \QC: GitLab
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-link-with-gitlab.html
+    \title \QC: Link projects with GitLab
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcs-mercurial.html
+    \title \QC: Mercurial
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcs-perforce.html
+    \title \QC: Perforce
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcs-subversion.html
+    \title \QC: Subversion
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-keyboard-shortcuts.html
+    \title \QC: Keyboard Shortcuts
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/qtcreator-transitions-example.html
+    \title \QC: Tutorial: Qt Quick application
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-tutorial-python-application-qt-quick.html
+    \title \QC: Tutorial: Qt Quick and Python
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-tutorial-python-application-qt-widgets.html
+    \title \QC: Tutorial: Qt Widgets and Python
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-tutorial-python-application-qt-widgets-ui.html
+    \title \QC: Tutorial: Qt Widgets UI and Python
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-python-development.html
+    \title \QC: Develop Qt for Python applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-python-apps.html
+    \title \QC: Run Python applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-run-settings-python.html
+    \title \QC: Python Run Settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-qml-modules-with-plugins.html
+    \title \QC: Using QML Modules with Plugins
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/quick-converting-ui-projects.html
+    \title \QC: Converting UI Projects to Applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/quick-projects.html
+    \title \QC: Create Qt Quick Applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-qtquick-ui-prototype.html
+    \title \QC: Create Qt Quick UI Prototypes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-run-settings-qtquick-ui-prototype.html
+    \title \QC: Qt Quick UI Prototype Run Settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-qtquick-code-style.html
+    \title \QC: Qt Quick Code Style
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-qtquickdesigner-plugin.html
+    \title \QC: Qt Quick Designer
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/qt-quick-toolbars.html
+    \title \QC: Edit properties of QML types
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-text-editor-font-colors.html
+    \title \QC: Font & Colors
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-change-editor-colors.html
+    \title \QC: Change editor colors
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-text-editor-behavior.html
+    \title \QC: Behavior
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-coding-navigating.html
+    \title \QC: Edit Mode
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-move-between-open-files.html
+    \title \QC: Move between files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-move-to-symbols.html
+    \title \QC: Move to symbols
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-change-text-encoding.html
+    \title \QC: Change text encoding
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-select-line-endings.html
+    \title \QC: Select line ending style
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-insert-multiple-cursors.html
+    \title \QC: Insert multiple cursors
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-split-editor-views.html
+    \title \QC: Split the editor view
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-bookmarks.html
+    \title \QC: Bookmark code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-reparse-files.html
+    \title \QC: Parse files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-inspect-code-model.html
+    \title \QC: Inspect the code model
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-highlighting.html
+    \title \QC: Download highlight definitions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-code-blocks.html
+    \title \QC: Highlight code blocks
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-checking-code-syntax.html
+    \title \QC: Check code syntax
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-js-and-qml-error-codes.html
+    \title \QC: JavaScript and QML Checks
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-autoformat-qml-js.html
+    \title \QC: Automatically format QML/JS files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-completing-code.html
+    \title \QC: Complete code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-text-editor-completion.html
+    \title \QC: Completion
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-text-editor-shippets.html
+    \title \QC: Snippets
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-code-snippets.html
+    \title \QC: Add code snippets to the auto-complete menu
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-editor-codepasting.html
+    \title \QC: Paste and fetch code snippets
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-macros.html
+    \title \QC: Record text editing macros
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-editor-fakevim.html
+    \title \QC: FakeVim Modes and Commands
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-edit-vim-style.html
+    \title \QC: Edit like in Vim
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-preferences-fakevim.html
+    \title \QC: FakeVim
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-indenting-code.html
+    \title \QC: Indent text or code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-rename-symbols.html
+    \title \QC: Rename symbols
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-editor-finding.html
+    \title \QC: Search in current file
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-advanced-search.html
+    \title \QC: Search in projects or file systems
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-editor-quick-fixes.html
+    \title \QC: Apply quick fixes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-qml-quick-fixes.html
+    \title \QC: QML Quick Fixes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-editor-locator.html
+    \title \QC: Navigate with locator
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-locator.html
+    \title \QC: Locator
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-mime-types.html
+    \title \QC: Edit MIME types
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-modeling.html
+    \title \QC: Model Editor
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-models.html
+    \title \QC: Create UML-style models
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-package-diagrams.html
+    \title \QC: Create package diagrams
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-class-diagrams.html
+    \title \QC: Create class diagrams
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-component-diagrams.html
+    \title \QC: Create component diagrams
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-qml-debugging-example.html
+    \title \QC: Tutorial: Qt Quick debugging
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugging-example.html
+    \title \QC: Tutorial: C++ debugging
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugger-engines.html
+    \title \QC: Supported Debuggers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugging-qml.html
+    \title \QC: Debugging Qt Quick Projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugging.html
+    \title \QC: Debugging
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-enble-debugging.html
+    \title \QC: Enable debugging
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-start-debugging.html
+    \title \QC: Start debugging
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-debug-external-apps.html
+    \title \QC: Start and debug an external application
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-attach-debugger-to-running-apps.html
+    \title \QC: Attach the debugger to running applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-attach-debugger-to-starting-processes.html
+    \title \QC: Attach the debugger to starting processes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-load-core-files-to-debugger.html
+    \title \QC: Load core files to the debugger
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-debug-post-mortem.html
+    \title \QC: Debug crashed processes on Windows
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-start-debugger-from-cli.html
+    \title \QC: Start debugging from the command line
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-debug-remotely-gdb.html
+    \title \QC: Debug remotely with GDB
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-debug-remotely-cdb.html
+    \title \QC: Debug remotely with CDB
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugger-examining-data.html
+    \title \QC: Show tooltips for simple values
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-examine-complex-values.html
+    \title \QC: Examine complex values in Debug views
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-step-through-code.html
+    \title \QC: Step through code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-inspect-basic-qt-objects.html
+    \title \QC: Inspect basic Qt objects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-threads-view.html
+    \title \QC: Viewing Threads
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-modules-view.html
+    \title \QC: Viewing Modules
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-source-files-view.html
+    \title \QC: Viewing Source Files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-registers-view.html
+    \title \QC: Viewing and Editing Register State
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-peripheral-registers-view.html
+    \title \QC: Peripheral Registers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugger-log-view.html
+    \title \QC: Debugger Log
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-disassembler-view.html
+    \title \QC: Viewing Disassembled Code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugger-operating-modes.html
+    \title \QC: Launching the Debugger
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debug-mode.html
+    \title \QC: Debug Mode Views
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-stack-view.html
+    \title \QC: Viewing Call Stack Trace
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-breakpoints-view.html
+    \title \QC: Setting Breakpoints
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-breakpoints.html
+    \title \QC: Add breakpoints
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-breakpoints.html
+    \title \QC: Manage breakpoints
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-set-data-breakpoints.html
+    \title \QC: Set data breakpoints
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-locals-view.html
+    \title \QC: Local Variables and Function Parameters
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-expressions-view.html
+    \title \QC: Evaluating Expressions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugging-helpers.html
+    \title \QC: Debugging Helpers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-troubleshooting-debugging.html
+    \title \QC: Troubleshooting Debugger
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debugger-preferences.html
+    \title \QC: Debugger General Preferences
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-debugger-gdb.html
+    \title \QC: GDB
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-debugger-cdb.html
+    \title \QC: CDB
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-debugger-cdb-paths.html
+    \title \QC: CDB Paths
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/index.html
+    \title \QC Documentation
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-os-supported-platforms.html
+    \title \QC: Supported Platforms
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-desktop-platforms.html
+    \title \QC: Desktop Platforms
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-usability.html
+    \title \QC: Optimizing Applications for Mobile Devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-acknowledgements.html
+    \title \QC: Acknowledgements
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/technical-support.html
+    \title \QC: Technical Support
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-overview.html
+    \title \QC: Overview
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-tutorials.html
+    \title \QC: Tutorials
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-known-issues.html
+    \title \QC: Known Issues
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-glossary.html
+    \title \QC: Glossary
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-getting-started.html
+    \title \QC: Getting Started
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-memcheck.html
+    \title \QC: Detect memory leaks with Memcheck
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-memcheck.html
+    \title \QC: Valgrind Memcheck
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-cache-profiler.html
+    \title \QC: Profile function execution
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-callgrind.html
+    \title \QC: Valgrind Callgrind
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-running-valgrind-remotely.html
+    \title \QC: Run Valgrind tools on external applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-run-settings-valgrind.html
+    \title \QC: Specify Valgrind settings for a project
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-analyze-mode.html
+    \title \QC: Analyzing Code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-qml-performance-monitor.html
+    \title \QC: Profiling QML Applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-profile-qml.html
+    \title \QC: Profile QML applications
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-deploying-android.html
+    \title \QC: Android Deploy Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-developing-ios.html
+    \title \QC: Developing for iOS
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-connect-ios-devices.html
+    \title \QC: Connect iOS devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-test-on-ios-simulator.html
+    \title \QC: Test on iOS Simulator
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-developing-android.html
+    \title \QC: Developing for Android
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-set-android-preferences.html
+    \title \QC: Set up Android development environment
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-android-ndk.html
+    \title \QC: Manage Android NDK packages
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-android-sdk.html
+    \title \QC: Manage Android SDK packages
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-avd.html
+    \title \QC: Manage AVDs
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-avd.html
+    \title \QC: Create an Android Virtual Device (AVD)
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-debug-android.html
+    \title \QC: Debug on Android devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-run-settings-android.html
+    \title \QC: Android Run Settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-example-application.html
+    \title \QC: Tutorial: Build and run
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-generic.html
+    \title \QC: Import an existing project
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-sharing-project-settings.html
+    \title \QC: Share project settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-opening.html
+    \title \QC: Open projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-cmake.html
+    \title \QC: CMake
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-view-cmake-project-contents.html
+    \title \QC: View CMake project contents
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-read-cmake-documentation.html
+    \title \QC: Read CMake documentation
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-cmake-tools.html
+    \title \QC: Add CMake tools
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-edit-cmake-config-files.html
+    \title \QC: Edit CMake configuration files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-complete-cmake-code.html
+    \title \QC: Complete CMake code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-format-cmake-files.html
+    \title \QC: Format CMake files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-files-in-cmake-projects.html
+    \title \QC: Manage files in CMake projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-external-libraries-to-cmake-projects.html
+    \title \QC: Add libraries to CMake projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-debug-cmake-files.html
+    \title \QC: Debug CMake project files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-profile-cmake-code.html
+    \title \QC: Profile CMake code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-settings-cmake-presets.html
+    \title \QC: CMake Presets
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-configure-cmake-for-project.html
+    \title \QC: Override CMake settings for a project
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-tool-chains.html
+    \title \QC: Adding Compilers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-kits-compilers.html
+    \title \QC: Compilers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-custom-compilers.html
+    \title \QC: Add custom compilers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-qbs.html
+    \title \QC: Qbs
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-qbs.html
+    \title \QC: Qbs Preferences
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-edit-qbs-profiles.html
+    \title \QC: Edit Qbs profiles
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-targets.html
+    \title \QC: Add kits
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-kits.html
+    \title \QC: Kits
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-creating.html
+    \title \QC: Creating Projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-project-wizards.html
+    \title \QC: Use project wizards
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-specify-project-contents.html
+    \title \QC: Specify project contents
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-subprojects-to-projects.html
+    \title \QC: Add subprojects to projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-wizards.html
+    \title \QC: Custom Wizards
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-wizards.html
+    \title \QC: Add wizards
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-meson.html
+    \title \QC: Meson
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-nimble.html
+    \title \QC: Nimble
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-nim-compilers.html
+    \title \QC: Add Nim compilers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-nimble.html
+    \title \QC: Create Nimble projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-incredibuild.html
+    \title \QC: IncrediBuild
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-conan.html
+    \title \QC: Conan Package Manager
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-projects-autotools.html
+    \title \QC: Autotools
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-configuring-projects.html
+    \title \QC: Configuring Projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-activate-kits.html
+    \title \QC: Activate kits for a project
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-process-customizing.html
+    \title \QC: Customize the build process
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-settings.html
+    \title \QC: Configure projects for building
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-settings-cmake.html
+    \title \QC: CMake Build Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-settings-qmake.html
+    \title \QC: qmake Build Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-settings-qbs.html
+    \title \QC: Qbs Build Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-settings-meson.html
+    \title \QC: Meson Build Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-settings-incredibuild.html
+    \title \QC: IncrediBuild Build Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-settings-conan.html
+    \title \QC: Conan Build Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-code-style-settings.html
+    \title \QC: Specify code style
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-run-settings.html
+    \title \QC: Configure projects for running
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-custom-executables.html
+    \title \QC: Specify a custom executable to run
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-qmake-libraries.html
+    \title \QC: Add libraries to qmake projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-tutorial-adding-internal-libraries-to-projects.html
+    \title \QC: Tutorial: Use internal libraries with qmake
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-running-targets.html
+    \title \QC: Run on many platforms
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-build-dependencies.html
+    \title \QC: Specify dependencies
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-set-project-environment.html
+    \title \QC: Specify the environment for projects
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-edit-environment-settings.html
+    \title \QC: Edit environment settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-custom-output-parsers.html
+    \title \QC: Add custom output parsers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-activate-custom-output-parsers.html
+    \title \QC: Activate custom output parsers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-editor-settings.html
+    \title \QC: Specify editor settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-project-qmake.html
+    \title \QC: Add Qt versions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-building-targets.html
+    \title \QC: Build for many platforms
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-qmake-before-building.html
+    \title \QC: Run qmake before building
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-using-qt-designer.html
+    \title \QC: \QD
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-writing-program.html
+    \title \QC: Tutorial: Qt Widgets application
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/adding-plugins.html
+    \title \QC: Adding \QD Plugins
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-configuring.html
+    \title \QC: Configuring \QC
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-debuggers.html
+    \title \QC: Add debuggers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/qtcreator-accelbubble-example.html
+    \title \QC: Tutorial: Mobile application
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-diff-editor.html
+    \title \QC: Compare files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-beautifier.html
+    \title \QC: Beautify source code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-beautifier.html
+    \title \QC: Beautifier
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-clang-codemodel.html
+    \title \QC: Clang Code Model
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-cpp-code-model.html
+    \title \QC: Configure C++ code model
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-cpp-code-model.html
+    \title \QC: Code Model
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-cpp-clangd.html
+    \title \QC: Clangd
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-override-clangd-preferences.html
+    \title \QC: Specify clangd settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-quick-ui-forms.html
+    \title \QC: UI Files
+*/
+
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-clang-tools.html
+    \title \QC: Analyze code with Clang-Tidy and Clazy
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-override-clang-tools-preferences.html
+    \title \QC: Specify Clang tools settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-analyzer-clang-tools.html
+    \title \QC: Clang Tools
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-configure-clang-diagnostics.html
+    \title \QC: Configure Clang diagnostics
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-heob.html
+    \title \QC: Heob
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-heob.html
+    \title \QC: Detect memory leaks with Heob
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-cpu-usage-analyzer.html
+    \title \QC: Performance Analyzer
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-analyze-cpu-usage.html
+    \title \QC: Analyze CPU usage
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-cppcheck.html
+    \title \QC: Detect errors in C++ code with Cppcheck
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-ctf-visualizer.html
+    \title \QC: Chrome Trace Format Visualizer
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-file-creating.html
+    \title \QC: Create files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-cpp-classes.html
+    \title \QC: Create C++ classes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-set-cpp-file-naming.html
+    \title \QC: Set C++ file naming preferences
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-resource-files.html
+    \title \QC: Create resource files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-opengl-shaders.html
+    \title \QC: Create OpenGL fragment and vertex shaders
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-ts-files.html
+    \title \QC: Add translation files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-scxml.html
+    \title \QC: SCXML Editor
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-state-charts.html
+    \title \QC: Create state charts
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-language-servers.html
+    \title \QC: Language Servers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-generic-language-servers.html
+    \title \QC: Add generic language servers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-java-language-servers.html
+    \title \QC: Add a Java language server
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-configure-python-language-servers.html
+    \title \QC: Configure Python language servers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-qml-language-server.html
+    \title \QC: Configure \QMLLS
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-inspect-language-clients.html
+    \title \QC: Inspect language clients
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-configure-lsp-workspace.html
+    \title \QC: Configure language server workspace
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/qtcreator-toc.html
+    \title \QC: All Topics
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-live-preview-desktop.html
+    \title \QC: Preview a QML file on desktop
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-live-preview-devices.html
+    \title \QC: Preview Qt Quick UIs on devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/qt-design-viewer.html
+    \title \QC: Preview UI prototypes in browsers
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-axivion.html
+    \title \QC: View Axivion static code analysis results
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-axivion.html
+    \title \QC: Axivion
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-coco.html
+    \title \QC: Set up code coverage from Coco
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-view-code-coverage-with-coco.html
+    \title \QC: View code coverage reports from Coco
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-run-in-app-manager.html
+    \title \QC: Run in Qt Application Manager
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-adding-docker-devices.html
+    \title \QC: Add Docker devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-docker.html
+    \title \QC: Set preferences for Docker devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-build-run-docker.html
+    \title \QC:  Build for and run on Docker devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-compilation-databases.html
+    \title \QC: Use compilation databases
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-copilot.html
+    \title \QC: Use GitHub Copilot
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-preferences-cpp-quick-fixes.html
+    \title \QC: Quick Fixes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-cpp-quick-fixes.html
+    \title \QC: C++ Quick Fixes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-specify-settings-for-quick-fixes.html
+    \title \QC: Specify settings for quick fixes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-editor-how-to-find-symbols.html
+    \title \QC: Find symbols
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-markdown-editor.html
+    \title \QC: Edit Markdown files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-cpp-code-style.html
+    \title \QC: C++ Code Style
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-nim.html
+    \title \QC: Nim
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-contact-qt.html
+    \title \QC: Contact Qt
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-document-code.html
+    \title \QC: Document code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-enable-plugins.html
+    \title \QC: Enable and disable plugins
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-find-settings-files.html
+    \title \QC: Reset \QC settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-install-extensions.html
+    \title \QC: Install extensions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-load-extensions.html
+    \title \QC: Load extensions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-extensions.html
+    \title \QC: Manage extensions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-install-plugins.html
+    \title \QC: Install plugins
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-install.html
+    \title \QC: Installation
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-record-screens.html
+    \title \QC: Record screens
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-preferences-screen-recording.html
+    \title \QC: Screen Recording
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-silver-searcher.html
+    \title \QC: Turn on Silver Searcher
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-logging-viewer.html
+    \title \QC: Inspect internal logs
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-connect-squish-server.html
+    \title \QC: Connect to Squish Server
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-select-squish-auts.html
+    \title \QC: Select Squish AUTs
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-squish-test-suites.html
+    \title \QC: Manage Squish test suites and cases
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-squish-test-suites.html
+    \title \QC: Create Squish test suites
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-reference-squish-output.html
+    \title \QC: Squish
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-vcpkg.html
+    \title \QC: vcpkg Package Manager
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-vcpkg-manifest-files.html
+    \title \QC: Create vcpkg manifest files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-edit-vcpkg-manifest-files.html
+    \title \QC: Edit vcpkg manifest files
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-change-ui-language.html
+    \title \QC: Change the UI language
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-find-preferences.html
+    \title \QC: Find preferences
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-set-high-dpi-scaling.html
+    \title \QC: Set high DPI scaling
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-switch-ui-themes.html
+    \title \QC: Switch UI themes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-view-images.html
+    \title \QC: View images
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-export-svg-images.html
+    \title \QC: Create pixmaps from SVG images
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-assign-keyboard-shortcuts.html
+    \title \QC: Assign keyboard shortcuts
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-find-keyboard-shortcuts.html
+    \title \QC: Find keyboard shortcuts
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-change-keyboard-shortcuts.html
+    \title \QC: Import and export keyboard shortcuts
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-developing-b2qt.html
+    \title \QC: Developing for \B2Q Devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-connect-b2qt.html
+    \title \QC: Connect \B2Q devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-add-b2qt.html
+    \title \QC: Add \B2Q devices
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-deployment-b2qt.html
+    \title \QC: \B2Q Deploy Configuration
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-run-settings-b2qt.html
+    \title \QC: \B2Q Run Settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-run-settings-remote-linux.html
+    \title \QC: Remote Linux Run Settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-configure-ssh.html
+    \title \QC: Configure SSH connections
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-generate-ssh-keys.html
+    \title \QC: Generate SSH keys
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-manage-device-processes.html
+    \title \QC: Manage device processes
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-create-compiler-explorer-sessions.html
+    \title \QC: Create compiler explorer sessions
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-explore-compiler-code.html
+    \title \QC: Explore compiler code
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-select-build-system.html
+    \title \QC: Select the build system
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-run-settings-desktop-devices.html
+    \title \QC: Desktop Device Run Settings
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-limit-files-to-path-patterns.html
+    \title \QC: Apply filters before scanning for tests
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-use-qtc-variables.html
+    \title \QC: Use \QC variables
+*/
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-sdk-tool.html
+    \title \QC: SDK Tool
+*/
+
+/*!
+    \externalpage https://doc.qt.io/qtcreator/creator-how-to-debug-vxworks.html
+    \title \QC: Debug C++ applications on VxWorks devices
+*/

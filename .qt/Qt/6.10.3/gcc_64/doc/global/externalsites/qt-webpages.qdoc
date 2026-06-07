@@ -1,0 +1,107 @@
+// Copyright (C) 2016 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GFDL-1.3-no-invariants-only
+/*!
+    \externalpage http://qt.io/
+    \title Qt Homepage
+*/
+/*!
+    \externalpage http://bugreports.qt.io
+    \title Qt Bug Tracker
+*/
+/*!
+    \externalpage http://qt.io/download
+    \title Downloads
+*/
+/*!
+    \externalpage http://www.qt.io/about-us/
+    \title The Qt Company
+*/
+/*!
+    \externalpage http://qt.io/licensing/
+    \title Qt Licensing Overview
+*/
+/*!
+    \externalpage http://doc.qt.io/archives/qq/
+    \title Qt Quarterly
+*/
+/*!
+    \externalpage http://doc.qt.io/archives/qq/qq19-plurals.html
+    \title Qt Quarterly: Plural Form in Translation
+*/
+/*!
+    \externalpage https://code.qt.io/
+    \title Public Qt Repository
+*/
+/*!
+    \externalpage https://code.qt.io/cgit/%7bnon-gerrit%7d/qt-labs/qtestlib-tools.git/
+    \title qtestlib-tools
+*/
+
+/*!
+    \externalpage http://wiki.qt.io/Qt_Coding_Style
+    \title Qt Coding Style
+*/
+/*!
+    \externalpage http://doc.qt.io/archives/qt-eclipse-1.6/index.html
+    \title Eclipse Plugin
+*/
+/*!
+    \externalpage http://doc.qt.io/archives/qq/qq11-events.html
+    \title Qt Quarterly: Another Look at Events
+*/
+/*!
+    \externalpage https://www.youtube.com/watch?v=P4kv-AoAJ-Q
+    \title Livecoding video effects with Qt5
+*/
+/*!
+    \externalpage http://blog.qt.io/2012/02/29/pimp-my-video-shader-effects-and-multimedia/
+    \title Pimp my video
+*/
+/*!
+    \externalpage http://wiki.qt.io/QtMediaHub
+    \title QtMediaHub
+*/
+/*!
+    \externalpage http://wiki.qt.io/Qt_RaspberryPi
+    \title QtonPi
+*/
+
+/*!
+    \externalpage http://wiki.qt.io/jom
+    \title jom
+*/
+
+/*!
+    \externalpage http://doc.qt.io/qt-4.8
+    \title Qt 4.8 Reference Documentation
+*/
+
+/*!
+    \externalpage http://wiki.qt.io/Qt_Localization
+    \title external: Translating Qt Into Other Languages
+*/
+
+/*!
+    \externalpage http://wiki.qt.io/Qt_Multimedia_Backends
+    \title Qt Multimedia Backends
+*/
+
+/*!
+    \externalpage https://doc.qt.io/qt3dstudio/index.html
+    \title Qt 3D Studio Manual
+*/
+
+/*!
+    \externalpage https://doc.qt.io/qtdesignstudio/index.html
+    \title Qt Design Studio Manual
+*/
+
+/*!
+    \externalpage https://marketplace.qt.io
+    \title Qt Marketplace
+*/
+
+/*!
+    \externalpage https://doc.qt.io/qtforpython/index.html
+    \title Qt for Python
+*/

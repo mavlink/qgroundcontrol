@@ -1,0 +1,1877 @@
+[
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "LayoutItemProxy"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1542"
+                    }
+                ],
+                "className": "QQuickLayoutItemProxy",
+                "lineNumber": 25,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 34,
+                        "isConst": true,
+                        "lineNumber": 42,
+                        "name": "effectiveTarget",
+                        "returnType": "QQuickItem*"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 29,
+                        "name": "target",
+                        "notify": "targetChanged",
+                        "read": "target",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickItem*",
+                        "user": false,
+                        "write": "setTarget"
+                    }
+                ],
+                "qualifiedClassName": "QQuickLayoutItemProxy",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 75,
+                        "name": "targetChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "slots": [
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 47,
+                        "name": "updatePos",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 2,
+                        "lineNumber": 56,
+                        "name": "targetMinimumWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 3,
+                        "lineNumber": 56,
+                        "name": "proxyMinimumWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 4,
+                        "lineNumber": 57,
+                        "name": "targetMinimumHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 5,
+                        "lineNumber": 57,
+                        "name": "proxyMinimumHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 6,
+                        "lineNumber": 58,
+                        "name": "targetPreferredWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 7,
+                        "lineNumber": 58,
+                        "name": "proxyPreferredWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 8,
+                        "lineNumber": 59,
+                        "name": "targetPreferredHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 9,
+                        "lineNumber": 59,
+                        "name": "proxyPreferredHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 10,
+                        "lineNumber": 60,
+                        "name": "targetMaximumWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 11,
+                        "lineNumber": 60,
+                        "name": "proxyMaximumWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 12,
+                        "lineNumber": 61,
+                        "name": "targetMaximumHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 13,
+                        "lineNumber": 61,
+                        "name": "proxyMaximumHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 14,
+                        "lineNumber": 62,
+                        "name": "targetFillWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 15,
+                        "lineNumber": 62,
+                        "name": "proxyFillWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 16,
+                        "lineNumber": 63,
+                        "name": "targetFillHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 17,
+                        "lineNumber": 63,
+                        "name": "proxyFillHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 18,
+                        "lineNumber": 64,
+                        "name": "targetAlignmentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 19,
+                        "lineNumber": 64,
+                        "name": "proxyAlignmentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 20,
+                        "lineNumber": 65,
+                        "name": "targetHorizontalStretchFactorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 21,
+                        "lineNumber": 65,
+                        "name": "proxyHorizontalStretchFactorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 22,
+                        "lineNumber": 66,
+                        "name": "targetVerticalStretchFactorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 23,
+                        "lineNumber": 66,
+                        "name": "proxyVerticalStretchFactorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 24,
+                        "lineNumber": 67,
+                        "name": "targetMarginsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 25,
+                        "lineNumber": 67,
+                        "name": "proxyMarginsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 26,
+                        "lineNumber": 68,
+                        "name": "targetLeftMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 27,
+                        "lineNumber": 68,
+                        "name": "proxyLeftMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 28,
+                        "lineNumber": 69,
+                        "name": "targetTopMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 29,
+                        "lineNumber": 69,
+                        "name": "proxyTopMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 30,
+                        "lineNumber": 70,
+                        "name": "targetRightMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 31,
+                        "lineNumber": 70,
+                        "name": "proxyRightMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 32,
+                        "lineNumber": 71,
+                        "name": "targetBottomMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "private",
+                        "index": 33,
+                        "lineNumber": 71,
+                        "name": "proxyBottomMarginChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickItem"
+                    }
+                ]
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    }
+                ],
+                "className": "QQuickLayoutItemProxyAttachedData",
+                "lineNumber": 116,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 121,
+                        "name": "proxyHasControl",
+                        "notify": "controllingProxyChanged",
+                        "read": "proxyHasControl",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 122,
+                        "name": "controllingProxy",
+                        "notify": "controllingProxyChanged",
+                        "read": "getControllingProxy",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickLayoutItemProxy*",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 123,
+                        "name": "proxies",
+                        "notify": "proxiesChanged",
+                        "read": "getProxies",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQmlListProperty<QQuickLayoutItemProxy>",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QQuickLayoutItemProxyAttachedData",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 137,
+                        "name": "controlTaken",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 138,
+                        "name": "controlReleased",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 139,
+                        "name": "controllingProxyChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 140,
+                        "name": "proxiesChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquicklayoutitemproxy_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "FlexboxLayout"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "1546"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickFlexboxLayoutAttached"
+                    }
+                ],
+                "className": "QQuickFlexboxLayout",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 49,
+                        "name": "FlexboxDirection",
+                        "values": [
+                            "Column",
+                            "ColumnReverse",
+                            "Row",
+                            "RowReverse"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 57,
+                        "name": "FlexboxWrap",
+                        "values": [
+                            "NoWrap",
+                            "Wrap",
+                            "WrapReverse"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 119,
+                        "name": "FlexboxAlignment",
+                        "values": [
+                            "AlignAuto",
+                            "AlignStart",
+                            "AlignCenter",
+                            "AlignEnd",
+                            "AlignStretch",
+                            "AlignBaseline",
+                            "AlignSpaceBetween",
+                            "AlignSpaceAround",
+                            "AlignSpaceEvenly"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 133,
+                        "name": "FlexboxJustify",
+                        "values": [
+                            "JustifyStart",
+                            "JustifyCenter",
+                            "JustifyEnd",
+                            "JustifySpaceBetween",
+                            "JustifySpaceAround",
+                            "JustifySpaceEvenly"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 144,
+                        "name": "FlexboxEdge",
+                        "values": [
+                            "EdgeLeft",
+                            "EdgeRight",
+                            "EdgeTop",
+                            "EdgeBottom",
+                            "EdgeAll",
+                            "EdgeMax"
+                        ]
+                    },
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 155,
+                        "name": "FlexboxGap",
+                        "values": [
+                            "GapRow",
+                            "GapColumn",
+                            "GapAll",
+                            "GapMax"
+                        ]
+                    }
+                ],
+                "lineNumber": 28,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 32,
+                        "name": "direction",
+                        "notify": "directionChanged",
+                        "read": "direction",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "FlexboxDirection",
+                        "user": false,
+                        "write": "setDirection"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 33,
+                        "name": "wrap",
+                        "notify": "wrapChanged",
+                        "read": "wrap",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "FlexboxWrap",
+                        "user": false,
+                        "write": "setWrap"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 34,
+                        "name": "alignItems",
+                        "notify": "alignItemsChanged",
+                        "read": "alignItems",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "FlexboxAlignment",
+                        "user": false,
+                        "write": "setAlignItems"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 35,
+                        "name": "alignContent",
+                        "notify": "alignContentChanged",
+                        "read": "alignContent",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "FlexboxAlignment",
+                        "user": false,
+                        "write": "setAlignContent"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 36,
+                        "name": "justifyContent",
+                        "notify": "justifyContentChanged",
+                        "read": "justifyContent",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "FlexboxJustify",
+                        "user": false,
+                        "write": "setJustifyContent"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 37,
+                        "name": "gap",
+                        "notify": "gapChanged",
+                        "read": "gap",
+                        "required": false,
+                        "reset": "resetGap",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setGap"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 38,
+                        "name": "rowGap",
+                        "notify": "rowGapChanged",
+                        "read": "rowGap",
+                        "required": false,
+                        "reset": "resetRowGap",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setRowGap"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 39,
+                        "name": "columnGap",
+                        "notify": "columnGapChanged",
+                        "read": "columnGap",
+                        "required": false,
+                        "reset": "resetColumnGap",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setColumnGap"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFlexboxLayout",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 213,
+                        "name": "countChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 214,
+                        "name": "directionChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 215,
+                        "name": "wrapChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 216,
+                        "name": "alignItemsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 217,
+                        "name": "alignContentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 218,
+                        "name": "justifyContentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 219,
+                        "name": "gapChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 220,
+                        "name": "rowGapChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 221,
+                        "name": "columnGapChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickLayout"
+                    }
+                ]
+            },
+            {
+                "className": "QQuickFlexboxLayoutAttached",
+                "lineNumber": 230,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 234,
+                        "name": "alignSelf",
+                        "notify": "alignSelfChanged",
+                        "read": "alignSelf",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickFlexboxLayout::FlexboxAlignment",
+                        "user": false,
+                        "write": "setAlignSelf"
+                    }
+                ],
+                "qualifiedClassName": "QQuickFlexboxLayoutAttached",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 243,
+                        "name": "alignSelfChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickflexboxlayout_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "Layout"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "256"
+                    },
+                    {
+                        "name": "QML.Creatable",
+                        "value": "false"
+                    },
+                    {
+                        "name": "QML.UncreatableReason",
+                        "value": "Do not create objects of type Layout."
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickLayoutAttached"
+                    }
+                ],
+                "className": "QQuickLayout",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 57,
+                        "name": "SizePolicy",
+                        "values": [
+                            "SizePolicyImplicit",
+                            "SizePolicyExplicit"
+                        ]
+                    }
+                ],
+                "lineNumber": 35,
+                "methods": [
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "isConst": true,
+                        "lineNumber": 110,
+                        "name": "_q_dumpLayoutTree",
+                        "returnType": "void"
+                    }
+                ],
+                "object": true,
+                "qualifiedClassName": "QQuickLayout",
+                "slots": [
+                    {
+                        "access": "protected",
+                        "index": 0,
+                        "lineNumber": 123,
+                        "name": "invalidateSenderItem",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickItem"
+                    },
+                    {
+                        "access": "public",
+                        "name": "QQuickItemChangeListener"
+                    }
+                ]
+            },
+            {
+                "className": "QQuickLayoutAttached",
+                "lineNumber": 167,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 170,
+                        "name": "minimumWidth",
+                        "notify": "minimumWidthChanged",
+                        "read": "minimumWidth",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setMinimumWidth"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 171,
+                        "name": "minimumHeight",
+                        "notify": "minimumHeightChanged",
+                        "read": "minimumHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setMinimumHeight"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 172,
+                        "name": "preferredWidth",
+                        "notify": "preferredWidthChanged",
+                        "read": "preferredWidth",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setPreferredWidth"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 3,
+                        "lineNumber": 173,
+                        "name": "preferredHeight",
+                        "notify": "preferredHeightChanged",
+                        "read": "preferredHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setPreferredHeight"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 4,
+                        "lineNumber": 174,
+                        "name": "maximumWidth",
+                        "notify": "maximumWidthChanged",
+                        "read": "maximumWidth",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setMaximumWidth"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 175,
+                        "name": "maximumHeight",
+                        "notify": "maximumHeightChanged",
+                        "read": "maximumHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setMaximumHeight"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 176,
+                        "name": "fillHeight",
+                        "notify": "fillHeightChanged",
+                        "read": "fillHeight",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setFillHeight"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 7,
+                        "lineNumber": 177,
+                        "name": "fillWidth",
+                        "notify": "fillWidthChanged",
+                        "read": "fillWidth",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setFillWidth"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 8,
+                        "lineNumber": 178,
+                        "name": "useDefaultSizePolicy",
+                        "notify": "useDefaultSizePolicyChanged",
+                        "read": "useDefaultSizePolicy",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickLayout::SizePolicy",
+                        "user": false,
+                        "write": "setUseDefaultSizePolicy"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 9,
+                        "lineNumber": 179,
+                        "name": "row",
+                        "notify": "rowChanged",
+                        "read": "row",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setRow"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 10,
+                        "lineNumber": 180,
+                        "name": "column",
+                        "notify": "columnChanged",
+                        "read": "column",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setColumn"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 11,
+                        "lineNumber": 181,
+                        "name": "rowSpan",
+                        "notify": "rowSpanChanged",
+                        "read": "rowSpan",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setRowSpan"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 12,
+                        "lineNumber": 182,
+                        "name": "columnSpan",
+                        "notify": "columnSpanChanged",
+                        "read": "columnSpan",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setColumnSpan"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 13,
+                        "lineNumber": 183,
+                        "name": "alignment",
+                        "notify": "alignmentChanged",
+                        "read": "alignment",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Qt::Alignment",
+                        "user": false,
+                        "write": "setAlignment"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 14,
+                        "lineNumber": 184,
+                        "name": "horizontalStretchFactor",
+                        "notify": "horizontalStretchFactorChanged",
+                        "read": "horizontalStretchFactor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setHorizontalStretchFactor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 15,
+                        "lineNumber": 185,
+                        "name": "verticalStretchFactor",
+                        "notify": "verticalStretchFactorChanged",
+                        "read": "verticalStretchFactor",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setVerticalStretchFactor"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 16,
+                        "lineNumber": 187,
+                        "name": "margins",
+                        "notify": "marginsChanged",
+                        "read": "margins",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setMargins"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 17,
+                        "lineNumber": 188,
+                        "name": "leftMargin",
+                        "notify": "leftMarginChanged",
+                        "read": "leftMargin",
+                        "required": false,
+                        "reset": "resetLeftMargin",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setLeftMargin"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 18,
+                        "lineNumber": 189,
+                        "name": "topMargin",
+                        "notify": "topMarginChanged",
+                        "read": "topMargin",
+                        "required": false,
+                        "reset": "resetTopMargin",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setTopMargin"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 19,
+                        "lineNumber": 190,
+                        "name": "rightMargin",
+                        "notify": "rightMarginChanged",
+                        "read": "rightMargin",
+                        "required": false,
+                        "reset": "resetRightMargin",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setRightMargin"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 20,
+                        "lineNumber": 191,
+                        "name": "bottomMargin",
+                        "notify": "bottomMarginChanged",
+                        "read": "bottomMargin",
+                        "required": false,
+                        "reset": "resetBottomMargin",
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setBottomMargin"
+                    }
+                ],
+                "qualifiedClassName": "QQuickLayoutAttached",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 349,
+                        "name": "minimumWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 350,
+                        "name": "minimumHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 351,
+                        "name": "preferredWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 352,
+                        "name": "preferredHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 353,
+                        "name": "maximumWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 354,
+                        "name": "maximumHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 355,
+                        "name": "fillWidthChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 7,
+                        "lineNumber": 356,
+                        "name": "fillHeightChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 8,
+                        "lineNumber": 357,
+                        "name": "useDefaultSizePolicyChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 9,
+                        "lineNumber": 358,
+                        "name": "leftMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 10,
+                        "lineNumber": 359,
+                        "name": "topMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 11,
+                        "lineNumber": 360,
+                        "name": "rightMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 12,
+                        "lineNumber": 361,
+                        "name": "bottomMarginChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 13,
+                        "lineNumber": 362,
+                        "name": "marginsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 14,
+                        "lineNumber": 363,
+                        "name": "rowChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 15,
+                        "lineNumber": 364,
+                        "name": "columnChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 16,
+                        "lineNumber": 365,
+                        "name": "rowSpanChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 17,
+                        "lineNumber": 366,
+                        "name": "columnSpanChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 18,
+                        "lineNumber": 367,
+                        "name": "alignmentChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 19,
+                        "lineNumber": 368,
+                        "name": "horizontalStretchFactorChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 20,
+                        "lineNumber": 369,
+                        "name": "verticalStretchFactorChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquicklayout_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "257"
+                    }
+                ],
+                "className": "QQuickGridLayoutBase",
+                "lineNumber": 32,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 36,
+                        "name": "layoutDirection",
+                        "notify": "layoutDirectionChanged",
+                        "read": "layoutDirection",
+                        "required": false,
+                        "revision": 257,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Qt::LayoutDirection",
+                        "user": false,
+                        "write": "setLayoutDirection"
+                    }
+                ],
+                "qualifiedClassName": "QQuickGridLayoutBase",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 74,
+                        "name": "layoutDirectionChanged",
+                        "returnType": "void",
+                        "revision": 257
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickLayout"
+                    }
+                ]
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "GridLayout"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "256"
+                    }
+                ],
+                "className": "QQuickGridLayout",
+                "enums": [
+                    {
+                        "isClass": false,
+                        "isFlag": false,
+                        "lineNumber": 143,
+                        "name": "Flow",
+                        "values": [
+                            "LeftToRight",
+                            "TopToBottom"
+                        ]
+                    }
+                ],
+                "lineNumber": 115,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 119,
+                        "name": "columnSpacing",
+                        "notify": "columnSpacingChanged",
+                        "read": "columnSpacing",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setColumnSpacing"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 120,
+                        "name": "rowSpacing",
+                        "notify": "rowSpacingChanged",
+                        "read": "rowSpacing",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setRowSpacing"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 2,
+                        "lineNumber": 121,
+                        "name": "columns",
+                        "notify": "columnsChanged",
+                        "read": "columns",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setColumns"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 3,
+                        "lineNumber": 122,
+                        "name": "rows",
+                        "notify": "rowsChanged",
+                        "read": "rows",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setRows"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 4,
+                        "lineNumber": 123,
+                        "name": "flow",
+                        "notify": "flowChanged",
+                        "read": "flow",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "Flow",
+                        "user": false,
+                        "write": "setFlow"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 5,
+                        "lineNumber": 124,
+                        "name": "uniformCellWidths",
+                        "notify": "uniformCellWidthsChanged",
+                        "read": "uniformCellWidths",
+                        "required": false,
+                        "revision": 1542,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setUniformCellWidths"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 6,
+                        "lineNumber": 126,
+                        "name": "uniformCellHeights",
+                        "notify": "uniformCellHeightsChanged",
+                        "read": "uniformCellHeights",
+                        "required": false,
+                        "revision": 1542,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setUniformCellHeights"
+                    }
+                ],
+                "qualifiedClassName": "QQuickGridLayout",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 156,
+                        "name": "columnSpacingChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 157,
+                        "name": "rowSpacingChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 159,
+                        "name": "columnsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 3,
+                        "lineNumber": 160,
+                        "name": "rowsChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 4,
+                        "lineNumber": 162,
+                        "name": "flowChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 5,
+                        "lineNumber": 164,
+                        "name": "uniformCellWidthsChanged",
+                        "returnType": "void",
+                        "revision": 1542
+                    },
+                    {
+                        "access": "public",
+                        "index": 6,
+                        "lineNumber": 165,
+                        "name": "uniformCellHeightsChanged",
+                        "returnType": "void",
+                        "revision": 1542
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickGridLayoutBase"
+                    }
+                ]
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "anonymous"
+                    }
+                ],
+                "className": "QQuickLinearLayout",
+                "lineNumber": 187,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 191,
+                        "name": "spacing",
+                        "notify": "spacingChanged",
+                        "read": "spacing",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "qreal",
+                        "user": false,
+                        "write": "setSpacing"
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 192,
+                        "name": "uniformCellSizes",
+                        "notify": "uniformCellSizesChanged",
+                        "read": "uniformCellSizes",
+                        "required": false,
+                        "revision": 1542,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false,
+                        "write": "setUniformCellSizes"
+                    }
+                ],
+                "qualifiedClassName": "QQuickLinearLayout",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 206,
+                        "name": "spacingChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 207,
+                        "name": "uniformCellSizesChanged",
+                        "returnType": "void",
+                        "revision": 1542
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickGridLayoutBase"
+                    }
+                ]
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "RowLayout"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "256"
+                    }
+                ],
+                "className": "QQuickRowLayout",
+                "lineNumber": 225,
+                "object": true,
+                "qualifiedClassName": "QQuickRowLayout",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickLinearLayout"
+                    }
+                ]
+            },
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "ColumnLayout"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "256"
+                    }
+                ],
+                "className": "QQuickColumnLayout",
+                "lineNumber": 242,
+                "object": true,
+                "qualifiedClassName": "QQuickColumnLayout",
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickLinearLayout"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquicklinearlayout_p.h",
+        "outputRevision": 69
+    },
+    {
+        "classes": [
+            {
+                "classInfos": [
+                    {
+                        "name": "QML.Element",
+                        "value": "StackLayout"
+                    },
+                    {
+                        "name": "QML.AddedInVersion",
+                        "value": "259"
+                    },
+                    {
+                        "name": "QML.Attached",
+                        "value": "QQuickStackLayoutAttached"
+                    }
+                ],
+                "className": "QQuickStackLayout",
+                "lineNumber": 27,
+                "methods": [
+                    {
+                        "access": "public",
+                        "arguments": [
+                            {
+                                "name": "index",
+                                "type": "int"
+                            }
+                        ],
+                        "index": 2,
+                        "isConst": true,
+                        "lineNumber": 52,
+                        "name": "itemAt",
+                        "returnType": "QQuickItem*"
+                    }
+                ],
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 0,
+                        "lineNumber": 30,
+                        "name": "count",
+                        "notify": "countChanged",
+                        "read": "count",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": false,
+                        "index": 1,
+                        "lineNumber": 31,
+                        "name": "currentIndex",
+                        "notify": "currentIndexChanged",
+                        "read": "currentIndex",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false,
+                        "write": "setCurrentIndex"
+                    }
+                ],
+                "qualifiedClassName": "QQuickStackLayout",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 62,
+                        "name": "currentIndexChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 63,
+                        "name": "countChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QQuickLayout"
+                    }
+                ]
+            },
+            {
+                "className": "QQuickStackLayoutAttached",
+                "lineNumber": 103,
+                "object": true,
+                "properties": [
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 0,
+                        "lineNumber": 106,
+                        "name": "index",
+                        "notify": "indexChanged",
+                        "read": "index",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "int",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 1,
+                        "lineNumber": 107,
+                        "name": "isCurrentItem",
+                        "notify": "isCurrentItemChanged",
+                        "read": "isCurrentItem",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "bool",
+                        "user": false
+                    },
+                    {
+                        "constant": false,
+                        "designable": true,
+                        "final": true,
+                        "index": 2,
+                        "lineNumber": 108,
+                        "name": "layout",
+                        "notify": "layoutChanged",
+                        "read": "layout",
+                        "required": false,
+                        "scriptable": true,
+                        "stored": true,
+                        "type": "QQuickStackLayout*",
+                        "user": false
+                    }
+                ],
+                "qualifiedClassName": "QQuickStackLayoutAttached",
+                "signals": [
+                    {
+                        "access": "public",
+                        "index": 0,
+                        "lineNumber": 123,
+                        "name": "indexChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 1,
+                        "lineNumber": 124,
+                        "name": "isCurrentItemChanged",
+                        "returnType": "void"
+                    },
+                    {
+                        "access": "public",
+                        "index": 2,
+                        "lineNumber": 125,
+                        "name": "layoutChanged",
+                        "returnType": "void"
+                    }
+                ],
+                "superClasses": [
+                    {
+                        "access": "public",
+                        "name": "QObject"
+                    }
+                ]
+            }
+        ],
+        "inputFile": "qquickstacklayout_p.h",
+        "outputRevision": 69
+    }
+]

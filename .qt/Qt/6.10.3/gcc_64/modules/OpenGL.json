@@ -1,0 +1,20 @@
+{
+    "schema_version": 2,
+    "name": "OpenGL",
+    "repository": "qtbase",
+    "version": "6.10.3",
+    "platforms": [
+        {
+            "name": "Linux",
+            "version": "5.14.0-427.42.1.el9_4.x86_64",
+            "compiler_id": "GNU",
+            "compiler_version": "11.4.1",
+            "targets": [
+                {
+                    "architecture": "x86_64",
+                    "abi": "x86_64-little_endian-lp64"
+                }
+            ]
+        }
+    ]
+}
