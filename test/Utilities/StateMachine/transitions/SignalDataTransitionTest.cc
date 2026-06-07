@@ -51,7 +51,7 @@ void SignalDataTransitionTest::_testSignalDataTransition()
 
     // Give time for event processing
     if (!finishedSpy.wait(TestTimeout::shortMs())) {
-        qDebug() << "finishedSpy wait failed. guardCalled:" << guardCalled << "actionCalled:" << actionCalled;
+        qCDebug(UnitTestLog) << "finishedSpy wait failed. guardCalled:" << guardCalled << "actionCalled:" << actionCalled;
     }
     QVERIFY(guardCalled);
     QVERIFY(actionCalled);

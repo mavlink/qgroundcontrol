@@ -175,7 +175,11 @@ void CorridorScanComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
 int CorridorScanComplexItem::_calcTransectCount(void) const
 {
     double fullWidth = _corridorWidthFact.rawValue().toDouble();
-    return fullWidth > 0.0 ? qCeil(fullWidth / _calcTransectSpacing()) : 1;
+    if (fullWidth <= 0.0) {
+        return 1;
+    }
+    const double spacing = _calcTransectSpacing();
+    return spacing > 0.0 ? qMin(qCeil(fullWidth / spacing), maxTransectCount) : 1;
 }
 
 void CorridorScanComplexItem::_polylineDirtyChanged(bool dirty)
@@ -403,11 +407,20 @@ double CorridorScanComplexItem::timeBetweenShots(void)
 double CorridorScanComplexItem::_calcTransectSpacing(void) const
 {
     double transectSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
-    if (transectSpacing < _minimumTransectSpacingMeters) {
-        // We can't let spacing get too small otherwise we will end up with too many transects.
-        // So we limit the spacing to be above a small increment and below that value we set to huge spacing
-        // which will cause a single transect to be added instead of having things blow up.
-        transectSpacing = _forceLargeTransectSpacingMeters;
+    if (transectSpacing <= 0) {
+        return 0;
+    }
+
+    // Cap spacing so the corridor never generates more than maxTransectCount transects.
+    // The relevant extent is the corridor width (transects run perpendicular to the path).
+    const double corridorWidth = _corridorWidthFact.rawValue().toDouble();
+    if (corridorWidth <= 0.0) {
+        qCWarning(CorridorScanComplexItemLog) << "Corridor width" << corridorWidth << "is invalid, skipping transect count cap";
+        return transectSpacing;
+    }
+    if (transectSpacing < corridorWidth / maxTransectCount) {
+        qCWarning(CorridorScanComplexItemLog) << "Transect spacing" << transectSpacing << "raised to" << corridorWidth / maxTransectCount << "to limit transect count to" << maxTransectCount;
+        transectSpacing = corridorWidth / maxTransectCount;
     }
 
     return transectSpacing;

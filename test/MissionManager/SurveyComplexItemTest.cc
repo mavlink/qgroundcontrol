@@ -4,6 +4,9 @@
 #include "MultiSignalSpy.h"
 #include "PlanViewSettings.h"
 #include "SurveyComplexItem.h"
+#include "TransectStyleComplexItem.h"
+
+#include <QtTest/QSignalSpy>
 
 SurveyComplexItemTest::SurveyComplexItemTest()
 {
@@ -66,7 +69,7 @@ void SurveyComplexItemTest::_testDirty()
     QList<Fact*> rgFacts;
     rgFacts << _surveyItem->gridAngle() << _surveyItem->flyAlternateTransects();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         QVERIFY(!_surveyItem->dirty());
         if (fact->typeIsBool()) {
             fact->setRawValue(!fact->rawValue().toBool());
@@ -108,7 +111,7 @@ void SurveyComplexItemTest::_testGridAngle()
         QGeoCoordinate firstTransectEntry = gridPoints[0].value<QGeoCoordinate>();
         QGeoCoordinate firstTransectExit = gridPoints[1].value<QGeoCoordinate>();
         double azimuth = firstTransectEntry.azimuthTo(firstTransectExit);
-        // qDebug() << gridAngle << azimuth << _clampGridAngle180(gridAngle) << _clampGridAngle180(azimuth);
+        // qCDebug(UnitTestLog) << gridAngle << azimuth << _clampGridAngle180(gridAngle) << _clampGridAngle180(azimuth);
         int clampGridAngle = qRound(_clampGridAngle180(gridAngle));
         int clampAzimuth = qRound(_clampGridAngle180(azimuth));
         QCOMPARE(clampGridAngle, clampAzimuth);
@@ -157,7 +160,7 @@ void SurveyComplexItemTest::_testItemCount()
     }
     QList<MissionItem*> items;
     for (const TestCase_t& testCase : rgTestCases) {
-        qDebug() << "hoverAndCapture:triggerInTurnAround:refly90:hasTuraround" << testCase.hoverAndCapture
+        qCDebug(UnitTestLog) << "hoverAndCapture:triggerInTurnAround:refly90:hasTurnaround" << testCase.hoverAndCapture
                  << testCase.triggerInTurnAround << testCase.refly90 << testCase.hasTurnaround;
         _surveyItem->hoverAndCapture()->setRawValue(testCase.hoverAndCapture);
         _surveyItem->cameraTriggerInTurnAround()->setRawValue(testCase.triggerInTurnAround);
@@ -198,7 +201,7 @@ QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround
 void SurveyComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaround, bool hasTurnaround,
                                                       bool useConditionGate, const QList<MAV_CMD>& expectedCommands)
 {
-    qDebug() << QStringLiteral("_testItemGenerationWorker imagesInTuraround:%1 turnaround:%2 gate:%3")
+    qCDebug(UnitTestLog) << QStringLiteral("_testItemGenerationWorker imagesInTurnaround:%1 turnaround:%2 gate:%3")
                     .arg(imagesInTurnaround)
                     .arg(hasTurnaround)
                     .arg(useConditionGate);
@@ -236,7 +239,7 @@ void SurveyComplexItemTest::_testItemGeneration()
     // Test cameraTriggerInTurnAround = true cases
     QList<MAV_CMD> imagesInTurnaroundWithTurnaroundDistanceCommands = {
         // Transect 1
-        MAV_CMD_CONDITION_GATE,         // First turaround
+        MAV_CMD_CONDITION_GATE,         // First turnaround
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_CONDITION_GATE,         // Survey entry
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // Survey entry also has trigger start
@@ -306,6 +309,28 @@ void SurveyComplexItemTest::_testHoverCaptureItemGeneration()
                               expectedCommands);
     _testItemGenerationWorker(false /* imagesInTurnaround */, true /* hasTurnaround */, false /* useConditionGate */,
                               expectedCommands);
+}
+
+void SurveyComplexItemTest::_testMaxTransectCount()
+{
+    // Tiny spacing triggers the cap: transect count must not exceed maxTransectCount.
+    // cameraShotsChanged is emitted at the end of every _rebuildTransects(); the rebuild
+    // fires synchronously (direct connection) so the spy count is already 1 on return.
+    {
+        QSignalSpy rebuildSpy(_surveyItem, &TransectStyleComplexItem::cameraShotsChanged);
+        _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(0.001);
+        QCOMPARE(rebuildSpy.count(), 1);
+        QVERIFY(_surveyItem->_transectCount() <= TransectStyleComplexItem::maxTransectCount);
+        QVERIFY(_surveyItem->_transectCount() > 0);
+    }
+
+    // Zero spacing must not crash and must fall back to a single center transect.
+    {
+        QSignalSpy rebuildSpy(_surveyItem, &TransectStyleComplexItem::cameraShotsChanged);
+        _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(0);
+        QCOMPARE(rebuildSpy.count(), 1);
+        QCOMPARE(_surveyItem->_transectCount(), 1);
+    }
 }
 
 UT_REGISTER_TEST(SurveyComplexItemTest, TestLabel::Unit, TestLabel::MissionManager)

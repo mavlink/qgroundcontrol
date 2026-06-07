@@ -42,7 +42,7 @@ void CameraCalcTest::_testDirty()
             << _cameraCalc->frontalOverlap() << _cameraCalc->sideOverlap() << _cameraCalc->adjustedFootprintSide()
             << _cameraCalc->adjustedFootprintFrontal();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         QVERIFY(!_cameraCalc->dirty());
         if (fact->typeIsBool()) {
             fact->setRawValue(!fact->rawValue().toBool());

@@ -56,7 +56,7 @@ void FWLandingPatternTest::_testDirty()
     QList<Fact*> rgFacts;
     rgFacts << _fwItem->glideSlope() << _fwItem->valueSetIsDistance();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         QVERIFY(!_fwItem->dirty());
         changeFactValue(fact);
         QVERIFY(_viSpy->emittedOnce("dirtyChanged"));
@@ -75,7 +75,7 @@ void FWLandingPatternTest::_testSaveLoad()
     FixedWingLandingComplexItem* newItem = new FixedWingLandingComplexItem(planController(), false /* flyView */);
     bool success = newItem->load(items[0].toObject(), 10, errorString);
     if (!success) {
-        qDebug() << errorString;
+        qCDebug(UnitTestLog) << errorString;
     }
     QVERIFY(success);
     QVERIFY(errorString.isEmpty());
