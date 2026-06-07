@@ -309,7 +309,7 @@ private:
     MAV_BATTERY_CHARGE_STATE _battery2ChargeState = MAV_BATTERY_CHARGE_STATE_OK;
 
     double _vehicleAltitudeAMSL = _defaultVehicleHomeAltitude;
-    bool _commLost = false;
+    std::atomic<bool> _commLost = false;
     bool _signingEnabled = false;
     bool _highLatencyTransmissionEnabled = true;
 

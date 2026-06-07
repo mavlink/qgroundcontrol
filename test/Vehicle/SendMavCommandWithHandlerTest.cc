@@ -75,7 +75,7 @@ void SendMavCommandWithHandlerTest::_performTestCases()
 {
     int index = 0;
     for (TestCase_t& testCase : _rgTestCases) {
-        qDebug() << "Testing case" << index++;
+        qCDebug(UnitTestLog) << "Testing case" << index++;
         _testCaseWorker(testCase);
     }
 }

@@ -29,6 +29,7 @@ private slots:
     void _testItemGeneration();
     void _testItemCount();
     void _testHoverCaptureItemGeneration();
+    void _testMaxTransectCount();
 
 private:
     double _clampGridAngle180(double gridAngle);
