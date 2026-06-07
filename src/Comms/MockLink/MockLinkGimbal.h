@@ -61,7 +61,7 @@ private:
     void _sendGimbalManagerStatus();
     void _sendGimbalDeviceAttitudeStatus();
     void _sendGimbalManagerInformation();
-    void _sendCommandAck(uint16_t command, uint8_t result);
+    void _sendCommandAck(uint16_t command, uint8_t result, uint8_t sourceCompId);
 
     static constexpr uint8_t kGimbalCompId = MAV_COMP_ID_GIMBAL;
     static constexpr int kDefaultIntervalUs = 1000000; // 1 Hz default

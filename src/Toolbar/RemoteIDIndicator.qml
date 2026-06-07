@@ -8,6 +8,7 @@ import QGroundControl.Controls
 //-- Remote ID Indicator
 Item {
     id:             control
+    objectName:     "toolbar_remoteIDIndicator"
     width:          remoteIDIcon.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom

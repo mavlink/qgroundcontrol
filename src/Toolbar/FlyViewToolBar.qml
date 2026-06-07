@@ -85,6 +85,7 @@ Item {
 
                         MainStatusIndicator {
                             id:                 mainStatusIndicator
+                            objectName:         "toolbar_mainStatusIndicator"
                             Layout.fillHeight:  true
                         }
                     }
@@ -97,6 +98,7 @@ Item {
                     }
 
                     FlightModeIndicator {
+                        objectName:         "toolbar_flightModeIndicator"
                         Layout.fillHeight:  true
                         visible:            _activeVehicle
                     }

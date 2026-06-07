@@ -600,6 +600,7 @@ ApplicationWindow {
             }
 
             Rectangle {
+                objectName:                 "indicatorDrawerExpandButton"
                 anchors.horizontalCenter:   backgroundRect.right
                 anchors.verticalCenter:     backgroundRect.top
                 width:                      ScreenTools.largeFontPixelHeight
@@ -630,7 +631,8 @@ ApplicationWindow {
             contentHeight:  indicatorDrawerLoader.height
 
             Loader {
-                id: indicatorDrawerLoader
+                id:         indicatorDrawerLoader
+                objectName: "indicatorDrawerLoader"
 
                 Binding {
                     target:     indicatorDrawerLoader.item
