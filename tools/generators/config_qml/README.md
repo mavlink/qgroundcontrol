@@ -99,7 +99,7 @@ auto-detects based on fact metadata (bool → checkbox, enum → combobox, etc.)
 |-----------------|--------|------------|
 | *(omitted)* | Auto-detected | — |
 | `combobox` | `LabelledFactComboBox` | `enumValues` for manual value/label list |
-| `textfield` | `LabelledFactTextField` | — |
+| `textfield` | `LabelledFactTextField` | `description` for optional help text below the field |
 | `checkbox` | `FactCheckBoxSlider` | — |
 | `toggleCheckbox` | `QGCCheckBoxSlider` with custom logic | `toggleCheckbox` |
 | `slider` | Slider with optional enable-checkbox and adjacent button | `sliderMin`, `sliderMax`, `enableCheckbox`, `button` |
@@ -131,6 +131,12 @@ supply a manual value/label list:
 ```
 
 `value` must be a number or string. `label` must be a string.
+
+#### `textfield` keys
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `description` | string | Help text rendered below the field in small font. Wraps the control in a `ColumnLayout`. |
 
 #### `factslider` keys
 

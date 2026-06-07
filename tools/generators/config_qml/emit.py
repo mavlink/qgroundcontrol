@@ -317,9 +317,13 @@ def _qml_control(ctrl: ControlDef, indent: str, *, indexed: bool = False, dialog
         enable_when=ctrl.enableWhen,
         label_source=f"{fact_ref}.shortDescription",
         qml_type="LabelledFactTextField",
+        description=ctrl.description,
         tr_context=tr_context,
     )
-    _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, "fact")
+    # When description is set, render_textfield wraps in a ColumnLayout which
+    # has no `fact` property, so we must use the full fact_ref expression.
+    _fact_for_vis = fact_ref if ctrl.description else "fact"
+    _v = _vis_expr(ctrl.showWhen, ctrl.optional, ctrl.param, _fact_for_vis)
     if _v:
         qml = _inject_prop(qml, f"{indent}    visible: {_v}")
     return _apply_indent(qml)
