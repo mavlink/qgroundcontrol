@@ -160,7 +160,10 @@ RowLayout {
     Component {
         id: overallStatusOfflineIndicatorPage
 
-        MainStatusIndicatorOfflinePage { }
+        MainStatusIndicatorOfflinePage {
+            Component.onCompleted:   mainWindow.suppressCriticalVehicleMessages = true
+            Component.onDestruction: mainWindow.suppressCriticalVehicleMessages = false
+        }
     }
 
     Component {
@@ -172,6 +175,9 @@ RowLayout {
             expandedComponentWaitForParameters: true
             contentComponent:                   mainStatusContentComponent
             expandedComponent:                  mainStatusExpandedComponent
+
+            Component.onCompleted:   mainWindow.suppressCriticalVehicleMessages = true
+            Component.onDestruction: mainWindow.suppressCriticalVehicleMessages = false
         }
     }
 
