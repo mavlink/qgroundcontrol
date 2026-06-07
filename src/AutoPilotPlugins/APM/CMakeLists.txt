@@ -170,7 +170,6 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMSubFrameComponent.qml
         APMSubFrameComponentSummary.qml
         APMSubMotorComponent.qml
-        APMTuningComponentSub.qml
         APMAutoTuneChannelSelector.qml
         APMAdvancedTuningCopterComponent.qml
     RESOURCES
