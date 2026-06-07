@@ -2,16 +2,13 @@
 
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
-#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "MockLink.h"
-#include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "VehicleComponent.h"
 
 #include <QtCore/QPointer>
-#include <QtCore/QScopeGuard>
 
 UT_REGISTER_TEST(APMVehicleConfigUITest, TestLabel::Integration)
 
@@ -22,30 +19,7 @@ UT_REGISTER_TEST(APMVehicleConfigUITest, TestLabel::Integration)
 void APMVehicleConfigUITest::_runNavigateVehicleConfig(
     const std::function<MockLink *()> &factory, const QString &vehicleName)
 {
-    startUI();
-    if (QTest::currentTestFailed()) return;
-
-    ignoreAPMMockLinkWarnings();
-
-    // -------------------------------------------------------------------------
-    // Connect MockLink and wait for parameters to be ready
-    // -------------------------------------------------------------------------
-    Vehicle *vehicle = nullptr;
-    QPointer<MockLink> mockLink = connectMockLinkAndWaitReady(factory, vehicle);
-    if (!mockLink) return;
-
-    const auto cleanup = qScopeGuard([&] {
-        closeUIWindow();
-        if (mockLink) {
-            QSignalSpy spyDisconnect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-            mockLink->disconnect();
-            if (spyDisconnect.isValid()) {
-                (void)waitForSignal(spyDisconnect, 5000, QStringLiteral("activeVehicleChanged"));
-            }
-        }
-        destroyUIEngine();
-    });
-
+    runWithMockLink(factory, [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
     // -------------------------------------------------------------------------
     // Navigate to the Configure view
     // -------------------------------------------------------------------------
@@ -106,6 +80,7 @@ void APMVehicleConfigUITest::_runNavigateVehicleConfig(
                             .arg(vehicleName, comp->name())));
     }
 
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -114,6 +89,7 @@ void APMVehicleConfigUITest::_runNavigateVehicleConfig(
 
 void APMVehicleConfigUITest::_testArduCopter()
 {
+    ignoreAPMMockLinkWarnings();
     _runNavigateVehicleConfig(
         [] { return MockLink::startAPMArduCopterMockLink(false, false, false); },
         QStringLiteral("ArduCopter"));
@@ -121,6 +97,7 @@ void APMVehicleConfigUITest::_testArduCopter()
 
 void APMVehicleConfigUITest::_testArduPlane()
 {
+    ignoreAPMMockLinkWarnings();
     _runNavigateVehicleConfig(
         [] { return MockLink::startAPMArduPlaneMockLink(false, false, false); },
         QStringLiteral("ArduPlane"));
@@ -135,6 +112,7 @@ void APMVehicleConfigUITest::_testArduSub()
 
 void APMVehicleConfigUITest::_testArduRover()
 {
+    ignoreAPMMockLinkWarnings();
     _runNavigateVehicleConfig(
         [] { return MockLink::startAPMArduRoverMockLink(false, false, false); },
         QStringLiteral("ArduRover"));
