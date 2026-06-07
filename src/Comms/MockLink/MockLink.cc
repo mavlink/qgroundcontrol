@@ -247,11 +247,12 @@ void MockLink::run10HzTasks()
 
     if (_mavlinkStarted && _connected && mavlinkChannelIsSet()) {
         _sendHeartBeat();
+        const bool gpsDelayExpired = (_sendGPSPositionDelayCount == 0);
         if (_sendGPSPositionDelayCount > 0) {
             // We delay gps position for better testing
             _sendGPSPositionDelayCount--;
         }
-        if (_sendGPSPositionDelayCount == 0 || QGC::runningUnitTests()) {
+        if (gpsDelayExpired || QGC::runningUnitTests()) {
             if (_vehicleType != MAV_TYPE_SUBMARINE) {
                 _sendGpsRawInt();
                 _sendGlobalPositionInt();
@@ -2515,7 +2516,7 @@ void MockLink::_sendEscStatus()
 void MockLink::_sendRadioStatus()
 {
     // Send a RADIO_STATUS message to make the TelemetryRSSI indicator visible.
-    // rssi=100 → int8_t(100) = 100 dBm (non-zero), which sets lrssi and triggers showIndicator.
+    // Any non-zero rssi value triggers showIndicator (TelemetryRSSIIndicator checks lrssi.rawValue != 0).
     mavlink_message_t msg{};
     (void) mavlink_msg_radio_status_pack_chan(
         _vehicleSystemId,
