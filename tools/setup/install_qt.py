@@ -18,7 +18,6 @@ import argparse
 import hashlib
 import re
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -32,6 +31,12 @@ ensure_tools_dir(__file__)
 
 from common import pip_install
 from common.gh_actions import write_github_output
+from common.net import run_with_retries
+
+# aqt's per-request connection timeout doesn't catch a mirror that stalls
+# mid-transfer; _AQT_RUN_TIMEOUT is the wall-clock cap per attempt that does.
+_AQT_CONNECT_TIMEOUT = "60"
+_AQT_RUN_TIMEOUT = 900.0
 
 # aqtinstall creates directories that differ from the arch parameter.
 # This mapping resolves the actual on-disk directory name.
@@ -126,7 +131,11 @@ def install_qt(
             print("::error::aqtinstall not found after pip install")
             sys.exit(1)
 
-    args = [aqt, "install-qt", host, target, version, arch, "--outputdir", str(outdir)]
+    args = [
+        aqt, "install-qt", host, target, version, arch,
+        "--outputdir", str(outdir),
+        "--timeout", _AQT_CONNECT_TIMEOUT,
+    ]
 
     if modules:
         args.extend(["--modules", *modules.split()])
@@ -134,7 +143,7 @@ def install_qt(
         args.extend(["--archives", *archives.split()])
 
     print(f"Running: {' '.join(args)}")
-    subprocess.run(args, check=True)
+    run_with_retries(args, attempts=3, backoff=15.0, timeout=_AQT_RUN_TIMEOUT)
 
     arch_dir = resolve_arch_dir(arch)
     return resolve_qt_root(outdir, version, arch_dir)

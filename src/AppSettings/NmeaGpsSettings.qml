@@ -21,7 +21,7 @@ SettingsGroupLayout {
             }
         }
 
-        Component.onCompleted: {
+        function rebuildModel() {
             var model = []
 
             model.push(qsTr("Disabled"))
@@ -38,6 +38,14 @@ SettingsGroupLayout {
 
             const index = nmeaPortCombo.comboBox.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
             nmeaPortCombo.currentIndex = index;
+        }
+
+        Component.onCompleted: rebuildModel()
+
+        // Serial ports come and go with USB hot-plug; rebuild so the current device is selectable.
+        Connections {
+            target: QGroundControl.linkManager
+            function onCommPortsChanged() { nmeaPortCombo.rebuildModel() }
         }
     }
 

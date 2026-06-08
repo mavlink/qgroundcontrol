@@ -25,6 +25,16 @@ dependencies {
     implementation 'androidx.core:core:1.16.0'
     implementation 'com.github.mik3y:usb-serial-for-android:3.10.0'
     testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.14.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:core:1.6.1'
+    // androidx.test 1.6.x is Kotlin-compiled and needs kotlin-stdlib on the androidTest compile
+    // classpath. AGP dedups it out of the debug androidTest APK at runtime (the app variant already
+    // pulls kotlin-stdlib transitively via androidx.core), so on-device instrumentation resolves
+    // kotlin.jvm.internal.* from the installed release app instead — see the `-keep class kotlin.**`
+    // rule in proguard-rules.pro, which stops R8 from stripping it from the release APK.
+    androidTestImplementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.24'
 }
 
 def getTimestampStr() { return new Date().format('yyyyMMddHHmmss') }
@@ -150,6 +160,7 @@ android {
             // Exclude JUnit test sources from the main source set — they are
             // picked up via 'src' above but belong to the test configuration.
             java.filter.exclude 'test/**'
+            java.filter.exclude 'androidTest/**'
             aidl.srcDirs = [qtAndroidDir + '/src', 'src', 'aidl']
             res.srcDirs = [qtAndroidDir + '/res', 'res']
             resources.srcDirs = ['resources']
@@ -159,6 +170,12 @@ android {
        }
         test {
             java.srcDirs = ['src/test/java']
+            // Shared wire-contract fixture (also decoded by the C++ SerialPortInfoCodecTest); resolved via an
+            // absolute CMake path because the Gradle project is a generated copy that can't reach the repo test/ dir.
+            resources.srcDirs = [qgcConfigOrDefault('QGC_SERIAL_TESTDATA_DIR', '../test/Comms/Serial/data')]
+        }
+        androidTest {
+            java.srcDirs = ['src/androidTest/java']
         }
     }
 
@@ -184,6 +201,15 @@ android {
         lintConfig = file("lint.xml")
     }
 
+    // Local unit tests run on the host JVM against a stub android.jar where every
+    // framework method throws "not mocked" by default. Return defaults so plain
+    // android.util.Log calls become no-ops in tests; tests that need real behavior
+    // mock those methods explicitly (or use Robolectric).
+    testOptions {
+        unitTests.returnDefaultValues = true
+        unitTests.includeAndroidResources = true
+    }
+
     // Do not compress Qt binary resources file
     aaptOptions {
         noCompress 'rcc'
@@ -192,6 +218,7 @@ android {
     defaultConfig {
         minSdk qgcConfigOrDefault('QGC_ANDROID_MIN_SDK_VERSION', qtMinSdkVersion).toInteger()
         targetSdk qgcConfigOrDefault('QGC_ANDROID_TARGET_SDK_VERSION', qtTargetSdkVersion).toInteger()
+        testInstrumentationRunner "org.mavlink.qgroundcontrol.QGCTestRunner"
         ndk.abiFilters = qtTargetAbiList.split(",")
         if (qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_CODE')) {
             versionCode Integer.parseInt(qgcAndroidConfig.getProperty('QGC_ANDROID_VERSION_CODE'))

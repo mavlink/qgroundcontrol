@@ -18,6 +18,8 @@ class AutoConnectSettings;
 class LogReplayLink;
 class MAVLinkProtocol;
 class QmlObjectListModel;
+class QGCSerialPort;
+class QIODevice;
 class QTimer;
 class SerialLink;
 class UDPConfiguration;
@@ -152,11 +154,17 @@ private:
     static constexpr const char *_mavlinkForwardingLinkName = "MAVLink Forwarding Link";
     static constexpr const char *_mavlinkForwardingSupportLinkName = "MAVLink Support Forwarding Link";
 
+#if defined(Q_OS_ANDROID)
+    // Detection is instant (USB attach kicks a rescan); the delay only clears the board's
+    // enumerate->firstMAVLink window (~440ms on a Cube) so we open past the boot tail, not at ~2s.
+    static constexpr int _autoconnectUpdateTimerMSecs = 500;
+    static constexpr int _autoconnectConnectDelayMSecs = 1000;
+#elif defined(Q_OS_WIN)
     static constexpr int _autoconnectUpdateTimerMSecs = 1000;
-#ifdef Q_OS_WIN
     // Have to manually let the bootloader go by on Windows to get a working connect
     static constexpr int _autoconnectConnectDelayMSecs = 6000;
 #else
+    static constexpr int _autoconnectUpdateTimerMSecs = 1000;
     static constexpr int _autoconnectConnectDelayMSecs = 1000;
 #endif
 
@@ -168,8 +176,10 @@ private:
 
 public:
     static QStringList serialBaudRates();
+    Q_INVOKABLE QStringList serialBaudRatesForPort(const QString &portName) const;
     QStringList serialPortStrings();
     QStringList serialPorts();
+    bool serialPortConnected(const QString &portName);
 
 signals:
     void commPortStringsChanged();
@@ -178,9 +188,9 @@ signals:
 private:
     bool _isSerialPortConnected();
     void _updateSerialPorts();
+    void _setSerialPortsFrom(const QList<QGCSerialPortInfo> &infos);  // refresh QML-visible list; emits on change
     bool _allowAutoConnectToBoard(QGCSerialPortInfo::BoardType_t boardType) const;
     void _addSerialAutoConnectLink();
-    bool _portAlreadyConnected(const QString &portName);
     void _filterCompositePorts(QList<QGCSerialPortInfo> &portList);
 
     QMap<QString, int> _autoconnectPortWaitList;   ///< key: QGCSerialPortInfo::systemLocation, value: wait count
@@ -190,7 +200,7 @@ private:
     QString _autoConnectRTKPort;
     QString _nmeaDeviceName;
     uint32_t _nmeaBaud = 0;
-    QSerialPort *_nmeaPort = nullptr;
+    QIODevice *_nmeaPort = nullptr;
 #endif // QGC_NO_SERIAL_LINK
 
     // NMEA UDP is network-only; available regardless of QGC_NO_SERIAL_LINK.

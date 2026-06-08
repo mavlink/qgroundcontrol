@@ -167,7 +167,7 @@ signals:
 private slots:
     void _firmwareDownloadProgress          (qint64 curr, qint64 total);
     void _firmwareDownloadComplete          (bool success, const QString &localFile, const QString &errorMsg);
-    void _foundBoard                        (bool firstAttempt, const QSerialPortInfo& portInfo, int boardType, QString boardName);
+    void _foundBoard                        (bool firstAttempt, const QGCSerialPortInfo& portInfo, int boardType, QString boardName);
     void _noBoardFound                      (void);
     void _boardGone                         (void);
     void _foundBoardInfo                    (int bootloaderVersion, int boardID, int flashSize);
@@ -238,7 +238,7 @@ private:
 
     bool _searchingForBoard;    ///< true: searching for board, false: search for bootloader
 
-    QSerialPortInfo                 _boardInfo;
+    QGCSerialPortInfo               _boardInfo;
     QGCSerialPortInfo::BoardType_t  _boardType;
     QString                         _boardTypeName;
 

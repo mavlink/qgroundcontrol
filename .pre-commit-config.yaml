@@ -75,6 +75,12 @@ repos:
         files: ^tools/.*\.py$
         pass_filenames: false
 
+      - id: checkstyle
+        name: checkstyle (first-party Android Java)
+        entry: tools/checkstyle/run_checkstyle.sh
+        language: script
+        files: ^android/src/(org/mavlink/qgroundcontrol/|(test|androidTest)/java/org/mavlink/qgroundcontrol/).*\.java$
+
   # uv lockfile sync (keeps tools/uv.lock current with tools/pyproject.toml)
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.15

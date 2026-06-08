@@ -1064,8 +1064,9 @@ void Vehicle::_handleExtendedSysState(mavlink_message_t& message)
 bool Vehicle::_apmArmingNotRequired()
 {
     QString armingRequireParam("ARMING_REQUIRE");
+    // getParameter() returns &_defaultFact (non-null, rawValue==0) when missing — must gate on parameterExists().
     return _parameterManager->parameterExists(ParameterManager::defaultComponentId, armingRequireParam) &&
-            _parameterManager->getParameter(ParameterManager::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
+           _parameterManager->getParameter(ParameterManager::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
 }
 
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
@@ -1407,7 +1408,7 @@ bool Vehicle::sendMessageOnLinkThreadSafe(LinkInterface* link, mavlink_message_t
 int Vehicle::motorCount()
 {
     uint8_t frameType = 0;
-    if (_vehicleType == MAV_TYPE_SUBMARINE) {
+    if ((_vehicleType == MAV_TYPE_SUBMARINE) && parameterManager()->parameterExists(_compID, "FRAME_CONFIG")) {
         frameType = parameterManager()->getParameter(_compID, "FRAME_CONFIG")->rawValue().toInt();
     }
     return QGCMAVLink::motorCount(_vehicleType, frameType);

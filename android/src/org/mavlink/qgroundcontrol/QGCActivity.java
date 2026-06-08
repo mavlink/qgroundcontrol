@@ -6,19 +6,23 @@ import java.io.InputStream;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import org.qtproject.qt.android.bindings.QtActivity;
 
-import org.freedesktop.gstreamer.GStreamer;
+
+import org.mavlink.qgroundcontrol.serial.QGCUsbSerialManager;
 
 public class QGCActivity extends QtActivity {
     private static final String TAG = QGCActivity.class.getSimpleName();
@@ -26,6 +30,7 @@ public class QGCActivity extends QtActivity {
     private static volatile QGCActivity m_instance = null;
 
     private static final int IMPORT_FILE_REQUEST_CODE = 42;
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 2;
     private static String s_importDestPath = "";
 
     private WifiManager.MulticastLock m_wifiMulticastLock;
@@ -39,9 +44,26 @@ public class QGCActivity extends QtActivity {
         nativeInit();
         setupMulticastLock();
 
-        QGCUsbSerialManager.initialize(this);
+        QGCUsbSerialManager.createInstance(this);
         QGCSDLManager.initialize(this);
         m_storagePermissionController = new QGCStoragePermissionController(this);
+        requestNotificationPermissionIfNeeded();
+    }
+
+    /**
+     * Requests POST_NOTIFICATIONS on Android 13+ so the USB serial foreground-service
+     * notification is visible. Denial is non-fatal — the service still runs.
+     */
+    private void requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            return;
+        }
+        final String permission = android.Manifest.permission.POST_NOTIFICATIONS;
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        runOnUiThread(() -> ActivityCompat.requestPermissions(
+                this, new String[]{permission}, NOTIFICATION_PERMISSION_REQUEST_CODE));
     }
 
     @Override
@@ -61,13 +83,13 @@ public class QGCActivity extends QtActivity {
         try {
             QGCSDLManager.cleanup();
             releaseMulticastLock();
-            QGCUsbSerialManager.cleanup(this);
+            // Tear down the process-global manager only when the current instance is genuinely finishing; a launch/config recreation destroys a stale instance the live one still needs.
+            if (m_instance == this && isFinishing()) {
+                QGCUsbSerialManager.destroyInstance();
+                m_instance = null;
+            }
         } catch (final Exception e) {
             QGCLogger.e(TAG, "Exception onDestroy()", e);
-        }
-
-        if (m_instance == this) {
-            m_instance = null;
         }
         super.onDestroy();
     }
@@ -111,7 +133,7 @@ public class QGCActivity extends QtActivity {
             return;
         }
         m_wifiMulticastLock.acquire();
-        QGCLogger.d(TAG, "Multicast lock: " + m_wifiMulticastLock.toString());
+        QGCLogger.d(TAG, () -> "Multicast lock: " + m_wifiMulticastLock);
     }
 
     /**
@@ -137,7 +159,7 @@ public class QGCActivity extends QtActivity {
             if (cursor != null && cursor.moveToFirst()) {
                 final int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
                 if (nameIndex >= 0) {
-                    displayName = cursor.getString(nameIndex);                    
+                    displayName = cursor.getString(nameIndex);
                     displayName = sanitizeFilename(displayName);
                 }
             }
@@ -168,6 +190,10 @@ public class QGCActivity extends QtActivity {
         File destFile;
         try {
             destFile = resolveDestFile(destDirectory, displayName);
+            if (!destFile.getCanonicalPath().startsWith(destDirectory.getCanonicalPath() + File.separator)) {
+                QGCLogger.e(TAG, "Rejected path traversal for: " + displayName);
+                return null;
+            }
         }  catch (Exception e) {
             QGCLogger.e(TAG, "failed to get filename for: " + displayName, e);
             return null;
@@ -191,7 +217,7 @@ public class QGCActivity extends QtActivity {
      * sanitize file name.
      */
     static String sanitizeFilename(String displayName) {
-        String[] badCharacters = new String[] { "..", "/" };
+        String[] badCharacters = new String[] { "..", "/", "\\" };
         String[] segments = displayName.split("/");
         String fileName = segments[segments.length - 1];
         for (String suspString : badCharacters) {
@@ -286,18 +312,26 @@ public class QGCActivity extends QtActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        if (m_storagePermissionController == null) {
-            m_storagePermissionController = new QGCStoragePermissionController(this);
-        }
-
-        final Boolean granted = m_storagePermissionController.onRequestPermissionsResult(requestCode, grantResults);
-        if (granted == null) {
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            final boolean granted = QGCStoragePermissionController.areAllPermissionsGranted(grantResults);
+            QGCLogger.i(TAG, "POST_NOTIFICATIONS " + (granted ? "granted" : "denied"));
             return;
         }
 
-        nativeStoragePermissionsResult(granted);
+        if (requestCode == QGCStoragePermissionController.STORAGE_PERMISSION_REQUEST_CODE) {
+            if (m_storagePermissionController == null) {
+                m_storagePermissionController = new QGCStoragePermissionController(this);
+            }
+            final Boolean granted = m_storagePermissionController.onRequestPermissionsResult(requestCode, grantResults);
+            if (granted != null) {
+                nativeStoragePermissionsResult(granted);
+            }
+            return;
+        }
+
+        // Codes we did not issue belong to Qt; forwarding our own codes makes Qt log a
+        // spurious "no valid pending permission request" warning.
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override
@@ -314,8 +348,6 @@ public class QGCActivity extends QtActivity {
 
     // Native C++ functions
     public native boolean nativeInit();
-    public native void qgcLogDebug(final String message);
-    public native void qgcLogWarning(final String message);
     public native void nativeStoragePermissionsResult(boolean granted);
     public native void onImportResult(final String filePath);
 }

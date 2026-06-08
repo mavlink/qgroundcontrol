@@ -28,6 +28,12 @@ inputs:
     description: Build directory (for diagnostics collection)
     required: false
     default: ${{ runner.temp }}/build
+  androidtest-apk-path:
+    description: >-
+      Path to the instrumentation (androidTest) APK. When set, the emulator step
+      installs it alongside the app APK and runs `am instrument` after the boot test.
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -59,7 +65,8 @@ runs:
         script: |
           timeout 20s adb start-server >/dev/null 2>&1 || true
           timeout 180s adb wait-for-device || (echo "::error::adb wait-for-device timed out before boot test." && exit 1)
-          python3 .github/scripts/android_boot_test.py --apk "${{ inputs.apk-path }}" --package ${{ inputs.package }} --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5 --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
+          python3 .github/scripts/android_boot_test.py --apk "${{ inputs.apk-path }}" --package "${{ inputs.package }}" --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5 --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
+          python3 .github/scripts/android_instrumentation_test.py --package "${{ inputs.package }}" --androidtest-apk "${{ inputs.androidtest-apk-path }}" --log-output /tmp/qgc_instrumentation.log
 
     - name: Collect Emulator Diagnostics
       if: failure()
@@ -71,6 +78,7 @@ runs:
           --out-dir "${RUNNER_TEMP}/emulator-diagnostics" \
           --build-dir "${BUILD_DIR}" \
           --boot-log /tmp/qgc_emulator_boot.log
+        cp /tmp/qgc_instrumentation.log "${RUNNER_TEMP}/emulator-diagnostics/" 2>/dev/null || true
         ls -la "${RUNNER_TEMP}/emulator-diagnostics" || true
 
     - name: Upload Emulator Diagnostics

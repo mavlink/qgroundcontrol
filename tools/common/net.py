@@ -22,18 +22,28 @@ __all__ = ["download_file", "download_with_retry", "run_with_retries"]
 
 
 def run_with_retries(
-    cmd: Sequence[str], *, attempts: int = 3, backoff: float = 15.0, check: bool = True
+    cmd: Sequence[str],
+    *,
+    attempts: int = 3,
+    backoff: float = 15.0,
+    check: bool = True,
+    timeout: float | None = None,
 ) -> None:
-    """Run *cmd*, retrying transient failures with exponential backoff."""
+    """Run *cmd*, retrying transient failures with exponential backoff.
+
+    *timeout* (seconds) bounds each attempt; a hang past it is killed and
+    retried, so a stalled download fails fast instead of blocking on the job timeout.
+    """
     for attempt in range(1, attempts + 1):
         try:
-            subprocess.run(list(cmd), check=check)
+            subprocess.run(list(cmd), check=check, timeout=timeout)
             return
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             if attempt == attempts:
                 raise
+            reason = "timed out" if isinstance(exc, subprocess.TimeoutExpired) else "failed"
             print(
-                f"::warning::{cmd[0]} failed (attempt {attempt}/{attempts}); retrying in {backoff:g}s",
+                f"::warning::{cmd[0]} {reason} (attempt {attempt}/{attempts}); retrying in {backoff:g}s",
                 file=sys.stderr,
             )
             time.sleep(backoff)

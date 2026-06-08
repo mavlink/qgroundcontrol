@@ -1,12 +1,8 @@
 #include "SerialGPSTransport.h"
 
 #include "QGCLoggingCategory.h"
-
-#ifdef Q_OS_ANDROID
-#include "qserialport.h"
-#else
-#include <QtSerialPort/QSerialPort>
-#endif
+#include "QGCSerialPort.h"
+#include "SerialPlatform.h"
 
 #include <QtCore/QThread>
 
@@ -24,31 +20,39 @@ SerialGPSTransport::~SerialGPSTransport() = default;
 
 bool SerialGPSTransport::open()
 {
-    _serial = std::make_unique<QSerialPort>();
-    _serial->setPortName(_device);
+    _serial.reset(SerialPlatform::makeSerialPort(_device, nullptr));
+    if (!_serial) {
+        qCWarning(SerialGPSTransportLog) << "GPS: Failed to create Serial Device" << _device;
+        return false;
+    }
     if (!_serial->open(QIODevice::ReadWrite)) {
         // Device can take 10-20s to become accessible after startup.
         uint32_t retries = 60;
-        while ((retries-- > 0) && !_requestStop && (_serial->error() == QSerialPort::PermissionError)) {
+        while ((retries-- > 0) && !_requestStop && (_serial->error() == QGCSerialPortError::PermissionDenied)) {
             qCDebug(SerialGPSTransportLog) << "Cannot open device... retrying";
             QThread::msleep(500);
+            _serial->clearError();
             if (_serial->open(QIODevice::ReadWrite)) {
-                _serial->clearError();
                 break;
             }
         }
 
-        if (_serial->error() != QSerialPort::NoError) {
+        if (_serial->error() != QGCSerialPortError::NoError) {
             qCWarning(SerialGPSTransportLog) << "GPS: Failed to open Serial Device" << _device << _serial->errorString();
             return false;
         }
     }
 
-    (void) _serial->setBaudRate(QSerialPort::Baud9600);
-    (void) _serial->setDataBits(QSerialPort::Data8);
-    (void) _serial->setParity(QSerialPort::NoParity);
-    (void) _serial->setStopBits(QSerialPort::OneStop);
-    (void) _serial->setFlowControl(QSerialPort::NoFlowControl);
+    _config.baud = 9600;
+    _config.dataBits = QGCDataBits::Data8;
+    _config.parity = QGCParity::None;
+    _config.stopBits = QGCStopBits::OneStop;
+    _config.flowControl = QGCFlowControl::None;
+    if (!_serial->reconfigure(_config)) {
+        qCWarning(SerialGPSTransportLog) << "GPS: Failed to configure Serial Device" << _device << _serial->errorString();
+        _serial->close();
+        return false;
+    }
 
     return true;
 }
@@ -56,8 +60,8 @@ bool SerialGPSTransport::open()
 bool SerialGPSTransport::fatalError() const
 {
     return _serial
-        && (_serial->error() != QSerialPort::NoError)
-        && (_serial->error() != QSerialPort::TimeoutError);
+        && (_serial->error() != QGCSerialPortError::NoError)
+        && (_serial->error() != QGCSerialPortError::Timeout);
 }
 
 int SerialGPSTransport::read(uint8_t *buffer, int length, int timeoutMs)
@@ -85,7 +89,7 @@ int SerialGPSTransport::write(const uint8_t *buffer, int length)
             return -1;
         }
         written += static_cast<int>(n);
-        if (!_serial->waitForBytesWritten(kWriteTimeoutMs)) {
+        if (written < length && !_serial->waitForBytesWritten(kWriteTimeoutMs)) {
             return -1;
         }
     }
@@ -94,5 +98,6 @@ int SerialGPSTransport::write(const uint8_t *buffer, int length)
 
 bool SerialGPSTransport::setBaudrate(unsigned baudrate)
 {
-    return _serial->setBaudRate(baudrate);
+    _config.baud = static_cast<qint32>(baudrate);
+    return _serial->reconfigure(_config);
 }

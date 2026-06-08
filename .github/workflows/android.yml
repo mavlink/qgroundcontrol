@@ -114,9 +114,6 @@ jobs:
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
 
-      # RunsOn images ship no Android SDK and don't preset ANDROID_SDK_ROOT (unlike
-      # GitHub-hosted images), so setup-android@v4 has no install target. Point it
-      # at a writable path. macOS stays GitHub-hosted with its preinstalled SDK.
       - name: Set Android SDK location
         if: matrix.host != 'mac'
         shell: bash
@@ -126,6 +123,9 @@ jobs:
 
       - name: Build Setup (Android)
         id: setup
+        # Backstop above the ~15 min cold cost so a stalled mirror/cache fails
+        # fast instead of burning the 120 min job timeout (~3 min warm).
+        timeout-minutes: 45
         uses: ./.github/actions/build-setup
         with:
           mode: android
@@ -138,6 +138,9 @@ jobs:
       - name: Install host build dependencies
         if: runner.os == 'Linux'
         uses: ./.github/actions/install-dependencies
+        with:
+          # Android cross-compiles; host needs only build tools, not desktop Qt/X11/GStreamer dev libs.
+          package-category: core
 
       - name: Create Debug Keystore
         if: ${{ env.QT_ANDROID_KEYSTORE_STORE_PASS == '' || !matrix.primary }}
@@ -212,6 +215,12 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Cache Gradle (Android tests)
+        if: ${{ matrix.host == 'linux' || matrix.emulator }}
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/master' }}
+
       - name: Android Lint
         if: ${{ matrix.host == 'linux' }}
         shell: bash
@@ -223,6 +232,26 @@ jobs:
             exit 1
           fi
           ./gradlew lintRelease --no-daemon
+
+      - name: Android Unit Tests
+        if: ${{ matrix.host == 'linux' }}
+        shell: bash
+        working-directory: ${{ runner.temp }}/build/android-build
+        run: |
+          if [[ ! -x "./gradlew" ]]; then
+            echo "::error::Gradle wrapper not found in ${PWD}"
+            ls -la
+            exit 1
+          fi
+          ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Publish Unit Test Report
+        if: ${{ always() && matrix.host == 'linux' }}
+        uses: mikepenz/action-junit-report@v5
+        with:
+          report_paths: ${{ runner.temp }}/build/android-build/build/test-results/testDebugUnitTest/TEST-*.xml
+          check_name: Android Unit Test Report
+          fail_on_failure: true
 
       - name: Prepare Artifact
         shell: bash
@@ -236,11 +265,38 @@ jobs:
           fi
           cp "${APK_DIR}"/*.apk "${TEMP_DIR}/build/${{ env.PACKAGE }}.apk"
 
+      - name: Assemble Instrumentation APK
+        if: ${{ matrix.emulator }}
+        id: androidtest
+        shell: bash
+        working-directory: ${{ runner.temp }}/build/android-build
+        run: |
+          if [[ ! -x "./gradlew" ]]; then
+            echo "::error::Gradle wrapper not found in ${PWD}"
+            ls -la
+            exit 1
+          fi
+          ./gradlew assembleDebugAndroidTest --no-daemon
+          APK="${PWD}/build/outputs/apk/androidTest/debug/android-build-debug-androidTest.apk"
+          if [[ ! -f "${APK}" ]]; then
+            echo "::error::androidTest APK not found at ${APK}"
+            find "${PWD}/build/outputs/apk" -name '*.apk' || true
+            exit 1
+          fi
+          # Gradle signs the test APK with its own debug key; re-sign with the app's keystore
+          # so the signatures match — Android refuses instrumentation otherwise.
+          APKSIGNER="$(find "${ANDROID_SDK_ROOT}/build-tools" -maxdepth 2 -name apksigner | sort -V | tail -1)"
+          "${APKSIGNER}" sign \
+            --ks "${RUNNER_TEMP}/debug.keystore" --ks-pass pass:android \
+            --ks-key-alias androiddebugkey --key-pass pass:android "${APK}"
+          echo "apk-path=${APK}" >> "$GITHUB_OUTPUT"
+
       - name: Emulator Boot Test
         if: ${{ matrix.emulator }}
         uses: ./.github/actions/android-emulator-test
         with:
           apk-path: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          androidtest-apk-path: ${{ steps.androidtest.outputs.apk-path }}
           package: org.mavlink.qgroundcontrol
           android-platform: ${{ steps.setup.outputs.android_platform }}
           qt-version: ${{ steps.setup.outputs.qt_version }}
