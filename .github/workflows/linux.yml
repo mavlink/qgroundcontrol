@@ -103,6 +103,8 @@ jobs:
           # c-cpp can't use overlay DBs (those require build-mode: none, interpreted-only); declare manual to match the cmake-build step below and silence the "undefined build-mode" fallback warning.
           build-mode: manual
           config-file: ./.github/codeql/codeql-config.yml
+          trap-caching: false
+          dependency-caching: false
 
       - name: Configure
         uses: ./.github/actions/cmake-configure
