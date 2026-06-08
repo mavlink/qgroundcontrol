@@ -47,4 +47,4 @@ In order to set up flight modes you must already have
 
 ## See Also
 
-- [PX4 비행 모드 ](https://docs.px4.io/en/flight_modes/)
+- [PX4 비행 모드 ](https://docs.px4.io/main/en/flight_modes/)

@@ -44,4 +44,4 @@ All values are automatically saved as they are changed.
 
 ## See Also
 
-- [PX4 Flight Modes](https://docs.px4.io/en/flight_modes/)
+- [PX4 Flight Modes](https://docs.px4.io/main/en/flight_modes/)
