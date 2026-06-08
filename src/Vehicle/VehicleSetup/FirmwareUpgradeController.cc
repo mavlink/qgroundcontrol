@@ -93,7 +93,8 @@ static QMap<int, QString> px4_board_name_map {
     {7001, "cuav_fmu-v6x_default"},
     {7002, "cuav_x25-evo_default"},
     {7003, "cuav_x25-super_default"},
-    {7004, "cuav_x25-mega_default"}
+    {7004, "cuav_x25-mega_default"},
+    {7120, "accton-godwit_ga1_default"}
 };
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
