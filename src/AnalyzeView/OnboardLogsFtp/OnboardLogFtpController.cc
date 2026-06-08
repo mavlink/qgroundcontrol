@@ -178,6 +178,8 @@ uint OnboardLogFtpController::_processFileEntries(const QStringList &dirList, co
             continue;
         }
 
+        // Entry format is "F<name>\t<size>" and, when the server supports kCmdListDirectoryWithTime,
+        // "F<name>\t<size>\t<modification time in seconds since UNIX epoch UTC>".
         const QString fileInfo = entry.mid(1);
         const int tabIdx = fileInfo.indexOf(QLatin1Char('\t'));
         if (tabIdx < 0) {
@@ -185,7 +187,8 @@ uint OnboardLogFtpController::_processFileEntries(const QStringList &dirList, co
         }
 
         const QString fileName = fileInfo.left(tabIdx);
-        const QString sizeStr = fileInfo.mid(tabIdx + 1);
+        const QString sizeStr = fileInfo.section(QLatin1Char('\t'), 1, 1);
+        const QString mtimeStr = fileInfo.section(QLatin1Char('\t'), 2, 2);
 
         if (!fileName.endsWith(QStringLiteral(".ulg"), Qt::CaseInsensitive) &&
             !fileName.endsWith(QStringLiteral(".bin"), Qt::CaseInsensitive)) {
@@ -199,7 +202,16 @@ uint OnboardLogFtpController::_processFileEntries(const QStringList &dirList, co
         }
 
         QDateTime dateTime;
-        if (dirDate.isValid()) {
+
+        // Prefer the modification time reported by the vehicle when available (0 means unknown).
+        bool mtimeOk = false;
+        const qint64 mtimeSecs = mtimeStr.toLongLong(&mtimeOk);
+        if (mtimeOk && mtimeSecs > 0) {
+            dateTime = QDateTime::fromSecsSinceEpoch(mtimeSecs, QTimeZone::UTC);
+        }
+
+        // Otherwise reconstruct the date from the date sub-directory name and the filename time.
+        if (!dateTime.isValid() && dirDate.isValid()) {
             const QString baseName = fileName.left(fileName.lastIndexOf(QLatin1Char('.')));
             const QTime fileTime = QTime::fromString(baseName, QStringLiteral("HH_mm_ss"));
             if (fileTime.isValid()) {

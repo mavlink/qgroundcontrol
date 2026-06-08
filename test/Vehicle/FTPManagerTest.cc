@@ -139,6 +139,52 @@ void FTPManagerTest::_testListDirectory()
     _disconnectMockLink();
 }
 
+void FTPManagerTest::_testListDirectoryWithTime()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
+    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
+    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
+    QCOMPARE(spyListDirectoryComplete.count(), 1);
+    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
+    const QStringList entries = arguments[0].toStringList();
+    QCOMPARE(entries.count(), 6);
+    QVERIFY(arguments[1].toString().isEmpty());
+
+    // Each entry should carry "F<name>\t<size>\t<modification time>"
+    for (int i = 0; i < entries.count(); i++) {
+        const QStringList fields = entries.at(i).mid(1).split(QLatin1Char('\t'));
+        QCOMPARE(fields.count(), 3);
+        bool ok = false;
+        const qint64 mtime = fields.at(2).toLongLong(&ok);
+        QVERIFY(ok);
+        QCOMPARE(mtime, static_cast<qint64>(MockLinkFTP::kMockModificationTime) + i);
+    }
+    _disconnectMockLink();
+}
+
+void FTPManagerTest::_testListDirectoryWithTimeFallback()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    _mockLink->mockLinkFTP()->setListDirectoryWithTimeSupported(false);
+    QSignalSpy spyListDirectoryComplete(ftpManager, &FTPManager::listDirectoryComplete);
+    ftpManager->listDirectory(MAV_COMP_ID_AUTOPILOT1, "/");
+    QVERIFY_SIGNAL_WAIT(spyListDirectoryComplete, TestTimeout::longMs());
+    QCOMPARE(spyListDirectoryComplete.count(), 1);
+    QList<QVariant> arguments = spyListDirectoryComplete.takeFirst();
+    const QStringList entries = arguments[0].toStringList();
+    QCOMPARE(entries.count(), 6);
+    QVERIFY(arguments[1].toString().isEmpty());
+
+    // After falling back to kCmdListDirectory the entries carry no modification-time field.
+    for (const QString &entry : entries) {
+        QCOMPARE(entry.mid(1).count(QLatin1Char('\t')), 1);
+    }
+    _disconnectMockLink();
+}
+
 void FTPManagerTest::_testListDirectoryNoResponse()
 {
     _connectMockLinkNoInitialConnectSequence();

@@ -33,24 +33,31 @@ void MockLinkFTP::ensureNullTemination(MavlinkFTP::Request *request)
     }
 }
 
-void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber)
+void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber, bool withTime)
 {
     MavlinkFTP::Request ackResponse{};
     ensureNullTemination(request);
 
     const uint16_t outgoingSeqNumber = _nextSeqNumber(seqNumber);
+    const MavlinkFTP::OpCode_t listOpCode = withTime ? MavlinkFTP::kCmdListDirectoryWithTime : MavlinkFTP::kCmdListDirectory;
+
+    if (withTime && !_listDirectoryWithTimeSupported) {
+        // Simulate a server which doesn't implement the command. The client should fall back to kCmdListDirectory.
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrUnknownCommand, outgoingSeqNumber, listOpCode);
+        return;
+    }
 
     // We only support root path
     const QString path = reinterpret_cast<char*>(&request->data[0]);
     if (!path.isEmpty() && path != "/") {
-        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, MavlinkFTP::kCmdListDirectory);
+        _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, listOpCode);
         return;
     }
 
     if (request->hdr.offset > 0) {
         if (_errMode == errModeNakSecondResponse) {
             // Nak error all subsequent requests
-            _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, MavlinkFTP::kCmdListDirectory);
+            _sendNak(senderSystemId, senderComponentId, MavlinkFTP::kErrFail, outgoingSeqNumber, listOpCode);
             return;
         }
 
@@ -67,20 +74,29 @@ void MockLinkFTP::_listCommand(uint8_t senderSystemId, uint8_t senderComponentId
     }
 
     ackResponse.hdr.opcode = MavlinkFTP::kRspAck;
-    ackResponse.hdr.req_opcode = MavlinkFTP::kCmdListDirectory;
+    ackResponse.hdr.req_opcode = listOpCode;
     ackResponse.hdr.session = 0;
     ackResponse.hdr.offset = request->hdr.offset;
     ackResponse.hdr.size = 0;
 
+    // Entry format is "F<name>\t<size>", plus a trailing "\t<modification time>" for kCmdListDirectoryWithTime.
+    const auto makeEntry = [withTime](uint32_t index) {
+        QString entry = QStringLiteral("Ffile%1.txt\t%2").arg(index).arg(1024 + index);
+        if (withTime) {
+            entry += QStringLiteral("\t%1").arg(kMockModificationTime + index);
+        }
+        return entry;
+    };
+
     // MockLink sends two directory entries per packet for a maximum of 3 packets, 6 total entries
     if (request->hdr.offset <= 5) {
         char *bufPtr = reinterpret_cast<char*>(&ackResponse.data[0]);
-        QString dirEntry = QStringLiteral("Ffile%1.txt").arg(request->hdr.offset);
+        QString dirEntry = makeEntry(request->hdr.offset);
         auto cchDirEntry = dirEntry.length();
         (void) strncpy(bufPtr, dirEntry.toStdString().c_str(), cchDirEntry);
         ackResponse.hdr.size += dirEntry.length() + 1;
         bufPtr += cchDirEntry + 1;
-        dirEntry = QStringLiteral("Ffile%1.txt").arg(request->hdr.offset + 1);
+        dirEntry = makeEntry(request->hdr.offset + 1);
         cchDirEntry = dirEntry.length();
         (void) strncpy(bufPtr, dirEntry.toStdString().c_str(), cchDirEntry);
         ackResponse.hdr.size += dirEntry.length() + 1;
@@ -444,7 +460,10 @@ void MockLinkFTP::mavlinkMessageReceived(const mavlink_message_t &message)
         _sendResponse(message.sysid, message.compid, &ackResponse, outgoingSeqNumber);
         break;
     case MavlinkFTP::kCmdListDirectory:
-        _listCommand(message.sysid, message.compid, request, incomingSeqNumber);
+        _listCommand(message.sysid, message.compid, request, incomingSeqNumber, false /* withTime */);
+        break;
+    case MavlinkFTP::kCmdListDirectoryWithTime:
+        _listCommand(message.sysid, message.compid, request, incomingSeqNumber, true /* withTime */);
         break;
     case MavlinkFTP::kCmdOpenFileRO:
         _openCommand(message.sysid, message.compid, request, incomingSeqNumber);

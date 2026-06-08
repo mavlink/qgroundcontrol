@@ -13,6 +13,8 @@ private slots:
     void _performSizeBasedTestCases();
     void _testLostPackets();
     void _testListDirectory();
+    void _testListDirectoryWithTime();
+    void _testListDirectoryWithTimeFallback();
     void _testListDirectoryNoResponse();
     void _testListDirectoryNakResponse();
     void _testListDirectoryNoSecondResponse();
