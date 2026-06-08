@@ -131,11 +131,12 @@ private:
     };
 
     struct ListDirectoryState_t {
-        uint8_t     sessionId;
-        uint32_t    expectedOffset;         ///< offset which should be coming next
-        QString     fullPathOnVehicle;      ///< Fully qualified path to file on vehicle
-        QStringList rgDirectoryList;
-        int         retryCount;
+        uint8_t                 sessionId;
+        uint32_t                expectedOffset;         ///< offset which should be coming next
+        QString                 fullPathOnVehicle;      ///< Fully qualified path to file on vehicle
+        QStringList             rgDirectoryList;
+        int                     retryCount;
+        MavlinkFTP::OpCode_t    opCode;                 ///< List opcode currently in use (kCmdListDirectoryWithTime or kCmdListDirectory)
 
         bool inProgress() const { return !fullPathOnVehicle.isEmpty(); }
 
@@ -145,8 +146,13 @@ private:
             fullPathOnVehicle.clear();
             rgDirectoryList.clear();
             retryCount      = 0;
+            opCode          = MavlinkFTP::kCmdListDirectory;
         }
     };
+
+    /// Whether the vehicle supports the kCmdListDirectoryWithTime command. Cached per FTPManager
+    /// instance (i.e. per vehicle) so repeated listings don't keep probing an unsupporting server.
+    enum class WithTimeSupport_t { Unknown, Supported, Unsupported };
 
     struct DeleteFileState_t {
         QString fullPathOnVehicle;      ///< Fully qualified path to file on vehicle
@@ -249,6 +255,7 @@ private:
     QTimer                  _ackOrNakTimeoutTimer;
     int                     _currentStateMachineIndex   = -1;
     uint16_t                _expectedIncomingSeqNumber  = 0;
+    WithTimeSupport_t       _listDirWithTimeSupport     = WithTimeSupport_t::Unknown;
 
     static const int _ackOrNakTimeoutMsecs  = 1000;
     static const int _maxRetry              = 3;

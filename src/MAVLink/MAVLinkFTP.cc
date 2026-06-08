@@ -35,6 +35,8 @@ QString MavlinkFTP::opCodeToString(OpCode_t opCode)
         return "Calc File CRC32";
     case kCmdBurstReadFile:
         return "Burst Read File";
+    case kCmdListDirectoryWithTime:
+        return "List Directory With Time";
     case kRspAck:
         return "Ack";
     case kRspNak:

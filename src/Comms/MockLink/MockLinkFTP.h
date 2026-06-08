@@ -52,6 +52,10 @@ public:
     /// Sets the error mode for command responses. This allows you to simulate various server errors.
     void setErrorMode(ErrorMode_t errMode) { _errMode = errMode; };
 
+    /// Controls whether the server implements the kCmdListDirectoryWithTime command. When false the
+    /// server Naks it with kErrUnknownCommand so the client fallback to kCmdListDirectory can be tested.
+    void setListDirectoryWithTimeSupported(bool supported) { _listDirectoryWithTimeSupported = supported; }
+
     /// Array of failure modes you can cycle through for testing. By looping through this array you can avoid
     /// hardcoding the specific error modes in your unit test. This way when new error modes are added your unit test
     /// code may not need to be modified.
@@ -67,6 +71,10 @@ public:
     static constexpr const size_t cFailureModes = std::size(MockLinkFTP::rgFailureModes);
 
     static constexpr const char *sizeFilenamePrefix = "mocklink-size-";
+
+    /// Base modification time (seconds since UNIX epoch UTC) reported by the kCmdListDirectoryWithTime
+    /// mock listing. Entry N reports kMockModificationTime + N.
+    static constexpr uint32_t kMockModificationTime = 1700000000;
 
 signals:
     /// You can connect to this signal to be notified when the server receives a Terminate command.
@@ -84,7 +92,7 @@ private:
     void _sendResponse(uint8_t targetSystemId, uint8_t targetComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     /// Handles List command requests. Only supports root folder paths.
     /// File list returned is set using the setFileList method.
-    void _listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
+    void _listCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber, bool withTime);
     void _openCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _createFileCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
     void _openFileWOCommand(uint8_t senderSystemId, uint8_t senderComponentId, MavlinkFTP::Request *request, uint16_t seqNumber);
@@ -110,6 +118,7 @@ private:
     bool _lastReplyValid = false;
     bool _randomDropsEnabled = false;
     ErrorMode_t _errMode = errModeNone;         ///< Currently set error mode, as specified by setErrorMode
+    bool _listDirectoryWithTimeSupported = true; ///< Whether the server implements kCmdListDirectoryWithTime
     mavlink_message_t _lastReply{};
     QFile _currentFile;
     QString _paramPckTempFile;
