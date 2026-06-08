@@ -643,13 +643,13 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
 
 void SimpleMissionItem::_clearParamMetaData(void)
 {
-    _param1MetaData = FactMetaData();
-    _param2MetaData = FactMetaData();
-    _param3MetaData = FactMetaData();
-    _param4MetaData = FactMetaData();
-    _param5MetaData = FactMetaData();
-    _param6MetaData = FactMetaData();
-    _param7MetaData = FactMetaData();
+    _param1MetaData = FactMetaData(FactMetaData::valueTypeDouble);
+    _param2MetaData = FactMetaData(FactMetaData::valueTypeDouble);
+    _param3MetaData = FactMetaData(FactMetaData::valueTypeDouble);
+    _param4MetaData = FactMetaData(FactMetaData::valueTypeDouble);
+    _param5MetaData = FactMetaData(FactMetaData::valueTypeDouble);
+    _param6MetaData = FactMetaData(FactMetaData::valueTypeDouble);
+    _param7MetaData = FactMetaData(FactMetaData::valueTypeDouble);
 }
 
 void SimpleMissionItem::_rebuildFacts(void)
