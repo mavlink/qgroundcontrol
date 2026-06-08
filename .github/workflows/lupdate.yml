@@ -46,6 +46,7 @@ jobs:
         with:
           branch: update-translations
           token: ${{ secrets.LUPDATE_PAT || github.token }}
+          add-paths: translations/*.ts
           title: "chore: update translations"
           commit-message: "chore: update translations"
           body: |
