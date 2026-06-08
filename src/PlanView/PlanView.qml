@@ -460,7 +460,7 @@ Item {
                         id: waypointButton
                         text: qsTr("Waypoint")
                         iconSource: "/res/waypoint.svg"
-                        enabled: _homePositionSet
+                        enabled: _homePositionSet && !_planMasterController.showCreateFromTemplate
                         visible: toolStrip._isMissionLayer
                         checkable: true
                         onTriggered: { _addWaypointOnClick = !_addWaypointOnClick; if (_addWaypointOnClick) _addROIOnClick = false }
@@ -469,7 +469,7 @@ Item {
                         id: roiButton
                         text: qsTr("ROI")
                         iconSource: "/qmlimages/roi.svg"
-                        enabled: _homePositionSet
+                        enabled: _homePositionSet && !_planMasterController.showCreateFromTemplate
                         visible: toolStrip._isMissionLayer && _planMasterController.controllerVehicle.supports.roiMode
                         checkable: true
                         onTriggered: { _addROIOnClick = !_addROIOnClick; if (_addROIOnClick) _addWaypointOnClick = false }
