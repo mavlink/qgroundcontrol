@@ -81,8 +81,8 @@ runs:
 
     - uses: lukka/get-cmake@v4.3.2
       with:
-        useCloudCache: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
-        useLocalCache: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+        useCloudCache: false
+        useLocalCache: true
 
     - uses: ./.github/actions/setup-python
       with:
