@@ -17,6 +17,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
+env:
+  # build-mode:manual can't produce overlay DBs (those need build-mode:none); disable the
+  # overlay attempt so CodeQL doesn't log the "falling back to a full database" message.
+  CODEQL_ACTION_OVERLAY_ANALYSIS: "false"
+
 permissions:
   contents: read
   id-token: write
