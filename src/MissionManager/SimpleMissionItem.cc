@@ -641,8 +641,20 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
     }
 }
 
+void SimpleMissionItem::_clearParamMetaData(void)
+{
+    _param1MetaData = FactMetaData();
+    _param2MetaData = FactMetaData();
+    _param3MetaData = FactMetaData();
+    _param4MetaData = FactMetaData();
+    _param5MetaData = FactMetaData();
+    _param6MetaData = FactMetaData();
+    _param7MetaData = FactMetaData();
+}
+
 void SimpleMissionItem::_rebuildFacts(void)
 {
+    _clearParamMetaData();
     _rebuildTextFieldFacts();
     _rebuildNaNFacts();
     _rebuildComboBoxFacts();

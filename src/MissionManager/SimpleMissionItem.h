@@ -172,6 +172,7 @@ private:
     void _updateOptionalSections(void);
     void _rebuildNaNFacts       (void);
     void _rebuildComboBoxFacts  (void);
+    void _clearParamMetaData    (void);
 
     MissionItem     _missionItem;
     bool            _rawEdit =                  false;
