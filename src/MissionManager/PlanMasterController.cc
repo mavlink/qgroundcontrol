@@ -260,7 +260,7 @@ void PlanMasterController::_loadGeoFenceComplete(void)
 void PlanMasterController::_loadRallyPointsComplete(void)
 {
     qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadRallyPointsComplete";
-    _setDirtyStates(containsItems() /* dirtyForSave */, false /* dirtyForUpload */);
+    _setDirtyStates(false /* dirtyForSave */, false /* dirtyForUpload */);
 }
 
 void PlanMasterController::_sendMissionComplete(void)
