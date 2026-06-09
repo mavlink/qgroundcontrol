@@ -1,6 +1,5 @@
 # Fly View Toolbar
 
-![Fly View](../../../assets/fly/toolbar/fly_view_toolbar.jpg)
 
 ## Views
 
@@ -15,7 +14,6 @@ The "Q" icon on the left of the toolbar allows you to select between additional 
 
 Next are multiple toolbar indicators for vehicle status. The dropdowns for each toolbar indicator provide additional detail on status. You can also expand the indicators to show additional application and vehicle settings associated with the indicator. Press the ">" button to expand.
 
-![Toolbar Indicator - expand button](../../../assets/fly/toolbar_indicator_expand.png)
 
 ### Flight Status <img src="../../../assets/fly/toolbar/main_status_indicator.png" alt="Flight Status indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 
@@ -37,7 +35,6 @@ The Flight Status indicator dropdown also gives you access to:
 
 In the cases of warnings or not ready state you can click the indicator to display the dropdown which will show the reason(s) why. The toggle on the right expands each error with additional information and possible solutions.
 
-![UI To check arming warnings](../../../assets/fly/vehicle_states/arming_preflight_check_ui.png)
 
 Once each issue is resolved it will disappear from the UI. When all issues blocking arming have been removed you should now be ready to fly.
 
@@ -101,7 +98,7 @@ The Gimbal indicator is shown when the vehicle supports the [MAVLink Gimbal Prot
 
 For VTOL vehicles, a VTOL transition status indicator is shown when applicable. It indicates the current VTOL mode/state and provides transition-related status information.
 
-### MAVLink Signing <img src="../../../assets/fly/toolbar/signing_indicator.jpg" alt="MAVLink Signing indicator" style="height: 1.15em; vertical-align: text-bottom;" />
+### MAVLink Signing
 
 The MAVLink Signing indicator appears when signing keys have been configured (see [MAVLink 2 Signing](../settings_view/telemetry.md#signing)).
 It shows a lock icon that indicates whether MAVLink 2 message signing is active on the current vehicle connection:

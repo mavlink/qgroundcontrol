@@ -66,7 +66,7 @@ function(_qgc_find_apple_pkg_config OUT_VAR)
     if(NOT _qgc_pkg_config)
         message(FATAL_ERROR
             "Could not find pkg-config.\n"
-            "Install dependencies with: python3 tools/setup/install_dependencies.py --platform macos\n"
+            "Install dependencies with: python3 tools/setup/install_dependencies --platform macos\n"
             "or install pkg-config manually (for example: brew install pkg-config).")
     endif()
     set(${OUT_VAR} "${_qgc_pkg_config}" CACHE FILEPATH "pkg-config executable" FORCE)

@@ -8,6 +8,8 @@ include(CMakeDependentOption)
 # Load centralized build configuration from .github/build-config.json
 include(BuildConfig)
 
+set(QGC_CUSTOM_DIR "custom" CACHE STRING "Custom build overlay directory, relative to the source root")
+
 # ============================================================================
 # Application Metadata
 # ============================================================================

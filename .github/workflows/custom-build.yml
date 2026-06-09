@@ -3,14 +3,10 @@ name: Custom Build
 on:
   push:
     branches: [master]
-    paths:
-      - 'custom-example/**'
-      - '.github/workflows/custom-build.yml'
+    paths-ignore:
+      - 'docs/**'
   pull_request:
-    branches: [master]
-    paths:
-      - 'custom-example/**'
-      - '.github/workflows/custom-build.yml'
+  merge_group:
   workflow_dispatch:
 
 concurrency:
@@ -22,8 +18,15 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: custom-build
+
   build:
     name: Custom Plugin Build
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: ubuntu-22.04
     timeout-minutes: 60
 
@@ -42,9 +45,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Enable custom build
-        uses: ./.github/actions/custom-build
-
       - name: Setup Build Environment
         uses: ./.github/actions/build-setup
         with:
@@ -61,6 +61,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: Release
+          extra-args: -DQGC_CUSTOM_DIR=custom-example
 
       - name: Build
         uses: ./.github/actions/cmake-build
@@ -69,8 +70,10 @@ jobs:
           build-type: Release
 
       - name: Create AppImage
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config Release
+        uses: ./.github/actions/cmake-install
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
 
       - name: Verify Custom AppImage
         uses: ./.github/actions/verify-executable

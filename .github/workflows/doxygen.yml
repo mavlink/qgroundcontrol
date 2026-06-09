@@ -1,0 +1,83 @@
+name: Doxygen API Docs
+
+on:
+  schedule:
+    - cron: '0 4 * * 0'  # Sunday 04:00 UTC
+  pull_request:
+    paths:
+      - 'Doxyfile'
+      - 'src/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  BRANCH_NAME: ${{ github.ref_name }}
+
+concurrency:
+  group: doxygen-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Doxygen and Graphviz
+        run: |
+          sudo apt-get -o Acquire::Retries=3 update -qq
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends doxygen graphviz
+
+      - name: Build Doxygen docs
+        run: doxygen Doxyfile
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: doxygen_build
+          path: docs/api/html/
+          retention-days: 1
+
+  deploy:
+    if: github.repository_owner == 'mavlink' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/deploy-docs
+            .github/scripts/ci_bootstrap.py
+            .github/scripts/deploy_docs.py
+            tools/_bootstrap.py
+            tools/common/__init__.py
+            tools/common/git.py
+            tools/common/proc.py
+          sparse-checkout-cone-mode: false
+
+      - name: Deploy docs
+        uses: ./.github/actions/deploy-docs
+        with:
+          artifact-name: doxygen_build
+          target-repo: mavlink/api.qgroundcontrol.com
+          target-branch: main
+          deploy-token: ${{ secrets.PX4BUILDBOT_ACCESSTOKEN }}
+          source-branch: ${{ env.BRANCH_NAME }}
+          commit-message: 'QGC Doxygen API docs update'

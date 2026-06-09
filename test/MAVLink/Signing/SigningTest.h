@@ -34,4 +34,7 @@ private slots:
     void _testInitSigningWithPersistedTimestamp();
     void _testStripSignatureForRetransmitProducesValidCrc();
     void _testTryDetectKeyInstallsSecureCallback();
+    void _testRefreshOutgoingTimestamp();
+    void _testSignOutgoingRefreshesCachedTimestamp();
+    void _testKeyStorePersistRoundTrip();
 };

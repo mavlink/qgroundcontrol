@@ -31,7 +31,7 @@ elseif(WIN32)
 else()
     set(QGC_APP_ICON "${CMAKE_SOURCE_DIR}/resources/icons/qgroundcontrol.png")
 endif()
-# set(CPACK_PACKAGE_CHECKSUM "")
+set(CPACK_PACKAGE_CHECKSUM "SHA256")
 # set(CPACK_PROJECT_CONFIG_FILE "")
 
 # ----------------------------------------------------------------------------

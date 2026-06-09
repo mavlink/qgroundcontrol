@@ -13,7 +13,7 @@ class TestFileCollector:
     def test_get_compare_ref_symbolic(self, tmp_path: Path) -> None:
         collector = FileCollector(tmp_path)
         mock_result = MagicMock(returncode=0, stdout="origin/main\n")
-        with patch("analyze.subprocess.run", return_value=mock_result):
+        with patch("common.proc.subprocess.run", return_value=mock_result):
             ref = collector.get_compare_ref()
         assert ref == "main"
 
@@ -29,14 +29,14 @@ class TestFileCollector:
                 return master_ok
             return MagicMock(returncode=1)
 
-        with patch("analyze.subprocess.run", side_effect=side_effect):
+        with patch("common.proc.subprocess.run", side_effect=side_effect):
             ref = collector.get_compare_ref()
         assert ref == "master"
 
     def test_get_compare_ref_none(self, tmp_path: Path) -> None:
         collector = FileCollector(tmp_path)
         fail = MagicMock(returncode=1, stdout="")
-        with patch("analyze.subprocess.run", return_value=fail):
+        with patch("common.proc.subprocess.run", return_value=fail):
             ref = collector.get_compare_ref()
         assert ref is None
 

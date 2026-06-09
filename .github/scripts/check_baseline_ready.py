@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from typing import Any
 
 from ci_bootstrap import ensure_tools_dir
@@ -13,6 +12,7 @@ from ci_bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common.gh_actions import list_workflow_runs_for_sha, parse_csv_list, write_github_output
+from common.github_runs import select_latest_runs_by_name
 
 
 def evaluate_readiness(
@@ -21,18 +21,7 @@ def evaluate_readiness(
     event: str = "push",
 ) -> tuple[bool, list[str], list[str], list[str]]:
     """Return readiness and missing/incomplete/failed platform workflow lists."""
-    latest_by_name: dict[str, dict[str, Any]] = {}
-    target = set(platforms)
-
-    for run in runs:
-        name = str(run.get("name", ""))
-        if name not in target:
-            continue
-        if str(run.get("event", "")) != event:
-            continue
-        existing = latest_by_name.get(name)
-        if existing is None or str(run.get("created_at", "")) > str(existing.get("created_at", "")):
-            latest_by_name[name] = run
+    latest_by_name = select_latest_runs_by_name(runs, set(platforms), event=event)
 
     missing = [name for name in platforms if name not in latest_by_name]
     incomplete = [
@@ -66,6 +55,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Workflow event name to consider (default: push)",
     )
     parser.add_argument(
+        "--runs-input",
+        default="",
+        help="Path to read pre-fetched workflow runs JSON; skips the API call",
+    )
+    parser.add_argument(
         "--runs-cache",
         default="",
         help="Path to write cached workflow runs JSON for downstream scripts",
@@ -76,7 +70,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     platforms = parse_csv_list(args.platform_workflows)
-    runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
+    if args.runs_input:
+        with open(args.runs_input, encoding="utf-8") as f:
+            runs = json.load(f)
+    else:
+        runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
 
     if args.runs_cache:
         with open(args.runs_cache, "w", encoding="utf-8") as f:

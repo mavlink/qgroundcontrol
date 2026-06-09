@@ -17,8 +17,9 @@
 class SigningController;
 class Vehicle;
 
-/// Per-vehicle signing facade. Owns the wiring between Vehicle and the active SigningController
+/// \brief Per-vehicle signing facade. Owns the wiring between Vehicle and the active SigningController
 /// (which lives on the vehicle's primary LinkInterface). Re-binds when the primary link changes.
+
 class VehicleSigningController : public QObject
 {
     Q_OBJECT
@@ -54,6 +55,13 @@ private slots:
 private:
     void _connect(SigningController* ctrl);
     void _disconnect(SigningController* ctrl);
+    /// Active controller's primary link, or null (logging `op` context) when no controller/link is available.
+    SharedLinkInterfacePtr _activeLink(const char* op) const;
+    /// Wire the one-shot confirm/fail handlers for one pending op. Called once per enable()/disable() — never from the
+    /// retransmit path, which would double-deliver the SingleShotConnection.
+    void _wireConfirmHandlers();
+    /// Transmit SETUP_SIGNING and arm retransmit. Cancels the pending op and returns false if transmit fails.
+    bool _sendAndStartRetransmit(const SharedLinkInterfacePtr& sharedLink, QByteArrayView keyView);
     bool _sendSetupSigning(const SharedLinkInterfacePtr& sharedLink, QByteArrayView keyView);
     void _refreshStatus();
     void _startRetransmit();

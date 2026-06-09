@@ -16,7 +16,7 @@ class APMDataFlashLogParser : public QObject
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(bool        parsed              READ parsed              NOTIFY parsedChanged)
+    Q_PROPERTY(bool        parseComplete              READ parseComplete              NOTIFY parseCompleteChanged)
     Q_PROPERTY(QString      parseError          READ parseError          NOTIFY parseErrorChanged)
     Q_PROPERTY(QStringList  availableFields     READ availableFields     NOTIFY availableFieldsChanged)
     Q_PROPERTY(QVariantList parameters          READ parameters          NOTIFY parametersChanged)
@@ -33,7 +33,7 @@ public:
     explicit APMDataFlashLogParser(QObject *parent = nullptr);
     ~APMDataFlashLogParser();
 
-    bool parsed() const { return _parsed; }
+    bool parseComplete() const { return _parseComplete; }
     QString parseError() const { return _parseError; }
     QStringList availableFields() const { return _availableFields; }
     QVariantList parameters() const { return _parameters; }
@@ -55,7 +55,7 @@ public:
     Q_INVOKABLE QVariantList eventsNear(double timestampSeconds, double thresholdSeconds) const;
 
 signals:
-    void parsedChanged();
+    void parseCompleteChanged();
     void parseErrorChanged();
     void availableFieldsChanged();
     void parametersChanged();
@@ -71,7 +71,7 @@ signals:
 private:
     void _setParseError(const QString &error);
 
-    bool _parsed = false;
+    bool _parseComplete = false;
     QString _parseError;
     QStringList _availableFields;
     QStringList _plottableFields;

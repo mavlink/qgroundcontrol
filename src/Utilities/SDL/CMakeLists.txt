@@ -127,7 +127,7 @@ CPMAddPackage(
     NAME sdl_gamecontrollerdb
     GITHUB_REPOSITORY mdqinc/SDL_GameControllerDB
     GIT_TAG 7c3baed7e78f4b85c12df22089b2b97410edec15
-    DOWNLOAD_ONLY
+    DOWNLOAD_ONLY YES
 )
 
 set(SDL_GAMECONTROLLERDB_PATH "${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt")

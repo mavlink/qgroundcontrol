@@ -1,24 +1,14 @@
 #include "QGCCachedFileDownloadTest.h"
 
 #include <QtCore/QFile>
-#include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkCacheMetaData>
 #include <QtNetwork/QNetworkDiskCache>
 #include <QtNetwork/QNetworkRequest>
-#include <QtNetwork/QTcpServer>
-#include <QtNetwork/QTcpSocket>
 #include <QtTest/QSignalSpy>
 
+#include "LocalHttpTestServer.h"
 #include "QGCCachedFileDownload.h"
 #include "QGCFileDownload.h"
-
-namespace {
-bool listenOnLocalTestAddress(QTcpServer& server)
-{
-    return server.listen(QHostAddress::LocalHost, 0) || server.listen(QHostAddress::LocalHostIPv6, 0) ||
-           server.listen(QHostAddress::Any, 0);
-}
-}  // namespace
 
 // ============================================================================
 // QGCCachedFileDownload Tests
@@ -121,33 +111,10 @@ void QGCCachedFileDownloadTest::_testCachedFileDownloadSyntheticCacheHit()
     QGCCachedFileDownload downloader(tempDirPath(), this);
 
     const QByteArray payload("cached-data");
-    QTcpServer server;
-    if (!listenOnLocalTestAddress(server)) {
-        const QString reason = QStringLiteral("Could not start local test HTTP server: %1").arg(server.errorString());
-        QSKIP(qPrintable(reason));
-    }
-    const QString url = QStringLiteral("http://127.0.0.1:%1/synthetic-cache-hit.txt").arg(server.serverPort());
-
-    (void)connect(&server, &QTcpServer::newConnection, &server, [&server, payload]() {
-        while (server.hasPendingConnections()) {
-            QTcpSocket* const socket = server.nextPendingConnection();
-            (void)connect(socket, &QTcpSocket::readyRead, socket, [socket, payload]() {
-                (void)socket->readAll();
-                const QByteArray response = QByteArrayLiteral(
-                                                "HTTP/1.1 200 OK\r\n"
-                                                "Content-Type: text/plain\r\n"
-                                                "Cache-Control: max-age=3600\r\n"
-                                                "Connection: close\r\n"
-                                                "Content-Length: ") +
-                                            QByteArray::number(payload.size()) + QByteArrayLiteral("\r\n\r\n") +
-                                            payload;
-                (void)socket->write(response);
-                (void)socket->flush();
-                socket->disconnectFromHost();
-            });
-            (void)connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
-        }
-    });
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local test HTTP server");
+    const QString url = server.url(QStringLiteral("/synthetic-cache-hit.txt"));
+    server.installHttpResponder(payload, 200, "text/plain", 3600);
 
     QSignalSpy firstFinishedSpy(&downloader, &QGCCachedFileDownload::finished);
     QVERIFY(downloader.download(url, 3600));
@@ -178,34 +145,11 @@ void QGCCachedFileDownloadTest::_testCachedFileDownloadCachedPath()
     QGCCachedFileDownload downloader(tempDirPath(), this);
 
     const QByteArray payload("cached-path-data");
-    QTcpServer server;
-    if (!listenOnLocalTestAddress(server)) {
-        const QString reason = QStringLiteral("Could not start local test HTTP server: %1").arg(server.errorString());
-        QSKIP(qPrintable(reason));
-    }
-    const QString url = QStringLiteral("http://127.0.0.1:%1/cached-path.txt").arg(server.serverPort());
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local test HTTP server");
+    const QString url = server.url(QStringLiteral("/cached-path.txt"));
     QVERIFY(downloader.cachedPath(url).isEmpty());
-
-    (void)connect(&server, &QTcpServer::newConnection, &server, [&server, payload]() {
-        while (server.hasPendingConnections()) {
-            QTcpSocket* const socket = server.nextPendingConnection();
-            (void)connect(socket, &QTcpSocket::readyRead, socket, [socket, payload]() {
-                (void)socket->readAll();
-                const QByteArray response = QByteArrayLiteral(
-                                                "HTTP/1.1 200 OK\r\n"
-                                                "Content-Type: text/plain\r\n"
-                                                "Cache-Control: max-age=3600\r\n"
-                                                "Connection: close\r\n"
-                                                "Content-Length: ") +
-                                            QByteArray::number(payload.size()) + QByteArrayLiteral("\r\n\r\n") +
-                                            payload;
-                (void)socket->write(response);
-                (void)socket->flush();
-                socket->disconnectFromHost();
-            });
-            (void)connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
-        }
-    });
+    server.installHttpResponder(payload, 200, "text/plain", 3600);
 
     QSignalSpy finishedSpy(&downloader, &QGCCachedFileDownload::finished);
     QVERIFY(downloader.download(url, 3600));
@@ -280,33 +224,10 @@ void QGCCachedFileDownloadTest::_testCachedFileDownloadIsCachedInvalidTimestamp(
     QGCCachedFileDownload downloader(tempDirPath(), this);
 
     const QByteArray payload("cached-invalid-timestamp");
-    QTcpServer server;
-    if (!listenOnLocalTestAddress(server)) {
-        const QString reason = QStringLiteral("Could not start local test HTTP server: %1").arg(server.errorString());
-        QSKIP(qPrintable(reason));
-    }
-    const QString url = QStringLiteral("http://127.0.0.1:%1/cached-invalid-timestamp.txt").arg(server.serverPort());
-
-    (void)connect(&server, &QTcpServer::newConnection, &server, [&server, payload]() {
-        while (server.hasPendingConnections()) {
-            QTcpSocket* const socket = server.nextPendingConnection();
-            (void)connect(socket, &QTcpSocket::readyRead, socket, [socket, payload]() {
-                (void)socket->readAll();
-                const QByteArray response = QByteArrayLiteral(
-                                                "HTTP/1.1 200 OK\r\n"
-                                                "Content-Type: text/plain\r\n"
-                                                "Cache-Control: max-age=3600\r\n"
-                                                "Connection: close\r\n"
-                                                "Content-Length: ") +
-                                            QByteArray::number(payload.size()) + QByteArrayLiteral("\r\n\r\n") +
-                                            payload;
-                (void)socket->write(response);
-                (void)socket->flush();
-                socket->disconnectFromHost();
-            });
-            (void)connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
-        }
-    });
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local test HTTP server");
+    const QString url = server.url(QStringLiteral("/cached-invalid-timestamp.txt"));
+    server.installHttpResponder(payload, 200, "text/plain", 3600);
 
     QSignalSpy finishedSpy(&downloader, &QGCCachedFileDownload::finished);
     QVERIFY(downloader.download(url, 3600));

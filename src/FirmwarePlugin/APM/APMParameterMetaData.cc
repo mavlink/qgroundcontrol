@@ -177,7 +177,23 @@ QList<ParameterMetaData::ValueDescPair> APMParameterMetaData::_sortedNumericPair
 
 void APMParameterMetaData::_applyEnumValues(FactMetaData *metaData, const QJsonObject &valuesObj)
 {
-    setEnumFromPairs(metaData, _sortedNumericPairs(valuesObj, metaData->name()));
+    QList<ValueDescPair> pairs = _sortedNumericPairs(valuesObj, metaData->name());
+
+    // ArduPilot JSON stores some int8 enum codes as unsigned values (e.g. 200 for
+    // BTN#_FUNCTION actuator functions added in Sub-4.5+). Reinterpret codes in
+    // [128..255] as their signed equivalent so convertAndValidateRaw passes and
+    // the correct bit pattern is sent back over MAVLink as INT8.
+    if (metaData->type() == FactMetaData::valueTypeInt8) {
+        for (auto &pair : pairs) {
+            bool ok = false;
+            const int code = pair.value.toInt(&ok);
+            if (ok && code >= 128 && code <= 255) {
+                pair.value = QString::number(code - 256);
+            }
+        }
+    }
+
+    setEnumFromPairs(metaData, pairs);
 }
 
 void APMParameterMetaData::_applyBitmask(FactMetaData *metaData, const QJsonObject &bitmaskObj)

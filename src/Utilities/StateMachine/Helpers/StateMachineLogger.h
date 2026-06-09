@@ -17,7 +17,7 @@ class QAbstractState;
 class QAbstractTransition;
 class QGCStateMachine;
 
-/// Extended logging for state machines.
+/// \brief Extended logging for state machines.
 ///
 /// Provides configurable, structured logging with multiple output options.
 ///
@@ -34,6 +34,7 @@ class QGCStateMachine;
 /// // Or log to file
 /// logger.setLogFile("/tmp/machine.log");
 /// @endcode
+///
 class StateMachineLogger : public QObject
 {
     Q_OBJECT

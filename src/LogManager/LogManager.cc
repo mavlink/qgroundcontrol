@@ -2,6 +2,7 @@
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QPointer>
@@ -13,12 +14,11 @@
 
 #include "LogFormatter.h"
 #include "LogModel.h"
-#include "LogRemoteSink.h"
-#include "LogStore.h"
-#include "LogStoreQueryModel.h"
-#include "QGCCompression.h"
 #include "QGCFileWriter.h"
 #include "QGCLoggingCategory.h"
+#include "AppSettings.h"
+#include "LogManagerSettings.h"
+#include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(LogManagerLog, "Utilities.LogManager")
 
@@ -31,6 +31,9 @@ static std::atomic<LogManager*> s_instance{nullptr};
 static std::atomic<bool> s_captureEnabled{false};
 static QMutex s_captureMutex;
 static QList<LogEntry> s_capturedMessages;
+
+// Elapsed timer started at static-init time (matches Qt's %{time process} epoch).
+static QElapsedTimer s_elapsedTimer = []() { QElapsedTimer t; t.start(); return t; }();
 
 // ---------------------------------------------------------------------------
 // Qt message handler
@@ -81,14 +84,11 @@ LogManager::LogManager(QObject* parent) : QObject(parent)
 {
     s_instance.store(this, std::memory_order_release);
     _model = new LogModel(this);
-    _remoteSink = new LogRemoteSink(this);
-    _logStore = new LogStore(this);
-    _historyModel = new LogStoreQueryModel(_logStore, this);
     _fileWriter = new QGCFileWriter(this);
 
     (void)connect(_fileWriter, &QGCFileWriter::errorOccurred, this, [this](const QString& msg) { _setIoError(msg); });
     (void)connect(_fileWriter, &QGCFileWriter::fileSizeChanged, this, [this](qint64 size) {
-        if (size >= kMaxLogFileSize) {
+        if (size >= _maxLogFileSize) {
             _rotateLogs();
         }
     });
@@ -111,9 +111,7 @@ LogManager::~LogManager()
 
     _flushTimer.stop();
     _flushToDisk();
-    _remoteSink->setEnabled(false);
     _fileWriter->close();
-    _logStore->close();
 
     if (_exportFuture.isValid()) {
         _exportFuture.waitForFinished();
@@ -160,6 +158,68 @@ void LogManager::applyEnvironmentLogLevel()
 }
 
 // ---------------------------------------------------------------------------
+// Two-phase init (called after SettingsManager is ready)
+// ---------------------------------------------------------------------------
+
+void LogManager::init()
+{
+    auto* appSettings = SettingsManager::instance()->appSettings();
+    auto* logSettings = SettingsManager::instance()->logManagerSettings();
+
+    // --- Log directory ---
+    setLogDirectory(appSettings->logSavePath());
+    (void)connect(appSettings, &AppSettings::savePathsChanged, this, [this, appSettings]() {
+        setLogDirectory(appSettings->logSavePath());
+    });
+
+    // --- Disk logging settings ---
+    _setDiskLoggingEnabled(logSettings->diskLoggingEnabled()->rawValue().toBool());
+    (void)connect(logSettings->diskLoggingEnabled(), &Fact::rawValueChanged, this, [this, logSettings]() {
+        _setDiskLoggingEnabled(logSettings->diskLoggingEnabled()->rawValue().toBool());
+    });
+
+    // --- Disk log rotation settings ---
+    _maxLogFileSize = logSettings->diskLoggingMaxFileSizeMB()->rawValue().toInt() * 1024 * 1024;
+    (void)connect(logSettings->diskLoggingMaxFileSizeMB(), &Fact::rawValueChanged, this, [this, logSettings]() {
+        _maxLogFileSize = logSettings->diskLoggingMaxFileSizeMB()->rawValue().toInt() * 1024 * 1024;
+    });
+
+    _maxBackupFiles = logSettings->diskLoggingMaxBackupFiles()->rawValue().toInt();
+    (void)connect(logSettings->diskLoggingMaxBackupFiles(), &Fact::rawValueChanged, this, [this, logSettings]() {
+        _maxBackupFiles = logSettings->diskLoggingMaxBackupFiles()->rawValue().toInt();
+    });
+
+    // --- Elapsed time display setting ---
+    (void)connect(appSettings->showAppLogTimestampAsElapsedTime(), &Fact::rawValueChanged, _model, [this]() {
+        const int rows = _model->rowCount();
+        if (rows > 0) {
+            const auto col = static_cast<int>(LogEntry::TimestampColumn);
+            emit _model->dataChanged(_model->index(0, col), _model->index(rows - 1, col), {Qt::DisplayRole});
+        }
+    });
+
+    _replayEarlyEntries();
+    _initialized = true;
+}
+
+// ---------------------------------------------------------------------------
+// Early-message replay
+// ---------------------------------------------------------------------------
+
+void LogManager::_replayEarlyEntries()
+{
+    const QList<LogEntry> earlyEntries = _model->allEntriesSnapshot();
+    for (const auto& entry : earlyEntries) {
+        if (_diskLoggingEnabled) {
+            _pendingDiskWrites.append(entry);
+        }
+    }
+    if (_diskLoggingEnabled && !_pendingDiskWrites.isEmpty()) {
+        _flushToDisk();
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Log ingestion
 // ---------------------------------------------------------------------------
 
@@ -188,28 +248,18 @@ const QString& LogManager::_internCategory(const QString& category)
 void LogManager::_dispatchToSinks(const LogEntry& entry)
 {
     _model->enqueue(entry);
-    if (_logStore->isOpen()) {
-        _logStore->append(entry);
-    }
     if (_diskLoggingEnabled) {
         _pendingDiskWrites.append(entry);
-    }
-    if (_remoteSink) {
-        _remoteSink->send(entry);
     }
 }
 
 void LogManager::_handleEntry(const LogEntry& entry)
 {
-    if (!_rateLimitCheck(entry)) {
+    if (_rateLimitingEnabled && !_rateLimitCheck(entry)) {
         return;
     }
 
     _dispatchToSinks(entry);
-
-    if (_flushOnLevel >= 0 && static_cast<int>(entry.level) >= _flushOnLevel) {
-        _flushToDisk();
-    }
 }
 
 bool LogManager::_rateLimitCheck(const LogEntry& entry)
@@ -282,7 +332,7 @@ void LogManager::flush()
     _fileWriter->flush();
 }
 
-void LogManager::setDiskLoggingEnabled(bool enabled)
+void LogManager::_setDiskLoggingEnabled(bool enabled)
 {
     if (_diskLoggingEnabled != enabled) {
         if (!enabled) {
@@ -290,34 +340,7 @@ void LogManager::setDiskLoggingEnabled(bool enabled)
             _fileWriter->close();
         }
         _diskLoggingEnabled = enabled;
-        emit diskLoggingEnabledChanged();
     }
-}
-
-void LogManager::setDiskCompressionEnabled(bool enabled)
-{
-    if (_diskCompressionEnabled != enabled) {
-        _diskCompressionEnabled = enabled;
-        emit diskCompressionEnabledChanged();
-    }
-}
-
-void LogManager::setFlushOnLevel(int level)
-{
-    if (_flushOnLevel != level) {
-        _flushOnLevel = level;
-        emit flushOnLevelChanged();
-    }
-}
-
-QStringList LogManager::categoryLogLevelNames()
-{
-    return {tr("Debug"), tr("Info"), tr("Warning"), tr("Critical")};
-}
-
-QVariantList LogManager::categoryLogLevelValues()
-{
-    return {QtDebugMsg, QtInfoMsg, QtWarningMsg, QtCriticalMsg};
 }
 
 // ---------------------------------------------------------------------------
@@ -339,18 +362,13 @@ void LogManager::setLogDirectory(const QString& path)
     }
     _logDirectory = path;
 
-    if (_logStore->isOpen()) {
-        _logStore->close();
-    }
-
     if (path.isEmpty()) {
         _fileWriter->setFilePath(QString());
         return;
     }
 
     const QDir dir(path);
-    _fileWriter->setFilePath(dir.absoluteFilePath(QStringLiteral("QGCConsole.log")));
-    _logStore->open(dir.absoluteFilePath(QStringLiteral("QGCConsole.db")));
+    _fileWriter->setFilePath(dir.absoluteFilePath(QStringLiteral("AppLog.log")));
 }
 
 void LogManager::_rotateLogs()
@@ -364,7 +382,7 @@ void LogManager::_rotateLogs()
     const QString name = fileInfo.baseName();
     const QString ext = fileInfo.completeSuffix();
 
-    for (int i = kMaxBackupFiles - 1; i >= 1; --i) {
+    for (int i = _maxBackupFiles - 1; i >= 1; --i) {
         const QString from = QStringLiteral("%1/%2.%3.%4").arg(dir, name).arg(i).arg(ext);
         const QString to = QStringLiteral("%1/%2.%3.%4").arg(dir, name).arg(i + 1).arg(ext);
         if (QFile::exists(to)) {
@@ -395,26 +413,23 @@ void LogManager::_flushToDisk()
 // Export
 // ---------------------------------------------------------------------------
 
-void LogManager::writeMessages(const QString& destFile, ExportFormat format)
+void LogManager::writeMessages(const QString& destFile)
 {
-    _exportEntries(_model->allEntriesSnapshot(), destFile, format);
+    _exportEntries(_model->allEntriesSnapshot(), destFile);
 }
 
-void LogManager::writeFilteredMessages(const QString& destFile, ExportFormat format)
-{
-    _exportEntries(_model->filteredEntries(), destFile, format);
-}
-
-void LogManager::_exportEntries(QList<LogEntry> entries, const QString& destFile, ExportFormat format)
+void LogManager::_exportEntries(QList<LogEntry> entries, const QString& destFile)
 {
     emit writeStarted();
 
     QPointer<LogManager> guard(this);
-    _exportFuture = QtConcurrent::run([guard, destFile, entries = std::move(entries), format]() {
+    _exportFuture = QtConcurrent::run([guard, destFile, entries = std::move(entries)]() {
         bool success = false;
         QSaveFile file(destFile);
         if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            const QByteArray content = LogFormatter::format(entries, format);
+            const int fmt = destFile.endsWith(QStringLiteral(".csv"), Qt::CaseInsensitive)
+                ? LogFormatter::CSV : LogFormatter::PlainText;
+            const QByteArray content = LogFormatter::format(entries, fmt);
             file.write(content);
             success = file.commit();
         } else {
@@ -512,6 +527,7 @@ void LogManager::captureIfEnabled(QtMsgType type, const QMessageLogContext& cont
 LogEntry LogManager::buildEntry(QtMsgType type, const QMessageLogContext& context, const QString& message)
 {
     LogEntry entry;
+    entry.elapsedMs = s_elapsedTimer.elapsed();
     entry.timestamp = QDateTime::currentDateTime();
     entry.level = LogEntry::fromQtMsgType(type);
     entry.category = context.category ? QString::fromLatin1(context.category) : QString();

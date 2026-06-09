@@ -117,7 +117,6 @@ qt_add_qml_module(QGroundControlControlsModule
         LabelledComboBox.qml
         LabelledLabel.qml
         LogReplayStatusBar.qml
-        MainWindowSavedState.qml
         MissionCommandDialog.qml
         MvPanelPage.qml
         OfflineMapButton.qml
@@ -197,11 +196,7 @@ qt_add_qml_module(QGroundControlControlsModule
 # ----------------------------------------------------------------------------
 # Control Configuration Resources
 # ----------------------------------------------------------------------------
-file(GLOB_RECURSE JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
-qt_add_resources(${CMAKE_PROJECT_NAME} json_controls
-    PREFIX "/json"
-    FILES ${JSON_FILES}
-)
+qgc_add_json_resources(json_controls)
 
 qt_add_resources(QGroundControlControlsModule qmlcontrols_resources
     PREFIX "/res"

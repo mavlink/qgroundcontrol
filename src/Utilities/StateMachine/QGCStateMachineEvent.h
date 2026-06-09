@@ -4,7 +4,8 @@
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 
-/// Custom event for QGCStateMachine delayed/scheduled events
+/// \brief Custom event for QGCStateMachine delayed/scheduled events
+///
 class QGCStateMachineEvent : public QEvent
 {
 public:

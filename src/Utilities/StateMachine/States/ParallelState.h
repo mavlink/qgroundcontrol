@@ -2,9 +2,11 @@
 
 #include "QGCState.h"
 
-/// State that executes all child states in parallel
+/// \brief State that executes all child states in parallel
+///
 /// When entered, all child states are activated simultaneously.
 /// The state completes when all child states have finished.
+///
 class ParallelState : public QGCState
 {
     Q_OBJECT

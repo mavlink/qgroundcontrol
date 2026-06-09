@@ -15,7 +15,7 @@ void WaitForSignalStateTest::_testWaitForSignalState()
         0
     );
 
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     waitState->addTransition(waitState, &QGCState::advance, finalState);
     machine.setInitialState(waitState);
@@ -51,7 +51,7 @@ void WaitForSignalStateTest::_testWaitForSignalStateTimeout()
     auto* timeoutState = new FunctionState(QStringLiteral("TimeoutHandler"), &machine, [&timeoutReached]() {
         timeoutReached = true;
     });
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     waitState->addTransition(waitState, &QGCState::advance, finalState);
     waitState->addTransition(waitState, &WaitForSignalState::timeout, timeoutState);
@@ -62,10 +62,7 @@ void WaitForSignalStateTest::_testWaitForSignalStateTimeout()
     MultiSignalSpy stateSpy;
     QVERIFY(stateSpy.init(waitState));
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(timeoutReached);
     // Verify timeout path taken, not success path
     QVERIFY(stateSpy.emittedByMask(stateSpy.mask("timeout")));
@@ -86,7 +83,7 @@ void WaitForSignalStateTest::_testCompletedSignal()
         0
     );
 
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     // Wire using completed() instead of advance()
     waitState->addTransition(waitState, &WaitStateBase::completed, finalState);
@@ -124,7 +121,7 @@ void WaitForSignalStateTest::_testTimedOutSignal()
         timeoutMs
     );
 
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     // Wire using timedOut() instead of timeout()
     waitState->addTransition(waitState, &WaitStateBase::timedOut, finalState);

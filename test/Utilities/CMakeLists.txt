@@ -34,3 +34,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "UtilitiesTest_res"
     FILES
         arducopter.apj
 )
+
+add_qgc_test(QGCCommandLineParserTest LABELS Unit Utilities)
+add_qgc_test(QGCMathTest LABELS Unit Utilities)
+add_qgc_test(SecureMemoryTest LABELS Unit Utilities)

@@ -9,8 +9,10 @@
 class Vehicle;
 class QmlObjectListModel;
 
-/// This is the base class for firmware specific geofence managers. A geofence manager is responsible
-/// for communicating with the vehicle to set/get geofence settings.
+/// \brief This is the base class for firmware specific geofence managers.
+///
+/// A geofence manager is responsible for communicating with the vehicle to set/get geofence settings.
+
 class GeoFenceManager : public PlanManager
 {
     Q_OBJECT

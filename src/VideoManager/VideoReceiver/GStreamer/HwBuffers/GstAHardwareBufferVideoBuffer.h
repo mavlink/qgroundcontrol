@@ -10,10 +10,11 @@
 
 class QRhi;
 
-/// Zero-copy QVideoFrame backing for GStreamer AHardwareBuffer samples (Android).
+/// \brief Zero-copy QVideoFrame backing for GStreamer AHardwareBuffer samples (Android).
 ///
 /// Imports via eglGetNativeClientBufferANDROID + eglCreateImageKHR into GL textures.
 /// Requires EGL_ANDROID_image_native_buffer.
+///
 class GstAHardwareBufferVideoBuffer final : public GstHwVideoBuffer
 {
 public:

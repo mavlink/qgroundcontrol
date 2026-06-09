@@ -7,8 +7,9 @@
 
 class Vehicle;
 
-/// The PlanManager class is the base class for the Mission, GeoFence and Rally Point managers. All of which use the
+/// \brief The PlanManager class is the base class for the Mission, GeoFence and Rally Point managers. All of which use the
 /// new mavlink v2 mission protocol.
+
 class PlanManager : public QObject
 {
     Q_OBJECT

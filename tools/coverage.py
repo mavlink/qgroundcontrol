@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import shutil
 import subprocess
@@ -15,7 +14,11 @@ from _bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common import find_repo_root
+from common.gh_actions import write_step_summary
 from common.logging import log_error, log_info, log_ok
+from common.opener import open_in_default_app
+from common.proc import run_captured
 
 LINE_COVERAGE_RE = re.compile(r"lines:\s*(.+)")
 BRANCH_COVERAGE_RE = re.compile(r"branches:\s*(.+)")
@@ -56,7 +59,9 @@ def run_command(
     capture_output: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     """Run a subprocess and fail fast on errors."""
-    return subprocess.run(cmd, cwd=cwd, check=True, capture_output=capture_output, text=True)
+    if capture_output:
+        return run_captured(cmd, cwd=cwd, check=True)
+    return subprocess.run(cmd, cwd=cwd, check=True, text=True)
 
 
 def check_dependencies() -> None:
@@ -135,11 +140,7 @@ def build_step_summary(log_text: str, mode: str) -> str:
 
 def maybe_write_step_summary(log_text: str, mode: str) -> None:
     """Append coverage markdown to GITHUB_STEP_SUMMARY when requested."""
-    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if not summary_path:
-        return
-    with open(summary_path, "a", encoding="utf-8") as handle:
-        handle.write(build_step_summary(log_text, mode))
+    write_step_summary(build_step_summary(log_text, mode))
 
 
 def generate_report(build_dir: Path, *, xml_only: bool, log_file: Path | None = None, mode: str = "full") -> str:
@@ -170,16 +171,14 @@ def open_report(build_dir: Path) -> None:
         raise FileNotFoundError(f"Report not found: {report}")
 
     log_info("Opening coverage report...")
-    opener = shutil.which("xdg-open") or shutil.which("open")
-    if opener is None:
+    if not open_in_default_app(report):
         raise RuntimeError(f"Could not find a browser opener. Report at: {report}")
-    subprocess.run([opener, str(report)], check=False)
 
 
 def main(argv: list[str] | None = None) -> int:
     """Run the requested coverage workflow."""
     args = parse_args(argv)
-    repo_root = Path(__file__).resolve().parent.parent
+    repo_root = find_repo_root(Path(__file__))
     build_dir = Path(args.build_dir)
     mode = "report-only" if args.report else args.mode
     if not build_dir.is_absolute():

@@ -8,6 +8,7 @@
 #include <QtTest/QTest>
 
 class QGeoCoordinate;
+class QQuickItem;
 class QRegularExpression;
 class QTemporaryDir;
 class QTemporaryFile;
@@ -314,6 +315,10 @@ public:
     static bool waitForDeleted(const QPointer<QObject>& objectPtr, int timeoutMs,
                                QStringView objectName = {});
 
+    /// Finds a visible QQuickItem by objectName in the visual tree, polling with
+    /// 50ms intervals up to timeoutMs. Returns nullptr if not found within the timeout.
+    static QQuickItem* findVisibleItem(QQuickItem* root, const QString& objectName, int timeoutMs = 1000);
+
     /// @name std::chrono overloads — prefer these in new code
     /// @{
     static bool waitForSignal(QSignalSpy& spy, std::chrono::milliseconds timeout, QStringView signalName = {})
@@ -460,6 +465,25 @@ protected:
     /// Call this before the code that emits the message.
     void expectLogMessage(QtMsgType type, const QRegularExpression &pattern);
 
+    /// Overload that also matches on category (useful for whitelisting Qt internal categories).
+    void expectLogMessage(const QRegularExpression &categoryPattern, QtMsgType type, const QRegularExpression &messagePattern);
+
+    /// Declare that a showAppMessage() call matching @a messagePattern is expected.
+    /// Convenience wrapper over expectLogMessage for the QGCAppMessageLog category.
+    void expectAppMessage(const QRegularExpression &messagePattern);
+
+    /// Permanently suppress all log messages matching @a pattern at level @a type
+    /// for the duration of the test. Semantically signals that the message may
+    /// fire any number of times (vs expectLogMessage for known single occurrences).
+    void ignoreLogMessage(QtMsgType type, const QRegularExpression &pattern);
+
+    /// Overload that also matches on category.
+    void ignoreLogMessage(const QRegularExpression &categoryPattern, QtMsgType type, const QRegularExpression &messagePattern);
+
+    /// Enable strict log checking: ANY unexpected log message (regardless of
+    /// category or level) will fail the test in cleanup().
+    void setStrictLogCheck(bool strict) { _strictLogCheck = strict; }
+
 private:
     void _cleanupTempFiles();
     void _resetTestState();
@@ -480,6 +504,7 @@ private:
     bool _cleanupCalled = false;
     bool _failureContextDumped = false;
     bool _standalone = false;
+    bool _strictLogCheck = false;
 };
 
 // ============================================================================

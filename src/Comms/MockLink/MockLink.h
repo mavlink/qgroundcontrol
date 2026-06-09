@@ -13,6 +13,7 @@
 #include <QtCore/QSet>
 #include <QtPositioning/QGeoCoordinate>
 
+#include <array>
 #include <atomic>
 
 class MockLinkCamera;
@@ -183,10 +184,8 @@ private:
     bool _allocateMavlinkChannel() final;
     void _freeMavlinkChannel() final;
 
-    uint8_t _getMavlinkAuxChannel() const { return _mavlinkAuxChannel; }
-    bool _mavlinkAuxChannelIsSet() const;
-    uint8_t _getMavlinkVehicleChannel() const { return _mavlinkVehicleChannel; }
-    bool _mavlinkVehicleChannelIsSet() const;
+    bool _incomingMavlinkChannelIsSet() const;
+    bool _outgoingMavlinkChannelIsSet() const;
 
     void _loadParams();
 
@@ -212,6 +211,7 @@ private:
     void _handleInProgressCommandLong(const mavlink_command_long_t &request);
     void _handleCommandLongSetMessageInterval(const mavlink_command_long_t &request, bool &acccepted);
     void _handleManualControl(const mavlink_message_t &msg);
+    void _handleRCChannelsOverride(const mavlink_message_t &msg);
     void _handlePreFlightCalibration(const mavlink_command_long_t &request);
     void _handleTakeoff(const mavlink_command_long_t &request);
     void _handleLogRequestList(const mavlink_message_t &msg);
@@ -233,6 +233,7 @@ private:
     void _sendVibration();
     void _sendSysStatus();
     void _sendBatteryStatus();
+    void _sendNamedValueFloats();
     void _sendChunkedStatusText(uint16_t chunkId, bool missingChunks);
     void _sendStatusTextMessages();
     void _respondWithAutopilotVersion();
@@ -240,7 +241,14 @@ private:
     void _sendADSBVehicles();
     void _sendGeneralMetaData();
     void _sendRemoteIDArmStatus();
+    void _sendEscInfo();
+    void _sendEscStatus();
+    void _sendRadioStatus();
     void _sendAvailableModesMonitor();
+    void _sendAttitudeQuaternion();
+    void _sendAttitudeTarget();
+    void _sendLocalPositionNed();
+    void _sendPositionTargetLocalNed();
 
     void _paramRequestListWorker();
     void _logDownloadWorker();
@@ -279,10 +287,10 @@ private:
     MockLinkGimbal *const _mockLinkGimbal = nullptr;
     MockLinkFTP *const _mockLinkFTP = nullptr;
 
-    uint8_t _mavlinkAuxChannel = std::numeric_limits<uint8_t>::max();
-    QMutex _mavlinkAuxMutex;
-    /// Vehicle-side outgoing channel; signing state lives here, decoupled from QGC's parser channel.
-    uint8_t _mavlinkVehicleChannel = std::numeric_limits<uint8_t>::max();
+    uint8_t _incomingMavlinkChannel = std::numeric_limits<uint8_t>::max();
+    QMutex _incomingMavlinkMutex;
+    /// Outgoing (vehicle-side) channel; signing state lives here, decoupled from QGC's incoming parser channel.
+    uint8_t _outgoingMavlinkChannel = std::numeric_limits<uint8_t>::max();
 
     mavlink_signing_t _mockSigning{};
     mavlink_signing_streams_t _mockSigningStreams{};
@@ -295,6 +303,7 @@ private:
     uint8_t _mavState = MAV_STATE_STANDBY;
 
     QElapsedTimer _runningTime;
+    static constexpr int kTestParamRequestListBatch = 25;
     static constexpr int32_t _batteryMaxTimeRemaining = 15 * 60;
     int8_t _battery1PctRemaining = 100;
     int32_t _battery1TimeRemaining = _batteryMaxTimeRemaining;
@@ -304,7 +313,7 @@ private:
     MAV_BATTERY_CHARGE_STATE _battery2ChargeState = MAV_BATTERY_CHARGE_STATE_OK;
 
     double _vehicleAltitudeAMSL = _defaultVehicleHomeAltitude;
-    bool _commLost = false;
+    std::atomic<bool> _commLost = false;
     bool _signingEnabled = false;
     bool _highLatencyTransmissionEnabled = true;
 
@@ -346,6 +355,13 @@ private:
     bool _hashCheckNoResponse = false;
     int _hashCheckRequestCount = 0;
     bool _paramRequestListHashCheckSent = false;
+
+    struct RCChannelOverride {
+        enum class State { Ignore, Overridden, Released } state = State::Ignore;
+        uint16_t value = 0;
+    };
+    static constexpr int kRcChannelOverrideChannelCount = 18;
+    std::array<RCChannelOverride, kRcChannelOverrideChannelCount> _rcChannelOverrides;
 
     QMap<MAV_CMD, int> _receivedMavCommandCountMap;
     QMap<MAV_CMD, QMap<int, int>> _receivedMavCommandByCompCountMap;

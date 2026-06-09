@@ -1,16 +1,14 @@
 # Plan View
 
+::: tip Having trouble?
+If missions fail to upload or download, see [Plan Upload/Download Failures](../troubleshooting/plan_upload_download.md). For mission resume issues, see [Resume Mission Failures](../troubleshooting/resume_mission.md).
+:::
+
 The _Plan View_ is used to plan _autonomous missions_ for your vehicle, and upload them to the vehicle. Once the mission is [planned](#plan_mission) and sent to the vehicle, you switch to the [Fly View](../fly_view/fly_view.md) to fly the mission.
 
 It is also used to configure the [GeoFence](plan_geofence.md) and [Rally Points](plan_rally_points.md) if these are supported by the firmware.
 
-<a id="plan_screenshot"></a>
-![Plan View](../../../assets/plan/plan_view_overview.png)
-
 ## UI Overview {#ui_overview}
-
-The [screenshot above](#plan_screenshot) shows the Plan View with an empty mission.
-The map is centered on the [Planned Home](#planned_home) position (H).
 
 The main elements of the UI are:
 
@@ -194,7 +192,4 @@ The loss rate should be in the low single digits (i.e. maximum of 2 or 3):
 There is a much smaller possibility that issues are caused by bugs in either flight stack or QGC.
 To analyze this possibility you can turn on [Console Logging](../settings_view/console_logging.md) for Plan upload/download and review the protocol message traffic.
 
-## Further Info
 
-- New Plan View features for [QGC release v3.2](../releases/release_note_stable_v3.md#plan-view-v32)
-- New Plan View features for [QGC release v3.3](../releases/release_note_stable_v3.md#plan-view-v33)

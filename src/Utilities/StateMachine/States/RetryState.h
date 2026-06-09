@@ -6,10 +6,11 @@
 
 #include <functional>
 
-/// A state that retries an action and chooses behavior when retries are exhausted.
+/// \brief A state that retries an action and chooses behavior when retries are exhausted.
 ///
 /// The action is executed on entry. If it fails, the state retries after a delay.
 /// Once retries are exhausted, behavior is controlled by ExhaustedBehavior.
+///
 class RetryState : public QGCState
 {
     Q_OBJECT

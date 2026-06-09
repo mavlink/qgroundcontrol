@@ -9,13 +9,15 @@ class AsyncFunctionState;
 class RetryableRequestMessageState;
 class RetryState;
 
-/// State machine for initial vehicle connection sequence.
+/// \brief State machine for initial vehicle connection sequence.
+///
 /// Handles requesting autopilot version, standard modes, component info,
 /// parameters, missions, geofence, and rally points in sequence.
 ///
 /// Uses QGCStateMachine's built-in weighted progress tracking where different
 /// states contribute different amounts to the overall progress (e.g., parameter
 /// loading takes longer than version request).
+///
 class InitialConnectStateMachine : public QGCStateMachine
 {
     Q_OBJECT

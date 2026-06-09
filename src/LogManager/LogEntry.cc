@@ -91,14 +91,14 @@ QVariant LogEntry::roleData(int role) const
 QVariant LogEntry::columnDisplayData(int column) const
 {
     switch (static_cast<Column>(column)) {
-        case TimestampColumn:
-            return timestamp.toString(QStringLiteral("hh:mm:ss.zzz"));
-        case LevelColumn:
-            return levelLabel();
+        case TimestampColumn: {
+            const double elapsed = elapsedMs / 1000.0;
+            return QString::number(elapsed, 'f', 3);
+        }
         case CategoryColumn:
             return category;
         case MessageColumn:
-            return message;
+            return levelLabel() + QStringLiteral(" ") + message;
         case SourceColumn:
             if (file.isEmpty()) {
                 return QString();
@@ -115,8 +115,6 @@ QVariant LogEntry::columnHeaderData(int section)
     switch (static_cast<Column>(section)) {
         case TimestampColumn:
             return QStringLiteral("Time");
-        case LevelColumn:
-            return QStringLiteral("Level");
         case CategoryColumn:
             return QStringLiteral("Category");
         case MessageColumn:

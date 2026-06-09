@@ -1,6 +1,5 @@
 # ArduSub Tuning
 
-![ArduSub Tuning Page](../../../assets/setup/tuning/ardusub.jpg)
 
 ## Basic Tuning
 

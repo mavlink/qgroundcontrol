@@ -11,7 +11,8 @@
 
 #include <functional>
 
-/// Callback-based file/directory watcher with debouncing support
+/// \brief Callback-based file/directory watcher with debouncing support
+///
 /// Provides a simpler API than QFileSystemWatcher for common use cases
 ///
 /// Example usage:
@@ -21,6 +22,7 @@
 ///     qDebug() << "Config changed:" << path;
 /// });
 /// @endcode
+///
 class QGCFileWatcher : public QObject
 {
     Q_OBJECT

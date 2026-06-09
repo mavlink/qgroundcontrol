@@ -1,0 +1,34 @@
+name: Replace Cache Entry
+description: >-
+  Delete a stale GitHub Actions cache entry (best-effort) then save the file at
+  the same key. Used by build-results.yml to publish moving "latest" baselines
+  that need to overwrite the previous run's snapshot.
+
+inputs:
+  path:
+    description: File path to cache
+    required: true
+  key:
+    description: Cache key (must be fixed/non-versioned; this is a moving 'latest')
+    required: true
+  github-token:
+    description: Token used by `gh actions-cache delete` (defaults to github.token)
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Delete stale cache entry
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        GH_REPO: ${{ github.repository }}
+        CACHE_KEY: ${{ inputs.key }}
+      run: gh actions-cache delete "${CACHE_KEY}" -R "${GH_REPO}" --confirm || true
+
+    - name: Save cache entry
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ inputs.path }}
+        key: ${{ inputs.key }}

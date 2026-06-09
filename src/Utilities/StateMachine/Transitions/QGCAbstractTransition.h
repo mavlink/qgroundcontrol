@@ -6,7 +6,8 @@
 class QGCStateMachine;
 class Vehicle;
 
-/// Base class for custom transitions that need access to QGCStateMachine and Vehicle
+/// \brief Base class for custom transitions that need access to QGCStateMachine and Vehicle
+///
 class QGCAbstractTransition : public QAbstractTransition
 {
     Q_OBJECT

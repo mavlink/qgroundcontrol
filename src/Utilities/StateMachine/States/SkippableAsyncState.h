@@ -4,7 +4,8 @@
 
 #include <functional>
 
-/// Combines skip condition checking with async operation setup in a single state.
+/// \brief Combines skip condition checking with async operation setup in a single state.
+///
 /// Common pattern in initialization workflows where operations should be skipped under certain conditions.
 ///
 /// On entry:
@@ -29,6 +30,7 @@
 /// missionState->addTransition(missionState, &QGCState::advance, nextState);
 /// missionState->addTransition(missionState, &SkippableAsyncState::skipped, nextState);
 /// @endcode
+///
 class SkippableAsyncState : public WaitStateBase
 {
     Q_OBJECT

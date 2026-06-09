@@ -8,7 +8,8 @@
 
 class QRhi;
 
-/// Wraps a D3D12Memory-backed GstSample as a QHwVideoBuffer; samples natively on QRhi::D3D12.
+/// \brief Wraps a D3D12Memory-backed GstSample as a QHwVideoBuffer; samples natively on QRhi::D3D12.
+///
 class GstD3D12VideoBuffer final : public GstHwVideoBuffer
 {
 public:

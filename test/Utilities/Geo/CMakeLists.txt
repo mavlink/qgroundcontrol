@@ -34,3 +34,8 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "Test_Utilities_Geo_res"
         polyline.kml
         polygon.kml
 )
+
+add_qgc_test(GeoTest LABELS Unit Utilities)
+add_qgc_test(GeoJsonHelperTest LABELS Unit Utilities)
+add_qgc_test(KMLDomDocumentTest LABELS Unit Utilities)
+add_qgc_test(ShapeTest LABELS Unit Utilities)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QSet>
 #include <QtCore/QTimer>
@@ -32,7 +33,8 @@ struct QMetaObject;
 
 #define qgcApp() qApp
 
-/// The main application and management class.
+/// \brief The main application and management class.
+///
 class QGCApplication : public QGuiApplication
 {
     Q_OBJECT
@@ -114,6 +116,8 @@ private:
 
     bool _initVideo();
 
+    bool _initQmlRootWindow();
+
     /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
     void _initForNormalAppBoot();
 
@@ -170,3 +174,5 @@ private:
 
     const QString _qgcImageProviderId = QStringLiteral("QGCImages");
 };
+
+Q_DECLARE_LOGGING_CATEGORY(QGCAppMessageLog)

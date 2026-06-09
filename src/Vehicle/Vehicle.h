@@ -14,6 +14,9 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <array>
+#include <atomic>
+
 #include "QGCMAVLink.h"
 #include "VehicleFactGroup.h"
 #include "VehicleSigningController.h"  // Q_PROPERTY needs the full QObject type for moc/QML metatype registration
@@ -414,6 +417,9 @@ public:
     void updateFlightDistance(double distance);
 
     void sendJoystickDataThreadSafe (float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float pitchExtension, float rollExtension, float aux1, float aux2, float aux3, float aux4, float aux5, float aux6);
+    /// Sends RC_CHANNELS_OVERRIDE for joystick aux axes mapped to RC channels 5–10 only.
+    static constexpr int kAuxRcOverrideChannelCount = 6; ///< Number of RC channels overridden (channels 5–10)
+    void sendJoystickAuxRcOverrideThreadSafe(const std::array<uint16_t, kAuxRcOverrideChannelCount> &channelValues, const std::array<bool, kAuxRcOverrideChannelCount> &channelEnabled, bool useRcOverride);
 
     // Property accesors
     int id() const{ return _systemID; }
@@ -940,6 +946,7 @@ private:
     bool            _readyToFly                             = false;
     bool            _allSensorsHealthy                      = true;
     VehicleSigningController* _signingController            = nullptr;
+    std::atomic<bool> _joystickAuxRcOverrideActive           = false;
 
     std::unique_ptr<SysStatusSensorInfo> _sysStatusSensorInfo;
 

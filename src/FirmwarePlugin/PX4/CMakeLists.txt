@@ -18,12 +18,7 @@ if(NOT QGC_DISABLE_PX4_PLUGIN)
 endif()
 
 # Add MavCmd JSON files
-file(GLOB JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/PX4-MavCmdInfo*.json)
-qt_add_resources(${CMAKE_PROJECT_NAME} json_firmaware_plugin_px4
-    PREFIX "/json"
-    FILES
-    ${JSON_FILES}
-)
+qgc_add_json_resources(json_firmaware_plugin_px4 NO_RECURSE PATTERN "PX4-MavCmdInfo*.json")
 
 # Add other resource
 set_source_files_properties(V1.4.OfflineEditing.params PROPERTIES QT_RESOURCE_ALIAS PX4.OfflineEditing.params)

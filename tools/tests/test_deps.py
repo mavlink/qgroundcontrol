@@ -7,7 +7,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from common.deps import check_dependencies, require_tool
 from common.errors import ToolNotFoundError
 
@@ -46,12 +45,12 @@ class TestRequireTool:
 
     def test_not_found_raises(self):
         """Raises ToolNotFoundError when tool is missing."""
-        with patch.object(shutil, "which", return_value=None):
-            with pytest.raises(ToolNotFoundError, match="cmake"):
-                require_tool("cmake")
+        with patch.object(shutil, "which", return_value=None), \
+             pytest.raises(ToolNotFoundError, match="cmake"):
+            require_tool("cmake")
 
     def test_hint_in_message(self):
         """Hint text appears in the error message."""
-        with patch.object(shutil, "which", return_value=None):
-            with pytest.raises(ToolNotFoundError, match="pip install"):
-                require_tool("gcovr", hint="pip install gcovr")
+        with patch.object(shutil, "which", return_value=None), \
+             pytest.raises(ToolNotFoundError, match="pip install"):
+            require_tool("gcovr", hint="pip install gcovr")

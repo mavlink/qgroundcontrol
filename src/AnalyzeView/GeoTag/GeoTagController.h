@@ -41,8 +41,10 @@ CalibrationResult calibrate(const QList<qint64> &imageTimestamps,
 
 } // namespace GeoTagCalibrator
 
-/// Controller for GeoTagPage.qml. Supports geotagging images based on logfile camera tags.
+/// \brief Controller for GeoTagPage.qml. Supports geotagging images based on logfile camera tags.
+///
 /// Uses async signal-based processing with QFutureWatcher for non-blocking operation.
+///
 class GeoTagController : public QObject
 {
     Q_OBJECT

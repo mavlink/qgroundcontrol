@@ -11,7 +11,8 @@
 class TerrainAtCoordinateQuery;
 class Vehicle;
 
-/// Coordinates the three terrain-query workflows attached to a Vehicle:
+/// \brief Coordinates the three terrain-query workflows attached to a Vehicle:
+///
 ///   1. DO_SET_HOME: query terrain altitude for the target coord, then send
 ///      MAV_CMD_DO_SET_HOME with a sanity-checked AMSL altitude.
 ///   2. ROI (PX4 only): query terrain altitude for the target coord, then send
@@ -22,6 +23,7 @@ class Vehicle;
 /// Each workflow owns a single outstanding TerrainAtCoordinateQuery; starting a new
 /// request while one is in-flight disconnects the previous one (auto-deleted by
 /// TerrainQuery). Callbacks access the Vehicle to send commands or write facts.
+///
 class TerrainQueryCoordinator : public QObject
 {
     Q_OBJECT

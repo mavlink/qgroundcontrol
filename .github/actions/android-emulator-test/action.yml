@@ -1,0 +1,83 @@
+name: Android Emulator Boot Test
+description: >-
+  Run the APK install + launch smoke test against an x86_64 Android emulator.
+  Wraps KVM enable + AVD cache restore/save + warm-up snapshot + boot test +
+  failure diagnostics so caller workflows don't repeat the ~100-line block.
+
+inputs:
+  apk-path:
+    description: Path to the APK to install
+    required: true
+  package:
+    description: Android package id to launch (e.g. org.mavlink.qgroundcontrol)
+    required: true
+  android-platform:
+    description: Android API level (from build-config)
+    required: true
+  qt-version:
+    description: Qt version (for AVD cache key)
+    required: true
+  ndk-version:
+    description: Android NDK full version (for AVD cache key)
+    required: true
+  diagnostics-name:
+    description: Suffix for the uploaded emulator-diagnostics artifact name
+    required: false
+    default: ${{ github.job }}
+  build-dir:
+    description: Build directory (for diagnostics collection)
+    required: false
+    default: ${{ runner.temp }}/build
+
+runs:
+  using: composite
+  steps:
+    - name: Enable KVM
+      shell: bash
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Emulator Boot Test
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ inputs.android-platform }}
+        system-image-api-level: ${{ inputs.android-platform }}
+        arch: x86_64
+        target: google_apis
+        profile: pixel_6
+        cores: 4
+        ram-size: 4096M
+        heap-size: 1024M
+        avd-name: qgc-ci
+        force-avd-creation: false
+        emulator-boot-timeout: 420
+        disable-animations: true
+        disable-spellchecker: true
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save
+        script: |
+          timeout 20s adb start-server >/dev/null 2>&1 || true
+          timeout 180s adb wait-for-device || (echo "::error::adb wait-for-device timed out before boot test." && exit 1)
+          python3 .github/scripts/android_boot_test.py --apk "${{ inputs.apk-path }}" --package ${{ inputs.package }} --timeout 120 --stability-window 20 --adb-ready-timeout 180 --install-retries 4 --install-retry-delay 5 --launch-retries 2 --log-output /tmp/qgc_emulator_boot.log
+
+    - name: Collect Emulator Diagnostics
+      if: failure()
+      shell: bash
+      env:
+        BUILD_DIR: ${{ inputs.build-dir }}
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/android_collect_diagnostics.py" \
+          --out-dir "${RUNNER_TEMP}/emulator-diagnostics" \
+          --build-dir "${BUILD_DIR}" \
+          --boot-log /tmp/qgc_emulator_boot.log
+        ls -la "${RUNNER_TEMP}/emulator-diagnostics" || true
+
+    - name: Upload Emulator Diagnostics
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: emulator-diagnostics-${{ inputs.diagnostics-name }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: ${{ runner.temp }}/emulator-diagnostics
+        if-no-files-found: warn
+        retention-days: 14

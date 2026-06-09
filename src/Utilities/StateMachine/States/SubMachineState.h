@@ -6,9 +6,11 @@
 
 class QGCStateMachine;
 
-/// State that invokes a child state machine
+/// \brief State that invokes a child state machine
+///
 /// When entered, creates and starts a child state machine.
 /// When the child machine finishes, emits advance() or error().
+///
 class SubMachineState : public QGCState
 {
     Q_OBJECT

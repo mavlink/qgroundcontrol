@@ -13,12 +13,14 @@
 
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// A tree model for QObject* items, usable from both C++ and QML.
+/// \brief A tree model for QObject* items, usable from both C++ and QML.
+///
 /// Works like QmlObjectListModel but supports hierarchical parent/child relationships.
 /// Compatible with Qt 6 TreeView.
 ///
 /// Top-level items are children of an invisible root node. The root is represented
 /// by an invalid QModelIndex (the default).
+///
 class QmlObjectTreeModel : public ObjectItemModelBase
 {
     Q_OBJECT

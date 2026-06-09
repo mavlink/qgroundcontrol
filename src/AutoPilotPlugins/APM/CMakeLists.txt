@@ -64,7 +64,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 # Code-generation: produce QML config pages from VehicleConfig.json definitions
 # ----------------------------------------------------------------------------
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(APM_CONFIG_QML_GENERATOR_DIR "${CMAKE_SOURCE_DIR}/tools/generators/config_qml")
 set(APM_CONFIG_PAGES_DIR         "${CMAKE_CURRENT_SOURCE_DIR}/VehicleConfig")
@@ -88,33 +87,15 @@ set(_apm_config_generated_qml_names
     APMTuningCopterComponent.qml
 )
 
-# Full paths in the build tree
-set(_apm_config_generated_qml "")
-foreach(_name IN LISTS _apm_config_generated_qml_names)
-    list(APPEND _apm_config_generated_qml "${APM_CONFIG_QML_GEN_DIR}/${_name}")
-endforeach()
-
-add_custom_command(
-    OUTPUT  ${_apm_config_generated_qml}
-    COMMAND ${Python3_EXECUTABLE} -m tools.generators.config_qml.generate_pages
-            --pages-dir "${APM_CONFIG_PAGES_DIR}"
-            --output-dir "${APM_CONFIG_QML_GEN_DIR}"
-    DEPENDS ${_apm_config_generator_sources} ${_apm_config_page_definitions}
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    COMMENT "Generating APM QML config pages from VehicleConfig.json definitions"
-    VERBATIM
+qgc_add_qml_codegen(GenerateConfigQmlAPM
+    GENERATOR_MODULE tools.generators.config_qml.generate_pages
+    OUTPUT_DIR       "${APM_CONFIG_QML_GEN_DIR}"
+    QML_NAMES        ${_apm_config_generated_qml_names}
+    EXTRA_ARGS       --pages-dir "${APM_CONFIG_PAGES_DIR}"
+    DEPENDS          ${_apm_config_generator_sources} ${_apm_config_page_definitions}
+    COMMENT          "Generating APM QML config pages from VehicleConfig.json definitions"
 )
-
-add_custom_target(GenerateConfigQmlAPM DEPENDS ${_apm_config_generated_qml})
-
-# GENERATED suppresses qmlimportscanner reads of not-yet-existing files at configure time.
-foreach(_name IN LISTS _apm_config_generated_qml_names)
-    set_source_files_properties("${APM_CONFIG_QML_GEN_DIR}/${_name}"
-        PROPERTIES
-            GENERATED TRUE
-            QT_RESOURCE_ALIAS "${_name}"
-    )
-endforeach()
+set(_apm_config_generated_qml ${GenerateConfigQmlAPM_OUTPUTS})
 
 # ----------------------------------------------------------------------------
 # APM QML Module
@@ -170,7 +151,6 @@ qt_add_qml_module(AutoPilotPluginsAPMModule
         APMSubFrameComponent.qml
         APMSubFrameComponentSummary.qml
         APMSubMotorComponent.qml
-        APMTuningComponentSub.qml
         APMAutoTuneChannelSelector.qml
         APMAdvancedTuningCopterComponent.qml
     RESOURCES

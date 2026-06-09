@@ -19,8 +19,10 @@ Transformation applied to each translatable string:
 
 import re
 import sys
+import xml.etree.ElementTree as ET  # for Element/SubElement/indent/tostring construction
 from pathlib import Path
-from xml.etree import ElementTree as ET
+
+import defusedxml.ElementTree as DET  # parse-only hardening for untrusted XML input
 
 # ---------------------------------------------------------------------------
 # Character substitution table
@@ -87,7 +89,7 @@ def _substitute(segment: str) -> str:
 
 def process_ts(src_path: Path, dst_path: Path, language: str) -> int:
     """Read *src_path*, write pseudo-loc *dst_path*. Returns message count."""
-    tree = ET.parse(src_path)
+    tree = DET.parse(src_path)
     root = tree.getroot()
 
     # Set locale on the <TS> element
@@ -111,11 +113,7 @@ def process_ts(src_path: Path, dst_path: Path, language: str) -> int:
         trans_el.text = pseudo_loc(source_el.text)
         count += 1
 
-    # Indent for readability (Python 3.9+)
-    try:
-        ET.indent(tree, space="    ")
-    except AttributeError:
-        pass  # Python < 3.9 — no indentation
+    ET.indent(tree, space="    ")
 
     # Build output preserving XML declaration
     xml_decl = '<?xml version="1.0" encoding="utf-8"?>\n'

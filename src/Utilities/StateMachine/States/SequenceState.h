@@ -4,7 +4,7 @@
 
 #include <functional>
 
-/// A composite state that executes a sequence of actions in order.
+/// \brief A composite state that executes a sequence of actions in order.
 ///
 /// Each action is executed in turn. If any action fails (returns false),
 /// the sequence stops and error() is emitted. When all actions complete
@@ -29,6 +29,7 @@
 /// seqState->addTransition(seqState, &SequenceState::advance, successState);
 /// seqState->addTransition(seqState, &SequenceState::error, errorState);
 /// @endcode
+///
 class SequenceState : public QGCState
 {
     Q_OBJECT

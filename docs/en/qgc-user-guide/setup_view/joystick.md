@@ -36,12 +36,10 @@ To configure a joystick:
 1. Select the **Gear** icon (Vehicle Setup) in the top toolbar and then **Joystick** in the sidebar.
    The screen below will appear.
 
-   ![Joystick setup - PlayStation](../../../assets/setup/joystick_sony_playstation.jpg)
 
 1. Make sure your joystick is selected in the **Active joystick** dropdown.
 1. Go to the **Calibrate** Tab, press the **Start** button and then follow the on-screen instructions to calibrate/move the sticks.
 
-   ![Joystick setup - Calibration](../../../assets/setup/joystick_calibration.jpg)
 
    The joystick is _enabled_ as the last step of the calibration process.
 
@@ -51,7 +49,6 @@ To configure a joystick:
 
 1. Test the buttons and sticks work as intended by pressing them, and viewing the result in the Axis/Button monitor in the **General** tab.
 1. Select the flight modes/vehicle functions activated by each joystick button.
-   ![Joystick setup - Buttons](../../../assets/setup/joystick_buttons.jpg)
 
 ## Advanced Options
 
@@ -60,7 +57,6 @@ These options may be useful for specific, unsual setups, for increasing sensibil
 
 ### Throttle Options
 
-![Joystick setup - Throttle Modes](../../../assets/setup/joystick_throttle_modes.jpg)
 
 - **Center stick is zero throttle**: Centered or lowered stick sends 0 in [MANUAL_CONTROL **z**](https://mavlink.io/en/messages/common.html#MANUAL_CONTROL), raised stick sends 1000.
   - **Spring loaded throttle smoothing**: In this mode you control not the throttle itself, but the rate at which it increases/decreases.
@@ -74,11 +70,9 @@ These options may be useful for specific, unsual setups, for increasing sensibil
 
 The expo slider allows you to make the sticks less sensitive in the center, allowing finer control in this zone.
 
-![Joystick setup - Expo](../../../assets/setup/joystick_throttle_expo.jpg)
 
 The slider adjusts the curvature of the exponential curve.
 
-![Joystick setup - Expo Curve](../../../assets/setup/joystick_throttle_expo_curve.jpg)
 
 The higher the Expo value, the flatter the curve is at the center, and steeper it is at the edges.
 
@@ -87,7 +81,6 @@ The higher the Expo value, the flatter the curve is at the center, and steeper i
 The advanced settings are not recommended for everyday users.
 They can cause unpredicted results if used incorrectly.
 
-![Joystick setup - Advanced Settings](../../../assets/setup/joystick_advanced.jpg)
 
 The following settings are available:
 
@@ -113,12 +106,10 @@ The following settings are available:
     In this figure, point B would command full pitch forward and full roll right, but the joystick is not able to reach point B because the retainer is circular.
     This means that you will not be able to achieve full roll and pitch deflection simultaneously.
 
-    ![](../../../assets/setup/joystick_circle_correction.jpg)
 
   - **Enabled:** The joystick values are adjusted in software to ensure full range of commands.
     The usable area of travel and resolution is decreased, however, because the area highlighted grey in the figure is no longer used.
 
-    ![Circle correction enabled](../../../assets/setup/joystick_circle_correction2.jpg)
 
 - **Deadbands:** Deadbands allow input changes to be ignored when the sticks are near their neutral positions.
   This helps to avoid noise or small oscillations on sensitive sticks which may be interpreted as commands, or small offsets when sticks do not re-center well.

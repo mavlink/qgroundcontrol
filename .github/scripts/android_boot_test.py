@@ -10,13 +10,20 @@ import sys
 import time
 from pathlib import Path
 
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.proc import run_bytes  # noqa: E402
+
 
 def _decode(value: bytes) -> str:
     return value.decode("utf-8", errors="replace")
 
 
 def run_command(cmd: list[str], check: bool = False) -> subprocess.CompletedProcess[bytes]:
-    result = subprocess.run(cmd, capture_output=True)
+    """Bytes-mode adb wrapper — logcat can contain non-UTF8 on native crashes."""
+    result = run_bytes(cmd)
     if check and result.returncode != 0:
         stdout = _decode(result.stdout)
         stderr = _decode(result.stderr)

@@ -17,16 +17,9 @@ void ShowAppMessageStateTest::_testShowAppMessageStateAdvance()
     QStateMachine machine;
 
     auto* state = new ShowAppMessageState(&machine, QStringLiteral("Test message"));
-    auto* finalState = new QFinalState(&machine);
-
-    state->addTransition(state, &QGCState::advance, finalState);
-    machine.setInitialState(state);
-
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
 
     // ShowAppMessageState should emit advance() after showing the message
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(runStateToCompletion(state, &machine));
 }
 
 UT_REGISTER_TEST(ShowAppMessageStateTest, TestLabel::Unit, TestLabel::Utilities)

@@ -8,4 +8,3 @@ The page also supports:
 - Selecting all received logs in one action (_Select All_ / _Deselect All_).
 - Sorting logs by timestamp (_Sort Ascending_ / _Sort Descending_).
 
-![Analyze View Log Download](../../../assets/analyze/log_download.jpg)

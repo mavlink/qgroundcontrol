@@ -11,7 +11,8 @@
 class APMSensorsComponent;
 class LinkInterface;
 
-/// Sensors Component MVC Controller for SensorsComponent.qml.
+/// \brief Sensors Component MVC Controller for SensorsComponent.qml.
+///
 class APMSensorsComponentController : public FactPanelController
 {
     Q_OBJECT
@@ -58,6 +59,8 @@ class APMSensorsComponentController : public FactPanelController
 
     Q_PROPERTY(bool waitingForCancel                        MEMBER _waitingForCancel                        NOTIFY waitingForCancelChanged)
 
+    Q_PROPERTY(bool calibrationActive                       READ calibrationActive                          NOTIFY calibrationActiveChanged)
+
     Q_PROPERTY(bool compass1CalSucceeded                    READ compass1CalSucceeded                       NOTIFY compass1CalSucceededChanged)
     Q_PROPERTY(bool compass2CalSucceeded                    READ compass2CalSucceeded                       NOTIFY compass2CalSucceededChanged)
     Q_PROPERTY(bool compass3CalSucceeded                    READ compass3CalSucceeded                       NOTIFY compass3CalSucceededChanged)
@@ -88,6 +91,8 @@ public:
     bool compass2CalSucceeded() const { return _rgCompassCalSucceeded[1]; }
     bool compass3CalSucceeded() const { return _rgCompassCalSucceeded[2]; }
 
+    bool calibrationActive() const { return _calTypeInProgress != QGCMAVLink::CalibrationNone; }
+
     double compass1CalFitness() const { return _rgCompassCalFitness[0]; }
     double compass2CalFitness() const { return _rgCompassCalFitness[1]; }
     double compass3CalFitness() const { return _rgCompassCalFitness[2]; }
@@ -101,6 +106,7 @@ signals:
     void orientationCalSidesRotateChanged();
     void resetStatusTextArea();
     void waitingForCancelChanged();
+    void calibrationActiveChanged();
     void setupNeededChanged();
     void calibrationComplete(QGCMAVLink::CalibrationType calType);
     void compass1CalSucceededChanged(bool compass1CalSucceeded);

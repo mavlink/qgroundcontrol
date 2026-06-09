@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 import importlib.util
+
+# Import module with a hyphen in the filename
+import sys as _sys
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
-# Import module with a hyphen in the filename
-import sys as _sys
 
 _SCRIPT = Path(__file__).parent.parent / "setup" / "build-gstreamer.py"
 _spec = importlib.util.spec_from_file_location("build_gstreamer", _SCRIPT)

@@ -11,7 +11,7 @@ class MissionCommandUIInfo;
 class MissionCommandTreeTest;
 #endif
 
-/// UI Information associated with a mission command (MAV_CMD) parameter
+/// \brief UI Information associated with a mission command (MAV_CMD) parameter
 ///
 /// MissionCommandParamInfo is used to automatically generate editing ui for a parameter associated with a MAV_CMD.
 ///
@@ -92,7 +92,7 @@ private:
     friend class MissionCommandUIInfo;
 };
 
-/// UI Information associated with a mission command (MAV_CMD)
+/// \brief UI Information associated with a mission command (MAV_CMD)
 ///
 /// MissionCommandUIInfo is used to automatically generate editing ui for a MAV_CMD. This object also supports the concept of only having a set of partial
 /// information for the command. This is used to create overrides of the base command information. For on override just specify the keys you want to modify

@@ -61,6 +61,14 @@ public:
     /// Request a refresh on all parameters that begin with the specified prefix
     void refreshParametersPrefix(int componentId, const QString &namePrefix);
 
+    /// Refresh a set of parameters in a single batch with exponential-backoff retry.
+    /// @param names  Mix of exact param names and prefix patterns ending in '*' (e.g. "COMPASS_*").
+    ///               Prefix entries are expanded against the known parameter set at call time.
+    ///               Duplicate names are deduplicated automatically.
+    /// @param notifyFailure  When true (default), shows a single user-visible message if any
+    ///                       parameters still fail to respond after all retry rounds.
+    void bulkRefresh(int componentId, const QStringList &names, bool notifyFailure = true);
+
     void resetAllParametersToDefaults();
     void resetAllToVehicleConfiguration();
 
@@ -77,9 +85,6 @@ public:
     ///     @param componentId: Component id or ParameterManager::defaultComponentId
     ///     @param name: Parameter name
     Fact *getParameter(int componentId, const QString &paramName);
-
-    /// Returns error messages from loading
-    QString readParametersFromStream(QTextStream &stream);
 
     void writeParametersToStream(QTextStream &stream) const;
 
@@ -98,6 +103,7 @@ public:
     static constexpr int kWaitForParamValueAckMs = 1000;            ///< Time to wait for param value ack after set param
     static constexpr int kMaxInitialRequestListRetry = 4;           ///< Maximum retries for initial parameter request list
     static constexpr int kHashCheckTimeoutMs = 1000;                ///< Timeout for standalone _HASH_CHECK request
+    static constexpr int kTestHashCheckTimeoutMs = 200;             ///< Shortened _HASH_CHECK timeout in unit tests (MockLink responds instantly)
     static constexpr int kParamRequestListTimeoutMs = 5000;        ///< Timeout for PARAM_REQUEST_LIST response
     static constexpr int kTestInitialRequestIntervalMs = 500;       ///< Timer interval for initial request in test mode
     /// Maximum time to wait for initial request retries to exhaust in tests
@@ -112,7 +118,8 @@ signals:
     void parameterDownloadSkippedChanged();
     void factAdded(int componentId, Fact *fact);
 
-    // These signals are used to verify unit tests
+    // Internal signals — emitted by PARAM_SET / PARAM_REQUEST_READ state machines.
+    // Also consumed by BulkRefreshJob and unit tests.
     void _paramSetSuccess(int componentId, const QString &paramName);
     void _paramSetFailure(int componentId, const QString &paramName);
     void _paramRequestReadSuccess(int componentId, const QString &paramName, int paramIndex);
@@ -203,6 +210,7 @@ private:
     int _initialRequestRetryCount = 0;                          ///< Current retry count for request list
     static constexpr int _maxInitialLoadRetrySingleParam = 5;   ///< Maximum retries for initial index based load of a single param
     bool _disableAllRetries = false;                            ///< true: Don't retry any requests (used for testing and logReplay)
+    const int _waitForParamValueAckMs;                          ///< 50 ms in unit tests, kWaitForParamValueAckMs otherwise
 
     bool _indexBatchQueueActive = false;    ///< true: we are actively batching re-requests for missing index base params, false: index based re-request has not yet started
     QList<int> _indexBatchQueue;            ///< The current queue of index re-requests

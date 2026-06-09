@@ -11,10 +11,11 @@
 class MavCommandQueue;
 class Vehicle;
 
-/// Coordinates MAV_CMD_REQUEST_MESSAGE workflows: per-component queueing, ack/message
+/// \brief Coordinates MAV_CMD_REQUEST_MESSAGE workflows: per-component queueing, ack/message
 /// correlation, duplicate suppression, and timeout handling for the requested message.
 ///
 /// Layers on top of MavCommandQueue for the actual command send + ack callback.
+
 class RequestMessageCoordinator : public QObject, public VehicleTypes
 {
     Q_OBJECT

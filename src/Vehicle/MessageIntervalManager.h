@@ -12,11 +12,12 @@ class MavCommandQueue;
 class RequestMessageCoordinator;
 class Vehicle;
 
-/// Tracks per-component MAVLink message intervals and mediates SET_MESSAGE_INTERVAL
+/// \brief Tracks per-component MAVLink message intervals and mediates SET_MESSAGE_INTERVAL
 /// commands plus MESSAGE_INTERVAL request/response flows.
 ///
 /// Layers on top of MavCommandQueue (for SET_MESSAGE_INTERVAL) and
 /// RequestMessageCoordinator (for MESSAGE_INTERVAL queries).
+
 class MessageIntervalManager : public QObject, public VehicleTypes
 {
     Q_OBJECT

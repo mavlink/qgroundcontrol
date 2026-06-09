@@ -44,6 +44,14 @@
                     "showWhen": "controller.parameterExists(-1, _fullParamName(\"_N_CELLS\"))"
                 },
                 {
+                    "param": "_CAPACITY",
+                    "label": "Battery capacity (mAh)",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"_CAPACITY\"))",
+                    "description": "Set to -1 to disable. When set to a positive value, enables coulomb counting for more accurate state-of-charge and time-remaining estimates."
+                },
+                {
+
                     "param": "_V_EMPTY",
                     "label": "Empty voltage (per cell)",
                     "optional": true,
@@ -84,12 +92,6 @@
                             "batteryIndex": "_rawIndex"
                         }
                     }
-                },
-                {
-                    "param": "_V_LOAD_DROP",
-                    "label": "Voltage drop on full load (per cell)",
-                    "optional": true,
-                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"_V_LOAD_DROP\"))"
                 }
             ]
         },

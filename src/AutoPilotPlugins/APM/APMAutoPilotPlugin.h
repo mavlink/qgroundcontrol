@@ -27,7 +27,8 @@ class JoystickComponent;
 class ScriptingComponent;
 class Vehicle;
 
-/// This is the AutoPilotPlugin implementation for the MAV_AUTOPILOT_ARDUPILOT type.
+/// \brief This is the AutoPilotPlugin implementation for the MAV_AUTOPILOT_ARDUPILOT type.
+///
 class APMAutoPilotPlugin : public AutoPilotPlugin
 {
     Q_OBJECT

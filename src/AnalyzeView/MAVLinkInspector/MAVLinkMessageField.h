@@ -5,6 +5,8 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <limits>
+
 class QGCMAVLinkMessage;
 class MAVLinkChartController;
 class QAbstractSeries;
@@ -19,7 +21,7 @@ class QGCMAVLinkMessageField : public QObject
     Q_PROPERTY(QString                  type        READ type       CONSTANT)
     Q_PROPERTY(QString                  value       READ value      NOTIFY valueChanged)
     Q_PROPERTY(bool                     selectable  READ selectable NOTIFY selectableChanged)
-    Q_PROPERTY(int                      chartIndex  READ chartIndex CONSTANT)
+    Q_PROPERTY(int                      chartIndex  READ chartIndex NOTIFY seriesChanged)
     Q_PROPERTY(const QAbstractSeries    *series     READ series     NOTIFY seriesChanged)
 
 public:
@@ -40,6 +42,7 @@ public:
 
     void setSelectable(bool sel);
     void updateValue(const QString &newValue, qreal v);
+    void resetBucketing(int bucketCount, qreal bucketWidthMs);
 
     void addSeries(MAVLinkChartController *chartController, QAbstractSeries *series);
     void delSeries();
@@ -51,6 +54,8 @@ signals:
     void valueChanged();
 
 private:
+    void _commitBucket();
+
     QString _type;
     QString _name;
     QGCMAVLinkMessage *_msg = nullptr;
@@ -58,8 +63,13 @@ private:
     QString _value;
     bool _selectable = true;
     int _dataIndex = 0;
-    qreal _rangeMin = 0;
-    qreal _rangeMax = 0;
+    int _bucketCount = 0;
+    qreal _bucketWidthMs = 0;
+    qreal _currentBucketStart = -1;
+    qreal _currentBucketMin = 0;
+    qreal _currentBucketMax = 0;
+    qreal _rangeMin = std::numeric_limits<qreal>::max();
+    qreal _rangeMax = std::numeric_limits<qreal>::lowest();
     QList<QPointF> _values;
 
     QAbstractSeries *_pSeries = nullptr;

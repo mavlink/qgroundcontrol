@@ -2,7 +2,8 @@
 
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// Set of meta data which describes a camera available on the vehicle
+/// \brief Set of meta data which describes a camera available on the vehicle
+///
 class CameraMetaData
 {
     Q_GADGET

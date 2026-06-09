@@ -389,31 +389,18 @@ VisualMissionItem* MissionController::insertCancelROIMissionItem(int visualItemI
 
 VisualMissionItem* MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int visualItemIndex, bool makeCurrentItem)
 {
-    ComplexMissionItem* newItem = nullptr;
-
-    if (itemName == SurveyComplexItem::canonicalName) {
-        newItem = new SurveyComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
-        newItem->setCoordinate(mapCenterCoordinate);
-
-        double                              prevAltitude;
-        QGroundControlQmlGlobal::AltitudeFrame    prevAltFrame;
-        if (globalAltitudeFrame() == QGroundControlQmlGlobal::AltitudeFrameMixed) {
-            // We are in mixed altitude frames, so copy from previous. Otherwise alt mode will be set from global setting in constructor.
-            if (_findPreviousAltitude(visualItemIndex, &prevAltitude, &prevAltFrame)) {
-                qobject_cast<SurveyComplexItem*>(newItem)->cameraCalc()->setDistanceMode(prevAltFrame);
-            }
-        }
-    } else if (itemName == FixedWingLandingComplexItem::canonicalName) {
-        newItem = new FixedWingLandingComplexItem(_masterController, _flyView);
-    } else if (itemName == VTOLLandingComplexItem::canonicalName) {
-        newItem = new VTOLLandingComplexItem(_masterController, _flyView);
-    } else if (itemName == StructureScanComplexItem::canonicalName) {
-        newItem = new StructureScanComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
-    } else if (itemName == CorridorScanComplexItem::canonicalName) {
-        newItem = new CorridorScanComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
-    } else {
-        qWarning() << "Internal error: Unknown complex item:" << itemName;
+    ComplexMissionItem* newItem = QGCCorePlugin::instance()->createComplexMissionItem(itemName, _masterController, _flyView);
+    if (!newItem) {
         return nullptr;
+    }
+    newItem->setCoordinate(mapCenterCoordinate);
+
+    if (globalAltitudeFrame() == QGroundControlQmlGlobal::AltitudeFrameMixed) {
+        double prevAltitude;
+        QGroundControlQmlGlobal::AltitudeFrame prevAltFrame;
+        if (_findPreviousAltitude(visualItemIndex, &prevAltitude, &prevAltFrame)) {
+            newItem->applyPreviousAltitudeFrame(prevAltFrame, prevAltitude);
+        }
     }
 
     _insertComplexMissionItemWorker(mapCenterCoordinate, newItem, visualItemIndex, makeCurrentItem);
@@ -423,16 +410,8 @@ VisualMissionItem* MissionController::insertComplexMissionItem(QString itemName,
 
 VisualMissionItem* MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int visualItemIndex, bool makeCurrentItem)
 {
-    ComplexMissionItem* newItem = nullptr;
-
-    if (itemName == SurveyComplexItem::canonicalName) {
-        newItem = new SurveyComplexItem(_masterController, _flyView, file);
-    } else if (itemName == StructureScanComplexItem::canonicalName) {
-        newItem = new StructureScanComplexItem(_masterController, _flyView, file);
-    } else if (itemName == CorridorScanComplexItem::canonicalName) {
-        newItem = new CorridorScanComplexItem(_masterController, _flyView, file);
-    } else {
-        qWarning() << "Internal error: Unknown complex item:" << itemName;
+    ComplexMissionItem* newItem = QGCCorePlugin::instance()->createComplexMissionItem(itemName, _masterController, _flyView, file);
+    if (!newItem) {
         return nullptr;
     }
 
@@ -714,54 +693,19 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
             }
             QString complexItemType = itemObject[ComplexMissionItem::jsonComplexItemTypeKey].toString();
 
-            if (complexItemType == SurveyComplexItem::jsonComplexItemTypeValue) {
-                qCDebug(MissionControllerLog) << "Loading Survey: nextSequenceNumber" << nextSequenceNumber;
-                SurveyComplexItem* surveyItem = new SurveyComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
-                if (!surveyItem->load(itemObject, nextSequenceNumber++, errorString)) {
-                    return false;
-                }
-                nextSequenceNumber = surveyItem->lastSequenceNumber() + 1;
-                qCDebug(MissionControllerLog) << "Survey load complete: nextSequenceNumber" << nextSequenceNumber;
-                visualItems->append(surveyItem);
-            } else if (complexItemType == FixedWingLandingComplexItem::jsonComplexItemTypeValue) {
-                qCDebug(MissionControllerLog) << "Loading Fixed Wing Landing Pattern: nextSequenceNumber" << nextSequenceNumber;
-                FixedWingLandingComplexItem* landingItem = new FixedWingLandingComplexItem(_masterController, _flyView);
-                if (!landingItem->load(itemObject, nextSequenceNumber++, errorString)) {
-                    return false;
-                }
-                nextSequenceNumber = landingItem->lastSequenceNumber() + 1;
-                qCDebug(MissionControllerLog) << "FW Landing Pattern load complete: nextSequenceNumber" << nextSequenceNumber;
-                visualItems->append(landingItem);
-            } else if (complexItemType == VTOLLandingComplexItem::jsonComplexItemTypeValue) {
-                qCDebug(MissionControllerLog) << "Loading VTOL Landing Pattern: nextSequenceNumber" << nextSequenceNumber;
-                VTOLLandingComplexItem* landingItem = new VTOLLandingComplexItem(_masterController, _flyView);
-                if (!landingItem->load(itemObject, nextSequenceNumber++, errorString)) {
-                    return false;
-                }
-                nextSequenceNumber = landingItem->lastSequenceNumber() + 1;
-                qCDebug(MissionControllerLog) << "VTOL Landing Pattern load complete: nextSequenceNumber" << nextSequenceNumber;
-                visualItems->append(landingItem);
-            } else if (complexItemType == StructureScanComplexItem::jsonComplexItemTypeValue) {
-                qCDebug(MissionControllerLog) << "Loading Structure Scan: nextSequenceNumber" << nextSequenceNumber;
-                StructureScanComplexItem* structureItem = new StructureScanComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
-                if (!structureItem->load(itemObject, nextSequenceNumber++, errorString)) {
-                    return false;
-                }
-                nextSequenceNumber = structureItem->lastSequenceNumber() + 1;
-                qCDebug(MissionControllerLog) << "Structure Scan load complete: nextSequenceNumber" << nextSequenceNumber;
-                visualItems->append(structureItem);
-            } else if (complexItemType == CorridorScanComplexItem::jsonComplexItemTypeValue) {
-                qCDebug(MissionControllerLog) << "Loading Corridor Scan: nextSequenceNumber" << nextSequenceNumber;
-                CorridorScanComplexItem* corridorItem = new CorridorScanComplexItem(_masterController, _flyView, QString() /* kmlOrShpFile */);
-                if (!corridorItem->load(itemObject, nextSequenceNumber++, errorString)) {
-                    return false;
-                }
-                nextSequenceNumber = corridorItem->lastSequenceNumber() + 1;
-                qCDebug(MissionControllerLog) << "Corridor Scan load complete: nextSequenceNumber" << nextSequenceNumber;
-                visualItems->append(corridorItem);
-            } else {
+            qCDebug(MissionControllerLog) << "Loading complex item type:" << complexItemType << "nextSequenceNumber:" << nextSequenceNumber;
+            ComplexMissionItem* complexItem = QGCCorePlugin::instance()->createComplexMissionItem(complexItemType, _masterController, _flyView);
+            if (!complexItem) {
                 errorString = tr("Unsupported complex item type: %1").arg(complexItemType);
+                return false;
             }
+            if (!complexItem->load(itemObject, nextSequenceNumber++, errorString)) {
+                delete complexItem;
+                return false;
+            }
+            nextSequenceNumber = complexItem->lastSequenceNumber() + 1;
+            qCDebug(MissionControllerLog) << "Complex item load complete nextSequenceNumber:" << nextSequenceNumber;
+            visualItems->append(complexItem);
         } else {
             errorString = tr("Unknown item type: %1").arg(itemType);
             return false;

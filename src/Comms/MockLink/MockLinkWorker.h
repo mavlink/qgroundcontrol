@@ -5,8 +5,10 @@
 class MockLink;
 class QTimer;
 
-/// Worker class that runs periodic tasks for MockLink simulation.
+/// \brief Worker class that runs periodic tasks for MockLink simulation.
+///
 /// Operates on a separate thread to avoid blocking the main thread.
+///
 class MockLinkWorker : public QObject
 {
     Q_OBJECT

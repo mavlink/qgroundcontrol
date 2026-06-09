@@ -20,7 +20,6 @@
 #include <QtCore/private/qthread_p.h>
 
 #include "LogManager.h"
-#include "LogRemoteSink.h"
 #include "AudioOutput.h"
 #include "FollowMe.h"
 #include "JoystickManager.h"
@@ -49,6 +48,7 @@
 #endif
 
 QGC_LOGGING_CATEGORY(QGCApplicationLog, "API.QGCApplication")
+QGC_LOGGING_CATEGORY(QGCAppMessageLog, "API.QGCApplication.AppMessage")
 
 QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &cli)
     : QGuiApplication(argc, argv)
@@ -226,44 +226,7 @@ void QGCApplication::init()
         SettingsManager::instance()->mavlinkSettings()->gcsMavlinkSystemID()->setRawValue(_systemId);
     }
 
-    // Set up log directory for disk logging and SQLite store, and re-apply on path change
-    {
-        auto *logMgr = LogManager::instance();
-        auto *appSettings = SettingsManager::instance()->appSettings();
-        logMgr->setLogDirectory(appSettings->logSavePath());
-        QObject::connect(appSettings, &AppSettings::savePathsChanged, logMgr, [logMgr, appSettings]() {
-            logMgr->setLogDirectory(appSettings->logSavePath());
-        });
-    }
-
-    // Wire remote logging settings to the sink
-    {
-        auto *appSettings = SettingsManager::instance()->appSettings();
-        auto *sink = LogManager::instance()->remoteSink();
-        auto applySetting = [appSettings, sink]() {
-            sink->setHost(appSettings->remoteLoggingHost()->rawValue().toString());
-            sink->setPort(static_cast<quint16>(appSettings->remoteLoggingPort()->rawValue().toUInt()));
-            sink->setProtocol(static_cast<TransportStrategy::Protocol>(
-                appSettings->remoteLoggingProtocol()->rawValue().toInt()));
-            sink->setVehicleId(appSettings->remoteLoggingVehicleId()->rawValue().toString());
-            sink->setTlsEnabled(appSettings->remoteLoggingTlsEnabled()->rawValue().toBool());
-            sink->setTlsVerifyPeer(appSettings->remoteLoggingTlsVerifyPeer()->rawValue().toBool());
-            sink->setCompressionEnabled(appSettings->remoteLoggingCompressionEnabled()->rawValue().toBool());
-            sink->setCompressionLevel(appSettings->remoteLoggingCompressionLevel()->rawValue().toInt());
-            sink->setEnabled(appSettings->remoteLoggingEnabled()->rawValue().toBool());
-        };
-        for (auto *fact : {
-                 appSettings->remoteLoggingEnabled(),    appSettings->remoteLoggingHost(),
-                 appSettings->remoteLoggingPort(),       appSettings->remoteLoggingProtocol(),
-                 appSettings->remoteLoggingVehicleId(),  appSettings->remoteLoggingTlsEnabled(),
-                 appSettings->remoteLoggingTlsVerifyPeer(),
-                 appSettings->remoteLoggingCompressionEnabled(),
-                 appSettings->remoteLoggingCompressionLevel(),
-             }) {
-            QObject::connect(fact, &Fact::rawValueChanged, sink, applySetting);
-        }
-        applySetting();
-    }
+    LogManager::instance()->init();
 
     // Although this should really be in _initForNormalAppBoot putting it here allowws us to create unit tests which pop up more easily
     if (QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
@@ -277,7 +240,9 @@ void QGCApplication::init()
     if (_simpleBootTest) {
         // Since GStream builds are so problematic we initialize video during the simple boot test
         // to make sure it works and verfies plugin availability.
-        _bootTestPassed = _initVideo();
+        const bool videoInitialized = _initVideo();
+        const bool qmlRootLoaded = _initQmlRootWindow();
+        _bootTestPassed = videoInitialized && qmlRootLoaded;
     } else if (!_runningUnitTests) {
         _initForNormalAppBoot();
     }
@@ -297,10 +262,8 @@ bool QGCApplication::_initVideo()
     return initSucceeded;
 }
 
-void QGCApplication::_initForNormalAppBoot()
+bool QGCApplication::_initQmlRootWindow()
 {
-    (void) _initVideo();
-
     QQuickStyle::setStyle("Basic");
     QGCCorePlugin::instance()->init();
     MAVLinkProtocol::instance()->init();
@@ -313,6 +276,15 @@ void QGCApplication::_initForNormalAppBoot()
     _qmlAppEngine->addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
 
     QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
+
+    return mainRootWindow() != nullptr;
+}
+
+void QGCApplication::_initForNormalAppBoot()
+{
+    (void) _initVideo();
+
+    (void) _initQmlRootWindow();
 
     AudioOutput::instance()->init(SettingsManager::instance()->appSettings()->audioVolume(), SettingsManager::instance()->appSettings()->audioMuted());
     FollowMe::instance()->init();
@@ -440,15 +412,19 @@ void QGCApplication::showAppMessage(const QString &message, const QString &title
 {
     const QString dialogTitle = title.isEmpty() ? applicationName() : title;
 
+    if (runningUnitTests()) {
+        // Never show a blocking dialog during unit tests — it would hang the test runner.
+        // Logged under QGCAppMessageLog so tests can use expectAppMessage() to white-list
+        // expected dialogs without matching against the general QGCApplication category.
+        qCDebug(QGCAppMessageLog) << "showAppMessage:" << dialogTitle << "-" << message;
+        return;
+    }
+
     QObject *const rootQmlObject = _rootQmlObject();
     if (rootQmlObject) {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
         QMetaObject::invokeMethod(rootQmlObject, "_showMessageDialog", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, dialogTitle), Q_ARG(QVariant, varMessage));
-    } else if (runningUnitTests()) {
-        // Unit tests can run without UI
-        // We don't use a logging category to make it easier to debug unit tests
-        qDebug() << "QGCApplication::showAppMessage unittest title:message" << dialogTitle << message;
     } else {
         // UI isn't ready yet
         _delayedAppMessages.append(QPair<QString, QString>(dialogTitle, message));

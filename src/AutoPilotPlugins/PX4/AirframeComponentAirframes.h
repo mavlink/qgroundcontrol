@@ -3,7 +3,8 @@
 #include <QtCore/QList>
 #include <QtCore/QMap>
 
-/// MVC Controller for AirframeComponent.qml.
+/// \brief MVC Controller for AirframeComponent.qml.
+///
 class AirframeComponentAirframes
 {
 public:

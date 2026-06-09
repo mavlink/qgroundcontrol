@@ -1,0 +1,12 @@
+{{ ind }}ConfigSection {
+{{ ind }}    Layout.fillWidth: true
+{{ ind }}    visible: {{ visible }}
+{{ ind }}    heading: {{ title_qtr }}
+{% if image %}
+{{ ind }}    iconSource: "{{ image }}"
+{% endif %}
+{% for ctrl_qml in controls %}
+
+{{ ctrl_qml }}
+{% endfor %}
+{{ ind }}}

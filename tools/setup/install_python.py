@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import functools
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -27,6 +28,7 @@ if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
 from common.file_traversal import find_repo_root
+from common.platform import is_windows
 
 
 @functools.lru_cache(maxsize=1)
@@ -76,14 +78,14 @@ def get_venv_path() -> Path:
 
 def get_activate_script(venv_path: Path) -> Path:
     """Get path to activate script based on platform."""
-    if sys.platform == "win32":
+    if is_windows():
         return venv_path / "Scripts" / "activate.bat"
     return venv_path / "bin" / "activate"
 
 
 def get_python_executable(venv_path: Path) -> Path:
     """Get path to Python executable in venv."""
-    if sys.platform == "win32":
+    if is_windows():
         return venv_path / "Scripts" / "python.exe"
     return venv_path / "bin" / "python"
 
@@ -112,7 +114,7 @@ def install_packages(venv_path: Path, packages: list[str]) -> None:
 
     if has_uv():
         print("Using uv (fast mode)")
-        cmd = ["uv", "pip", "install", "--python", str(python)] + packages
+        cmd = ["uv", "pip", "install", "--python", str(python), *packages]
     else:
         print("Using pip (install uv for faster installs: curl -LsSf https://astral.sh/uv/install.sh | sh)")
         # Upgrade pip first
@@ -120,7 +122,7 @@ def install_packages(venv_path: Path, packages: list[str]) -> None:
             [str(python), "-m", "pip", "install", "--quiet", "--upgrade", "pip"],
             check=True,
         )
-        cmd = [str(python), "-m", "pip", "install"] + packages
+        cmd = [str(python), "-m", "pip", "install", *packages]
 
     subprocess.run(cmd, check=True)
 
@@ -150,7 +152,7 @@ def sync_groups_with_uv(venv_path: Path, group_spec: str) -> None:
 
     env = os.environ.copy()
     env["VIRTUAL_ENV"] = str(venv_path)
-    scripts_dir = venv_path / ("Scripts" if sys.platform == "win32" else "bin")
+    scripts_dir = venv_path / ("Scripts" if is_windows() else "bin")
     env["PATH"] = f"{scripts_dir}{os.pathsep}{env.get('PATH', '')}"
     subprocess.run(cmd, check=True, env=env)
 
@@ -159,6 +161,25 @@ def list_packages(venv_path: Path) -> None:
     """List installed packages."""
     python = get_python_executable(venv_path)
     subprocess.run([str(python), "-m", "pip", "list"])
+
+
+def check_installed(packages: list[str]) -> int:
+    """Exit 0 only if every package's distribution resolves in the running interpreter."""
+    import importlib.metadata as metadata
+
+    missing: list[str] = []
+    for req in packages:
+        name = re.split(r"[<>=!~;\[ ]", req, maxsplit=1)[0].strip()
+        if not name:
+            continue
+        try:
+            metadata.version(name)
+        except metadata.PackageNotFoundError:
+            missing.append(name)
+    if missing:
+        print(f"Missing from environment: {', '.join(missing)}", file=sys.stderr)
+        return 1
+    return 0
 
 
 def get_packages_for_groups(group_spec: str) -> list[str]:
@@ -182,6 +203,7 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Groups:
+  scripts   Code-generator deps (defusedxml, httpx, jinja2)
   precommit Pre-commit hooks only
   test      Python test tools (pytest, jinja2, pyyaml)
   ci        Pre-commit hooks, meson, ninja (default)
@@ -217,6 +239,11 @@ To install uv (recommended, 10-100x faster than pip):
         action="store_true",
         help="Show what would be installed without installing",
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Verify the running interpreter has the group's packages; exit 1 if any missing",
+    )
 
     return parser.parse_args(args)
 
@@ -239,6 +266,9 @@ def main() -> int:
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
+
+    if args.check:
+        return check_installed(packages)
 
     print(f"Setting up Python environment with group: {args.group}")
     print(f"Packages: {', '.join(packages)}")
@@ -266,7 +296,7 @@ def main() -> int:
     print()
     print("Done! Activate the environment with:")
     activate_script = get_activate_script(venv_path)
-    if sys.platform == "win32":
+    if is_windows():
         print(f"  {activate_script}")
     else:
         print(f"  source {activate_script}")

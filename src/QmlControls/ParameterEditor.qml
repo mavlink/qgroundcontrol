@@ -26,6 +26,14 @@ Item {
         id: controller
     }
 
+    Connections {
+        target: controller
+        function onMissingParamsFromFile(missingParams) {
+            QGroundControl.showMessageDialog(_root, qsTr("Missing Parameters"),
+                qsTr("The following parameters from the file were not found on the vehicle and were skipped: %1").arg(missingParams.join("\n")))
+        }
+    }
+
     Timer {
         id:         clearTimer
         interval:   100;
@@ -98,7 +106,7 @@ Item {
     QGCFileDialog {
         id:             fileDialog
         folder:         _appSettings.parameterSavePath
-        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*)") ]
+        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension), qsTr("Mission Planner Files (*.param)"), qsTr("All Files (*)") ]
 
         onAcceptedForSave: (file) => {
             controller.saveToFile(file)

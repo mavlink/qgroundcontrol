@@ -11,12 +11,15 @@ The parser handles the MAVLink XML format including:
 - Field units and types
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
-import defusedxml.ElementTree as ET
 from dataclasses import dataclass, field
-from xml.etree.ElementTree import Element
-from pathlib import Path
-from typing import Optional
+from pathlib import Path  # noqa: TC003
+from xml.etree.ElementTree import Element  # noqa: TC003
+
+import defusedxml.ElementTree as ET
 
 from .mavlink_data import MAVLinkField, MAVLinkMessage
 
@@ -33,7 +36,7 @@ class MAVLinkDialect:
     includes: list[str] = field(default_factory=list)
 
 
-def find_mavlink_definitions(project_root: Path) -> Optional[Path]:
+def find_mavlink_definitions(project_root: Path) -> Path | None:
     """Find the MAVLink message_definitions directory in a project.
 
     Searches common locations:
@@ -57,7 +60,7 @@ def find_mavlink_definitions(project_root: Path) -> Optional[Path]:
     return None
 
 
-def parse_mavlink_xml(xml_path: Path, definitions_dir: Optional[Path] = None) -> MAVLinkDialect:
+def parse_mavlink_xml(xml_path: Path, definitions_dir: Path | None = None) -> MAVLinkDialect:
     """Parse a MAVLink XML file and its includes.
 
     Args:
@@ -82,10 +85,8 @@ def parse_mavlink_xml(xml_path: Path, definitions_dir: Optional[Path] = None) ->
     # Parse version
     version_elem = root.find("version")
     if version_elem is not None and version_elem.text:
-        try:
+        with contextlib.suppress(ValueError):  # non-numeric version → default 0
             dialect.version = int(version_elem.text)
-        except ValueError:
-            pass  # Non-numeric version, use default 0
 
     # Parse includes (process these first to get base messages)
     for include in root.findall("include"):
@@ -133,7 +134,7 @@ def parse_mavlink_xml(xml_path: Path, definitions_dir: Optional[Path] = None) ->
     return dialect
 
 
-def _parse_message(msg_elem: Element, enums: dict) -> Optional[MAVLinkMessage]:
+def _parse_message(msg_elem: Element, enums: dict) -> MAVLinkMessage | None:
     """Parse a single message element."""
     msg_id_str = msg_elem.get("id", "")
     msg_name = msg_elem.get("name", "")
@@ -177,7 +178,7 @@ def _parse_message(msg_elem: Element, enums: dict) -> Optional[MAVLinkMessage]:
     )
 
 
-def _parse_field(field_elem: Element) -> Optional[MAVLinkField]:
+def _parse_field(field_elem: Element) -> MAVLinkField | None:
     """Parse a single field element."""
     name = field_elem.get("name", "")
     field_type = field_elem.get("type", "")

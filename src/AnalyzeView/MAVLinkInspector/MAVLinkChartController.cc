@@ -7,6 +7,8 @@
 #include <QtGraphs/QAbstractSeries>
 #include <QtCore/QTimer>
 
+static constexpr qreal kMinDelta = 1e-6;
+
 QGC_LOGGING_CATEGORY(MAVLinkChartControllerLog, "AnalyzeView.MAVLinkChartController")
 
 MAVLinkChartController::MAVLinkChartController(QObject *parent)
@@ -78,6 +80,7 @@ void MAVLinkChartController::setRangeXIndex(quint32 index)
     emit rangeXIndexChanged();
 
     updateXRange();
+    _resetFieldBucketing();
 }
 
 void MAVLinkChartController::updateXRange()
@@ -105,27 +108,35 @@ void MAVLinkChartController::updateYRange()
     }
 
     qreal vmin = std::numeric_limits<qreal>::max();
-    qreal vmax = std::numeric_limits<qreal>::min();
+    qreal vmax = std::numeric_limits<qreal>::lowest();
     for (const QVariant &field : _chartFields) {
         QObject *const object = qvariant_cast<QObject*>(field);
         QGCMAVLinkMessageField *const pField = qobject_cast<QGCMAVLinkMessageField*>(object);
         if (pField) {
-            if (vmax < pField->rangeMax()) {
-                vmax = pField->rangeMax();
-            }
-
-            if (vmin > pField->rangeMin()) {
-                vmin = pField->rangeMin();
-            }
+            vmin = std::min(vmin, pField->rangeMin());
+            vmax = std::max(vmax, pField->rangeMax());
         }
     }
 
-    if (qAbs(_rangeYMin - vmin) > 0.000001) {
+    if (vmin > vmax) {
+        return; // No field has received data yet (sentinel values)
+    }
+
+    if (qAbs(vmax - vmin) < kMinDelta) {
+        vmin -= 1.0;
+        vmax += 1.0;
+    } else {
+        const qreal padding = (vmax - vmin) * 0.05;
+        vmin -= padding;
+        vmax += padding;
+    }
+
+    if (qAbs(_rangeYMin - vmin) > kMinDelta) {
         _rangeYMin = vmin;
         emit rangeYMinChanged();
     }
 
-    if (qAbs(_rangeYMax - vmax) > 0.000001) {
+    if (qAbs(_rangeYMax - vmax) > kMinDelta) {
         _rangeYMax = vmax;
         emit rangeYMaxChanged();
     }
@@ -141,6 +152,10 @@ void MAVLinkChartController::_refreshSeries()
         if(pField) {
             pField->updateSeries();
         }
+    }
+
+    if (_rangeYIndex == 0) {
+        updateYRange();
     }
 }
 
@@ -181,6 +196,33 @@ void MAVLinkChartController::delSeries(QGCMAVLinkMessageField *field)
         if (_chartFields.isEmpty()) {
             updateXRange();
             _updateSeriesTimer->stop();
+        }
+    }
+}
+
+void MAVLinkChartController::setPlotPixelWidth(int width)
+{
+    if (width == _plotPixelWidth) {
+        return;
+    }
+
+    _plotPixelWidth = width;
+    emit plotPixelWidthChanged();
+    _resetFieldBucketing();
+}
+
+void MAVLinkChartController::_resetFieldBucketing()
+{
+    if (_plotPixelWidth <= 0) {
+        return;
+    }
+
+    const qreal bucketWidthMs = rangeXMs() / _plotPixelWidth;
+    for (const QVariant &field : _chartFields) {
+        QObject *const object = qvariant_cast<QObject*>(field);
+        QGCMAVLinkMessageField *const pField = qobject_cast<QGCMAVLinkMessageField*>(object);
+        if (pField) {
+            pField->resetBucketing(_plotPixelWidth, bucketWidthMs);
         }
     }
 }

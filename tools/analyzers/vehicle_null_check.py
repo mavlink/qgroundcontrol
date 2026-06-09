@@ -20,20 +20,24 @@ Exit codes:
 import json
 import re
 import sys
-from dataclasses import dataclass, asdict
+from collections.abc import Generator
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Generator
+from typing import ClassVar
 
-# Add tools to path for imports
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from _bootstrap import ensure_tools_dir
 
+ensure_tools_dir(__file__)
+
+from common.analyzer import AnalysisResult, AnalyzerBase
+from common.file_traversal import find_cpp_files
 from common.patterns import (
-    ACTIVE_VEHICLE_DIRECT_PATTERN,
     ACTIVE_VEHICLE_ASSIGN_PATTERN,
+    ACTIVE_VEHICLE_DIRECT_PATTERN,
     GET_PARAMETER_DIRECT_PATTERN,
     NULL_CHECK_PATTERNS,
 )
-from common.file_traversal import find_cpp_files
 
 
 @dataclass
@@ -47,7 +51,7 @@ class Violation:
     suggestion: str
 
 
-def has_null_check_before(lines: list[str], current_line: int, var_name: str = None) -> bool:
+def has_null_check_before(lines: list[str], current_line: int, var_name: str | None = None) -> bool:
     """Check if there's a null check in the preceding lines (within same function scope)."""
     start = max(0, current_line - 10)
     context = '\n'.join(lines[start:current_line])
@@ -60,10 +64,9 @@ def has_null_check_before(lines: list[str], current_line: int, var_name: str = N
         if re.search(pattern, context):
             return True
 
-    if var_name and re.search(rf'if\s*\([^)]*{re.escape(var_name)}[^)]*\)\s*\{{', context):
-        return True
-
-    return False
+    return bool(
+        var_name and re.search(rf'if\s*\([^)]*{re.escape(var_name)}[^)]*\)\s*\{{', context)
+    )
 
 
 def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
@@ -134,6 +137,27 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
             )
 
 
+class VehicleNullCheckAnalyzer(AnalyzerBase):
+    """Detect unsafe activeVehicle() / getParameter() patterns."""
+
+    name: ClassVar[str] = "vehicle-null-check"
+    install_hint: ClassVar[str] = ""
+
+    def run(self, files: list[Path], fix: bool = False) -> AnalysisResult:
+        del fix
+        violations = [v for f in files for v in analyze_file(f)]
+        output_lines = [format_violation(v) for v in violations]
+        files_with_issues = sorted({v.file for v in violations})
+        return AnalysisResult(
+            tool=self.name,
+            passed=not violations,
+            issues=len(violations),
+            output="".join(output_lines),
+            files_checked=len(files),
+            files_with_issues=files_with_issues,
+        )
+
+
 def format_violation(v: Violation) -> str:
     """Format a violation for human-readable output."""
     return (
@@ -165,7 +189,7 @@ def main() -> int:
         print("Usage: vehicle_null_check.py [--json] [files or directories...]", file=sys.stderr)
         return 0
 
-    violations = list(v for file_path in find_cpp_files(paths) for v in analyze_file(file_path))
+    violations = [v for file_path in find_cpp_files(paths) for v in analyze_file(file_path)]
 
     if json_output:
         print(json.dumps([asdict(v) for v in violations], indent=2))

@@ -17,7 +17,8 @@ struct APMCustomMode
     };
 };
 
-/// This is the base class for all stack specific APM firmware plugins
+/// \brief This is the base class for all stack specific APM firmware plugins
+///
 class APMFirmwarePlugin : public FirmwarePlugin
 {
     Q_OBJECT

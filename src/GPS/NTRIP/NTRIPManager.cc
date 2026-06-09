@@ -8,6 +8,7 @@
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMMavlink.h"
+#include "RTCMUdpInput.h"
 #include "SettingsManager.h"
 
 #include "MultiVehicleManager.h"
@@ -44,11 +45,34 @@ NTRIPManager::NTRIPManager(QObject* parent)
 
     NTRIPSettings* settings = SettingsManager::instance()->ntripSettings();
     if (settings) {
+        const quint16 port = static_cast<quint16>(
+            settings->rtcmUdpInputPort()->rawValue().toUInt());
+
+        _rtcmUdpInput = new RTCMUdpInput(port, this);
+        connect(_rtcmUdpInput, &RTCMUdpInput::rtcmDataReceived,
+                _rtcmMavlink,  &RTCMMavlink::RTCMDataUpdate);
+
+        auto applyUdpInputSettings = [this, settings]() {
+            const quint16 uin_port = static_cast<quint16>(
+                settings->rtcmUdpInputPort()->rawValue().toUInt());
+                _rtcmUdpInput->setPort(uin_port);
+            if (settings->rtcmUdpInputEnabled()->rawValue().toBool()) {
+                _rtcmUdpInput->start();
+            } else {
+                _rtcmUdpInput->stop();
+            }
+        };
+        connect(settings->rtcmUdpInputEnabled(), &Fact::rawValueChanged,
+                this, applyUdpInputSettings);
+        connect(settings->rtcmUdpInputPort(),    &Fact::rawValueChanged,
+                this, applyUdpInputSettings);
+
         auto connectSetting = [this](Fact* fact) {
             if (fact) {
                 connect(fact, &Fact::rawValueChanged, this, &NTRIPManager::_onSettingChanged);
             }
         };
+
         connectSetting(settings->ntripServerConnectEnabled());
         connectSetting(settings->ntripServerHostAddress());
         connectSetting(settings->ntripServerPort());
@@ -60,6 +84,7 @@ NTRIPManager::NTRIPManager(QObject* parent)
         connectSetting(settings->ntripUdpForwardEnabled());
         connectSetting(settings->ntripUdpTargetAddress());
         connectSetting(settings->ntripUdpTargetPort());
+        applyUdpInputSettings();
     }
 
     // Check initial state (handles connect-on-start)

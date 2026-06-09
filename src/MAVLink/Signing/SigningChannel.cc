@@ -61,6 +61,35 @@ bool SigningChannel::init(mavlink_channel_t channel, QByteArrayView key, mavlink
     return true;
 }
 
+bool SigningChannel::refreshOutgoingTimestamp()
+{
+    QWriteLocker locker(&_lock);
+    if (!_enabled) {
+        return false;
+    }
+    const uint64_t now = MAVLinkSigning::currentSigningTimestampTicks();
+    if (now <= _signing.timestamp) {
+        return false;
+    }
+    _signing.timestamp = now;
+    return true;
+}
+
+bool SigningChannel::signOutgoing(mavlink_message_t& message)
+{
+    QWriteLocker locker(&_lock);
+    if (!_enabled || !(_signing.flags & MAVLINK_SIGNING_FLAG_SIGN_OUTGOING)) {
+        return false;
+    }
+    // Keep monotonic AND current: libmavlink only post-increments per packet, so an idle/cached path otherwise drifts.
+    _signing.timestamp = std::max(_signing.timestamp, MAVLinkSigning::currentSigningTimestampTicks());
+    const QByteArrayView key(reinterpret_cast<const char*>(_signing.secret_key), sizeof(_signing.secret_key));
+    MAVLinkSigning::signMessage(key, _signing.link_id, _signing.timestamp, message);
+    // Match libmavlink's mavlink_sign_packet: post-increment so the next packet never reuses this timestamp.
+    ++_signing.timestamp;
+    return true;
+}
+
 SigningChannel::TimestampSnapshot SigningChannel::currentTimestampAndName() const
 {
     QReadLocker locker(&_lock);

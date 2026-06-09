@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -13,7 +12,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import append_github_env  # noqa: E402
+from common.gh_actions import append_github_env
+from common.net import run_with_retries
 
 
 def main() -> None:
@@ -34,11 +34,13 @@ def main() -> None:
         print(f"::error::NDK path not found: {ndk_path}", file=sys.stderr)
         sys.exit(1)
 
-    append_github_env({
-        "ANDROID_NDK_ROOT": ndk_path,
-        "ANDROID_NDK_HOME": ndk_path,
-        "ANDROID_NDK": ndk_path,
-    })
+    append_github_env(
+        {
+            "ANDROID_NDK_ROOT": ndk_path,
+            "ANDROID_NDK_HOME": ndk_path,
+            "ANDROID_NDK": ndk_path,
+        }
+    )
 
     is_windows = os.environ.get("RUNNER_OS") == "Windows"
 
@@ -49,8 +51,8 @@ def main() -> None:
         sdkmanager = "sdkmanager"
         gradlew = os.path.join(args.workspace, "android", "gradlew")
 
-    subprocess.run([sdkmanager, "--update"], check=True)
-    subprocess.run([gradlew, "--version"], check=True)
+    run_with_retries([sdkmanager, "--update"])
+    run_with_retries([gradlew, "--version"])
 
 
 if __name__ == "__main__":

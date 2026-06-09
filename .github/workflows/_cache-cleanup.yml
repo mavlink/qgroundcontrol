@@ -1,0 +1,59 @@
+name: _cache-cleanup
+
+# Reusable cleanup job shared by cache-cleanup.yml (manual) and cache-cleanup-pr.yml (PR close).
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to clean (empty = all branches)'
+        required: false
+        type: string
+        default: ''
+      dry-run:
+        description: 'List caches without deleting'
+        required: false
+        type: boolean
+        default: true
+      summary:
+        description: 'Write a markdown table of caches to $GITHUB_STEP_SUMMARY'
+        required: false
+        type: boolean
+        default: false
+      prune:
+        description: 'GC mode: keep build caches (ccache/cpm), evict the rest when the pool nears the cap'
+        required: false
+        type: boolean
+        default: false
+      timeout-minutes:
+        description: 'Job timeout'
+        required: false
+        type: number
+        default: 30
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    name: Cleanup Caches
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/actions/cache-cleanup
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            .github/scripts/gh_cache_cleanup.py
+            tools/common/__init__.py
+            tools/common/gh_actions.py
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+      - uses: ./.github/actions/cache-cleanup
+        with:
+          branch: ${{ inputs.branch }}
+          dry-run: ${{ inputs.dry-run && 'true' || 'false' }}
+          summary: ${{ inputs.summary && 'true' || 'false' }}
+          prune: ${{ inputs.prune && 'true' || 'false' }}

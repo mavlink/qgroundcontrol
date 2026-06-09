@@ -4,6 +4,7 @@
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QStringList>
+#include <QtCore/QTimeZone>
 
 #include <algorithm>
 #include <stdexcept>
@@ -11,6 +12,9 @@
 #include <ulog_cpp/subscription.hpp>
 
 QGC_LOGGING_CATEGORY(ULogFullHandlerLog, "AnalyzeView.ULogFullHandler")
+
+// Used for testing
+//#define QGC_NO_LOG_START_TIME
 
 namespace {
 
@@ -67,7 +71,7 @@ bool _isNumericScalarField(const ulog_cpp::Field &field)
 
 } // namespace
 
-ULogFullHandler::ULogFullHandler(LogParseResult &result)
+ULogFullHandler::ULogFullHandler(LogParseResult &result, const ProgressCallback &/*progressCallback*/)
     : _result(result)
 {
 }
@@ -135,6 +139,22 @@ void ULogFullHandler::data(const ulog_cpp::Data &data)
             timestampSecs = static_cast<double>(tsUs) / 1e6;
             _lastTimestampSecs = timestampSecs;
         }
+
+        // Extract GPS UTC start time from first valid sensor_gps/vehicle_gps_position sample.
+        // Define QGC_NO_LOG_START_TIME at build time to suppress this for UI testing.
+#ifndef QGC_NO_LOG_START_TIME
+        if (_result.startTime.isNull() && timestampSecs >= 0.0) {
+            if ((sub.topicName == "sensor_gps" || sub.topicName == "vehicle_gps_position")
+                    && sub.format->fieldMap().count("time_utc_usec") > 0) {
+                const uint64_t utcUsec = view.at("time_utc_usec").as<uint64_t>();
+                const uint64_t tsUs   = view.at("timestamp").as<uint64_t>();
+                if (utcUsec > 0 && utcUsec >= tsUs) {
+                    const qint64 startMs = static_cast<qint64>((utcUsec - tsUs) / 1000);
+                    _result.startTime = QDateTime::fromMSecsSinceEpoch(startMs, QTimeZone::utc());
+                }
+            }
+        }
+#endif // QGC_NO_LOG_START_TIME
 
         // Field name: "topic_name.field" or "topic_name[N].field" for multi-instance
         const QString prefix = (sub.multiId > 0)
@@ -216,18 +236,43 @@ void ULogFullHandler::parameter(const ulog_cpp::Parameter &param)
     }
 
     QVariant value;
+    bool isFloat = false;
     try {
         // ULog parameters are restricted to int32_t and float per spec.
         // as<double>() safely static_casts either type.
         value = param.value().as<double>();
+        isFloat = (param.field().type().type == ulog_cpp::Field::BasicType::FLOAT);
     } catch (const std::exception &) {
         value = QVariant();
     }
 
     QVariantMap row;
-    row[QStringLiteral("name")] = name;
-    row[QStringLiteral("value")] = value;
+    row[QStringLiteral("name")]    = name;
+    row[QStringLiteral("value")]   = value;
+    row[QStringLiteral("isFloat")] = isFloat;
+    // hasDefault / defaultValue / isDefault are filled in by finalize() once all
+    // ParameterDefault messages have been collected.
     _result.parameters.append(row);
+}
+
+void ULogFullHandler::parameterDefault(const ulog_cpp::ParameterDefault &param_default)
+{
+    const QString name = QString::fromStdString(param_default.field().name());
+    if (name.isEmpty()) {
+        return;
+    }
+    try {
+        const double defaultVal = param_default.value().as<double>();
+        // Only store system defaults (bit 0 set). Configuration defaults (bit 1) are
+        // user-visible overrides and not what we want to compare against.
+        using DT = ulog_cpp::ulog_parameter_default_type_t;
+        if ((static_cast<uint8_t>(param_default.defaultType()) &
+             static_cast<uint8_t>(DT::system)) != 0) {
+            _paramDefaults[name] = defaultVal;
+        }
+    } catch (const std::exception &) {
+        // Ignore unreadable defaults
+    }
 }
 
 void ULogFullHandler::dropout(const ulog_cpp::Dropout &dropout)
@@ -302,5 +347,37 @@ void ULogFullHandler::finalize()
     _result.plottableFields = _plottableFieldSet.values();
     std::sort(_result.plottableFields.begin(), _result.plottableFields.end());
 
+    // Annotate parameter rows with default value info now that all ParameterDefault
+    // messages have been collected.
+    for (int i = 0; i < _result.parameters.size(); i++) {
+        QVariantMap row = _result.parameters[i].toMap();
+        const QString name = row.value(QStringLiteral("name")).toString();
+        const auto it = _paramDefaults.constFind(name);
+        if (it != _paramDefaults.constEnd()) {
+            const double defaultVal = it.value();
+            const QVariant valueVariant = row.value(QStringLiteral("value"));
+            row[QStringLiteral("hasDefault")]   = true;
+            row[QStringLiteral("defaultValue")] = defaultVal;
+            // Treat parameters whose value couldn't be read (invalid QVariant from
+            // the catch block in parameter()) as non-default so they are never
+            // hidden by the "Changed only" filter.
+            bool isDefault = false;
+            if (valueVariant.isValid() && valueVariant.canConvert<double>()) {
+                const double currentVal = valueVariant.toDouble();
+                // qFuzzyCompare is undefined when either value is 0.0, so use exact
+                // equality for the zero case and relative comparison otherwise.
+                isDefault = (currentVal == defaultVal)
+                    || (!qFuzzyIsNull(defaultVal) && qFuzzyCompare(currentVal, defaultVal));
+            }
+            row[QStringLiteral("isDefault")]    = isDefault;
+        } else {
+            row[QStringLiteral("hasDefault")]   = false;
+            row[QStringLiteral("defaultValue")] = QVariant();
+            row[QStringLiteral("isDefault")]    = false;
+        }
+        _result.parameters[i] = row;
+    }
+
+    _result.sourceType = LogParseResult::SourceType::PX4ULog;
     _result.ok = true;
 }

@@ -119,10 +119,12 @@ using MessageCallback = std::function<bool(uint8_t msgType, const char *payload,
 /// @param size Size of log data
 /// @param formats Message formats from parseFmtMessages()
 /// @param callback Function called for each message
+/// @param progressCallback Optional callback invoked every ~1000 messages with byte-position progress (0.0–1.0)
 /// @return Number of messages processed
 int iterateMessages(const char *data, qint64 size,
                     const QMap<uint8_t, MessageFormat> &formats,
-                    const MessageCallback &callback);
+                    const MessageCallback &callback,
+                    const std::function<void(float)> &progressCallback = nullptr);
 
 // ============================================================================
 // Half-Precision Float Conversion

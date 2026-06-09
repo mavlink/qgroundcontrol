@@ -2,7 +2,8 @@
 
 #include "QGCMapPolygon.h"
 
-/// The QGCFencePolygon class provides a polygon used by GeoFence support.
+/// \brief The QGCFencePolygon class provides a polygon used by GeoFence support.
+///
 class QGCFencePolygon : public QGCMapPolygon
 {
     Q_OBJECT

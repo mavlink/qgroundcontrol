@@ -14,10 +14,7 @@ void QGCFinalStateTest::_testQGCFinalState()
 
     QCOMPARE(finalState->objectName(), QStringLiteral("MyFinal"));
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
 }
 
 UT_REGISTER_TEST(QGCFinalStateTest, TestLabel::Unit, TestLabel::Utilities)

@@ -7,7 +7,6 @@ This feature only works with _PX4_ flight stack logs.
 ArduPilot is not supported.
 :::
 
-![Analyze View GeoTag Images](../../../assets/analyze/geotag_images.jpg)
 
 Select the log file, image directory and (optionally) output directory for geotagged images using the buttons provided.
 Click **Start Tagging** to generate the geotagged images.

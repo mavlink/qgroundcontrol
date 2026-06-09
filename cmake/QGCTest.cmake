@@ -26,50 +26,62 @@ set(QGC_TEST_TIMEOUT_INTEGRATION 120 CACHE STRING "Timeout for integration tests
 set(QGC_TEST_TIMEOUT_SLOW 180 CACHE STRING "Timeout for slow tests (seconds)")
 set(QGC_TEST_TIMEOUT_DEFAULT 90 CACHE STRING "Default test timeout (seconds)")
 
+option(QGC_TEST_ONSCREEN "Run tests with native display instead of offscreen" OFF)
+
 # ----------------------------------------------------------------------------
 # Convenience Targets
 # ----------------------------------------------------------------------------
 
 add_custom_target(check
-    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running all tests"
     VERBATIM
 )
 
 add_custom_target(check-unit
-    COMMAND ${CMAKE_CTEST_COMMAND} -L Unit --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} -L Unit --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running unit tests"
     VERBATIM
 )
 
 add_custom_target(check-integration
-    COMMAND ${CMAKE_CTEST_COMMAND} -L Integration --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} -L Integration --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running integration tests"
     VERBATIM
 )
 
 add_custom_target(check-fast
-    COMMAND ${CMAKE_CTEST_COMMAND} -LE Slow --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} -LE Slow --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running fast tests (excluding Slow)"
     VERBATIM
 )
 
 add_custom_target(check-ci
-    COMMAND ${CMAKE_CTEST_COMMAND} -LE "Flaky|Network" --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    COMMAND ${CMAKE_CTEST_COMMAND} -LE "Flaky|Network" --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
     USES_TERMINAL
     COMMENT "Running CI-safe tests"
     VERBATIM
 )
 
+set(QGC_TEST_FLAKY_REPEAT 3 CACHE STRING "Repeat count for the check-flaky target")
+add_custom_target(check-flaky
+    COMMAND ${CMAKE_CTEST_COMMAND} -LE "Network" --repeat until-fail:${QGC_TEST_FLAKY_REPEAT}
+            --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+    USES_TERMINAL
+    COMMENT "Running tests ${QGC_TEST_FLAKY_REPEAT}x (until-fail) to surface flaky failures"
+    VERBATIM
+)
+
 # Category-specific targets
-foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
+set(_qgc_test_categories MissionManager Vehicle Utilities MAVLink Comms)
+foreach(_category IN LISTS _qgc_test_categories)
     string(TOLOWER ${_category} _target_suffix)
     add_custom_target(check-${_target_suffix}
-        COMMAND ${CMAKE_CTEST_COMMAND} -L ${_category} --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
+        COMMAND ${CMAKE_CTEST_COMMAND} -L ${_category} --no-tests=error --output-on-failure --parallel ${QGC_TEST_PARALLEL_LEVEL}
         USES_TERMINAL
         COMMENT "Running ${_category} tests"
         VERBATIM
@@ -77,8 +89,8 @@ foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
 endforeach()
 
 # Collect all check targets for build dependency injection
-set(_qgc_check_targets check check-unit check-integration check-fast check-ci)
-foreach(_category MissionManager Vehicle Utilities MAVLink Comms)
+set(_qgc_check_targets check check-unit check-integration check-fast check-ci check-flaky)
+foreach(_category IN LISTS _qgc_test_categories)
     string(TOLOWER ${_category} _target_suffix)
     list(APPEND _qgc_check_targets check-${_target_suffix})
 endforeach()
@@ -112,11 +124,16 @@ endforeach()
 #   add_qgc_test(ParameterManagerTest LABELS Integration Vehicle SERIAL)
 
 function(add_qgc_test test_name)
-    cmake_parse_arguments(ARG "SERIAL" "TIMEOUT" "LABELS;RESOURCE_LOCK" ${ARGN})
+    cmake_parse_arguments(ARG "SERIAL" "TIMEOUT" "LABELS;RESOURCE_LOCK;SKIP_REGEX;ENV_MODIFICATION" ${ARGN})
+
+    set(_test_command $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest:${test_name} --allow-multiple)
+    if(QGC_TEST_ONSCREEN)
+        list(APPEND _test_command --onscreen)
+    endif()
 
     add_test(
         NAME ${test_name}
-        COMMAND $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest:${test_name} --allow-multiple
+        COMMAND ${_test_command}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
@@ -133,7 +150,10 @@ function(add_qgc_test test_name)
         set(_timeout ${QGC_TEST_TIMEOUT_DEFAULT})
     endif()
 
-    set(_test_env "QT_QPA_PLATFORM=offscreen" "QT_LOGGING_RULES=*.debug=false")
+    set(_test_env "QT_LOGGING_RULES=*.debug=false")
+    if(NOT QGC_TEST_ONSCREEN)
+        list(PREPEND _test_env "QT_QPA_PLATFORM=offscreen")
+    endif()
 
     # LSan's tracer process needs ptrace, which Yama (ptrace_scope>=1) blocks on
     # most dev/CI hosts — disable leak detection under ASan to avoid spurious
@@ -152,16 +172,19 @@ function(add_qgc_test test_name)
         set_tests_properties(${test_name} PROPERTIES LABELS "${ARG_LABELS}")
     endif()
 
+    if(ARG_SKIP_REGEX)
+        set_tests_properties(${test_name} PROPERTIES SKIP_REGULAR_EXPRESSION "${ARG_SKIP_REGEX}")
+    endif()
+
+    if(ARG_ENV_MODIFICATION)
+        set_tests_properties(${test_name} PROPERTIES ENVIRONMENT_MODIFICATION "${ARG_ENV_MODIFICATION}")
+    endif()
+
     # Resource locking for tests that can't run in parallel
     if(ARG_SERIAL)
-        set_tests_properties(${test_name} PROPERTIES
-            RESOURCE_LOCK "MockLink;Vehicle;ParameterManager;MissionController"
-            RUN_SERIAL TRUE
-        )
+        set_tests_properties(${test_name} PROPERTIES RUN_SERIAL TRUE)
     elseif(ARG_RESOURCE_LOCK)
         set_tests_properties(${test_name} PROPERTIES RESOURCE_LOCK "${ARG_RESOURCE_LOCK}")
-    elseif("Integration" IN_LIST ARG_LABELS)
-        set_tests_properties(${test_name} PROPERTIES RESOURCE_LOCK "MockLink")
     endif()
 
 endfunction()

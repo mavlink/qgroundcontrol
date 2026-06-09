@@ -9,6 +9,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include <functional>
+#include <array>
 
 #include "RemoteControlCalibrationController.h"
 #include "JoystickSettings.h"
@@ -140,12 +141,12 @@ public:
         throttleFunction,
         pitchExtensionFunction,
         rollExtensionFunction,
-        aux1ExtensionFunction,
-        aux2ExtensionFunction,
-        aux3ExtensionFunction,
-        aux4ExtensionFunction,
-        aux5ExtensionFunction,
-        aux6ExtensionFunction,
+        additionalAxis1Function,
+        additionalAxis2Function,
+        additionalAxis3Function,
+        additionalAxis4Function,
+        additionalAxis5Function,
+        additionalAxis6Function,
         maxAxisFunction
     };
     static QString axisFunctionToString(AxisFunction_t function);
@@ -419,6 +420,7 @@ private:
     void _stopPollingThread();
     QString _pollingFlagsToString(PollingFlags flags) const;
     PollingFlags _pollingFlags = PollingNone;
+
     Vehicle* _pollingVehicle = nullptr;
 
     void _resetFunctionToAxisMap();
@@ -439,6 +441,7 @@ private:
 
     /// Adjust the raw axis value to the -1:1 range given calibration information
     float _adjustRange(int reversedAxisValue, const AxisCalibration_t &calibration, bool withDeadbands);
+    uint16_t _adjustRangeToRcOverridePwm(int value, const AxisCalibration_t &calibration, bool withDeadbands);
 
     void _executeButtonAction(const QString &action, const ButtonEvent_t buttonEvent);
     int  _findAvailableButtonActionIndex(const QString &action);

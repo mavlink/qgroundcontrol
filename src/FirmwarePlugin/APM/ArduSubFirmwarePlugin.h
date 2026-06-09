@@ -81,7 +81,8 @@ public:
     int defaultJoystickTXMode() const override { return 3; }
     void initializeStreamRates(Vehicle *vehicle) override;
     bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) const override;
-    bool supportsThrottleModeCenterZero() const override { return false; }
+    bool supportsThrottleModeCenterZero() const override { return true; }
+    bool supportsNegativeThrust(Vehicle *vehicle) const override { Q_UNUSED(vehicle); return true; }
     bool supportsRadio() const override { return false; }
     bool supportsJSButton() const override { return true; }
     bool supportsMotorInterference() const override { return false; }

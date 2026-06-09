@@ -4,15 +4,29 @@
 # while allowing more lenient settings for third-party dependencies
 # ----------------------------------------------------------------------------
 
+include(CheckCompilerFlag)
+include(CMakePushCheckState)
+
+function(qgc_add_optional_no_warning target scope warning)
+    string(MAKE_C_IDENTIFIER "QGC_HAVE_W_${warning}" _var)
+    cmake_push_check_state(RESET)
+    check_compiler_flag(CXX "-W${warning}" ${_var})
+    cmake_pop_check_state()
+    if(${_var})
+        target_compile_options(${target} ${scope} "-Wno-${warning}")
+    endif()
+endfunction()
+
 # ----------------------------------------------------------------------------
 # QGC Warning Flags for Main Source Code
 # ----------------------------------------------------------------------------
 function(qgc_set_warning_flags target)
+    set_target_properties(${target} PROPERTIES COMPILE_WARNING_AS_ERROR ON)
+
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(${target} PRIVATE
             -Wall                       # Enable common warnings
             -Wextra                     # Enable extra warnings
-            -Werror                     # Treat warnings as errors
             -Wshadow                    # Warn about variable shadowing
             #-Wnon-virtual-dtor          # Warn about non-virtual destructors
             #-Wold-style-cast            # Warn about C-style casts
@@ -33,15 +47,14 @@ function(qgc_set_warning_flags target)
             -Wno-switch
 
             # Qt-specific warnings to disable
-            -Wno-deprecated-enum-enum-conversion  # Qt has some deprecated enum conversions
             -Wno-unknown-warning-option           # Don't error on unknown warning options
         )
+        qgc_add_optional_no_warning(${target} PRIVATE deprecated-enum-enum-conversion)
 
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         target_compile_options(${target} PRIVATE
             -Wall                       # Enable common warnings
             -Wextra                     # Enable extra warnings
-            -Werror                     # Treat warnings as errors
             -Wshadow                    # Warn about variable shadowing
             #-Wnon-virtual-dtor          # Warn about non-virtual destructors
             #-Wold-style-cast            # Warn about C-style casts
@@ -64,7 +77,6 @@ function(qgc_set_warning_flags target)
     elseif(MSVC)
         target_compile_options(${target} PRIVATE
             /W2                         # Warning level 2 (ultimate target is level 3)
-            /WX                         # Treat warnings as errors
 
             # The following warnings are temporarily disabled due to known issues in QGC codebase that need to be addressed
             /wd4996                     # deprecated functions (strncpy, etc)
@@ -98,19 +110,21 @@ endfunction()
 function(qgc_disable_dependency_warnings target)
     # Check if target exists
     if(NOT TARGET ${target})
-        message(WARNING "qgc_disable_dependency_warnings: Target '${target}' does not exist")
+        message(WARNING "QGC: qgc_disable_dependency_warnings: Target '${target}' does not exist")
         return()
     endif()
 
     # Get target type
     get_target_property(_target_type ${target} TYPE)
     if(_target_type STREQUAL "INTERFACE_LIBRARY")
-        message(WARNING "qgc_disable_dependency_warnings: Target '${target}' is an INTERFACE library. "
+        message(WARNING "QGC: qgc_disable_dependency_warnings: Target '${target}' is an INTERFACE library. "
             "Warning flags would propagate to all consumers. Use SYSTEM include directories instead.")
         return()
     endif()
 
     set(_scope PRIVATE)
+
+    set_target_properties(${target} PROPERTIES SYSTEM TRUE)
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(${target} ${_scope}

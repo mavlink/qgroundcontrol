@@ -6,6 +6,9 @@
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 
+class ComplexMissionItem;
+class PlanCreator;
+
 class CustomOptions;
 class CustomPlugin;
 class CustomSettings;
@@ -70,6 +73,16 @@ public:
     void paletteOverride(const QString &colorName, QGCPalette::PaletteColorInfo_t &colorInfo) final;
     /// We override this so we can get access to QQmlApplicationEngine and use it to register our qml module
     QQmlApplicationEngine *createQmlApplicationEngine(QObject *parent) final;
+
+    /// Adds the Perimeter Scan item to the complex-item menu.
+    QVariantList complexMissionItemNames(Vehicle *vehicle) final;
+    /// Factory: creates PerimeterScanComplexItem for our custom type, falls back to base for built-ins.
+    ComplexMissionItem *createComplexMissionItem(const QString &complexItemType,
+                                                 PlanMasterController *masterController,
+                                                 bool flyView,
+                                                 const QString &kmlOrShpFile = QString()) final;
+    /// Adds the Perimeter Scan plan creator to the New Plan dialog.
+    QList<PlanCreator *> planCreators(PlanMasterController *planMasterController) final;
 
 private slots:
     void _advancedChanged(bool advanced);

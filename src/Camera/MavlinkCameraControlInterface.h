@@ -14,7 +14,8 @@ class QGCVideoStreamInfo;
 class QmlObjectListModel;
 class Vehicle;
 
-/// Abstract base class for all camera controls: real and simulated
+/// \brief Abstract base class for all camera controls: real and simulated
+///
 class MavlinkCameraControlInterface : public FactGroup
 {
     Q_OBJECT

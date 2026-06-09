@@ -20,7 +20,7 @@ inline mavlink_message_t makeHeartbeat(uint8_t sysId = 1, uint8_t compId = 1)
 inline QGCMAVLinkMessage* makeHeartbeatMsg(uint8_t sysId, uint8_t compId, QObject* parent = nullptr)
 {
     mavlink_message_t msg = makeHeartbeat(sysId, compId);
-    return new QGCMAVLinkMessage(msg, parent);
+    return new QGCMAVLinkMessage(msg, QString(), parent);
 }
 
 inline QGCMAVLinkMessage* makeHeartbeatMsg(QObject* parent = nullptr)

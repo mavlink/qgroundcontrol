@@ -5,7 +5,8 @@
 
 #include "QGCArchiveDeviceBase.h"
 
-/// QIODevice wrapper for streaming decompression of single-file formats
+/// \brief QIODevice wrapper for streaming decompression of single-file formats
+///
 /// Supports .gz, .xz, .zst, .bz2, .lz4 compressed data
 /// Read-only, sequential access only
 ///
@@ -16,6 +17,7 @@
 /// QTextStream stream(&device);
 /// QString content = stream.readAll();
 /// @endcode
+///
 class QGCDecompressDevice : public QGCArchiveDeviceBase
 {
     Q_OBJECT

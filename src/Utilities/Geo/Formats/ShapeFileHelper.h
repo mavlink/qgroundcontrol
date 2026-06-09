@@ -5,7 +5,8 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// Routines for loading polygons or polylines from KML or SHP files.
+/// \brief Routines for loading polygons or polylines from KML or SHP files.
+///
 class ShapeFileHelper : public QObject
 {
     Q_OBJECT

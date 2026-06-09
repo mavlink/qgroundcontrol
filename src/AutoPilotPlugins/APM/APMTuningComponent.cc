@@ -23,8 +23,6 @@ QUrl APMTuningComponent::setupSource() const
     case MAV_TYPE_TRICOPTER:
         // Generated from APMTuningCopter.VehicleConfig.json
         return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMTuningCopterComponent.qml");
-    case MAV_TYPE_SUBMARINE:
-        return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/APM/APMTuningComponentSub.qml");
     default:
         return QUrl::fromUserInput(QString());
     }

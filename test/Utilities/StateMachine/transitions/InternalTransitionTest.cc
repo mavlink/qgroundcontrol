@@ -20,7 +20,7 @@ void InternalTransitionTest::_testInternalTransition()
     );
     state->addTransition(internalTransition);
 
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
     // Add a way to exit after testing internal transitions
     QTimer exitTimer;
     exitTimer.setSingleShot(true);

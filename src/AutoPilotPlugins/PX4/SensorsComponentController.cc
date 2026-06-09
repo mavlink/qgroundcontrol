@@ -432,17 +432,12 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
 
 void SensorsComponentController::_refreshParams(void)
 {
-    QStringList fastRefreshList;
-
-    // We ask for a refresh on these first so that the rotation combo show up as fast as possible
-    fastRefreshList << "CAL_MAG0_ID" << "CAL_MAG1_ID" << "CAL_MAG2_ID" << "CAL_MAG0_ROT" << "CAL_MAG1_ROT" << "CAL_MAG2_ROT";
-    for (const QString &paramName : std::as_const(fastRefreshList)) {
-        _vehicle->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, paramName);
-    }
-
-    // Now ask for all to refresh
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, "CAL_");
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, "SENS_");
+    _vehicle->parameterManager()->bulkRefresh(ParameterManager::defaultComponentId, {
+        QStringLiteral("CAL_MAG0_ID"), QStringLiteral("CAL_MAG1_ID"), QStringLiteral("CAL_MAG2_ID"),
+        QStringLiteral("CAL_MAG0_ROT"), QStringLiteral("CAL_MAG1_ROT"), QStringLiteral("CAL_MAG2_ROT"),
+        QStringLiteral("CAL_*"),
+        QStringLiteral("SENS_*"),
+    }, false /* notifyFailure */);
 }
 
 void SensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)

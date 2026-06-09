@@ -9,7 +9,8 @@ class Vehicle;
 
 #include <functional>
 
-/// Requests a MAVLink message with built-in retry logic.
+/// \brief Requests a MAVLink message with built-in retry logic.
+///
 /// On failure, retries up to maxRetries times before giving up.
 ///
 /// Emits advance() on success or after all retries exhausted.
@@ -26,6 +27,7 @@ class Vehicle;
 ///     2  // max retries
 /// );
 /// @endcode
+///
 class RetryableRequestMessageState : public WaitStateBase
 {
     Q_OBJECT

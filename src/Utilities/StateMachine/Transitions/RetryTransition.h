@@ -4,7 +4,8 @@
 
 #include <functional>
 
-/// Transition that retries an action N times before advancing to target state.
+/// \brief Transition that retries an action N times before advancing to target state.
+///
 /// Useful for timeout handling where you want to retry before giving up.
 ///
 /// On each trigger (e.g., timeout signal):
@@ -21,6 +22,7 @@
 /// );
 /// state->addTransition(retry);
 /// @endcode
+///
 class RetryTransition : public QGCSignalTransition
 {
     Q_OBJECT

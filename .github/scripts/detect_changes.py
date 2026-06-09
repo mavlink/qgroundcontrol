@@ -13,15 +13,14 @@ from __future__ import annotations
 import argparse
 import os
 import re
-import subprocess
-import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output
+from common.gh_actions import write_github_output  # noqa: E402
+from common.git import run_git  # noqa: E402
 
 # Patterns that trigger a build for ANY platform
 _COMMON_PATTERNS: list[str] = [
@@ -41,6 +40,7 @@ _COMMON_PATTERNS: list[str] = [
 # Per-platform additional patterns
 _PLATFORM_PATTERNS: dict[str, list[str]] = {
     "android": [r"^android/"],
+    "custom-build": [r"^custom-example/"],
     "docker-linux": [
         r"^deploy/docker/Dockerfile-build-ubuntu$",
         r"^deploy/linux/",
@@ -52,9 +52,8 @@ _PLATFORM_PATTERNS: dict[str, list[str]] = {
     ],
 }
 
-# Per-platform tools/setup patterns
 _SETUP_PATTERNS: dict[str, list[str]] = {
-    "linux": [r"^tools/setup/.*debian", r"^tools/setup/install_dependencies\.py$"],
+    "linux": [r"^tools/setup/.*debian", r"^tools/setup/install_dependencies/"],
     "windows": [r"^tools/setup/.*windows"],
     "macos": [r"^tools/setup/.*macos"],
     "android": [r"^tools/setup/"],
@@ -63,13 +62,13 @@ _SETUP_PATTERNS: dict[str, list[str]] = {
     "docker-android": [r"^tools/setup/"],
 }
 
-
 def workflow_name_for_platform(platform: str) -> str:
     """Map a platform to its workflow YAML filename (without extension)."""
     if platform.startswith("docker-"):
         return "docker"
+    if platform == "custom-build":
+        return "custom-build"
     return platform
-
 
 def build_patterns(platform: str) -> list[re.Pattern[str]]:
     """Build the list of compiled regex patterns for a platform."""
@@ -80,7 +79,6 @@ def build_patterns(platform: str) -> list[re.Pattern[str]]:
     raw.extend(_PLATFORM_PATTERNS.get(platform, []))
     raw.extend(_SETUP_PATTERNS.get(platform, []))
     return [re.compile(p) for p in raw]
-
 
 def has_relevant_changes(files: Sequence[str], platform: str) -> bool:
     """Check if any changed file matches the platform's patterns."""
@@ -93,47 +91,32 @@ def has_relevant_changes(files: Sequence[str], platform: str) -> bool:
                 return True
     return False
 
-
 # ---------------------------------------------------------------------------
 # Git helpers — these call out to git as subprocesses
 # ---------------------------------------------------------------------------
 
 _NULL_SHA = "0" * 40
 
-
-def _run_git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["git", *args],
-        capture_output=True,
-        text=True,
-        check=check,
-    )
-
-
 def _ensure_commit(sha: str) -> bool:
     """Ensure a commit exists locally; fetch it shallowly if needed."""
     if not sha:
         return True
-    r = _run_git("cat-file", "-e", f"{sha}^{{commit}}", check=False)
-    if r.returncode == 0:
+    if run_git("cat-file", "-e", f"{sha}^{{commit}}").returncode == 0:
         return True
-    _run_git("fetch", "--no-tags", "--depth=1", "origin", sha, check=False)
-    return _run_git("cat-file", "-e", f"{sha}^{{commit}}", check=False).returncode == 0
-
+    run_git("fetch", "--no-tags", "--depth=1", "origin", sha)
+    return run_git("cat-file", "-e", f"{sha}^{{commit}}").returncode == 0
 
 def _diff_names(sha_a: str, sha_b: str) -> list[str] | None:
     """Return changed file names between two commits, or None on failure."""
-    r = _run_git("diff", "--name-only", sha_a, sha_b, check=False)
+    r = run_git("diff", "--name-only", sha_a, sha_b)
     if r.returncode != 0:
         return None
     return r.stdout.strip().splitlines()
 
-
 def _tree_names(sha: str) -> list[str]:
     """List files changed in a single commit."""
-    r = _run_git("diff-tree", "--no-commit-id", "--name-only", "-r", sha, check=False)
+    r = run_git("diff-tree", "--no-commit-id", "--name-only", "-r", sha)
     return r.stdout.strip().splitlines() if r.returncode == 0 else []
-
 
 def get_changed_files() -> list[str] | None:
     """Determine changed files from environment variables set by GitHub Actions.
@@ -169,22 +152,38 @@ def get_changed_files() -> list[str] | None:
     current = os.environ.get("CURRENT_SHA", "")
     return _tree_names(current) if current else None
 
+# Output keys emitted by `_detect-changes.yml` for non-PR events. Names match the
+# reusable workflow's `outputs:` block (note: `docker_linux`, not `docker-linux`).
+_NON_PR_PASSTHROUGH_KEYS = (
+    "should_build", "linux", "windows", "macos", "android",
+    "docker_linux", "docker_android",
+)
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Detect CI-relevant file changes for a platform.")
-    parser.add_argument("--platform", required=True, nargs="+",
+    parser.add_argument("--platform", nargs="+",
                         help="Platform(s) (linux, windows, macos, android, ios, docker-linux, docker-android)")
-    return parser.parse_args(argv)
-
+    parser.add_argument("--non-pr-passthrough", action="store_true",
+                        help="Emit the reusable workflow's full output set as 'true' "
+                             "(used by _detect-changes.yml on push/merge_group/workflow_dispatch)")
+    args = parser.parse_args(argv)
+    if not args.non_pr_passthrough and not args.platform:
+        parser.error("--platform is required unless --non-pr-passthrough is given")
+    return args
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+
+    if args.non_pr_passthrough:
+        write_github_output(dict.fromkeys(_NON_PR_PASSTHROUGH_KEYS, "true"))
+        return 0
+
     platforms: list[str] = args.platform
 
     changed = get_changed_files()
     if changed is None:
         print("::warning::Unable to compute changed files reliably; forcing build for safety.")
-        outputs = {p: "true" for p in platforms}
+        outputs = dict.fromkeys(platforms, "true")
         outputs["any"] = "true"
         write_github_output(outputs)
         return 0
@@ -204,7 +203,6 @@ def main(argv: list[str] | None = None) -> int:
     write_github_output(outputs)
     print(f"Results: {outputs}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

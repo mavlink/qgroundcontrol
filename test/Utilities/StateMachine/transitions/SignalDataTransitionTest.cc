@@ -13,7 +13,7 @@ void SignalDataTransitionTest::_testSignalDataTransition()
 
     auto* waitState = new QState(&machine);
     auto* targetState = new QState(&machine);
-    auto* finalState = new QFinalState(&machine);
+    auto* finalState = addFinalState(&machine);
 
     auto* transition = new SignalDataTransition<QString>(
         &emitter, &SignalEmitter::valueChanged,
@@ -51,7 +51,7 @@ void SignalDataTransitionTest::_testSignalDataTransition()
 
     // Give time for event processing
     if (!finishedSpy.wait(TestTimeout::shortMs())) {
-        qDebug() << "finishedSpy wait failed. guardCalled:" << guardCalled << "actionCalled:" << actionCalled;
+        qCDebug(UnitTestLog) << "finishedSpy wait failed. guardCalled:" << guardCalled << "actionCalled:" << actionCalled;
     }
     QVERIFY(guardCalled);
     QVERIFY(actionCalled);

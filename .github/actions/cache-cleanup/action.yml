@@ -1,0 +1,63 @@
+name: Cache Cleanup
+description: List and optionally delete GitHub Actions caches via gh-actions-cache.
+
+inputs:
+  branch:
+    description: 'Branch to clean (empty = all branches)'
+    required: false
+    default: ''
+  dry-run:
+    description: 'List caches without deleting (true = list only)'
+    required: false
+    default: 'true'
+  summary:
+    description: 'Write a markdown table of caches to $GITHUB_STEP_SUMMARY'
+    required: false
+    default: 'false'
+  prune:
+    description: 'GC mode: keep build caches, evict the rest when the pool nears the 10 GiB cap'
+    required: false
+    default: 'false'
+  high-water-mb:
+    description: 'Prune trigger: only evict when total cache size exceeds this'
+    required: false
+    default: '9000'
+  keep-mb:
+    description: 'Prune target: evict down to roughly this size, leaving headroom'
+    required: false
+    default: '6500'
+
+outputs:
+  count:
+    description: 'Number of caches found'
+    value: ${{ steps.run.outputs.count }}
+  deleted:
+    description: 'Number of caches deleted (0 when dry-run)'
+    value: ${{ steps.run.outputs.deleted }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install gh-actions-cache
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        if ! gh extension list | awk '{print $1}' | grep -qx 'actions/gh-actions-cache'; then
+          gh extension install actions/gh-actions-cache
+        fi
+
+    - name: List and clean caches
+      id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+      run: |
+        ARGS=(--branch "${{ inputs.branch }}")
+        [[ "${{ inputs.dry-run }}" != "true" ]] && ARGS+=(--delete)
+        [[ "${{ inputs.summary }}" == "true" ]] && ARGS+=(--summary)
+        if [[ "${{ inputs.prune }}" == "true" ]]; then
+          ARGS+=(--prune --high-water-mb "${{ inputs.high-water-mb }}" --keep-mb "${{ inputs.keep-mb }}")
+        fi
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/gh_cache_cleanup.py" "${ARGS[@]}"

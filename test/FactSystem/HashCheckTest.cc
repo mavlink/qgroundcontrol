@@ -107,13 +107,9 @@ MockLink *HashCheckTest::_startPX4MockLinkHighLatency()
 // ManualRefresh:          User-triggered refreshAllParameters() bypasses _HASH_CHECK and requests full param list.
 // ArduPilot:              ArduPilot uses FTP for parameters, so no _HASH_CHECK or PARAM_REQUEST_LIST traffic.
 // HighLatency:            High-latency links skip parameter download entirely; params marked as missing.
-// LogReplay:              Log replay shares the high-latency code path; params marked as missing.
 //
 // PARAM_REQUEST_LIST (xPRL) is only asserted for PX4 vehicles; ArduPilot uses FTP.
 // missingParameters (xMiss) is only asserted when expectParametersReady (xReady) is true.
-// Scenarios 11 and 12 exercise the same code path via setHighLatency(true).
-// MockLink doesn't support isLogReplay(), so high latency serves as proxy for the
-// shared guard: if (isHighLatency || _logReplay) { signal ready immediately }.
 
 void HashCheckTest::_hashCheckMatrix_data()
 {
@@ -145,7 +141,6 @@ void HashCheckTest::_hashCheckMatrix_data()
     QTest::newRow("ManualRefresh")           << true  << false << false << false << false << false << false << true   << false << true  << true  << false;
     QTest::newRow("ArduPilot")              << false  << false << false << false << false << false << false << false  << false << false << true  << false;
     QTest::newRow("HighLatency")             << true  << true  << false << false << false << false << false << false  << false << false << true  << true;
-    QTest::newRow("LogReplay")               << true  << true  << false << false << false << false << false << false  << false << false << true  << true;
 }
 
 void HashCheckTest::_hashCheckMatrix()
@@ -248,7 +243,7 @@ void HashCheckTest::_hashCheckMatrix()
         QVERIFY(vehicle);
 
         QSignalSpy spyParamsReady(vehicleMgr, &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
-        const int maxWaitMs = ParameterManager::kHashCheckTimeoutMs
+        const int maxWaitMs = ParameterManager::kTestHashCheckTimeoutMs
                             + ParameterManager::kTestMaxInitialRequestTimeMs
                             + TestTimeout::shortMs();
         QVERIFY_NO_SIGNAL_WAIT(spyParamsReady, maxWaitMs);

@@ -92,17 +92,9 @@ Rectangle {
                     labelDecimals:              1
                 }
 
-                LineSeries {
-                    id:         terrainSeries
-                    color:      "green"
-                    width:      2
-                }
-
-                LineSeries {
-                    id:         flightSeries
-                    color:      "orange"
-                    width:      2
-                }
+                // The order of the LineSeries is important to work around nasty bugs in QtGraphs where series just don't display. If you put
+                // terrain and flight first you end up with cases where flight doesn't display no matter what other sorts of workarounds you try.
+                // Putting missing and collision first seems to prevent the problem.
 
                 LineSeries {
                     id:         missingSeries
@@ -113,7 +105,19 @@ Rectangle {
                 LineSeries {
                     id:         collisionSeries
                     color:      "red"
-                    width:      3
+                    width:      flightSeries.width * 3
+                }
+
+                LineSeries {
+                    id:         terrainSeries
+                    color:      "green"
+                    width:      2
+                }
+
+                LineSeries {
+                    id:         flightSeries
+                    color:      "orange"
+                    width:      2
                 }
             }
 

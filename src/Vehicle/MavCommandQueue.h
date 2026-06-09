@@ -11,12 +11,13 @@
 
 class Vehicle;
 
-/// Owns the COMMAND_LONG / COMMAND_INT send/retry/ack pipeline for a single Vehicle.
+/// \brief Owns the COMMAND_LONG / COMMAND_INT send/retry/ack pipeline for a single Vehicle.
 ///
 /// Each outbound command is appended to a per-vehicle queue with its retry policy
 /// and ack timeout. A periodic timer resends entries whose ack window has expired;
 /// incoming COMMAND_ACK messages are matched by (compId, command) and either complete
 /// the entry or refresh its timer on MAV_RESULT_IN_PROGRESS.
+///
 class MavCommandQueue : public QObject, public VehicleTypes
 {
     Q_OBJECT

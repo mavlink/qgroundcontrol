@@ -15,7 +15,8 @@ class QmlObjectListModel;
 class SigningController;
 class Vehicle;
 
-/// A single named signing key entry.
+/// \brief A single named signing key entry.
+///
 class MAVLinkSigningKey : public QObject
 {
     Q_OBJECT
@@ -43,7 +44,8 @@ private:
     uint64_t _lastTimestamp = 0;
 };
 
-/// Bag of named MAVLink signing keys; correct key per vehicle is auto-detected from incoming signed packets.
+/// \brief Bag of named MAVLink signing keys; correct key per vehicle is auto-detected from incoming signed packets.
+///
 class MAVLinkSigningKeys : public QObject
 {
     Q_OBJECT
@@ -128,7 +130,7 @@ private:
 
     static constexpr QLatin1StringView kSettingsGroup = QLatin1StringView("MAVLinkSigningKeys");
     static constexpr QLatin1StringView kManifestKey = QLatin1StringView("manifest");  // key names list (no secrets)
-    static constexpr QLatin1StringView kKeychainKeyPrefix = QLatin1StringView("MAVLinkSigningKeys/");
+    static constexpr QLatin1StringView kKeySubgroup = QLatin1StringView("keys");  // <kSettingsGroup>/keys/<name> = key bytes
     static constexpr QLatin1StringView kTimestampSubgroup = QLatin1StringView("timestamps");  // <kSettingsGroup>/timestamps/<name> = quint64
     static constexpr int kTimestampFlushIntervalMs = 5000;
 

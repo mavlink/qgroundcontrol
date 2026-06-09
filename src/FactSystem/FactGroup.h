@@ -10,7 +10,8 @@
 
 class Vehicle;
 
-/// Used to group Facts together into an object hierarachy.
+/// \brief Used to group Facts together into an object hierarachy.
+///
 class FactGroup : public QObject
 {
     Q_OBJECT

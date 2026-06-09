@@ -9,10 +9,12 @@ class FirmwarePlugin;
 class Vehicle;
 class VehicleComponent;
 
-/// The AutoPilotPlugin class is an abstract base class which represent the methods and objects
-/// which are specific to a certain AutoPilot. This is the only place where AutoPilot specific
-/// code should reside in QGroundControl. The remainder of the QGroundControl source is
-/// generic to a common mavlink implementation.
+/// \brief The AutoPilotPlugin class is an abstract base class which represents the methods and objects
+/// which are specific to a certain AutoPilot.
+///
+/// This is the only place where AutoPilot specific code should reside in QGroundControl. The remainder
+/// of the QGroundControl source is generic to a common mavlink implementation.
+
 class AutoPilotPlugin : public QObject
 {
     Q_OBJECT

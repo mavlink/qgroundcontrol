@@ -9,7 +9,8 @@ class Vehicle;
 class FirmwarePlugin;
 class CompInfoGeneral;
 
-/// Base class for all CompInfo types
+/// \brief Base class for all CompInfo types
+///
 class CompInfo : public QObject
 {
     Q_OBJECT

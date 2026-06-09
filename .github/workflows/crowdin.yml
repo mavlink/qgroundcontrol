@@ -6,10 +6,6 @@ on:
   push:
     branches: [master]
     paths: ['docs/en/**']
-  pull_request:
-    types: [closed]
-    branches: [master]
-    paths: ['docs/en/**']
   schedule:
     - cron: '0 0 * * 0'  # Download translations every Sunday
   workflow_dispatch:
@@ -30,7 +26,7 @@ concurrency:
 jobs:
   sync:
     name: Crowdin Sync
-    if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.merged == true)
+    if: github.repository_owner == 'mavlink'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -42,11 +38,10 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_ACTION: ${{ inputs.action }}
-          PR_MERGED: ${{ github.event.pull_request.merged }}
         run: |
           if [[ "$EVENT_NAME" == "schedule" ]] || [[ "$EVENT_NAME" == "workflow_dispatch" && "$INPUT_ACTION" == "download" ]]; then
             echo "mode=download" >> "$GITHUB_OUTPUT"
-          elif [[ "$EVENT_NAME" == "push" ]] || [[ "$EVENT_NAME" == "pull_request" && "$PR_MERGED" == "true" ]] || [[ "$EVENT_NAME" == "workflow_dispatch" && "$INPUT_ACTION" == "upload" ]]; then
+          elif [[ "$EVENT_NAME" == "push" ]] || [[ "$EVENT_NAME" == "workflow_dispatch" && "$INPUT_ACTION" == "upload" ]]; then
             echo "mode=upload" >> "$GITHUB_OUTPUT"
           else
             echo "mode=skip" >> "$GITHUB_OUTPUT"

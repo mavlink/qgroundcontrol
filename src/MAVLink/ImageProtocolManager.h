@@ -6,8 +6,10 @@
 #include <QtCore/QObject>
 #include <QtGui/QImage>
 
-/// Supports the Mavlink image transmission protocol (https://mavlink.io/en/services/image_transmission.html).
+/// \brief Supports the Mavlink image transmission protocol (https://mavlink.io/en/services/image_transmission.html).
+///
 /// Mainly used by optical flow cameras.
+///
 class ImageProtocolManager : public QObject
 {
     Q_OBJECT

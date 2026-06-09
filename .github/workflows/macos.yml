@@ -31,28 +31,23 @@ permissions:
   id-token: write
   attestations: write
   actions: read
-  security-events: write
-
-env:
-  IS_STABLE_BUILD: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
 
 jobs:
   changes:
-    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/_detect-changes.yml
     with:
       platform: macos
 
   build:
     needs: changes
-    if: always() && !cancelled() && (needs.changes.outputs.should_build == 'true' || needs.changes.result == 'skipped')
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: macos-15
     timeout-minutes: 120
 
     strategy:
       fail-fast: false
       matrix:
-        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Release"]') }}
+        build_type: ['${{ inputs.build_type || ''Release'' }}']
 
     defaults:
       run:
@@ -77,11 +72,6 @@ jobs:
           qt-arch: clang_64
           build-type: ${{ matrix.build_type }}
 
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: ${{ steps.setup.outputs.xcode_version }}
-
       - name: Install Dependencies
         uses: ./.github/actions/install-dependencies
 
@@ -90,7 +80,6 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
-          stable: ${{ env.IS_STABLE_BUILD }}
           extra-args: -DQGC_MACOS_SIGN_WITH_IDENTITY=${{ github.event_name != 'pull_request' && 'ON' || 'OFF' }}
 
       - name: Build
@@ -98,14 +87,6 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
-
-      # TODO: Enable GStreamer integration tests once a Debug build is added to the matrix.
-      # Release builds strip test infrastructure; these tests require a Debug or RelWithDebInfo build.
-      # - name: Run GStreamer Integration Tests
-      #   uses: ./.github/actions/run-unit-tests
-      #   with:
-      #     build-dir: ${{ runner.temp }}/build
-      #     include-labels: 'Integration'
 
       - name: Verify dev build executable
         uses: ./.github/actions/verify-executable
@@ -120,20 +101,17 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
           p12-password: ${{ secrets.MACOS_CERT_P12_PASSWORD }}
 
-      - name: Create signed/notarized/stapled app bundle
-        if: github.event_name != 'pull_request'
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config ${{ matrix.build_type }}
+      # PRs configure with QGC_MACOS_SIGN_WITH_IDENTITY=OFF, so the signing env vars are unused there — leaving them resolved-but-empty is harmless and lets us avoid duplicating the install step.
+      - name: Create app bundle
+        uses: ./.github/actions/cmake-install
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
         env:
           QGC_MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
           QGC_MACOS_NOTARIZATION_USERNAME: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
           QGC_MACOS_NOTARIZATION_PASSWORD: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
           QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
-
-      - name: Create unsigned app bundle
-        if: github.event_name == 'pull_request'
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config ${{ matrix.build_type }}
 
       - name: Mount DMG
         working-directory: ${{ runner.temp }}/build

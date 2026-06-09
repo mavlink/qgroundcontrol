@@ -2,8 +2,11 @@
 """Validate and upload artifacts to AWS S3.
 
 Subcommands:
-    validate    Validate AWS credentials and artifact inputs
-    upload      Upload artifact to S3 with path safety checks
+    validate       Validate AWS credentials and artifact inputs
+    upload         Upload artifact to S3 builds/<ref>/ with path safety checks
+    upload-latest  Upload artifact to S3 latest/ (release tags only)
+    invalidate     Invalidate the latest/<artifact> path in CloudFront
+    auth-mode      Resolve which AWS auth configure step should run
 """
 
 from __future__ import annotations
@@ -13,6 +16,13 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common.gh_actions import write_github_output  # noqa: E402
+from common.proc import run_captured  # noqa: E402
 
 
 def validate_credentials(role_arn: str, key_id: str, secret_key: str) -> None:
@@ -51,14 +61,61 @@ def cmd_validate(args: argparse.Namespace) -> None:
     validate_artifact(args.artifact_path, args.artifact_name)
 
 
+def resolve_auth_mode(role_arn: str, key_id: str) -> str:
+    """Return 'oidc' when a role ARN is set, 'static' when a key ID is set, else 'none'.
+
+    Mirrors the conditional ordering in aws-upload/action.yml so the two paths
+    can't disagree on which configure-credentials step should run.
+    """
+    if role_arn:
+        return "oidc"
+    if key_id:
+        return "static"
+    return "none"
+
+
+def cmd_auth_mode(args: argparse.Namespace) -> None:
+    mode = resolve_auth_mode(args.role_arn, args.key_id)
+    print(mode)
+    write_github_output({"mode": mode})
+
+
+def _run_aws(cmd: list[str]) -> None:
+    """Run an AWS CLI command, surfacing stderr on failure."""
+    try:
+        run_captured(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        sys.stderr.write(e.stderr or "")
+        raise
+
+
 def cmd_upload(args: argparse.Namespace) -> None:
     validate_artifact(args.artifact_path, args.artifact_name)
     safe_ref = sanitize_ref(args.ref_name)
 
     s3_path = f"s3://{args.s3_bucket}/builds/{safe_ref}/{args.artifact_name}"
-    subprocess.run(
-        ["aws", "s3", "cp", args.artifact_path, s3_path, "--acl", "public-read"],
-        check=True,
+    _run_aws(["aws", "s3", "cp", args.artifact_path, s3_path, "--acl", "public-read"])
+
+
+def cmd_upload_latest(args: argparse.Namespace) -> None:
+    validate_artifact(args.artifact_path, args.artifact_name)
+    s3_path = f"s3://{args.s3_bucket}/latest/{args.artifact_name}"
+    _run_aws(["aws", "s3", "cp", args.artifact_path, s3_path, "--acl", "public-read"])
+
+
+def cmd_invalidate(args: argparse.Namespace) -> None:
+    if re.search(r"[/\\]", args.artifact_name) or ".." in args.artifact_name:
+        print(
+            f"::error::Invalid artifact name (contains path separators or ..): {args.artifact_name}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    _run_aws(
+        [
+            "aws", "cloudfront", "create-invalidation",
+            "--distribution-id", args.distribution_id,
+            "--paths", f"/latest/{args.artifact_name}",
+        ]
     )
 
 
@@ -79,8 +136,27 @@ def main() -> None:
     p_up.add_argument("--ref-name", required=True)
     p_up.add_argument("--s3-bucket", default="qgroundcontrol")
 
+    p_latest = sub.add_parser("upload-latest")
+    p_latest.add_argument("--artifact-path", required=True)
+    p_latest.add_argument("--artifact-name", required=True)
+    p_latest.add_argument("--s3-bucket", default="qgroundcontrol")
+
+    p_inv = sub.add_parser("invalidate")
+    p_inv.add_argument("--artifact-name", required=True)
+    p_inv.add_argument("--distribution-id", required=True)
+
+    p_auth = sub.add_parser("auth-mode", help="Resolve oidc|static|none from secret presence")
+    p_auth.add_argument("--role-arn", default="")
+    p_auth.add_argument("--key-id", default="")
+
     args = parser.parse_args()
-    {"validate": cmd_validate, "upload": cmd_upload}[args.command](args)
+    {
+        "validate": cmd_validate,
+        "upload": cmd_upload,
+        "upload-latest": cmd_upload_latest,
+        "invalidate": cmd_invalidate,
+        "auth-mode": cmd_auth_mode,
+    }[args.command](args)
 
 
 if __name__ == "__main__":

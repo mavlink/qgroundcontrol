@@ -1,7 +1,8 @@
 {
   "$schema": "build-config.schema.json",
   "android_build_tools": "35.0.0",
-  "ccache_version": "4.13.1",
+  "ccache_version": "4.13.6",
+  "mold_version": "2.41.0",
   "android_cmdline_tools": "13114758",
   "android_min_sdk": "28",
   "android_platform": "35",

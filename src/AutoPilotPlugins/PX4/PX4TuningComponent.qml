@@ -24,6 +24,7 @@ ColumnLayout {
         Repeater {
             model: root.model
             QGCTabButton {
+                objectName: "pidTuning_tab_" + buttonText.replace(/ /g, "")
                 text: buttonText
             }
         }

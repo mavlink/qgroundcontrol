@@ -3,8 +3,10 @@
 #include <QtCore/QByteArray>
 #include <QtNetwork/QUdpSocket>
 
-/// UdpIODevice provides a QIODevice interface over a QUdpSocket in server mode.
+/// \brief UdpIODevice provides a QIODevice interface over a QUdpSocket in server mode.
+///
 /// It allows line-based reading using canReadLine() and readLineData() even when the socket is in bound mode.
+///
 class UdpIODevice: public QUdpSocket
 {
     Q_OBJECT

@@ -6,9 +6,11 @@
 #include <QtCore/QString>
 #include <functional>
 
-/// Transition that fires when a named QGCStateMachineEvent is posted to the state machine
+/// \brief Transition that fires when a named QGCStateMachineEvent is posted to the state machine
+///
 /// Uses QAbstractTransition (via QGCAbstractTransition) to intercept events posted via
 /// QStateMachine::postEvent() / QGCStateMachine::postEvent().
+///
 class NamedEventTransition : public QGCAbstractTransition
 {
     Q_OBJECT

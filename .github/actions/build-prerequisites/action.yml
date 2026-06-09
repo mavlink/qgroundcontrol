@@ -1,0 +1,93 @@
+name: Build Prerequisites
+description: Shared CI prerequisites for all platform builds — build config, disk cleanup, CMake, Python, build dir.
+
+inputs:
+  build-type:
+    description: Build type (controls Linux Debug disk-cleanup heuristic)
+    required: false
+    default: "Release"
+  mode:
+    description: Setup mode (desktop, android, ios) — controls disk-cleanup variant on Linux.
+    required: false
+    default: desktop
+
+outputs:
+  qt_modules:
+    description: Qt modules from build-config
+    value: ${{ steps.config.outputs.qt_modules }}
+  qt_modules_ios:
+    description: Qt modules for iOS target from build-config
+    value: ${{ steps.config.outputs.qt_modules_ios }}
+  qt_version:
+    description: Qt version from build-config
+    value: ${{ steps.config.outputs.qt_version }}
+  gstreamer_version:
+    description: GStreamer version (generic/minimum) from build-config
+    value: ${{ steps.config.outputs.gstreamer_version }}
+  gstreamer_macos_version:
+    description: GStreamer version for macOS
+    value: ${{ steps.config.outputs.gstreamer_macos_version }}
+  gstreamer_android_version:
+    description: GStreamer version for Android
+    value: ${{ steps.config.outputs.gstreamer_android_version }}
+  gstreamer_windows_version:
+    description: GStreamer version for Windows
+    value: ${{ steps.config.outputs.gstreamer_windows_version }}
+  xcode_version:
+    description: Xcode version for macOS
+    value: ${{ steps.config.outputs.xcode_version }}
+  xcode_ios_version:
+    description: Xcode version for iOS
+    value: ${{ steps.config.outputs.xcode_ios_version }}
+  ndk_full_version:
+    description: Android NDK full version
+    value: ${{ steps.config.outputs.ndk_full_version }}
+  java_version:
+    description: Java version
+    value: ${{ steps.config.outputs.java_version }}
+  android_platform:
+    description: Android platform / API level
+    value: ${{ steps.config.outputs.android_platform }}
+  android_build_tools:
+    description: Android build-tools version
+    value: ${{ steps.config.outputs.android_build_tools }}
+  android_cmdline_tools:
+    description: Android cmdline-tools version
+    value: ${{ steps.config.outputs.android_cmdline_tools }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get build config
+      id: config
+      uses: ./.github/actions/build-config
+
+    - name: Free disk space (Linux)
+      if: runner.os == 'Linux'
+      uses: ./.github/actions/free-disk-space
+      with:
+        remove-android: ${{ inputs.mode != 'android' }}
+
+    - name: Exclude workspace from Windows Defender
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        try {
+          Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE","$env:RUNNER_TEMP" -ErrorAction Stop
+          Add-MpPreference -ExclusionProcess "cl.exe","clang.exe","clang++.exe","link.exe","ninja.exe","cmake.exe","moc.exe","rcc.exe","qmlcachegen.exe" -ErrorAction Stop
+        } catch {
+          Write-Host "::warning::Failed to add Defender exclusions: $_"
+        }
+
+    - uses: lukka/get-cmake@v4.3.2
+      with:
+        useCloudCache: false
+        useLocalCache: true
+
+    - uses: ./.github/actions/setup-python
+      with:
+        groups: scripts
+
+    - name: Create build directory
+      shell: bash
+      run: mkdir -p "$RUNNER_TEMP/build"

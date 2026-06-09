@@ -51,7 +51,7 @@ void StructureScanComplexItemTest::_testDirty()
     QList<Fact*> rgFacts;
     rgFacts << _structureScanItem->entranceAlt() << _structureScanItem->layers();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         QVERIFY(!_structureScanItem->dirty());
         if (fact->typeIsBool()) {
             fact->setRawValue(!fact->rawValue().toBool());

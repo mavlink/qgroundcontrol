@@ -5,9 +5,11 @@
 
 #include "LogEntry.h"
 
-/// Base class for table models that display LogEntry data.
+/// \brief Base class for table models that display LogEntry data.
+///
 /// Provides shared data(), headerData(), roleNames(), and columnCount()
 /// implementations. Subclasses supply entries via entryAt().
+///
 class LogEntryTableModel : public QAbstractTableModel
 {
     Q_OBJECT

@@ -113,16 +113,4 @@ void LogManagerTest::_hasCapturedUncategorized()
     LogManager::setCaptureEnabled(false);
 }
 
-void LogManagerTest::_categoryLogLevelNames()
-{
-    const auto names = LogManager::categoryLogLevelNames();
-    QCOMPARE(names.size(), 4);
-    QVERIFY(names.contains(QStringLiteral("Debug")));
-    QVERIFY(names.contains(QStringLiteral("Warning")));
-
-    const auto values = LogManager::categoryLogLevelValues();
-    QCOMPARE(values.size(), 4);
-    QCOMPARE(values[0].toInt(), static_cast<int>(QtDebugMsg));
-}
-
 UT_REGISTER_TEST(LogManagerTest, TestLabel::Unit, TestLabel::Utilities)

@@ -918,7 +918,7 @@ void CameraSectionTest::_testScanForMultipleItems()
             item2->missionItem() = cameraItem->missionItem();
             visualItems.append(item1);
             visualItems.append(item2);
-            // qDebug() << MissionCommandTree::instance()->getUIInfo(_controllerVehicle,
+            // qCDebug(UnitTestLog) << MissionCommandTree::instance()->getUIInfo(_controllerVehicle,
             // QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item1->command())->rawName() <<
             // MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric,
             // (MAV_CMD)item2->command())->rawName();

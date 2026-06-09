@@ -24,8 +24,9 @@ SigningController::SigningController(mavlink_channel_t channel, QObject* parent)
     : QObject(parent), _mavlinkChannel(channel)
 {
     _timeout.setSingleShot(true);
-    _timeout.setInterval(kTimeout);
     connect(&_timeout, &QTimer::timeout, this, &SigningController::_onTimeout);
+    _wallClockRefresh.setInterval(kWallClockRefreshInterval);
+    connect(&_wallClockRefresh, &QTimer::timeout, this, [this]() { _channel.refreshOutgoingTimestamp(); });
     qCDebug(SigningControllerLog) << "SigningController ctor — channel" << _mavlinkChannel;
 }
 
@@ -33,6 +34,7 @@ SigningController::~SigningController()
 {
     qCDebug(SigningControllerLog) << "SigningController dtor — channel" << _mavlinkChannel;
     _timeout.stop();
+    _wallClockRefresh.stop();
     {
         QMutexLocker<QRecursiveMutex> locker(&_fsmMutex);
         _autoDetectGuard.reset();
@@ -50,6 +52,12 @@ void SigningController::_setOpLocked(PendingOp next)
 {
     _op = std::move(next);
     QMetaObject::invokeMethod(this, [this]() { emit stateChanged(); }, Qt::AutoConnection);
+}
+
+void SigningController::_setWallClockRefresh(bool on)
+{
+    // QTimer start/stop must run on the timer's owning (main) thread; auto-detect reaches here on the link-RX thread.
+    QMetaObject::invokeMethod(&_wallClockRefresh, on ? "start" : "stop", Qt::AutoConnection);
 }
 
 SigningController::State SigningController::state() const
@@ -95,11 +103,6 @@ QString SigningController::keyName() const
     return _channel.keyHint();
 }
 
-int SigningController::streamCount() const
-{
-    return _channel.streamCount();
-}
-
 QString SigningController::statusText() const
 {
     const State s = state();
@@ -112,26 +115,9 @@ QString SigningController::statusText() const
     if (!_channel.isEnabled()) {
         return tr("Off");
     }
-    const mavlink_status_t* const status = mavlink_get_channel_status(_mavlinkChannel);
-    const mavlink_signing_status_t lastStatus =
-        (status && status->signing) ? status->signing->last_status : MAVLINK_SIGNING_STATUS_NONE;
-    switch (lastStatus) {
-        case MAVLINK_SIGNING_STATUS_OK:
-            return QStringLiteral("OK");
-        case MAVLINK_SIGNING_STATUS_BAD_SIGNATURE:
-            return QStringLiteral("Bad Signature");
-        case MAVLINK_SIGNING_STATUS_NO_STREAMS:
-            return QStringLiteral("No Streams");
-        case MAVLINK_SIGNING_STATUS_TOO_MANY_STREAMS:
-            return QStringLiteral("Too Many Streams");
-        case MAVLINK_SIGNING_STATUS_OLD_TIMESTAMP:
-            return QStringLiteral("Stale Timestamp");
-        case MAVLINK_SIGNING_STATUS_REPLAY:
-            return QStringLiteral("Replay Detected");
-        case MAVLINK_SIGNING_STATUS_NONE:
-        default:
-            return tr("On");
-    }
+    // Last wire-status detail (empty when NONE); fall back to "On" for a healthy-but-idle link.
+    const QString detail = MAVLinkSigning::signingStatusString(_mavlinkChannel);
+    return detail.isEmpty() ? tr("On") : detail;
 }
 
 bool SigningController::clearSigning()
@@ -144,6 +130,7 @@ bool SigningController::clearSigning()
     }
     const bool ok = _channel.init(_mavlinkChannel, QByteArrayView(), nullptr);
     _channel.clearDetectCooldown();
+    _setWallClockRefresh(false);
     return ok;
 }
 
@@ -151,7 +138,9 @@ bool SigningController::initSigningImmediate(QByteArrayView key, MAVLinkSigning:
                                              const QString& keyNameHint)
 {
     const uint64_t persisted = keyNameHint.isEmpty() ? 0 : MAVLinkSigningKeys::instance()->lastTimestamp(keyNameHint);
-    return _channel.init(_mavlinkChannel, key, MAVLinkSigning::callbackForPolicy(policy), persisted, keyNameHint);
+    const bool ok = _channel.init(_mavlinkChannel, key, MAVLinkSigning::callbackForPolicy(policy), persisted, keyNameHint);
+    _setWallClockRefresh(_channel.isEnabled());
+    return ok;
 }
 
 std::optional<SigningFailure> SigningController::tryBeginEnable(uint8_t expectedSysId, const QString& kName,
@@ -185,7 +174,9 @@ std::optional<SigningFailure> SigningController::tryBeginEnable(uint8_t expected
         });
     }
     // QTimer is owned by main thread; tryBeginEnable is called on the main thread.
+    _timeout.setInterval(_effectiveTimeout());
     _timeout.start();
+    _setWallClockRefresh(true);  // channel installed (signOutgoing flips true on confirm); keep timestamp fresh meanwhile
     qCDebug(SigningControllerLog) << "[ch" << _mavlinkChannel << "] enable pending — key" << kName << "sysid"
                                   << expectedSysId << "timeout" << kTimeout << "ms";
     return std::nullopt;
@@ -214,6 +205,7 @@ std::optional<SigningFailure> SigningController::tryBeginDisable(uint8_t expecte
             .keyBytes = {},
         });
     }
+    _timeout.setInterval(_effectiveTimeout());
     _timeout.start();
     qCDebug(SigningControllerLog) << "[ch" << _mavlinkChannel << "] disable pending — sysid" << expectedSysId
                                   << "timeout" << kTimeout << "ms";
@@ -419,4 +411,6 @@ void SigningController::_clearLocked()
     _autoDetectGuard.reset();
     QGC::secureZero(_op.keyBytes);
     _setOpLocked(PendingOp{});
+    // Common FSM exit: enable-confirm leaves the channel signing (keep), disable/abort disables it (stop).
+    _setWallClockRefresh(_channel.isEnabled());
 }

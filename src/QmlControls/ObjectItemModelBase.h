@@ -12,8 +12,10 @@
 #include <QtCore/QAbstractItemModel>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// Common base for QObject*-based item models (flat lists and trees).
+/// \brief Common base for QObject*-based item models (flat lists and trees).
+///
 /// Provides: dirty tracking, depth-counted begin/endResetModel, shared role constants, roleNames.
+///
 class ObjectItemModelBase : public QAbstractItemModel
 {
     Q_OBJECT

@@ -27,10 +27,7 @@ void QGCSignalTransitionTest::_testTransitionMachineAccessor()
 
     machine.setInitialState(startState);
 
-    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
-    machine.start();
-
-    QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
+    QVERIFY(startAndWaitForFinished(&machine));
     QCOMPARE(capturedMachine, &machine);
 }
 

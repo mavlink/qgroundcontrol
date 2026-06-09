@@ -4,7 +4,8 @@
 
 #include <functional>
 
-/// State that reports progress on entry.
+/// \brief State that reports progress on entry.
+///
 /// Useful for state machines that need to track progress through a sequence of states.
 ///
 /// Progress can be reported as:
@@ -22,6 +23,7 @@
 ///     return calculateProgress();
 /// });
 /// @endcode
+///
 class ProgressState : public QGCState
 {
     Q_OBJECT

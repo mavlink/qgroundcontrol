@@ -29,11 +29,11 @@ import sys
 from pathlib import Path
 
 from .generator import (
-    FactGroupSpec,
     FactGroupGenerator,
+    FactGroupSpec,
+    load_spec_from_file,
     parse_facts_string,
     parse_mavlink_string,
-    load_spec_from_file,
     validate_spec,
 )
 
@@ -152,11 +152,11 @@ def main() -> int:
     else:
         print(f"\nGenerated {len(files)} files in {args.output}")
         print("\nNext steps:")
-        print(f"1. Add files to src/Vehicle/FactGroups/CMakeLists.txt")
+        print("1. Add files to src/Vehicle/FactGroups/CMakeLists.txt")
         print(f"2. Add #include \"{spec.header_filename}\" to Vehicle.h")
         print(f"3. Add member: {spec.class_name} _{spec.factgroup_name}FactGroup;")
-        print(f"4. Add initializer in Vehicle.cc constructor")
-        print(f"5. Call _addFactGroup() in _commonInit()")
+        print("4. Add initializer in Vehicle.cc constructor")
+        print("5. Call _addFactGroup() in _commonInit()")
 
     return 0
 

@@ -19,6 +19,7 @@ static constexpr const char *msgBeginThrottleDown = QT_TRANSLATE_NOOP("RemoteCon
 );
 static constexpr const char *msgBeginThrottleCenter = QT_TRANSLATE_NOOP("RemoteControlCalibrationController",
     "* Center all sticks as shown in diagram.\n"
+    "* Make sure any additional axes are at a neutral position.\n"
     "* Please ensure all motor power is disconnected from the vehicle.\n"
     "* Click Next to continue"
 );
@@ -32,7 +33,7 @@ static constexpr const char *msgPitchDown =             QT_TRANSLATE_NOOP("Remot
 static constexpr const char *msgPitchUp =               QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Pitch stick all the way up and hold it there...");
 static constexpr const char *msgPitchCenter =           QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Allow the Pitch stick to move back to center...");
 static constexpr const char *msgExtensionHigh =         QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the %1 Extension stick to its high value position and hold it there...");
-static constexpr const char *msgExtensionLow =          QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the %1 Extension stick to its low value position and hold it there...");
+static constexpr const char *msgExtensionLow =          QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "* Move the %1 Extension stick to its low value position and hold it there...\n* Select 'One-Sided' for controls like gamepad triggers.");
 static constexpr const char *msgSwitchMinMaxRC =        QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move all the transmitter switches and/or dials back and forth to their extreme positions.");
 static constexpr const char *msgComplete =              QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "All settings have been captured. Click Next to write the new parameters to your board.");
 
@@ -53,18 +54,18 @@ RemoteControlCalibrationController::RemoteControlCalibrationController(QObject *
         { stickFunctionPitchExtension,  StateMachineStepExtensionLowVert,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
         { stickFunctionRollExtension,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
         { stickFunctionRollExtension,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionAux1Extension,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionAux1Extension,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionAux2Extension,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionAux2Extension,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionAux3Extension,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionAux3Extension,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionAux4Extension,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionAux4Extension,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionAux5Extension,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionAux5Extension,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionAux6Extension,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionAux6Extension,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis1,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis1,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis2,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis2,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis3,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis3,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis4,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis4,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis5,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis5,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis6,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis6,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
 
         { stickFunctionMax,             StateMachineStepSwitchMinMax,   &RemoteControlCalibrationController::_inputSwitchMinMax,    &RemoteControlCalibrationController::_advanceState },
         { stickFunctionMax,             StateMachineStepComplete,       nullptr,                                                    &RemoteControlCalibrationController::_saveCalibrationValues },
@@ -364,12 +365,12 @@ void RemoteControlCalibrationController::_setupCurrentState()
         static const QMap <StickFunction, const char*> extensionNameMap = {
             { stickFunctionPitchExtension,  QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Pitch") },
             { stickFunctionRollExtension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Roll") },
-            { stickFunctionAux1Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 1") },
-            { stickFunctionAux2Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 2") },
-            { stickFunctionAux3Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 3") },
-            { stickFunctionAux4Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 4") },
-            { stickFunctionAux5Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 5") },
-            { stickFunctionAux6Extension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 6") },
+            { stickFunctionAdditionalAxis1,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 1") },
+            { stickFunctionAdditionalAxis2,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 2") },
+            { stickFunctionAdditionalAxis3,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 3") },
+            { stickFunctionAdditionalAxis4,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 4") },
+            { stickFunctionAdditionalAxis5,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 5") },
+            { stickFunctionAdditionalAxis6,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 6") },
         };
         const char* extName = extensionNameMap.value(state.stickFunction, QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Unknown"));
         msg = msg.arg(QCoreApplication::translate("RemoteControlCalibrationController", extName));
@@ -389,6 +390,7 @@ void RemoteControlCalibrationController::_setupCurrentState()
     _saveCurrentRawValues();
 
     _nextButton->setEnabled(state.nextButtonFn != nullptr);
+    emit oneSidedButtonVisibleChanged(oneSidedButtonVisible());
 }
 
 void RemoteControlCalibrationController::_processChannelValues(QVector<int> channelValues)
@@ -430,23 +432,23 @@ void RemoteControlCalibrationController::_processChannelValues(QVector<int> chan
             case stickFunctionPitchExtension:
                 emit adjustedPitchExtensionChannelValueChanged(adjustedValue);
                 break;
-            case stickFunctionAux1Extension:
-                emit adjustedAux1ExtensionChannelValueChanged(adjustedValue);
+            case stickFunctionAdditionalAxis1:
+                emit adjustedAdditionalAxis1ChannelValueChanged(adjustedValue);
                 break;
-            case stickFunctionAux2Extension:
-                emit adjustedAux2ExtensionChannelValueChanged(adjustedValue);
+            case stickFunctionAdditionalAxis2:
+                emit adjustedAdditionalAxis2ChannelValueChanged(adjustedValue);
                 break;
-            case stickFunctionAux3Extension:
-                emit adjustedAux3ExtensionChannelValueChanged(adjustedValue);
+            case stickFunctionAdditionalAxis3:
+                emit adjustedAdditionalAxis3ChannelValueChanged(adjustedValue);
                 break;
-            case stickFunctionAux4Extension:
-                emit adjustedAux4ExtensionChannelValueChanged(adjustedValue);
+            case stickFunctionAdditionalAxis4:
+                emit adjustedAdditionalAxis4ChannelValueChanged(adjustedValue);
                 break;
-            case stickFunctionAux5Extension:
-                emit adjustedAux5ExtensionChannelValueChanged(adjustedValue);
+            case stickFunctionAdditionalAxis5:
+                emit adjustedAdditionalAxis5ChannelValueChanged(adjustedValue);
                 break;
-            case stickFunctionAux6Extension:
-                emit adjustedAux6ExtensionChannelValueChanged(adjustedValue);
+            case stickFunctionAdditionalAxis6:
+                emit adjustedAdditionalAxis6ChannelValueChanged(adjustedValue);
                 break;
             default:
                 break;
@@ -482,6 +484,15 @@ void RemoteControlCalibrationController::nextButtonClicked()
             (this->*state.nextButtonFn)();
         }
     }
+}
+
+void RemoteControlCalibrationController::oneSidedButtonClicked()
+{
+    if (!oneSidedButtonVisible()) {
+        return;
+    }
+
+    _applyOneSidedCalibration();
 }
 
 void RemoteControlCalibrationController::cancelButtonClicked()
@@ -527,11 +538,9 @@ bool RemoteControlCalibrationController::_stickSettleComplete(int value)
 
     if (abs(_stickDetectValue - value) > _calSettleDelta) {
         // Stick is moving too much to consider stopped
-
-        qCDebug(RemoteControlCalibrationControllerLog) << "Still moving, _stickDetectValue:value" << _stickDetectValue << value;
-
         _stickDetectValue = value;
         _stickDetectSettleStarted = false;
+        qCDebug(RemoteControlCalibrationControllerLog) << "Still moving - _stickDetectValue" << value;
     } else {
         // Stick is still positioned within the specified small range
 
@@ -545,7 +554,7 @@ bool RemoteControlCalibrationController::_stickSettleComplete(int value)
         } else {
             // Start waiting for the stick to stay settled for _stickDetectSettleWaitMSecs msecs
 
-            qCDebug(RemoteControlCalibrationControllerLog) << "Starting settle timer, _stickDetectValue:value" << _stickDetectValue << value;
+            qCDebug(RemoteControlCalibrationControllerLog) << "Starting settle timer - _stickDetectValue:value" << _stickDetectValue << value;
 
             _stickDetectSettleStarted = true;
             _stickDetectSettleElapsed.start();
@@ -595,7 +604,10 @@ void RemoteControlCalibrationController::_inputStickDetect(StickFunction stickFu
                 _rgChannelInfo[channel].channelMax = value;
             }
 
-            qCDebug(RemoteControlCalibrationControllerLog) << "Stick detected - function:channel:reversed:" << _stickFunctionToString(stickFunction) << channel << info->channelReversed;
+            qCDebug(RemoteControlCalibrationControllerLog) <<
+                QStringLiteral("Stick detected - function:channel:reversed:trim:%1").arg(info->channelReversed ? "min" : "max") <<
+                _stickFunctionToString(stickFunction) << channel << info->channelReversed << info->channelTrim <<
+                (info->channelReversed ? info->channelMin : info->channelMax);
 
             _signalAllAttitudeValueChanges();
 
@@ -675,6 +687,38 @@ void RemoteControlCalibrationController::_inputCenterWait(StickFunction stickFun
     }
 }
 
+void RemoteControlCalibrationController::_applyOneSidedCalibration()
+{
+    if (!_isOneSidedCalibrationStep(_currentStep)) {
+        return;
+    }
+
+    const StateMachineEntry &state = _getStateMachineEntry(_currentStep);
+    const int channel = _rgFunctionChannelMapping[state.stickFunction];
+    if (channel < 0 || channel >= _chanMax) {
+        return;
+    }
+
+    ChannelInfo &channelInfo = _rgChannelInfo[channel];
+    const int trimValue = channelInfo.channelTrim;
+    if (channelInfo.channelReversed) {
+        channelInfo.channelMax = trimValue;
+    } else {
+        channelInfo.channelMin = trimValue;
+    }
+
+    qCDebug(RemoteControlCalibrationControllerLog)
+        << "Applying one-sided calibration - function:channel:reversed:trim:min:max"
+        << _stickFunctionToString(state.stickFunction)
+        << channel
+        << channelInfo.channelReversed
+        << channelInfo.channelTrim
+        << channelInfo.channelMin
+        << channelInfo.channelMax;
+
+    _advanceState();
+}
+
 void RemoteControlCalibrationController::_inputSwitchMinMax(StickFunction /*stickFunction*/, int channel, int value)
 {
     // If the channel is mapped we already have min/max
@@ -727,15 +771,35 @@ void RemoteControlCalibrationController::_validateAndAdjustCalibrationValues()
         auto& channelInfo = _rgChannelInfo[chan];
 
         if (chan < _chanCount) {
+            const bool extensionFunction = channelInfo.stickFunction == stickFunctionPitchExtension ||
+                                           channelInfo.stickFunction == stickFunctionRollExtension ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis1 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis2 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis3 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis4 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis5 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis6;
+            const bool positiveOnlyExtension = extensionFunction &&
+                                               (channelInfo.channelTrim == channelInfo.channelMin) &&
+                                               (channelInfo.channelMax >= _calValidMaxValue);
+            const bool negativeOnlyExtension = extensionFunction &&
+                                               (channelInfo.channelTrim == channelInfo.channelMax) &&
+                                               (channelInfo.channelMin <= _calValidMinValue);
+            const bool oneSidedExtension = positiveOnlyExtension || negativeOnlyExtension;
+
             // Validate Min/Max values. Although the channel appears as available we still may
             // not have good min/max/trim values for it. Set to defaults if needed.
-            if (channelInfo.channelMin > _calValidMinValue || channelInfo.channelMax < _calValidMaxValue) {
+            if (!oneSidedExtension && (channelInfo.channelMin > _calValidMinValue || channelInfo.channelMax < _calValidMaxValue)) {
                 qCDebug(RemoteControlCalibrationControllerLog) << "resetting channel invalid min/max - chan:channelMin:calValidMinValue:channelMax:calValidMaxValue"
                     << chan << channelInfo.channelMin << _calValidMinValue << channelInfo.channelMax << _calValidMaxValue;
                 channelInfo.channelMin = _calDefaultMinValue;
                 channelInfo.channelMax = _calDefaultMaxValue;
                 channelInfo.channelTrim = channelInfo.channelMin + ((channelInfo.channelMax - channelInfo.channelMin) / 2);
             } else {
+                if (oneSidedExtension) {
+                    continue;
+                }
+
                 switch (channelInfo.stickFunction) {
                 case stickFunctionThrottle:
                 case stickFunctionYaw:
@@ -823,6 +887,24 @@ void RemoteControlCalibrationController::_stopCalibration()
     _stickDisplayPositions = { _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical,
                                _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical };
     emit stickDisplayPositionsChanged();
+    emit oneSidedButtonVisibleChanged(false);
+}
+
+bool RemoteControlCalibrationController::oneSidedButtonVisible() const
+{
+    return _calibrating && _isOneSidedCalibrationStep(_currentStep);
+}
+
+bool RemoteControlCalibrationController::_isOneSidedCalibrationStep(int step) const
+{
+    if (step < 0 || step >= _stateMachine.size()) {
+        return false;
+    }
+
+    const StateMachineEntry &entry = _stateMachine[step];
+    const bool isLowStep = entry.stepFunction == StateMachineStepExtensionLowHorz || entry.stepFunction == StateMachineStepExtensionLowVert;
+    const bool isAdditionalAxis = entry.stickFunction >= stickFunctionAdditionalAxis1 && entry.stickFunction < stickFunctionMax;
+    return isLowStep && isAdditionalAxis;
 }
 
 void RemoteControlCalibrationController::_saveCurrentRawValues()
@@ -926,9 +1008,9 @@ int RemoteControlCalibrationController::adjustedPitchExtensionChannelValue()
     }
 }
 
-int RemoteControlCalibrationController::adjustedAux1ExtensionChannelValue()
+int RemoteControlCalibrationController::adjustedAdditionalAxis1ChannelValue()
 {
-    int channel = _rgFunctionChannelMapping[stickFunctionAux1Extension];
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis1];
     if (channel != _chanMax) {
         return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
     } else {
@@ -936,9 +1018,9 @@ int RemoteControlCalibrationController::adjustedAux1ExtensionChannelValue()
     }
 }
 
-int RemoteControlCalibrationController::adjustedAux2ExtensionChannelValue()
+int RemoteControlCalibrationController::adjustedAdditionalAxis2ChannelValue()
 {
-    int channel = _rgFunctionChannelMapping[stickFunctionAux2Extension];
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis2];
     if (channel != _chanMax) {
         return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
     } else {
@@ -946,9 +1028,9 @@ int RemoteControlCalibrationController::adjustedAux2ExtensionChannelValue()
     }
 }
 
-int RemoteControlCalibrationController::adjustedAux3ExtensionChannelValue()
+int RemoteControlCalibrationController::adjustedAdditionalAxis3ChannelValue()
 {
-    int channel = _rgFunctionChannelMapping[stickFunctionAux3Extension];
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis3];
     if (channel != _chanMax) {
         return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
     } else {
@@ -956,9 +1038,9 @@ int RemoteControlCalibrationController::adjustedAux3ExtensionChannelValue()
     }
 }
 
-int RemoteControlCalibrationController::adjustedAux4ExtensionChannelValue()
+int RemoteControlCalibrationController::adjustedAdditionalAxis4ChannelValue()
 {
-    int channel = _rgFunctionChannelMapping[stickFunctionAux4Extension];
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis4];
     if (channel != _chanMax) {
         return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
     } else {
@@ -966,9 +1048,9 @@ int RemoteControlCalibrationController::adjustedAux4ExtensionChannelValue()
     }
 }
 
-int RemoteControlCalibrationController::adjustedAux5ExtensionChannelValue()
+int RemoteControlCalibrationController::adjustedAdditionalAxis5ChannelValue()
 {
-    int channel = _rgFunctionChannelMapping[stickFunctionAux5Extension];
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis5];
     if (channel != _chanMax) {
         return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
     } else {
@@ -976,9 +1058,9 @@ int RemoteControlCalibrationController::adjustedAux5ExtensionChannelValue()
     }
 }
 
-int RemoteControlCalibrationController::adjustedAux6ExtensionChannelValue()
+int RemoteControlCalibrationController::adjustedAdditionalAxis6ChannelValue()
 {
-    int channel = _rgFunctionChannelMapping[stickFunctionAux6Extension];
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis6];
     if (channel != _chanMax) {
         return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
     } else {
@@ -1006,34 +1088,34 @@ bool RemoteControlCalibrationController::pitchExtensionChannelMapped()
     return (_rgFunctionChannelMapping[stickFunctionPitchExtension] != _chanMax);
 }
 
-bool RemoteControlCalibrationController::aux1ExtensionChannelMapped()
+bool RemoteControlCalibrationController::additionalAxis1ChannelMapped()
 {
-    return (_rgFunctionChannelMapping[stickFunctionAux1Extension] != _chanMax);
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis1] != _chanMax);
 }
 
-bool RemoteControlCalibrationController::aux2ExtensionChannelMapped()
+bool RemoteControlCalibrationController::additionalAxis2ChannelMapped()
 {
-    return (_rgFunctionChannelMapping[stickFunctionAux2Extension] != _chanMax);
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis2] != _chanMax);
 }
 
-bool RemoteControlCalibrationController::aux3ExtensionChannelMapped()
+bool RemoteControlCalibrationController::additionalAxis3ChannelMapped()
 {
-    return (_rgFunctionChannelMapping[stickFunctionAux3Extension] != _chanMax);
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis3] != _chanMax);
 }
 
-bool RemoteControlCalibrationController::aux4ExtensionChannelMapped()
+bool RemoteControlCalibrationController::additionalAxis4ChannelMapped()
 {
-    return (_rgFunctionChannelMapping[stickFunctionAux4Extension] != _chanMax);
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis4] != _chanMax);
 }
 
-bool RemoteControlCalibrationController::aux5ExtensionChannelMapped()
+bool RemoteControlCalibrationController::additionalAxis5ChannelMapped()
 {
-    return (_rgFunctionChannelMapping[stickFunctionAux5Extension] != _chanMax);
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis5] != _chanMax);
 }
 
-bool RemoteControlCalibrationController::aux6ExtensionChannelMapped()
+bool RemoteControlCalibrationController::additionalAxis6ChannelMapped()
 {
-    return (_rgFunctionChannelMapping[stickFunctionAux6Extension] != _chanMax);
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis6] != _chanMax);
 }
 
 bool RemoteControlCalibrationController::yawChannelMapped()
@@ -1056,42 +1138,34 @@ bool RemoteControlCalibrationController::rollExtensionEnabled()
     return _stickFunctionEnabled(stickFunctionRollExtension);
 }
 
-bool RemoteControlCalibrationController::aux1ExtensionEnabled()
+bool RemoteControlCalibrationController::additionalAxis1Enabled()
 {
-    return _stickFunctionEnabled(stickFunctionAux1Extension);
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis1);
 }
 
-bool RemoteControlCalibrationController::aux2ExtensionEnabled()
+bool RemoteControlCalibrationController::additionalAxis2Enabled()
 {
-    return _stickFunctionEnabled(stickFunctionAux2Extension);
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis2);
 }
 
-bool RemoteControlCalibrationController::aux3ExtensionEnabled()
+bool RemoteControlCalibrationController::additionalAxis3Enabled()
 {
-    return _stickFunctionEnabled(stickFunctionAux3Extension);
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis3);
 }
 
-bool RemoteControlCalibrationController::aux4ExtensionEnabled()
+bool RemoteControlCalibrationController::additionalAxis4Enabled()
 {
-    return _stickFunctionEnabled(stickFunctionAux4Extension);
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis4);
 }
 
-bool RemoteControlCalibrationController::aux5ExtensionEnabled()
+bool RemoteControlCalibrationController::additionalAxis5Enabled()
 {
-    return _stickFunctionEnabled(stickFunctionAux5Extension);
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis5);
 }
 
-bool RemoteControlCalibrationController::aux6ExtensionEnabled()
+bool RemoteControlCalibrationController::additionalAxis6Enabled()
 {
-    return _stickFunctionEnabled(stickFunctionAux6Extension);
-}
-
-bool RemoteControlCalibrationController::anyExtensionEnabled()
-{
-    return pitchExtensionEnabled() || rollExtensionEnabled() ||
-           aux1ExtensionEnabled() || aux2ExtensionEnabled() ||
-           aux3ExtensionEnabled() || aux4ExtensionEnabled() ||
-           aux5ExtensionEnabled() || aux6ExtensionEnabled();
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis6);
 }
 
 bool RemoteControlCalibrationController::rollChannelReversed()
@@ -1130,55 +1204,55 @@ bool RemoteControlCalibrationController::pitchExtensionChannelReversed()
     }
 }
 
-bool RemoteControlCalibrationController::aux1ExtensionChannelReversed()
+bool RemoteControlCalibrationController::additionalAxis1ChannelReversed()
 {
-    if (_rgFunctionChannelMapping[stickFunctionAux1Extension] != _chanMax) {
-        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAux1Extension]].channelReversed;
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis1] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis1]].channelReversed;
     } else {
         return false;
     }
 }
 
-bool RemoteControlCalibrationController::aux2ExtensionChannelReversed()
+bool RemoteControlCalibrationController::additionalAxis2ChannelReversed()
 {
-    if (_rgFunctionChannelMapping[stickFunctionAux2Extension] != _chanMax) {
-        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAux2Extension]].channelReversed;
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis2] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis2]].channelReversed;
     } else {
         return false;
     }
 }
 
-bool RemoteControlCalibrationController::aux3ExtensionChannelReversed()
+bool RemoteControlCalibrationController::additionalAxis3ChannelReversed()
 {
-    if (_rgFunctionChannelMapping[stickFunctionAux3Extension] != _chanMax) {
-        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAux3Extension]].channelReversed;
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis3] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis3]].channelReversed;
     } else {
         return false;
     }
 }
 
-bool RemoteControlCalibrationController::aux4ExtensionChannelReversed()
+bool RemoteControlCalibrationController::additionalAxis4ChannelReversed()
 {
-    if (_rgFunctionChannelMapping[stickFunctionAux4Extension] != _chanMax) {
-        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAux4Extension]].channelReversed;
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis4] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis4]].channelReversed;
     } else {
         return false;
     }
 }
 
-bool RemoteControlCalibrationController::aux5ExtensionChannelReversed()
+bool RemoteControlCalibrationController::additionalAxis5ChannelReversed()
 {
-    if (_rgFunctionChannelMapping[stickFunctionAux5Extension] != _chanMax) {
-        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAux5Extension]].channelReversed;
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis5] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis5]].channelReversed;
     } else {
         return false;
     }
 }
 
-bool RemoteControlCalibrationController::aux6ExtensionChannelReversed()
+bool RemoteControlCalibrationController::additionalAxis6ChannelReversed()
 {
-    if (_rgFunctionChannelMapping[stickFunctionAux6Extension] != _chanMax) {
-        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAux6Extension]].channelReversed;
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis6] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis6]].channelReversed;
     } else {
         return false;
     }
@@ -1220,12 +1294,12 @@ void RemoteControlCalibrationController::_signalAllAttitudeValueChanges()
     emit pitchChannelMappedChanged(pitchChannelMapped());
     emit rollExtensionChannelMappedChanged(rollExtensionChannelMapped());
     emit pitchExtensionChannelMappedChanged(pitchExtensionChannelMapped());
-    emit aux1ExtensionChannelMappedChanged(aux1ExtensionChannelMapped());
-    emit aux2ExtensionChannelMappedChanged(aux2ExtensionChannelMapped());
-    emit aux3ExtensionChannelMappedChanged(aux3ExtensionChannelMapped());
-    emit aux4ExtensionChannelMappedChanged(aux4ExtensionChannelMapped());
-    emit aux5ExtensionChannelMappedChanged(aux5ExtensionChannelMapped());
-    emit aux6ExtensionChannelMappedChanged(aux6ExtensionChannelMapped());
+    emit additionalAxis1ChannelMappedChanged(additionalAxis1ChannelMapped());
+    emit additionalAxis2ChannelMappedChanged(additionalAxis2ChannelMapped());
+    emit additionalAxis3ChannelMappedChanged(additionalAxis3ChannelMapped());
+    emit additionalAxis4ChannelMappedChanged(additionalAxis4ChannelMapped());
+    emit additionalAxis5ChannelMappedChanged(additionalAxis5ChannelMapped());
+    emit additionalAxis6ChannelMappedChanged(additionalAxis6ChannelMapped());
     emit yawChannelMappedChanged(yawChannelMapped());
     emit throttleChannelMappedChanged(throttleChannelMapped());
 
@@ -1233,12 +1307,12 @@ void RemoteControlCalibrationController::_signalAllAttitudeValueChanges()
     emit pitchChannelReversedChanged(pitchChannelReversed());
     emit rollExtensionChannelReversedChanged(rollExtensionChannelReversed());
     emit pitchExtensionChannelReversedChanged(pitchExtensionChannelReversed());
-    emit aux1ExtensionChannelReversedChanged(aux1ExtensionChannelReversed());
-    emit aux2ExtensionChannelReversedChanged(aux2ExtensionChannelReversed());
-    emit aux3ExtensionChannelReversedChanged(aux3ExtensionChannelReversed());
-    emit aux4ExtensionChannelReversedChanged(aux4ExtensionChannelReversed());
-    emit aux5ExtensionChannelReversedChanged(aux5ExtensionChannelReversed());
-    emit aux6ExtensionChannelReversedChanged(aux6ExtensionChannelReversed());
+    emit additionalAxis1ChannelReversedChanged(additionalAxis1ChannelReversed());
+    emit additionalAxis2ChannelReversedChanged(additionalAxis2ChannelReversed());
+    emit additionalAxis3ChannelReversedChanged(additionalAxis3ChannelReversed());
+    emit additionalAxis4ChannelReversedChanged(additionalAxis4ChannelReversed());
+    emit additionalAxis5ChannelReversedChanged(additionalAxis5ChannelReversed());
+    emit additionalAxis6ChannelReversedChanged(additionalAxis6ChannelReversed());
     emit yawChannelReversedChanged(yawChannelReversed());
     emit throttleChannelReversedChanged(throttleChannelReversed());
 
@@ -1246,12 +1320,12 @@ void RemoteControlCalibrationController::_signalAllAttitudeValueChanges()
     _emitDeadbandChanged(stickFunctionPitch);
     _emitDeadbandChanged(stickFunctionRollExtension);
     _emitDeadbandChanged(stickFunctionPitchExtension);
-    _emitDeadbandChanged(stickFunctionAux1Extension);
-    _emitDeadbandChanged(stickFunctionAux2Extension);
-    _emitDeadbandChanged(stickFunctionAux3Extension);
-    _emitDeadbandChanged(stickFunctionAux4Extension);
-    _emitDeadbandChanged(stickFunctionAux5Extension);
-    _emitDeadbandChanged(stickFunctionAux6Extension);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis1);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis2);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis3);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis4);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis5);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis6);
     _emitDeadbandChanged(stickFunctionYaw);
     _emitDeadbandChanged(stickFunctionThrottle);
 }
@@ -1276,34 +1350,34 @@ int RemoteControlCalibrationController::pitchExtensionDeadband()
     return _deadbandForFunction(stickFunctionPitchExtension);
 }
 
-int RemoteControlCalibrationController::aux1ExtensionDeadband()
+int RemoteControlCalibrationController::additionalAxis1Deadband()
 {
-    return _deadbandForFunction(stickFunctionAux1Extension);
+    return _deadbandForFunction(stickFunctionAdditionalAxis1);
 }
 
-int RemoteControlCalibrationController::aux2ExtensionDeadband()
+int RemoteControlCalibrationController::additionalAxis2Deadband()
 {
-    return _deadbandForFunction(stickFunctionAux2Extension);
+    return _deadbandForFunction(stickFunctionAdditionalAxis2);
 }
 
-int RemoteControlCalibrationController::aux3ExtensionDeadband()
+int RemoteControlCalibrationController::additionalAxis3Deadband()
 {
-    return _deadbandForFunction(stickFunctionAux3Extension);
+    return _deadbandForFunction(stickFunctionAdditionalAxis3);
 }
 
-int RemoteControlCalibrationController::aux4ExtensionDeadband()
+int RemoteControlCalibrationController::additionalAxis4Deadband()
 {
-    return _deadbandForFunction(stickFunctionAux4Extension);
+    return _deadbandForFunction(stickFunctionAdditionalAxis4);
 }
 
-int RemoteControlCalibrationController::aux5ExtensionDeadband()
+int RemoteControlCalibrationController::additionalAxis5Deadband()
 {
-    return _deadbandForFunction(stickFunctionAux5Extension);
+    return _deadbandForFunction(stickFunctionAdditionalAxis5);
 }
 
-int RemoteControlCalibrationController::aux6ExtensionDeadband()
+int RemoteControlCalibrationController::additionalAxis6Deadband()
 {
-    return _deadbandForFunction(stickFunctionAux6Extension);
+    return _deadbandForFunction(stickFunctionAdditionalAxis6);
 }
 
 int RemoteControlCalibrationController::yawDeadband()
@@ -1332,18 +1406,18 @@ QString RemoteControlCalibrationController::_stickFunctionToString(StickFunction
         return tr("Yaw");
     case stickFunctionThrottle:
         return tr("Throttle");
-    case stickFunctionAux1Extension:
-        return tr("Aux1 Extension");
-    case stickFunctionAux2Extension:
-        return tr("Aux2 Extension");
-    case stickFunctionAux3Extension:
-        return tr("Aux3 Extension");
-    case stickFunctionAux4Extension:
-        return tr("Aux4 Extension");
-    case stickFunctionAux5Extension:
-        return tr("Aux5 Extension");
-    case stickFunctionAux6Extension:
-        return tr("Aux6 Extension");
+    case stickFunctionAdditionalAxis1:
+        return tr("Additional Axis 1");
+    case stickFunctionAdditionalAxis2:
+        return tr("Additional Axis 2");
+    case stickFunctionAdditionalAxis3:
+        return tr("Additional Axis 3");
+    case stickFunctionAdditionalAxis4:
+        return tr("Additional Axis 4");
+    case stickFunctionAdditionalAxis5:
+        return tr("Additional Axis 5");
+    case stickFunctionAdditionalAxis6:
+        return tr("Additional Axis 6");
     case stickFunctionPitchExtension:
         return tr("Pitch Extension");
     case stickFunctionRollExtension:
@@ -1390,18 +1464,18 @@ void RemoteControlCalibrationController::_emitDeadbandChanged(StickFunction stic
 {
     const int deadband = _deadbandForFunction(stickFunction);
     switch (stickFunction) {
-    case stickFunctionRoll:
-        emit rollDeadbandChanged(deadband);
-        break;
-    case stickFunctionPitch:
-        emit pitchDeadbandChanged(deadband);
-        break;
-    case stickFunctionYaw:
-        emit yawDeadbandChanged(deadband);
-        break;
-    case stickFunctionThrottle:
-        emit throttleDeadbandChanged(deadband);
-        break;
+    case stickFunctionRoll:                emit rollDeadbandChanged(deadband);                break;
+    case stickFunctionPitch:               emit pitchDeadbandChanged(deadband);               break;
+    case stickFunctionYaw:                 emit yawDeadbandChanged(deadband);                 break;
+    case stickFunctionThrottle:            emit throttleDeadbandChanged(deadband);            break;
+    case stickFunctionRollExtension:       emit rollExtensionDeadbandChanged(deadband);       break;
+    case stickFunctionPitchExtension:      emit pitchExtensionDeadbandChanged(deadband);      break;
+    case stickFunctionAdditionalAxis1:     emit additionalAxis1DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis2:     emit additionalAxis2DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis3:     emit additionalAxis3DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis4:     emit additionalAxis4DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis5:     emit additionalAxis5DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis6:     emit additionalAxis6DeadbandChanged(deadband);     break;
     default:
         break;
     }

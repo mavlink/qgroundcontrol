@@ -35,6 +35,8 @@ endif()
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_AUTOGEN_USE_SYSTEM_INCLUDE ON)
+
 # Include compiler warnings configuration
 include(CompilerWarnings)
 
@@ -97,7 +99,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
             set(CMAKE_CXX_COMPILER_LAUNCHER "")
             message(STATUS "QGC: -ftime-trace enabled (granularity=100us); compiler launcher disabled")
         else()
-            message(WARNING "QGC_TIME_TRACE requires Clang; ignoring with ${CMAKE_CXX_COMPILER_ID}")
+            message(WARNING "QGC: QGC_TIME_TRACE requires Clang; ignoring with ${CMAKE_CXX_COMPILER_ID}")
         endif()
     endif()
 
@@ -105,7 +107,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
 elseif(MSVC)
     # MSVC-specific optimizations
     add_link_options("$<$<CONFIG:Release>:/LTCG:INCREMENTAL>")
-    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug>:Embedded>")
+    # /Z7 not /Zi — /Zi's absolute PDB paths break ccache hashing (ccache#1040); linker still emits a sidecar PDB.
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "Embedded")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
@@ -136,11 +139,11 @@ endif()
 # ----------------------------------------------------------------------------
 if(CMAKE_CROSSCOMPILING)
     if(NOT DEFINED QT_HOST_PATH OR QT_HOST_PATH STREQUAL "")
-        message(FATAL_ERROR "Cross-compilation requires QT_HOST_PATH to be defined and set to a valid Qt host installation path")
+        message(FATAL_ERROR "QGC: Cross-compilation requires QT_HOST_PATH to be defined and set to a valid Qt host installation path")
     endif()
 
     if(NOT IS_DIRECTORY "${QT_HOST_PATH}")
-        message(FATAL_ERROR "Cross-compilation QT_HOST_PATH is not a valid directory: ${QT_HOST_PATH}")
+        message(FATAL_ERROR "QGC: Cross-compilation QT_HOST_PATH is not a valid directory: ${QT_HOST_PATH}")
     endif()
 
     if(ANDROID)

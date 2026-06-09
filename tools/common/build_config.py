@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 from typing import Any
+
+from .io import read_json
 
 CONFIG_ENV_VAR = "CONFIG_FILE"
 CONFIG_RELATIVE_PATH = Path(".github") / "build-config.json"
@@ -16,6 +17,7 @@ DEFAULT_EXPORT_KEYS = [
     "gstreamer_minimum_version",
     "gstreamer_default_version",
     "gstreamer_macos_version",
+    "gstreamer_ios_version",
     "gstreamer_android_version",
     "gstreamer_windows_version",
     "xcode_version",
@@ -69,8 +71,7 @@ def load_build_config(
 ) -> dict[str, Any]:
     """Load and parse the build config JSON file."""
     path = config_file or find_build_config(start, extra_candidates=extra_candidates)
-    with path.open(encoding="utf-8") as f:
-        data = json.load(f)
+    data = read_json(path)
     if not isinstance(data, dict):
         raise ValueError(f"Expected JSON object in {path}")
     return data

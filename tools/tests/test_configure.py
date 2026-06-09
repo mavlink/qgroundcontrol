@@ -6,7 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-from configure import BuildConfig, find_qt_cmake, parse_version
+from configure import CMakeConfig, find_qt_cmake, parse_version
 
 
 class TestParseVersion:
@@ -23,9 +23,9 @@ class TestParseVersion:
         assert parse_version(path) == (0, 0, 0)
 
 
-class TestBuildConfig:
+class TestCMakeConfig:
     def test_defaults(self) -> None:
-        config = BuildConfig()
+        config = CMakeConfig()
         assert config.build_type == "Debug"
         assert config.generator == "Ninja"
         assert config.testing is False
@@ -33,7 +33,7 @@ class TestBuildConfig:
         assert config.unity_build is False
 
     def test_custom_values(self) -> None:
-        config = BuildConfig(
+        config = CMakeConfig(
             build_type="Release",
             testing=True,
             unity_build=True,

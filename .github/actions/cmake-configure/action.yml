@@ -27,17 +27,10 @@ inputs:
     required: false
     default: 'false'
   stable:
-    description: 'Stable build (QGC_STABLE_BUILD)'
+    description: >-
+      Stable build (QGC_STABLE_BUILD). Defaults to true on tag refs and Stable* branches.
     required: false
-    default: 'false'
-  unity-build:
-    description: 'Enable unity build for faster compilation'
-    required: false
-    default: 'false'
-  unity-batch-size:
-    description: 'Unity build batch size'
-    required: false
-    default: '16'
+    default: ${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'true' || 'false' }}
   extra-args:
     description: 'Additional CMake arguments'
     required: false
@@ -59,6 +52,18 @@ runs:
     - name: Configure
       shell: bash
       run: |
+        # Pin Python3_EXECUTABLE to the workspace venv so CMake-invoked jinja generators see project deps.
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          VENV_PYTHON="${GITHUB_WORKSPACE}/.venv/Scripts/python.exe"
+        else
+          VENV_PYTHON="${GITHUB_WORKSPACE}/.venv/bin/python"
+        fi
+        EXTRA_ARGS="${{ inputs.extra-args }}"
+        if [[ -x "$VENV_PYTHON" ]]; then
+          EXTRA_ARGS="${EXTRA_ARGS:+$EXTRA_ARGS }-DPython3_EXECUTABLE=${VENV_PYTHON}"
+        else
+          echo "::warning::venv python not found at $VENV_PYTHON; CMake will pick system python (may lack jinja2)"
+        fi
         ARGS=(configure
           --source-dir "${{ inputs.source-dir }}"
           --build-dir "${{ inputs.build-dir }}"
@@ -69,8 +74,5 @@ runs:
         [[ "${{ inputs.coverage }}" == "true" ]] && ARGS+=(--coverage)
         [[ "${{ inputs.stable }}" == "true" ]] && ARGS+=(--stable)
         [[ "${{ inputs.use-qt-cmake }}" != "true" ]] && ARGS+=(--no-qt-cmake)
-        if [[ "${{ inputs.unity-build }}" == "true" ]]; then
-          ARGS+=(--unity-build --unity-batch-size "${{ inputs.unity-batch-size }}")
-        fi
-        [[ -n "${{ inputs.extra-args }}" ]] && ARGS+=("--extra-args=${{ inputs.extra-args }}")
+        [[ -n "$EXTRA_ARGS" ]] && ARGS+=("--extra-args=$EXTRA_ARGS")
         python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"

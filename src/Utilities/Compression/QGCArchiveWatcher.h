@@ -12,7 +12,7 @@
 
 class QGCCompressionJob;
 
-/// Watches directories for new archive files and optionally auto-decompresses them
+/// \brief Watches directories for new archive files and optionally auto-decompresses them
 ///
 /// Example usage:
 /// @code
@@ -30,6 +30,7 @@ class QGCCompressionJob;
 /// });
 /// watcher.watchDirectory("/downloads");
 /// @endcode
+///
 class QGCArchiveWatcher : public QObject
 {
     Q_OBJECT

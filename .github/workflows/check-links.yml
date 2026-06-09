@@ -41,29 +41,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Restore lychee cache (PR)
-        if: github.event_name == 'pull_request'
-        uses: actions/cache/restore@v5
-        with:
-          path: .lycheecache
-          key: cache-lychee-${{ hashFiles('.lychee.toml') }}
-          restore-keys: cache-lychee-
-
-      - name: Cache lychee (push)
-        if: github.event_name != 'pull_request'
-        uses: actions/cache@v5
-        with:
-          path: .lycheecache
-          key: cache-lychee-${{ hashFiles('.lychee.toml') }}
-          restore-keys: cache-lychee-
-
       - name: Check links
         uses: lycheeverse/lychee-action@v2
         with:
           args: '--config .lychee.toml --cache --max-cache-age 3d --no-progress **/*.md docs/en/**'
           lycheeVersion: v0.22.0
           failIfEmpty: false
-          fail: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          fail: ${{ github.event_name == 'pull_request' }}
 
       - name: Upload report
         uses: actions/upload-artifact@v7

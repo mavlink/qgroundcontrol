@@ -23,7 +23,7 @@ QGC configures GStreamer runtime paths before `gst_init()`:
 
 ### Linux
 
-Use `python3 tools/setup/install_dependencies.py`, or manually:
+Use `python3 tools/setup/install_dependencies`, or manually:
 
 ```
 sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev python3-gi python3-gst-1.0

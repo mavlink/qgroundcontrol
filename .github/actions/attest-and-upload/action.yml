@@ -44,14 +44,32 @@ inputs:
     description: 'GitHub artifact compression level 0-9 (0=none, best for pre-compressed binaries)'
     required: false
     default: '0'
+  artifact-source-path:
+    description: >-
+      Override for the source path of the artifact. Defaults to
+      <runner.temp>/build/<artifact-name>. Use this for multi-config
+      generators (e.g. iOS Ninja Multi-Config writes to build/Release/<bundle>).
+    required: false
+    default: ''
 
 runs:
   using: composite
   steps:
+    - name: Resolve source path
+      id: src
+      shell: bash
+      env:
+        OVERRIDE: ${{ inputs.artifact-source-path }}
+        DEFAULT: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/attest_helper.py" resolve-path \
+          --override "${OVERRIDE}" \
+          --default "${DEFAULT}"
+
     - name: Attest Build with SBOM
       uses: ./.github/actions/attest-sbom
       with:
-        subject-path: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
+        subject-path: ${{ steps.src.outputs.path }}
         subject-name: ${{ inputs.subject-name || inputs.package-name }}
         scan-path: ${{ inputs.scan-path || format('{0}/build', runner.temp) }}
 
@@ -59,7 +77,7 @@ runs:
       uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.package-name }}
-        path: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
+        path: ${{ steps.src.outputs.path }}
         retention-days: ${{ inputs.retention-days != '' && inputs.retention-days || (github.event_name == 'pull_request' && '7' || '30') }}
         compression-level: ${{ inputs.compression-level }}
 
@@ -72,7 +90,7 @@ runs:
       uses: ./.github/actions/aws-upload
       with:
         artifact-name: ${{ inputs.artifact-name }}
-        artifact-path: ${{ runner.temp }}/build/${{ inputs.artifact-name }}
+        artifact-path: ${{ steps.src.outputs.path }}
         aws-role-arn: ${{ inputs.aws-role-arn }}
         aws-key-id: ${{ inputs.aws-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}

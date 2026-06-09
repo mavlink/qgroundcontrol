@@ -26,22 +26,22 @@ void LogViewerController::clear()
     _expandedGroups.clear();
     emit fieldRowsChanged();
     emit selectedFieldsChanged();
-    _setLog(SourceType::None, QString(), tr("No log loaded"));
+    _setLog(SourceType::None, QString());
 }
 
 void LogViewerController::openTLog(const QString &path)
 {
-    _setLog(SourceType::TLog, path, tr("Telemetry log loaded"));
+    _setLog(SourceType::TLog, path);
 }
 
 void LogViewerController::openBinLog(const QString &path)
 {
-    _setLog(SourceType::Bin, path, tr("DataFlash log loaded"));
+    _setLog(SourceType::Bin, path);
 }
 
 void LogViewerController::openULogFile(const QString &path)
 {
-    _setLog(SourceType::ULog, path, tr("ULog file loaded"));
+    _setLog(SourceType::ULog, path);
 }
 
 void LogViewerController::setPlottableFields(const QStringList &fieldNames)
@@ -123,47 +123,7 @@ QString LogViewerController::eventColor(const QString &eventType) const
     return _assignColorForKey(QStringLiteral("event-other"));
 }
 
-QString LogViewerController::modeColor(const QString &modeName) const
-{
-    static const QStringList modePalette = {
-        QStringLiteral("#E53935"), // red
-        QStringLiteral("#FB8C00"), // orange
-        QStringLiteral("#FDD835"), // yellow
-        QStringLiteral("#43A047"), // green
-        QStringLiteral("#00897B"), // teal
-        QStringLiteral("#00ACC1"), // cyan
-        QStringLiteral("#1E88E5"), // blue
-        QStringLiteral("#5E35B1"), // indigo
-        QStringLiteral("#8E24AA"), // purple
-        QStringLiteral("#D81B60"), // pink
-        QStringLiteral("#6D4C41"), // brown
-        QStringLiteral("#546E7A"), // blue grey
-    };
-
-    quint32 hash = 0;
-    for (const QChar ch : modeName) {
-        hash = (hash * 31U) + ch.unicode();
-    }
-
-    const qsizetype idx = static_cast<qsizetype>(hash % static_cast<quint32>(modePalette.count()));
-    return modePalette[idx];
-}
-
-QStringList LogViewerController::modeLegendEntries(const QVariantList &modeSegments) const
-{
-    QStringList modes;
-    for (const QVariant &variant : modeSegments) {
-        const QVariantMap segment = variant.toMap();
-        const QString mode = segment.value(QStringLiteral("mode")).toString();
-        if (!mode.isEmpty() && !modes.contains(mode)) {
-            modes.append(mode);
-        }
-    }
-
-    return modes;
-}
-
-void LogViewerController::_setLog(SourceType sourceType, const QString &path, const QString &statusText)
+void LogViewerController::_setLog(SourceType sourceType, const QString &path)
 {
     if (_sourceType != sourceType) {
         _sourceType = sourceType;
@@ -173,11 +133,6 @@ void LogViewerController::_setLog(SourceType sourceType, const QString &path, co
     if (_currentLogPath != path) {
         _currentLogPath = path;
         emit currentLogPathChanged();
-    }
-
-    if (_statusText != statusText) {
-        _statusText = statusText;
-        emit statusTextChanged();
     }
 
     qCDebug(LogViewerControllerLog) << "sourceType" << static_cast<int>(_sourceType) << "path" << _currentLogPath;

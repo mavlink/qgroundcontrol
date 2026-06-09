@@ -9,7 +9,7 @@ Q_DECLARE_LOGGING_CATEGORY(QGCStateMachineLog)
 class QGCStateMachine;
 class Vehicle;
 
-/// Full-featured base class for QGroundControl state machine states.
+/// \brief Full-featured base class for QGroundControl state machine states.
 ///
 /// Extends QGCAbstractState with:
 /// - Local per-state error handling (setLocalErrorState)
@@ -18,6 +18,7 @@ class Vehicle;
 ///
 /// Use QGCAbstractState when you only need callback-driven entry/exit.
 /// Use QGCState when you need the extra features listed above.
+///
 class QGCState : public QGCAbstractState
 {
     Q_OBJECT

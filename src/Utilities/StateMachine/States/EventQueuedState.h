@@ -5,7 +5,7 @@
 #include <QtCore/QSet>
 #include <QtCore/QString>
 
-/// A state that waits for one or more named events before advancing.
+/// \brief A state that waits for one or more named events before advancing.
 ///
 /// This state integrates with QGCStateMachine's postEvent() and postDelayedEvent()
 /// methods to provide event-based state coordination.
@@ -26,6 +26,7 @@
 /// Multiple events can be configured using addExpectedEvent().
 /// The state advances when ANY of the expected events is received (OR logic).
 /// For AND logic (wait for all events), chain multiple EventQueuedState instances.
+///
 class EventQueuedState : public WaitStateBase
 {
     Q_OBJECT

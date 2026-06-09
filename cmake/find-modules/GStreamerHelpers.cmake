@@ -1,3 +1,5 @@
+include(Download)
+
 option(GStreamer_REQUIRE_CHECKSUM "Fail if SDK download checksum cannot be verified" OFF)
 option(GStreamer_DEBUG "Print GStreamer CMake debug messages" OFF)
 
@@ -150,106 +152,32 @@ function(gstreamer_fetch_checksum PLATFORM VERSION OUTPUT_VAR)
     set(${OUTPUT_VAR} "${_result}" PARENT_SCOPE)
 endfunction()
 
-macro(_gstreamer_parse_expected_hash _HASH_SPEC _OUT_ALGO _OUT_EXPECTED)
-    set(_gph_valid MD5 SHA1 SHA224 SHA256 SHA384 SHA512 SHA3_224 SHA3_256 SHA3_384 SHA3_512)
-    string(REGEX MATCH "^([A-Za-z0-9_]+)=(.+)$" _gph_match "${${_HASH_SPEC}}")
-    if(NOT _gph_match)
-        message(FATAL_ERROR "gstreamer_resilient_download: Invalid EXPECTED_HASH format '${${_HASH_SPEC}}' (expected ALGO=hex)")
-    endif()
-    set(${_OUT_ALGO} "${CMAKE_MATCH_1}")
-    set(${_OUT_EXPECTED} "${CMAKE_MATCH_2}")
-    list(FIND _gph_valid "${${_OUT_ALGO}}" _gph_idx)
-    if(_gph_idx EQUAL -1)
-        message(FATAL_ERROR "gstreamer_resilient_download: Unsupported hash algorithm '${${_OUT_ALGO}}'")
-    endif()
-endmacro()
-
 function(gstreamer_resilient_download)
     cmake_parse_arguments(ARG "ALLOW_FAILURE" "FILENAME;DESTINATION_DIR;RESULT_VAR;TIMEOUT;INACTIVITY_TIMEOUT;EXPECTED_HASH" "URLS" ${ARGN})
 
-    foreach(_required FILENAME DESTINATION_DIR RESULT_VAR)
-        if(NOT ARG_${_required})
-            message(FATAL_ERROR "gstreamer_resilient_download: ${_required} is required")
-        endif()
-    endforeach()
-    if(NOT ARG_URLS)
-        message(FATAL_ERROR "gstreamer_resilient_download: at least one URL is required")
+    set(_args
+        FILENAME "${ARG_FILENAME}"
+        DESTINATION_DIR "${ARG_DESTINATION_DIR}"
+        RESULT_VAR _gst_download_result
+        URLS ${ARG_URLS}
+        LOG_TAG "GStreamer"
+        FAILURE_HINT "Install manually from https://gstreamer.freedesktop.org/download/ or set GStreamer_ROOT_DIR."
+    )
+    if(ARG_TIMEOUT)
+        list(APPEND _args TIMEOUT "${ARG_TIMEOUT}")
     endif()
-
-    if(NOT ARG_TIMEOUT)
-        set(ARG_TIMEOUT 120)
+    if(ARG_INACTIVITY_TIMEOUT)
+        list(APPEND _args INACTIVITY_TIMEOUT "${ARG_INACTIVITY_TIMEOUT}")
     endif()
-    if(NOT ARG_INACTIVITY_TIMEOUT)
-        set(ARG_INACTIVITY_TIMEOUT 60)
+    if(ARG_EXPECTED_HASH)
+        list(APPEND _args EXPECTED_HASH "${ARG_EXPECTED_HASH}")
     endif()
-
-    set(_dest "${ARG_DESTINATION_DIR}/${ARG_FILENAME}")
-
-    if(EXISTS "${_dest}")
-        if(ARG_EXPECTED_HASH)
-            _gstreamer_parse_expected_hash(ARG_EXPECTED_HASH _hash_algo _expected)
-            file(${_hash_algo} "${_dest}" _cached_hash)
-            if(NOT _cached_hash STREQUAL "${_expected}")
-                message(STATUS "GStreamer: Cached ${ARG_FILENAME} failed ${_hash_algo} check, re-downloading")
-                file(REMOVE "${_dest}")
-            else()
-                set(${ARG_RESULT_VAR} "${_dest}" PARENT_SCOPE)
-                return()
-            endif()
-        else()
-            message(STATUS "GStreamer: Using cached ${ARG_FILENAME} (no checksum verification)")
-            set(${ARG_RESULT_VAR} "${_dest}" PARENT_SCOPE)
-            return()
-        endif()
-    endif()
-
-    file(MAKE_DIRECTORY "${ARG_DESTINATION_DIR}")
-    set(_tmp "${_dest}.tmp")
-    set(_tried_urls "")
-
-    foreach(_url IN LISTS ARG_URLS)
-        if(NOT _url)
-            continue()
-        endif()
-        message(STATUS "GStreamer: Downloading ${ARG_FILENAME} from ${_url}")
-        file(DOWNLOAD "${_url}" "${_tmp}"
-            STATUS _status
-            SHOW_PROGRESS
-            TIMEOUT ${ARG_TIMEOUT}
-            INACTIVITY_TIMEOUT ${ARG_INACTIVITY_TIMEOUT}
-            TLS_VERIFY ON
-        )
-        list(GET _status 0 _code)
-        if(_code EQUAL 0)
-            if(ARG_EXPECTED_HASH)
-                _gstreamer_parse_expected_hash(ARG_EXPECTED_HASH _hash_algo _expected)
-                file(${_hash_algo} "${_tmp}" _actual_hash)
-                if(NOT _actual_hash STREQUAL "${_expected}")
-                    message(WARNING "GStreamer: ${_hash_algo} mismatch for ${ARG_FILENAME} from ${_url}")
-                    file(REMOVE "${_tmp}")
-                    list(APPEND _tried_urls "${_url}")
-                    continue()
-                endif()
-            endif()
-            file(RENAME "${_tmp}" "${_dest}")
-            set(${ARG_RESULT_VAR} "${_dest}" PARENT_SCOPE)
-            return()
-        endif()
-        list(GET _status 1 _error)
-        message(WARNING "GStreamer: Failed to download from ${_url}: ${_error}")
-        file(REMOVE "${_tmp}")
-        list(APPEND _tried_urls "${_url}")
-    endforeach()
-
     if(ARG_ALLOW_FAILURE)
-        message(STATUS "GStreamer: All download URLs failed for ${ARG_FILENAME} (allowing failure). Tried: ${_tried_urls}")
-        set(${ARG_RESULT_VAR} "" PARENT_SCOPE)
-        return()
+        list(APPEND _args ALLOW_FAILURE)
     endif()
 
-    message(FATAL_ERROR "GStreamer: All download URLs failed for ${ARG_FILENAME}.\n"
-        "Tried: ${_tried_urls}\n"
-        "Install manually from https://gstreamer.freedesktop.org/download/ or set GStreamer_ROOT_DIR.")
+    qgc_resilient_download(${_args})
+    set(${ARG_RESULT_VAR} "${_gst_download_result}" PARENT_SCOPE)
 endfunction()
 
 function(gstreamer_download_sdk PLATFORM VERSION FILENAME DESTINATION_DIR RESULT_VAR)

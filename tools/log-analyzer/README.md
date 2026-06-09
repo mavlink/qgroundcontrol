@@ -18,25 +18,25 @@ pip install pymavlink
 
 ```bash
 # Show all entries
-./analyze_log.py ~/.local/share/QGroundControl/Logs/QGCConsole.log
+./analyze_log.py ~/.local/share/QGroundControl/Logs/AppLog.log
 
 # Show only errors
-./analyze_log.py --errors QGCConsole.log
+./analyze_log.py --errors AppLog.log
 
 # Show errors and warnings
-./analyze_log.py --warnings QGCConsole.log
+./analyze_log.py --warnings AppLog.log
 
 # Filter by component
-./analyze_log.py --component Vehicle QGCConsole.log
+./analyze_log.py --component Vehicle AppLog.log
 
 # Filter by message pattern
-./analyze_log.py --message "parameter" QGCConsole.log
+./analyze_log.py --message "parameter" AppLog.log
 
 # Show statistics
-./analyze_log.py --stats QGCConsole.log
+./analyze_log.py --stats AppLog.log
 
 # Show timeline
-./analyze_log.py --timeline QGCConsole.log
+./analyze_log.py --timeline AppLog.log
 ```
 
 ### Analyze Telemetry Logs
@@ -67,13 +67,13 @@ Telemetry logs (`.tlog`) are saved in the same directory.
 ### Find Connection Issues
 
 ```bash
-./analyze_log.py --message "connect|disconnect|timeout" QGCConsole.log
+./analyze_log.py --message "connect|disconnect|timeout" AppLog.log
 ```
 
 ### Find Parameter Errors
 
 ```bash
-./analyze_log.py --component parameter --errors QGCConsole.log
+./analyze_log.py --component parameter --errors AppLog.log
 ```
 
 ### Analyze Flight Session
@@ -83,7 +83,7 @@ Telemetry logs (`.tlog`) are saved in the same directory.
 ./analyze_log.py --stats flight.tlog
 
 # Find GPS issues
-./analyze_log.py --message "GPS|satellite" --warnings QGCConsole.log
+./analyze_log.py --message "GPS|satellite" --warnings AppLog.log
 ```
 
 ## Output Formats

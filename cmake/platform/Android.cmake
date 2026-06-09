@@ -101,24 +101,13 @@ set_target_properties(${CMAKE_PROJECT_NAME}
 # endif()
 
 set(QGC_CPM_JAVA_SRC_DIR "${CMAKE_BINARY_DIR}/extra_java_sources")
-list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH QGC_CPM_JAVA_SRC_DIR QGC_ANDROID_PROPERTIES_FILE)
+# Forward Python3_EXECUTABLE so per-ABI sub-configures use the same interpreter (jinja2 lives in workspace .venv, not hostedtoolcache python).
+list(APPEND QT_ANDROID_MULTI_ABI_FORWARD_VARS QGC_STABLE_BUILD QT_HOST_PATH QGC_CPM_JAVA_SRC_DIR QGC_ANDROID_PROPERTIES_FILE Python3_EXECUTABLE)
 
 # ----------------------------------------------------------------------------
 # Android OpenSSL Libraries
 # ----------------------------------------------------------------------------
-CPMAddPackage(
-    NAME android_openssl
-    URL https://github.com/KDAB/android_openssl/archive/b71f1470962019bd89534a2919f5925f93bc5779.zip
-    URL_HASH SHA256=9277d62ecdb4809801e2c369e0a639c154e0d9137e8d60863b44bf07d16ed5b3
-)
-
-if(android_openssl_ADDED)
-    include(${android_openssl_SOURCE_DIR}/android_openssl.cmake)
-    add_android_openssl_libraries(${CMAKE_PROJECT_NAME})
-    message(STATUS "QGC: Android OpenSSL libraries added")
-else()
-    message(WARNING "QGC: Failed to add Android OpenSSL libraries")
-endif()
+include(AndroidOpenSSL)
 
 # ----------------------------------------------------------------------------
 # Android Permissions

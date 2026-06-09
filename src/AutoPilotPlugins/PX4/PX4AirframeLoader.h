@@ -6,7 +6,7 @@ class AutoPilotPlugin;
 
 class FactMetaData;
 
-/// Collection of Parameter Facts for PX4 AutoPilot
+/// \brief Collection of Parameter Facts for PX4 AutoPilot
 
 class PX4AirframeLoader : QObject
 {

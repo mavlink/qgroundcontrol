@@ -28,7 +28,7 @@ bool _waitForExpectedCommandResult(QSignalSpy& spyResult, MAV_CMD expectedComman
             return true;
         }
 
-        qDebug() << "Received response to command" << arguments.at(2).toInt() << ", ignoring, waiting for:" << expectedCommand;
+        qCDebug(UnitTestLog) << "Received response to command" << arguments.at(2).toInt() << ", ignoring, waiting for:" << expectedCommand;
     }
 }
 }
@@ -77,7 +77,7 @@ void SendMavCommandWithSignallingTest::_performTestCases()
 {
     int index = 0;
     for (TestCase_t& testCase : _rgTestCases) {
-        qDebug() << "Testing case" << index++;
+        qCDebug(UnitTestLog) << "Testing case" << index++;
         _testCaseWorker(testCase);
     }
 }

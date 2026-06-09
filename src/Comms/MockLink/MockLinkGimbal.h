@@ -6,7 +6,7 @@
 
 class MockLink;
 
-/// Simulates MAVLink Gimbal Manager Protocol for MockLink.
+/// \brief Simulates MAVLink Gimbal Manager Protocol for MockLink.
 ///
 /// Supports a Gimbal Manager on MAV_COMPID_AUTOPILOT1 with a single gimbal device with the id MAV_COMP_ID_GIMBAL.
 /// Gimbal attitude is simulated with a slow oscillation when not under manual control.
@@ -19,6 +19,7 @@ class MockLink;
 ///   MAV_CMD_DO_GIMBAL_MANAGER_PITCHYAW
 ///   MAV_CMD_DO_GIMBAL_MANAGER_CONFIGURE
 ///   Periodic sending of GIMBAL_MANAGER_STATUS and GIMBAL_DEVICE_ATTITUDE_STATUS
+///
 class MockLinkGimbal
 {
 public:
@@ -60,7 +61,7 @@ private:
     void _sendGimbalManagerStatus();
     void _sendGimbalDeviceAttitudeStatus();
     void _sendGimbalManagerInformation();
-    void _sendCommandAck(uint16_t command, uint8_t result);
+    void _sendCommandAck(uint16_t command, uint8_t result, uint8_t sourceCompId);
 
     static constexpr uint8_t kGimbalCompId = MAV_COMP_ID_GIMBAL;
     static constexpr int kDefaultIntervalUs = 1000000; // 1 Hz default

@@ -4,7 +4,7 @@
 
 #include <functional>
 
-/// A state that executes an action with automatic rollback on failure.
+/// \brief A state that executes an action with automatic rollback on failure.
 ///
 /// If the forward action fails, the rollback action is executed before
 /// emitting the error() signal. This provides transaction-like semantics.
@@ -19,6 +19,7 @@
 /// state->addTransition(state, &RollbackState::advance, successState);
 /// state->addTransition(state, &RollbackState::error, errorState);
 /// @endcode
+///
 class RollbackState : public QGCState
 {
     Q_OBJECT

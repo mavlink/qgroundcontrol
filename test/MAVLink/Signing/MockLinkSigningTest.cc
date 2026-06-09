@@ -3,9 +3,12 @@
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
+#include <chrono>
+
 #include "MAVLinkSigning.h"
 #include "MAVLinkSigningKeys.h"
 #include "QmlObjectListModel.h"
+#include "SigningController.h"
 #include "Vehicle.h"
 #include "VehicleSigningController.h"
 
@@ -26,6 +29,7 @@ void MockLinkSigningTest::init()
 
 void MockLinkSigningTest::cleanup()
 {
+    SigningController::setTimeoutForTesting(std::chrono::milliseconds(0));
     MAVLinkSigningKeys::instance()->removeAllKeys();
 
     VehicleTest::cleanup();
@@ -82,11 +86,13 @@ void MockLinkSigningTest::_testSigningEnableTimeout()
     QVERIFY(vehicle());
     QVERIFY(mockLink());
 
-    expectLogMessage(QtDebugMsg, QRegularExpression("showAppMessage.*timeout"));
+    expectAppMessage(QRegularExpression("showAppMessage.*timeout"));
 
     auto* signingKeys = MAVLinkSigningKeys::instance();
     signingKeys->addKey("BadKey", "BadPassphrase");
 
+    // Comm is lost, so only the FSM timeout resolves this — shorten it to avoid the production 5s wait.
+    SigningController::setTimeoutForTesting(std::chrono::milliseconds(500));
     mockLink()->setCommLost(true);
 
     vehicle()->signingController()->enable(QStringLiteral("BadKey"));
@@ -137,8 +143,10 @@ void MockLinkSigningTest::_testSigningPendingState()
 
     QVERIFY(!vehicle()->signingController()->signingStatus().pending());
 
+    // Comm is lost, so only the FSM timeout resolves this — shorten it to avoid the production 5s wait.
+    SigningController::setTimeoutForTesting(std::chrono::milliseconds(500));
     mockLink()->setCommLost(true);
-    expectLogMessage(QtDebugMsg, QRegularExpression("showAppMessage.*timeout"));
+    expectAppMessage(QRegularExpression("showAppMessage.*timeout"));
 
     vehicle()->signingController()->enable(QStringLiteral("PendingKey"));
 
@@ -166,6 +174,38 @@ void MockLinkSigningTest::_testSigningStatusChangedSignalFiresOnEnable()
 
     QTRY_VERIFY_WITH_TIMEOUT(vehicle()->signingController()->signingStatus().enabled, TestTimeout::mediumMs());
     QVERIFY(spy.count() >= 2);
+}
+
+// Regression: confirm/fail handlers are wired once per op (Qt::SingleShotConnection), so a fresh enable after a
+// completed cycle re-wires rather than relying on a consumed connection. A dropped re-wire would hang the second
+// enable; a stale/double wire would surface as a spurious signingFailed. Guards the wire/transmit split in enable().
+void MockLinkSigningTest::_testEnableDisableReEnableCycle()
+{
+    QVERIFY(vehicle());
+    QVERIFY(mockLink());
+
+    auto* signingKeys = MAVLinkSigningKeys::instance();
+    signingKeys->addKey("CycleA", "CyclePassphraseA");
+    signingKeys->addKey("CycleB", "CyclePassphraseB");
+
+    auto* const sc = vehicle()->signingController();
+    QSignalSpy failedSpy(sc, &VehicleSigningController::signingFailed);
+
+    sc->enable(QStringLiteral("CycleA"));
+    QVERIFY_TRUE_WAIT(sc->signingStatus().enabled, TestTimeout::mediumMs());
+    QCOMPARE(sc->signingStatus().keyName, QStringLiteral("CycleA"));
+    QVERIFY(mockLink()->signingEnabled());
+
+    sc->disable();
+    QVERIFY_TRUE_WAIT(!sc->signingStatus().enabled, TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(!mockLink()->signingEnabled(), TestTimeout::mediumMs());
+
+    sc->enable(QStringLiteral("CycleB"));
+    QVERIFY_TRUE_WAIT(sc->signingStatus().enabled, TestTimeout::mediumMs());
+    QCOMPARE(sc->signingStatus().keyName, QStringLiteral("CycleB"));
+    QVERIFY(mockLink()->signingEnabled());
+
+    QCOMPARE(failedSpy.count(), 0);
 }
 
 UT_REGISTER_TEST(MockLinkSigningTest, TestLabel::Integration, TestLabel::Vehicle)

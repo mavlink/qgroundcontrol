@@ -2,7 +2,8 @@
 
 #include "QGCMapCircle.h"
 
-/// The QGCFenceCircle class provides a cicle used by GeoFence support.
+/// \brief The QGCFenceCircle class provides a cicle used by GeoFence support.
+///
 class QGCFenceCircle : public QGCMapCircle
 {
     Q_OBJECT

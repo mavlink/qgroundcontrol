@@ -9,6 +9,7 @@
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 #include "TestFixtures.h"
+#include "MultiSignalSpy.h"
 
 using namespace TestFixtures;
 
@@ -31,11 +32,10 @@ void MissionControllerTreeTest::_initForTest()
     _masterController->setFlyView(false);
     _missionController = _masterController->missionController();
 
-    SignalSpyFixture spy(_missionController);
-    QVERIFY(spy.spy());
-    spy.expect("visualItemsReset");
+    MultiSignalSpy spy;
+    QVERIFY(spy.init(_missionController));
     _masterController->start();
-    QVERIFY(spy.waitAndVerify(TestTimeout::mediumMs()));
+    QVERIFY(spy.waitForSignal("visualItemsReset", TestTimeout::mediumMs()));
 
     // Sanity — visualItems has MissionSettingsItem at index 0
     QVERIFY(_missionController->visualItems());

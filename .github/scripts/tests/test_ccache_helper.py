@@ -14,14 +14,11 @@ from ccache_helper import (
     CcacheInstaller,
     build_summary_markdown,
     configure_ccache_environment,
-    configure_cpm_cache,
-    compute_cpm_fingerprint,
     determine_cache_scope,
     main,
     resolve_arch,
     resolve_windows_binary_config,
     parse_args,
-    write_step_summary,
 )
 
 
@@ -122,7 +119,7 @@ class TestCcacheConfig:
         """Test CcacheConfig is immutable."""
         config = CcacheConfig(version="4.13.1", arch="x86_64", max_size="2G")
         with pytest.raises(AttributeError):
-            config.version = "5.0.0"
+            config.version = "5.0.0"  # pyright: ignore[reportAttributeAccessIssue]  intentional: assert frozen
 
 
 class TestBuildSummaryMarkdown:
@@ -159,28 +156,16 @@ class TestBuildSummaryMarkdown:
         md = build_summary_markdown(stats)
         assert "5 / 5 (100.0%)" in md
 
+    def test_size_and_cleanups(self):
+        stats = {"cache_size_kibibyte": 491520, "max_cache_size_kibibyte": 2097152, "cleanups_performed": 3}
+        md = build_summary_markdown(stats)
+        assert "| Cache size | 480 MiB / 2.0 GiB (23.4%) |" in md
+        assert "| Cleanups (LRU evictions) | 3 |" in md
 
-class TestWriteStepSummary:
-    """Tests for write_step_summary function."""
-
-    def test_writes_to_file(self, tmp_path):
-        summary_file = tmp_path / "summary.md"
-        with patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": str(summary_file)}):
-            assert write_step_summary("hello\n")
-        assert summary_file.read_text() == "hello\n"
-
-    def test_appends_to_existing(self, tmp_path):
-        summary_file = tmp_path / "summary.md"
-        summary_file.write_text("existing\n")
-        with patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": str(summary_file)}):
-            write_step_summary("appended\n")
-        assert summary_file.read_text() == "existing\nappended\n"
-
-    def test_prints_when_no_env(self, capsys):
-        with patch.dict(os.environ, {}, clear=True):
-            os.environ.pop("GITHUB_STEP_SUMMARY", None)
-            write_step_summary("fallback\n")
-        assert "fallback" in capsys.readouterr().out
+    def test_errors_row_only_when_nonzero(self):
+        assert "Errors" not in build_summary_markdown({"direct_cache_hit": 1})
+        md = build_summary_markdown({"missing_cache_file": 2, "internal_error": 1})
+        assert "| ⚠ Errors | 3 |" in md
 
 
 class TestResolveArch:
@@ -232,14 +217,17 @@ class TestCLI:
 
     def test_summary_without_ccache(self):
         with patch("ccache_helper.get_ccache_json_stats", return_value=None), \
+             patch("ccache_helper.get_ccache_compression_stats", return_value=None), \
              patch("ccache_helper.get_ccache_verbose_stats", return_value=None):
             assert main(["summary"]) == 0
 
     def test_summary_with_stats(self, tmp_path):
         stats = {"direct_cache_hit": 10, "preprocessed_cache_hit": 2, "cache_miss": 5}
         verbose = "cache hit (direct): 10\ncache miss: 5"
+        compression = "Compression ratio: 4.632 x     (78.4% space savings)"
         summary_file = tmp_path / "summary.md"
         with patch("ccache_helper.get_ccache_json_stats", return_value=stats), \
+             patch("ccache_helper.get_ccache_compression_stats", return_value=compression), \
              patch("ccache_helper.get_ccache_verbose_stats", return_value=verbose), \
              patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": str(summary_file)}):
             assert main(["summary"]) == 0
@@ -247,6 +235,7 @@ class TestCLI:
         assert "12 / 17" in content
         assert "<details>" in content
         assert "cache hit (direct): 10" in content
+        assert "Compression ratio: 4.632 x" in content
 
 
 class TestCacheScope:
@@ -257,23 +246,6 @@ class TestCacheScope:
 
     def test_push_non_master_scope(self):
         assert determine_cache_scope("push", "feature/test") == "branch-feature-test"
-
-
-class TestFingerprint:
-    """Tests for CPM fingerprint helper."""
-
-    def test_fingerprint_changes_when_dependency_file_changes(self, tmp_path):
-        (tmp_path / "cmake/modules").mkdir(parents=True)
-        (tmp_path / ".github").mkdir()
-        (tmp_path / "CMakeLists.txt").write_text("project(QGC)\nCPMAddPackage(NAME foo)\n")
-        (tmp_path / "cmake/modules/CPM.cmake").write_text("# helper\n")
-        (tmp_path / ".github/build-config.json").write_text("{}\n")
-
-        before = compute_cpm_fingerprint(tmp_path)
-        (tmp_path / "CMakeLists.txt").write_text("project(QGC)\nCPMAddPackage(NAME bar)\n")
-        after = compute_cpm_fingerprint(tmp_path)
-
-        assert before != after
 
 
 class TestWindowsConfig:
@@ -300,13 +272,3 @@ class TestEnvironmentConfig:
         content = github_env.read_text()
         assert "CCACHE_DIR=" in content
         assert "CCACHE_CONFIGPATH=" in content
-
-    def test_configure_cpm_cache_writes_outputs(self, tmp_path):
-        github_env = tmp_path / "env.txt"
-        github_output = tmp_path / "output.txt"
-        cache = tmp_path / "cpm-cache"
-        with patch.dict(os.environ, {"GITHUB_ENV": str(github_env), "GITHUB_OUTPUT": str(github_output)}):
-            configured = configure_cpm_cache(str(cache))
-        assert configured == cache
-        assert "CPM_SOURCE_CACHE=" in github_env.read_text()
-        assert "path=" in github_output.read_text()

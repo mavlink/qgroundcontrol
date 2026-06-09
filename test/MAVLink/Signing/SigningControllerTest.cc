@@ -1,5 +1,7 @@
 #include "SigningControllerTest.h"
 
+#include <chrono>
+
 #include <QtCore/QByteArrayView>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
@@ -81,6 +83,8 @@ void SigningControllerTest::initTestCase()
 {
     UnitTest::initTestCase();
     MAVLinkSigningKeys::setPbkdf2IterationsForTesting(1);
+    // Exercise the real timeout FSM path without the production 5s wall-clock wait.
+    SigningController::setTimeoutForTesting(std::chrono::milliseconds(150));
 }
 
 void SigningControllerTest::cleanup()
@@ -542,6 +546,49 @@ void SigningControllerTest::_testExpectedSysIdScopedToPendingOp()
     mavlink_message_t fromExpectedSys = encodeSigned(kTestSysId);
     ctrl.processFrame(true, fromExpectedSys);
     QCOMPARE(ctrl.state(), SigningController::State::On);
+}
+
+// Regression: mavlink/qgroundcontrol#14375 — the wall-clock refresh timer must run once the channel is signing so an
+// idle outbound path doesn't drift behind wall clock. Guards the timer-gating that replaced the always-on ctor timer.
+void SigningControllerTest::_testWallClockTimerRefreshesAfterEnable()
+{
+    SigningController ctrl(kTestChannel);
+    QVERIFY(!ctrl.wallClockRefreshActiveForTesting());
+
+    const auto key = makeKey(0x5A);
+    const QByteArrayView kv(reinterpret_cast<const char*>(key.data()), key.size());
+    QVERIFY(ctrl.initSigningImmediate(kv, MAVLinkSigning::UnsignedAcceptancePolicy::Strict, QStringLiteral("wc")));
+    QVERIFY(ctrl.wallClockRefreshActiveForTesting());
+
+    auto* const signing = mavlink_get_channel_status(kTestChannel)->signing;
+    QVERIFY(signing);
+
+    // Stall 3 minutes behind wall clock; the 1Hz timer must catch the timestamp back up on its own.
+    constexpr uint64_t kThreeMinutesTicks = 3ULL * 60 * 100'000;
+    const uint64_t stale = MAVLinkSigning::currentSigningTimestampTicks() - kThreeMinutesTicks;
+    signing->timestamp = stale;
+
+    QTRY_VERIFY_WITH_TIMEOUT(signing->timestamp > stale, 3000);
+    QVERIFY(signing->timestamp >= MAVLinkSigning::currentSigningTimestampTicks() - (2ULL * 100'000));
+
+    QVERIFY(ctrl.clearSigning());
+    QVERIFY(!ctrl.wallClockRefreshActiveForTesting());
+}
+
+void SigningControllerTest::_testWallClockTimerStoppedWhenIdle()
+{
+    SigningController ctrl(kTestChannel);
+    QVERIFY(!ctrl.wallClockRefreshActiveForTesting());
+
+    // Pending-enable installs the channel (signOutgoing flips on confirm) → timer runs meanwhile.
+    const auto key = makeKey(0x6B);
+    (void)ctrl.tryBeginEnable(kTestSysId, QStringLiteral("k"), key);
+    QVERIFY(ctrl.wallClockRefreshActiveForTesting());
+
+    // Aborting back to Idle disables the channel and must stop the timer.
+    ctrl.cancelPending();
+    QTRY_VERIFY(!ctrl.wallClockRefreshActiveForTesting());
+    QCOMPARE(ctrl.state(), SigningController::State::Off);
 }
 
 UT_REGISTER_TEST(SigningControllerTest, TestLabel::Unit, TestLabel::Comms, TestLabel::Slow)

@@ -71,20 +71,52 @@ ColumnLayout {
                 }
 
                 QGCLabel {
-                    text: qsTr("Extension Controls")
-                    visible: controller.anyExtensionEnabled
+                    text: qsTr("Aux Extensions")
+                    visible: controller.pitchExtensionEnabled || controller.rollExtensionEnabled
                 }
 
                 Repeater {
                     model: [
                         { name: qsTr("Pitch"),  extensionEnabled: controller.pitchExtensionEnabled, mapped: controller.pitchExtensionChannelMapped, value: controller.adjustedPitchExtensionChannelValue,   deadband: controller.pitchExtensionDeadband },
                         { name: qsTr("Roll"),   extensionEnabled: controller.rollExtensionEnabled,  mapped: controller.rollExtensionChannelMapped,  value: controller.adjustedRollExtensionChannelValue,    deadband: controller.rollExtensionDeadband },
-                        { name: qsTr("Aux 1"),  extensionEnabled: controller.aux1ExtensionEnabled,  mapped: controller.aux1ExtensionChannelMapped,  value: controller.adjustedAux1ExtensionChannelValue,    deadband: controller.aux1ExtensionDeadband },
-                        { name: qsTr("Aux 2"),  extensionEnabled: controller.aux2ExtensionEnabled,  mapped: controller.aux2ExtensionChannelMapped,  value: controller.adjustedAux2ExtensionChannelValue,    deadband: controller.aux2ExtensionDeadband },
-                        { name: qsTr("Aux 3"),  extensionEnabled: controller.aux3ExtensionEnabled,  mapped: controller.aux3ExtensionChannelMapped,  value: controller.adjustedAux3ExtensionChannelValue,    deadband: controller.aux3ExtensionDeadband },
-                        { name: qsTr("Aux 4"),  extensionEnabled: controller.aux4ExtensionEnabled,  mapped: controller.aux4ExtensionChannelMapped,  value: controller.adjustedAux4ExtensionChannelValue,    deadband: controller.aux4ExtensionDeadband },
-                        { name: qsTr("Aux 5"),  extensionEnabled: controller.aux5ExtensionEnabled,  mapped: controller.aux5ExtensionChannelMapped,  value: controller.adjustedAux5ExtensionChannelValue,    deadband: controller.aux5ExtensionDeadband },
-                        { name: qsTr("Aux 6"),  extensionEnabled: controller.aux6ExtensionEnabled,  mapped: controller.aux6ExtensionChannelMapped,  value: controller.adjustedAux6ExtensionChannelValue,    deadband: controller.aux6ExtensionDeadband }
+                    ]
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        visible: modelData.extensionEnabled
+
+                        QGCLabel {
+                            Layout.fillWidth: true
+                            text: modelData.name
+                        }
+
+                        RemoteControlChannelValueDisplay {
+                            Layout.preferredWidth: root._channelValueDisplayWidth
+                            mode: RemoteControlChannelValueDisplay.MappedValue
+                            channelValueMin: controller.channelValueMin
+                            channelValueMax: controller.channelValueMax
+                            channelMapped: modelData.mapped
+                            channelValue: modelData.value
+                            deadbandValue: modelData.deadband
+                            deadbandEnabled: root._deadbandActive
+                        }
+                    }
+                }
+
+                QGCLabel {
+                    text: qsTr("Additional Axes")
+                    visible: controller.additionalAxis1Enabled || controller.additionalAxis2Enabled || controller.additionalAxis3Enabled ||
+                             controller.additionalAxis4Enabled || controller.additionalAxis5Enabled || controller.additionalAxis6Enabled
+                }
+
+                Repeater {
+                    model: [
+                        { name: qsTr("Aux 1"),  extensionEnabled: controller.additionalAxis1Enabled,  mapped: controller.additionalAxis1ChannelMapped,  value: controller.adjustedAdditionalAxis1ChannelValue,    deadband: controller.additionalAxis1Deadband },
+                        { name: qsTr("Aux 2"),  extensionEnabled: controller.additionalAxis2Enabled,  mapped: controller.additionalAxis2ChannelMapped,  value: controller.adjustedAdditionalAxis2ChannelValue,    deadband: controller.additionalAxis2Deadband },
+                        { name: qsTr("Aux 3"),  extensionEnabled: controller.additionalAxis3Enabled,  mapped: controller.additionalAxis3ChannelMapped,  value: controller.adjustedAdditionalAxis3ChannelValue,    deadband: controller.additionalAxis3Deadband },
+                        { name: qsTr("Aux 4"),  extensionEnabled: controller.additionalAxis4Enabled,  mapped: controller.additionalAxis4ChannelMapped,  value: controller.adjustedAdditionalAxis4ChannelValue,    deadband: controller.additionalAxis4Deadband },
+                        { name: qsTr("Aux 5"),  extensionEnabled: controller.additionalAxis5Enabled,  mapped: controller.additionalAxis5ChannelMapped,  value: controller.adjustedAdditionalAxis5ChannelValue,    deadband: controller.additionalAxis5Deadband },
+                        { name: qsTr("Aux 6"),  extensionEnabled: controller.additionalAxis6Enabled,  mapped: controller.additionalAxis6ChannelMapped,  value: controller.adjustedAdditionalAxis6ChannelValue,    deadband: controller.additionalAxis6Deadband }
                     ]
 
                     RowLayout {
@@ -218,6 +250,12 @@ ColumnLayout {
             id: cancelButton
             text: qsTr("Cancel")
             onClicked: controller.cancelButtonClicked()
+        }
+
+        QGCButton {
+            text: qsTr("One-Sided")
+            visible: controller.oneSidedButtonVisible
+            onClicked: controller.oneSidedButtonClicked()
         }
 
         QGCButton {

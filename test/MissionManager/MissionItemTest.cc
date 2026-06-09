@@ -9,6 +9,7 @@
 #include "PlanMasterController.h"
 #include "SimpleMissionItem.h"
 #include "TestFixtures.h"
+#include "MultiSignalSpy.h"
 
 using namespace TestFixtures;
 
@@ -55,26 +56,24 @@ void MissionItemTest::_testSignals()
                             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,  // params
                             true,                               // autoContinue
                             true);                              // isCurrentItem
-    SignalSpyFixture missionItemSignals(&missionItem);
-    QVERIFY(missionItemSignals.spy());
+    MultiSignalSpy missionItemSignals;
+    QVERIFY(missionItemSignals.init(&missionItem));
     // Validate isCurrentItemChanged signalling
-    missionItemSignals.expectExactly("isCurrentItemChanged", 1);
     missionItem.setIsCurrentItem(true);
-    QVERIFY(!missionItemSignals.wasEmitted("isCurrentItemChanged"));
+    QVERIFY(!missionItemSignals.emitted("isCurrentItemChanged"));
     missionItem.setIsCurrentItem(false);
-    QVERIFY(missionItemSignals.verify());
-    QSignalSpy* spy = missionItemSignals.spy()->spy("isCurrentItemChanged");
+    QCOMPARE(missionItemSignals.count("isCurrentItemChanged"), 1);
+    QSignalSpy* spy = missionItemSignals.spy("isCurrentItemChanged");
     QList<QVariant> signalArgs = spy->takeFirst();
     QCOMPARE(signalArgs.count(), 1);
     QCOMPARE(signalArgs[0].toBool(), false);
-    missionItemSignals.clear();
+    missionItemSignals.clearAllSignals();
     // Validate sequenceNumberChanged signalling
-    missionItemSignals.expectExactly("sequenceNumberChanged", 1);
     missionItem.setSequenceNumber(1);
-    QVERIFY(!missionItemSignals.wasEmitted("sequenceNumberChanged"));
+    QVERIFY(!missionItemSignals.emitted("sequenceNumberChanged"));
     missionItem.setSequenceNumber(2);
-    QVERIFY(missionItemSignals.verify());
-    spy = missionItemSignals.spy()->spy("sequenceNumberChanged");
+    QCOMPARE(missionItemSignals.count("sequenceNumberChanged"), 1);
+    spy = missionItemSignals.spy("sequenceNumberChanged");
     signalArgs = spy->takeFirst();
     QCOMPARE(signalArgs.count(), 1);
     QCOMPARE(signalArgs[0].toInt(), 2);

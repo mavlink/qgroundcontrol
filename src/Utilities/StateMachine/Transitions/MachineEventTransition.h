@@ -6,9 +6,11 @@
 #include <QtCore/QString>
 #include <functional>
 
-/// Transition that fires when a named event is posted to the state machine
+/// \brief Transition that fires when a named event is posted to the state machine
+///
 /// Use this for events posted via QGCStateMachine::postEvent/postDelayedEvent.
 /// For events on watched objects, use NamedEventTransition instead.
+///
 class MachineEventTransition : public QGCAbstractTransition
 {
     Q_OBJECT

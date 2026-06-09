@@ -8,7 +8,7 @@
 class QGCStateMachine;
 class Vehicle;
 
-/// Lightweight base class for simple states.
+/// \brief Lightweight base class for simple states.
 ///
 /// ## When to use QGCAbstractState vs QGCState
 ///
@@ -24,6 +24,7 @@ class Vehicle;
 ///
 /// ## Notes
 /// - Local error-state helpers are not provided; use registerState() for global error handling.
+///
 class QGCAbstractState : public QState
 {
     Q_OBJECT

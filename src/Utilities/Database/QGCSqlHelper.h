@@ -31,10 +31,12 @@ void applySqlitePragmas(QSqlDatabase& db);
 [[nodiscard]] bool setUserVersion(QSqlDatabase& db, int v);
 
 // ── Scoped connection RAII ─────────────────────────────────────────────
-/// RAII wrapper around QSqlDatabase::addDatabase / removeDatabase.
+/// \brief RAII wrapper around QSqlDatabase::addDatabase / removeDatabase.
+///
 /// Creates a uniquely-named connection on construction, removes it on
 /// destruction. Avoids the common pitfall of reusing connection names
 /// or forgetting to call removeDatabase.
+///
 class ScopedConnection
 {
 public:
@@ -62,10 +64,12 @@ private:
 };
 
 // ── Transaction RAII ───────────────────────────────────────────────────
-/// RAII wrapper around QSqlDatabase::transaction()/commit()/rollback().
+/// \brief RAII wrapper around QSqlDatabase::transaction()/commit()/rollback().
+///
 /// Begins a transaction on construction; rolls back in destructor unless
 /// commit() was called. Check ok() before issuing queries — begin can fail
 /// (e.g. driver doesn't support transactions, or one is already open).
+///
 class Transaction
 {
 public:

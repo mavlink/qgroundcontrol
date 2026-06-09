@@ -61,6 +61,7 @@ void APMSensorsComponentController::_startLogCalibration()
     _cancelButton->setEnabled(_calTypeInProgress == QGCMAVLink::CalibrationMag);
 
     (void) connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
+    emit calibrationActiveChanged();
 }
 
 void APMSensorsComponentController::_startVisualCalibration()
@@ -74,6 +75,7 @@ void APMSensorsComponentController::_startVisualCalibration()
     (void) _progressBar->setProperty("value", 0);
 
     (void) connect(MAVLinkProtocol::instance(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
+    emit calibrationActiveChanged();
 }
 
 void APMSensorsComponentController::_resetInternalState()
@@ -152,7 +154,9 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
         break;
     }
 
+    (void) disconnect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
     _calTypeInProgress = QGCMAVLink::CalibrationNone;
+    emit calibrationActiveChanged();
 }
 
 void APMSensorsComponentController::_mavCommandResult(int vehicleId, int component, int command, int result, int failureCode)
@@ -164,71 +168,10 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
     }
 
     switch (command) {
-    case MAV_CMD_DO_CANCEL_MAG_CAL:
-        (void) disconnect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
-        if (result == MAV_RESULT_ACCEPTED) {
-            // Onboard mag cal is supported
-            _calTypeInProgress = QGCMAVLink::CalibrationMag;
-            _rgCompassCalProgress[0] = 0;
-            _rgCompassCalProgress[1] = 0;
-            _rgCompassCalProgress[2] = 0;
-            _rgCompassCalComplete[0] = false;
-            _rgCompassCalComplete[1] = false;
-            _rgCompassCalComplete[2] = false;
-
-            _startLogCalibration();
-            uint8_t compassBits = 0;
-            if ((getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_DEV_ID"))->rawValue().toInt() > 0) &&
-                    getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_USE"))->rawValue().toBool()) {
-                compassBits |= 1 << 0;
-                qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 1";
-            } else {
-                _rgCompassCalComplete[0] = true;
-                _rgCompassCalSucceeded[0] = true;
-                _rgCompassCalFitness[0] = 0;
-            }
-            if ((getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_DEV_ID2"))->rawValue().toInt() > 0) &&
-                    getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_USE2"))->rawValue().toBool()) {
-                compassBits |= 1 << 1;
-                qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 2";
-            } else {
-                _rgCompassCalComplete[1] = true;
-                _rgCompassCalSucceeded[1] = true;
-                _rgCompassCalFitness[1] = 0;
-            }
-            if ((getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_DEV_ID3"))->rawValue().toInt() > 0) &&
-                    getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_USE3"))->rawValue().toBool()) {
-                compassBits |= 1 << 2;
-                qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 3";
-            } else {
-                _rgCompassCalComplete[2] = true;
-                _rgCompassCalSucceeded[2] = true;
-                _rgCompassCalFitness[2] = 0;
-            }
-
-            // We bump up the fitness value so calibration will always succeed
-            const Fact *const compassCalFitness = getParameterFact(ParameterManager::defaultComponentId, _compassCalFitnessParam);
-            _restoreCompassCalFitness = true;
-            _previousCompassCalFitness = compassCalFitness->rawValue().toFloat();
-            getParameterFact(ParameterManager::defaultComponentId, _compassCalFitnessParam)->setRawValue(100.0);
-
-            _appendStatusLog(tr("Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right ."));
-            _vehicle->sendMavCommand(
-                _vehicle->defaultComponentId(),
-                MAV_CMD_DO_START_MAG_CAL,
-                true,          // showError
-                compassBits,   // which compass(es) to calibrate
-                0,             // no retry on failure
-                1,             // save values after complete
-                0,             // no delayed start
-                0              // no auto-reboot
-            );
-
-        }
-        break;
     case MAV_CMD_DO_START_MAG_CAL:
         if (result != MAV_RESULT_ACCEPTED) {
-            _restorePreviousCompassCalFitness();
+            _appendStatusLog(tr("Failed to start compass calibration"));
+            _stopCalibration(StopCalibrationFailed);
         }
         break;
     case MAV_CMD_FIXED_MAG_CAL_YAW:
@@ -247,18 +190,69 @@ void APMSensorsComponentController::_mavCommandResult(int vehicleId, int compone
 
 void APMSensorsComponentController::calibrateCompass()
 {
-    // First we need to determine if the vehicle support onboard compass cal. There isn't an easy way to
-    // do this. A hack is to send the mag cancel command and see if it is accepted.
-    (void) connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
-    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_DO_CANCEL_MAG_CAL, false /* showError */);
+    _calTypeInProgress = QGCMAVLink::CalibrationMag;
+    _rgCompassCalProgress[0] = 0;
+    _rgCompassCalProgress[1] = 0;
+    _rgCompassCalProgress[2] = 0;
+    _rgCompassCalComplete[0] = false;
+    _rgCompassCalComplete[1] = false;
+    _rgCompassCalComplete[2] = false;
 
-    // Now we wait for the result to come back
+    _startLogCalibration();
+    uint8_t compassBits = 0;
+    if ((getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_DEV_ID"))->rawValue().toInt() > 0) &&
+            getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_USE"))->rawValue().toBool()) {
+        compassBits |= 1 << 0;
+        qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 1";
+    } else {
+        _rgCompassCalComplete[0] = true;
+        _rgCompassCalSucceeded[0] = true;
+        _rgCompassCalFitness[0] = 0;
+    }
+    if ((getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_DEV_ID2"))->rawValue().toInt() > 0) &&
+            getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_USE2"))->rawValue().toBool()) {
+        compassBits |= 1 << 1;
+        qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 2";
+    } else {
+        _rgCompassCalComplete[1] = true;
+        _rgCompassCalSucceeded[1] = true;
+        _rgCompassCalFitness[1] = 0;
+    }
+    if ((getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_DEV_ID3"))->rawValue().toInt() > 0) &&
+            getParameterFact(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_USE3"))->rawValue().toBool()) {
+        compassBits |= 1 << 2;
+        qCDebug(APMSensorsComponentControllerLog) << "Performing onboard compass cal for compass 3";
+    } else {
+        _rgCompassCalComplete[2] = true;
+        _rgCompassCalSucceeded[2] = true;
+        _rgCompassCalFitness[2] = 0;
+    }
+
+    // We bump up the fitness value so calibration will always succeed
+    const Fact *const compassCalFitness = getParameterFact(ParameterManager::defaultComponentId, _compassCalFitnessParam);
+    _restoreCompassCalFitness = true;
+    _previousCompassCalFitness = compassCalFitness->rawValue().toFloat();
+    getParameterFact(ParameterManager::defaultComponentId, _compassCalFitnessParam)->setRawValue(100.0);
+
+    _appendStatusLog(tr("Rotate the vehicle randomly around all axes until the progress bar fills all the way to the right."));
+    (void) connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult, Qt::UniqueConnection);
+    _vehicle->sendMavCommand(
+        _vehicle->defaultComponentId(),
+        MAV_CMD_DO_START_MAG_CAL,
+        true,          // showError
+        compassBits,   // which compass(es) to calibrate
+        0,             // no retry on failure
+        1,             // save values after complete
+        0,             // no delayed start
+        0              // no auto-reboot
+    );
 }
 
 void APMSensorsComponentController::calibrateCompassNorth(float lat, float lon, int mask)
 {
+    _calTypeInProgress = QGCMAVLink::CalibrationMag;
     _startLogCalibration();
-    (void) connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult);
+    (void) connect(_vehicle, &Vehicle::mavCommandResult, this, &APMSensorsComponentController::_mavCommandResult, Qt::UniqueConnection);
     _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_FIXED_MAG_CAL_YAW, true /* showError */, 0 /* north*/, mask, lat, lon);
 }
 
@@ -376,18 +370,12 @@ void APMSensorsComponentController::_handleTextMessage(int sysid, int componenti
 
 void APMSensorsComponentController::_refreshParams()
 {
-    static const QStringList fastRefreshList = {
+    _vehicle->parameterManager()->bulkRefresh(ParameterManager::defaultComponentId, {
         QStringLiteral("COMPASS_OFS_X"), QStringLiteral("COMPASS_OFS_Y"), QStringLiteral("COMPASS_OFS_Z"),
-        QStringLiteral("INS_ACCOFFS_X"), QStringLiteral("INS_ACCOFFS_Y"), QStringLiteral("INS_ACCOFFS_Z")
-    };
-
-    for (const QString &paramName : fastRefreshList) {
-        _vehicle->parameterManager()->refreshParameter(ParameterManager::defaultComponentId, paramName);
-    }
-
-    // Now ask for all to refresh
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_"));
-    _vehicle->parameterManager()->refreshParametersPrefix(ParameterManager::defaultComponentId, QStringLiteral("INS_"));
+        QStringLiteral("INS_ACCOFFS_X"), QStringLiteral("INS_ACCOFFS_Y"), QStringLiteral("INS_ACCOFFS_Z"),
+        QStringLiteral("COMPASS_*"),
+        QStringLiteral("INS_*"),
+    }, false /* notifyFailure */);
 }
 
 void APMSensorsComponentController::_updateAndEmitShowOrientationCalArea(bool show)

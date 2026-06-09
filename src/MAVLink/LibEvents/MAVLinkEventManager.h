@@ -18,8 +18,9 @@ namespace events::parser {
 class ParsedEvent;
 }
 
-/// Owns per-component EventHandler instances and drives the Health & Arming
+/// \brief Owns per-component EventHandler instances and drives the Health & Arming
 /// Check report.
+
 class MAVLinkEventManager : public QObject
 {
     Q_OBJECT

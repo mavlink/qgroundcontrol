@@ -96,6 +96,20 @@ void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
     (void) QMetaObject::invokeMethod(this, "_writeBytes", Qt::AutoConnection, data);
 }
 
+void LinkInterface::sendMessageThreadSafe(mavlink_message_t &message)
+{
+    // Re-sign with a current timestamp; the cached-resend path (Vehicle::sendMessageMultiple) otherwise ships frozen
+    // signed bytes whose timestamp drifts behind wall clock and gets OLD_TIMESTAMP-rejected. No-op when signing is
+    // disabled or the message isn't outgoing-signed. The secret key stays in the signing layer.
+    if (_signingController) {
+        (void) _signingController->signOutgoing(message);
+    }
+
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    const int len = mavlink_msg_to_send_buffer(buffer, &message);
+    writeBytesThreadSafe(reinterpret_cast<const char *>(buffer), len);
+}
+
 void LinkInterface::removeVehicleReference()
 {
     if (_vehicleReferenceCount != 0) {

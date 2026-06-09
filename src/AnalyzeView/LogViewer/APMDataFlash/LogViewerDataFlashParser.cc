@@ -4,15 +4,37 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QHash>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QSet>
+#include <QtCore/QTimeZone>
 #include <QtCore/QVariantMap>
 
 #include <algorithm>
 #include <limits>
 
 namespace {
+
+int _leapSecondsTAI(int year, int month)
+{
+    const int yyyymm = year * 100 + month;
+    if (yyyymm >= 201701) return 37;
+    if (yyyymm >= 201507) return 36;
+    if (yyyymm >= 201207) return 35;
+    if (yyyymm >= 200901) return 34;
+    if (yyyymm >= 200601) return 33;
+    if (yyyymm >= 199901) return 32;
+    if (yyyymm >= 199707) return 31;
+    if (yyyymm >= 199601) return 30;
+    return 0;
+}
+
+int _leapSecondsGPS(int year, int month)
+{
+    return _leapSecondsTAI(year, month) - 19;
+}
 
 QString _vehicleTypeFromMessageText(const QString &messageText)
 {
@@ -22,6 +44,17 @@ QString _vehicleTypeFromMessageText(const QString &messageText)
     if (text.contains(QStringLiteral("ardurover")))  { return QStringLiteral("ArduRover"); }
     if (text.contains(QStringLiteral("ardusub")))    { return QStringLiteral("ArduSub"); }
     return QString();
+}
+
+// Parse "major.minor" from firmware version strings like "ArduCopter V4.3.1" or "V4.5-stable"
+void _parseFirmwareVersionFromMessageText(const QString &messageText, int &major, int &minor)
+{
+    static const QRegularExpression re(QStringLiteral("V(\\d+)\\.(\\d+)"));
+    const QRegularExpressionMatch m = re.match(messageText);
+    if (m.hasMatch()) {
+        major = m.captured(1).toInt();
+        minor = m.captured(2).toInt();
+    }
 }
 
 QString _ardupilotModeName(const QString &vehicleType, int modeNumber)
@@ -204,9 +237,10 @@ void _appendEvent(QVariantList &events, double timestampSecs, const QString &typ
 
 namespace DataFlashParser {
 
-LogParseResult parseFile(const QString &filePath)
+LogParseResult parseFile(const QString &filePath, const ProgressCallback &progressCallback, const CancelToken &cancelToken)
 {
     LogParseResult result;
+    result.sourceType = LogParseResult::SourceType::APMDataFlash;
 
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
@@ -278,6 +312,8 @@ LogParseResult parseFile(const QString &filePath)
     static const QString kMODE = QStringLiteral("MODE");
     static const QString kERR  = QStringLiteral("ERR");
     static const QString kEV   = QStringLiteral("EV");
+    static const QString kGPS  = QStringLiteral("GPS");
+    static const QString kGPS2 = QStringLiteral("GPS2");
 
     APMDataFlashUtility::iterateMessages(bytes.constData(), bytes.size(), formats,
         [&](uint8_t msgType, const char *payload, int, const APMDataFlashUtility::MessageFormat &fmt) {
@@ -288,6 +324,22 @@ LogParseResult parseFile(const QString &filePath)
             maxTimestampSecs = std::max(maxTimestampSecs, timestampSecs);
         }
 
+        if ((fmt.name == kGPS || fmt.name == kGPS2) && result.startTime.isNull()
+                && values.contains(QStringLiteral("GWk")) && values.contains(QStringLiteral("GMS"))
+                && timestampSecs >= 0.0) {
+            const int gwk = values.value(QStringLiteral("GWk")).toInt();
+            const int gms = values.value(QStringLiteral("GMS")).toInt();
+            if (gwk > 2000) {
+                const double gpsSecs = 315964800.0 + (7.0 * 24 * 60 * 60) * gwk + (gms / 1000.0);
+                const QDateTime gpsDateTime = QDateTime::fromMSecsSinceEpoch(
+                    static_cast<qint64>(gpsSecs * 1000.0), QTimeZone::utc());
+                const int leapSecs = _leapSecondsGPS(gpsDateTime.date().year(), gpsDateTime.date().month());
+                const double utcSecs = gpsSecs - leapSecs;
+                result.startTime = QDateTime::fromMSecsSinceEpoch(
+                    static_cast<qint64>((utcSecs - timestampSecs) * 1000.0), QTimeZone::utc());
+            }
+        }
+
         if (fmt.name == kPARM) {
             const QString paramName = values.value(QStringLiteral("Name")).toString();
             const QVariant paramValue = values.contains(QStringLiteral("Value"))
@@ -295,8 +347,14 @@ LogParseResult parseFile(const QString &filePath)
                 : values.value(QStringLiteral("Val"));
             if (!paramName.isEmpty()) {
                 QVariantMap row;
-                row[QStringLiteral("name")] = paramName;
-                row[QStringLiteral("value")] = paramValue;
+                row[QStringLiteral("name")]         = paramName;
+                row[QStringLiteral("value")]        = paramValue;
+                // DataFlash logs don't carry default value metadata
+                row[QStringLiteral("isFloat")]      = paramValue.metaType() == QMetaType::fromType<float>()
+                                                      || paramValue.metaType() == QMetaType::fromType<double>();
+                row[QStringLiteral("hasDefault")]   = false;
+                row[QStringLiteral("defaultValue")] = QVariant();
+                row[QStringLiteral("isDefault")]    = false;
                 result.parameters.append(row);
             }
         } else if (fmt.name == kMSG) {
@@ -304,6 +362,7 @@ LogParseResult parseFile(const QString &filePath)
             const QString detected = _vehicleTypeFromMessageText(text);
             if (result.detectedVehicleType.isEmpty() && !detected.isEmpty()) {
                 result.detectedVehicleType = detected;
+                _parseFirmwareVersionFromMessageText(text, result.firmwareMajorVersion, result.firmwareMinorVersion);
             }
             if (!text.isEmpty()) {
                 QVariantMap row;
@@ -365,8 +424,12 @@ LogParseResult parseFile(const QString &filePath)
                 plottableFieldSet.insert(fieldName);
             }
         }
-        return true;
-    });
+        return !cancelToken || !cancelToken->load(std::memory_order_relaxed);
+    }, progressCallback);
+
+    if (cancelToken && cancelToken->load(std::memory_order_relaxed)) {
+        return result; // cancelled; ok remains false
+    }
 
     if (hasOpenModeSegment && (maxTimestampSecs >= modeSegmentStartSecs)) {
         QVariantMap segment;

@@ -28,7 +28,7 @@ public:
     int selected() const { return _selected; }
 
     void setSelected(int sel);
-    QGCMAVLinkMessage *findMessage(uint32_t id, uint8_t compId);
+    QGCMAVLinkMessage *findMessage(uint32_t id, uint8_t compId, const QString &instanceValue = QString());
     int findMessage(const QGCMAVLinkMessage *message);
     void append(QGCMAVLinkMessage *message);
     QGCMAVLinkMessage *selectedMsg();

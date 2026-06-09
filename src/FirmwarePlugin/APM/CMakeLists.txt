@@ -27,12 +27,7 @@ endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB_RECURSE JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
-qt_add_resources(${CMAKE_PROJECT_NAME} json_firmaware_plugin_apm
-    PREFIX "/json"
-    FILES
-    ${JSON_FILES}
-)
+qgc_add_json_resources(json_firmaware_plugin_apm)
 
 qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_apm_resource
     PREFIX "/FirmwarePlugin/APM"
@@ -46,9 +41,17 @@ qt_add_resources(${CMAKE_PROJECT_NAME} firmaware_plugin_apm_resource
 #===========================================================================#
 
 CPMAddPackage(
-    NAME ArduPilotParams
+    NAME              ArduPilotParams
     GITHUB_REPOSITORY ArduPilot/ParameterRepository
-    GIT_TAG 037ff6bcfc080608544a4526f2c22406f2cce60f
+    GIT_TAG           main
+    GIT_SHALLOW       TRUE
+    DOWNLOAD_ONLY     TRUE
+)
+qgc_track_git_head(
+    REPO_PATH "${ArduPilotParams_SOURCE_DIR}"
+    GIT_REF   main
+    INTERVAL  3600
+    OFFLINE_OK
 )
 
 # Filters applied to discovered ArduPilot parameter dirs (e.g. "Copter-4.7").

@@ -85,11 +85,11 @@ To install Qt:
 
 1. Install Additional Packages (Platform Specific)
 
-   - **Ubuntu:** `python3 ./qgroundcontrol/tools/setup/install_dependencies.py --platform debian`
+   - **Ubuntu:** `python3 ./qgroundcontrol/tools/setup/install_dependencies --platform debian`
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
-   - **Mac:** `python3 ./qgroundcontrol/tools/setup/install_dependencies.py --platform macos`
-   - **Windows:** `python3 ./qgroundcontrol/tools/setup/install_dependencies.py --platform windows`
+   - **Mac:** `python3 ./qgroundcontrol/tools/setup/install_dependencies --platform macos`
+   - **Windows:** `python3 ./qgroundcontrol/tools/setup/install_dependencies --platform windows`
    - **Android:** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Read [Qt 6 for Android](https://doc.qt.io/qt-6/android.html) carefully to the extend. Continue with [Gettting Started with Qt 6 for Android](https://doc.qt.io/qt-6/android-getting-started.html).
 
 1. Install OS-Specific Functionalities
@@ -106,9 +106,7 @@ To install Qt:
 
 Install [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/).
 
-When installing, select _Desktop development with C++_ as shown:
-
-![Visual Studio 2019 - Select Desktop Environment with C++](../../../assets/dev_getting_started/visual_studio_select_features.png)
+When installing, select _Desktop development with C++_.
 
    ::: info
    Visual Studio is ONLY used to get the compiler. Building _QGroundControl_ is done using [Qt Creator](#qt-creator) or [cmake](#cmake) directly as outlined below.
@@ -124,8 +122,6 @@ When installing, select _Desktop development with C++_ as shown:
    :::
 
 1. Build using the "hammer" icon. After that, in order to deploy the build, use the "play" icon. Or use the menu Build on top for a detailed alternative.
-
-   ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
 
 #### Build using CMake on CLI {#cmake}
 

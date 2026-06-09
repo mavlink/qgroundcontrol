@@ -10,7 +10,8 @@
 class PlanMasterController;
 class MissionController;
 
-/// Base class for PlanCreator objects which are used to create a full plan in a single step.
+/// \brief Base class for PlanCreator objects which are used to create a full plan in a single step.
+///
 class PlanCreator : public QObject
 {
     Q_OBJECT

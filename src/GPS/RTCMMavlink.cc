@@ -6,19 +6,22 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
+#include <QtCore/QByteArray>
+#include <QtCore/QThread>
+
 QGC_LOGGING_CATEGORY(RTCMMavlinkLog, "GPS.RTCMMavlink")
 
 RTCMMavlink::RTCMMavlink(QObject *parent)
     : QObject(parent)
 {
-    // qCDebug(RTCMMavlinkLog) << Q_FUNC_INFO << this;
+    qCDebug(RTCMMavlinkLog) << this;
 
     _bandwidthTimer.start();
 }
 
 RTCMMavlink::~RTCMMavlink()
 {
-    // qCDebug(RTCMMavlinkLog) << Q_FUNC_INFO << this;
+    qCDebug(RTCMMavlinkLog) << this;
 }
 
 void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
@@ -54,11 +57,27 @@ void RTCMMavlink::RTCMDataUpdate(QByteArrayView data)
     ++_sequenceId;
 }
 
+void RTCMMavlink::sendSimulatedData(const std::atomic_bool &requestStop)
+{
+    constexpr int kMessageLengths[] = { 30, 170, 240 };
+    const QByteArray payload(kMessageLengths[2], '\0');
+    while (!requestStop) {
+        for (const int length : kMessageLengths) {
+            RTCMDataUpdate(QByteArrayView(payload).first(length));
+            QThread::msleep(4);
+        }
+        QThread::msleep(100);
+    }
+}
+
 void RTCMMavlink::_sendMessageToVehicle(const mavlink_gps_rtcm_data_t &data)
 {
     QmlObjectListModel* const vehicles = MultiVehicleManager::instance()->vehicles();
     for (qsizetype i = 0; i < vehicles->count(); i++) {
         Vehicle* const vehicle = qobject_cast<Vehicle*>(vehicles->get(i));
+        if (!vehicle) {
+            continue;
+        }
         const SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();
         if (sharedLink) {
             mavlink_message_t message;
@@ -84,7 +103,7 @@ void RTCMMavlink::_calculateBandwith(qsizetype bytes)
 
     const qint64 elapsed = _bandwidthTimer.elapsed();
     if (elapsed > 1000) {
-        qCDebug(RTCMMavlinkLog) << QStringLiteral("RTCM bandwidth: %1 kB/s").arg(((_bandwidthByteCounter / elapsed) * 1000.f) / 1024.f);
+        qCDebug(RTCMMavlinkLog) << QStringLiteral("RTCM bandwidth: %1 kB/s").arg((_bandwidthByteCounter * 1000.0) / elapsed / 1024.0, 0, 'f', 3);
         (void) _bandwidthTimer.restart();
         _bandwidthByteCounter = 0;
     }

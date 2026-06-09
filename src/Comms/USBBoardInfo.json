@@ -57,6 +57,8 @@
         { "vendorID": 9900, "productID": 4131,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7" },
         { "vendorID": 9900, "productID": 4132,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7 OEM" },
         { "vendorID": 9900, "productID": 4388,      "boardClass": "Pixhawk",    "name": "3DR Control Zero H7 OEM Rev G" },
+        { "vendorID": 9900, "productID": 80,        "boardClass": "Pixhawk",    "name": "Gear Up AirBrainH743" },
+        { "vendorID": 5840, "productID": 5374,      "boardClass": "Pixhawk",    "name": "AEDROX AEDROXH7" },
 
         { "vendorID": 2106, "productID": 7120,      "boardClass": "Pixhawk",    "name": "PX4 Accton Godwit GA1" },
 
@@ -74,7 +76,8 @@
         { "vendorID": 8352, "productID": 16848,     "boardClass": "OpenPilot",  "name": "Taulabs Sparky2" },
         { "vendorID": 13891, "productID": 5600,     "boardClass": "Pixhawk",    "name": "ZeroOne X6" },
         { "vendorID": 8355, "productID": 16888,     "boardClass": "Pixhawk",    "name": "Svehicle e2" },
-        { "vendorID": 16325, "productID": 71,     "boardClass": "Pixhawk",    "name": "VOLOLAND NarinFC-H7" }
+        { "vendorID": 16325, "productID": 71,       "boardClass": "Pixhawk",    "name": "VOLOLAND NarinFC-H7" },
+        { "vendorID": 5840,  "productID": 5318,     "boardClass": "Pixhawk",    "name": "CBU H753-SOM" }
     ],
 
     "boardDescriptionFallback": [

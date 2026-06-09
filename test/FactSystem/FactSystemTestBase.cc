@@ -28,22 +28,22 @@ void FactSystemTestBase::_cleanup()
 /// Basic test of parameter values in Fact System
 void FactSystemTestBase::_parameter_default_component_id_test()
 {
-    QVERIFY(_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "RC_MAP_THROTTLE"));
-    Fact* fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "RC_MAP_THROTTLE");
+    QVERIFY(_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "BAT1_N_CELLS"));
+    Fact* fact = _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "BAT1_N_CELLS");
     QVERIFY(fact != nullptr);
     QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
 
-    QCOMPARE(factValue.toInt(), 3);
+    QCOMPARE(factValue.toInt(), 4);
 }
 
 void FactSystemTestBase::_parameter_specific_component_id_test()
 {
-    QVERIFY(_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_AUTOPILOT1, "RC_MAP_THROTTLE"));
-    Fact* fact = _vehicle->parameterManager()->getParameter(MAV_COMP_ID_AUTOPILOT1, "RC_MAP_THROTTLE");
+    QVERIFY(_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_AUTOPILOT1, "BAT1_N_CELLS"));
+    Fact* fact = _vehicle->parameterManager()->getParameter(MAV_COMP_ID_AUTOPILOT1, "BAT1_N_CELLS");
     QVERIFY(fact != nullptr);
     QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
-    QCOMPARE(factValue.toInt(), 3);
+    QCOMPARE(factValue.toInt(), 4);
 }
 

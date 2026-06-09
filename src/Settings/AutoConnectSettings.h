@@ -4,8 +4,10 @@
 
 #include "SettingsGroup.h"
 
-/// Auto connect settings
+/// \brief Auto connect settings
+///
 /// Defines which links should be automatically created and started at runtime
+///
 class AutoConnectSettings : public SettingsGroup
 {
     Q_OBJECT

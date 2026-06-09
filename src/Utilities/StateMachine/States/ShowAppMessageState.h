@@ -4,7 +4,7 @@
 
 #include <QtCore/QString>
 
-/// Display an application message to the user
+/// \brief Display an application message to the user
 
 class ShowAppMessageState : public QGCState
 {

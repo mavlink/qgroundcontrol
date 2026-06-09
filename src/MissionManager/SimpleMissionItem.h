@@ -7,7 +7,8 @@
 class SpeedSection;
 class CameraSection;
 
-/// A SimpleMissionItem is used to represent a single MissionItem to the ui.
+/// \brief A SimpleMissionItem is used to represent a single MissionItem to the ui.
+///
 class SimpleMissionItem : public VisualMissionItem
 {
     Q_OBJECT

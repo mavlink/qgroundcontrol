@@ -3,7 +3,6 @@
 GeoFences allow you to create virtual regions within which the vehicle can fly, or in which it is _not allowed_ to fly.
 You can also configure the action taken if you fly outside permitted areas.
 
-![Geofence overview](../../../assets/plan/geofence/geofence_overview.jpg)
 
 ::: info
 **ArduPilot users:** GeoFence support is only supported by Rover 3.6 and Copter 3.7 or higher. It also requires usage of a Daily build or Stable 3.6 (once available).
@@ -17,7 +16,6 @@ To create a GeoFence:
 1. Navigate to the Plan View
 1. Select the _Geofence_ radio button above the Mission Command List
 
-   ![Select geofence radio button](../../../assets/plan/geofence/geofence_select.jpg)
 
 1. Insert a circular or polygon region by pressing the **Circular Fence** or **Polygon Fence** button, respectively.
    A new region will be added to the map and to the associated list of fences below the buttons.
@@ -28,14 +26,12 @@ You can create multiple regions by pressing the buttons multiple times, allowing
 
 - Circular region:
 
-  ![Circular Geofence](../../../assets/plan/geofence/geofence_circular.jpg)
 
   - Move the region by dragging the central dot on the map
   - Resize the circle by dragging the dot on the edge of the circle (or you can change the radius value in the fence panel).
 
 - Polygon region:
 
-  ![Polygon Geofence](../../../assets/plan/geofence/geofence_polygon.jpg)
 
   - Move the vertices by dragging the filled dots
   - Create new vertices by clicking the "unfilled" dots on the lines between the filled vertices.

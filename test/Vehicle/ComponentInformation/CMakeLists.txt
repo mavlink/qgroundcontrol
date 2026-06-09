@@ -26,3 +26,8 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "VehicleTest_ComponentInformation_res"
         TranslationTest.json
         TranslationTest_de_DE.ts
 )
+
+add_qgc_test(ComponentInformationCacheTest LABELS Integration Vehicle RESOURCE_LOCK TempFiles)
+add_qgc_test(ComponentInformationTranslationTest LABELS Unit Vehicle)
+add_qgc_test(ComponentInformationManagerTest LABELS Integration Vehicle)
+add_qgc_test(RequestMetaDataTypeStateMachineTest LABELS Integration Vehicle)

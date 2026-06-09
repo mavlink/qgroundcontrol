@@ -60,8 +60,22 @@
 },
 {
     "name":             "numSatellites",
-    "shortDesc": "Number of Satellites",
+    "shortDesc": "Satellites in View",
     "type":             "int32",
+    "default":          0
+},
+{
+    "name":             "numSatellitesUsed",
+    "shortDesc": "Satellites Used in Solution",
+    "type":             "int32",
+    "default":          0
+},
+{
+    "name":             "lastError",
+    "shortDesc": "Last Connection Error",
+    "type":             "uint32",
+    "enumStrings":      "None,Failed to open device,Configuration rejected,Device error",
+    "enumValues":       "0,1,2,3",
     "default":          0
 }
 ]

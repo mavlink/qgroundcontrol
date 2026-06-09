@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from generators.settings_qml.page_generator import (
     ControlDef,
     GroupDef,
@@ -13,7 +12,6 @@ from generators.settings_qml.page_generator import (
     generate_pages_model_qml,
     load_page_def,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -196,6 +194,20 @@ class TestGeneratePageQml:
         assert "SettingsPage {" in qml
         assert qml.rstrip().endswith("}")
 
+    def test_page_name_emits_object_name(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
+        ])
+        qml = generate_page_qml(page, settings_dir, page_name="Fly View")
+        assert 'objectName: "settingsPage_FlyView"' in qml
+
+    def test_page_name_empty_no_object_name(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
+        ])
+        qml = generate_page_qml(page, settings_dir, page_name="")
+        assert "objectName:" not in qml
+
     def test_bool_generates_checkbox(self, settings_dir: Path):
         page = PageDef(groups=[
             GroupDef(controls=[ControlDef(setting="appSettings.enableFeature")]),
@@ -260,6 +272,41 @@ class TestGeneratePageQml:
         assert "ColumnLayout {" in qml
         assert "(someFlag)" in qml
         assert "MyCustomWidget {" in qml
+
+    def test_component_control(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(heading="G", controls=[
+                ControlDef(setting="appSettings.enableFeature"),
+                ControlDef(setting="", control="component", component="MyInlineWidget"),
+            ]),
+        ])
+        qml = generate_page_qml(page, settings_dir)
+        assert "MyInlineWidget {" in qml
+        assert "Layout.fillWidth: true" in qml
+        # Should NOT be wrapped in a ColumnLayout (it's inside SettingsGroupLayout)
+        lines = [line.strip() for line in qml.splitlines()]
+        idx = lines.index("MyInlineWidget {")
+        assert "ColumnLayout {" not in lines[idx - 1]
+
+    def test_component_control_with_showWhen(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(heading="G", controls=[
+                ControlDef(setting="", control="component", component="MyWidget", showWhen="featureEnabled"),
+            ]),
+        ])
+        qml = generate_page_qml(page, settings_dir)
+        assert "MyWidget {" in qml
+        assert "visible: featureEnabled" in qml
+
+    def test_component_control_with_enableWhen(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(heading="G", controls=[
+                ControlDef(setting="", control="component", component="MyWidget", enableWhen="isReady"),
+            ]),
+        ])
+        qml = generate_page_qml(page, settings_dir)
+        assert "MyWidget {" in qml
+        assert "enabled: isReady" in qml
 
     def test_showWhen_on_group(self, settings_dir: Path):
         page = PageDef(groups=[
@@ -327,6 +374,60 @@ class TestGeneratePageQml:
         ])
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledFactIncrementer {" in qml
+
+    def test_info_control(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(controls=[ControlDef(
+                setting="", control="info", label="Log files are saved to", value="logSavePath",
+                showWhen="diskLoggingEnabledValue",
+            )]),
+        ])
+        qml = generate_page_qml(page, settings_dir)
+        assert "LabelledLabel {" in qml
+        assert 'label: qsTr("Log files are saved to")' in qml
+        assert "labelText: logSavePath" in qml
+        assert "visible: diskLoggingEnabledValue" in qml
+
+    def test_info_control_no_show_when(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(controls=[ControlDef(
+                setting="", control="info", label="Some info", value="someBinding",
+            )]),
+        ])
+        qml = generate_page_qml(page, settings_dir)
+        assert "LabelledLabel {" in qml
+        assert "visible:" not in qml.split("LabelledLabel")[1].split("}")[0]
+
+    def test_info_control_with_button(self, settings_dir: Path):
+        from generators.common.controls import ButtonDef
+        from generators.settings_qml.page_generator import ControlDef as CD
+        page = PageDef(groups=[
+            GroupDef(controls=[CD(
+                setting="", control="info", label="Bytes sent", value="sink.bytesSentDisplay",
+                showWhen="sink && sink.enabled",
+                button=ButtonDef(text="Reset", onClicked="sink.resetBytesSent()"),
+            )]),
+        ])
+        qml = generate_page_qml(page, settings_dir)
+        assert "RowLayout {" in qml
+        assert "LabelledLabel {" in qml
+        assert 'label: qsTr("Bytes sent")' in qml
+        assert "labelText: sink.bytesSentDisplay" in qml
+        assert "QGCButton {" in qml
+        assert 'text: qsTr("Reset")' in qml
+        assert "onClicked: sink.resetBytesSent()" in qml
+        assert "visible: sink && sink.enabled" in qml
+
+    def test_info_control_with_enable_when(self, settings_dir: Path):
+        page = PageDef(groups=[
+            GroupDef(controls=[ControlDef(
+                setting="", control="info", label="Info", value="someValue",
+                enableWhen="someCondition",
+            )]),
+        ])
+        qml = generate_page_qml(page, settings_dir)
+        assert "LabelledLabel {" in qml
+        assert "enabled: someCondition" in qml
 
     def test_bindings_emitted(self, settings_dir: Path):
         page = PageDef(
@@ -426,6 +527,7 @@ class TestGeneratePagesModelQml:
     def test_page_entry(self, pages_setup: Path):
         qml = generate_pages_model_qml(pages_setup)
         assert 'name: qsTranslate("SettingsPages.json", "Test Page")' in qml
+        assert 'nameKey: "Test Page"' in qml
         assert "qrc:/qml/QGroundControl/AppSettings/TestPage.qml" in qml
         assert "qrc:/test.svg" in qml
 
@@ -481,7 +583,7 @@ class TestRealPageDefinitions:
         pytest.skip("Not running from QGC repo root")
 
     def test_all_page_defs_load(self, repo_root: Path):
-        pages_dir = repo_root / "src" / "UI" / "AppSettings" / "pages"
+        pages_dir = repo_root / "src" / "AppSettings" / "pages"
         json_files = list(pages_dir.glob("*.SettingsUI.json"))
         assert len(json_files) > 0, "No page definition files found"
         for json_file in json_files:
@@ -489,7 +591,7 @@ class TestRealPageDefinitions:
             assert isinstance(page, PageDef), f"Failed to load {json_file.name}"
 
     def test_all_page_defs_generate(self, repo_root: Path):
-        pages_dir = repo_root / "src" / "UI" / "AppSettings" / "pages"
+        pages_dir = repo_root / "src" / "AppSettings" / "pages"
         settings_dir = repo_root / "src" / "Settings"
         json_files = list(pages_dir.glob("*.SettingsUI.json"))
         for json_file in json_files:
@@ -498,7 +600,7 @@ class TestRealPageDefinitions:
             assert "SettingsPage {" in qml, f"Generation failed for {json_file.name}"
 
     def test_viewer3d_page(self, repo_root: Path):
-        pages_dir = repo_root / "src" / "UI" / "AppSettings" / "pages"
+        pages_dir = repo_root / "src" / "AppSettings" / "pages"
         settings_dir = repo_root / "src" / "Settings"
         page = load_page_def(pages_dir / "Viewer3D.SettingsUI.json")
         qml = generate_page_qml(page, settings_dir)
@@ -507,7 +609,7 @@ class TestRealPageDefinitions:
         assert "viewer3DSettings.enabled" in qml
 
     def test_pages_model_generates(self, repo_root: Path):
-        pages_path = repo_root / "src" / "UI" / "AppSettings" / "pages" / "SettingsPages.json"
+        pages_path = repo_root / "src" / "AppSettings" / "pages" / "SettingsPages.json"
         qml = generate_pages_model_qml(pages_path)
         assert "ListModel {" in qml
         assert "General" in qml

@@ -89,6 +89,25 @@
             "default": 0,
             "label": "UDP target port",
             "keywords": "udp forward,relay"
+        },
+        {
+            "name": "rtcmUdpInputEnabled",
+            "shortDesc": "Enable UDP RTCM input",
+            "longDesc": "Listen on a UDP port for incoming RTCM3 correction data and forward it to connected vehicles via MAVLink GPS_RTCM_DATA.",
+            "type": "bool",
+            "default": false,
+            "label": "Enable UDP RTCM input"
+        },
+        {
+            "name": "rtcmUdpInputPort",
+            "shortDesc": "UDP RTCM input port",
+            "longDesc": "UDP port to listen on for incoming RTCM3 correction data.",
+            "type": "uint32",
+            "default": 13320,
+            "min": 1024,
+            "max": 65535,
+            "decimalPlaces": 0,
+            "label": "UDP RTCM input port"
         }
     ]
 }

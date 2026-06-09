@@ -4,8 +4,10 @@
 
 #include <functional>
 
-/// A state that evaluates a predicate on entry and either executes or skips
+/// \brief A state that evaluates a predicate on entry and either executes or skips
+///
 /// Useful for conditional logic like "skip if high latency link"
+///
 class ConditionalState : public QGCState
 {
     Q_OBJECT

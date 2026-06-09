@@ -8,10 +8,12 @@
 class QGCVideoStreamInfo;
 class Vehicle;
 
-/// Creates a simulated Camera Control which supports:
+/// \brief Creates a simulated Camera Control which supports:
+///
 ///     Video record if a manual stream is available
 ///     Photo capture using DO_DIGICAM_CONTROL if the setting is enabled
 ///     It does not support time lapse capture
+///
 class SimulatedCameraControl : public MavlinkCameraControlInterface
 {
     Q_OBJECT

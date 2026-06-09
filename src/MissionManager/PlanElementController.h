@@ -5,8 +5,10 @@
 class PlanMasterController;
 
 
-/// This is the abstract base clas for Plan Element controllers.
+/// \brief This is the abstract base clas for Plan Element controllers.
+///
 /// Examples of plan elements are: missions (MissionController), geofence (GeoFenceController)
+///
 class PlanElementController : public QObject
 {
     Q_OBJECT

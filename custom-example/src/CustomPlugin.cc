@@ -1,4 +1,6 @@
 #include "CustomPlugin.h"
+#include "PerimeterScanComplexItem.h"
+#include "PerimeterScanPlanCreator.h"
 #include "QmlComponentInfo.h"
 #include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
@@ -256,6 +258,7 @@ QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
 {
     _qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
     _qmlEngine->addImportPath("qrc:/qml/Custom/Widgets");
+    _qmlEngine->addImportPath("qrc:/qml/Custom/Plan");
     // TODO: Investigate _qmlEngine->setExtraSelectors({"custom"})
 
     _selector = new CustomOverrideInterceptor();
@@ -294,4 +297,40 @@ QUrl CustomOverrideInterceptor::intercept(const QUrl &url, QQmlAbstractUrlInterc
     }
 
     return url;
+}
+
+/*===========================================================================*/
+
+QVariantList CustomPlugin::complexMissionItemNames(Vehicle *vehicle)
+{
+    // Start with the standard set, then append our custom item.
+    QVariantList items = QGCCorePlugin::complexMissionItemNames(vehicle);
+
+    QVariantMap entry;
+    entry[QStringLiteral("canonicalName")]  = QString(PerimeterScanComplexItem::canonicalName);
+    entry[QStringLiteral("translatedName")] = PerimeterScanComplexItem::tr(PerimeterScanComplexItem::canonicalName);
+    items.append(entry);
+
+    return items;
+}
+
+ComplexMissionItem *CustomPlugin::createComplexMissionItem(const QString &complexItemType,
+                                                            PlanMasterController *masterController,
+                                                            bool flyView,
+                                                            const QString &kmlOrShpFile)
+{
+    if (complexItemType == PerimeterScanComplexItem::canonicalName
+            || complexItemType == PerimeterScanComplexItem::jsonComplexItemTypeValue) {
+        return new PerimeterScanComplexItem(masterController, flyView, kmlOrShpFile);
+    }
+    // Fall back to the built-in factory for all standard item types.
+    return QGCCorePlugin::createComplexMissionItem(complexItemType, masterController, flyView, kmlOrShpFile);
+}
+
+QList<PlanCreator *> CustomPlugin::planCreators(PlanMasterController *planMasterController)
+{
+    // Start with the standard creators, then add ours.
+    QList<PlanCreator *> creators = QGCCorePlugin::planCreators(planMasterController);
+    creators.append(new PerimeterScanPlanCreator(planMasterController));
+    return creators;
 }

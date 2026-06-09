@@ -2,7 +2,8 @@
 
 #include "RemoteControlCalibrationController.h"
 
-/// Controller class for RC Transmitter calibration
+/// \brief Controller class for RC Transmitter calibration
+///
 class RadioComponentController : public RemoteControlCalibrationController
 {
     Q_OBJECT
