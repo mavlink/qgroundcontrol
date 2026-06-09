@@ -47,8 +47,9 @@ public:
 
 private:
     QTextToSpeech *_engine = nullptr;
-    QAtomicInteger<qsizetype> _textQueueSize = 0;
+    qsizetype _textQueueSize = 0;
     bool _initialized = false;
+    bool _speakCapable = false;
     Fact *_volumeFact = nullptr;
     Fact *_mutedFact = nullptr;
     double _lastVolume = -1.0;
@@ -61,6 +62,12 @@ private:
 
     /// Sets the TTS engine volume from the current Fact value.
     void _setVolume();
+
+    /// Applies engine-dependent settings (locale, cached capabilities) for the current engine.
+    void _applyEngineSettings();
+
+    /// Finalizes initialization once the engine is Ready: applies settings, wires Facts, sets volume.
+    void _finishInit();
 
     static const QHash<QString, QString> _textHash;
 

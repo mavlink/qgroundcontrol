@@ -8,6 +8,13 @@
 
     <!-- %%INSERT_FEATURES -->
 
+    <!-- Android 11+ (API 30) package visibility: required for QTextToSpeech to discover the system TTS engine -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <uses-feature android:name="android.hardware.audio.output" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
