@@ -1,9 +1,9 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include "UnitTest.h"
 
 /// Tests for QGCFileHelper (generic file system utilities)
-class QGCFileHelperTest : public TempDirectoryTest
+class QGCFileHelperTest : public UnitTest
 {
     Q_OBJECT
 

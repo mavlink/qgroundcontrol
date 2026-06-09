@@ -1,5 +1,6 @@
 #include "MissionCommandTreeEditorTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
@@ -51,6 +52,12 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLinkTypes::FirmwareC
 
 void MissionCommandTreeEditorTest::testEditors()
 {
+    // Qt font alias lookup warning is a platform-level timing artifact.
+    ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
+                     QRegularExpression("Populating font family aliases"));
+    // RTL_CONE_SLOPE has an invalid enum value of 0 in ArduPilot metadata; skip warning is expected.
+    ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Skipping invalid enum value"));
     for (const QGCMAVLink::FirmwareClass_t& firmwareClass : QGCMAVLink::allFirmwareClasses()) {
         for (const QGCMAVLink::VehicleClass_t& vehicleClass : QGCMAVLink::allVehicleClasses()) {
             _testEditorsWorker(firmwareClass, vehicleClass);

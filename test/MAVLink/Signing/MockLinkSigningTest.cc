@@ -86,7 +86,13 @@ void MockLinkSigningTest::_testSigningEnableTimeout()
     QVERIFY(vehicle());
     QVERIFY(mockLink());
 
-    expectAppMessage(QRegularExpression("showAppMessage.*timeout"));
+    expectLogMessage("MAVLink.SigningController",
+                     QtWarningMsg,
+                     QRegularExpression("signing operation failed: Timeout"));
+    expectLogMessage("Vehicle.SigningController",
+                     QtWarningMsg,
+                     QRegularExpression("signing failed: Timeout"));
+    expectAppMessage(QRegularExpression("Signing setup not confirmed by vehicle"));
 
     auto* signingKeys = MAVLinkSigningKeys::instance();
     signingKeys->addKey("BadKey", "BadPassphrase");
@@ -102,7 +108,9 @@ void MockLinkSigningTest::_testSigningEnableTimeout()
     QVERIFY_TRUE_WAIT(!vehicle()->signingController()->signingStatus().pending(), TestTimeout::mediumMs() + 5000);
     QVERIFY(!vehicle()->signingController()->signingStatus().enabled);
     QVERIFY(vehicle()->signingController()->signingStatus().keyName.isEmpty());
-
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     mockLink()->setCommLost(false);
 }
 
@@ -146,7 +154,13 @@ void MockLinkSigningTest::_testSigningPendingState()
     // Comm is lost, so only the FSM timeout resolves this — shorten it to avoid the production 5s wait.
     SigningController::setTimeoutForTesting(std::chrono::milliseconds(500));
     mockLink()->setCommLost(true);
-    expectAppMessage(QRegularExpression("showAppMessage.*timeout"));
+    expectLogMessage("MAVLink.SigningController",
+                     QtWarningMsg,
+                     QRegularExpression("signing operation failed: Timeout"));
+    expectLogMessage("Vehicle.SigningController",
+                     QtWarningMsg,
+                     QRegularExpression("signing failed: Timeout"));
+    expectAppMessage(QRegularExpression("Signing setup not confirmed by vehicle"));
 
     vehicle()->signingController()->enable(QStringLiteral("PendingKey"));
 
@@ -157,7 +171,9 @@ void MockLinkSigningTest::_testSigningPendingState()
 
     QVERIFY_TRUE_WAIT(!vehicle()->signingController()->signingStatus().pending(), TestTimeout::mediumMs() + 5000);
     QVERIFY(!vehicle()->signingController()->signingStatus().enabled);
-
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     mockLink()->setCommLost(false);
 }
 

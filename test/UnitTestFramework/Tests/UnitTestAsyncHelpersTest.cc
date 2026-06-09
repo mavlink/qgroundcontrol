@@ -1,5 +1,6 @@
 #include "UnitTestAsyncHelpersTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 
@@ -35,7 +36,9 @@ void UnitTestAsyncHelpersTest::_testWaitForSignalTimeout()
     QSignalSpy spy(&emitter, &AsyncSignalEmitter::ping);
     QVERIFY(spy.isValid());
 
+    expectLogMessage("Test.UnitTest", QtWarningMsg, QRegularExpression(QStringLiteral("Timeout waiting for signal")));
     QVERIFY(!UnitTest::waitForSignal(spy, 50, QStringLiteral("ping")));
+    verifyExpectedLogMessage();
     QCOMPARE(spy.count(), 0);
 }
 
@@ -74,7 +77,9 @@ void UnitTestAsyncHelpersTest::_testWaitForConditionSuccess()
 void UnitTestAsyncHelpersTest::_testWaitForConditionTimeout()
 {
     bool ready = false;
+    expectLogMessage("Test.UnitTest", QtWarningMsg, QRegularExpression(QStringLiteral("Timeout waiting for condition")));
     QVERIFY(!UnitTest::waitForCondition([&ready]() { return ready; }, 50, QStringLiteral("ready")));
+    verifyExpectedLogMessage();
 }
 
 void UnitTestAsyncHelpersTest::_testWaitMacros()

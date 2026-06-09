@@ -1,8 +1,8 @@
 #pragma once
 
-#include "TempDirectoryTest.h"
+#include "UnitTest.h"
 
-class FirmwareUpgradeControllerTest : public TempDirectoryTest
+class FirmwareUpgradeControllerTest : public UnitTest
 {
     Q_OBJECT
 

@@ -4,6 +4,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QJsonObject>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTimer>
 #include <QtCore/QUuid>
 #include <QtNetwork/QNetworkRequest>
@@ -248,7 +249,9 @@ void TestFixturesTest::_testWaitForSignalCountHelper()
     QVERIFY_SIGNAL_COUNT_WAIT(spy, 2, TestTimeout::mediumMs());
     QCOMPARE(spy.count(), 2);
 
+    expectLogMessage("Test.UnitTest", QtWarningMsg, QRegularExpression(QStringLiteral("Timeout waiting for signal count")));
     QVERIFY(!UnitTest::waitForSignalCount(spy, 3, 100, QStringLiteral("valueChanged")));
+    verifyExpectedLogMessage();
 }
 
 // ============================================================================

@@ -1,6 +1,7 @@
 #include "SendMavCommandWithSignallingTest.h"
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 #include "MultiVehicleManager.h"
@@ -75,6 +76,12 @@ void SendMavCommandWithSignallingTest::_testCaseWorker(TestCase_t& testCase)
 
 void SendMavCommandWithSignallingTest::_performTestCases()
 {
+    // Some test cases send showError=true and get a failed result, producing showAppMessage debug logs.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("command failed|did not respond to command"));
+    // No-response test cases exhaust command retries, producing MavCommandQueue warnings.
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression("Giving up sending command after max retries:"));
     int index = 0;
     for (TestCase_t& testCase : _rgTestCases) {
         qCDebug(UnitTestLog) << "Testing case" << index++;
@@ -84,6 +91,9 @@ void SendMavCommandWithSignallingTest::_performTestCases()
 
 void SendMavCommandWithSignallingTest::_duplicateCommand()
 {
+    // Sending a duplicate command produces a showAppMessage debug log.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("Unable to send command"));
     MultiVehicleManager* vehicleMgr = MultiVehicleManager::instance();
     Vehicle* vehicle = vehicleMgr->activeVehicle();
     vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MockLink::MAV_CMD_MOCKLINK_NO_RESPONSE, true /* showError */);

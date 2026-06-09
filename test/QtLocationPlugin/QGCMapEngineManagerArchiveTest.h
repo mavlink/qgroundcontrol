@@ -1,8 +1,8 @@
 #pragma once
 
-#include "TempDirectoryTest.h"
+#include "UnitTest.h"
 
-class QGCMapEngineManagerArchiveTest : public TempDirectoryTest
+class QGCMapEngineManagerArchiveTest : public UnitTest
 {
     Q_OBJECT
 

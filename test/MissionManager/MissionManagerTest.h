@@ -7,6 +7,7 @@ class MissionManagerTest : public MissionControllerManagerTest
     Q_OBJECT
 
 private slots:
+    void init() override;
     void _testWriteFailureHandlingPX4();
     void _testWriteFailureHandlingAPM();
     void _testReadFailureHandlingPX4();

@@ -2,6 +2,8 @@
 #include "NTRIPHttpTransport.h"
 #include "GpsTestHelpers.h"
 
+#include <QtCore/QRegularExpression>
+
 // ---------------------------------------------------------------------------
 // Whitelist Parsing
 // ---------------------------------------------------------------------------
@@ -270,7 +272,9 @@ void NTRIPHttpTransportTest::_testFilterRejectsBadCrc()
 
     QByteArray good = GpsTestHelpers::buildRtcmFrame(1077, 2);
 
+    expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression("RTCM CRC mismatch"));
     t._parseRtcm(bad + good);
+    verifyExpectedLogMessage();
 
     QCOMPARE(count, 1);
 }

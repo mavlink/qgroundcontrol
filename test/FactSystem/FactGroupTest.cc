@@ -1,4 +1,5 @@
 #include "FactGroupTest.h"
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 
@@ -40,8 +41,9 @@ void FactGroupTest::_factExistsNonExistent_test()
 void FactGroupTest::_getFactNonExistent_test()
 {
     TestableFactGroup group;
-    // Returns nullptr and emits a warning (expected)
+    expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Unknown Fact"));
     Fact *result = group.getFact(QStringLiteral("noSuchFact"));
+    verifyExpectedLogMessage();
     QVERIFY(result == nullptr);
 }
 
@@ -53,7 +55,9 @@ void FactGroupTest::_duplicateFact_test()
 
     group._addFact(&fact1, QStringLiteral("dup"));
     // Adding duplicate should warn but not crash; original stays
+    expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Duplicate Fact"));
     group._addFact(&fact2, QStringLiteral("dup"));
+    verifyExpectedLogMessage();
     QCOMPARE(group.getFact(QStringLiteral("dup")), &fact1);
 }
 
@@ -70,7 +74,9 @@ void FactGroupTest::_addFactGroupAndLookup_test()
 void FactGroupTest::_getFactGroupNonExistent_test()
 {
     TestableFactGroup group;
+    expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Unknown FactGroup"));
     FactGroup *result = group.getFactGroup(QStringLiteral("noSuchGroup"));
+    verifyExpectedLogMessage();
     QVERIFY(result == nullptr);
 }
 
@@ -81,7 +87,9 @@ void FactGroupTest::_duplicateFactGroup_test()
     TestableFactGroup *child2 = new TestableFactGroup(&parent);
 
     parent._addFactGroup(child1, QStringLiteral("dup"));
+    expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Duplicate FactGroup"));
     parent._addFactGroup(child2, QStringLiteral("dup"));
+    verifyExpectedLogMessage();
     QCOMPARE(parent.getFactGroup(QStringLiteral("dup")), child1);
 }
 
@@ -106,15 +114,21 @@ void FactGroupTest::_dotNotationFactNotFound_test()
     parent._addFactGroup(child, QStringLiteral("gps"));
 
     QVERIFY(!parent.factExists(QStringLiteral("gps.noSuch")));
+    expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Unknown Fact"));
     QVERIFY(parent.getFact(QStringLiteral("gps.noSuch")) == nullptr);
+    verifyExpectedLogMessage();
 }
 
 void FactGroupTest::_dotNotationTooDeep_test()
 {
     TestableFactGroup group;
     // More than one dot level is unsupported
+    expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Only single level of hierarchy supported"));
     QVERIFY(!group.factExists(QStringLiteral("a.b.c")));
+    verifyExpectedLogMessage();
+    expectLogMessage("FactSystem.FactGroup", QtWarningMsg, QRegularExpression("Only single level of hierarchy supported"));
     QVERIFY(group.getFact(QStringLiteral("a.b.c")) == nullptr);
+    verifyExpectedLogMessage();
 }
 
 void FactGroupTest::_camelCaseConversion_test()

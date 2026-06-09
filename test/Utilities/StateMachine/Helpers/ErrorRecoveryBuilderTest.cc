@@ -172,9 +172,18 @@ void ErrorRecoveryBuilderTest::_testExhaustedBehaviorMatrix()
         QSignalSpy exhaustedSpy(state, &ErrorRecoveryState::exhausted);
         QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
 
+        const bool willLog = (tc.behavior == ErrorRecoveryBuilder::LogAndError ||
+                              tc.behavior == ErrorRecoveryBuilder::LogAndAdvance);
+        if (willLog) {
+            expectLogMessage("Utilities.QGCStateMachine", QtWarningMsg, QRegularExpression("all recovery options exhausted"));
+        }
+
         machine.start();
 
         QVERIFY(spyTriggered(finishedSpy, TestTimeout::shortMs()));
+        if (willLog) {
+            verifyExpectedLogMessage();
+        }
         QCOMPARE(exhaustedSpy.count(), 1);
         QCOMPARE(advanceSpy.count() > 0, tc.expectAdvance);
         QCOMPARE(errorSpy.count() > 0, !tc.expectAdvance);

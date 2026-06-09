@@ -3,6 +3,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QEventLoop>
 #include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 #include "JoystickManager.h"
@@ -211,6 +212,12 @@ void JoystickManagerTest::_instanceIdReuseNameMismatchManagerTest()
 //-----------------------------------------------------------------------------
 void JoystickManagerTest::_setActiveJoystickTest()
 {
+    // _multiJoysticksSupported() probes whether the SDL backend can expose two
+    // joysticks simultaneously. On systems that can't, the probe times out and
+    // emits a Test.UnitTest timeout warning — that warning is the expected probe
+    // outcome, not a test failure.
+    ignoreLogMessage("Test.UnitTest", QtWarningMsg,
+                     QRegularExpression("Timeout waiting for condition"));
     if (!_multiJoysticksSupported()) {
         QSKIP("Skipping: backend did not expose two concurrent virtual joysticks");
     }

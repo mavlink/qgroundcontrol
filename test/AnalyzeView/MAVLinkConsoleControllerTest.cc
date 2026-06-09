@@ -1,9 +1,20 @@
 #include "MAVLinkConsoleControllerTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtGui/QClipboard>
 #include <QtGui/QGuiApplication>
 
 #include "MAVLinkConsoleController.h"
+
+void MAVLinkConsoleControllerTest::init()
+{
+    UnitTest::init();
+    // sendCommand() unconditionally calls _sendSerialData(), which logs
+    // "Internal error" when no vehicle is connected. History tests need
+    // to call sendCommand() to populate history state but have no vehicle,
+    // so this warning is expected and benign for this fixture.
+    ignoreLogMessage("AnalyzeView.MAVLinkConsoleController", QtWarningMsg, QRegularExpression(QStringLiteral("^_sendSerialData called with no active vehicle$")));
+}
 
 // ---------------------------------------------------------------------------
 // Construction / initial state

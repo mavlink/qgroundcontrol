@@ -5,15 +5,17 @@
 #include <QtTest/QSignalSpy>
 
 #include "OsmParserThread.h"
+#include <QtCore/QTemporaryDir>
 
 void OsmParserThreadTest::_testParseValidOsmFile()
 {
+    QTemporaryDir tempDir;
     OsmParserThread thread;
     QSignalSpy spy(&thread, &OsmParserThread::fileParsed);
     QVERIFY(spy.isValid());
 
     QTemporaryFile tmpFile;
-    tmpFile.setFileTemplate(tempPath(QStringLiteral("test_XXXXXX.osm")));
+    tmpFile.setFileTemplate(tempDir.filePath(QStringLiteral("test_XXXXXX.osm")));
     QVERIFY(tmpFile.open());
 
     const QByteArray osmXml =
@@ -65,12 +67,13 @@ void OsmParserThreadTest::_testParseInvalidFile()
 
 void OsmParserThreadTest::_testParseEmptyFile()
 {
+    QTemporaryDir tempDir;
     OsmParserThread thread;
     QSignalSpy spy(&thread, &OsmParserThread::fileParsed);
     QVERIFY(spy.isValid());
 
     QTemporaryFile tmpFile;
-    tmpFile.setFileTemplate(tempPath(QStringLiteral("test_empty_XXXXXX.osm")));
+    tmpFile.setFileTemplate(tempDir.filePath(QStringLiteral("test_empty_XXXXXX.osm")));
     QVERIFY(tmpFile.open());
     tmpFile.close();
 
@@ -137,8 +140,9 @@ static QString _writeResourceToTempFile(const QString& tempDirectoryPath, const 
 
 void OsmParserThreadTest::_testParseMultipleBuildings()
 {
+    QTemporaryDir tempDir;
     const QString absolutePath =
-        _writeResourceToTempFile(tempDirPath(), QStringLiteral(":/unittest/test_buildings.osm"),
+        _writeResourceToTempFile(tempDir.path(), QStringLiteral(":/unittest/test_buildings.osm"),
                                  QStringLiteral("multi_XXXXXX.osm"));
     QVERIFY(!absolutePath.isEmpty());
     OsmParserThread thread;
@@ -175,8 +179,9 @@ void OsmParserThreadTest::_testParseMultipleBuildings()
 
 void OsmParserThreadTest::_testParseMultipolygonRelation()
 {
+    QTemporaryDir tempDir;
     const QString absolutePath =
-        _writeResourceToTempFile(tempDirPath(), QStringLiteral(":/unittest/test_buildings.osm"),
+        _writeResourceToTempFile(tempDir.path(), QStringLiteral(":/unittest/test_buildings.osm"),
                                  QStringLiteral("mpoly_XXXXXX.osm"));
     QVERIFY(!absolutePath.isEmpty());
     OsmParserThread thread;
@@ -209,7 +214,8 @@ void OsmParserThreadTest::_testParseMultipolygonRelation()
 
 void OsmParserThreadTest::_benchmarkParseOsmFile()
 {
-    const QString absolutePath = _writeResourceToTempFile(tempDirPath(), QStringLiteral(":/unittest/map_sim_small.osm"),
+    QTemporaryDir tempDir;
+    const QString absolutePath = _writeResourceToTempFile(tempDir.path(), QStringLiteral(":/unittest/map_sim_small.osm"),
                                                           QStringLiteral("bench_XXXXXX.osm"));
     QVERIFY(!absolutePath.isEmpty());
     QBENCHMARK

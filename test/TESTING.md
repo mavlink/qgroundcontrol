@@ -277,15 +277,31 @@ QGC_TEST_VERBOSE=1 ./QGroundControl --unittest:MyTest
 2. **Resource conflicts**: Use `RESOURCE_LOCK` or `SERIAL` for exclusive access
 3. **Flaky signals**: Use `MultiSignalSpy::waitForSignal()` instead of `QSignalSpy::wait()`
 4. **Stale singletons**: Ensure proper cleanup in `cleanup()` method
-5. **"Uncategorized log messages" lint failure**: If the code under test logs via plain
-   `qDebug()`/`qWarning()`/`qCritical()` (no `qCDebug(Category)` wrapper), use the QGC
-   base-class helper instead of `QTest::ignoreMessage`:
+5. **Unexpected log messages (strict mode)**: Every test runs with strict log checking, so any log message that is not explicitly expected or suppressed causes `QFAIL`. If the code under test emits a warning you didn't anticipate, use the QGC base-class helpers instead of `QTest::ignoreMessage` (which is banned by the `check-no-qtest-ignore-message` pre-commit hook):
 
    ```cpp
-   // Correct — satisfies the uncategorized-log lint in the QGC harness
-   expectLogMessage(QtWarningMsg, QRegularExpression(QStringLiteral("Flight mode group not set")));
+    // Preferred: one-shot expectation — asserts the message was actually emitted
+   expectLogMessage("MAVLink.LibEvents.HealthAndArmingCheckReport",
+                    QtWarningMsg,
+                    QRegularExpression(QStringLiteral("Flight mode group not set")));
    somethingThatLogs();
+    verifyExpectedLogMessage();
+
+    // Last resort only: persistent suppression — does NOT assert the message fires
+    ignoreLogMessage("qt.bluetooth",
+                     QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
    ```
+
+    `expectLogMessage(...)` must be followed by `verifyExpectedLogMessage()`.
+    If verification is omitted, `cleanup()` fails the test.
+
+    **Always prefer `expectLogMessage` + `verifyExpectedLogMessage`.** That
+    pairing both silences the strict-mode check *and* asserts the message was
+    actually emitted, so a regression that removes the log will break the test.
+
+    Use `ignoreLogMessage(...)` only as a last resort for non-deterministic or
+    environment-dependent noise that cannot be tied to a precise call site.
 
 6. **Expensive SKIP paths**: If a test conditionally `QSKIP`s based on a backend probe
    (e.g. "SDL didn't expose a second virtual joystick"), cache the probe result in a

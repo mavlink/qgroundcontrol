@@ -163,7 +163,9 @@ void ObjectItemModelBaseTest::_endResetWithoutBeginLogsWarning()
     QSignalSpy resetEndSpy(&model, &QAbstractItemModel::modelReset);
 
     // Should just log a warning and not crash
+    expectLogMessage("API.ObjectItemModelBase", QtWarningMsg, QRegularExpression("endResetModel called without prior beginResetModel"));
     model.endResetModel();
+    verifyExpectedLogMessage();
     QCOMPARE(resetEndSpy.count(), 0);
 }
 

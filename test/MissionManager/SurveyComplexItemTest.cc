@@ -6,6 +6,7 @@
 #include "SurveyComplexItem.h"
 #include "TransectStyleComplexItem.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 SurveyComplexItemTest::SurveyComplexItemTest()
@@ -313,6 +314,8 @@ void SurveyComplexItemTest::_testHoverCaptureItemGeneration()
 
 void SurveyComplexItemTest::_testMaxTransectCount()
 {
+    ignoreLogMessage("Plan.SurveyComplexItem", QtWarningMsg, QRegularExpression("Transect spacing.*raised"));
+    ignoreLogMessage("Plan.SurveyComplexItem", QtWarningMsg, QRegularExpression("Grid spacing 0 is invalid"));
     // Tiny spacing triggers the cap: transect count must not exceed maxTransectCount.
     // cameraShotsChanged is emitted at the end of every _rebuildTransects(); the rebuild
     // fires synchronously (direct connection) so the spy count is already 1 on return.

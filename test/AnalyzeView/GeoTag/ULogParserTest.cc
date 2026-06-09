@@ -7,6 +7,7 @@
 #include "GeoTagData.h"
 #include "ULogParser.h"
 #include "ULogTestGenerator.h"
+#include <QtCore/QTemporaryDir>
 
 namespace {
 
@@ -41,7 +42,8 @@ QByteArray generateTestULog(const QString& tempDirPath, int numEvents = 20)
 
 void ULogParserTest::_getTagsFromLogTest()
 {
-    const QByteArray logBuffer = generateTestULog(tempDirPath(), 20);
+    QTemporaryDir tempDir;
+    const QByteArray logBuffer = generateTestULog(tempDir.path(), 20);
     QVERIFY(!logBuffer.isEmpty());
 
     QList<GeoTagData> cameraFeedback;
@@ -78,7 +80,8 @@ void ULogParserTest::_getTagsFromLogInvalidTest()
 
 void ULogParserTest::_parseGeoTagDataFieldsTest()
 {
-    const QByteArray logBuffer = generateTestULog(tempDirPath(), 20);
+    QTemporaryDir tempDir;
+    const QByteArray logBuffer = generateTestULog(tempDir.path(), 20);
     QVERIFY(!logBuffer.isEmpty());
 
     QList<GeoTagData> cameraFeedback;
@@ -108,12 +111,13 @@ void ULogParserTest::_parseGeoTagDataFieldsTest()
 
 void ULogParserTest::_generatedULogTest()
 {
+    QTemporaryDir tempDir;
     // Generate test ULog with valid camera captures
     const int numEvents = 20;
     const auto events = ULogTestGenerator::generateSampleEvents(numEvents);
     QCOMPARE(events.size(), numEvents);
 
-    const QString generatedPath = tempPath(QStringLiteral("generated.ulg"));
+    const QString generatedPath = tempDir.filePath(QStringLiteral("generated.ulg"));
     QVERIFY(ULogTestGenerator::generateULog(generatedPath, events));
 
     // Read back and verify
@@ -152,7 +156,8 @@ void ULogParserTest::_generatedULogTest()
 
 void ULogParserTest::_benchmarkGetTagsFromLog()
 {
-    const QByteArray logBuffer = generateTestULog(tempDirPath(), 50);
+    QTemporaryDir tempDir;
+    const QByteArray logBuffer = generateTestULog(tempDir.path(), 50);
     QVERIFY(!logBuffer.isEmpty());
 
     QList<GeoTagData> cameraFeedback;

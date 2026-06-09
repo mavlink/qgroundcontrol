@@ -5,9 +5,11 @@
 
 #include "QGCMapEngineManager.h"
 #include "UnitTest.h"
+#include <QtCore/QTemporaryDir>
 
 void QGCMapEngineManagerArchiveTest::_importArchiveRejectsInvalidInput()
 {
+    QTemporaryDir tempDir;
     QGCMapEngineManager manager;
 
     QVERIFY(!manager.importArchive(QString()));
@@ -16,7 +18,7 @@ void QGCMapEngineManagerArchiveTest::_importArchiveRejectsInvalidInput()
     QVERIFY(!manager.importArchive(QStringLiteral("/nonexistent/archive.zip")));
     QVERIFY(manager.errorMessage().contains(QStringLiteral("Archive file not found")));
 
-    const QString plainFile = tempPath(QStringLiteral("qgc_map_manager_plain.txt"));
+    const QString plainFile = tempDir.filePath(QStringLiteral("qgc_map_manager_plain.txt"));
     QFile file(plainFile);
     QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
     file.write("not an archive");

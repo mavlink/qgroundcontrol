@@ -1,6 +1,7 @@
 #include "SigningTest.h"
 
 #include <QtCore/QSettings>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QTest>
 
 #include "MAVLinkLib.h"
@@ -265,18 +266,28 @@ void SigningTest::_testAddRawKey()
     };
     QCOMPARE(toQBA(signingKeys->keyAt(0)->keyBytes()), QByteArray::fromHex(hexKey.toLatin1()));
 
+    expectLogMessage("MAVLink.SigningKeys", QtWarningMsg, QRegularExpression("Key with name already exists:"));
     signingKeys->addRawKey(QStringLiteral("RawKey"), hexKey);
+    verifyExpectedLogMessage();
     QCOMPARE(signingKeys->keys()->count(), 1);
 
+    expectLogMessage("MAVLink.SigningKeys", QtWarningMsg, QRegularExpression("Raw key must be exactly 32 bytes"));
     signingKeys->addRawKey(QStringLiteral("ShortKey"), QStringLiteral("0102030405"));
+    verifyExpectedLogMessage();
     QCOMPARE(signingKeys->keys()->count(), 1);
 
+    expectLogMessage("MAVLink.SigningKeys", QtWarningMsg, QRegularExpression("Raw key must be exactly 32 bytes"));
     signingKeys->addRawKey(QStringLiteral("LongKey"), hexKey + QStringLiteral("ff"));
+    verifyExpectedLogMessage();
     QCOMPARE(signingKeys->keys()->count(), 1);
 
+    expectLogMessage("MAVLink.SigningKeys", QtWarningMsg, QRegularExpression("Key name must not be empty"));
     signingKeys->addRawKey(QString(), hexKey);
+    verifyExpectedLogMessage();
     QCOMPARE(signingKeys->keys()->count(), 1);
+    expectLogMessage("MAVLink.SigningKeys", QtWarningMsg, QRegularExpression("Hex key must not be empty"));
     signingKeys->addRawKey(QStringLiteral("EmptyHex"), QString());
+    verifyExpectedLogMessage();
     QCOMPARE(signingKeys->keys()->count(), 1);
 
     const MAVLinkSigning::SigningKey expectedBytes = signingKeys->keyAt(0)->keyBytes();
@@ -302,11 +313,15 @@ void SigningTest::_testMaxKeyLimit()
     }
     QCOMPARE(signingKeys->keys()->count(), MAVLinkSigningKeys::kMaxKeys);
 
+    expectLogMessage("MAVLink.SigningKeys", QtWarningMsg, QRegularExpression("Maximum key count reached:"));
     signingKeys->addKey(QStringLiteral("Overflow"), QStringLiteral("overflow"));
+    verifyExpectedLogMessage();
     QCOMPARE(signingKeys->keys()->count(), MAVLinkSigningKeys::kMaxKeys);
 
     const QString hexKey = QStringLiteral("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+    expectLogMessage("MAVLink.SigningKeys", QtWarningMsg, QRegularExpression("Maximum key count reached:"));
     signingKeys->addRawKey(QStringLiteral("OverflowRaw"), hexKey);
+    verifyExpectedLogMessage();
     QCOMPARE(signingKeys->keys()->count(), MAVLinkSigningKeys::kMaxKeys);
 
     signingKeys->removeAllKeys();
@@ -533,7 +548,9 @@ void SigningTest::_testTryDetectKeySuspended()
     QVERIFY(suspendedCtrl.channel().isAutoDetectSuspended());
     QVERIFY(MAVLinkSigningKeys::instance()->tryDetectKey(&suspendedCtrl, message).isEmpty());
     QVERIFY(!suspendedCtrl.isEnabled());
+    expectLogMessage("MAVLink.SigningController", QtWarningMsg, QRegularExpression("Signing operation cancelled"));
     suspendedCtrl.cancelPending();
+    verifyExpectedLogMessage();
     QVERIFY(!suspendedCtrl.channel().isAutoDetectSuspended());
 
     constexpr auto kActiveCh = static_cast<mavlink_channel_t>(6);

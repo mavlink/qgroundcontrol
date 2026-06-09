@@ -1,8 +1,8 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include "UnitTest.h"
 
-class QGCCachedFileDownloadTest : public TempDirectoryTest
+class QGCCachedFileDownloadTest : public UnitTest
 {
     Q_OBJECT
 

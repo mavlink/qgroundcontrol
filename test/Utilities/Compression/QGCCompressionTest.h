@@ -1,9 +1,9 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include "UnitTest.h"
 
 /// Tests for QGCCompression (decompression-only: format detection, extraction, decompression)
-class QGCCompressionTest : public TempDirectoryTest
+class QGCCompressionTest : public UnitTest
 {
     Q_OBJECT
 

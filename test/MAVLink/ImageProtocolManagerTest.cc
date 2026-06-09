@@ -125,19 +125,19 @@ void ImageProtocolManagerTest::_testRejectHandshakeWithZeroFields()
     ImageProtocolManager manager;
 
     // All-zero handshake is silently ignored (warning is logged).
-    QTest::ignoreMessage(QtWarningMsg,
-                         QRegularExpression(QStringLiteral("Invalid field")));
+    expectLogMessage("MAVLink.ImageProtocolManager", QtWarningMsg, QRegularExpression(QStringLiteral("Invalid field")));
 
     const mavlink_message_t hs = makeHandshake(MAVLINK_DATA_STREAM_IMG_JPEG,
                                                /*size*/0, 10, 20, /*packets*/0, /*payload*/0);
     manager.mavlinkMessageReceived(hs);
+    verifyExpectedLogMessage();
 
     // Follow-up data must be rejected because no transmission is active.
-    QTest::ignoreMessage(QtWarningMsg,
-                         QRegularExpression(QStringLiteral("no prior DATA_TRANSMISSION_HANDSHAKE")));
+    expectLogMessage("MAVLink.ImageProtocolManager", QtWarningMsg, QRegularExpression(QStringLiteral("no prior DATA_TRANSMISSION_HANDSHAKE")));
     const uint8_t buf[4] = {1, 2, 3, 4};
     const mavlink_message_t ed = makeEncapsulated(0, buf, sizeof(buf));
     manager.mavlinkMessageReceived(ed);
+    verifyExpectedLogMessage();
 
     // Index never advanced because imageReady was never emitted.
     QCOMPARE(manager.flowImageIndex(), 0u);
@@ -149,12 +149,12 @@ void ImageProtocolManagerTest::_testRejectHandshakeExceedingMaxImageSize()
 
     // 2 MB exceeds the internal 1 MB cap.
     constexpr uint32_t kOversizedImage = 2u * 1024u * 1024u;
-    QTest::ignoreMessage(QtWarningMsg,
-                         QRegularExpression(QStringLiteral("Image size exceeds limit")));
+    expectLogMessage("MAVLink.ImageProtocolManager", QtWarningMsg, QRegularExpression(QStringLiteral("Image size exceeds limit")));
     const mavlink_message_t hs = makeHandshake(MAVLINK_DATA_STREAM_IMG_JPEG,
                                                kOversizedImage, 1024, 1024,
                                                /*packets*/10, /*payload*/253);
     manager.mavlinkMessageReceived(hs);
+    verifyExpectedLogMessage();
 
     QCOMPARE(manager.flowImageIndex(), 0u);
 }
@@ -166,12 +166,12 @@ void ImageProtocolManagerTest::_testRejectHandshakeWithOversizedPayload()
     // payload larger than the ENCAPSULATED_DATA field capacity (253) is
     // rejected to avoid buffer overruns on decode.
     const uint8_t kBogusPayload = 255;
-    QTest::ignoreMessage(QtWarningMsg,
-                         QRegularExpression(QStringLiteral("payload exceeds")));
+    expectLogMessage("MAVLink.ImageProtocolManager", QtWarningMsg, QRegularExpression(QStringLiteral("payload exceeds")));
     const mavlink_message_t hs = makeHandshake(MAVLINK_DATA_STREAM_IMG_JPEG,
                                                /*size*/500, 10, 20,
                                                /*packets*/2, kBogusPayload);
     manager.mavlinkMessageReceived(hs);
+    verifyExpectedLogMessage();
 
     QCOMPARE(manager.flowImageIndex(), 0u);
 }
@@ -186,11 +186,11 @@ void ImageProtocolManagerTest::_testEncapsulatedDataWithoutHandshakeIgnored()
 
     QSignalSpy readySpy(&manager, &ImageProtocolManager::imageReady);
 
-    QTest::ignoreMessage(QtWarningMsg,
-                         QRegularExpression(QStringLiteral("no prior DATA_TRANSMISSION_HANDSHAKE")));
+    expectLogMessage("MAVLink.ImageProtocolManager", QtWarningMsg, QRegularExpression(QStringLiteral("no prior DATA_TRANSMISSION_HANDSHAKE")));
     const uint8_t buf[4] = {9, 9, 9, 9};
     const mavlink_message_t ed = makeEncapsulated(0, buf, sizeof(buf));
     manager.mavlinkMessageReceived(ed);
+    verifyExpectedLogMessage();
 
     QCOMPARE(readySpy.count(), 0);
     QCOMPARE(manager.flowImageIndex(), 0u);
@@ -208,11 +208,11 @@ void ImageProtocolManagerTest::_testEncapsulatedDataPastEndIgnored()
     manager.mavlinkMessageReceived(hs);
 
     // seqnr=5 → bytePosition = 5 * 50 = 250, past the 100-byte image.
-    QTest::ignoreMessage(QtWarningMsg,
-                         QRegularExpression(QStringLiteral("past end of image size")));
+    expectLogMessage("MAVLink.ImageProtocolManager", QtWarningMsg, QRegularExpression(QStringLiteral("past end of image size")));
     uint8_t buf[kPayload] = {};
     const mavlink_message_t edBad = makeEncapsulated(5, buf, sizeof(buf));
     manager.mavlinkMessageReceived(edBad);
+    verifyExpectedLogMessage();
 
     // No image was emitted — transmission is still incomplete.
     QCOMPARE(manager.flowImageIndex(), 0u);

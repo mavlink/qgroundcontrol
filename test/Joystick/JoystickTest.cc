@@ -6,6 +6,7 @@
 #include "SDLJoystick.h"
 
 #include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
 
 void JoystickTest::initTestCase()
 {
@@ -419,7 +420,9 @@ void JoystickTest::_invalidAxisIndexTest()
     QVERIFY(!js->hasAxis(-1));
     QVERIFY(!js->hasAxis(-100));
     // Test getAxisCalibration with invalid index returns default calibration
+    expectLogMessage("Joystick.Joystick", QtWarningMsg, QRegularExpression("Invalid axis index"));
     Joystick::AxisCalibration_t cal = js->getAxisCalibration(100);
+    verifyExpectedLogMessage();
     QCOMPARE(cal.min, Joystick::AxisMin);
     QCOMPARE(cal.max, Joystick::AxisMax);
     QCOMPARE(cal.center, 0);

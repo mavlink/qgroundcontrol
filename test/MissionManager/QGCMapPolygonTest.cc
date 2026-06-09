@@ -1,6 +1,7 @@
 #include "QGCMapPolygonTest.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
 
 #include "CoordFixtures.h"
 #include "UnitTestCoords.h"
@@ -163,9 +164,15 @@ void QGCMapPolygonTest::_testVertexManipulation()
 void QGCMapPolygonTest::_testKMLLoad()
 {
     QVERIFY(_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonGood.kml")));
+    expectAppMessage(QRegularExpression("KML file load failed.*PolygonBadXml"));
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
+    verifyExpectedLogMessage();
+    expectAppMessage(QRegularExpression("KML file load failed.*Unable to find Polygon"));
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonMissingNode.kml")));
+    verifyExpectedLogMessage();
+    expectAppMessage(QRegularExpression("KML file load failed.*PolygonBadCoordinatesNode"));
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
+    verifyExpectedLogMessage();
 }
 
 void QGCMapPolygonTest::_testSelectVertex()
@@ -177,7 +184,9 @@ void QGCMapPolygonTest::_testSelectVertex()
     QVERIFY(_mapPolygon->count() == _polyPoints.count());
     _mapPolygon->selectVertex(-1);
     QVERIFY(_mapPolygon->selectedVertex() == -1);
+    expectLogMessage("QMLControls.QGCMapPolygon", QtWarningMsg, QRegularExpression("Selected vertex index.*out of bounds"));
     _mapPolygon->selectVertex(_polyPoints.count());
+    verifyExpectedLogMessage();
     QVERIFY(_mapPolygon->selectedVertex() == -1);
     _mapPolygon->selectVertex(_polyPoints.count() - 1);
     QVERIFY(_mapPolygon->selectedVertex() == _polyPoints.count() - 1);

@@ -210,6 +210,14 @@ repos:
         exclude: ^test/
         pass_filenames: true
 
+      - id: check-no-qtest-ignore-message
+        name: Check for QTest::ignoreMessage in test code
+        entry: bash -c 'if grep -nH "QTest::ignoreMessage" "$@" 2>/dev/null; then echo "::error::QTest::ignoreMessage found. Use expectLogMessage+verifyExpectedLogMessage or ignoreLogMessage instead." >&2; exit 1; fi' --
+        language: system
+        types: [c++]
+        files: ^test/
+        pass_filenames: true
+
       - id: vehicle-null-check
         name: Check vehicle null safety
         entry: python3 tools/analyzers/vehicle_null_check.py

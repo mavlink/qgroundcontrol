@@ -3,6 +3,7 @@
 #include "APMDataFlashLogParser.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryFile>
 
 #include <cstring>
@@ -88,7 +89,9 @@ void APMDataFlashLogParserTest::_parseInvalidLogTest()
     tempFile.close();
 
     APMDataFlashLogParser parser;
+    expectLogMessage("AnalyzeView.APMDataFlashLogParser", QtWarningMsg, QRegularExpression(QStringLiteral("No valid FMT messages were found")));
     QVERIFY(!parser.parseFile(tempFile.fileName()));
+    verifyExpectedLogMessage();
     QVERIFY(!parser.parseComplete());
     QVERIFY(!parser.parseError().isEmpty());
 }

@@ -23,8 +23,6 @@
 
 void QmlUITestBase::startUI()
 {
-    setStrictLogCheck(true);
-
     // Initialise subsystems needed for the full QML UI
     // setStyle() must only be called once per process; subsequent calls after
     // any QML engine has loaded produce an "must be called before loading QML"
@@ -48,16 +46,16 @@ void QmlUITestBase::startUI()
     QVERIFY2(QGCCorePlugin::instance()->showAdvancedUI(), "Test requires Advanced UI mode");
 
     // Ignore benign Qt platform warnings that cannot be avoided in offscreen mode
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^default$")), QtWarningMsg,
+    ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("This plugin does not support propagateSizeHints")));
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^qt\\.qpa\\.fonts$")), QtWarningMsg,
+    ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Populating font family aliases")));
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^default$")), QtWarningMsg,
+    ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("QRhiGles2")));
 #ifdef QT_DEBUG
     // Debug builds on macOS are ad-hoc signed with an unbound Info.plist, so
     // macOS never shows the camera permission dialog and silently denies access.
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^default$")), QtWarningMsg,
+    ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Access to camera not granted")));
 #endif
 
@@ -85,7 +83,7 @@ void QmlUITestBase::ignoreAPMMockLinkWarnings()
 {
     // ArduPilot MockLink does not serve COMP_METADATA_TYPE_GENERAL.
     ignoreLogMessage(
-        QRegularExpression(QStringLiteral("^ComponentInformation\\.RequestMetaDataTypeStateMachine$")),
+        "ComponentInformation.RequestMetaDataTypeStateMachine",
         QtWarningMsg,
         QRegularExpression(QStringLiteral("\"COMP_METADATA_TYPE_GENERAL\" : failed to load metadata \\(primary and fallback\\) \"\"")));
 }

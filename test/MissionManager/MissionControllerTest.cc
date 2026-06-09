@@ -16,6 +16,7 @@
 #include "TestFixtures.h"
 #include "MultiSignalSpy.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 using namespace TestFixtures;
 
@@ -75,6 +76,11 @@ void MissionControllerTest::_testEmptyVehicle()
 {
     UT_FETCH_AUTOPILOT();
     Q_UNUSED(autopilotName);
+    // ArduPilot mock link has no metadata source; these warnings are expected for that autopilot.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
+    ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Skipping invalid enum value"));
     _initForFirmwareType(autopilot);
     // FYI: A significant amount of empty vehicle testing is in _initForFirmwareType since that
     // sets up an empty vehicle
@@ -344,8 +350,12 @@ void MissionControllerTest::_testMissionTransformsInvalidHome()
     QVERIFY_TRUE_WAIT(!settingsItem->coordinate().isValid(), TestTimeout::shortMs());
 
     // repositionMission and rotateMission require a valid home — they should be no-ops
+    expectLogMessage("PlanManager.MissionController", QtWarningMsg, QRegularExpression("Cannot reposition mission while home is invalid"));
     _missionController->repositionMission(home.atDistanceAndAzimuth(100.0, 0.0), true, true);
+    verifyExpectedLogMessage();
+    expectLogMessage("PlanManager.MissionController", QtWarningMsg, QRegularExpression("Cannot rotate mission while home is invalid"));
     _missionController->rotateMission(45.0, true, true);
+    verifyExpectedLogMessage();
     QCOMPARE_COORDS(item1->coordinate(), oldItemCoord, kCoordToleranceMeters);
     QCOMPARE_FUZZY(item1->editableAlt(), oldItemAlt, kAltToleranceMeters);
 

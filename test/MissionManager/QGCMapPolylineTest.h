@@ -1,13 +1,13 @@
 #pragma once
 
 #include "CoordFixtures.h"
-#include "TempDirectoryTest.h"
+#include "UnitTest.h"
 
 class MultiSignalSpy;
 class QGCMapPolyline;
 class QmlObjectListModel;
 
-class QGCMapPolylineTest : public TempDirectoryTest
+class QGCMapPolylineTest : public UnitTest
 {
     Q_OBJECT
 

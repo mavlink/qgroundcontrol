@@ -1,9 +1,9 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include "UnitTest.h"
 
 /// Tests for QGCFileWatcher (QFileSystemWatcher wrapper with callbacks)
-class QGCFileWatcherTest : public TempDirectoryTest
+class QGCFileWatcherTest : public UnitTest
 {
     Q_OBJECT
 

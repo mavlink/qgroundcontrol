@@ -49,7 +49,9 @@ void RetryTransitionTest::_testRetryActionCalled()
     machine.setInitialState(startState);
 
     // Should finish after retry + final transition
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
     QCOMPARE(retryCount, 1);  // Retry action called once
     QVERIFY(targetReached);   // Then transitioned to target
 }
@@ -92,7 +94,9 @@ void RetryTransitionTest::_testTransitionAfterMaxRetries()
     alternateState->addTransition(alternateState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
     QCOMPARE(retryCount, 2);      // Both retries used
     QVERIFY(targetReached);       // Transitioned to retry target
     QVERIFY(!alternateReached);   // Not to alternate
@@ -124,7 +128,9 @@ void RetryTransitionTest::_testRetryCountResets()
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
 
     // Verify the transition's internal count was reset
     QCOMPARE(retryTransition->retryCount(), 0);
@@ -159,7 +165,9 @@ void RetryTransitionTest::_testMultipleRetries()
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
     QCOMPARE(retryCount, 3);  // All 3 retries used
     QVERIFY(targetReached);
 }
@@ -193,7 +201,9 @@ void RetryTransitionTest::_testZeroRetries()
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
     QCOMPARE(retryCount, 0);  // No retries attempted
     QVERIFY(targetReached);   // Immediate transition
 }
@@ -219,7 +229,9 @@ void RetryTransitionTest::_testWaitRearmedBeforeRetryAction()
     targetState->addTransition(targetState, &QGCState::advance, finalState);
     machine.setInitialState(startState);
 
+    expectLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg, QRegularExpression(R"("Start" timeout after \d+ retries, advancing)"));
     QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
     QVERIFY(waitWasRearmedBeforeRetryAction);
 }
 
