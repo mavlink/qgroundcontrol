@@ -2,6 +2,7 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QUuid>
 #include <QtTest/QSignalSpy>
@@ -110,6 +111,9 @@ void RequestMetaDataTypeStateMachineTest::_sequentialRequestsReuseMachine()
 
 void RequestMetaDataTypeStateMachineTest::_requestCompletesForArduPilot()
 {
+    // ArduPilot mock link has no metadata source; this warning is expected.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
     _disconnectMockLink();
     _connectMockLink(MAV_AUTOPILOT_ARDUPILOTMEGA);
 
@@ -134,6 +138,9 @@ void RequestMetaDataTypeStateMachineTest::_requestCompletesForArduPilot()
 
 void RequestMetaDataTypeStateMachineTest::_requestSkipsCompInfoOnHighLatencyLink()
 {
+    // High-latency link skips metadata requests, resulting in the expected failure warning.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
     _disconnectMockLink();
 
     LinkManager::instance()->setConnectionsAllowed();

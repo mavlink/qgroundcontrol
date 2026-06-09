@@ -643,6 +643,17 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
 
 void SimpleMissionItem::_rebuildFacts(void)
 {
+    // Reset param metadata to defaults so stale min/max from a previous command
+    // does not cause setRawMin/setRawMax to spuriously reject sentinel values.
+    const FactMetaData kDefaultDouble(FactMetaData::valueTypeDouble);
+    _param1MetaData = kDefaultDouble;
+    _param2MetaData = kDefaultDouble;
+    _param3MetaData = kDefaultDouble;
+    _param4MetaData = kDefaultDouble;
+    _param5MetaData = kDefaultDouble;
+    _param6MetaData = kDefaultDouble;
+    _param7MetaData = kDefaultDouble;
+
     _rebuildTextFieldFacts();
     _rebuildNaNFacts();
     _rebuildComboBoxFacts();

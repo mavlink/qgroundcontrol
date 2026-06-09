@@ -6,8 +6,10 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEvent>
 #include <QtCore/QHash>
+#include <QtCore/QSet>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
 #include <QtPositioning/QGeoCoordinate>
@@ -39,9 +41,18 @@ struct UnitTest::ExpectedLogMessages
     {
         LogEntry::Level level;
         QRegularExpression pattern;
-        QRegularExpression categoryPattern; // empty = match any category
+        QString category;
     };
-    QList<Entry> list;
+
+    struct PendingExpectation
+    {
+        Entry entry;
+        int startIndex = 0;
+    };
+
+    QList<Entry> ignored;
+    QList<PendingExpectation> pending;
+    QSet<int> consumedMessageIndices;
 };
 
 QGC_LOGGING_CATEGORY(UnitTestLog, "Test.UnitTest")
@@ -725,37 +736,75 @@ void UnitTest::cleanupTestCase()
     }
 }
 
-void UnitTest::expectLogMessage(QtMsgType type, const QRegularExpression &pattern)
+void UnitTest::expectLogMessage(const char *category, QtMsgType type, const QRegularExpression &pattern)
 {
-    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), pattern, {}});
+    Q_ASSERT_X(category && *category != '\0', "expectLogMessage", "category must not be empty — use the exact Qt logging category string (e.g. \"Utilities.QGCFileHelper\")");
+    _expectedLogMessages->pending.append({
+        .entry = {LogEntry::fromQtMsgType(type), pattern, QString::fromLatin1(category)},
+        .startIndex = static_cast<int>(LogManager::capturedMessages().size()),
+    });
 }
 
-void UnitTest::expectLogMessage(const QRegularExpression &categoryPattern, QtMsgType type, const QRegularExpression &messagePattern)
+void UnitTest::verifyExpectedLogMessage()
 {
-    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), messagePattern, categoryPattern});
+    if (_expectedLogMessages->pending.isEmpty()) {
+        QFAIL("verifyExpectedLogMessage called with no pending expectLogMessage.");
+    }
+
+    auto matches = [](const LogEntry &m, const ExpectedLogMessages::Entry &e) {
+        if (e.level != m.level) {
+            return false;
+        }
+        if (!e.pattern.match(m.message).hasMatch()) {
+            return false;
+        }
+        if (e.category != m.category) {
+            return false;
+        }
+        return true;
+    };
+
+    const ExpectedLogMessages::PendingExpectation expected = _expectedLogMessages->pending.front();
+
+    const auto allMsgs = LogManager::capturedMessages();
+    for (int i = expected.startIndex; i < allMsgs.size(); ++i) {
+        if (_expectedLogMessages->consumedMessageIndices.contains(i)) {
+            continue;
+        }
+        if (!matches(allMsgs[i], expected.entry)) {
+            continue;
+        }
+
+        _expectedLogMessages->consumedMessageIndices.insert(i);
+        _expectedLogMessages->pending.removeFirst();
+        return;
+    }
+
+    const QString detail = QStringLiteral("Expected log message was not captured after expectLogMessage. pattern='%1' category='%2'")
+                               .arg(expected.entry.pattern.pattern(),
+                                    expected.entry.category);
+    _expectedLogMessages->pending.removeFirst();
+    QFAIL(qPrintable(detail));
 }
 
 void UnitTest::expectAppMessage(const QRegularExpression &messagePattern)
 {
-    expectLogMessage(QRegularExpression("API\\.QGCApplication\\.AppMessage"), QtDebugMsg, messagePattern);
+    expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg, messagePattern);
 }
 
-void UnitTest::ignoreLogMessage(QtMsgType type, const QRegularExpression &pattern)
+void UnitTest::ignoreLogMessage(const char *category, QtMsgType type, const QRegularExpression &pattern)
 {
-    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), pattern, {}});
-}
-
-void UnitTest::ignoreLogMessage(const QRegularExpression &categoryPattern, QtMsgType type, const QRegularExpression &messagePattern)
-{
-    _expectedLogMessages->list.append({LogEntry::fromQtMsgType(type), messagePattern, categoryPattern});
+    Q_ASSERT_X(category && *category != '\0', "ignoreLogMessage", "category must not be empty — use the exact Qt logging category string (e.g. \"Utilities.QGCFileHelper\")");
+    _expectedLogMessages->ignored.append({LogEntry::fromQtMsgType(type), pattern, QString::fromLatin1(category)});
 }
 
 void UnitTest::init()
 {
     _initCalled = true;
     _failureContextDumped = false;
-    _strictLogCheck = false;
-    _expectedLogMessages->list.clear();
+    _expectedLogMessages->ignored.clear();
+    _expectedLogMessages->pending.clear();
+    _expectedLogMessages->consumedMessageIndices.clear();
 
     // Start capturing log messages for this test (cleared from previous test)
     LogManager::clearCapturedMessages();
@@ -774,26 +823,33 @@ void UnitTest::cleanup()
     _cleanupCalled = true;
     dumpFailureContextIfTestFailed(QStringLiteral("cleanup"));
 
-    // Stop capturing log messages after the test finishes
-    LogManager::setCaptureEnabled(false);
+    // Keep log capture enabled through the settle/verification phase so warnings
+    // emitted while draining queued events are still subject to strict checking.
+    // The scope guard guarantees capture is disabled on every exit path, including
+    // the early returns taken by the QFAIL macros below.
+    const auto captureGuard = qScopeGuard([] { LogManager::setCaptureEnabled(false); });
 
     _cleanupTempFiles();
 
     // Process any lingering events to prevent cross-test contamination
     settleEventLoopForCleanup(3, 0);
 
-    // Fail the test if any uncategorized or critical log messages were captured.
+    // Fail the test if any unexpected captured log messages were emitted (strict mode).
     // Skip if the test already failed to avoid noisy double-failure reports.
     if (!QTest::currentTestFailed()) {
-        QString uncategorizedDetails;
-        QString criticalDetails;
+        if (!_expectedLogMessages->pending.isEmpty()) {
+            const auto expected = _expectedLogMessages->pending.front().entry;
+            _expectedLogMessages->pending.clear();
+            const QString detail = QStringLiteral("expectLogMessage was called without a matching verifyExpectedLogMessage. pattern='%1' category='%2'")
+                                       .arg(expected.pattern.pattern(), expected.category);
+            QFAIL(qPrintable(detail));
+        }
 
-        auto isExpected = [this](const LogEntry &m) {
-            for (const auto &e : _expectedLogMessages->list) {
+        auto isIgnored = [this](const LogEntry &m) {
+            for (const auto &e : _expectedLogMessages->ignored) {
                 if (e.level != m.level) continue;
                 if (!e.pattern.match(m.message).hasMatch()) continue;
-                if (!e.categoryPattern.pattern().isEmpty() &&
-                    !e.categoryPattern.match(m.category).hasMatch()) continue;
+                if (e.category != m.category) continue;
                 return true;
             }
             return false;
@@ -801,45 +857,25 @@ void UnitTest::cleanup()
 
         const auto allMsgs = LogManager::capturedMessages();
         QString strictDetails;
-        for (const auto &m : allMsgs) {
-            if (isExpected(m)) {
+        for (int i = 0; i < allMsgs.size(); ++i) {
+            if (_expectedLogMessages->consumedMessageIndices.contains(i)) {
                 continue;
             }
-            if (_strictLogCheck) {
-                const char *lvl = (m.level == LogEntry::Debug)   ? "debug"
-                                : (m.level == LogEntry::Warning) ? "warning"
-                                : (m.level == LogEntry::Info)    ? "info"
-                                : (m.level == LogEntry::Critical) ? "critical"
-                                                                 : "other";
-                strictDetails += QStringLiteral("  [%1][%2] %3\n")
-                                     .arg(QLatin1String(lvl), m.category, m.message);
-            } else {
-                if (m.category.isEmpty() || m.category == QStringLiteral("default")) {
-                    const char *lvl = (m.level == LogEntry::Debug)   ? "debug"
-                                    : (m.level == LogEntry::Warning) ? "warning"
-                                    : (m.level == LogEntry::Info)    ? "info"
-                                                                     : "other";
-                    uncategorizedDetails += QStringLiteral("  [%1] %2\n").arg(QLatin1String(lvl), m.message);
-                }
-                if (m.level == LogEntry::Critical) {
-                    criticalDetails += QStringLiteral("  [%1] %2\n").arg(m.category, m.message);
-                }
+            const LogEntry &m = allMsgs[i];
+            if (isIgnored(m)) {
+                continue;
             }
+            const char *lvl = (m.level == LogEntry::Debug)    ? "debug"
+                            : (m.level == LogEntry::Warning)  ? "warning"
+                            : (m.level == LogEntry::Info)     ? "info"
+                            : (m.level == LogEntry::Critical) ? "critical"
+                                                              : "other";
+            strictDetails += QStringLiteral("  [%1][%2] %3\n")
+                                 .arg(QLatin1String(lvl), m.category, m.message);
         }
 
         if (!strictDetails.isEmpty()) {
             QFAIL(qPrintable(QStringLiteral("Unexpected log messages (strict mode):\n%1").arg(strictDetails)));
-        }
-        if (!uncategorizedDetails.isEmpty() || !criticalDetails.isEmpty()) {
-            QString msg;
-            if (!uncategorizedDetails.isEmpty()) {
-                msg += QStringLiteral("Uncategorized log messages (use qCDebug/qCWarning with a category):\n%1")
-                           .arg(uncategorizedDetails);
-            }
-            if (!criticalDetails.isEmpty()) {
-                msg += QStringLiteral("Critical log messages:\n%1").arg(criticalDetails);
-            }
-            QFAIL(qPrintable(msg));
         }
     }
 }

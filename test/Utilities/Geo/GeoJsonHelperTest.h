@@ -1,8 +1,8 @@
 #pragma once
 
-#include "TempDirectoryTest.h"
+#include "UnitTest.h"
 
-class GeoJsonHelperTest : public TempDirectoryTest
+class GeoJsonHelperTest : public UnitTest
 {
     Q_OBJECT
 

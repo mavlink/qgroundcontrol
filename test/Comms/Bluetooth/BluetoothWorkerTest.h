@@ -7,6 +7,8 @@ class BluetoothWorkerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void init() override;
+
     void _testFactoryCreatesClassicWorker();
     void _testFactoryCreatesBleWorker();
     void _testInitialState();

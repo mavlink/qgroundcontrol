@@ -22,8 +22,27 @@
 #include "MavlinkSettings.h"
 #include "SettingsManager.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/qscopeguard.h>
 #include <QtTest/QTest>
+
+void InitialConnectTest::init()
+{
+    VehicleTestManualConnect::init();
+    // Many initial-connect tests exercise failure or timeout paths that produce these expected warnings.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
+    ignoreLogMessage("Utilities.StateMachine.RetryableRequestMessageState", QtWarningMsg,
+                     QRegularExpression("Max retries exhausted"));
+    ignoreLogMessage("Utilities.StateMachine.RetryTransition", QtWarningMsg,
+                     QRegularExpression("timeout after .* retries, advancing"));
+    // Timeout tests for Mission/GeoFence/Rally states cause transfer-failed showAppMessage logs.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("transfer failed"));
+    // StandardModes timeout exhausts MAV_CMD_REQUEST_MESSAGE retries in MavCommandQueue.
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression("Giving up sending command after max retries:"));
+}
 
 void InitialConnectTest::_performTestCases_data()
 {

@@ -1,6 +1,7 @@
 #include "ExifParserTest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 
 #include "ExifParser.h"
 #include "ExifUtility.h"
@@ -28,14 +29,18 @@ void ExifParserTest::_readTimeTest()
 void ExifParserTest::_readTimeEmptyBufferTest()
 {
     const QByteArray emptyBuffer;
+    expectLogMessage("AnalyzeView.ExifParser", QtWarningMsg, QRegularExpression("DateTimeDigitized tag not found"));
     const QDateTime result = ExifParser::readTime(emptyBuffer);
+    verifyExpectedLogMessage();
     QVERIFY(!result.isValid());
 }
 
 void ExifParserTest::_readTimeInvalidJpegTest()
 {
     const QByteArray invalidData("This is not a JPEG file");
+    expectLogMessage("AnalyzeView.ExifParser", QtWarningMsg, QRegularExpression("DateTimeDigitized tag not found"));
     const QDateTime result = ExifParser::readTime(invalidData);
+    verifyExpectedLogMessage();
     QVERIFY(!result.isValid());
 }
 
@@ -65,8 +70,10 @@ void ExifParserTest::_writeEmptyBufferTest()
     GeoTagData data;
     data.coordinate = QGeoCoordinate(37.225, -80.425, 618.4392);
 
+    expectLogMessage("Utilities.ExifUtility", QtWarningMsg, QRegularExpression("Not a valid JPEG file"));
     // Writing to empty buffer should create new EXIF data
     const bool result = ExifParser::write(emptyBuffer, data);
+    verifyExpectedLogMessage();
     // This may fail or succeed depending on implementation - just verify no crash
     Q_UNUSED(result);
 }

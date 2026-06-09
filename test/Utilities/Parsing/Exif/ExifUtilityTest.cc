@@ -142,7 +142,9 @@ void ExifUtilityTest::_testSaveToBufferRejectsNonJpeg()
     QVERIFY(data != nullptr);
 
     QByteArray notJpeg("plain-text-data");
+    expectLogMessage("Utilities.ExifUtility", QtWarningMsg, QRegularExpression("Not a valid JPEG file"));
     QVERIFY(!ExifUtility::saveToBuffer(data, notJpeg));
+    verifyExpectedLogMessage();
 
     exif_data_unref(data);
 }
@@ -161,7 +163,9 @@ void ExifUtilityTest::_testSaveToBufferRejectsTiff()
     tiffData.append(16, '\x00');
 
     QVERIFY(ExifUtility::isTiff(tiffData));
+    expectLogMessage("Utilities.ExifUtility", QtWarningMsg, QRegularExpression("TIFF/DNG format not supported"));
     QVERIFY(!ExifUtility::saveToBuffer(data, tiffData));
+    verifyExpectedLogMessage();
 
     exif_data_unref(data);
 }

@@ -82,10 +82,12 @@ void LoggingQmlBindingTest::_modelReceivesEntries()
     auto* model = LogManager::instance()->model();
     const int before = model->totalCount();
 
+    expectLogMessage("Test.LoggingQmlBinding", QtWarningMsg, QRegularExpression("test message for model"));
     qCWarning(LoggingQmlBindingTestLog) << "test message for model";
     // Model update is an in-process queued signal, not I/O; a 500 ms window
     // is generous for a local Qt signal and keeps failure feedback fast.
     QTRY_VERIFY_WITH_TIMEOUT(model->totalCount() > before, 500);
+    verifyExpectedLogMessage();
 
     QQmlComponent component(_engine);
     component.setData(R"(

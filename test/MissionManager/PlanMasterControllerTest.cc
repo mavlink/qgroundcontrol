@@ -12,6 +12,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
@@ -40,6 +41,10 @@ void PlanMasterControllerTest::_testMissionPlannerFileLoad()
 
 void PlanMasterControllerTest::_testActiveVehicleChanged()
 {
+    // The test emits missionManager->error() twice to verify signal propagation.
+    // Each emission triggers a showAppMessage debug log via PlanMasterController.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("Mission transfer failed"));
     // There was a defect where the PlanMasterController would, upon a new active vehicle,
     // overzelously disconnect all subscribers interested in the outgoing active vechicle.
     Vehicle* outgoingManagerVehicle = _masterController->managerVehicle();

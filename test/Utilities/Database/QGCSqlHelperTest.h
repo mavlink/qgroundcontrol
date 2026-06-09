@@ -1,8 +1,8 @@
 #pragma once
 
-#include "TempDirectoryTest.h"
+#include "UnitTest.h"
 
-class QGCSqlHelperTest : public TempDirectoryTest
+class QGCSqlHelperTest : public UnitTest
 {
     Q_OBJECT
 

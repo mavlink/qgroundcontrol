@@ -1,6 +1,8 @@
 #include "RequestMessageTest.h"
 
 #include "MultiVehicleManager.h"
+
+#include <QtCore/QRegularExpression>
 RequestMessageTest::TestCase_t RequestMessageTest::_rgTestCases[] = {
     {MockLink::FailRequestMessageNone, MAV_RESULT_ACCEPTED, Vehicle::RequestMessageNoFailure, 1, MAVLINK_MSG_ID_DEBUG, false, 0},
     {MockLink::FailRequestMessageCommandAcceptedMsgNotSent, MAV_RESULT_FAILED,
@@ -56,6 +58,9 @@ void RequestMessageTest::_testCaseWorker(TestCase_t& testCase)
 
 void RequestMessageTest::_performTestCases()
 {
+    // No-response test cases exhaust command retries, producing MavCommandQueue warnings.
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression("Giving up sending command after max retries:"));
     int index = 0;
     for (TestCase_t& testCase : _rgTestCases) {
         qCDebug(UnitTestLog) << "Testing case" << index++;
@@ -82,7 +87,10 @@ void RequestMessageTest::_duplicateCommand()
     QCOMPARE(firstRequestCase.resultHandlerCalled, false);
 
     // Exact duplicate request should fail immediately and should not send a second MAV_CMD_REQUEST_MESSAGE.
+    expectLogMessage("Vehicle.RequestMessageCoordinator", QtWarningMsg,
+                     QRegularExpression("failing exact duplicate compId:msgId"));
     vehicle->requestMessage(_requestMessageResultHandler, &exactDuplicateCase, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_DEBUG);
+    verifyExpectedLogMessage();
     QCOMPARE(exactDuplicateCase.resultHandlerCalled, true);
     QCOMPARE(exactDuplicateCase.callbackCount, 1);
     QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_MESSAGE), exactDuplicateCase.expectedSendCount);
@@ -155,7 +163,10 @@ void RequestMessageTest::_duplicateWhileQueued()
     QCOMPARE(queuedRequestCase.resultHandlerCalled, false);
 
     // Duplicate of an already queued request should fail immediately and should not send another command.
+    expectLogMessage("Vehicle.RequestMessageCoordinator", QtWarningMsg,
+                     QRegularExpression("failing exact duplicate compId:msgId"));
     vehicle->requestMessage(_requestMessageResultHandler, &duplicateQueuedCase, MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_AUTOPILOT_VERSION);
+    verifyExpectedLogMessage();
     QCOMPARE(duplicateQueuedCase.resultHandlerCalled, true);
     QCOMPARE(duplicateQueuedCase.callbackCount, 1);
     QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_MESSAGE), 1);

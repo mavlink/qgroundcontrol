@@ -97,7 +97,6 @@ void ParameterEditorControllerTest::_buildDiffNoDifferencesQGC()
     ParameterEditorController controller;
     const bool result = controller.buildDiffFromFile(tempFile.path());
 
-    // parsedLineCount > 0 so returns true, but no diffs found
     QVERIFY(result);
     QCOMPARE(controller.diffList()->count(), 0);
 }
@@ -126,8 +125,8 @@ void ParameterEditorControllerTest::_buildDiffBadFormat()
     ParameterEditorController controller;
     expectAppMessage(QRegularExpression("No valid parameters found"));
     const bool result = controller.buildDiffFromFile(tempFile.path());
+    verifyExpectedLogMessage();
 
-    // parsedLineCount == 0 → returns false
     QVERIFY(!result);
     QCOMPARE(controller.diffList()->count(), 0);
 }
@@ -142,7 +141,6 @@ void ParameterEditorControllerTest::_buildDiffMissingOnVehicle()
     ParameterEditorController controller;
     const bool result = controller.buildDiffFromFile(tempFile.path());
 
-    // Line was parsed (parsedLineCount > 0) → returns true
     QVERIFY(result);
     QCOMPARE(controller.diffList()->count(), 1);
     const auto* diff = controller.diffList()->value<ParameterEditorDiff*>(0);
@@ -162,7 +160,6 @@ void ParameterEditorControllerTest::_buildDiffMPMissingParam()
     QSignalSpy missingSpy(&controller, &ParameterEditorController::missingParamsFromFile);
     const bool result = controller.buildDiffFromFile(tempFile.path());
 
-    // File had a parseable line (parsedLineCount > 0) → returns true
     QVERIFY(result);
     // Unknown MP param is skipped — diff list stays empty
     QCOMPARE(controller.diffList()->count(), 0);

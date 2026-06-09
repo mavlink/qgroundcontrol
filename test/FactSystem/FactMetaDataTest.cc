@@ -1,5 +1,6 @@
 #include "FactMetaDataTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QtNumeric>
 
 #include <cmath>
@@ -264,7 +265,9 @@ void FactMetaDataTest::_defaultValueOutOfRange_test()
     meta.setRawMax(QVariant(100));
 
     // Attempting to set default outside range should not set it
+    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("Attempt to set default value which is outside min/max range"));
     meta.setRawDefaultValue(QVariant(200));
+    verifyExpectedLogMessage();
     QVERIFY(!meta.defaultValueAvailable());
 }
 

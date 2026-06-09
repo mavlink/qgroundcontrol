@@ -3,16 +3,18 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 
 #include "MultiSignalSpy.h"
 #include "UnitTestCoords.h"
 #include "QGCMapPolyline.h"
 #include "QGCQGeoCoordinate.h"
 #include "QmlObjectListModel.h"
+#include <QtCore/QTemporaryDir>
 
 void QGCMapPolylineTest::init()
 {
-    TempDirectoryTest::init();
+    UnitTest::init();
     _mapPolyline = new QGCMapPolyline(this);
     _pathModel = _mapPolyline->qmlPathModel();
     QVERIFY(_pathModel);
@@ -30,7 +32,7 @@ void QGCMapPolylineTest::cleanup()
     _multiSpyPolyline = nullptr;
     delete _mapPolyline;
     _mapPolyline = nullptr;
-    TempDirectoryTest::cleanup();
+    UnitTest::cleanup();
 }
 
 void QGCMapPolylineTest::_testDirty()
@@ -162,12 +164,13 @@ QString QGCMapPolylineTest::_copyRes(const QString& dirPath, const QString& name
 
 void QGCMapPolylineTest::_testShapeLoad()
 {
-    (void)_copyRes(tempDirPath(), "pline.dbf");
-    (void)_copyRes(tempDirPath(), "pline.shx");
-    (void)_copyRes(tempDirPath(), "pline.prj");
-    const QString shpFile = _copyRes(tempDirPath(), "pline.shp");
+    QTemporaryDir tempDir;
+    (void)_copyRes(tempDir.path(), "pline.dbf");
+    (void)_copyRes(tempDir.path(), "pline.shx");
+    (void)_copyRes(tempDir.path(), "pline.prj");
+    const QString shpFile = _copyRes(tempDir.path(), "pline.shp");
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(shpFile));
-    const QString kmlFile = _copyRes(tempDirPath(), "polyline.kml");
+    const QString kmlFile = _copyRes(tempDir.path(), "polyline.kml");
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(kmlFile));
 }
 
@@ -180,7 +183,9 @@ void QGCMapPolylineTest::_testSelectVertex()
     QVERIFY(_mapPolyline->count() == _linePoints.count());
     _mapPolyline->selectVertex(-1);
     QVERIFY(_mapPolyline->selectedVertex() == -1);
+    expectLogMessage("QMLControls.QGCMapPolyline", QtWarningMsg, QRegularExpression("Selected vertex index.*out of bounds"));
     _mapPolyline->selectVertex(_linePoints.count());
+    verifyExpectedLogMessage();
     QVERIFY(_mapPolyline->selectedVertex() == -1);
     _mapPolyline->selectVertex(_linePoints.count() - 1);
     QVERIFY(_mapPolyline->selectedVertex() == (_linePoints.count() - 1));

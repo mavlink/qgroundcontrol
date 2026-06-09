@@ -2,11 +2,11 @@
 
 #include <memory>
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include "UnitTest.h"
 
 class QGCTileCacheDatabase;
 
-class QGCTileCacheDatabaseTest : public TempDirectoryTest
+class QGCTileCacheDatabaseTest : public UnitTest
 {
     Q_OBJECT
 
@@ -56,7 +56,7 @@ private slots:
     void _testForeignKeyCascadeDelete();
 
 private:
-    std::unique_ptr<QGCTileCacheDatabase> _createInitializedDB();
+    std::unique_ptr<QGCTileCacheDatabase> _createInitializedDB(QTemporaryDir &tempDir);
     void _insertTileSet(QGCTileCacheDatabase* db, const QString& name, quint64& outSetID);
     void _insertDownloadRecord(QGCTileCacheDatabase* db, quint64 setID, const QString& hash, int state = 0);
     void _linkTileToSet(QGCTileCacheDatabase* db, quint64 tileID, quint64 setID);
