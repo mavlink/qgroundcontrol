@@ -79,24 +79,28 @@ Rectangle {
             visible: vehicleInfoSectionHeader.visible && vehicleInfoSectionHeader.checked
 
             FactComboBox {
+                objectName: "planInfo_firmwareCombo"
                 fact: QGroundControl.settingsManager.appSettings.offlineEditingFirmwareClass
                 indexModel: false
                 Layout.fillWidth: true
                 visible: _root._multipleFirmware && _root._allowFWVehicleTypeSelection
             }
             QGCLabel {
+                objectName: "planInfo_firmwareLabel"
                 text: _root._controllerVehicle ? _root._controllerVehicle.firmwareTypeString : ""
                 Layout.fillWidth: true
                 visible: _root._multipleFirmware && !_root._allowFWVehicleTypeSelection
             }
 
             FactComboBox {
+                objectName: "planInfo_vehicleTypeCombo"
                 fact: QGroundControl.settingsManager.appSettings.offlineEditingVehicleClass
                 indexModel: false
                 Layout.fillWidth: true
                 visible: _root._multipleVehicleTypes && _root._allowFWVehicleTypeSelection
             }
             QGCLabel {
+                objectName: "planInfo_vehicleTypeLabel"
                 text: _root._controllerVehicle ? _root._controllerVehicle.vehicleTypeString : ""
                 Layout.fillWidth: true
                 visible: _root._multipleVehicleTypes && !_root._allowFWVehicleTypeSelection
@@ -179,12 +183,14 @@ Rectangle {
         // ── Plan Templates ──
         SectionHeader {
             id: planTemplateSectionHeader
+            objectName: "planInfo_templatesSection"
             Layout.fillWidth: true
             text: qsTr("Plan Templates")
             visible: _root.planMasterController.showCreateFromTemplate
         }
 
         ColumnLayout {
+            objectName: "planInfo_templatesColumn"
             Layout.fillWidth: true
             spacing: ScreenTools.defaultFontPixelHeight / 2
             visible: planTemplateSectionHeader.visible && planTemplateSectionHeader.checked
@@ -195,6 +201,7 @@ Rectangle {
                 model: _root.planMasterController.planCreators
 
                 QGCButton {
+                    objectName: "planCreator_" + object.name
                     Layout.fillWidth: true
                     text: object.name
                     onClicked: {

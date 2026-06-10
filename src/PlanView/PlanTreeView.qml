@@ -328,6 +328,7 @@ TreeView {
             id: groupHeaderComponent
 
             Rectangle {
+                objectName: "planTree_" + delegateRoot.nodeType + "Header"
                 width:  delegateRoot.width
                 height: ScreenTools.implicitComboBoxHeight + ScreenTools.defaultFontPixelWidth
                 color:  qgcPal.windowShade

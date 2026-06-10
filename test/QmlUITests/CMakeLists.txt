@@ -14,6 +14,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/APMVehicleConfigUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/ToolbarIndicatorUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ToolbarIndicatorUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/PlanViewUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/PlanViewUITest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME}
@@ -25,3 +27,4 @@ add_qgc_test(TopLevelViewsTest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(PX4VehicleConfigUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(APMVehicleConfigUITest LABELS Integration NoSanitizer TIMEOUT 360)
 add_qgc_test(ToolbarIndicatorUITest LABELS Integration NoSanitizer TIMEOUT 180)
+add_qgc_test(PlanViewUITest LABELS Integration NoSanitizer TIMEOUT 120)
