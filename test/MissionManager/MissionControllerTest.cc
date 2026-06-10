@@ -97,6 +97,44 @@ void MissionControllerTest::_setupVisualItemSignals(VisualMissionItem* visualIte
     QVERIFY(visualItemSpy.init(visualItem));
 }
 
+void MissionControllerTest::_testInsertValidityHomePositionGating()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    auto boolProperty = [this](const char* name) {
+        const QVariant value = _missionController->property(name);
+        return value.isValid() && value.toBool();
+    };
+
+    // All insert validity properties must exist
+    QVERIFY(_missionController->property("isInsertTakeoffValid").isValid());
+    QVERIFY(_missionController->property("isInsertLandValid").isValid());
+    QVERIFY(_missionController->property("isInsertROIValid").isValid());
+    QVERIFY(_missionController->property("flyThroughCommandsAllowed").isValid());
+
+    // No home position set: no inserts are valid
+    QCOMPARE(_missionController->homePositionSet(), false);
+    QCOMPARE(boolProperty("isInsertTakeoffValid"), false);
+    QCOMPARE(boolProperty("isInsertLandValid"), false);
+    QCOMPARE(boolProperty("isInsertROIValid"), false);
+    QCOMPARE(boolProperty("flyThroughCommandsAllowed"), false);
+
+    // Home position set, empty plan: only takeoff insert is valid
+    _missionController->setHomePosition(Coord::zurich());
+    QCOMPARE(_missionController->homePositionSet(), true);
+    QCOMPARE(boolProperty("isInsertTakeoffValid"), true);
+    QCOMPARE(boolProperty("isInsertLandValid"), false);
+    QCOMPARE(boolProperty("isInsertROIValid"), false);
+    QCOMPARE(boolProperty("flyThroughCommandsAllowed"), false);
+
+    // Takeoff added: takeoff no longer valid, everything else is
+    QVERIFY(_missionController->insertTakeoffItem(Coord::zurich(), 1, true /* makeCurrentItem */));
+    QCOMPARE(boolProperty("isInsertTakeoffValid"), false);
+    QCOMPARE(boolProperty("isInsertLandValid"), true);
+    QCOMPARE(boolProperty("isInsertROIValid"), true);
+    QCOMPARE(boolProperty("flyThroughCommandsAllowed"), true);
+}
+
 void MissionControllerTest::_testGimbalRecalc()
 {
     _initForFirmwareType(MAV_AUTOPILOT_PX4);

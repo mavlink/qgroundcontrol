@@ -38,6 +38,30 @@ public:
     /// On non-Android platforms this is a no-op.
     Q_INVOKABLE void importFromNativePicker();
 
+    /// @name Unit test file dialog shim
+    /// Native file dialogs cannot be driven from automated tests. Tests arm the
+    /// shim with the result the next dialog should produce; QGCFileDialog.qml
+    /// checks testHookArmed() in openForLoad()/openForSave() and, when armed,
+    /// emits acceptedForLoad/acceptedForSave (or rejected) directly instead of
+    /// opening the native dialog. Outside of unit test builds the hook is never
+    /// armed and the QML check is a no-op.
+    ///@{
+
+    /// Returns true if a test result has been armed for the next dialog open.
+    Q_INVOKABLE static bool testHookArmed();
+
+    /// Returns the armed file path (empty for reject) and disarms the hook.
+    Q_INVOKABLE static QString takeTestNextFile();
+
+#ifdef QGC_UNITTEST_BUILD
+    /// Arms the next dialog open to be accepted with the specified file.
+    static void setTestNextFileForAccept(const QString &file);
+
+    /// Arms the next dialog open to be rejected.
+    static void setTestRejectNext();
+#endif
+    ///@}
+
 signals:
     /// Emitted when the selected file has been successfully imported to the Missions directory.
     /// @param filePath Fully-qualified path of the imported file in the Missions directory.

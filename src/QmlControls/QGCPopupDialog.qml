@@ -232,12 +232,14 @@ Popup {
 
             QGCButton {
                 id:                     rejectButton
+                objectName:             "popupDialog_rejectButton"
                 onClicked:              _reject()
                 Layout.minimumWidth:    height * 1.5
             }
 
             QGCButton {
                 id:                     acceptButton
+                objectName:             "popupDialog_acceptButton"
                 primary:                true
                 onClicked:              _accept()
                 Layout.minimumWidth:    height * 1.5
