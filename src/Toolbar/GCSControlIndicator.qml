@@ -13,12 +13,12 @@ Item {
 
     property var    activeVehicle:                          QGroundControl.multiVehicleManager.activeVehicle
     property bool   showIndicator:                          activeVehicle && activeVehicle.firstControlStatusReceived
-    property var    sysidInControl:                         activeVehicle ?  activeVehicle.sysidInControl : 0
+    property var    gcsMain:                                activeVehicle ?  activeVehicle.gcsMain : 0
     property bool   gcsControlStatusFlags_SystemManager:    activeVehicle ? activeVehicle.gcsControlStatusFlags_SystemManager : false
     property bool   gcsControlStatusFlags_TakeoverAllowed:  activeVehicle ? activeVehicle.gcsControlStatusFlags_TakeoverAllowed : false
     property Fact   requestControlAllowTakeoverFact:        QGroundControl.settingsManager.flyViewSettings.requestControlAllowTakeover
     property bool   requestControlAllowTakeover:            requestControlAllowTakeoverFact.rawValue
-    property bool   isThisGCSinControl:                     sysidInControl == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
+    property bool   isThisGCSinControl:                     gcsMain == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
     property bool   sendControlRequestAllowed:              activeVehicle ? activeVehicle.sendControlRequestAllowed : false
 
     property var    margins:                                ScreenTools.defaultFontPixelWidth
@@ -235,7 +235,7 @@ Item {
                     font.bold:              true
                 }
                 QGCLabel {
-                    text:                   isThisGCSinControl ? (qsTr("This GCS") + " (" + sysidInControl + ")" ) : sysidInControl
+                    text:                   isThisGCSinControl ? (qsTr("This GCS") + " (" + gcsMain + ")" ) : gcsMain
                     font.bold:              isThisGCSinControl
                     color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
                     Layout.alignment:       Qt.AlignRight
@@ -362,7 +362,7 @@ Item {
         // Current GCS in control indicator
         QGCLabel {
             id:                     gcsInControlIndicator
-            text:                   sysidInControl
+            text:                   gcsMain
             font.bold:              true
             font.pointSize:         ScreenTools.smallFontPointSize * 1.1
             color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
