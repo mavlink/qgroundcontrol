@@ -79,7 +79,9 @@
         { "vendorID": 13891, "productID": 5600,     "boardClass": "Pixhawk",    "name": "ZeroOne X6" },
         { "vendorID": 8355, "productID": 16888,     "boardClass": "Pixhawk",    "name": "Svehicle e2" },
         { "vendorID": 16325, "productID": 71,       "boardClass": "Pixhawk",    "name": "VOLOLAND NarinFC-H7" },
-        { "vendorID": 5840,  "productID": 5318,     "boardClass": "Pixhawk",    "name": "CBU H753-SOM" }
+        { "vendorID": 5840,  "productID": 5318,     "boardClass": "Pixhawk",    "name": "CBU H753-SOM" },
+        { "vendorID": 5840,  "productID": 5387,     "boardClass": "Pixhawk",    "name": "CORVON 743V2" },
+        { "vendorID": 5840,  "productID": 5418,     "boardClass": "Pixhawk",    "name": "CORVON V5" }
     ],
 
     "boardDescriptionFallback": [
@@ -139,6 +141,7 @@
     "boardManufacturerFallback": [
         { "regExp": "^ArduPilot$",      "boardClass": "Pixhawk" },
         { "regExp": "^ARK$",            "boardClass": "Pixhawk" },
+        { "regExp": "^CORVON$",         "boardClass": "Pixhawk" },
         { "regExp": "^Hex/ProfiCNC$",   "boardClass": "Pixhawk" },
         { "regExp": "^Holybro$",        "boardClass": "Pixhawk" },
         { "regExp": "^mRo$",            "boardClass": "Pixhawk" },
