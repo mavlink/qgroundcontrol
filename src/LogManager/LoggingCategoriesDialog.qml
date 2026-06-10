@@ -39,10 +39,7 @@ QGCPopupDialog {
                         id: _searchDebounce
                         interval: 200
                         repeat: false
-                        onTriggered: {
-                            searchResultsView._maxRowWidth = ScreenTools.defaultFontPixelWidth
-                            QGCLoggingCategoryManager.setFilterText(searchText.text)
-                        }
+                        onTriggered: QGCLoggingCategoryManager.setFilterText(searchText.text)
                     }
                 }
 
