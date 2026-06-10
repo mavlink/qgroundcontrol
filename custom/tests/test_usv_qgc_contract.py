@@ -197,10 +197,15 @@ class USVQGCContractTests(unittest.TestCase):
 
     def test_rover_command_metadata_contains_set_baseline_and_correct_sample_semantics(self):
         metadata = json.loads((REPO_ROOT / "src" / "MissionManager" / "MavCmdInfoRover.json").read_text(encoding="utf-8"))
+        actions = json.loads((REPO_ROOT / "custom" / "res" / "actions" / "usv_actions.json").read_text(encoding="utf-8"))
+        payload_panel = (REPO_ROOT / "custom" / "res" / "USVPayloadPanel.qml").read_text(encoding="utf-8")
         commands = {entry["id"]: entry for entry in metadata["mavCmdInfo"]}
+        action_cmds = {entry["mavCmd"] for entry in actions["actions"]}
 
         self.assertIn(42702, commands)
         self.assertNotIn(31010, commands)
+        self.assertNotIn(42702, action_cmds)
+        self.assertNotIn("42702", payload_panel)
         self.assertIn(31017, commands)
         self.assertIn(31018, commands)
         self.assertIn(31019, commands)
@@ -209,9 +214,16 @@ class USVQGCContractTests(unittest.TestCase):
         self.assertIn("spectro", commands[31019]["rawName"].lower())
         sample = commands[42702]
         self.assertEqual(sample["rawName"], "MAV_CMD_NAV_SCRIPT_TIME")
+        self.assertEqual(sample["friendlyName"], "定点采样任务项")
+        self.assertEqual(sample["category"], "USV")
+        self.assertFalse(sample["specifiesCoordinate"])
+        self.assertTrue(sample["friendlyEdit"])
         self.assertEqual(sample["param1"]["default"], 1)
+        self.assertEqual(sample["param1"]["min"], 1)
+        self.assertEqual(sample["param1"]["max"], 1)
         self.assertEqual(sample["param2"]["default"], 255)
         self.assertEqual(sample["param2"]["max"], 255)
+        self.assertIn("Plan only", sample["description"])
         self.assertIn("USV_SMPL", sample["description"])
 
 

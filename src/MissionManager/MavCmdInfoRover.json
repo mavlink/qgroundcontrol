@@ -7,8 +7,8 @@
         {
             "id":                   42702,
             "rawName":              "MAV_CMD_NAV_SCRIPT_TIME",
-            "friendlyName":         "定点采样",
-            "description":          "航线定点采样任务项。飞控执行 NAV_SCRIPT_TIME 且 param1=1 时发送 USV_SMPL，ROS 采样完成后回传 USV_DONE。",
+            "friendlyName":         "定点采样任务项",
+            "description":          "航线定点采样任务项（Plan only）。飞控执行 NAV_SCRIPT_TIME 且 param1=1 时发送 USV_SMPL，ROS 采样完成后回传 USV_DONE；不要作为载荷面板手动命令发送。",
             "specifiesCoordinate":  false,
             "friendlyEdit":         true,
             "category":             "USV",
