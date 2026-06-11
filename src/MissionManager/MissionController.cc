@@ -49,10 +49,11 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     _updateTimer.setSingleShot(true);
 
     connect(&_updateTimer,                                      &QTimer::timeout,                                       this, &MissionController::_updateTimeout);
-    connect(_planViewSettings->takeoffItemNotRequired(),        &Fact::rawValueChanged,                                 this, &MissionController::_forceRecalcOfAllowedBits);
+    connect(_planViewSettings->takeoffItemNotRequired(),        &Fact::rawValueChanged,                                 this, &MissionController::_recalcPlanViewState);
     connect(_planViewSettings->allowMultipleLandingPatterns(),  &Fact::rawValueChanged,                                 this, &MissionController::multipleLandPatternsAllowedChanged);
     connect(_masterController,                                  &PlanMasterController::managerVehicleChanged,           this, &MissionController::multipleLandPatternsAllowedChanged);
-    connect(this,                                               &MissionController::multipleLandPatternsAllowedChanged, this, &MissionController::_forceRecalcOfAllowedBits);
+    connect(this,                                               &MissionController::multipleLandPatternsAllowedChanged, this, &MissionController::_recalcPlanViewState);
+    connect(this,                                               &MissionController::homePositionSetChanged,             this, &MissionController::_recalcPlanViewState);
     connect(this,                                               &MissionController::missionPlannedDistanceChanged,      this, &MissionController::recalcTerrainProfile);
 
     // The follow is used to compress multiple recalc calls in a row to into a single call.
@@ -1929,6 +1930,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
     if (_visualItems && (force || sequenceNumber != _currentPlanViewSeqNum)) {
         qCDebug(MissionControllerLog) << "setCurrentPlanViewSeqNum";
         bool    foundLand =             false;
+        bool    onlyInsertTakeoffValid = false;
         int     takeoffSeqNum =         -1;
         int     landSeqNum =            -1;
         int     lastFlyThroughSeqNum =  -1;
@@ -1937,9 +1939,9 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         _currentPlanViewItem  =         nullptr;
         _currentPlanViewSeqNum =        -1;
         _currentPlanViewVIIndex =       -1;
-        _onlyInsertTakeoffValid =       false;
         _isInsertTakeoffValid =         true;
         _isInsertLandValid =            true;
+        _isInsertROIValid =             false;
         _isROIActive =                  false;
         _isROIBeginCurrentItem =        false;
         _flyThroughCommandsAllowed =    true;
@@ -1947,7 +1949,7 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
 
         bool noItemsAddedYet = _visualItems->count() == 1;
         if (_masterController->controllerVehicle()->supports()->takeoffMissionCommand() && !_planViewSettings->takeoffItemNotRequired()->rawValue().toBool() && noItemsAddedYet) {
-            _onlyInsertTakeoffValid = true;
+            onlyInsertTakeoffValid = true;
         }
 
         for (int viIndex=0; viIndex<_visualItems->count(); viIndex++) {
@@ -2087,12 +2089,19 @@ void MissionController::setCurrentPlanViewSeqNum(int sequenceNumber, bool force)
         }
 
         // These are not valid when only takeoff is allowed
-        _isInsertLandValid =            _isInsertLandValid && !_onlyInsertTakeoffValid;
-        _flyThroughCommandsAllowed =    _flyThroughCommandsAllowed && !_onlyInsertTakeoffValid;
+        _isInsertLandValid =            _isInsertLandValid && !onlyInsertTakeoffValid;
+        _flyThroughCommandsAllowed =    _flyThroughCommandsAllowed && !onlyInsertTakeoffValid;
 
-        // These 10 properties are all recomputed together above, so a single signal is sufficient.
+        // Nothing can be inserted until the home position has been set
+        const bool homePosSet = homePositionSet();
+        _isInsertTakeoffValid =         _isInsertTakeoffValid && homePosSet;
+        _isInsertLandValid =            _isInsertLandValid && homePosSet;
+        _flyThroughCommandsAllowed =    _flyThroughCommandsAllowed && homePosSet;
+        _isInsertROIValid =             homePosSet && !onlyInsertTakeoffValid;
+
+        // These properties are all recomputed together above, so a single signal is sufficient.
         // QML property bindings list planViewStateChanged as their NOTIFY signal which means
-        // one emit re-evaluates all dependent bindings in one pass instead of 10 separate updates.
+        // one emit re-evaluates all dependent bindings in one pass instead of many separate updates.
         // splitSegmentChanged is kept separate because PlanView.qml has an explicit onSplitSegmentChanged handler.
         emit planViewStateChanged();
         emit splitSegmentChanged();
@@ -2355,9 +2364,8 @@ bool MissionController::isEmpty(void) const
     return _visualItems->count() <= 1;
 }
 
-void MissionController::_forceRecalcOfAllowedBits(void)
+void MissionController::_recalcPlanViewState(void)
 {
-    // Force a recalc of allowed bits
     setCurrentPlanViewSeqNum(_currentPlanViewSeqNum, true /* force */);
 }
 

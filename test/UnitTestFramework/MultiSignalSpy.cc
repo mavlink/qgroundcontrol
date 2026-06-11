@@ -47,7 +47,6 @@ void MultiSignalSpy::_cleanup()
 
 void MultiSignalSpy::_onEmitterDestroyed()
 {
-    qCWarning(MultiSignalSpyLog) << "Monitored object destroyed";
     _cleanup();
 }
 

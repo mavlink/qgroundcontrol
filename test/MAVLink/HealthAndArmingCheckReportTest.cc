@@ -73,13 +73,11 @@ void HealthAndArmingCheckReportTest::_testUpdateSkipsUninitializedFlightModeGrou
 
     QSignalSpy updatedSpy(&report, &HealthAndArmingCheckReport::updated);
 
-    // The report logs a warning and bails when flightModeGroup == -1. Use
-    // UnitTest::expectLogMessage (not QTest::ignoreMessage) so the
-    // "uncategorized log messages" lint in the QGC test harness passes.
-    expectLogMessage(QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Flight mode group not set")));
+    // The report logs a warning and bails when flightModeGroup == -1.
+    expectLogMessage("MAVLink.LibEvents.HealthAndArmingCheckReport", QtWarningMsg, QRegularExpression(QStringLiteral("Flight mode group not set")));
     EventHandler stubHandler = makeStubEventHandler();
     report.update(MAV_COMP_ID_AUTOPILOT1, stubHandler, /*flightModeGroup*/ -1);
+    verifyExpectedLogMessage();
 
     QCOMPARE(updatedSpy.count(), 0);
     QVERIFY(!report.supported());

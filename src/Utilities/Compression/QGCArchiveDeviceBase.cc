@@ -103,7 +103,7 @@ qint64 QGCArchiveDeviceBase::readData(char *data, qint64 maxSize)
 
 qint64 QGCArchiveDeviceBase::writeData(const char *, qint64)
 {
-    return -1;  // Read-only device
+    return -1;
 }
 
 // ============================================================================

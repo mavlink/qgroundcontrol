@@ -11,10 +11,13 @@
 #include "QGCMapUrlEngine.h"
 #include "QGCTile.h"
 #include "QGCTileCacheDatabase.h"
+#include <QtCore/QTemporaryDir>
 
-std::unique_ptr<QGCTileCacheDatabase> QGCTileCacheDatabaseTest::_createInitializedDB()
+static const QString kFixedProviderType = QStringLiteral("Bing Road");
+
+std::unique_ptr<QGCTileCacheDatabase> QGCTileCacheDatabaseTest::_createInitializedDB(QTemporaryDir &tempDir)
 {
-    auto db = std::make_unique<QGCTileCacheDatabase>(tempPath("tiles.db"));
+    auto db = std::make_unique<QGCTileCacheDatabase>(tempDir.filePath("tiles.db"));
     if (!db->init() || !db->connectDB()) {
         return nullptr;
     }
@@ -49,7 +52,8 @@ void QGCTileCacheDatabaseTest::_insertDownloadRecord(QGCTileCacheDatabase* db, q
 
 void QGCTileCacheDatabaseTest::_testInitWithValidPath()
 {
-    QGCTileCacheDatabase db(tempPath("tiles.db"));
+    QTemporaryDir tempDir;
+    QGCTileCacheDatabase db(tempDir.filePath("tiles.db"));
     QVERIFY(!db.isValid());
     QVERIFY(!db.hasFailed());
 
@@ -61,18 +65,20 @@ void QGCTileCacheDatabaseTest::_testInitWithValidPath()
 void QGCTileCacheDatabaseTest::_testInitWithEmptyPath()
 {
     // Expected: critical about missing cache directory
-    expectLogMessage(QtCriticalMsg, QRegularExpression("Could not find suitable cache directory"));
+    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtCriticalMsg, QRegularExpression("Could not find suitable cache directory"));
 
     const QString emptyPath;
     QGCTileCacheDatabase db(emptyPath);
     QVERIFY(!db.init());
+    verifyExpectedLogMessage();
     QVERIFY(db.hasFailed());
     QVERIFY(!db.isValid());
 }
 
 void QGCTileCacheDatabaseTest::_testConnectDisconnect()
 {
-    QGCTileCacheDatabase db(tempPath("tiles.db"));
+    QTemporaryDir tempDir;
+    QGCTileCacheDatabase db(tempDir.filePath("tiles.db"));
     QVERIFY(db.init());
 
     QVERIFY(db.connectDB());
@@ -88,7 +94,8 @@ void QGCTileCacheDatabaseTest::_testConnectDisconnect()
 
 void QGCTileCacheDatabaseTest::_testDefaultTileSetCreated()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     const auto sets = db->getTileSets();
     QCOMPARE(sets.size(), 1);
     QVERIFY(sets[0].defaultSet);
@@ -97,38 +104,39 @@ void QGCTileCacheDatabaseTest::_testDefaultTileSetCreated()
 
 void QGCTileCacheDatabaseTest::_testSaveTileAndGetTile()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const QString hash = QStringLiteral("test_hash_1234");
     const QString format = QStringLiteral("png");
     const QByteArray img("fake_tile_data_bytes");
-    const QStringList providerTypes = UrlFactory::getProviderTypes();
-    QVERIFY(!providerTypes.isEmpty());
-    const QString type = providerTypes.first();
+    QVERIFY(UrlFactory::getQtMapIdFromProviderType(kFixedProviderType) != -1);
 
-    QVERIFY(db->saveTile(hash, format, img, type, QGCTileCacheDatabase::kInvalidTileSet));
+    QVERIFY(db->saveTile(hash, format, img, kFixedProviderType, QGCTileCacheDatabase::kInvalidTileSet));
 
     auto tile = db->getTile(hash);
     QVERIFY(tile != nullptr);
     QCOMPARE(tile->hash, hash);
     QCOMPARE(tile->format, format);
     QCOMPARE(tile->img, img);
-    QCOMPARE(tile->type, type);
+    QCOMPARE(tile->type, kFixedProviderType);
 }
 
 void QGCTileCacheDatabaseTest::_testGetTileNotFound()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     auto tile = db->getTile(QStringLiteral("nonexistent_hash"));
     QVERIFY(tile == nullptr);
 }
 
 void QGCTileCacheDatabaseTest::_testFindTile()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const QString hash = QStringLiteral("findme_hash");
-    QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), QStringLiteral("T"),
+    QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     const auto id = db->findTile(hash);
@@ -141,7 +149,8 @@ void QGCTileCacheDatabaseTest::_testFindTile()
 
 void QGCTileCacheDatabaseTest::_testGetTileSetsMultiple()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     quint64 customSetID = 0;
     _insertTileSet(db.get(), QStringLiteral("My Custom Set"), customSetID);
@@ -164,7 +173,8 @@ void QGCTileCacheDatabaseTest::_testGetTileSetsMultiple()
 
 void QGCTileCacheDatabaseTest::_testRenameTileSet()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     quint64 setID = 0;
     _insertTileSet(db.get(), QStringLiteral("Original Name"), setID);
@@ -178,7 +188,8 @@ void QGCTileCacheDatabaseTest::_testRenameTileSet()
 
 void QGCTileCacheDatabaseTest::_testFindTileSetID()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const auto foundID = db->findTileSetID(QStringLiteral("Default Tile Set"));
     QVERIFY(foundID.has_value());
@@ -190,7 +201,8 @@ void QGCTileCacheDatabaseTest::_testFindTileSetID()
 
 void QGCTileCacheDatabaseTest::_testDeleteTileSet()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     quint64 setID = 0;
     _insertTileSet(db.get(), QStringLiteral("ToDelete"), setID);
@@ -205,9 +217,10 @@ void QGCTileCacheDatabaseTest::_testDeleteTileSet()
 
 void QGCTileCacheDatabaseTest::_testResetDatabase()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
-    QVERIFY(db->saveTile(QStringLiteral("h1"), QStringLiteral("png"), QByteArray("d1"), QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("h1"), QStringLiteral("png"), QByteArray("d1"), kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
     QVERIFY(db->findTile(QStringLiteral("h1")).has_value());
 
@@ -223,13 +236,14 @@ void QGCTileCacheDatabaseTest::_testResetDatabase()
 
 void QGCTileCacheDatabaseTest::_testComputeTotals()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const QByteArray data10(10, 'A');
     const QByteArray data20(20, 'B');
-    QVERIFY(db->saveTile(QStringLiteral("ct1"), QStringLiteral("png"), data10, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("ct1"), QStringLiteral("png"), data10, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
-    QVERIFY(db->saveTile(QStringLiteral("ct2"), QStringLiteral("png"), data20, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("ct2"), QStringLiteral("png"), data20, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     const TotalsResult totals = db->computeTotals();
@@ -241,28 +255,30 @@ void QGCTileCacheDatabaseTest::_testComputeTotals()
 
 void QGCTileCacheDatabaseTest::_testComputeSetTotalsDefault()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const QByteArray data(15, 'X');
-    QVERIFY(db->saveTile(QStringLiteral("sd1"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("sd1"), QStringLiteral("png"), data, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     const auto defaultSetID = db->findTileSetID(QStringLiteral("Default Tile Set"));
     QVERIFY(defaultSetID.has_value());
 
-    const SetTotalsResult result = db->computeSetTotals(defaultSetID.value(), true, 0, QStringLiteral("T"));
+    const SetTotalsResult result = db->computeSetTotals(defaultSetID.value(), true, 0, kFixedProviderType);
     QCOMPARE(result.savedTileCount, static_cast<quint32>(1));
     QCOMPARE(result.savedTileSize, static_cast<quint64>(15));
 }
 
 void QGCTileCacheDatabaseTest::_testPruneCache()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const QByteArray data(100, 'Z');
-    QVERIFY(db->saveTile(QStringLiteral("pr1"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("pr1"), QStringLiteral("png"), data, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
-    QVERIFY(db->saveTile(QStringLiteral("pr2"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("pr2"), QStringLiteral("png"), data, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     QVERIFY(db->findTile(QStringLiteral("pr1")).has_value());
@@ -275,7 +291,8 @@ void QGCTileCacheDatabaseTest::_testPruneCache()
 
 void QGCTileCacheDatabaseTest::_testUpdateTileDownloadState()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const auto defaultSetID = db->findTileSetID(QStringLiteral("Default Tile Set"));
     QVERIFY(defaultSetID.has_value());
@@ -319,12 +336,13 @@ void QGCTileCacheDatabaseTest::_testUpdateTileDownloadState()
 
 void QGCTileCacheDatabaseTest::_testExportImportReplace()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const QByteArray data(50, 'E');
-    QVERIFY(db->saveTile(QStringLiteral("exp1"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("exp1"), QStringLiteral("png"), data, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
-    QVERIFY(db->saveTile(QStringLiteral("exp2"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("exp2"), QStringLiteral("png"), data, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     const auto sets = db->getTileSets();
@@ -333,7 +351,7 @@ void QGCTileCacheDatabaseTest::_testExportImportReplace()
     TileSetRecord defaultRec = sets[0];
     defaultRec.numTiles = 2;
 
-    const QString exportPath = tempPath("export.db");
+    const QString exportPath = tempDir.filePath("export.db");
     int lastProgress = 0;
     auto progressCb = [&lastProgress](int p) { lastProgress = p; };
 
@@ -343,7 +361,7 @@ void QGCTileCacheDatabaseTest::_testExportImportReplace()
 
     db.reset();
 
-    auto db2 = std::make_unique<QGCTileCacheDatabase>(tempPath("tiles2.db"));
+    auto db2 = std::make_unique<QGCTileCacheDatabase>(tempDir.filePath("tiles2.db"));
     QVERIFY(db2->init());
     QVERIFY(db2->connectDB());
 
@@ -368,7 +386,8 @@ void QGCTileCacheDatabaseTest::_linkTileToSet(QGCTileCacheDatabase* db, quint64 
 
 void QGCTileCacheDatabaseTest::_testGetTileDownloadList()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const auto defaultSetID = db->findTileSetID(QStringLiteral("Default Tile Set"));
     QVERIFY(defaultSetID.has_value());
@@ -409,12 +428,13 @@ void QGCTileCacheDatabaseTest::_testGetTileDownloadList()
 
 void QGCTileCacheDatabaseTest::_testImportSetsMerge()
 {
-    auto dbSrc = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto dbSrc = _createInitializedDB(tempDir);
 
     const QByteArray data(40, 'M');
-    QVERIFY(dbSrc->saveTile(QStringLiteral("exp_m1"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(dbSrc->saveTile(QStringLiteral("exp_m1"), QStringLiteral("png"), data, kFixedProviderType,
                             QGCTileCacheDatabase::kInvalidTileSet));
-    QVERIFY(dbSrc->saveTile(QStringLiteral("exp_m2"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(dbSrc->saveTile(QStringLiteral("exp_m2"), QStringLiteral("png"), data, kFixedProviderType,
                             QGCTileCacheDatabase::kInvalidTileSet));
 
     const auto srcSets = dbSrc->getTileSets();
@@ -422,16 +442,16 @@ void QGCTileCacheDatabaseTest::_testImportSetsMerge()
     TileSetRecord srcRec = srcSets[0];
     srcRec.numTiles = 2;
 
-    const QString exportPath = tempPath("merge_export.db");
+    const QString exportPath = tempDir.filePath("merge_export.db");
     const DatabaseResult exportResult = dbSrc->exportSets({srcRec}, exportPath, nullptr);
     QVERIFY(exportResult.success);
     dbSrc.reset();
 
-    auto dbTgt = std::make_unique<QGCTileCacheDatabase>(tempPath("merge_target.db"));
+    auto dbTgt = std::make_unique<QGCTileCacheDatabase>(tempDir.filePath("merge_target.db"));
     QVERIFY(dbTgt->init());
     QVERIFY(dbTgt->connectDB());
 
-    QVERIFY(dbTgt->saveTile(QStringLiteral("trg_m1"), QStringLiteral("png"), QByteArray(25, 'N'), QStringLiteral("T"),
+    QVERIFY(dbTgt->saveTile(QStringLiteral("trg_m1"), QStringLiteral("png"), QByteArray(25, 'N'), kFixedProviderType,
                             QGCTileCacheDatabase::kInvalidTileSet));
 
     int lastProgress = 0;
@@ -448,7 +468,8 @@ void QGCTileCacheDatabaseTest::_testImportSetsMerge()
 
 void QGCTileCacheDatabaseTest::_testComputeSetTotalsNonDefault()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     quint64 customSetID = 0;
     _insertTileSet(db.get(), QStringLiteral("Stats Set"), customSetID);
@@ -456,9 +477,9 @@ void QGCTileCacheDatabaseTest::_testComputeSetTotalsNonDefault()
 
     const QByteArray data20(20, 'A');
     const QByteArray data30(30, 'B');
-    QVERIFY(db->saveTile(QStringLiteral("st1"), QStringLiteral("png"), data20, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("st1"), QStringLiteral("png"), data20, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
-    QVERIFY(db->saveTile(QStringLiteral("st2"), QStringLiteral("png"), data30, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("st2"), QStringLiteral("png"), data30, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     const auto tile1 = db->findTile(QStringLiteral("st1"));
@@ -469,22 +490,23 @@ void QGCTileCacheDatabaseTest::_testComputeSetTotalsNonDefault()
     _linkTileToSet(db.get(), tile1.value(), customSetID);
     _linkTileToSet(db.get(), tile2.value(), customSetID);
 
-    const SetTotalsResult result = db->computeSetTotals(customSetID, false, 5, QStringLiteral("T"));
+    const SetTotalsResult result = db->computeSetTotals(customSetID, false, 5, kFixedProviderType);
     QCOMPARE(result.savedTileCount, static_cast<quint32>(2));
     QCOMPARE(result.savedTileSize, static_cast<quint64>(50));
 }
 
 void QGCTileCacheDatabaseTest::_testSaveDuplicateTile()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const QByteArray data1(10, 'X');
     const QByteArray data2(10, 'Y');
 
-    QVERIFY(db->saveTile(QStringLiteral("dup_hash"), QStringLiteral("png"), data1, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("dup_hash"), QStringLiteral("png"), data1, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
     // Second save with same hash succeeds (links existing tile to same set via OR IGNORE)
-    QVERIFY(db->saveTile(QStringLiteral("dup_hash"), QStringLiteral("png"), data2, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("dup_hash"), QStringLiteral("png"), data2, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     auto tile = db->getTile(QStringLiteral("dup_hash"));
@@ -494,31 +516,54 @@ void QGCTileCacheDatabaseTest::_testSaveDuplicateTile()
 
 void QGCTileCacheDatabaseTest::_testOperationsAfterDisconnect()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     db->disconnectDB();
 
-    QVERIFY(!db->saveTile(QStringLiteral("x"), QStringLiteral("png"), QByteArray("d"), QStringLiteral("T"),
-                          QGCTileCacheDatabase::kInvalidTileSet));
-    QVERIFY(db->getTile(QStringLiteral("x")) == nullptr);
-    QVERIFY(!db->findTile(QStringLiteral("x")).has_value());
-    QVERIFY(db->getTileSets().isEmpty());
+    const char *categoryPattern = "QtLocationPlugin.QGCTileCacheDatabase";
+    const QRegularExpression disconnectedPattern(QStringLiteral("Database not connected"));
 
+    expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
+    QVERIFY(!db->saveTile(QStringLiteral("x"), QStringLiteral("png"), QByteArray("d"), kFixedProviderType,
+                          QGCTileCacheDatabase::kInvalidTileSet));
+    verifyExpectedLogMessage();
+
+    expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
+    QVERIFY(db->getTile(QStringLiteral("x")) == nullptr);
+    verifyExpectedLogMessage();
+
+    expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
+    QVERIFY(!db->findTile(QStringLiteral("x")).has_value());
+    verifyExpectedLogMessage();
+
+    expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
+    QVERIFY(db->getTileSets().isEmpty());
+    verifyExpectedLogMessage();
+
+    expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
     const TotalsResult totals = db->computeTotals();
+    verifyExpectedLogMessage();
     QCOMPARE(totals.totalCount, static_cast<quint32>(0));
     QCOMPARE(totals.totalSize, static_cast<quint64>(0));
 
+    expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
     QVERIFY(!db->pruneCache(100));
+    verifyExpectedLogMessage();
+
+    expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
     QVERIFY(!db->resetDatabase());
+    verifyExpectedLogMessage();
 }
 
 void QGCTileCacheDatabaseTest::_testPruneCacheCleansSetTiles()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const QByteArray data(100, 'P');
-    QVERIFY(db->saveTile(QStringLiteral("ps1"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("ps1"), QStringLiteral("png"), data, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
-    QVERIFY(db->saveTile(QStringLiteral("ps2"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("ps2"), QStringLiteral("png"), data, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     {
@@ -543,13 +588,14 @@ void QGCTileCacheDatabaseTest::_testPruneCacheCleansSetTiles()
 
 void QGCTileCacheDatabaseTest::_testDeleteTileSetCleansTiles()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     quint64 setID = 0;
     _insertTileSet(db.get(), QStringLiteral("CleanupSet"), setID);
     QVERIFY(setID != 0);
 
-    QVERIFY(db->saveTile(QStringLiteral("cleanup1"), QStringLiteral("png"), QByteArray(50, 'C'), QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("cleanup1"), QStringLiteral("png"), QByteArray(50, 'C'), kFixedProviderType,
                          setID));
 
     QVERIFY(db->findTile(QStringLiteral("cleanup1")).has_value());
@@ -570,14 +616,15 @@ void QGCTileCacheDatabaseTest::_testDeleteTileSetCleansTiles()
 
 void QGCTileCacheDatabaseTest::_testImportSetsMergeDeduplicatesName()
 {
-    auto dbSrc = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto dbSrc = _createInitializedDB(tempDir);
 
     quint64 customSetID = 0;
     _insertTileSet(dbSrc.get(), QStringLiteral("SharedName"), customSetID);
     QVERIFY(customSetID != 0);
 
     QVERIFY(dbSrc->saveTile(QStringLiteral("dedup_tile1"), QStringLiteral("png"), QByteArray(30, 'D'),
-                            QStringLiteral("T"), QGCTileCacheDatabase::kInvalidTileSet));
+                            kFixedProviderType, QGCTileCacheDatabase::kInvalidTileSet));
     const auto tileID = dbSrc->findTile(QStringLiteral("dedup_tile1"));
     QVERIFY(tileID.has_value());
     _linkTileToSet(dbSrc.get(), tileID.value(), customSetID);
@@ -593,12 +640,12 @@ void QGCTileCacheDatabaseTest::_testImportSetsMergeDeduplicatesName()
     }
     QVERIFY(customRec.setID != 0);
 
-    const QString exportPath = tempPath("dedup_export.db");
+    const QString exportPath = tempDir.filePath("dedup_export.db");
     const DatabaseResult exportResult = dbSrc->exportSets({customRec}, exportPath, nullptr);
     QVERIFY(exportResult.success);
     dbSrc.reset();
 
-    auto dbTgt = std::make_unique<QGCTileCacheDatabase>(tempPath("dedup_target.db"));
+    auto dbTgt = std::make_unique<QGCTileCacheDatabase>(tempDir.filePath("dedup_target.db"));
     QVERIFY(dbTgt->init());
     QVERIFY(dbTgt->connectDB());
 
@@ -624,7 +671,8 @@ void QGCTileCacheDatabaseTest::_testImportSetsMergeDeduplicatesName()
 
 void QGCTileCacheDatabaseTest::_testGetTileDownloadListBatch()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const auto defaultSetID = db->findTileSetID(QStringLiteral("Default Tile Set"));
     QVERIFY(defaultSetID.has_value());
@@ -659,15 +707,16 @@ void QGCTileCacheDatabaseTest::_testGetTileDownloadListBatch()
 
 void QGCTileCacheDatabaseTest::_testSaveTileLinksToDifferentSet()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     quint64 setA = 0, setB = 0;
     _insertTileSet(db.get(), QStringLiteral("SetA"), setA);
     _insertTileSet(db.get(), QStringLiteral("SetB"), setB);
 
     const QByteArray data(10, 'A');
-    QVERIFY(db->saveTile(QStringLiteral("shared_hash"), QStringLiteral("png"), data, QStringLiteral("T"), setA));
-    QVERIFY(db->saveTile(QStringLiteral("shared_hash"), QStringLiteral("png"), data, QStringLiteral("T"), setB));
+    QVERIFY(db->saveTile(QStringLiteral("shared_hash"), QStringLiteral("png"), data, kFixedProviderType, setA));
+    QVERIFY(db->saveTile(QStringLiteral("shared_hash"), QStringLiteral("png"), data, kFixedProviderType, setB));
 
     auto tile = db->getTile(QStringLiteral("shared_hash"));
     QVERIFY(tile != nullptr);
@@ -688,10 +737,11 @@ void QGCTileCacheDatabaseTest::_testSaveTileLinksToDifferentSet()
 
 void QGCTileCacheDatabaseTest::_testExportImportNoLingeringConnections()
 {
-    auto db1 = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db1 = _createInitializedDB(tempDir);
 
     const QByteArray data(20, 'L');
-    QVERIFY(db1->saveTile(QStringLiteral("linger1"), QStringLiteral("png"), data, QStringLiteral("T"),
+    QVERIFY(db1->saveTile(QStringLiteral("linger1"), QStringLiteral("png"), data, kFixedProviderType,
                           QGCTileCacheDatabase::kInvalidTileSet));
 
     const auto sets = db1->getTileSets();
@@ -699,7 +749,7 @@ void QGCTileCacheDatabaseTest::_testExportImportNoLingeringConnections()
     TileSetRecord rec = sets[0];
     rec.numTiles = 1;
 
-    const QString exportPath = tempPath("linger_export.db");
+    const QString exportPath = tempDir.filePath("linger_export.db");
 
     const DatabaseResult exp1 = db1->exportSets({rec}, exportPath, nullptr);
     QVERIFY(exp1.success);
@@ -707,13 +757,13 @@ void QGCTileCacheDatabaseTest::_testExportImportNoLingeringConnections()
     const DatabaseResult exp2 = db1->exportSets({rec}, exportPath, nullptr);
     QVERIFY(exp2.success);
 
-    auto db2 = std::make_unique<QGCTileCacheDatabase>(tempPath("linger_db2.db"));
+    auto db2 = std::make_unique<QGCTileCacheDatabase>(tempDir.filePath("linger_db2.db"));
     QVERIFY(db2->init());
     QVERIFY(db2->connectDB());
     const DatabaseResult imp1 = db2->importSetsMerge(exportPath, nullptr);
     QVERIFY(imp1.success);
 
-    auto db3 = std::make_unique<QGCTileCacheDatabase>(tempPath("linger_db3.db"));
+    auto db3 = std::make_unique<QGCTileCacheDatabase>(tempDir.filePath("linger_db3.db"));
     QVERIFY(db3->init());
     QVERIFY(db3->connectDB());
     const DatabaseResult imp2 = db3->importSetsMerge(exportPath, nullptr);
@@ -722,14 +772,13 @@ void QGCTileCacheDatabaseTest::_testExportImportNoLingeringConnections()
 
 void QGCTileCacheDatabaseTest::_testCreateTileSet()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
-    const QStringList providerTypes = UrlFactory::getProviderTypes();
-    QVERIFY(!providerTypes.isEmpty());
-    const QString providerType = providerTypes.first();
+    QVERIFY(UrlFactory::getQtMapIdFromProviderType(kFixedProviderType) != -1);
 
     const auto setID = db->createTileSet(QStringLiteral("Test Set"), QStringLiteral("TestMap"), 37.0, -122.0, 36.0,
-                                         -121.0, 5, 5, providerType, 100);
+                                         -121.0, 5, 5, kFixedProviderType, 100);
 
     QVERIFY(setID.has_value());
     QVERIFY(setID.value() != 0);
@@ -754,7 +803,8 @@ void QGCTileCacheDatabaseTest::_testCreateTileSet()
 
 void QGCTileCacheDatabaseTest::_testDeleteBingNoTileTiles()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     QFile file(QStringLiteral(":/res/BingNoTileBytes.dat"));
     if (!file.open(QFile::ReadOnly)) {
@@ -764,9 +814,9 @@ void QGCTileCacheDatabaseTest::_testDeleteBingNoTileTiles()
     file.close();
     QVERIFY(!noTileBytes.isEmpty());
 
-    QVERIFY(db->saveTile(QStringLiteral("bing_notile_1"), QStringLiteral("png"), noTileBytes, QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("bing_notile_1"), QStringLiteral("png"), noTileBytes, kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
-    QVERIFY(db->saveTile(QStringLiteral("normal_tile"), QStringLiteral("png"), QByteArray(50, 'N'), QStringLiteral("T"),
+    QVERIFY(db->saveTile(QStringLiteral("normal_tile"), QStringLiteral("png"), QByteArray(50, 'N'), kFixedProviderType,
                          QGCTileCacheDatabase::kInvalidTileSet));
 
     QVERIFY(db->findTile(QStringLiteral("bing_notile_1")).has_value());
@@ -783,7 +833,8 @@ void QGCTileCacheDatabaseTest::_testDeleteBingNoTileTiles()
 
 void QGCTileCacheDatabaseTest::_testDeleteDefaultSetInvalidatesCache()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     const auto defaultID = db->findTileSetID(QStringLiteral("Default Tile Set"));
     QVERIFY(defaultID.has_value());
@@ -792,18 +843,25 @@ void QGCTileCacheDatabaseTest::_testDeleteDefaultSetInvalidatesCache()
 
     // After deleting default set, saveTile with kInvalidTileSet should fail gracefully
     // (no default set to link to), not crash or use stale ID
-    QVERIFY(!db->saveTile(QStringLiteral("orphan"), QStringLiteral("png"), QByteArray(10, 'O'), QStringLiteral("T"),
+    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Default tile set not found in database")));
+    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Cannot save tile: no valid tile set")));
+    QVERIFY(!db->saveTile(QStringLiteral("orphan"), QStringLiteral("png"), QByteArray(10, 'O'), kFixedProviderType,
                           QGCTileCacheDatabase::kInvalidTileSet));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
 }
 
 void QGCTileCacheDatabaseTest::_testPruneCacheMultipleBatches()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     // Save 200 tiles of 100 bytes each = 20000 bytes total
     for (int i = 0; i < 200; i++) {
         QVERIFY(db->saveTile(QStringLiteral("prune_multi_%1").arg(i), QStringLiteral("png"), QByteArray(100, 'P'),
-                             QStringLiteral("T"), QGCTileCacheDatabase::kInvalidTileSet));
+                             kFixedProviderType, QGCTileCacheDatabase::kInvalidTileSet));
     }
 
     const TotalsResult before = db->computeTotals();
@@ -819,7 +877,8 @@ void QGCTileCacheDatabaseTest::_testPruneCacheMultipleBatches()
 
 void QGCTileCacheDatabaseTest::_testSchemaVersionSetOnFreshDB()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
     QSqlQuery query(db->database());
     QVERIFY(query.exec("PRAGMA user_version"));
@@ -829,7 +888,8 @@ void QGCTileCacheDatabaseTest::_testSchemaVersionSetOnFreshDB()
 
 void QGCTileCacheDatabaseTest::_testSchemaVersionResetsLegacyDB()
 {
-    const QString path = tempPath("legacy.db");
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("legacy.db");
 
     // Create a legacy database (no user_version set, but has tile data)
     {
@@ -858,7 +918,12 @@ void QGCTileCacheDatabaseTest::_testSchemaVersionResetsLegacyDB()
 
     // Open with the versioned code — should detect legacy and reset
     QGCTileCacheDatabase db(path);
+    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtWarningMsg,
+                     QRegularExpression(QStringLiteral(
+                         "Legacy database detected \\(no schema version\\)\\. Discarding cached tiles and "
+                         "rebuilding\\.")));
     QVERIFY(db.init());
+    verifyExpectedLogMessage();
     QVERIFY(db.connectDB());
 
     // Legacy tile data should be gone
@@ -878,16 +943,15 @@ void QGCTileCacheDatabaseTest::_testSchemaVersionResetsLegacyDB()
 
 void QGCTileCacheDatabaseTest::_testSaveTileTypeStoredAsInteger()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
-    const QStringList providerTypes = UrlFactory::getProviderTypes();
-    QVERIFY(!providerTypes.isEmpty());
-    const QString type = providerTypes.first();
-    const int expectedMapId = UrlFactory::getQtMapIdFromProviderType(type);
+    const int expectedMapId = UrlFactory::getQtMapIdFromProviderType(kFixedProviderType);
     QVERIFY(expectedMapId != -1);
 
     const QString hash = QStringLiteral("type_int_test");
-    QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), type, QGCTileCacheDatabase::kInvalidTileSet));
+    QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
 
     // Verify the raw DB stores the type as an integer mapId, not a string
     {
@@ -902,21 +966,19 @@ void QGCTileCacheDatabaseTest::_testSaveTileTypeStoredAsInteger()
     // Verify getTile converts the integer back to the provider name string
     auto tile = db->getTile(hash);
     QVERIFY(tile != nullptr);
-    QCOMPARE(tile->type, type);
+    QCOMPARE(tile->type, kFixedProviderType);
 }
 
 void QGCTileCacheDatabaseTest::_testCreateTileSetTypeStoredAsInteger()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
 
-    const QStringList providerTypes = UrlFactory::getProviderTypes();
-    QVERIFY(!providerTypes.isEmpty());
-    const QString providerType = providerTypes.first();
-    const int expectedMapId = UrlFactory::getQtMapIdFromProviderType(providerType);
+    const int expectedMapId = UrlFactory::getQtMapIdFromProviderType(kFixedProviderType);
     QVERIFY(expectedMapId != -1);
 
     const auto setID = db->createTileSet(QStringLiteral("TypeInt Set"), QStringLiteral("TestMap"), 37.0, -122.0, 36.0,
-                                         -121.0, 5, 5, providerType, 100);
+                                         -121.0, 5, 5, kFixedProviderType, 100);
     QVERIFY(setID.has_value());
 
     // Verify TileSets.type stores the integer mapId
@@ -934,7 +996,8 @@ void QGCTileCacheDatabaseTest::_testCreateTileSetTypeStoredAsInteger()
 
 void QGCTileCacheDatabaseTest::_testTablesExist()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     QVERIFY(db);
 
     QSqlQuery query(db->database());
@@ -959,7 +1022,8 @@ void QGCTileCacheDatabaseTest::_testTablesExist()
 
 void QGCTileCacheDatabaseTest::_testTilesTableColumns()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     QVERIFY(db);
 
     QSqlQuery query(db->database());
@@ -1026,7 +1090,8 @@ void QGCTileCacheDatabaseTest::_testTilesTableColumns()
 
 void QGCTileCacheDatabaseTest::_testTileSetsTableColumns()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     QVERIFY(db);
 
     QSqlQuery query(db->database());
@@ -1125,7 +1190,8 @@ void QGCTileCacheDatabaseTest::_testTileSetsTableColumns()
 
 void QGCTileCacheDatabaseTest::_testSetTilesTableColumns()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     QVERIFY(db);
 
     QSqlQuery query(db->database());
@@ -1156,7 +1222,8 @@ void QGCTileCacheDatabaseTest::_testSetTilesTableColumns()
 
 void QGCTileCacheDatabaseTest::_testTilesDownloadTableColumns()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     QVERIFY(db);
 
     QSqlQuery query(db->database());
@@ -1220,7 +1287,8 @@ void QGCTileCacheDatabaseTest::_testTilesDownloadTableColumns()
 
 void QGCTileCacheDatabaseTest::_testIndexesExist()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     QVERIFY(db);
 
     QSqlQuery query(db->database());
@@ -1245,20 +1313,22 @@ void QGCTileCacheDatabaseTest::_testIndexesExist()
 
 void QGCTileCacheDatabaseTest::_testForeignKeyCascadeDelete()
 {
-    auto db = _createInitializedDB();
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
     QVERIFY(db);
 
-    const QStringList providerTypes = UrlFactory::getProviderTypes();
-    QVERIFY(!providerTypes.isEmpty());
-    const QString type = providerTypes.first();
+    QVERIFY(UrlFactory::getQtMapIdFromProviderType(kFixedProviderType) != -1);
 
     const QString hash = QStringLiteral("fk_cascade_hash");
-    QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), type, QGCTileCacheDatabase::kInvalidTileSet));
+    QVERIFY(
+        db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), kFixedProviderType,
+                     QGCTileCacheDatabase::kInvalidTileSet));
 
     const auto tileID = db->findTile(hash);
     QVERIFY(tileID.has_value());
 
-    const auto setID = db->createTileSet(QStringLiteral("CascadeTestSet"), type, 10.0, 20.0, 30.0, 40.0, 5, 5, type, 1);
+    const auto setID = db->createTileSet(QStringLiteral("CascadeTestSet"), kFixedProviderType, 10.0, 20.0, 30.0,
+                                         40.0, 5, 5, kFixedProviderType, 1);
     QVERIFY(setID.has_value());
 
     _linkTileToSet(db.get(), tileID.value(), setID.value());

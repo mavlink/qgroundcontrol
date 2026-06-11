@@ -11,6 +11,8 @@
 #include "GeoTagController.h"
 #include "GeoTagImageModel.h"
 #include "ULogTestGenerator.h"
+#include <QtCore/QScopedPointer>
+#include <QtCore/QTemporaryDir>
 
 namespace {
 
@@ -56,12 +58,13 @@ GeoTagData makeTriggerWithInvalidCoord(qint64 timestamp)
 
 void GeoTagControllerTest::_propertyAccessorsTest()
 {
-    const QString imageDirPath = tempPath(QStringLiteral("images"));
-    const QString taggedDirPath = tempPath(QStringLiteral("tagged"));
+    QTemporaryDir tempDir;
+    const QString imageDirPath = tempDir.filePath(QStringLiteral("images"));
+    const QString taggedDirPath = tempDir.filePath(QStringLiteral("tagged"));
     QVERIFY(QDir().mkpath(imageDirPath));
     QVERIFY(QDir().mkpath(taggedDirPath));
 
-    const QString ulogPath = generateTestULogFile(tempDirPath(), 10);
+    const QString ulogPath = generateTestULogFile(tempDir.path(), 10);
     QVERIFY(!ulogPath.isEmpty());
 
     QFile file(":/unittest/DSCN0010.jpg");
@@ -69,7 +72,7 @@ void GeoTagControllerTest::_propertyAccessorsTest()
         QVERIFY(file.copy(imageDirPath + QStringLiteral("/geotag_temp_image_%1.jpg").arg(i)));
     }
 
-    GeoTagController* const controller = new GeoTagController(this);
+    QScopedPointer<GeoTagController> controller(new GeoTagController(nullptr));
 
     controller->setLogFile(ulogPath);
     controller->setImageDirectory(imageDirPath + "/");
@@ -99,9 +102,10 @@ void GeoTagControllerTest::_propertyAccessorsTest()
 
 void GeoTagControllerTest::_urlPathConversionTest()
 {
-    GeoTagController* const controller = new GeoTagController(this);
+    QTemporaryDir tempDir;
+    QScopedPointer<GeoTagController> controller(new GeoTagController(nullptr));
 
-    const QString testPath = tempPath(QStringLiteral("test_file.ulg"));
+    const QString testPath = tempDir.filePath(QStringLiteral("test_file.ulg"));
 
     QFile testFile(testPath);
     QVERIFY(testFile.open(QIODevice::WriteOnly));
@@ -116,8 +120,7 @@ void GeoTagControllerTest::_urlPathConversionTest()
 
 void GeoTagControllerTest::_validationTest()
 {
-    GeoTagController* const controller = new GeoTagController(this);
-
+    QScopedPointer<GeoTagController> controller(new GeoTagController(nullptr));
     controller->setLogFile(QString());
     QVERIFY(!controller->errorMessage().isEmpty());
 
@@ -136,13 +139,14 @@ void GeoTagControllerTest::_validationTest()
 
 void GeoTagControllerTest::_calibrationMismatchTest()
 {
-    const QString imageDirPath = tempPath(QStringLiteral("images"));
-    const QString taggedDirPath = tempPath(QStringLiteral("tagged"));
+    QTemporaryDir tempDir;
+    const QString imageDirPath = tempDir.filePath(QStringLiteral("images"));
+    const QString taggedDirPath = tempDir.filePath(QStringLiteral("tagged"));
     QVERIFY(QDir().mkpath(imageDirPath));
     QVERIFY(QDir().mkpath(taggedDirPath));
 
     const int numImages = 10;
-    const QString ulogPath = generateTestULogFile(tempDirPath(), numImages);
+    const QString ulogPath = generateTestULogFile(tempDir.path(), numImages);
     QVERIFY(!ulogPath.isEmpty());
 
     // Copy test images (same timestamp, so calibration will fail)
@@ -151,12 +155,12 @@ void GeoTagControllerTest::_calibrationMismatchTest()
         QVERIFY(file.copy(imageDirPath + QStringLiteral("/geotag_temp_image_%1.jpg").arg(i)));
     }
 
-    GeoTagController* const controller = new GeoTagController(this);
+    QScopedPointer<GeoTagController> controller(new GeoTagController(nullptr));
     controller->setLogFile(ulogPath);
     controller->setImageDirectory(imageDirPath + "/");
     controller->setSaveDirectory(taggedDirPath);
 
-    QSignalSpy completeSpy(controller, &GeoTagController::taggingCompleteChanged);
+    QSignalSpy completeSpy(controller.get(), &GeoTagController::taggingCompleteChanged);
 
     controller->startTagging();
 
@@ -170,10 +174,11 @@ void GeoTagControllerTest::_calibrationMismatchTest()
 
 void GeoTagControllerTest::_fullGeotaggingTest()
 {
+    QTemporaryDir tempDir;
     const int numImages = 10;
 
-    const QString imageDirPath = tempPath(QStringLiteral("images"));
-    const QString taggedDirPath = tempPath(QStringLiteral("tagged"));
+    const QString imageDirPath = tempDir.filePath(QStringLiteral("images"));
+    const QString taggedDirPath = tempDir.filePath(QStringLiteral("tagged"));
     QVERIFY(QDir().mkpath(imageDirPath));
     QVERIFY(QDir().mkpath(taggedDirPath));
 
@@ -181,7 +186,7 @@ void GeoTagControllerTest::_fullGeotaggingTest()
     const auto events = ULogTestGenerator::generateSampleEvents(numImages, 1000000, 2.0);
     QCOMPARE(events.size(), numImages);
 
-    const QString ulogPath = tempPath(QStringLiteral("test.ulg"));
+    const QString ulogPath = tempDir.filePath(QStringLiteral("test.ulg"));
     QVERIFY(ULogTestGenerator::generateULog(ulogPath, events));
 
     // Load template image
@@ -215,12 +220,12 @@ void GeoTagControllerTest::_fullGeotaggingTest()
     }
 
     // Run geotagging via controller
-    GeoTagController* const controller = new GeoTagController(this);
+    QScopedPointer<GeoTagController> controller(new GeoTagController(nullptr));
     controller->setLogFile(ulogPath);
     controller->setImageDirectory(imageDirPath + "/");
     controller->setSaveDirectory(taggedDirPath);
 
-    QSignalSpy inProgressSpy(controller, &GeoTagController::inProgressChanged);
+    QSignalSpy inProgressSpy(controller.get(), &GeoTagController::inProgressChanged);
 
     controller->startTagging();
 
@@ -261,18 +266,19 @@ void GeoTagControllerTest::_fullGeotaggingTest()
 
 void GeoTagControllerTest::_previewModeTest()
 {
+    QTemporaryDir tempDir;
     constexpr int numImages = 3;
 
     // Generate ULog with valid camera captures
     const auto events = ULogTestGenerator::generateSampleEvents(numImages, 1000000, 2.0);
     QCOMPARE(events.size(), numImages);
 
-    const QString ulogPath = tempPath(QStringLiteral("test.ulg"));
+    const QString ulogPath = tempDir.filePath(QStringLiteral("test.ulg"));
     QVERIFY(ULogTestGenerator::generateULog(ulogPath, events));
 
     // Create image directory and tagged output directory paths
-    const QString imageDirPath = tempPath(QStringLiteral("images"));
-    const QString taggedDirPath = tempPath(QStringLiteral("tagged"));
+    const QString imageDirPath = tempDir.filePath(QStringLiteral("images"));
+    const QString taggedDirPath = tempDir.filePath(QStringLiteral("tagged"));
     QVERIFY(QDir().mkpath(imageDirPath));
     // Don't create tagged directory - preview mode shouldn't need it
 
@@ -307,13 +313,13 @@ void GeoTagControllerTest::_previewModeTest()
     }
 
     // Run geotagging in preview mode
-    GeoTagController* const controller = new GeoTagController(this);
+    QScopedPointer<GeoTagController> controller(new GeoTagController(nullptr));
     controller->setLogFile(ulogPath);
     controller->setImageDirectory(imageDirPath + "/");
     controller->setSaveDirectory(taggedDirPath);
     controller->setPreviewMode(true);
 
-    QSignalSpy inProgressSpy(controller, &GeoTagController::inProgressChanged);
+    QSignalSpy inProgressSpy(controller.get(), &GeoTagController::inProgressChanged);
 
     controller->startTagging();
 

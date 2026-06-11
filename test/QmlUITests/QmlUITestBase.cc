@@ -3,6 +3,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QVariant>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -17,14 +18,13 @@
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "QGCFileDialogController.h"
 #include "QGCImageProvider.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 
 void QmlUITestBase::startUI()
 {
-    setStrictLogCheck(true);
-
     // Initialise subsystems needed for the full QML UI
     // setStyle() must only be called once per process; subsequent calls after
     // any QML engine has loaded produce an "must be called before loading QML"
@@ -48,16 +48,16 @@ void QmlUITestBase::startUI()
     QVERIFY2(QGCCorePlugin::instance()->showAdvancedUI(), "Test requires Advanced UI mode");
 
     // Ignore benign Qt platform warnings that cannot be avoided in offscreen mode
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^default$")), QtWarningMsg,
+    ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("This plugin does not support propagateSizeHints")));
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^qt\\.qpa\\.fonts$")), QtWarningMsg,
+    ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Populating font family aliases")));
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^default$")), QtWarningMsg,
+    ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("QRhiGles2")));
 #ifdef QT_DEBUG
     // Debug builds on macOS are ad-hoc signed with an unbound Info.plist, so
     // macOS never shows the camera permission dialog and silently denies access.
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^default$")), QtWarningMsg,
+    ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Access to camera not granted")));
 #endif
 
@@ -85,7 +85,7 @@ void QmlUITestBase::ignoreAPMMockLinkWarnings()
 {
     // ArduPilot MockLink does not serve COMP_METADATA_TYPE_GENERAL.
     ignoreLogMessage(
-        QRegularExpression(QStringLiteral("^ComponentInformation\\.RequestMetaDataTypeStateMachine$")),
+        "ComponentInformation.RequestMetaDataTypeStateMachine",
         QtWarningMsg,
         QRegularExpression(QStringLiteral("\"COMP_METADATA_TYPE_GENERAL\" : failed to load metadata \\(primary and fallback\\) \"\"")));
 }
@@ -123,6 +123,14 @@ void QmlUITestBase::stopUI()
     destroyUIEngine();
 }
 
+void QmlUITestBase::_verifyFileDialogTestHookConsumed()
+{
+    if (QGCFileDialogController::testHookArmed()) {
+        QGCFileDialogController::takeTestNextFile();  // clear so later tests aren't contaminated
+        QTest::qFail("file dialog test hook was armed but never consumed by a dialog", __FILE__, __LINE__);
+    }
+}
+
 bool QmlUITestBase::clickButton(const QString &objectName)
 {
     QQuickItem *btn = findVisibleItem(_rootItem, objectName);
@@ -132,6 +140,74 @@ bool QmlUITestBase::clickButton(const QString &objectName)
     const QPointF center = btn->mapToScene(QPointF(btn->width() / 2, btn->height() / 2));
     QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
     return true;
+}
+
+// Format a property value for failure messages: quote strings, otherwise use
+// QVariant's string form ("true"/"false" for bools).
+static QString _displayValue(const QVariant &value)
+{
+    if (value.typeId() == QMetaType::QString) {
+        return QStringLiteral("'%1'").arg(value.toString());
+    }
+    return value.toString();
+}
+
+bool QmlUITestBase::_verifyItemProperty(const QString &objectName, const char *propertyName,
+                                        const QVariant &expectedValue, const QString &context)
+{
+    // Item discovery is as asynchronous as state propagation (view transitions,
+    // Loaders); poll for the item with the same ceiling as the state check.
+    // findVisibleItem returns immediately once the item exists.
+    QQuickItem *item = findVisibleItem(_rootItem, objectName, 2000);
+    if (!item) {
+        QTest::qFail(qPrintable(QStringLiteral("%1: item not found: %2").arg(context, objectName)),
+                     __FILE__, __LINE__);
+        return false;
+    }
+
+    // An invalid QVariant silently converts to false/"", which would make a
+    // false/empty expected value pass vacuously on an item without the property.
+    if (!item->property(propertyName).isValid()) {
+        QTest::qFail(qPrintable(QStringLiteral("%1: %2 has no '%3' property")
+                                    .arg(context, objectName, QLatin1String(propertyName))),
+                     __FILE__, __LINE__);
+        return false;
+    }
+
+    // State changes propagate through bindings; allow them to settle
+    const bool matched = waitForCondition(
+        [item, propertyName, expectedValue] { return item->property(propertyName) == expectedValue; },
+        2000,
+        QStringLiteral("%1 %2 == %3").arg(objectName, QLatin1String(propertyName), _displayValue(expectedValue)));
+    if (!matched) {
+        QTest::qFail(qPrintable(QStringLiteral("%1: %2 expected %3=%4 but was %5")
+                                    .arg(context, objectName, QLatin1String(propertyName),
+                                         _displayValue(expectedValue),
+                                         _displayValue(item->property(propertyName)))),
+                     __FILE__, __LINE__);
+        return false;
+    }
+    return true;
+}
+
+bool QmlUITestBase::verifyEnabled(const QString &objectName, bool expectedEnabled, const QString &context)
+{
+    return _verifyItemProperty(objectName, "enabled", expectedEnabled, context);
+}
+
+bool QmlUITestBase::verifyPrimary(const QString &objectName, bool expectedPrimary, const QString &context)
+{
+    return _verifyItemProperty(objectName, "primary", expectedPrimary, context);
+}
+
+bool QmlUITestBase::verifyChecked(const QString &objectName, bool expectedChecked, const QString &context)
+{
+    return _verifyItemProperty(objectName, "checked", expectedChecked, context);
+}
+
+bool QmlUITestBase::verifyText(const QString &objectName, const QString &expectedText, const QString &context)
+{
+    return _verifyItemProperty(objectName, "text", expectedText, context);
 }
 
 void QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObjectName)

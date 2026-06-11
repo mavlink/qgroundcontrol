@@ -1,6 +1,7 @@
 #include "QmlObjectListModel.h"
 #include "VehicleLinkManagerTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 #include "LinkManager.h"
@@ -61,6 +62,9 @@ void VehicleLinkManagerTest::_simpleLinkTest()
 
 void VehicleLinkManagerTest::_simpleCommLossTest()
 {
+    // Comm loss with pending vehicle commands causes MavCommandQueue to give up.
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression("Giving up sending command after max retries:"));
     SharedLinkConfigurationPtr mockConfig;
     SharedLinkInterfacePtr mockLink;
     _startMockLink(1, false /*highLatency*/, true /*incrementVehicleId*/, mockConfig, mockLink);
@@ -167,6 +171,9 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
     multiSpy.clearAllSignals();
 
     // Comm loss on 1: 1 is primary so should trigger switch of primary to 2
+    // Switching primary produces a showAppMessage debug log.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("Switching communication to secondary link"));
     pMockLink1->setCommLost(true);
     QCOMPARE(multiSpy.waitForSignal(_primaryLinkChangedSignalName, VehicleLinkManager::kTestCommLostDetectionTimeoutMs),
              true);
@@ -222,6 +229,14 @@ void VehicleLinkManagerTest::_connectionRemovedTest()
 
 void VehicleLinkManagerTest::_highLatencyLinkTest()
 {
+    // Comm loss causes MavCommandQueue to give up pending commands; link switch triggers showAppMessage.
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression("Giving up sending command after max retries:"));
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("Switching communication to secondary link"));
+    // Giving up on the COMPONENT_METADATA request leaves the metadata load unable to complete.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata \\(primary and fallback\\)"));
     SharedLinkConfigurationPtr mockConfig1;
     SharedLinkInterfacePtr mockLink1;
     SharedLinkConfigurationPtr mockConfig2;

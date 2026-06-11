@@ -460,29 +460,43 @@ protected:
     /// Allows derived fixtures to append state to failure dumps.
     virtual QString failureContextSummary() const;
 
-    /// Declare that a captured log message matching @a pattern at level @a type
-    /// is expected and should not cause a test failure in cleanup().
-    /// Call this before the code that emits the message.
-    void expectLogMessage(QtMsgType type, const QRegularExpression &pattern);
+    /// Declare one required log message for the current test flow.
+    /// Call this before the code that emits the message, then call
+    /// verifyExpectedLogMessage() immediately after that code.
+    ///
+    /// @a category must be the exact Qt logging category string (e.g.
+    /// "Utilities.QGCFileHelper"). An empty string is a precondition
+    /// violation and will Q_ASSERT in debug builds.
+    ///
+    /// Contract:
+    /// - Multiple pending expectations are allowed (FIFO verification order).
+    /// - If verifyExpectedLogMessage() is never called, cleanup() fails.
+    /// - After verifyExpectedLogMessage(), that expectation is consumed.
+    void expectLogMessage(const char *category, QtMsgType type, const QRegularExpression &pattern);
 
-    /// Overload that also matches on category (useful for whitelisting Qt internal categories).
-    void expectLogMessage(const QRegularExpression &categoryPattern, QtMsgType type, const QRegularExpression &messagePattern);
+    /// Verify and consume the next pending expectLogMessage() expectation.
+    /// Fails the test if no matching message was captured after expectLogMessage().
+    void verifyExpectedLogMessage();
 
-    /// Declare that a showAppMessage() call matching @a messagePattern is expected.
+    /// Declare that a showAppMessage() call matching @a messagePattern is required.
+    /// Call verifyExpectedLogMessage() after the code that should emit it.
     /// Convenience wrapper over expectLogMessage for the QGCAppMessageLog category.
     void expectAppMessage(const QRegularExpression &messagePattern);
 
     /// Permanently suppress all log messages matching @a pattern at level @a type
-    /// for the duration of the test. Semantically signals that the message may
-    /// fire any number of times (vs expectLogMessage for known single occurrences).
-    void ignoreLogMessage(QtMsgType type, const QRegularExpression &pattern);
-
-    /// Overload that also matches on category.
-    void ignoreLogMessage(const QRegularExpression &categoryPattern, QtMsgType type, const QRegularExpression &messagePattern);
-
-    /// Enable strict log checking: ANY unexpected log message (regardless of
-    /// category or level) will fail the test in cleanup().
-    void setStrictLogCheck(bool strict) { _strictLogCheck = strict; }
+    /// in the given @a category for the duration of the test.
+    ///
+    /// @a category must be the exact Qt logging category string (e.g.
+    /// "Utilities.QGCFileHelper"). An empty string is a precondition
+    /// violation and will Q_ASSERT in debug builds.
+    ///
+    /// Use this sparingly and only as a last resort for non-deterministic or
+    /// environment-dependent noise that cannot be tied to a precise call site.
+    ///
+    /// Prefer expectLogMessage(...) + verifyExpectedLogMessage() at specific
+    /// points in the test whenever the log is part of the behavior under test.
+    /// That pairing provides a stronger assertion and avoids masking regressions.
+    void ignoreLogMessage(const char *category, QtMsgType type, const QRegularExpression &pattern);
 
 private:
     void _cleanupTempFiles();
@@ -504,7 +518,6 @@ private:
     bool _cleanupCalled = false;
     bool _failureContextDumped = false;
     bool _standalone = false;
-    bool _strictLogCheck = false;
 };
 
 // ============================================================================

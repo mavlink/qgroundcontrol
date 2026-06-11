@@ -82,9 +82,9 @@ public:
     Q_PROPERTY(int                  batteryChangePoint              READ batteryChangePoint             NOTIFY batteryChangePointChanged)
     Q_PROPERTY(int                  batteriesRequired               READ batteriesRequired              NOTIFY batteriesRequiredChanged)
     Q_PROPERTY(QGCGeoBoundingCube*  travelBoundingCube              READ travelBoundingCube             NOTIFY missionBoundingCubeChanged)
-    Q_PROPERTY(bool                 onlyInsertTakeoffValid          MEMBER _onlyInsertTakeoffValid      NOTIFY planViewStateChanged)
     Q_PROPERTY(bool                 isInsertTakeoffValid            MEMBER _isInsertTakeoffValid        NOTIFY planViewStateChanged)
     Q_PROPERTY(bool                 isInsertLandValid               MEMBER _isInsertLandValid           NOTIFY planViewStateChanged)
+    Q_PROPERTY(bool                 isInsertROIValid                MEMBER _isInsertROIValid            NOTIFY planViewStateChanged)
     Q_PROPERTY(bool                 hasLandItem                     MEMBER _hasLandItem                 NOTIFY hasLandItemChanged)
     Q_PROPERTY(bool                 multipleLandPatternsAllowed     READ multipleLandPatternsAllowed    NOTIFY multipleLandPatternsAllowedChanged)
     Q_PROPERTY(bool                 isROIActive                     MEMBER _isROIActive                 NOTIFY planViewStateChanged)
@@ -352,7 +352,7 @@ private slots:
     void _complexBoundingBoxChanged             (void);
     void _recalcAll                             (void);
     void _managerVehicleChanged                 (Vehicle* managerVehicle);
-    void _forceRecalcOfAllowedBits              (void);
+    void _recalcPlanViewState                   (void);
     // Incremental tree model sync slots
     void _syncTreeMissionItemsInserted                (const QModelIndex& parent, int first, int last);
     void _syncTreeMissionItemsAboutToBeRemoved         (const QModelIndex& parent, int first, int last);
@@ -441,9 +441,9 @@ private:
     QGeoCoordinate              _previousCoordinate;
     FlightPathSegment*          _splitSegment =                 nullptr;
     bool                        _delayedSplitSegmentUpdate =    false;
-    bool                        _onlyInsertTakeoffValid =       true;
     bool                        _isInsertTakeoffValid =         true;
     bool                        _isInsertLandValid =            false;
+    bool                        _isInsertROIValid =             false;
     bool                        _hasLandItem =                  false;
     bool                        _isROIActive =                  false;
     bool                        _flyThroughCommandsAllowed =    false;

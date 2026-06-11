@@ -12,6 +12,46 @@
 
 QGC_LOGGING_CATEGORY(QGCFileDialogControllerLog, "QMLControls.QGCFileDialogController")
 
+#ifdef QGC_UNITTEST_BUILD
+static bool s_testHookArmed = false;
+static QString s_testNextFile;
+
+bool QGCFileDialogController::testHookArmed()
+{
+    return s_testHookArmed;
+}
+
+QString QGCFileDialogController::takeTestNextFile()
+{
+    s_testHookArmed = false;
+    const QString file = s_testNextFile;
+    s_testNextFile.clear();
+    return file;
+}
+
+void QGCFileDialogController::setTestNextFileForAccept(const QString &file)
+{
+    s_testHookArmed = true;
+    s_testNextFile = file;
+}
+
+void QGCFileDialogController::setTestRejectNext()
+{
+    s_testHookArmed = true;
+    s_testNextFile.clear();
+}
+#else
+bool QGCFileDialogController::testHookArmed()
+{
+    return false;
+}
+
+QString QGCFileDialogController::takeTestNextFile()
+{
+    return QString();
+}
+#endif
+
 QGCFileDialogController::QGCFileDialogController(QObject *parent)
     : QObject(parent)
 {

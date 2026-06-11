@@ -3,6 +3,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -145,6 +146,13 @@ void HashCheckTest::_hashCheckMatrix_data()
 
 void HashCheckTest::_hashCheckMatrix()
 {
+    // ArduPilot and high-latency variants do not have a metadata source;
+    // the resulting warning is expected for those rows.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
+    // BothTimersExhaust row: parameters never become ready, producing a showAppMessage for the timeout.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("did not respond to request for parameters"));
     QFETCH(bool, px4);
     QFETCH(bool, highLatency);
     QFETCH(bool, populateCache);

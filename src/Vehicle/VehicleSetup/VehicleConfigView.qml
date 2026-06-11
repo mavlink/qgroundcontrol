@@ -432,6 +432,7 @@ Rectangle {
 
                             Button {
                                 id:             sectionBtn
+                                objectName:     "vehicleConfig_section_" + modelData.replace(/ /g, "")
                                 Layout.fillWidth: true
                                 padding:        ScreenTools.defaultFontPixelWidth * 0.75
                                 leftPadding:    ScreenTools.defaultFontPixelWidth * 3

@@ -10,6 +10,7 @@ class MockLink;
 class QQmlApplicationEngine;
 class QQuickItem;
 class QQuickWindow;
+class QVariant;
 class Vehicle;
 
 /// Base class for QML UI smoke tests.
@@ -37,6 +38,7 @@ class QmlUITestBase : public UnitTest
 protected slots:
     void cleanup() override
     {
+        _verifyFileDialogTestHookConsumed();
         stopUI();
         UnitTest::cleanup();
     }
@@ -61,9 +63,33 @@ protected:
     /// null-reference bugs in QML bindings.
     void stopUI();
 
+    /// Fail the current test if the QGCFileDialogController test hook is still
+    /// armed at teardown. A hook armed but never consumed means the expected
+    /// dialog never opened; left armed it would be silently consumed by the
+    /// next dialog anywhere — possibly in a later test. Clears the hook so the
+    /// failure stays in the offending test.
+    void _verifyFileDialogTestHookConsumed();
+
     /// Click the visible QQuickItem with \a objectName in the current window.
     /// Returns false if the item cannot be found.
     bool clickButton(const QString &objectName);
+
+    /// Verify the enabled state of a visible item found by \a objectName,
+    /// waiting up to 2 seconds for bindings to settle. Returns false (after
+    /// recording a test failure) if the item is missing or the enabled state
+    /// does not match. \a context is prepended to failure messages.
+    bool verifyEnabled(const QString &objectName, bool expectedEnabled, const QString &context);
+
+    /// Verify the primary (highlight) state of a button found by \a objectName.
+    /// Same semantics as verifyEnabled().
+    bool verifyPrimary(const QString &objectName, bool expectedPrimary, const QString &context);
+
+    /// Verify the checked state of a checkable button found by \a objectName.
+    /// Same semantics as verifyEnabled().
+    bool verifyChecked(const QString &objectName, bool expectedChecked, const QString &context);
+
+    /// Same semantics as verifyEnabled().
+    bool verifyText(const QString &objectName, const QString &expectedText, const QString &context);
 
     /// Scroll the QQuickFlickable identified by \a flickableObjectName so that
     /// \a item's centre is fully visible inside the flickable. Does nothing if
@@ -108,4 +134,12 @@ protected:
     QQuickItem            *_rootItem = nullptr;
     int _viewDelay = 0;  ///< ms to pause between view switches when onscreen
     int _pageDelay = 0;  ///< ms to pause between page switches when onscreen
+
+private:
+    /// Shared implementation for the verify* helpers: find the visible item,
+    /// guard against the property not existing (an invalid QVariant silently
+    /// converts to false/"" which would make false/empty expectations pass
+    /// vacuously), then wait up to 2 seconds for the property to match.
+    bool _verifyItemProperty(const QString &objectName, const char *propertyName,
+                             const QVariant &expectedValue, const QString &context);
 };

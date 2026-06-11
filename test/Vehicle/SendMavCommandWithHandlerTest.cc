@@ -2,6 +2,8 @@
 
 #include "MultiVehicleManager.h"
 
+#include <QtCore/QRegularExpression>
+
 SendMavCommandWithHandlerTest::TestCase_t SendMavCommandWithHandlerTest::_rgTestCases[] = {
     {MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED, MAV_RESULT_ACCEPTED, false,
      Vehicle::MavCmdResultCommandResultOnly, 1},
@@ -73,6 +75,9 @@ void SendMavCommandWithHandlerTest::_testCaseWorker(TestCase_t& testCase)
 
 void SendMavCommandWithHandlerTest::_performTestCases()
 {
+    // No-response test cases exhaust command retries, producing MavCommandQueue warnings.
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression("Giving up sending command after max retries:"));
     int index = 0;
     for (TestCase_t& testCase : _rgTestCases) {
         qCDebug(UnitTestLog) << "Testing case" << index++;

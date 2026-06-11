@@ -5,7 +5,18 @@
 #include "QGCCacheTile.h"
 #include "QGCCachedTileSet.h"
 #include "QGCMapTasks.h"
+#include "QGCMapUrlEngine.h"
 #include "QGCTileCacheWorker.h"
+#include <QtCore/QTemporaryDir>
+
+static const QString kTestProviderType = QStringLiteral("Bing Road");
+
+void QGCCacheWorkerTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    QVERIFY2(UrlFactory::getQtMapIdFromProviderType(kTestProviderType) != -1,
+             ("Provider type '" + kTestProviderType.toLatin1() + "' not available in this build").constData());
+}
 
 bool QGCCacheWorkerTest::_startWorker(QGCCacheWorker& worker, int timeoutMs)
 {
@@ -27,8 +38,9 @@ bool QGCCacheWorkerTest::_startWorker(QGCCacheWorker& worker, int timeoutMs)
 
 void QGCCacheWorkerTest::_testStartAndStop()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("start_stop.db"));
+    worker.setDatabaseFile(tempDir.filePath("start_stop.db"));
     QVERIFY(!worker.isRunning());
 
     QVERIFY(_startWorker(worker));
@@ -41,8 +53,9 @@ void QGCCacheWorkerTest::_testStartAndStop()
 
 void QGCCacheWorkerTest::_testEnqueueBeforeInit()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("pre_init.db"));
+    worker.setDatabaseFile(tempDir.filePath("pre_init.db"));
 
     auto* task = new QGCFetchTileTask(QStringLiteral("hash"));
     bool errorReceived = false;
@@ -53,8 +66,9 @@ void QGCCacheWorkerTest::_testEnqueueBeforeInit()
 
 void QGCCacheWorkerTest::_testUpdateTotalsOnInit()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("totals.db"));
+    worker.setDatabaseFile(tempDir.filePath("totals.db"));
 
     quint32 totalTiles = UINT32_MAX;
     quint64 totalSize = UINT64_MAX;
@@ -79,12 +93,13 @@ void QGCCacheWorkerTest::_testUpdateTotalsOnInit()
 
 void QGCCacheWorkerTest::_testSaveAndFetchTile()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("save_fetch.db"));
+    worker.setDatabaseFile(tempDir.filePath("save_fetch.db"));
     QVERIFY(_startWorker(worker));
 
     auto* tile =
-        new QGCCacheTile(QStringLiteral("h1"), QByteArray("tile_data"), QStringLiteral("png"), QStringLiteral("T"));
+        new QGCCacheTile(QStringLiteral("h1"), QByteArray("tile_data"), QStringLiteral("png"), kTestProviderType);
     QVERIFY(worker.enqueueTask(new QGCSaveTileTask(tile)));
 
     // Fetch — FIFO guarantees save completes first
@@ -113,8 +128,9 @@ void QGCCacheWorkerTest::_testSaveAndFetchTile()
 
 void QGCCacheWorkerTest::_testFetchTileNotFound()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("not_found.db"));
+    worker.setDatabaseFile(tempDir.filePath("not_found.db"));
     QVERIFY(_startWorker(worker));
 
     auto* fetchTask = new QGCFetchTileTask(QStringLiteral("nonexistent"));
@@ -138,8 +154,9 @@ void QGCCacheWorkerTest::_testFetchTileNotFound()
 
 void QGCCacheWorkerTest::_testFetchTileSets()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("tile_sets.db"));
+    worker.setDatabaseFile(tempDir.filePath("tile_sets.db"));
     QVERIFY(_startWorker(worker));
 
     // Wait for updateTotals after the fetch task completes to know all sets were emitted
@@ -168,13 +185,14 @@ void QGCCacheWorkerTest::_testFetchTileSets()
 
 void QGCCacheWorkerTest::_testCreateAndDeleteTileSet()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("create_delete.db"));
+    worker.setDatabaseFile(tempDir.filePath("create_delete.db"));
     QVERIFY(_startWorker(worker));
 
     auto* tileSet = new QGCCachedTileSet(QStringLiteral("Test Set"));
     tileSet->setMapTypeStr(QStringLiteral("TestMap"));
-    tileSet->setType(QStringLiteral("T"));
+    tileSet->setType(kTestProviderType);
     tileSet->setTopleftLat(37.0);
     tileSet->setTopleftLon(-122.0);
     tileSet->setBottomRightLat(36.0);
@@ -219,13 +237,14 @@ void QGCCacheWorkerTest::_testCreateAndDeleteTileSet()
 
 void QGCCacheWorkerTest::_testPruneCache()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("prune.db"));
+    worker.setDatabaseFile(tempDir.filePath("prune.db"));
     QVERIFY(_startWorker(worker));
 
     for (int i = 0; i < 10; i++) {
         auto* tile = new QGCCacheTile(QStringLiteral("pr_%1").arg(i), QByteArray(100, 'P'), QStringLiteral("png"),
-                                      QStringLiteral("T"));
+                                      kTestProviderType);
         QVERIFY(worker.enqueueTask(new QGCSaveTileTask(tile)));
     }
 
@@ -253,11 +272,12 @@ void QGCCacheWorkerTest::_testPruneCache()
 
 void QGCCacheWorkerTest::_testResetDatabase()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("reset.db"));
+    worker.setDatabaseFile(tempDir.filePath("reset.db"));
     QVERIFY(_startWorker(worker));
 
-    auto* tile = new QGCCacheTile(QStringLiteral("r1"), QByteArray("data"), QStringLiteral("png"), QStringLiteral("T"));
+    auto* tile = new QGCCacheTile(QStringLiteral("r1"), QByteArray("data"), QStringLiteral("png"), kTestProviderType);
     QVERIFY(worker.enqueueTask(new QGCSaveTileTask(tile)));
 
     auto* resetTask = new QGCResetTask();
@@ -283,13 +303,14 @@ void QGCCacheWorkerTest::_testResetDatabase()
 
 void QGCCacheWorkerTest::_testStopWhileProcessing()
 {
+    QTemporaryDir tempDir;
     QGCCacheWorker worker;
-    worker.setDatabaseFile(tempPath("stop_busy.db"));
+    worker.setDatabaseFile(tempDir.filePath("stop_busy.db"));
     QVERIFY(_startWorker(worker));
 
     for (int i = 0; i < 100; i++) {
         auto* tile = new QGCCacheTile(QStringLiteral("stop_%1").arg(i), QByteArray(50, 'S'), QStringLiteral("png"),
-                                      QStringLiteral("T"));
+                                      kTestProviderType);
         worker.enqueueTask(new QGCSaveTileTask(tile));
     }
 

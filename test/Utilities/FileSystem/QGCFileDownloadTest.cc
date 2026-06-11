@@ -4,11 +4,14 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 #include "QGCCompression.h"
 #include "QGCFileDownload.h"
 #include "QGCFileHelper.h"
+#include <QtCore/QTemporaryDir>
+#include <QtCore/QDir>
 
 void QGCFileDownloadTest::_testFileDownload()
 {
@@ -34,7 +37,9 @@ void QGCFileDownloadTest::_testFileDownloadEmptyUrl()
     QGCFileDownload downloader(this);
     QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
 
+    expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Empty URL provided"));
     QVERIFY(!downloader.start(QString()));
+    verifyExpectedLogMessage();
     QCOMPARE(finishedSpy.count(), 0);
     QVERIFY(!downloader.errorString().isEmpty());
 }
@@ -46,7 +51,9 @@ void QGCFileDownloadTest::_testFileDownloadConcurrentStartRejected()
 
     QVERIFY(downloader.start(":/unittest/manifest.json.gz"));
     QVERIFY(downloader.isRunning());
+    expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download already in progress"));
     QVERIFY(!downloader.start(":/unittest/arducopter.apj"));
+    verifyExpectedLogMessage();
 
     QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
     QCOMPARE(finishedSpy.count(), 1);
@@ -96,10 +103,11 @@ void QGCFileDownloadTest::_testFileDownloadHashVerificationSuccess()
 
 void QGCFileDownloadTest::_testFileDownloadCustomOutputPath()
 {
+    QTemporaryDir tempDir;
     QGCFileDownload downloader(this);
     QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
 
-    const QString customOutput = tempPath(QStringLiteral("qgc_custom_download.apj"));
+    const QString customOutput = tempDir.filePath(QStringLiteral("qgc_custom_download.apj"));
     QFile::remove(customOutput);
     downloader.setOutputPath(customOutput);
 
@@ -117,14 +125,17 @@ void QGCFileDownloadTest::_testFileDownloadCustomOutputPath()
 
 void QGCFileDownloadTest::_testFileDownloadNonExistentLocalFile()
 {
+    QTemporaryDir tempDir;
     QGCFileDownload downloader(this);
     QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
 
-    const QString missingPath = tempPath(QStringLiteral("does_not_exist.apj"));
+    const QString missingPath = tempDir.filePath(QStringLiteral("does_not_exist.apj"));
     QVERIFY(!QFile::exists(missingPath));
 
+    expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error:"));
     QVERIFY(downloader.start(missingPath));
     QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
     QCOMPARE(finishedSpy.count(), 1);
 
     const QList<QVariant> args = finishedSpy.first();
@@ -135,10 +146,11 @@ void QGCFileDownloadTest::_testFileDownloadNonExistentLocalFile()
 
 void QGCFileDownloadTest::_testFileDownloadOutputPathIsDirectory()
 {
+    QTemporaryDir tempDir;
     QGCFileDownload downloader(this);
     QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
 
-    downloader.setOutputPath(tempDirPath());
+    downloader.setOutputPath(tempDir.path());
     QVERIFY(!downloader.start(":/unittest/arducopter.apj"));
     QCOMPARE(finishedSpy.count(), 0);
     QVERIFY(!downloader.errorString().isEmpty());
@@ -268,6 +280,7 @@ void QGCFileDownloadTest::_testAutoDecompressUncompressedFile()
 // ============================================================================
 void QGCFileDownloadTest::_testDownloadAndExtractZip()
 {
+    QTemporaryDir tempDir;
     // Integration test: Download a ZIP archive and extract it
     // This tests the full workflow of QGCFileDownload + QGCCompression
     QGCFileDownload* const downloader = new QGCFileDownload(this);
@@ -289,7 +302,8 @@ void QGCFileDownloadTest::_testDownloadAndExtractZip()
     QVERIFY2(resultErrorMsg.isEmpty(), qPrintable(resultErrorMsg));
     QVERIFY2(QFile::exists(resultLocalFile), qPrintable("Downloaded file doesn't exist: " + resultLocalFile));
     // Create temp directory for extraction
-    const QString extractDir = createSubDir(QStringLiteral("extract_zip"));
+    const QString extractDir = tempDir.path() + "/extract_zip";
+    QDir().mkpath(extractDir);
     QVERIFY(!extractDir.isEmpty());
     // Extract the downloaded archive using QGCCompression
     const bool extractResult = QGCCompression::extractArchive(resultLocalFile, extractDir);

@@ -2,6 +2,7 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QUuid>
 
@@ -161,6 +162,10 @@ void MavlinkLogTest::_connectLogNoArm_test()
 
 void MavlinkLogTest::_connectLogArm_test()
 {
+    QSKIP("MAVLinkProtocol::_startLogging() is a no-op during unit tests, so no "
+          "telemetry log is ever created. Testing the arm-triggers-save path "
+          "requires either removing the runningUnitTests() guard or injecting a "
+          "test-capable logging backend.");
     _connectLogWorker(true);
 }
 

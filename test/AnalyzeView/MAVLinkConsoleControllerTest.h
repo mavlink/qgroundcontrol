@@ -9,6 +9,7 @@ class MAVLinkConsoleControllerTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void init() override;
     void _constructionTest();
     void _initialStateTest();
     void _historyUpOnEmptyTest();

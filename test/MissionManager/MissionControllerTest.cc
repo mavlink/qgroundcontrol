@@ -16,6 +16,7 @@
 #include "TestFixtures.h"
 #include "MultiSignalSpy.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 using namespace TestFixtures;
 
@@ -75,6 +76,11 @@ void MissionControllerTest::_testEmptyVehicle()
 {
     UT_FETCH_AUTOPILOT();
     Q_UNUSED(autopilotName);
+    // ArduPilot mock link has no metadata source; these warnings are expected for that autopilot.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
+    ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Skipping invalid enum value"));
     _initForFirmwareType(autopilot);
     // FYI: A significant amount of empty vehicle testing is in _initForFirmwareType since that
     // sets up an empty vehicle
@@ -89,6 +95,44 @@ void MissionControllerTest::_setupVisualItemSignals(VisualMissionItem* visualIte
 {
     MultiSignalSpy visualItemSpy;
     QVERIFY(visualItemSpy.init(visualItem));
+}
+
+void MissionControllerTest::_testInsertValidityHomePositionGating()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_PX4);
+
+    auto boolProperty = [this](const char* name) {
+        const QVariant value = _missionController->property(name);
+        return value.isValid() && value.toBool();
+    };
+
+    // All insert validity properties must exist
+    QVERIFY(_missionController->property("isInsertTakeoffValid").isValid());
+    QVERIFY(_missionController->property("isInsertLandValid").isValid());
+    QVERIFY(_missionController->property("isInsertROIValid").isValid());
+    QVERIFY(_missionController->property("flyThroughCommandsAllowed").isValid());
+
+    // No home position set: no inserts are valid
+    QCOMPARE(_missionController->homePositionSet(), false);
+    QCOMPARE(boolProperty("isInsertTakeoffValid"), false);
+    QCOMPARE(boolProperty("isInsertLandValid"), false);
+    QCOMPARE(boolProperty("isInsertROIValid"), false);
+    QCOMPARE(boolProperty("flyThroughCommandsAllowed"), false);
+
+    // Home position set, empty plan: only takeoff insert is valid
+    _missionController->setHomePosition(Coord::zurich());
+    QCOMPARE(_missionController->homePositionSet(), true);
+    QCOMPARE(boolProperty("isInsertTakeoffValid"), true);
+    QCOMPARE(boolProperty("isInsertLandValid"), false);
+    QCOMPARE(boolProperty("isInsertROIValid"), false);
+    QCOMPARE(boolProperty("flyThroughCommandsAllowed"), false);
+
+    // Takeoff added: takeoff no longer valid, everything else is
+    QVERIFY(_missionController->insertTakeoffItem(Coord::zurich(), 1, true /* makeCurrentItem */));
+    QCOMPARE(boolProperty("isInsertTakeoffValid"), false);
+    QCOMPARE(boolProperty("isInsertLandValid"), true);
+    QCOMPARE(boolProperty("isInsertROIValid"), true);
+    QCOMPARE(boolProperty("flyThroughCommandsAllowed"), true);
 }
 
 void MissionControllerTest::_testGimbalRecalc()
@@ -344,8 +388,12 @@ void MissionControllerTest::_testMissionTransformsInvalidHome()
     QVERIFY_TRUE_WAIT(!settingsItem->coordinate().isValid(), TestTimeout::shortMs());
 
     // repositionMission and rotateMission require a valid home — they should be no-ops
+    expectLogMessage("PlanManager.MissionController", QtWarningMsg, QRegularExpression("Cannot reposition mission while home is invalid"));
     _missionController->repositionMission(home.atDistanceAndAzimuth(100.0, 0.0), true, true);
+    verifyExpectedLogMessage();
+    expectLogMessage("PlanManager.MissionController", QtWarningMsg, QRegularExpression("Cannot rotate mission while home is invalid"));
     _missionController->rotateMission(45.0, true, true);
+    verifyExpectedLogMessage();
     QCOMPARE_COORDS(item1->coordinate(), oldItemCoord, kCoordToleranceMeters);
     QCOMPARE_FUZZY(item1->editableAlt(), oldItemAlt, kAltToleranceMeters);
 

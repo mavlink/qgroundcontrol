@@ -26,7 +26,15 @@ Item {
 
     function openForLoad() {
         _openForLoad = true
-        if (_mobileDlg && folder.length !== 0) {
+        if (QGCFileDialogController.testHookArmed()) {
+            // Unit test shim: bypass the native dialog and produce the armed result
+            var testFile = QGCFileDialogController.takeTestNextFile()
+            if (testFile.length === 0) {
+                _root.rejected()
+            } else {
+                _root.acceptedForLoad(testFile)
+            }
+        } else if (_mobileDlg && folder.length !== 0) {
             mobileFileOpenDialogFactory.open()
         } else if (selectFolder) {
             fullFolderDialog.open()
@@ -38,7 +46,15 @@ Item {
 
     function openForSave() {
         _openForLoad = false
-        if (_mobileDlg && folder.length !== 0) {
+        if (QGCFileDialogController.testHookArmed()) {
+            // Unit test shim: bypass the native dialog and produce the armed result
+            var testFile = QGCFileDialogController.takeTestNextFile()
+            if (testFile.length === 0) {
+                _root.rejected()
+            } else {
+                _root.acceptedForSave(testFile)
+            }
+        } else if (_mobileDlg && folder.length !== 0) {
             mobileFileSaveDialogFactory.open()
         } else {
             fullFileDialog.fileMode = FileDialog.SaveFile

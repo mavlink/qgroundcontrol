@@ -6,6 +6,7 @@
 #include "PlanViewSettings.h"
 #include "TransectStyleComplexItem.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 CorridorScanComplexItemTest::CorridorScanComplexItemTest()
@@ -167,6 +168,7 @@ void CorridorScanComplexItemTest::_testItemGeneration()
 
 void CorridorScanComplexItemTest::_testMaxTransectCount()
 {
+    ignoreLogMessage("Plan.CorridorScanComplexItem", QtWarningMsg, QRegularExpression("Transect spacing.*raised"));
     // Tiny spacing triggers the cap: transect count must not exceed maxTransectCount.
     // cameraShotsChanged is emitted at the end of every _rebuildTransects(); the rebuild
     // fires synchronously (direct connection) so the spy count is already 1 on return.

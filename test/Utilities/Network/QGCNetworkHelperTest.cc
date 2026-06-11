@@ -464,7 +464,9 @@ void QGCNetworkHelperTest::_testParseJsonValid()
 void QGCNetworkHelperTest::_testParseJsonInvalid()
 {
     QJsonParseError error{};
+    expectLogMessage("Utilities.QGCNetworkHelper", QtWarningMsg, QRegularExpression("JSON parse error"));
     const QJsonDocument doc = QGCNetworkHelper::parseJson("{ invalid json", &error);
+    verifyExpectedLogMessage();
 
     QVERIFY(doc.isNull());
     QVERIFY(error.error != QJsonParseError::NoError);

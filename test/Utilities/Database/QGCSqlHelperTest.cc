@@ -6,6 +6,7 @@
 
 #include "QGCSqlHelper.h"
 #include "UnitTestList.h"
+#include <QtCore/QTemporaryDir>
 
 void QGCSqlHelperTest::_escapeLikePattern()
 {
@@ -30,7 +31,8 @@ void QGCSqlHelperTest::_escapeLikePattern()
 
 void QGCSqlHelperTest::_scopedConnectionOpen()
 {
-    const QString dbPath = tempPath(QStringLiteral("test.db"));
+    QTemporaryDir tempDir;
+    const QString dbPath = tempDir.filePath(QStringLiteral("test.db"));
 
     {
         QGCSqlHelper::ScopedConnection conn(dbPath);
@@ -54,7 +56,8 @@ void QGCSqlHelperTest::_scopedConnectionOpen()
 
 void QGCSqlHelperTest::_scopedConnectionReadOnly()
 {
-    const QString dbPath = tempPath(QStringLiteral("readonly.db"));
+    QTemporaryDir tempDir;
+    const QString dbPath = tempDir.filePath(QStringLiteral("readonly.db"));
 
     // Create a database with data first
     {
@@ -89,7 +92,8 @@ void QGCSqlHelperTest::_scopedConnectionInvalidPath()
 
 void QGCSqlHelperTest::_scopedConnectionUniqueNames()
 {
-    const QString dbPath = tempPath(QStringLiteral("unique.db"));
+    QTemporaryDir tempDir;
+    const QString dbPath = tempDir.filePath(QStringLiteral("unique.db"));
 
     // Open two connections simultaneously — should not conflict
     QGCSqlHelper::ScopedConnection conn1(dbPath);
@@ -108,7 +112,8 @@ void QGCSqlHelperTest::_scopedConnectionUniqueNames()
 
 void QGCSqlHelperTest::_scopedConnectionCleanup()
 {
-    const QString dbPath = tempPath(QStringLiteral("cleanup.db"));
+    QTemporaryDir tempDir;
+    const QString dbPath = tempDir.filePath(QStringLiteral("cleanup.db"));
     const int beforeCount = QSqlDatabase::connectionNames().size();
 
     {
@@ -123,7 +128,8 @@ void QGCSqlHelperTest::_scopedConnectionCleanup()
 
 void QGCSqlHelperTest::_applySqlitePragmas()
 {
-    const QString dbPath = tempPath(QStringLiteral("pragma.db"));
+    QTemporaryDir tempDir;
+    const QString dbPath = tempDir.filePath(QStringLiteral("pragma.db"));
 
     // ScopedConnection applies pragmas automatically, verify them
     QGCSqlHelper::ScopedConnection conn(dbPath);

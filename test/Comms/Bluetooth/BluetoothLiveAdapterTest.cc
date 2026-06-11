@@ -48,11 +48,27 @@ static QString _firstAdapterAddressOrEmpty(const QVariantList &adapters)
     return QString();
 }
 
+void BluetoothLiveAdapterTest::init()
+{
+    UnitTest::init();
+
+    // Qt's Bluetooth stack emits environment-dependent warnings when BlueZ is
+    // unavailable or no adapter is present (e.g. headless CI). These are infrastructure
+    // noise, not behavior under test.
+    ignoreLogMessage("default", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
+    ignoreLogMessage("qt.bluetooth", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("LE controller has invalid adapter")));
+    ignoreLogMessage("qt.bluetooth.bluez", QtInfoMsg,
+                     QRegularExpression(QStringLiteral("Missing CAP_NET_ADMIN")));
+    ignoreLogMessage("qt.bluetooth.bluez", QtWarningMsg,
+                     QRegularExpression(QStringLiteral(
+                         "Cannot open HCI socket|Cannot determine bluetoothd version|"
+                         "Disabling Qt Bluetooth LE feature|Cannot find Bluez 5 adapter")));
+}
+
 void BluetoothLiveAdapterTest::_testLiveAdapterSelectionAndState()
 {
-    // Qt's Bluetooth module may emit an uncategorized warning when BlueZ is not running (e.g. on headless CI).
-    expectLogMessage(QtWarningMsg, QRegularExpression(QStringLiteral("Cannot find a compatible running Bluez")));
-
     const QList<QBluetoothHostInfo> localHosts = _localAdaptersOrSkip();
     if (localHosts.isEmpty()) {
         QSKIP("No local Bluetooth adapter detected on this host");

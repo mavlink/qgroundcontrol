@@ -43,8 +43,8 @@ void SendMavlinkCommandStateTest::_testUnconfiguredStateFails()
     QStateMachine machine;
 
     // Expected: unconfigured state emits critical + Qt warns about null connect
-    expectLogMessage(QtWarningMsg, QRegularExpression("invalid nullptr parameter"));
-    expectLogMessage(QtCriticalMsg, QRegularExpression("SendMavlinkCommandState not configured"));
+    expectLogMessage("qt.core.qobject.connect", QtWarningMsg, QRegularExpression("invalid nullptr parameter"));
+    expectLogMessage("Utilities.QGCStateMachine", QtCriticalMsg, QRegularExpression("SendMavlinkCommandState not configured"));
 
     // Create without configuration
     auto* state = new SendMavlinkCommandState(&machine);
@@ -60,6 +60,8 @@ void SendMavlinkCommandStateTest::_testUnconfiguredStateFails()
 
     // Should fail immediately because not configured and no vehicle
     QVERIFY(startAndWaitForFinished(&machine));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QCOMPARE(errorSpy.count(), 1);
 }
 

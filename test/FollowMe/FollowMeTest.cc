@@ -1,5 +1,6 @@
 #include "FollowMeTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
@@ -11,6 +12,11 @@
 
 void FollowMeTest::_testFollowMe()
 {
+    // The mock vehicle does not have a follow mode configured, so setFlightMode produces expected warnings.
+    ignoreLogMessage("FirmwarePlugin.PX4FirmwarePlugin", QtWarningMsg,
+                     QRegularExpression("Unknown flight Mode"));
+    ignoreLogMessage("Vehicle.Vehicle", QtWarningMsg,
+                     QRegularExpression("setFlightMode failed"));
     FollowMe::instance()->init();
     QGCPositionManager::instance()->init();
     _connectMockLinkNoInitialConnectSequence();
