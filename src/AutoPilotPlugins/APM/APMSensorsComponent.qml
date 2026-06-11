@@ -103,6 +103,14 @@ SetupPage {
                 _showSimpleAccelCalOption = true
             }
 
+            // Maps the APM controller per-side done/inProgress bools to a VehicleRotationCal.CalState
+            function sideCalState(done, inProgress) {
+                if (inProgress) {
+                    return VehicleRotationCal.CalState.InProgress
+                }
+                return done ? VehicleRotationCal.CalState.Completed : VehicleRotationCal.CalState.Incomplete
+            }
+
             function compassLabel(index) {
                 let label = qsTr("Compass %1 ").arg(index+1)
                 let addOpenParan = true
@@ -845,8 +853,7 @@ SetupPage {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalDownSideVisible
-                                calValid:           controller.orientationCalDownSideDone
-                                calInProgress:      controller.orientationCalDownSideInProgress
+                                calState:           sideCalState(controller.orientationCalDownSideDone, controller.orientationCalDownSideInProgress)
                                 calInProgressText:  controller.orientationCalDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleDown.png"
                             }
@@ -854,8 +861,7 @@ SetupPage {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalLeftSideVisible
-                                calValid:           controller.orientationCalLeftSideDone
-                                calInProgress:      controller.orientationCalLeftSideInProgress
+                                calState:           sideCalState(controller.orientationCalLeftSideDone, controller.orientationCalLeftSideInProgress)
                                 calInProgressText:  controller.orientationCalLeftSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleLeft.png"
                             }
@@ -863,8 +869,7 @@ SetupPage {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalRightSideVisible
-                                calValid:           controller.orientationCalRightSideDone
-                                calInProgress:      controller.orientationCalRightSideInProgress
+                                calState:           sideCalState(controller.orientationCalRightSideDone, controller.orientationCalRightSideInProgress)
                                 calInProgressText:  controller.orientationCalRightSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleRight.png"
                             }
@@ -872,8 +877,7 @@ SetupPage {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalNoseDownSideVisible
-                                calValid:           controller.orientationCalNoseDownSideDone
-                                calInProgress:      controller.orientationCalNoseDownSideInProgress
+                                calState:           sideCalState(controller.orientationCalNoseDownSideDone, controller.orientationCalNoseDownSideInProgress)
                                 calInProgressText:  controller.orientationCalNoseDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleNoseDown.png"
                             }
@@ -881,8 +885,7 @@ SetupPage {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalTailDownSideVisible
-                                calValid:           controller.orientationCalTailDownSideDone
-                                calInProgress:      controller.orientationCalTailDownSideInProgress
+                                calState:           sideCalState(controller.orientationCalTailDownSideDone, controller.orientationCalTailDownSideInProgress)
                                 calInProgressText:  controller.orientationCalTailDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleTailDown.png"
                             }
@@ -890,8 +893,7 @@ SetupPage {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalUpsideDownSideVisible
-                                calValid:           controller.orientationCalUpsideDownSideDone
-                                calInProgress:      controller.orientationCalUpsideDownSideInProgress
+                                calState:           sideCalState(controller.orientationCalUpsideDownSideDone, controller.orientationCalUpsideDownSideInProgress)
                                 calInProgressText:  controller.orientationCalUpsideDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleUpsideDown.png"
                             }
