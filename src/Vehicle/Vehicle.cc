@@ -3381,8 +3381,26 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
     }
 }
 
-void Vehicle::_handleCommandRequestOperatorControl(const mavlink_command_long_t commandLong)
+void Vehicle::_handleCommandRequestOperatorControl(const mavlink_message_t& message, const mavlink_command_long_t& commandLong)
 {
+    // Acknowledge the takeover notification so the autopilot can clear its pending notification state
+    SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
+    if (sharedLink) {
+        mavlink_message_t ackMessage{};
+        (void) mavlink_msg_command_ack_pack_chan(
+            MAVLinkProtocol::instance()->getSystemId(),
+            MAVLinkProtocol::getComponentId(),
+            sharedLink->mavlinkChannel(),
+            &ackMessage,
+            MAV_CMD_REQUEST_OPERATOR_CONTROL,
+            MAV_RESULT_ACCEPTED,
+            0,                  // progress
+            0,                  // result_param2
+            message.sysid,
+            message.compid);
+        (void) sendMessageOnLinkThreadSafe(sharedLink.get(), ackMessage);
+    }
+
     emit requestOperatorControlReceived(
         static_cast<int>(commandLong.param4),   // GCS sysid requesting control
         static_cast<int>(commandLong.param2),   // Allow takeover
@@ -3399,7 +3417,7 @@ void Vehicle::_handleCommandLong(const mavlink_message_t& message)
         return;
     }
     if (commandLong.command == MAV_CMD_REQUEST_OPERATOR_CONTROL) {
-        _handleCommandRequestOperatorControl(commandLong);
+        _handleCommandRequestOperatorControl(message, commandLong);
     }
 }
 

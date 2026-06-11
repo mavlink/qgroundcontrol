@@ -1156,7 +1156,7 @@ public:
 
 private:
     void _handleControlStatus(const mavlink_message_t& message);
-    void _handleCommandRequestOperatorControl(const mavlink_command_long_t commandLong);
+    void _handleCommandRequestOperatorControl(const mavlink_message_t& message, const mavlink_command_long_t& commandLong);
     static void _requestOperatorControlAckHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
 
     Q_PROPERTY(uint8_t     sysidInControl                        READ sysidInControl                        NOTIFY gcsControlStatusChanged)
