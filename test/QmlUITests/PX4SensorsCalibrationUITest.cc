@@ -17,16 +17,17 @@ namespace {
 struct PoseInfo {
     MockLinkPX4Calibration::Pose pose;
     const char *objectName;     ///< VehicleRotationCal objectName in SensorsSetup.qml
-    const char *rotateImage;    ///< Image shown while rotating on this side
+    const char *rotateImage;    ///< Image shown while rotating on this side (mag cal)
+    const char *stillImage;     ///< Image shown while holding still on this side (accel cal)
 };
 
 constexpr PoseInfo kPoses[MockLinkPX4Calibration::kSideCount] = {
-    { MockLinkPX4Calibration::Pose::RightSideUp, "sensorsCal_downSide",       "VehicleDownRotate.png" },
-    { MockLinkPX4Calibration::Pose::UpsideDown,  "sensorsCal_upsideDownSide", "VehicleUpsideDownRotate.png" },
-    { MockLinkPX4Calibration::Pose::NoseDown,    "sensorsCal_noseDownSide",   "VehicleNoseDownRotate.png" },
-    { MockLinkPX4Calibration::Pose::TailDown,    "sensorsCal_tailDownSide",   "VehicleTailDownRotate.png" },
-    { MockLinkPX4Calibration::Pose::Left,        "sensorsCal_leftSide",       "VehicleLeftRotate.png" },
-    { MockLinkPX4Calibration::Pose::Right,       "sensorsCal_rightSide",      "VehicleRightRotate.png" },
+    { MockLinkPX4Calibration::Pose::RightSideUp, "sensorsCal_downSide",       "VehicleDownRotate.png",       "VehicleDown.png" },
+    { MockLinkPX4Calibration::Pose::UpsideDown,  "sensorsCal_upsideDownSide", "VehicleUpsideDownRotate.png", "VehicleUpsideDown.png" },
+    { MockLinkPX4Calibration::Pose::NoseDown,    "sensorsCal_noseDownSide",   "VehicleNoseDownRotate.png",   "VehicleNoseDown.png" },
+    { MockLinkPX4Calibration::Pose::TailDown,    "sensorsCal_tailDownSide",   "VehicleTailDownRotate.png",   "VehicleTailDown.png" },
+    { MockLinkPX4Calibration::Pose::Left,        "sensorsCal_leftSide",       "VehicleLeftRotate.png",       "VehicleLeft.png" },
+    { MockLinkPX4Calibration::Pose::Right,       "sensorsCal_rightSide",      "VehicleRightRotate.png",      "VehicleRight.png" },
 };
 
 bool waitForCalState(QQuickItem *item, SensorsComponentController::SideCalState expected, int timeoutMs)
@@ -113,9 +114,10 @@ void PX4SensorsCalibrationUITest::_verifyAllPosesState(int expectedState, const 
     }
 }
 
-void PX4SensorsCalibrationUITest::_startCompassCalibration()
+void PX4SensorsCalibrationUITest::_startCalibration(const QString &calibrateButtonObjectName)
 {
-    QVERIFY2(clickButton(QStringLiteral("sensorsSetup_calibrateCompass")), "Failed to click Calibrate Compass");
+    QVERIFY2(clickButton(calibrateButtonObjectName),
+             qPrintable(QStringLiteral("Failed to click calibrate button: %1").arg(calibrateButtonObjectName)));
 
     // Accept the pre-calibration dialog which sends MAV_CMD_PREFLIGHT_CALIBRATION
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("popupDialog_acceptButton"), 3000),
@@ -139,7 +141,7 @@ void PX4SensorsCalibrationUITest::_testMagCalibration()
     _verifyAllPosesState(SensorsComponentController::SideCalStateIdle, "idle preview");
     if (QTest::currentTestFailed()) return;
 
-    _startCompassCalibration();
+    _startCalibration(QStringLiteral("sensorsSetup_calibrateCompass"));
     if (QTest::currentTestFailed()) return;
 
     // MockLink responds with "[cal] calibration started: 2 mag" which makes all
@@ -243,7 +245,7 @@ void PX4SensorsCalibrationUITest::_testMagCalibration()
     });
 }
 
-void PX4SensorsCalibrationUITest::_testMagCalibrationCancel()
+void PX4SensorsCalibrationUITest::_runCalibrationCancelTest(const QString &sectionObjectName, const QString &calibrateButtonObjectName)
 {
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(false, false, false); },
@@ -251,7 +253,11 @@ void PX4SensorsCalibrationUITest::_testMagCalibrationCancel()
     _navigateToSensorsPanel();
     if (QTest::currentTestFailed()) return;
 
-    _startCompassCalibration();
+    // Select the sensor section so its calibrate button is at the top of the page
+    _clickSidebarSection(sectionObjectName);
+    if (QTest::currentTestFailed()) return;
+
+    _startCalibration(calibrateButtonObjectName);
     if (QTest::currentTestFailed()) return;
 
     // Start calibrating one side
@@ -279,11 +285,137 @@ void PX4SensorsCalibrationUITest::_testMagCalibrationCancel()
              qPrintable(QStringLiteral("Side not Idle after cancel (state %1)")
                             .arg(QLatin1String(calStateName(side->property("calState").toInt())))));
 
-    // Calibrate Compass button is clickable again
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_calibrateCompass"), 3000),
-             "Calibrate Compass button not available after cancel");
+    // The calibrate button is clickable again
+    QVERIFY2(findVisibleItem(_rootItem, calibrateButtonObjectName, 3000),
+             qPrintable(QStringLiteral("Calibrate button not available after cancel: %1")
+                            .arg(calibrateButtonObjectName)));
 
     waitForParamRefreshQuiet(vehicle);
 
     });
+}
+
+void PX4SensorsCalibrationUITest::_testMagCalibrationCancel()
+{
+    _runCalibrationCancelTest(QStringLiteral("vehicleConfig_section_Compass"),
+                              QStringLiteral("sensorsSetup_calibrateCompass"));
+}
+
+void PX4SensorsCalibrationUITest::_testAccelCalibration()
+{
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
+    _navigateToSensorsPanel();
+    if (QTest::currentTestFailed()) return;
+
+    // Select the Accelerometer section: the idle orientation preview appears with
+    // all six poses in the neutral Idle state
+    _clickSidebarSection(QStringLiteral("vehicleConfig_section_Accelerometer"));
+    if (QTest::currentTestFailed()) return;
+
+    _verifyAllPosesState(SensorsComponentController::SideCalStateIdle, "idle preview");
+    if (QTest::currentTestFailed()) return;
+
+    _startCalibration(QStringLiteral("sensorsSetup_calibrateAccel"));
+    if (QTest::currentTestFailed()) return;
+
+    // MockLink responds with "[cal] calibration started: 2 accel" which makes all
+    // six pose indicators visible and Incomplete (red, not yet visited)
+    for (const PoseInfo &info : kPoses) {
+        QQuickItem *side = findVisibleItem(_rootItem, QLatin1String(info.objectName), 5000);
+        QVERIFY2(side, qPrintable(QStringLiteral("Pose indicator not visible: %1").arg(QLatin1String(info.objectName))));
+        QVERIFY2(waitForCalState(side, SensorsComponentController::SideCalStateIncomplete, 5000),
+                 qPrintable(QStringLiteral("Pose not Incomplete at start (state %1): %2")
+                                .arg(QLatin1String(calStateName(side->property("calState").toInt())),
+                                     QLatin1String(info.objectName))));
+    }
+
+    QQuickItem *progressBar = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_progressBar"), 2000);
+    QVERIFY2(progressBar, "Progress bar not visible during calibration");
+    QVERIFY2(qFuzzyIsNull(progressBar->property("value").toDouble()), "Progress bar not at 0 at calibration start");
+
+    QQuickItem *cancelButton = findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_cancelCalibration"), 2000);
+    QVERIFY2(cancelButton, "Cancel button not visible during calibration");
+
+    // ---------------------------------------------------------------------
+    // Place the vehicle into each pose and watch the UI track the side
+    // ---------------------------------------------------------------------
+    int sidesDone = 0;
+
+    for (const PoseInfo &info : kPoses) {
+        const QString sideName = QLatin1String(info.objectName);
+        QQuickItem *side = findVisibleItem(_rootItem, sideName);
+        QVERIFY2(side, qPrintable(QStringLiteral("Pose indicator disappeared: %1").arg(sideName)));
+
+        mockLink->setCalibrationPose(info.pose);
+
+        // Orientation detected: the side goes InProgress. Unlike mag cal the
+        // vehicle must be held still, so the static (non-rotating) image stays up
+        QVERIFY2(waitForCalState(side, SensorsComponentController::SideCalStateInProgress, 5000),
+                 qPrintable(QStringLiteral("Side never went in-progress: %1").arg(sideName)));
+        QCOMPARE(side->property("calInProgressText").toString(), QStringLiteral("Hold Still"));
+        QVERIFY2(side->property("imageSource").toString().endsWith(QLatin1String(info.stillImage)),
+                 qPrintable(QStringLiteral("Wrong hold-still image for %1: %2")
+                                .arg(sideName, side->property("imageSource").toString())));
+
+        // Side completes and marks itself done (green/Completed)
+        QVERIFY2(waitForCalState(side, SensorsComponentController::SideCalStateCompleted, 5000),
+                 qPrintable(QStringLiteral("Side never completed: %1").arg(sideName)));
+
+        sidesDone++;
+
+        // The firmware reports progress in 17% jumps after each side (see PX4
+        // accel_calibration_worker())
+        if (sidesDone < MockLinkPX4Calibration::kSideCount) {
+            const double progress = progressBar->property("value").toDouble();
+            const double expected = (17.0 * sidesDone) / 100.0;
+            QVERIFY2(qAbs(progress - expected) < 0.005,
+                     qPrintable(QStringLiteral("Unexpected progress after %1 sides: %2, expected %3")
+                                    .arg(sidesDone).arg(progress).arg(expected)));
+        }
+
+        // Previously completed sides must remain marked complete
+        for (const PoseInfo &doneInfo : kPoses) {
+            if (&doneInfo == &info) break;
+            QQuickItem *doneSide = findVisibleItem(_rootItem, QLatin1String(doneInfo.objectName));
+            QVERIFY2(doneSide && (doneSide->property("calState").toInt() == SensorsComponentController::SideCalStateCompleted),
+                     qPrintable(QStringLiteral("Previously completed side no longer marked complete: %1")
+                                    .arg(QLatin1String(doneInfo.objectName))));
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Calibration complete: progress hits 100% and the calibration-active UI
+    // (progress bar + cancel button row) hides. Unlike mag cal there is no
+    // completion dialog.
+    // ---------------------------------------------------------------------
+    QVERIFY2(QTest::qWaitFor([&] { return qFuzzyCompare(progressBar->property("value").toDouble(), 1.0); }, 5000),
+             qPrintable(QStringLiteral("Progress bar never reached 1.0: %1")
+                            .arg(progressBar->property("value").toDouble())));
+
+    QVERIFY2(QTest::qWaitFor([&] { return !cancelButton->isVisible(); }, 5000),
+             "Cancel button still visible after calibration completed");
+
+    waitForParamRefreshQuiet(vehicle);
+
+    // All sides must remain marked complete (green) after calibration ends and
+    // the post-calibration parameter refresh settles
+    _verifyAllPosesState(SensorsComponentController::SideCalStateCompleted, "after calibration finished");
+    if (QTest::currentTestFailed()) return;
+
+    // Switching the preview to a different sensor resets the completed sides:
+    // the Compass preview must show all poses in the neutral Idle state
+    _clickSidebarSection(QStringLiteral("vehicleConfig_section_Compass"));
+    if (QTest::currentTestFailed()) return;
+
+    _verifyAllPosesState(SensorsComponentController::SideCalStateIdle, "after section switch");
+
+    });
+}
+
+void PX4SensorsCalibrationUITest::_testAccelCalibrationCancel()
+{
+    _runCalibrationCancelTest(QStringLiteral("vehicleConfig_section_Accelerometer"),
+                              QStringLiteral("sensorsSetup_calibrateAccel"));
 }
