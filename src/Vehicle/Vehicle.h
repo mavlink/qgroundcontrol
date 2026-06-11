@@ -1165,7 +1165,7 @@ private:
     Q_PROPERTY(bool        gcsControlStatusFlags_TakeoverAllowed READ gcsControlStatusFlags_TakeoverAllowed NOTIFY gcsControlStatusChanged)
     Q_PROPERTY(bool        firstControlStatusReceived            READ firstControlStatusReceived            NOTIFY gcsControlStatusChanged)
     Q_PROPERTY(int         operatorControlTakeoverTimeoutMsecs   READ operatorControlTakeoverTimeoutMsecs   CONSTANT)
-    Q_PROPERTY(int         requestOperatorControlRemainingMsecs  READ requestOperatorControlRemainingMsecs  CONSTANT)
+    Q_PROPERTY(int         requestOperatorControlRemainingMsecs  READ requestOperatorControlRemainingMsecs  NOTIFY sendControlRequestAllowedChanged)
     Q_PROPERTY(bool        sendControlRequestAllowed             READ sendControlRequestAllowed             NOTIFY sendControlRequestAllowedChanged)
 
     uint8_t    sysidInControl() const { return _sysid_in_control; }

@@ -3258,6 +3258,15 @@ void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
 
 void Vehicle::releaseOperatorControl()
 {
+    // Releasing control makes any pending request countdown or takeover revert meaningless
+    _timerRevertAllowTakeover.stop();
+    _timerRequestOperatorControl.stop();
+    disconnect(&_timerRequestOperatorControl, &QTimer::timeout, nullptr, nullptr);
+    if (!_sendControlRequestAllowed) {
+        _sendControlRequestAllowed = true;
+        emit sendControlRequestAllowedChanged(true);
+    }
+
     const MavCmdAckHandlerInfo_t handlerInfo = {&Vehicle::_requestOperatorControlAckHandler, this, nullptr, nullptr};
     sendMavCommandWithHandler(
         &handlerInfo,
@@ -3336,6 +3345,10 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
         const uint8_t myId = static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId());
         _joystickSendAllowed.store(_sysid_in_control == 0 || _sysid_in_control == myId,
                                    std::memory_order_relaxed);
+        if (_sysid_in_control != myId) {
+            // Control moved away from this GCS, so a pending revert to takeover not allowed no longer applies
+            _timerRevertAllowTakeover.stop();
+        }
         updateControlStatusSignals = true;
     }
 
@@ -3360,7 +3373,7 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
     }
 
     const uint8_t myId = static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId());
-    if (!sendControlRequestAllowed() && (_sysid_in_control == myId || _gcsControlStatusFlags_TakeoverAllowed)) {
+    if (!sendControlRequestAllowed() && (_sysid_in_control == myId || _sysid_in_control == 0 || _gcsControlStatusFlags_TakeoverAllowed)) {
         _timerRequestOperatorControl.stop();
         disconnect(&_timerRequestOperatorControl, &QTimer::timeout, nullptr, nullptr);
         _sendControlRequestAllowed = true;

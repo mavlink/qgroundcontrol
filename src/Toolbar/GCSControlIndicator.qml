@@ -216,6 +216,20 @@ Item {
                     sendRequestProgressTracker.stop()
                 }
             }
+            // Also stop it if we gained control, or the vehicle became uncontrolled/the request expired,
+            // which the C++ side reports through sendControlRequestAllowed
+            property bool isThisGCSinControlLocal: control.isThisGCSinControl
+            onIsThisGCSinControlLocalChanged: {
+                if (isThisGCSinControlLocal && sendRequestProgressTracker.running) {
+                    sendRequestProgressTracker.stop()
+                }
+            }
+            property bool sendControlRequestAllowedLocal: control.sendControlRequestAllowed
+            onSendControlRequestAllowedLocalChanged: {
+                if (sendControlRequestAllowedLocal && sendRequestProgressTracker.running) {
+                    sendRequestProgressTracker.stop()
+                }
+            }
 
             Component.onCompleted: {
                 // If send control request is not allowed it means we recently sent a request, closed the popup, and opened again
