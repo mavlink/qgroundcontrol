@@ -13,13 +13,18 @@ Item {
 
     property var    activeVehicle:                          QGroundControl.multiVehicleManager.activeVehicle
     property bool   showIndicator:                          activeVehicle && activeVehicle.firstControlStatusReceived
-    property var    gcsMain:                                activeVehicle ?  activeVehicle.gcsMain : 0
+    property var    sysidInControl:                         activeVehicle ?  activeVehicle.sysidInControl : 0
+    property var    secondaryGCSList:                       activeVehicle ? activeVehicle.secondaryGCSList : []
     property bool   gcsControlStatusFlags_SystemManager:    activeVehicle ? activeVehicle.gcsControlStatusFlags_SystemManager : false
     property bool   gcsControlStatusFlags_TakeoverAllowed:  activeVehicle ? activeVehicle.gcsControlStatusFlags_TakeoverAllowed : false
     property Fact   requestControlAllowTakeoverFact:        QGroundControl.settingsManager.flyViewSettings.requestControlAllowTakeover
     property bool   requestControlAllowTakeover:            requestControlAllowTakeoverFact.rawValue
     property bool   isThisGCSinControl:                     gcsMain == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
     property bool   sendControlRequestAllowed:              activeVehicle ? activeVehicle.sendControlRequestAllowed : false
+
+    property Fact   secondaryGCSSettingFact:                 QGroundControl.settingsManager.flyViewSettings.operatorControlSecondaryGCS
+    property string secondaryGCSSetting:                    secondaryGCSSettingFact.rawValue
+    property bool   hasConfiguredSecondaryGCS:              secondaryGCSSetting.length > 0
 
     property var    margins:                                ScreenTools.defaultFontPixelWidth
     property var    panelRadius:                            ScreenTools.defaultFontPixelWidth * 0.5
@@ -250,6 +255,11 @@ Item {
                     horizontalAlignment:    Text.AlignRight
                     color:                  gcsControlStatusFlags_TakeoverAllowed ? qgcPal.colorGreen : qgcPal.text
                 }
+                QGCLabel {
+                    text:                   qsTr("Secondary GCS: ") + secondaryGCSList.join(", ")
+                    Layout.columnSpan:      2
+                    visible:                secondaryGCSList.length > 0
+                }
                 // Separator
                 Rectangle {
                     Layout.columnSpan:      2
@@ -280,12 +290,11 @@ Item {
                     enabled:                gcsControlStatusFlags_TakeoverAllowed || isThisGCSinControl
                 }
                 QGCButton {
-                    text:                   gcsControlStatusFlags_TakeoverAllowed ? qsTr("Adquire Control") : qsTr("Send Request")
+                    text:                   gcsControlStatusFlags_TakeoverAllowed ? qsTr("Acquire Control") : qsTr("Send Request")
                     onClicked: {
                         var timeout = gcsControlStatusFlags_TakeoverAllowed ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
                         control.activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
                         if (timeout > 0) {
-                            // Start UI timeout animation
                             startProgressTracker(timeout)
                         }
                     }
@@ -310,6 +319,15 @@ Item {
                     Layout.alignment:       Qt.AlignRight
                     enabled:                gcsControlStatusFlags_TakeoverAllowed != requestControlAllowTakeoverFact.rawValue
                 }
+                QGCButton {
+                    text:                   qsTr("Release Control")
+                    onClicked: {
+                        control.activeVehicle.releaseOperatorControl()
+                    }
+                    Layout.columnSpan:      2
+                    Layout.alignment:       Qt.AlignRight
+                    visible:                isThisGCSinControl
+                }
                 // Separator
                 Rectangle {
                     Layout.columnSpan:      2
@@ -323,6 +341,61 @@ Item {
                     Layout.columnSpan:      2
                     label:                  qsTr("This GCS Mavlink System ID: ")
                     fact:                   QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID
+                }
+                // Separator
+                Rectangle {
+                    Layout.columnSpan:      2
+                    Layout.preferredWidth:  parent.width
+                    Layout.alignment:       Qt.AlignHCenter
+                    color:                  qgcPal.windowShade
+                    height:                 outdoorPalette ? 1 : 2
+                }
+                // Compact hint when secondary GCS are configured (collapsed)
+                QGCLabel {
+                    property bool expanded: false
+                    id:                     rangeSettingsToggle
+                    text:                   hasConfiguredSecondaryGCS
+                                                ? qsTr("Control range configured (click to edit)")
+                                                : qsTr("Configure secondary GCS range")
+                    Layout.columnSpan:      2
+                    color:                  hasConfiguredSecondaryGCS ? qgcPal.buttonHighlight : qgcPal.text
+                    font.underline:         true
+                    MouseArea {
+                        anchors.fill:       parent
+                        cursorShape:        Qt.PointingHandCursor
+                        onClicked:          rangeSettingsToggle.expanded = !rangeSettingsToggle.expanded
+                    }
+                }
+                // Expanded settings
+                QGCLabel {
+                    text:                   qsTr("Secondary GCS IDs (comma-separated):")
+                    Layout.columnSpan:      2
+                    visible:                rangeSettingsToggle.expanded
+                }
+                FactTextField {
+                    fact:                   secondaryGCSSettingFact
+                    Layout.columnSpan:      2
+                    Layout.fillWidth:       true
+                    visible:                rangeSettingsToggle.expanded
+                }
+                QGCLabel {
+                    visible:                rangeSettingsToggle.expanded && hasConfiguredSecondaryGCS
+                    Layout.columnSpan:      2
+                    color:                  qgcPal.buttonHighlight
+                    text: {
+                        var myId = QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
+                        var parts = secondaryGCSSetting.split(",")
+                        var lo = myId
+                        var hi = myId
+                        for (var i = 0; i < parts.length; i++) {
+                            var val = parseInt(parts[i].trim())
+                            if (!isNaN(val) && val >= 1 && val <= 255) {
+                                if (val < lo) lo = val
+                                if (val > hi) hi = val
+                            }
+                        }
+                        return qsTr("Request range: ") + lo + " - " + hi
+                    }
                 }
             }
         }

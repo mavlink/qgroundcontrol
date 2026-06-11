@@ -947,6 +947,7 @@ private:
     bool            _allSensorsHealthy                      = true;
     VehicleSigningController* _signingController            = nullptr;
     std::atomic<bool> _joystickAuxRcOverrideActive           = false;
+    std::atomic<bool> _joystickSendAllowed                   = true;
 
     std::unique_ptr<SysStatusSensorInfo> _sysStatusSensorInfo;
 
@@ -1151,37 +1152,42 @@ public:
 public:
     Q_INVOKABLE void startTimerRevertAllowTakeover();
     Q_INVOKABLE void requestOperatorControl(bool allowOverride, int requestTimeoutSecs = 0);
+    Q_INVOKABLE void releaseOperatorControl();
 
 private:
     void _handleControlStatus(const mavlink_message_t& message);
     void _handleCommandRequestOperatorControl(const mavlink_command_long_t commandLong);
     static void _requestOperatorControlAckHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
 
-    Q_PROPERTY(uint8_t gcsMain                               READ gcsMain                               NOTIFY gcsControlStatusChanged)
-    Q_PROPERTY(bool    gcsControlStatusFlags_SystemManager   READ gcsControlStatusFlags_SystemManager   NOTIFY gcsControlStatusChanged)
-    Q_PROPERTY(bool    gcsControlStatusFlags_TakeoverAllowed READ gcsControlStatusFlags_TakeoverAllowed NOTIFY gcsControlStatusChanged)
-    Q_PROPERTY(bool    firstControlStatusReceived            READ firstControlStatusReceived            NOTIFY gcsControlStatusChanged)
-    Q_PROPERTY(int     operatorControlTakeoverTimeoutMsecs   READ operatorControlTakeoverTimeoutMsecs   CONSTANT)
-    Q_PROPERTY(int     requestOperatorControlRemainingMsecs  READ requestOperatorControlRemainingMsecs  CONSTANT)
-    Q_PROPERTY(bool    sendControlRequestAllowed             READ sendControlRequestAllowed             NOTIFY sendControlRequestAllowedChanged)
+    Q_PROPERTY(uint8_t     sysidInControl                        READ sysidInControl                        NOTIFY gcsControlStatusChanged)
+    Q_PROPERTY(QList<int>  secondaryGCSList                      READ secondaryGCSList                      NOTIFY gcsControlStatusChanged)
+    Q_PROPERTY(bool        gcsControlStatusFlags_SystemManager   READ gcsControlStatusFlags_SystemManager   NOTIFY gcsControlStatusChanged)
+    Q_PROPERTY(bool        gcsControlStatusFlags_TakeoverAllowed READ gcsControlStatusFlags_TakeoverAllowed NOTIFY gcsControlStatusChanged)
+    Q_PROPERTY(bool        firstControlStatusReceived            READ firstControlStatusReceived            NOTIFY gcsControlStatusChanged)
+    Q_PROPERTY(int         operatorControlTakeoverTimeoutMsecs   READ operatorControlTakeoverTimeoutMsecs   CONSTANT)
+    Q_PROPERTY(int         requestOperatorControlRemainingMsecs  READ requestOperatorControlRemainingMsecs  CONSTANT)
+    Q_PROPERTY(bool        sendControlRequestAllowed             READ sendControlRequestAllowed             NOTIFY sendControlRequestAllowedChanged)
 
-    uint8_t gcsMain() const { return _gcsMain; }
-    bool    gcsControlStatusFlags_SystemManager() const { return _gcsControlStatusFlags_SystemManager; }
-    bool    gcsControlStatusFlags_TakeoverAllowed() const { return _gcsControlStatusFlags_TakeoverAllowed; }
-    bool    firstControlStatusReceived() const { return _firstControlStatusReceived; }
-    int     operatorControlTakeoverTimeoutMsecs() const;
-    int     requestOperatorControlRemainingMsecs() const { return _timerRequestOperatorControl.remainingTime(); }
-    bool    sendControlRequestAllowed() const { return _sendControlRequestAllowed; }
-    void    requestOperatorControlStartTimer(int requestTimeoutMsecs);
+    uint8_t    sysidInControl() const { return _sysid_in_control; }
+    QList<int> secondaryGCSList() const { return _secondaryGCSList; }
+    bool       gcsControlStatusFlags_SystemManager() const { return _gcsControlStatusFlags_SystemManager; }
+    bool       gcsControlStatusFlags_TakeoverAllowed() const { return _gcsControlStatusFlags_TakeoverAllowed; }
+    bool       firstControlStatusReceived() const { return _firstControlStatusReceived; }
+    int        operatorControlTakeoverTimeoutMsecs() const;
+    int        requestOperatorControlRemainingMsecs() const { return _timerRequestOperatorControl.remainingTime(); }
+    bool       sendControlRequestAllowed() const { return _sendControlRequestAllowed; }
+    void       requestOperatorControlStartTimer(int requestTimeoutMsecs);
+    void       _computeOperatorControlRange(uint8_t &rangeLow, uint8_t &rangeHigh) const;
 
-    uint8_t _gcsMain = 0;
-    uint8_t _gcsControlStatusFlags = 0;
-    bool    _gcsControlStatusFlags_SystemManager = 0;
-    bool    _gcsControlStatusFlags_TakeoverAllowed = 0;
-    bool    _firstControlStatusReceived = false;
-    QTimer  _timerRevertAllowTakeover;
-    QTimer  _timerRequestOperatorControl;
-    bool    _sendControlRequestAllowed = true;
+    uint8_t    _sysid_in_control = 0;
+    QList<int> _secondaryGCSList;
+    uint8_t    _gcsControlStatusFlags = 0;
+    bool       _gcsControlStatusFlags_SystemManager = 0;
+    bool       _gcsControlStatusFlags_TakeoverAllowed = 0;
+    bool       _firstControlStatusReceived = false;
+    QTimer     _timerRevertAllowTakeover;
+    QTimer     _timerRequestOperatorControl;
+    bool       _sendControlRequestAllowed = true;
 
 signals:
     void gcsControlStatusChanged();

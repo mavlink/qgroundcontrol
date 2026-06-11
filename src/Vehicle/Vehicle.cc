@@ -2977,6 +2977,10 @@ void Vehicle::clearAllParamMapRC(void)
 
 void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float pitchExtension, float rollExtension, float aux1, float aux2, float aux3, float aux4, float aux5, float aux6)
 {
+    if (!_joystickSendAllowed.load(std::memory_order_relaxed)) {
+        return;
+    }
+
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         qCDebug(VehicleLog)<< "sendJoystickDataThreadSafe: primary link gone!";
@@ -3037,6 +3041,10 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
 // Channels 1–4 (attitude axes) always carry UINT16_MAX (ignore) and channels 11–18 are unused.
 void Vehicle::sendJoystickAuxRcOverrideThreadSafe(const std::array<uint16_t, kAuxRcOverrideChannelCount> &channelValues, const std::array<bool, kAuxRcOverrideChannelCount> &channelEnabled, bool useRcOverride)
 {
+    if (!_joystickSendAllowed.load(std::memory_order_relaxed)) {
+        return;
+    }
+
     SharedLinkInterfacePtr sharedLink = vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         qCDebug(VehicleLog) << "sendJoystickAuxRcOverrideThreadSafe: primary link gone!";
@@ -3189,6 +3197,34 @@ void Vehicle::startTimerRevertAllowTakeover()
     _timerRevertAllowTakeover.start();
 }
 
+void Vehicle::_computeOperatorControlRange(uint8_t &rangeLow, uint8_t &rangeHigh) const
+{
+    const uint8_t myId = static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId());
+    const QString secondaryStr = SettingsManager::instance()->flyViewSettings()->operatorControlSecondaryGCS()->rawValue().toString().trimmed();
+
+    if (secondaryStr.isEmpty()) {
+        rangeLow = myId;
+        rangeHigh = 0;
+        return;
+    }
+
+    uint8_t lo = myId;
+    uint8_t hi = myId;
+    const QStringList parts = secondaryStr.split(',', Qt::SkipEmptyParts);
+    for (const QString &part : parts) {
+        bool ok = false;
+        const int val = part.trimmed().toInt(&ok);
+        if (ok && val >= 1 && val <= 255) {
+            const uint8_t id = static_cast<uint8_t>(val);
+            if (id < lo) lo = id;
+            if (id > hi) hi = id;
+        }
+    }
+
+    rangeLow = lo;
+    rangeHigh = (hi > lo) ? hi : 0;
+}
+
 void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
 {
     int safeRequestTimeoutSecs;
@@ -3197,25 +3233,42 @@ void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
     if (requestTimeoutSecs >= requestTimeoutSecsMin && requestTimeoutSecs <= requestTimeoutSecsMax) {
         safeRequestTimeoutSecs = requestTimeoutSecs;
     } else {
-        // If out of limits use default value
         safeRequestTimeoutSecs = SettingsManager::instance()->flyViewSettings()->requestControlTimeout()->cookedDefaultValue().toInt();
     }
+
+    uint8_t rangeLow, rangeHigh;
+    _computeOperatorControlRange(rangeLow, rangeHigh);
 
     const MavCmdAckHandlerInfo_t handlerInfo = {&Vehicle::_requestOperatorControlAckHandler, this, nullptr, nullptr};
     sendMavCommandWithHandler(
         &handlerInfo,
         _defaultComponentId,
         MAV_CMD_REQUEST_OPERATOR_CONTROL,
-        0,                                  // System ID of GCS requesting control, 0 if it is this GCS
-        1,                                  // Action - 0: Release control, 1: Request control.
-        allowOverride ? 1 : 0,              // Allow takeover - Enable automatic granting of ownership on request. 0: Ask current owner and reject request, 1: Allow automatic takeover.
-        safeRequestTimeoutSecs              // Timeout in seconds before a request to a GCS to allow takeover is assumed to be rejected. This is used to display the timeout graphically on requestor and GCS in control.
+        1,                                  // param1: Action - 1: Request control
+        allowOverride ? 1.0f : 0.0f,        // param2: Allow takeover
+        static_cast<float>(safeRequestTimeoutSecs), // param3: Timeout in seconds
+        static_cast<float>(rangeLow),        // param4: GCS sysid (range low)
+        static_cast<float>(rangeHigh)        // param5: GCS sysid upper range (0 = single GCS)
     );
 
-    // If this is a request we sent to other GCS, start timer so User can not keep sending requests until the current timeout expires
     if (requestTimeoutSecs > 0) {
         requestOperatorControlStartTimer(requestTimeoutSecs * 1000);
     }
+}
+
+void Vehicle::releaseOperatorControl()
+{
+    const MavCmdAckHandlerInfo_t handlerInfo = {&Vehicle::_requestOperatorControlAckHandler, this, nullptr, nullptr};
+    sendMavCommandWithHandler(
+        &handlerInfo,
+        _defaultComponentId,
+        MAV_CMD_REQUEST_OPERATOR_CONTROL,
+        0,                                  // param1: Action - 0: Release control
+        0,                                  // param2: Allow takeover (irrelevant for release)
+        0,                                  // param3: Timeout (irrelevant for release)
+        static_cast<float>(MAVLinkProtocol::instance()->getSystemId()), // param4: GCS sysid
+        0                                   // param5: GCS sysid upper range (0 = single GCS)
+    );
 }
 
 void Vehicle::_requestOperatorControlAckHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode)
@@ -3278,8 +3331,22 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
         updateControlStatusSignals = true;
     }
 
-    if (_gcsMain != controlStatus.gcs_main) {
-        _gcsMain = controlStatus.gcs_main;
+    if (_sysid_in_control != controlStatus.gcs_main) {
+        _sysid_in_control = controlStatus.gcs_main;
+        const uint8_t myId = static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId());
+        _joystickSendAllowed.store(_sysid_in_control == 0 || _sysid_in_control == myId,
+                                   std::memory_order_relaxed);
+        updateControlStatusSignals = true;
+    }
+
+    QList<int> newSecondaryList;
+    for (int i = 0; i < 10; i++) {
+        if (controlStatus.gcs_secondary[i] != 0) {
+            newSecondaryList.append(controlStatus.gcs_secondary[i]);
+        }
+    }
+    if (_secondaryGCSList != newSecondaryList) {
+        _secondaryGCSList = newSecondaryList;
         updateControlStatusSignals = true;
     }
 
@@ -3292,9 +3359,9 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
         emit gcsControlStatusChanged();
     }
 
-    // If we were waiting for a request to be accepted and now it was accepted, adjust flags accordingly so
-    // UI unlocks the request/take control button
-    if (!sendControlRequestAllowed() && _gcsControlStatusFlags_TakeoverAllowed) {
+    const uint8_t myId = static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId());
+    if (!sendControlRequestAllowed() && (_sysid_in_control == myId || _gcsControlStatusFlags_TakeoverAllowed)) {
+        _timerRequestOperatorControl.stop();
         disconnect(&_timerRequestOperatorControl, &QTimer::timeout, nullptr, nullptr);
         _sendControlRequestAllowed = true;
         emit sendControlRequestAllowedChanged(true);
@@ -3303,7 +3370,11 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
 
 void Vehicle::_handleCommandRequestOperatorControl(const mavlink_command_long_t commandLong)
 {
-    emit requestOperatorControlReceived(commandLong.param1, commandLong.param3, commandLong.param4);
+    emit requestOperatorControlReceived(
+        static_cast<int>(commandLong.param4),   // GCS sysid requesting control
+        static_cast<int>(commandLong.param2),   // Allow takeover
+        static_cast<int>(commandLong.param3)    // Request timeout in seconds
+    );
 }
 
 void Vehicle::_handleCommandLong(const mavlink_message_t& message)
