@@ -298,6 +298,7 @@ protected:
     QTimer                              _streamInfoTimer;
     QTimer                              _streamStatusTimer;
     QTimer                              _cameraSettingsTimer;
+    QTimer                              _cameraSettingsRetryTimer;
     QTimer                              _storageInfoTimer;
     QmlObjectListModel                  _streams;
     QStringList                         _streamLabels;

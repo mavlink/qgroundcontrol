@@ -173,6 +173,7 @@ VehicleCameraControl::~VehicleCameraControl()
     _streamInfoTimer.stop();
     _streamStatusTimer.stop();
     _cameraSettingsTimer.stop();
+    _cameraSettingsRetryTimer.stop();
     _storageInfoTimer.stop();
 
     delete _netManager;
@@ -191,8 +192,11 @@ void VehicleCameraControl::_initWhenReady()
         _requestAllParameters();
     }
 
+    connect(&_cameraSettingsTimer, &QTimer::timeout, this, &VehicleCameraControl::_requestCameraSettings);
+    _cameraSettingsTimer.setSingleShot(true);
+
     QTimer::singleShot(500, this, &VehicleCameraControl::_requestCameraSettings);
-    connect(&_cameraSettingsTimer, &QTimer::timeout, this, &VehicleCameraControl::_cameraSettingsTimeout);
+    connect(&_cameraSettingsRetryTimer, &QTimer::timeout, this, &VehicleCameraControl::_cameraSettingsTimeout);
 
     QTimer::singleShot(1000, this, &VehicleCameraControl::_checkForVideoStreams);
 
@@ -591,6 +595,7 @@ void VehicleCameraControl::setZoomLevel(qreal level)
                 ZOOM_TYPE_RANGE,                        // Zoom type
                 static_cast<float>(level));             // Level
         }
+        _cameraSettingsTimer.start(1000);
     }
 }
 
@@ -608,6 +613,7 @@ void VehicleCameraControl::setFocusLevel(qreal level)
                 FOCUS_TYPE_RANGE,                       // Focus type
                 static_cast<float>(level));             // Level
         }
+        _cameraSettingsTimer.start(1000);
     }
 }
 
@@ -649,6 +655,8 @@ void VehicleCameraControl::stepZoom(int direction)
             false,                                  // ShowError
             ZOOM_TYPE_STEP,                         // Zoom type
             direction);                             // Direction (-1 wide, 1 tele)
+
+        _cameraSettingsTimer.start(1000);
     }
 }
 
@@ -675,6 +683,8 @@ void VehicleCameraControl::stopZoom()
             false,                                  // ShowError
             ZOOM_TYPE_CONTINUOUS,                   // Zoom type
             0);                                     // Direction (-1 wide, 1 tele)
+
+        _cameraSettingsTimer.start(1000);
     }
 }
 
@@ -688,6 +698,8 @@ void VehicleCameraControl::stepFocus(int direction)
             false,                                  // ShowError
             FOCUS_TYPE_STEP,                        // Focus type
             direction);                             // Direction (-1 in, 1 out)
+
+        _cameraSettingsTimer.start(1000);
     }
 }
 
@@ -714,6 +726,8 @@ void VehicleCameraControl::stopFocus()
             false,                                  // ShowError
             FOCUS_TYPE_CONTINUOUS,                  // Focus type
             0);                                     // Direction (-1 in, 1 out)
+
+        _cameraSettingsTimer.start(1000);
     }
 }
 
@@ -1499,7 +1513,7 @@ void VehicleCameraControl::_requestParamUpdates()
 
 void VehicleCameraControl::_requestCameraSettings()
 {
-    qCDebug(VehicleCameraControlLog) << "_requestCameraSettings() - retries:" << _cameraSettingsRetries << "timer active:" << _cameraSettingsTimer.isActive();
+    qCDebug(VehicleCameraControlLog) << "_requestCameraSettings() - retries:" << _cameraSettingsRetries << "timer active:" << _cameraSettingsRetryTimer.isActive();
     if(_vehicle) {
         // Use REQUEST_MESSAGE instead of deprecated REQUEST_CAMERA_SETTINGS
         // first time and every other time after that.
@@ -1519,12 +1533,12 @@ void VehicleCameraControl::_requestCameraSettings()
                 false,                                  // showError
                 1);                                     // Do Request
         }
-        if(_cameraSettingsTimer.isActive()) {
+        if(_cameraSettingsRetryTimer.isActive()) {
             qCDebug(VehicleCameraControlLog) << "_requestCameraSettings() - RESTARTING already active timer";
         } else {
             qCDebug(VehicleCameraControlLog) << "_requestCameraSettings() - starting timer";
         }
-        _cameraSettingsTimer.start(1000);               // Wait up to a second for it
+        _cameraSettingsRetryTimer.start(1000);               // Wait up to a second for it
     }
 
 }
@@ -1564,7 +1578,7 @@ void VehicleCameraControl::handleCameraSettings(const mavlink_camera_settings_t&
         << "\n\tZoom level:" << settings.zoomLevel
         << "\n\tFocus level:" << settings.focusLevel;
 
-    _cameraSettingsTimer.stop();
+    _cameraSettingsRetryTimer.stop();
     _cameraSettingsRetries = 0;
 
     _setCameraMode(static_cast<CameraMode>(settings.mode_id));
@@ -2015,7 +2029,7 @@ void VehicleCameraControl::_cameraSettingsTimeout()
     qCDebug(VehicleCameraControlLog) << "_cameraSettingsTimeout() - retries now:" << _cameraSettingsRetries;
     if(_cameraSettingsRetries > 5) {
         qCWarning(VehicleCameraControlLog) << "Giving up requesting camera settings after" << _cameraSettingsRetries << "retries";
-        _cameraSettingsTimer.stop();
+        _cameraSettingsRetryTimer.stop();
         return;
     }
     qCDebug(VehicleCameraControlLog) << "_cameraSettingsTimeout() - calling _requestCameraSettings()";
