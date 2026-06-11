@@ -2131,16 +2131,15 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
         return;
     }
 
-    const char *pCalMessage = nullptr;
     if (request.param1 == 1) {
-        pCalMessage = "[cal] calibration started: 2 gyro";
-    } else if (request.param5 == 1) {
-        pCalMessage = "[cal] calibration started: 2 accel";
-    } else {
+        sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] calibration started: 2 gyro"));
         return;
     }
 
-    sendStatusTextMessage(MAV_SEVERITY_INFO, QString::fromLatin1(pCalMessage));
+    if (request.param5 == 1) {
+        // Accelerometer calibration runs the full pose-driven simulation
+        _mockLinkPX4Calibration->startAccelCalibration();
+    }
 }
 
 void MockLink::sendStatusTextMessage(uint8_t severity, const QString &text)

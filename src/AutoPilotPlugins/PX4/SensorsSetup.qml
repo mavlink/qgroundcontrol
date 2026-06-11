@@ -395,6 +395,7 @@ Item {
             }
 
             QGCButton {
+                objectName: "sensorsSetup_calibrateAccel"
                 Layout.fillWidth: true
                 text:       qsTr("Calibrate Accelerometer")
                 visible:    sectionNameFilter === "" || sectionNameFilter === qsTr("Accelerometer")

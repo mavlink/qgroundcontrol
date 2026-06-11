@@ -4,10 +4,11 @@
 
 class MockLink;
 
-/// \brief Simulates the PX4 commander magnetometer calibration protocol for MockLink.
+/// \brief Simulates the PX4 commander magnetometer and accelerometer calibration protocols for MockLink.
 ///
 /// Replays the [cal] STATUSTEXT protocol emitted by the PX4 firmware
-/// (src/modules/commander/mag_calibration.cpp and calibration_routines.cpp):
+/// (src/modules/commander/mag_calibration.cpp, accelerometer_calibration.cpp and
+/// calibration_routines.cpp). Magnetometer:
 ///
 ///     [cal] calibration started: 2 mag
 ///     [cal] <side> orientation detected
@@ -16,10 +17,20 @@ class MockLink;
 ///     [cal] progress <100>
 ///     [cal] calibration done: mag
 ///
+/// Accelerometer:
+///
+///     [cal] calibration started: 2 accel
+///     [cal] <side> orientation detected
+///     [cal] Hold still, measuring <side> side
+///     [cal] <side> side result: [x y z]
+///     [cal] progress <17*doneCount>
+///     [cal] <side> side done, rotate to a different side
+///     [cal] calibration done: accel
+///
 /// The simulation is pose-driven: a unit test places the simulated vehicle into a
 /// pose with setPose(). On subsequent 10Hz ticks the state machine detects the
-/// orientation, simulates the rotation/sampling phase with progress messages and
-/// completes the side. Setting a pose for an already completed side emits
+/// orientation, simulates the rotation/sampling phase and completes the side.
+/// Setting a pose for an already completed side emits
 /// "[cal] <side> side already completed", matching firmware behavior.
 ///
 /// All six sides are required, matching CAL_MAG_SIDES=63 in PX4MockLink.params.
@@ -47,11 +58,15 @@ public:
     /// and resets the side state machine.
     void startMagCalibration();
 
+    /// Starts simulated accel calibration: sends "[cal] calibration started: 2 accel"
+    /// and resets the side state machine.
+    void startAccelCalibration();
+
     /// Handles an all-zero MAV_CMD_PREFLIGHT_CALIBRATION (cancel request).
     ///     @return true if a calibration was active and has been cancelled
     bool cancel();
 
-    bool magCalActive() const;
+    bool calibrationActive() const;
 
     /// Test API: places the simulated vehicle into the given pose. The state
     /// machine advances on subsequent 10Hz ticks. Thread-safe.
@@ -61,14 +76,23 @@ public:
     void run10HzTasks();
 
 private:
+    enum class CalType {
+        None,
+        Mag,
+        Accel,
+    };
+
+    void _startCalibration(CalType calType);
     void _sideTick();
+    void _magSideTick();
+    void _accelSideTick();
     void _detectPose();
     int _doneCount() const;
 
     MockLink *_mockLink = nullptr;
 
     mutable QMutex _mutex;
-    bool _magCalActive = false;
+    CalType _calType = CalType::None;
     int _requestedPose = -1;            ///< Pose set by test, -1 when consumed/none
     int _activeSide = -1;               ///< Side currently calibrating, -1 when waiting for pose
     int _sideTickCount = 0;             ///< Ticks elapsed in the active side
@@ -76,5 +100,5 @@ private:
     bool _sideDone[kSideCount] = {};
 
     static constexpr int kTicksPerSide = 5;     ///< 10Hz ticks to complete one side
-    static constexpr int kTicksToFinish = 10;   ///< 10Hz ticks simulating the final mag fit calculation
+    static constexpr int kTicksToFinish = 10;   ///< 10Hz ticks simulating the final calibration calculation
 };
