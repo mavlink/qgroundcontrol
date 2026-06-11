@@ -86,6 +86,7 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
                                                         _mockConfig->gimbalHasRetract(),
                                                         _mockConfig->gimbalHasNeutral())
                                     : nullptr)
+    , _mockLinkPX4Calibration(new MockLinkPX4Calibration(this))
     , _mockLinkFTP(new MockLinkFTP(_vehicleSystemId, _vehicleComponentId, this))
 {
     qCDebug(MockLinkLog) << this;
@@ -131,6 +132,7 @@ MockLink::~MockLink()
 
     delete _mockLinkCamera;
     delete _mockLinkGimbal;
+    delete _mockLinkPX4Calibration;
 
     if (!_logDownloadFilename.isEmpty()) {
         QFile::remove(_logDownloadFilename);
@@ -264,6 +266,8 @@ void MockLink::run10HzTasks()
         _sendAttitudeTarget();
         _sendLocalPositionNed();
         _sendPositionTargetLocalNed();
+
+        _mockLinkPX4Calibration->run10HzTasks();
 
         if (_enableCamera) {
             _mockLinkCamera->run10HzTasks();
@@ -2113,23 +2117,36 @@ void MockLink::_sendRCChannels()
 
 void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request)
 {
-    static constexpr const char *gyroCalResponse = "[cal] calibration started: 2 gyro";
-    static constexpr const char *magCalResponse = "[cal] calibration started: 2 mag";
-    static constexpr const char *accelCalResponse = "[cal] calibration started: 2 accel";
-    const char *pCalMessage;
+    if ((request.param1 == 0) && (request.param2 == 0) && (request.param3 == 0) &&
+        (request.param4 == 0) && (request.param5 == 0) && (request.param6 == 0) &&
+        (request.param7 == 0)) {
+        // All zeros is a calibration cancel request. See PX4 calibrate_cancel_check().
+        (void) _mockLinkPX4Calibration->cancel();
+        return;
+    }
 
+    if (request.param2 == 1) {
+        // Magnetometer calibration runs the full pose-driven simulation
+        _mockLinkPX4Calibration->startMagCalibration();
+        return;
+    }
+
+    const char *pCalMessage = nullptr;
     if (request.param1 == 1) {
-        pCalMessage = gyroCalResponse;
-    } else if (request.param2 == 1) {
-        pCalMessage = magCalResponse;
+        pCalMessage = "[cal] calibration started: 2 gyro";
     } else if (request.param5 == 1) {
-        pCalMessage = accelCalResponse;
+        pCalMessage = "[cal] calibration started: 2 accel";
     } else {
         return;
     }
 
+    sendStatusTextMessage(MAV_SEVERITY_INFO, QString::fromLatin1(pCalMessage));
+}
+
+void MockLink::sendStatusTextMessage(uint8_t severity, const QString &text)
+{
     char statusText[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] = {};
-    (void) std::strncpy(statusText, pCalMessage, sizeof(statusText) - 1);
+    (void) std::strncpy(statusText, text.toUtf8().constData(), sizeof(statusText) - 1);
 
     mavlink_message_t msg{};
     (void) mavlink_msg_statustext_pack_chan(
@@ -2137,7 +2154,7 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
         _vehicleComponentId,
         _outgoingMavlinkChannel,
         &msg,
-        MAV_SEVERITY_INFO,
+        severity,
         statusText,
         0,
         0 // Not chunked

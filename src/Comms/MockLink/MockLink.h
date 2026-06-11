@@ -5,6 +5,7 @@
 #include "MAVLinkMessageType.h"
 #include "QGCMAVLinkTypes.h"
 #include "MockConfiguration.h"
+#include "MockLinkPX4Calibration.h"
 #include "MockLinkMissionItemHandler.h"
 
 #include <QtCore/QElapsedTimer>
@@ -55,6 +56,13 @@ public:
 
     /// Sends the specified mavlink message to QGC
     void respondWithMavlinkMessage(const mavlink_message_t &msg);
+
+    /// Sends a STATUSTEXT message to QGC
+    ///     @param severity MAV_SEVERITY value
+    void sendStatusTextMessage(uint8_t severity, const QString &text);
+
+    /// Test API: places the simulated vehicle into the given pose during calibration
+    void setCalibrationPose(MockLinkPX4Calibration::Pose pose) const { _mockLinkPX4Calibration->setPose(pose); }
 
     MockLinkFTP *mockLinkFTP() const;
 
@@ -285,6 +293,7 @@ private:
     MockLinkMissionItemHandler *const _missionItemHandler = nullptr;
     MockLinkCamera *const _mockLinkCamera = nullptr;
     MockLinkGimbal *const _mockLinkGimbal = nullptr;
+    MockLinkPX4Calibration *const _mockLinkPX4Calibration = nullptr;
     MockLinkFTP *const _mockLinkFTP = nullptr;
 
     uint8_t _incomingMavlinkChannel = std::numeric_limits<uint8_t>::max();

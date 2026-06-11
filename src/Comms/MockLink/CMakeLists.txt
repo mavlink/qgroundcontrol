@@ -18,6 +18,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MockLinkWorker.h
         MockLinkMissionItemHandler.cc
         MockLinkMissionItemHandler.h
+        MockLinkPX4Calibration.cc
+        MockLinkPX4Calibration.h
 )
 
 # Add resource files

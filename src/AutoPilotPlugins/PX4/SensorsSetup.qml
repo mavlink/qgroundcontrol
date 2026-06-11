@@ -331,6 +331,11 @@ Item {
 
     property string sectionNameFilter: ""
 
+    // Completed (green) side indicators are only meaningful for the sensor that was
+    // just calibrated. Return them to the neutral idle state when the preview switches
+    // to a different sensor.
+    onSectionNameFilterChanged: controller.resetSidesToIdle()
+
     function sectionVisible(name) {
         if (name === qsTr("Compass")) return !_allMagsDisabled && QGroundControl.corePlugin.options.showSensorCalibrationCompass && showSensorCalibrationCompass
         if (name === qsTr("Gyroscope")) return QGroundControl.corePlugin.options.showSensorCalibrationGyro && showSensorCalibrationGyro
@@ -345,6 +350,11 @@ Item {
         preCalibrationDialogType = type
         preCalibrationDialogHelp = help
         preCalibrationDialogFactory.open({ title: title })
+    }
+
+    // Mag calibration requires the vehicle to be rotated while a side is calibrating
+    function _sideRotating(calState) {
+        return (calState === VehicleRotationCal.CalState.InProgress) && controller.magCalInProgress
     }
 
     property bool _showOrientationPreview: !controller.calibrationActive &&
@@ -370,6 +380,7 @@ Item {
             visible: !controller.calibrationActive
 
             QGCButton {
+                objectName: "sensorsSetup_calibrateCompass"
                 Layout.fillWidth: true
                 text:       qsTr("Calibrate Compass")
                 visible:    sectionNameFilter === "" || sectionNameFilter === qsTr("Compass")
@@ -438,10 +449,12 @@ Item {
 
             ProgressBar {
                 id:                 progressBar
+                objectName:         "sensorsSetup_progressBar"
                 Layout.fillWidth:   true
             }
 
             QGCButton {
+                objectName: "sensorsSetup_cancelCalibration"
                 text:       qsTr("Cancel")
                 onClicked:  controller.cancelCalibration()
             }
@@ -491,58 +504,58 @@ Item {
                     property real indicatorHeight:  (height / 2) - spacing
 
                     VehicleRotationCal {
+                        objectName:         "sensorsCal_downSide"
                         width:              parent.indicatorWidth
                         height:             parent.indicatorHeight
                         visible:            controller.orientationCalDownSideVisible || _showAllSidesPreview || _showDownOnlyPreview
-                        calValid:           controller.orientationCalDownSideDone && !_showOrientationPreview
-                        calInProgress:      controller.orientationCalDownSideInProgress
-                        calInProgressText:  controller.orientationCalDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                        imageSource:        controller.orientationCalDownSideRotate ? "qrc:///qmlimages/VehicleDownRotate.png" : "qrc:///qmlimages/VehicleDown.png"
+                        calState:           controller.orientationCalDownSideState
+                        calInProgressText:  controller.magCalInProgress ? qsTr("Rotate") : qsTr("Hold Still")
+                        imageSource:        _sideRotating(calState) ? "qrc:///qmlimages/VehicleDownRotate.png" : "qrc:///qmlimages/VehicleDown.png"
                     }
                     VehicleRotationCal {
+                        objectName:         "sensorsCal_upsideDownSide"
                         width:              parent.indicatorWidth
                         height:             parent.indicatorHeight
                         visible:            controller.orientationCalUpsideDownSideVisible || _showAllSidesPreview
-                        calValid:           controller.orientationCalUpsideDownSideDone && !_showOrientationPreview
-                        calInProgress:      controller.orientationCalUpsideDownSideInProgress
-                        calInProgressText:  controller.orientationCalUpsideDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                        imageSource:        controller.orientationCalUpsideDownSideRotate ? "qrc:///qmlimages/VehicleUpsideDownRotate.png" : "qrc:///qmlimages/VehicleUpsideDown.png"
+                        calState:           controller.orientationCalUpsideDownSideState
+                        calInProgressText:  controller.magCalInProgress ? qsTr("Rotate") : qsTr("Hold Still")
+                        imageSource:        _sideRotating(calState) ? "qrc:///qmlimages/VehicleUpsideDownRotate.png" : "qrc:///qmlimages/VehicleUpsideDown.png"
                     }
                     VehicleRotationCal {
+                        objectName:         "sensorsCal_noseDownSide"
                         width:              parent.indicatorWidth
                         height:             parent.indicatorHeight
                         visible:            controller.orientationCalNoseDownSideVisible || _showAllSidesPreview
-                        calValid:           controller.orientationCalNoseDownSideDone && !_showOrientationPreview
-                        calInProgress:      controller.orientationCalNoseDownSideInProgress
-                        calInProgressText:  controller.orientationCalNoseDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                        imageSource:        controller.orientationCalNoseDownSideRotate ? "qrc:///qmlimages/VehicleNoseDownRotate.png" : "qrc:///qmlimages/VehicleNoseDown.png"
+                        calState:           controller.orientationCalNoseDownSideState
+                        calInProgressText:  controller.magCalInProgress ? qsTr("Rotate") : qsTr("Hold Still")
+                        imageSource:        _sideRotating(calState) ? "qrc:///qmlimages/VehicleNoseDownRotate.png" : "qrc:///qmlimages/VehicleNoseDown.png"
                     }
                     VehicleRotationCal {
+                        objectName:         "sensorsCal_tailDownSide"
                         width:              parent.indicatorWidth
                         height:             parent.indicatorHeight
                         visible:            controller.orientationCalTailDownSideVisible || _showAllSidesPreview
-                        calValid:           controller.orientationCalTailDownSideDone && !_showOrientationPreview
-                        calInProgress:      controller.orientationCalTailDownSideInProgress
-                        calInProgressText:  controller.orientationCalTailDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                        imageSource:        controller.orientationCalTailDownSideRotate ? "qrc:///qmlimages/VehicleTailDownRotate.png" : "qrc:///qmlimages/VehicleTailDown.png"
+                        calState:           controller.orientationCalTailDownSideState
+                        calInProgressText:  controller.magCalInProgress ? qsTr("Rotate") : qsTr("Hold Still")
+                        imageSource:        _sideRotating(calState) ? "qrc:///qmlimages/VehicleTailDownRotate.png" : "qrc:///qmlimages/VehicleTailDown.png"
                     }
                     VehicleRotationCal {
+                        objectName:         "sensorsCal_leftSide"
                         width:              parent.indicatorWidth
                         height:             parent.indicatorHeight
                         visible:            controller.orientationCalLeftSideVisible || _showAllSidesPreview
-                        calValid:           controller.orientationCalLeftSideDone && !_showOrientationPreview
-                        calInProgress:      controller.orientationCalLeftSideInProgress
-                        calInProgressText:  controller.orientationCalLeftSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                        imageSource:        controller.orientationCalLeftSideRotate ? "qrc:///qmlimages/VehicleLeftRotate.png" : "qrc:///qmlimages/VehicleLeft.png"
+                        calState:           controller.orientationCalLeftSideState
+                        calInProgressText:  controller.magCalInProgress ? qsTr("Rotate") : qsTr("Hold Still")
+                        imageSource:        _sideRotating(calState) ? "qrc:///qmlimages/VehicleLeftRotate.png" : "qrc:///qmlimages/VehicleLeft.png"
                     }
                     VehicleRotationCal {
+                        objectName:         "sensorsCal_rightSide"
                         width:              parent.indicatorWidth
                         height:             parent.indicatorHeight
                         visible:            controller.orientationCalRightSideVisible || _showAllSidesPreview
-                        calValid:           controller.orientationCalRightSideDone && !_showOrientationPreview
-                        calInProgress:      controller.orientationCalRightSideInProgress
-                        calInProgressText:  controller.orientationCalRightSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                        imageSource:        controller.orientationCalRightSideRotate ? "qrc:///qmlimages/VehicleRightRotate.png" : "qrc:///qmlimages/VehicleRight.png"
+                        calState:           controller.orientationCalRightSideState
+                        calInProgressText:  controller.magCalInProgress ? qsTr("Rotate") : qsTr("Hold Still")
+                        imageSource:        _sideRotating(calState) ? "qrc:///qmlimages/VehicleRightRotate.png" : "qrc:///qmlimages/VehicleRight.png"
                     }
                 }
             }
