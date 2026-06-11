@@ -11,7 +11,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/CommsTest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/TerrainTest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/TerrainTest.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/TempDirectoryTest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/JsonTest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/StateMachineTest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/StateMachineTest.h

@@ -1,6 +1,7 @@
 #include "MultiSignalSpyTest.h"
 
 #include <QtCore/QObject>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QTest>
 
 #include "MultiSignalSpy.h"
@@ -59,7 +60,9 @@ signals:
 void MultiSignalSpyTest::_testInitWithNullEmitter()
 {
     MultiSignalSpy spy;
+    expectLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Null signalEmitter")));
     QVERIFY(!spy.init(nullptr));
+    verifyExpectedLogMessage();
     QVERIFY(!spy.isValid());
 }
 
@@ -88,7 +91,9 @@ void MultiSignalSpyTest::_testInitWithEmptySignalList()
 {
     TestEmitter emitter;
     MultiSignalSpy spy;
+    expectLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Empty signal list")));
     QVERIFY(!spy.init(&emitter, {}));
+    verifyExpectedLogMessage();
     QVERIFY(!spy.isValid());
 }
 
@@ -96,7 +101,9 @@ void MultiSignalSpyTest::_testInitWithInvalidSignalName()
 {
     TestEmitter emitter;
     MultiSignalSpy spy;
+    expectLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Signal not found:")));
     QVERIFY(!spy.init(&emitter, {"nonExistentSignal"}));
+    verifyExpectedLogMessage();
     QVERIFY(!spy.isValid());
 }
 
@@ -236,7 +243,9 @@ void MultiSignalSpyTest::_testMaskForUnknownSignal()
     TestEmitter emitter;
     MultiSignalSpy spy;
     spy.init(&emitter, {"signal1"});
+    expectLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Signal not monitored:")));
     quint64 mask = spy.mask("nonExistent");
+    verifyExpectedLogMessage();
     QCOMPARE(mask, 0ULL);
 }
 
@@ -322,7 +331,9 @@ void MultiSignalSpyTest::_testSpyForUnknownSignal()
     TestEmitter emitter;
     MultiSignalSpy spy;
     spy.init(&emitter, {"signal1"});
+    expectLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Signal not monitored:")));
     QSignalSpy* s = spy.spy("nonExistent");
+    verifyExpectedLogMessage();
     QVERIFY(s == nullptr);
 }
 

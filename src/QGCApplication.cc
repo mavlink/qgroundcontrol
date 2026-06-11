@@ -153,6 +153,11 @@ QGCApplication::QGCApplication(int &argc, char *argv[], const QGCCommandLinePars
     QGCLoggingCategoryManager::init();
     QGCLoggingCategoryManager::instance()->installFilter(loggingOptions);
 
+    if (_runningUnitTests) {
+        // Enable the AppMessage category so showAppMessage() debug logs are visible during unit tests.
+        QGCLoggingCategoryManager::instance()->setCategoryEnabled(QStringLiteral("API.QGCApplication.AppMessage"), true);
+    }
+
     // We need to set language as early as possible prior to loading on JSON files.
     setLanguage();
 

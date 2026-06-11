@@ -1,6 +1,7 @@
 #include "TerrainQueryTest.h"
 
 #include <QtCore/QMetaObject>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 
 #include "TerrainQuery.h"
@@ -114,7 +115,9 @@ void TerrainQueryTest::_testPolyPathQueryEmptyPath()
     QSignalSpy spy(query, &TerrainPolyPathQuery::terrainDataReceived);
     QVERIFY(spy.isValid());
     const QList<QGeoCoordinate> emptyPath;
+    expectLogMessage("Terrain.TerrainQuery", QtWarningMsg, QRegularExpression("polyPath requires at least 2 coordinates"));
     query->requestData(emptyPath);
+    verifyExpectedLogMessage();
     // Signal is emitted synchronously for invalid path
     QCOMPARE(spy.count(), 1);
     const QVariantList arguments = spy.takeFirst();
@@ -128,7 +131,9 @@ void TerrainQueryTest::_testPolyPathQuerySingleCoord()
     QVERIFY(spy.isValid());
     QList<QGeoCoordinate> singleCoordPath;
     (void)singleCoordPath.append(pointNemo());
+    expectLogMessage("Terrain.TerrainQuery", QtWarningMsg, QRegularExpression("polyPath requires at least 2 coordinates"));
     query->requestData(singleCoordPath);
+    verifyExpectedLogMessage();
     // Signal is emitted synchronously for invalid path
     QCOMPARE(spy.count(), 1);
     const QVariantList arguments = spy.takeFirst();

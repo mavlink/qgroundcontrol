@@ -59,6 +59,7 @@ RowLayout {
 
     Loader {
         id:                     expandedItemLoader
+        objectName:             "indicatorExpandedLoader"
         Layout.alignment:       Qt.AlignTop
         Layout.preferredWidth:  visible ? -1 : 0
         visible:                expanded && _expandedParametersReady

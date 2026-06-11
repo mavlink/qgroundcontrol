@@ -1,5 +1,6 @@
 #include "ADSBTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtNetwork/QTcpServer>
 #include <QtTest/QSignalSpy>
 
@@ -28,7 +29,9 @@ void ADSBTest::_adsbVehicleTest()
     vehicleInfo2.callsign = QStringLiteral("2");
     vehicleInfo2.location = QGeoCoordinate(2., 2.);
     vehicleInfo2.availableFlags = ADSB::CallsignAvailable | ADSB::LocationAvailable;
+    expectLogMessage("ADSB.ADSBVehicle", QtWarningMsg, QRegularExpression(QStringLiteral("ICAO address mismatch")));
     adsbVehicle->update(vehicleInfo2);
+    verifyExpectedLogMessage();
     QCOMPARE_NE(adsbVehicle->callsign(), vehicleInfo2.callsign);
     QCOMPARE_NE(adsbVehicle->coordinate(), vehicleInfo2.location);
     vehicleInfo2.icaoAddress = 1;

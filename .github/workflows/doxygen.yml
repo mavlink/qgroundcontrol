@@ -63,8 +63,14 @@ jobs:
         uses: actions/checkout@v6
         with:
           sparse-checkout: |
-            .github/actions
-            .github/scripts
+            .github/actions/deploy-docs
+            .github/scripts/ci_bootstrap.py
+            .github/scripts/deploy_docs.py
+            tools/_bootstrap.py
+            tools/common/__init__.py
+            tools/common/git.py
+            tools/common/proc.py
+          sparse-checkout-cone-mode: false
 
       - name: Deploy docs
         uses: ./.github/actions/deploy-docs

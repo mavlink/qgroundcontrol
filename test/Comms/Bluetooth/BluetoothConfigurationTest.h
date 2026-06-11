@@ -7,6 +7,8 @@ class BluetoothConfigurationTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void init() override;
+
     void _testConstruction();
     void _testCopyConstruction();
     void _testFactoryCreateAndDuplicate();

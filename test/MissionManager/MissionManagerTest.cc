@@ -1,5 +1,6 @@
 #include "MissionManagerTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
 #include <iterator>
 
@@ -27,6 +28,21 @@ const MissionManagerTest::TestCase_t MissionManagerTest::_rgTestCases[] = {
       MAV_FRAME_MISSION}},
 };
 const size_t MissionManagerTest::_cTestCases = sizeof(_rgTestCases) / sizeof(_rgTestCases[0]);
+
+void MissionManagerTest::init()
+{
+    MissionControllerManagerTest::init();
+    // All failure-handling tests deliberately trigger mission transfer failures which
+    // cause showAppMessage() debug logs. Ignore them for the whole fixture.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("Mission transfer failed"));
+    // ArduPilot mock link has no metadata source; this warning is expected for APM variants.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
+    // ArduPilot metadata includes an invalid enum value for RTL_CONE_SLOPE; skip warning is expected.
+    ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Skipping invalid enum value"));
+}
 
 void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t failureMode,
                                      MAV_MISSION_RESULT failureAckResult, bool shouldFail)

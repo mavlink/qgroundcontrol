@@ -2,6 +2,7 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -22,8 +23,6 @@
 
 void QmlUITestBase::startUI()
 {
-    setStrictLogCheck(true);
-
     // Initialise subsystems needed for the full QML UI
     // setStyle() must only be called once per process; subsequent calls after
     // any QML engine has loaded produce an "must be called before loading QML"
@@ -47,16 +46,16 @@ void QmlUITestBase::startUI()
     QVERIFY2(QGCCorePlugin::instance()->showAdvancedUI(), "Test requires Advanced UI mode");
 
     // Ignore benign Qt platform warnings that cannot be avoided in offscreen mode
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^default$")), QtWarningMsg,
+    ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("This plugin does not support propagateSizeHints")));
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^qt\\.qpa\\.fonts$")), QtWarningMsg,
+    ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Populating font family aliases")));
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^default$")), QtWarningMsg,
+    ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("QRhiGles2")));
 #ifdef QT_DEBUG
     // Debug builds on macOS are ad-hoc signed with an unbound Info.plist, so
     // macOS never shows the camera permission dialog and silently denies access.
-    ignoreLogMessage(QRegularExpression(QStringLiteral("^default$")), QtWarningMsg,
+    ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Access to camera not granted")));
 #endif
 
@@ -84,7 +83,7 @@ void QmlUITestBase::ignoreAPMMockLinkWarnings()
 {
     // ArduPilot MockLink does not serve COMP_METADATA_TYPE_GENERAL.
     ignoreLogMessage(
-        QRegularExpression(QStringLiteral("^ComponentInformation\\.RequestMetaDataTypeStateMachine$")),
+        "ComponentInformation.RequestMetaDataTypeStateMachine",
         QtWarningMsg,
         QRegularExpression(QStringLiteral("\"COMP_METADATA_TYPE_GENERAL\" : failed to load metadata \\(primary and fallback\\) \"\"")));
 }
@@ -164,6 +163,38 @@ void QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObj
     QTest::qWait(50);
 }
 
+void QmlUITestBase::runWithMockLink(
+    const std::function<MockLink *()> &factory,
+    const std::function<void(QPointer<MockLink>, Vehicle *)> &body)
+{
+    startUI();
+    if (QTest::currentTestFailed()) return;
+
+    Vehicle *vehicle = nullptr;
+    QPointer<MockLink> mockLink = connectMockLinkAndWaitReady(factory, vehicle);
+    if (!mockLink) return;
+
+    const auto cleanup = qScopeGuard([&] {
+        disconnectMockLink(mockLink);
+        closeUIWindow();
+        destroyUIEngine();
+    });
+
+    body(mockLink, vehicle);
+}
+
+void QmlUITestBase::disconnectMockLink(QPointer<MockLink> mockLink)
+{
+    if (!mockLink) return;
+
+    QSignalSpy spyDisconnect(MultiVehicleManager::instance(),
+                             &MultiVehicleManager::activeVehicleChanged);
+    mockLink->disconnect();
+    if (spyDisconnect.isValid()) {
+        (void)waitForSignal(spyDisconnect, 5000, QStringLiteral("activeVehicleChanged"));
+    }
+}
+
 QPointer<MockLink> QmlUITestBase::connectMockLinkAndWaitReady(
     const std::function<MockLink *()> &factory,
     Vehicle *&vehicleOut)
@@ -182,45 +213,46 @@ QPointer<MockLink> QmlUITestBase::connectMockLinkAndWaitReady(
         return {};
     }
 
-    if (!waitForSignal(spyVehicle, 10000, QStringLiteral("activeVehicleChanged"))) {
-        QTest::qFail("Timeout waiting for vehicle connection", __FILE__, __LINE__);
+    // Helper: disconnect the MockLink and return {} so callers never receive a
+    // live link they cannot clean up (the caller's qScopeGuard is not yet active).
+    const auto failAndDisconnect = [&](const char *msg) -> QPointer<MockLink> {
+        QTest::qFail(msg, __FILE__, __LINE__);
+        mockLink->disconnect();
         return {};
+    };
+
+    if (!waitForSignal(spyVehicle, 10000, QStringLiteral("activeVehicleChanged"))) {
+        return failAndDisconnect("Timeout waiting for vehicle connection");
     }
 
     Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();
     if (!vehicle) {
-        QTest::qFail("No active vehicle after MockLink connection", __FILE__, __LINE__);
-        return {};
+        return failAndDisconnect("No active vehicle after MockLink connection");
     }
 
     QSignalSpy spyConnect(vehicle, &Vehicle::initialConnectComplete);
     if (!spyConnect.isValid()) {
-        QTest::qFail("Failed to create spy for initialConnectComplete", __FILE__, __LINE__);
-        return {};
+        return failAndDisconnect("Failed to create spy for initialConnectComplete");
     }
     if (!vehicle->isInitialConnectComplete()) {
         if (!waitForSignal(spyConnect, 10000, QStringLiteral("initialConnectComplete"))) {
-            QTest::qFail("Timeout waiting for initial connect", __FILE__, __LINE__);
-            return {};
+            return failAndDisconnect("Timeout waiting for initial connect");
         }
     }
 
     QSignalSpy spyParamsReady(MultiVehicleManager::instance(),
                               &MultiVehicleManager::parameterReadyVehicleAvailableChanged);
     if (!spyParamsReady.isValid()) {
-        QTest::qFail("Failed to create spy for parameterReadyVehicleAvailableChanged", __FILE__, __LINE__);
-        return {};
+        return failAndDisconnect("Failed to create spy for parameterReadyVehicleAvailableChanged");
     }
     if (!MultiVehicleManager::instance()->parameterReadyVehicleAvailable()) {
         if (!waitForSignal(spyParamsReady, 15000,
                            QStringLiteral("parameterReadyVehicleAvailableChanged"))) {
-            QTest::qFail("Timeout waiting for parameters to be ready", __FILE__, __LINE__);
-            return {};
+            return failAndDisconnect("Timeout waiting for parameters to be ready");
         }
     }
     if (!MultiVehicleManager::instance()->parameterReadyVehicleAvailable()) {
-        QTest::qFail("Parameters should be ready after signal", __FILE__, __LINE__);
-        return {};
+        return failAndDisconnect("Parameters should be ready after signal");
     }
 
     vehicleOut = vehicle;

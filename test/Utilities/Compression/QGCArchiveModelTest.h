@@ -1,9 +1,9 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include "UnitTest.h"
 
 /// Tests for QGCArchiveModel (QAbstractListModel for archive contents)
-class QGCArchiveModelTest : public TempDirectoryTest
+class QGCArchiveModelTest : public UnitTest
 {
     Q_OBJECT
 

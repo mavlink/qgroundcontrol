@@ -59,6 +59,20 @@ SetupPage {
             function setupPageCompleted() {
                 controller.startBoardSearch()
                 _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
+                _lastKnownCount = 0
+            }
+
+            property int _lastKnownCount: 0
+
+            function _recognizedBoardCount() {
+                var ports = controller.availablePorts
+                var count = 0
+                for (var i = 0; i < ports.length; i++) {
+                    if (ports[i].boardType === _boardTypePixhawk || ports[i].boardType === _boardTypeSiKRadio) {
+                        count++
+                    }
+                }
+                return count
             }
 
             function _preselectIndex() {
@@ -66,38 +80,54 @@ SetupPage {
                 if (ports.length === 0) {
                     return -1
                 }
-                // Prefer a recognized Pixhawk
                 for (var i = 0; i < ports.length; i++) {
                     if (ports[i].boardType === _boardTypePixhawk) {
                         return i
                     }
                 }
-                // Else prefer a recognized SiK radio
                 for (var j = 0; j < ports.length; j++) {
                     if (ports[j].boardType === _boardTypeSiKRadio) {
                         return j
                     }
                 }
-                // Else first item
-                return 0
+                // No recognized device found
+                return -1
             }
 
             function _refreshSelection() {
-                if (_flashStarted) {
+                if (_flashStarted || portCombo.popup.visible) {
                     return
                 }
+                var knownCount = _recognizedBoardCount()
+                if (knownCount > 1 && _lastKnownCount <= 1) {
+                    statusTextArea.append(highlightPrefix + qsTr("Multiple devices detected. Make sure to select the correct one from the list.") + highlightSuffix)
+                }
+                _lastKnownCount = knownCount
                 var ports = controller.availablePorts
                 if (ports.length === 0) {
                     portCombo.currentIndex = -1
                     _selectedSystemLocation = ""
                     return
                 }
-                // Try to keep the current selection if its port is still present
                 if (_selectedSystemLocation !== "") {
+                    // Check if the current selection is already a recognized device
+                    var currentIsRecognized = false
                     for (var i = 0; i < ports.length; i++) {
                         if (ports[i].systemLocation === _selectedSystemLocation) {
-                            portCombo.currentIndex = i
-                            return
+                            if (ports[i].boardType === _boardTypePixhawk || ports[i].boardType === _boardTypeSiKRadio) {
+                                currentIsRecognized = true
+                            }
+                            break
+                        }
+                    }
+                    // Only keep the current selection if it is a recognized device;
+                    // otherwise fall through to preselect the first recognized device
+                    if (currentIsRecognized) {
+                        for (var j = 0; j < ports.length; j++) {
+                            if (ports[j].systemLocation === _selectedSystemLocation) {
+                                portCombo.currentIndex = j
+                                return
+                            }
                         }
                     }
                 }
@@ -131,7 +161,7 @@ SetupPage {
 
                 onBoardFound: {
                     if (_flashStarted) {
-                        statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
+                        statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType + " (" + controller.boardPort + ")")
                         if (QGroundControl.multiVehicleManager.activeVehicle) {
                             QGroundControl.multiVehicleManager.activeVehicle.vehicleLinkManager.autoDisconnect = true
                         }
@@ -462,17 +492,33 @@ SetupPage {
             } // Component - firmwareSelectDialogComponent
 
             RowLayout {
-                Layout.fillWidth:   true
-                spacing:            ScreenTools.defaultFontPixelWidth
-                visible:            !flashBootloaderButton.visible
+                spacing: ScreenTools.defaultFontPixelWidth
+                visible: !flashBootloaderButton.visible
 
                 QGCComboBox {
                     id:                 portCombo
-                    Layout.fillWidth:   true
+                    sizeToContents:     true
                     visible:            !_flashStarted
                     enabled:            controller.availablePorts.length > 0
                     model:              controller.availablePorts
                     textRole:           "displayName"
+
+                    alternateText: {
+                        if (_lastKnownCount !== 1) {
+                            return ""
+                        }
+                        var idx = portCombo.currentIndex
+                        var ports = controller.availablePorts
+                        if (idx < 0 || idx >= ports.length) {
+                            return ""
+                        }
+                        var p = ports[idx]
+                        if (p.boardName && p.description) {
+                            return p.description + " [" + p.boardName + "]"
+                        }
+                        return p.boardName || p.description || p.displayName
+                    }
+
                     onActivated: (index) => {
                         if (index >= 0 && index < controller.availablePorts.length) {
                             _selectedSystemLocation = controller.availablePorts[index].systemLocation
@@ -481,11 +527,10 @@ SetupPage {
                 }
 
                 QGCLabel {
-                    id:                 portLabel
-                    Layout.fillWidth:   true
-                    visible:            _flashStarted
-                    text:               _selectedDisplayName
-                    elide:              Text.ElideRight
+                    id:         portLabel
+                    visible:    _flashStarted
+                    text:       qsTr("Flashing - %1").arg(_selectedDisplayName)
+                    elide:      Text.ElideRight
                 }
 
                 QGCButton {
@@ -500,7 +545,7 @@ SetupPage {
                         }
                         var entry = ports[portCombo.currentIndex]
                         _selectedSystemLocation = entry.systemLocation
-                        _selectedDisplayName = entry.displayName
+                        _selectedDisplayName = portCombo.alternateText !== "" ? portCombo.alternateText : entry.displayName
                         _flashStarted = true
                         statusTextArea.append(unplugReplugText)
                         if (QGroundControl.multiVehicleManager.activeVehicle) {

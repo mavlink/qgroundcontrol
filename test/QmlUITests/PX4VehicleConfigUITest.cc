@@ -2,14 +2,11 @@
 
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
-#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "MockLink.h"
-#include "MultiVehicleManager.h"
 
 #include <QtCore/QPointer>
-#include <QtCore/QScopeGuard>
 #include "Vehicle.h"
 #include "VehicleComponent.h"
 
@@ -17,29 +14,9 @@ UT_REGISTER_TEST(PX4VehicleConfigUITest, TestLabel::Integration)
 
 void PX4VehicleConfigUITest::_testNavigateVehicleConfig()
 {
-    startUI();
-    if (QTest::currentTestFailed()) return;
-
-    // -------------------------------------------------------------------------
-    // Connect PX4 MockLink and wait for parameters to be ready
-    // -------------------------------------------------------------------------
-    Vehicle *vehicle = nullptr;
-    QPointer<MockLink> mockLink = connectMockLinkAndWaitReady(
-        [] { return MockLink::startPX4MockLink(false, false, false); }, vehicle);
-    if (!mockLink) return;
-
-    const auto cleanup = qScopeGuard([&] {
-        closeUIWindow();
-        if (mockLink) {
-            QSignalSpy spyDisconnect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-            mockLink->disconnect();
-            if (spyDisconnect.isValid()) {
-                (void)waitForSignal(spyDisconnect, 5000, QStringLiteral("activeVehicleChanged"));
-            }
-        }
-        destroyUIEngine();
-    });
-
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
     // -------------------------------------------------------------------------
     // Navigate to the Configure view
     // -------------------------------------------------------------------------
@@ -93,6 +70,7 @@ void PX4VehicleConfigUITest::_testNavigateVehicleConfig()
                  qPrintable(QStringLiteral("Panel loader has no item after clicking %1").arg(comp->name())));
     }
 
+    });
 }
 
 // Cycle through the axis buttons on a PID tuning tab. Each click exercises
@@ -111,17 +89,9 @@ void PX4VehicleConfigUITest::_cycleAxisButtons(const QStringList &axisNames)
 
 void PX4VehicleConfigUITest::_testDisconnectWithPIDTuningOpen()
 {
-    startUI();
-    if (QTest::currentTestFailed()) return;
-
-    // -------------------------------------------------------------------------
-    // Connect PX4 MockLink and wait for parameters to be ready
-    // -------------------------------------------------------------------------
-    Vehicle *vehicle = nullptr;
-    QPointer<MockLink> mockLink = connectMockLinkAndWaitReady(
-        [] { return MockLink::startPX4MockLink(false, false, false); }, vehicle);
-    if (!mockLink) return;
-
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(false, false, false); },
+        [&](QPointer<MockLink> /*mockLink*/, Vehicle * /*vehicle*/) {
     // -------------------------------------------------------------------------
     // Navigate to Configure view and open the PID Tuning sidebar page
     // -------------------------------------------------------------------------
@@ -186,14 +156,5 @@ void PX4VehicleConfigUITest::_testDisconnectWithPIDTuningOpen()
     _cycleAxisButtons({QStringLiteral("Horizontal"), QStringLiteral("Vertical"), QStringLiteral("Horizontal")});
     if (QTest::currentTestFailed()) return;
 
-    closeUIWindow();
-
-    if (mockLink) {
-        QSignalSpy spyDisconnect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-        QVERIFY2(spyDisconnect.isValid(), "Failed to create spy for disconnect");
-        mockLink->disconnect();
-        (void)waitForSignal(spyDisconnect, 5000, QStringLiteral("activeVehicleChanged"));
-    }
-
-    destroyUIEngine();
+    });
 }

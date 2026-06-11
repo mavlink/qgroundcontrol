@@ -3,9 +3,9 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QJsonDocument>
 
-#include "TempDirectoryTest.h"
+#include "UnitTest.h"
 
-class ComponentInformationTranslationTest : public TempDirectoryTest
+class ComponentInformationTranslationTest : public UnitTest
 {
     Q_OBJECT
 

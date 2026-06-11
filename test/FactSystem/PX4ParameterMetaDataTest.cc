@@ -6,6 +6,7 @@
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QRegularExpression>
 
 using namespace Qt::StringLiterals;
 
@@ -187,7 +188,11 @@ void PX4ParameterMetaDataTest::_skipMissingNameOrType()
         _makeParam(u"GOOD_PARAM"_s, u"Int32"_s),                       // valid
     };
 
+    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("required keys are missing"));
+    expectLogMessage("FirmwarePlugin.PX4ParameterMetaData", QtWarningMsg, QRegularExpression("Skipping invalid parameter metadata: \"NO_TYPE\""));
     QScopedPointer<PX4ParameterMetaData> meta(_loadFromJson(params, nullptr));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QVERIFY(meta);
 
     // Invalid entries skipped, valid one parsed
@@ -277,7 +282,9 @@ void PX4ParameterMetaDataTest::_rejectOldVersion()
     QJsonObject extra;
     extra[u"shortDesc"_s] = u"Old"_s;
 
+    expectLogMessage("FirmwarePlugin.PX4ParameterMetaData", QtWarningMsg, QRegularExpression("Parameter JSON version too old"));
     QScopedPointer<PX4ParameterMetaData> meta(_loadFromJson({_makeParam(u"OLD_PARAM"_s, u"Int32"_s, extra)}, nullptr, 0));
+    verifyExpectedLogMessage();
     QVERIFY(meta);
 
     FactMetaData *fact = meta->getMetaDataForFact("OLD_PARAM", FactMetaData::valueTypeInt32);
@@ -287,7 +294,11 @@ void PX4ParameterMetaDataTest::_rejectOldVersion()
 
 void PX4ParameterMetaDataTest::_rejectInvalidType()
 {
+    expectLogMessage("FactSystem.FactMetaData", QtWarningMsg, QRegularExpression("Unknown type \"BADTYPE\""));
+    expectLogMessage("FirmwarePlugin.PX4ParameterMetaData", QtWarningMsg, QRegularExpression("Skipping invalid parameter metadata: \"TEST_BAD\""));
     QScopedPointer<PX4ParameterMetaData> meta(_loadFromJson({_makeParam(u"TEST_BAD"_s, u"BADTYPE"_s)}, nullptr));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QVERIFY(meta);
 
     FactMetaData *fact = meta->getMetaDataForFact("TEST_BAD", FactMetaData::valueTypeInt32);
@@ -310,7 +321,9 @@ void PX4ParameterMetaDataTest::_handleDuplicateParam()
         _makeParam(u"DUP_PARAM"_s, u"Int32"_s, extra2),
     };
 
+    expectLogMessage("FirmwarePlugin.PX4ParameterMetaData", QtWarningMsg, QRegularExpression("Duplicate parameter: \"DUP_PARAM\""));
     QScopedPointer<PX4ParameterMetaData> meta(_loadFromJson(params, nullptr));
+    verifyExpectedLogMessage();
     QVERIFY(meta);
 
     FactMetaData *fact = meta->getMetaDataForFact("DUP_PARAM", FactMetaData::valueTypeInt32);
@@ -375,8 +388,10 @@ void PX4ParameterMetaDataTest::_parseCategory()
 
 void PX4ParameterMetaDataTest::_getVersionInfoMissingFile()
 {
+    expectLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg, QRegularExpression("Failed to read parameter meta data file:"));
     const QVersionNumber version = ParameterMetaData::versionFromMetaDataFile(
         QStringLiteral("/nonexistent/path/file.json"));
+    verifyExpectedLogMessage();
     QVERIFY(version.isNull());
 }
 
@@ -411,7 +426,9 @@ void PX4ParameterMetaDataTest::_loadGuard()
 void PX4ParameterMetaDataTest::_loadMissingFile()
 {
     PX4ParameterMetaData meta;
+    expectLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg, QRegularExpression("Unable to open parameter meta data file:"));
     meta.loadParameterFactMetaDataFile(QStringLiteral("/nonexistent/path/file.json"));
+    verifyExpectedLogMessage();
 
     FactMetaData *fact = meta.getMetaDataForFact("ANY_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);

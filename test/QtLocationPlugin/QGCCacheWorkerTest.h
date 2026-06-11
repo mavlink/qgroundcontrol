@@ -1,14 +1,15 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include "UnitTest.h"
 
 class QGCCacheWorker;
 
-class QGCCacheWorkerTest : public TempDirectoryTest
+class QGCCacheWorkerTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
     void _testStartAndStop();
     void _testEnqueueBeforeInit();
     void _testUpdateTotalsOnInit();

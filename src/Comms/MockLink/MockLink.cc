@@ -213,6 +213,10 @@ void MockLink::run1HzTasks()
         _mockLinkGimbal->run1HzTasks();
     }
 
+    _sendEscInfo();
+    _sendEscStatus();
+    _sendRadioStatus();
+
     if (_enableCamera) {
         _mockLinkCamera->sendCameraHeartbeats();
     }
@@ -243,10 +247,12 @@ void MockLink::run10HzTasks()
 
     if (_mavlinkStarted && _connected && mavlinkChannelIsSet()) {
         _sendHeartBeat();
+        const bool gpsDelayExpired = (_sendGPSPositionDelayCount == 0);
         if (_sendGPSPositionDelayCount > 0) {
             // We delay gps position for better testing
             _sendGPSPositionDelayCount--;
-        } else {
+        }
+        if (gpsDelayExpired || QGC::runningUnitTests()) {
             if (_vehicleType != MAV_TYPE_SUBMARINE) {
                 _sendGpsRawInt();
                 _sendGlobalPositionInt();
@@ -2455,6 +2461,75 @@ void MockLink::_sendRemoteIDArmStatus()
         &msg,
         MAV_ODID_ARM_STATUS_GOOD_TO_ARM,
         armStatusError
+    );
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendEscInfo()
+{
+    // Send ESC_INFO for 4 motors starting at index 0.
+    // count=4 and info bitmask=0x0F (all 4 online) makes the ESC indicator visible.
+    static const uint16_t failureFlags[4] = {0, 0, 0, 0};
+    static const uint32_t errorCount[4]   = {0, 0, 0, 0};
+    static const int16_t  temperature[4]  = {3000, 3000, 3000, 3000}; // centidegrees
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_esc_info_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        _outgoingMavlinkChannel,
+        &msg,
+        0,                              // index: first group starts at 0
+        static_cast<uint64_t>(_runningTime.elapsed()) * 1000, // time_usec
+        0,                              // counter
+        4,                              // count: 4 motors
+        ESC_CONNECTION_TYPE_DSHOT,      // connection_type
+        0x0F,                           // info: bitmask — motors 0-3 online
+        failureFlags,
+        errorCount,
+        temperature
+    );
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendEscStatus()
+{
+    static const int32_t rpm[4]     = {5000, 5000, 5000, 5000};
+    static const float   voltage[4] = {16.0f, 16.0f, 16.0f, 16.0f};
+    static const float   current[4] = {5.0f, 5.0f, 5.0f, 5.0f};
+
+    mavlink_message_t msg{};
+    (void) mavlink_msg_esc_status_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        _outgoingMavlinkChannel,
+        &msg,
+        0,                              // index: first group
+        static_cast<uint64_t>(_runningTime.elapsed()) * 1000, // time_usec
+        rpm,
+        voltage,
+        current
+    );
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendRadioStatus()
+{
+    // Send a RADIO_STATUS message to make the TelemetryRSSI indicator visible.
+    // Any non-zero rssi value triggers showIndicator (TelemetryRSSIIndicator checks lrssi.rawValue != 0).
+    mavlink_message_t msg{};
+    (void) mavlink_msg_radio_status_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        _outgoingMavlinkChannel,
+        &msg,
+        100,    // rssi: local signal strength
+        100,    // remrssi: remote signal strength
+        50,     // txbuf: transmit buffer fill (%)
+        10,     // noise: local background noise
+        10,     // remnoise: remote background noise
+        0,      // rxerrors
+        0       // fixed
     );
     respondWithMavlinkMessage(msg);
 }

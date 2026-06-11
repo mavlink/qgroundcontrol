@@ -220,6 +220,7 @@ ApplicationWindow {
     readonly property int _skipPendingParameterWritesCheckMask: 0x02
     readonly property int _skipActiveConnectionsCheckMask: 0x04
     property int _closeChecksToSkip: 0
+    property bool _reentrantCloseGuard: false
     function performCloseChecks() {
         if (!(_closeChecksToSkip & _skipUnsavedMissionCheckMask) && !checkForUnsavedMission()) {
             return false
@@ -238,11 +239,13 @@ ApplicationWindow {
 
     function checkForUnsavedMission() {
         if (planView._planMasterController.dirtyForSave || planView._planMasterController.dirtyForUpload) {
+            let accepted = false
+            _reentrantCloseGuard = true
             _showMessageDialogWorker(mainWindow, closeDialogTitle,
                               qsTr("You have a mission edit in progress which has not been saved/uploaded. If you close you will lose changes. Are you sure you want to close?"),
                               Dialog.Yes | Dialog.No,
-                              function() { _closeChecksToSkip |= _skipUnsavedMissionCheckMask; performCloseChecks() },
-                              null,
+                              function() { accepted = true; _closeChecksToSkip |= _skipUnsavedMissionCheckMask; performCloseChecks() },
+                              function() { if (!accepted) _reentrantCloseGuard = false },
                               true /* bypassNavigationCheck */)
             return false
         } else {
@@ -253,11 +256,13 @@ ApplicationWindow {
     function checkForPendingParameterWrites() {
         for (var index=0; index<QGroundControl.multiVehicleManager.vehicles.count; index++) {
             if (QGroundControl.multiVehicleManager.vehicles.get(index).parameterManager.pendingWrites) {
+                let accepted = false
+                _reentrantCloseGuard = true
                 _showMessageDialogWorker(mainWindow, closeDialogTitle,
                     qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?"),
                     Dialog.Yes | Dialog.No,
-                    function() { _closeChecksToSkip |= _skipPendingParameterWritesCheckMask; performCloseChecks() },
-                    null,
+                    function() { accepted = true; _closeChecksToSkip |= _skipPendingParameterWritesCheckMask; performCloseChecks() },
+                    function() { if (!accepted) _reentrantCloseGuard = false },
                     true /* bypassNavigationCheck */)
                 return false
             }
@@ -267,11 +272,13 @@ ApplicationWindow {
 
     function checkForActiveConnections() {
         if (QGroundControl.multiVehicleManager.activeVehicle) {
+            let accepted = false
+            _reentrantCloseGuard = true
             _showMessageDialogWorker(mainWindow, closeDialogTitle,
                 qsTr("There are still active connections to vehicles. Are you sure you want to exit?"),
                 Dialog.Yes | Dialog.No,
-                function() { _closeChecksToSkip |= _skipActiveConnectionsCheckMask; performCloseChecks() },
-                null,
+                function() { accepted = true; _closeChecksToSkip |= _skipActiveConnectionsCheckMask; performCloseChecks() },
+                function() { if (!accepted) _reentrantCloseGuard = false },
                 true /* bypassNavigationCheck */)
             return false
         } else {
@@ -281,6 +288,10 @@ ApplicationWindow {
 
     onClosing: (close) => {
         if (!_forceClose) {
+            if (_reentrantCloseGuard) {
+                close.accepted = false
+                return
+            }
             _closeChecksToSkip = 0
             close.accepted = performCloseChecks()
         }
@@ -606,6 +617,7 @@ ApplicationWindow {
             }
 
             Rectangle {
+                objectName:                 "indicatorDrawerExpandButton"
                 anchors.horizontalCenter:   backgroundRect.right
                 anchors.verticalCenter:     backgroundRect.top
                 width:                      ScreenTools.largeFontPixelHeight
@@ -636,7 +648,8 @@ ApplicationWindow {
             contentHeight:  indicatorDrawerLoader.height
 
             Loader {
-                id: indicatorDrawerLoader
+                id:         indicatorDrawerLoader
+                objectName: "indicatorDrawerLoader"
 
                 Binding {
                     target:     indicatorDrawerLoader.item

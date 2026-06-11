@@ -479,7 +479,11 @@ ParameterMetaData *FirmwarePlugin::loadParameterMetaData(const Vehicle *vehicle)
 {
     ParameterMetaData *metaData = _createParameterMetaData();
     if (!metaData) {
-        qCWarning(FirmwarePluginLog) << "No parameter metadata parser for firmware plugin" << this;
+        if (_autopilotType() == MAV_AUTOPILOT_GENERIC) {
+            qCDebug(FirmwarePluginLog) << "No parameter metadata parser for firmware plugin" << this << "(expected for generic firmware)";
+        } else {
+            qCWarning(FirmwarePluginLog) << "No parameter metadata parser for firmware plugin" << this;
+        }
         return nullptr;
     }
 

@@ -13,6 +13,7 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QRegularExpression>
 #include <gst/gst.h>
 
 #include <atomic>
@@ -60,7 +61,16 @@ void GStreamerTest::init()
         QStringLiteral("cannot register existing type|"
                         "g_type_add_interface_static.*G_TYPE_IS_INSTANTIATABLE|"
                         "g_once_init_leave.*result != 0"));
-    expectLogMessage(QtCriticalMsg, sGLibTypeRe);
+    // GStreamer/GLib type registration warnings are environment/startup-order dependent
+    // and may occur 0..N times across test process lifetime.
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtCriticalMsg, sGLibTypeRe);
+
+    // On headless/software-GL CI the sink bin cannot honor construct-only GPU properties
+    // and the GL bridge is disabled. These warnings are environment-dependent.
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("gpu-zerocopy.*can't be set after construction")));
+    ignoreLogMessage("Video.GStreamer.HwBuffers.GstGlBridge", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Qt GL context exposes neither EGL nor GLX")));
 
     if (!gst_is_initialized()) {
         GStreamer::prepareEnvironment();
@@ -197,8 +207,15 @@ void GStreamerTest::_testRedirectGLibLogging()
 {
     GStreamer::redirectGLibLogging();
 
+    // Debug-level GLib messages map to QtDebugMsg — suppress it.
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("GStreamerTest debug message")));
+    // Warning-level message is the redirect target being tested — expect and verify it.
+    expectLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("GStreamerTest warning message")));
     g_log("TestDomain", G_LOG_LEVEL_DEBUG, "GStreamerTest debug message");
     g_log("TestDomain", G_LOG_LEVEL_WARNING, "GStreamerTest warning message");
+    verifyExpectedLogMessage();
 }
 
 void GStreamerTest::_testVerifyRequiredPlugins()
@@ -728,6 +745,14 @@ void GStreamerTest::_testGlMemoryDispatch()
 #if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     QSKIP("GLMemory zero-copy GPU path not compiled (QGC_HAS_GST_GLMEMORY_GPU_PATH undefined)");
 #else
+#ifdef Q_OS_MACOS
+    // On macOS, Qt's Cocoa platform plugin emits an uncategorized warning when
+    // GStreamer tries to create an OpenGL context outside the main thread.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("This plugin does not support createPlatformOpenGLContext")));
+    // GStreamer-GL emits an NSApplication warning on macOS when running outside the main thread.
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("An NSApplication needs to be running")));
+#endif
     GStreamer::redirectGLibLogging();
     QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
 

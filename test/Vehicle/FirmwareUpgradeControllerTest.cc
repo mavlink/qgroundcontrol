@@ -5,6 +5,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "FirmwareUpgradeController.h"
+#include <QtCore/QTemporaryDir>
 
 void FirmwareUpgradeControllerTest::_manifestCompleteErrorClearsDownloadingState()
 {
@@ -13,7 +14,9 @@ void FirmwareUpgradeControllerTest::_manifestCompleteErrorClearsDownloadingState
     QVERIFY(spy.isValid());
 
     controller._downloadingFirmwareList = true;
+    expectLogMessage("Vehicle.VehicleSetup.FirmwareUpgradeController", QtWarningMsg, QRegularExpression("ArduPilot Manifest download failed"));
     controller._ardupilotManifestDownloadComplete(false, QString(), QStringLiteral("simulated error"));
+    verifyExpectedLogMessage();
 
     QVERIFY(!controller._downloadingFirmwareList);
     QVERIFY(!spy.isEmpty());
@@ -22,14 +25,17 @@ void FirmwareUpgradeControllerTest::_manifestCompleteErrorClearsDownloadingState
 
 void FirmwareUpgradeControllerTest::_manifestCompleteBadJsonClearsDownloadingState()
 {
+    QTemporaryDir tempDir;
     FirmwareUpgradeController controller;
     QSignalSpy spy(&controller, &FirmwareUpgradeController::downloadingFirmwareListChanged);
     QVERIFY(spy.isValid());
 
-    const QString missingFile = tempPath(QStringLiteral("missing_manifest.json"));
+    const QString missingFile = tempDir.filePath(QStringLiteral("missing_manifest.json"));
 
     controller._downloadingFirmwareList = true;
+    expectLogMessage("Vehicle.VehicleSetup.FirmwareUpgradeController", QtWarningMsg, QRegularExpression("Json file read failed"));
     controller._ardupilotManifestDownloadComplete(true, missingFile, QString());
+    verifyExpectedLogMessage();
 
     QVERIFY(!controller._downloadingFirmwareList);
     QVERIFY(!spy.isEmpty());
@@ -38,11 +44,12 @@ void FirmwareUpgradeControllerTest::_manifestCompleteBadJsonClearsDownloadingSta
 
 void FirmwareUpgradeControllerTest::_manifestCompleteValidJsonPopulatesManifestInfo()
 {
+    QTemporaryDir tempDir;
     FirmwareUpgradeController controller;
     QSignalSpy spy(&controller, &FirmwareUpgradeController::downloadingFirmwareListChanged);
     QVERIFY(spy.isValid());
 
-    const QString manifestPath = tempPath(QStringLiteral("manifest.json"));
+    const QString manifestPath = tempDir.filePath(QStringLiteral("manifest.json"));
 
     QFile manifestFile(manifestPath);
     QVERIFY(manifestFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
@@ -94,9 +101,10 @@ void FirmwareUpgradeControllerTest::_manifestCompleteValidJsonPopulatesManifestI
 
 void FirmwareUpgradeControllerTest::_px4ReleasesCompleteParsesStableAndBeta()
 {
+    QTemporaryDir tempDir;
     FirmwareUpgradeController controller;
 
-    const QString releasesPath = tempPath(QStringLiteral("releases.json"));
+    const QString releasesPath = tempDir.filePath(QStringLiteral("releases.json"));
 
     QFile releasesFile(releasesPath);
     QVERIFY(releasesFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
@@ -117,18 +125,21 @@ void FirmwareUpgradeControllerTest::_px4ReleasesCompleteParsesStableAndBeta()
 
 void FirmwareUpgradeControllerTest::_px4ReleasesCompleteBadJsonKeepsPreviousVersions()
 {
+    QTemporaryDir tempDir;
     FirmwareUpgradeController controller;
     controller._px4StableVersion = QStringLiteral("old_stable");
     controller._px4BetaVersion = QStringLiteral("old_beta");
 
-    const QString releasesPath = tempPath(QStringLiteral("releases_bad.json"));
+    const QString releasesPath = tempDir.filePath(QStringLiteral("releases_bad.json"));
     QFile releasesFile(releasesPath);
     QVERIFY(releasesFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
     QTextStream out(&releasesFile);
     out << "{ invalid json\n";
     releasesFile.close();
 
+    expectLogMessage("Vehicle.VehicleSetup.FirmwareUpgradeController", QtWarningMsg, QRegularExpression("Unable to open px4 releases json document"));
     controller._px4ReleasesGithubDownloadComplete(true, releasesPath, QString());
+    verifyExpectedLogMessage();
 
     QCOMPARE(controller._px4StableVersion, QStringLiteral("old_stable"));
     QCOMPARE(controller._px4BetaVersion, QStringLiteral("old_beta"));
@@ -136,18 +147,21 @@ void FirmwareUpgradeControllerTest::_px4ReleasesCompleteBadJsonKeepsPreviousVers
 
 void FirmwareUpgradeControllerTest::_px4ReleasesCompleteNonArrayJsonKeepsPreviousVersions()
 {
+    QTemporaryDir tempDir;
     FirmwareUpgradeController controller;
     controller._px4StableVersion = QStringLiteral("old_stable");
     controller._px4BetaVersion = QStringLiteral("old_beta");
 
-    const QString releasesPath = tempPath(QStringLiteral("releases_object.json"));
+    const QString releasesPath = tempDir.filePath(QStringLiteral("releases_object.json"));
     QFile releasesFile(releasesPath);
     QVERIFY(releasesFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
     QTextStream out(&releasesFile);
     out << "{ \"name\": \"v1.15.2\", \"prerelease\": false }\n";
     releasesFile.close();
 
+    expectLogMessage("Vehicle.VehicleSetup.FirmwareUpgradeController", QtWarningMsg, QRegularExpression("px4 releases json document is not an array"));
     controller._px4ReleasesGithubDownloadComplete(true, releasesPath, QString());
+    verifyExpectedLogMessage();
 
     QCOMPARE(controller._px4StableVersion, QStringLiteral("old_stable"));
     QCOMPARE(controller._px4BetaVersion, QStringLiteral("old_beta"));
@@ -155,9 +169,10 @@ void FirmwareUpgradeControllerTest::_px4ReleasesCompleteNonArrayJsonKeepsPreviou
 
 void FirmwareUpgradeControllerTest::_px4ReleasesCompleteOnlyStableKeepsBetaEmpty()
 {
+    QTemporaryDir tempDir;
     FirmwareUpgradeController controller;
 
-    const QString releasesPath = tempPath(QStringLiteral("releases_stable_only.json"));
+    const QString releasesPath = tempDir.filePath(QStringLiteral("releases_stable_only.json"));
     QFile releasesFile(releasesPath);
     QVERIFY(releasesFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text));
     QTextStream out(&releasesFile);

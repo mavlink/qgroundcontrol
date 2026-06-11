@@ -8,6 +8,7 @@ import QGroundControl.Controls
 //-- Telemetry RSSI
 Item {
     id:             control
+    objectName:     "toolbar_telemetryRSSIIndicator"
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          telemIcon.width * 1.1

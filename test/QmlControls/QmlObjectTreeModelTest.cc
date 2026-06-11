@@ -109,7 +109,9 @@ void QmlObjectTreeModelTest::_insertOutOfRangeLogsWarning()
     QmlObjectTreeModel model;
     QObject obj;
 
+    expectLogMessage("API.QmlObjectTreeModel", QtWarningMsg, QRegularExpression("insertItem: invalid row"));
     const QModelIndex idx = model.insertItem(5, &obj); // row 5, but 0 children
+    verifyExpectedLogMessage();
     QVERIFY(!idx.isValid()); // should fail gracefully
     QCOMPARE(model.count(), 0);
 }
@@ -179,7 +181,9 @@ void QmlObjectTreeModelTest::_removeChildrenKeepsParent()
 void QmlObjectTreeModelTest::_removeInvalidIndexReturnsNull()
 {
     QmlObjectTreeModel model;
+    expectLogMessage("API.QmlObjectTreeModel", QtWarningMsg, QRegularExpression("removeItem: invalid index"));
     QObject* removed = model.removeItem(QModelIndex());
+    verifyExpectedLogMessage();
     QVERIFY(removed == nullptr);
 }
 
@@ -636,13 +640,17 @@ void QmlObjectTreeModelTest::_insertDuringResetNoSignals()
 void QmlObjectTreeModelTest::_insertRowsReturnsFalse()
 {
     QmlObjectTreeModel model;
+    expectLogMessage("API.QmlObjectTreeModel", QtWarningMsg, QRegularExpression(R"(insertRows\(\) not supported)"));
     QVERIFY(!model.insertRows(0, 1));
+    verifyExpectedLogMessage();
 }
 
 void QmlObjectTreeModelTest::_removeRowsReturnsFalse()
 {
     QmlObjectTreeModel model;
+    expectLogMessage("API.QmlObjectTreeModel", QtWarningMsg, QRegularExpression(R"(removeRows\(\) not supported)"));
     QVERIFY(!model.removeRows(0, 1));
+    verifyExpectedLogMessage();
 }
 
 // ===========================================================================
