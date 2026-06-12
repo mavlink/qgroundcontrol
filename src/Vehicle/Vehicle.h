@@ -1180,6 +1180,7 @@ private:
     void       _computeOperatorControlRange(uint8_t &rangeLow, uint8_t &rangeHigh) const;
 
     uint8_t    _sysid_in_control = 0;
+    uint8_t    _operatorControlCompId = 0;   // compid of the system manager component, learned from CONTROL_STATUS
     QList<int> _secondaryGCSList;
     uint8_t    _gcsControlStatusFlags = 0;
     bool       _gcsControlStatusFlags_SystemManager = 0;

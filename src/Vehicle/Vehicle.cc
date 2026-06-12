@@ -3242,7 +3242,7 @@ void Vehicle::requestOperatorControl(bool allowOverride, int requestTimeoutSecs)
     const MavCmdAckHandlerInfo_t handlerInfo = {&Vehicle::_requestOperatorControlAckHandler, this, nullptr, nullptr};
     sendMavCommandWithHandler(
         &handlerInfo,
-        _defaultComponentId,
+        (_operatorControlCompId != 0) ? _operatorControlCompId : _defaultComponentId,
         MAV_CMD_REQUEST_OPERATOR_CONTROL,
         1,                                  // param1: Action - 1: Request control
         allowOverride ? 1.0f : 0.0f,        // param2: Allow takeover
@@ -3270,7 +3270,7 @@ void Vehicle::releaseOperatorControl()
     const MavCmdAckHandlerInfo_t handlerInfo = {&Vehicle::_requestOperatorControlAckHandler, this, nullptr, nullptr};
     sendMavCommandWithHandler(
         &handlerInfo,
-        _defaultComponentId,
+        (_operatorControlCompId != 0) ? _operatorControlCompId : _defaultComponentId,
         MAV_CMD_REQUEST_OPERATOR_CONTROL,
         0,                                  // param1: Action - 0: Release control
         0,                                  // param2: Allow takeover (irrelevant for release)
@@ -3331,6 +3331,12 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
 {
     mavlink_control_status_t controlStatus;
     mavlink_msg_control_status_decode(&message, &controlStatus);
+
+    if (controlStatus.flags & GCS_CONTROL_STATUS_FLAGS_SYSTEM_MANAGER) {
+        // This component manages GCS control of the whole system. Operator control
+        // commands must be addressed to it, which is not necessarily the autopilot
+        _operatorControlCompId = message.compid;
+    }
 
     bool updateControlStatusSignals = false;
     if (_gcsControlStatusFlags != controlStatus.flags) {
