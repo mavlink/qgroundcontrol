@@ -24,6 +24,11 @@ static constexpr const char *kSideAccelResults[MockLinkPX4Calibration::kSideCoun
     "[0.000 0.000 -9.810]",
 };
 
+// Device ids stored in CAL_MAG0_ID/CAL_ACC0_ID after a successful calibration,
+// matching the values in PX4MockLink.params
+static constexpr int32_t kMagDeviceId = 197388;
+static constexpr int32_t kAccelDeviceId = 1310988;
+
 MockLinkPX4Calibration::MockLinkPX4Calibration(MockLink *mockLink)
     : _mockLink(mockLink)
 {
@@ -101,8 +106,13 @@ void MockLinkPX4Calibration::run10HzTasks()
             _calType = CalType::None;
             _finishTickCount = -1;
             if (calType == CalType::Mag) {
+                // Store the calibration result like the firmware does, before reporting
+                // done so the subsequent param refresh by QGC picks it up
+                _mockLink->setInt32ParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("CAL_MAG0_ID"), kMagDeviceId);
                 // The mag fit calculation reports its own final progress
                 _mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] progress <100>"));
+            } else {
+                _mockLink->setInt32ParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("CAL_ACC0_ID"), kAccelDeviceId);
             }
             _mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] calibration done: %1")
                 .arg(QLatin1String((calType == CalType::Mag) ? "mag" : "accel")));

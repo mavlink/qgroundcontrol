@@ -35,6 +35,7 @@ Rectangle {
     property int    _selectedComponentIndex: -1     // -1 = summary or special button
     property int    _selectedSectionIndex:   -1
     property string _selectedSpecial:        ""     // "summary", "parameters", "firmware", "opticalflow"
+    property bool   _showingPrereqMessage:   false  // Panel area shows prerequisite message instead of selected component
     property var    _expandedComponents:     ({})
     property int    _expandedRevision:       0
     property string _searchQuery:            ""
@@ -157,14 +158,6 @@ Rectangle {
         if (compIndex < 0 || compIndex >= components.length) return
         var vehicleComponent = components[compIndex]
 
-        var autopilotPlugin = _activeVehicle.autopilotPlugin
-        var prereq = autopilotPlugin.prerequisiteSetup(vehicleComponent)
-        if (prereq !== "") {
-            _messagePanelText = qsTr("%1 setup must be completed prior to %2 setup.").arg(prereq).arg(vehicleComponent.name)
-            panelLoader.setSourceComponent(messagePanelComponent)
-            return
-        }
-
         _selectedSpecial = ""
 
         // If component opts in and root was clicked, auto-select first section
@@ -173,8 +166,21 @@ Rectangle {
         }
         _selectedSectionIndex = sectionIndex
 
-        if (_selectedComponentIndex !== compIndex) {
+        var autopilotPlugin = _activeVehicle.autopilotPlugin
+        var prereq = autopilotPlugin.prerequisiteSetup(vehicleComponent)
+        if (prereq !== "") {
+            // Selection state still updates so the tree expands and highlights
+            // normally; only the panel area shows the prerequisite message
             _selectedComponentIndex = compIndex
+            _showingPrereqMessage = true
+            _messagePanelText = qsTr("%1 setup must be completed prior to %2 setup.").arg(prereq).arg(vehicleComponent.name)
+            panelLoader.setSourceComponent(messagePanelComponent)
+            return
+        }
+
+        if (_selectedComponentIndex !== compIndex || _showingPrereqMessage) {
+            _selectedComponentIndex = compIndex
+            _showingPrereqMessage = false
             panelLoader.setSource(vehicleComponent.setupSource, vehicleComponent)
         }
 
@@ -301,6 +307,8 @@ Rectangle {
         id: messagePanelComponent
 
         Item {
+            objectName: "vehicleConfig_messagePanel"
+
             QGCLabel {
                 anchors.margins:        _defaultTextWidth * 2
                 anchors.fill:           parent
@@ -440,6 +448,18 @@ Rectangle {
 
                                 property int sectionIndex: index
                                 property bool sectionChecked: compColumn.isSelected && vehicleConfigView._selectedSectionIndex === sectionIndex
+                                property bool sectionSetupComplete: {
+                                    if (!compColumn.comp) {
+                                        return true
+                                    }
+                                    // Referencing comp.setupComplete re-evaluates this binding whenever a
+                                    // setup trigger parameter changes, since sectionSetupComplete() is a
+                                    // plain function call which QML cannot otherwise track
+                                    void compColumn.comp.setupComplete
+                                    return typeof compColumn.comp.sectionSetupComplete === "function"
+                                               ? compColumn.comp.sectionSetupComplete(modelData)
+                                               : true
+                                }
                                 property bool sectionMatchesSearch: {
                                     if (!compColumn.isSearching) return true
                                     return vehicleConfigView._sectionMatchesSearch(compColumn.comp, modelData)
@@ -466,11 +486,8 @@ Rectangle {
                                         width:   ScreenTools.defaultFontPixelWidth
                                         height:  width
                                         radius:  width / 2
-                                        color:   compColumn.comp && typeof compColumn.comp.sectionSetupComplete === "function"
-                                                     ? (compColumn.comp.sectionSetupComplete(modelData) ? qgcPal.colorGreen : qgcPal.colorOrange)
-                                                     : "transparent"
-                                        visible: compColumn.comp && typeof compColumn.comp.sectionSetupComplete === "function"
-                                                     && !compColumn.comp.sectionSetupComplete(modelData)
+                                        color:   sectionBtn.sectionSetupComplete ? qgcPal.colorGreen : qgcPal.colorOrange
+                                        visible: !sectionBtn.sectionSetupComplete
                                     }
 
                                     QGCLabel {

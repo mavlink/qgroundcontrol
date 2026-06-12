@@ -68,36 +68,29 @@ void waitForParamRefreshQuiet(Vehicle *vehicle)
 
 void PX4SensorsCalibrationUITest::_navigateToSensorsPanel()
 {
-    QVERIFY2(clickButton(QStringLiteral("toolbar_qgcLogo")), "Failed to click Q logo button");
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("toolbar_viewConfigure"), 2000),
-             "toolbar_viewConfigure button not found");
-    QVERIFY2(clickButton(QStringLiteral("toolbar_viewConfigure")), "Failed to click Configure button");
-    QTest::qWait(_viewDelay);
+    navigateToConfigureView();
+    if (QTest::currentTestFailed()) return;
 
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_root"), 3000),
-             "vehicleConfig_root not found after navigating to Configure");
+    QQuickItem *sensorsBtn = clickSidebarButton(QStringLiteral("vehicleConfig_comp_Sensors"));
+    if (QTest::currentTestFailed()) return;
 
-    QQuickItem *sensorsBtn = findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_comp_Sensors"), 2000);
-    QVERIFY2(sensorsBtn, "vehicleConfig_comp_Sensors button not found");
-
-    scrollIntoView(sensorsBtn, QStringLiteral("vehicleConfig_sidebarFlickable"));
-    const QPointF center = sensorsBtn->mapToScene(QPointF(sensorsBtn->width() / 2, sensorsBtn->height() / 2));
-    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
-    QTest::qWait(_pageDelay);
+    // Clicking the Sensors button expands its section tree and auto-selects the
+    // first section (Compass), since SensorsComponent::showFirstSectionOnRootClick
+    // is true
+    QVERIFY2(sensorsBtn->property("expanded").toBool(), "Sensors section tree not expanded after clicking Sensors button");
+    QQuickItem *compassSection = findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_section_Compass"), 3000);
+    QVERIFY2(compassSection, "Compass section button not visible after clicking Sensors button");
+    QVERIFY2(QTest::qWaitFor([&] { return compassSection->property("sectionChecked").toBool(); }, 3000),
+             "Compass section not selected by default after clicking Sensors button");
 
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("sensorsSetup_calibrateCompass"), 3000),
              "Calibrate Compass button not found after opening Sensors page");
-}
 
-void PX4SensorsCalibrationUITest::_clickSidebarSection(const QString &objectName)
-{
-    QQuickItem *sectionBtn = findVisibleItem(_rootItem, objectName, 3000);
-    QVERIFY2(sectionBtn, qPrintable(QStringLiteral("Section button not found: %1").arg(objectName)));
-
-    scrollIntoView(sectionBtn, QStringLiteral("vehicleConfig_sidebarFlickable"));
-    const QPointF center = sectionBtn->mapToScene(QPointF(sectionBtn->width() / 2, sectionBtn->height() / 2));
-    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
-    QTest::qWait(_pageDelay);
+    // The prerequisite-setup message panel ("%1 setup must be completed prior to %2
+    // setup.") must not be shown: SYS_AUTOSTART is preserved across the param reset
+    // so Airframe setup remains complete
+    QVERIFY2(!findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_messagePanel"), 0),
+             "Prerequisite setup message panel shown instead of Sensors page");
 }
 
 void PX4SensorsCalibrationUITest::_verifyAllPosesState(int expectedState, const char *context)
@@ -111,6 +104,40 @@ void PX4SensorsCalibrationUITest::_verifyAllPosesState(int expectedState, const 
                  qPrintable(QStringLiteral("Pose in state %1, expected %2 (%3): %4")
                                 .arg(QLatin1String(calStateName(state)), QLatin1String(calStateName(expectedState)),
                                      QLatin1String(context), QLatin1String(info.objectName))));
+    }
+}
+
+void PX4SensorsCalibrationUITest::_verifySensorsSetupStates(const SensorsSetupStates &expected, const char *context)
+{
+    struct ButtonCheck {
+        const char *objectName;
+        const char *propertyName;
+        bool expectedComplete;
+    };
+    const ButtonCheck checks[] = {
+        { "vehicleConfig_comp_Sensors",          "setupComplete",        expected.sensorsComplete },
+        { "vehicleConfig_section_Compass",       "sectionSetupComplete", expected.compassComplete },
+        { "vehicleConfig_section_Gyroscope",     "sectionSetupComplete", expected.gyroscopeComplete },
+        { "vehicleConfig_section_Accelerometer", "sectionSetupComplete", expected.accelerometerComplete },
+        { "vehicleConfig_section_LevelHorizon",  "sectionSetupComplete", expected.levelHorizonComplete },
+        { "vehicleConfig_section_Orientations",  "sectionSetupComplete", expected.orientationsComplete },
+    };
+
+    for (const ButtonCheck &check : checks) {
+        QQuickItem *btn = findVisibleItem(_rootItem, QLatin1String(check.objectName), 3000);
+        QVERIFY2(btn, qPrintable(QStringLiteral("Button not found (%1): %2")
+                                     .arg(QLatin1String(context), QLatin1String(check.objectName))));
+        const QVariant complete = btn->property(check.propertyName);
+        QVERIFY2(complete.isValid(),
+                 qPrintable(QStringLiteral("Button has no %1 property (%2): %3")
+                                .arg(QLatin1String(check.propertyName), QLatin1String(context), QLatin1String(check.objectName))));
+        // Wait briefly for bindings to settle on the expected value
+        (void) QTest::qWaitFor([&] { return btn->property(check.propertyName).toBool() == check.expectedComplete; }, 3000);
+        QVERIFY2(btn->property(check.propertyName).toBool() == check.expectedComplete,
+                 qPrintable(QStringLiteral("Button setup complete state is %1, expected %2 (%3): %4")
+                                .arg(btn->property(check.propertyName).toBool())
+                                .arg(check.expectedComplete)
+                                .arg(QLatin1String(context), QLatin1String(check.objectName))));
     }
 }
 
@@ -130,12 +157,25 @@ void PX4SensorsCalibrationUITest::_testMagCalibration()
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(false, false, false); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
+    resetParamsToFirmwareDefaults(vehicle, QStringLiteral("CAL_MAG0_ID"));
+    if (QTest::currentTestFailed()) return;
+
     _navigateToSensorsPanel();
+    if (QTest::currentTestFailed()) return;
+
+    _verifySensorsSetupStates({
+        .sensorsComplete = false,
+        .compassComplete = false,
+        .gyroscopeComplete = false,
+        .accelerometerComplete = false,
+        .levelHorizonComplete = false,
+        .orientationsComplete = true,
+    }, "after param reset");
     if (QTest::currentTestFailed()) return;
 
     // Select the Compass section: the idle orientation preview appears with all
     // six poses in the neutral Idle state
-    _clickSidebarSection(QStringLiteral("vehicleConfig_section_Compass"));
+    clickSidebarButton(QStringLiteral("vehicleConfig_section_Compass"));
     if (QTest::currentTestFailed()) return;
 
     _verifyAllPosesState(SensorsComponentController::SideCalStateIdle, "idle preview");
@@ -237,10 +277,22 @@ void PX4SensorsCalibrationUITest::_testMagCalibration()
 
     // Switching the preview to a different sensor resets the completed sides:
     // the Accelerometer preview must show all poses in the neutral Idle state
-    _clickSidebarSection(QStringLiteral("vehicleConfig_section_Accelerometer"));
+    clickSidebarButton(QStringLiteral("vehicleConfig_section_Accelerometer"));
     if (QTest::currentTestFailed()) return;
 
     _verifyAllPosesState(SensorsComponentController::SideCalStateIdle, "after section switch");
+    if (QTest::currentTestFailed()) return;
+
+    // The completed mag calibration set CAL_MAG0_ID on the vehicle: only the
+    // Compass section shows setup complete, everything else still requires config
+    _verifySensorsSetupStates({
+        .sensorsComplete = false,
+        .compassComplete = true,
+        .gyroscopeComplete = false,
+        .accelerometerComplete = false,
+        .levelHorizonComplete = false,
+        .orientationsComplete = true,
+    }, "after mag calibration");
 
     });
 }
@@ -250,11 +302,24 @@ void PX4SensorsCalibrationUITest::_runCalibrationCancelTest(const QString &secti
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(false, false, false); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
+    resetParamsToFirmwareDefaults(vehicle, QStringLiteral("CAL_MAG0_ID"));
+    if (QTest::currentTestFailed()) return;
+
     _navigateToSensorsPanel();
     if (QTest::currentTestFailed()) return;
 
+    _verifySensorsSetupStates({
+        .sensorsComplete = false,
+        .compassComplete = false,
+        .gyroscopeComplete = false,
+        .accelerometerComplete = false,
+        .levelHorizonComplete = false,
+        .orientationsComplete = true,
+    }, "after param reset");
+    if (QTest::currentTestFailed()) return;
+
     // Select the sensor section so its calibrate button is at the top of the page
-    _clickSidebarSection(sectionObjectName);
+    clickSidebarButton(sectionObjectName);
     if (QTest::currentTestFailed()) return;
 
     _startCalibration(calibrateButtonObjectName);
@@ -292,6 +357,17 @@ void PX4SensorsCalibrationUITest::_runCalibrationCancelTest(const QString &secti
 
     waitForParamRefreshQuiet(vehicle);
 
+    // The cancelled calibration discarded its results: every sensor still
+    // requires config
+    _verifySensorsSetupStates({
+        .sensorsComplete = false,
+        .compassComplete = false,
+        .gyroscopeComplete = false,
+        .accelerometerComplete = false,
+        .levelHorizonComplete = false,
+        .orientationsComplete = true,
+    }, "after calibration cancelled");
+
     });
 }
 
@@ -306,12 +382,25 @@ void PX4SensorsCalibrationUITest::_testAccelCalibration()
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(false, false, false); },
         [&](QPointer<MockLink> mockLink, Vehicle *vehicle) {
+    resetParamsToFirmwareDefaults(vehicle, QStringLiteral("CAL_MAG0_ID"));
+    if (QTest::currentTestFailed()) return;
+
     _navigateToSensorsPanel();
+    if (QTest::currentTestFailed()) return;
+
+    _verifySensorsSetupStates({
+        .sensorsComplete = false,
+        .compassComplete = false,
+        .gyroscopeComplete = false,
+        .accelerometerComplete = false,
+        .levelHorizonComplete = false,
+        .orientationsComplete = true,
+    }, "after param reset");
     if (QTest::currentTestFailed()) return;
 
     // Select the Accelerometer section: the idle orientation preview appears with
     // all six poses in the neutral Idle state
-    _clickSidebarSection(QStringLiteral("vehicleConfig_section_Accelerometer"));
+    clickSidebarButton(QStringLiteral("vehicleConfig_section_Accelerometer"));
     if (QTest::currentTestFailed()) return;
 
     _verifyAllPosesState(SensorsComponentController::SideCalStateIdle, "idle preview");
@@ -406,10 +495,23 @@ void PX4SensorsCalibrationUITest::_testAccelCalibration()
 
     // Switching the preview to a different sensor resets the completed sides:
     // the Compass preview must show all poses in the neutral Idle state
-    _clickSidebarSection(QStringLiteral("vehicleConfig_section_Compass"));
+    clickSidebarButton(QStringLiteral("vehicleConfig_section_Compass"));
     if (QTest::currentTestFailed()) return;
 
     _verifyAllPosesState(SensorsComponentController::SideCalStateIdle, "after section switch");
+    if (QTest::currentTestFailed()) return;
+
+    // The completed accel calibration set CAL_ACC0_ID on the vehicle: only the
+    // Accelerometer section shows setup complete. Level Horizon still requires
+    // config because the gyro is uncalibrated.
+    _verifySensorsSetupStates({
+        .sensorsComplete = false,
+        .compassComplete = false,
+        .gyroscopeComplete = false,
+        .accelerometerComplete = true,
+        .levelHorizonComplete = false,
+        .orientationsComplete = true,
+    }, "after accel calibration");
 
     });
 }

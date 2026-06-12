@@ -1,6 +1,6 @@
 #pragma once
 
-#include "QmlUITestBase.h"
+#include "VehicleConfigUITestBase.h"
 
 #include <functional>
 
@@ -8,7 +8,7 @@ class MockLink;
 
 /// UI smoke test that boots the full QML UI with each ArduPilot MockLink
 /// vehicle type connected and navigates through all vehicle configuration pages.
-class APMVehicleConfigUITest : public QmlUITestBase
+class APMVehicleConfigUITest : public VehicleConfigUITestBase
 {
     Q_OBJECT
 
