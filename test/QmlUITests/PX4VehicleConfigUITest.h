@@ -1,12 +1,12 @@
 #pragma once
 
-#include "QmlUITestBase.h"
+#include "VehicleConfigUITestBase.h"
 
 class MockLink;
 
 /// UI smoke test that boots the full QML UI with a PX4 MockLink vehicle
 /// connected and navigates through all vehicle configuration pages.
-class PX4VehicleConfigUITest : public QmlUITestBase
+class PX4VehicleConfigUITest : public VehicleConfigUITestBase
 {
     Q_OBJECT
 

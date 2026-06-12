@@ -8,7 +8,6 @@
 
 #include <QtCore/QPointer>
 #include "Vehicle.h"
-#include "VehicleComponent.h"
 
 UT_REGISTER_TEST(PX4VehicleConfigUITest, TestLabel::Integration)
 
@@ -17,17 +16,8 @@ void PX4VehicleConfigUITest::_testNavigateVehicleConfig()
     runWithMockLink(
         [] { return MockLink::startPX4MockLink(false, false, false); },
         [&](QPointer<MockLink> /*mockLink*/, Vehicle *vehicle) {
-    // -------------------------------------------------------------------------
-    // Navigate to the Configure view
-    // -------------------------------------------------------------------------
-    QVERIFY2(clickButton(QStringLiteral("toolbar_qgcLogo")), "Failed to click Q logo button");
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("toolbar_viewConfigure"), 2000),
-             "toolbar_viewConfigure button not found");
-    QVERIFY2(clickButton(QStringLiteral("toolbar_viewConfigure")), "Failed to click Configure button");
-    QTest::qWait(_viewDelay);
-
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_root"), 3000),
-             "vehicleConfig_root not found after navigating to Configure");
+    navigateToConfigureView();
+    if (QTest::currentTestFailed()) return;
 
     // -------------------------------------------------------------------------
     // Click Summary
@@ -38,37 +28,7 @@ void PX4VehicleConfigUITest::_testNavigateVehicleConfig()
     // -------------------------------------------------------------------------
     // Click through each vehicle component
     // -------------------------------------------------------------------------
-    const QVariantList components = vehicle->autopilotPlugin()->vehicleComponents();
-    QVERIFY2(!components.isEmpty(), "No vehicle components found for PX4 MockLink");
-
-    for (const QVariant &compVariant : components) {
-        auto *comp = compVariant.value<VehicleComponent *>();
-        if (!comp) {
-            continue;
-        }
-
-        // Match the objectName set in VehicleConfigView.qml:
-        // "vehicleConfig_comp_" + compName.replace(/ /g, "")
-        const QString cleanName  = QString(comp->name()).remove(QLatin1Char(' '));
-        const QString buttonName = QStringLiteral("vehicleConfig_comp_") + cleanName;
-
-        QQuickItem *btn = findVisibleItem(_rootItem, buttonName, 2000);
-        if (!btn) {
-            // Component may be hidden (e.g. ESP8266 not present) – skip silently
-            continue;
-        }
-
-        scrollIntoView(btn, QStringLiteral("vehicleConfig_sidebarFlickable"));
-
-        const QPointF center = btn->mapToScene(QPointF(btn->width() / 2, btn->height() / 2));
-        QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
-        QTest::qWait(_pageDelay);
-
-        QQuickItem *loader = findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_panelLoader"), 2000);
-        QVERIFY2(loader, qPrintable(QStringLiteral("vehicleConfig_panelLoader not found after clicking %1").arg(comp->name())));
-        QVERIFY2(loader->property("item").value<QQuickItem *>() != nullptr,
-                 qPrintable(QStringLiteral("Panel loader has no item after clicking %1").arg(comp->name())));
-    }
+    clickThroughAllComponents(vehicle);
 
     });
 }
@@ -95,23 +55,12 @@ void PX4VehicleConfigUITest::_testDisconnectWithPIDTuningOpen()
     // -------------------------------------------------------------------------
     // Navigate to Configure view and open the PID Tuning sidebar page
     // -------------------------------------------------------------------------
-    QVERIFY2(clickButton(QStringLiteral("toolbar_qgcLogo")), "Failed to click Q logo button");
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("toolbar_viewConfigure"), 2000),
-             "toolbar_viewConfigure button not found");
-    QVERIFY2(clickButton(QStringLiteral("toolbar_viewConfigure")), "Failed to click Configure button");
-    QTest::qWait(_viewDelay);
-
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_root"), 3000),
-             "vehicleConfig_root not found after navigating to Configure");
+    navigateToConfigureView();
+    if (QTest::currentTestFailed()) return;
 
     // PX4TuningComponent::name() returns "PID Tuning" -> objectName "vehicleConfig_comp_PIDTuning"
-    QQuickItem *tuningBtn = findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_comp_PIDTuning"), 2000);
-    QVERIFY2(tuningBtn, "vehicleConfig_comp_PIDTuning button not found");
-
-    scrollIntoView(tuningBtn, QStringLiteral("vehicleConfig_sidebarFlickable"));
-    const QPointF tuningBtnCenter = tuningBtn->mapToScene(QPointF(tuningBtn->width() / 2, tuningBtn->height() / 2));
-    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, tuningBtnCenter.toPoint());
-    QTest::qWait(_pageDelay);
+    clickSidebarButton(QStringLiteral("vehicleConfig_comp_PIDTuning"));
+    if (QTest::currentTestFailed()) return;
 
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_panelLoader"), 2000),
              "vehicleConfig_panelLoader not found after opening PID Tuning");

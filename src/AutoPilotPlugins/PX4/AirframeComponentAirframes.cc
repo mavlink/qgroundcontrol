@@ -26,6 +26,33 @@ QMap<QString, AirframeComponentAirframes::AirframeType_t*>& AirframeComponentAir
     return rgAirframeTypes;
 }
 
+QList<AirframeComponentAirframes::AirframeType_t*> AirframeComponentAirframes::sortedTypes()
+{
+    // Standard airframes show first so users don't have to scroll past the
+    // exotic frames to find a regular quad. The remainder follows in QMap
+    // (alphabetical) order.
+    static const char *priorityNames[] = {
+        "Quadrotor x",
+        "Standard Plane",
+        "Standard VTOL",
+    };
+
+    QList<AirframeType_t*> sorted;
+    for (const char *name : priorityNames) {
+        AirframeType_t *type = rgAirframeTypes.value(QLatin1String(name), nullptr);
+        if (type) {
+            sorted.append(type);
+        }
+    }
+    for (AirframeType_t *type : rgAirframeTypes) {
+        if (!sorted.contains(type)) {
+            sorted.append(type);
+        }
+    }
+
+    return sorted;
+}
+
 void AirframeComponentAirframes::insert(QString& group, QString& image, QString& name, int id)
 {
     AirframeType_t *g;

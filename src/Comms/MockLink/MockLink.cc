@@ -16,6 +16,9 @@
 #include "QGCMath.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QSet>
 #include <QtCore/QRandomGenerator>
@@ -428,6 +431,83 @@ void MockLink::_loadParams()
 
         _mapParamName2Value[compId][paramName] = paramValue;
         _mapParamName2MavParamType[compId][paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
+    }
+}
+
+/// Unit test support: MAV_CMD_PREFLIGHT_STORAGE with param1=2 (as sent by
+/// ParameterManager::resetAllParametersToDefaults) resets all parameters to the
+/// firmware default values from the parameter metadata
+/// (MockLink.Parameter.MetaData.json) rather than the initial values from the
+/// .params file. SYS_AUTOSTART is preserved unless setResetSysAutostartOnParamReset
+/// has been called, so the simulated airframe doesn't change by default.
+void MockLink::_resetParamsToDefaults()
+{
+    if (_firmwareType != MAV_AUTOPILOT_PX4) {
+        // The parameter metadata defaults are PX4-specific
+        qCWarning(MockLinkLog) << "Param reset to defaults only supported for PX4 firmware";
+        return;
+    }
+
+    QFile metaDataFile(QStringLiteral(":/MockLink/Parameter.MetaData.json"));
+    if (!metaDataFile.open(QFile::ReadOnly)) {
+        qCWarning(MockLinkLog) << "Unable to open parameter metadata for reset" << metaDataFile.fileName();
+        return;
+    }
+
+    QJsonParseError parseError{};
+    const QJsonDocument doc = QJsonDocument::fromJson(metaDataFile.readAll(), &parseError);
+    if (parseError.error != QJsonParseError::NoError) {
+        qCWarning(MockLinkLog) << "Unable to parse parameter metadata for reset:" << parseError.errorString();
+        return;
+    }
+
+    QHash<QString, QVariant> defaults;
+    const QJsonArray parameters = doc.object().value(QStringLiteral("parameters")).toArray();
+    for (const QJsonValue &parameter : parameters) {
+        const QJsonObject paramObject = parameter.toObject();
+        if (paramObject.contains(QStringLiteral("default"))) {
+            defaults[paramObject.value(QStringLiteral("name")).toString()] = paramObject.value(QStringLiteral("default")).toVariant();
+        }
+    }
+
+    for (auto compIt = _mapParamName2Value.begin(); compIt != _mapParamName2Value.end(); ++compIt) {
+        const int compId = compIt.key();
+        for (auto paramIt = compIt.value().begin(); paramIt != compIt.value().end(); ++paramIt) {
+            const QString &paramName = paramIt.key();
+            if (!_resetSysAutostartOnParamReset && (paramName == QLatin1String("SYS_AUTOSTART"))) {
+                continue;
+            }
+            const auto defaultIt = defaults.constFind(paramName);
+            if (defaultIt == defaults.constEnd()) {
+                continue;
+            }
+            switch (_mapParamName2MavParamType[compId][paramName]) {
+            case MAV_PARAM_TYPE_REAL32:
+                paramIt.value() = QVariant(defaultIt->toFloat());
+                break;
+            case MAV_PARAM_TYPE_UINT32:
+                paramIt.value() = QVariant(defaultIt->toUInt());
+                break;
+            case MAV_PARAM_TYPE_INT32:
+                paramIt.value() = QVariant(defaultIt->toInt());
+                break;
+            case MAV_PARAM_TYPE_UINT16:
+                paramIt.value() = QVariant(static_cast<quint16>(defaultIt->toUInt()));
+                break;
+            case MAV_PARAM_TYPE_INT16:
+                paramIt.value() = QVariant(static_cast<qint16>(defaultIt->toInt()));
+                break;
+            case MAV_PARAM_TYPE_UINT8:
+                paramIt.value() = QVariant(static_cast<quint8>(defaultIt->toUInt()));
+                break;
+            case MAV_PARAM_TYPE_INT8:
+                paramIt.value() = QVariant(static_cast<qint8>(defaultIt->toInt()));
+                break;
+            default:
+                qCWarning(MockLinkLog) << "Param reset skipped unhandled type" << _mapParamName2MavParamType[compId][paramName] << paramName;
+                break;
+            }
+        }
     }
 }
 
@@ -1565,6 +1645,16 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         }
         break;
     case MAV_CMD_PREFLIGHT_STORAGE:
+        if (static_cast<int>(request.param1) == 2) {
+            // Reset all parameters to firmware defaults (unit test support)
+            _resetParamsToDefaults();
+        }
+        commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
+        // Unit test support: accept the reboot command so tests can exercise
+        // flows which restart the vehicle (e.g. airframe Apply and Restart).
+        // The actual reboot is not simulated.
         commandResult = MAV_RESULT_ACCEPTED;
         break;
     case MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES:

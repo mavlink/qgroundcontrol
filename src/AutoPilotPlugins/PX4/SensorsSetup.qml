@@ -106,26 +106,10 @@ Item {
     }
 
     function orientationsButtonVisible() {
-        if (_sensorsHaveFixedOrientation || !showSetOrientations) {
-            return false
-        } else if (_boardOrientationChangeAllowed) {
-            return true
-        } else if (_compassOrientationChangeAllowed && !_allMagsDisabled) {
-            for (var index=0; index<_arbitrarilyLargeMaxMagIndex; index++) {
-                var magIdParam = _calMagIdParamFormat.replace("#", index)
-                if (controller.parameterExists(-1, magIdParam)) {
-                    var calMagIdFact = controller.parameterExists(-1, magIdParam)
-                    var calMagRotFact = controller.parameterExists(-1, _calMagRotParamFormat.replace("#", index))
-                    if (calMagIdFact.value > 0 && calMagRotFact.value >= 0) {
-                        // Only external compasses can set orientation
-                        return true
-                    }
-                }
-            }
-            return false
-        } else {
-            return false
-        }
+        // Deliberately independent of setOrientationsDialogShowBoardOrientation: that is a
+        // transient flag controlling dialog contents only (cleared by onMagCalComplete) and
+        // must not hide the Orientations button after a compass calibration completes.
+        return !_sensorsHaveFixedOrientation && showSetOrientations
     }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }

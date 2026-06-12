@@ -145,11 +145,24 @@ public:
 
     void setHashCheckNoResponse(bool noResponse) { _hashCheckNoResponse = noResponse; }
 
+    /// Controls whether SYS_AUTOSTART is also reset when a MAV_CMD_PREFLIGHT_STORAGE
+    /// param1=2 (reset params to defaults) command is received. Defaults to false so
+    /// the simulated airframe doesn't change.
+    void setResetSysAutostartOnParamReset(bool reset) { _resetSysAutostartOnParamReset = reset; }
+
     /// Returns the number of standalone PARAM_REQUEST_READ requests for _HASH_CHECK received
     int hashCheckRequestCount() const { return _hashCheckRequestCount; }
 
     /// Change a float parameter value directly on MockLink (for testing cache invalidation)
     void setMockParamValue(int componentId, const QString &paramName, float value);
+
+    /// Change an int32 parameter value directly on MockLink. Used to simulate the
+    /// firmware storing calibration results (e.g. CAL_MAG0_ID).
+    void setInt32ParamValue(int componentId, const QString &paramName, int32_t value) { _mapParamName2Value[componentId][paramName] = QVariant::fromValue(value); }
+
+    /// Returns the current MockLink-side value of a parameter. Used by unit tests
+    /// to verify that PARAM_SET writes reached the simulated firmware.
+    QVariant paramValue(int componentId, const QString &paramName) const { return _mapParamName2Value.value(componentId).value(paramName); }
 
     static MockLink *startPX4MockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
     static MockLink *startGenericMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode = MockConfiguration::FailNone);
@@ -196,6 +209,7 @@ private:
     bool _outgoingMavlinkChannelIsSet() const;
 
     void _loadParams();
+    void _resetParamsToDefaults();
 
     /// Convert from a parameter variant to the float value from mavlink_param_union_t
     float _floatUnionForParam(int componentId, const QString &paramName);
@@ -364,6 +378,7 @@ private:
     bool _hashCheckNoResponse = false;
     int _hashCheckRequestCount = 0;
     bool _paramRequestListHashCheckSent = false;
+    bool _resetSysAutostartOnParamReset = false;
 
     struct RCChannelOverride {
         enum class State { Ignore, Overridden, Released } state = State::Ignore;

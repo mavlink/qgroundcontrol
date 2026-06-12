@@ -36,10 +36,7 @@ AirframeComponentController::AirframeComponentController(void) :
     _autostartId = getParameterFact(ParameterManager::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt();
     _currentVehicleName = QString::number(_autostartId); // Temp val. Replaced with actual vehicle name if found
 
-    for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
-
-        const AirframeComponentAirframes::AirframeType_t* pType = AirframeComponentAirframes::get().values().at(tindex);
-
+    for (const AirframeComponentAirframes::AirframeType_t* pType : AirframeComponentAirframes::sortedTypes()) {
         AirframeType* airframeType = new AirframeType(pType->name, pType->imageResource, this);
         Q_CHECK_PTR(airframeType);
 
