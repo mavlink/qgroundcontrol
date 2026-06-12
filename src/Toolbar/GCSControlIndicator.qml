@@ -393,12 +393,17 @@ Item {
                     visible:                rangeSettingsToggle.expanded
                 }
                 QGCLabel {
+                    id:                     rangeSummaryLabel
                     visible:                rangeSettingsToggle.expanded && hasConfiguredSecondaryGCS
                     Layout.columnSpan:      2
                     color:                  qgcPal.buttonHighlight
+                    // Number of sysids inside the computed range which are neither this GCS nor a configured secondary.
+                    // The protocol encodes the request as a contiguous range, so these would be granted control too
+                    property int unconfiguredIdsInRange: 0
                     text: {
                         var myId = QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
                         var parts = secondaryGCSSetting.split(",")
+                        var ids = [ myId ]
                         var lo = myId
                         var hi = myId
                         for (var i = 0; i < parts.length; i++) {
@@ -406,10 +411,20 @@ Item {
                             if (!isNaN(val) && val >= 1 && val <= 255) {
                                 if (val < lo) lo = val
                                 if (val > hi) hi = val
+                                if (ids.indexOf(val) < 0) ids.push(val)
                             }
                         }
+                        rangeSummaryLabel.unconfiguredIdsInRange = (hi - lo + 1) - ids.length
                         return qsTr("Request range: ") + lo + " - " + hi
                     }
+                }
+                QGCLabel {
+                    visible:                rangeSummaryLabel.visible && rangeSummaryLabel.unconfiguredIdsInRange > 0
+                    Layout.columnSpan:      2
+                    Layout.fillWidth:       true
+                    wrapMode:               Text.WordWrap
+                    color:                  qgcPal.colorOrange
+                    text:                   qsTr("Warning: %1 other GCS id(s) inside this range will also be accepted as operators").arg(rangeSummaryLabel.unconfiguredIdsInRange)
                 }
             }
         }
