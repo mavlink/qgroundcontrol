@@ -2977,7 +2977,7 @@ void Vehicle::clearAllParamMapRC(void)
 
 void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, float thrust, quint16 buttons, quint16 buttons2, float pitchExtension, float rollExtension, float aux1, float aux2, float aux3, float aux4, float aux5, float aux6)
 {
-    if (!_joystickSendAllowed.load(std::memory_order_relaxed)) {
+    if (!_joystickSendAllowed.load(std::memory_order_acquire)) {
         return;
     }
 
@@ -3041,7 +3041,7 @@ void Vehicle::sendJoystickDataThreadSafe(float roll, float pitch, float yaw, flo
 // Channels 1–4 (attitude axes) always carry UINT16_MAX (ignore) and channels 11–18 are unused.
 void Vehicle::sendJoystickAuxRcOverrideThreadSafe(const std::array<uint16_t, kAuxRcOverrideChannelCount> &channelValues, const std::array<bool, kAuxRcOverrideChannelCount> &channelEnabled, bool useRcOverride)
 {
-    if (!_joystickSendAllowed.load(std::memory_order_relaxed)) {
+    if (!_joystickSendAllowed.load(std::memory_order_acquire)) {
         return;
     }
 
@@ -3350,7 +3350,7 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
         _sysid_in_control = controlStatus.gcs_main;
         const uint8_t myId = static_cast<uint8_t>(MAVLinkProtocol::instance()->getSystemId());
         _joystickSendAllowed.store(_sysid_in_control == 0 || _sysid_in_control == myId,
-                                   std::memory_order_relaxed);
+                                   std::memory_order_release);
         if (_sysid_in_control != myId) {
             // Control moved away from this GCS, so a pending revert to takeover not allowed no longer applies
             _timerRevertAllowTakeover.stop();
