@@ -291,6 +291,8 @@ void MockLink::run500HzTasks()
         }
         _logDownloadWorker();
         _availableModesWorker();
+        _apmCompassCalWorker();
+        _apmAccelCalWorker();
     }
 }
 
@@ -435,16 +437,33 @@ void MockLink::_loadParams()
 }
 
 /// Unit test support: MAV_CMD_PREFLIGHT_STORAGE with param1=2 (as sent by
-/// ParameterManager::resetAllParametersToDefaults) resets all parameters to the
-/// firmware default values from the parameter metadata
-/// (MockLink.Parameter.MetaData.json) rather than the initial values from the
-/// .params file. SYS_AUTOSTART is preserved unless setResetSysAutostartOnParamReset
-/// has been called, so the simulated airframe doesn't change by default.
+/// ParameterManager::resetAllParametersToDefaults) resets parameters to firmware defaults.
+///
+/// For PX4: resets all parameters to the values from Parameter.MetaData.json.
+/// SYS_AUTOSTART is preserved unless setResetSysAutostartOnParamReset has been called.
+///
+/// For ArduPilot: resets only the calibration-indicator parameters (compass offsets and
+/// accelerometer offsets) to 0.0, which is the ArduPilot firmware default for an
+/// uncalibrated vehicle. This allows QGC to detect that sensor setup is required after
+/// a reset, matching real ArduPilot behavior.
 void MockLink::_resetParamsToDefaults()
 {
+    if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        // ArduPilot firmware default for calibration-indicator parameters is 0 (uncalibrated).
+        // Resetting these causes QGC's APMSensorsComponent::setupComplete() to return false,
+        // which is the correct post-reset state on a real vehicle.
+        for (auto compIt = _mapParamName2Value.begin(); compIt != _mapParamName2Value.end(); ++compIt) {
+            for (auto paramIt = compIt.value().begin(); paramIt != compIt.value().end(); ++paramIt) {
+                if (kAPMCalOffsetParams.contains(paramIt.key())) {
+                    paramIt.value() = QVariant(0.0f);
+                }
+            }
+        }
+        return;
+    }
+
     if (_firmwareType != MAV_AUTOPILOT_PX4) {
-        // The parameter metadata defaults are PX4-specific
-        qCWarning(MockLinkLog) << "Param reset to defaults only supported for PX4 firmware";
+        qCWarning(MockLinkLog) << "Param reset to defaults not supported for firmware type" << _firmwareType;
         return;
     }
 
@@ -880,6 +899,20 @@ void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
         break;
     case MAVLINK_MSG_ID_SETUP_SIGNING:
         _handleSetupSigning(msg);
+        break;
+    case MAVLINK_MSG_ID_COMMAND_ACK:
+        // GCS sends COMMAND_ACK(command=0) via nextClicked() to acknowledge each pose
+        // during APM full accel calibration (the "Next" button press).
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            mavlink_command_ack_t ack{};
+            mavlink_msg_command_ack_decode(&msg, &ack);
+            if (ack.command == 0) {
+                QMutexLocker locker(&_apmAccelCalMutex);
+                if (_apmAccelCalPosIndex >= 0 && _apmAccelCalPosIndex < 6) {
+                    _apmAccelCalGotAck = true;
+                }
+            }
+        }
         break;
     default:
         break;
@@ -1635,6 +1668,23 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
     case MAV_CMD_DO_MOTOR_TEST:
         commandResult = MAV_RESULT_ACCEPTED;
         break;
+    case MAV_CMD_DO_START_MAG_CAL:
+        // APM onboard compass calibration: start sending MAG_CAL_PROGRESS then MAG_CAL_REPORT
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            QMutexLocker locker(&_apmCompassCalMutex);
+            _apmCompassCalProgress  = 0;
+            _apmCompassCalTickCount = 0;
+            commandResult = MAV_RESULT_ACCEPTED;
+        }
+        break;
+    case MAV_CMD_DO_CANCEL_MAG_CAL:
+        // Stop APM compass calibration worker
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            QMutexLocker locker(&_apmCompassCalMutex);
+            _apmCompassCalProgress = -1;
+            commandResult = MAV_RESULT_ACCEPTED;
+        }
+        break;
     case MAV_CMD_CONTROL_HIGH_LATENCY:
         if (linkConfiguration()->isHighLatency()) {
             _highLatencyTransmissionEnabled = static_cast<int>(request.param1) != 0;
@@ -2210,8 +2260,26 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
     if ((request.param1 == 0) && (request.param2 == 0) && (request.param3 == 0) &&
         (request.param4 == 0) && (request.param5 == 0) && (request.param6 == 0) &&
         (request.param7 == 0)) {
-        // All zeros is a calibration cancel request. See PX4 calibrate_cancel_check().
-        (void) _mockLinkPX4Calibration->cancel();
+        // All zeros is a calibration cancel request.
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            // Send ACCELCAL_VEHICLE_POS_FAILED so controller calls _stopCalibration(Failed)
+            QMutexLocker locker(&_apmAccelCalMutex);
+            if (_apmAccelCalPosIndex >= 0) {
+                mavlink_message_t msg{};
+                mavlink_command_long_t cmd{};
+                cmd.target_system    = 255;
+                cmd.target_component = MAV_COMP_ID_MISSIONPLANNER;
+                cmd.command          = MAV_CMD_ACCELCAL_VEHICLE_POS;
+                cmd.param1           = static_cast<float>(ACCELCAL_VEHICLE_POS_FAILED);
+                (void) mavlink_msg_command_long_encode_chan(
+                    _vehicleSystemId, _vehicleComponentId, _outgoingMavlinkChannel, &msg, &cmd);
+                respondWithMavlinkMessage(msg);
+                _apmAccelCalPosIndex = -1;
+            }
+        } else {
+            // PX4: See PX4 calibrate_cancel_check().
+            (void) _mockLinkPX4Calibration->cancel();
+        }
         return;
     }
 
@@ -2227,8 +2295,16 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
     }
 
     if (request.param5 == 1) {
-        // Accelerometer calibration runs the full pose-driven simulation
-        _mockLinkPX4Calibration->startAccelCalibration();
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            // APM full accelerometer calibration: drive the ACCELCAL_VEHICLE_POS handshake
+            QMutexLocker locker(&_apmAccelCalMutex);
+            _apmAccelCalPosIndex  = 0;
+            _apmAccelCalGotAck    = false;
+            _apmAccelCalTickCount = 0;
+        } else {
+            // Accelerometer calibration runs the full pose-driven simulation
+            _mockLinkPX4Calibration->startAccelCalibration();
+        }
     }
 }
 
@@ -2718,4 +2794,147 @@ void MockLink::_sendAvailableModesMonitor()
 int MockLink::_availableModesCount() const
 {
     return _availableFlightModes.count() - (_availableModesMonitorSeqNumber == 0 ? 1 : 0); // Exclude the delayed mode
+}
+
+// ---------------------------------------------------------------------------
+// ArduPilot compass calibration simulation
+//
+// Driven by _apmCompassCalProgress: -1 = inactive, 0..100 = current pct.
+// Main thread sets it to 0 to start and -1 to stop.
+// Worker sends MAG_CAL_PROGRESS at ~10Hz (every 50 calls of 500Hz worker),
+// then sends MAG_CAL_REPORT when pct reaches 100.
+// ---------------------------------------------------------------------------
+void MockLink::_apmCompassCalWorker()
+{
+    if (_firmwareType != MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        return;
+    }
+
+    QMutexLocker locker(&_apmCompassCalMutex);
+    if (_apmCompassCalProgress < 0) {
+        return;
+    }
+
+    // Tick ~10 Hz: advance every 50 calls of the 500 Hz worker
+    if (++_apmCompassCalTickCount < 50) {
+        return;
+    }
+    _apmCompassCalTickCount = 0;
+
+    const int pct = _apmCompassCalProgress;
+
+    // Send MAG_CAL_PROGRESS for all 3 active compasses
+    mavlink_message_t msg{};
+    for (uint8_t id = 0; id < 3; ++id) {
+        mavlink_mag_cal_progress_t progress{};
+        progress.compass_id      = id;
+        progress.cal_mask        = 0x07; // all 3 compasses
+        progress.cal_status      = MAG_CAL_RUNNING_STEP_ONE;
+        progress.completion_pct  = static_cast<uint8_t>(qMin(pct, 100));
+        (void) mavlink_msg_mag_cal_progress_encode_chan(
+            _vehicleSystemId, _vehicleComponentId, _outgoingMavlinkChannel, &msg, &progress);
+        respondWithMavlinkMessage(msg);
+    }
+
+    if (pct >= 100) {
+        // Send MAG_CAL_REPORT for all 3 compasses
+        for (uint8_t id = 0; id < 3; ++id) {
+            mavlink_mag_cal_report_t report{};
+            report.compass_id  = id;
+            report.cal_mask    = 0x07;
+            report.cal_status  = MAG_CAL_SUCCESS;
+            report.fitness     = 0.5f;
+            (void) mavlink_msg_mag_cal_report_encode_chan(
+                _vehicleSystemId, _vehicleComponentId, _outgoingMavlinkChannel, &msg, &report);
+            respondWithMavlinkMessage(msg);
+        }
+
+        // Write non-zero offsets so QGC sees all compasses as calibrated after refresh.
+        // _mapParamName2Value is owned by MockLink's main thread; dispatch the write there
+        // to avoid a data race with concurrent param reads on the main thread.
+        (void) QMetaObject::invokeMethod(this, [this] {
+            constexpr int compId = MAV_COMP_ID_AUTOPILOT1;
+            _mapParamName2Value[compId][QStringLiteral("COMPASS_OFS_X")]   = QVariant(10.0f);
+            _mapParamName2Value[compId][QStringLiteral("COMPASS_OFS_Y")]   = QVariant(10.0f);
+            _mapParamName2Value[compId][QStringLiteral("COMPASS_OFS_Z")]   = QVariant(10.0f);
+            _mapParamName2Value[compId][QStringLiteral("COMPASS_OFS2_X")]  = QVariant(10.0f);
+            _mapParamName2Value[compId][QStringLiteral("COMPASS_OFS2_Y")]  = QVariant(10.0f);
+            _mapParamName2Value[compId][QStringLiteral("COMPASS_OFS2_Z")]  = QVariant(10.0f);
+            _mapParamName2Value[compId][QStringLiteral("COMPASS_OFS3_X")]  = QVariant(10.0f);
+            _mapParamName2Value[compId][QStringLiteral("COMPASS_OFS3_Y")]  = QVariant(10.0f);
+            _mapParamName2Value[compId][QStringLiteral("COMPASS_OFS3_Z")]  = QVariant(10.0f);
+        }, Qt::QueuedConnection);
+
+        _apmCompassCalProgress = -1; // deactivate
+    } else {
+        _apmCompassCalProgress = qMin(pct + 5, 100);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// ArduPilot full accelerometer calibration simulation
+//
+// The firmware sends COMMAND_LONG(MAV_CMD_ACCELCAL_VEHICLE_POS, pos) to QGC
+// and waits for a COMMAND_ACK (the "Next" button press) before advancing.
+// State: _apmAccelCalPosIndex -1=inactive, 0..5=current pose, 6=done.
+// ---------------------------------------------------------------------------
+void MockLink::_apmAccelCalWorker()
+{
+    if (_firmwareType != MAV_AUTOPILOT_ARDUPILOTMEGA) {
+        return;
+    }
+
+    QMutexLocker locker(&_apmAccelCalMutex);
+    if (_apmAccelCalPosIndex < 0) {
+        return;
+    }
+
+    if (_apmAccelCalPosIndex == 6) {
+        // All poses done: send SUCCESS
+        mavlink_message_t msg{};
+        mavlink_command_long_t cmd{};
+        cmd.target_system    = 255; // GCS
+        cmd.target_component = MAV_COMP_ID_MISSIONPLANNER;
+        cmd.command          = MAV_CMD_ACCELCAL_VEHICLE_POS;
+        cmd.param1           = static_cast<float>(ACCELCAL_VEHICLE_POS_SUCCESS);
+        (void) mavlink_msg_command_long_encode_chan(
+            _vehicleSystemId, _vehicleComponentId, _outgoingMavlinkChannel, &msg, &cmd);
+        respondWithMavlinkMessage(msg);
+
+        // Write non-zero accel offsets.
+        // _mapParamName2Value is owned by MockLink's main thread; dispatch the write there
+        // to avoid a data race with concurrent param reads on the main thread.
+        (void) QMetaObject::invokeMethod(this, [this] {
+            constexpr int compId = MAV_COMP_ID_AUTOPILOT1;
+            _mapParamName2Value[compId][QStringLiteral("INS_ACCOFFS_X")] = QVariant(0.1f);
+            _mapParamName2Value[compId][QStringLiteral("INS_ACCOFFS_Y")] = QVariant(0.1f);
+            _mapParamName2Value[compId][QStringLiteral("INS_ACCOFFS_Z")] = QVariant(0.1f);
+        }, Qt::QueuedConnection);
+
+        _apmAccelCalPosIndex = -1;
+        return;
+    }
+
+    // Send the current position request once; wait for Next ack before advancing
+    if (!_apmAccelCalGotAck) {
+        // Throttle re-sends to ~10 Hz
+        if (++_apmAccelCalTickCount < 50) {
+            return;
+        }
+        _apmAccelCalTickCount = 0;
+
+        mavlink_message_t msg{};
+        mavlink_command_long_t cmd{};
+        cmd.target_system    = 255;
+        cmd.target_component = MAV_COMP_ID_MISSIONPLANNER;
+        cmd.command          = MAV_CMD_ACCELCAL_VEHICLE_POS;
+        cmd.param1           = static_cast<float>(kAPMAccelCalPosSequence[_apmAccelCalPosIndex]);
+        (void) mavlink_msg_command_long_encode_chan(
+            _vehicleSystemId, _vehicleComponentId, _outgoingMavlinkChannel, &msg, &cmd);
+        respondWithMavlinkMessage(msg);
+    } else {
+        // Ack received — advance to next pose
+        _apmAccelCalGotAck  = false;
+        _apmAccelCalPosIndex++;
+    }
 }

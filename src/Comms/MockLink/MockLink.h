@@ -2,6 +2,7 @@
 
 #include "PX4/px4_custom_mode.h"
 #include "LinkInterface.h"
+#include "MAVLinkEnums.h"
 #include "MAVLinkMessageType.h"
 #include "QGCMAVLinkTypes.h"
 #include "MockConfiguration.h"
@@ -275,6 +276,8 @@ private:
     void _paramRequestListWorker();
     void _logDownloadWorker();
     void _availableModesWorker();
+    void _apmCompassCalWorker();
+    void _apmAccelCalWorker();
     void _sendAvailableMode(uint8_t modeIndexOneBased);
     int  _availableModesCount() const;
     void _moveADSBVehicle(int vehicleIndex);
@@ -380,6 +383,30 @@ private:
     bool _paramRequestListHashCheckSent = false;
     bool _resetSysAutostartOnParamReset = false;
 
+    // APM compass calibration worker state
+    // Protects _apmCompassCalProgress: main thread writes 0 to start/stop,
+    // worker thread reads/increments each 100ms tick.
+    QMutex _apmCompassCalMutex;
+    int    _apmCompassCalProgress  = -1; ///< -1 = inactive, 0-100 = progress pct
+    int    _apmCompassCalTickCount = 0;  ///< 500 Hz tick counter for ~10 Hz throttle
+
+    // APM accel calibration worker state
+    // Protects _apmAccelCalPos: main thread writes the starting pos,
+    // worker thread reads and advances through the sequence.
+    QMutex _apmAccelCalMutex;
+    /// Each position the firmware sends to QGC in sequence
+    static constexpr ACCELCAL_VEHICLE_POS kAPMAccelCalPosSequence[] = {
+        ACCELCAL_VEHICLE_POS_LEVEL,
+        ACCELCAL_VEHICLE_POS_LEFT,
+        ACCELCAL_VEHICLE_POS_RIGHT,
+        ACCELCAL_VEHICLE_POS_NOSEDOWN,
+        ACCELCAL_VEHICLE_POS_NOSEUP,
+        ACCELCAL_VEHICLE_POS_BACK,
+    };
+    int  _apmAccelCalPosIndex   = -1;   ///< -1 = inactive, 0..5 = current pos, 6 = done
+    bool _apmAccelCalGotAck     = false; ///< GCS clicked Next
+    int  _apmAccelCalTickCount  = 0;    ///< 500 Hz tick counter for ~10 Hz throttle
+
     struct RCChannelOverride {
         enum class State { Ignore, Overridden, Released } state = State::Ignore;
         uint16_t value = 0;
@@ -421,6 +448,16 @@ private:
     static constexpr uint32_t _logDownloadFileSize = 1000;  ///< Size of simulated log file
 
     static constexpr bool _mavlinkStarted = true;
+
+    /// ArduPilot calibration-indicator parameters whose firmware default is 0 (uncalibrated).
+    /// Used by _resetParamsToDefaults() and MockLinkFTP::_generateParamPck() to keep both
+    /// sites in sync.
+    inline static const QSet<QString> kAPMCalOffsetParams = {
+        QStringLiteral("COMPASS_OFS_X"),  QStringLiteral("COMPASS_OFS_Y"),  QStringLiteral("COMPASS_OFS_Z"),
+        QStringLiteral("COMPASS_OFS2_X"), QStringLiteral("COMPASS_OFS2_Y"), QStringLiteral("COMPASS_OFS2_Z"),
+        QStringLiteral("COMPASS_OFS3_X"), QStringLiteral("COMPASS_OFS3_Y"), QStringLiteral("COMPASS_OFS3_Z"),
+        QStringLiteral("INS_ACCOFFS_X"),  QStringLiteral("INS_ACCOFFS_Y"),  QStringLiteral("INS_ACCOFFS_Z"),
+    };
 
     static QList<FlightMode_t> _availableFlightModes;
 

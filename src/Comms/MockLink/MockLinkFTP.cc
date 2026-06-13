@@ -683,10 +683,13 @@ QString MockLinkFTP::_generateParamPck(bool withDefaults)
             commonLen = 0;
         }
 
-        // For MockLink all params are at defaults, so when withDefaults is requested
-        // we still include the default value for every param (matching real ArduPilot
-        // behavior where value == default means no default flag, but we include them
-        // so QGC can show default values in the UI)
+        // For ArduPilot, calibration-indicator parameters have a firmware default of 0
+        // (uncalibrated). All other parameters use their current value as the default,
+        // since MockLink params are loaded from a snapshot and we have no separate
+        // defaults file.
+        const bool useZeroDefault = withDefaults
+            && (_mockLink->getFirmwareType() == MAV_AUTOPILOT_ARDUPILOTMEGA)
+            && MockLink::kAPMCalOffsetParams.contains(name);
         const bool addDefault = withDefaults;
         const quint8 flags = addDefault ? 0x01 : 0x00;
         const int packedLen = 2 + nameLen + valueSize + (addDefault ? valueSize : 0);
@@ -721,19 +724,19 @@ QString MockLinkFTP::_generateParamPck(bool withDefaults)
         case AP_PARAM_INT8: {
             const qint8 v = static_cast<qint8>(value.toInt());
             stream << v;
-            if (addDefault) stream << v;
+            if (addDefault) stream << (useZeroDefault ? qint8(0) : v);
             break;
         }
         case AP_PARAM_INT16: {
             const qint16 v = static_cast<qint16>(value.toInt());
             stream << v;
-            if (addDefault) stream << v;
+            if (addDefault) stream << (useZeroDefault ? qint16(0) : v);
             break;
         }
         case AP_PARAM_INT32: {
             const qint32 v = value.toInt();
             stream << v;
-            if (addDefault) stream << v;
+            if (addDefault) stream << (useZeroDefault ? qint32(0) : v);
             break;
         }
         case AP_PARAM_FLOAT: {
@@ -741,7 +744,13 @@ QString MockLinkFTP::_generateParamPck(bool withDefaults)
             qint32 raw;
             memcpy(&raw, &f, sizeof(raw));
             stream << raw;
-            if (addDefault) stream << raw;
+            if (addDefault) {
+                if (useZeroDefault) {
+                    stream << qint32(0);
+                } else {
+                    stream << raw;
+                }
+            }
             break;
         }
         }

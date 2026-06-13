@@ -58,6 +58,24 @@ void VehicleConfigUITestBase::resetParamsToFirmwareDefaults(Vehicle *vehicle, co
              "Parameters never refreshed to firmware defaults");
 }
 
+void VehicleConfigUITestBase::resetAPMParamsToUncalibrated(Vehicle *vehicle)
+{
+    ParameterManager *mgr = vehicle->parameterManager();
+
+    QVERIFY2(mgr->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_OFS_X")),
+             "COMPASS_OFS_X parameter not found");
+    Fact *compassOfs = mgr->getParameter(ParameterManager::defaultComponentId, QStringLiteral("COMPASS_OFS_X"));
+    QVERIFY2(compassOfs, "COMPASS_OFS_X fact not found");
+
+    // Sends MAV_CMD_PREFLIGHT_STORAGE param1=2 which MockLink's APM branch zeroes
+    // the compass and accel offset parameters.
+    mgr->resetAllParametersToDefaults();
+    mgr->refreshAllParameters();
+
+    QVERIFY2(QTest::qWaitFor([&] { return qFuzzyIsNull(compassOfs->rawValue().toFloat()); }, 30000),
+             "COMPASS_OFS_X never refreshed to 0 after APM param reset");
+}
+
 void VehicleConfigUITestBase::clickThroughAllComponents(Vehicle *vehicle, const QString &vehicleName)
 {
     const QString prefix = vehicleName.isEmpty() ? QString() : (vehicleName + QStringLiteral(": "));
