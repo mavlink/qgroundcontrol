@@ -33,6 +33,12 @@ protected:
     /// sentinel for the refresh completing.
     void resetParamsToFirmwareDefaults(Vehicle *vehicle, const QString &sentinelParamName);
 
+    /// Reset an APM MockLink to an uncalibrated state by sending
+    /// MAV_CMD_PREFLIGHT_STORAGE param1=2 (which MockLink now zeros the
+    /// calibration-indicator params for ArduPilot) and waiting for
+    /// COMPASS_OFS_X to read back as 0 from the vehicle.
+    void resetAPMParamsToUncalibrated(Vehicle *vehicle);
+
     /// Click through every vehicle component in the config sidebar and verify
     /// each one loads a panel. Hidden components (e.g. optional peripherals not
     /// present) are skipped silently. When non-empty, \a vehicleName is

@@ -94,13 +94,25 @@ void QmlUITestBase::closeUIWindow()
 {
     if (_window) {
         _window->close();
-        QTest::qWait(100);
+        (void) QTest::qWaitFor([this] { return !_window->isVisible(); }, 1000);
+        for (int i = 0; i < 5; ++i) {
+            QCoreApplication::processEvents();
+            QTest::qWait(20);
+        }
     }
 }
 
 void QmlUITestBase::destroyUIEngine()
 {
     if (_engine) {
+        // Give asynchronous QML item creation/destruction a brief drain window
+        // before engine teardown to avoid strict-mode warnings at shutdown.
+        for (int i = 0; i < 10; ++i) {
+            _engine->collectGarbage();
+            QCoreApplication::processEvents();
+            QTest::qWait(10);
+        }
+
         // Force GC and event processing so QML releases references to C++ singletons
         // (e.g. SettingsFacts) before the engine is destroyed.  Without this,
         // QQmlData attached to those objects fires stale binding updates during
