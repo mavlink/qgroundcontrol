@@ -424,7 +424,11 @@ Item {
                 QGCLabel {
                     visible:                rangeSummaryLabel.visible && rangeSummaryLabel.unconfiguredIdsInRange > 0
                     Layout.columnSpan:      2
+                    // preferredWidth 0 keeps the long warning text from inflating the
+                    // panel's natural width; fillWidth then stretches it to whatever
+                    // width the other panel elements already establish, wrapping inside it
                     Layout.fillWidth:       true
+                    Layout.preferredWidth:  0
                     wrapMode:               Text.WordWrap
                     color:                  qgcPal.colorOrange
                     text:                   qsTr("Warning: %1 other GCS id(s) inside this range will also be accepted as operators").arg(rangeSummaryLabel.unconfiguredIdsInRange)
