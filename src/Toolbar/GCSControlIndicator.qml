@@ -21,8 +21,11 @@ Item {
     property bool   requestControlAllowTakeover:            requestControlAllowTakeoverFact.rawValue
     property bool   isThisGCSinControl:                     gcsMain == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
     property bool   sendControlRequestAllowed:              activeVehicle ? activeVehicle.sendControlRequestAllowed : false
+    // When nobody is in control (uncontrolled) or takeover is allowed, the autopilot grants control
+    // immediately, so there is no owner to ask and no request countdown
+    property bool   controlGrantedImmediately:              sysidInControl == 0 || gcsControlStatusFlags_TakeoverAllowed
 
-    property Fact   secondaryGCSSettingFact:                 QGroundControl.settingsManager.flyViewSettings.operatorControlSecondaryGCS
+    property Fact   secondaryGCSSettingFact:                QGroundControl.settingsManager.flyViewSettings.operatorControlSecondaryGCS
     property string secondaryGCSSetting:                    secondaryGCSSettingFact.rawValue
     property bool   hasConfiguredSecondaryGCS:              secondaryGCSSetting.length > 0
 
@@ -304,9 +307,9 @@ Item {
                     enabled:                gcsControlStatusFlags_TakeoverAllowed || isThisGCSinControl
                 }
                 QGCButton {
-                    text:                   gcsControlStatusFlags_TakeoverAllowed ? qsTr("Acquire Control") : qsTr("Send Request")
+                    text:                   controlGrantedImmediately ? qsTr("Acquire Control") : qsTr("Send Request")
                     onClicked: {
-                        var timeout = gcsControlStatusFlags_TakeoverAllowed ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
+                        var timeout = controlGrantedImmediately ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
                         control.activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
                         if (timeout > 0) {
                             startProgressTracker(timeout)
@@ -318,11 +321,11 @@ Item {
                 }
                 QGCLabel {
                     text:                   qsTr("Request Timeout (sec):")
-                    visible:                !isThisGCSinControl && !gcsControlStatusFlags_TakeoverAllowed
+                    visible:                !isThisGCSinControl && !controlGrantedImmediately
                 }
                 FactTextField {
                     fact:                   QGroundControl.settingsManager.flyViewSettings.requestControlTimeout
-                    visible:                !isThisGCSinControl && !gcsControlStatusFlags_TakeoverAllowed
+                    visible:                !isThisGCSinControl && !controlGrantedImmediately
                     Layout.alignment:       Qt.AlignRight
                     Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 7
                 }
