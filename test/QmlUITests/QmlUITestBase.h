@@ -74,6 +74,29 @@ protected:
     /// Returns false if the item cannot be found.
     bool clickButton(const QString &objectName);
 
+    /// Open the toolbar Q-logo tool-select dropdown and click the entry with
+    /// objectName \a viewObjectName (e.g. "toolbar_viewPlan", "toolbar_viewClose").
+    /// Clicks the Q logo, waits up to \a timeoutMs for the entry to appear, then
+    /// clicks it. Returns false (after recording a test failure) if any step fails.
+    bool clickToolSelectDropdownButton(const QString &viewObjectName, int timeoutMs = 2000);
+
+    /// Wait up to \a timeoutMs for a QGCPopupDialog whose title contains
+    /// \a titleSubstring to become visible. Matches against the dialog title
+    /// label (objectName "popupDialog_title"). Returns true once found.
+    bool waitForDialog(const QString &titleSubstring, int timeoutMs = 3000);
+
+    /// Returns true if a QGCPopupDialog whose title contains \a titleSubstring
+    /// is currently visible. Does not wait — use to assert a dialog is absent.
+    bool dialogVisible(const QString &titleSubstring);
+
+    /// Wait up to \a timeoutMs for the popup dialog accept button to become
+    /// visible, then click it. Returns false if the button never appears.
+    bool acceptDialog(int timeoutMs = 3000);
+
+    /// Wait up to \a timeoutMs for the popup dialog reject button to become
+    /// visible, then click it. Returns false if the button never appears.
+    bool rejectDialog(int timeoutMs = 3000);
+
     /// Verify the enabled state of a visible item found by \a objectName,
     /// waiting up to 2 seconds for bindings to settle. Returns false (after
     /// recording a test failure) if the item is missing or the enabled state

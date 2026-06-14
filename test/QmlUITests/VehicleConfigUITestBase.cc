@@ -12,10 +12,8 @@
 
 void VehicleConfigUITestBase::navigateToConfigureView()
 {
-    QVERIFY2(clickButton(QStringLiteral("toolbar_qgcLogo")), "Failed to click Q logo button");
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("toolbar_viewConfigure"), 2000),
-             "toolbar_viewConfigure button not found");
-    QVERIFY2(clickButton(QStringLiteral("toolbar_viewConfigure")), "Failed to click Configure button");
+    QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewConfigure")),
+             "Failed to navigate to Configure view");
     QTest::qWait(_viewDelay);
 
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("vehicleConfig_root"), 3000),

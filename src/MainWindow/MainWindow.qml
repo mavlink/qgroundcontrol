@@ -235,13 +235,11 @@ ApplicationWindow {
         return true
     }
 
-    property string closeDialogTitle: qsTr("Close %1").arg(QGroundControl.appName)
-
     function checkForUnsavedMission() {
         if (planView._planMasterController.dirtyForSave || planView._planMasterController.dirtyForUpload) {
             let accepted = false
             _reentrantCloseGuard = true
-            _showMessageDialogWorker(mainWindow, closeDialogTitle,
+            _showMessageDialogWorker(mainWindow, qsTr("Unsaved Mission"),
                               qsTr("You have a mission edit in progress which has not been saved/uploaded. If you close you will lose changes. Are you sure you want to close?"),
                               Dialog.Yes | Dialog.No,
                               function() { accepted = true; _closeChecksToSkip |= _skipUnsavedMissionCheckMask; performCloseChecks() },
@@ -258,7 +256,7 @@ ApplicationWindow {
             if (QGroundControl.multiVehicleManager.vehicles.get(index).parameterManager.pendingWrites) {
                 let accepted = false
                 _reentrantCloseGuard = true
-                _showMessageDialogWorker(mainWindow, closeDialogTitle,
+                _showMessageDialogWorker(mainWindow, qsTr("Pending Parameter Updates"),
                     qsTr("You have pending parameter updates to a vehicle. If you close you will lose changes. Are you sure you want to close?"),
                     Dialog.Yes | Dialog.No,
                     function() { accepted = true; _closeChecksToSkip |= _skipPendingParameterWritesCheckMask; performCloseChecks() },
@@ -274,7 +272,7 @@ ApplicationWindow {
         if (QGroundControl.multiVehicleManager.activeVehicle) {
             let accepted = false
             _reentrantCloseGuard = true
-            _showMessageDialogWorker(mainWindow, closeDialogTitle,
+            _showMessageDialogWorker(mainWindow, qsTr("Active Vehicle Connections"),
                 qsTr("There are still active connections to vehicles. Are you sure you want to exit?"),
                 Dialog.Yes | Dialog.No,
                 function() { accepted = true; _closeChecksToSkip |= _skipActiveConnectionsCheckMask; performCloseChecks() },

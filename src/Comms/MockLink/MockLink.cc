@@ -98,6 +98,10 @@ MockLink::MockLink(SharedLinkConfigurationPtr &config, QObject *parent)
         setArmed(true);
     }
 
+    if (_mockConfig->preloadMission()) {
+        _missionItemHandler->loadSimpleMultirotorMission();
+    }
+
     // Initialize ADS-B vehicles with different starting conditions
     _adsbVehicles.reserve(_numberOfVehicles);
     for (int i = 0; i < _numberOfVehicles; ++i) {
@@ -2188,7 +2192,7 @@ MockLink *MockLink::_startMockLink(MockConfiguration *mockConfig)
     return nullptr;
 }
 
-MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode, bool preloadMission)
 {
     MockConfiguration *const mockConfig = new MockConfiguration(configName);
 
@@ -2198,6 +2202,7 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
     mockConfig->setEnableCamera(enableCamera);
     mockConfig->setEnableGimbal(enableGimbal);
     mockConfig->setFailureMode(failureMode);
+    mockConfig->setPreloadMission(preloadMission);
 
     return _startMockLink(mockConfig);
 }
@@ -2205,6 +2210,11 @@ MockLink *MockLink::_startMockLinkWorker(const QString &configName, MAV_AUTOPILO
 MockLink *MockLink::startPX4MockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
 {
     return _startMockLinkWorker(QStringLiteral("PX4 MultiRotor MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, sendStatusText, enableCamera, enableGimbal, failureMode);
+}
+
+MockLink *MockLink::startPX4MockLinkWithMission(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)
+{
+    return _startMockLinkWorker(QStringLiteral("PX4 MultiRotor MockLink"), MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, sendStatusText, enableCamera, enableGimbal, failureMode, true /* preloadMission */);
 }
 
 MockLink *MockLink::startGenericMockLink(bool sendStatusText, bool enableCamera, bool enableGimbal, MockConfiguration::FailureMode_t failureMode)

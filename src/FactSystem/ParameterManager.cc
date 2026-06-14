@@ -1557,6 +1557,17 @@ bool ParameterManager::pendingWrites() const
     return _pendingWritesCount > 0;
 }
 
+#ifdef QGC_UNITTEST_BUILD
+void ParameterManager::setPendingWritesForTest(bool pending)
+{
+    const bool wasPending = (_pendingWritesCount > 0);
+    _pendingWritesCount = pending ? 1 : 0;
+    if (wasPending != pending) {
+        emit pendingWritesChanged(pending);
+    }
+}
+#endif
+
 Vehicle *ParameterManager::vehicle()
 {
     return _vehicle;

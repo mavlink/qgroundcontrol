@@ -806,6 +806,16 @@ void UnitTest::init()
     _expectedLogMessages->pending.clear();
     _expectedLogMessages->consumedMessageIndices.clear();
 
+    // MockLink emulates an Open Drone ID device (sends OPEN_DRONE_ID_ARM_STATUS at
+    // 1Hz), which makes RemoteIDManager start its periodic send timer. That timer
+    // warns about the missing GCS GPS fix — but headless unit tests never have a
+    // GCS GPS source, so this is expected noise. Whether the timer ticks inside a
+    // given test's strict-mode capture window is timing-dependent, so without this
+    // ignore the warning lands in a random test each full run, causing flaky
+    // failures across many vehicle/UI tests. Ignore it globally.
+    ignoreLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^GCS GPS error:")));
+
     // Start capturing log messages for this test (cleared from previous test)
     LogManager::clearCapturedMessages();
     LogManager::setCaptureEnabled(true);

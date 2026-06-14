@@ -21,6 +21,8 @@
 #include "QGCFileDialogController.h"
 #include "QGCImageProvider.h"
 #include "SettingsManager.h"
+#include "TerrainQuery.h"
+#include "TerrainTest.h"
 #include "Vehicle.h"
 
 void QmlUITestBase::startUI()
@@ -38,6 +40,12 @@ void QmlUITestBase::startUI()
     MAVLinkProtocol::instance()->init();
     MultiVehicleManager::instance()->init();
 
+    // Replace the live terrain backend with the synthetic unit-test provider so
+    // mission editing in the UI never makes real HTTP terrain requests. Live
+    // fetches can return HTTP 500, emitting warning logs that trip the
+    // strict-mode log check. Restored to the default backend in stopUI().
+    TerrainAtCoordinateBatchManager::instance()->setTerrainQueryInterface(new UnitTestTerrainQuery());
+
     // Suppress first-run prompts so they don't block the UI
     AppSettings *appSettings = SettingsManager::instance()->appSettings();
     const QList<int> promptIds = QGCCorePlugin::instance()->firstRunPromptStdIds();
@@ -54,6 +62,17 @@ void QmlUITestBase::startUI()
                      QRegularExpression(QStringLiteral("Populating font family aliases")));
     ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("QRhiGles2")));
+
+    // The synthetic terrain provider installed above only covers coordinate
+    // queries routed through TerrainAtCoordinateBatchManager. Path/carpet queries
+    // (TerrainPathQuery, TerrainAreaQuery) hardcode their own online backend and
+    // hit the live terrain server, which intermittently returns HTTP errors. Those
+    // are external-server reachability warnings, never something a UI smoke test
+    // should assert on, so ignore them to keep the full run deterministic.
+    ignoreLogMessage("QtLocationPlugin.QGeoTiledMapReplyQGC", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Error transferring")));
+    ignoreLogMessage("Terrain.TerrainTileManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Elevation tile fetching returned error")));
 #ifdef QT_DEBUG
     // Debug builds on macOS are ad-hoc signed with an unbound Info.plist, so
     // macOS never shows the camera permission dialog and silently denies access.
@@ -133,6 +152,11 @@ void QmlUITestBase::stopUI()
 {
     closeUIWindow();
     destroyUIEngine();
+
+    // Restore the default terrain backend. The batch manager is a process-global
+    // singleton shared across all tests in a single-process --unittest run, so the
+    // mock must not leak into later tests.
+    TerrainAtCoordinateBatchManager::instance()->setTerrainQueryInterface(new TerrainOfflineQuery());
 }
 
 void QmlUITestBase::_verifyFileDialogTestHookConsumed()
@@ -152,6 +176,75 @@ bool QmlUITestBase::clickButton(const QString &objectName)
     const QPointF center = btn->mapToScene(QPointF(btn->width() / 2, btn->height() / 2));
     QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, center.toPoint());
     return true;
+}
+
+bool QmlUITestBase::clickToolSelectDropdownButton(const QString &viewObjectName, int timeoutMs)
+{
+    if (!clickButton(QStringLiteral("toolbar_qgcLogo"))) {
+        QTest::qFail("Failed to click Q logo button", __FILE__, __LINE__);
+        return false;
+    }
+    if (!findVisibleItem(_rootItem, viewObjectName, timeoutMs)) {
+        QTest::qFail(qPrintable(QStringLiteral("Tool select dropdown button not found: %1").arg(viewObjectName)),
+                     __FILE__, __LINE__);
+        return false;
+    }
+    if (!clickButton(viewObjectName)) {
+        QTest::qFail(qPrintable(QStringLiteral("Failed to click tool select dropdown button: %1").arg(viewObjectName)),
+                     __FILE__, __LINE__);
+        return false;
+    }
+    return true;
+}
+
+// Recursively search the visible item tree for an item with the given
+// objectName whose "text" property contains the given substring. Used to
+// locate a specific dialog by its title label.
+static QQuickItem *_findVisibleItemWithText(QQuickItem *root, const QString &objectName, const QString &textSubstring)
+{
+    if (!root || !root->isVisible()) {
+        return nullptr;
+    }
+    if (root->objectName() == objectName) {
+        const QVariant textProp = root->property("text");
+        if (textProp.isValid() && textProp.toString().contains(textSubstring)) {
+            return root;
+        }
+    }
+    const auto children = root->childItems();
+    for (auto *child : children) {
+        if (auto *found = _findVisibleItemWithText(child, objectName, textSubstring)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
+bool QmlUITestBase::dialogVisible(const QString &titleSubstring)
+{
+    return _findVisibleItemWithText(_rootItem, QStringLiteral("popupDialog_title"), titleSubstring) != nullptr;
+}
+
+bool QmlUITestBase::waitForDialog(const QString &titleSubstring, int timeoutMs)
+{
+    return waitForCondition([this, &titleSubstring] { return dialogVisible(titleSubstring); },
+                            timeoutMs, QStringLiteral("dialog '%1'").arg(titleSubstring));
+}
+
+bool QmlUITestBase::acceptDialog(int timeoutMs)
+{
+    if (!findVisibleItem(_rootItem, QStringLiteral("popupDialog_acceptButton"), timeoutMs)) {
+        return false;
+    }
+    return clickButton(QStringLiteral("popupDialog_acceptButton"));
+}
+
+bool QmlUITestBase::rejectDialog(int timeoutMs)
+{
+    if (!findVisibleItem(_rootItem, QStringLiteral("popupDialog_rejectButton"), timeoutMs)) {
+        return false;
+    }
+    return clickButton(QStringLiteral("popupDialog_rejectButton"));
 }
 
 // Format a property value for failure messages: quote strings, otherwise use

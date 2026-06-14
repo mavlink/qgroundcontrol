@@ -18,14 +18,9 @@ void TopLevelViewsTest::_testNavigateViews()
 
     // Navigate to a view and verify which main panels become visible
     auto navigateAndVerify = [this](const QString &view, bool expectFlyView, bool expectPlanView, bool expectToolDrawer) {
-        QVERIFY2(clickButton(QStringLiteral("toolbar_qgcLogo")),
-                 qPrintable(QStringLiteral("Failed to click Q logo button before %1").arg(view)));
-
         const QString buttonName = QStringLiteral("toolbar_view") + view;
-        QVERIFY2(findVisibleItem(_rootItem, buttonName, 2000),
-                 qPrintable(QStringLiteral("View button not found: %1").arg(buttonName)));
-        QVERIFY2(clickButton(buttonName),
-                 qPrintable(QStringLiteral("Failed to click %1").arg(buttonName)));
+        QVERIFY2(clickToolSelectDropdownButton(buttonName),
+                 qPrintable(QStringLiteral("Failed to navigate to %1").arg(view)));
 
         const int flyTimeout    = expectFlyView    ? 1000 : 0;
         const int planTimeout   = expectPlanView   ? 1000 : 0;

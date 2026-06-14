@@ -260,7 +260,9 @@ void PlanMasterController::_loadGeoFenceComplete(void)
 void PlanMasterController::_loadRallyPointsComplete(void)
 {
     qCDebug(PlanMasterControllerLog) << "PlanMasterController::_loadRallyPointsComplete";
-    _setDirtyStates(containsItems() /* dirtyForSave */, false /* dirtyForUpload */);
+    // A plan just downloaded from the vehicle reflects exactly what is on the vehicle.
+    // The user has made no edits, so it must not be dirty for save or upload.
+    _setDirtyStates(false /* dirtyForSave */, false /* dirtyForUpload */);
 }
 
 void PlanMasterController::_sendMissionComplete(void)

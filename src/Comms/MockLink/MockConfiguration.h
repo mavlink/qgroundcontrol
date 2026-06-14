@@ -111,6 +111,11 @@ public:
     bool startArmed() const { return _startArmed; }
     void setStartArmed(bool armed) { _startArmed = armed; }
 
+    // Test-only: when true, the simulated vehicle starts with a simple
+    // multirotor mission (takeoff, waypoint, RTL) already loaded. Not persisted.
+    bool preloadMission() const { return _preloadMission; }
+    void setPreloadMission(bool preloadMission) { _preloadMission = preloadMission; }
+
 signals:
     void firmwareChanged();
     void vehicleChanged();
@@ -146,6 +151,7 @@ private:
     uint16_t _boardVendorId = 0;
     uint16_t _boardProductId = 0;
     bool _startArmed = false;
+    bool _preloadMission = false;
 
     // Camera capability flags (defaults match current Camera 1 configuration)
     bool _cameraCaptureVideo = true;
