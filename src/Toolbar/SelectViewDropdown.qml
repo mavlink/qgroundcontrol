@@ -99,7 +99,11 @@ ToolIndicatorPage {
                 imageResource: "/res/OpenDoor.svg"
                 onClicked: {
                     if (mainWindow.allowViewSwitch()) {
-                        mainWindow.finishCloseProcess()
+                        mainWindow.closeIndicatorDrawer()
+                        // Route through the window close handler so the unsaved
+                        // mission / pending parameter / active connection checks
+                        // run, matching the desktop window-close behavior.
+                        mainWindow.close()
                     }
                 }
             }

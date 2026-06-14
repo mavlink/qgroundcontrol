@@ -64,6 +64,10 @@ public:
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
     void reset() { _missionItems.clear(); _requestListCounts.clear(); }
 
+    /// Test-only: seeds a simple multirotor mission (takeoff, waypoint, RTL) so that a
+    /// connecting GCS will download a non-empty mission.
+    void loadSimpleMultirotorMission();
+
     void setSendHomePositionOnEmptyList(bool sendHomePositionOnEmptyList) { _sendHomePositionOnEmptyList = sendHomePositionOnEmptyList; }
 
     int requestListCount(MAV_MISSION_TYPE type) const { return _requestListCounts.value(type, 0); }

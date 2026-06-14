@@ -24,6 +24,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/APMSensorsCalibrationUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/PX4AirframeSetupUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/PX4AirframeSetupUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/AppCloseWarningUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/AppCloseWarningUITest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME}
@@ -39,3 +41,4 @@ add_qgc_test(PlanViewUITest LABELS Integration NoSanitizer TIMEOUT 120)
 add_qgc_test(PX4SensorsCalibrationUITest LABELS Integration NoSanitizer TIMEOUT 180)
 add_qgc_test(APMSensorsCalibrationUITest LABELS Integration NoSanitizer TIMEOUT 240)
 add_qgc_test(PX4AirframeSetupUITest LABELS Integration NoSanitizer TIMEOUT 120)
+add_qgc_test(AppCloseWarningUITest LABELS Integration NoSanitizer TIMEOUT 120)

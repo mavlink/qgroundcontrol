@@ -97,9 +97,7 @@ void PlanViewUITest::_testPlanViewStates()
     if (QTest::currentTestFailed()) return;
 
     // Navigate to Plan view
-    QVERIFY2(clickButton(QStringLiteral("toolbar_qgcLogo")), "Failed to click Q logo button");
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("toolbar_viewPlan"), 2000), "Plan view button not found");
-    QVERIFY2(clickButton(QStringLiteral("toolbar_viewPlan")), "Failed to click Plan view button");
+    QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewPlan")), "Failed to navigate to Plan view");
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainView_plan"), 2000), "Plan view did not appear");
     QTest::qWait(_viewDelay);
 

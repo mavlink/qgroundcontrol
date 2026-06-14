@@ -53,7 +53,7 @@ private:
         SaveFalseOnSuccessfulLoad,
         ClearSaveDirtyPreservesUploadTrue,
         ClearSaveDirtyPreservesUploadFalse,
-        DownloadWithItemsDirtyForSave,
+        DownloadWithItemsNotDirtyForSave,
         DownloadEmptyNotDirtyForSave,
     };
 

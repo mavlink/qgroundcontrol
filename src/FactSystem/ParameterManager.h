@@ -90,6 +90,14 @@ public:
 
     bool pendingWrites() const;
 
+#ifdef QGC_UNITTEST_BUILD
+    /// Test-only: deterministically force the pendingWrites state on or off,
+    /// emitting pendingWritesChanged when the state actually changes. Used by
+    /// UI tests to exercise the app-close "pending parameter updates" warning
+    /// without driving the racy real PARAM_SET state machine.
+    void setPendingWritesForTest(bool pending);
+#endif
+
     Vehicle *vehicle();
 
     static MAV_PARAM_TYPE factTypeToMavType(FactMetaData::ValueType_t factType);

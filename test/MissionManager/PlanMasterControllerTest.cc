@@ -78,7 +78,7 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix_data()
     //
     // | State \ Action | Upload OK | Clear | SaveDirty=true | Load plan | Save file OK | Clear save-dirty | Download w/ items | Download empty |
     // |----------------|-----------|-------|----------------|-----------|--------------|------------------|-------------------|----------------|
-    // | dirtyForSave   | unchanged | false | true           | false     | false        | false            | true              | false          |
+    // | dirtyForSave   | unchanged | false | true           | false     | false        | false            | false             | false          |
     // | dirtyForUpload | false     | false | true           | true      | unchanged    | unchanged        | false             | false          |
 
     // Data columns:
@@ -112,7 +112,7 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix_data()
         { SaveFalseOnSuccessfulLoad,          "save false on successful load",       DirtyStateFalse,     DirtyStateTrue },
         { ClearSaveDirtyPreservesUploadTrue,  "clear save dirty keeps upload true",  DirtyStateFalse,     DirtyStateUnchanged },
         { ClearSaveDirtyPreservesUploadFalse, "clear save dirty keeps upload false", DirtyStateFalse,     DirtyStateUnchanged },
-        { DownloadWithItemsDirtyForSave,      "download with items marks save dirty",DirtyStateTrue,      DirtyStateFalse },
+        { DownloadWithItemsNotDirtyForSave,   "download with items stays clean",     DirtyStateFalse,     DirtyStateFalse },
         { DownloadEmptyNotDirtyForSave,       "download empty keeps save clean",     DirtyStateFalse,     DirtyStateFalse },
     };
 
@@ -160,7 +160,7 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix()
     QVERIFY(initialDirtyForUpload != DirtyStateUnchanged);
 
     // Pre-load items for scenarios that need containsItems() == true
-    if (scenario == DownloadWithItemsDirtyForSave) {
+    if (scenario == DownloadWithItemsNotDirtyForSave) {
         _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
     }
 
@@ -226,7 +226,7 @@ void PlanMasterControllerTest::_testDirtyFlagsMatrix()
     case ClearSaveDirtyPreservesUploadFalse:
         _masterController->_setDirtyForSave(false);
         break;
-    case DownloadWithItemsDirtyForSave: {
+    case DownloadWithItemsNotDirtyForSave: {
         QVERIFY(_masterController->containsItems());
         const bool invoked = QMetaObject::invokeMethod(_masterController, "_loadRallyPointsComplete", Qt::DirectConnection);
         QVERIFY(invoked);

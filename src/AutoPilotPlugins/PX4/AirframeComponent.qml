@@ -190,7 +190,6 @@ SetupPage {
 
                                 onCheckedChanged: {
                                     if (checked && combo.currentIndex !== -1) {
-                                        console.log("check box change", combo.currentIndex)
                                         controller.autostartId = modelData.airframes[combo.currentIndex].autostartId
                                     }
                                 }

@@ -27,6 +27,38 @@ void MockLinkMissionItemHandler::_startMissionItemResponseTimer()
     _missionItemResponseTimer.start(500);
 }
 
+void MockLinkMissionItemHandler::loadSimpleMultirotorMission()
+{
+    _missionItems.clear();
+
+    constexpr double homeLatitude = 47.397;
+    constexpr double homeLongitude = 8.5455;
+    constexpr float relativeAltitude = 50.0f;
+
+    const auto makeItem = [](uint16_t seq, uint16_t command, bool current, double latitude, double longitude, float altitude) {
+        mavlink_mission_item_int_t item{};
+        item.seq = seq;
+        item.frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
+        item.command = command;
+        item.current = current ? 1 : 0;
+        item.autocontinue = 1;
+        item.x = static_cast<int32_t>(latitude * 1e7);
+        item.y = static_cast<int32_t>(longitude * 1e7);
+        item.z = altitude;
+        item.mission_type = MAV_MISSION_TYPE_MISSION;
+        return item;
+    };
+
+    // Seq 0: Takeoff
+    _missionItems[0] = makeItem(0, MAV_CMD_NAV_TAKEOFF, true, homeLatitude, homeLongitude, relativeAltitude);
+    // Seq 1: Waypoint
+    _missionItems[1] = makeItem(1, MAV_CMD_NAV_WAYPOINT, false, homeLatitude + 0.001, homeLongitude + 0.001, relativeAltitude);
+    // Seq 2: Return to launch
+    _missionItems[2] = makeItem(2, MAV_CMD_NAV_RETURN_TO_LAUNCH, false, 0.0, 0.0, 0.0);
+
+    qCDebug(MockLinkMissionItemHandlerLog) << "loadSimpleMultirotorMission seeded" << _missionItems.count() << "items";
+}
+
 bool MockLinkMissionItemHandler::handleMavlinkMessage(const mavlink_message_t &msg)
 {
     switch (msg.msgid) {
