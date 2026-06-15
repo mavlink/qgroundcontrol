@@ -24,4 +24,5 @@ public:
     DEFINE_SETTINGFACT(osmFilePath)
     DEFINE_SETTINGFACT(buildingLevelHeight)
     DEFINE_SETTINGFACT(altitudeBias)
+    DEFINE_SETTINGFACT(keepSceneAlive)
 };

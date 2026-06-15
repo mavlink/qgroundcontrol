@@ -49,6 +49,14 @@
             "default": 0,
             "label": "Altitude bias for vehicles in the 3D View",
             "keywords": "altitude bias,3d data"
+        },
+        {
+            "name": "keepSceneAlive",
+            "shortDesc": "Keep the 3D scene loaded in memory when switching back to fly view. Disable on memory-constrained devices.",
+            "type": "bool",
+            "default": true,
+            "label": "Keep 3D scene alive when exiting 3D view",
+            "keywords": "3d view,memory,scene,alive"
         }
     ]
 }

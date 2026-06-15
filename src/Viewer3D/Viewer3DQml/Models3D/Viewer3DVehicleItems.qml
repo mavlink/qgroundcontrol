@@ -163,7 +163,11 @@ Node {
 
     ListModel {
         id: missionWaypointListModel
+    }
 
+    Component.onDestruction: {
+        // This is necessary insurance to prevent crashes after destruction when "keepSceneAlive" setting is disabled.
+        missionWaypointListModel.clear()
     }
 
     DroneModelDjiF450 {
