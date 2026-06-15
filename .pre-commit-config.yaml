@@ -35,7 +35,7 @@ repos:
 
   # Secret detection
   - repo: https://github.com/trufflesecurity/trufflehog
-    rev: v3.95.3
+    rev: v3.95.5
     hooks:
       - id: trufflehog
         args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
@@ -43,7 +43,7 @@ repos:
   # C++ formatting (check-only, use 'clang-format -i' to fix)
   # Note: Install matching clang-format version locally to avoid formatting differences
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v21.1.7
+    rev: v22.1.5
     hooks:
       - id: clang-format
         args: ['--dry-run', '--Werror']
@@ -52,7 +52,7 @@ repos:
 
   # Python formatting (report-only)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.14
+    rev: v0.15.17
     hooks:
       - id: ruff
       - id: ruff-format
@@ -60,7 +60,7 @@ repos:
 
   # Python type checking
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.409
+    rev: v1.1.410
     hooks:
       - id: pyright
         files: ^(tools|test|\.github/scripts)/.*\.py$
@@ -77,7 +77,7 @@ repos:
 
   # uv lockfile sync (keeps tools/uv.lock current with tools/pyproject.toml)
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.15
+    rev: 0.11.21
     hooks:
       - id: uv-lock
         files: ^tools/(pyproject\.toml|uv\.lock)$
@@ -123,7 +123,7 @@ repos:
 
   # JSON Schema validation for build-config.json
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: 0.37.3
     hooks:
       - id: check-jsonschema
         name: Validate .github/build-config.json
@@ -132,7 +132,7 @@ repos:
 
   # Renovate config validation (schema-checks the dormant renovate.json)
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 43.150.0
+    rev: 43.224.0
     hooks:
       - id: renovate-config-validator
         files: ^\.github/renovate\.json$
@@ -146,7 +146,7 @@ repos:
 
   # Prose linting (documentation quality)
   - repo: https://github.com/errata-ai/vale
-    rev: v3.14.2
+    rev: v3.15.1
     hooks:
       - id: vale
         files: ^docs/
@@ -154,7 +154,7 @@ repos:
 
   # Spell checking (report-only, doesn't auto-fix)
   - repo: https://github.com/crate-ci/typos
-    rev: v1.46.2
+    rev: v1.47.2
     hooks:
       - id: typos
         args: []  # Empty args disables auto-fix mode
