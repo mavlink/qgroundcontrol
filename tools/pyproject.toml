@@ -34,7 +34,7 @@ dev = [
   "jinja2",
   "pyyaml",
   "pymavlink",
-  "rust-just>=1.30",
+  "rust-just>=1.52.0",
   "tomli>=2.0; python_version < '3.11'",
 ]
 lsp = [
