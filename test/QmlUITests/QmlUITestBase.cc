@@ -1,10 +1,12 @@
 #include "QmlUITestBase.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QVariant>
 #include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlIncubationController>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtQuickControls2/QQuickStyle>
@@ -124,12 +126,23 @@ void QmlUITestBase::closeUIWindow()
 void QmlUITestBase::destroyUIEngine()
 {
     if (_engine) {
-        // Give asynchronous QML item creation/destruction a brief drain window
-        // before engine teardown to avoid strict-mode warnings at shutdown.
-        for (int i = 0; i < 10; ++i) {
-            _engine->collectGarbage();
-            QCoreApplication::processEvents();
-            QTest::qWait(10);
+        // Asynchronous QML item creation (Loader asynchronous, incubators) is
+        // driven by the window's incubation controller, which is normally pumped
+        // by the render loop. In offscreen / software-GL CI no frames are
+        // presented, so pending incubators never advance on their own and would
+        // still be "in progress" at engine destruction, tripping the strict-mode
+        // "There are still N items in the process of being created" warning.
+        // Drive the controller explicitly and wait on the real condition (no
+        // incubating objects) rather than a fixed delay.
+        if (QQmlIncubationController *ic = _engine->incubationController()) {
+            QElapsedTimer timer;
+            timer.start();
+            while ((ic->incubatingObjectCount() > 0) && (timer.elapsed() < 3000)) {
+                ic->incubateFor(50);
+                _engine->collectGarbage();
+                QCoreApplication::processEvents();
+                QTest::qWait(5);
+            }
         }
 
         // Force GC and event processing so QML releases references to C++ singletons
