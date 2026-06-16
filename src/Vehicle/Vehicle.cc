@@ -79,10 +79,6 @@
 #include "MavlinkSettings.h"
 #include "APM.h"
 
-#ifdef QT_DEBUG
-#include "MockLink.h"
-#endif
-
 #include <QtCore/QDateTime>
 
 QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
