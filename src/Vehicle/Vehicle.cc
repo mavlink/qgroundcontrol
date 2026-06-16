@@ -3278,8 +3278,8 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
         updateControlStatusSignals = true;
     }
 
-    if (_gcsMain != controlStatus.gcs_main) {
-        _gcsMain = controlStatus.gcs_main;
+    if (_gcsMain != controlStatus.sysid_in_control) {
+        _gcsMain = controlStatus.sysid_in_control;
         updateControlStatusSignals = true;
     }
 
