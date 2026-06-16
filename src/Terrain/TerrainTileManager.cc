@@ -10,6 +10,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCGeo.h"
 
+#include <QtCore/QDateTime>
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
@@ -72,6 +73,11 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate> 
                 qCDebug(TerrainTileManagerLog) << "returning elevation from tile cache" << elevation;
             }
             altitudes.push_back(elevation);
+        } else if (_isFailedTile(tileHash)) {
+            // Tile fetch failed recently; short-circuit to avoid hammering the server with repeated requests
+            // (e.g. uninitialized 0,0 coordinates from MAVLink TERRAIN_REQUEST returning HTTP 500).
+            error = true;
+            altitudes.push_back(qQNaN());
         } else if (_state != TerrainQuery::State::Downloading) {
             QGeoTileSpec spec;
             spec.setX(provider->long2tileX(coordinate.longitude(), 1));
@@ -295,21 +301,34 @@ void TerrainTileManager::_terrainDone()
     const QByteArray responseBytes = reply->mapImageData();
     const QGeoTileSpec spec = reply->tileSpec();
 
+    const QString hash = UrlFactory::getTileHash(UrlFactory::getProviderTypeFromQtMapId(spec.mapId()), spec.x(), spec.y(), spec.zoom());
+
     if (reply->error() != QGeoTiledMapReplyQGC::NoError) {
-        qCWarning(TerrainTileManagerLog) << "Elevation tile fetching returned error:" << reply->errorString();
+        const bool firstFailure = _recordFailedTile(hash);
+        if (firstFailure) {
+            qCWarning(TerrainTileManagerLog) << "Elevation tile fetching returned error:" << reply->errorString();
+        } else {
+            qCDebug(TerrainTileManagerLog) << "Elevation tile fetching returned error (suppressed):" << reply->errorString();
+        }
         _tileFailed();
         return;
     }
 
     if (responseBytes.isEmpty()) {
-        qCWarning(TerrainTileManagerLog) << "Error in fetching elevation tile. Empty response.";
+        const bool firstFailure = _recordFailedTile(hash);
+        if (firstFailure) {
+            qCWarning(TerrainTileManagerLog) << "Error in fetching elevation tile. Empty response.";
+        } else {
+            qCDebug(TerrainTileManagerLog) << "Error in fetching elevation tile. Empty response (suppressed).";
+        }
         _tileFailed();
         return;
     }
 
+    _clearFailedTile(hash);
+
     qCDebug(TerrainTileManagerLog) << "Received some bytes of terrain data:" << responseBytes.size();
 
-    const QString hash = UrlFactory::getTileHash(UrlFactory::getProviderTypeFromQtMapId(spec.mapId()), spec.x(), spec.y(), spec.zoom());
     _cacheTile(responseBytes, hash);
 
     for (qsizetype i = _requestQueue.count() - 1; i >= 0; i--) {
@@ -400,6 +419,54 @@ TerrainTile *TerrainTileManager::_getCachedTile(const QString &hash)
     }
 
     return tile;
+}
+
+bool TerrainTileManager::_isFailedTile(const QString &hash)
+{
+    QMutexLocker locker(&_tilesMutex);
+
+    const auto it = _failedTiles.constFind(hash);
+    if (it == _failedTiles.constEnd()) {
+        return false;
+    }
+    if (QDateTime::currentMSecsSinceEpoch() - it.value() < kFailedTileBackoffMs) {
+        return true;
+    }
+    _failedTiles.erase(it);
+    return false;
+}
+
+bool TerrainTileManager::_recordFailedTile(const QString &hash)
+{
+    QMutexLocker locker(&_tilesMutex);
+
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+    // Opportunistic, throttled sweep: failed-tile entries are useless once their backoff
+    // window expires, so prune stale ones while we already hold the lock. Throttling to at
+    // most once per backoff window keeps this O(n) sweep from running on every failure during
+    // a burst of distinct failures.
+    if (now - _lastFailedTileSweepMs >= kFailedTileBackoffMs) {
+        _lastFailedTileSweepMs = now;
+        for (auto it = _failedTiles.begin(); it != _failedTiles.end();) {
+            if (now - it.value() >= kFailedTileBackoffMs) {
+                it = _failedTiles.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    const bool firstFailure = !_failedTiles.contains(hash);
+    _failedTiles.insert(hash, now);
+    return firstFailure;
+}
+
+void TerrainTileManager::_clearFailedTile(const QString &hash)
+{
+    QMutexLocker locker(&_tilesMutex);
+
+    _failedTiles.remove(hash);
 }
 
 void TerrainTileManager::_processCarpetResults(const QList<double> &altitudes, int gridSizeLat, int gridSizeLon,
