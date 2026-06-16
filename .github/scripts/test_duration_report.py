@@ -6,16 +6,18 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import xml.etree.ElementTree as ET
 
 from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output, write_step_summary  # noqa: E402
-from xml_utils import xml_parse  # noqa: E402
+from common.gh_actions import write_github_output, write_step_summary
+from xml_utils import xml_parse
 
 
 def test_key(elem: ET.Element) -> str:
@@ -31,7 +33,7 @@ def parse_time(value: str) -> float:
     """Parse testcase duration, defaulting invalid values to 0."""
     try:
         return float(value)
-    except Exception:
+    except (ValueError, TypeError):
         return 0.0
 
 
@@ -46,7 +48,10 @@ def analyze_test_durations(
     root = tree.getroot()
     if root is None:
         raise ValueError(f"JUnit XML {junit_path} has no root element")
-    cases = [(test_key(testcase), parse_time(testcase.attrib.get("time", "0"))) for testcase in root.iter("testcase")]
+    cases = [
+        (test_key(testcase), parse_time(testcase.attrib.get("time", "0")))
+        for testcase in root.iter("testcase")
+    ]
 
     total_seconds = sum(secs for _, secs in cases)
     slowest = sorted(cases, key=lambda item: item[1], reverse=True)
@@ -124,13 +129,17 @@ def main(argv: list[str] | None = None) -> int:
         slow_threshold=args.slow_threshold_seconds,
     )
     report_json_path.parent.mkdir(parents=True, exist_ok=True)
-    report_json_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    report_json_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
     write_step_summary(build_summary(report))
     write_github_output({"slow_count": str(report["slow_count"])})
 
     for key, secs in report["slow_warnings"]:
-        print(f"::warning::Slow test (>={args.slow_threshold_seconds:.1f}s): {key} took {secs:.3f}s")
+        print(
+            f"::warning::Slow test (>={args.slow_threshold_seconds:.1f}s): {key} took {secs:.3f}s"
+        )
 
     return 0
 

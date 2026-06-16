@@ -43,6 +43,10 @@ _tools_dir = Path(__file__).resolve().parents[1]
 if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
+from _bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
 from common.build_config import get_build_config_value
 from common.gh_actions import write_github_output
 from common.logging import log_error, log_info, log_ok, log_warn
@@ -54,38 +58,32 @@ from common.logging import log_error, log_info, log_ok, log_warn
 MESON_VERSION = "1.10.1"
 NINJA_VERSION = "1.13.0"
 
-def run_cmd(cmd: list, cwd: Path | None = None, check: bool = True,
-            env: dict | None = None) -> subprocess.CompletedProcess:
+
+def run_cmd(
+    cmd: list, cwd: Path | None = None, check: bool = True, env: dict | None = None
+) -> subprocess.CompletedProcess:
     """Run a command with optional working directory and environment."""
     merged_env = {**os.environ, **(env or {})}
     log_info(f"Running: {' '.join(str(c) for c in cmd)}")
     return subprocess.run(cmd, cwd=cwd, check=check, env=merged_env)
 
+
 def detect_jobs(override: int | None = None) -> int:
     """Detect number of parallel jobs to use."""
     if override:
         return override
-    try:
-        return os.cpu_count() or 4
-    except Exception:
-        return 4
+    return os.cpu_count() or 4
 
-def detect_host_platform() -> str:
-    """Detect the host platform."""
-    system = platform.system().lower()
-    if system == 'darwin':
-        return 'macos'
-    return system
 
 def detect_host_arch() -> str:
     """Detect the host architecture."""
     machine = platform.machine().lower()
-    if machine in ('x86_64', 'amd64'):
-        return 'x86_64'
-    if machine in ('aarch64', 'arm64'):
-        return 'arm64'
-    if machine.startswith('arm'):
-        return 'armv7'
+    if machine in ("x86_64", "amd64"):
+        return "x86_64"
+    if machine in ("aarch64", "arm64"):
+        return "arm64"
+    if machine.startswith("arm"):
+        return "armv7"
     return machine
 
 
@@ -95,85 +93,85 @@ def detect_host_arch() -> str:
 
 # Common meson options for all Meson-based platforms
 MESON_COMMON = {
-    'auto_features': 'disabled',
-    'introspection': 'disabled',
-    'tests': 'disabled',
-    'examples': 'disabled',
-    'gtk_doc': 'disabled',
-    'gst-full-libraries': 'app,video,audio,gl,codecparsers',
-    'gpl': 'enabled',
-    'libav': 'enabled',
-    'orc': 'enabled',
-    'qt6': 'enabled',
-    'base': 'enabled',
-    'good': 'enabled',
-    'bad': 'enabled',
-    'ugly': 'enabled',
+    "auto_features": "disabled",
+    "introspection": "disabled",
+    "tests": "disabled",
+    "examples": "disabled",
+    "gtk_doc": "disabled",
+    "gst-full-libraries": "app,video,audio,gl,codecparsers",
+    "gpl": "enabled",
+    "libav": "enabled",
+    "orc": "enabled",
+    "qt6": "enabled",
+    "base": "enabled",
+    "good": "enabled",
+    "bad": "enabled",
+    "ugly": "enabled",
 }
 
 # Base plugins (shared across Meson platforms)
 PLUGINS_BASE = {
-    'gst-plugins-base:app': 'enabled',
-    'gst-plugins-base:gl': 'enabled',
-    'gst-plugins-base:playback': 'enabled',
-    'gst-plugins-base:tcp': 'enabled',
+    "gst-plugins-base:app": "enabled",
+    "gst-plugins-base:gl": "enabled",
+    "gst-plugins-base:playback": "enabled",
+    "gst-plugins-base:tcp": "enabled",
 }
 
 # Good plugins (shared across Meson platforms)
 PLUGINS_GOOD = {
-    'gst-plugins-good:isomp4': 'enabled',
-    'gst-plugins-good:matroska': 'enabled',
-    'gst-plugins-good:qt-method': 'auto',
-    'gst-plugins-good:qt6': 'enabled',
-    'gst-plugins-good:rtp': 'enabled',
-    'gst-plugins-good:rtpmanager': 'enabled',
-    'gst-plugins-good:rtsp': 'enabled',
-    'gst-plugins-good:udp': 'enabled',
+    "gst-plugins-good:isomp4": "enabled",
+    "gst-plugins-good:matroska": "enabled",
+    "gst-plugins-good:qt-method": "auto",
+    "gst-plugins-good:qt6": "enabled",
+    "gst-plugins-good:rtp": "enabled",
+    "gst-plugins-good:rtpmanager": "enabled",
+    "gst-plugins-good:rtsp": "enabled",
+    "gst-plugins-good:udp": "enabled",
 }
 
 # Bad plugins (shared across Meson platforms)
 PLUGINS_BAD = {
-    'gst-plugins-bad:gl': 'enabled',
-    'gst-plugins-bad:mpegtsdemux': 'enabled',
-    'gst-plugins-bad:rtp': 'enabled',
-    'gst-plugins-bad:sdp': 'enabled',
-    'gst-plugins-bad:videoparsers': 'enabled',
+    "gst-plugins-bad:gl": "enabled",
+    "gst-plugins-bad:mpegtsdemux": "enabled",
+    "gst-plugins-bad:rtp": "enabled",
+    "gst-plugins-bad:sdp": "enabled",
+    "gst-plugins-bad:videoparsers": "enabled",
 }
 
 # Ugly plugins (shared across Meson platforms)
 PLUGINS_UGLY = {
-    'gst-plugins-ugly:x264': 'enabled',
+    "gst-plugins-ugly:x264": "enabled",
 }
 
 # Platform-specific GL configurations
 GL_CONFIG = {
-    'linux': {
-        'gst-plugins-base:gl_api': 'opengl,gles2',
-        'gst-plugins-base:gl_platform': 'glx,egl',
-        'gst-plugins-base:gl_winsys': 'x11,egl,wayland',
-        'gst-plugins-base:x11': 'enabled',
-        'gst-plugins-good:qt-egl': 'enabled',
-        'gst-plugins-good:qt-wayland': 'enabled',
-        'gst-plugins-good:qt-x11': 'enabled',
-        'gst-plugins-bad:va': 'enabled',
-        'gst-plugins-bad:wayland': 'enabled',
-        'gst-plugins-bad:x11': 'enabled',
-        'gst-plugins-bad:x265': 'enabled',
-        'vaapi': 'enabled',
+    "linux": {
+        "gst-plugins-base:gl_api": "opengl,gles2",
+        "gst-plugins-base:gl_platform": "glx,egl",
+        "gst-plugins-base:gl_winsys": "x11,egl,wayland",
+        "gst-plugins-base:x11": "enabled",
+        "gst-plugins-good:qt-egl": "enabled",
+        "gst-plugins-good:qt-wayland": "enabled",
+        "gst-plugins-good:qt-x11": "enabled",
+        "gst-plugins-bad:va": "enabled",
+        "gst-plugins-bad:wayland": "enabled",
+        "gst-plugins-bad:x11": "enabled",
+        "gst-plugins-bad:x265": "enabled",
+        "vaapi": "enabled",
     },
-    'macos': {
-        'gst-plugins-base:gl_api': 'opengl,gles2',
-        'gst-plugins-base:gl_platform': 'cgl',
-        'gst-plugins-base:gl_winsys': 'cocoa',
-        'gst-plugins-bad:applemedia': 'enabled',
+    "macos": {
+        "gst-plugins-base:gl_api": "opengl,gles2",
+        "gst-plugins-base:gl_platform": "cgl",
+        "gst-plugins-base:gl_winsys": "cocoa",
+        "gst-plugins-bad:applemedia": "enabled",
     },
-    'windows': {
-        'gst-plugins-base:gl_api': 'opengl',
-        'gst-plugins-base:gl_platform': 'wgl,egl',
-        'gst-plugins-base:gl_winsys': 'win32,egl',
-        'gst-plugins-bad:d3d11': 'enabled',
-        'gst-plugins-bad:d3d12': 'enabled',
-        'gst-plugins-bad:mediafoundation': 'enabled',
+    "windows": {
+        "gst-plugins-base:gl_api": "opengl",
+        "gst-plugins-base:gl_platform": "wgl,egl",
+        "gst-plugins-base:gl_winsys": "win32,egl",
+        "gst-plugins-bad:d3d11": "enabled",
+        "gst-plugins-bad:d3d12": "enabled",
+        "gst-plugins-bad:mediafoundation": "enabled",
     },
 }
 
@@ -182,12 +180,13 @@ GL_CONFIG = {
 # Build Configuration
 # ============================================================================
 
+
 @dataclass
 class BuildConfig:
     platform: str
     arch: str
     version: str
-    build_type: str = 'release'
+    build_type: str = "release"
     prefix: Path | None = None
     work_dir: Path = field(default_factory=lambda: Path(tempfile.gettempdir()))
     qt_prefix: Path | None = None
@@ -197,21 +196,22 @@ class BuildConfig:
 
     def __post_init__(self):
         if not self.prefix:
-            self.prefix = self.work_dir / f'gst-{self.platform}-{self.arch}'
-        self.source_dir = self.work_dir / 'gstreamer'
-        self.build_dir = self.source_dir / 'builddir'
+            self.prefix = self.work_dir / f"gst-{self.platform}-{self.arch}"
+        self.source_dir = self.work_dir / "gstreamer"
+        self.build_dir = self.source_dir / "builddir"
 
     @property
     def archive_name(self) -> str:
-        name = f'gstreamer-1.0-{self.platform}-{self.arch}-{self.version}'
+        name = f"gstreamer-1.0-{self.platform}-{self.arch}-{self.version}"
         if self.simulator:
-            name += '-simulator'
+            name += "-simulator"
         return name
 
 
 # ============================================================================
 # Meson Builder (Linux, macOS, Windows)
 # ============================================================================
+
 
 class MesonBuilder:
     """Build GStreamer using Meson for desktop platforms."""
@@ -221,14 +221,14 @@ class MesonBuilder:
 
     def check_dependencies(self) -> None:
         """Check for required build tools."""
-        required = ['git', 'python3', 'pkg-config']
+        required = ["git", "python3", "pkg-config"]
         missing = [cmd for cmd in required if not shutil.which(cmd)]
 
         if (
-            self.config.platform == 'macos'
-            and subprocess.run(['xcode-select', '-p'], capture_output=True).returncode != 0
+            self.config.platform == "macos"
+            and subprocess.run(["xcode-select", "-p"], capture_output=True).returncode != 0
         ):
-            missing.append('xcode-select')
+            missing.append("xcode-select")
 
         if missing:
             raise RuntimeError(f"Missing required tools: {', '.join(missing)}")
@@ -237,8 +237,8 @@ class MesonBuilder:
 
     def ensure_meson(self) -> None:
         """Ensure meson and ninja are available."""
-        meson_path = shutil.which('meson')
-        ninja_path = shutil.which('ninja')
+        meson_path = shutil.which("meson")
+        ninja_path = shutil.which("ninja")
         if meson_path and ninja_path:
             log_info(f"Using existing meson: {meson_path}")
             return
@@ -251,12 +251,13 @@ class MesonBuilder:
 
         log_info(f"Installing pinned build tools: {', '.join(packages)}")
         from common import pip_install
+
         pip_install(packages)
 
-        user_scripts = Path(site.getuserbase()) / ('Scripts' if os.name == 'nt' else 'bin')
-        os.environ['PATH'] = f"{user_scripts}{os.pathsep}{os.environ['PATH']}"
+        user_scripts = Path(site.getuserbase()) / ("Scripts" if os.name == "nt" else "bin")
+        os.environ["PATH"] = f"{user_scripts}{os.pathsep}{os.environ['PATH']}"
 
-        if not shutil.which('meson') or not shutil.which('ninja'):
+        if not shutil.which("meson") or not shutil.which("ninja"):
             raise RuntimeError("Failed to install meson and ninja into user scripts directory")
 
     def clone_source(self) -> None:
@@ -268,17 +269,24 @@ class MesonBuilder:
         if not self.config.source_dir.exists():
             log_info(f"Cloning GStreamer {self.config.version}...")
             self.config.work_dir.mkdir(parents=True, exist_ok=True)
-            run_cmd([
-                'git', 'clone', '--depth', '1', '--branch', self.config.version,
-                'https://github.com/GStreamer/gstreamer.git',
-                str(self.config.source_dir)
-            ])
+            run_cmd(
+                [
+                    "git",
+                    "clone",
+                    "--depth",
+                    "1",
+                    "--branch",
+                    self.config.version,
+                    "https://github.com/GStreamer/gstreamer.git",
+                    str(self.config.source_dir),
+                ]
+            )
         else:
             log_info(f"Using existing source at {self.config.source_dir}")
 
     def _find_ccache(self) -> str | None:
         """Find ccache if available."""
-        path = shutil.which('ccache')
+        path = shutil.which("ccache")
         if path:
             log_info(f"Using ccache: {path}")
         return path
@@ -286,39 +294,39 @@ class MesonBuilder:
     def get_meson_args(self) -> list:
         """Build meson configuration arguments."""
         args = [
-            f'--prefix={self.config.prefix}',
-            f'--buildtype={self.config.build_type}',
-            '--wrap-mode=forcefallback',
-            '--strip',
+            f"--prefix={self.config.prefix}",
+            f"--buildtype={self.config.build_type}",
+            "--wrap-mode=forcefallback",
+            "--strip",
         ]
 
         # Add common options
         for key, value in MESON_COMMON.items():
-            args.append(f'-D{key}={value}')
+            args.append(f"-D{key}={value}")
 
         # Add base plugins
         for key, value in PLUGINS_BASE.items():
-            args.append(f'-D{key}={value}')
+            args.append(f"-D{key}={value}")
 
         # Add good plugins
         for key, value in PLUGINS_GOOD.items():
-            args.append(f'-D{key}={value}')
+            args.append(f"-D{key}={value}")
 
         # Add bad plugins
         for key, value in PLUGINS_BAD.items():
-            args.append(f'-D{key}={value}')
+            args.append(f"-D{key}={value}")
 
         # Add ugly plugins
         for key, value in PLUGINS_UGLY.items():
-            args.append(f'-D{key}={value}')
+            args.append(f"-D{key}={value}")
 
         # Add platform-specific GL config
         gl_config = GL_CONFIG.get(self.config.platform, {})
         for key, value in gl_config.items():
-            args.append(f'-D{key}={value}')
+            args.append(f"-D{key}={value}")
 
         # Handle macOS universal builds
-        if self.config.platform == 'macos' and self.config.arch != 'universal':
+        if self.config.platform == "macos" and self.config.arch != "universal":
             args.append(f"-Dcpp_args=['-arch', '{self.config.arch}']")
             args.append(f"-Dc_args=['-arch', '{self.config.arch}']")
 
@@ -329,7 +337,7 @@ class MesonBuilder:
         if (
             self.config.build_dir.exists()
             and not self.config.clean
-            and (self.config.build_dir / 'build.ninja').exists()
+            and (self.config.build_dir / "build.ninja").exists()
         ):
             log_info("Using existing configuration")
             return
@@ -338,16 +346,16 @@ class MesonBuilder:
         if self.config.build_dir.exists():
             shutil.rmtree(self.config.build_dir)
 
-        args = ['meson', 'setup', str(self.config.build_dir), *self.get_meson_args()]
+        args = ["meson", "setup", str(self.config.build_dir), *self.get_meson_args()]
 
         env = {}
         if self.config.qt_prefix:
-            env['PKG_CONFIG_PATH'] = f"{self.config.qt_prefix}/lib/pkgconfig"
+            env["PKG_CONFIG_PATH"] = f"{self.config.qt_prefix}/lib/pkgconfig"
 
         ccache = self._find_ccache()
         if ccache:
-            env['CC'] = 'ccache cc'
-            env['CXX'] = 'ccache c++'
+            env["CC"] = "ccache cc"
+            env["CXX"] = "ccache c++"
 
         run_cmd(args, cwd=self.config.source_dir, env=env)
 
@@ -355,28 +363,28 @@ class MesonBuilder:
         """Compile GStreamer."""
         jobs = detect_jobs(self.config.jobs)
         log_info(f"Compiling GStreamer with {jobs} jobs...")
-        run_cmd(['meson', 'compile', '-C', str(self.config.build_dir), '-j', str(jobs)])
+        run_cmd(["meson", "compile", "-C", str(self.config.build_dir), "-j", str(jobs)])
 
     def install(self) -> None:
         """Install GStreamer."""
         log_info("Installing GStreamer...")
-        run_cmd(['meson', 'install', '-C', str(self.config.build_dir)])
+        run_cmd(["meson", "install", "-C", str(self.config.build_dir)])
 
     def build_universal(self) -> None:
         """Build universal binary for macOS."""
-        if self.config.platform != 'macos' or self.config.arch != 'universal':
+        if self.config.platform != "macos" or self.config.arch != "universal":
             return
 
         log_info("Building universal binary...")
 
         # Build for each architecture
-        for arch in ['x86_64', 'arm64']:
+        for arch in ["x86_64", "arm64"]:
             arch_config = BuildConfig(
-                platform='macos',
+                platform="macos",
                 arch=arch,
                 version=self.config.version,
                 build_type=self.config.build_type,
-                prefix=self.config.work_dir / f'gst-macos-{arch}',
+                prefix=self.config.work_dir / f"gst-macos-{arch}",
                 work_dir=self.config.work_dir,
                 qt_prefix=self.config.qt_prefix,
                 jobs=self.config.jobs,
@@ -395,11 +403,10 @@ class MesonBuilder:
         """Merge architecture-specific builds into universal binary."""
         log_info("Creating universal binaries with lipo...")
 
-        x86_prefix = self.config.work_dir / 'gst-macos-x86_64'
-        arm_prefix = self.config.work_dir / 'gst-macos-arm64'
+        x86_prefix = self.config.work_dir / "gst-macos-x86_64"
+        arm_prefix = self.config.work_dir / "gst-macos-arm64"
         uni_prefix = self.config.prefix
-
-        uni_prefix.mkdir(parents=True, exist_ok=True)
+        assert uni_prefix is not None  # __post_init__ guarantees this
 
         # Copy structure from arm64 (arbitrary choice)
         if uni_prefix.exists():
@@ -407,22 +414,24 @@ class MesonBuilder:
         shutil.copytree(arm_prefix, uni_prefix)
 
         # Find all dylibs and merge them
-        for arm_lib in arm_prefix.rglob('*.dylib'):
+        for arm_lib in arm_prefix.rglob("*.dylib"):
             rel_path = arm_lib.relative_to(arm_prefix)
             x86_lib = x86_prefix / rel_path
             uni_lib = uni_prefix / rel_path
 
             if x86_lib.exists():
-                run_cmd(['lipo', '-create', str(x86_lib), str(arm_lib), '-output', str(uni_lib)])
+                run_cmd(["lipo", "-create", str(x86_lib), str(arm_lib), "-output", str(uni_lib)])
 
     def run(self) -> None:
         """Execute the full build process."""
-        log_info(f"Building GStreamer {self.config.version} for {self.config.platform}/{self.config.arch}")
+        log_info(
+            f"Building GStreamer {self.config.version} for {self.config.platform}/{self.config.arch}"
+        )
 
         self.check_dependencies()
         self.ensure_meson()
 
-        if self.config.platform == 'macos' and self.config.arch == 'universal':
+        if self.config.platform == "macos" and self.config.arch == "universal":
             self.build_universal()
         else:
             self.clone_source()
@@ -433,48 +442,51 @@ class MesonBuilder:
         log_ok(f"GStreamer {self.config.version} installed to {self.config.prefix}")
 
         # Output for CI
-        write_github_output({
-            'gstreamer_prefix': str(self.config.prefix),
-            'gstreamer_version': self.config.version,
-            'gstreamer_arch': self.config.arch,
-            'archive_name': self.config.archive_name,
-        })
+        write_github_output(
+            {
+                "gstreamer_prefix": str(self.config.prefix),
+                "gstreamer_version": self.config.version,
+                "gstreamer_arch": self.config.arch,
+                "archive_name": self.config.archive_name,
+            }
+        )
 
 
 # ============================================================================
 # Cerbero Builder (Android, iOS)
 # ============================================================================
 
+
 class CerberoBuilder:
     """Build GStreamer using Cerbero for mobile platforms."""
 
     CERBERO_CONFIGS: ClassVar[dict[str, dict[str, str]]] = {
-        'android': {
-            'arm64': 'cross-android-arm64',
-            'armv7': 'cross-android-armv7',
-            'x86': 'cross-android-x86',
-            'x86_64': 'cross-android-x86-64',
+        "android": {
+            "arm64": "cross-android-arm64",
+            "armv7": "cross-android-armv7",
+            "x86": "cross-android-x86",
+            "x86_64": "cross-android-x86-64",
         },
-        'ios': {
-            'arm64': 'cross-ios-arm64',
-            'x86_64': 'cross-ios-x86-64',
+        "ios": {
+            "arm64": "cross-ios-arm64",
+            "x86_64": "cross-ios-x86-64",
         },
     }
 
     def __init__(self, config: BuildConfig):
         self.config = config
-        self.cerbero_dir = config.work_dir / 'cerbero'
+        self.cerbero_dir = config.work_dir / "cerbero"
 
     def check_dependencies(self) -> None:
         """Check for required tools."""
-        required = ['git', 'python3']
+        required = ["git", "python3"]
         missing = [cmd for cmd in required if not shutil.which(cmd)]
 
         if (
-            self.config.platform == 'ios'
-            and subprocess.run(['xcrun', '--show-sdk-path'], capture_output=True).returncode != 0
+            self.config.platform == "ios"
+            and subprocess.run(["xcrun", "--show-sdk-path"], capture_output=True).returncode != 0
         ):
-            missing.append('Xcode/iOS SDK')
+            missing.append("Xcode/iOS SDK")
 
         if missing:
             raise RuntimeError(f"Missing required tools: {', '.join(missing)}")
@@ -490,19 +502,26 @@ class CerberoBuilder:
         if not self.cerbero_dir.exists():
             log_info(f"Cloning Cerbero for GStreamer {self.config.version}...")
             self.config.work_dir.mkdir(parents=True, exist_ok=True)
-            run_cmd([
-                'git', 'clone', '--depth', '1', '--branch', self.config.version,
-                'https://github.com/GStreamer/cerbero.git',
-                str(self.cerbero_dir)
-            ])
+            run_cmd(
+                [
+                    "git",
+                    "clone",
+                    "--depth",
+                    "1",
+                    "--branch",
+                    self.config.version,
+                    "https://github.com/GStreamer/cerbero.git",
+                    str(self.cerbero_dir),
+                ]
+            )
         else:
             log_info(f"Using existing Cerbero at {self.cerbero_dir}")
 
     def bootstrap(self) -> None:
         """Bootstrap Cerbero."""
         log_info("Bootstrapping Cerbero...")
-        cerbero = self.cerbero_dir / 'cerbero-uninstalled'
-        run_cmd([str(cerbero), 'bootstrap'], cwd=self.cerbero_dir)
+        cerbero = self.cerbero_dir / "cerbero-uninstalled"
+        run_cmd([str(cerbero), "bootstrap"], cwd=self.cerbero_dir)
 
     def get_config_name(self, arch: str) -> str:
         """Get Cerbero config name for platform/arch."""
@@ -512,26 +531,30 @@ class CerberoBuilder:
         if not config_name:
             raise ValueError(f"Unsupported arch {arch} for {self.config.platform}")
 
-        if self.config.platform == 'ios' and self.config.simulator:
-            config_name += '-simulator'
+        if self.config.platform == "ios" and self.config.simulator:
+            config_name += "-simulator"
 
         return config_name
 
     def build_arch(self, arch: str) -> None:
         """Build for a specific architecture."""
         config_name = self.get_config_name(arch)
-        cerbero = self.cerbero_dir / 'cerbero-uninstalled'
+        cerbero = self.cerbero_dir / "cerbero-uninstalled"
 
         log_info(f"Building GStreamer for {self.config.platform}/{arch}...")
 
         cmd = [
-            str(cerbero), '-c', config_name,
-            'package', 'gstreamer-1.0',
-            '-o', str(self.config.prefix),
+            str(cerbero),
+            "-c",
+            config_name,
+            "package",
+            "gstreamer-1.0",
+            "-o",
+            str(self.config.prefix),
         ]
 
-        if self.config.build_type == 'debug':
-            cmd.extend(['--variant', 'debug'])
+        if self.config.build_type == "debug":
+            cmd.extend(["--variant", "debug"])
 
         run_cmd(cmd, cwd=self.cerbero_dir)
 
@@ -542,19 +565,21 @@ class CerberoBuilder:
 
     def run(self) -> None:
         """Execute the full build process."""
-        log_info(f"Building GStreamer {self.config.version} for {self.config.platform}/{self.config.arch}")
+        log_info(
+            f"Building GStreamer {self.config.version} for {self.config.platform}/{self.config.arch}"
+        )
 
         self.check_dependencies()
         self.clone_cerbero()
         self.bootstrap()
 
-        if self.config.arch == 'universal':
-            if self.config.platform == 'android':
-                archs = ['arm64', 'armv7']
+        if self.config.arch == "universal":
+            if self.config.platform == "android":
+                archs = ["arm64", "armv7"]
             else:  # iOS
-                archs = ['arm64']
+                archs = ["arm64"]
                 if self.config.simulator:
-                    archs = ['x86_64', 'arm64']
+                    archs = ["x86_64", "arm64"]
             self.build_universal(archs)
         else:
             self.build_arch(self.config.arch)
@@ -562,89 +587,105 @@ class CerberoBuilder:
         log_ok(f"GStreamer {self.config.version} built for {self.config.platform}")
 
         # Output for CI
-        write_github_output({
-            'gstreamer_prefix': str(self.config.prefix),
-            'gstreamer_version': self.config.version,
-            'gstreamer_arch': self.config.arch,
-            'archive_name': self.config.archive_name,
-        })
+        write_github_output(
+            {
+                "gstreamer_prefix": str(self.config.prefix),
+                "gstreamer_version": self.config.version,
+                "gstreamer_arch": self.config.arch,
+                "archive_name": self.config.archive_name,
+            }
+        )
 
 
 # ============================================================================
 # Main Entry Point
 # ============================================================================
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Build GStreamer for QGroundControl',
+        description="Build GStreamer for QGroundControl",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
 
-    parser.add_argument('--platform', '-p', required=True,
-                        choices=['linux', 'macos', 'windows', 'android', 'ios'],
-                        help='Target platform')
-    parser.add_argument('--arch', '-a', default='',
-                        help='Target architecture (default: native or universal)')
-    parser.add_argument('--version', '-v', default='',
-                        help='GStreamer version (default: from build-config.json)')
-    parser.add_argument('--type', '-t', dest='build_type', default='release',
-                        choices=['release', 'debug'],
-                        help='Build type (default: release)')
-    parser.add_argument('--prefix', default='',
-                        help='Install prefix')
-    parser.add_argument('--work-dir', '-w', default=tempfile.gettempdir(),
-                        help='Working directory (default: system temp)')
-    parser.add_argument('--qt-prefix', '-q', default='',
-                        help='Qt installation path')
-    parser.add_argument('--jobs', '-j', type=int, default=0,
-                        help='Parallel jobs (default: auto)')
-    parser.add_argument('--clean', '-c', action='store_true',
-                        help='Clean build directory')
-    parser.add_argument('--simulator', action='store_true',
-                        help='iOS simulator build')
-    parser.add_argument('--verify', action='store_true',
-                        help='After install, run gst-launch-1.0 --version against the install prefix')
+    parser.add_argument(
+        "--platform",
+        "-p",
+        required=True,
+        choices=["linux", "macos", "windows", "android", "ios"],
+        help="Target platform",
+    )
+    parser.add_argument(
+        "--arch", "-a", default="", help="Target architecture (default: native or universal)"
+    )
+    parser.add_argument(
+        "--version", "-v", default="", help="GStreamer version (default: from build-config.json)"
+    )
+    parser.add_argument(
+        "--type",
+        "-t",
+        dest="build_type",
+        default="release",
+        choices=["release", "debug"],
+        help="Build type (default: release)",
+    )
+    parser.add_argument("--prefix", default="", help="Install prefix")
+    parser.add_argument(
+        "--work-dir",
+        "-w",
+        default=tempfile.gettempdir(),
+        help="Working directory (default: system temp)",
+    )
+    parser.add_argument("--qt-prefix", "-q", default="", help="Qt installation path")
+    parser.add_argument("--jobs", "-j", type=int, default=0, help="Parallel jobs (default: auto)")
+    parser.add_argument("--clean", "-c", action="store_true", help="Clean build directory")
+    parser.add_argument("--simulator", action="store_true", help="iOS simulator build")
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        help="After install, run gst-launch-1.0 --version against the install prefix",
+    )
 
     return parser.parse_args()
 
 
 def get_default_arch(plat: str) -> str:
     """Get default architecture for platform."""
-    if plat in ('macos', 'android', 'ios'):
-        return 'universal'
+    if plat in ("macos", "android", "ios"):
+        return "universal"
     return detect_host_arch()
 
 
 def verify_install(config: BuildConfig) -> None:
     """Run `gst-launch-1.0 --version` against the install prefix to confirm it runs."""
-    if config.platform in ('android', 'ios'):
+    if config.platform in ("android", "ios"):
         log_info(f"Skipping verify on cross-compiled target: {config.platform}")
         return
 
     prefix = config.prefix
     assert prefix is not None  # __post_init__ guarantees this
-    is_windows = config.platform == 'windows'
-    bin_name = 'gst-launch-1.0.exe' if is_windows else 'gst-launch-1.0'
-    bin_path = prefix / 'bin' / bin_name
+    is_windows = config.platform == "windows"
+    bin_name = "gst-launch-1.0.exe" if is_windows else "gst-launch-1.0"
+    bin_path = prefix / "bin" / bin_name
 
     if not bin_path.exists():
         raise RuntimeError(f"gst-launch binary missing at {bin_path}")
 
     env = os.environ.copy()
-    if config.platform == 'linux':
+    if config.platform == "linux":
         # GStreamer installs into multiarch libdir on Debian/Ubuntu (e.g. lib/x86_64-linux-gnu).
-        libdir = prefix / 'lib' / f'{platform.machine()}-linux-gnu'
-        env['LD_LIBRARY_PATH'] = str(libdir)
-        env['GST_PLUGIN_PATH'] = str(libdir / 'gstreamer-1.0')
-    elif config.platform == 'macos':
-        env['DYLD_LIBRARY_PATH'] = str(prefix / 'lib')
-        env['GST_PLUGIN_PATH'] = str(prefix / 'lib' / 'gstreamer-1.0')
+        libdir = prefix / "lib" / f"{platform.machine()}-linux-gnu"
+        env["LD_LIBRARY_PATH"] = str(libdir)
+        env["GST_PLUGIN_PATH"] = str(libdir / "gstreamer-1.0")
+    elif config.platform == "macos":
+        env["DYLD_LIBRARY_PATH"] = str(prefix / "lib")
+        env["GST_PLUGIN_PATH"] = str(prefix / "lib" / "gstreamer-1.0")
     elif is_windows:
-        env['PATH'] = f"{prefix / 'bin'}{os.pathsep}{env.get('PATH', '')}"
-        env['GST_PLUGIN_PATH'] = str(prefix / 'lib' / 'gstreamer-1.0')
+        env["PATH"] = f"{prefix / 'bin'}{os.pathsep}{env.get('PATH', '')}"
+        env["GST_PLUGIN_PATH"] = str(prefix / "lib" / "gstreamer-1.0")
 
-    run_cmd([str(bin_path), '--version'], env=env)
+    run_cmd([str(bin_path), "--version"], env=env)
     log_ok(f"verify: {bin_path} runs and reports a version")
 
 
@@ -652,7 +693,7 @@ def main() -> int:
     args = parse_args()
 
     # Resolve defaults
-    version = args.version or get_build_config_value('gstreamer_default_version', '1.24.13')
+    version = args.version or get_build_config_value("gstreamer_default_version", "1.24.13")
     arch = args.arch or get_default_arch(args.platform)
     prefix = Path(args.prefix) if args.prefix else None
     work_dir = Path(args.work_dir)
@@ -673,7 +714,7 @@ def main() -> int:
     )
 
     # Select builder
-    if args.platform in ('linux', 'macos', 'windows'):
+    if args.platform in ("linux", "macos", "windows"):
         builder = MesonBuilder(config)
     else:
         builder = CerberoBuilder(config)
@@ -694,5 +735,5 @@ def main() -> int:
         return 130
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

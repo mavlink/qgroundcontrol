@@ -59,14 +59,18 @@ def test_resolve_lupdate_prefers_qt_root_dir(tmp_path: Path) -> None:
 
 def test_resolve_lupdate_falls_back_to_path(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("QT_ROOT_DIR", raising=False)
-    with patch.object(qgc_lupdate, "get_build_config_value", return_value=""), \
-         patch.object(qgc_lupdate.shutil, "which", return_value="/usr/bin/lupdate"):
+    with (
+        patch.object(qgc_lupdate, "get_build_config_value", return_value=""),
+        patch.object(qgc_lupdate.shutil, "which", return_value="/usr/bin/lupdate"),
+    ):
         assert qgc_lupdate.resolve_lupdate() == Path("/usr/bin/lupdate")
 
 
 def test_resolve_lupdate_raises_when_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("QT_ROOT_DIR", raising=False)
-    with patch.object(qgc_lupdate, "get_build_config_value", return_value=""), \
-         patch.object(qgc_lupdate.shutil, "which", return_value=None):
-        with pytest.raises(FileNotFoundError):
-            qgc_lupdate.resolve_lupdate()
+    with (
+        patch.object(qgc_lupdate, "get_build_config_value", return_value=""),
+        patch.object(qgc_lupdate.shutil, "which", return_value=None),
+        pytest.raises(FileNotFoundError),
+    ):
+        qgc_lupdate.resolve_lupdate()

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import collect_artifact_sizes as mod
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _run(
@@ -37,7 +40,9 @@ def test_latest_successful_runs_picks_latest_success_per_platform() -> None:
         _run("Other", run_id=5),
     ]
 
-    latest = mod.latest_successful_runs(runs, platforms)
+    latest = mod.select_latest_runs_by_name(
+        runs, set(platforms), status="completed", conclusion="success"
+    )
     assert latest["Linux"]["id"] == 2
     assert latest["Windows"]["id"] == 4
 
@@ -49,7 +54,9 @@ def test_latest_successful_runs_handles_iso8601_offsets() -> None:
         _run("Linux", run_id=2, created_at="2026-02-24T01:00:00Z"),
     ]
 
-    latest = mod.latest_successful_runs(runs, platforms)
+    latest = mod.select_latest_runs_by_name(
+        runs, set(platforms), status="completed", conclusion="success"
+    )
     assert latest["Linux"]["id"] == 2
 
 
@@ -60,7 +67,9 @@ def test_latest_successful_runs_filters_by_event() -> None:
         _run("Linux", run_id=2, created_at="2026-02-24T01:00:00Z", event="push"),
     ]
 
-    latest = mod.latest_successful_runs(runs, platforms, event="pull_request")
+    latest = mod.select_latest_runs_by_name(
+        runs, set(platforms), event="pull_request", status="completed", conclusion="success"
+    )
     assert latest["Linux"]["id"] == 1
 
 
@@ -156,7 +165,9 @@ def test_collect_artifacts_uses_prefetched_artifact_metadata() -> None:
     }
 
     def fail_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
-        raise AssertionError("list_run_artifacts should not be called when prefetched metadata is provided")
+        raise AssertionError(
+            "list_run_artifacts should not be called when prefetched metadata is provided"
+        )
 
     original = mod.list_run_artifacts
     mod.list_run_artifacts = fail_list_run_artifacts  # type: ignore[assignment]
@@ -269,7 +280,9 @@ def test_main_reads_artifacts_file_when_provided(tmp_path: Path, monkeypatch) ->
         return runs
 
     def fail_list_run_artifacts(repo: str, run_id: int) -> list[dict[str, object]]:
-        raise AssertionError("list_run_artifacts should not be called when artifacts file is provided")
+        raise AssertionError(
+            "list_run_artifacts should not be called when artifacts file is provided"
+        )
 
     monkeypatch.setattr(mod, "list_workflow_runs_for_sha", fake_list_workflow_runs)
     monkeypatch.setattr(mod, "list_run_artifacts", fail_list_run_artifacts)

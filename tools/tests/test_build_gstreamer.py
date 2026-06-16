@@ -21,7 +21,6 @@ _spec.loader.exec_module(_mod)
 BuildConfig = _mod.BuildConfig
 MesonBuilder = _mod.MesonBuilder
 detect_host_arch = _mod.detect_host_arch
-detect_host_platform = _mod.detect_host_platform
 detect_jobs = _mod.detect_jobs
 
 
@@ -40,24 +39,6 @@ def test_detect_jobs_without_override() -> None:
 def test_detect_jobs_fallback_when_cpu_count_none() -> None:
     with patch("os.cpu_count", return_value=None):
         assert detect_jobs() == 4
-
-
-# ── detect_host_platform ─────────────────────────────────────────────────
-
-
-def test_detect_host_platform_linux() -> None:
-    with patch("platform.system", return_value="Linux"):
-        assert detect_host_platform() == "linux"
-
-
-def test_detect_host_platform_macos() -> None:
-    with patch("platform.system", return_value="Darwin"):
-        assert detect_host_platform() == "macos"
-
-
-def test_detect_host_platform_windows() -> None:
-    with patch("platform.system", return_value="Windows"):
-        assert detect_host_platform() == "windows"
 
 
 # ── detect_host_arch ──────────────────────────────────────────────────────

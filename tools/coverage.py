@@ -34,9 +34,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Coverage generation mode (default: full)",
     )
     parser.add_argument("-r", "--report", action="store_true", help="Generate report only")
-    parser.add_argument("-o", "--open", dest="open_report", action="store_true", help="Open HTML report")
+    parser.add_argument(
+        "-o", "--open", dest="open_report", action="store_true", help="Open HTML report"
+    )
     parser.add_argument("-c", "--clean", action="store_true", help="Clean coverage data")
-    parser.add_argument("--xml", action="store_true", help="Generate coverage report and highlight XML output path")
+    parser.add_argument(
+        "--xml", action="store_true", help="Generate coverage report and highlight XML output path"
+    )
     parser.add_argument("--log-file", default="", help="Write coverage target output to a file")
     parser.add_argument(
         "--step-summary",
@@ -52,21 +56,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def run_command(
-    cmd: list[str],
-    *,
-    cwd: Path | None = None,
-    capture_output: bool = False,
-) -> subprocess.CompletedProcess[str]:
-    """Run a subprocess and fail fast on errors."""
-    if capture_output:
-        return run_captured(cmd, cwd=cwd, check=True)
-    return subprocess.run(cmd, cwd=cwd, check=True, text=True)
-
-
 def check_dependencies() -> None:
     """Ensure required tooling is installed."""
     from common.deps import require_tool
+
     require_tool("gcovr", hint="Install with: pip install gcovr")
 
 
@@ -87,7 +80,7 @@ def configure_build(repo_root: Path, build_dir: Path) -> None:
             return
 
     log_info("Configuring build with coverage...")
-    run_command(
+    subprocess.run(
         [
             "cmake",
             "-B",
@@ -99,7 +92,9 @@ def configure_build(repo_root: Path, build_dir: Path) -> None:
             "-DQGC_BUILD_TESTING=ON",
             "-G",
             "Ninja",
-        ]
+        ],
+        check=True,
+        text=True,
     )
     log_ok("Build configured")
 
@@ -107,14 +102,18 @@ def configure_build(repo_root: Path, build_dir: Path) -> None:
 def build_project(build_dir: Path) -> None:
     """Build the coverage target."""
     log_info("Building project...")
-    run_command(["cmake", "--build", str(build_dir), "--parallel"])
+    subprocess.run(["cmake", "--build", str(build_dir), "--parallel"], check=True, text=True)
     log_ok("Build complete")
 
 
 def run_tests(build_dir: Path) -> None:
     """Run tests and fail if any test fails."""
     log_info("Running tests...")
-    run_command(["ctest", "--test-dir", str(build_dir), "--output-on-failure", "--timeout", "300"])
+    subprocess.run(
+        ["ctest", "--test-dir", str(build_dir), "--output-on-failure", "--timeout", "300"],
+        check=True,
+        text=True,
+    )
 
 
 def build_step_summary(log_text: str, mode: str) -> str:
@@ -143,12 +142,14 @@ def maybe_write_step_summary(log_text: str, mode: str) -> None:
     write_step_summary(build_step_summary(log_text, mode))
 
 
-def generate_report(build_dir: Path, *, xml_only: bool, log_file: Path | None = None, mode: str = "full") -> str:
+def generate_report(
+    build_dir: Path, *, xml_only: bool, log_file: Path | None = None, mode: str = "full"
+) -> str:
     """Generate coverage artifacts from existing coverage data."""
     log_info("Generating coverage report...")
-    result = run_command(
+    result = run_captured(
         ["cmake", "--build", str(build_dir), "--target", "coverage-report"],
-        capture_output=True,
+        check=True,
     )
     if result.stdout:
         print(result.stdout, end="")
@@ -194,12 +195,16 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if mode == "report-only":
-            report_output = generate_report(build_dir, xml_only=args.xml, log_file=log_file, mode=mode)
+            report_output = generate_report(
+                build_dir, xml_only=args.xml, log_file=log_file, mode=mode
+            )
         else:
             configure_build(repo_root, build_dir)
             build_project(build_dir)
             run_tests(build_dir)
-            report_output = generate_report(build_dir, xml_only=args.xml, log_file=log_file, mode=mode)
+            report_output = generate_report(
+                build_dir, xml_only=args.xml, log_file=log_file, mode=mode
+            )
 
         if args.open_report:
             open_report(build_dir)

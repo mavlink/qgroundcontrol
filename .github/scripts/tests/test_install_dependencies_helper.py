@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import re
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import install_dependencies_helper
 
@@ -18,10 +17,13 @@ class TestDetectPythonVersion:
         def fake_write_output(d: dict) -> None:
             captured.update(d)
 
-        with patch.object(install_dependencies_helper, "write_github_output", side_effect=fake_write_output):
+        with patch.object(
+            install_dependencies_helper, "write_github_output", side_effect=fake_write_output
+        ):
             install_dependencies_helper.detect_python_version()
 
         import sys
+
         expected = f"{sys.version_info.major}.{sys.version_info.minor}"
         assert captured["minor"] == expected
 
@@ -43,9 +45,7 @@ class TestLdconfigHasBlas:
     def test_ldconfig_has_blas_negative(self):
         """Returns False when no libblas.so.3 in output."""
         fake_result = MagicMock()
-        fake_result.stdout = (
-            "\tlibm.so.6 (libc6,x86-64) => /lib/x86_64-linux-gnu/libm.so.6\n"
-        )
+        fake_result.stdout = "\tlibm.so.6 (libc6,x86-64) => /lib/x86_64-linux-gnu/libm.so.6\n"
         fake_result.returncode = 0
         with patch.object(install_dependencies_helper, "run_captured", return_value=fake_result):
             assert install_dependencies_helper._ldconfig_has_blas() is False

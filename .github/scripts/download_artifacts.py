@@ -26,9 +26,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh, list_workflow_runs_for_sha, list_run_artifacts
+from common.gh_actions import gh, list_run_artifacts, list_workflow_runs_for_sha
 from common.github_runs import group_runs_by_name, select_latest_runs_by_name
-
 
 ARTIFACT_EXTENSIONS = (
     ".apk",
@@ -64,23 +63,9 @@ def select_latest_successful_runs(
     )
 
 
-def group_successful_runs_by_workflow(
-    runs: list[dict[str, Any]],
-    workflows: list[str],
-    *,
-    event: str = "",
-) -> dict[str, list[dict[str, Any]]]:
-    """Group successful runs by workflow name, newest first."""
-    return group_runs_by_name(
-        runs,
-        workflows,
-        event=event,
-        status="completed",
-        conclusion="success",
-    )
-
-
-def get_workflow_runs(repo: str, head_sha: str, workflows: list[str], *, event: str = "") -> list[dict]:
+def get_workflow_runs(
+    repo: str, head_sha: str, workflows: list[str], *, event: str = ""
+) -> list[dict]:
     """Return completed successful runs for the given workflows and commit."""
     all_runs = list_workflow_runs_for_sha(repo, head_sha)
     return select_latest_successful_runs(all_runs, workflows, event=event)
@@ -130,7 +115,8 @@ def download_run_artifacts(
 def list_downloaded_artifacts(output_dir: Path) -> list[Path]:
     """Return all artifact files under output_dir matching known extensions."""
     files = [
-        path for path in output_dir.rglob("*")
+        path
+        for path in output_dir.rglob("*")
         if path.is_file() and path.suffix in ARTIFACT_EXTENSION_SET
     ]
     return sorted(files)
@@ -232,7 +218,9 @@ def main(argv: list[str] | None = None) -> int:
     had_successful_runs = bool(select_latest_successful_runs(all_runs, workflows, event=event))
     if artifact_prefixes:
         runs = []
-        grouped_runs = group_successful_runs_by_workflow(all_runs, workflows, event=event)
+        grouped_runs = group_runs_by_name(
+            all_runs, workflows, event=event, status="completed", conclusion="success"
+        )
         for workflow_name in workflows:
             candidates = grouped_runs.get(workflow_name, [])
             selected_run: dict[str, Any] | None = None
@@ -303,7 +291,9 @@ def main(argv: list[str] | None = None) -> int:
             json.dumps({"runs": run_artifact_metadata}, indent=2) + "\n",
             encoding="utf-8",
         )
-        print(f"Wrote artifact metadata for {len(run_artifact_metadata)} run(s) to {artifact_metadata_out}")
+        print(
+            f"Wrote artifact metadata for {len(run_artifact_metadata)} run(s) to {artifact_metadata_out}"
+        )
 
     def _download(run: dict) -> tuple[str, bool]:
         name = run["name"]
@@ -315,10 +305,14 @@ def main(argv: list[str] | None = None) -> int:
         return name, ok
 
     # Filter out runs with no matching artifacts before spawning threads
-    downloadable = [r for r in runs if not artifact_prefixes or run_artifact_map.get(int(r["id"])) is not None]
+    downloadable = [
+        r for r in runs if not artifact_prefixes or run_artifact_map.get(int(r["id"])) is not None
+    ]
     for run in runs:
         if artifact_prefixes and run_artifact_map.get(int(run["id"])) is None:
-            print(f"Skipping {run['name']} (run {run['id']}): no artifacts match requested prefixes")
+            print(
+                f"Skipping {run['name']} (run {run['id']}): no artifacts match requested prefixes"
+            )
 
     if artifact_prefixes and not downloadable:
         print(
@@ -331,7 +325,9 @@ def main(argv: list[str] | None = None) -> int:
         run_id = int(run["id"])
         artifact_names = run_artifact_map.get(run_id)
         if artifact_names:
-            print(f"Downloading {len(artifact_names)} filtered artifact(s) from {run['name']} (run {run_id})...")
+            print(
+                f"Downloading {len(artifact_names)} filtered artifact(s) from {run['name']} (run {run_id})..."
+            )
         else:
             print(f"Downloading artifacts from {run['name']} (run {run_id})...")
 
@@ -345,7 +341,11 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"  Failed: {name}")
                     failed += 1
 
-    files = list_downloaded_files(output_dir) if artifact_prefixes else list_downloaded_artifacts(output_dir)
+    files = (
+        list_downloaded_files(output_dir)
+        if artifact_prefixes
+        else list_downloaded_artifacts(output_dir)
+    )
     if not files:
         print("No artifact files found after download")
     else:

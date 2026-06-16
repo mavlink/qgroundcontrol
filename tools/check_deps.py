@@ -8,7 +8,6 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from _bootstrap import ensure_tools_dir
 
@@ -16,11 +15,9 @@ ensure_tools_dir(__file__)
 
 from common import find_repo_root
 from common.build_config import get_build_config_value
+from common.git import run_git
 from common.logging import log_error, log_info, log_ok, log_warn
 from common.proc import run_captured
-
-if TYPE_CHECKING:
-    import subprocess
 
 QT_RELEASES_URL = "https://download.qt.io/official_releases/qt/"
 REQ_FILES = [
@@ -31,14 +28,9 @@ REQ_FILES = [
 BUILD_TOOLS = ["cmake", "ninja", "ccache", "clang-format", "clang-tidy"]
 
 
-def run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
-    """Run a git command and capture stdout/stderr."""
-    return run_captured(["git", *args], cwd=cwd)
-
-
 def parse_submodule_paths(repo_root: Path) -> list[Path]:
     """Return existing submodule paths from ``git submodule status``."""
-    result = run_git(["submodule", "status", "--recursive"], repo_root)
+    result = run_git("submodule", "status", "--recursive", cwd=repo_root)
     if result.returncode != 0:
         return []
 
@@ -56,17 +48,17 @@ def parse_submodule_paths(repo_root: Path) -> list[Path]:
 def check_submodules(repo_root: Path, *, update: bool) -> None:
     """Check whether git submodules are behind their upstream branch."""
     log_info("Checking git submodules...")
-    run_git(["submodule", "update", "--init", "--recursive"], repo_root)
+    run_git("submodule", "update", "--init", "--recursive", cwd=repo_root)
 
     outdated: list[tuple[Path, int]] = []
     for submodule in parse_submodule_paths(repo_root):
-        run_git(["fetch", "--quiet"], submodule)
-        upstream = run_git(["rev-parse", "@{u}"], submodule)
+        run_git("fetch", "--quiet", cwd=submodule)
+        upstream = run_git("rev-parse", "@{u}", cwd=submodule)
         if upstream.returncode != 0:
             print(f"  - {submodule.relative_to(repo_root)} (no upstream)")
             continue
 
-        behind_result = run_git(["rev-list", "--count", "HEAD..@{u}"], submodule)
+        behind_result = run_git("rev-list", "--count", "HEAD..@{u}", cwd=submodule)
         behind = int(behind_result.stdout.strip() or "0") if behind_result.returncode == 0 else 0
         if behind > 0:
             outdated.append((submodule, behind))
@@ -81,7 +73,7 @@ def check_submodules(repo_root: Path, *, update: bool) -> None:
     log_warn(f"{len(outdated)} submodule(s) have updates available")
     if update:
         log_info("Updating submodules...")
-        result = run_git(["submodule", "update", "--remote", "--merge"], repo_root)
+        result = run_git("submodule", "update", "--remote", "--merge", cwd=repo_root)
         if result.returncode == 0:
             log_ok("Submodules updated")
         else:
@@ -96,11 +88,15 @@ def fetch_latest_qt_minor() -> str | None:
     """Return the latest Qt 6 minor version available on download.qt.io."""
     try:
         import httpx
+    except ImportError:
+        return None
+
+    try:
         with httpx.Client(timeout=15) as client:
             response = client.get(QT_RELEASES_URL)
             response.raise_for_status()
             body = response.text
-    except Exception:
+    except (httpx.HTTPError, OSError):
         return None
 
     versions = re.findall(r">6\.(\d+)/<", body)
@@ -115,7 +111,9 @@ def fetch_latest_qt_minor() -> str | None:
 def check_qt_version() -> None:
     """Check configured and installed Qt versions."""
     log_info("Checking Qt version...")
-    current_version = get_build_config_value("qt_version", "unknown", start=Path(__file__).resolve())
+    current_version = get_build_config_value(
+        "qt_version", "unknown", start=Path(__file__).resolve()
+    )
     print(f"  Current: Qt {current_version}")
 
     latest_minor = fetch_latest_qt_minor()
@@ -215,7 +213,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Check dependency versions and tool availability.")
     parser.add_argument("--submodules", action="store_true", help="Check only git submodules")
     parser.add_argument("--qt", action="store_true", help="Check only Qt version")
-    parser.add_argument("--update", action="store_true", help="Update submodules to latest upstream")
+    parser.add_argument(
+        "--update", action="store_true", help="Update submodules to latest upstream"
+    )
     return parser.parse_args(argv)
 
 

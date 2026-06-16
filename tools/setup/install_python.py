@@ -20,14 +20,18 @@ import re
 import shutil
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
 
 _tools_dir = Path(__file__).resolve().parents[1]
 if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
+from _bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
 from common.file_traversal import find_repo_root
+from common.io import read_toml
 from common.platform import is_windows
 
 
@@ -35,7 +39,7 @@ from common.platform import is_windows
 def load_package_groups() -> dict[str, list[str]]:
     """Load dependency groups from tools/pyproject.toml."""
     pyproject_path = find_repo_root() / "tools" / "pyproject.toml"
-    data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    data = read_toml(pyproject_path)
     optional = data.get("project", {}).get("optional-dependencies", {})
     if not isinstance(optional, dict):
         raise ValueError("project.optional-dependencies is missing from tools/pyproject.toml")
@@ -46,12 +50,7 @@ def load_package_groups() -> dict[str, list[str]]:
             groups[group] = [str(pkg) for pkg in packages]
 
     groups["all"] = sorted(
-        {
-            package
-            for group, packages in groups.items()
-            if group != "all"
-            for package in packages
-        }
+        {package for group, packages in groups.items() if group != "all" for package in packages}
     )
     return groups
 
@@ -116,7 +115,9 @@ def install_packages(venv_path: Path, packages: list[str]) -> None:
         print("Using uv (fast mode)")
         cmd = ["uv", "pip", "install", "--python", str(python), *packages]
     else:
-        print("Using pip (install uv for faster installs: curl -LsSf https://astral.sh/uv/install.sh | sh)")
+        print(
+            "Using pip (install uv for faster installs: curl -LsSf https://astral.sh/uv/install.sh | sh)"
+        )
         # Upgrade pip first
         subprocess.run(
             [str(python), "-m", "pip", "install", "--quiet", "--upgrade", "pip"],
@@ -190,7 +191,9 @@ def get_packages_for_groups(group_spec: str) -> list[str]:
 
     for group in groups:
         if group not in package_groups:
-            raise ValueError(f"Unknown group: {group}. Valid groups: {', '.join(package_groups.keys())}")
+            raise ValueError(
+                f"Unknown group: {group}. Valid groups: {', '.join(package_groups.keys())}"
+            )
         packages.update(package_groups[group])
 
     return sorted(packages)
@@ -261,17 +264,24 @@ def main() -> int:
                 print(f"    - {pkg}")
         return 0
 
-    try:
-        packages = get_packages_for_groups(args.group)
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return 1
+    # uv sync reads pyproject/uv.lock itself, so the recommended bootstrap path
+    # avoids parsing TOML here — keeping system-Python 3.10 working without tomli.
+    uv = has_uv()
+
+    packages: list[str] = []
+    if not uv or args.check or args.dry_run:
+        try:
+            packages = get_packages_for_groups(args.group)
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
 
     if args.check:
         return check_installed(packages)
 
     print(f"Setting up Python environment with group: {args.group}")
-    print(f"Packages: {', '.join(packages)}")
+    if packages:
+        print(f"Packages: {', '.join(packages)}")
 
     if args.dry_run:
         print("\nDry run - no changes made")
@@ -281,7 +291,7 @@ def main() -> int:
 
     try:
         create_venv(venv_path)
-        if has_uv():
+        if uv:
             print("Using uv sync (locked mode)")
             sync_groups_with_uv(venv_path, args.group)
         else:

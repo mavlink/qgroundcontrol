@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MAVLinkDialect:
     """A parsed MAVLink dialect (XML file)."""
+
     name: str
     version: int
     messages: list[MAVLinkMessage] = field(default_factory=list)
@@ -61,15 +62,7 @@ def find_mavlink_definitions(project_root: Path) -> Path | None:
 
 
 def parse_mavlink_xml(xml_path: Path, definitions_dir: Path | None = None) -> MAVLinkDialect:
-    """Parse a MAVLink XML file and its includes.
-
-    Args:
-        xml_path: Path to the XML file to parse
-        definitions_dir: Directory containing XML files (for resolving includes)
-
-    Returns:
-        MAVLinkDialect with parsed messages and enums
-    """
+    """Parse a MAVLink XML file and its includes."""
     if definitions_dir is None:
         definitions_dir = xml_path.parent
 
@@ -113,7 +106,9 @@ def parse_mavlink_xml(xml_path: Path, definitions_dir: Path | None = None) -> MA
                 entry_name = entry.get("name", "")
                 entry_value = int(entry.get("value", "0"))
                 desc_elem = entry.find("description")
-                entry_desc = desc_elem.text.strip() if desc_elem is not None and desc_elem.text else ""
+                entry_desc = (
+                    desc_elem.text.strip() if desc_elem is not None and desc_elem.text else ""
+                )
                 entries.append((entry_name, entry_value, entry_desc))
             if enum_name:
                 dialect.enums[enum_name] = entries
@@ -250,18 +245,7 @@ def _categorize_message(msg_id: int, msg_name: str) -> str:
 
 
 def load_all_messages(project_root: Path) -> list[MAVLinkMessage]:
-    """Load all MAVLink messages from the project's definitions.
-
-    This is the main entry point for loading MAVLink data.
-    It finds the definitions directory and parses common.xml (which
-    includes all standard messages).
-
-    Args:
-        project_root: Root directory of the QGC project
-
-    Returns:
-        List of MAVLinkMessage objects
-    """
+    """Load all MAVLink messages from the project's definitions."""
     definitions_dir = find_mavlink_definitions(project_root)
 
     if definitions_dir is None:

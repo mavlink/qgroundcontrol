@@ -29,6 +29,10 @@ _tools_dir = Path(__file__).resolve().parents[1]
 if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
+from _bootstrap import ensure_tools_dir  # noqa: E402
+
+ensure_tools_dir(__file__)
+
 from common.build_config import (  # noqa: E402
     export_build_config_values,
     find_build_config,

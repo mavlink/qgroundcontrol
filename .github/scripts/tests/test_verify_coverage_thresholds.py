@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from verify_coverage_thresholds import main
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _write_xml(path: Path, content: str) -> None:
@@ -21,7 +24,9 @@ def test_missing_file_returns_zero(tmp_path: Path, monkeypatch) -> None:
 
 def test_above_thresholds(tmp_path: Path, monkeypatch) -> None:
     xml = tmp_path / "coverage.xml"
-    _write_xml(xml, '<coverage lines-valid="100" lines-covered="80" line-rate="0.80" branch-rate="0.60"/>')
+    _write_xml(
+        xml, '<coverage lines-valid="100" lines-covered="80" line-rate="0.80" branch-rate="0.60"/>'
+    )
     monkeypatch.setattr(
         "sys.argv",
         ["prog", "--coverage-xml", str(xml), "--line-threshold", "30", "--branch-threshold", "20"],
@@ -31,7 +36,9 @@ def test_above_thresholds(tmp_path: Path, monkeypatch) -> None:
 
 def test_below_line_threshold(tmp_path: Path, monkeypatch) -> None:
     xml = tmp_path / "coverage.xml"
-    _write_xml(xml, '<coverage lines-valid="100" lines-covered="10" line-rate="0.10" branch-rate="0.50"/>')
+    _write_xml(
+        xml, '<coverage lines-valid="100" lines-covered="10" line-rate="0.10" branch-rate="0.50"/>'
+    )
     monkeypatch.setattr(
         "sys.argv",
         ["prog", "--coverage-xml", str(xml), "--line-threshold", "30", "--branch-threshold", "20"],
@@ -41,7 +48,9 @@ def test_below_line_threshold(tmp_path: Path, monkeypatch) -> None:
 
 def test_below_branch_threshold(tmp_path: Path, monkeypatch) -> None:
     xml = tmp_path / "coverage.xml"
-    _write_xml(xml, '<coverage lines-valid="100" lines-covered="80" line-rate="0.80" branch-rate="0.10"/>')
+    _write_xml(
+        xml, '<coverage lines-valid="100" lines-covered="80" line-rate="0.80" branch-rate="0.10"/>'
+    )
     monkeypatch.setattr(
         "sys.argv",
         ["prog", "--coverage-xml", str(xml), "--line-threshold", "30", "--branch-threshold", "20"],

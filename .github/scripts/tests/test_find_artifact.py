@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
-
 from find_artifact import main
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_missing_dir(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setattr("sys.argv", ["prog", "--build-dir", str(tmp_path / "nope"), "--pattern", "*.apk"])
+    monkeypatch.setattr(
+        "sys.argv", ["prog", "--build-dir", str(tmp_path / "nope"), "--pattern", "*.apk"]
+    )
     assert main() == 0
 
 

@@ -1,13 +1,9 @@
-"""Safe XML parsing with defusedxml fallback."""
+"""Safe XML parsing via defusedxml."""
 
 from pathlib import Path
-
-try:
-    from defusedxml.ElementTree import parse as _xml_parse_impl
-except ImportError:
-    from xml.etree.ElementTree import parse as _xml_parse_impl
-
 from xml.etree.ElementTree import ParseError as XMLParseError
+
+from defusedxml.ElementTree import parse as _xml_parse_impl
 
 
 def xml_parse(path):

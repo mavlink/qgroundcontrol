@@ -19,8 +19,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output  # noqa: E402
-from common.proc import run_captured  # noqa: E402
+from common.gh_actions import write_github_output
+from common.proc import run_captured
 
 APT_OPTS = ["-o", "DPkg::Lock::Timeout=300", "-o", "Acquire::Retries=3"]
 
@@ -48,7 +48,11 @@ def enable_universe() -> None:
     for source in sources_dirs:
         if not source.exists():
             continue
-        paths = [source] if source.is_file() else list(source.glob("*.list")) + list(source.glob("*.sources"))
+        paths = (
+            [source]
+            if source.is_file()
+            else list(source.glob("*.list")) + list(source.glob("*.sources"))
+        )
         for p in paths:
             try:
                 text = p.read_text(errors="replace")
@@ -104,8 +108,15 @@ def fix_apt_alternatives() -> None:
 def install_optional_packages() -> None:
     """Install optional apt packages that are available."""
     result = run_captured(
-        [sys.executable, "tools/setup/install_dependencies",
-         "--platform", "debian", "--category", "gstreamer_optional", "--print-available-packages"],
+        [
+            sys.executable,
+            "tools/setup/install_dependencies",
+            "--platform",
+            "debian",
+            "--category",
+            "gstreamer_optional",
+            "--print-available-packages",
+        ],
     )
     packages = result.stdout.strip()
     if packages:
@@ -122,8 +133,13 @@ def detect_python_version() -> None:
 def print_packages() -> None:
     """Resolve the debian apt package list and emit it as a GITHUB_OUTPUT value."""
     result = run_captured(
-        [sys.executable, "tools/setup/install_dependencies",
-         "--platform", "debian", "--print-packages"],
+        [
+            sys.executable,
+            "tools/setup/install_dependencies",
+            "--platform",
+            "debian",
+            "--print-packages",
+        ],
         check=True,
     )
     write_github_output({"packages": result.stdout.strip()})
@@ -131,6 +147,7 @@ def print_packages() -> None:
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("enable-universe")

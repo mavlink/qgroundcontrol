@@ -15,4 +15,6 @@ _TOOLS_DIR = Path(__file__).resolve().parents[2] / "tools"
 if str(_TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(_TOOLS_DIR))
 
-from _bootstrap import ensure_tools_dir as ensure_tools_dir  # noqa: E402  explicit re-export for pyright
+from _bootstrap import (
+    ensure_tools_dir as ensure_tools_dir,
+)

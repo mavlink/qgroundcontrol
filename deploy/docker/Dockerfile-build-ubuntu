@@ -45,15 +45,15 @@ ENV LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
 
 # ---------- Bring in the helper scripts and config ----------
-# install_dependencies/_common.py imports tools/common/build_config via parents[2] →
-# `/tmp/qt/..` must contain `common/`, so mirror tools/ layout under /tmp/.
-COPY .github/build-config.json /tmp/qt/
-COPY tools/setup/install_dependencies/ /tmp/qt/install_dependencies/
-COPY tools/setup/read_config.py /tmp/qt/
-COPY tools/common/ /tmp/common/
-RUN python3 /tmp/qt/install_dependencies --platform debian && \
-    QT_VERSION=$(python3 /tmp/qt/read_config.py --get qt_version) && \
-    QT_MODULES=$(python3 /tmp/qt/read_config.py --get qt_modules) && \
+# Mirror the real tools/ layout under /tmp/tools (parents[N] math + _bootstrap import need a dir named "tools").
+COPY .github/build-config.json /tmp/tools/setup/
+COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
+COPY tools/setup/read_config.py /tmp/tools/setup/
+COPY tools/_bootstrap.py /tmp/tools/
+COPY tools/common/ /tmp/tools/common/
+RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
+    QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt_version) && \
+    QT_MODULES=$(python3 /tmp/tools/setup/read_config.py --get qt_modules) && \
     mkdir -p /opt/Qt && \
     aqt_install() { \
         for attempt in 1 2 3; do \
@@ -68,7 +68,7 @@ RUN python3 /tmp/qt/install_dependencies --platform debian && \
     echo 'export PATH=$QT_ROOT_DIR/bin:$PATH' >> /etc/profile.d/qt.sh && \
     chmod +x /etc/profile.d/qt.sh && \
     rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/qt /tmp/common
+    rm -rf /tmp/tools
 
 # Source qt.sh in bash login shells; for non-login, find Qt dynamically
 SHELL ["/bin/bash", "-lc"]

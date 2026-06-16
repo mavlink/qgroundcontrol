@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 import subprocess
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from size_analysis import BinaryAnalyzer
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_binary_analyzer_requires_existing_file(tmp_path: Path) -> None:
     missing = tmp_path / "missing.bin"
     try:
         BinaryAnalyzer(missing)
-        assert False, "Expected FileNotFoundError"
+        raise AssertionError("Expected FileNotFoundError")
     except FileNotFoundError:
         pass
 
@@ -32,7 +35,9 @@ def test_get_symbol_count_success(tmp_path: Path) -> None:
 
     with patch(
         "size_analysis.subprocess.run",
-        return_value=subprocess.CompletedProcess(args=["nm"], returncode=0, stdout="a\nb\n", stderr=""),
+        return_value=subprocess.CompletedProcess(
+            args=["nm"], returncode=0, stdout="a\nb\n", stderr=""
+        ),
     ):
         assert analyzer.get_symbol_count() == 2
 
@@ -44,7 +49,9 @@ def test_get_symbol_count_failure_returns_zero(tmp_path: Path) -> None:
 
     with patch(
         "size_analysis.subprocess.run",
-        return_value=subprocess.CompletedProcess(args=["nm"], returncode=1, stdout="", stderr="err"),
+        return_value=subprocess.CompletedProcess(
+            args=["nm"], returncode=1, stdout="", stderr="err"
+        ),
     ):
         assert analyzer.get_symbol_count() == 0
 
@@ -70,5 +77,3 @@ def test_generate_metrics_json_with_explicit_values(tmp_path: Path) -> None:
     assert metrics[0]["value"] == 4
     assert metrics[1]["value"] == 3
     assert metrics[2]["value"] == 42
-
-

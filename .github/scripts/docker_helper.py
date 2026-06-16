@@ -18,7 +18,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output  # noqa: E402
+from common.gh_actions import write_github_output
 
 VALID_DOCKERFILES = {"Dockerfile-build-ubuntu", "Dockerfile-build-android"}
 VALID_BUILD_TYPES = {"Release", "Debug"}
@@ -65,7 +65,9 @@ def cmd_run(args: argparse.Namespace) -> None:
         if attempt >= args.max_attempts:
             print(f"::error::Docker build failed after {attempt} attempt(s).", file=sys.stderr)
             sys.exit(1)
-        print(f"Docker build failed on attempt {attempt}. Retrying in {args.retry_delay} seconds...")
+        print(
+            f"Docker build failed on attempt {attempt}. Retrying in {args.retry_delay} seconds..."
+        )
         time.sleep(args.retry_delay)
 
 

@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
-from pathlib import Path
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from generate_build_results_comment import generate_comment
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_generate_comment_minimal(tmp_path: Path) -> None:
@@ -18,7 +21,9 @@ def test_generate_comment_minimal(tmp_path: Path) -> None:
         "TRIGGERED_BY": "Linux",
     }
 
-    out = generate_comment(env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=UTC))
+    out = generate_comment(
+        env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
+    )
 
     assert "## Build Results" in out
     assert "| Linux | Passed | [View](https://example.test) |" in out
@@ -52,7 +57,9 @@ def test_generate_comment_precommit_artifact_overrides_status(tmp_path: Path) ->
         "TRIGGERED_BY": "Android",
     }
 
-    out = generate_comment(env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=UTC))
+    out = generate_comment(
+        env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
+    )
 
     assert "| pre-commit | Failed (non-blocking) | [View](https://example.test/precommit) |" in out
     assert "Pre-commit hooks: 12 passed, 3 failed, 1 skipped." in out
@@ -76,16 +83,30 @@ def test_generate_comment_test_coverage_and_sizes(tmp_path: Path) -> None:
     coverage_path.write_text('<coverage line-rate="0.75" lines-valid="100" />', encoding="utf-8")
 
     baseline_coverage = tmp_path / "baseline-coverage.xml"
-    baseline_coverage.write_text('<coverage line-rate="0.70" lines-valid="100" />', encoding="utf-8")
+    baseline_coverage.write_text(
+        '<coverage line-rate="0.70" lines-valid="100" />', encoding="utf-8"
+    )
 
     pr_sizes = tmp_path / "pr-sizes.json"
     pr_sizes.write_text(
-        json.dumps({"artifacts": [{"name": "QGroundControl.dmg", "size_bytes": 10485760, "size_human": "10.00 MB"}]}),
+        json.dumps(
+            {
+                "artifacts": [
+                    {"name": "QGroundControl.dmg", "size_bytes": 10485760, "size_human": "10.00 MB"}
+                ]
+            }
+        ),
         encoding="utf-8",
     )
     baseline_sizes = tmp_path / "baseline-sizes.json"
     baseline_sizes.write_text(
-        json.dumps({"artifacts": [{"name": "QGroundControl.dmg", "size_bytes": 9437184, "size_human": "9.00 MB"}]}),
+        json.dumps(
+            {
+                "artifacts": [
+                    {"name": "QGroundControl.dmg", "size_bytes": 9437184, "size_human": "9.00 MB"}
+                ]
+            }
+        ),
         encoding="utf-8",
     )
 
@@ -101,7 +122,9 @@ def test_generate_comment_test_coverage_and_sizes(tmp_path: Path) -> None:
         "TRIGGERED_BY": "MacOS",
     }
 
-    out = generate_comment(env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=UTC))
+    out = generate_comment(
+        env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
+    )
 
     assert "### Test Results" in out
     assert "**linux_gcc_64**: 1 passed, 1 failed, 0 skipped" in out
@@ -119,7 +142,9 @@ def test_generate_comment_rejects_non_http_precommit_url(tmp_path: Path) -> None
         "TRIGGERED_BY": "Linux",
     }
 
-    out = generate_comment(env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=UTC))
+    out = generate_comment(
+        env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
+    )
 
     assert "| pre-commit | Passed | - |" in out
 
@@ -149,7 +174,9 @@ def test_generate_comment_sanitizes_precommit_artifact_url(tmp_path: Path) -> No
         "TRIGGERED_BY": "Linux",
     }
 
-    out = generate_comment(env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=UTC))
+    out = generate_comment(
+        env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
+    )
 
     assert "[View](https://example.test/precommit%29%20%5Boops%5D%28https://bad.test%29)" in out
     assert "[oops]" not in out
@@ -180,6 +207,8 @@ def test_generate_comment_handles_malformed_size_entries(tmp_path: Path) -> None
         "TRIGGERED_BY": "Linux",
     }
 
-    out = generate_comment(env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=UTC))
+    out = generate_comment(
+        env, tmp_path, now_utc=datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
+    )
 
     assert "| QGroundControl.dmg | 1.00 MB |" in out

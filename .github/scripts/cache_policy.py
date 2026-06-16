@@ -16,7 +16,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import resolve_cache_policy, write_github_output  # noqa: E402
+from common.gh_actions import resolve_cache_policy, write_github_output
 
 
 def main(argv: list[str] | None = None) -> int:

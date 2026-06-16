@@ -69,21 +69,15 @@ class QGCLanguageServer(LanguageServer):
         return self._mavlink_messages
 
     def analyze_document(self, document) -> list[types.Diagnostic]:
-        if not self._is_cpp_file(document.uri):
+        if not self.is_cpp_file(document.uri):
             return []
         return [*check_vehicle_null_safety(document), *check_parameter_access(document)]
 
     def is_cpp_file(self, uri: str) -> bool:
-        return self._is_cpp_file(uri)
-
-    def is_fact_json_file(self, uri: str) -> bool:
-        return self._is_fact_json_file(uri)
-
-    def _is_cpp_file(self, uri: str) -> bool:
         path = uri.lower()
         return any(path.endswith(ext) for ext in self._CPP_EXTS)
 
-    def _is_fact_json_file(self, uri: str) -> bool:
+    def is_fact_json_file(self, uri: str) -> bool:
         path = uri.lower()
         if path.endswith("fact.json") or path.endswith(".factmetadata.json"):
             return True
@@ -101,6 +95,7 @@ def initialized(ls: QGCLanguageServer, params: types.InitializedParams) -> None:
         root = Path(ls.workspace.root_path).resolve()
     elif ls.workspace.root_uri:
         from urllib.parse import unquote, urlparse
+
         parsed = urlparse(ls.workspace.root_uri)
         root = Path(unquote(parsed.path)).resolve()
     if root:
@@ -108,7 +103,9 @@ def initialized(ls: QGCLanguageServer, params: types.InitializedParams) -> None:
         logger.info(f"Set project root to: {root}")
 
 
-def _publish(ls: QGCLanguageServer, doc, diagnostics: list[types.Diagnostic], include_version: bool = True) -> None:
+def _publish(
+    ls: QGCLanguageServer, doc, diagnostics: list[types.Diagnostic], include_version: bool = True
+) -> None:
     ls.diagnostics[doc.uri] = (doc.version, diagnostics)
     params = types.PublishDiagnosticsParams(
         uri=doc.uri,
@@ -136,9 +133,7 @@ def did_change(ls: QGCLanguageServer, params: types.DidChangeTextDocumentParams)
 def did_close(ls: QGCLanguageServer, params: types.DidCloseTextDocumentParams) -> None:
     uri = params.text_document.uri
     ls.diagnostics.pop(uri, None)
-    ls.text_document_publish_diagnostics(
-        types.PublishDiagnosticsParams(uri=uri, diagnostics=[])
-    )
+    ls.text_document_publish_diagnostics(types.PublishDiagnosticsParams(uri=uri, diagnostics=[]))
 
 
 @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
@@ -193,7 +188,9 @@ def completion(ls: QGCLanguageServer, params: types.CompletionParams) -> types.C
     if is_in_switch_context(lines, line_num, char_pos):
         case_id_match = re.search(r"case\s+MAVLINK_MSG_ID_(\w*)$", prefix_text, re.IGNORECASE)
         if case_id_match:
-            items = get_message_id_completions(case_id_match.group(1).upper(), messages, include_case=True)
+            items = get_message_id_completions(
+                case_id_match.group(1).upper(), messages, include_case=True
+            )
         elif prefix_text.strip().endswith("case") or prefix_text.strip() == "":
             items = get_case_completions(messages)
         else:

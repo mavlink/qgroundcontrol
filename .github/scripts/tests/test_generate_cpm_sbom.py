@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from cmake_helper import read_cache_dict
@@ -12,6 +12,9 @@ from generate_cpm_sbom import (
     make_purl,
     normalize_git_url,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 SAMPLE_CACHE = """\
 CMAKE_BUILD_TYPE:STRING=Debug
@@ -40,9 +43,13 @@ def test_read_cache_dict(tmp_path: Path) -> None:
 
 
 def test_normalize_git_url() -> None:
-    assert normalize_git_url("https://github.com/madler/zlib.git") == "https://github.com/madler/zlib"
+    assert (
+        normalize_git_url("https://github.com/madler/zlib.git") == "https://github.com/madler/zlib"
+    )
     assert normalize_git_url("git@github.com:madler/zlib.git") == "https://github.com/madler/zlib"
-    assert normalize_git_url("https://gitlab.com/bzip2/bzip2.git") == "https://gitlab.com/bzip2/bzip2"
+    assert (
+        normalize_git_url("https://gitlab.com/bzip2/bzip2.git") == "https://gitlab.com/bzip2/bzip2"
+    )
     assert normalize_git_url("https://example.com/repo") == "https://example.com/repo"
 
 
@@ -74,9 +81,18 @@ def test_make_purl_generic_no_version() -> None:
 def _mock_git_info(source_dir: Path) -> tuple[str, str]:
     """Return fake git info based on the source dir path."""
     mapping = {
-        "/src/zlib": ("https://github.com/madler/zlib.git", "da607da739fa6047df13e66a2af6b8bec7c2a498"),
-        "/src/mavlink": ("https://github.com/mavlink/mavlink.git", "b1fb5a1a32c41c6e46fea70600d626a0b5a8edbe"),
-        "/src/earcut": ("https://github.com/mapbox/earcut.hpp.git", "f36ced7e50254738c4e5af1a239f5fb7b1094007"),
+        "/src/zlib": (
+            "https://github.com/madler/zlib.git",
+            "da607da739fa6047df13e66a2af6b8bec7c2a498",
+        ),
+        "/src/mavlink": (
+            "https://github.com/mavlink/mavlink.git",
+            "b1fb5a1a32c41c6e46fea70600d626a0b5a8edbe",
+        ),
+        "/src/earcut": (
+            "https://github.com/mapbox/earcut.hpp.git",
+            "f36ced7e50254738c4e5af1a239f5fb7b1094007",
+        ),
     }
     return mapping.get(str(source_dir), ("", ""))
 
@@ -120,6 +136,7 @@ def test_main_stdout(tmp_path: Path, monkeypatch, capsys) -> None:
 
     with patch("generate_cpm_sbom.git_info", side_effect=_mock_git_info):
         from generate_cpm_sbom import main
+
         ret = main()
 
     assert ret == 0
@@ -136,6 +153,7 @@ def test_main_file_output(tmp_path: Path, monkeypatch) -> None:
 
     with patch("generate_cpm_sbom.git_info", side_effect=_mock_git_info):
         from generate_cpm_sbom import main
+
         ret = main()
 
     assert ret == 0

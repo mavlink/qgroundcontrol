@@ -54,34 +54,34 @@ class Violation:
 # Patterns that are always wrong: QT_TRANSLATE_NOOP / QT_TR_NOOP used as a runtime string value
 _WRONG_PATTERNS = [
     (
-        re.compile(r'\breturn\s+QT_TRANSLATE_NOOP\s*\('),
+        re.compile(r"\breturn\s+QT_TRANSLATE_NOOP\s*\("),
         "QT_TRANSLATE_NOOP result returned directly — string will not be translated",
-        "return QCoreApplication::translate(\"context\", \"source\")",
+        'return QCoreApplication::translate("context", "source")',
     ),
     (
-        re.compile(r'\breturn\s+QT_TR_NOOP\s*\('),
+        re.compile(r"\breturn\s+QT_TR_NOOP\s*\("),
         "QT_TR_NOOP result returned directly — string will not be translated",
-        "return tr(\"source\")",
+        'return tr("source")',
     ),
     (
-        re.compile(r'\.arg\s*\(\s*QT_TRANSLATE_NOOP\s*\('),
+        re.compile(r"\.arg\s*\(\s*QT_TRANSLATE_NOOP\s*\("),
         "QT_TRANSLATE_NOOP result passed to .arg() — string will not be translated",
-        ".arg(QCoreApplication::translate(\"context\", \"source\"))",
+        '.arg(QCoreApplication::translate("context", "source"))',
     ),
     (
-        re.compile(r'\.arg\s*\(\s*QT_TR_NOOP\s*\('),
+        re.compile(r"\.arg\s*\(\s*QT_TR_NOOP\s*\("),
         "QT_TR_NOOP result passed to .arg() — string will not be translated",
-        ".arg(tr(\"source\"))",
+        '.arg(tr("source"))',
     ),
     (
-        re.compile(r'\bQString\s*\(\s*QT_TRANSLATE_NOOP\s*\('),
+        re.compile(r"\bQString\s*\(\s*QT_TRANSLATE_NOOP\s*\("),
         "QT_TRANSLATE_NOOP result wrapped in QString() — string will not be translated",
-        "QCoreApplication::translate(\"context\", \"source\")",
+        'QCoreApplication::translate("context", "source")',
     ),
     (
-        re.compile(r'\bQString\s*\(\s*QT_TR_NOOP\s*\('),
+        re.compile(r"\bQString\s*\(\s*QT_TR_NOOP\s*\("),
         "QT_TR_NOOP result wrapped in QString() — string will not be translated",
-        "tr(\"source\")",
+        'tr("source")',
     ),
 ]
 
@@ -89,7 +89,7 @@ _WRONG_PATTERNS = [
 def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
     try:
         content = file_path.read_text(encoding="utf-8", errors="replace")
-    except Exception as e:
+    except OSError as e:
         print(f"Warning: Could not read {file_path}: {e}", file=sys.stderr)
         return
 

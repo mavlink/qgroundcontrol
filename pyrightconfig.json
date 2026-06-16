@@ -14,7 +14,7 @@
     "tools/translations",
     ".github/scripts"
   ],
-  "pythonVersion": "3.12",
+  "pythonVersion": "3.10",
   "reportMissingImports": "warning",
   "reportMissingTypeStubs": false,
   "reportUnusedImport": "warning",

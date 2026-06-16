@@ -29,7 +29,7 @@ from common import find_repo_root, get_default_branch_ref, log_error, log_ok, lo
 
 if TYPE_CHECKING:
     from common.analyzer import AnalyzerBase
-from common.proc import run_captured
+from common.git import run_git
 
 
 class FileCollector:
@@ -94,8 +94,8 @@ class FileCollector:
     def _get_changed_files(self, extensions: tuple[str, ...], compare_ref: str) -> list[Path]:
         """Get files changed compared to an available upstream ref."""
         patterns = [f"*{ext}" for ext in extensions]
-        result = run_captured(
-            ["git", "-C", str(self.repo_root), "diff", "--name-only", f"{compare_ref}...", "--", *patterns],
+        result = run_git(
+            "diff", "--name-only", f"{compare_ref}...", "--", *patterns, cwd=self.repo_root
         )
 
         if result.returncode != 0:
@@ -139,24 +139,31 @@ def get_analyzer(
     match tool:
         case "clang-tidy":
             from analyzers.clang_tidy import ClangTidyAnalyzer
+
             return ClangTidyAnalyzer(repo_root, build_dir, jobs=jobs)
         case "clazy":
             from analyzers.clazy import ClazyAnalyzer
+
             return ClazyAnalyzer(repo_root, build_dir, jobs=jobs)
         case "clang-format":
             from analyzers.clang_format import ClangFormatAnalyzer
+
             return ClangFormatAnalyzer(repo_root, build_dir)
         case "cppcheck":
             from analyzers.cppcheck import CppcheckAnalyzer
+
             return CppcheckAnalyzer(repo_root, build_dir)
         case "qmllint":
             from analyzers.qmllint import QmlLintAnalyzer
+
             return QmlLintAnalyzer(repo_root, build_dir)
         case "vehicle-null-check":
             from analyzers.vehicle_null_check import VehicleNullCheckAnalyzer
+
             return VehicleNullCheckAnalyzer(repo_root, build_dir)
         case "qt-translate-noop-check":
             from analyzers.qt_translate_noop_check import QtTranslateNoopAnalyzer
+
             return QtTranslateNoopAnalyzer(repo_root, build_dir)
         case _:
             available = "clang-format, clang-tidy, cppcheck, clazy, qmllint, vehicle-null-check, qt-translate-noop-check"
@@ -196,7 +203,15 @@ Examples:
         "-t",
         "--tool",
         default="clang-tidy",
-        choices=["clang-format", "clang-tidy", "cppcheck", "clazy", "qmllint", "vehicle-null-check", "qt-translate-noop-check"],
+        choices=[
+            "clang-format",
+            "clang-tidy",
+            "cppcheck",
+            "clazy",
+            "qmllint",
+            "vehicle-null-check",
+            "qt-translate-noop-check",
+        ],
         help="Analysis tool to use (default: clang-tidy)",
     )
     parser.add_argument(
@@ -246,6 +261,7 @@ def main() -> int:
 
     if args.check_deps:
         from common.deps import check_and_report
+
         tool_map = {
             "clang-format": ["clang-format"],
             "clang-tidy": ["clang-tidy"],

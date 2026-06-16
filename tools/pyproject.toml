@@ -1,13 +1,14 @@
 [project]
 name = "qgc-tools"
 version = "0.0.0"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
 scripts = [
   "defusedxml>=0.7.1",
   "httpx>=0.28",
   "jinja2>=3.1",
+  "tomli>=2.0; python_version < '3.11'",
 ]
 precommit = [
   "pre-commit",
@@ -16,6 +17,7 @@ test = [
   "pytest",
   "jinja2",
   "pyyaml",
+  "tomli>=2.0; python_version < '3.11'",
 ]
 ci = [
   "pre-commit",
@@ -33,6 +35,7 @@ dev = [
   "pyyaml",
   "pymavlink",
   "rust-just>=1.30",
+  "tomli>=2.0; python_version < '3.11'",
 ]
 lsp = [
   "pygls",

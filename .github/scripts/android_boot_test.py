@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import re
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -14,7 +13,12 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.proc import run_bytes  # noqa: E402
+from typing import TYPE_CHECKING
+
+from common.proc import run_bytes
+
+if TYPE_CHECKING:
+    import subprocess
 
 
 def _decode(value: bytes) -> str:
@@ -323,8 +327,7 @@ def run_boot_attempt(
             )
 
         has_relevant_crash = any(
-            crash_signature_pattern.search(line)
-            and crash_context_pattern.search(line)
+            crash_signature_pattern.search(line) and crash_context_pattern.search(line)
             for line in logcat_delta.splitlines()
         )
         if has_relevant_crash:
@@ -363,8 +366,7 @@ def run_boot_attempt(
 
             if second - app_launched_at >= stability_window:
                 print(
-                    "Boot test passed: app remained running for "
-                    f"{stability_window}s after launch."
+                    f"Boot test passed: app remained running for {stability_window}s after launch."
                 )
                 return True, None, None, logcat_content, app_log_pattern
 

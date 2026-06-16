@@ -19,16 +19,14 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import ClassVar
 
 from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import (  # noqa: E402
-    write_github_output as _write_github_output,
-    write_step_summary as _write_step_summary,
-)
-from common.proc import run_captured  # noqa: E402
+from common.gh_actions import write_github_output, write_step_summary
+from common.proc import run_captured
 
 
 @dataclass
@@ -73,8 +71,8 @@ def run_command(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
 
 
 class GStreamerArchiver:
-    VALID_PLATFORMS = {"linux", "macos", "windows", "android", "ios"}
-    ALLOWED_BUCKETS = {"qgroundcontrol"}
+    VALID_PLATFORMS: ClassVar[set[str]] = {"linux", "macos", "windows", "android", "ios"}
+    ALLOWED_BUCKETS: ClassVar[set[str]] = {"qgroundcontrol"}
 
     def __init__(
         self,
@@ -286,11 +284,13 @@ class GStreamerArchiver:
     def write_github_output(self) -> None:
         if not self._archive_result:
             return
-        _write_github_output({
-            "name": self._archive_result.name,
-            "path": str(self._archive_result.path),
-            "ext": self._archive_result.extension,
-        })
+        write_github_output(
+            {
+                "name": self._archive_result.name,
+                "path": str(self._archive_result.path),
+                "ext": self._archive_result.extension,
+            }
+        )
 
     def write_github_summary(self, uploaded: bool = False) -> None:
         if not self._archive_result:
@@ -314,11 +314,9 @@ class GStreamerArchiver:
         ]
 
         if uploaded:
-            lines.append(
-                f"| S3 Path | dependencies/gstreamer/{self.platform}/{self.version}/ |"
-            )
+            lines.append(f"| S3 Path | dependencies/gstreamer/{self.platform}/{self.version}/ |")
 
-        _write_step_summary("\n".join(lines) + "\n")
+        write_step_summary("\n".join(lines) + "\n")
 
 
 def parse_args() -> argparse.Namespace:

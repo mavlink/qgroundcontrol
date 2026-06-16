@@ -11,7 +11,6 @@ Examples:
 from __future__ import annotations
 
 import argparse
-import contextlib
 import shutil
 import subprocess
 import sys
@@ -24,6 +23,7 @@ ensure_tools_dir(__file__)
 
 from common import find_repo_root, run_captured
 from common.cli import add_dry_run
+from common.io import chdir
 from common.logging import log_info, log_ok, log_warn
 
 if TYPE_CHECKING:
@@ -46,7 +46,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("-a", "--all", action="store_true", help="Clean build + caches + generated files")
+    parser.add_argument(
+        "-a", "--all", action="store_true", help="Clean build + caches + generated files"
+    )
     parser.add_argument("-c", "--cache", action="store_true", help="Clean only caches")
     add_dry_run(parser, help="Show what would be removed; do not delete")
     return parser.parse_args(argv)
@@ -104,7 +106,9 @@ def report_disk_usage(root: Path) -> None:
     try:
         result = subprocess.run(
             ["du", "-sh", str(root)],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         print()
         log_info(f"Disk usage: {result.stdout.split()[0]}")
@@ -116,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     root = repo_root()
 
-    with contextlib.chdir(root):
+    with chdir(root):
         if args.dry_run:
             log_warn("Dry run mode - no files will be removed")
 

@@ -25,6 +25,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
+from common.io import require_tar_data_filter
 from common.net import download_with_retry
 from common.proc import run_captured
 from common.tool_version import probe_version
@@ -75,6 +76,7 @@ def install(version: str, arch: str, prefix: Path) -> Path:
         actual = hashlib.sha256(archive.read_bytes()).hexdigest()
         if actual != sha256:
             raise RuntimeError(f"SHA256 mismatch for {archive_name}: {actual} != {sha256}")
+        require_tar_data_filter()
         with tarfile.open(archive, "r:gz") as tar:
             tar.extractall(tmp_path, filter="data")
         src = tmp_path / stem / "bin" / "mold"

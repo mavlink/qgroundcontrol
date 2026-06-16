@@ -40,11 +40,10 @@ ensure_tools_dir(__file__)
 from common.gh_actions import (
     append_github_env,
     append_github_path,
+    write_github_output,
     write_step_summary,
 )
-from common.gh_actions import (
-    write_github_output as write_github_outputs,
-)
+from common.io import require_tar_data_filter
 from common.net import download_with_retry
 from common.proc import run_captured
 from common.tool_version import probe_version
@@ -58,6 +57,7 @@ def _extract_zip(archive: Path, dest: Path) -> None:
 
 
 def _extract_tar_gz(archive: Path, dest: Path) -> None:
+    require_tar_data_filter()
     with tarfile.open(archive, "r:gz") as tar:
         tar.extractall(dest, filter="data")
 
@@ -261,6 +261,7 @@ class CcacheInstaller:
             return None
 
         try:
+            require_tar_data_filter()
             with tarfile.open(minisign_path, "r:gz") as tar:
                 tar.extractall(temp_dir, filter="data")
         except tarfile.TarError as e:
@@ -304,6 +305,7 @@ class CcacheInstaller:
         extract_dir = temp_dir / f"ccache-{self.version}-linux-{self.arch}-glibc"
 
         try:
+            require_tar_data_filter()
             with tarfile.open(archive, "r:xz") as tar:
                 tar.extractall(temp_dir, filter="data")
         except tarfile.TarError as e:
@@ -513,7 +515,7 @@ def run_summary() -> int:
 
 def output_github_actions(config: CcacheConfig) -> None:
     """Write outputs for GitHub Actions."""
-    write_github_outputs(
+    write_github_output(
         {
             "version": config.version,
             "arch": config.arch,
@@ -797,20 +799,20 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "scope":
         scope = determine_cache_scope(args.event_name, args.ref_name, args.pr_number)
         print(scope)
-        write_github_outputs({"scope": scope})
+        write_github_output({"scope": scope})
         return 0
 
     if args.command == "windows-config":
         values = resolve_windows_binary_config(args.host, args.target)
         print(f"arch={values['arch']}")
         print(f"sha256={values['sha256']}")
-        write_github_outputs(values)
+        write_github_output(values)
         return 0
 
     if args.command == "install-windows":
         install_dir = install_windows_binary(args.version, args.arch, args.sha256, args.runner_temp)
         print(install_dir)
-        write_github_outputs({"install_dir": str(install_dir)})
+        write_github_output({"install_dir": str(install_dir)})
         return 0
 
     if args.command == "add-windows-path":
@@ -820,7 +822,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "macos-config":
         print(f"sha256={MACOS_BINARY_SHA256}")
-        write_github_outputs({"sha256": MACOS_BINARY_SHA256})
+        write_github_output({"sha256": MACOS_BINARY_SHA256})
         return 0
 
     if args.command == "install-macos":

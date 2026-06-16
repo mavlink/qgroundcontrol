@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import platform
 import re
 import subprocess
+import tarfile
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -21,6 +23,7 @@ JUST_TARGETS: dict[str, str] = {
 DEBIAN_PACKAGE_ALTERNATIVES: dict[str, list[str]] = {
     "libgstreamer-plugins-good1.0-dev": ["libgstreamer-plugins-extra1.0-dev"],
 }
+
 
 def resolve_package_alternatives(packages: list[str]) -> list[str]:
     """Replace packages with their first available alternative when the primary is missing."""
@@ -55,6 +58,7 @@ def resolve_package_alternatives(packages: list[str]) -> list[str]:
         resolved.append(chosen)
     return resolved
 
+
 def _detect_just_version() -> tuple[int, ...] | None:
     """Return installed just's (major, minor, patch) tuple, or None if absent/unparsable."""
     if not _c.has_command("just"):
@@ -69,6 +73,7 @@ def _detect_just_version() -> tuple[int, ...] | None:
     if not match:
         return None
     return tuple(int(g) for g in match.groups(default="0"))
+
 
 def install_just_debian(dry_run: bool = False) -> bool:
     """Install `just` via apt when available, else from upstream prebuilt binary.
@@ -98,9 +103,7 @@ def install_just_debian(dry_run: bool = False) -> bool:
             "falling back to upstream binary"
         )
 
-    import platform as _platform
-
-    machine = _platform.machine().lower()
+    machine = platform.machine().lower()
     target = JUST_TARGETS.get(machine)
     if not target:
         _c.log_warn(f"no prebuilt 'just' for arch '{machine}'; install manually")
@@ -117,9 +120,8 @@ def install_just_debian(dry_run: bool = False) -> bool:
         archive = Path(tmp) / "just.tar.gz"
         if not _c.download_file(url, archive):
             return False
-        import tarfile
-
         try:
+            _c.require_tar_data_filter()
             with tarfile.open(archive, "r:gz") as tar:
                 tar.extract("just", path=tmp, filter="data")
         except (tarfile.TarError, KeyError) as e:
@@ -128,6 +130,7 @@ def install_just_debian(dry_run: bool = False) -> bool:
         return _c.run_command(
             ["install", "-m", "0755", f"{tmp}/just", "/usr/local/bin/just"], dry_run, sudo=True
         )
+
 
 def install_debian(
     dry_run: bool = False,
@@ -197,6 +200,7 @@ def install_debian(
 
     print("\nDebian dependencies installed successfully!")
     return True
+
 
 __all__ = [
     "DEBIAN_PACKAGE_ALTERNATIVES",

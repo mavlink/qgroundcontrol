@@ -22,7 +22,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.proc import run_captured  # noqa: E402
+from common.proc import run_captured
 
 ADB_TIMEOUT_SHORT = 20
 ADB_TIMEOUT_LONG = 30
@@ -61,8 +61,11 @@ def collect_build_artifacts(out_dir: Path, build_dir: Path, boot_log: Path | Non
     if boot_log is not None:
         _copy_if_exists(boot_log, out_dir / boot_log.name)
 
-    for name in ("qgc-build.log", "qgc-build-retry.log",
-                 "android-QGroundControl-deployment-settings.json"):
+    for name in (
+        "qgc-build.log",
+        "qgc-build-retry.log",
+        "android-QGroundControl-deployment-settings.json",
+    ):
         _copy_if_exists(build_dir / name, out_dir / name)
 
     # Pretty-print the deployment-settings JSON for human review; keep going on parse error.
@@ -72,8 +75,7 @@ def collect_build_artifacts(out_dir: Path, build_dir: Path, boot_log: Path | Non
     if settings.exists():
         try:
             data = json.loads(settings.read_text(encoding="utf-8"))
-            pretty.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n",
-                              encoding="utf-8")
+            pretty.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         except (json.JSONDecodeError, OSError) as e:
             error.write_text(str(e), encoding="utf-8")
 
@@ -83,15 +85,15 @@ def adb_available() -> bool:
 
 
 def emulator_online(devices_output: str) -> bool:
-    return any(re.match(r"^emulator-\d+\s+device$", line)
-               for line in devices_output.splitlines())
+    return any(re.match(r"^emulator-\d+\s+device$", line) for line in devices_output.splitlines())
 
 
 def collect_adb_diagnostics(out_dir: Path) -> None:
     """Run adb dumps if an emulator device is online; otherwise note why we skipped."""
     if not adb_available():
-        (out_dir / "adb-skipped.txt").write_text("adb not found; skipping adb diagnostics.\n",
-                                                 encoding="utf-8")
+        (out_dir / "adb-skipped.txt").write_text(
+            "adb not found; skipping adb diagnostics.\n", encoding="utf-8"
+        )
         return
 
     _run(["adb", "start-server"], ADB_TIMEOUT_SHORT)
@@ -125,10 +127,10 @@ def extract_gstreamer_diagnostics(logcat_path: Path, out_dir: Path) -> None:
     lines = text.splitlines()
     gst_lines = [line for line in lines if GSTREAMER_LOG_PATTERN.search(line)]
     load_errors = [line for line in lines if GSTREAMER_LOAD_ERROR_PATTERN.search(line)]
-    (out_dir / "gstreamer-logcat.txt").write_text("\n".join(gst_lines) + "\n",
-                                                  encoding="utf-8")
-    (out_dir / "gstreamer-load-errors.txt").write_text("\n".join(load_errors) + "\n",
-                                                       encoding="utf-8")
+    (out_dir / "gstreamer-logcat.txt").write_text("\n".join(gst_lines) + "\n", encoding="utf-8")
+    (out_dir / "gstreamer-load-errors.txt").write_text(
+        "\n".join(load_errors) + "\n", encoding="utf-8"
+    )
 
 
 def collect_avd_files(out_dir: Path, avd_home: Path) -> None:
@@ -146,14 +148,30 @@ def collect_avd_files(out_dir: Path, avd_home: Path) -> None:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out-dir", type=Path, required=True,
-                        help="Directory to write diagnostics into (created if missing)")
-    parser.add_argument("--build-dir", type=Path, required=True,
-                        help="CMake build directory to pull qgc-build*.log and deployment-settings.json from")
-    parser.add_argument("--boot-log", type=Path, default=None,
-                        help="Path to the emulator boot test log (e.g. /tmp/qgc_emulator_boot.log)")
-    parser.add_argument("--avd-home", type=Path, default=Path.home() / ".android" / "avd",
-                        help="AVD home directory (default: ~/.android/avd)")
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        required=True,
+        help="Directory to write diagnostics into (created if missing)",
+    )
+    parser.add_argument(
+        "--build-dir",
+        type=Path,
+        required=True,
+        help="CMake build directory to pull qgc-build*.log and deployment-settings.json from",
+    )
+    parser.add_argument(
+        "--boot-log",
+        type=Path,
+        default=None,
+        help="Path to the emulator boot test log (e.g. /tmp/qgc_emulator_boot.log)",
+    )
+    parser.add_argument(
+        "--avd-home",
+        type=Path,
+        default=Path.home() / ".android" / "avd",
+        help="AVD home directory (default: ~/.android/avd)",
+    )
     return parser.parse_args(argv)
 
 

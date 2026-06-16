@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import pytest
-
 from aws_upload import (
     main,
     resolve_auth_mode,

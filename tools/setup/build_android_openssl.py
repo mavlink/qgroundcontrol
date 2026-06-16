@@ -31,6 +31,10 @@ _tools_dir = Path(__file__).resolve().parents[1]
 if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
+from _bootstrap import ensure_tools_dir  # noqa: E402
+
+ensure_tools_dir(__file__)
+
 from common.logging import log_error, log_info, log_ok  # noqa: E402
 
 _QT_ABI = {"arm64": "arm64-v8a", "arm": "armeabi-v7a"}

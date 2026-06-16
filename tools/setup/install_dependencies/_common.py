@@ -21,8 +21,9 @@ if str(_tools_dir) not in sys.path:
     sys.path.insert(0, str(_tools_dir))
 
 from common.build_config import get_build_config_value  # noqa: E402
-from common.env import is_ci as _common_is_ci  # noqa: E402
+from common.env import is_ci  # noqa: E402  re-exported for submodules
 from common.gh_actions import append_github_env  # noqa: E402
+from common.io import require_tar_data_filter  # noqa: E402  re-exported for submodules
 from common.logging import log_error, log_info, log_warn  # noqa: E402  re-exported for submodules
 from common.platform import is_linux, is_macos, is_windows  # noqa: E402
 
@@ -176,11 +177,6 @@ def run_command(cmd: list[str], dry_run: bool = False, sudo: bool = False) -> bo
     return result.returncode == 0
 
 
-def is_ci() -> bool:
-    """Check if running in a CI environment."""
-    return _common_is_ci()
-
-
 def _set_env_var_ci(name: str, value: str) -> None:
     """Set an environment variable via GITHUB_ENV for CI."""
     append_github_env({name: value})
@@ -274,6 +270,8 @@ def download_file(
 
 __all__ = [
     "APT_BASE_OPTIONS",
+    "_set_env_var_ci",
+    "_set_env_var_local",
     "add_to_path",
     "append_github_env",
     "check_apt_package_available",
@@ -289,9 +287,8 @@ __all__ = [
     "log_error",
     "log_info",
     "log_warn",
+    "require_tar_data_filter",
     "run_apt_install_with_retry",
     "run_command",
     "set_env_var",
-    "_set_env_var_ci",
-    "_set_env_var_local",
 ]

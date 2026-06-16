@@ -50,16 +50,16 @@ if(NOT EXISTS "${_qgc_venv_python}" AND QGC_AUTO_PYTHON_VENV)
     find_program(_qgc_boot_python NAMES python3 python)
     if(NOT _qgc_boot_python)
         message(FATAL_ERROR "QGC: no python3 found to bootstrap .venv. "
-                            "Install Python 3.12+ or run tools/setup/install_python.py manually.")
+                            "Install Python 3.10+ or run tools/setup/install_python.py manually.")
     endif()
     execute_process(
         COMMAND "${_qgc_boot_python}" -c
-                "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)"
+                "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"
         RESULT_VARIABLE _qgc_boot_ok
     )
     if(NOT _qgc_boot_ok EQUAL 0)
-        message(FATAL_ERROR "QGC: bootstrap interpreter ${_qgc_boot_python} is older than Python 3.12 "
-                            "(required by tools/pyproject.toml). Install Python 3.12+ and reconfigure.")
+        message(FATAL_ERROR "QGC: bootstrap interpreter ${_qgc_boot_python} is older than Python 3.10 "
+                            "(required by tools/pyproject.toml). Install Python 3.10+ and reconfigure.")
     endif()
     message(STATUS "QGC: .venv missing — creating it via tools/setup/install_python.py scripts")
     execute_process(

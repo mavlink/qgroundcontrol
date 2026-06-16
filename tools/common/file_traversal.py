@@ -9,22 +9,24 @@ from collections.abc import Generator, Iterable
 from pathlib import Path
 
 # Directories to skip when traversing
-DEFAULT_SKIP_DIRS = frozenset({
-    'build',
-    'libs',
-    'test',
-    '.cache',
-    '.ccache',
-    'cpm_modules',
-    '_deps',
-    'node_modules',
-    '.git',
-    '.rcc',
-})
+DEFAULT_SKIP_DIRS = frozenset(
+    {
+        "build",
+        "libs",
+        "test",
+        ".cache",
+        ".ccache",
+        "cpm_modules",
+        "_deps",
+        "node_modules",
+        ".git",
+        ".rcc",
+    }
+)
 
 # C++ file extensions
-CPP_EXTENSIONS = frozenset({'.cc', '.cpp', '.cxx'})
-HEADER_EXTENSIONS = frozenset({'.h', '.hpp', '.hxx'})
+CPP_EXTENSIONS = frozenset({".cc", ".cpp", ".cxx"})
+HEADER_EXTENSIONS = frozenset({".h", ".hpp", ".hxx"})
 ALL_CPP_EXTENSIONS = CPP_EXTENSIONS | HEADER_EXTENSIONS
 
 
@@ -43,8 +45,8 @@ def find_repo_root(start_path: Path | None = None) -> Path:
 
     current = start_path if start_path.is_dir() else start_path.parent
 
-    for parent in [current, *list(current.parents)]:
-        if (parent / '.git').exists():
+    for parent in [current, *current.parents]:
+        if (parent / ".git").exists():
             return parent
 
     return start_path
@@ -87,8 +89,12 @@ def find_cpp_files(
             if path.suffix in ALL_CPP_EXTENSIONS:
                 yield path
         elif path.is_dir():
-            for file_path in path.rglob('*'):
-                if file_path.is_file() and file_path.suffix in ALL_CPP_EXTENSIONS and not should_skip_path(file_path, skip_dirs):
+            for file_path in path.rglob("*"):
+                if (
+                    file_path.is_file()
+                    and file_path.suffix in ALL_CPP_EXTENSIONS
+                    and not should_skip_path(file_path, skip_dirs)
+                ):
                     yield file_path
 
 
@@ -107,7 +113,7 @@ def find_header_files(
         Paths to header files.
     """
     for ext in HEADER_EXTENSIONS:
-        for file_path in root.rglob(f'*{ext}'):
+        for file_path in root.rglob(f"*{ext}"):
             if not should_skip_path(file_path, skip_dirs):
                 yield file_path
 
@@ -127,14 +133,14 @@ def find_source_files(
         Paths to source files.
     """
     for ext in CPP_EXTENSIONS:
-        for file_path in root.rglob(f'*{ext}'):
+        for file_path in root.rglob(f"*{ext}"):
             if not should_skip_path(file_path, skip_dirs):
                 yield file_path
 
 
 def find_json_files(
     root: Path,
-    pattern: str = '*Fact.json',
+    pattern: str = "*Fact.json",
     skip_dirs: Iterable[str] | None = None,
 ) -> Generator[Path, None, None]:
     """

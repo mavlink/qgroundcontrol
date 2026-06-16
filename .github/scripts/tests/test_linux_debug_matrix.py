@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from linux_debug_matrix import COVERAGE_JOB, SANITIZER_JOB, build_matrix, main
 
 
@@ -33,9 +32,7 @@ def test_main_writes_github_output_for_pr(
     assert "include=" in capsys.readouterr().out
 
 
-def test_main_non_pr_includes_sanitizers(
-    tmp_path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_main_non_pr_includes_sanitizers(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     output_file = tmp_path / "gha_output"
     monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
     monkeypatch.setenv("IS_PR", "0")
@@ -47,9 +44,7 @@ def test_main_non_pr_includes_sanitizers(
 
 
 @pytest.mark.parametrize("flag", ["1", "true", "True", "yes", "YES"])
-def test_main_truthy_pr_flag_values(
-    flag: str, tmp_path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_main_truthy_pr_flag_values(flag: str, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
     output_file = tmp_path / "gha_output"
     monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
     monkeypatch.setenv("IS_PR", flag)

@@ -4,10 +4,13 @@
 from __future__ import annotations
 
 import subprocess
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from deploy_docs import deploy_branch, sanitize_branch
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestSanitizeBranch:
@@ -78,7 +81,9 @@ class TestDeployBranch:
         assert (target / "feature_docs" / "assets" / "x.css").read_text() == "body{}"
         log = subprocess.run(
             ["git", "-C", str(target), "log", "--oneline"],
-            check=True, capture_output=True, text=True,
+            check=True,
+            capture_output=True,
+            text=True,
         ).stdout
         assert "Docs update" in log
 
