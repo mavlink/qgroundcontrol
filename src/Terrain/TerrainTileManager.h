@@ -40,6 +40,7 @@ private:
     void _tileFailed();
     void _cacheTile(const QByteArray &data, const QString &hash);
     TerrainTile *_getCachedTile(const QString &hash);
+    bool _isFailedTile(const QString &hash);
     static void _processCarpetResults(const QList<double> &altitudes, int gridSizeLat, int gridSizeLon,
                                       bool statsOnly, double &minHeight, double &maxHeight, QList<QList<double>> &carpet);
 
@@ -59,6 +60,9 @@ private:
 
     QMutex _tilesMutex;
     QHash<QString, TerrainTile*> _tiles;
+    QHash<QString, qint64> _failedTiles;  ///< Tile hash -> ms since epoch of last failed fetch; suppresses immediate retries
 
     QNetworkAccessManager *_networkManager = nullptr;
+
+    static constexpr qint64 kFailedTileBackoffMs = 5000;
 };
