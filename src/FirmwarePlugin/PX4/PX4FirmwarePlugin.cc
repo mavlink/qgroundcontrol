@@ -38,50 +38,64 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
     const QString rtlFlightModeName = tr("Return");
     const QString landingFlightModeName = tr("Land");
     const QString preclandFlightModeName = tr("Precision Land");
-    const QString rtgsFlightModeName = tr("Return to Groundstation");
     const QString followMeFlightModeName = tr("Follow Me");
     const QString simpleFlightModeName = tr("Simple");
     const QString orbitFlightModeName = tr("Orbit");
+    const QString slowFlightModeName = tr("Position Slow");
+    const QString altitudeCruiseFlightModeName = tr("Altitude Cruise");
+    const QString terminationFlightModeName = tr("Termination");
+    const QString vtolTakeoffFlightModeName = tr("VTOL Takeoff");
+    const QString guidedCourseFlightModeName = tr("Guided Course");
 
     _setModeEnumToModeStringMapping({
-        { PX4CustomMode::MANUAL,        manualFlightModeName      },
-        { PX4CustomMode::STABILIZED,    stabilizedFlightModeName  },
-        { PX4CustomMode::ACRO,          acroFlightModeName        },
-        { PX4CustomMode::RATTITUDE,     rattitudeFlightModeName   },
-        { PX4CustomMode::ALTCTL,        altCtlFlightModeName      },
-        { PX4CustomMode::OFFBOARD,      offboardFlightModeName    },
-        { PX4CustomMode::SIMPLE,        simpleFlightModeName      },
-        { PX4CustomMode::POSCTL_POSCTL, posCtlFlightModeName      },
-        { PX4CustomMode::POSCTL_ORBIT,  orbitFlightModeName       },
-        { PX4CustomMode::AUTO_LOITER,   holdFlightModeName        },
-        { PX4CustomMode::AUTO_MISSION,  missionFlightModeName     },
-        { PX4CustomMode::AUTO_RTL,      rtlFlightModeName         },
-        { PX4CustomMode::AUTO_LAND,     landingFlightModeName     },
-        { PX4CustomMode::AUTO_PRECLAND, preclandFlightModeName    },
-        { PX4CustomMode::AUTO_READY,    readyFlightModeName       },
-        { PX4CustomMode::AUTO_RTGS,     rtgsFlightModeName        },
-        { PX4CustomMode::AUTO_TAKEOFF,  takeoffFlightModeName     },
+        { PX4CustomMode::MANUAL,                manualFlightModeName      },
+        { PX4CustomMode::STABILIZED,            stabilizedFlightModeName  },
+        { PX4CustomMode::ACRO,                  acroFlightModeName        },
+        { PX4CustomMode::RATTITUDE,             rattitudeFlightModeName   },
+        { PX4CustomMode::ALTCTL,                altCtlFlightModeName      },
+        { PX4CustomMode::OFFBOARD,              offboardFlightModeName    },
+        { PX4CustomMode::SIMPLE,                simpleFlightModeName      },
+        { PX4CustomMode::POSCTL_POSCTL,         posCtlFlightModeName      },
+        { PX4CustomMode::POSCTL_ORBIT,          orbitFlightModeName       },
+        { PX4CustomMode::POSCTL_SLOW,           slowFlightModeName        },
+        { PX4CustomMode::ALTITUDE_CRUISE,       altitudeCruiseFlightModeName },
+        { PX4CustomMode::TERMINATION,           terminationFlightModeName },
+        { PX4CustomMode::AUTO_LOITER,           holdFlightModeName        },
+        { PX4CustomMode::AUTO_MISSION,          missionFlightModeName     },
+        { PX4CustomMode::AUTO_RTL,              rtlFlightModeName         },
+        { PX4CustomMode::AUTO_FOLLOW_TARGET,    followMeFlightModeName    },
+        { PX4CustomMode::AUTO_LAND,             landingFlightModeName     },
+        { PX4CustomMode::AUTO_PRECLAND,         preclandFlightModeName    },
+        { PX4CustomMode::AUTO_READY,            readyFlightModeName       },
+        { PX4CustomMode::AUTO_TAKEOFF,          takeoffFlightModeName     },
+        { PX4CustomMode::AUTO_VTOL_TAKEOFF,     vtolTakeoffFlightModeName },
+        { PX4CustomMode::AUTO_GUIDED_COURSE,    guidedCourseFlightModeName },
     });
 
     static FlightModeList availableFlightModes = {
-        // Mode Name                Custom Mode                     CanBeSet  adv
-        { manualFlightModeName,     PX4CustomMode::MANUAL,          true,   true },
-        { stabilizedFlightModeName, PX4CustomMode::STABILIZED,      true,   true },
-        { acroFlightModeName,       PX4CustomMode::ACRO,            true,   true },
-        { rattitudeFlightModeName,  PX4CustomMode::RATTITUDE,       true,   false},
-        { altCtlFlightModeName,     PX4CustomMode::ALTCTL,          true,   false},
-        { offboardFlightModeName,   PX4CustomMode::OFFBOARD,        true,   true },
-        { simpleFlightModeName,     PX4CustomMode::SIMPLE,          false,  false},
-        { posCtlFlightModeName,     PX4CustomMode::POSCTL_POSCTL,   true,   false},
-        { orbitFlightModeName,      PX4CustomMode::POSCTL_ORBIT,    false,  true },
-        { holdFlightModeName,       PX4CustomMode::AUTO_LOITER,     true,   true },
-        { missionFlightModeName,    PX4CustomMode::AUTO_MISSION,    true,   true },
-        { rtlFlightModeName,        PX4CustomMode::AUTO_RTL,        true,   true },
-        { landingFlightModeName,    PX4CustomMode::AUTO_LAND,       false,  true },
-        { preclandFlightModeName,   PX4CustomMode::AUTO_PRECLAND,   true,   true },
-        { readyFlightModeName,      PX4CustomMode::AUTO_READY,      false,  false},
-        { rtgsFlightModeName,       PX4CustomMode::AUTO_RTGS,       false,  false},
-        { takeoffFlightModeName,    PX4CustomMode::AUTO_TAKEOFF,    false,  false},
+        // Mode Name                    Custom Mode                         CanBeSet  adv
+        { manualFlightModeName,         PX4CustomMode::MANUAL,              true,   true },
+        { stabilizedFlightModeName,     PX4CustomMode::STABILIZED,          true,   true },
+        { acroFlightModeName,           PX4CustomMode::ACRO,                true,   true },
+        { rattitudeFlightModeName,      PX4CustomMode::RATTITUDE,           true,   false},
+        { altCtlFlightModeName,         PX4CustomMode::ALTCTL,              true,   false},
+        { offboardFlightModeName,       PX4CustomMode::OFFBOARD,            true,   true },
+        { simpleFlightModeName,         PX4CustomMode::SIMPLE,              false,  false},
+        { posCtlFlightModeName,         PX4CustomMode::POSCTL_POSCTL,       true,   false},
+        { slowFlightModeName,           PX4CustomMode::POSCTL_SLOW,         true,   true },
+        { altitudeCruiseFlightModeName, PX4CustomMode::ALTITUDE_CRUISE,     true,   true },
+        { orbitFlightModeName,          PX4CustomMode::POSCTL_ORBIT,        false,  true },
+        { holdFlightModeName,           PX4CustomMode::AUTO_LOITER,         true,   true },
+        { missionFlightModeName,        PX4CustomMode::AUTO_MISSION,        true,   true },
+        { rtlFlightModeName,            PX4CustomMode::AUTO_RTL,            true,   true },
+        { followMeFlightModeName,       PX4CustomMode::AUTO_FOLLOW_TARGET,  false,  true },
+        { landingFlightModeName,        PX4CustomMode::AUTO_LAND,           false,  true },
+        { preclandFlightModeName,       PX4CustomMode::AUTO_PRECLAND,       true,   true },
+        { readyFlightModeName,          PX4CustomMode::AUTO_READY,          false,  false},
+        { takeoffFlightModeName,        PX4CustomMode::AUTO_TAKEOFF,        false,  false},
+        { vtolTakeoffFlightModeName,    PX4CustomMode::AUTO_VTOL_TAKEOFF,   false,  true },
+        { terminationFlightModeName,    PX4CustomMode::TERMINATION,         false,  true },
+        { guidedCourseFlightModeName,   PX4CustomMode::AUTO_GUIDED_COURSE,  false,  true },
     };
 
     updateAvailableFlightModes(availableFlightModes);
@@ -742,52 +756,60 @@ void PX4FirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 
         // Update Multi Rotor
         switch (cMode) {
-        case PX4CustomMode::MANUAL            :
-        case PX4CustomMode::STABILIZED        :
-        case PX4CustomMode::ACRO              :
-        case PX4CustomMode::RATTITUDE         :
-        case PX4CustomMode::ALTCTL            :
-        case PX4CustomMode::OFFBOARD          :
-        case PX4CustomMode::SIMPLE            :
-        case PX4CustomMode::POSCTL_POSCTL     :
-        case PX4CustomMode::AUTO_LOITER       :
-        case PX4CustomMode::AUTO_MISSION      :
-        case PX4CustomMode::AUTO_RTL          :
+        case PX4CustomMode::MANUAL:
+        case PX4CustomMode::STABILIZED:
+        case PX4CustomMode::ACRO:
+        case PX4CustomMode::RATTITUDE:
+        case PX4CustomMode::ALTCTL:
+        case PX4CustomMode::OFFBOARD:
+        case PX4CustomMode::SIMPLE:
+        case PX4CustomMode::POSCTL_POSCTL:
+        case PX4CustomMode::AUTO_LOITER:
+        case PX4CustomMode::AUTO_MISSION:
+        case PX4CustomMode::AUTO_RTL:
         case PX4CustomMode::AUTO_FOLLOW_TARGET:
-        case PX4CustomMode::AUTO_LAND         :
-        case PX4CustomMode::AUTO_PRECLAND     :
-        case PX4CustomMode::AUTO_READY        :
-        case PX4CustomMode::AUTO_RTGS         :
-        case PX4CustomMode::AUTO_TAKEOFF      :
+        case PX4CustomMode::AUTO_LAND:
+        case PX4CustomMode::AUTO_PRECLAND:
+        case PX4CustomMode::AUTO_READY:
+        case PX4CustomMode::AUTO_TAKEOFF:
+        case PX4CustomMode::POSCTL_SLOW:
+        case PX4CustomMode::TERMINATION:
             mode.multiRotor = true;
             break;
-        case PX4CustomMode::POSCTL_ORBIT      :
+        case PX4CustomMode::POSCTL_ORBIT:
+        case PX4CustomMode::ALTITUDE_CRUISE:
+        case PX4CustomMode::AUTO_VTOL_TAKEOFF:
+        case PX4CustomMode::AUTO_GUIDED_COURSE:
             mode.multiRotor = false;
             break;
         }
 
         // Update Fixed Wing
         switch (cMode){
-        case PX4CustomMode::SIMPLE            :
-        case PX4CustomMode::POSCTL_ORBIT      :
+        case PX4CustomMode::SIMPLE:
+        case PX4CustomMode::POSCTL_ORBIT:
         case PX4CustomMode::AUTO_FOLLOW_TARGET:
-        case PX4CustomMode::AUTO_PRECLAND     :
+        case PX4CustomMode::AUTO_PRECLAND:
+        case PX4CustomMode::POSCTL_SLOW:
             mode.fixedWing = false;
             break;
-        case PX4CustomMode::OFFBOARD          :
-        case PX4CustomMode::MANUAL            :
-        case PX4CustomMode::STABILIZED        :
-        case PX4CustomMode::ACRO              :
-        case PX4CustomMode::RATTITUDE         :
-        case PX4CustomMode::ALTCTL            :
-        case PX4CustomMode::POSCTL_POSCTL     :
-        case PX4CustomMode::AUTO_LOITER       :
-        case PX4CustomMode::AUTO_MISSION      :
-        case PX4CustomMode::AUTO_RTL          :
-        case PX4CustomMode::AUTO_LAND         :
-        case PX4CustomMode::AUTO_READY        :
-        case PX4CustomMode::AUTO_RTGS         :
-        case PX4CustomMode::AUTO_TAKEOFF      :
+        case PX4CustomMode::OFFBOARD:
+        case PX4CustomMode::MANUAL:
+        case PX4CustomMode::STABILIZED:
+        case PX4CustomMode::ACRO:
+        case PX4CustomMode::RATTITUDE:
+        case PX4CustomMode::ALTCTL:
+        case PX4CustomMode::POSCTL_POSCTL:
+        case PX4CustomMode::AUTO_LOITER:
+        case PX4CustomMode::AUTO_MISSION:
+        case PX4CustomMode::AUTO_RTL:
+        case PX4CustomMode::AUTO_LAND:
+        case PX4CustomMode::AUTO_READY:
+        case PX4CustomMode::AUTO_TAKEOFF:
+        case PX4CustomMode::ALTITUDE_CRUISE:
+        case PX4CustomMode::TERMINATION:
+        case PX4CustomMode::AUTO_VTOL_TAKEOFF:
+        case PX4CustomMode::AUTO_GUIDED_COURSE:
             mode.fixedWing = true;
             break;
         }

@@ -50,7 +50,8 @@ QList<MockLink::FlightMode_t> MockLink::_availableFlightModes = {
     { "Precision Landing",      0,                          PX4CustomMode::AUTO_PRECLAND,       true,       true },
     { "Takeoff",                MAV_STANDARD_MODE_TAKEOFF,  PX4CustomMode::AUTO_TAKEOFF,        false,      false},
     { "MockLink Mode",          0,                          PX4CustomMode::RATTITUDE,           true,       false},
-    { "(Mode not available)",   0,                          PX4CustomMode::AUTO_RTGS,           false,      false},
+    // Deliberately uses the reserved (deleted RTGS) AUTO sub-mode so QGC has no name for it
+    { "(Mode not available)",   0,                          static_cast<uint32_t>(PX4_CUSTOM_MAIN_MODE_AUTO << 16 | (PX4_CUSTOM_SUB_MODE_AUTO_RESERVED_DO_NOT_USE << 24)), false, false},
     { "MockLink Mode (delayed)",0,                          PX4CustomMode::AUTO_FOLLOW_TARGET,  true,       false},
 };
 

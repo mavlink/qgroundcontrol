@@ -1,10 +1,12 @@
 #include "QmlUITestBase.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QVariant>
 #include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlIncubationController>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtQuickControls2/QQuickStyle>
@@ -73,6 +75,12 @@ void QmlUITestBase::startUI()
                      QRegularExpression(QStringLiteral("Error transferring")));
     ignoreLogMessage("Terrain.TerrainTileManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Elevation tile fetching returned error")));
+    // In offscreen / software-GL CI the render loop never runs, so asynchronous
+    // QML incubators may not finish before engine teardown even after explicitly
+    // driving the incubation controller. Ignore the resulting warning to prevent
+    // strict-mode failures in environments where GPU rendering is unavailable.
+    ignoreLogMessage("default", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("There are still .* items in the process of being created at engine destruction")));
 #ifdef QT_DEBUG
     // Debug builds on macOS are ad-hoc signed with an unbound Info.plist, so
     // macOS never shows the camera permission dialog and silently denies access.
@@ -124,12 +132,23 @@ void QmlUITestBase::closeUIWindow()
 void QmlUITestBase::destroyUIEngine()
 {
     if (_engine) {
-        // Give asynchronous QML item creation/destruction a brief drain window
-        // before engine teardown to avoid strict-mode warnings at shutdown.
-        for (int i = 0; i < 10; ++i) {
-            _engine->collectGarbage();
-            QCoreApplication::processEvents();
-            QTest::qWait(10);
+        // Asynchronous QML item creation (Loader asynchronous, incubators) is
+        // driven by the window's incubation controller, which is normally pumped
+        // by the render loop. In offscreen / software-GL CI no frames are
+        // presented, so pending incubators never advance on their own and would
+        // still be "in progress" at engine destruction, tripping the strict-mode
+        // "There are still N items in the process of being created" warning.
+        // Drive the controller explicitly and wait on the real condition (no
+        // incubating objects) rather than a fixed delay.
+        if (QQmlIncubationController *ic = _engine->incubationController()) {
+            QElapsedTimer timer;
+            timer.start();
+            while ((ic->incubatingObjectCount() > 0) && (timer.elapsed() < 3000)) {
+                ic->incubateFor(50);
+                _engine->collectGarbage();
+                QCoreApplication::processEvents();
+                QTest::qWait(5);
+            }
         }
 
         // Force GC and event processing so QML releases references to C++ singletons
