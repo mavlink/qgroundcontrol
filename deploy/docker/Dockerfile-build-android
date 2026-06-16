@@ -3,23 +3,23 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Copy build config and setup scripts
-# install_dependencies/_common.py imports tools/common/build_config via parents[2] →
-# `/tmp/qt/..` must contain `common/`, so mirror tools/ layout under /tmp/.
-COPY .github/build-config.json /tmp/qt/
-COPY tools/setup/install_dependencies/ /tmp/qt/install_dependencies/
-COPY tools/setup/read_config.py /tmp/qt/
-COPY tools/common/ /tmp/common/
+# Mirror the real tools/ layout under /tmp/tools (parents[N] math + _bootstrap import need a dir named "tools").
+COPY .github/build-config.json /tmp/tools/setup/
+COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
+COPY tools/setup/read_config.py /tmp/tools/setup/
+COPY tools/_bootstrap.py /tmp/tools/
+COPY tools/common/ /tmp/tools/common/
 
 # Install system packages, project dependencies, and read all config in one layer
 RUN apt-get update && \
     apt-get install -y --no-install-recommends python3 pipx && \
-    python3 /tmp/qt/install_dependencies --platform debian && \
-    python3 /tmp/qt/read_config.py --export bash > /etc/profile.d/qgc.sh && \
+    python3 /tmp/tools/setup/install_dependencies --platform debian && \
+    python3 /tmp/tools/setup/read_config.py --export bash > /etc/profile.d/qgc.sh && \
     chmod +x /etc/profile.d/qgc.sh && \
     . /etc/profile.d/qgc.sh && \
     apt-get install -y openjdk-${JAVA_VERSION}-jdk && \
     rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/common
+    rm -rf /tmp/tools
 
 # Build-time Python deps for CMake-invoked generators (jinja2 for
 # settings_qml/config_qml). Synced from tools/pyproject.toml [scripts] so the

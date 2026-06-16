@@ -271,12 +271,16 @@ class ClientHandler(threading.Thread):
                 if ready:
                     nmea = self.conn.recv(4096)
                     if nmea:
-                        log.info("%s << NMEA: %s", self.addr, nmea.decode("ascii", errors="replace").strip())
+                        log.info(
+                            "%s << NMEA: %s",
+                            self.addr,
+                            nmea.decode("ascii", errors="replace").strip(),
+                        )
                     else:
                         log.info("%s client closed", self.addr)
                         return
-            except Exception:
-                pass
+            except OSError:
+                return
 
             time.sleep(interval)
 
@@ -326,9 +330,7 @@ def run_server(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Mock NTRIP caster for QGroundControl testing"
-    )
+    parser = argparse.ArgumentParser(description="Mock NTRIP caster for QGroundControl testing")
     parser.add_argument("--host", default="0.0.0.0", help="Bind address (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=2101, help="Port (default: 2101)")
     parser.add_argument("--auth", metavar="USER:PASS", help="Require basic auth (e.g. user:pass)")

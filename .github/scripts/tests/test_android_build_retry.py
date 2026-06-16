@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import android_build_retry as mod
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_detect_truncation_matches_qt_error(tmp_path: Path) -> None:

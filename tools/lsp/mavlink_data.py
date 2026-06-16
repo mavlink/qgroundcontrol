@@ -42,9 +42,10 @@ def load_messages_from_xml(project_root: Path) -> list[MAVLinkMessage]:
     """Load MAVLink messages from XML; return [] when XML or parser is unavailable."""
     try:
         from .mavlink_parser import load_all_messages
+
         return load_all_messages(project_root)
     except ImportError:
-        logger.debug("mavlink_parser not available")
+        logger.debug("mavlink_parser unavailable (missing optional dependency)")
         return []
     except Exception as e:
         logger.warning(f"Failed to load MAVLink XML: {e}")

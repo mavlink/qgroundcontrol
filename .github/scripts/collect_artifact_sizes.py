@@ -43,20 +43,6 @@ def _is_distributable_artifact(name: str) -> bool:
         return False
     return any(name.startswith(prefix) for prefix in _DISTRIBUTABLE_PREFIXES)
 
-def latest_successful_runs(
-    runs: list[dict[str, Any]],
-    platforms: list[str],
-    *,
-    event: str = "",
-) -> dict[str, dict[str, Any]]:
-    return select_latest_runs_by_name(
-        runs,
-        set(platforms),
-        event=event,
-        status="completed",
-        conclusion="success",
-    )
-
 
 def collect_artifacts(
     repo: str,
@@ -95,15 +81,17 @@ def collect_artifacts(
         max_workers = min(len(run_ids), 4)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as pool:
             future_to_run = {
-                pool.submit(list_run_artifacts, repo, run_id): run_id
-                for run_id in run_ids
+                pool.submit(list_run_artifacts, repo, run_id): run_id for run_id in run_ids
             }
             for future in concurrent.futures.as_completed(future_to_run):
                 run_id = future_to_run[future]
                 try:
                     run_artifacts = future.result()
                 except Exception as exc:
-                    print(f"Warning: failed to list artifacts for run {run_id}: {exc}", file=sys.stderr)
+                    print(
+                        f"Warning: failed to list artifacts for run {run_id}: {exc}",
+                        file=sys.stderr,
+                    )
                     continue
                 for artifact in run_artifacts:
                     name = str(artifact.get("name", ""))
@@ -204,7 +192,9 @@ def main(argv: list[str] | None = None) -> int:
                             artifact for artifact in run_artifacts if isinstance(artifact, dict)
                         ]
 
-    latest = latest_successful_runs(runs, platforms, event=event)
+    latest = select_latest_runs_by_name(
+        runs, set(platforms), event=event, status="completed", conclusion="success"
+    )
     artifacts = collect_artifacts(
         args.repo,
         latest,

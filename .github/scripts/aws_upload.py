@@ -21,8 +21,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output  # noqa: E402
-from common.proc import run_captured  # noqa: E402
+from common.gh_actions import write_github_output
+from common.proc import run_captured
 
 
 def validate_credentials(role_arn: str, key_id: str, secret_key: str) -> None:
@@ -112,9 +112,13 @@ def cmd_invalidate(args: argparse.Namespace) -> None:
         sys.exit(1)
     _run_aws(
         [
-            "aws", "cloudfront", "create-invalidation",
-            "--distribution-id", args.distribution_id,
-            "--paths", f"/latest/{args.artifact_name}",
+            "aws",
+            "cloudfront",
+            "create-invalidation",
+            "--distribution-id",
+            args.distribution_id,
+            "--paths",
+            f"/latest/{args.artifact_name}",
         ]
     )
 

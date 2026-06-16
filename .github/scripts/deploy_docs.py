@@ -13,7 +13,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.git import run_git  # noqa: E402
+from common.git import run_git
 
 
 def sanitize_branch(name: str) -> str:

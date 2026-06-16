@@ -25,8 +25,8 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from cmake_helper import read_cache_dict  # noqa: E402
-from common.git import run_git  # noqa: E402
+from cmake_helper import read_cache_dict
+from common.git import run_git
 
 
 def git_info(source_dir: Path) -> tuple[str, str]:
@@ -52,7 +52,7 @@ def normalize_git_url(url: str) -> str:
     """Convert git URL to HTTPS browse URL for purl."""
     url = url.removesuffix(".git")
     if url.startswith("git@github.com:"):
-        url = "https://github.com/" + url[len("git@github.com:"):]
+        url = "https://github.com/" + url[len("git@github.com:") :]
     return url
 
 
@@ -70,7 +70,11 @@ def make_purl(name: str, version: str, url: str, commit: str) -> str:
         repo_path = m.group(1).lower()
         ref = version if version and version != "0" else commit[:12]
         return f"pkg:gitlab/{repo_path}@{ref}" if ref else f"pkg:gitlab/{repo_path}"
-    return f"pkg:generic/{name.lower()}@{version}" if version and version != "0" else f"pkg:generic/{name.lower()}"
+    return (
+        f"pkg:generic/{name.lower()}@{version}"
+        if version and version != "0"
+        else f"pkg:generic/{name.lower()}"
+    )
 
 
 def generate_sbom(build_dir: Path) -> dict:
@@ -96,7 +100,9 @@ def generate_sbom(build_dir: Path) -> dict:
         if source_dir:
             url, commit = git_info(Path(source_dir))
 
-        display_version = version if version and version != "0" else commit[:12] if commit else "unknown"
+        display_version = (
+            version if version and version != "0" else commit[:12] if commit else "unknown"
+        )
 
         component: dict = {
             "type": "library",
@@ -116,9 +122,7 @@ def generate_sbom(build_dir: Path) -> dict:
             component["externalReferences"] = external_refs
 
         if commit:
-            component["hashes"] = [
-                {"alg": "SHA-1", "content": commit}
-            ]
+            component["hashes"] = [{"alg": "SHA-1", "content": commit}]
 
         components.append(component)
 

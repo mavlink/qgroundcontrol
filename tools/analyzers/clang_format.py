@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from common.analyzer import AnalysisResult, AnalyzerBase
+from common.git import run_git
 from common.logging import log_error, log_info, log_ok
 from common.proc import run_captured
 from common.tool_version import probe_version
@@ -46,12 +47,12 @@ class ClangFormatAnalyzer(AnalyzerBase):
 
         log_ok(f"Formatted {formatted} files")
 
-        diff_result = run_captured(["git", "-C", str(self.repo_root), "diff", "--quiet"])
+        diff_result = run_git("diff", "--quiet", cwd=self.repo_root)
         if diff_result.returncode == 0:
             log_info("No formatting changes needed")
         else:
             log_info("Files modified:")
-            modified = run_captured(["git", "-C", str(self.repo_root), "diff", "--name-only"])
+            modified = run_git("diff", "--name-only", cwd=self.repo_root)
             print(modified.stdout)
 
         return AnalysisResult(tool=self.name, passed=True, files_checked=len(files))

@@ -6,8 +6,7 @@ from __future__ import annotations
 import argparse
 
 import pytest
-
-from docker_helper import VALID_BUILD_TYPES, VALID_DOCKERFILES, cmd_validate
+from docker_helper import cmd_validate
 
 
 class TestValidate:

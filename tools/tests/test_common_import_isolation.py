@@ -49,6 +49,6 @@ def test_importing_package_loads_no_submodules():
 def test_submodule_import_does_not_pull_logging(sub):
     loaded = _loaded_common_submodules(f"import common.{sub}")
     assert "common.logging" not in loaded, (
-        f"importing common.{sub} transitively loaded common.logging "
-        f"(StrEnum/3.11+); setup scripts on system Python would break"
+        f"importing common.{sub} transitively loaded common.logging; "
+        f"setup scripts under sparse checkouts must not pull unrelated submodules"
     )

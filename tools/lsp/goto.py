@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import glob
 import json
 import logging
 import re
@@ -37,15 +36,10 @@ def find_fact_definition(project_root: Path | None, fact_name: str) -> types.Loc
     if not project_root:
         return None
 
-    json_patterns = [
-        str(project_root / "src" / "**" / "*Fact.json"),
-        str(project_root / "src" / "**" / "*Facts.json"),
-        str(project_root / "src" / "**" / "FactMetaData" / "*.json"),
-    ]
-
-    for pattern in json_patterns:
-        for json_path in glob.glob(pattern, recursive=True):
-            location = _search_fact_in_json(json_path, fact_name)
+    src_root = project_root / "src"
+    for pattern in ("*Fact.json", "*Facts.json", "FactMetaData/*.json"):
+        for json_path in src_root.rglob(pattern):
+            location = _search_fact_in_json(str(json_path), fact_name)
             if location:
                 return location
     return None

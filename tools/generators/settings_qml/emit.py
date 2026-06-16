@@ -197,8 +197,9 @@ def generate_page_qml(
         vis_parts: list[str] = []
         if grp.showWhen:
             vis_parts.append(f"({grp.showWhen})")
-        if grp.controls:
-            vis_parts.append(f"({_group_auto_vis(grp)})")
+        auto_vis = _group_auto_vis(grp)
+        if auto_vis:
+            vis_parts.append(f"({auto_vis})")
         if vis_parts:
             section_cases.append({"idx": grp_idx, "expr": " && ".join(vis_parts)})
 
@@ -208,8 +209,9 @@ def generate_page_qml(
         vis_parts = [section_vis]
         if grp.showWhen:
             vis_parts.append(f"({grp.showWhen})")
-        if grp.controls:
-            vis_parts.append(f"({_group_auto_vis(grp)})")
+        auto_vis = _group_auto_vis(grp)
+        if auto_vis:
+            vis_parts.append(f"({auto_vis})")
         visible_expr = " && ".join(vis_parts)
 
         if grp.component:

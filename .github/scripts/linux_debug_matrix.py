@@ -17,7 +17,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import parse_bool, write_github_output  # noqa: E402
+from common.gh_actions import parse_bool, write_github_output
 
 COVERAGE_JOB: dict[str, str | int] = {
     "job_name": "Test + Coverage linux_gcc_64 Debug",

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import faulthandler
 import os
 import sys
@@ -26,18 +27,15 @@ def _configure_debug() -> None:
         return
 
     if not faulthandler.is_enabled():
-        try:
+        # stderr may be redirected by a test runner; non-fatal.
+        with contextlib.suppress(RuntimeError, ValueError, OSError):
             faulthandler.enable(file=sys.stderr)
-        except (RuntimeError, ValueError, OSError):
-            pass  # stderr may be redirected by a test runner; non-fatal.
 
     for stream in (sys.stdout, sys.stderr):
         reconfigure = getattr(stream, "reconfigure", None)
         if reconfigure is not None:
-            try:
+            with contextlib.suppress(ValueError, OSError):
                 reconfigure(line_buffering=True)
-            except (ValueError, OSError):
-                pass
 
     if os.environ.get(_GHA_ENV, "").lower() != "true":
         return
@@ -46,10 +44,8 @@ def _configure_debug() -> None:
         prev = sys.excepthook
 
         def _excepthook(exc_type, exc, tb) -> None:
-            try:
+            with contextlib.suppress(Exception):
                 print(f"::error::{exc_type.__name__}: {exc}", file=sys.stderr, flush=True)
-            except Exception:  # noqa: BLE001 — hook must never crash the process
-                pass
             prev(exc_type, exc, tb)
 
         setattr(_excepthook, _HOOK_MARKER, True)
@@ -62,7 +58,7 @@ def _configure_debug() -> None:
             try:
                 msg = f"{unraisable.exc_type.__name__}: {unraisable.exc_value}"
                 print(f"::error::unraisable: {msg}", file=sys.stderr, flush=True)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
             prev_un(unraisable)
 
@@ -82,7 +78,7 @@ def ensure_tools_dir(start: str | Path) -> Path:
     """
     path = Path(start).resolve()
     current = path if path.is_dir() else path.parent
-    for candidate in [current, *list(current.parents)]:
+    for candidate in [current, *current.parents]:
         if candidate.name == "tools":
             tools_dir = candidate
             break

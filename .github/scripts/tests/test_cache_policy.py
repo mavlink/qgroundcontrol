@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import pytest
+from typing import TYPE_CHECKING
 
 import cache_policy as mod
+import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_explicit_true_passes_through(monkeypatch, capsys, tmp_path: Path) -> None:

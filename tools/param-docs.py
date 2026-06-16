@@ -20,6 +20,7 @@ import argparse
 import html
 import json
 import sys
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -66,7 +67,7 @@ def parse_factmetadata(filepath: Path) -> list[Parameter]:
     # Handle both formats: direct list or wrapped in object
     if isinstance(data, dict):
         # Look for parameters in common keys
-        for key in ["parameters", "facts", "items", ""]:
+        for key in ["parameters", "facts", "items"]:
             if key in data and isinstance(data[key], list):
                 data = data[key]
                 break
@@ -127,11 +128,9 @@ def generate_markdown(params: list[Parameter], group_by: str = "group") -> str:
     lines.append(f"Generated from {len({p.source_file for p in params})} FactMetaData files.\n")
 
     # Group parameters
-    groups: dict[str, list[Parameter]] = {}
+    groups: defaultdict[str, list[Parameter]] = defaultdict(list)
     for param in params:
         key = getattr(param, group_by) or "Ungrouped"
-        if key not in groups:
-            groups[key] = []
         groups[key].append(param)
 
     # Generate documentation
@@ -206,11 +205,9 @@ def generate_html(params: list[Parameter]) -> str:
 """)
 
     # Group parameters
-    groups: dict[str, list[Parameter]] = {}
+    groups: defaultdict[str, list[Parameter]] = defaultdict(list)
     for param in params:
         key = param.group or "Ungrouped"
-        if key not in groups:
-            groups[key] = []
         groups[key].append(param)
 
     for group_name in sorted(groups.keys()):

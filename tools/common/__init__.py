@@ -107,9 +107,6 @@ if TYPE_CHECKING:
         Color as Color,
     )
     from .logging import (
-        Colors as Colors,
-    )
-    from .logging import (
         Logger as Logger,
     )
     from .logging import (
@@ -199,7 +196,6 @@ _LAZY_SYMBOLS: dict[str, str] = {
     "select_latest_runs_by_name": "github_runs",
     "group_runs_by_name": "github_runs",
     "Color": "logging",
-    "Colors": "logging",
     "Logger": "logging",
     "use_color": "logging",
     "colorize": "logging",

@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import os
 import re
 import shutil
@@ -19,6 +18,7 @@ ensure_tools_dir(__file__)
 from common import find_repo_root, get_default_branch_ref, run_captured
 from common.gh_actions import write_github_output as _write_github_output
 from common.gh_actions import write_step_summary as _write_step_summary
+from common.io import chdir
 from common.logging import log_error, log_info, log_ok, log_warn
 
 HOOK_RESULT_RE = re.compile(r"\b(Passed|Failed|Skipped)\b")
@@ -27,7 +27,9 @@ ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run pre-commit checks.")
-    parser.add_argument("-c", "--changed", action="store_true", help="Run only files changed vs master")
+    parser.add_argument(
+        "-c", "--changed", action="store_true", help="Run only files changed vs master"
+    )
     parser.add_argument("-i", "--install", action="store_true", help="Install pre-commit hooks")
     parser.add_argument("-u", "--update", action="store_true", help="Update hook versions")
     parser.add_argument("--ci", action="store_true", help="Enable GitHub Actions outputs")
@@ -83,18 +85,18 @@ def build_precommit_args(args: argparse.Namespace) -> list[str]:
     return result
 
 
-def run_command(cmd: list[str]) -> subprocess.CompletedProcess[str]:
-    return run_captured(cmd)
-
-
-def write_github_output(exit_code: int, passed: int, failed: int, skipped: int, summary_lines: list[str]) -> None:
-    _write_github_output({
-        "exit_code": str(exit_code),
-        "passed": str(passed),
-        "failed": str(failed),
-        "skipped": str(skipped),
-        "summary": "\n".join(summary_lines),
-    })
+def write_github_output(
+    exit_code: int, passed: int, failed: int, skipped: int, summary_lines: list[str]
+) -> None:
+    _write_github_output(
+        {
+            "exit_code": str(exit_code),
+            "passed": str(passed),
+            "failed": str(failed),
+            "skipped": str(skipped),
+            "summary": "\n".join(summary_lines),
+        }
+    )
 
 
 def write_step_summary(exit_code: int, passed: int, failed: int, skipped: int, output: str) -> None:
@@ -106,11 +108,15 @@ def write_step_summary(exit_code: int, passed: int, failed: int, skipped: int, o
     if skipped > 0:
         parts.append(f"| Skipped | {skipped} |")
     hook_lines = "\n".join(extract_hook_lines(output))
-    parts.append(f"\n<details>\n<summary>Hook Results</summary>\n\n```\n{hook_lines}\n```\n</details>")
+    parts.append(
+        f"\n<details>\n<summary>Hook Results</summary>\n\n```\n{hook_lines}\n```\n</details>"
+    )
 
     diff = run_captured(["git", "diff", "--stat"])
     if diff.stdout.strip():
-        parts.append(f"\n<details>\n<summary>Files Modified by Hooks</summary>\n\n```\n{diff.stdout}```\n</details>")
+        parts.append(
+            f"\n<details>\n<summary>Files Modified by Hooks</summary>\n\n```\n{diff.stdout}```\n</details>"
+        )
 
     _write_step_summary("\n".join(parts) + "\n")
 
@@ -118,6 +124,7 @@ def write_step_summary(exit_code: int, passed: int, failed: int, skipped: int, o
 def handle_install() -> int:
     log_info("Installing pre-commit and hooks...")
     from common import pip_install
+
     pip_install(["pre-commit"])
     subprocess.run(["pre-commit", "install"], check=True)
     subprocess.run(["pre-commit", "install", "--hook-type", "commit-msg"], check=True)
@@ -135,7 +142,7 @@ def handle_update() -> int:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
-    with contextlib.chdir(repo_root()):
+    with chdir(repo_root()):
         try:
             if args.install:
                 return handle_install()
@@ -154,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
             command = build_precommit_args(args)
             log_info("Running pre-commit checks...")
             print()
-            result = run_command(command)
+            result = run_captured(command)
             if result.stdout:
                 print(result.stdout, end="")
             if result.stderr:
@@ -175,7 +182,9 @@ def main(argv: list[str] | None = None) -> int:
             if args.ci:
                 summary_lines = extract_hook_lines(result.stdout + result.stderr)
                 write_github_output(result.returncode, passed, failed, skipped, summary_lines)
-                write_step_summary(result.returncode, passed, failed, skipped, result.stdout + result.stderr)
+                write_step_summary(
+                    result.returncode, passed, failed, skipped, result.stdout + result.stderr
+                )
 
             if result.returncode != 0:
                 print()

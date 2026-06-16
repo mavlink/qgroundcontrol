@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import pytest
+from typing import TYPE_CHECKING
 
 from check_baseline_ready import evaluate_readiness
 from common.gh_actions import write_github_output
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    import pytest
 
 PLATFORMS = ["Linux", "Windows", "MacOS", "Android"]
 

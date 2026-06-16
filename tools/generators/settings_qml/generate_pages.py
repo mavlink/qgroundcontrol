@@ -18,6 +18,7 @@ Generates:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -29,10 +30,12 @@ SETTINGS_DIR = Path("src/Settings")
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate QML settings pages from UI definitions")
-    parser.add_argument("--output-dir", "-o", required=True,
-                        help="Output directory for generated QML files")
-    parser.add_argument("--dry-run", "-n", action="store_true",
-                        help="Print what would be generated without writing")
+    parser.add_argument(
+        "--output-dir", "-o", required=True, help="Output directory for generated QML files"
+    )
+    parser.add_argument(
+        "--dry-run", "-n", action="store_true", help="Print what would be generated without writing"
+    )
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir)
@@ -42,7 +45,6 @@ def main() -> int:
         print(f"ERROR: {pages_json} not found", file=sys.stderr)
         return 1
 
-    import json
     with open(pages_json, encoding="utf-8") as f:
         pages_data = json.load(f)
 
@@ -70,7 +72,9 @@ def main() -> int:
             continue
 
         page = load_page_def(page_def_path)
-        qml = generate_page_qml(page, SETTINGS_DIR, json_context=page_def_name, page_name=entry.get("name", ""))
+        qml = generate_page_qml(
+            page, SETTINGS_DIR, json_context=page_def_name, page_name=entry.get("name", "")
+        )
 
         if args.dry_run:
             print(f"=== {qml_name} ===")

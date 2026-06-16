@@ -3,12 +3,14 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-
 from cmake_helper import detect_jobs, main, read_cache_var
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestDetectJobs:
@@ -28,16 +30,19 @@ class TestDetectJobs:
 
     def test_invalid_exits(self) -> None:
         import pytest
+
         with pytest.raises(SystemExit):
             detect_jobs("abc")
 
     def test_zero_exits(self) -> None:
         import pytest
+
         with pytest.raises(SystemExit):
             detect_jobs("0")
 
     def test_negative_exits(self) -> None:
         import pytest
+
         with pytest.raises(SystemExit):
             detect_jobs("-1")
 
@@ -103,11 +108,16 @@ class TestCmdCacheVar:
         monkeypatch.setattr(
             "sys.argv",
             [
-                "prog", "cache-var",
-                "--build-dir", str(tmp_path),
-                "--name", "ABSENT",
-                "--default", "fallback",
-                "--output-key", "value",
+                "prog",
+                "cache-var",
+                "--build-dir",
+                str(tmp_path),
+                "--name",
+                "ABSENT",
+                "--default",
+                "fallback",
+                "--output-key",
+                "value",
             ],
         )
         main()

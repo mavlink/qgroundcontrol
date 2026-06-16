@@ -15,14 +15,6 @@ from common.gh_actions import list_workflow_runs_for_sha, parse_csv_list, write_
 from common.github_runs import select_latest_runs_by_name
 
 
-def latest_runs_by_name(
-    runs: list[dict[str, Any]],
-    names: set[str],
-    event: str,
-) -> dict[str, dict[str, Any]]:
-    return select_latest_runs_by_name(runs, names, event=event)
-
-
 def platform_status(
     run: dict[str, Any] | None,
 ) -> dict[str, str]:
@@ -67,9 +59,10 @@ def render_table(platforms: list[str], states: dict[str, dict[str, str]]) -> str
     return "\n".join(lines)
 
 
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Collect build status for PR build-results comment.")
+    parser = argparse.ArgumentParser(
+        description="Collect build status for PR build-results comment."
+    )
     parser.add_argument("--repo", required=True, help="Repository in owner/repo format")
     parser.add_argument("--head-sha", required=True, help="Commit SHA to inspect")
     parser.add_argument(
@@ -111,7 +104,7 @@ def main(argv: list[str] | None = None) -> int:
         with open(args.runs_cache, "w", encoding="utf-8") as f:
             json.dump(runs, f)
 
-    latest = latest_runs_by_name(runs, target_names, args.event)
+    latest = select_latest_runs_by_name(runs, target_names, event=args.event)
 
     states = {name: platform_status(latest.get(name)) for name in platforms}
     precommit = precommit_status(latest.get("pre-commit"))
@@ -120,19 +113,23 @@ def main(argv: list[str] | None = None) -> int:
     platform_conclusions = [states[name]["conclusion"] for name in platforms]
     all_complete = all(c in {"success", "failure", "cancelled"} for c in platform_conclusions)
     all_success = all(c == "success" for c in platform_conclusions)
-    summary = "All builds passed." if all_complete and all_success else (
-        "Some builds failed." if all_complete else "Some builds still in progress."
+    summary = (
+        "All builds passed."
+        if all_complete and all_success
+        else ("Some builds failed." if all_complete else "Some builds still in progress.")
     )
 
-    write_github_output({
-        "table": table,
-        "summary": summary,
-        "all_complete": "true" if all_complete else "false",
-        "precommit_status": precommit["status"],
-        "precommit_url": precommit["url"],
-        "precommit_conclusion": precommit["conclusion"],
-        "precommit_run_id": precommit["run_id"],
-    })
+    write_github_output(
+        {
+            "table": table,
+            "summary": summary,
+            "all_complete": "true" if all_complete else "false",
+            "precommit_status": precommit["status"],
+            "precommit_url": precommit["url"],
+            "precommit_conclusion": precommit["conclusion"],
+            "precommit_run_id": precommit["run_id"],
+        }
+    )
 
     print(table)
     print(summary)

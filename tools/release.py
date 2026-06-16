@@ -15,7 +15,6 @@ Environment:
 from __future__ import annotations
 
 import argparse
-import contextlib
 import os
 import shutil
 import subprocess
@@ -27,6 +26,7 @@ from _bootstrap import ensure_tools_dir
 ensure_tools_dir(__file__)
 
 from common import find_repo_root, probe_version
+from common.io import chdir
 from common.logging import log_error, log_info, log_ok
 
 # Pin versions for reproducibility + supply chain (bumped via Dependabot npm ecosystem)
@@ -38,13 +38,18 @@ SR_PACKAGES: tuple[str, ...] = (
 )
 MIN_NODE_MAJOR = 18
 
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("-r", "--run", action="store_true", help="Actually create the release (CI only)")
-    parser.add_argument("-i", "--install", action="store_true", help="Install semantic-release deps locally")
+    parser.add_argument(
+        "-r", "--run", action="store_true", help="Actually create the release (CI only)"
+    )
+    parser.add_argument(
+        "-i", "--install", action="store_true", help="Install semantic-release deps locally"
+    )
     return parser.parse_args(argv)
 
 
@@ -60,7 +65,9 @@ def check_node() -> int:
         sys.exit(1)
     major = version[0]
     if major < MIN_NODE_MAJOR:
-        log_error(f"Node.js {MIN_NODE_MAJOR}+ required (found: {'.'.join(str(p) for p in version)})")
+        log_error(
+            f"Node.js {MIN_NODE_MAJOR}+ required (found: {'.'.join(str(p) for p in version)})"
+        )
         sys.exit(1)
     return major
 
@@ -91,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     check_node()
 
-    with contextlib.chdir(repo_root()):
+    with chdir(repo_root()):
         if args.install:
             return handle_install()
 
@@ -106,7 +113,9 @@ def main(argv: list[str] | None = None) -> int:
         exit_code = run_semantic_release(dry_run=not args.run)
         print()
         if exit_code == 0:
-            log_ok("Release dry-run complete (no changes made)" if not args.run else "Release complete")
+            log_ok(
+                "Release dry-run complete (no changes made)" if not args.run else "Release complete"
+            )
             if not args.run:
                 log_info("Run with --run to create an actual release")
         else:

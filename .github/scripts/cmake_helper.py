@@ -24,7 +24,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import append_github_env, write_github_output  # noqa: E402
+from common.gh_actions import append_github_env, write_github_output
 
 
 def _run_with_tee(cmd: list[str], output_file: str) -> int:
@@ -55,10 +55,7 @@ def detect_jobs(requested: str = "auto") -> int:
             sys.exit(1)
         return int(requested)
 
-    try:
-        return os.cpu_count() or 2
-    except Exception:
-        return 2
+    return os.cpu_count() or 2
 
 
 def cmd_detect_jobs(args: argparse.Namespace) -> None:
@@ -77,8 +74,10 @@ def cmd_build(args: argparse.Namespace) -> None:
     if args.parallel:
         if args.parallel_jobs:
             if not re.match(r"^[1-9]\d*$", args.parallel_jobs):
-                print(f"::error::parallel-jobs must be a positive integer, got '{args.parallel_jobs}'",
-                      file=sys.stderr)
+                print(
+                    f"::error::parallel-jobs must be a positive integer, got '{args.parallel_jobs}'",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
             cmd += ["--parallel", args.parallel_jobs]
         else:
@@ -114,11 +113,16 @@ def cmd_configure(args: argparse.Namespace) -> None:
     """Run configure.py with standardized arguments."""
     workspace = os.environ.get("GITHUB_WORKSPACE", ".")
     cmd = [
-        sys.executable, os.path.join(workspace, "tools", "configure.py"),
-        "-S", args.source_dir,
-        "-B", args.build_dir,
-        "-G", args.generator,
-        "-t", args.build_type,
+        sys.executable,
+        os.path.join(workspace, "tools", "configure.py"),
+        "-S",
+        args.source_dir,
+        "-B",
+        args.build_dir,
+        "-G",
+        args.generator,
+        "-t",
+        args.build_type,
     ]
     if args.testing:
         cmd.append("--testing")
@@ -146,8 +150,10 @@ def cmd_ctest(args: argparse.Namespace) -> None:
     cmd = [
         "ctest",
         "--output-on-failure",
-        "--output-junit", args.junit_output,
-        "--parallel", str(args.jobs),
+        "--output-junit",
+        args.junit_output,
+        "--parallel",
+        str(args.jobs),
     ]
     if args.include_labels:
         cmd += ["-L", args.include_labels]
@@ -166,22 +172,14 @@ _CACHE_LINE_RE = re.compile(r"^([A-Za-z0-9_.\-]+):[^=]+=(.*)$")
 
 def read_cache_var(cache_path: str, name: str) -> str | None:
     """Return the value of a CMake cache variable, or None if not set."""
-    try:
-        with open(cache_path, "r", encoding="utf-8") as fh:
-            for line in fh:
-                match = _CACHE_LINE_RE.match(line.rstrip("\n"))
-                if match and match.group(1) == name:
-                    return match.group(2)
-    except FileNotFoundError:
-        return None
-    return None
+    return read_cache_dict(cache_path).get(name)
 
 
 def read_cache_dict(cache_path: str) -> dict[str, str]:
     """Return all typed entries from CMakeCache.txt as a flat name->value dict."""
     entries: dict[str, str] = {}
     try:
-        with open(cache_path, "r", encoding="utf-8") as fh:
+        with open(cache_path, encoding="utf-8") as fh:
             for line in fh:
                 match = _CACHE_LINE_RE.match(line.rstrip("\n"))
                 if match:
@@ -198,8 +196,10 @@ def cmd_cache_var(args: argparse.Namespace) -> None:
         if args.default is not None:
             value = args.default
         elif args.required:
-            print(f"::error::CMake cache variable {args.name} not found in {cache_path}",
-                  file=sys.stderr)
+            print(
+                f"::error::CMake cache variable {args.name} not found in {cache_path}",
+                file=sys.stderr,
+            )
             sys.exit(1)
         else:
             value = ""
@@ -254,7 +254,9 @@ def main() -> None:
     p_cv.add_argument("--name", required=True, help="Cache variable name (case-sensitive)")
     p_cv.add_argument("--default", default=None, help="Fallback when the variable is missing")
     p_cv.add_argument("--required", action="store_true", help="Exit 1 if missing and no --default")
-    p_cv.add_argument("--output-key", default="", help="GITHUB_OUTPUT key (default: lowercase name)")
+    p_cv.add_argument(
+        "--output-key", default="", help="GITHUB_OUTPUT key (default: lowercase name)"
+    )
 
     args = parser.parse_args()
     commands = {

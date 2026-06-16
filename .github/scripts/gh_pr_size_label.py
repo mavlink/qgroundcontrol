@@ -28,11 +28,13 @@ from common.gh_actions import gh, write_github_output
 
 SIZE_PREFIX = "size/"
 
+
 def _repo() -> str:
     repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
     if not repo:
         sys.exit("::error::GH_REPO or GITHUB_REPOSITORY must be set")
     return repo
+
 
 def _pr_number(arg: str | None) -> str:
     pr = arg or os.environ.get("PR_NUMBER", "")
@@ -40,23 +42,29 @@ def _pr_number(arg: str | None) -> str:
         sys.exit("::error::--pr-number or PR_NUMBER must be set")
     return str(pr)
 
+
 def list_size_labels(repo: str, pr: str) -> list[str]:
     """Return the sorted list of size/* labels currently on the PR."""
     result = gh(
-        "api", f"repos/{repo}/issues/{pr}/labels",
-        "--jq", '.[] | select(.name | startswith("size/")) | .name',
+        "api",
+        f"repos/{repo}/issues/{pr}/labels",
+        "--jq",
+        '.[] | select(.name | startswith("size/")) | .name',
         check=False,
     )
     if result.returncode != 0:
         sys.exit(f"::error::gh api failed ({result.returncode}): {result.stderr.strip()}")
     return sorted(line for line in result.stdout.splitlines() if line.startswith(SIZE_PREFIX))
 
+
 def remove_label(repo: str, pr: str, label: str) -> bool:
     """Delete a single label from the PR. Returns True on success or 404 (already gone)."""
     encoded = quote(label, safe="")
     result = gh(
-        "api", f"repos/{repo}/issues/{pr}/labels/{encoded}",
-        "-X", "DELETE",
+        "api",
+        f"repos/{repo}/issues/{pr}/labels/{encoded}",
+        "-X",
+        "DELETE",
         check=False,
     )
     if result.returncode == 0:
@@ -67,12 +75,14 @@ def remove_label(repo: str, pr: str, label: str) -> bool:
     print(f"::warning::failed to remove label {label!r}: {result.stderr.strip()}", file=sys.stderr)
     return False
 
+
 def cmd_current(args: argparse.Namespace) -> int:
     """Emit the first size/* label (or empty string) to $GITHUB_OUTPUT."""
     labels = list_size_labels(_repo(), _pr_number(args.pr_number))
     write_github_output({"label": labels[0] if labels else ""})
     print(f"label={labels[0] if labels else ''}")
     return 0
+
 
 def cmd_prune(args: argparse.Namespace) -> int:
     """Remove stale size/* labels when more than one is present."""
@@ -85,13 +95,12 @@ def cmd_prune(args: argparse.Namespace) -> int:
         return 0
 
     old_label = args.old_label or os.environ.get("OLD_LABEL", "")
-    to_remove = [old_label] if old_label and old_label in labels else [
-        label for label in labels[1:]
-    ]
+    to_remove = [old_label] if old_label and old_label in labels else list(labels[1:])
     for label in to_remove:
         print(f"Removing stale size label: {label}")
         remove_label(repo, pr, label)
     return 0
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -108,6 +117,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     return args.func(args)
+
 
 if __name__ == "__main__":
     sys.exit(main())

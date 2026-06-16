@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote, urlsplit, urlunsplit
@@ -55,7 +55,7 @@ def _parse_precommit_results(path: Path) -> tuple[str | None, str | None, str | 
 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except (json.JSONDecodeError, OSError):
         logger.warning("Failed to parse pre-commit results from %s", path, exc_info=True)
         return None, None, None
 
@@ -118,8 +118,6 @@ def _failed_test_lines(content: str, limit: int = 20, max_len: int = 500) -> lis
     return lines
 
 
-
-
 def _collect_test_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, Any] | None:
     pattern = _env(env, "TEST_RESULTS_GLOB", "artifacts/test-results-*/test-output.txt")
     files = sorted(base_dir.glob(pattern))
@@ -138,7 +136,12 @@ def _collect_test_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, Any]
         total_failed += failed
         total_skipped += skipped
 
-        entry: dict[str, Any] = {"arch": arch, "passed": passed, "failed": failed, "skipped": skipped}
+        entry: dict[str, Any] = {
+            "arch": arch,
+            "passed": passed,
+            "failed": failed,
+            "skipped": skipped,
+        }
         if failed > 0:
             has_failures = True
             entry["failed_lines"] = _failed_test_lines(content)
@@ -175,7 +178,7 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
 
     try:
         pr_data = json.loads(pr_sizes_path.read_text(encoding="utf-8"))
-    except Exception:
+    except (json.JSONDecodeError, OSError):
         logger.warning("Failed to parse PR sizes from %s", pr_sizes_path, exc_info=True)
         return None
 
@@ -194,7 +197,7 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
                     baseline[name] = int(artifact.get("size_bytes", 0))
                 except (TypeError, ValueError):
                     continue
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             logger.warning("Failed to parse baseline sizes from %s", baseline_path, exc_info=True)
             baseline = {}
 
@@ -232,7 +235,9 @@ def _collect_artifact_data(base_dir: Path, env: Mapping[str, str]) -> dict[str, 
     }
 
 
-def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime | None = None) -> str:
+def generate_comment(
+    env: Mapping[str, str], base_dir: Path, now_utc: datetime | None = None
+) -> str:
     table = _env(env, "BUILD_TABLE")
     summary = _env(env, "BUILD_SUMMARY", "Some builds still in progress.")
     precommit_status = _env(env, "PRECOMMIT_STATUS", "Not Triggered")
@@ -243,7 +248,9 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
     precommit_details = _view_link(precommit_url) or "-"
     precommit_note = ""
 
-    precommit_path = base_dir / _env(env, "PRECOMMIT_RESULTS_PATH", "artifacts/pre-commit-results/pre-commit-results.json")
+    precommit_path = base_dir / _env(
+        env, "PRECOMMIT_RESULTS_PATH", "artifacts/pre-commit-results/pre-commit-results.json"
+    )
     parsed_status, parsed_details, parsed_note = _parse_precommit_results(precommit_path)
     if parsed_status:
         precommit_status = parsed_status
@@ -252,7 +259,7 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
     if parsed_note:
         precommit_note = parsed_note
 
-    now = now_utc or datetime.now(UTC)
+    now = now_utc or datetime.now(timezone.utc)
 
     jinja_env = jinja2.Environment(
         loader=jinja2.FileSystemLoader(_TEMPLATE_DIR),
@@ -266,7 +273,11 @@ def generate_comment(env: Mapping[str, str], base_dir: Path, now_utc: datetime |
     rendered = template.render(
         table=table,
         summary=summary,
-        precommit={"status": precommit_status, "details": precommit_details, "note": precommit_note},
+        precommit={
+            "status": precommit_status,
+            "details": precommit_details,
+            "note": precommit_note,
+        },
         tests=_collect_test_data(base_dir, env),
         coverage=_collect_coverage_data(base_dir, env),
         artifacts=_collect_artifact_data(base_dir, env),

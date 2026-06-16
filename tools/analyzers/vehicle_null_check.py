@@ -43,6 +43,7 @@ from common.patterns import (
 @dataclass
 class Violation:
     """A detected null-safety violation."""
+
     file: str
     line: int
     column: int
@@ -54,34 +55,32 @@ class Violation:
 def has_null_check_before(lines: list[str], current_line: int, var_name: str | None = None) -> bool:
     """Check if there's a null check in the preceding lines (within same function scope)."""
     start = max(0, current_line - 10)
-    context = '\n'.join(lines[start:current_line])
+    context = "\n".join(lines[start:current_line])
 
     for pattern in NULL_CHECK_PATTERNS:
         if var_name:
-            specific_pattern = pattern.replace(r'\w+', re.escape(var_name))
+            specific_pattern = pattern.replace(r"\w+", re.escape(var_name))
             if re.search(specific_pattern, context):
                 return True
         if re.search(pattern, context):
             return True
 
-    return bool(
-        var_name and re.search(rf'if\s*\([^)]*{re.escape(var_name)}[^)]*\)\s*\{{', context)
-    )
+    return bool(var_name and re.search(rf"if\s*\([^)]*{re.escape(var_name)}[^)]*\)\s*\{{", context))
 
 
 def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
     """Analyze a single C++ file for null-check violations."""
     try:
-        content = file_path.read_text(encoding='utf-8', errors='replace')
-    except Exception as e:
+        content = file_path.read_text(encoding="utf-8", errors="replace")
+    except OSError as e:
         print(f"Warning: Could not read {file_path}: {e}", file=sys.stderr)
         return
 
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     for line_num, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.startswith('//') or stripped.startswith('/*'):
+        if stripped.startswith("//") or stripped.startswith("/*"):
             continue
 
         # Check for direct activeVehicle()->method() calls
@@ -91,13 +90,13 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
                     file=str(file_path),
                     line=line_num + 1,
                     column=match.start() + 1,
-                    pattern='unsafe_active_vehicle_direct',
+                    pattern="unsafe_active_vehicle_direct",
                     code=stripped,
                     suggestion=(
-                        'Add null check before using activeVehicle():\n'
-                        '  Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();\n'
-                        '  if (!vehicle) return;'
-                    )
+                        "Add null check before using activeVehicle():\n"
+                        "  Vehicle *vehicle = MultiVehicleManager::instance()->activeVehicle();\n"
+                        "  if (!vehicle) return;"
+                    ),
                 )
 
         # Check for activeVehicle() assignment followed by use without check
@@ -106,18 +105,18 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
             var_name = assign_match.group(1)
             for future_line_num in range(line_num + 1, min(line_num + 5, len(lines))):
                 future_line = lines[future_line_num]
-                if re.search(rf'\b{re.escape(var_name)}\s*->', future_line):
+                if re.search(rf"\b{re.escape(var_name)}\s*->", future_line):
                     if not has_null_check_before(lines, future_line_num, var_name):
                         yield Violation(
                             file=str(file_path),
                             line=future_line_num + 1,
                             column=1,
-                            pattern='unsafe_active_vehicle_use',
+                            pattern="unsafe_active_vehicle_use",
                             code=future_line.strip(),
                             suggestion=(
-                                f'Add null check after assigning {var_name}:\n'
-                                f'  if (!{var_name}) return;'
-                            )
+                                f"Add null check after assigning {var_name}:\n"
+                                f"  if (!{var_name}) return;"
+                            ),
                         )
                     break
 
@@ -127,13 +126,13 @@ def analyze_file(file_path: Path) -> Generator[Violation, None, None]:
                 file=str(file_path),
                 line=line_num + 1,
                 column=match.start() + 1,
-                pattern='unsafe_get_parameter',
+                pattern="unsafe_get_parameter",
                 code=stripped,
                 suggestion=(
-                    'getParameter() can return nullptr. Store result and check:\n'
-                    '  Fact *param = vehicle->parameterManager()->getParameter(...);\n'
+                    "getParameter() can return nullptr. Store result and check:\n"
+                    "  Fact *param = vehicle->parameterManager()->getParameter(...);\n"
                     '  if (!param) { qCWarning(...) << "Parameter not found"; return; }'
-                )
+                ),
             )
 
 
@@ -172,11 +171,11 @@ def main() -> int:
     json_output = False
     args = sys.argv[1:]
 
-    if '--json' in args:
+    if "--json" in args:
         json_output = True
-        args.remove('--json')
+        args.remove("--json")
 
-    if '-h' in args or '--help' in args:
+    if "-h" in args or "--help" in args:
         print(__doc__)
         return 0
 
@@ -202,5 +201,5 @@ def main() -> int:
     return 1 if violations else 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

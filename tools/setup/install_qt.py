@@ -26,6 +26,11 @@ _tools_dir = str(Path(__file__).resolve().parent.parent)
 if _tools_dir not in sys.path:
     sys.path.insert(0, _tools_dir)
 
+from _bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common import pip_install
 from common.gh_actions import write_github_output
 
 # aqtinstall creates directories that differ from the arch parameter.
@@ -65,7 +70,7 @@ def resolve_arch_dir(arch: str) -> str:
         return _ARCH_DIR_MAP[arch]
     for prefix, replacement in _ARCH_DIR_PREFIXES:
         if arch.startswith(prefix):
-            return replacement + arch[len(prefix):]
+            return replacement + arch[len(prefix) :]
     if arch == "clang_64":
         return "macos"
     return arch
@@ -84,7 +89,9 @@ def resolve_qt_root(outdir: Path, version: str, arch_dir: str) -> Path:
         available = "none"
         version_dir = outdir / version
         if version_dir.is_dir():
-            available = ", ".join(sorted(p.name for p in version_dir.iterdir() if p.is_dir())) or "none"
+            available = (
+                ", ".join(sorted(p.name for p in version_dir.iterdir() if p.is_dir())) or "none"
+            )
         print(f"::error::Qt root not found at {qt_root}")
         print(f"Expected arch_dir '{arch_dir}' from arch, available: {available}")
         sys.exit(1)
@@ -109,7 +116,6 @@ def install_qt(
     """
     aqt = shutil.which("aqt")
     if not aqt or aqt_source:
-        from common import pip_install
         if aqt_source:
             validate_aqt_source(aqt_source)
             pip_install(["--force-reinstall", aqt_source])
@@ -192,12 +198,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     resolve_p = sub.add_parser("resolve-arch", help="Print resolved arch directory name")
     resolve_p.add_argument("--arch", required=True)
 
-    paths_p = sub.add_parser("resolve-paths", help="Output qt_root_dir/qt_bin_dir for an installed Qt")
+    paths_p = sub.add_parser(
+        "resolve-paths", help="Output qt_root_dir/qt_bin_dir for an installed Qt"
+    )
     paths_p.add_argument("--outdir", type=Path, required=True)
     paths_p.add_argument("--version", required=True)
     paths_p.add_argument("--arch-dir", required=True)
 
-    android_p = sub.add_parser("resolve-android-root", help="Pick primary Android Qt root from installed ABIs")
+    android_p = sub.add_parser(
+        "resolve-android-root", help="Pick primary Android Qt root from installed ABIs"
+    )
     android_p.add_argument("--abis", required=True, help="Semicolon-separated ABI list")
     android_p.add_argument("--arm64", default="")
     android_p.add_argument("--armv7", default="")
@@ -216,10 +226,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "resolve-paths":
         qt_root = args.outdir / args.version / args.arch_dir
-        write_github_output({
-            "qt_root_dir": str(qt_root),
-            "qt_bin_dir": str(qt_root / "bin"),
-        })
+        write_github_output(
+            {
+                "qt_root_dir": str(qt_root),
+                "qt_bin_dir": str(qt_root / "bin"),
+            }
+        )
         print(f"qt_root_dir={qt_root}")
         return 0
 
@@ -251,11 +263,13 @@ def main(argv: list[str] | None = None) -> int:
         aqt_source=args.aqt_source,
     )
 
-    write_github_output({
-        "arch_dir": arch_dir,
-        "qt_root_dir": str(qt_root),
-        "qt_bin_dir": str(qt_root / "bin"),
-    })
+    write_github_output(
+        {
+            "arch_dir": arch_dir,
+            "qt_root_dir": str(qt_root),
+            "qt_bin_dir": str(qt_root / "bin"),
+        }
+    )
     print(f"Qt installed at {qt_root}")
     return 0
 

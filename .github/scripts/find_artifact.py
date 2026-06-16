@@ -15,7 +15,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output  # noqa: E402
+from common.gh_actions import write_github_output
 
 
 def find_first(build_dir: Path, pattern: str) -> Path | None:

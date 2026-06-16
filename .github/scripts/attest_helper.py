@@ -12,7 +12,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output  # noqa: E402
+from common.gh_actions import write_github_output
 
 
 def cmd_check(args: argparse.Namespace) -> None:
@@ -33,11 +33,13 @@ def cmd_check(args: argparse.Namespace) -> None:
     suffix = "cdx.json" if args.sbom_format == "cyclonedx-json" else "spdx.json"
     sbom_path = str(Path(args.runner_temp) / f"{args.subject_name}.sbom.{suffix}")
 
-    write_github_output({
-        "skip": "false",
-        "scan-path": scan_path,
-        "sbom-path": sbom_path,
-    })
+    write_github_output(
+        {
+            "skip": "false",
+            "scan-path": scan_path,
+            "sbom-path": sbom_path,
+        }
+    )
     print(f"Will attest: {subject}")
     print(f"Scan path: {scan_path}")
     print(f"SBOM path: {sbom_path}")
@@ -69,7 +71,9 @@ def main() -> None:
     p_check.add_argument("--sbom-format", default="spdx-json")
     p_check.add_argument("--runner-temp", required=True)
 
-    p_resolve = sub.add_parser("resolve-path", help="Validate artifact source path and emit it as an output")
+    p_resolve = sub.add_parser(
+        "resolve-path", help="Validate artifact source path and emit it as an output"
+    )
     p_resolve.add_argument("--override", default="")
     p_resolve.add_argument("--default", required=True)
 
