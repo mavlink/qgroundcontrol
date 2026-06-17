@@ -71,21 +71,21 @@
     "shortDesc": "Alt (Rel)",
     "type":             "double",
     "decimalPlaces":    1,
-    "units":            "m"
+    "units":            "vertical m"
 },
 {
     "name":             "altitudeAMSL",
     "shortDesc": "Alt (AMSL)",
     "type":             "double",
     "decimalPlaces":    1,
-    "units":            "m"
+    "units":            "vertical m"
 },
 {
     "name":             "altitudeAboveTerr",
     "shortDesc": "Alt (Above Terrain)",
     "type":             "double",
     "decimalPlaces":    1,
-    "units":            "m"
+    "units":            "vertical m"
 },
 {
     "name":             "flightDistance",
