@@ -70,7 +70,10 @@ def test_unix_invokes_sdkmanager_and_gradlew(monkeypatch, tmp_path: Path) -> Non
 
 
 def test_windows_uses_bat_paths(monkeypatch, tmp_path: Path) -> None:
-    _setup_env(monkeypatch, tmp_path, runner_os="Windows")
+    _, sdk_root = _setup_env(monkeypatch, tmp_path, runner_os="Windows")
+    sdkmanager = sdk_root / "cmdline-tools" / "latest" / "bin" / "sdkmanager.bat"
+    sdkmanager.parent.mkdir(parents=True)
+    sdkmanager.write_text("")
     calls: list[list[str]] = []
     monkeypatch.setattr(
         subprocess,
@@ -79,8 +82,33 @@ def test_windows_uses_bat_paths(monkeypatch, tmp_path: Path) -> None:
     )
 
     mod.main()
-    assert calls[0][0].endswith("sdkmanager.bat")
+    assert calls[0][0] == str(sdkmanager)
     assert calls[1][0].endswith("gradlew.bat")
+
+
+def test_windows_prefers_versioned_when_no_latest(monkeypatch, tmp_path: Path) -> None:
+    _, sdk_root = _setup_env(monkeypatch, tmp_path, runner_os="Windows")
+    for version in ("9.0", "10.0"):
+        bat = sdk_root / "cmdline-tools" / version / "bin" / "sdkmanager.bat"
+        bat.parent.mkdir(parents=True)
+        bat.write_text("")
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0),
+    )
+
+    assert (
+        mod._find_sdkmanager(str(sdk_root)).replace("\\", "/").endswith("10.0/bin/sdkmanager.bat")
+    )
+
+
+def test_windows_missing_sdkmanager_exits(monkeypatch, tmp_path: Path, capsys) -> None:
+    _setup_env(monkeypatch, tmp_path, runner_os="Windows")
+    with pytest.raises(SystemExit) as exc:
+        mod.main()
+    assert exc.value.code == 1
+    assert "sdkmanager.bat not found" in capsys.readouterr().err
 
 
 def test_subprocess_failure_propagates(monkeypatch, tmp_path: Path) -> None:

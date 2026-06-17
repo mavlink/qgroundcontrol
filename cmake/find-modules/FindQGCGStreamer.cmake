@@ -241,7 +241,12 @@ endmacro()
 
 macro(_qgc_discover_linux_sdk)
     if(NOT DEFINED GStreamer_ROOT_DIR)
-        set(GStreamer_ROOT_DIR "/usr")
+        # Cross-builds resolve system libs from the sysroot, not the host /usr.
+        if(CMAKE_SYSROOT)
+            set(GStreamer_ROOT_DIR "${CMAKE_SYSROOT}/usr")
+        else()
+            set(GStreamer_ROOT_DIR "/usr")
+        endif()
     endif()
 
     _gst_normalize_and_validate_root()

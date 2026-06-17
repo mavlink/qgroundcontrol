@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -17,6 +18,92 @@ WINDOWS_GSTREAMER_INSTALL_DIR = "C:\\gstreamer"
 WINDOWS_GSTREAMER_PREFIX = "C:\\gstreamer\\1.0\\msvc_x86_64"
 WINDOWS_VULKAN_INSTALL_DIR = "C:\\VulkanSDK\\latest"
 WINDOWS_VULKAN_URL = "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe"
+WINDOWS_VS_BUILDTOOLS_URL = "https://aka.ms/vs/17/release/vs_BuildTools.exe"
+WINDOWS_NSIS_VERSION = "3.11"
+WINDOWS_NSIS_URL = (
+    f"https://downloads.sourceforge.net/project/nsis/NSIS%203/{WINDOWS_NSIS_VERSION}/"
+    f"nsis-{WINDOWS_NSIS_VERSION}-setup.exe"
+)
+
+
+def install_windows_nsis(dry_run: bool = False) -> bool:
+    """Install NSIS (makensis) for the Windows installer build step."""
+    program_files_x86 = os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
+    makensis = Path(program_files_x86) / "NSIS" / "makensis.exe"
+    if makensis.exists():
+        print(f"NSIS already installed at {makensis}; skipping")
+        return True
+
+    print(f"\nInstalling NSIS {WINDOWS_NSIS_VERSION}...")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        installer = Path(tmpdir) / "nsis-setup.exe"
+        if not _c.download_file(WINDOWS_NSIS_URL, installer, dry_run):
+            return False
+        if not _c.run_command([str(installer), "/S"], dry_run):
+            return False
+
+    if not dry_run and not makensis.exists():
+        _c.log_error(f"NSIS installer reported success but {makensis} is missing")
+        return False
+    print("NSIS installed")
+    return True
+
+
+def _verify_msvc(arm64: bool) -> bool:
+    """Confirm the requested VC Tools components are present via vswhere."""
+    program_files_x86 = os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)")
+    vswhere = Path(program_files_x86) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+    if not vswhere.exists():
+        _c.log_warn(f"vswhere not found at {vswhere}; skipping MSVC verification")
+        return True
+
+    components = ["Microsoft.VisualStudio.Component.VC.Tools.x86.x64"]
+    if arm64:
+        components.append("Microsoft.VisualStudio.Component.VC.Tools.ARM64")
+    for component in components:
+        result = subprocess.run(
+            [
+                str(vswhere),
+                "-products",
+                "*",
+                "-requires",
+                component,
+                "-property",
+                "installationPath",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0 or not result.stdout.strip():
+            _c.log_error(f"MSVC verification failed: component {component} not installed")
+            return False
+    return True
+
+
+def install_windows_msvc(dry_run: bool = False, arm64: bool = False) -> bool:
+    """Install Visual Studio 2022 Build Tools with the C++ (VCTools) workload."""
+    print("\nInstalling Visual Studio Build Tools (VCTools)...")
+    components = ["--add", "Microsoft.VisualStudio.Workload.VCTools", "--includeRecommended"]
+    if arm64:
+        components += ["--add", "Microsoft.VisualStudio.Component.VC.Tools.ARM64"]
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        installer = Path(tmpdir) / "vs_BuildTools.exe"
+        if not _c.download_file(WINDOWS_VS_BUILDTOOLS_URL, installer, dry_run):
+            return False
+        if not _c.run_command(
+            [str(installer), "--quiet", "--wait", "--norestart", "--nocache", *components],
+            dry_run,
+            ok_returncodes=(0, 3010),
+        ):
+            return False
+
+    if not dry_run and not _verify_msvc(arm64):
+        return False
+    print("Visual Studio Build Tools installed")
+    return True
+
 
 def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
     """Install GStreamer on Windows (AMD64 only)."""
@@ -90,6 +177,7 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
     print(f"GStreamer {version} installed to {prefix}")
     return True
 
+
 def install_windows_vulkan(dry_run: bool = False) -> bool:
     """Install Vulkan SDK on Windows."""
     print("\nInstalling Vulkan SDK...")
@@ -122,16 +210,26 @@ def install_windows_vulkan(dry_run: bool = False) -> bool:
     print("Vulkan SDK installed")
     return True
 
+
 def install_windows(
     dry_run: bool = False,
     gstreamer_version: str | None = None,
     skip_gstreamer: bool = False,
     vulkan: bool = False,
+    msvc: bool = False,
+    msvc_arm64: bool = False,
+    nsis: bool = False,
 ) -> bool:
     """Install Windows dependencies."""
     _c.log_info("Installing Windows dependencies...")
     arch = os.environ.get("PROCESSOR_ARCHITECTURE", "unknown")
     print(f"Architecture: {arch}")
+
+    if msvc and not install_windows_msvc(dry_run, msvc_arm64):
+        return False
+
+    if nsis and not install_windows_nsis(dry_run):
+        return False
 
     if not skip_gstreamer:
         version = gstreamer_version or _c.get_config_value("gstreamer_windows_version")
@@ -151,13 +249,17 @@ def install_windows(
     print("\nWindows dependencies installed!")
     return True
 
+
 __all__ = [
     "WINDOWS_GSTREAMER_BASE_URL",
     "WINDOWS_GSTREAMER_INSTALL_DIR",
     "WINDOWS_GSTREAMER_PREFIX",
+    "WINDOWS_VS_BUILDTOOLS_URL",
     "WINDOWS_VULKAN_INSTALL_DIR",
     "WINDOWS_VULKAN_URL",
     "install_windows",
     "install_windows_gstreamer",
+    "install_windows_msvc",
+    "install_windows_nsis",
     "install_windows_vulkan",
 ]

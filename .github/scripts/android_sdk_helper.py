@@ -16,6 +16,23 @@ from common.gh_actions import append_github_env
 from common.net import run_with_retries
 
 
+def _find_sdkmanager(sdk_root: str) -> str:
+    """Locate sdkmanager.bat under cmdline-tools/{latest,<version>}, preferring latest."""
+    cmdline_tools = Path(sdk_root) / "cmdline-tools"
+    default = cmdline_tools / "latest" / "bin" / "sdkmanager.bat"
+    # Prefer latest; fall back to highest numeric version (9.0 < 10.0, not lexicographic).
+    versioned = sorted(
+        (p for p in cmdline_tools.glob("*/bin/sdkmanager.bat") if p.parent.parent.name != "latest"),
+        key=lambda p: [int(n) if n.isdigit() else -1 for n in p.parent.parent.name.split(".")],
+        reverse=True,
+    )
+    found = next((c for c in (default, *versioned) if c.is_file()), None)
+    if found is None:
+        print(f"::error::sdkmanager.bat not found under {cmdline_tools}", file=sys.stderr)
+        sys.exit(1)
+    return str(found)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ndk-version", required=True)
@@ -45,7 +62,7 @@ def main() -> None:
     is_windows = os.environ.get("RUNNER_OS") == "Windows"
 
     if is_windows:
-        sdkmanager = os.path.join(sdk_root, "cmdline-tools", "latest", "bin", "sdkmanager.bat")
+        sdkmanager = _find_sdkmanager(sdk_root)
         gradlew = os.path.join(args.workspace, "android", "gradlew.bat")
     else:
         sdkmanager = "sdkmanager"

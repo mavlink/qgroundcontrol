@@ -207,6 +207,10 @@ void VehicleLinkManagerTest::_multiLinkSingleVehicleTest()
 
 void VehicleLinkManagerTest::_connectionRemovedTest()
 {
+    // Connection removal makes MavCommandQueue give up pending commands, same as the comm-loss tests.
+    ignoreLogMessage("Vehicle.MavCommandQueue", QtWarningMsg,
+                     QRegularExpression("Giving up sending command after max retries:"));
+
     SharedLinkConfigurationPtr mockConfig;
     SharedLinkInterfacePtr mockLink;
     _startMockLink(1, false /*highLatency*/, true /*incrementVehicleId*/, mockConfig, mockLink);

@@ -81,27 +81,60 @@ Examples:
 """,
     )
 
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Show what would be installed without installing")
-    parser.add_argument("--platform", choices=["debian", "macos", "windows"],
-                        help="Override platform detection")
-    parser.add_argument("--list", dest="list_packages", action="store_true",
-                        help="List packages by category")
-    parser.add_argument("--print-packages", action="store_true",
-                        help="Print space-separated package list (machine-readable, for CI caching)")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be installed without installing"
+    )
+    parser.add_argument(
+        "--platform", choices=["debian", "macos", "windows"], help="Override platform detection"
+    )
+    parser.add_argument(
+        "--list", dest="list_packages", action="store_true", help="List packages by category"
+    )
+    parser.add_argument(
+        "--print-packages",
+        action="store_true",
+        help="Print space-separated package list (machine-readable, for CI caching)",
+    )
     parser.add_argument("--category", help="Install only specific category (Debian only)")
-    parser.add_argument("--skip-system-packages", action="store_true",
-                        help="Skip apt package installation (Debian only), useful when another step pre-installs system packages")
-    parser.add_argument("--gstreamer-version",
-                        help="GStreamer version to install (Windows only, overrides build-config.json)")
-    parser.add_argument("--skip-gstreamer", action="store_true",
-                        help="Skip GStreamer installation (Windows only)")
-    parser.add_argument("--vulkan", action="store_true",
-                        help="Install Vulkan SDK (Windows only)")
-    parser.add_argument("--print-available-packages", action="store_true",
-                        help="Print available apt packages in the selected Debian category")
-    parser.add_argument("--validate-extra-packages", nargs="*", default=None,
-                        help="Validate extra apt package names and print them back")
+    parser.add_argument(
+        "--skip-system-packages",
+        action="store_true",
+        help="Skip apt package installation (Debian only), useful when another step pre-installs system packages",
+    )
+    parser.add_argument(
+        "--gstreamer-version",
+        help="GStreamer version to install (Windows only, overrides build-config.json)",
+    )
+    parser.add_argument(
+        "--skip-gstreamer", action="store_true", help="Skip GStreamer installation (Windows only)"
+    )
+    parser.add_argument("--vulkan", action="store_true", help="Install Vulkan SDK (Windows only)")
+    parser.add_argument(
+        "--msvc",
+        action="store_true",
+        help="Install Visual Studio Build Tools / VCTools (Windows only)",
+    )
+    parser.add_argument(
+        "--msvc-arm64",
+        action="store_true",
+        help="Also add the ARM64 cross compiler component (implies --msvc, Windows only)",
+    )
+    parser.add_argument(
+        "--nsis",
+        action="store_true",
+        help="Install NSIS / makensis for the installer build (Windows only)",
+    )
+    parser.add_argument(
+        "--print-available-packages",
+        action="store_true",
+        help="Print available apt packages in the selected Debian category",
+    )
+    parser.add_argument(
+        "--validate-extra-packages",
+        nargs="*",
+        default=None,
+        help="Validate extra apt package names and print them back",
+    )
 
     return parser.parse_args(args)
 
@@ -155,10 +188,13 @@ def main() -> int:
         success = install_macos(args.dry_run)
     elif platform == "windows":
         success = install_windows(
-            args.dry_run,
-            args.gstreamer_version,
-            args.skip_gstreamer,
-            args.vulkan,
+            dry_run=args.dry_run,
+            gstreamer_version=args.gstreamer_version,
+            skip_gstreamer=args.skip_gstreamer,
+            vulkan=args.vulkan,
+            msvc=args.msvc or args.msvc_arm64,
+            msvc_arm64=args.msvc_arm64,
+            nsis=args.nsis,
         )
     else:
         _c.log_error(f"Unsupported platform: {platform}")

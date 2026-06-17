@@ -51,6 +51,7 @@ jobs:
             .github/scripts/ci_bootstrap.py
             tools/_bootstrap.py
             tools/common/__init__.py
+            tools/common/file_traversal.py
             tools/common/gh_actions.py
           sparse-checkout-cone-mode: false
 
@@ -64,7 +65,7 @@ jobs:
 
   build:
     name: Docker ${{ matrix.platform }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=80gb', github.run_id) || 'ubuntu-latest' }}
     needs: [changes, plan-builds]
     if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
     timeout-minutes: 120
@@ -82,6 +83,13 @@ jobs:
         shell: bash
 
     steps:
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
@@ -98,16 +106,22 @@ jobs:
       - name: Resolve push target
         id: push-target
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref }}
         run: >-
           python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" resolve-push-target
-          --event-name "${{ github.event_name }}"
-          --repo "${{ github.repository }}"
-          --ref "${{ github.ref }}"
+          --event-name "${EVENT_NAME}"
+          --repo "${REPO}"
+          --ref "${REF}"
 
       - name: Build with Docker
         uses: ./.github/actions/docker
         with:
-          dockerfile: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          variant: ${{ matrix.variant }}
+          build-args: ${{ matrix.build_args }}
           fuse: ${{ matrix.fuse }}
           docker-username: ${{ secrets.DOCKERHUB_USERNAME }}
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}

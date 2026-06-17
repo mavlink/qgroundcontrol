@@ -42,7 +42,7 @@ jobs:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 120
 
     strategy:
@@ -52,19 +52,19 @@ jobs:
         variant: [amd64, arm64, arm64-cross]
         include:
           - variant: amd64
-            os: windows-2022
+            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_64
             package: QGroundControl-installer-AMD64
 
           - variant: arm64
-            os: windows-11-arm
+            runs_on: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
             package: QGroundControl-installer-ARM64
 
           - variant: arm64-cross
-            os: windows-2022
+            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             package: QGroundControl-installer-AMD64-ARM64
@@ -75,6 +75,13 @@ jobs:
         shell: cmd
 
     steps:
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
@@ -84,6 +91,15 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+
+      - name: Install Visual Studio Build Tools
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
+        uses: ./.github/actions/install-dependencies
+        with:
+          gstreamer: 'false'
+          msvc: 'true'
+          msvc-arm64: ${{ matrix.variant == 'arm64-cross' }}
+          nsis: 'true'
 
       - name: Build Setup
         id: build-setup

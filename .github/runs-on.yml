@@ -1,0 +1,40 @@
+# RunsOn self-hosted runner pools. Not yet referenced by the workflows (they
+# still inline their runner specs); switch jobs to `runner=<pool>` after merge.
+runners:
+  linux-x64-builder:
+    family: ["c8i.2xlarge"]
+    spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 80gb
+  linux-x64-builder-60gb:
+    family: ["c8i.2xlarge"]
+    spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 60gb
+  linux-arm64-builder:
+    family: ["c8g.2xlarge"]
+    spot: false
+    image: ubuntu24-full-arm64
+    extras: s3-cache
+    volume: 60gb
+  linux-x64-tester:
+    family: ["m8i.2xlarge"]
+    spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 60gb
+  linux-x64-emulator:
+    family: ["c8i.2xlarge"]
+    spot: false
+    image: ubuntu24-full-x64
+    extras: s3-cache
+    volume: 80gb
+    nested-virt: true
+  windows-x64-builder:
+    family: ["c8i.2xlarge"]
+    spot: false
+    image: windows22-full-x64
+    extras: s3-cache
+    volume: 100gb

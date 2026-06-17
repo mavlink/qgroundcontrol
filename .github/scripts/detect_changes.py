@@ -46,11 +46,19 @@ _PLATFORM_PATTERNS: dict[str, list[str]] = {
     "android": [r"^android/"],
     "custom-build": [r"^custom-example/"],
     "docker-linux": [
-        r"^deploy/docker/Dockerfile-build-ubuntu$",
+        # Single multi-stage Dockerfile builds every variant; any change rebuilds.
+        r"^deploy/docker/Dockerfile$",
+        r"^deploy/docker/entrypoint\.sh$",
+        r"^deploy/docker/install-sysroot-aarch64\.sh$",
+        r"^deploy/docker/_docker-exec\.sh$",
+        r"^deploy/docker/lib/",
         r"^deploy/linux/",
     ],
     "docker-android": [
-        r"^deploy/docker/Dockerfile-build-android$",
+        r"^deploy/docker/Dockerfile$",
+        r"^deploy/docker/entrypoint\.sh$",
+        r"^deploy/docker/_docker-exec\.sh$",
+        r"^deploy/docker/lib/",
         r"^android/",
         r"^deploy/android/",
     ],

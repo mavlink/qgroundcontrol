@@ -169,7 +169,9 @@ function(add_qgc_test test_name)
 
     set(_test_env "QT_LOGGING_RULES=*.debug=false")
     if(NOT QGC_TEST_ONSCREEN)
-        list(PREPEND _test_env "QT_QPA_PLATFORM=offscreen")
+        # Headless CI has no GL context; force Qt Quick's software backend (matches
+        # QmlTesting) so UI tests render without RHI/OpenGL and don't fail at teardown.
+        list(PREPEND _test_env "QT_QPA_PLATFORM=offscreen" "QT_QUICK_BACKEND=software")
     endif()
 
     # LSan's tracer process needs ptrace, which Yama (ptrace_scope>=1) blocks on

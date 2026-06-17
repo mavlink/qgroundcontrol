@@ -4,6 +4,11 @@ set -euo pipefail
 usage() {
     echo "Usage: $0 [--fuse] <image-name> [build-type]"
     echo "  --fuse    Enable FUSE support (required for AppImage builds)"
+    echo ""
+    echo "Env:"
+    echo "  SOURCE_DIR   Host source tree    (default: \$PWD)"
+    echo "  BUILD_DIR    Host build output   (default: \$SOURCE_DIR/build)"
+    echo "  CLEAN_BUILD  Set 1 to wipe the build dir before configuring (cross image only)"
     exit 1
 }
 
@@ -18,7 +23,7 @@ while [[ $# -gt 0 && "$1" == --* ]]; do
             usage
             ;;
         *)
-            echo "Unknown option: $1"
+            echo "Unknown option: $1" >&2
             usage
             ;;
     esac
@@ -33,8 +38,16 @@ BUILD_DIR="${BUILD_DIR:-${SOURCE_DIR}/build}"
 
 mkdir -p "${BUILD_DIR}"
 
+# --user matches the host UID so on-disk build artifacts aren't root-owned.
+# HOME is forced to a writable path because a mapped UID has no /etc/passwd
+# entry (gradle/ccache need a writable home). Source is mounted read-write: the
+# build writes a compile_commands.json symlink and the CPM cache into the tree.
 docker run \
     --rm \
+    --user "$(id -u):$(id -g)" \
+    --env HOME=/tmp \
+    --env CLEAN_BUILD="${CLEAN_BUILD:-0}" \
+    --env JOBS="${JOBS:-}" \
     ${FUSE_FLAGS[@]+"${FUSE_FLAGS[@]}"} \
     -v "${SOURCE_DIR}:/project/source" \
     -v "${BUILD_DIR}:/project/build" \
