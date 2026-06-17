@@ -90,8 +90,24 @@ void LinkManager::createConnectedLink(const LinkConfiguration *config)
     }
 }
 
+void LinkManager::disconnectLink(LinkInterface *link)
+{
+    if (!link) {
+        return;
+    }
+
+    const SharedLinkConfigurationPtr config = link->linkConfiguration();
+    if (config) {
+        config->setSuppressAutoReconnect(true);
+    }
+
+    link->disconnect();
+}
+
 bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
 {
+    config->setSuppressAutoReconnect(false);
+
     SharedLinkInterfacePtr link = nullptr;
 
     switch(config->type()) {
@@ -422,6 +438,22 @@ void LinkManager::_addMAVLinkForwardingLink()
     _createDynamicForwardLink(_mavlinkForwardingLinkName, hostName);
 }
 
+void LinkManager::_reconnectAutoConnectLinks()
+{
+    for (SharedLinkConfigurationPtr &config : _rgLinkConfigs) {
+        if (!config || config->isDynamic() || !config->isAutoConnect()) {
+            continue;
+        }
+
+        if (config->link() || config->suppressAutoReconnect()) {
+            continue;
+        }
+
+        qCDebug(LinkManagerLog) << "Reconnecting auto-connect link" << config->name();
+        createConnectedLink(config);
+    }
+}
+
 void LinkManager::_updateAutoConnectLinks()
 {
     if (_connectionsSuspended) {
@@ -430,6 +462,7 @@ void LinkManager::_updateAutoConnectLinks()
 
     _addUDPAutoConnectLink();
     _addMAVLinkForwardingLink();
+    _reconnectAutoConnectLinks();
 
     // check to see if nmea gps is configured for UDP input, if so, set it up to connect
     if (_autoConnectSettings->autoConnectNmeaPort()->cookedValueString() == "UDP Port") {

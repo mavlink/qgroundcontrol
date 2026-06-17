@@ -23,8 +23,15 @@ struct UDPClient
         , port(portNum)
     {}
 
+    UDPClient(const QString &host, const QHostAddress &addr, quint16 portNum)
+        : hostname(host)
+        , address(addr)
+        , port(portNum)
+    {}
+
     explicit UDPClient(const UDPClient *other)
-        : address(other->address)
+        : hostname(other->hostname)
+        , address(other->address)
         , port(other->port)
     {}
 
@@ -35,12 +42,14 @@ struct UDPClient
 
     UDPClient &operator=(const UDPClient &other)
     {
+        hostname = other.hostname;
         address = other.address;
         port = other.port;
 
         return *this;
     }
 
+    QString hostname;
     QHostAddress address;
     quint16 port = 0;
 };
@@ -74,6 +83,7 @@ public:
 
     QStringList hostList() const { return _hostList; }
     QList<std::shared_ptr<UDPClient>> targetHosts() const { return _targetHosts; }
+    void resolveHosts() const;
     quint16 localPort() const { return _localPort; }
     void setLocalPort(quint16 port) { if (port != _localPort) { _localPort = port; emit localPortChanged(); } }
 

@@ -54,6 +54,9 @@ public:
     /// Set if this is this an Auto Connect configuration.
     virtual void setAutoConnect(bool autoc = true);
 
+    bool suppressAutoReconnect() const { return _suppressAutoReconnect; }
+    void setSuppressAutoReconnect(bool suppress) { _suppressAutoReconnect = suppress; }
+
     /// Is this a High Latency configuration?
     ///     @return True if this is an High Latency configuration (link with large delays).
     bool isHighLatency() const { return _highLatency; }
@@ -131,6 +134,7 @@ private:
     bool _forwarding = false;  ///< Automatically added Mavlink forwarding connection
     bool _autoConnect = false; ///< This connection is started automatically at boot
     bool _highLatency = false;
+    bool _suppressAutoReconnect = false; ///< User disconnected; skip auto-reconnect until manually reconnected (runtime only)
 };
 
 typedef std::shared_ptr<LinkConfiguration> SharedLinkConfigurationPtr;

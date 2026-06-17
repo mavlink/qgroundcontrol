@@ -14,6 +14,7 @@ private slots:
     void _testBaseSetHighLatencyEmitsSignal();
     void _testBaseDefaults();
     void _testBaseSettingsRoot();
+    void _testSuppressAutoReconnectNotPersisted();
 
     // TCPConfiguration
     void _testTcpConstruction();
@@ -22,6 +23,7 @@ private slots:
     void _testTcpCopyConstruction();
     void _testTcpCopyFrom();
     void _testTcpSettingsRoundtrip();
+    void _testTcpHostnameRoundtrip();
 
     // UDPConfiguration
     void _testUdpConstruction();
@@ -30,4 +32,8 @@ private slots:
     void _testUdpCopyConstruction();
     void _testUdpCopyFrom();
     void _testUdpSettingsRoundtrip();
+    void _testUdpHostnamePreservedWhenUnresolved();
+    void _testUdpHostnameRoundtrip();
+    void _testUdpRemoveByHostname();
+    void _testUdpResolveHostsUpdatesAddress();
 };
