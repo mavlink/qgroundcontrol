@@ -139,7 +139,7 @@
         },
         {
             "name": "operatorControlSecondaryGCS",
-            "shortDesc": "Comma-separated list of GCS system IDs to include in the control range when requesting operator control. Empty means single-GCS mode.",
+            "shortDesc": "List of GCS system IDs to include in the control range when requesting operator control, separated by commas or spaces. Empty means single-GCS mode.",
             "type": "string",
             "default": "",
             "label": "Secondary GCS system IDs to include in control range"

@@ -385,7 +385,7 @@ Item {
                 }
                 // Expanded settings
                 QGCLabel {
-                    text:                   qsTr("Secondary GCS IDs (comma-separated):")
+                    text:                   qsTr("Secondary GCS IDs (comma or space separated):")
                     Layout.columnSpan:      2
                     visible:                rangeSettingsToggle.expanded
                 }
@@ -405,12 +405,13 @@ Item {
                     property int unconfiguredIdsInRange: 0
                     text: {
                         var myId = QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
-                        var parts = secondaryGCSSetting.split(",")
+                        // Accept any non-digit separator (commas, spaces, or a mix), matching _computeOperatorControlRange
+                        var parts = secondaryGCSSetting.match(/\d+/g) || []
                         var ids = [ myId ]
                         var lo = myId
                         var hi = myId
                         for (var i = 0; i < parts.length; i++) {
-                            var val = parseInt(parts[i].trim())
+                            var val = parseInt(parts[i])
                             if (!isNaN(val) && val >= 1 && val <= 255) {
                                 if (val < lo) lo = val
                                 if (val > hi) hi = val

@@ -84,6 +84,7 @@
 #endif
 
 #include <QtCore/QDateTime>
+#include <QtCore/QRegularExpression>
 
 QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
@@ -3210,10 +3211,11 @@ void Vehicle::_computeOperatorControlRange(uint8_t &rangeLow, uint8_t &rangeHigh
 
     uint8_t lo = myId;
     uint8_t hi = myId;
-    const QStringList parts = secondaryStr.split(',', Qt::SkipEmptyParts);
+    // Accept any non-digit separator (commas, spaces, or a mix) so the field is forgiving
+    const QStringList parts = secondaryStr.split(QRegularExpression(QStringLiteral("[^0-9]+")), Qt::SkipEmptyParts);
     for (const QString &part : parts) {
         bool ok = false;
-        const int val = part.trimmed().toInt(&ok);
+        const int val = part.toInt(&ok);
         if (ok && val >= 1 && val <= 255) {
             const uint8_t id = static_cast<uint8_t>(val);
             if (id < lo) lo = id;
