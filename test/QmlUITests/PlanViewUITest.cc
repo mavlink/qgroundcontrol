@@ -105,9 +105,17 @@ void PlanViewUITest::_testPlanViewStates()
     // are deterministic and offset clicks produce nearby waypoints.
     QQuickItem *map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
     QVERIFY2(map, "planView_map not found");
-    map->setProperty("center", QVariant::fromValue(QGeoCoordinate(47.397742, 8.545594))); // Zurich
+    const QGeoCoordinate mapCenter(47.397742, 8.545594); // Zurich
+    map->setProperty("center", QVariant::fromValue(mapCenter));
     map->setProperty("zoomLevel", 15.0);
-    QTest::qWait(100); // Let the map settle
+    QVERIFY2(waitForCondition(
+                 [&] {
+                     const QGeoCoordinate c = map->property("center").value<QGeoCoordinate>();
+                     return c.isValid() && (c.distanceTo(mapCenter) < 1.0)
+                         && qFuzzyCompare(map->property("zoomLevel").toReal(), 15.0);
+                 },
+                 1000),
+             "Map did not settle on the requested center/zoom");
 
     const QString takeoffBtn  = QStringLiteral("planToolStrip_takeoffButton");
     const QString waypointBtn = QStringLiteral("planToolStrip_waypointButton");

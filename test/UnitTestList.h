@@ -22,6 +22,15 @@ constexpr int kStressIterations = 20;
 int runTests(const QStringList& unitTests = QStringList(), int iterations = 1, const QString& outputFile = QString(),
              TestLabels labelFilter = TestLabels());
 
+/// Runs only the lightweight (pure-logic) subset registered via
+/// UT_REGISTER_TEST_LIGHTWEIGHT. Intended to be called from an entry point that has
+/// constructed a bare QCoreApplication instead of the full QGCApplication, so pure-logic
+/// tests skip QML-engine/plugin startup. If @a unitTests is non-empty, any name in it that
+/// is NOT a registered lightweight test is rejected (those must run on the full-app path).
+/// @return 0 on success, negative number indicating failure count
+int runLightweightTests(const QStringList& unitTests = QStringList(), int iterations = 1,
+                        const QString& outputFile = QString(), TestLabels labelFilter = TestLabels());
+
 /// Returns list of all registered test names
 QStringList registeredTestNames();
 

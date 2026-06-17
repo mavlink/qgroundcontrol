@@ -218,6 +218,14 @@ repos:
         files: ^test/
         pass_filenames: true
 
+      - id: check-no-fixed-qwait
+        name: Check for fixed-delay QTest::qWait in test code
+        entry: bash -c 'if grep -EnH "qWait\([1-9][0-9]*\)" "$@" 2>/dev/null; then echo "::error::QTest::qWait(<non-zero>) found. Use QTRY_VERIFY_WITH_TIMEOUT, QTRY_COMPARE_WITH_TIMEOUT, or QSignalSpy::wait with a TestTimeout::* constant instead." >&2; exit 1; fi' --
+        language: system
+        types: [c++]
+        files: ^test/
+        pass_filenames: true
+
       - id: vehicle-null-check
         name: Check vehicle null safety
         entry: python3 tools/analyzers/vehicle_null_check.py

@@ -65,8 +65,8 @@ void AsyncFunctionStateTest::_testAsyncFunctionStateTimeout()
     QVERIFY(finishedSpy.wait(TestTimeout::shortMs()));
     QVERIFY(timeoutReached);
     // Verify timeout path taken, not success path
-    QVERIFY(stateSpy.emittedByMask(stateSpy.mask("timeout")));
-    QVERIFY(stateSpy.notEmittedByMask(stateSpy.mask("advance")));
+    QVERIFY(stateSpy.emitted("timeout"));
+    QVERIFY(stateSpy.notEmitted("advance"));
 }
 
 void AsyncFunctionStateTest::_testErrorTransition()
@@ -107,8 +107,8 @@ void AsyncFunctionStateTest::_testErrorTransition()
     verifyExpectedLogMessage();
     QVERIFY(errorHandled);
     // Verify error path taken, not success path
-    QVERIFY(stateSpy.emittedByMask(stateSpy.mask("error")));
-    QVERIFY(stateSpy.notEmittedByMask(stateSpy.mask("advance")));
+    QVERIFY(stateSpy.emitted("error"));
+    QVERIFY(stateSpy.notEmitted("advance"));
 }
 
 UT_REGISTER_TEST(AsyncFunctionStateTest, TestLabel::Unit, TestLabel::Utilities)

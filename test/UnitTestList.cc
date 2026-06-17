@@ -1,5 +1,6 @@
 #include "UnitTestList.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QSet>
 
@@ -60,6 +61,55 @@ int runTests(const QStringList& unitTests, int iterations, const QString& output
         }
     }
 
+    return result;
+}
+
+int runLightweightTests(const QStringList& unitTests, int iterations, const QString& outputFile,
+                        TestLabels labelFilter)
+{
+    if (!QCoreApplication::instance()) {
+        qCWarning(UnitTestListLog) << "runLightweightTests called with no QCoreApplication instance";
+        return -1;
+    }
+
+    QStringList testsToRun;
+    if (unitTests.isEmpty()) {
+        testsToRun = UnitTest::registeredLightweightTests(labelFilter);
+    } else {
+        QStringList nonLightweight;
+        for (const QString& name : unitTests) {
+            if (UnitTest::isLightweightTest(name)) {
+                testsToRun.append(name);
+            } else {
+                nonLightweight.append(name);
+            }
+        }
+        if (!nonLightweight.isEmpty()) {
+            qCWarning(UnitTestListLog)
+                << "Requested test(s) are not lightweight (must run on the full-app path):"
+                << nonLightweight.join(QStringLiteral(", "));
+            return -static_cast<int>(nonLightweight.size());
+        }
+    }
+
+    if (testsToRun.isEmpty()) {
+        qCInfo(UnitTestListLog) << "No lightweight tests to run";
+        return 0;
+    }
+
+    iterations = qMax(1, iterations);
+    int result = 0;
+    for (int i = 0; i < iterations; ++i) {
+        int failures = 0;
+        for (const QString& test : testsToRun) {
+            failures += UnitTest::run(test, outputFile, labelFilter);
+        }
+        if (failures != 0) {
+            qCWarning(UnitTestListLog) << failures << "LIGHTWEIGHT TESTS FAILED!";
+            result = -failures;
+            break;
+        }
+    }
     return result;
 }
 

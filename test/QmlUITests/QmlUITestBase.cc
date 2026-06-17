@@ -1,10 +1,13 @@
 #include "QmlUITestBase.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QEventLoop>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QVariant>
 #include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlIncubationController>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtQuickControls2/QQuickStyle>
@@ -24,6 +27,45 @@
 #include "TerrainQuery.h"
 #include "TerrainTest.h"
 #include "Vehicle.h"
+
+// Bounded real-time window for render/GC/deferred-delete settle drains during UI teardown.
+// These have no observable completion condition in offscreen mode (the render loop never
+// self-pumps), so we drain events for a fixed, minimal interval instead.
+static constexpr int kSettleDrainMs = 100;
+
+static QQuickItem *findVisibleItemImmediate(QQuickItem *root, const QString &objectName)
+{
+    if (!root || !root->isVisible()) {
+        return nullptr;
+    }
+    if (root->objectName() == objectName) {
+        return root;
+    }
+    const auto children = root->childItems();
+    for (auto *child : children) {
+        if (auto *found = findVisibleItemImmediate(child, objectName)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
+QQuickItem *QmlUITestBase::findVisibleItem(QQuickItem *root, const QString &objectName, int timeoutMs)
+{
+    constexpr int pollIntervalMs = 50;
+    int elapsed = 0;
+    while (elapsed <= timeoutMs) {
+        if (auto *item = findVisibleItemImmediate(root, objectName)) {
+            return item;
+        }
+        if (elapsed >= timeoutMs) {
+            break;
+        }
+        QTest::qWait(pollIntervalMs);
+        elapsed += pollIntervalMs;
+    }
+    return nullptr;
+}
 
 void QmlUITestBase::startUI()
 {
@@ -117,10 +159,14 @@ void QmlUITestBase::closeUIWindow()
 {
     if (_window) {
         _window->close();
-        (void) QTest::qWaitFor([this] { return !_window->isVisible(); }, 1000);
-        for (int i = 0; i < 5; ++i) {
-            QCoreApplication::processEvents();
-            QTest::qWait(20);
+        (void) QTest::qWaitFor([this] { return !_window->isVisible(); }, TestTimeout::shortMs());
+        // No observable post-close condition: this is a bounded render/deferred-delete settle
+        // drain (offscreen render loop never self-pumps). Drain real-time so queued
+        // deleteLater()/timer events fire before the engine is torn down.
+        QElapsedTimer settle;
+        settle.start();
+        while (settle.elapsed() < kSettleDrainMs) {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
         }
     }
 }
@@ -128,12 +174,28 @@ void QmlUITestBase::closeUIWindow()
 void QmlUITestBase::destroyUIEngine()
 {
     if (_engine) {
+        // Async incubation rides QQuickWindow's render-loop controller, which never
+        // pumps in offscreen mode, so pending incubators stall mid-creation and the
+        // engine warns "items still being created at engine destruction". Pump the
+        // controller directly until it drains so teardown is clean.
+        if (QQmlIncubationController *controller = _engine->incubationController()) {
+            QElapsedTimer drainTimer;
+            drainTimer.start();
+            while ((controller->incubatingObjectCount() > 0) && (drainTimer.elapsed() < 2000)) {
+                controller->incubateFor(50);
+                QCoreApplication::processEvents();
+            }
+        }
+
         // Give asynchronous QML item creation/destruction a brief drain window
         // before engine teardown to avoid strict-mode warnings at shutdown.
-        for (int i = 0; i < 10; ++i) {
+        // No observable condition: bounded GC/event settle drain so the engine releases
+        // references to C++ singletons before teardown (see comment above).
+        QElapsedTimer gcSettle;
+        gcSettle.start();
+        while (gcSettle.elapsed() < kSettleDrainMs) {
             _engine->collectGarbage();
-            QCoreApplication::processEvents();
-            QTest::qWait(10);
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
         }
 
         // Force GC and event processing so QML releases references to C++ singletons
@@ -346,8 +408,22 @@ void QmlUITestBase::scrollIntoView(QQuickItem *item, const QString &flickableObj
     // Target contentY that places the item's centre in the middle of the flickable.
     const double targetY = absoluteY + item->height() / 2.0 - flickable->height() / 2.0;
     const double maxContentY = flickable->property("contentHeight").toDouble() - flickable->height();
-    flickable->setProperty("contentY", qBound(0.0, targetY, qMax(0.0, maxContentY)));
-    QTest::qWait(50);
+    const double clampedTargetY = qBound(0.0, targetY, qMax(0.0, maxContentY));
+    flickable->setProperty("contentY", clampedTargetY);
+
+    // Wait for the flickable to apply the new contentY and re-lay-out the item, so callers
+    // that immediately query/click the item see it at its scrolled position. The observable
+    // condition is that the item's scene centre now falls inside the flickable viewport, or
+    // contentY settled at its clamped target when the item can't be fully centred.
+    QTRY_VERIFY_WITH_TIMEOUT(
+        ([&] {
+            const QPointF center = item->mapToScene(QPointF(item->width() / 2, item->height() / 2));
+            const QRectF viewport(flickable->mapToScene(QPointF(0, 0)),
+                                  QSizeF(flickable->width(), flickable->height()));
+            return viewport.contains(center)
+                || qFuzzyCompare(flickable->property("contentY").toDouble() + 1.0, clampedTargetY + 1.0);
+        }()),
+        TestTimeout::shortMs());
 }
 
 void QmlUITestBase::runWithMockLink(

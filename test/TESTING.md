@@ -64,14 +64,14 @@ ninja check-comms            # Comms tests
 There are two separate QML-related test entry points with different purposes:
 
 - `QmlQuickTests` (recommended for real QML testing): Runs `tst_*.qml` via a dedicated Qt Quick Test executable (`QGCQmlQuickTests`) out-of-process.
-- `QmlTestRunner` (sanity/structure check): Runs inside the regular `UnitTest` harness and validates test discovery/setup, but is not the primary Qt Quick execution path.
+- `QmlTestFileValidator` (sanity/structure check): Runs inside the regular `UnitTest` harness and validates test discovery/setup, but is not the primary Qt Quick execution path.
 
 ```bash
 # Real QML quick tests
 ctest -R QmlQuickTests --output-on-failure
 
 # In-process sanity check runner
-ctest -R QmlTestRunner --output-on-failure
+ctest -R QmlTestFileValidator --output-on-failure
 ```
 
 ## Writing Tests
@@ -98,6 +98,15 @@ UT_REGISTER_TEST(MyTest, TestLabel::Unit)
 `UT_REGISTER_TEST` auto-registers the class at static-init time. There is no central list of tests to update — `main.cc`, `QGCApplication`, `QGCCommandLineParser`, and `UnitTestList` are all generic and enumerate tests at runtime via `UnitTest::registeredTests()`.
 
 Available `TestLabel::*` enum values: `Unit`, `Integration`, `Vehicle`, `MissionManager`, `Comms`, `Utilities`, `Slow`, `Network`, `Serial`, `Joystick`, `AnalyzeView`, `Terrain`. CTest `LABELS` in `CMakeLists.txt` are a superset (e.g. `MAVLink`, `Settings`) — the two lists are independent.
+
+### Data-driven tests (default for permutations)
+
+For tests that repeat the same assertions across a set of literal inputs, use Qt's
+table-driven pattern (`_data()` + `QTest::addColumn`/`QFETCH`) rather than copy-pasting
+near-identical method bodies. Each row gets its own failure tag, so a single bad
+permutation is identified without re-running the whole method. See
+`Utilities/Compression/QGCCompressionTest.cc` (`_testFormatDetection`,
+`_testDetectFormatFromMagicBytes`) for the canonical shape.
 
 ### Register in CMakeLists.txt
 
@@ -186,7 +195,7 @@ spy.init(myObject);
 // String-based API (recommended)
 QVERIFY(spy.emittedOnce("valueChanged"));           // Emitted exactly once
 QVERIFY(spy.onlyEmittedOnce("valueChanged"));       // Only this signal fired
-QVERIFY(spy.waitForSignal("valueChanged", 5000));   // Wait with timeout
+QVERIFY(spy.waitForSignal("valueChanged", TestTimeout::mediumMs())); // Wait with timeout
 QVERIFY(spy.notEmitted("errorOccurred"));           // Signal not emitted
 spy.clearAllSignals();
 
@@ -199,9 +208,8 @@ QVERIFY(spy.expect("signal").times(3));
 // Argument extraction
 int value = spy.argument<int>("valueChanged");
 
-// Mask-based API for multiple signals
-quint64 mask = spy.mask("signal1", "signal2");
-QVERIFY(spy.emittedOnceByMask(mask));
+// Multiple-signal API (each signal emitted exactly once)
+QVERIFY(spy.emittedOnce("signal1", "signal2"));
 ```
 
 ## Base Test Classes

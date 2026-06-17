@@ -1,11 +1,15 @@
 #include "MissionTest.h"
 
+#include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QTest>
 
 #include "AppSettings.h"
+#include "Fact.h"
 #include "GeoFenceController.h"
 #include "MissionController.h"
+#include "MissionItem.h"
 #include "PlanMasterController.h"
+#include "QGCMath.h"
 #include "QGCMAVLink.h"
 #include "RallyPointController.h"
 #include "SettingsManager.h"
@@ -122,4 +126,36 @@ void OfflineMissionTest::clearMission()
     if (missionController()) {
         missionController()->removeAll();
     }
+}
+
+void OfflineMissionTest::_missionItemsEqual(const MissionItem& actual, const MissionItem& expected)
+{
+    QCOMPARE(static_cast<int>(actual.command()), static_cast<int>(expected.command()));
+    QCOMPARE(static_cast<int>(actual.frame()), static_cast<int>(expected.frame()));
+    QCOMPARE(actual.autoContinue(), expected.autoContinue());
+
+    QVERIFY(QGC::fuzzyCompare(actual.param1(), expected.param1()));
+    QVERIFY(QGC::fuzzyCompare(actual.param2(), expected.param2()));
+    QVERIFY(QGC::fuzzyCompare(actual.param3(), expected.param3()));
+    QVERIFY(QGC::fuzzyCompare(actual.param4(), expected.param4()));
+    QVERIFY(QGC::fuzzyCompare(actual.param5(), expected.param5()));
+    QVERIFY(QGC::fuzzyCompare(actual.param6(), expected.param6()));
+    QVERIFY(QGC::fuzzyCompare(actual.param7(), expected.param7()));
+}
+
+void OfflineMissionTest::changeFactValue(Fact* fact, double increment)
+{
+    if (fact->typeIsBool()) {
+        fact->setRawValue(!fact->rawValue().toBool());
+    } else {
+        if (qFuzzyIsNull(increment)) {
+            increment = 1.0;
+        }
+        fact->setRawValue(fact->rawValue().toDouble() + increment);
+    }
+}
+
+QGeoCoordinate OfflineMissionTest::changeCoordinateValue(const QGeoCoordinate& coordinate)
+{
+    return coordinate.atDistanceAndAzimuth(1, 0);
 }

@@ -135,6 +135,18 @@ QGC_LOGGING_CATEGORY(MyComponentLog, "qgc.component.name")
 // Do not use qCInfo, always use qCDebug.
 qCDebug(MyComponentLog) << "Debug message";
 
+// Do not prefix the message with the function or method name — the logging
+// formatter already includes it, so repeating it is redundant.
+qCDebug(MyComponentLog) << "download(): fromURI:" << fromURI; // This is wrong
+qCDebug(MyComponentLog) << "fromURI:" << fromURI;             // Correct
+
+// When logging multiple values, stream each value on its own line, aligned
+// under the first operand. Keeps long log statements readable and diffs minimal.
+qCDebug(MyComponentLog) << "fromCompId:" << fromCompId
+                        << "fromURI:" << fromURI
+                        << "toDir:" << toDir
+                        << "fileName:" << fileName;
+
 // qCWarning is used for logging of error flows which are handled but unusual.
 // For example the vehicle failed to respond to a request.
 // These logs will display even when the category is not enabled to display.

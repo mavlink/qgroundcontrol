@@ -1,4 +1,4 @@
-#include "QmlTestRunner.h"
+#include "QmlTestFileValidator.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
@@ -6,13 +6,13 @@
 #include "QmlTesting.h"
 
 // Register as standalone - quick_test_main calls exit() so can't run with other tests
-UT_REGISTER_TEST_STANDALONE(QmlTestRunner, TestLabel::Unit)
+UT_REGISTER_TEST_STANDALONE(QmlTestFileValidator, TestLabel::Unit)
 
-QmlTestRunner::QmlTestRunner()
+QmlTestFileValidator::QmlTestFileValidator()
 {
 }
 
-QString QmlTestRunner::_testDirectory() const
+QString QmlTestFileValidator::_testDirectory() const
 {
     // Look for qmltests directory relative to executable
     const QDir appDir(QCoreApplication::applicationDirPath());
@@ -32,7 +32,7 @@ QString QmlTestRunner::_testDirectory() const
     return QString();
 }
 
-void QmlTestRunner::_runQmlTests()
+void QmlTestFileValidator::_runQmlTests()
 {
     // Qt Quick Test's quick_test_main() calls exit(), so it cannot run inside the
     // normal test harness. QML tests must be built and invoked as a separate

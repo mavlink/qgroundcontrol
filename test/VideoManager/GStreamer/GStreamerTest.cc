@@ -46,6 +46,9 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #  include "QGCRhiCapture.h"
 #endif
 #include <QtTest/QSignalSpy>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QElapsedTimer>
+#include <QtCore/QEventLoop>
 #include <QtQuick/QQuickWindow>
 #include <string_view>
 
@@ -105,7 +108,6 @@ void GStreamerTest::_testIsHardwareDecoderFactory()
     GList *factories = gst_element_factory_list_get_elements(
         static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
         GST_RANK_NONE);
-
     if (!factories) {
         QSKIP("No video decoder factories available on this system");
     }
@@ -154,7 +156,6 @@ void GStreamerTest::_testSetCodecPrioritiesSoftware()
     GList *factories = gst_element_factory_list_get_elements(
         static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
         GST_RANK_NONE);
-
     if (!factories) {
         QSKIP("No video decoder factories available on this system");
     }
@@ -185,7 +186,6 @@ void GStreamerTest::_testSetCodecPrioritiesHardware()
     GList *factories = gst_element_factory_list_get_elements(
         static_cast<GstElementFactoryListType>(GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO),
         GST_RANK_NONE);
-
     if (!factories) {
         QSKIP("No video decoder factories available on this system");
     }
@@ -931,7 +931,16 @@ PipelineRunResult runPipelineThroughAdapter(GstAppSinkAdapter &adapter,
         r.errorMessage = QStringLiteral("timeout waiting for EOS");
     }
     gst_object_unref(bus);
-    QTest::qWait(50);
+    // Drain any queued videoFrameChanged deliveries (bridged onto this thread) before teardown.
+    // No positive count target here -- frameCount is asserted by the caller via QTRY -- so this
+    // is a bounded settle drain rather than a condition wait.
+    {
+        QElapsedTimer drain;
+        drain.start();
+        while (drain.elapsed() < 50) {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+        }
+    }
     adapter.teardown();
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
@@ -1008,7 +1017,10 @@ void GStreamerTest::_testAppsinkTeardownUnderLoad()
     gst_object_unref(sinkBin);
 
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
-    QTest::qWait(150);
+    // Tear down only once the pipeline is genuinely "under load" (frames reaching the appsink),
+    // rather than after a fixed sleep that may race ahead of the first buffer.
+    QVERIFY(UnitTest::waitForCondition([&] { return adapter.appsinkInputFrames() > 0; },
+                                       TestTimeout::shortMs(), QStringLiteral("appsinkInputFrames() > 0")));
     adapter.teardown();
 
     gst_element_set_state(pipeline, GST_STATE_NULL);
@@ -1646,7 +1658,16 @@ void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
     // After FLUSH_START, push a few more buffers; they should all be dropped by the adapter.
     // Use a short window so the test stays under a second.
     const int duringFlushBaseline = deliveredFrames.load(std::memory_order_relaxed);
-    QTest::qWait(150);
+    // Negative assertion: verify NO new frames are delivered while flushing. There is no
+    // positive condition to QTRY on -- we must hold a bounded window open and confirm the
+    // count stayed flat -- so keep a minimal fixed wait while pumping queued deliveries.
+    {
+        QElapsedTimer flushWindow;
+        flushWindow.start();
+        while (flushWindow.elapsed() < 150) {
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+        }
+    }
     QCOMPARE(deliveredFrames.load(std::memory_order_relaxed), duringFlushBaseline);
 
     // Send FLUSH_STOP — restore normal flow. videotestsrc may have emitted EOS by now,

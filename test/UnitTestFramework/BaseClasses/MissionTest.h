@@ -7,6 +7,9 @@ class PlanMasterController;
 class MissionController;
 class GeoFenceController;
 class RallyPointController;
+class MissionItem;
+class Fact;
+class QGeoCoordinate;
 
 /// @file
 /// @brief Base classes for mission-related tests
@@ -130,6 +133,17 @@ protected:
 
     /// Clears the current mission
     void clearMission();
+
+    /// Compares two MissionItems for equality using QCOMPARE/QVERIFY
+    static void _missionItemsEqual(const MissionItem& actual, const MissionItem& expected);
+
+    /// Changes a Fact's rawValue to trigger valueChanged signal
+    /// @param fact The fact to modify
+    /// @param increment For numeric facts, amount to add (0 = use default of 1)
+    void changeFactValue(Fact* fact, double increment = 0);
+
+    /// Returns a coordinate offset by 1 meter north
+    QGeoCoordinate changeCoordinateValue(const QGeoCoordinate& coordinate);
 
 private:
     PlanMasterController* _planController = nullptr;

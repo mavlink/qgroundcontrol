@@ -183,27 +183,28 @@ int MultiSignalSpy::_indexForSignal(const char* signalName) const
     return it.value();
 }
 
-quint64 MultiSignalSpy::mask(const char* signalName) const
+QList<int> MultiSignalSpy::_indicesForSignals(const QList<const char*>& signalNames) const
 {
-    const int index = _indexForSignal(signalName);
-    if (index < 0 || index >= 64) {
-        return 0;
+    QList<int> indices;
+    indices.reserve(signalNames.size());
+    for (const char* name : signalNames) {
+        const int index = _indexForSignal(name);
+        if (index < 0) {
+            return {};
+        }
+        indices.append(index);
     }
-    return 1ULL << index;
+    return indices;
 }
 
-bool MultiSignalSpy::_emittedOnceByMaskWorker(quint64 signalMask, bool multipleAllowed) const
+bool MultiSignalSpy::_emittedWorker(const QList<int>& indices, bool multipleAllowed) const
 {
-    if (!_signalEmitter) {
+    if (!_signalEmitter || indices.isEmpty()) {
         return false;
     }
 
-    for (size_t i = 0; i < _spies.size(); ++i) {
-        if (!((1ULL << i) & signalMask)) {
-            continue;
-        }
-
-        const int signalCount = _spies[i]->count();
+    for (const int index : indices) {
+        const int signalCount = _spies[index]->count();
         if (multipleAllowed) {
             if (signalCount == 0) {
                 return false;
@@ -217,15 +218,15 @@ bool MultiSignalSpy::_emittedOnceByMaskWorker(quint64 signalMask, bool multipleA
     return true;
 }
 
-bool MultiSignalSpy::_onlyEmittedOnceByMaskWorker(quint64 signalMask, bool multipleAllowed) const
+bool MultiSignalSpy::_onlyEmittedWorker(const QList<int>& indices, bool multipleAllowed) const
 {
-    if (!_signalEmitter) {
+    if (!_signalEmitter || indices.isEmpty()) {
         return false;
     }
 
     for (size_t i = 0; i < _spies.size(); ++i) {
         const int signalCount = _spies[i]->count();
-        const bool expected = (1ULL << i) & signalMask;
+        const bool expected = indices.contains(static_cast<int>(i));
 
         if (expected) {
             if (multipleAllowed) {
@@ -246,29 +247,43 @@ bool MultiSignalSpy::_onlyEmittedOnceByMaskWorker(quint64 signalMask, bool multi
     return true;
 }
 
-bool MultiSignalSpy::emittedOnce(const char* signalName) const
+bool MultiSignalSpy::emittedOnce(const QList<const char*>& signalNames) const
 {
-    return emittedOnceByMask(mask(signalName));
+    return _emittedWorker(_indicesForSignals(signalNames), false);
 }
 
-bool MultiSignalSpy::emitted(const char* signalName) const
+bool MultiSignalSpy::emitted(const QList<const char*>& signalNames) const
 {
-    return emittedByMask(mask(signalName));
+    return _emittedWorker(_indicesForSignals(signalNames), true);
 }
 
-bool MultiSignalSpy::onlyEmittedOnce(const char* signalName) const
+bool MultiSignalSpy::onlyEmittedOnce(const QList<const char*>& signalNames) const
 {
-    return onlyEmittedOnceByMask(mask(signalName));
+    return _onlyEmittedWorker(_indicesForSignals(signalNames), false);
 }
 
-bool MultiSignalSpy::onlyEmitted(const char* signalName) const
+bool MultiSignalSpy::onlyEmitted(const QList<const char*>& signalNames) const
 {
-    return onlyEmittedByMask(mask(signalName));
+    return _onlyEmittedWorker(_indicesForSignals(signalNames), true);
 }
 
-bool MultiSignalSpy::notEmitted(const char* signalName) const
+bool MultiSignalSpy::notEmitted(const QList<const char*>& signalNames) const
 {
-    return notEmittedByMask(mask(signalName));
+    if (!_signalEmitter) {
+        return true;
+    }
+
+    const QList<int> indices = _indicesForSignals(signalNames);
+    if (indices.isEmpty()) {
+        return false;
+    }
+
+    for (const int index : indices) {
+        if (_spies[index]->count() != 0) {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool MultiSignalSpy::noneEmitted() const
@@ -285,57 +300,11 @@ bool MultiSignalSpy::noneEmitted() const
     return true;
 }
 
-bool MultiSignalSpy::emittedOnceByMask(quint64 signalMask) const
-{
-    return _emittedOnceByMaskWorker(signalMask, false);
-}
-
-bool MultiSignalSpy::emittedByMask(quint64 signalMask) const
-{
-    return _emittedOnceByMaskWorker(signalMask, true);
-}
-
-bool MultiSignalSpy::onlyEmittedOnceByMask(quint64 signalMask) const
-{
-    return _onlyEmittedOnceByMaskWorker(signalMask, false);
-}
-
-bool MultiSignalSpy::onlyEmittedByMask(quint64 signalMask) const
-{
-    return _onlyEmittedOnceByMaskWorker(signalMask, true);
-}
-
-bool MultiSignalSpy::notEmittedByMask(quint64 signalMask) const
-{
-    if (!_signalEmitter) {
-        return true;
-    }
-
-    for (size_t i = 0; i < _spies.size(); ++i) {
-        if (!((1ULL << i) & signalMask)) {
-            continue;
-        }
-        if (_spies[i]->count() != 0) {
-            return false;
-        }
-    }
-    return true;
-}
-
 void MultiSignalSpy::clearSignal(const char* signalName)
 {
     const int index = _indexForSignal(signalName);
     if (index >= 0) {
         _spies[index]->clear();
-    }
-}
-
-void MultiSignalSpy::clearSignalsByMask(quint64 signalMask)
-{
-    for (size_t i = 0; i < _spies.size(); ++i) {
-        if ((1ULL << i) & signalMask) {
-            _spies[i]->clear();
-        }
     }
 }
 
@@ -346,7 +315,7 @@ void MultiSignalSpy::clearAllSignals()
     }
 }
 
-bool MultiSignalSpy::waitForSignal(const char* signalName, int msec)
+bool MultiSignalSpy::waitForSignal(const char* signalName, std::chrono::milliseconds timeout)
 {
     const int index = _indexForSignal(signalName);
     if (index < 0) {
@@ -359,7 +328,7 @@ bool MultiSignalSpy::waitForSignal(const char* signalName, int msec)
     }
 
     const QString normalizedName = normalizeSignalName(signalName);
-    return UnitTest::waitForSignal(*s, msec, normalizedName);
+    return UnitTest::waitForSignal(*s, timeout, normalizedName);
 }
 
 QSignalSpy* MultiSignalSpy::spy(const char* signalName) const
@@ -415,12 +384,10 @@ int MultiSignalSpy::uniqueSignalsEmitted() const
     return unique;
 }
 
-void MultiSignalSpy::printState(quint64 expectedMask) const
+void MultiSignalSpy::printState() const
 {
     qCDebug(MultiSignalSpyLog) << "Signal state:";
     for (int i = 0; i < static_cast<int>(_spies.size()); ++i) {
-        const bool expected = (1ULL << i) & expectedMask;
-        qCDebug(MultiSignalSpyLog) << " " << _signalNames[i] << "count:" << _spies[i]->count()
-                                   << (expected ? "(expected)" : "");
+        qCDebug(MultiSignalSpyLog) << " " << _signalNames[i] << "count:" << _spies[i]->count();
     }
 }

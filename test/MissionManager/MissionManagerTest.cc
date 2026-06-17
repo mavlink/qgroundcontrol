@@ -81,7 +81,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         //      inProgressChanged(false) signal
         //      error(errorCode, QString) signal
         QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "inProgressChanged", _missionManagerSignalWaitTime);
-        QVERIFY(_multiSpyMissionManager->emittedByMask(_multiSpyMissionManager->mask("inProgressChanged", "error")));
+        QVERIFY(_multiSpyMissionManager->emitted("inProgressChanged", "error"));
         // Validate inProgressChanged signal value
         _checkInProgressValues(false);
         // Validate error signal values
@@ -95,8 +95,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
         //      inProgressChanged(false) signal
         //      sendComplete signal
         QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "sendComplete", _missionManagerSignalWaitTime);
-        QVERIFY(_multiSpyMissionManager->emittedByMask(
-            _multiSpyMissionManager->mask("inProgressChanged", "sendComplete")));
+        QVERIFY(_multiSpyMissionManager->emitted("inProgressChanged", "sendComplete"));
         // Validate inProgressChanged signal value
         _checkInProgressValues(false);
         // Validate item count in mission manager
@@ -129,8 +128,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         //      error(errorCode, QString) signal
         //      newMissionItemsAvailable signal
         QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "inProgressChanged", _missionManagerSignalWaitTime);
-        QVERIFY(_multiSpyMissionManager->emittedByMask(
-            _multiSpyMissionManager->mask("newMissionItemsAvailable", "inProgressChanged", "error")));
+        QVERIFY(_multiSpyMissionManager->emitted("newMissionItemsAvailable", "inProgressChanged", "error"));
         // Validate inProgressChanged signal value
         _checkInProgressValues(false);
         // Validate error signal values
@@ -144,8 +142,7 @@ void MissionManagerTest::_roundTripItems(MockLinkMissionItemHandler::FailureMode
         //      inProgressChanged(false) signal to signal completion
         //      newMissionItemsAvailable signal
         QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "inProgressChanged", _missionManagerSignalWaitTime);
-        QVERIFY(_multiSpyMissionManager->emittedByMask(
-            _multiSpyMissionManager->mask("newMissionItemsAvailable", "inProgressChanged")));
+        QVERIFY(_multiSpyMissionManager->emitted("newMissionItemsAvailable", "inProgressChanged"));
         _checkInProgressValues(false);
     }
     _multiSpyMissionManager->clearAllSignals();

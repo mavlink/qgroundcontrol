@@ -24,8 +24,7 @@ void MissionControllerManagerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareTy
     if (_missionManager->inProgress()) {
         QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "newMissionItemsAvailable", _missionManagerSignalWaitTime);
         QVERIFY_WAIT_SIGNAL((*_multiSpyMissionManager), "inProgressChanged", _missionManagerSignalWaitTime);
-        QVERIFY(_multiSpyMissionManager->emittedByMask(
-            _multiSpyMissionManager->mask("newMissionItemsAvailable", "inProgressChanged")));
+        QVERIFY(_multiSpyMissionManager->emitted("newMissionItemsAvailable", "inProgressChanged"));
     }
     QVERIFY(!_missionManager->inProgress());
     QCOMPARE(_missionManager->missionItems().count(), 0);

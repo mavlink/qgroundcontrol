@@ -9,7 +9,12 @@ class QGCCompressionTest : public UnitTest
 
 private slots:
     // Format detection
+    void _testFormatDetection_data();
     void _testFormatDetection();
+    void _testDetectFormatFromFile_data();
+    void _testDetectFormatFromFile();
+    void _testDetectFormatFromMagicBytes_data();
+    void _testDetectFormatFromMagicBytes();
     void _testFormatDetectionFromContent();
     void _testFormatHelpers();
 

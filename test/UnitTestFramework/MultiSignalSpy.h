@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QHash>
+#include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
@@ -52,64 +53,73 @@ public:
     bool init(QObject* signalEmitter, const QStringList& signalNames);
 
     // ------------------------------------------------------------------------
-    // Mask operations
+    // Check methods
     // ------------------------------------------------------------------------
 
-    quint64 mask(const char* signalName) const;
+    /// Each named signal emitted exactly once
+    bool emittedOnce(const QList<const char*>& signalNames) const;
 
-    template <typename... Args>
-    quint64 mask(const char* first, Args... rest) const
-    {
-        return mask(first) | mask(rest...);
-    }
+    /// Each named signal emitted at least once
+    bool emitted(const QList<const char*>& signalNames) const;
 
-    // ------------------------------------------------------------------------
-    // Check methods (string-based API)
-    // ------------------------------------------------------------------------
+    /// Each named signal emitted exactly once AND no other monitored signal fired
+    bool onlyEmittedOnce(const QList<const char*>& signalNames) const;
 
-    /// Signal emitted exactly once
-    bool emittedOnce(const char* signalName) const;
+    /// Each named signal emitted at least once AND no other monitored signal fired
+    bool onlyEmitted(const QList<const char*>& signalNames) const;
 
-    /// Signal emitted at least once
-    bool emitted(const char* signalName) const;
-
-    /// Signal emitted exactly once AND no other signals fired
-    bool onlyEmittedOnce(const char* signalName) const;
-
-    /// Signal emitted at least once AND no other signals fired
-    bool onlyEmitted(const char* signalName) const;
-
-    /// Signal was not emitted
-    bool notEmitted(const char* signalName) const;
+    /// None of the named signals were emitted
+    bool notEmitted(const QList<const char*>& signalNames) const;
 
     /// No signals emitted
     bool noneEmitted() const;
 
-    // Mask-based versions
-    bool emittedOnceByMask(quint64 signalMask) const;
-    bool emittedByMask(quint64 signalMask) const;
-    bool onlyEmittedOnceByMask(quint64 signalMask) const;
-    bool onlyEmittedByMask(quint64 signalMask) const;
-    bool notEmittedByMask(quint64 signalMask) const;
+    template <typename... Args>
+    bool emittedOnce(const char* first, Args... rest) const
+    {
+        return emittedOnce(QList<const char*>{first, rest...});
+    }
+
+    template <typename... Args>
+    bool emitted(const char* first, Args... rest) const
+    {
+        return emitted(QList<const char*>{first, rest...});
+    }
+
+    template <typename... Args>
+    bool onlyEmittedOnce(const char* first, Args... rest) const
+    {
+        return onlyEmittedOnce(QList<const char*>{first, rest...});
+    }
+
+    template <typename... Args>
+    bool onlyEmitted(const char* first, Args... rest) const
+    {
+        return onlyEmitted(QList<const char*>{first, rest...});
+    }
+
+    template <typename... Args>
+    bool notEmitted(const char* first, Args... rest) const
+    {
+        return notEmitted(QList<const char*>{first, rest...});
+    }
 
     // ------------------------------------------------------------------------
     // Clear methods
     // ------------------------------------------------------------------------
 
     void clearSignal(const char* signalName);
-    void clearSignalsByMask(quint64 signalMask);
     void clearAllSignals();
 
     // ------------------------------------------------------------------------
     // Wait methods
     // ------------------------------------------------------------------------
 
-    bool waitForSignal(const char* signalName, int msec = TestTimeout::mediumMs());
+    bool waitForSignal(const char* signalName, std::chrono::milliseconds timeout);
 
-    /// std::chrono overload — prefer in new code
-    bool waitForSignal(const char* signalName, std::chrono::milliseconds timeout)
+    bool waitForSignal(const char* signalName, int msec = TestTimeout::mediumMs())
     {
-        return waitForSignal(signalName, static_cast<int>(timeout.count()));
+        return waitForSignal(signalName, std::chrono::milliseconds(msec));
     }
 
     // ------------------------------------------------------------------------
@@ -152,7 +162,7 @@ public:
     QString summary() const;
     int totalEmissions() const;
     int uniqueSignalsEmitted() const;
-    void printState(quint64 expectedMask = 0) const;
+    void printState() const;
 
     // ------------------------------------------------------------------------
     // Fluent API
@@ -162,18 +172,18 @@ public:
     {
     public:
         Expectation(MultiSignalSpy& spy, const char* signalName)
-            : _spy(spy), _signalName(signalName), _mask(spy.mask(signalName))
+            : _spy(spy), _signalName(signalName)
         {
         }
 
         bool once() const
         {
-            return _spy.emittedOnceByMask(_mask);
+            return _spy.emittedOnce(_signalName);
         }
 
         bool atLeastOnce() const
         {
-            return _spy.emittedByMask(_mask);
+            return _spy.emitted(_signalName);
         }
 
         bool times(int n) const
@@ -183,22 +193,22 @@ public:
 
         bool never() const
         {
-            return _spy.notEmittedByMask(_mask);
+            return _spy.notEmitted(_signalName);
         }
 
         bool onlyOnce() const
         {
-            return _spy.onlyEmittedOnceByMask(_mask);
+            return _spy.onlyEmittedOnce(_signalName);
+        }
+
+        bool wait(std::chrono::milliseconds timeout) const
+        {
+            return _spy.waitForSignal(_signalName, timeout);
         }
 
         bool wait(int msec = TestTimeout::mediumMs()) const
         {
             return _spy.waitForSignal(_signalName, msec);
-        }
-
-        bool wait(std::chrono::milliseconds timeout) const
-        {
-            return _spy.waitForSignal(_signalName, static_cast<int>(timeout.count()));
         }
 
         void clear()
@@ -209,7 +219,6 @@ public:
     private:
         MultiSignalSpy& _spy;
         const char* _signalName;
-        quint64 _mask;
     };
 
     Expectation expect(const char* signalName)
@@ -222,8 +231,9 @@ private slots:
 
 private:
     int _indexForSignal(const char* signalName) const;
-    bool _emittedOnceByMaskWorker(quint64 signalMask, bool multipleAllowed) const;
-    bool _onlyEmittedOnceByMaskWorker(quint64 signalMask, bool multipleAllowed) const;
+    QList<int> _indicesForSignals(const QList<const char*>& signalNames) const;
+    bool _emittedWorker(const QList<int>& indices, bool multipleAllowed) const;
+    bool _onlyEmittedWorker(const QList<int>& indices, bool multipleAllowed) const;
     void _cleanup();
 
     QObject* _signalEmitter = nullptr;

@@ -57,19 +57,17 @@ void PlanMasterControllerTest::_testActiveVehicleChanged()
     // Since MissionManager works with actual vehicles (which we don't have in the test cycle)
     // we have to be a bit creative emulating a signal emitted by a MissionManager.
     emit outgoingManagerVehicle->missionManager()->error(0, "");
-    auto missionManagerErrorSignalMask = spyMissionManager.mask("error");
-    QVERIFY(spyMissionManager.onlyEmittedOnceByMask(missionManagerErrorSignalMask));
+    QVERIFY(spyMissionManager.onlyEmittedOnce("error"));
     spyMissionManager.clearSignal("error");
     QVERIFY(spyMissionManager.noneEmitted());
 
     _connectMockLink(MAV_AUTOPILOT_PX4);
-    auto masterControllerMgrVehicleChanged = spyMasterController.mask("managerVehicleChanged");
-    QVERIFY(spyMasterController.emittedOnceByMask(masterControllerMgrVehicleChanged));
+    QVERIFY(spyMasterController.emittedOnce("managerVehicleChanged"));
 
     emit outgoingManagerVehicle->missionManager()->error(0, "");
     // This signal was affected by the defect - it wouldn't reach the subscriber. Here
     // we make sure it does.
-    QVERIFY(spyMissionManager.onlyEmittedOnceByMask(missionManagerErrorSignalMask));
+    QVERIFY(spyMissionManager.onlyEmittedOnce("error"));
 }
 
 void PlanMasterControllerTest::_testDirtyFlagsMatrix_data()
@@ -342,9 +340,9 @@ void PlanMasterControllerTest::_testSaveWithCurrentName()
     _masterController->loadFromFile(":/unittest/MissionPlanner.waypoints");
 
     // First save to a real (writable) directory so _currentPlanFile points somewhere valid
-    QTemporaryDir* const tmpDir = createTempDir();
-    QVERIFY(tmpDir && tmpDir->isValid());
-    const QString initialPath = QStringLiteral("%1/MissionPlanner.%2").arg(tmpDir->path(), _masterController->fileExtension());
+    QTemporaryDir tmpDir;
+    QVERIFY(tmpDir.isValid());
+    const QString initialPath = QStringLiteral("%1/MissionPlanner.%2").arg(tmpDir.path(), _masterController->fileExtension());
     QVERIFY(_masterController->saveToFile(initialPath));
 
     // Rename
@@ -385,9 +383,9 @@ void PlanMasterControllerTest::_testResolvedPlanFileExists()
     QVERIFY(!_masterController->resolvedPlanFileExists());
 
     // Save a file so it exists on disk
-    QTemporaryDir* const tmpDir = createTempDir();
-    QVERIFY(tmpDir && tmpDir->isValid());
-    const QString savePath = QStringLiteral("%1/ExistingPlan.%2").arg(tmpDir->path(), _masterController->fileExtension());
+    QTemporaryDir tmpDir;
+    QVERIFY(tmpDir.isValid());
+    const QString savePath = QStringLiteral("%1/ExistingPlan.%2").arg(tmpDir.path(), _masterController->fileExtension());
     QVERIFY(_masterController->saveToFile(savePath));
 
     // Now rename to the same base name — file exists at resolved path

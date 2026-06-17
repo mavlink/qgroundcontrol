@@ -76,7 +76,7 @@ void TransectStyleComplexItemTest::_testRebuildTransects()
     _transectStyleItem->adjustSurveAreaPolygon();
     QVERIFY_TRUE_WAIT(_transectStyleItem->rebuildTransectsPhase1Called, TestTimeout::mediumMs());
     QVERIFY_TRUE_WAIT(_transectStyleItem->recalcCameraShotsCalled, TestTimeout::mediumMs());
-    QVERIFY_TRUE_WAIT(_multiSpy->emittedByMask(_multiSpy->mask("coveredAreaChanged", "lastSequenceNumberChanged")),
+    QVERIFY_TRUE_WAIT(_multiSpy->emitted("coveredAreaChanged", "lastSequenceNumberChanged"),
                       TestTimeout::mediumMs());
     _transectStyleItem->rebuildTransectsPhase1Called = false;
     _transectStyleItem->recalcCameraShotsCalled = false;
@@ -126,7 +126,7 @@ void TransectStyleComplexItemTest::_testRebuildTransects()
 void TransectStyleComplexItemTest::_testDistanceSignalling()
 {
     _transectStyleItem->adjustSurveAreaPolygon();
-    QVERIFY_TRUE_WAIT(_multiSpy->emittedByMask(_multiSpy->mask("complexDistanceChanged", "greatestDistanceToChanged")),
+    QVERIFY_TRUE_WAIT(_multiSpy->emitted("complexDistanceChanged", "greatestDistanceToChanged"),
                       TestTimeout::mediumMs());
     _transectStyleItem->setDirty(false);
     _multiSpy->clearAllSignals();
@@ -136,7 +136,7 @@ void TransectStyleComplexItemTest::_testDistanceSignalling()
     for (Fact* fact : rgFacts) {
         qCDebug(UnitTestLog) << fact->name();
         changeFactValue(fact);
-        QVERIFY(_multiSpy->emittedByMask(_multiSpy->mask("complexDistanceChanged", "greatestDistanceToChanged")));
+        QVERIFY(_multiSpy->emitted("complexDistanceChanged", "greatestDistanceToChanged"));
         _transectStyleItem->setDirty(false);
         _multiSpy->clearAllSignals();
     }

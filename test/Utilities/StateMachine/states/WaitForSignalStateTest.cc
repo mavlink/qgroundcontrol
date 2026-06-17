@@ -65,8 +65,8 @@ void WaitForSignalStateTest::_testWaitForSignalStateTimeout()
     QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(timeoutReached);
     // Verify timeout path taken, not success path
-    QVERIFY(stateSpy.emittedByMask(stateSpy.mask("timeout")));
-    QVERIFY(stateSpy.notEmittedByMask(stateSpy.mask("advance")));
+    QVERIFY(stateSpy.emitted("timeout"));
+    QVERIFY(stateSpy.notEmitted("advance"));
 }
 
 void WaitForSignalStateTest::_testCompletedSignal()

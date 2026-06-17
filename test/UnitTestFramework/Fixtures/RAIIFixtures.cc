@@ -3,17 +3,13 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtNetwork/QNetworkRequest>
-#include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
 #include "Fact.h"
-#include "LinkManager.h"
-#include "MockLink.h"
-#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 #include "RunGuard.h"
 #include "SettingsManager.h"
-#include "Vehicle.h"
 
 #include <cstring>
 #include <memory>
@@ -21,91 +17,6 @@
 QGC_LOGGING_CATEGORY(RAIIFixturesLog, "Test.RAIIFixtures")
 
 namespace TestFixtures {
-
-// ============================================================================
-// VehicleFixture Implementation
-// ============================================================================
-
-VehicleFixture::VehicleFixture(VehicleTest* test, MAV_AUTOPILOT autopilot, bool waitForInitialConnect) : _test(test)
-{
-    if (!_test) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: null VehicleTest";
-        return;
-    }
-
-    QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-
-    // Create MockLink configuration
-    MockConfiguration* mockConfig = new MockConfiguration(QStringLiteral("VehicleFixture"));
-    mockConfig->setDynamic(true);
-    mockConfig->setFirmwareType(autopilot);
-
-    SharedLinkConfigurationPtr sharedConfig(mockConfig);
-
-    if (!LinkManager::instance()->createConnectedLink(sharedConfig)) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: failed to create MockLink";
-        return;
-    }
-
-    _mockLink = qobject_cast<MockLink*>(mockConfig->link());
-    if (!_mockLink) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: link is not MockLink";
-        return;
-    }
-
-    // Wait for vehicle to connect
-    if (!UnitTest::waitForSignal(spyVehicle, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged"))) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: timeout waiting for vehicle";
-        return;
-    }
-
-    _vehicle = MultiVehicleManager::instance()->activeVehicle();
-    if (!_vehicle) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: no active vehicle after connection";
-        return;
-    }
-
-    // Wait for initial connect sequence if requested
-    if (waitForInitialConnect && autopilot != MAV_AUTOPILOT_INVALID) {
-        QSignalSpy spyConnect(_vehicle, &Vehicle::initialConnectComplete);
-        if (!_vehicle->isInitialConnectComplete()) {
-            if (!UnitTest::waitForSignal(spyConnect, TestTimeout::longMs(), QStringLiteral("initialConnectComplete"))) {
-                qCWarning(RAIIFixturesLog) << "VehicleFixture: timeout waiting for initialConnectComplete";
-            }
-        }
-    }
-}
-
-VehicleFixture::~VehicleFixture()
-{
-    if (_mockLink) {
-        QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-
-        _mockLink->disconnect();
-
-        // Wait for vehicle to disconnect
-        if (!UnitTest::waitForSignal(spyVehicle, TestTimeout::longMs(), QStringLiteral("activeVehicleChanged"))) {
-            qCWarning(RAIIFixturesLog) << "~VehicleFixture: timeout waiting for vehicle disconnect";
-        }
-
-        // Process pending events for cleanup.
-        UnitTest::settleEventLoopForCleanup(5, 10);
-    }
-}
-
-void VehicleFixture::setCommLost(bool lost)
-{
-    if (_mockLink) {
-        _mockLink->setCommLost(lost);
-    }
-}
-
-void VehicleFixture::simulateConnectionRemoved()
-{
-    if (_mockLink) {
-        _mockLink->simulateConnectionRemoved();
-    }
-}
 
 // ============================================================================
 // SettingsFixture Implementation

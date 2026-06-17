@@ -35,15 +35,13 @@ void InitialConnectPeripheralStartupTest::_noCameraOrGimbalRequestsBeforeInitial
     // Test pre-complete behavior only while initial connect is still in progress.
     QVERIFY2(!_vehicle->isInitialConnectComplete(), "Initial connect completed too quickly for pre-complete assertions");
 
-    const QDeadlineTimer preCompleteDeadline(TestTimeout::longMs());
-    while (!_vehicle->isInitialConnectComplete() && (initialConnectCompleteSpy.count() == 0)) {
-        QCOMPARE(_mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION), 0);
-        QCOMPARE(_mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_CAMERA_INFORMATION), 0);
-        QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_CAMERA_INFORMATION), 0);
-
-        QVERIFY2(!preCompleteDeadline.hasExpired(), "Timed out waiting for initialConnectComplete");
-        QTest::qWait(20);
-    }
+    // Received-message counts are monotonic, so verifying they are still zero at the instant
+    // initial connect completes proves no peripheral request was sent before completion.
+    QVERIFY_TRUE_WAIT(_vehicle->isInitialConnectComplete() || (initialConnectCompleteSpy.count() > 0),
+                      TestTimeout::longMs());
+    QCOMPARE(_mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_GIMBAL_MANAGER_INFORMATION), 0);
+    QCOMPARE(_mockLink->receivedRequestMessageCount(MAVLINK_MSG_ID_CAMERA_INFORMATION), 0);
+    QCOMPARE(_mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_CAMERA_INFORMATION), 0);
 
     // After initial connect completes, both managers should begin startup requests.
     QVERIFY_TRUE_WAIT(

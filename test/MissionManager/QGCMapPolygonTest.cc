@@ -87,15 +87,13 @@ void QGCMapPolygonTest::_testVertexManipulation()
         _mapPolygon->appendVertex(_polyPoints[i]);
         QCoreApplication::processEvents();
         if (i >= 2) {
-            QVERIFY2(_multiSpyPolygon->onlyEmittedOnceByMask(
-                         _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged", "centerChanged")),
+            QVERIFY2(_multiSpyPolygon->onlyEmittedOnce("pathChanged", "dirtyChanged", "countChanged", "centerChanged"),
                      qPrintable(_multiSpyPolygon->summary()));
         } else {
-            QVERIFY2(_multiSpyPolygon->onlyEmittedOnceByMask(
-                         _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged")),
+            QVERIFY2(_multiSpyPolygon->onlyEmittedOnce("pathChanged", "dirtyChanged", "countChanged"),
                      qPrintable(_multiSpyPolygon->summary()));
         }
-        QVERIFY(_multiSpyModel->onlyEmittedOnceByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
+        QVERIFY(_multiSpyModel->onlyEmittedOnce("dirtyChanged", "countChanged"));
         QCOMPARE(_multiSpyPolygon->argument<int>("countChanged"), i + 1);
         QCOMPARE(_multiSpyModel->argument<int>("countChanged"), i + 1);
         QVERIFY(_mapPolygon->dirty());
@@ -117,8 +115,7 @@ void QGCMapPolygonTest::_testVertexManipulation()
     QGeoCoordinate adjustCoord(_polyPoints[1].latitude() + 1, _polyPoints[1].longitude() + 1);
     _mapPolygon->adjustVertex(1, adjustCoord);
     QCoreApplication::processEvents();
-    QVERIFY(_multiSpyPolygon->onlyEmittedOnceByMask(
-        _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "centerChanged")));
+    QVERIFY(_multiSpyPolygon->onlyEmittedOnce("pathChanged", "dirtyChanged", "centerChanged"));
     QVERIFY(_multiSpyModel->onlyEmittedOnce("dirtyChanged"));
     QCOMPARE(coordSpy.count(), 1);
     QCOMPARE(coordDirtySpy.count(), 1);
@@ -135,9 +132,8 @@ void QGCMapPolygonTest::_testVertexManipulation()
     _multiSpyModel->clearAllSignals();
     // Vertex removal testing
     _mapPolygon->removeVertex(1);
-    QVERIFY(_multiSpyPolygon->onlyEmittedByMask(
-        _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged", "centerChanged")));
-    QVERIFY(_multiSpyModel->onlyEmittedOnceByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
+    QVERIFY(_multiSpyPolygon->onlyEmitted("pathChanged", "dirtyChanged", "countChanged", "centerChanged"));
+    QVERIFY(_multiSpyModel->onlyEmittedOnce("dirtyChanged", "countChanged"));
     QCOMPARE(_mapPolygon->count(), 3);
     polyList = _mapPolygon->path();
     QCOMPARE(polyList.count(), 3);
@@ -150,9 +146,8 @@ void QGCMapPolygonTest::_testVertexManipulation()
     QCOMPARE(_pathModel->value<QGCQGeoCoordinate*>(2)->coordinate(), _polyPoints[3]);
     // Clear testing
     _mapPolygon->clear();
-    QVERIFY(_multiSpyPolygon->onlyEmittedByMask(
-        _multiSpyPolygon->mask("pathChanged", "dirtyChanged", "countChanged", "centerChanged", "cleared")));
-    QVERIFY(_multiSpyModel->onlyEmittedByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
+    QVERIFY(_multiSpyPolygon->onlyEmitted("pathChanged", "dirtyChanged", "countChanged", "centerChanged", "cleared"));
+    QVERIFY(_multiSpyModel->onlyEmitted("dirtyChanged", "countChanged"));
     QVERIFY(_mapPolygon->dirty());
     QVERIFY(_pathModel->dirty());
     QCOMPARE(_mapPolygon->count(), 0);
