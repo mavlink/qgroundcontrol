@@ -39,7 +39,7 @@ jobs:
     name: Release ${{ matrix.arch }}
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 120
 
     # security-events: write is scoped here (CodeQL runs only in this job),
@@ -55,23 +55,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04-arm, ubuntu-22.04]
         include:
-          - os: ubuntu-24.04-arm
+          - arch: linux_gcc_arm64
+            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=c8g.2xlarge/image=ubuntu24-full-arm64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04-arm' }}
             package: QGroundControl-aarch64
             host: linux_arm64
-            arch: linux_gcc_arm64
 
-          - os: ubuntu-22.04
+          - arch: linux_gcc_64
+            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04' }}
             package: QGroundControl-x86_64
             host: linux
-            arch: linux_gcc_64
 
     defaults:
       run:
         shell: bash
 
     steps:
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
       # harden-runner is x86_64 Linux only — skip on the ubuntu-24.04-arm matrix entry.
       # macOS/Windows runners no-op silently, so other workflows don't need the guard.
       - name: Harden Runner
@@ -138,14 +144,14 @@ jobs:
           binary-path: ${{ runner.temp }}/build/Release/QGroundControl
 
       - name: Analyze binary size
-        if: matrix.os == 'ubuntu-22.04'
+        if: matrix.arch == 'linux_gcc_64'
         uses: ./.github/actions/size-analysis
         with:
           binary-path: ${{ runner.temp }}/build/Release/QGroundControl
           output-file: ${{ runner.temp }}/build/metrics.json
 
       - name: Upload metrics artifact
-        if: matrix.os == 'ubuntu-22.04'
+        if: matrix.arch == 'linux_gcc_64'
         uses: actions/upload-artifact@v7
         with:
           name: size-metrics
@@ -203,7 +209,7 @@ jobs:
     name: ${{ matrix.job_name }}
     needs: [changes, debug-matrix]
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ubuntu-22.04
+    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=m8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04' }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
 
     strategy:
@@ -216,6 +222,13 @@ jobs:
         shell: bash
 
     steps:
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
@@ -257,8 +270,9 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: Debug
 
-      - name: Run Unit Tests
-        id: tests
+      # Split by label so Unit parallelizes; Integration serializes on shared MockLink/LinkManager state.
+      - name: Run Unit Tests (parallel)
+        id: unit_tests
         uses: ./.github/actions/run-unit-tests
         env:
           ASAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
@@ -266,42 +280,78 @@ jobs:
           UBSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
         with:
           build-dir: ${{ runner.temp }}/build
-          junit-output: junit-results-linux-${{ matrix.mode }}.xml
-          ctest-output: test-output-linux-${{ matrix.mode }}.txt
-          include-labels: 'Unit|Integration'
+          junit-output: junit-results-linux-${{ matrix.mode }}-unit.xml
+          ctest-output: test-output-linux-${{ matrix.mode }}-unit.txt
+          include-labels: 'Unit'
           exclude-labels: ${{ matrix.exclude_labels }}
           # Coverage requires serial execution (gcov writes race); sanitizers don't.
           parallel: ${{ matrix.mode == 'coverage' && '1' || 'auto' }}
 
-      - name: Analyze Unit Test Durations
-        if: always() && !cancelled() && steps.tests.conclusion != 'skipped'
+      - name: Run Integration Tests (serial)
+        id: integration_tests
+        if: always() && !cancelled() && steps.unit_tests.conclusion != 'cancelled'
+        uses: ./.github/actions/run-unit-tests
+        env:
+          ASAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
+          LSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
+          UBSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-linux-${{ matrix.mode }}-integration.xml
+          ctest-output: test-output-linux-${{ matrix.mode }}-integration.txt
+          include-labels: 'Integration'
+          exclude-labels: ${{ matrix.exclude_labels }}
+          parallel: '1'
+
+      - name: Analyze Unit Test Durations (unit)
+        if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
         uses: ./.github/actions/test-duration-report
         with:
-          junit-path: ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}.xml
-          report-json-path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}.json
+          junit-path: ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}-unit.xml
+          report-json-path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}-unit.json
           top-n: '20'
           slow-threshold-seconds: '60'
 
-      - name: Report Test Results
-        if: always() && !cancelled() && steps.tests.conclusion != 'skipped'
+      - name: Analyze Unit Test Durations (integration)
+        if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
+        uses: ./.github/actions/test-duration-report
+        with:
+          junit-path: ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}-integration.xml
+          report-json-path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}-integration.json
+          top-n: '20'
+          slow-threshold-seconds: '60'
+
+      - name: Report Test Results (unit)
+        if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
         uses: ./.github/actions/test-report
         with:
           name: Unit Tests (${{ matrix.mode }})
           build-dir: ${{ runner.temp }}/build
-          junit-file: junit-results-linux-${{ matrix.mode }}.xml
-          output-file: test-output-linux-${{ matrix.mode }}.txt
-          artifact-name: test-results-linux-${{ matrix.mode }}
+          junit-file: junit-results-linux-${{ matrix.mode }}-unit.xml
+          output-file: test-output-linux-${{ matrix.mode }}-unit.txt
+          artifact-name: test-results-linux-${{ matrix.mode }}-unit
+          retention-days: 7
+
+      - name: Report Test Results (integration)
+        if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
+        uses: ./.github/actions/test-report
+        with:
+          name: Integration Tests (${{ matrix.mode }})
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-results-linux-${{ matrix.mode }}-integration.xml
+          output-file: test-output-linux-${{ matrix.mode }}-integration.txt
+          artifact-name: test-results-linux-${{ matrix.mode }}-integration
           retention-days: 7
 
       - name: Upload Test Artifacts
-        if: always() && !cancelled() && steps.tests.conclusion != 'skipped'
+        if: always() && !cancelled() && (steps.unit_tests.conclusion != 'skipped' || steps.integration_tests.conclusion != 'skipped')
         uses: actions/upload-artifact@v7
         with:
           name: test-artifacts-linux-${{ matrix.mode }}
           path: |
-            ${{ runner.temp }}/build/test-output-linux-${{ matrix.mode }}.txt
-            ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}.xml
-            ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}.json
+            ${{ runner.temp }}/build/test-output-linux-${{ matrix.mode }}-*.txt
+            ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}-*.xml
+            ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}-*.json
           retention-days: 7
 
       - name: Verify coverage data files exist

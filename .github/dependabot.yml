@@ -25,9 +25,8 @@ updates:
       include: "scope"
     open-pull-requests-limit: 5
     groups:
-      npm-minor-patch:
+      npm-all:
         patterns: ["*"]
-        update-types: ["minor", "patch"]
 
   - package-ecosystem: "npm"
     directory: "/tools/lsp/vscode-extension"
@@ -38,9 +37,8 @@ updates:
       include: "scope"
     open-pull-requests-limit: 3
     groups:
-      vscode-ext-minor-patch:
+      vscode-ext-all:
         patterns: ["*"]
-        update-types: ["minor", "patch"]
 
   - package-ecosystem: "uv"
     directory: "/tools"
@@ -51,9 +49,8 @@ updates:
       include: "scope"
     open-pull-requests-limit: 5
     groups:
-      python-minor-patch:
+      python-all:
         patterns: ["*"]
-        update-types: ["minor", "patch"]
 
   - package-ecosystem: "pre-commit"
     directory: "/"

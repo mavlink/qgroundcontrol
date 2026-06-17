@@ -62,6 +62,10 @@ void QmlUITestBase::startUI()
                      QRegularExpression(QStringLiteral("Populating font family aliases")));
     ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("QRhiGles2")));
+    // Async QML incubation rides QQuickWindow's render-loop controller, which never pumps in
+    // offscreen mode, so a component still incubating at engine teardown logs this.
+    ignoreLogMessage("default", QtInfoMsg,
+                     QRegularExpression(QStringLiteral("Object or context destroyed during incubation")));
 
     // The synthetic terrain provider installed above only covers coordinate
     // queries routed through TerrainAtCoordinateBatchManager. Path/carpet queries
