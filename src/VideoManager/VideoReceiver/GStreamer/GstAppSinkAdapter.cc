@@ -63,18 +63,18 @@ QVideoFrameFormat::ColorSpace toQtColorSpace(GstVideoColorMatrix matrix)
 QVideoFrameFormat::ColorTransfer toQtColorTransfer(GstVideoTransferFunction transfer)
 {
     // Mapping mirrors qt6/qtmultimedia/.../qgst.cpp QGstCaps::formatAndVideoInfo() — keep
-    // in sync if Qt changes its mapping (last cross-check: Qt 6.10.3).
+    // in sync if Qt changes its mapping (last cross-check: Qt 6.11.1).
     switch (transfer) {
     case GST_VIDEO_TRANSFER_BT601:        return QVideoFrameFormat::ColorTransfer_BT601;
     case GST_VIDEO_TRANSFER_BT2020_10:
     case GST_VIDEO_TRANSFER_BT2020_12:
-    case GST_VIDEO_TRANSFER_BT709:        return QVideoFrameFormat::ColorTransfer_BT709;
-    case GST_VIDEO_TRANSFER_GAMMA20:      return QVideoFrameFormat::ColorTransfer_BT709; // best fit per Qt
-    case GST_VIDEO_TRANSFER_SMPTE240M:    return QVideoFrameFormat::ColorTransfer_BT709; // near-identical to BT.709 per Qt qgst.cpp:424
+    case GST_VIDEO_TRANSFER_BT709:
+    case GST_VIDEO_TRANSFER_GAMMA18:      // Qt: GAMMA18/GAMMA20 fall through to BT709 ("not quite, but best fit")
+    case GST_VIDEO_TRANSFER_GAMMA20:      return QVideoFrameFormat::ColorTransfer_BT709;
     case GST_VIDEO_TRANSFER_GAMMA22:
+    case GST_VIDEO_TRANSFER_SMPTE240M:    // Qt: grouped with GAMMA22/SRGB/ADOBERGB
     case GST_VIDEO_TRANSFER_SRGB:
     case GST_VIDEO_TRANSFER_ADOBERGB:     return QVideoFrameFormat::ColorTransfer_Gamma22;
-    case GST_VIDEO_TRANSFER_GAMMA18:      return QVideoFrameFormat::ColorTransfer_Gamma22; // closest Qt equivalent
     case GST_VIDEO_TRANSFER_GAMMA28:      return QVideoFrameFormat::ColorTransfer_Gamma28;
     case GST_VIDEO_TRANSFER_GAMMA10:      return QVideoFrameFormat::ColorTransfer_Linear;
     case GST_VIDEO_TRANSFER_SMPTE2084:    return QVideoFrameFormat::ColorTransfer_ST2084;

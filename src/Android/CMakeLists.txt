@@ -85,14 +85,14 @@ target_compile_definitions(qtandroidextensions_lockers PRIVATE QTANDROIDEXTENSIO
 target_link_libraries(qtandroidextensions_lockers PUBLIC Qt6::Core PRIVATE Qt6::CorePrivate)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qtandroidextensions_lockers)
 
-# Deploy Java sources to build tree (picked up by build.gradle via cpmJavaSrcDir)
+# Deploy Java sources to QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR (added to build.gradle's source set)
 file(GLOB _qjnihelpers_java "${_qjni_dir}/ru.dublgis.qjnihelpers/*.java")
 file(GLOB _qtandroidhelpers_java "${_qtah_dir}/ru.dublgis.androidhelpers/*.java")
 file(COPY ${_qjnihelpers_java}
-    DESTINATION "${CMAKE_BINARY_DIR}/extra_java_sources/ru/dublgis/qjnihelpers"
+    DESTINATION "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}/ru/dublgis/qjnihelpers"
 )
 file(COPY ${_qtandroidhelpers_java}
-    DESTINATION "${CMAKE_BINARY_DIR}/extra_java_sources/ru/dublgis/androidhelpers"
+    DESTINATION "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}/ru/dublgis/androidhelpers"
 )
 
 # ----------------------------------------------------------------------------
@@ -117,7 +117,7 @@ target_sources(${CMAKE_PROJECT_NAME}
 )
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${_qtat_dir})
 
-# Deploy Java sources to build tree (picked up by build.gradle via cpmJavaSrcDir)
+# Deploy Java sources to QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR (added to build.gradle's source set)
 file(COPY "${_qtat_dir}/src/com/falsinsoft/qtandroidtools/AndroidScreen.java"
-    DESTINATION "${CMAKE_BINARY_DIR}/extra_java_sources/com/falsinsoft/qtandroidtools"
+    DESTINATION "${QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR}/com/falsinsoft/qtandroidtools"
 )

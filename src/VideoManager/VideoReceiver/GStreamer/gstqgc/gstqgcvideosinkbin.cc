@@ -305,7 +305,7 @@ gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin *self)
 
     if (self->gpu_zerocopy) {
         // List only features the build can consume zero-copy; stale features waste a caps-intersection pass on every link.
-        // Y444 omitted: Qt 6.10 has no Format_YUV444* and toQtPixelFormat returns Invalid
+        // Y444 omitted: Qt 6.11 has no Format_YUV444* and toQtPixelFormat returns Invalid
         // → onNewSample errors out. Re-add when Qt grows the enum.
         static constexpr const char kFormats[] =
             "{ NV12, NV21, I420, YV12, Y42B, P010_10LE, AYUV, YUY2, UYVY, "

@@ -1418,7 +1418,7 @@ void GStreamerTest::_testColorimetryPixelFormatMapping()
     QCOMPARE(toQtPixelFormat(GST_VIDEO_FORMAT_RGBA),      QVideoFrameFormat::Format_RGBA8888);
     QCOMPARE(toQtPixelFormat(GST_VIDEO_FORMAT_I420_10LE), QVideoFrameFormat::Format_YUV420P10);
     QCOMPARE(toQtPixelFormat(GST_VIDEO_FORMAT_P016_LE),   QVideoFrameFormat::Format_P016);
-    // Y444 is intentionally NOT in caps — Qt 6.10 has no Format_YUV444*, so any negotiation
+    // Y444 is intentionally NOT in caps — Qt 6.11 has no Format_YUV444*, so any negotiation
     // would dead-end at GST_FLOW_ERROR. Re-enable when Qt grows the enum.
     QCOMPARE(toQtPixelFormat(GST_VIDEO_FORMAT_Y444),      QVideoFrameFormat::Format_Invalid);
 }
@@ -1440,8 +1440,9 @@ void GStreamerTest::_testColorimetryTransferMapping()
     QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_ARIB_STD_B67), QVideoFrameFormat::ColorTransfer_STD_B67);
     QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_GAMMA10),    QVideoFrameFormat::ColorTransfer_Linear);
     QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_GAMMA28),    QVideoFrameFormat::ColorTransfer_Gamma28);
-    QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_SMPTE240M),  QVideoFrameFormat::ColorTransfer_BT709);
+    QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_SMPTE240M),  QVideoFrameFormat::ColorTransfer_Gamma22);
     QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_ADOBERGB),   QVideoFrameFormat::ColorTransfer_Gamma22);
+    QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_GAMMA18),    QVideoFrameFormat::ColorTransfer_BT709);
     QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_LOG100),     QVideoFrameFormat::ColorTransfer_Unknown);
 }
 
