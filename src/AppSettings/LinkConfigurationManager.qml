@@ -78,7 +78,7 @@ SettingsGroupLayout {
                 text:       object.link ? qsTr("Disconnect") : qsTr("Connect")
                 onClicked: {
                     if (object.link) {
-                        object.link.disconnect()
+                        _linkManager.disconnectLink(object.link)
                     } else {
                         _linkManager.createConnectedLink(object)
                     }
