@@ -36,7 +36,6 @@ void QGCCommandLineParserTest::_testDefaultResult()
     QCOMPARE(result.fakeMobile,           false);
     QCOMPARE(result.allowMultiple,        false);
 
-    QCOMPARE(result.useDesktopGL,         false);
     QCOMPARE(result.useSwRast,            false);
     QCOMPARE(result.quietWindowsAsserts,  false);
 }

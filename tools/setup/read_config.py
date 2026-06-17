@@ -24,6 +24,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 _tools_dir = Path(__file__).resolve().parents[1]
 if str(_tools_dir) not in sys.path:
@@ -108,13 +109,18 @@ def main() -> int:
         return 1
 
     if args.get:
-        key = args.get.lower()
-        # Legacy alias: --get gstreamer_version resolves to gstreamer_default_version.
-        if key == "gstreamer_version" and "gstreamer_default_version" in config:
-            print(config["gstreamer_default_version"])
-            return 0
-        if key in config:
-            print(config[key])
+        key = args.get.lower()  # Normalize to lowercase
+        if key == "gstreamer_version":
+            key = "gstreamer.version.default"
+        value: Any = config
+        for part in key.split("."):
+            if isinstance(value, dict) and part in value:
+                value = value[part]
+            else:
+                value = None
+                break
+        if value is not None:
+            print(value if isinstance(value, (str, int, float, bool)) else json.dumps(value))
             return 0
         print(f"Error: Key '{key}' not found in config", file=sys.stderr)
         print(f"Available keys: {', '.join(sorted(config.keys()))}", file=sys.stderr)

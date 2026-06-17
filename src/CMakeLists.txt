@@ -105,6 +105,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         Qt6::Core
         Qt6::CorePrivate
         Qt6::Gui
+        Qt6::GuiPrivate
         Qt6::HttpServer
         Qt6::Network
         Qt6::StateMachine

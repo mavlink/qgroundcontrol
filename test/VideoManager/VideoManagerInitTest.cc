@@ -21,7 +21,7 @@ void VideoManagerInitTest::init()
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtCriticalMsg, sGStreamerCriticalRe);
 }
 
-void VideoManagerInitTest::_testQmlReadyBeforeGstReady()
+void VideoManagerInitTest::_testQmlReadyBeforeBackendReady()
 {
     VideoManager videoManager;
     QQuickWindow mainWindow;
@@ -38,17 +38,17 @@ void VideoManagerInitTest::_testQmlReadyBeforeGstReady()
     QCOMPARE(videoManager._initState, VideoManager::InitState::QmlReady);
     QCOMPARE(createReceiversCount, 0);
 
-    videoManager._onGstInitComplete(true);
+    videoManager._onBackendInitComplete(true);
     QCOMPARE(videoManager._initState, VideoManager::InitState::Running);
     QCOMPARE(createReceiversCount, 1);
 
-    expectLogMessage("Video.VideoManager", QtWarningMsg, QRegularExpression(QStringLiteral("_onGstInitComplete: unexpected state")));
-    videoManager._onGstInitComplete(true);
+    expectLogMessage("Video.VideoManager", QtWarningMsg, QRegularExpression(QStringLiteral("_onBackendInitComplete: unexpected state")));
+    videoManager._onBackendInitComplete(true);
     verifyExpectedLogMessage();
     QCOMPARE(createReceiversCount, 1);
 }
 
-void VideoManagerInitTest::_testGstReadyBeforeQmlReady()
+void VideoManagerInitTest::_testBackendReadyBeforeQmlReady()
 {
     VideoManager videoManager;
     QQuickWindow mainWindow;
@@ -61,8 +61,8 @@ void VideoManagerInitTest::_testGstReadyBeforeQmlReady()
 
     videoManager._initState = VideoManager::InitState::Pending;
 
-    videoManager._onGstInitComplete(true);
-    QCOMPARE(videoManager._initState, VideoManager::InitState::GstReady);
+    videoManager._onBackendInitComplete(true);
+    QCOMPARE(videoManager._initState, VideoManager::InitState::BackendReady);
     QCOMPARE(createReceiversCount, 0);
 
     videoManager._initAfterQmlIsReady();
@@ -75,7 +75,7 @@ void VideoManagerInitTest::_testGstReadyBeforeQmlReady()
     QCOMPARE(createReceiversCount, 1);
 }
 
-void VideoManagerInitTest::_testGstInitFailure()
+void VideoManagerInitTest::_testBackendInitFailure()
 {
     VideoManager videoManager;
     QQuickWindow mainWindow;
@@ -88,13 +88,13 @@ void VideoManagerInitTest::_testGstInitFailure()
 
     videoManager._initState = VideoManager::InitState::Pending;
 
-    expectLogMessage("Video.VideoManager", QtCriticalMsg, QRegularExpression(QStringLiteral("GStreamer initialization failed")));
-    videoManager._onGstInitComplete(false);
+    expectLogMessage("Video.VideoManager", QtCriticalMsg, QRegularExpression(QStringLiteral("video initialization failed")));
+    videoManager._onBackendInitComplete(false);
     verifyExpectedLogMessage();
     QCOMPARE(videoManager._initState, VideoManager::InitState::Failed);
     QCOMPARE(createReceiversCount, 0);
 
-    expectLogMessage("Video.VideoManager", QtWarningMsg, QRegularExpression(QStringLiteral("QML ready but GStreamer init failed")));
+    expectLogMessage("Video.VideoManager", QtWarningMsg, QRegularExpression(QStringLiteral("QML ready but video init failed")));
     videoManager._initAfterQmlIsReady();
     verifyExpectedLogMessage();
     QCOMPARE(videoManager._initState, VideoManager::InitState::Failed);
@@ -104,9 +104,9 @@ void VideoManagerInitTest::_testGstInitFailure()
 #else
 
 void VideoManagerInitTest::init() { UnitTest::init(); QSKIP("GStreamer not enabled"); }
-void VideoManagerInitTest::_testQmlReadyBeforeGstReady() { QSKIP("GStreamer not enabled"); }
-void VideoManagerInitTest::_testGstReadyBeforeQmlReady() { QSKIP("GStreamer not enabled"); }
-void VideoManagerInitTest::_testGstInitFailure() { QSKIP("GStreamer not enabled"); }
+void VideoManagerInitTest::_testQmlReadyBeforeBackendReady() { QSKIP("GStreamer not enabled"); }
+void VideoManagerInitTest::_testBackendReadyBeforeQmlReady() { QSKIP("GStreamer not enabled"); }
+void VideoManagerInitTest::_testBackendInitFailure() { QSKIP("GStreamer not enabled"); }
 
 #endif
 

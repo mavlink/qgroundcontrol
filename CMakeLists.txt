@@ -349,6 +349,8 @@ if(QGC_BUILD_TESTING)
     add_subdirectory(test)
     # Exclude test directory from translation scanning
     set_property(DIRECTORY test PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
+    # Pure-CMake unit tests for cmake/GStreamer helpers (no project build needed).
+    add_subdirectory(cmake/GStreamer/tests)
 endif()
 
 # ----------------------------------------------------------------------------

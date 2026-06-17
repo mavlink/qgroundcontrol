@@ -56,18 +56,23 @@ jobs:
             host: windows
             arch: win64_msvc2022_64
             package: QGroundControl-installer-AMD64
+            gstreamer: true
 
           - variant: arm64
             runs_on: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
             package: QGroundControl-installer-ARM64
+            # Native arm64 has no GStreamer SDK (setup steps are skipped on the
+            # windows-11-arm runner), so build without video streaming.
+            gstreamer: false
 
           - variant: arm64-cross
             runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             package: QGroundControl-installer-AMD64-ARM64
+            gstreamer: false
             aqt_source: 'git+https://github.com/miurahr/aqtinstall.git@c84e1470349e5bedbeee977bd62ec495d50d65b6'
 
     defaults:
@@ -116,12 +121,12 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
           extra-args: >-
-            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && 'ON' || 'OFF' }}
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.gstreamer && 'ON' || 'OFF' }}
             ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
 
       - name: Resolve GStreamer root
         id: gst-root
-        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        if: matrix.gstreamer
         shell: bash
         run: |
           python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" cache-var \
@@ -131,7 +136,7 @@ jobs:
             --output-key gst_root
 
       - name: Add GStreamer to PATH
-        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        if: matrix.gstreamer
         shell: bash
         run: echo "${{ steps.gst-root.outputs.gst_root }}/bin" >> "$GITHUB_PATH"
 
@@ -174,8 +179,11 @@ jobs:
             Get-ChildItem -Path $installDir -Recurse | Select-Object FullName
             exit 1
           }
+          $expectGstreamer = "${{ matrix.gstreamer }}" -eq "true"
           $pluginDir = Join-Path $installDir "lib\gstreamer-1.0"
-          if (Test-Path $pluginDir) {
+          if (-not $expectGstreamer) {
+            Write-Host "GStreamer disabled for this build; skipping plugin verification"
+          } elseif (Test-Path $pluginDir) {
             $pluginCount = (Get-ChildItem -Path $pluginDir -Filter "*.dll" | Measure-Object).Count
             Write-Host "GStreamer plugins found: $pluginCount"
             if ($pluginCount -eq 0) {
@@ -188,7 +196,7 @@ jobs:
           }
 
       - name: Remove build SDK from PATH for installed verification
-        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        if: matrix.build_type == 'Release' && matrix.gstreamer
         shell: pwsh
         env:
           GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
@@ -198,10 +206,13 @@ jobs:
           "QGC_VERIFY_INSTALLED_PATH=$sanitizedPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Verify installed executable
+        # Arch-based, not matrix.gstreamer: still smoke-tests the GStreamer-less arm64-native binary (env.PATH fallback below).
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
         uses: ./.github/actions/verify-executable
         env:
-          PATH: ${{ env.QGC_VERIFY_INSTALLED_PATH }}
+          # Non-GStreamer builds skip the SDK-PATH sanitize step above, so fall
+          # back to the runner PATH when QGC_VERIFY_INSTALLED_PATH is unset.
+          PATH: ${{ env.QGC_VERIFY_INSTALLED_PATH || env.PATH }}
         with:
           binary-path: ${{ runner.temp }}\qgc-install-test\bin\QGroundControl.exe
           type: exe

@@ -458,7 +458,7 @@ Version numbers and build settings are centralized in `.github/build-config.json
 {
   "qt_version": "6.10.1",
   "qt_modules": "qtgraphs qtlocation ...",
-  "gstreamer_default_version": "1.24.13",
+  "gstreamer": { "version": { "default": "1.24.13", ... }, ... },
   "ndk_version": "r27c",
   ...
 }

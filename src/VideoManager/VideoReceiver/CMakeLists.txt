@@ -3,7 +3,12 @@
 # Video streaming backends (GStreamer and Qt Multimedia)
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE VideoReceiver.h)
+target_sources(${CMAKE_PROJECT_NAME}
+    PRIVATE
+        VideoReceiver.h
+        VideoBackend.cc
+        VideoBackend.h
+)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -11,4 +16,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # Video Backend Implementations
 # ----------------------------------------------------------------------------
 add_subdirectory(GStreamer)
+add_subdirectory(Offscreen)
 add_subdirectory(QtMultimedia)
+add_subdirectory(SceneGraph)

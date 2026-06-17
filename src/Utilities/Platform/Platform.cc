@@ -3,6 +3,8 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QProcessEnvironment>
+#include <QtQuick/QQuickWindow>
+#include <QtQuick/QSGRendererInterface>
 
 #include "QGCCommandLineParser.h"
 
@@ -208,15 +210,25 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
 #endif
 
     // --- Qt attributes ---
-    if (args.useDesktopGL) {
-        QCoreApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
-    }
-
     if (args.useSwRast) {
+        // RHI defaults to D3D11/Metal on Win/macOS; AA_UseSoftwareOpenGL only bites once the scene graph is on GL.
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
         QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
     }
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
+    (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))
+    // GL is the only working desktop-Linux GStreamer zero-copy backend (GLMemory and DMABuf/EGLImage both import into a
+    // GL RHI; Vulkan import dormant); pin it unless the user set QSG_RHI_BACKEND. No QRhi::probe — needs GuiPrivate (not
+    // linked here) and GL is always present on Linux.
+    else if (!qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) {
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+    }
+#endif
 
+    // GStreamer's GL/DMABuf zero-copy paths both need QOpenGLContext::globalShareContext(), which this attribute enables.
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#endif
     QCoreApplication::setAttribute(Qt::AA_CompressTabletEvents);
 
     return std::nullopt;
