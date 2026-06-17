@@ -145,6 +145,18 @@ def cmd_configure(args: argparse.Namespace) -> None:
     sys.exit(result.returncode)
 
 
+def _maybe_wrap_xvfb(cmd: list[str]) -> list[str]:
+    """Prefix `xvfb-run` on headless Linux so the offscreen plugin's GLX path
+    gets a display and QRhiGles2 can create a software GL context."""
+    if sys.platform.startswith("linux") and not os.environ.get("DISPLAY"):
+        xvfb = shutil.which("xvfb-run")
+        if xvfb:
+            print("::notice::No DISPLAY; running CTest under xvfb-run")
+            return [xvfb, "-a", *cmd]
+        print("::warning::xvfb-run not found; tests run without a GL context")
+    return cmd
+
+
 def cmd_ctest(args: argparse.Namespace) -> None:
     """Run CTest with standardized arguments and timing."""
     cmd = [
@@ -167,7 +179,7 @@ def cmd_ctest(args: argparse.Namespace) -> None:
         cmd += ["-I", f"{start_idx},0,{args.shard_count}"]
 
     start = time.monotonic()
-    exit_code = _run_with_tee(cmd, args.ctest_output)
+    exit_code = _run_with_tee(_maybe_wrap_xvfb(cmd), args.ctest_output)
     duration = int(time.monotonic() - start)
     print(f"::notice::Tests completed in {duration}s")
     sys.exit(exit_code)

@@ -50,6 +50,10 @@ inputs:
     description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false
     default: 'auto'
+  aqt-source:
+    description: Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
+    required: false
+    default: ''
 runs:
   using: composite
   steps:
@@ -93,6 +97,7 @@ runs:
         arch: ${{ inputs.arch }}
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
+        aqt-source: ${{ inputs.aqt-source }}
 
     - name: Install Qt for Android (arm64_v8a)
       if: contains(format(';{0};', inputs.abis), ';arm64-v8a;')
@@ -106,6 +111,7 @@ runs:
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
         export-env: 'false'
+        aqt-source: ${{ inputs.aqt-source }}
 
     - name: Install Qt for Android (armv7)
       if: contains(format(';{0};', inputs.abis), ';armeabi-v7a;')
@@ -119,6 +125,7 @@ runs:
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
         export-env: 'false'
+        aqt-source: ${{ inputs.aqt-source }}
 
     - name: Install Qt for Android (x86_64)
       if: contains(format(';{0};', inputs.abis), ';x86_64;')
@@ -132,6 +139,7 @@ runs:
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
         export-env: 'false'
+        aqt-source: ${{ inputs.aqt-source }}
 
     - name: Install Qt for Android (x86)
       if: contains(format(';{0};', inputs.abis), ';x86;')
@@ -145,6 +153,7 @@ runs:
         dir: ${{ runner.temp }}
         modules: ${{ inputs.modules }}
         export-env: 'false'
+        aqt-source: ${{ inputs.aqt-source }}
 
     - name: Resolve primary Android Qt root
       id: qt-target

@@ -136,9 +136,6 @@ QUrl buildUrl(const QString& baseUrl, const QMap<QString, QString>& params);
 /// Build URL with query parameters from a list of pairs
 QUrl buildUrl(const QString& baseUrl, const QList<QPair<QString, QString>>& params);
 
-/// Extract filename from URL path (last path segment)
-QString urlFileName(const QUrl& url);
-
 /// Get URL without query string and fragment
 QUrl urlWithoutQuery(const QUrl& url);
 
@@ -159,6 +156,11 @@ struct RequestConfig
     QString acceptEncoding;
     QString contentType;
     QList<QPair<QNetworkRequest::Attribute, QVariant>> requestAttributes;
+
+    int connectionCacheExpirySecs = -1;
+    int tcpKeepAliveIdleSecs = -1;
+    int tcpKeepAliveIntervalSecs = -1;
+    int tcpKeepAliveProbeCount = -1;
 };
 
 /// Configure a QNetworkRequest with standard settings
@@ -266,8 +268,7 @@ QList<QSslCertificate> loadCaCertificates(const QString& filePath, QString* erro
 /// @param keyOut Receives the loaded key
 /// @param errorOut Optional pointer to receive error message
 /// @return true on success
-bool loadClientCertAndKey(const QString& certPath, const QString& keyPath,
-                          QSslCertificate& certOut, QSslKey& keyOut,
+bool loadClientCertAndKey(const QString& certPath, const QString& keyPath, QSslCertificate& certOut, QSslKey& keyOut,
                           QString* errorOut = nullptr);
 
 // ============================================================================

@@ -4,7 +4,7 @@ GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType,
                                    GstSample *sample,
                                    const GstVideoInfo &videoInfo,
                                    QVideoFrameFormat format)
-    : QHwVideoBuffer(handleType, nullptr)
+    : QHwVideoBuffer(handleType)
     , _sample(sample ? gst_sample_ref(sample) : nullptr)
     , _videoInfo(videoInfo)
     , _format(std::move(format))

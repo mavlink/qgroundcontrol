@@ -72,6 +72,12 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libxrender-dev",
         "libunwind-dev",
         "libegl-dev",
+        # Headless GL: xvfb gives ctest a virtual display so the offscreen plugin's
+        # GLX path can create a Mesa llvmpipe context (see cmake_helper.py).
+        "xvfb",
+        "xauth",
+        "libgl1-mesa-dri",
+        "libglx-mesa0",
     ],
     "gstreamer": [
         "libgstreamer1.0-dev",

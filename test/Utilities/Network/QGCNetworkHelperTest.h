@@ -37,13 +37,13 @@ private slots:
     void _testEnsureScheme();
     void _testBuildUrlFromMap();
     void _testBuildUrlFromList();
-    void _testUrlFileName();
     void _testUrlWithoutQuery();
 
     // Request configuration tests
     void _testDefaultUserAgent();
     void _testRequestConfigDefaults();
     void _testRequestConfigAttributes();
+    void _testRequestConfigKeepAlive();
     void _testSetJsonHeaders();
     void _testCreateBasicAuthCredentials();
     void _testSetBasicAuthHeader();

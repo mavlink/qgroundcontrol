@@ -800,6 +800,27 @@ void UnitTest::init()
     ignoreLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^GCS GPS error:")));
 
+    // offscreen QPA exposes no GLX/EGL display, so Qt 6.11's QRhiGles2 probe can't
+    // create a context and warns; UI tests use the software backend, so it's benign.
+    ignoreLogMessage("default", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^QRhiGles2: Failed to create")));
+
+    // QQuickPinchArea declares its own `enabled` property (gesture enable, distinct
+    // from QQuickItem::enabled); Qt 6.11's property-cache shadow check warns once per
+    // QML engine. A framework quirk, not QGC's — every UI test scene hits it.
+    ignoreLogMessage("qt.qml.propertyCache.append", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("QQuickPinchArea overrides a member")));
+
+    // QtGraphs warns when a LineSeries is given the GraphsView's own axes (redundant
+    // association); cosmetic, the chart still renders. Surfaces in the Analyze charts.
+    ignoreLogMessage("qt.graphs2d.axis.properties", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("axis already associated with")));
+
+    // Headless software-GL (xvfb) gives GStreamer no usable X11/EGL GL context, so the
+    // GL bridge disables itself and falls back to software decode — by design in tests.
+    ignoreLogMessage("Video.GStreamer.HwBuffers.GstGlBridge", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("GL bridge disabled")));
+
     // Start capturing log messages for this test (cleared from previous test)
     LogManager::clearCapturedMessages();
     LogManager::setCaptureEnabled(true);
