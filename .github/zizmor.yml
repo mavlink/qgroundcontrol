@@ -1,0 +1,7 @@
+# Repo convention is version-tag pinning (@v2, @v6, ...) for all actions, not SHA pins.
+# ref-pin keeps the floating-ref protection (rejects @main / branch refs) while allowing tags.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin
