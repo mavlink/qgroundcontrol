@@ -350,9 +350,9 @@ Version numbers and build settings are centralized in `.github/build-config.json
 
 ```json
 {
-  "qt_version": "6.10.1",
+  "qt_version": "6.11.1",
   "qt_modules": "qtgraphs qtlocation ...",
-  "gstreamer_default_version": "1.24.13",
+  "gstreamer_default_version": "1.28.1",
   "ndk_version": "r27c",
   ...
 }

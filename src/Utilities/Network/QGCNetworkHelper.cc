@@ -1,21 +1,22 @@
 #include "QGCNetworkHelper.h"
 
+#include <QtBluetooth/QBluetoothLocalDevice>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QUrlQuery>
+#include <QtNetwork/QHttpHeaders>
 #include <QtNetwork/QHttpPart>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkInformation>
 #include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QNetworkProxyFactory>
 #include <QtNetwork/QSslSocket>
+#include <chrono>
 
 #include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
-
-#include <QtBluetooth/QBluetoothLocalDevice>
 
 QGC_LOGGING_CATEGORY(QGCNetworkHelperLog, "Utilities.QGCNetworkHelper")
 
@@ -27,19 +28,20 @@ namespace QGCNetworkHelper {
 
 HttpStatusClass classifyHttpStatus(int statusCode)
 {
-    if (statusCode >= 100 && statusCode < 200) {
+    const auto code = static_cast<HttpStatusCode>(statusCode);
+    if (code >= HttpStatusCode::Continue && code < HttpStatusCode::Ok) {
         return HttpStatusClass::Informational;
     }
-    if (statusCode >= 200 && statusCode < 300) {
+    if (code >= HttpStatusCode::Ok && code < HttpStatusCode::MultipleChoices) {
         return HttpStatusClass::Success;
     }
-    if (statusCode >= 300 && statusCode < 400) {
+    if (code >= HttpStatusCode::MultipleChoices && code < HttpStatusCode::BadRequest) {
         return HttpStatusClass::Redirection;
     }
-    if (statusCode >= 400 && statusCode < 500) {
+    if (code >= HttpStatusCode::BadRequest && code < HttpStatusCode::InternalServerError) {
         return HttpStatusClass::ClientError;
     }
-    if (statusCode >= 500 && statusCode < 600) {
+    if (code >= HttpStatusCode::InternalServerError && code <= HttpStatusCode::NetworkConnectTimeoutError) {
         return HttpStatusClass::ServerError;
     }
     return HttpStatusClass::Unknown;
@@ -176,16 +178,12 @@ QString httpStatusText(HttpStatusCode statusCode)
         case HttpStatusCode::NetworkConnectTimeoutError:
             return QStringLiteral("Network Connect Timeout Error");
         default:
-            return QStringLiteral("Unknown Status");
+            return QStringLiteral("Unknown Status (%1)").arg(static_cast<int>(statusCode));
     }
 }
 
 QString httpStatusText(int statusCode)
 {
-    if (classifyHttpStatus(statusCode) == HttpStatusClass::Unknown) {
-        return QStringLiteral("Unknown Status (%1)").arg(statusCode);
-    }
-
     return httpStatusText(static_cast<HttpStatusCode>(statusCode));
 }
 
@@ -278,25 +276,15 @@ QUrl normalizeUrl(const QUrl& url)
         return url;
     }
 
-    QUrl normalized = url;
-
-    // Lowercase scheme and host
+    QUrl normalized = url.adjusted(QUrl::NormalizePathSegments | QUrl::StripTrailingSlash);
     normalized.setScheme(normalized.scheme().toLower());
     normalized.setHost(normalized.host().toLower());
 
-    // Remove default ports
     const int port = normalized.port();
     const QString scheme = normalized.scheme();
     if ((scheme == QLatin1String("http") && port == 80) || (scheme == QLatin1String("https") && port == 443) ||
         (scheme == QLatin1String("ftp") && port == 21)) {
         normalized.setPort(-1);
-    }
-
-    // Remove trailing slash from path (except for root)
-    QString path = normalized.path();
-    if (path.length() > 1 && path.endsWith(QLatin1Char('/'))) {
-        path.chop(1);
-        normalized.setPath(path);
     }
 
     return normalized;
@@ -349,22 +337,9 @@ QUrl buildUrl(const QString& baseUrl, const QList<QPair<QString, QString>>& para
     return url;
 }
 
-QString urlFileName(const QUrl& url)
-{
-    const QString path = url.path();
-    const int lastSlash = path.lastIndexOf(QLatin1Char('/'));
-    if (lastSlash >= 0 && lastSlash < path.length() - 1) {
-        return path.mid(lastSlash + 1);
-    }
-    return path;
-}
-
 QUrl urlWithoutQuery(const QUrl& url)
 {
-    QUrl result = url;
-    result.setQuery(QString());
-    result.setFragment(QString());
-    return result;
+    return url.adjusted(QUrl::RemoveQuery | QUrl::RemoveFragment);
 }
 
 // ============================================================================
@@ -398,27 +373,38 @@ void configureRequest(QNetworkRequest& request, const RequestConfig& config)
     // Background request
     request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, config.backgroundRequest);
 
-    // Headers
-    const QString userAgent = config.userAgent.isEmpty() ? defaultUserAgent() : config.userAgent;
-    request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
-
+    using WK = QHttpHeaders::WellKnownHeader;
+    QHttpHeaders headers = request.headers();
+    headers.replaceOrAppend(WK::UserAgent, config.userAgent.isEmpty() ? defaultUserAgent() : config.userAgent);
     if (!config.accept.isEmpty()) {
-        request.setRawHeader("Accept", config.accept.toUtf8());
+        headers.replaceOrAppend(WK::Accept, config.accept);
     }
-
     if (!config.acceptEncoding.isEmpty()) {
-        request.setRawHeader("Accept-Encoding", config.acceptEncoding.toUtf8());
+        headers.replaceOrAppend(WK::AcceptEncoding, config.acceptEncoding);
     }
-
     if (!config.contentType.isEmpty()) {
-        request.setHeader(QNetworkRequest::ContentTypeHeader, config.contentType);
+        headers.replaceOrAppend(WK::ContentType, config.contentType);
     }
+    headers.replaceOrAppend(WK::Connection, "keep-alive");
+    request.setHeaders(headers);
 
-    for (const auto &[attribute, value] : config.requestAttributes) {
+    for (const auto& [attribute, value] : config.requestAttributes) {
         request.setAttribute(attribute, value);
     }
 
-    request.setRawHeader("Connection", "keep-alive");
+    if (config.connectionCacheExpirySecs >= 0) {
+        request.setAttribute(QNetworkRequest::ConnectionCacheExpiryTimeoutSecondsAttribute,
+                             config.connectionCacheExpirySecs);
+    }
+    if (config.tcpKeepAliveIdleSecs >= 0) {
+        request.setTcpKeepAliveIdleTimeBeforeProbes(std::chrono::seconds(config.tcpKeepAliveIdleSecs));
+    }
+    if (config.tcpKeepAliveIntervalSecs >= 0) {
+        request.setTcpKeepAliveIntervalBetweenProbes(std::chrono::seconds(config.tcpKeepAliveIntervalSecs));
+    }
+    if (config.tcpKeepAliveProbeCount >= 0) {
+        request.setTcpKeepAliveProbeCount(config.tcpKeepAliveProbeCount);
+    }
 }
 
 QNetworkRequest createRequest(const QUrl& url, const RequestConfig& config)
@@ -430,17 +416,22 @@ QNetworkRequest createRequest(const QUrl& url, const RequestConfig& config)
 
 void setStandardHeaders(QNetworkRequest& request, const QString& userAgent)
 {
-    const QString ua = userAgent.isEmpty() ? defaultUserAgent() : userAgent;
-    request.setHeader(QNetworkRequest::UserAgentHeader, ua);
-    request.setRawHeader("Accept", "*/*");
-    request.setRawHeader("Accept-Encoding", "gzip, deflate");
-    request.setRawHeader("Connection", "keep-alive");
+    using WK = QHttpHeaders::WellKnownHeader;
+    QHttpHeaders headers = request.headers();
+    headers.replaceOrAppend(WK::UserAgent, userAgent.isEmpty() ? defaultUserAgent() : userAgent);
+    headers.replaceOrAppend(WK::Accept, "*/*");
+    headers.replaceOrAppend(WK::AcceptEncoding, "gzip, deflate");
+    headers.replaceOrAppend(WK::Connection, "keep-alive");
+    request.setHeaders(headers);
 }
 
 void setJsonHeaders(QNetworkRequest& request)
 {
-    request.setRawHeader("Accept", "application/json");
-    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    using WK = QHttpHeaders::WellKnownHeader;
+    QHttpHeaders headers = request.headers();
+    headers.replaceOrAppend(WK::Accept, "application/json");
+    headers.replaceOrAppend(WK::ContentType, "application/json");
+    request.setHeaders(headers);
 }
 
 void setFormHeaders(QNetworkRequest& request)
@@ -466,7 +457,9 @@ QString defaultUserAgent()
 
 void setBasicAuth(QNetworkRequest& request, const QString& credentials)
 {
-    request.setRawHeader("Authorization", ("Basic " + credentials).toUtf8());
+    QHttpHeaders headers = request.headers();
+    headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Authorization, "Basic " + credentials);
+    request.setHeaders(headers);
 }
 
 void setBasicAuth(QNetworkRequest& request, const QString& username, const QString& password)
@@ -476,7 +469,9 @@ void setBasicAuth(QNetworkRequest& request, const QString& username, const QStri
 
 void setBearerToken(QNetworkRequest& request, const QString& token)
 {
-    request.setRawHeader("Authorization", ("Bearer " + token).toUtf8());
+    QHttpHeaders headers = request.headers();
+    headers.replaceOrAppend(QHttpHeaders::WellKnownHeader::Authorization, "Bearer " + token);
+    request.setHeaders(headers);
 }
 
 QString createBasicAuthCredentials(const QString& username, const QString& password)
@@ -544,19 +539,20 @@ QList<QSslCertificate> loadCaCertificates(const QString& filePath, QString* erro
     return certs;
 }
 
-bool loadClientCertAndKey(const QString& certPath, const QString& keyPath,
-                          QSslCertificate& certOut, QSslKey& keyOut,
+bool loadClientCertAndKey(const QString& certPath, const QString& keyPath, QSslCertificate& certOut, QSslKey& keyOut,
                           QString* errorOut)
 {
     const auto certs = QSslCertificate::fromPath(certPath, QSsl::Pem);
     if (certs.isEmpty()) {
-        if (errorOut) *errorOut = QStringLiteral("No certificate found in %1").arg(certPath);
+        if (errorOut)
+            *errorOut = QStringLiteral("No certificate found in %1").arg(certPath);
         return false;
     }
 
     QFile keyFile(keyPath);
     if (!keyFile.open(QIODevice::ReadOnly)) {
-        if (errorOut) *errorOut = QStringLiteral("Cannot open key file %1").arg(keyPath);
+        if (errorOut)
+            *errorOut = QStringLiteral("Cannot open key file %1").arg(keyPath);
         return false;
     }
 
@@ -566,7 +562,8 @@ bool loadClientCertAndKey(const QString& certPath, const QString& keyPath,
         key = QSslKey(&keyFile, QSsl::Ec);
     }
     if (key.isNull()) {
-        if (errorOut) *errorOut = QStringLiteral("Invalid key in %1").arg(keyPath);
+        if (errorOut)
+            *errorOut = QStringLiteral("Invalid key in %1").arg(keyPath);
         return false;
     }
 

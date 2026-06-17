@@ -126,8 +126,8 @@ ENV ANDROID_HOME=$ANDROID_SDK_ROOT
 RUN . /etc/profile.d/qgc.sh && \
     mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
     wget "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
-    # Pinned to android_cmdline_tools 13114758 (.github/build-config.json); update both together.
-    echo "7ec965280a073311c339e571cd5de778b9975026cfcbe79f2b1cdcb1e15317ee  /opt/cmdline-tools.zip" | sha256sum -c - && \
+    # Pinned to android_cmdline_tools 14742923 (.github/build-config.json); update both together.
+    echo "04453066b540409d975c676d781da1477479dde3761310f1a7eb92a1dfb15af7  /opt/cmdline-tools.zip" | sha256sum -c - && \
     unzip /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
     mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
     rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \

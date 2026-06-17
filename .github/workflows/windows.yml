@@ -32,6 +32,9 @@ permissions:
   attestations: write
   actions: read
 
+env:
+  AQT_SOURCE: 'git+https://github.com/miurahr/aqtinstall.git@8d961e61720b3c06583517fbc68d57ec0a4e9f95'
+
 jobs:
   changes:
     uses: ./.github/workflows/_detect-changes.yml
@@ -68,7 +71,6 @@ jobs:
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             package: QGroundControl-installer-AMD64-ARM64
-            aqt_source: 'git+https://github.com/miurahr/aqtinstall.git@c84e1470349e5bedbeee977bd62ec495d50d65b6'
 
     defaults:
       run:
@@ -107,7 +109,7 @@ jobs:
         with:
           qt-host: ${{ matrix.host }}
           qt-arch: ${{ matrix.arch }}
-          aqt-source: ${{ matrix.aqt_source || '' }}
+          aqt-source: ${{ env.AQT_SOURCE }}
           build-type: ${{ matrix.build_type }}
 
       - name: Configure
