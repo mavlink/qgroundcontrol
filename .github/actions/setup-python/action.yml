@@ -14,22 +14,21 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Setup Python ${{ inputs.python-version }}
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ inputs.python-version }}
-
-    - name: Setup uv
+    # uv provisions the interpreter itself (standalone CPython), avoiding the
+    # actions/setup-python installer that dumps the whole Python tree on a
+    # tool-cache miss (every run on the bare RunsOn images).
+    - name: Setup uv and Python ${{ inputs.python-version }}
       uses: astral-sh/setup-uv@v8.1.0
       with:
         enable-cache: false
+        python-version: ${{ inputs.python-version }}
 
     - name: Install dependencies
       shell: bash
       env:
         GROUPS: ${{ inputs.groups }}
       run: |
-        python3 tools/setup/install_python.py "$GROUPS"
+        uv run --no-project python tools/setup/install_python.py "$GROUPS"
 
     - name: Add venv to PATH
       shell: bash

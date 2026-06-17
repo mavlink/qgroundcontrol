@@ -128,7 +128,7 @@ elseif(LINUX)
         set(QGC_BUILD_DIR \"${CMAKE_BINARY_DIR}\")
         set(CMAKE_SYSTEM_PROCESSOR \"${CMAKE_SYSTEM_PROCESSOR}\")
     ")
-    if(QGC_CREATE_APPIMAGE)
+    if(QGC_CREATE_APPIMAGE AND NOT CMAKE_CROSSCOMPILING)
         install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateAppImage.cmake")
     endif()
 

@@ -72,11 +72,15 @@ runs:
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
+        if (-not (Get-Command Add-MpPreference -ErrorAction SilentlyContinue)) {
+          Write-Host "Windows Defender not present; skipping exclusions"
+          return
+        }
         try {
           Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE","$env:RUNNER_TEMP" -ErrorAction Stop
           Add-MpPreference -ExclusionProcess "cl.exe","clang.exe","clang++.exe","link.exe","ninja.exe","cmake.exe","moc.exe","rcc.exe","qmlcachegen.exe" -ErrorAction Stop
         } catch {
-          Write-Host "::warning::Failed to add Defender exclusions: $_"
+          Write-Host "Defender exclusions unavailable on this image ($_); continuing"
         }
 
     - uses: lukka/get-cmake@v4.3.2

@@ -1,7 +1,8 @@
 {
   "build": {
     "context": "..",
-    "dockerfile": "../deploy/docker/Dockerfile-build-ubuntu"
+    "dockerfile": "../deploy/docker/Dockerfile",
+    "target": "linux"
   },
   "customizations": {
     "vscode": {

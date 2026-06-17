@@ -19,6 +19,7 @@ on:
       - 'tools/lsp/**'
       - 'tools/simulation/**'
       - 'tools/translations/**'
+      - 'deploy/docker/**'
   push:
     branches:
       - master
@@ -40,6 +41,7 @@ on:
       - 'tools/lsp/**'
       - 'tools/simulation/**'
       - 'tools/translations/**'
+      - 'deploy/docker/**'
   workflow_dispatch:
 
 concurrency:
@@ -116,6 +118,7 @@ jobs:
             tools/lsp
             tools/simulation
             tools/translations
+            deploy/docker
           sparse-checkout-cone-mode: false
 
       - name: Setup Python

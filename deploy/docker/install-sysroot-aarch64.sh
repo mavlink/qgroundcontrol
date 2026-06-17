@@ -80,6 +80,14 @@ configure_apt() {
             "${src}" 2>/dev/null || true
     done
 
+    # deb822 sources (Ubuntu 24.04+): without an explicit arch pin apt requests
+    # arm64 from archive.ubuntu.com (amd64/i386 only) and 404s.
+    for src in /etc/apt/sources.list.d/*.sources; do
+        [[ -f "${src}" ]] || continue
+        grep -q '^Architectures:' "${src}" && continue
+        sed -i -E '/^Types:/a Architectures: amd64' "${src}" 2>/dev/null || true
+    done
+
     cat >/etc/apt/sources.list.d/ubuntu-arm64-ports.list <<EOF
 deb [arch=arm64] ${MIRROR} ${UBUNTU_SUITE} main restricted universe multiverse
 deb [arch=arm64] ${MIRROR} ${UBUNTU_SUITE}-updates main restricted universe multiverse
@@ -90,61 +98,59 @@ EOF
 configure_apt
 apt_retry apt-get -o Acquire::Retries=3 update -y --quiet
 
-# Cross compiler + Qt/QGC link deps. Library set mirrors tools/setup/install_dependencies/_packages.py
-# DEBIAN_PACKAGES (build/runtime libs); arch tag :arm64 forces target-side install.
-apt_retry apt-get -o Acquire::Retries=3 install -y --quiet --no-install-recommends \
-    gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
-    pkg-config-aarch64-linux-gnu \
-    libc6:arm64 libstdc++6:arm64 libgcc-s1:arm64 \
-    libudev-dev:arm64 libinput-dev:arm64 \
-    libdrm-dev:arm64 libgbm-dev:arm64 \
-    libgl-dev:arm64 libgles-dev:arm64 libegl-dev:arm64 libvulkan-dev:arm64 \
-    libfontconfig1-dev:arm64 libfreetype-dev:arm64 libglib2.0-dev:arm64 \
-    libx11-dev:arm64 libx11-xcb-dev:arm64 libxext-dev:arm64 libxfixes-dev:arm64 \
-    libxcb1-dev:arm64 libxcb-cursor-dev:arm64 libxcb-glx0-dev:arm64 \
-    libxcb-icccm4-dev:arm64 libxcb-image0-dev:arm64 libxcb-keysyms1-dev:arm64 \
-    libxcb-randr0-dev:arm64 libxcb-render0-dev:arm64 libxcb-render-util0-dev:arm64 \
-    libxcb-shape0-dev:arm64 libxcb-shm0-dev:arm64 libxcb-sync-dev:arm64 \
-    libxcb-util-dev:arm64 libxcb-xfixes0-dev:arm64 libxcb-xinerama0-dev:arm64 \
-    libxcb-xinput-dev:arm64 libxcb-xkb-dev:arm64 \
-    libxkbcommon-dev:arm64 libxkbcommon-x11-dev:arm64 \
-    libxi-dev:arm64 libxrender-dev:arm64 libxdamage-dev:arm64 libxrandr-dev:arm64 \
-    libdbus-1-dev:arm64 libpulse-dev:arm64 libasound2-dev:arm64 libssl-dev:arm64 \
-    libnss3-dev:arm64 zlib1g-dev:arm64 libicu-dev:arm64 libpcre2-dev:arm64 \
-    libgstreamer1.0-dev:arm64 \
-    libgstreamer-plugins-base1.0-dev:arm64 \
-    libgstreamer-plugins-bad1.0-dev:arm64 \
-    libusb-1.0-0-dev:arm64 libsdl2-dev:arm64
-
-# Optional: not present on every arch/suite combo, do not fail the install.
-apt-get install -y --quiet --no-install-recommends gstreamer1.0-qt6:arm64 2>/dev/null || true
-
-HOST_TRIPLE="$(dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null || true)"
-
-mkdir -p "${SYSROOT}/lib" "${SYSROOT}/usr/lib" "${SYSROOT}/usr/include"
-
-for src in /lib/aarch64-linux-gnu /usr/lib/aarch64-linux-gnu; do
-    [[ -d "${src}" ]] || continue
-    cp -a "${src}" "${SYSROOT}$(dirname "${src}")/"
-done
-
-# Exclude the host triple dir so x86_64 internals don't bleed into the arm64 sysroot.
-if [[ -d /usr/include ]]; then
-    if [[ -n "$HOST_TRIPLE" && -d "/usr/include/$HOST_TRIPLE" ]]; then
-        if command -v rsync >/dev/null 2>&1; then
-            rsync -a --exclude="/${HOST_TRIPLE}/" /usr/include/ "${SYSROOT}/usr/include/"
-        else
-            cp -a /usr/include/. "${SYSROOT}/usr/include/"
-            rm -rf "${SYSROOT}/usr/include/${HOST_TRIPLE}"
-        fi
-    else
-        cp -a /usr/include/. "${SYSROOT}/usr/include/"
-    fi
+# Target-side libraries are single-sourced from install_dependencies
+# (DEBIAN_PACKAGES["cross_arm64"]) so they can't drift from the native build;
+# each is arch-tagged :arm64 here. Host cross compilers stay hardcoded — they
+# are amd64 packages, not target-side. Override INSTALL_DEPS for non-Docker runs.
+INSTALL_DEPS="${INSTALL_DEPS:-/tmp/tools/setup/install_dependencies}"
+# read into the array via newlines (no unquoted $(...)) so a glob char in a
+# package name can't expand against the filesystem.
+arm64_pkgs=()
+while IFS= read -r lib; do
+    [ -n "${lib}" ] && arm64_pkgs+=("${lib}:arm64")
+done < <(python3 "${INSTALL_DEPS}" --print-packages --platform debian --category cross_arm64 | tr ' ' '\n')
+if [[ ${#arm64_pkgs[@]} -eq 0 ]]; then
+    echo "ERROR: install_dependencies returned no cross_arm64 packages (INSTALL_DEPS=${INSTALL_DEPS})" >&2
+    exit 1
 fi
 
-# Some .pc files reference /usr/lib/aarch64-linux-gnu absolutely (no $prefix);
-# pkg-config's PKG_CONFIG_SYSROOT_DIR handles that. No further patching needed.
+# Host cross toolchain (amd64, runs on the build host) — no multiarch conflict.
+apt_retry apt-get -o Acquire::Retries=3 install -y --quiet --no-install-recommends \
+    gcc-aarch64-linux-gnu g++-aarch64-linux-gnu pkgconf
 
-echo "==> Sysroot ready at ${SYSROOT}"
+# Download + unpack the arm64 closure rather than `apt-get install`: installing
+# :arm64 -dev packages pulls python3:arm64, which breaks the host python3.
+want=("${arm64_pkgs[@]}")
+if apt-cache show gstreamer1.0-qt6:arm64 >/dev/null 2>&1; then
+    want+=("gstreamer1.0-qt6:arm64")
+fi
+
+# Closure members are the unindented lines; keep real arm64 pkgs, drop virtuals/all.
+mapfile -t closure < <(
+    apt-cache depends --recurse --no-recommends --no-suggests \
+        --no-conflicts --no-breaks --no-replaces --no-enhances \
+        "${want[@]}" | awk '/^[^[:space:]]/ {print $1}' | grep ':arm64$' | sort -u
+)
+if [[ ${#closure[@]} -eq 0 ]]; then
+    echo "ERROR: empty arm64 dependency closure (apt-cache depends failed?)" >&2
+    exit 1
+fi
+
+DL_DIR="$(mktemp -d)"
+trap 'rm -rf "${DL_DIR}"' EXIT
+( cd "${DL_DIR}" && apt_retry apt-get download "${closure[@]}" )
+
+mkdir -p "${SYSROOT}"
+shopt -s nullglob
+debs=("${DL_DIR}"/*.deb)
+if [[ ${#debs[@]} -eq 0 ]]; then
+    echo "ERROR: apt-get download produced no .deb files" >&2
+    exit 1
+fi
+for deb in "${debs[@]}"; do
+    dpkg-deb -x "${deb}" "${SYSROOT}"
+done
+
+echo "==> Sysroot ready at ${SYSROOT} (${#closure[@]} arm64 packages)"
 echo "    cross-gcc: $(aarch64-linux-gnu-gcc --version | head -1)"
-echo "    libc6:    $(dpkg-query -W -f='${Version}' libc6:arm64 2>/dev/null || echo unknown)"
+echo "    libc:      $(find "${SYSROOT}" -name 'libc.so.6' -print -quit 2>/dev/null || echo missing)"

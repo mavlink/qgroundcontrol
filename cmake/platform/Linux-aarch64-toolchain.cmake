@@ -2,8 +2,8 @@
 # Cross-compile QGroundControl for Linux aarch64 from an x86_64 host.
 #
 # Pairs with:
-#   - deploy/docker/Dockerfile-build-ubuntu-aarch64 (full toolchain image)
-#   - deploy/docker/install-sysroot-aarch64.sh      (multiarch :arm64 sysroot)
+#   - deploy/docker/Dockerfile (target: linux-cross)            (full toolchain image)
+#   - deploy/docker/install-sysroot-aarch64.sh                  (multiarch :arm64 sysroot)
 #
 # Required cache vars (pass via -D on the initial CMake invocation):
 #   QT_HOST_PATH    Host Qt (matching version) for moc/rcc/uic during AUTOMOC
@@ -76,11 +76,14 @@ set(CMAKE_CXX_FLAGS_INIT        "--sysroot=${QGC_AARCH64_SYSROOT}")
 set(CMAKE_EXE_LINKER_FLAGS_INIT "--sysroot=${QGC_AARCH64_SYSROOT}")
 set(CMAKE_SHARED_LINKER_FLAGS_INIT "--sysroot=${QGC_AARCH64_SYSROOT}")
 
+# Re-root find_package onto the target Qt prefix (MODE_PACKAGE=ONLY). Host Qt must not
+# be a root or optional components (e.g. Qt6::SerialPort) resolve to the x86 .so.
+set(CMAKE_FIND_ROOT_PATH "${QGC_AARCH64_SYSROOT}" ${CMAKE_PREFIX_PATH})
+
 # Host Qt tools for AUTOMOC/AUTORCC. Target moc cannot parse host C++ headers;
 # Qt6's qt-cmake handles this when invoked from host, but a raw cmake invocation
 # needs the executables pinned explicitly.
 if(DEFINED QT_HOST_PATH)
-    set(CMAKE_FIND_ROOT_PATH "${QGC_AARCH64_SYSROOT}" "${QT_HOST_PATH}")
     foreach(_tool moc rcc uic)
         string(TOUPPER ${_tool} _TOOL_UPPER)
         if(EXISTS "${QT_HOST_PATH}/libexec/${_tool}")
@@ -94,6 +97,4 @@ if(DEFINED QT_HOST_PATH)
     # AUTOMOC re-runs the cross-compiler over host headers without this; the host
     # compiler-predefines that AUTOMOC scrapes don't match the cross target.
     set(CMAKE_AUTOMOC_COMPILER_PREDEFINES OFF)
-else()
-    set(CMAKE_FIND_ROOT_PATH "${QGC_AARCH64_SYSROOT}")
 endif()

@@ -161,7 +161,12 @@ def get_available_debian_packages(category: str) -> list[str]:
     return [pkg for pkg, ok in zip(packages, available, strict=False) if ok]
 
 
-def run_command(cmd: list[str], dry_run: bool = False, sudo: bool = False) -> bool:
+def run_command(
+    cmd: list[str],
+    dry_run: bool = False,
+    sudo: bool = False,
+    ok_returncodes: tuple[int, ...] = (0,),
+) -> bool:
     """Run a command, optionally with sudo."""
     # os.geteuid is not available on Windows; treat missing API as non-root.
     is_root = hasattr(os, "geteuid") and os.geteuid() == 0
@@ -174,7 +179,7 @@ def run_command(cmd: list[str], dry_run: bool = False, sudo: bool = False) -> bo
 
     print(f"  Running: {shlex.join(cmd[:5])}{'...' if len(cmd) > 5 else ''}")
     result = subprocess.run(cmd)
-    return result.returncode == 0
+    return result.returncode in ok_returncodes
 
 
 def _set_env_var_ci(name: str, value: str) -> None:

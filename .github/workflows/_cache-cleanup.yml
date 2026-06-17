@@ -48,6 +48,7 @@ jobs:
             tools/_bootstrap.py
             .github/scripts/gh_cache_cleanup.py
             tools/common/__init__.py
+            tools/common/file_traversal.py
             tools/common/gh_actions.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1

@@ -2,10 +2,18 @@ name: Docker Build
 description: Build QGC using Docker
 
 inputs:
-  dockerfile:
-    description: Dockerfile to use
+  target:
+    description: Dockerfile build stage to target (linux, linux-cross, android)
     required: false
-    default: 'Dockerfile-build-ubuntu'
+    default: 'linux'
+  variant:
+    description: Variant key for cache namespace + image tag suffix (e.g. linux, linux-2204)
+    required: false
+    default: 'linux'
+  build-args:
+    description: Newline-separated KEY=VALUE docker build args (e.g. UBUNTU_REF=...)
+    required: false
+    default: ''
   build-type:
     description: CMake build type (Release or Debug)
     required: false
@@ -60,66 +68,61 @@ runs:
 
     - name: Validate inputs
       shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        BUILD_TYPE: ${{ inputs.build-type }}
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" validate \
-          --dockerfile "${{ inputs.dockerfile }}" \
-          --build-type "${{ inputs.build-type }}"
+          --target "${TARGET}" \
+          --build-type "${BUILD_TYPE}"
 
-    - name: Resolve image tags
-      id: tags
-      shell: bash
-      env:
-        PUSH_IMAGE: ${{ inputs.push-image }}
-        DOCKERFILE: ${{ inputs.dockerfile }}
-        SHA: ${{ github.sha }}
-      run: |
-        case "$DOCKERFILE" in
-          Dockerfile-build-ubuntu)  suffix=linux ;;
-          Dockerfile-build-android) suffix=android ;;
-          *)                        suffix="${DOCKERFILE#Dockerfile-build-}" ;;
-        esac
-        local_tag="dronecode/qgroundcontrol:${suffix}"
-        if [[ -n "$PUSH_IMAGE" ]]; then
-          tags="${PUSH_IMAGE}:${suffix},${PUSH_IMAGE}:${suffix}-${SHA::7}"
-          push=true
-          local_alias_source="${PUSH_IMAGE}:${suffix}"
-        else
-          tags="${local_tag}"
-          push=false
-          local_alias_source=""
-        fi
-        {
-          echo "tags=${tags}"
-          echo "push=${push}"
-          echo "local_tag=${local_tag}"
-          echo "local_alias_source=${local_alias_source}"
-        } >> "$GITHUB_OUTPUT"
+    - name: Docker metadata (tags + OCI labels)
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        images: ${{ inputs.push-image || 'dronecode/qgroundcontrol' }}
+        flavor: latest=false
+        tags: |
+          type=raw,value=${{ inputs.variant }}
+          type=sha,prefix=${{ inputs.variant }}-,format=short,enable=${{ inputs.push-image != '' }}
 
     - name: Build Docker image
-      if: contains(fromJSON('["Dockerfile-build-ubuntu", "Dockerfile-build-android"]'), inputs.dockerfile)
+      if: contains(fromJSON('["linux", "linux-cross", "android"]'), inputs.target)
       uses: docker/build-push-action@v7
       with:
         context: .
-        file: ./deploy/docker/${{ inputs.dockerfile }}
-        tags: ${{ steps.tags.outputs.tags }}
+        file: ./deploy/docker/Dockerfile
+        target: ${{ inputs.target }}
+        build-args: ${{ inputs.build-args }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        # load must stay unconditional: the Run step docker-runs the image locally
+        # whether or not we push. Targets are single-arch, so load+push coexist.
         load: true
-        push: ${{ steps.tags.outputs.push }}
-        cache-from: type=registry,ref=${{ steps.ghcr.outputs.ref }}:${{ inputs.dockerfile }}
-        cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}:{1},mode=max', steps.ghcr.outputs.ref, inputs.dockerfile) || '' }}
+        push: ${{ inputs.push-image != '' }}
+        # Avoid the OCI attestation manifest that renders as unknown/unknown on Docker Hub.
+        provenance: false
+        sbom: false
+        cache-from: ${{ github.event.pull_request.head.repo.fork != true && format('type=registry,ref={0}:{1}', steps.ghcr.outputs.ref, inputs.variant) || '' }}
+        cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}:{1},mode=max', steps.ghcr.outputs.ref, inputs.variant) || '' }}
 
     - name: Re-tag pushed image for local run
-      if: steps.tags.outputs.local_alias_source != '' && steps.tags.outputs.local_alias_source != steps.tags.outputs.local_tag
+      if: inputs.push-image != ''
       shell: bash
-      run: docker tag "${{ steps.tags.outputs.local_alias_source }}" "${{ steps.tags.outputs.local_tag }}"
+      env:
+        PUSH_IMAGE: ${{ inputs.push-image }}
+        VARIANT: ${{ inputs.variant }}
+      run: docker tag "${PUSH_IMAGE}:${VARIANT}" "dronecode/qgroundcontrol:${VARIANT}"
 
     - name: Run Docker build
       if: contains(fromJSON('["Release", "Debug"]'), inputs.build-type)
       shell: bash
       env:
         ENABLE_FUSE: ${{ inputs.fuse }}
-        IMAGE: ${{ steps.tags.outputs.local_tag }}
+        IMAGE: dronecode/qgroundcontrol:${{ inputs.variant }}
+        BUILD_TYPE: ${{ inputs.build-type }}
       run: |
-        chmod +x ./deploy/docker/docker-run.sh
-        ARGS=(run --image "$IMAGE" --build-type "${{ inputs.build-type }}")
+        chmod +x ./deploy/docker/_docker-exec.sh
+        ARGS=(run --image "$IMAGE" --build-type "$BUILD_TYPE")
         [[ "$ENABLE_FUSE" == "true" ]] && ARGS+=(--fuse)
         python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" "${ARGS[@]}"

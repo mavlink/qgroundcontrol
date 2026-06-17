@@ -50,7 +50,7 @@ jobs:
       matrix:
         include:
           - host: linux
-            runner: ubuntu-latest
+            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=80gb', github.run_id) || 'ubuntu-latest' }}
             arch: linux_gcc_64
             qt_host_path: gcc_64
             shell: bash
@@ -64,7 +64,7 @@ jobs:
             primary: false
             emulator: false
           - host: windows
-            runner: windows-2022
+            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
             arch: win64_msvc2022_64
             qt_host_path: msvc2022_64
             shell: pwsh
@@ -72,7 +72,7 @@ jobs:
             emulator: false
           - host: linux-emulator
             qt_host: linux
-            runner: ubuntu-latest
+            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/nested-virt=true/volume=80gb', github.run_id) || 'ubuntu-latest' }}
             arch: linux_gcc_64
             qt_host_path: gcc_64
             shell: bash
@@ -97,6 +97,13 @@ jobs:
       HAS_PLAYSTORE_SECRET: ${{ secrets.GOOGLE_SERVICE_ACCOUNT != '' }}
 
     steps:
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.host != 'mac'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
@@ -106,6 +113,16 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+
+      # RunsOn images ship no Android SDK and don't preset ANDROID_SDK_ROOT (unlike
+      # GitHub-hosted images), so setup-android@v4 has no install target. Point it
+      # at a writable path. macOS stays GitHub-hosted with its preinstalled SDK.
+      - name: Set Android SDK location
+        if: matrix.host != 'mac'
+        shell: bash
+        run: |
+          echo "ANDROID_SDK_ROOT=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=${RUNNER_TEMP}/android-sdk" >> "$GITHUB_ENV"
 
       - name: Build Setup (Android)
         id: setup

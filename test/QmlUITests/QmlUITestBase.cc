@@ -108,6 +108,9 @@ void QmlUITestBase::startUI()
     // offscreen mode, so a component still incubating at engine teardown logs this.
     ignoreLogMessage("default", QtInfoMsg,
                      QRegularExpression(QStringLiteral("Object or context destroyed during incubation")));
+    // Offscreen incubation can leave an item incubating at teardown; the drain is best-effort.
+    ignoreLogMessage("default", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("in the process of being created at engine destruction")));
 
     // The synthetic terrain provider installed above only covers coordinate
     // queries routed through TerrainAtCoordinateBatchManager. Path/carpet queries
@@ -205,6 +208,12 @@ void QmlUITestBase::destroyUIEngine()
         _engine->collectGarbage();
         QCoreApplication::processEvents();
         _engine->clearComponentCache();
+        QCoreApplication::processEvents();
+
+        // Destroy the root window while the engine/context are still alive so a Loader
+        // stuck mid-incubation is cancelled here instead of crashing engine teardown.
+        delete _window;
+        _window = nullptr;
         QCoreApplication::processEvents();
     }
     delete _engine;

@@ -21,9 +21,10 @@ exclude = [
     '192\.168\.',
     '10\.\d+\.',
 
-    # Flaky/slow external sites (timeouts)
+    # Flaky/slow external sites (timeouts, intermittent 5xx)
     '^https?://www\.gnu\.org/',
     '^https?://logs\.px4\.io',
+    '^https?://review\.px4\.io',
 
     # Dead/restructured external sites
     '^https?://www\.cplusplus\.com/',

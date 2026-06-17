@@ -254,13 +254,25 @@ def __getattr__(name: str):
 
 
 def pip_install(packages: list[str], quiet: bool = True) -> None:
-    """Install packages using uv (preferred) or pip."""
+    """Install packages using uv (preferred) or pip.
+
+    Targets the project .venv (on PATH in CI) rather than --system: the system
+    interpreter may be externally managed (PEP 668) when no writable runner
+    Python is provisioned. Falls back to --system when no .venv exists.
+    """
     import shutil
     import subprocess
     import sys
 
     if shutil.which("uv"):
-        cmd = ["uv", "pip", "install", "--system", *packages]
+        from .file_traversal import find_repo_root
+
+        rel = "Scripts/python.exe" if sys.platform == "win32" else "bin/python"
+        venv_python = find_repo_root() / ".venv" / rel
+        if venv_python.exists():
+            cmd = ["uv", "pip", "install", "--python", str(venv_python), *packages]
+        else:
+            cmd = ["uv", "pip", "install", "--system", *packages]
     else:
         cmd = [sys.executable, "-m", "pip", "install", *packages]
         if quiet:

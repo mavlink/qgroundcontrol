@@ -19,8 +19,8 @@ README.md
 CHANGELOG.md
 LICENSE-*
 
-# Build artifacts
-build/
+# Build artifacts (build*/ catches build-android, build-aarch64 from the dev wrappers)
+build*/
 cmake-build-*/
 out/
 cpm_modules/
@@ -47,10 +47,14 @@ package-lock.json
 *.pyc
 __pycache__/
 .ruff_cache/
+.pytest_cache/
+.venv/
+*.egg-info/
 
 # Local development
 .claude/
 .cache/
+.ccache/
 CLAUDE.md
 AGENTS.md
 

@@ -14,6 +14,18 @@ inputs:
     description: 'Install Vulkan SDK (Windows only, for validation layers)'
     required: false
     default: 'false'
+  msvc:
+    description: 'Install Visual Studio Build Tools / VCTools (Windows only)'
+    required: false
+    default: 'false'
+  msvc-arm64:
+    description: 'Also add the ARM64 cross compiler component (Windows only)'
+    required: false
+    default: 'false'
+  nsis:
+    description: 'Install NSIS / makensis for the installer build (Windows only)'
+    required: false
+    default: 'false'
   extra-packages:
     description: 'Additional packages to install (space-separated, Linux only)'
     required: false
@@ -22,6 +34,10 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Setup Python (Windows)
+      if: runner.os == 'Windows'
+      uses: ./.github/actions/setup-python
+
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
       uses: nick-fields/retry@v4
@@ -29,8 +45,11 @@ runs:
         INPUT_GSTREAMER: ${{ inputs.gstreamer }}
         INPUT_GSTREAMER_VERSION: ${{ inputs.gstreamer-version }}
         INPUT_VULKAN: ${{ inputs.vulkan }}
+        INPUT_MSVC: ${{ inputs.msvc }}
+        INPUT_MSVC_ARM64: ${{ inputs.msvc-arm64 }}
+        INPUT_NSIS: ${{ inputs.nsis }}
       with:
-        timeout_minutes: 10
+        timeout_minutes: 20
         max_attempts: 3
         shell: python
         command: |
@@ -42,6 +61,12 @@ runs:
               args.append('--skip-gstreamer')
           if os.environ.get('INPUT_VULKAN') == 'true':
               args.append('--vulkan')
+          if os.environ.get('INPUT_MSVC') == 'true':
+              args.append('--msvc')
+          if os.environ.get('INPUT_MSVC_ARM64') == 'true':
+              args.append('--msvc-arm64')
+          if os.environ.get('INPUT_NSIS') == 'true':
+              args.append('--nsis')
           sys.exit(subprocess.run(args).returncode)
 
     - name: Get system package list (Linux)

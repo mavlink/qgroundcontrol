@@ -103,7 +103,7 @@ docs:
 
 # Build using Docker (Ubuntu)
 docker:
-    ./deploy/docker/run-docker-ubuntu.sh
+    ./deploy/docker/run-docker.sh ubuntu
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Utilities

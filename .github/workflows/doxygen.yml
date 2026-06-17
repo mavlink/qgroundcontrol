@@ -68,6 +68,7 @@ jobs:
             .github/scripts/deploy_docs.py
             tools/_bootstrap.py
             tools/common/__init__.py
+            tools/common/file_traversal.py
             tools/common/git.py
             tools/common/proc.py
           sparse-checkout-cone-mode: false

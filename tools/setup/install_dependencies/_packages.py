@@ -106,6 +106,69 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libvulkan-dev",
         "libpipewire-0.3-dev",
     ],
+    # Target-side libraries for the aarch64 cross sysroot. Single source for
+    # deploy/docker/install-sysroot-aarch64.sh, which apt-installs these with an
+    # :arm64 tag. Excluded from the aggregate (native) set by get_debian_packages.
+    "cross_arm64": [
+        "libc6",
+        "libstdc++6",
+        "libgcc-s1",
+        "libudev-dev",
+        "libinput-dev",
+        "libdrm-dev",
+        "libgbm-dev",
+        "libgl-dev",
+        "libgles-dev",
+        "libegl-dev",
+        "libvulkan-dev",
+        "libfontconfig1-dev",
+        "libfreetype-dev",
+        "libglib2.0-dev",
+        "libx11-dev",
+        "libx11-xcb-dev",
+        "libxext-dev",
+        "libxfixes-dev",
+        "libxcb1-dev",
+        "libxcb-cursor-dev",
+        "libxcb-glx0-dev",
+        "libxcb-icccm4-dev",
+        "libxcb-image0-dev",
+        "libxcb-keysyms1-dev",
+        "libxcb-randr0-dev",
+        "libxcb-render0-dev",
+        "libxcb-render-util0-dev",
+        "libxcb-shape0-dev",
+        "libxcb-shm0-dev",
+        "libxcb-sync-dev",
+        "libxcb-util-dev",
+        "libxcb-xfixes0-dev",
+        "libxcb-xinerama0-dev",
+        "libxcb-xinput-dev",
+        "libxcb-xkb-dev",
+        "libxkbcommon-dev",
+        "libxkbcommon-x11-dev",
+        "libxi-dev",
+        "libxrender-dev",
+        "libxdamage-dev",
+        "libxrandr-dev",
+        "libdbus-1-dev",
+        "libpulse-dev",
+        "libasound2-dev",
+        "libssl-dev",
+        "libnss3-dev",
+        "zlib1g-dev",
+        "libicu-dev",
+        "libpcre2-dev",
+        "libgstreamer1.0-dev",
+        "libgstreamer-plugins-base1.0-dev",
+        "libgstreamer-plugins-bad1.0-dev",
+        # Runtime plugin .so packages for the AppDir (the -dev packages above are link-only);
+        # install verification needs playback/tcp (base) and rtsp/rtp/rtpmanager/udp (good).
+        "gstreamer1.0-plugins-base",
+        "gstreamer1.0-plugins-good",
+        "libusb-1.0-0-dev",
+        "libsdl2-dev",
+    ],
 }
 
 MACOS_PACKAGES: list[str] = [
@@ -136,6 +199,8 @@ def get_debian_packages(
 
     packages = []
     for cat, pkgs in DEBIAN_PACKAGES.items():
+        if cat.startswith("cross_"):
+            continue  # target-arch sysroot libs, not for the native host
         if cat.endswith("_optional") and not include_optional:
             continue
         packages.extend(pkgs)
