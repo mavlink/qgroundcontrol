@@ -322,4 +322,41 @@ void RTCMParserTest::_testParserCorruptedPreamble()
     QVERIFY(parser.validateCrc());
 }
 
+void RTCMParserTest::_testParserRecoveryAfterBadCrc()
+{
+    QByteArray msg1 = GpsTestHelpers::buildRtcmFrame(1005, 4);
+    QByteArray msg2 = GpsTestHelpers::buildRtcmFrame(1077, 8);
+    QByteArray msg3 = GpsTestHelpers::buildRtcmFrame(1087, 2);
+
+    // Corrupt the CRC of the middle frame
+    msg2[msg2.size() - 1] = static_cast<char>(msg2[msg2.size() - 1] ^ 0xFF);
+
+    QByteArray stream = msg1 + msg2 + msg3;
+
+    RTCMParser parser;
+    int validCount = 0;
+    int invalidCount = 0;
+    QVector<uint16_t> validIds;
+
+    for (int i = 0; i < stream.size(); i++) {
+        if (!parser.addByte(static_cast<uint8_t>(stream[i]))) {
+            continue;
+        }
+
+        if (parser.validateCrc()) {
+            validIds.append(parser.messageId());
+            validCount++;
+        } else {
+            invalidCount++;
+        }
+
+        parser.reset();
+    }
+
+    QCOMPARE(validCount, 2);
+    QCOMPARE(invalidCount, 1);
+    QCOMPARE(validIds[0], static_cast<uint16_t>(1005));
+    QCOMPARE(validIds[1], static_cast<uint16_t>(1087));
+}
+
 UT_REGISTER_TEST(RTCMParserTest, TestLabel::Unit)

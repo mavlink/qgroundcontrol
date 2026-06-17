@@ -27,4 +27,5 @@ private slots:
     void _testParserMaxLength();
     void _testParserTruncatedFrame();
     void _testParserCorruptedPreamble();
+    void _testParserRecoveryAfterBadCrc();
 };

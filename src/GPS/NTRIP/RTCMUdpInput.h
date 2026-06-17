@@ -4,6 +4,7 @@
 #include <QtCore/QObject>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QUdpSocket>
+#include "RTCMParser.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RTCMUdpInputLog)
 
@@ -41,11 +42,15 @@ public:
     /// Unbind the socket and stop accepting datagrams.
     void stop();
 
-    bool   isRunning() const { return _running; }
+    bool isRunning() const { return _running; }
     quint16 port()     const { return _port; }
 
     /// Change the listen port. If already running, restarts automatically.
     void setPort(quint16 port);
+
+    /// Enable/disable validation of RTCM data.
+    /// With this enabled, only valid RTCM packets are converted to MAVLink.
+    void setValidation(const bool validate) { _validateRtcm = validate; }
 
 signals:
     /// Emitted once per received datagram with the raw RTCM payload.
@@ -60,6 +65,10 @@ private slots:
 
 private:
     QUdpSocket _socket;
-    quint16    _port;
-    bool       _running = false;
+    quint16 _port;
+    bool _running = false;
+    bool _validateRtcm = false;
+    RTCMParser _rtcmParser;
+    quint64 _validBytes = 0;
+    quint64 _invalidBytes = 0;
 };

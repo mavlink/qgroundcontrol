@@ -24,4 +24,5 @@ public:
     DEFINE_SETTINGFACT(ntripUdpTargetPort)
     DEFINE_SETTINGFACT(rtcmUdpInputEnabled)
     DEFINE_SETTINGFACT(rtcmUdpInputPort)
+    DEFINE_SETTINGFACT(rtcmUdpValidate)
 };
