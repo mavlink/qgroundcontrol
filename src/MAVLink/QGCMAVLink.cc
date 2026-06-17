@@ -328,8 +328,8 @@ QString QGCMAVLink::mavResultToString(uint8_t result)
 QString QGCMAVLink::mavSysStatusSensorToString(MAV_SYS_STATUS_SENSOR sysStatusSensor)
 {
     struct sensorInfo_s {
-        uint32_t    bit;
-        const char* sensorName;
+        MAV_SYS_STATUS_SENSOR bit;
+        const char*           sensorName;
     };
 
     static const sensorInfo_s rgSensorInfo[] = {

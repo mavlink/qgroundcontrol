@@ -76,6 +76,8 @@ void disableAppNapViaInfoDict()
 #if defined(Q_OS_WIN)
 
 #if defined(_MSC_VER)
+
+#if defined(_DEBUG)
 int __cdecl WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 {
     if (message) {
@@ -89,6 +91,7 @@ int __cdecl WindowsCrtReportHook(int reportType, char* message, int* returnValue
     }
     return 0; // let CRT continue
 }
+#endif // _DEBUG
 
 void __cdecl WindowsPurecallHandler()
 {
