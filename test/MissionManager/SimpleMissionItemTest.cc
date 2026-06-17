@@ -205,15 +205,13 @@ void SimpleMissionItemTest::_testSignals()
     //      amslEntryAltChanged, amslExitAltChanged, terrainAltitudeChanged (altitude depends on position)
     // Check that actually changing coordinate signals correctly
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5() + 1, missionItem.param6(), missionItem.param7()));
-    QVERIFY(_spyVisualItem->onlyEmittedOnceByMask(
-        _spyVisualItem->mask("coordinateChanged", "entryCoordinateChanged", "exitCoordinateChanged", "dirtyChanged",
-                             "amslEntryAltChanged", "amslExitAltChanged", "terrainAltitudeChanged")));
+    QVERIFY(_spyVisualItem->onlyEmittedOnce("coordinateChanged", "entryCoordinateChanged", "exitCoordinateChanged", "dirtyChanged",
+                             "amslEntryAltChanged", "amslExitAltChanged", "terrainAltitudeChanged"));
     _spyVisualItem->clearAllSignals();
     _spySimpleItem->clearAllSignals();
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6() + 1, missionItem.param7()));
-    QVERIFY(_spyVisualItem->onlyEmittedOnceByMask(
-        _spyVisualItem->mask("coordinateChanged", "entryCoordinateChanged", "exitCoordinateChanged", "dirtyChanged",
-                             "amslEntryAltChanged", "amslExitAltChanged", "terrainAltitudeChanged")));
+    QVERIFY(_spyVisualItem->onlyEmittedOnce("coordinateChanged", "entryCoordinateChanged", "exitCoordinateChanged", "dirtyChanged",
+                             "amslEntryAltChanged", "amslExitAltChanged", "terrainAltitudeChanged"));
     _spyVisualItem->clearAllSignals();
     _spySimpleItem->clearAllSignals();
     // Altitude in coordinate is not used in setCoordinate
@@ -247,8 +245,7 @@ void SimpleMissionItemTest::_testSignals()
     _simpleItem->setAltitudeFrame(_simpleItem->altitudeFrame() == QGroundControlQmlGlobal::AltitudeFrameRelative
                                      ? QGroundControlQmlGlobal::AltitudeFrameAbsolute
                                      : QGroundControlQmlGlobal::AltitudeFrameRelative);
-    QVERIFY(_spySimpleItem->emittedByMask(
-        _spySimpleItem->mask("dirtyChanged", "friendlyEditAllowedChanged", "altitudeFrameChanged")));
+    QVERIFY(_spySimpleItem->emitted("dirtyChanged", "friendlyEditAllowedChanged", "altitudeFrameChanged"));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
     // Check commandChanged signalling. Call setCommand should trigger:
@@ -261,7 +258,7 @@ void SimpleMissionItemTest::_testSignals()
     QVERIFY(_spySimpleItem->noneEmitted());
     _simpleItem->setCommand(MAV_CMD_NAV_LOITER_TIME);
     QVERIFY(_spySimpleItem->emitted("commandChanged"));
-    QVERIFY(_spyVisualItem->emittedByMask(_spyVisualItem->mask("commandNameChanged", "dirtyChanged")));
+    QVERIFY(_spyVisualItem->emitted("commandNameChanged", "dirtyChanged"));
 }
 
 void SimpleMissionItemTest::_testCameraSectionDirty()

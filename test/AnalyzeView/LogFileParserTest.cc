@@ -13,6 +13,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QPointF>
 #include <QtCore/QTemporaryFile>
+#include <QtCore/QThreadPool>
 #include <QtCore/QTimeZone>
 #include <QtCore/QVariantList>
 #include <QtTest/QSignalSpy>
@@ -1014,9 +1015,12 @@ void LogFileParserTest::_clearDuringAsyncParseTest()
     // parsingChanged must have fired at least once for the false transition.
     QVERIFY(parsingSpy.count() >= 1);
 
-    // Drain the event loop long enough for the background thread to finish
-    // and any queued signals to be dispatched.
-    QTest::qWait(3000);
+    // Wait for the cancelled worker to drain off the global pool, then flush its
+    // queued finished-slot, instead of blindly sleeping for a fixed duration.
+    QVERIFY(UnitTest::waitForCondition(
+        [] { return QThreadPool::globalInstance()->activeThreadCount() == 0; }, TestTimeout::mediumMs(),
+        QStringLiteral("global thread pool drained")));
+    QCoreApplication::processEvents();
 
     // The cancelled result must NOT have been applied.
     QCOMPARE(parser.parsing(), false);

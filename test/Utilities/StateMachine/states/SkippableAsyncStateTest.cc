@@ -39,8 +39,8 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateExecute()
     QVERIFY(setupCalled);
     QVERIFY(capturedState != nullptr);
     // Verify advance path taken, not skip path
-    QVERIFY(stateSpy.emittedByMask(stateSpy.mask("advance")));
-    QVERIFY(stateSpy.notEmittedByMask(stateSpy.mask("skipped")));
+    QVERIFY(stateSpy.emitted("advance"));
+    QVERIFY(stateSpy.notEmitted("skipped"));
 }
 
 void SkippableAsyncStateTest::_testSkippableAsyncStateSkip()
@@ -81,8 +81,8 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateSkip()
     QVERIFY(!setupCalled);  // Setup should NOT have been called
     QVERIFY(skipHandled);
     // Verify skip path taken, not execute path
-    QVERIFY(stateSpy.emittedByMask(stateSpy.mask("skipped")));
-    QVERIFY(stateSpy.notEmittedByMask(stateSpy.mask("advance")));
+    QVERIFY(stateSpy.emitted("skipped"));
+    QVERIFY(stateSpy.notEmitted("advance"));
 }
 
 void SkippableAsyncStateTest::_testSkippableAsyncStateTimeout()
@@ -120,9 +120,9 @@ void SkippableAsyncStateTest::_testSkippableAsyncStateTimeout()
     QVERIFY(startAndWaitForFinished(&machine));
     QVERIFY(timeoutReached);
     // Verify timeout path taken
-    QVERIFY(stateSpy.emittedByMask(stateSpy.mask("timeout")));
-    QVERIFY(stateSpy.notEmittedByMask(stateSpy.mask("advance")));
-    QVERIFY(stateSpy.notEmittedByMask(stateSpy.mask("skipped")));
+    QVERIFY(stateSpy.emitted("timeout"));
+    QVERIFY(stateSpy.notEmitted("advance"));
+    QVERIFY(stateSpy.notEmitted("skipped"));
 }
 
 void SkippableAsyncStateTest::_testSkippableAsyncStateWithSkipAction()

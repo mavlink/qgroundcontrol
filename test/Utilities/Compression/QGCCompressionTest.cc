@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <initializer_list>
 #include <vector>
 
 #include "QGCCompression.h"
@@ -40,83 +41,97 @@ bool QGCCompressionTest::_compareFiles(const QString& file1, const QString& file
 // ============================================================================
 // Format Detection Tests
 // ============================================================================
+void QGCCompressionTest::_testFormatDetection_data()
+{
+    QTest::addColumn<QString>("path");
+    QTest::addColumn<bool>("contentFallback");
+    QTest::addColumn<int>("expected");
+
+    const auto addRow = [](const char *tag, const QString &path, bool fallback, QGCCompression::Format fmt) {
+        QTest::newRow(tag) << path << fallback << static_cast<int>(fmt);
+    };
+
+    addRow("zip", "file.zip", true, QGCCompression::Format::ZIP);
+    addRow("7z", "file.7z", true, QGCCompression::Format::SEVENZ);
+    addRow("gz", "file.gz", true, QGCCompression::Format::GZIP);
+    addRow("gzip", "file.gzip", true, QGCCompression::Format::GZIP);
+    addRow("xz", "file.xz", true, QGCCompression::Format::XZ);
+    addRow("lzma", "file.lzma", true, QGCCompression::Format::XZ);
+    addRow("zst", "file.zst", true, QGCCompression::Format::ZSTD);
+    addRow("zstd", "file.zstd", true, QGCCompression::Format::ZSTD);
+    addRow("tar", "file.tar", true, QGCCompression::Format::TAR);
+    addRow("tar.gz", "file.tar.gz", true, QGCCompression::Format::TAR_GZ);
+    addRow("tgz", "file.tgz", true, QGCCompression::Format::TAR_GZ);
+    addRow("tar.xz", "file.tar.xz", true, QGCCompression::Format::TAR_XZ);
+    addRow("txz", "file.txz", true, QGCCompression::Format::TAR_XZ);
+    addRow("unknown-ext", "file.unknown", true, QGCCompression::Format::Auto);
+    addRow("txt", "file.txt", true, QGCCompression::Format::Auto);
+    addRow("uppercase-zip", "FILE.ZIP", true, QGCCompression::Format::ZIP);
+    addRow("mixedcase-gz", "File.Gz", true, QGCCompression::Format::GZIP);
+    addRow("unknown-no-fallback", "file.unknown", false, QGCCompression::Format::Auto);
+}
+
 void QGCCompressionTest::_testFormatDetection()
 {
-    // Extension-based detection
-    QCOMPARE(QGCCompression::detectFormat("file.zip"), QGCCompression::Format::ZIP);
-    QCOMPARE(QGCCompression::detectFormat("file.7z"), QGCCompression::Format::SEVENZ);
-    QCOMPARE(QGCCompression::detectFormat("file.gz"), QGCCompression::Format::GZIP);
-    QCOMPARE(QGCCompression::detectFormat("file.gzip"), QGCCompression::Format::GZIP);
-    QCOMPARE(QGCCompression::detectFormat("file.xz"), QGCCompression::Format::XZ);
-    QCOMPARE(QGCCompression::detectFormat("file.lzma"), QGCCompression::Format::XZ);
-    QCOMPARE(QGCCompression::detectFormat("file.zst"), QGCCompression::Format::ZSTD);
-    QCOMPARE(QGCCompression::detectFormat("file.zstd"), QGCCompression::Format::ZSTD);
-    QCOMPARE(QGCCompression::detectFormat("file.tar"), QGCCompression::Format::TAR);
-    QCOMPARE(QGCCompression::detectFormat("file.tar.gz"), QGCCompression::Format::TAR_GZ);
-    QCOMPARE(QGCCompression::detectFormat("file.tgz"), QGCCompression::Format::TAR_GZ);
-    QCOMPARE(QGCCompression::detectFormat("file.tar.xz"), QGCCompression::Format::TAR_XZ);
-    QCOMPARE(QGCCompression::detectFormat("file.txz"), QGCCompression::Format::TAR_XZ);
-    QCOMPARE(QGCCompression::detectFormat("file.unknown"), QGCCompression::Format::Auto);
-    QCOMPARE(QGCCompression::detectFormat("file.txt"), QGCCompression::Format::Auto);
-    // Case insensitive
-    QCOMPARE(QGCCompression::detectFormat("FILE.ZIP"), QGCCompression::Format::ZIP);
-    QCOMPARE(QGCCompression::detectFormat("File.Gz"), QGCCompression::Format::GZIP);
-    // Test without content fallback (extension-only)
-    QCOMPARE(QGCCompression::detectFormat("file.unknown", false), QGCCompression::Format::Auto);
+    QFETCH(QString, path);
+    QFETCH(bool, contentFallback);
+    QFETCH(int, expected);
+
+    QCOMPARE(static_cast<int>(QGCCompression::detectFormat(path, contentFallback)), expected);
+}
+
+void QGCCompressionTest::_testDetectFormatFromFile_data()
+{
+    QTest::addColumn<QString>("resource");
+    QTest::addColumn<int>("expected");
+
+    QTest::newRow("zip") << QStringLiteral(":/unittest/manifest.json.zip") << static_cast<int>(QGCCompression::Format::ZIP);
+    QTest::newRow("gz") << QStringLiteral(":/unittest/manifest.json.gz") << static_cast<int>(QGCCompression::Format::GZIP);
+    QTest::newRow("xz") << QStringLiteral(":/unittest/manifest.json.xz") << static_cast<int>(QGCCompression::Format::XZ);
+    QTest::newRow("zst") << QStringLiteral(":/unittest/manifest.json.zst") << static_cast<int>(QGCCompression::Format::ZSTD);
+#ifdef QGC_ENABLE_BZIP2
+    QTest::newRow("bz2") << QStringLiteral(":/unittest/manifest.json.bz2") << static_cast<int>(QGCCompression::Format::BZIP2);
+#endif
+    QTest::newRow("7z") << QStringLiteral(":/unittest/manifest.json.7z") << static_cast<int>(QGCCompression::Format::SEVENZ);
+}
+
+void QGCCompressionTest::_testDetectFormatFromFile()
+{
+    QFETCH(QString, resource);
+    QFETCH(int, expected);
+    QCOMPARE(static_cast<int>(QGCCompression::detectFormatFromFile(resource)), expected);
+}
+
+void QGCCompressionTest::_testDetectFormatFromMagicBytes_data()
+{
+    QTest::addColumn<QByteArray>("magic");
+    QTest::addColumn<int>("expected");
+
+    const auto padded = [](std::initializer_list<int> bytes) {
+        QByteArray data;
+        for (int b : bytes) {
+            data.append(static_cast<char>(b));
+        }
+        data.append(QByteArray(10, '\0'));
+        return data;
+    };
+
+    QTest::newRow("gzip") << padded({0x1F, 0x8B}) << static_cast<int>(QGCCompression::Format::GZIP);
+    QTest::newRow("zip") << padded({0x50, 0x4B, 0x03, 0x04}) << static_cast<int>(QGCCompression::Format::ZIP);
+    QTest::newRow("xz") << padded({0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00}) << static_cast<int>(QGCCompression::Format::XZ);
+    QTest::newRow("zstd") << padded({0x28, 0xB5, 0x2F, 0xFD}) << static_cast<int>(QGCCompression::Format::ZSTD);
+}
+
+void QGCCompressionTest::_testDetectFormatFromMagicBytes()
+{
+    QFETCH(QByteArray, magic);
+    QFETCH(int, expected);
+    QCOMPARE(static_cast<int>(QGCCompression::detectFormatFromData(magic)), expected);
 }
 
 void QGCCompressionTest::_testFormatDetectionFromContent()
 {
     QTemporaryDir tempDir;
-    // Test detectFormatFromFile() - reads actual file content
-    // Using Qt resources that exist in the test bundle
-    // ZIP archive
-    QCOMPARE(QGCCompression::detectFormatFromFile(":/unittest/manifest.json.zip"), QGCCompression::Format::ZIP);
-    // GZIP compressed file
-    QCOMPARE(QGCCompression::detectFormatFromFile(":/unittest/manifest.json.gz"), QGCCompression::Format::GZIP);
-    // XZ compressed file
-    QCOMPARE(QGCCompression::detectFormatFromFile(":/unittest/manifest.json.xz"), QGCCompression::Format::XZ);
-    // ZSTD compressed file
-    QCOMPARE(QGCCompression::detectFormatFromFile(":/unittest/manifest.json.zst"), QGCCompression::Format::ZSTD);
-#ifdef QGC_ENABLE_BZIP2
-    // BZ2 compressed file
-    QCOMPARE(QGCCompression::detectFormatFromFile(":/unittest/manifest.json.bz2"), QGCCompression::Format::BZIP2);
-#endif
-    // 7z archive
-    QCOMPARE(QGCCompression::detectFormatFromFile(":/unittest/manifest.json.7z"), QGCCompression::Format::SEVENZ);
-    // Test detectFormatFromData() with raw bytes
-    // GZIP magic bytes
-    QByteArray gzipData;
-    gzipData.append(char(0x1F));
-    gzipData.append(char(0x8B));
-    gzipData.append(QByteArray(10, '\0'));  // Padding
-    QCOMPARE(QGCCompression::detectFormatFromData(gzipData), QGCCompression::Format::GZIP);
-    // ZIP magic bytes (PK\x03\x04)
-    QByteArray zipData;
-    zipData.append(char(0x50));  // 'P'
-    zipData.append(char(0x4B));  // 'K'
-    zipData.append(char(0x03));
-    zipData.append(char(0x04));
-    zipData.append(QByteArray(10, '\0'));
-    QCOMPARE(QGCCompression::detectFormatFromData(zipData), QGCCompression::Format::ZIP);
-    // XZ magic bytes
-    QByteArray xzData;
-    xzData.append(char(0xFD));
-    xzData.append(char(0x37));  // '7'
-    xzData.append(char(0x7A));  // 'z'
-    xzData.append(char(0x58));  // 'X'
-    xzData.append(char(0x5A));  // 'Z'
-    xzData.append(char(0x00));
-    xzData.append(QByteArray(10, '\0'));
-    QCOMPARE(QGCCompression::detectFormatFromData(xzData), QGCCompression::Format::XZ);
-    // ZSTD magic bytes
-    QByteArray zstdData;
-    zstdData.append(char(0x28));
-    zstdData.append(char(0xB5));
-    zstdData.append(char(0x2F));
-    zstdData.append(char(0xFD));
-    zstdData.append(QByteArray(10, '\0'));
-    QCOMPARE(QGCCompression::detectFormatFromData(zstdData), QGCCompression::Format::ZSTD);
     // Test content fallback in detectFormat()
     // Copy a .gz file to a file without extension and verify detection
     const QString noExtFile = tempDir.filePath("compressed_no_ext");
@@ -1446,4 +1461,4 @@ void QGCCompressionTest::_benchmarkListArchive()
 #include "UnitTest.h"
 #include <QtCore/QTemporaryDir>
 
-UT_REGISTER_TEST(QGCCompressionTest, TestLabel::Unit, TestLabel::Utilities)
+UT_REGISTER_TEST_LIGHTWEIGHT(QGCCompressionTest, TestLabel::Unit, TestLabel::Utilities)

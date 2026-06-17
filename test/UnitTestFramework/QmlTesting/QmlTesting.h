@@ -14,7 +14,7 @@
 /// 2. Each file contains TestCase elements with test functions
 /// 3. A dedicated Qt Quick Test executable (QGCQmlQuickTests) runs them
 ///    out-of-process via quick_test_main()
-/// 4. QmlTestRunner still provides an in-process structural/sanity check
+/// 4. QmlTestFileValidator still provides an in-process structural/sanity check
 /// 5. Results integrate with CTest
 ///
 /// ## Basic Test Structure
@@ -93,7 +93,7 @@
 ///   ctest -R QmlQuickTests
 ///
 /// Via command line (sanity check only):
-///   ./QGroundControl --unittest:QmlTestRunner
+///   ./QGroundControl --unittest:QmlTestFileValidator
 ///
 /// ## File Naming
 ///

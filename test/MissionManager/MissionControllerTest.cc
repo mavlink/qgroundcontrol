@@ -521,9 +521,9 @@ void MissionControllerTest::_testLoadPlanRoundTripComplexItems()
     QCOMPARE(_missionController->visualItems()->count(), 3);
 
     // Save to a temporary file, reload, and verify the types survive the round-trip
-    QTemporaryDir* const tmpDir = createTempDir();
-    QVERIFY(tmpDir && tmpDir->isValid());
-    const QString planPath = QStringLiteral("%1/test.%2").arg(tmpDir->path(), _masterController->fileExtension());
+    QTemporaryDir tmpDir;
+    QVERIFY(tmpDir.isValid());
+    const QString planPath = QStringLiteral("%1/test.%2").arg(tmpDir.path(), _masterController->fileExtension());
     QVERIFY(_masterController->saveToFile(planPath));
 
     _missionController->removeAll();

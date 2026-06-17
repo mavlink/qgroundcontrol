@@ -84,9 +84,8 @@ void QGCMapPolylineTest::_testVertexManipulation()
         QCOMPARE(_mapPolyline->count(), i);
         _mapPolyline->appendVertex(_linePoints[i]);
         QCoreApplication::processEvents();
-        QVERIFY(_multiSpyPolyline->onlyEmittedOnceByMask(_multiSpyPolyline->mask(
-            "pathChanged", "dirtyChanged", "countChanged", "isEmptyChanged", "isValidChanged")));
-        QVERIFY(_multiSpyModel->emittedOnceByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
+        QVERIFY(_multiSpyPolyline->onlyEmittedOnce("pathChanged", "dirtyChanged", "countChanged", "isEmptyChanged", "isValidChanged"));
+        QVERIFY(_multiSpyModel->emittedOnce("dirtyChanged", "countChanged"));
         QCOMPARE(_multiSpyPolyline->argument<int>("countChanged"), static_cast<int>(i + 1));
         QCOMPARE(_multiSpyModel->argument<int>("countChanged"), static_cast<int>(i + 1));
         QVERIFY(_mapPolyline->dirty());
@@ -108,7 +107,7 @@ void QGCMapPolylineTest::_testVertexManipulation()
     QGeoCoordinate adjustCoord(_linePoints[1].latitude() + 1, _linePoints[1].longitude() + 1);
     _mapPolyline->adjustVertex(1, adjustCoord);
     QCoreApplication::processEvents();
-    QVERIFY2(_multiSpyPolyline->onlyEmittedOnceByMask(_multiSpyPolyline->mask("pathChanged", "dirtyChanged")),
+    QVERIFY2(_multiSpyPolyline->onlyEmittedOnce("pathChanged", "dirtyChanged"),
              qPrintable(_multiSpyPolyline->summary()));
     QVERIFY(_multiSpyModel->onlyEmittedOnce("dirtyChanged"));
     QVERIFY(multiSpyGeoCoord->emittedOnce("coordinateChanged"));
@@ -126,9 +125,8 @@ void QGCMapPolylineTest::_testVertexManipulation()
     _multiSpyModel->clearAllSignals();
     // Vertex removal testing
     _mapPolyline->removeVertex(1);
-    QVERIFY(_multiSpyPolyline->onlyEmittedOnceByMask(
-        _multiSpyPolyline->mask("pathChanged", "dirtyChanged", "countChanged", "isEmptyChanged", "isValidChanged")));
-    QVERIFY(_multiSpyModel->emittedOnceByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
+    QVERIFY(_multiSpyPolyline->onlyEmittedOnce("pathChanged", "dirtyChanged", "countChanged", "isEmptyChanged", "isValidChanged"));
+    QVERIFY(_multiSpyModel->emittedOnce("dirtyChanged", "countChanged"));
     QCOMPARE(_mapPolyline->count(), 3);
     vertexList = _mapPolyline->coordinateList();
     QCOMPARE(vertexList.count(), 3);
@@ -141,9 +139,8 @@ void QGCMapPolylineTest::_testVertexManipulation()
     QCOMPARE(_pathModel->value<QGCQGeoCoordinate*>(2)->coordinate(), _linePoints[3]);
     // Clear testing
     _mapPolyline->clear();
-    QVERIFY(_multiSpyPolyline->onlyEmittedByMask(_multiSpyPolyline->mask(
-        "pathChanged", "dirtyChanged", "countChanged", "isEmptyChanged", "isValidChanged", "cleared")));
-    QVERIFY(_multiSpyModel->emittedByMask(_multiSpyModel->mask("dirtyChanged", "countChanged")));
+    QVERIFY(_multiSpyPolyline->onlyEmitted("pathChanged", "dirtyChanged", "countChanged", "isEmptyChanged", "isValidChanged", "cleared"));
+    QVERIFY(_multiSpyModel->emitted("dirtyChanged", "countChanged"));
     QVERIFY(_mapPolyline->dirty());
     QVERIFY(_pathModel->dirty());
     QCOMPARE(_mapPolyline->count(), 0);

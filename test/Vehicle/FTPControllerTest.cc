@@ -1,6 +1,8 @@
 #include "FTPControllerTest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QTemporaryDir>
+#include <QtCore/QTemporaryFile>
 #include <QtTest/QSignalSpy>
 
 #include "FTPController.h"
@@ -21,24 +23,24 @@ void FTPControllerTest::_extractArchiveRejectsInvalidInput()
 void FTPControllerTest::_extractArchiveHappyPath()
 {
     FTPController controller(this);
-    QTemporaryDir* const outputDir = createTempDir();
-    QVERIFY(outputDir && outputDir->isValid());
+    QTemporaryDir outputDir;
+    QVERIFY(outputDir.isValid());
 
     QSignalSpy completeSpy(&controller, &FTPController::extractionComplete);
     QSignalSpy extractingSpy(&controller, &FTPController::extractingChanged);
     QVERIFY(completeSpy.isValid());
     QVERIFY(extractingSpy.isValid());
 
-    QVERIFY(controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir->path()));
+    QVERIFY(controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir.path()));
     QVERIFY(controller.extracting());
 
     QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::longMs());
     QCOMPARE(completeSpy.count(), 1);
     const QList<QVariant> args = completeSpy.takeFirst();
-    QCOMPARE(args.at(0).toString(), outputDir->path());
+    QCOMPARE(args.at(0).toString(), outputDir.path());
     QVERIFY(args.at(1).toString().isEmpty());
 
-    QVERIFY(QFile::exists(outputDir->path() + QStringLiteral("/manifest.json")));
+    QVERIFY(QFile::exists(outputDir.path() + QStringLiteral("/manifest.json")));
     QVERIFY(!controller.extracting());
     QVERIFY(controller.errorString().isEmpty());
     QVERIFY(extractingSpy.count() >= 2);
@@ -47,13 +49,13 @@ void FTPControllerTest::_extractArchiveHappyPath()
 void FTPControllerTest::_extractArchiveConcurrentRejected()
 {
     FTPController controller(this);
-    QTemporaryDir* const outputDir = createTempDir();
-    QVERIFY(outputDir && outputDir->isValid());
+    QTemporaryDir outputDir;
+    QVERIFY(outputDir.isValid());
 
-    QVERIFY(controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir->path()));
+    QVERIFY(controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir.path()));
     QVERIFY(controller.extracting());
 
-    QVERIFY(!controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir->path()));
+    QVERIFY(!controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir.path()));
     QVERIFY(controller.errorString().contains(QStringLiteral("Extraction already in progress")));
 
     QSignalSpy completeSpy(&controller, &FTPController::extractionComplete);
@@ -72,13 +74,12 @@ void FTPControllerTest::_browseArchiveRejectsInvalidInput()
     QVERIFY(!controller.browseArchive(QStringLiteral("/nonexistent/archive.zip")));
     QVERIFY(controller.errorString().contains(QStringLiteral("Archive file not found")));
 
-    QTemporaryFile* const tempFile = createTempFile();
-    QVERIFY(tempFile != nullptr);
-    QVERIFY(tempFile->isOpen());
-    tempFile->write("not an archive");
-    tempFile->flush();
+    QTemporaryFile tempFile;
+    QVERIFY(tempFile.open());
+    tempFile.write("not an archive");
+    tempFile.flush();
 
-    QVERIFY(!controller.browseArchive(tempFile->fileName()));
+    QVERIFY(!controller.browseArchive(tempFile.fileName()));
     QVERIFY(controller.errorString().contains(QStringLiteral("Not a supported archive format")));
 }
 

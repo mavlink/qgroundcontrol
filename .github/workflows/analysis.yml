@@ -117,6 +117,7 @@ jobs:
           extra-args: >-
             -DQGC_ENABLE_COVERAGE=OFF
             ${{ inputs.tool == 'asan' && '-DQGC_ENABLE_ASAN=ON' || '' }}
+            ${{ inputs.tool == 'asan' && '-DQGC_TEST_DETECT_LEAKS=ON' || '' }}
             ${{ inputs.tool == 'ubsan' && '-DQGC_ENABLE_UBSAN=ON' || '' }}
             ${{ inputs.tool == 'tsan' && '-DQGC_ENABLE_TSAN=ON' || '' }}
 

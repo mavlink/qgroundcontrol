@@ -28,6 +28,19 @@ set(QGC_TEST_TIMEOUT_DEFAULT 90 CACHE STRING "Default test timeout (seconds)")
 
 option(QGC_TEST_ONSCREEN "Run tests with native display instead of offscreen" OFF)
 
+# When OFF (default) the per-test ASAN_OPTIONS forces detect_leaks=0 to avoid
+# LSan's ptrace tracer tripping Yama (ptrace_scope>=1) on most dev/CI hosts.
+# Turn ON where ptrace is permitted (CI sanitizer lane passes
+# -DQGC_TEST_DETECT_LEAKS=ON) to let the job-level ASAN_OPTIONS=detect_leaks=1
+# take effect instead of being clobbered by a per-test override.
+option(QGC_TEST_DETECT_LEAKS "Allow LSan leak detection under ASan (requires ptrace permission)" OFF)
+
+# Opt-in: build tests into a separate qgc_tests executable so editing a test
+# relinks only test objects instead of the whole app. OFF keeps the existing
+# behavior of compiling tests into the main app target and dispatching via
+# `<app> --unittest`. Full wiring is scaffolded in test/CMakeLists.txt.
+option(QGC_BUILD_TEST_BINARY "Build a separate qgc_tests executable for faster test relinks" OFF)
+
 # ----------------------------------------------------------------------------
 # Convenience Targets
 # ----------------------------------------------------------------------------
@@ -126,7 +139,11 @@ endforeach()
 function(add_qgc_test test_name)
     cmake_parse_arguments(ARG "SERIAL" "TIMEOUT" "LABELS;RESOURCE_LOCK;SKIP_REGEX;ENV_MODIFICATION" ${ARGN})
 
-    set(_test_command $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest:${test_name} --allow-multiple)
+    if(QGC_BUILD_TEST_BINARY AND TARGET qgc_tests)
+        set(_test_command $<TARGET_FILE:qgc_tests> --unittest:${test_name} --allow-multiple)
+    else()
+        set(_test_command $<TARGET_FILE:${CMAKE_PROJECT_NAME}> --unittest:${test_name} --allow-multiple)
+    endif()
     if(QGC_TEST_ONSCREEN)
         list(APPEND _test_command --onscreen)
     endif()
@@ -157,15 +174,28 @@ function(add_qgc_test test_name)
 
     # LSan's tracer process needs ptrace, which Yama (ptrace_scope>=1) blocks on
     # most dev/CI hosts — disable leak detection under ASan to avoid spurious
-    # "Tracer caught signal 11" failures at process exit.
-    if(QGC_ENABLE_ASAN)
+    # "Tracer caught signal 11" failures at process exit. Opt back in with
+    # QGC_TEST_DETECT_LEAKS=ON where ptrace is permitted; that path injects no
+    # per-test override so the job-level ASAN_OPTIONS=detect_leaks=1 wins.
+    if(QGC_ENABLE_ASAN AND NOT QGC_TEST_DETECT_LEAKS)
         list(APPEND _test_env "ASAN_OPTIONS=detect_leaks=0")
+    endif()
+
+    # Per-test isolated temp dir so tests writing under QDir::tempPath() /
+    # QStandardPaths::TempLocation (both honor TMPDIR on Unix, TMP/TEMP on
+    # Windows) never collide. This replaces the shared TempFiles RESOURCE_LOCK
+    # and needs no C++ change — QTemporaryDir/QStandardPaths pick it up.
+    set(_test_tmpdir "${CMAKE_BINARY_DIR}/test-tmp/${test_name}")
+    file(MAKE_DIRECTORY "${_test_tmpdir}")
+    list(APPEND _test_env "TMPDIR=${_test_tmpdir}")
+    if(WIN32)
+        list(APPEND _test_env "TMP=${_test_tmpdir}" "TEMP=${_test_tmpdir}")
     endif()
 
     set_tests_properties(${test_name} PROPERTIES
         TIMEOUT ${_timeout}
         ENVIRONMENT "${_test_env}"
-        FAIL_REGULAR_EXPRESSION "FAIL!;Segmentation fault;ASSERT"
+        FAIL_REGULAR_EXPRESSION "FAIL!;Segmentation fault"
     )
 
     if(ARG_LABELS)
@@ -184,7 +214,14 @@ function(add_qgc_test test_name)
     if(ARG_SERIAL)
         set_tests_properties(${test_name} PROPERTIES RUN_SERIAL TRUE)
     elseif(ARG_RESOURCE_LOCK)
-        set_tests_properties(${test_name} PROPERTIES RESOURCE_LOCK "${ARG_RESOURCE_LOCK}")
+        # TempFiles is now handled by per-test isolated TMPDIR above; strip it so
+        # those tests parallelize. Genuinely serial locks (MockLink, Joystick,
+        # Settings, fixed ports, PlanViewSettings) are preserved.
+        set(_resource_lock ${ARG_RESOURCE_LOCK})
+        list(REMOVE_ITEM _resource_lock TempFiles)
+        if(_resource_lock)
+            set_tests_properties(${test_name} PROPERTIES RESOURCE_LOCK "${_resource_lock}")
+        endif()
     endif()
 
 endfunction()

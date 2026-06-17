@@ -159,6 +159,12 @@ def cmd_ctest(args: argparse.Namespace) -> None:
         cmd += ["-L", args.include_labels]
     if args.exclude_labels:
         cmd += ["-LE", args.exclude_labels]
+    if args.repeat:
+        cmd += ["--repeat", args.repeat]
+    if args.shard_count and args.shard_count > 1:
+        # CTest -I start,end,stride: stride=shard_count, start=shard_index+1, end=0 (last).
+        start_idx = args.shard_index + 1
+        cmd += ["-I", f"{start_idx},0,{args.shard_count}"]
 
     start = time.monotonic()
     exit_code = _run_with_tee(cmd, args.ctest_output)
@@ -247,6 +253,26 @@ def main() -> None:
     p_ctest.add_argument("--jobs", type=int, required=True)
     p_ctest.add_argument("--include-labels", default="")
     p_ctest.add_argument("--exclude-labels", default="")
+    p_ctest.add_argument(
+        "--repeat",
+        default="",
+        metavar="SPEC",
+        help="CTest --repeat spec (e.g. until-fail:5). Optional; absent = no repeat.",
+    )
+    p_ctest.add_argument(
+        "--shard-index",
+        type=int,
+        default=0,
+        metavar="N",
+        help="0-based shard index (default 0). Ignored unless --shard-count > 1.",
+    )
+    p_ctest.add_argument(
+        "--shard-count",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Total number of shards. 0 or 1 disables sharding (default).",
+    )
 
     # cache-var
     p_cv = sub.add_parser("cache-var", help="Read a CMakeCache.txt variable")

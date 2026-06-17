@@ -476,4 +476,4 @@ void GeoTest::_qbenchmarkGeodesicDistance()
     QVERIFY(dist > 0);
 }
 
-UT_REGISTER_TEST(GeoTest, TestLabel::Unit, TestLabel::Utilities)
+UT_REGISTER_TEST_LIGHTWEIGHT(GeoTest, TestLabel::Unit, TestLabel::Utilities)

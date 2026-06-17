@@ -70,6 +70,10 @@ protected:
     /// failure stays in the offending test.
     void _verifyFileDialogTestHookConsumed();
 
+    /// Finds a visible QQuickItem by objectName in the visual tree, polling with
+    /// 50ms intervals up to timeoutMs. Returns nullptr if not found within the timeout.
+    static QQuickItem *findVisibleItem(QQuickItem *root, const QString &objectName, int timeoutMs = 1000);
+
     /// Click the visible QQuickItem with \a objectName in the current window.
     /// Returns false if the item cannot be found.
     bool clickButton(const QString &objectName);

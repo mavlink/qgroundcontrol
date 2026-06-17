@@ -31,7 +31,7 @@ This directory contains example files demonstrating QGroundControl coding conven
 ### C++ Implementation Files (`.cc`)
 
 - **Include Order**: Own header first, then system → Qt → QGC
-- **Logging**: Use `QGC_LOGGING_CATEGORY` (not `Q_LOGGING_CATEGORY`)
+- **Logging**: Use `QGC_LOGGING_CATEGORY` (not `Q_LOGGING_CATEGORY`); don't repeat the function name in the message (the formatter adds it), and align multi-value statements one value per line
 - **C++20 Features**:
   - `std::ranges` algorithms
   - Designated initializers

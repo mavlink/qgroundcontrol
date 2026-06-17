@@ -13,80 +13,15 @@
 
 #include <memory>
 
-#include "BaseClasses/VehicleTest.h"
 #include "MAVLinkMessageType.h"
 
-class MockLink;
 class RunGuard;
-class Vehicle;
 class Fact;
 
 /// @file
 /// @brief RAII wrappers for test resources
 
 namespace TestFixtures {
-
-// ============================================================================
-// VehicleFixture - RAII wrapper for MockLink vehicle connection
-// ============================================================================
-
-/// RAII fixture that connects a MockLink vehicle and auto-disconnects on destruction
-/// Usage:
-///   VehicleFixture vehicle(this, MAV_AUTOPILOT_PX4);
-///   QVERIFY(vehicle.isConnected());
-///   vehicle->doSomething();  // Access via operator->
-class VehicleFixture
-{
-public:
-    /// Connect a MockLink vehicle
-    /// @param test The VehicleTest instance (for access to _connectMockLink)
-    /// @param autopilot Autopilot type to simulate
-    /// @param waitForInitialConnect If true, wait for full initial connect sequence
-    explicit VehicleFixture(VehicleTest* test, MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4,
-                            bool waitForInitialConnect = true);
-
-    /// Disconnects the MockLink automatically
-    ~VehicleFixture();
-
-    // Non-copyable
-    VehicleFixture(const VehicleFixture&) = delete;
-    VehicleFixture& operator=(const VehicleFixture&) = delete;
-
-    /// Check if vehicle is connected
-    bool isConnected() const
-    {
-        return _vehicle != nullptr;
-    }
-
-    /// Get the Vehicle pointer
-    Vehicle* vehicle() const
-    {
-        return _vehicle;
-    }
-
-    /// Get the MockLink pointer
-    MockLink* mockLink() const
-    {
-        return _mockLink;
-    }
-
-    /// Pointer-like access to Vehicle
-    Vehicle* operator->() const
-    {
-        return _vehicle;
-    }
-
-    /// Simulate communication loss
-    void setCommLost(bool lost);
-
-    /// Simulate connection removed
-    void simulateConnectionRemoved();
-
-private:
-    VehicleTest* _test = nullptr;
-    Vehicle* _vehicle = nullptr;
-    MockLink* _mockLink = nullptr;
-};
 
 // ============================================================================
 // SettingsFixture - RAII wrapper for settings save/restore
