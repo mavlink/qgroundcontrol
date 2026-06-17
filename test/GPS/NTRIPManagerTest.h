@@ -2,30 +2,31 @@
 
 #include "UnitTest.h"
 
+/// State-transition smoke tests for the NTRIP manager singleton.
+///
+/// The detailed GGA formatting suite that used to live here has been moved to
+/// NTRIPGgaProviderTest — that is where the implementation of makeGGA lives and
+/// where future sentence-format cases should go. This file focuses on the
+/// NTRIPManager's observable state machine (connectionStatus, casterStatus)
+/// rather than downstream sentence encoding.
 class NTRIPManagerTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
-    // GGA format and structure
-    void _testMakeGGAFormat();
-    void _testMakeGGAFieldCount();
-    void _testMakeGGAChecksum();
+    void cleanup();
 
-    // GGA hemisphere encoding
-    void _testMakeGGANorthEast();
-    void _testMakeGGASouthWest();
-    void _testMakeGGAEquator();
-    void _testMakeGGADateLine();
+    void testInitialStateIsDisconnected();
+    void testStopFromIdleIsNoop();
+    void testPlaintextCredentialWarningIsVisibleState();
+    void testErrorStateStopsUdpForwarder();
 
-    // GGA altitude
-    void _testMakeGGAZeroAltitude();
-    void _testMakeGGAHighAltitude();
-    void _testMakeGGANegativeAltitude();
-
-    // GGA coordinate precision
-    void _testMakeGGADMMPrecision();
-
-    // GGA time field
-    void _testMakeGGATimeFormat();
+    // Reconnect backoff (migrated from NTRIPReconnectPolicyTest after the policy
+    // was inlined into NTRIPManager). Driven through the friend test seam.
+    void testReconnectInitialBackoff();
+    void testReconnectExponentialBackoff();
+    void testReconnectMaxBackoff();
+    void testReconnectCancelStopsTimer();
+    void testReconnectResetAttempts();
+    void testReconnectSignalFires();
 };

@@ -17,6 +17,7 @@ SettingsGroupLayout {
     property real _textFieldWidth: ScreenTools.defaultFontPixelWidth * 30
 
     LabelledFactTextField {
+        objectName:         "ntripHostField"
         Layout.fillWidth:           true
         textFieldPreferredWidth:    _textFieldWidth
         fact:               _ntrip.ntripServerHostAddress
@@ -66,10 +67,20 @@ SettingsGroupLayout {
     }
 
     FactCheckBoxSlider {
+        objectName:         "ntripUseTlsSwitch"
         Layout.fillWidth:   true
         text:               fact.shortDescription
         fact:               _ntrip.ntripUseTls
         visible:            fact.userVisible
         enabled:            !_isActive
+    }
+
+    FactCheckBoxSlider {
+        objectName:         "ntripAcceptSelfSignedSwitch"
+        Layout.fillWidth:   true
+        text:               fact.shortDescription
+        fact:               _ntrip.ntripAllowSelfSignedCerts
+        visible:            fact.userVisible
+        enabled:            !_isActive && _ntrip.ntripUseTls.rawValue
     }
 }

@@ -3,8 +3,8 @@
     "fileType": "SettingsUI",
     "groups": [
         {
-            "component": "NtripConnectionStatus",
-            "sectionName": "Connection Status",
+            "component": "NtripConnectionSettings",
+            "sectionName": "Connection",
             "keywords": [
                 "ntrip",
                 "rtk",
@@ -33,6 +33,18 @@
                 "mountpoint",
                 "browse",
                 "stream"
+            ]
+        },
+        {
+            "heading": "GGA Position Reporting",
+            "keywords": ["gga", "vrs", "nmea", "position", "network rtk", "ntrip"],
+            "controls": [
+                {
+                    "setting": "ntripSettings.ntripGgaPositionSource"
+                },
+                {
+                    "setting": "ntripSettings.ntripGgaIntervalSec"
+                }
             ]
         },
         {
@@ -71,6 +83,10 @@
                 },
                 {
                     "setting": "ntripSettings.rtcmUdpInputPort",
+                    "enableWhen": "QGroundControl.settingsManager.ntripSettings.rtcmUdpInputEnabled.rawValue"
+                },
+                {
+                    "setting": "ntripSettings.rtcmUdpValidate",
                     "enableWhen": "QGroundControl.settingsManager.ntripSettings.rtcmUdpInputEnabled.rawValue"
                 }
             ]

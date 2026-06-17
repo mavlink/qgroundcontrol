@@ -9,40 +9,40 @@
 
 class GPSRTKFactGroup;
 class FactGroup;
-class RTCMMavlink;
 
 class GPSRtk : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit GPSRtk(QObject *parent = nullptr);
+    explicit GPSRtk(QObject* parent = nullptr);
     ~GPSRtk();
 
-    void connectGPS(const QString &device, QStringView gps_type);
+    void connectGPS(const QString& device, QStringView gps_type);
     void disconnectGPS();
     bool connected() const;
-    FactGroup *gpsRtkFactGroup();
+    FactGroup* gpsRtkFactGroup();
 
-    struct SatelliteCounts {
+    struct SatelliteCounts
+    {
         uint8_t inView = 0;
         int used = 0;
     };
+
     /// Clamp count to the array bound and tally used-in-solution satellites.
-    static SatelliteCounts countSatellites(const satellite_info_s &msg);
+    static SatelliteCounts countSatellites(const satellite_info_s& msg);
 
 private slots:
-    void _satelliteInfoUpdate(const satellite_info_s &msg);
-    void _sensorGpsUpdate(const sensor_gps_s &msg);
+    void _satelliteInfoUpdate(const satellite_info_s& msg);
+    void _sensorGpsUpdate(const sensor_gps_s& msg);
     void _onGPSConnect();
     void _onGPSDisconnect();
     void _onGPSConnectionError(GPSConnectionError error);
-    void _onGPSSurveyInStatus(const GPSSurveyInStatus &status);
+    void _onGPSSurveyInStatus(const GPSSurveyInStatus& status);
 
 private:
-    GPSProvider *_gpsProvider = nullptr;
-    RTCMMavlink *_rtcmMavlink = nullptr;
-    GPSRTKFactGroup *_gpsRtkFactGroup = nullptr;
+    GPSProvider* _gpsProvider = nullptr;
+    GPSRTKFactGroup* _gpsRtkFactGroup = nullptr;
 
     std::atomic_bool _requestGpsStop = false;
 
