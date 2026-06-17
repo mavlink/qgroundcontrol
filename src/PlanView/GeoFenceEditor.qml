@@ -16,6 +16,10 @@ Rectangle {
     property var    myGeoFenceController
     property var    flightMap
 
+    /// Emitted when the user interacts with the editor, so the plan view can make
+    /// GeoFence the active editing layer (required for the map visuals to be interactive).
+    signal requestEditingLayer()
+
     readonly property real  _editFieldWidth:    Math.min(width - _margin * 2, ScreenTools.defaultFontPixelWidth * 15)
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
@@ -112,6 +116,7 @@ Rectangle {
                     text:               qsTr("Polygon Fence")
 
                     onClicked: {
+                        geoFenceEditorRect.requestEditingLayer()
                         var rect = Qt.rect(flightMap.centerViewport.x, flightMap.centerViewport.y, flightMap.centerViewport.width, flightMap.centerViewport.height)
                         var topLeftCoord = flightMap.toCoordinate(Qt.point(rect.x, rect.y), false /* clipToViewPort */)
                         var bottomRightCoord = flightMap.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height), false /* clipToViewPort */)
@@ -124,6 +129,7 @@ Rectangle {
                     text:               qsTr("Circular Fence")
 
                     onClicked: {
+                        geoFenceEditorRect.requestEditingLayer()
                         var rect = Qt.rect(flightMap.centerViewport.x, flightMap.centerViewport.y, flightMap.centerViewport.width, flightMap.centerViewport.height)
                         var topLeftCoord = flightMap.toCoordinate(Qt.point(rect.x, rect.y), false /* clipToViewPort */)
                         var bottomRightCoord = flightMap.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height), false /* clipToViewPort */)
@@ -183,6 +189,7 @@ Rectangle {
                             on_InteractiveChanged: checked = _interactive
 
                             onClicked: {
+                                geoFenceEditorRect.requestEditingLayer()
                                 myGeoFenceController.clearAllInteractive()
                                 object.interactive = checked
                             }
@@ -223,7 +230,7 @@ Rectangle {
                     anchors.right:      parent.right
                     columns:            4
                     flow:               GridLayout.TopToBottom
-                    visible:            polygonSection.checked && myGeoFenceController.circles.count > 0
+                    visible:            circleSection.checked && myGeoFenceController.circles.count > 0
 
                     QGCLabel {
                         text:               qsTr("Inclusion")
@@ -259,6 +266,7 @@ Rectangle {
                             on_InteractiveChanged: checked = _interactive
 
                             onClicked: {
+                                geoFenceEditorRect.requestEditingLayer()
                                 myGeoFenceController.clearAllInteractive()
                                 object.interactive = checked
                             }

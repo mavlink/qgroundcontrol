@@ -15,6 +15,10 @@ Rectangle {
     property var rallyPoint ///< RallyPoint object associated with editor
     property var controller ///< RallyPointController
 
+    /// Emitted when the user interacts with the editor, so the plan view can make
+    /// Rally the active editing layer (required for the map visuals to be interactive).
+    signal requestEditingLayer()
+
     property bool _currentItem: rallyPoint ? rallyPoint === controller.currentRallyPoint : false
     property color _outerTextColor: qgcPal.text
 
@@ -58,6 +62,7 @@ Rectangle {
         anchors.right: titleLayout.right
         onClicked: {
             if (mainWindow.allowViewSwitch()) {
+                root.requestEditingLayer()
                 controller.currentRallyPoint = rallyPoint
             }
         }

@@ -285,8 +285,25 @@ TreeView {
             }
 
             onLoaded: {
+                if (delegateRoot.nodeType === "fenceEditor" && item) {
+                    // Interacting with the GeoFence editor makes the fence the active
+                    // editing layer so its map visuals become interactive.
+                    item.requestEditingLayer.connect(function() {
+                        root.editingLayerChangeRequested(root._layerFence)
+                    })
+                }
+                if (delegateRoot.nodeType === "rallyItem" && item) {
+                    // Selecting a rally point makes Rally the active editing layer so its
+                    // map visuals become interactive.
+                    item.requestEditingLayer.connect(function() {
+                        root.editingLayerChangeRequested(root._layerRally)
+                    })
+                }
                 if (delegateRoot.nodeType === "missionItem" && item) {
                     item.clicked.connect(function() {
+                        // Selecting a mission item makes Mission the active editing layer so its
+                        // map visuals (e.g. survey polygon tools) become interactive.
+                        root.editingLayerChangeRequested(root._layerMission)
                         root._missionController.setCurrentPlanViewSeqNum(delegateRoot.nodeObject.sequenceNumber, false)
                     })
                     item.remove.connect(function() {
