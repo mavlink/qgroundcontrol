@@ -3,10 +3,12 @@
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtNetwork/QHostAddress>
-#include <QtNetwork/QUdpSocket>
+
 #include "RTCMParser.h"
 
 Q_DECLARE_LOGGING_CATEGORY(RTCMUdpInputLog)
+
+class QUdpSocket;
 
 /**
  * @brief Listens on a UDP port for raw RTCM3 correction data and emits it
@@ -20,19 +22,19 @@ Q_DECLARE_LOGGING_CATEGORY(RTCMUdpInputLog)
  *   udpInput->start();
  * @endcode
  *
- * The class accepts datagrams from any sender on the bound port. Each datagram
- * is emitted as-is; no RTCM framing validation is performed here — that is the
- * responsibility of the downstream consumer (RTCMMavlink fragments as needed).
+ * The class accepts datagrams from any sender on the bound port. With validation
+ * disabled each datagram is emitted as-is; with validation enabled (see
+ * setValidation) datagrams are reframed through RTCMParser and only CRC-valid
+ * RTCM3 frames are forwarded. Downstream (RTCMMavlink) fragments as needed.
  */
 class RTCMUdpInput : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(bool    running  READ isRunning  NOTIFY runningChanged)
-    Q_PROPERTY(quint16 port     READ port       NOTIFY portChanged)
+    Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
+    Q_PROPERTY(quint16 port READ port NOTIFY portChanged)
 
 public:
-
-    explicit RTCMUdpInput(quint16 port, QObject *parent = nullptr);
+    explicit RTCMUdpInput(quint16 port, QObject* parent = nullptr);
     ~RTCMUdpInput() override;
 
     /// Bind the socket and begin accepting datagrams.
@@ -43,7 +45,8 @@ public:
     void stop();
 
     bool isRunning() const { return _running; }
-    quint16 port()     const { return _port; }
+
+    quint16 port() const { return _port; }
 
     /// Change the listen port. If already running, restarts automatically.
     void setPort(quint16 port);
@@ -55,7 +58,7 @@ public:
 signals:
     /// Emitted once per received datagram with the raw RTCM payload.
     /// Connect directly to RTCMMavlink::RTCMDataUpdate (same thread).
-    void rtcmDataReceived(const QByteArray &data);
+    void rtcmDataReceived(const QByteArray& data);
 
     void runningChanged();
     void portChanged();
@@ -64,11 +67,11 @@ private slots:
     void _readDatagrams();
 
 private:
-    QUdpSocket _socket;
+    QUdpSocket* _socket = nullptr;
     quint16 _port;
     bool _running = false;
     bool _validateRtcm = false;
     RTCMParser _rtcmParser;
-    quint64 _validBytes = 0;
-    quint64 _invalidBytes = 0;
+    quint64 _validFrames = 0;
+    quint64 _invalidFrames = 0;
 };

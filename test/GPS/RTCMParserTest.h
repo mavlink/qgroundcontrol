@@ -28,4 +28,16 @@ private slots:
     void _testParserTruncatedFrame();
     void _testParserCorruptedPreamble();
     void _testParserRecoveryAfterBadCrc();
+
+    // Edge cases
+    void _testParserZeroLengthPayload();
+    void _testParserMaxLengthPayload();
+    void _testParserPreambleInPayload();
+    void _testParserTruncatedMidFrame();
+    void _testParserWhitelistEdgeCases();
+
+    // extractValidFrames
+    void _testExtractValidFramesMultiple();
+    void _testExtractValidFramesDropsBadCrc();
+    void _testExtractValidFramesCrossCallState();
 };

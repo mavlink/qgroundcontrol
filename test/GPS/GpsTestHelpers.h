@@ -1,9 +1,9 @@
 #pragma once
 
-#include "RTCMParser.h"
-
 #include <QtCore/QByteArray>
 #include <cstdint>
+
+#include "RTCMParser.h"
 
 namespace GpsTestHelpers {
 
@@ -13,7 +13,7 @@ inline QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
     const int payloadLen = 2 + extraPayloadBytes;
     QByteArray frame;
 
-    frame.append(static_cast<char>(RTCM3_PREAMBLE));
+    frame.append(static_cast<char>(RTCMParser::kPreamble));
     frame.append(static_cast<char>((payloadLen >> 8) & 0x03));
     frame.append(static_cast<char>(payloadLen & 0xFF));
 
@@ -24,9 +24,8 @@ inline QByteArray buildRtcmFrame(uint16_t messageId, int extraPayloadBytes = 0)
         frame.append(static_cast<char>(i & 0xFF));
     }
 
-    const uint32_t crc = RTCMParser::crc24q(
-        reinterpret_cast<const uint8_t*>(frame.constData()),
-        static_cast<size_t>(frame.size()));
+    const uint32_t crc =
+        RTCMParser::crc24q(reinterpret_cast<const uint8_t*>(frame.constData()), static_cast<size_t>(frame.size()));
 
     frame.append(static_cast<char>((crc >> 16) & 0xFF));
     frame.append(static_cast<char>((crc >> 8) & 0xFF));
@@ -57,4 +56,4 @@ inline bool verifyNmeaChecksum(const QByteArray& sentence)
     return actual == expected;
 }
 
-} // namespace GpsTestHelpers
+}  // namespace GpsTestHelpers

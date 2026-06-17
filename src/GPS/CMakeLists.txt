@@ -3,15 +3,11 @@
 # GPS/GNSS positioning and RTK support
 # ============================================================================
 
-# NTRIP + RTCMMavlink are network/MAVLink-only — build even when QGC_NO_SERIAL_LINK skips the rest.
-target_sources(${CMAKE_PROJECT_NAME}
-    PRIVATE
-        RTCMMavlink.cc
-        RTCMMavlink.h
-)
+# RTCM + NTRIP are network/MAVLink-only — build even when QGC_NO_SERIAL_LINK skips the rest.
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+add_subdirectory(RTCM)
 add_subdirectory(NTRIP)
 
 # Everything below uses QSerialPort or spawns a serial-attached GPS process.
