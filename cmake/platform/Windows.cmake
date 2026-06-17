@@ -11,9 +11,10 @@ endif()
 # ----------------------------------------------------------------------------
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PRIVATE
-        _USE_MATH_DEFINES    # Enable M_PI and other math constants
-        NOMINMAX             # Prevent min/max macro conflicts
-        WIN32_LEAN_AND_MEAN  # Reduce Windows.h bloat
+        _USE_MATH_DEFINES       # Enable M_PI and other math constants
+        NOMINMAX                # Prevent min/max macro conflicts
+        WIN32_LEAN_AND_MEAN     # Reduce Windows.h bloat
+        _CRT_SECURE_NO_WARNINGS # Disable warnings for unsafe C functions
 )
 
 # ----------------------------------------------------------------------------
