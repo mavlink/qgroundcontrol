@@ -216,6 +216,7 @@ Item {
         id: controlPopup
 
         ToolIndicatorPage {
+            showExpand: true
 
             TimedProgressTracker {
                 id:                     sendRequestProgressTracker
@@ -375,127 +376,134 @@ Item {
                     Layout.alignment:       Qt.AlignRight
                     visible:                isThisGCSinControl
                 }
-                // Separator
-                Rectangle {
-                    Layout.columnSpan:      2
-                    Layout.fillWidth:       true
-                    color:                  qgcPal.windowShade
-                    height:                 outdoorPalette ? 1 : 2
-                }
-                // More options expander (editable settings). A full-width button is a reliable
-                // touch target on small screens, unlike a bare clickable label.
-                QGCButton {
-                    id:                     moreOptionsToggle
-                    property bool expanded:  false
-                    text:                   (expanded ? qsTr("▾ ") : qsTr("▸ ")) + qsTr("More options")
-                    Layout.columnSpan:      2
-                    Layout.fillWidth:       true
-                    onClicked:              expanded = !expanded
-                }
+            }
+
+            // Editable settings, shown to the right of the status/actions panel via the standard
+            // ToolIndicatorPage expand button, matching the rest of the toolbar indicators.
+            // Wrapped in an Item with an explicit implicitWidth: the grid is loaded inside a Loader,
+            // so Layout.* on it is ignored. Without a width source the wrapping labels below
+            // (preferredWidth 0 + fillWidth) collapse and pile up; the fixed-width wrapper gives the
+            // anchored grid a stable width to wrap within regardless of which rows are visible.
+            expandedComponent: Item {
+                id:             settingsRoot
+                implicitWidth:  ScreenTools.defaultFontPixelWidth * 30
+                implicitHeight: settingsLayout.implicitHeight
+
+                GridLayout {
+                    id:                 settingsLayout
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    anchors.top:        parent.top
+                    columns:            2
+
                 // This GCS system ID setting. Label on its own wrapping row so the long text doesn't
-                // drive the panel width; small field below.
-                QGCLabel {
-                    text:                   qsTr("This GCS System ID:")
-                    Layout.fillWidth:       true
-                    Layout.preferredWidth:  0
-                    wrapMode:               Text.WordWrap
-                    visible:                moreOptionsToggle.expanded
-                }
-                FactTextField {
-                    fact:                   QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID
-                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 8
-                    visible:                moreOptionsToggle.expanded
-                }
-                // Request timeout setting (same wrapping-label treatment)
-                QGCLabel {
-                    text:                   qsTr("Takeover request timeout (s):")
-                    Layout.fillWidth:       true
-                    Layout.preferredWidth:  0
-                    wrapMode:               Text.WordWrap
-                    visible:                moreOptionsToggle.expanded
-                }
-                FactTextField {
-                    fact:                   QGroundControl.settingsManager.flyViewSettings.requestControlTimeout
-                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 8
-                    visible:                moreOptionsToggle.expanded
-                }
-                // Multi-owner toggle: reveals the secondary GCS field. The label is a separate wrapping,
-                // clickable QGCLabel (QGCCheckBox text can't wrap) so the long text doesn't drive panel
-                // width. Initialised from whether secondaries are configured; unticking clears the list.
-                RowLayout {
-                    Layout.columnSpan:      2
-                    Layout.fillWidth:       true
-                    visible:                moreOptionsToggle.expanded
-                    spacing:                ScreenTools.defaultFontPixelWidth
-                    QGCCheckBox {
-                        id:                 multiGcsCheckBox
-                        checked:            hasConfiguredSecondaryGCS
-                        onCheckedChanged:   if (!checked) secondaryGCSSettingFact.rawValue = ""
-                    }
+                    // drive the panel width; small field below.
                     QGCLabel {
-                        text:               qsTr("This GCS is part of a control group")
-                        Layout.fillWidth:   true
-                        Layout.preferredWidth: 0
-                        wrapMode:           Text.WordWrap
-                        MouseArea {
-                            anchors.fill:   parent
-                            onClicked:      multiGcsCheckBox.checked = !multiGcsCheckBox.checked
-                        }
+                        text:                   qsTr("This GCS System ID:")
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        wrapMode:               Text.WordWrap
                     }
-                }
-                // Secondary GCS list setting. This label is unusually long, so let it wrap instead of
-                // inflating the panel width: preferredWidth 0 + fillWidth makes it take the width the
-                // rest of the panel already establishes and wrap within it.
-                QGCLabel {
-                    text:                   qsTr("Secondary GCS IDs (comma or space separated):")
-                    Layout.columnSpan:      2
-                    Layout.fillWidth:       true
-                    Layout.preferredWidth:  0
-                    wrapMode:               Text.WordWrap
-                    visible:                moreOptionsToggle.expanded && multiGcsCheckBox.checked
-                }
-                FactTextField {
-                    fact:                   secondaryGCSSettingFact
-                    Layout.fillWidth:       true
-                    visible:                moreOptionsToggle.expanded && multiGcsCheckBox.checked
-                }
-                QGCLabel {
-                    id:                     rangeSummaryLabel
-                    visible:                moreOptionsToggle.expanded && multiGcsCheckBox.checked && hasConfiguredSecondaryGCS
-                    color:                  qgcPal.buttonHighlight
-                    // Number of sysids inside the computed range which are neither this GCS nor a configured secondary.
-                    // The protocol encodes the request as a contiguous range, so these would be granted control too
-                    property int unconfiguredIdsInRange: 0
-                    text: {
-                        var myId = QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
-                        // Accept any non-digit separator (commas, spaces, or a mix), matching _computeOperatorControlRange
-                        var parts = secondaryGCSSetting.match(/\d+/g) || []
-                        var ids = [ myId ]
-                        var lo = myId
-                        var hi = myId
-                        for (var i = 0; i < parts.length; i++) {
-                            var val = parseInt(parts[i])
-                            if (!isNaN(val) && val >= 1 && val <= 255) {
-                                if (val < lo) lo = val
-                                if (val > hi) hi = val
-                                if (ids.indexOf(val) < 0) ids.push(val)
+                    FactTextField {
+                        fact:                   QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID
+                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 8
+                        Layout.alignment:       Qt.AlignRight
+                    }
+                    // Request timeout setting (same wrapping-label treatment)
+                    QGCLabel {
+                        text:                   qsTr("Takeover request timeout (s):")
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        wrapMode:               Text.WordWrap
+                    }
+                    FactTextField {
+                        fact:                   QGroundControl.settingsManager.flyViewSettings.requestControlTimeout
+                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 8
+                        Layout.alignment:       Qt.AlignRight
+                    }
+                    // Multi-owner toggle: reveals the secondary GCS field. The label is a separate wrapping,
+                    // clickable QGCLabel (QGCCheckBox text can't wrap) so the long text doesn't drive panel
+                    // width. Initialised from whether secondaries are configured; unticking clears the list.
+                    RowLayout {
+                        Layout.columnSpan:      2
+                        Layout.fillWidth:       true
+                        spacing:                ScreenTools.defaultFontPixelWidth
+                        QGCCheckBox {
+                            id:                 multiGcsCheckBox
+                            checked:            hasConfiguredSecondaryGCS
+                            onCheckedChanged:   if (!checked) secondaryGCSSettingFact.rawValue = ""
+                        }
+                        QGCLabel {
+                            text:               qsTr("This GCS is part of a control group")
+                            Layout.fillWidth:   true
+                            Layout.preferredWidth: 0
+                            wrapMode:           Text.WordWrap
+                            MouseArea {
+                                anchors.fill:   parent
+                                onClicked:      multiGcsCheckBox.checked = !multiGcsCheckBox.checked
                             }
                         }
-                        rangeSummaryLabel.unconfiguredIdsInRange = (hi - lo + 1) - ids.length
-                        return qsTr("Request range: ") + lo + " - " + hi
                     }
-                }
-                QGCLabel {
-                    visible:                rangeSummaryLabel.visible && rangeSummaryLabel.unconfiguredIdsInRange > 0
-                    Layout.columnSpan:      2
-                    // preferredWidth 0 keeps the long warning text from inflating the
-                    // panel's natural width; fillWidth then stretches it to whatever
-                    // width the other panel elements already establish, wrapping inside it
-                    Layout.fillWidth:       true
-                    Layout.preferredWidth:  0
-                    wrapMode:               Text.WordWrap
-                    color:                  qgcPal.colorOrange
-                    text:                   qsTr("Warning: %1 other GCS id(s) inside this range will also be accepted as operators").arg(rangeSummaryLabel.unconfiguredIdsInRange)
+                    // Secondary GCS list setting. This label is unusually long, so let it wrap instead of
+                    // inflating the panel width: preferredWidth 0 + fillWidth makes it take the width the
+                    // rest of the panel already establishes and wrap within it.
+                    QGCLabel {
+                        text:                   qsTr("Secondary GCS IDs (comma or space separated):")
+                        Layout.columnSpan:      2
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        wrapMode:               Text.WordWrap
+                        visible:                multiGcsCheckBox.checked
+                    }
+                    FactTextField {
+                        fact:                   secondaryGCSSettingFact
+                        // Full-width own row with preferredWidth 0: keeps the typed list from widening a
+                        // shared column (which would shove the right-justified fields on the rows above).
+                        Layout.columnSpan:      2
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        visible:                multiGcsCheckBox.checked
+                    }
+                    QGCLabel {
+                        id:                     rangeSummaryLabel
+                        // Full-width own row so it never lands in the field column above and inflate it
+                        Layout.columnSpan:      2
+                        visible:                multiGcsCheckBox.checked && hasConfiguredSecondaryGCS
+                        color:                  qgcPal.buttonHighlight
+                        // Number of sysids inside the computed range which are neither this GCS nor a configured secondary.
+                        // The protocol encodes the request as a contiguous range, so these would be granted control too
+                        property int unconfiguredIdsInRange: 0
+                        text: {
+                            var myId = QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
+                            // Accept any non-digit separator (commas, spaces, or a mix), matching _computeOperatorControlRange
+                            var parts = secondaryGCSSetting.match(/\d+/g) || []
+                            var ids = [ myId ]
+                            var lo = myId
+                            var hi = myId
+                            for (var i = 0; i < parts.length; i++) {
+                                var val = parseInt(parts[i])
+                                if (!isNaN(val) && val >= 1 && val <= 255) {
+                                    if (val < lo) lo = val
+                                    if (val > hi) hi = val
+                                    if (ids.indexOf(val) < 0) ids.push(val)
+                                }
+                            }
+                            rangeSummaryLabel.unconfiguredIdsInRange = (hi - lo + 1) - ids.length
+                            return qsTr("Request range: ") + lo + " - " + hi
+                        }
+                    }
+                    QGCLabel {
+                        visible:                rangeSummaryLabel.visible && rangeSummaryLabel.unconfiguredIdsInRange > 0
+                        Layout.columnSpan:      2
+                        // preferredWidth 0 keeps the long warning text from inflating the
+                        // panel's natural width; fillWidth then stretches it to whatever
+                        // width the other panel elements already establish, wrapping inside it
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        wrapMode:               Text.WordWrap
+                        color:                  qgcPal.colorOrange
+                        text:                   qsTr("Warning: %1 other GCS id(s) inside this range will also be accepted as operators").arg(rangeSummaryLabel.unconfiguredIdsInRange)
+                    }
                 }
             }
         }
