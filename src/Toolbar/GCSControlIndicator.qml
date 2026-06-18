@@ -270,9 +270,9 @@ Item {
                     font.bold:              true
                 }
                 QGCLabel {
-                    text:                   isThisGCSinControl ? qsTr("In control, full")
-                                                : (isThisGCSsecondary ? qsTr("In control, commands only")
-                                                : (controlGrantedImmediately ? qsTr("Unlocked") : qsTr("Request needed")))
+                    text:                   isThisGCSinControl ? qsTr("In Control, FULL")
+                                                : (isThisGCSsecondary ? qsTr("In control, COMMANDS ONLY")
+                                                : (controlGrantedImmediately ? qsTr("Unlocked") : qsTr("Request Needed")))
                     font.bold:              isThisGCSoperator
                     color:                  isThisGCSoperator ? qgcPal.colorGreen : qgcPal.text
                     Layout.alignment:       Qt.AlignRight
@@ -281,8 +281,9 @@ Item {
                 }
                 // 2. Takeover permission
                 QGCLabel {
-                    text:                   controlGrantedImmediately ? qsTr("Takeover allowed") : qsTr("Takeover not allowed")
+                    text:                   controlGrantedImmediately ? qsTr("Takeover <b>ALLOWED</b>") : qsTr("Takeover <b>NOT ALLOWED</b>")
                     Layout.columnSpan:      2
+                    Layout.alignment:       Qt.AlignRight
                 }
                 // 3. Ownership roster: the main GCS and any secondaries, each labelled (this GCS marked)
                 QGCLabel {
