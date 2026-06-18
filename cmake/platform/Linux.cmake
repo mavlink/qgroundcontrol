@@ -22,4 +22,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
 
 set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
 
-message(STATUS "QGC: Linux platform configuration applied")
+if(NOT DEFINED QGC_LINUX_DISTRO)
+    include(LinuxDistro)
+endif()
+
+message(STATUS "QGC: Linux platform configuration applied (distro: ${QGC_LINUX_DISTRO}, family: ${QGC_LINUX_DISTRO_FAMILY})")

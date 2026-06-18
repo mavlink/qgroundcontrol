@@ -85,8 +85,9 @@ download_tool(LINUXDEPLOY https://github.com/linuxdeploy/linuxdeploy/releases/do
 download_tool(APPIMAGETOOL https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-${CMAKE_SYSTEM_PROCESSOR}.AppImage
     EXPECTED_HASH "${_APPIMAGETOOL_HASH}")
 
-# AppImageLint is only available for x86_64; uses a rolling "continuous" release so no hash pin
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+# x86_64-only, rolling "continuous" release (no hash pin); skipped when
+# QGC_RUN_APPIMAGELINT is OFF (Fedora/Arch, where the compat report is noise).
+if(QGC_RUN_APPIMAGELINT AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
     download_tool(APPIMAGELINT https://github.com/TheAssassin/appimagelint/releases/download/continuous/appimagelint-${CMAKE_SYSTEM_PROCESSOR}.AppImage)
 endif()
 
@@ -105,10 +106,16 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 if(NOT _blas_path)
+    # Debian/Ubuntu keep libs under /usr/lib/<multiarch>/; Fedora/Arch/openSUSE
+    # use /usr/lib64/ (and Arch has a flat /usr/lib/). Cover all layouts.
     file(GLOB _blas_candidates
         "/usr/lib/*/libblas.so.3"
         "/usr/lib/*/openblas*/libblas.so.3"
+        "/usr/lib64/libblas.so.3"
+        "/usr/lib64/openblas*/libblas.so.3"
+        "/usr/lib/libblas.so.3"
         "/lib/*/libblas.so.3"
+        "/lib64/libblas.so.3"
     )
     list(LENGTH _blas_candidates _blas_candidate_count)
     if(_blas_candidate_count GREATER 0)
@@ -122,6 +129,19 @@ if(_blas_path AND EXISTS "${_blas_path}")
 else()
     message(WARNING "QGC: Could not pre-resolve libblas.so.3; linuxdeploy will attempt auto-resolution")
 endif()
+
+# linuxdeploy's bundled strip aborts on newer toolchains (Fedora/Arch); keep
+# stripping only on the Debian/Ubuntu portable floor where it works.
+if(NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "debian")
+    set(ENV{NO_STRIP} 1)
+endif()
+
+# Samba's private libs live in a non-ldconfig dir, so expose them on
+# LD_LIBRARY_PATH for linuxdeploy; the globs are no-ops where samba is absent.
+file(GLOB _private_lib_dirs "/usr/lib64/samba" "/usr/lib/samba" "/usr/lib/*/samba")
+foreach(_dir IN LISTS _private_lib_dirs)
+    set(ENV{LD_LIBRARY_PATH} "${_dir}:$ENV{LD_LIBRARY_PATH}")
+endforeach()
 
 execute_process(
     COMMAND "${LINUXDEPLOY_PATH}"
@@ -156,7 +176,9 @@ message(STATUS "QGC: AppImage created successfully: ${APPIMAGE_PATH}")
 # Validation & Linting
 # ============================================================================
 
-if(EXISTS "${APPIMAGELINT_PATH}")
+if(NOT QGC_RUN_APPIMAGELINT)
+    message(STATUS "QGC: AppImageLint disabled (QGC_RUN_APPIMAGELINT=OFF), skipping validation")
+elseif(EXISTS "${APPIMAGELINT_PATH}")
     message(STATUS "QGC: Running AppImage linter...")
     execute_process(
         COMMAND "${APPIMAGELINT_PATH}" "${APPIMAGE_PATH}"

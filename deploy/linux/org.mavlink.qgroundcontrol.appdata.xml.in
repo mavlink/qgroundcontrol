@@ -8,9 +8,9 @@
   <project_license>Apache-2.0 OR GPL-3.0</project_license>
   <content_rating type="oars-1.1"/>
 
- <!--  <developer id="org.@QGC_APPIMAGE_APPDATA_DEVELOPER@">
-    <name translate="no">@QGC_APPIMAGE_APPDATA_DEVELOPER@</name>
-  </developer> -->
+  <developer id="com.@QGC_APPIMAGE_APPDATA_DEVELOPER@">
+    <name translate="no">@QGC_APP_NAME@</name>
+  </developer>
 
   <summary>@QGC_APP_DESCRIPTION@</summary>
   <description>

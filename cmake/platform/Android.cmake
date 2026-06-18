@@ -58,8 +58,25 @@ if(CMAKE_PROJECT_VERSION_PATCH LESS 10)
     set(ANDROID_PATCH_VERSION "0${CMAKE_PROJECT_VERSION_PATCH}")
 endif()
 
-# Version code format: BBMIPPDDD (B=Bitness, M=Major, I=Minor, P=Patch, D=Dev) - Dev not currently supported and always 000
-set(ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}${CMAKE_PROJECT_VERSION_MINOR}${ANDROID_PATCH_VERSION}000")
+# Dev field (last 3 digits) = commits since tag, so daily builds get unique,
+# increasing codes; tagged releases stay at 000. Clamp at the field width (999).
+set(ANDROID_DEV_VERSION "${QGC_APP_VERSION_DEV}")
+if(NOT ANDROID_DEV_VERSION MATCHES "^[0-9]+$")
+    set(ANDROID_DEV_VERSION 0)
+endif()
+if(ANDROID_DEV_VERSION GREATER 999)
+    message(WARNING "QGC: Android dev version ${ANDROID_DEV_VERSION} exceeds 999; clamping. Cut a release tag to reset the counter.")
+    set(ANDROID_DEV_VERSION 999)
+endif()
+string(LENGTH "${ANDROID_DEV_VERSION}" _qgc_dev_len)
+if(_qgc_dev_len EQUAL 1)
+    set(ANDROID_DEV_VERSION "00${ANDROID_DEV_VERSION}")
+elseif(_qgc_dev_len EQUAL 2)
+    set(ANDROID_DEV_VERSION "0${ANDROID_DEV_VERSION}")
+endif()
+
+# Version code format: BBMIPPDDD (B=Bitness, M=Major, I=Minor, P=Patch, D=Dev)
+set(ANDROID_VERSION_CODE "${ANDROID_BITNESS_CODE}${CMAKE_PROJECT_VERSION_MAJOR}${CMAKE_PROJECT_VERSION_MINOR}${ANDROID_PATCH_VERSION}${ANDROID_DEV_VERSION}")
 message(STATUS "QGC: Android version code: ${ANDROID_VERSION_CODE}")
 
 set(QGC_ANDROID_PROPERTIES_FILE "${CMAKE_BINARY_DIR}/qgc-android-config.properties")

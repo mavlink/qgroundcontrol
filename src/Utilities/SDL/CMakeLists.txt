@@ -79,10 +79,22 @@ CPMAddPackage(
 # Suppress compiler warnings for SDL3 dependency
 if(SDL3_ADDED)
     if(ANDROID)
-        qgc_disable_dependency_warnings(SDL3-shared)
+        set(_qgc_sdl3_target SDL3-shared)
     else()
-        qgc_disable_dependency_warnings(SDL3-static)
+        set(_qgc_sdl3_target SDL3-static)
     endif()
+
+    qgc_disable_dependency_warnings(${_qgc_sdl3_target})
+
+    # SDL3 is plain C; drop the global AUTOMOC so its moc PCH can't clash with SDL's own.
+    set_target_properties(${_qgc_sdl3_target} PROPERTIES
+        AUTOMOC OFF
+        AUTOUIC OFF
+        AUTORCC OFF
+    )
+
+    # SDL3's subdir-scoped LibUSB::LibUSB target breaks qt_add_translations' top-level scan.
+    set_property(DIRECTORY "${SDL3_SOURCE_DIR}" PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
 endif()
 
 if(ANDROID)

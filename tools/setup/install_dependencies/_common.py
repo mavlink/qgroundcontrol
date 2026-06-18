@@ -41,14 +41,38 @@ def get_config_value(key: str) -> str | None:
     return value or None
 
 
+def _os_release_ids() -> set[str]:
+    """Return the ID + ID_LIKE tokens from /etc/os-release (lowercased)."""
+    ids: set[str] = set()
+    try:
+        text = Path("/etc/os-release").read_text(encoding="utf-8")
+    except OSError:
+        return ids
+    for line in text.splitlines():
+        key, _, value = line.partition("=")
+        if key in ("ID", "ID_LIKE"):
+            ids.update(value.strip().strip('"').lower().split())
+    return ids
+
+
+def is_ubuntu() -> bool:
+    """True only on Ubuntu (not plain Debian) — gates Ubuntu-only apt repos."""
+    return "ubuntu" in _os_release_ids()
+
+
 def detect_platform() -> str | None:
-    """Detect current platform."""
+    """Detect current platform (package-manager family)."""
     if is_windows():
         return "windows"
     if is_macos():
         return "macos"
     if is_linux():
-        if Path("/etc/debian_version").exists():
+        ids = _os_release_ids()
+        if ids & {"fedora", "rhel", "centos"}:
+            return "fedora"
+        if "arch" in ids:
+            return "arch"
+        if Path("/etc/debian_version").exists() or {"debian", "ubuntu"} & ids:
             return "debian"
         return "linux"
     return None
@@ -103,6 +127,70 @@ def run_apt_install_with_retry(
         if not run_command(get_apt_update_command(), dry_run, sudo=sudo):
             return False
     return False
+
+
+def get_dnf_install_command(packages: list[str]) -> list[str]:
+    """Build a dnf install command tolerant of missing optional packages."""
+    return [
+        "dnf",
+        "install",
+        "-y",
+        "--setopt=install_weak_deps=False",
+        "--skip-unavailable",
+        "--skip-broken",
+        *packages,
+    ]
+
+
+def run_dnf_install_with_retry(
+    packages: list[str],
+    dry_run: bool = False,
+    sudo: bool = False,
+    max_attempts: int = 2,
+) -> bool:
+    """Install dnf packages, refreshing metadata between attempts."""
+    for attempt in range(1, max_attempts + 1):
+        if run_command(get_dnf_install_command(packages), dry_run, sudo=sudo):
+            return True
+        if attempt >= max_attempts:
+            break
+        print(f"  dnf install failed (attempt {attempt}/{max_attempts}); retrying...")
+        if not run_command(["dnf", "makecache"], dry_run, sudo=sudo):
+            return False
+    return False
+
+
+def run_pacman_install_with_retry(
+    packages: list[str],
+    dry_run: bool = False,
+    sudo: bool = False,
+    max_attempts: int = 2,
+) -> bool:
+    """Install pacman packages (--needed skips already-installed), refreshing between attempts."""
+    install_cmd = ["pacman", "-S", "--needed", "--noconfirm", *packages]
+    for attempt in range(1, max_attempts + 1):
+        if run_command(install_cmd, dry_run, sudo=sudo):
+            return True
+        if attempt >= max_attempts:
+            break
+        print(f"  pacman install failed (attempt {attempt}/{max_attempts}); refreshing...")
+        if not run_command(["pacman", "-Syy", "--noconfirm"], dry_run, sudo=sudo):
+            return False
+    return False
+
+
+def run_pipx_install(dry_run: bool = False) -> bool:
+    """Install the shared pipx-managed Python tools (gcovr, etc.)."""
+    # Late import to avoid a circular dep at module load time.
+    from ._packages import PIPX_PACKAGES
+
+    print("\nInstalling pipx packages...")
+    run_command(["pipx", "ensurepath"], dry_run)
+    for pkg in PIPX_PACKAGES:
+        if not run_command(["pipx", "install", pkg], dry_run):
+            log_error(f"Failed to install pipx package: {pkg}")
+            return False
+    return True
 
 
 def _brew_installed_formulae() -> set[str]:
@@ -287,13 +375,18 @@ __all__ = [
     "get_available_debian_packages",
     "get_brew_install_command",
     "get_config_value",
+    "get_dnf_install_command",
     "has_command",
     "is_ci",
+    "is_ubuntu",
     "log_error",
     "log_info",
     "log_warn",
     "require_tar_data_filter",
     "run_apt_install_with_retry",
     "run_command",
+    "run_dnf_install_with_retry",
+    "run_pacman_install_with_retry",
+    "run_pipx_install",
     "set_env_var",
 ]

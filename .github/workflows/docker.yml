@@ -49,6 +49,7 @@ jobs:
           sparse-checkout: |
             .github/scripts/plan_docker_builds.py
             .github/scripts/ci_bootstrap.py
+            deploy/docker/variants.json
             tools/_bootstrap.py
             tools/common/__init__.py
             tools/common/file_traversal.py
@@ -133,6 +134,36 @@ jobs:
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
           --build-dir "${{ github.workspace }}/build"
           --pattern "${{ matrix.artifact_pattern }}"
+
+      # Per-distro artifact: `variant` keys the name so the parallel matrix entries
+      # (linux, linux-debian, linux-fedora, linux-arch, ...) don't collide.
+      - name: Upload build artifact
+        if: steps.artifact.outputs.found == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: qgroundcontrol-${{ matrix.variant }}
+          path: ${{ steps.artifact.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+
+      # Native distro package (.deb/.rpm/.pkg.tar.zst) alongside the AppImage on
+      # x86_64 Linux variants; empty package_pattern (aarch64, Android) skips both.
+      - name: Find native package
+        id: package
+        if: matrix.package_pattern != ''
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
+          --build-dir "${{ github.workspace }}/build"
+          --pattern "${{ matrix.package_pattern }}"
+
+      - name: Upload native package
+        if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: qgroundcontrol-${{ matrix.variant }}-package
+          path: ${{ steps.package.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Generate CPM dependency SBOM
         if: steps.artifact.outputs.found == 'true'

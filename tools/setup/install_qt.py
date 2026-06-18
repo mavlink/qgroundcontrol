@@ -20,6 +20,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 _tools_dir = str(Path(__file__).resolve().parent.parent)
@@ -98,6 +99,26 @@ def resolve_qt_root(outdir: Path, version: str, arch_dir: str) -> Path:
     return qt_root
 
 
+_AQT_MAX_ATTEMPTS = 3
+_AQT_RETRY_DELAY_SECONDS = 15
+
+
+def _run_aqt_with_retries(args: list[str]) -> None:
+    """Run aqt, retrying transient CDN download/extraction failures (exit 254, "bad path")."""
+    for attempt in range(1, _AQT_MAX_ATTEMPTS + 1):
+        result = subprocess.run(args, check=False)
+        if result.returncode == 0:
+            return
+        if attempt == _AQT_MAX_ATTEMPTS:
+            raise subprocess.CalledProcessError(result.returncode, args)
+        print(
+            f"::warning::aqtinstall failed (exit {result.returncode}), "
+            f"attempt {attempt}/{_AQT_MAX_ATTEMPTS}; retrying in "
+            f"{_AQT_RETRY_DELAY_SECONDS}s",
+        )
+        time.sleep(_AQT_RETRY_DELAY_SECONDS)
+
+
 def install_qt(
     host: str,
     target: str,
@@ -134,7 +155,7 @@ def install_qt(
         args.extend(["--archives", *archives.split()])
 
     print(f"Running: {' '.join(args)}")
-    subprocess.run(args, check=True)
+    _run_aqt_with_retries(args)
 
     arch_dir = resolve_arch_dir(arch)
     return resolve_qt_root(outdir, version, arch_dir)

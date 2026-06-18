@@ -3,26 +3,32 @@
 #   docker build -f deploy/docker/Dockerfile --target linux       .   # x86_64 AppImage
 #   docker build -f deploy/docker/Dockerfile --target linux-cross .   # aarch64 cross
 #   docker build -f deploy/docker/Dockerfile --target android     .   # Android APK
-# run-docker.sh and plan_docker_builds.py drive --target + build-args; the 22.04
-# image is the `linux` target with the base + toolchain build args overridden.
+# run-docker.sh / plan_docker_builds.py drive --target + build-args; non-Ubuntu
+# Linux variants reuse the `linux` target with base/bootstrap/backend overridden.
 
 # ---------- base: shared bootstrap for every variant ----------
-# Pinned by digest for reproducible builds (re-resolve with `docker buildx
-# imagetools inspect ubuntu:<ver>` when intentionally bumping). UBUNTU_REF is
-# overridden to pin 22.04 for the Linux-22.04 build.
-ARG UBUNTU_REF=ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54
-FROM ${UBUNTU_REF} AS base
+# Digest-pinned for reproducibility (re-resolve via `docker buildx imagetools
+# inspect` when bumping); BASE_REF/SETUP_BASE overridden for non-Ubuntu distros.
+ARG BASE_REF=ubuntu:24.04@sha256:786a8b558f7be160c6c8c4a54f9a57274f3b4fb1491cf65146521ae77ff1dc54
+FROM ${BASE_REF} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 ENV PATH="/opt/qgc-venv/bin:${PATH}"
 
-# Shared shell helpers (retry, setup-base, setup-venv, build-type validation).
+# Shared shell helpers (retry, setup-base*, setup-venv, build-type validation).
 COPY deploy/docker/lib/ /usr/local/lib/qgc/
 
-# APT_EXTRA adds variant packages (e.g. "gcc-12 g++-12" on 22.04 for full C++20).
+# SETUP_BASE picks the bootstrap (apt/dnf/pacman); APT_EXTRA adds variant
+# packages (e.g. "gcc-12 g++-12" on 22.04 for full C++20; apt only).
+ARG SETUP_BASE=setup-base.sh
 ARG APT_EXTRA=""
-RUN APT_EXTRA="${APT_EXTRA}" sh /usr/local/lib/qgc/setup-base.sh
+# SETUP_BASE is interpolated into a shell path; whitelist it to block traversal.
+RUN case "${SETUP_BASE}" in \
+        setup-base.sh|setup-base-dnf.sh|setup-base-pacman.sh) ;; \
+        *) echo "Invalid SETUP_BASE: ${SETUP_BASE}" >&2; exit 1 ;; \
+    esac && \
+    APT_EXTRA="${APT_EXTRA}" sh "/usr/local/lib/qgc/${SETUP_BASE}"
 
 # Optional compiler pin (22.04 needs gcc-12 for full C++20). Written to the login
 # env so it applies at entrypoint cmake-configure time; empty = distro default.
@@ -57,14 +63,19 @@ WORKDIR /project/build
 SHELL ["/bin/bash", "-lc"]
 
 # ---------- linux: native x86_64 AppImage build ----------
+# DEP_PLATFORM selects the install_dependencies backend (debian = apt/Ubuntu &
+# Debian; fedora = dnf; arch = pacman). Non-Ubuntu distros set it via build args.
 FROM base AS linux
+ARG DEP_PLATFORM=debian
+# Persist for entrypoint.sh: Fedora/Arch builds skip the appimagelint compat check.
+ENV QGC_DEP_PLATFORM=${DEP_PLATFORM}
 RUN sh /usr/local/lib/qgc/install-qt.sh linux desktop linux_gcc_64 && \
     QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt_version) && \
     { echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64"; \
       echo 'export PATH=$QT_ROOT_DIR/bin:$PATH'; } > /etc/profile.d/qt.sh
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
-RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
-    rm -rf /var/lib/apt/lists/* /tmp/tools
+RUN python3 /tmp/tools/setup/install_dependencies --platform "${DEP_PLATFORM}" && \
+    rm -rf /var/lib/apt/lists/* /var/cache/dnf /var/cache/pacman/pkg /tmp/tools
 COPY deploy/docker/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/bin/bash", "-l", "/entrypoint.sh"]
 CMD ["Release"]
@@ -115,6 +126,8 @@ ENV ANDROID_HOME=$ANDROID_SDK_ROOT
 RUN . /etc/profile.d/qgc.sh && \
     mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest && \
     wget "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_CMDLINE_TOOLS}_latest.zip" -O /opt/cmdline-tools.zip && \
+    # Pinned to android_cmdline_tools 13114758 (.github/build-config.json); update both together.
+    echo "7ec965280a073311c339e571cd5de778b9975026cfcbe79f2b1cdcb1e15317ee  /opt/cmdline-tools.zip" | sha256sum -c - && \
     unzip /opt/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools && \
     mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/ && \
     rm -rf $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools && \

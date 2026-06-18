@@ -147,13 +147,33 @@ set(QGC_IOS_TARGETED_DEVICE_FAMILY "1,2" CACHE STRING "iOS targeted device famil
 # ----------------------------------------------------------------------------
 # Linux Platform
 # ----------------------------------------------------------------------------
+# Distro-aware defaults for native (non-Docker) builds. Docker builds pass these
+# explicitly via -D (see deploy/docker/entrypoint.sh), which overrides the cache.
+include(LinuxDistro)
+
+# Fedora/Arch glibc exceeds the AppImage floor (appimagelint noise there); native
+# package generator follows the distro (DEB/RPM via CPack, Arch via makepkg).
+set(_qgc_appimagelint_default ON)
+set(_qgc_cpack_default "")
+if(QGC_LINUX_DISTRO_FAMILY STREQUAL "debian")
+    set(_qgc_cpack_default "DEB")
+elseif(QGC_LINUX_DISTRO_FAMILY STREQUAL "rhel")
+    set(_qgc_appimagelint_default OFF)
+    set(_qgc_cpack_default "RPM")
+elseif(QGC_LINUX_DISTRO_FAMILY STREQUAL "arch")
+    set(_qgc_appimagelint_default OFF)
+endif()
+
 option(QGC_CREATE_APPIMAGE "Create AppImage package after build" ON)
+option(QGC_RUN_APPIMAGELINT "Run the appimagelint distro-compatibility check after AppImage creation" ${_qgc_appimagelint_default})
 set(QGC_APPIMAGE_ICON_256_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/QGroundControl_256.png" CACHE FILEPATH "AppImage 256x256 icon path")
 set(QGC_APPIMAGE_ICON_SCALABLE_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/QGroundControl.svg" CACHE FILEPATH "AppImage SVG icon path")
 set(QGC_APPIMAGE_APPRUN_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/AppRun" CACHE FILEPATH "AppImage AppRun script path")
 set(QGC_APPIMAGE_DESKTOP_ENTRY_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.desktop.in" CACHE FILEPATH "AppImage desktop entry path")
 set(QGC_APPIMAGE_METADATA_PATH "${CMAKE_SOURCE_DIR}/deploy/linux/org.mavlink.qgroundcontrol.appdata.xml.in" CACHE FILEPATH "AppImage metadata path")
 set(QGC_APPIMAGE_APPDATA_DEVELOPER "qgroundcontrol" CACHE STRING "AppImage developer name")
+set(QGC_CPACK_GENERATOR "${_qgc_cpack_default}" CACHE STRING "Extra CPack generator for a Linux native package alongside the AppImage (\"\", DEB, RPM)")
+set_property(CACHE QGC_CPACK_GENERATOR PROPERTY STRINGS "" "DEB" "RPM")
 
 # ----------------------------------------------------------------------------
 # Windows Platform

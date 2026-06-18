@@ -49,6 +49,24 @@
       "cacheVariables": {
         "QT_HOST_PATH": "$penv{QT_HOST_PATH}"
       }
+    },
+    {
+      "name": "Linux-deb",
+      "displayName": "Linux Release (.deb package)",
+      "inherits": ["release", "linux-base"],
+      "binaryDir": "${sourceParentDir}/build/Linux-deb",
+      "cacheVariables": {
+        "QGC_CPACK_GENERATOR": "DEB"
+      }
+    },
+    {
+      "name": "Linux-rpm",
+      "displayName": "Linux Release (.rpm package)",
+      "inherits": ["release", "linux-base"],
+      "binaryDir": "${sourceParentDir}/build/Linux-rpm",
+      "cacheVariables": {
+        "QGC_CPACK_GENERATOR": "RPM"
+      }
     }
   ],
   "buildPresets": [
@@ -56,7 +74,9 @@
     { "name": "Linux-debug", "configurePreset": "Linux-debug", "inherits": ["default"] },
     { "name": "Linux-coverage", "configurePreset": "Linux-coverage", "inherits": ["default"] },
     { "name": "Linux-arm64", "configurePreset": "Linux-arm64", "inherits": ["default"] },
-    { "name": "Linux-arm64-debug", "configurePreset": "Linux-arm64-debug", "inherits": ["default"] }
+    { "name": "Linux-arm64-debug", "configurePreset": "Linux-arm64-debug", "inherits": ["default"] },
+    { "name": "Linux-deb", "configurePreset": "Linux-deb", "inherits": ["default"] },
+    { "name": "Linux-rpm", "configurePreset": "Linux-rpm", "inherits": ["default"] }
   ],
   "testPresets": [
     { "name": "Linux", "configurePreset": "Linux", "inherits": ["default"] },
@@ -65,7 +85,9 @@
   ],
   "packagePresets": [
     { "name": "Linux", "configurePreset": "Linux" },
-    { "name": "Linux-arm64", "configurePreset": "Linux-arm64" }
+    { "name": "Linux-arm64", "configurePreset": "Linux-arm64" },
+    { "name": "Linux-deb", "configurePreset": "Linux-deb", "generators": ["DEB"] },
+    { "name": "Linux-rpm", "configurePreset": "Linux-rpm", "generators": ["RPM"] }
   ],
   "workflowPresets": [
     {
@@ -83,6 +105,22 @@
         { "type": "configure", "name": "Linux-debug" },
         { "type": "build", "name": "Linux-debug" },
         { "type": "test", "name": "Linux-debug" }
+      ]
+    },
+    {
+      "name": "Linux-deb",
+      "steps": [
+        { "type": "configure", "name": "Linux-deb" },
+        { "type": "build", "name": "Linux-deb" },
+        { "type": "package", "name": "Linux-deb" }
+      ]
+    },
+    {
+      "name": "Linux-rpm",
+      "steps": [
+        { "type": "configure", "name": "Linux-rpm" },
+        { "type": "build", "name": "Linux-rpm" },
+        { "type": "package", "name": "Linux-rpm" }
       ]
     }
   ]
