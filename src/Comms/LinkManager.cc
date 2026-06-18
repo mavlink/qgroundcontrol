@@ -85,6 +85,8 @@ void LinkManager::createConnectedLink(const LinkConfiguration *config)
 {
     for (SharedLinkConfigurationPtr &sharedConfig : _rgLinkConfigs) {
         if (sharedConfig.get() == config) {
+            sharedConfig->setAutoConnectStarted(true);
+            sharedConfig->resetReconnectBackoff();
             createConnectedLink(sharedConfig);
         }
     }
@@ -102,6 +104,19 @@ void LinkManager::disconnectLink(LinkInterface *link)
     }
 
     link->disconnect();
+}
+
+void LinkManager::disconnectLinkConfiguration(LinkConfiguration *config)
+{
+    if (!config) {
+        return;
+    }
+
+    config->setSuppressAutoReconnect(true);
+
+    if (LinkInterface *const link = config->link()) {
+        link->disconnect();
+    }
 }
 
 bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
@@ -151,6 +166,7 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     (void) connect(link.get(), &LinkInterface::communicationError, this, &LinkManager::_communicationError);
     (void) connect(link.get(), &LinkInterface::bytesReceived, MAVLinkProtocol::instance(), &MAVLinkProtocol::receiveBytes);
     (void) connect(link.get(), &LinkInterface::bytesSent, MAVLinkProtocol::instance(), &MAVLinkProtocol::logSentBytes);
+    (void) connect(link.get(), &LinkInterface::connected, this, &LinkManager::_linkConnected);
     (void) connect(link.get(), &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 
     MAVLinkProtocol::instance()->resetMetadataForLink(link.get());
@@ -175,8 +191,26 @@ bool LinkManager::createConnectedLink(SharedLinkConfigurationPtr &config)
     return true;
 }
 
+void LinkManager::_linkConnected()
+{
+    const LinkInterface *const link = qobject_cast<LinkInterface*>(sender());
+    const SharedLinkConfigurationPtr config = link ? link->linkConfiguration() : nullptr;
+    if (config) {
+        config->noteConnected();
+    }
+}
+
 void LinkManager::_communicationError(const QString &title, const QString &error)
 {
+    const LinkInterface *const link = qobject_cast<LinkInterface*>(sender());
+    const SharedLinkConfigurationPtr config = link ? link->linkConfiguration() : nullptr;
+
+    // Auto-connect links retry on a timer; a popup per failed attempt is just noise. Log only.
+    if (config && config->isAutoConnect() && !config->suppressAutoReconnect()) {
+        qCDebug(LinkManagerLog) << "Auto-connect link error (will retry):" << title << error;
+        return;
+    }
+
     QGC::showAppMessage(error, title);
 }
 
@@ -252,12 +286,14 @@ void LinkManager::_linkDisconnected()
     }
 
     if (config) {
+        config->noteDisconnected();
         config->setLink(nullptr);
     }
 
     (void) disconnect(link, &LinkInterface::communicationError, this, &LinkManager::_communicationError);
     (void) disconnect(link, &LinkInterface::bytesReceived, MAVLinkProtocol::instance(), &MAVLinkProtocol::receiveBytes);
     (void) disconnect(link, &LinkInterface::bytesSent, MAVLinkProtocol::instance(), &MAVLinkProtocol::logSentBytes);
+    (void) disconnect(link, &LinkInterface::connected, this, &LinkManager::_linkConnected);
     (void) disconnect(link, &LinkInterface::disconnected, this, &LinkManager::_linkDisconnected);
 
     link->_freeMavlinkChannel();
@@ -445,11 +481,19 @@ void LinkManager::_reconnectAutoConnectLinks()
             continue;
         }
 
-        if (config->link() || config->suppressAutoReconnect()) {
+        // Only re-establish links started this session (boot or manual connect); a freshly
+        // added auto-connect config waits for next app start rather than connecting now.
+        if (config->link() || config->suppressAutoReconnect() || !config->autoConnectStarted()) {
+            continue;
+        }
+
+        // Exponential backoff between attempts so a dead host isn't hammered every tick.
+        if (!config->reconnectReady()) {
             continue;
         }
 
         qCDebug(LinkManagerLog) << "Reconnecting auto-connect link" << config->name();
+        config->noteReconnectAttempt();
         createConnectedLink(config);
     }
 }
@@ -646,6 +690,7 @@ void LinkManager::startAutoConnectedLinks()
 {
     for (SharedLinkConfigurationPtr &sharedConfig : _rgLinkConfigs) {
         if (sharedConfig->isAutoConnect()) {
+            sharedConfig->setAutoConnectStarted(true);
             createConnectedLink(sharedConfig);
         }
     }

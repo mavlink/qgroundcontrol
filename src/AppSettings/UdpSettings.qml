@@ -26,18 +26,18 @@ ColumnLayout {
         QGCLabel { text: qsTr("Port") }
         QGCTextField {
             id:                     portField
-            text:                   subEditConfig.localPort.toString()
+            text:                   subEditConfig ? subEditConfig.localPort.toString() : ""
             focus:                  true
             Layout.preferredWidth:  _secondColumnWidth
             inputMethodHints:       Qt.ImhFormattedNumbersOnly
-            onTextChanged:          subEditConfig.localPort = parseInt(portField.text)
+            onTextChanged:          { if (subEditConfig) subEditConfig.localPort = parseInt(portField.text) }
         }
     }
 
     QGCLabel { text: qsTr("Server Addresses (optional)") }
 
     Repeater {
-        model: subEditConfig.hostList
+        model: subEditConfig ? subEditConfig.hostList : []
 
         delegate: RowLayout {
             spacing: _colSpacing

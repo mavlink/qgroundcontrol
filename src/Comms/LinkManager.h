@@ -40,6 +40,8 @@ class LinkManager : public QObject
     Q_PROPERTY(QStringList linkTypeStrings READ linkTypeStrings CONSTANT)
     Q_PROPERTY(bool mavlinkSupportForwardingEnabled READ mavlinkSupportForwardingEnabled NOTIFY mavlinkSupportForwardingEnabledChanged)
 
+    friend class LinkManagerTest;
+
 public:
     explicit LinkManager(QObject *parent = nullptr);
     ~LinkManager();
@@ -58,6 +60,8 @@ public:
     /// This should only be used by Qml code
     Q_INVOKABLE void createConnectedLink(const LinkConfiguration *config);
     Q_INVOKABLE void disconnectLink(LinkInterface *link);
+    /// Stop a link and suppress auto-reconnect, working whether or not a live link currently exists.
+    Q_INVOKABLE void disconnectLinkConfiguration(LinkConfiguration *config);
     Q_INVOKABLE void createMavlinkForwardingSupportLink();
     /// Called to signal app shutdown. Disconnects all links while turning off auto-connect.
     Q_INVOKABLE void shutdown();
@@ -114,6 +118,7 @@ signals:
     void isBluetoothAvailableChanged();
 
 private slots:
+    void _linkConnected();
     void _linkDisconnected();
     void _communicationError(const QString &title, const QString &error);
 

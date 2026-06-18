@@ -15,6 +15,7 @@ private slots:
     void _testBaseDefaults();
     void _testBaseSettingsRoot();
     void _testSuppressAutoReconnectNotPersisted();
+    void _testReconnectBackoff();
 
     // TCPConfiguration
     void _testTcpConstruction();
