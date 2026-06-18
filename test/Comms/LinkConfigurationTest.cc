@@ -243,6 +243,18 @@ void LinkConfigurationTest::_testSuppressAutoReconnectNotPersisted()
     QVERIFY(!loaded.suppressAutoReconnect());
 }
 
+void LinkConfigurationTest::_testReconnectBackoff()
+{
+    TCPConfiguration config(QStringLiteral("BackoffTest"));
+    QVERIFY(config.reconnectReady());
+
+    config.noteReconnectAttempt();
+    QVERIFY(!config.reconnectReady());
+
+    config.resetReconnectBackoff();
+    QVERIFY(config.reconnectReady());
+}
+
 // ============================================================================
 // UDPConfiguration tests
 // ============================================================================

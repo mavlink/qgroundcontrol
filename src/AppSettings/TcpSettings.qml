@@ -19,7 +19,7 @@ GridLayout {
     QGCTextField {
         id:                     hostField
         Layout.preferredWidth:  _secondColumnWidth
-        text:                   subEditConfig.host
+        text:                   subEditConfig ? subEditConfig.host : ""
         placeholderText:        qsTr("localhost or 192.168.1.1")
 
         // Allow IPv4, IPv6, hostnames, and domain names
@@ -34,7 +34,7 @@ GridLayout {
     QGCTextField {
         id:                     portField
         Layout.preferredWidth:  _secondColumnWidth
-        text:                   subEditConfig.port.toString()
+        text:                   subEditConfig ? subEditConfig.port.toString() : ""
         inputMethodHints:       Qt.ImhFormattedNumbersOnly
         placeholderText:        qsTr("5760")
 

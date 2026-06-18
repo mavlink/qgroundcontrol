@@ -546,7 +546,7 @@ ApplicationWindow {
                 if (criticalVehicleMessagePopup.additionalCriticalMessagesReceived) {
                     criticalVehicleMessagePopup.additionalCriticalMessagesReceived = false;
                     flyView.dropMainStatusIndicatorTool();
-                } else {
+                } else if (QGroundControl.multiVehicleManager.activeVehicle) {
                     QGroundControl.multiVehicleManager.activeVehicle.resetErrorLevelMessages();
                 }
             }
