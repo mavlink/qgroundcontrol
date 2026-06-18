@@ -1,6 +1,8 @@
 #include "AndroidInterface.h"
+#include "AndroidLogSink.h"
 #ifndef QGC_NO_SERIAL_LINK
-#include "AndroidSerial.h"
+#include "AndroidSerialPort.h"
+#include "AndroidSerialPortRegistry.h"
 #endif
 #include <QtCore/QJniEnvironment>
 #include <QtCore/QJniObject>
@@ -43,51 +45,27 @@ extern "C"
 
 #endif
 
+static jboolean jniInit(JNIEnv *env, jobject thiz);
+Q_DECLARE_JNI_NATIVE_METHOD(jniInit, nativeInit)
+
 static jboolean jniInit(JNIEnv *env, jobject thiz)
 {
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
-    const jclass context_cls = env->GetObjectClass(thiz);
-    if (!context_cls) {
+    const QJniObject activity(thiz);
+    const QJniObject appContext = activity.callObjectMethod("getApplicationContext", "()Landroid/content/Context;");
+    if (QJniEnvironment::checkAndClearExceptions(env) || !appContext.isValid()) {
         return JNI_FALSE;
     }
 
-    const jmethodID get_app_context_id = env->GetMethodID(context_cls, "getApplicationContext", "()Landroid/content/Context;");
-    env->DeleteLocalRef(context_cls);
-    if (QJniEnvironment::checkAndClearExceptions(env)) {
+    const QJniObject classLoader = appContext.callObjectMethod("getClassLoader", "()Ljava/lang/ClassLoader;");
+    if (QJniEnvironment::checkAndClearExceptions(env) || !classLoader.isValid()) {
         return JNI_FALSE;
     }
 
-    const jobject app_context = env->CallObjectMethod(thiz, get_app_context_id);
-    if (QJniEnvironment::checkAndClearExceptions(env) || !app_context) {
-        return JNI_FALSE;
-    }
-
-    const jclass app_context_cls = env->GetObjectClass(app_context);
-    if (!app_context_cls) {
-        env->DeleteLocalRef(app_context);
-        return JNI_FALSE;
-    }
-
-    const jmethodID get_class_loader_id = env->GetMethodID(app_context_cls, "getClassLoader", "()Ljava/lang/ClassLoader;");
-    env->DeleteLocalRef(app_context_cls);
-    if (QJniEnvironment::checkAndClearExceptions(env)) {
-        env->DeleteLocalRef(app_context);
-        return JNI_FALSE;
-    }
-
-    const jobject class_loader = env->CallObjectMethod(app_context, get_class_loader_id);
-    if (QJniEnvironment::checkAndClearExceptions(env)) {
-        env->DeleteLocalRef(app_context);
-        return JNI_FALSE;
-    }
-
-    const jobject app_context_global = env->NewGlobalRef(app_context);
-    const jobject class_loader_global = env->NewGlobalRef(class_loader);
-
-    env->DeleteLocalRef(app_context);
-    env->DeleteLocalRef(class_loader);
-
+    // GStreamer's C-ABI accessors return a raw jobject for the process lifetime, so promote to global refs the QJniObject temporaries don't own.
+    const jobject app_context_global = env->NewGlobalRef(appContext.object());
+    const jobject class_loader_global = env->NewGlobalRef(classLoader.object());
     if (!app_context_global || !class_loader_global || QJniEnvironment::checkAndClearExceptions(env)) {
         if (app_context_global) {
             env->DeleteGlobalRef(app_context_global);
@@ -112,32 +90,14 @@ static jint jniSetNativeMethods()
 {
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
-    const JNINativeMethod javaMethods[] {
-        {"nativeInit", "()Z", reinterpret_cast<void *>(jniInit)},
-    };
-
-    QJniEnvironment jniEnv;
-    (void) jniEnv.checkAndClearExceptions();
-
-    jclass objectClass = jniEnv->FindClass(AndroidInterface::kJniQGCActivityClassName);
-    if (!objectClass) {
-        qCWarning(AndroidInitLog) << "Couldn't find class:" << AndroidInterface::kJniQGCActivityClassName;
-        (void) jniEnv.checkAndClearExceptions();
-        return JNI_ERR;
-    }
-
-    const jint val = jniEnv->RegisterNatives(objectClass, javaMethods, std::size(javaMethods));
-    jniEnv->DeleteLocalRef(objectClass);
-    if (val < 0) {
-        qCWarning(AndroidInitLog) << "Error registering methods:" << val;
-        (void) jniEnv.checkAndClearExceptions();
+    QJniEnvironment env;
+    if (!env.registerNativeMethods<QtJniTypes::QGCActivity>({ Q_JNI_NATIVE_METHOD(jniInit) })) {
+        qCWarning(AndroidInitLog) << "Failed to register native methods for"
+                                  << AndroidInterface::kJniQGCActivityClassName;
         return JNI_ERR;
     }
 
     qCDebug(AndroidInitLog) << "Main Native Functions Registered";
-
-    (void) jniEnv.checkAndClearExceptions();
-
     return JNI_OK;
 }
 
@@ -157,9 +117,10 @@ jint JNI_OnLoad(JavaVM* vm, void*)
     }
 
     AndroidInterface::setNativeMethods();
+    AndroidLogSink::setNativeMethods();
 
 #ifndef QGC_NO_SERIAL_LINK
-    AndroidSerial::setNativeMethods();
+    AndroidSerialPort::initializeNative();
 #endif
 
     QNativeInterface::QAndroidApplication::hideSplashScreen(333);
@@ -181,9 +142,10 @@ void JNI_OnUnload(JavaVM* vm, void*)
         }
     }
 
-    _java_vm.store(nullptr, std::memory_order_release);
-
 #ifndef QGC_NO_SERIAL_LINK
-    AndroidSerial::cleanupJniCache();
+    // Drop token->port entries so a same-process native reload doesn't inherit stale pointers.
+    PortRegistry::clear();
 #endif
+
+    _java_vm.store(nullptr, std::memory_order_release);
 }

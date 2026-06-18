@@ -233,7 +233,8 @@ void QGCLoggingCategoryManager::_categoryFilter(QLoggingCategory* category)
     // Leave "default" (uncategorized qDebug()) and "qml" (QML console.log/warn/error)
     // to Qt's built-in filter, which enables debug messages in Debug builds by default.
     // Without this, the QGC filter would suppress them at the default level (Warning).
-    if (categoryName == QLatin1String("default") || categoryName == QLatin1String("qml")) {
+    const QLoggingCategory* const defaultCat = QLoggingCategory::defaultCategory();
+    if ((defaultCat && (categoryName == QLatin1String(defaultCat->categoryName()))) || categoryName == QLatin1String("qml")) {
         return;
     }
 

@@ -68,8 +68,8 @@ def main() -> None:
         sdkmanager = "sdkmanager"
         gradlew = os.path.join(args.workspace, "android", "gradlew")
 
-    run_with_retries([sdkmanager, "--update"])
-    run_with_retries([gradlew, "--version"])
+    run_with_retries([sdkmanager, "--update"], timeout=600)
+    run_with_retries([gradlew, "--version"], timeout=300)
 
 
 if __name__ == "__main__":

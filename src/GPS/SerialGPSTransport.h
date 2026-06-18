@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GPSTransport.h"
+#include "QGCSerialPortTypes.h"
 
 #include <QtCore/QString>
 
@@ -8,10 +9,11 @@
 #include <cstdint>
 #include <memory>
 
-class QSerialPort;
+class QGCSerialPort;
 
-/// GPSTransport backed by a QSerialPort. Owns the port and must be constructed on
-/// the thread that pumps the driver — QSerialPort has thread affinity.
+/// GPSTransport backed by a QGCSerialPort (HostSerialPort on desktop, AndroidSerialPort on
+/// Android USB-host). Owns the port and must be constructed on the thread that pumps the
+/// driver — the port has thread affinity.
 class SerialGPSTransport : public GPSTransport
 {
 public:
@@ -34,5 +36,6 @@ private:
 
     QString _device;
     const std::atomic_bool &_requestStop;
-    std::unique_ptr<QSerialPort> _serial;
+    SerialPortConfig _config{};
+    std::unique_ptr<QGCSerialPort> _serial;
 };

@@ -6,6 +6,10 @@
 
     <!-- %%INSERT_PERMISSIONS -->
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- %%INSERT_FEATURES -->
 
     <!-- Android 11+ (API 30) package visibility: required for QTextToSpeech to discover the system TTS engine -->
@@ -57,16 +61,10 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-                <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
-                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
-                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
             </intent-filter>
 
             <meta-data
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-                android:resource="@xml/device_filter" />
-            <meta-data
-                android:name="android.hardware.usb.action.USB_DEVICE_DETACHED"
                 android:resource="@xml/device_filter" />
 
             <meta-data
@@ -89,6 +87,11 @@
             <!-- <meta-data android:name="android.app.background_running" -->
             <!-- <meta-data android:name="android.app.trace_location" -->
         </activity>
+
+        <service
+            android:name="org.mavlink.qgroundcontrol.QGCForegroundService"
+            android:foregroundServiceType="connectedDevice"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -10,6 +10,7 @@ Handles:
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -101,6 +102,10 @@ def fix_apt_alternatives() -> None:
     _sudo(["ldconfig"])
 
     if not _ldconfig_has_blas():
+        # core-only installs (e.g. Android host) never pull BLAS; absence is expected, not fatal.
+        if os.environ.get("INPUT_PACKAGE_CATEGORY", "").strip():
+            print("::warning::libblas.so.3 absent; skipping (no BLAS in selected package category)")
+            return
         print("::error::libblas.so.3 is still missing after repair attempt")
         sys.exit(1)
 
@@ -132,16 +137,17 @@ def detect_python_version() -> None:
 
 def print_packages() -> None:
     """Resolve the debian apt package list and emit it as a GITHUB_OUTPUT value."""
-    result = run_captured(
-        [
-            sys.executable,
-            "tools/setup/install_dependencies",
-            "--platform",
-            "debian",
-            "--print-packages",
-        ],
-        check=True,
-    )
+    cmd = [
+        sys.executable,
+        "tools/setup/install_dependencies",
+        "--platform",
+        "debian",
+        "--print-packages",
+    ]
+    category = os.environ.get("INPUT_PACKAGE_CATEGORY", "").strip()
+    if category:
+        cmd += ["--category", category]
+    result = run_captured(cmd, check=True)
     write_github_output({"packages": result.stdout.strip()})
 
 

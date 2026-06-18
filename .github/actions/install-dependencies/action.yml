@@ -30,6 +30,10 @@ inputs:
     description: 'Additional packages to install (space-separated, Linux only)'
     required: false
     default: ''
+  package-category:
+    description: 'Restrict the Linux host apt set to a single category (e.g. core); empty installs all'
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -73,6 +77,8 @@ runs:
       if: runner.os == 'Linux'
       id: linux-deps
       shell: bash
+      env:
+        INPUT_PACKAGE_CATEGORY: ${{ inputs.package-category }}
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" print-packages
 
     - name: Enable universe repository (Linux)
@@ -80,19 +86,41 @@ runs:
       shell: bash
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" enable-universe
 
+    # `sudo timeout` (not nick-fields/retry) bounds each attempt: that action runs as `runner`
+    # and dies with EPERM trying to kill root-owned apt on timeout, so it can't retry. Running
+    # the timeout under sudo lets root kill apt; the loop resumes from apt's archive cache and
+    # `dpkg --configure -a` recovers a half-applied attempt. Bounds a throttled mirror without
+    # the unbounded grind composite steps would otherwise allow (no native timeout-minutes).
     - name: Install apt packages (Linux)
       if: runner.os == 'Linux'
       shell: bash
       env:
         APT_PACKAGES: ${{ steps.linux-deps.outputs.packages }}
       run: |
-        sudo apt-get -o Acquire::Retries=3 update -qq
-        # shellcheck disable=SC2086
-        sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends $APT_PACKAGES
+        set -uo pipefail
+        apt_opts=(-o DPkg::Lock::Timeout=300 -o Acquire::Retries=3)
+        sudo timeout 300 apt-get "${apt_opts[@]}" update -qq \
+          || echo "::warning::apt update timed out/failed; proceeding with cached lists"
+        for attempt in 1 2 3; do
+          echo "::group::apt install attempt ${attempt}"
+          sudo dpkg --configure -a || true
+          # shellcheck disable=SC2086
+          if sudo timeout 720 apt-get "${apt_opts[@]}" install -y --no-install-recommends $APT_PACKAGES; then
+            echo "::endgroup::"
+            exit 0
+          fi
+          echo "::endgroup::"
+          echo "::warning::apt install attempt ${attempt} failed or timed out; retrying"
+          sleep 15
+        done
+        echo "::error::apt install failed after 3 attempts"
+        exit 1
 
     - name: Fix apt alternatives (Linux)
       if: runner.os == 'Linux'
       shell: bash
+      env:
+        INPUT_PACKAGE_CATEGORY: ${{ inputs.package-category }}
       run: python3 "${GITHUB_WORKSPACE}/.github/scripts/install_dependencies_helper.py" fix-apt-alternatives
 
     - name: Install optional apt packages (Linux)

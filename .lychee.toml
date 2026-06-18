@@ -7,6 +7,12 @@ verbose = "info"
 # Disable progress bar (cleaner CI output)
 no_progress = true
 
+# Tolerate transient 5xx from external doc hosts (e.g. mavlink.io) without failing CI.
+# Defaults are max_retries=2 / retry_wait_time=2 / timeout=20.
+max_retries = 5
+retry_wait_time = 3
+timeout = 30
+
 # Accept these HTTP status codes as valid
 accept = ["200", "204", "301", "302", "403", "429"]
 

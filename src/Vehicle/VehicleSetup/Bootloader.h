@@ -2,11 +2,7 @@
 
 #include <QtCore/QObject>
 
-#ifdef Q_OS_ANDROID
-#include "qserialport.h"
-#else
-#include <QtSerialPort/QSerialPort>
-#endif
+#include "QGCSerialPort.h"
 
 class FirmwareImage;
 
@@ -22,7 +18,7 @@ public:
     QString errorString(void) { return _errorString; }
 
     bool open               (const QString portName);
-    void close              (void) { _port.close(); }
+    void close              (void) { if (_port) _port->close(); }
     bool getBoardInfo       (uint32_t& bootloaderVersion, uint32_t& boardID, uint32_t& flashSize);
     bool initFlashSequence  (void);
     bool erase              (void);
@@ -76,13 +72,13 @@ private:
         PROTO_GET_SYNC =        0x21,   ///< NOP for re-establishing sync
         PROTO_GET_DEVICE =      0x22,   ///< get device ID bytes
         PROTO_CHIP_ERASE =      0x23,   ///< erase program area and reset program address
-        PROTO_LOAD_ADDRESS =    0x24,	///< set next programming address
+        PROTO_LOAD_ADDRESS =    0x24,	///< set next programming address (Rev1+); aliased by PROTO_CHIP_VERIFY in Rev2
         PROTO_PROG_MULTI =      0x27,   ///< write bytes at program address and increment
         PROTO_GET_CRC =         0x29,	///< compute & return a CRC
         PROTO_BOOT =            0x30,   ///< boot the application
 
         // Command bytes - Rev 2 boootloader only
-        PROTO_CHIP_VERIFY	=   0x24, ///< begin verify mode
+        PROTO_CHIP_VERIFY	=   0x24, ///< begin verify mode (Rev2); deliberately same byte as PROTO_LOAD_ADDRESS
         PROTO_READ_MULTI	=   0x28, ///< read bytes at programm address and increment
 
         INFO_BL_REV         =   1,    ///< bootloader protocol revision
@@ -95,8 +91,10 @@ private:
         PROG_MULTI_MAX		=   64,     ///< write size for PROTO_PROG_MULTI, must be multiple of 4
         READ_MULTI_MAX		=   0x28    ///< read size for PROTO_READ_MULTI, must be multiple of 4. Sik Radio max size is 0x28
     };
+    static_assert(PROTO_CHIP_VERIFY == PROTO_LOAD_ADDRESS, "Rev2 PROTO_CHIP_VERIFY deliberately aliases PROTO_LOAD_ADDRESS (0x24)");
 
-    QSerialPort _port;
+    QGCSerialPort *_port = nullptr;
+    SerialPortConfig _portConfig;
     bool        _sikRadio           = false;
     bool        _inBootloaderMode   = false;    ///< true: board is in bootloader mode, false: special case for SiK Radio, board is in command mode
     uint32_t    _boardID            = 0;        ///< board id for currently connected board

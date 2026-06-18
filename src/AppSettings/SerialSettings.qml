@@ -36,6 +36,7 @@ ColumnLayout {
                     } else {
                         subEditConfig.portName = QGroundControl.linkManager.serialPorts[index]
                     }
+                    baudCombo.refreshModel()
                 }
             }
 
@@ -78,8 +79,8 @@ ColumnLayout {
                 }
             }
 
-            Component.onCompleted: {
-                var rates = QGroundControl.linkManager.serialBaudRates.slice()
+            function refreshModel() {
+                var rates = QGroundControl.linkManager.serialBaudRatesForPort(subEditConfig.portName).slice()
                 rates.push(_customLabel)
                 model = rates
 
@@ -92,6 +93,8 @@ ColumnLayout {
                     baudCombo.currentIndex = index
                 }
             }
+
+            Component.onCompleted: refreshModel()
         }
 
         QGCLabel {
@@ -143,39 +146,10 @@ ColumnLayout {
         QGCLabel { text: qsTr("Parity") }
         QGCComboBox {
             Layout.preferredWidth:  _secondColumnWidth
-            model:                  [qsTr("None"), qsTr("Even"), qsTr("Odd")]
-
-            onActivated: (index) => {
-                // Hard coded values from qserialport.h
-                switch (index) {
-                case 0:
-                    subEditConfig.parity = 0
-                    break
-                case 1:
-                    subEditConfig.parity = 2
-                    break
-                case 2:
-                    subEditConfig.parity = 3
-                    break
-                }
-            }
-
-            Component.onCompleted: {
-                switch (subEditConfig.parity) {
-                case 0:
-                    currentIndex = 0
-                    break
-                case 2:
-                    currentIndex = 1
-                    break
-                case 3:
-                    currentIndex = 2
-                    break
-                default:
-                    console.warn("Unknown parity", subEditConfig.parity)
-                    break
-                }
-            }
+            // Combo index is the QGCParity enum value (None, Odd, Even, Mark, Space).
+            model:                  [qsTr("None"), qsTr("Odd"), qsTr("Even"), qsTr("Mark"), qsTr("Space")]
+            currentIndex:           Math.max(Math.min(subEditConfig.parity, 4), 0)
+            onActivated:            (index) => { subEditConfig.parity = index }
         }
 
         QGCLabel { text: qsTr("Data Bits") }

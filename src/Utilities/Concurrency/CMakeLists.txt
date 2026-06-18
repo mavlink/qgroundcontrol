@@ -3,6 +3,7 @@ add_library(QGCConcurrency INTERFACE)
 target_sources(QGCConcurrency
     INTERFACE
         AutoSuspendGuard.h
+        WorkerThread.h
 )
 
 target_include_directories(QGCConcurrency

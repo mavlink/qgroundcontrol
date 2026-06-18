@@ -3,7 +3,10 @@
 # Android platform-specific initialization and interfaces
 # ============================================================================
 
-# Only build on Android platforms
+# Serial subsystem (own CMakeLists): compiles its JNI-free pieces on every platform for host tests,
+# the JNI-backed port on Android only. Added before the NOT-ANDROID guard so the host trio builds.
+add_subdirectory(Serial)
+
 if(NOT ANDROID)
     return()
 endif()
@@ -15,16 +18,11 @@ target_sources(${CMAKE_PROJECT_NAME}
         AndroidInit.cc
         AndroidInterface.cc
         AndroidInterface.h
-        AndroidSerial.cc
-        AndroidSerial.h
+        AndroidLogSink.cc
+        AndroidLogSink.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-# ----------------------------------------------------------------------------
-# Android Serial Port Support
-# ----------------------------------------------------------------------------
-add_subdirectory(qtandroidserialport)
 
 # ----------------------------------------------------------------------------
 # Qt Android Extensions (2GIS) — selective compile
