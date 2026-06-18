@@ -12,15 +12,16 @@ Item {
     anchors.bottom: parent.bottom
 
     property var    activeVehicle:                          QGroundControl.multiVehicleManager.activeVehicle
-    property bool   showIndicator:                          activeVehicle && activeVehicle.firstControlStatusReceived
-    property var    sysidInControl:                         activeVehicle ?  activeVehicle.sysidInControl : 0
-    property var    secondaryGCSList:                       activeVehicle ? activeVehicle.secondaryGCSList : []
-    property bool   gcsControlStatusFlags_SystemManager:    activeVehicle ? activeVehicle.gcsControlStatusFlags_SystemManager : false
-    property bool   gcsControlStatusFlags_TakeoverAllowed:  activeVehicle ? activeVehicle.gcsControlStatusFlags_TakeoverAllowed : false
+    property var    gcsControlManager:                      activeVehicle ? activeVehicle.gcsControlManager : null
+    property bool   showIndicator:                          gcsControlManager && gcsControlManager.firstControlStatusReceived
+    property var    sysidInControl:                         gcsControlManager ? gcsControlManager.sysidInControl : 0
+    property var    secondaryGCSList:                       gcsControlManager ? gcsControlManager.secondaryGCSList : []
+    property bool   gcsControlStatusFlags_SystemManager:    gcsControlManager ? gcsControlManager.gcsControlStatusFlags_SystemManager : false
+    property bool   gcsControlStatusFlags_TakeoverAllowed:  gcsControlManager ? gcsControlManager.gcsControlStatusFlags_TakeoverAllowed : false
     property Fact   requestControlAllowTakeoverFact:        QGroundControl.settingsManager.flyViewSettings.requestControlAllowTakeover
     property bool   requestControlAllowTakeover:            requestControlAllowTakeoverFact.rawValue
-    property bool   isThisGCSinControl:                     gcsMain == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
-    property bool   sendControlRequestAllowed:              activeVehicle ? activeVehicle.sendControlRequestAllowed : false
+    property bool   isThisGCSinControl:                     sysidInControl == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
+    property bool   sendControlRequestAllowed:              gcsControlManager ? gcsControlManager.sendControlRequestAllowed : false
     // When nobody is in control (uncontrolled) or takeover is allowed, the autopilot grants control
     // immediately, so there is no owner to ask and no request countdown
     property bool   controlGrantedImmediately:              sysidInControl == 0 || gcsControlStatusFlags_TakeoverAllowed
@@ -54,7 +55,7 @@ Item {
     signal triggerAnimations // Used to trigger animation inside the popup component
 
     Connections {
-        target: activeVehicle
+        target: gcsControlManager
         // Popup prompting user to accept control from other GCS
         function onRequestOperatorControlReceived(sysIdRequestingControl, allowTakeover, requestTimeoutSecs) {
             // If we don't have the indicator visible ( not receiving CONTROL_STATUS ) don't proceed
@@ -131,11 +132,11 @@ Item {
                     Layout.alignment:       Qt.AlignBottom
                     Layout.fillHeight:      true
                     onClicked: {
-                        control.activeVehicle.requestOperatorControl(true) // Allow takeover
+                        control.gcsControlManager.requestOperatorControl(true) // Allow takeover
                         mainWindow.closeIndicatorDrawer()
                         // After allowing takeover, if other GCS does not take control within 10 seconds
                         // takeover will be set to not allowed again. Notify user about this
-                        control.activeVehicle.startTimerRevertAllowTakeover()
+                        control.gcsControlManager.startTimerRevertAllowTakeover()
                         mainWindow.showIndicatorDrawer(allowTakeoverExpirationPopup, control)
                     }
                 }
@@ -172,7 +173,7 @@ Item {
             // that after vehicle::REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS seconds, this GCS will change back to takeover not allowed, as per mavlink specs
             TimedProgressTracker {
                 id:                     revertTakeoverProgressTracker
-                timeoutSeconds:         control.activeVehicle.operatorControlTakeoverTimeoutMsecs * 0.001
+                timeoutSeconds:         control.gcsControlManager.operatorControlTakeoverTimeoutMsecs * 0.001
                 onTimeout:              {
                     mainWindow.closeIndicatorDrawer()
                 }
@@ -249,7 +250,7 @@ Item {
                 // before the other request timeout expired. This way we can keep track of the time remaining and update UI accordingly
                 if (!sendControlRequestAllowed) {
                     // vehicle.requestOperatorControlRemainingMsecs holds the time remaining for the current request
-                    startProgressTracker(control.activeVehicle.requestOperatorControlRemainingMsecs * 0.001)
+                    startProgressTracker(control.gcsControlManager.requestOperatorControlRemainingMsecs * 0.001)
                 }
             }
 
@@ -349,7 +350,7 @@ Item {
                     text:                   controlGrantedImmediately ? qsTr("Take full control") : qsTr("Request full control")
                     onClicked: {
                         var timeout = controlGrantedImmediately ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
-                        control.activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
+                        control.gcsControlManager.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
                         if (timeout > 0) {
                             startProgressTracker(timeout)
                         }
@@ -360,7 +361,7 @@ Item {
                 }
                 QGCButton {
                     text:                   qsTr("Change")
-                    onClicked:              control.activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue)
+                    onClicked:              control.gcsControlManager.requestOperatorControl(requestControlAllowTakeoverFact.rawValue)
                     visible:                isThisGCSinControl
                     Layout.alignment:       Qt.AlignRight
                     enabled:                gcsControlStatusFlags_TakeoverAllowed != requestControlAllowTakeoverFact.rawValue
@@ -370,7 +371,7 @@ Item {
                 QGCButton {
                     text:                   qsTr("Release Control")
                     onClicked: {
-                        control.activeVehicle.releaseOperatorControl()
+                        control.gcsControlManager.releaseOperatorControl()
                     }
                     Layout.columnSpan:      2
                     Layout.alignment:       Qt.AlignRight
