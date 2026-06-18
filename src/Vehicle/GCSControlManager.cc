@@ -126,7 +126,7 @@ void GCSControlManager::releaseOperatorControl()
 
 void GCSControlManager::_requestOperatorControlAckHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, VehicleTypes::MavCmdResultFailureCode_t failureCode)
 {
-    // For the moment, this will always come from an autopilot, compid 1
+    // COMMAND_ACK may come from the system-manager component (not necessarily the autopilot)
     Q_UNUSED(compId);
 
     // If duplicated or no response, show popup to user. Otherwise only log it.
