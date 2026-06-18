@@ -85,7 +85,6 @@
 #endif
 
 #include <QtCore/QDateTime>
-#include <QtCore/QRegularExpression>
 
 QGC_LOGGING_CATEGORY(VehicleLog, "Vehicle.Vehicle")
 
