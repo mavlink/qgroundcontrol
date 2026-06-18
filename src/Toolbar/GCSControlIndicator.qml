@@ -7,7 +7,7 @@ import QGroundControl.FactControls
 
 Item {
     id:             control
-    width:          controlIndicatorIconGCS.width * 1.1
+    width:          controlIndicatorIconRole.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
@@ -24,6 +24,14 @@ Item {
     // When nobody is in control (uncontrolled) or takeover is allowed, the autopilot grants control
     // immediately, so there is no owner to ask and no request countdown
     property bool   controlGrantedImmediately:              sysidInControl == 0 || gcsControlStatusFlags_TakeoverAllowed
+    // Someone (anyone) holds control of the vehicle
+    property bool   someoneInControl:                       sysidInControl != 0
+    // This GCS is a recognized secondary operator: another GCS is primary and the vehicle lists us
+    // in its secondary range. (When uncontrolled the vehicle lists every recognized GCS, so scope to someoneInControl.)
+    property bool   isThisGCSsecondary:                     someoneInControl && !isThisGCSinControl &&
+                                                            secondaryGCSList.indexOf(Number(QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue)) >= 0
+    // This GCS has an operator role (primary or secondary) on the vehicle
+    property bool   isThisGCSoperator:                      isThisGCSinControl || isThisGCSsecondary
 
     property Fact   secondaryGCSSettingFact:                QGroundControl.settingsManager.flyViewSettings.operatorControlSecondaryGCS
     property string secondaryGCSSetting:                    secondaryGCSSettingFact.rawValue
@@ -438,44 +446,55 @@ Item {
         }
     }
 
-    // Actual top toolbar indicator
-    QGCColoredImage {
-        id:                      controlIndicatorIconLine
-        width:                   height
-        anchors.top:             parent.top
-        anchors.bottom:          parent.bottom
-        source:                  "/gcscontrolIndicator/gcscontrol_line.svg"
-        fillMode:                Image.PreserveAspectFit
-        sourceSize.height:       height
-        color:                   isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
-    }
+    // Actual top toolbar indicator. Three stacked layers occupying different quadrants:
+    //   aircraft (top-left)  - green when any GCS controls the vehicle
+    //   line     (bottom-left) - green only when THIS GCS has an operator role (its control link)
+    //   role glyph (right)   - solid device = primary, outlined device = secondary,
+    //                          lock open/closed = no role (open when control is acquirable now).
+    //                          Always white: it's your station; green is reserved for the control
+    //                          relationship (aircraft + line + PRIM/SEC label).
     QGCColoredImage {
         id:                      controlIndicatorIconAircraft
         width:                   height
         anchors.top:             parent.top
         anchors.bottom:          parent.bottom
-        source:                  "/gcscontrolIndicator/gcscontrol_device.svg"
+        source:                  "/gcscontrolIndicator/multigcs_aircraft.svg"
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
-        color:                   (isThisGCSinControl || gcsControlStatusFlags_TakeoverAllowed) ? qgcPal.colorGreen : qgcPal.text
+        color:                   someoneInControl ? qgcPal.colorGreen : qgcPal.text
     }
     QGCColoredImage {
-        id:                      controlIndicatorIconGCS
+        id:                      controlIndicatorIconLine
         width:                   height
         anchors.top:             parent.top
         anchors.bottom:          parent.bottom
-        source:                  "/gcscontrolIndicator/gcscontrol_gcs.svg"
+        source:                  "/gcscontrolIndicator/multigcs_line.svg"
+        fillMode:                Image.PreserveAspectFit
+        sourceSize.height:       height
+        color:                   isThisGCSoperator ? qgcPal.colorGreen : qgcPal.text
+    }
+    QGCColoredImage {
+        id:                      controlIndicatorIconRole
+        width:                   height
+        anchors.top:             parent.top
+        anchors.bottom:          parent.bottom
+        source:                  isThisGCSoperator
+                                     ? (isThisGCSinControl ? "/gcscontrolIndicator/multigcs_device.svg"
+                                                           : "/gcscontrolIndicator/multigcs_device_alt.svg")
+                                     : (controlGrantedImmediately ? "/gcscontrolIndicator/multigcs_lock_open.svg"
+                                                                  : "/gcscontrolIndicator/multigcs_lock_closed.svg")
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
         color:                   qgcPal.text
 
-        // Current GCS in control indicator
+        // PRIM/SEC role label, only shown when this GCS has an operator role
         QGCLabel {
-            id:                     gcsInControlIndicator
-            text:                   gcsMain
+            id:                     roleLabel
+            text:                   isThisGCSinControl ? qsTr("PRIM") : qsTr("SEC")
+            visible:                isThisGCSoperator
             font.bold:              true
-            font.pointSize:         ScreenTools.smallFontPointSize * 1.1
-            color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
+            font.pointSize:         ScreenTools.smallFontPointSize
+            color:                  qgcPal.colorGreen
             anchors.bottom:         parent.bottom
             anchors.bottomMargin:   -margins * 0.7
             anchors.right:          parent.right
