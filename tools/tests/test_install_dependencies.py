@@ -9,21 +9,29 @@ from unittest.mock import call, patch
 
 import pytest
 from setup.install_dependencies import (
+    ARCH_PACKAGES,
     DEBIAN_PACKAGES,
+    FEDORA_PACKAGES,
     JUST_MIN_VERSION,
     MACOS_PACKAGES,
+    PACKAGE_NAME_RE,
     PIPX_PACKAGES,
+    _arch,
     _detect_just_version,
+    _fedora,
     _windows,
     detect_platform,
     get_apt_install_command,
     get_apt_update_command,
+    get_arch_packages,
     get_available_debian_packages,
     get_brew_install_command,
     get_debian_packages,
+    get_fedora_packages,
     get_macos_packages,
     install_just_debian,
     parse_args,
+    resolve_package_alternatives,
     run_apt_install_with_retry,
     validate_extra_packages,
 )
@@ -106,6 +114,38 @@ def test_get_available_debian_packages_filters_unavailable() -> None:
         assert get_available_debian_packages("core") == ["cmake"]
 
 
+def test_resolve_package_alternatives_keeps_available_primary() -> None:
+    with patch(
+        "setup.install_dependencies._common.check_apt_package_available",
+        side_effect=lambda pkg: True,
+    ):
+        assert resolve_package_alternatives(["libgstreamer-plugins-good1.0-dev"]) == [
+            "libgstreamer-plugins-good1.0-dev"
+        ]
+
+
+def test_resolve_package_alternatives_swaps_to_available_alternative() -> None:
+    with patch(
+        "setup.install_dependencies._common.check_apt_package_available",
+        side_effect=lambda pkg: pkg == "libgstreamer-plugins-extra1.0-dev",
+    ):
+        assert resolve_package_alternatives(["libgstreamer-plugins-good1.0-dev"]) == [
+            "libgstreamer-plugins-extra1.0-dev"
+        ]
+
+
+def test_resolve_package_alternatives_drops_when_none_available() -> None:
+    # Regression: Debian bookworm has neither the good-dev package nor its
+    # alternative; keeping the unknown name made apt abort the whole install.
+    with patch(
+        "setup.install_dependencies._common.check_apt_package_available",
+        side_effect=lambda pkg: False,
+    ):
+        assert resolve_package_alternatives(["cmake", "libgstreamer-plugins-good1.0-dev"]) == [
+            "cmake"
+        ]
+
+
 def test_get_macos_packages() -> None:
     pkgs = get_macos_packages()
     assert "cmake" in pkgs
@@ -114,13 +154,81 @@ def test_get_macos_packages() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Fedora / Arch package lists
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("table", "getter"),
+    [(FEDORA_PACKAGES, get_fedora_packages), (ARCH_PACKAGES, get_arch_packages)],
+)
+def test_linux_package_tables_well_formed(table, getter) -> None:
+    assert table
+    for category, pkgs in table.items():
+        assert pkgs, f"Category '{category}' is empty"
+        assert len(pkgs) == len(set(pkgs)), f"Duplicates in category '{category}'"
+        for pkg in pkgs:
+            assert PACKAGE_NAME_RE.match(pkg), f"Invalid package name '{pkg}'"
+    aggregate = getter()
+    assert len(aggregate) == len(set(aggregate))
+
+
+def test_get_fedora_packages_categories() -> None:
+    assert "cmake" in get_fedora_packages("core")
+    assert "just" in get_fedora_packages("core")
+    assert any("gstreamer1" in p for p in get_fedora_packages("gstreamer"))
+    assert get_fedora_packages("nonexistent") == []
+
+
+def test_get_arch_packages_categories() -> None:
+    assert "cmake" in get_arch_packages("core")
+    assert "base-devel" in get_arch_packages("core")
+    assert "gstreamer" in get_arch_packages("gstreamer")
+    assert get_arch_packages("nonexistent") == []
+
+
+# ---------------------------------------------------------------------------
 # Platform detection
 # ---------------------------------------------------------------------------
 
 
+_OS_RELEASE = "setup.install_dependencies._common._os_release_ids"
+
+
 def test_detect_platform_linux_debian() -> None:
-    with patch("sys.platform", "linux"), patch("pathlib.Path.exists", return_value=True):
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=True),
+        patch(_OS_RELEASE, return_value={"debian"}),
+    ):
         assert detect_platform() == "debian"
+
+
+def test_detect_platform_linux_ubuntu() -> None:
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=True),
+        patch(_OS_RELEASE, return_value={"ubuntu", "debian"}),
+    ):
+        assert detect_platform() == "debian"
+
+
+def test_detect_platform_linux_fedora() -> None:
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=False),
+        patch(_OS_RELEASE, return_value={"fedora"}),
+    ):
+        assert detect_platform() == "fedora"
+
+
+def test_detect_platform_linux_arch() -> None:
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=False),
+        patch(_OS_RELEASE, return_value={"arch"}),
+    ):
+        assert detect_platform() == "arch"
 
 
 def test_detect_platform_macos() -> None:
@@ -134,7 +242,11 @@ def test_detect_platform_windows() -> None:
 
 
 def test_detect_platform_unknown_linux() -> None:
-    with patch("sys.platform", "linux"), patch("pathlib.Path.exists", return_value=False):
+    with (
+        patch("sys.platform", "linux"),
+        patch("pathlib.Path.exists", return_value=False),
+        patch(_OS_RELEASE, return_value=set()),
+    ):
         assert detect_platform() == "linux"
 
 
@@ -459,3 +571,88 @@ def test_install_windows_dispatch_invokes_msvc_and_nsis() -> None:
         )
     msvc.assert_called_once_with(False, True)
     nsis.assert_called_once_with(False)
+
+
+# ---------------------------------------------------------------------------
+# Linux install orchestration (Fedora / Arch)
+# ---------------------------------------------------------------------------
+
+
+def test_install_fedora_installs_packages_pipx_then_cleans() -> None:
+    with (
+        patch.object(_fedora, "get_fedora_packages", return_value=["cmake"]),
+        patch.object(_fedora._c, "run_dnf_install_with_retry", return_value=True) as dnf,
+        patch.object(_fedora._c, "run_pipx_install", return_value=True) as pipx,
+        patch.object(_fedora._c, "run_command", return_value=True) as cleanup,
+    ):
+        assert _fedora.install_fedora(dry_run=False) is True
+    dnf.assert_called_once_with(["cmake"], False, sudo=True)
+    pipx.assert_called_once_with(False)
+    cleanup.assert_called_once_with(["dnf", "clean", "all"], False, sudo=True)
+
+
+def test_install_fedora_skip_system_packages_skips_dnf_and_cleanup() -> None:
+    with (
+        patch.object(_fedora._c, "run_dnf_install_with_retry", return_value=True) as dnf,
+        patch.object(_fedora._c, "run_pipx_install", return_value=True) as pipx,
+        patch.object(_fedora._c, "run_command", return_value=True) as cleanup,
+    ):
+        assert _fedora.install_fedora(dry_run=False, skip_system_packages=True) is True
+    dnf.assert_not_called()
+    cleanup.assert_not_called()
+    pipx.assert_called_once_with(False)
+
+
+def test_install_fedora_returns_false_when_dnf_fails() -> None:
+    with (
+        patch.object(_fedora, "get_fedora_packages", return_value=["cmake"]),
+        patch.object(_fedora._c, "run_dnf_install_with_retry", return_value=False),
+        patch.object(_fedora._c, "run_pipx_install", return_value=True) as pipx,
+    ):
+        assert _fedora.install_fedora(dry_run=False) is False
+    pipx.assert_not_called()
+
+
+def test_install_fedora_unknown_category_returns_false() -> None:
+    with (
+        patch.object(_fedora, "get_fedora_packages", return_value=[]),
+        patch.object(_fedora._c, "run_dnf_install_with_retry", return_value=True) as dnf,
+    ):
+        assert _fedora.install_fedora(dry_run=False, category="bogus") is False
+    dnf.assert_not_called()
+
+
+def test_install_arch_syncs_installs_then_cleans() -> None:
+    with (
+        patch.object(_arch, "get_arch_packages", return_value=["cmake"]),
+        patch.object(_arch._c, "run_command", return_value=True) as run_command,
+        patch.object(_arch._c, "run_pacman_install_with_retry", return_value=True) as pac,
+        patch.object(_arch._c, "run_pipx_install", return_value=True) as pipx,
+    ):
+        assert _arch.install_arch(dry_run=False) is True
+    run_command.assert_any_call(["pacman", "-Syu", "--noconfirm"], False, sudo=True)
+    run_command.assert_any_call(["pacman", "-Sc", "--noconfirm"], False, sudo=True)
+    pac.assert_called_once_with(["cmake"], False, sudo=True)
+    pipx.assert_called_once_with(False)
+
+
+def test_install_arch_aborts_when_sync_fails() -> None:
+    with (
+        patch.object(_arch._c, "run_command", return_value=False),
+        patch.object(_arch._c, "run_pacman_install_with_retry", return_value=True) as pac,
+    ):
+        assert _arch.install_arch(dry_run=False) is False
+    pac.assert_not_called()
+
+
+def test_install_arch_category_skips_pipx_and_cleanup() -> None:
+    with (
+        patch.object(_arch, "get_arch_packages", return_value=["cmake"]),
+        patch.object(_arch._c, "run_command", return_value=True) as run_command,
+        patch.object(_arch._c, "run_pacman_install_with_retry", return_value=True),
+        patch.object(_arch._c, "run_pipx_install", return_value=True) as pipx,
+    ):
+        assert _arch.install_arch(dry_run=False, category="gstreamer") is True
+    pipx.assert_not_called()
+    cleanup_calls = [c for c in run_command.call_args_list if c.args[0][:2] == ["pacman", "-Sc"]]
+    assert cleanup_calls == []

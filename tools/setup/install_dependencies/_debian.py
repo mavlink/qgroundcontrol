@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import platform
 import re
+import shutil
 import subprocess
 import tarfile
 import tempfile
@@ -11,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from . import _common as _c
-from ._packages import DEBIAN_PACKAGES, PIPX_PACKAGES, get_debian_packages
+from ._packages import DEBIAN_PACKAGES, get_debian_packages
 
 JUST_VERSION = "1.51.0"
 JUST_MIN_VERSION = (1, 30)
@@ -26,7 +27,12 @@ DEBIAN_PACKAGE_ALTERNATIVES: dict[str, list[str]] = {
 
 
 def resolve_package_alternatives(packages: list[str]) -> list[str]:
-    """Replace packages with their first available alternative when the primary is missing."""
+    """Swap each alternative-mapped package to its first available candidate, dropping it if none exist.
+
+    apt-get aborts the whole transaction on an unknown package, so a mapped
+    package that exists on no supported release (e.g. libgstreamer-plugins-good1.0-dev
+    on Debian bookworm) must be omitted rather than passed through.
+    """
     needs_check = {pkg for pkg in packages if pkg in DEBIAN_PACKAGE_ALTERNATIVES}
     if not needs_check:
         return packages
@@ -45,17 +51,15 @@ def resolve_package_alternatives(packages: list[str]) -> list[str]:
 
     resolved = []
     for pkg in packages:
-        if pkg not in needs_check:
+        if pkg not in needs_check or availability.get(pkg):
             resolved.append(pkg)
             continue
-        chosen = pkg
-        if not availability.get(pkg):
-            for alt in DEBIAN_PACKAGE_ALTERNATIVES[pkg]:
-                if availability.get(alt):
-                    print(f"  Package {pkg} not available; using {alt}")
-                    chosen = alt
-                    break
-        resolved.append(chosen)
+        alt = next((a for a in DEBIAN_PACKAGE_ALTERNATIVES[pkg] if availability.get(a)), None)
+        if alt:
+            print(f"  Package {pkg} not available; using {alt}")
+            resolved.append(alt)
+        else:
+            _c.log_warn(f"Package {pkg} and its alternatives are unavailable; skipping")
     return resolved
 
 
@@ -120,15 +124,26 @@ def install_just_debian(dry_run: bool = False) -> bool:
         archive = Path(tmp) / "just.tar.gz"
         if not _c.download_file(url, archive):
             return False
+        just_bin = Path(tmp) / "just"
         try:
-            _c.require_tar_data_filter()
+            # Stream only the trusted 'just' member to a path we control: avoids
+            # tar path-traversal (no PEP 706 filter, works on bookworm's 3.11.2).
             with tarfile.open(archive, "r:gz") as tar:
-                tar.extract("just", path=tmp, filter="data")
-        except (tarfile.TarError, KeyError) as e:
+                member = tar.getmember("just")
+                if not member.isfile():
+                    _c.log_error("Archive member 'just' is not a regular file")
+                    return False
+                src = tar.extractfile(member)
+                if src is None:
+                    _c.log_error("Could not read 'just' from archive")
+                    return False
+                with src, just_bin.open("wb") as dst:
+                    shutil.copyfileobj(src, dst)
+        except (tarfile.TarError, KeyError, OSError) as e:
             _c.log_error(f"Failed to extract just: {e}")
             return False
         return _c.run_command(
-            ["install", "-m", "0755", f"{tmp}/just", "/usr/local/bin/just"], dry_run, sudo=True
+            ["install", "-m", "0755", str(just_bin), "/usr/local/bin/just"], dry_run, sudo=True
         )
 
 
@@ -148,14 +163,16 @@ def install_debian(
         bootstrap_packages = ["software-properties-common", "gnupg2", "ca-certificates"]
 
         # Ensure "universe" is enabled before installing full package set.
+        # universe is Ubuntu-only; add-apt-repository would fail on plain Debian.
         if not category:
             print("\nInstalling bootstrap packages...")
             if not _c.run_apt_install_with_retry(bootstrap_packages, dry_run, sudo=True):
                 return False
-            if not _c.run_command(["add-apt-repository", "-y", "universe"], dry_run, sudo=True):
-                return False
-            if not _c.run_command(apt_update_cmd, dry_run, sudo=True):
-                return False
+            if _c.is_ubuntu():
+                if not _c.run_command(["add-apt-repository", "-y", "universe"], dry_run, sudo=True):
+                    return False
+                if not _c.run_command(apt_update_cmd, dry_run, sudo=True):
+                    return False
 
         if category:
             packages = get_debian_packages(category)
@@ -183,12 +200,8 @@ def install_debian(
         print("\nSkipping apt package installation (--skip-system-packages)")
 
     if not category or category == "core":
-        print("\nInstalling pipx packages...")
-        _c.run_command(["pipx", "ensurepath"], dry_run)
-        for pkg in PIPX_PACKAGES:
-            if not _c.run_command(["pipx", "install", pkg], dry_run):
-                _c.log_error(f"Failed to install pipx package: {pkg}")
-                return False
+        if not _c.run_pipx_install(dry_run):
+            return False
 
         if not install_just_debian(dry_run):
             _c.log_error("Failed to install just")

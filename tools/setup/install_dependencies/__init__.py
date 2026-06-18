@@ -1,6 +1,7 @@
 """Install system dependencies for QGroundControl development.
 
-Supports Debian/Ubuntu, macOS, and Windows. Auto-detects platform or allows override.
+Supports Debian/Ubuntu, Fedora/RHEL, Arch, macOS, and Windows. Auto-detects
+platform or allows override.
 
 Usage:
     python tools/setup/install_dependencies                 # Auto-detect platform
@@ -11,6 +12,7 @@ Usage:
 
 from __future__ import annotations
 
+from ._arch import install_arch
 from ._cli import list_packages, main, parse_args, print_packages
 from ._common import (
     APT_BASE_OPTIONS,
@@ -23,10 +25,14 @@ from ._common import (
     get_available_debian_packages,
     get_brew_install_command,
     get_config_value,
+    get_dnf_install_command,
     has_command,
     is_ci,
+    is_ubuntu,
     run_apt_install_with_retry,
     run_command,
+    run_dnf_install_with_retry,
+    run_pacman_install_with_retry,
     set_env_var,
 )
 from ._debian import (
@@ -39,13 +45,18 @@ from ._debian import (
     install_just_debian,
     resolve_package_alternatives,
 )
+from ._fedora import install_fedora
 from ._macos import get_gstreamer_macos_urls, install_macos
 from ._packages import (
+    ARCH_PACKAGES,
     DEBIAN_PACKAGES,
+    FEDORA_PACKAGES,
     MACOS_PACKAGES,
     PACKAGE_NAME_RE,
     PIPX_PACKAGES,
+    get_arch_packages,
     get_debian_packages,
+    get_fedora_packages,
     get_macos_packages,
     validate_extra_packages,
 )
@@ -62,8 +73,10 @@ from ._windows import (
 
 __all__ = [
     "APT_BASE_OPTIONS",
+    "ARCH_PACKAGES",
     "DEBIAN_PACKAGES",
     "DEBIAN_PACKAGE_ALTERNATIVES",
+    "FEDORA_PACKAGES",
     "JUST_MIN_VERSION",
     "JUST_TARGETS",
     "JUST_VERSION",
@@ -82,20 +95,26 @@ __all__ = [
     "download_file",
     "get_apt_install_command",
     "get_apt_update_command",
+    "get_arch_packages",
     "get_available_debian_packages",
     "get_brew_install_command",
     "get_config_value",
     "get_debian_packages",
+    "get_dnf_install_command",
+    "get_fedora_packages",
     "get_gstreamer_macos_urls",
     "get_macos_packages",
     "has_command",
+    "install_arch",
     "install_debian",
+    "install_fedora",
     "install_just_debian",
     "install_macos",
     "install_windows",
     "install_windows_gstreamer",
     "install_windows_vulkan",
     "is_ci",
+    "is_ubuntu",
     "list_packages",
     "main",
     "parse_args",
@@ -103,6 +122,8 @@ __all__ = [
     "resolve_package_alternatives",
     "run_apt_install_with_retry",
     "run_command",
+    "run_dnf_install_with_retry",
+    "run_pacman_install_with_retry",
     "set_env_var",
     "validate_extra_packages",
 ]

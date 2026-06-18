@@ -1,0 +1,119 @@
+{
+  "_comment": "Single source of truth for QGC Docker build variants. Consumed by .github/scripts/plan_docker_builds.py (CI matrix), deploy/docker/run-docker.sh (local builds, via _variant_info.py), and deploy/docker/gen_compose.py (docker-compose.yml). Edit variants here only; docker-compose.yml is generated. Base-image digests: re-resolve with `docker buildx imagetools inspect <ref>` when bumping. build_args key order is preserved into the generated --build-arg list.",
+  "variants": [
+    {
+      "id": "ubuntu",
+      "ci_variant": "linux",
+      "platform": "Linux-Ubuntu-24.04",
+      "selector": "linux",
+      "target": "linux",
+      "image": "qgc-ubuntu-docker",
+      "fuse": true,
+      "artifact_pattern": "*.AppImage",
+      "package_pattern": "*.deb",
+      "build_args": {}
+    },
+    {
+      "id": "ubuntu-2204",
+      "ci_variant": "linux-2204",
+      "platform": "Linux-Ubuntu-22.04",
+      "selector": "linux",
+      "target": "linux",
+      "image": "qgc-ubuntu-2204-docker",
+      "fuse": true,
+      "artifact_pattern": "*.AppImage",
+      "package_pattern": "*.deb",
+      "build_args": {
+        "BASE_REF": "ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d",
+        "APT_EXTRA": "gcc-12 g++-12",
+        "PIP_CMAKE": "cmake>=3.25,<4",
+        "CC_PIN": "gcc-12",
+        "CXX_PIN": "g++-12"
+      }
+    },
+    {
+      "id": "ubuntu-2604",
+      "ci_variant": "linux-2604",
+      "platform": "Linux-Ubuntu-26.04",
+      "selector": "linux",
+      "target": "linux",
+      "image": "qgc-ubuntu-2604-docker",
+      "fuse": true,
+      "artifact_pattern": "*.AppImage",
+      "package_pattern": "*.deb",
+      "build_args": {
+        "BASE_REF": "ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64"
+      }
+    },
+    {
+      "id": "debian",
+      "ci_variant": "linux-debian",
+      "platform": "Linux-Debian",
+      "selector": "linux",
+      "target": "linux",
+      "image": "qgc-debian-docker",
+      "fuse": true,
+      "artifact_pattern": "*.AppImage",
+      "package_pattern": "*.deb",
+      "build_args": {
+        "BASE_REF": "debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
+      }
+    },
+    {
+      "id": "fedora",
+      "ci_variant": "linux-fedora",
+      "platform": "Linux-Fedora",
+      "selector": "linux",
+      "target": "linux",
+      "image": "qgc-fedora-docker",
+      "fuse": true,
+      "artifact_pattern": "*.AppImage",
+      "package_pattern": "*.rpm",
+      "build_args": {
+        "BASE_REF": "fedora:41@sha256:f1a3fab47bcb3c3ddf3135d5ee7ba8b7b25f2e809a47440936212a3a50957f3d",
+        "SETUP_BASE": "setup-base-dnf.sh",
+        "DEP_PLATFORM": "fedora"
+      }
+    },
+    {
+      "id": "arch",
+      "ci_variant": "linux-arch",
+      "platform": "Linux-Arch",
+      "selector": "linux",
+      "target": "linux",
+      "image": "qgc-arch-docker",
+      "fuse": true,
+      "artifact_pattern": "*.AppImage",
+      "package_pattern": "*.pkg.tar.zst",
+      "build_args": {
+        "BASE_REF": "archlinux:base@sha256:ff410a88e200b133e577f5730b7bfa324e26a333075ee056bf45e911c6ac5671",
+        "SETUP_BASE": "setup-base-pacman.sh",
+        "DEP_PLATFORM": "arch"
+      }
+    },
+    {
+      "id": "aarch64",
+      "ci_variant": "linux-aarch64",
+      "platform": "Linux-aarch64",
+      "selector": "linux",
+      "target": "linux-cross",
+      "image": "qgc-ubuntu-aarch64-docker",
+      "fuse": false,
+      "artifact_pattern": "QGroundControl",
+      "package_pattern": "",
+      "build_args": {}
+    },
+    {
+      "id": "android",
+      "ci_variant": "android",
+      "platform": "Android",
+      "selector": "android",
+      "target": "android",
+      "image": "qgc-android-docker",
+      "fuse": false,
+      "artifact_pattern": "*.apk",
+      "package_pattern": "",
+      "build_args": {}
+    }
+  ]
+}

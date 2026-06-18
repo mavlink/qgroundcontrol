@@ -260,9 +260,27 @@ jobs:
           aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
           upload-aws: ${{ matrix.primary }}
 
+      # Shell conditional, not a `&& x || y` GHA ternary whose `||` arm misfires
+      # if the truthy arm ever evaluates falsy. tag -> production; master -> beta.
+      - name: Compute Play Store rollout
+        id: playstore_rollout
+        if: ${{ !matrix.emulator && matrix.primary && env.HAS_PLAYSTORE_SECRET == 'true' && (github.ref_type == 'tag' || github.ref == 'refs/heads/master') }}
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+        run: |
+          if [ "${REF_TYPE}" = "tag" ]; then
+            { echo "track=production"; echo "status=inProgress"; echo "user_fraction=0.2"; } >> "${GITHUB_OUTPUT}"
+          else
+            { echo "track=beta"; echo "status=completed"; echo "user_fraction="; } >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Deploy to Play Store
-        if: ${{ !matrix.emulator && matrix.primary && github.ref_type == 'tag' && env.HAS_PLAYSTORE_SECRET == 'true' }}
+        if: ${{ !matrix.emulator && matrix.primary && env.HAS_PLAYSTORE_SECRET == 'true' && (github.ref_type == 'tag' || github.ref == 'refs/heads/master') }}
         uses: ./.github/actions/playstore
         with:
           artifact: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
           service_account_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+          track: ${{ steps.playstore_rollout.outputs.track }}
+          status: ${{ steps.playstore_rollout.outputs.status }}
+          user_fraction: ${{ steps.playstore_rollout.outputs.user_fraction }}
+          whats_new_directory: ${{ github.workspace }}/deploy/android/whatsnew

@@ -3,8 +3,12 @@
 
 from __future__ import annotations
 
+import subprocess
+
 import pytest
+from setup import install_qt
 from setup.install_qt import (
+    _run_aqt_with_retries,
     compute_cache_digest,
     resolve_android_qt_root,
     resolve_arch_dir,
@@ -133,3 +137,36 @@ class TestValidateAqtSource:
     def test_different_package_rejected(self) -> None:
         with pytest.raises(SystemExit):
             validate_aqt_source("evil-package")
+
+
+class TestRunAqtWithRetries:
+    @staticmethod
+    def _fake_run(returncodes: list[int], calls: list[list[str]]):
+        seq = iter(returncodes)
+
+        def _run(args: list[str], check: bool = False) -> subprocess.CompletedProcess:
+            calls.append(args)
+            return subprocess.CompletedProcess(args, next(seq))
+
+        return _run
+
+    def test_succeeds_first_try(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        calls: list[list[str]] = []
+        monkeypatch.setattr(install_qt.subprocess, "run", self._fake_run([0], calls))
+        _run_aqt_with_retries(["aqt", "install-qt"])
+        assert len(calls) == 1
+
+    def test_retries_then_succeeds(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        calls: list[list[str]] = []
+        monkeypatch.setattr(install_qt.subprocess, "run", self._fake_run([254, 0], calls))
+        monkeypatch.setattr(install_qt.time, "sleep", lambda _s: None)
+        _run_aqt_with_retries(["aqt", "install-qt"])
+        assert len(calls) == 2
+
+    def test_raises_after_exhausting_attempts(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        calls: list[list[str]] = []
+        monkeypatch.setattr(install_qt.subprocess, "run", self._fake_run([254] * 3, calls))
+        monkeypatch.setattr(install_qt.time, "sleep", lambda _s: None)
+        with pytest.raises(subprocess.CalledProcessError):
+            _run_aqt_with_retries(["aqt", "install-qt"])
+        assert len(calls) == install_qt._AQT_MAX_ATTEMPTS

@@ -101,6 +101,9 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
     ],
     "audio": [
         "libpulse-dev",
+        # Backing lib for Qt's speechd TextToSpeech plugin so CPackDeb's
+        # dpkg-shlibdeps resolves it into a runtime Depends instead of erroring.
+        "libspeechd2",
     ],
     "misc": [
         "libvulkan-dev",
@@ -171,6 +174,176 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
     ],
 }
 
+# Fedora/RHEL (dnf), mirrors DEBIAN_PACKAGES. gstreamer ugly/libav come from RPM
+# Fusion; installer uses --skip-unavailable so a missing optional plugin is OK.
+FEDORA_PACKAGES: dict[str, list[str]] = {
+    "core": [
+        "dnf-plugins-core",
+        "gnupg2",
+        "ca-certificates",
+        "appstream",
+        "binutils",
+        "gcc",
+        "gcc-c++",
+        "make",
+        "ccache",
+        "cmake",
+        "cppcheck",
+        "file",
+        "gdb",
+        "gettext",
+        "git",
+        "just",
+        "fuse-libs",
+        "fuse3",
+        "libtool",
+        "glibc-langpack-en",
+        "mold",
+        "nasm",
+        "ninja-build",
+        "patchelf",
+        "pipx",
+        "pkgconf-pkg-config",
+        "rpm-build",
+        "python3",
+        "python3-pip",
+        "rsync",
+        "unzip",
+        "valgrind",
+        "wget",
+        "zsync",
+    ],
+    "qt": [
+        "at-spi2-core-devel",
+        "fontconfig-devel",
+        "freetype-devel",
+        "gtk3-devel",
+        "libSM-devel",
+        "libX11-devel",
+        "libX11-xcb",
+        "libxcb-devel",
+        "xcb-util-cursor-devel",
+        "xcb-util-wm-devel",
+        "xcb-util-image-devel",
+        "xcb-util-keysyms-devel",
+        "xcb-util-renderutil-devel",
+        "xcb-util-devel",
+        "libXext-devel",
+        "libXfixes-devel",
+        "libXi-devel",
+        "libxkbcommon-devel",
+        "libxkbcommon-x11-devel",
+        "libXrender-devel",
+        "libunwind-devel",
+        "mesa-libEGL-devel",
+        "mesa-libGL-devel",
+    ],
+    "gstreamer": [
+        "gstreamer1-devel",
+        "gstreamer1-plugins-base-devel",
+        "gstreamer1-plugins-bad-free-devel",
+        "gstreamer1-plugins-base",
+        "gstreamer1-plugins-good",
+        "gstreamer1-plugins-bad-free",
+        "gstreamer1-plugins-ugly",
+        "gstreamer1-libav",
+        "blas",
+        "openblas",
+        "python3-gobject",
+        "python3-gstreamer1",
+    ],
+    "sdl": [
+        "libusb1-devel",
+    ],
+    "audio": [
+        "pulseaudio-libs-devel",
+    ],
+    "misc": [
+        "vulkan-loader-devel",
+        "pipewire-devel",
+    ],
+}
+
+# Arch (pacman). Arch ships headers inside the runtime package, so there is no
+# -dev/-devel split. base-devel (group) covers gcc/make/binutils/libtool/pkgconf.
+ARCH_PACKAGES: dict[str, list[str]] = {
+    "core": [
+        "base-devel",
+        "gnupg",
+        "ca-certificates",
+        "appstream",
+        "ccache",
+        "cmake",
+        "cppcheck",
+        "file",
+        "gdb",
+        "gettext",
+        "git",
+        "just",
+        "fuse2",
+        "fuse3",
+        "mold",
+        "nasm",
+        "ninja",
+        "patchelf",
+        "python-pipx",
+        "python",
+        "python-pip",
+        "rsync",
+        "unzip",
+        "valgrind",
+        "wget",
+        "zsync",
+    ],
+    "qt": [
+        "at-spi2-core",
+        "fontconfig",
+        "freetype2",
+        "gtk3",
+        "libsm",
+        "libx11",
+        "libxcb",
+        "xcb-util-cursor",
+        "xcb-util-wm",
+        "xcb-util-image",
+        "xcb-util-keysyms",
+        "xcb-util-renderutil",
+        "xcb-util",
+        "libxext",
+        "libxfixes",
+        "libxi",
+        "libxkbcommon",
+        "libxkbcommon-x11",
+        "libxrender",
+        "libunwind",
+        "libglvnd",
+        "mesa",
+    ],
+    "gstreamer": [
+        "gstreamer",
+        "gst-plugins-base",
+        "gst-plugins-base-libs",
+        "gst-plugins-good",
+        "gst-plugins-bad",
+        "gst-plugins-ugly",
+        "gst-libav",
+        "openblas",
+        "python-gobject",
+        "gst-python",
+    ],
+    "sdl": [
+        "libusb",
+    ],
+    "audio": [
+        "libpulse",
+    ],
+    "misc": [
+        "vulkan-icd-loader",
+        "vulkan-headers",
+        "pipewire",
+    ],
+}
+
 MACOS_PACKAGES: list[str] = [
     "cmake",
     "ninja",
@@ -189,6 +362,7 @@ PIPX_PACKAGES: list[str] = [
     "gcovr",
 ]
 
+
 def get_debian_packages(
     category: str | None = None,
     include_optional: bool = False,
@@ -206,9 +380,35 @@ def get_debian_packages(
         packages.extend(pkgs)
     return list(dict.fromkeys(packages))  # Remove duplicates, preserve order
 
+
+def _get_categorized_packages(
+    table: dict[str, list[str]], category: str | None = None
+) -> list[str]:
+    """Flatten a category->packages table, skipping cross_/optional categories."""
+    if category:
+        return list(table.get(category, []))
+    packages: list[str] = []
+    for cat, pkgs in table.items():
+        if cat.startswith("cross_") or cat.endswith("_optional"):
+            continue
+        packages.extend(pkgs)
+    return list(dict.fromkeys(packages))
+
+
+def get_fedora_packages(category: str | None = None) -> list[str]:
+    """Get Fedora/RHEL dnf packages, optionally filtered by category."""
+    return _get_categorized_packages(FEDORA_PACKAGES, category)
+
+
+def get_arch_packages(category: str | None = None) -> list[str]:
+    """Get Arch pacman packages, optionally filtered by category."""
+    return _get_categorized_packages(ARCH_PACKAGES, category)
+
+
 def get_macos_packages() -> list[str]:
     """Get macOS Homebrew packages."""
     return list(MACOS_PACKAGES)
+
 
 def validate_extra_packages(packages: list[str]) -> list[str]:
     """Validate extra package names passed from CI inputs."""
@@ -219,12 +419,17 @@ def validate_extra_packages(packages: list[str]) -> list[str]:
         validated.append(package)
     return validated
 
+
 __all__ = [
+    "ARCH_PACKAGES",
     "DEBIAN_PACKAGES",
+    "FEDORA_PACKAGES",
     "MACOS_PACKAGES",
     "PACKAGE_NAME_RE",
     "PIPX_PACKAGES",
+    "get_arch_packages",
     "get_debian_packages",
+    "get_fedora_packages",
     "get_macos_packages",
     "validate_extra_packages",
 ]

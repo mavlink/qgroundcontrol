@@ -282,9 +282,11 @@ if(_gst_verify_dest)
     endforeach()
 
     install(CODE "
+        # Honor DESTDIR: CPack stages into \$ENV{DESTDIR}, so this hand-written check
+        # must prepend it like install(FILES) does, or DEB/RPM/pacman packaging false-fails.
         set(_missing_plugins)
         foreach(_plugin IN ITEMS ${_gst_required_check})
-            if(NOT EXISTS \"\${CMAKE_INSTALL_PREFIX}/${_gst_verify_dest}/\${_plugin}\")
+            if(NOT EXISTS \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${_gst_verify_dest}/\${_plugin}\")
                 list(APPEND _missing_plugins \"\${_plugin}\")
             endif()
         endforeach()

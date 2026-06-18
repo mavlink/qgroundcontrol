@@ -17,6 +17,7 @@ if(NOT GIT_FOUND OR NOT EXISTS "${CMAKE_SOURCE_DIR}/.git")
     set(QGC_APP_VERSION_MAJOR "0")
     set(QGC_APP_VERSION_MINOR "0")
     set(QGC_APP_VERSION_PATCH "0")
+    set(QGC_APP_VERSION_DEV "0")
     string(TIMESTAMP QGC_APP_DATE "%Y-%m-%dT%H:%M:%S%z" UTC)
     configure_file(
         "${CMAKE_SOURCE_DIR}/src/qgc_version.h.in"
@@ -96,6 +97,14 @@ if(NOT QGC_APP_VERSION_STR)
     set(QGC_APP_VERSION_STR "v0.0.0")
 endif()
 # cmake_print_variables(QGC_APP_VERSION_STR)
+
+# Commits since the nearest tag (git describe "-<N>-g<sha>" suffix; 0 on a tag).
+# Feeds the Android versionCode Dev field so daily builds get unique codes.
+if(QGC_APP_VERSION_STR MATCHES "-([0-9]+)-g[0-9a-f]+$")
+    set(QGC_APP_VERSION_DEV "${CMAKE_MATCH_1}")
+else()
+    set(QGC_APP_VERSION_DEV "0")
+endif()
 
 # ----------------------------------------------------------------------------
 # Extract Clean Version Tag

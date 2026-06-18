@@ -372,6 +372,7 @@ jobs:
         with:
           build-dir: ${{ runner.temp }}/build
           mode: report-only
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Verify Coverage Thresholds
         if: matrix.mode == 'coverage'
