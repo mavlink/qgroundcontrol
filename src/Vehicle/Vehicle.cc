@@ -3285,11 +3285,11 @@ void Vehicle::_handleControlStatus(const mavlink_message_t& message)
         _gcsControlStatusFlags_TakeoverAllowed = controlStatus.flags & GCS_CONTROL_STATUS_FLAGS_TAKEOVER_ALLOWED;
         updateControlStatusSignals = true;
     }
-
-    if (_gcsMain != controlStatus.gcs_main) {
+    /*if (_gcsMain != controlStatus.gcs_main) {
         _gcsMain = controlStatus.gcs_main;
         updateControlStatusSignals = true;
-    }
+    }*/
+    
 
     if (!_firstControlStatusReceived) {
         _firstControlStatusReceived = true;
