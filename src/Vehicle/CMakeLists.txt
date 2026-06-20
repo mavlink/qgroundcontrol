@@ -35,8 +35,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         TrajectoryPoints.h
         Vehicle.cc
         Vehicle.h
-        SVMavlinkHandler.cc
-        SVMavlinkHandler.h
+        SvMavlinkHandler.cc
+        SvMavlinkHandler.h
         VehicleLinkManager.cc
         VehicleLinkManager.h
         VehicleObjectAvoidance.cc
