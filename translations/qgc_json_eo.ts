@@ -4492,6 +4492,25 @@
             <source>altitude bias,3d data</source>
             <translation>[ȧĺṫıṫũḋė ƀıȧŝ,3ḋ ḋȧṫȧ______]</translation>
         </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[keepSceneAlive].shortDesc</extracomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json" />
+            <source>Keep the 3D scene loaded in memory when switching back to fly view. Disable on memory-constrained devices.</source>
+            <translation>[Ķėėṗ ṫħė 3Ḋ ŝċėńė ĺǒȧḋėḋ ıń m̃ėm̃ǒŕẏ ẇħėń ŝẇıṫċħıńġ ƀȧċķ ṫǒ ƒĺẏ v̇ıėẇ. Ḋıŝȧƀĺė ǒń m̃ėm̃ǒŕẏ-ċǒńŝṫŕȧıńėḋ ḋėv̇ıċėŝ.______________________________]</translation>
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[keepSceneAlive].label</extracomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json" />
+            <source>Keep 3D scene alive when exiting 3D view</source>
+            <translation>[Ķėėṗ 3Ḋ ŝċėńė ȧĺıv̇ė ẇħėń ėẋıṫıńġ 3Ḋ v̇ıėẇ___________]</translation>
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[keepSceneAlive].keywords</extracomment>
+            <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json" />
+            <source>3d view,memory,scene,alive</source>
+            <translation>[3ḋ v̇ıėẇ,m̃ėm̃ǒŕẏ,ŝċėńė,ȧĺıv̇ė_______]</translation>
+        </message>
     </context>
     <context>
         <name>OfflineMaps.SettingsGroup.json</name>
@@ -6474,6 +6493,18 @@
             <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
             <source>UDP port to listen on for incoming RTCM3 correction data.</source>
             <translation>[ŨḊṖ ṗǒŕṫ ṫǒ ĺıŝṫėń ǒń ƒǒŕ ıńċǒm̃ıńġ ŔṪĊM̃3 ċǒŕŕėċṫıǒń ḋȧṫȧ.________________]</translation>
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[rtcmUdpValidate].shortDesc, .QGC.MetaData.Facts[rtcmUdpValidate].label</extracomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <source>UDP RTCM enable validation</source>
+            <translation>[ŨḊṖ ŔṪĊM̃ ėńȧƀĺė v̇ȧĺıḋȧṫıǒń________]</translation>
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[rtcmUdpValidate].longDesc</extracomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <source>Enable validation of incoming data as RTCM and drop garbage (improves security).</source>
+            <translation>[Ėńȧƀĺė v̇ȧĺıḋȧṫıǒń ǒƒ ıńċǒm̃ıńġ ḋȧṫȧ ȧŝ ŔṪĊM̃ ȧńḋ ḋŕǒṗ ġȧŕƀȧġė (ım̃ṗŕǒv̇ėŝ ŝėċũŕıṫẏ)._______________________]</translation>
         </message>
     </context>
     <context>
