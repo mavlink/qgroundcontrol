@@ -4492,6 +4492,25 @@
             <source>altitude bias,3d data</source>
             <translation type="unfinished" />
         </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[keepSceneAlive].shortDesc</extracomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json" />
+            <source>Keep the 3D scene loaded in memory when switching back to fly view. Disable on memory-constrained devices.</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[keepSceneAlive].label</extracomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json" />
+            <source>Keep 3D scene alive when exiting 3D view</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[keepSceneAlive].keywords</extracomment>
+            <translatorcomment>Only use english comma ',' to separate strings</translatorcomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/Viewer3D.SettingsGroup.json" />
+            <source>3d view,memory,scene,alive</source>
+            <translation type="unfinished" />
+        </message>
     </context>
     <context>
         <name>OfflineMaps.SettingsGroup.json</name>
@@ -6473,6 +6492,18 @@
             <extracomment>.QGC.MetaData.Facts[rtcmUdpInputPort].longDesc</extracomment>
             <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
             <source>UDP port to listen on for incoming RTCM3 correction data.</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[rtcmUdpValidate].shortDesc, .QGC.MetaData.Facts[rtcmUdpValidate].label</extracomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <source>UDP RTCM enable validation</source>
+            <translation type="unfinished" />
+        </message>
+        <message>
+            <extracomment>.QGC.MetaData.Facts[rtcmUdpValidate].longDesc</extracomment>
+            <location filename="/home/runner/work/qgroundcontrol/qgroundcontrol/src/Settings/NTRIP.SettingsGroup.json" />
+            <source>Enable validation of incoming data as RTCM and drop garbage (improves security).</source>
             <translation type="unfinished" />
         </message>
     </context>
