@@ -57,7 +57,7 @@ jobs:
       # everything. Sparse-checkout just the script + bootstrap shim it needs.
       - name: Checkout passthrough script (non-PR)
         if: github.event_name != 'pull_request'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
           sparse-checkout: |
@@ -85,7 +85,7 @@ jobs:
 
       - name: Checkout repo
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
 

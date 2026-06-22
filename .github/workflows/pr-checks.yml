@@ -55,7 +55,7 @@ jobs:
         if: |
           steps.title_check.outcome == 'failure' &&
           github.event.pull_request.user.type != 'Bot'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           sparse-checkout: .github/prompts
@@ -261,7 +261,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: |
             .github/scripts/gh_pr_size_label.py
