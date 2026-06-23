@@ -172,6 +172,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
     _csvLogTimer.start(1000);
 
+    _svMavlinkHandler = new SvMavlinkHandler(this, this);
+
 }
 
 // Disconnected Vehicle for offline editing
@@ -524,6 +526,7 @@ void Vehicle::resetCounters()
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
+    
     if (message.sysid != _systemID && message.sysid != 0) {
         // We allow RADIO_STATUS messages which come from a link the vehicle is using to pass through and be handled
         if (!(message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _vehicleLinkManager->containsLink(link))) {
@@ -588,6 +591,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     for (FactGroup* factGroup : factGroups()) {
         factGroup->handleMessage(this, message);
     }
+
+    _svMavlinkHandler->handleMessage(message);
+
 
     this->handleMessage(this, message);
 

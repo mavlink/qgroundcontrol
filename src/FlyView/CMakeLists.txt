@@ -40,6 +40,8 @@ qt_add_qml_module(FlyViewModule
         FlyViewPreFlightChecklistPopup.qml
         FlyViewToolStrip.qml
         FlyViewToolStripActionList.qml
+        DigitalJoystickButton.qml
+        DigitalJoystick.qml
 
         FlyViewTopRightColumnLayout.qml
         FlyViewTopRightPanel.qml

@@ -19,8 +19,11 @@ public:
     void handleMessage(const mavlink_message_t& message);
 
     Q_INVOKABLE void sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp);
+
     Q_INVOKABLE void sendAIParameters(uint8_t run_ai, QString track_model_name, QString scan_model_name);
+
     Q_INVOKABLE void sendModelParameters(QString model_name);
+    
     Q_INVOKABLE void sendVideoOutputParameters(
         QString stream_name, uint16_t width, uint16_t height, uint8_t fps,
         uint8_t layout_mode, uint8_t detection_overlay_mode, uint8_t num_user_views,

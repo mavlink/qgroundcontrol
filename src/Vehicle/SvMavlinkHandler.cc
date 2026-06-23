@@ -6,11 +6,12 @@
 #include <QMetaObject>
 #include <QVariant>
 #include <QDebug>
+#include <QtQml/QQmlEngine>
 
 SvMavlinkHandler::SvMavlinkHandler(Vehicle* vehicle, QObject* parent)
-    : QObject(parent)
-    , _vehicle(vehicle)
+    : QObject(parent), _vehicle(vehicle)
 {
+    (void) qmlRegisterUncreatableType<SvMavlinkHandler>("QGroundControl.SvMavlinkHandler", 1, 0, "SvMavlinkHandler", "Reference only");
 }
 
 void SvMavlinkHandler::registerCameraItem(QQuickItem* svCamItem)
@@ -26,8 +27,6 @@ void SvMavlinkHandler::copyStringToCharBuf(const QString& src, char* dest, int s
     strncpy(dest, ba.constData(), size - 1);
 }
 
-// Helper: send a message on the vehicle's primary link.
-// Mirrors the pattern used throughout QGC (PlanManager, ParameterManager, etc.).
 void SvMavlinkHandler::_sendMessage(mavlink_message_t& msg)
 {
     if (!_vehicle) return;
@@ -41,9 +40,7 @@ void SvMavlinkHandler::_sendMessage(mavlink_message_t& msg)
     _vehicle->sendMessageOnLinkThreadSafe(sharedLink.get(), msg);
 }
 
-// --------------------------------------------------------------------------
-// OUTGOING PIPELINE  (called from QML to send data TO the drone)
-// --------------------------------------------------------------------------
+//Setters
 
 void SvMavlinkHandler::sendSystemStatusParameters(uint8_t status, uint8_t error, float jetson_temp)
 {

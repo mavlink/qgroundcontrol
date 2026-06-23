@@ -1,5 +1,7 @@
 #include "QGCApplication.h"
 
+#include "SvMavlinkHandler.h"
+
 #include <QtCore/QEvent>
 #include <QtCore/QFile>
 #include <QtCore/QMetaMethod>

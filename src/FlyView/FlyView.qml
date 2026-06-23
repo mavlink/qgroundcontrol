@@ -50,6 +50,8 @@ Item {
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
 
+    property bool   _overlay:           true
+
     function _calcCenterViewPort() {
         var newToolInset = Qt.rect(0, 0, width, height)
         toolstrip.adjustToolInset(newToolInset)
@@ -150,7 +152,7 @@ Item {
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
             viewer3DCameraController: viewer3DLoader.item ? viewer3DLoader.item.cameraController : null
-            visible:                !QGroundControl.videoManager.fullScreen
+            visible:                !QGroundControl.videoManager.fullScreen && !_overlay
         }
 
         FlyViewCustomLayer {
@@ -159,7 +161,7 @@ Item {
             z:                  _fullItemZorder + 2
             parentToolInsets:   widgetLayer.totalToolInsets
             mapControl:         _mapControl
-            visible:            !QGroundControl.videoManager.fullScreen
+            visible:            !QGroundControl.videoManager.fullScreen && _overlay
         }
 
         // Development tool for visualizing the insets for a paticular layer, show if needed
@@ -217,5 +219,6 @@ Item {
         id:                 toolbar
         guidedValueSlider:  _guidedValueSlider
         visible:            !QGroundControl.videoManager.fullScreen
+        overlay: _overlay
     }
 }
