@@ -26,12 +26,19 @@ Examples:
 
 import json
 import sys
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator, NamedTuple
+from typing import NamedTuple
 
 # Add tools to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from common.file_traversal import (
+    find_header_files,
+    find_json_files,
+    find_repo_root,
+    find_source_files,
+)
 from common.patterns import (
     FACT_MEMBER_PATTERN,
     FACTGROUP_CLASS_PATTERN,
@@ -39,16 +46,11 @@ from common.patterns import (
     PARAM_NAME_PATTERN,
     make_query_pattern,
 )
-from common.file_traversal import (
-    find_repo_root,
-    find_header_files,
-    find_source_files,
-    find_json_files,
-)
 
 
 class SearchResult(NamedTuple):
     """A search result with name, file path, and line number."""
+
     name: str
     path: str
     line: int
@@ -67,43 +69,29 @@ def search_with_pattern(
 
     for path in files:
         try:
-            content = path.read_text(encoding='utf-8', errors='replace')
-            for i, line in enumerate(content.split('\n'), 1):
+            content = path.read_text(encoding="utf-8", errors="replace")
+            for i, line in enumerate(content.split("\n"), 1):
                 if match := query_pattern.search(line):
-                    yield SearchResult(
-                        match.group(1),
-                        str(path.relative_to(REPO_ROOT)),
-                        i
-                    )
-        except Exception:
+                    yield SearchResult(match.group(1), str(path.relative_to(REPO_ROOT)), i)
+        except OSError:
             continue
 
 
 def find_facts(query: str) -> Generator[SearchResult, None, None]:
     """Find Fact member variables matching query."""
-    return search_with_pattern(
-        FACT_MEMBER_PATTERN,
-        find_header_files(REPO_ROOT / 'src'),
-        query
-    )
+    return search_with_pattern(FACT_MEMBER_PATTERN, find_header_files(REPO_ROOT / "src"), query)
 
 
 def find_factgroups(query: str) -> Generator[SearchResult, None, None]:
     """Find FactGroup class definitions matching query."""
-    return search_with_pattern(
-        FACTGROUP_CLASS_PATTERN,
-        find_header_files(REPO_ROOT / 'src'),
-        query
-    )
+    return search_with_pattern(FACTGROUP_CLASS_PATTERN, find_header_files(REPO_ROOT / "src"), query)
 
 
 def find_mavlink(query: str) -> Generator[SearchResult, None, None]:
     """Find MAVLink message ID usage matching query."""
     seen = set()
     for result in search_with_pattern(
-        MAVLINK_MSG_ID_PATTERN,
-        find_source_files(REPO_ROOT / 'src'),
-        query
+        MAVLINK_MSG_ID_PATTERN, find_source_files(REPO_ROOT / "src"), query
     ):
         key = (result.name, result.path)
         if key not in seen:
@@ -113,26 +101,22 @@ def find_mavlink(query: str) -> Generator[SearchResult, None, None]:
 
 def find_params(query: str) -> Generator[SearchResult, None, None]:
     """Find parameter names in FactMetaData JSON files."""
-    return search_with_pattern(
-        PARAM_NAME_PATTERN,
-        find_json_files(REPO_ROOT / 'src'),
-        query
-    )
+    return search_with_pattern(PARAM_NAME_PATTERN, find_json_files(REPO_ROOT / "src"), query)
 
 
 COMMANDS = {
-    'fact': find_facts,
-    'facts': find_facts,
-    'f': find_facts,
-    'factgroup': find_factgroups,
-    'factgroups': find_factgroups,
-    'fg': find_factgroups,
-    'mavlink': find_mavlink,
-    'mav': find_mavlink,
-    'm': find_mavlink,
-    'param': find_params,
-    'params': find_params,
-    'p': find_params,
+    "fact": find_facts,
+    "facts": find_facts,
+    "f": find_facts,
+    "factgroup": find_factgroups,
+    "factgroups": find_factgroups,
+    "fg": find_factgroups,
+    "mavlink": find_mavlink,
+    "mav": find_mavlink,
+    "m": find_mavlink,
+    "param": find_params,
+    "params": find_params,
+    "p": find_params,
 }
 
 
@@ -143,18 +127,18 @@ def main() -> int:
     max_results = 50
 
     # Parse options
-    if '--json' in args:
+    if "--json" in args:
         json_output = True
-        args.remove('--json')
+        args.remove("--json")
 
-    if '--limit' in args:
-        idx = args.index('--limit')
+    if "--limit" in args:
+        idx = args.index("--limit")
         max_results = int(args[idx + 1])
-        args = args[:idx] + args[idx + 2:]
+        args = args[:idx] + args[idx + 2 :]
 
-    if '-h' in args or '--help' in args or len(args) < 2:
+    if "-h" in args or "--help" in args or len(args) < 2:
         print(__doc__)
-        return 0 if '-h' in args or '--help' in args else 1
+        return 0 if "-h" in args or "--help" in args else 1
 
     command = args[0].lower()
     query = args[1]
@@ -186,5 +170,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

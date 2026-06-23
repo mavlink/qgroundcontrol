@@ -19,16 +19,23 @@ from __future__ import annotations
 import argparse
 import os
 import re
-import shutil
 import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from _bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
+from common import find_repo_root
+from common.gh_actions import write_github_output
+from common.platform import is_windows
+
 
 @dataclass
-class BuildConfig:
-    """Build configuration options."""
+class CMakeConfig:
+    """CMake invocation options for configure.py."""
 
     source_dir: Path = field(default_factory=lambda: Path("."))
     build_dir: Path = field(default_factory=lambda: Path("build"))
@@ -61,18 +68,23 @@ def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
     2. QT_ROOT_DIR environment variable
     3. Common installation paths (newest version first)
     """
+    # On Windows, prefer .bat variant since qt-cmake may be a bash script
+    suffixes = [".bat", ""] if is_windows() else [""]
+
     # Check explicit qt_root
     if qt_root:
-        qt_cmake = qt_root / "bin" / "qt-cmake"
-        if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
-            return qt_cmake
+        for suffix in suffixes:
+            qt_cmake = qt_root / "bin" / f"qt-cmake{suffix}"
+            if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
+                return qt_cmake
 
     # Check QT_ROOT_DIR environment variable
     env_root = os.environ.get("QT_ROOT_DIR")
     if env_root:
-        qt_cmake = Path(env_root) / "bin" / "qt-cmake"
-        if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
-            return qt_cmake
+        for suffix in suffixes:
+            qt_cmake = Path(env_root) / "bin" / f"qt-cmake{suffix}"
+            if qt_cmake.exists() and os.access(qt_cmake, os.X_OK):
+                return qt_cmake
 
     # Common Qt installation patterns
     patterns = [
@@ -84,7 +96,7 @@ def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
     ]
 
     # Windows patterns
-    if sys.platform == "win32":
+    if is_windows():
         patterns.extend(
             [
                 Path("C:/Qt") / "*" / "msvc2022_64" / "bin" / "qt-cmake.bat",
@@ -111,7 +123,7 @@ def find_qt_cmake(qt_root: Path | None = None) -> Path | None:
     return None
 
 
-def configure(config: BuildConfig) -> int:
+def configure(config: CMakeConfig) -> int:
     """Run CMake configuration."""
     # Determine cmake command
     if config.use_qt_cmake:
@@ -165,11 +177,7 @@ def configure(config: BuildConfig) -> int:
     if result.returncode != 0:
         return result.returncode
 
-    # Output for CI if available
-    github_output = os.environ.get("GITHUB_OUTPUT")
-    if github_output:
-        with open(github_output, "a") as f:
-            f.write(f"build_dir={config.build_dir.resolve()}\n")
+    write_github_output({"build_dir": str(config.build_dir.resolve())})
 
     print(f"Configured: {config.build_dir}")
     return 0
@@ -286,9 +294,9 @@ def main() -> int:
     # Default source dir to repo root when run from tools/
     source_dir = args.source_dir
     if source_dir == Path(".") and Path(__file__).parent.name == "tools":
-        source_dir = Path(__file__).parent.parent
+        source_dir = find_repo_root(Path(__file__))
 
-    config = BuildConfig(
+    config = CMakeConfig(
         source_dir=source_dir.resolve(),
         build_dir=args.build_dir,
         build_type=args.build_type or "Debug",

@@ -1,0 +1,83 @@
+#pragma once
+
+#include <QtCore/QObject>
+#include <QtCore/QString>
+#include <QtCore/QList>
+#include <QtQmlIntegration/QtQmlIntegration>
+
+#include "MAVLinkMessageType.h"
+
+class QmlObjectListModel;
+
+class QGCMAVLinkMessage : public QObject
+{
+    Q_OBJECT
+    // QML_ELEMENT
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
+    Q_PROPERTY(quint32              id              READ id             CONSTANT)
+    Q_PROPERTY(quint32              sysId           READ sysId          CONSTANT)
+    Q_PROPERTY(quint32              compId          READ compId         CONSTANT)
+    Q_PROPERTY(QString              name            READ name           CONSTANT)
+    Q_PROPERTY(QString              instanceValue   READ instanceValue  CONSTANT)
+    Q_PROPERTY(qreal                actualRateHz    READ actualRateHz   NOTIFY actualRateHzChanged)
+    Q_PROPERTY(int32_t              targetRateHz    READ targetRateHz   NOTIFY targetRateHzChanged)
+    Q_PROPERTY(quint64              count           READ count          NOTIFY countChanged)
+    Q_PROPERTY(QmlObjectListModel   *fields         READ fields         CONSTANT)
+    Q_PROPERTY(bool                 fieldSelected   READ fieldSelected  NOTIFY fieldSelectedChanged)
+    Q_PROPERTY(bool                 selected        READ selected       NOTIFY selectedChanged)
+
+public:
+    explicit QGCMAVLinkMessage(const mavlink_message_t &message, const QString &instanceValue = QString(), QObject *parent = nullptr);
+    ~QGCMAVLinkMessage();
+
+    /// Extract the instance field value from a raw mavlink message, or empty string if none.
+    static QString extractInstanceValue(const mavlink_message_t &message);
+
+    quint32 id() const { return _message.msgid;  }
+    quint8 sysId() const { return _message.sysid; }
+    quint8 compId() const { return _message.compid; }
+    QString name() const { return _name;  }
+    QString instanceValue() const { return _instanceValue; }
+    qreal actualRateHz() const { return _actualRateHz; }
+    int32_t targetRateHz() const { return _targetRateHz; }
+    quint64 count() const { return _count; }
+    quint64 lastCount() const { return _lastCount; }
+    QmlObjectListModel *fields() const { return _fields; }
+    bool fieldSelected() const { return _fieldSelected; }
+    bool selected() const { return _selected; }
+
+    void updateFieldSelection();
+    void update(const mavlink_message_t &message);
+    void updateFreq();
+    void setSelected(bool sel);
+    void setTargetRateHz(int32_t rate);
+
+signals:
+    void countChanged();
+    void actualRateHzChanged();
+    void targetRateHzChanged();
+    void fieldSelectedChanged();
+    void selectedChanged();
+
+private:
+    void _updateFields();
+    static QString _extractDebugInstanceValue(const mavlink_message_t &message);
+
+    /// Maps each entry in _fields back to its msgInfo field index and array element.
+    struct FieldMapping {
+        unsigned int fieldIndex = 0;    ///< Index into mavlink_message_info_t::fields[]
+        int arrayElement = -1;          ///< -1 for scalar, 0..N-1 for array element
+    };
+
+    mavlink_message_t _message{};
+    QmlObjectListModel *_fields = nullptr;
+    QList<FieldMapping> _fieldMappings;
+    QString _name;
+    QString _instanceValue;
+    qreal _actualRateHz = 0.0;
+    int32_t _targetRateHz = 0;
+    uint64_t _count = 1;
+    uint64_t _lastCount = 0;
+    bool _fieldSelected = false;
+    bool _selected = false;
+};

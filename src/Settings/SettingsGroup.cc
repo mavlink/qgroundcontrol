@@ -5,7 +5,7 @@
 
 SettingsGroup::SettingsGroup(const QString& name, const QString& settingsGroup, QObject* parent)
     : QObject       (parent)
-    , _visible      (QGCCorePlugin::instance()->overrideSettingsGroupVisibility(name))
+    , _userVisible  (QGCCorePlugin::instance()->overrideSettingsGroupVisibility(name))
     , _name         (name)
     , _settingsGroup(settingsGroup)
 {
@@ -20,6 +20,9 @@ SettingsFact* SettingsGroup::_createSettingsFact(const QString& factName)
     if(!m) {
         qCritical() << "Fact name " << factName << "not found in" << QString(kJsonFileTemplate).arg(_name);
         exit(-1);
+    }
+    if (m->label().isEmpty()) {
+        qCritical() << "Missing or empty label for" << factName << "in" << QString(kJsonFileTemplate).arg(_name);
     }
     return new SettingsFact(_settingsGroup, m, this);
 }

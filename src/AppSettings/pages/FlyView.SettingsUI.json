@@ -1,0 +1,107 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "bindings": {
+        "hasChecklist": "QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length",
+        "useChecklistValue": "QGroundControl.settingsManager.appSettings.useChecklist.value",
+        "virtualJoystickOn": "QGroundControl.settingsManager.appSettings.virtualJoystick.rawValue"
+    },
+    "groups": [
+        {
+            "heading": "General",
+            "keywords": ["checklist", "preflight", "multi vehicle", "center map", "log replay", "camera control", "home position", "mission popup"],
+            "controls": [
+                {
+                    "setting": "appSettings.useChecklist",
+                    "showWhen": "hasChecklist"
+                },
+                {
+                    "setting": "appSettings.enforceChecklist",
+                    "showWhen": "hasChecklist && QGroundControl.settingsManager.appSettings.useChecklist.userVisible",
+                    "enableWhen": "useChecklistValue"
+                },
+                {
+                    "setting": "appSettings.enableMultiVehiclePanel"
+                },
+                {
+                    "setting": "flyViewSettings.keepMapCenteredOnVehicle"
+                },
+                {
+                    "setting": "flyViewSettings.showLogReplayStatusBar"
+                },
+                {
+                    "setting": "flyViewSettings.showSimpleCameraControl"
+                },
+                {
+                    "setting": "flyViewSettings.updateHomePosition"
+                },
+                {
+                    "setting": "flyViewSettings.enableAutomaticMissionPopups"
+                }
+            ]
+        },
+        {
+            "heading": "Guided Commands",
+            "keywords": ["altitude", "guided", "minimum", "maximum", "goto", "go to", "loiter radius", "confirmation"],
+            "controls": [
+                {
+                    "setting": "flyViewSettings.guidedMinimumAltitude"
+                },
+                {
+                    "setting": "flyViewSettings.guidedMaximumAltitude"
+                },
+                {
+                    "setting": "flyViewSettings.maxGoToLocationDistance"
+                },
+                {
+                    "setting": "flyViewSettings.forwardFlightGoToLocationLoiterRad"
+                },
+                {
+                    "setting": "flyViewSettings.goToLocationRequiresConfirmInGuided"
+                }
+            ]
+        },
+        {
+            "component": "MavlinkActionSettings",
+            "sectionName": "MAVLink Actions",
+            "keywords": [
+                "mavlink action",
+                "pre-arm",
+                "post-arm",
+                "disarm"
+            ]
+        },
+        {
+            "heading": "Virtual Joystick",
+            "keywords": ["joystick", "virtual stick", "throttle", "left handed", "auto center"],
+            "controls": [
+                {
+                    "setting": "appSettings.virtualJoystick"
+                },
+                {
+                    "setting": "appSettings.virtualJoystickAutoCenterThrottle",
+                    "enableWhen": "virtualJoystickOn"
+                },
+                {
+                    "setting": "appSettings.virtualJoystickLeftHandedMode",
+                    "enableWhen": "virtualJoystickOn"
+                }
+            ]
+        },
+        {
+            "heading": "Instrument Panel",
+            "keywords": ["compass", "indicators", "hud", "instrument", "nose up"],
+            "controls": [
+                {
+                    "setting": "flyViewSettings.showAdditionalIndicatorsCompass"
+                },
+                {
+                    "setting": "flyViewSettings.lockNoseUpCompass"
+                },
+                {
+                    "setting": "flyViewSettings.instrumentQmlFile2"
+                }
+            ]
+        }
+    ]
+}

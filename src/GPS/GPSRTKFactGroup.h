@@ -1,10 +1,6 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
 #include "FactGroup.h"
-
-Q_DECLARE_LOGGING_CATEGORY(GPSRTKFactGroupLog)
 
 class GPSRTKFactGroup : public FactGroup
 {
@@ -18,6 +14,8 @@ class GPSRTKFactGroup : public FactGroup
     Q_PROPERTY(Fact *valid              READ valid              CONSTANT)
     Q_PROPERTY(Fact *active             READ active             CONSTANT)
     Q_PROPERTY(Fact *numSatellites      READ numSatellites      CONSTANT)
+    Q_PROPERTY(Fact *numSatellitesUsed  READ numSatellitesUsed  CONSTANT)
+    Q_PROPERTY(Fact *lastError          READ lastError          CONSTANT)
 
 public:
     explicit GPSRTKFactGroup(QObject *parent = nullptr);
@@ -32,6 +30,8 @@ public:
     Fact *valid() { return &_validFact; }
     Fact *active() { return &_activeFact; }
     Fact *numSatellites() { return &_numSatellitesFact; }
+    Fact *numSatellitesUsed() { return &_numSatellitesUsedFact; }
+    Fact *lastError() { return &_lastErrorFact; }
 
 private:
     Fact _connectedFact = Fact(0, QStringLiteral("connected"), FactMetaData::valueTypeBool);
@@ -43,4 +43,6 @@ private:
     Fact _validFact = Fact(0, QStringLiteral("valid"), FactMetaData::valueTypeBool);
     Fact _activeFact = Fact(0, QStringLiteral("active"), FactMetaData::valueTypeBool);
     Fact _numSatellitesFact = Fact(0, QStringLiteral("numSatellites"), FactMetaData::valueTypeInt32);
+    Fact _numSatellitesUsedFact = Fact(0, QStringLiteral("numSatellitesUsed"), FactMetaData::valueTypeInt32);
+    Fact _lastErrorFact = Fact(0, QStringLiteral("lastError"), FactMetaData::valueTypeUint32);
 };

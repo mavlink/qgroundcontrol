@@ -1,5 +1,6 @@
 #include "CityMapGeometry.h"
 
+#include "Fact.h"
 #include "OsmParser.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"

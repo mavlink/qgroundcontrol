@@ -1,9 +1,11 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include <QtCore/QTemporaryDir>
+
+#include "UnitTest.h"
 
 /// Tests for QGCArchiveWatcher (watches directories for archive files)
-class QGCArchiveWatcherTest : public TempDirectoryTest
+class QGCArchiveWatcherTest : public UnitTest
 {
     Q_OBJECT
 
@@ -44,5 +46,6 @@ private:
     void _createTestArchive(const QString& path);
     void _createTestCompressedFile(const QString& path);
 
+    QTemporaryDir _tempDir;
     QString _outputDirPath;
 };

@@ -3,14 +3,10 @@ name: Custom Build
 on:
   push:
     branches: [master]
-    paths:
-      - 'custom-example/**'
-      - '.github/workflows/custom-build.yml'
+    paths-ignore:
+      - 'docs/**'
   pull_request:
-    branches: [master]
-    paths:
-      - 'custom-example/**'
-      - '.github/workflows/custom-build.yml'
+  merge_group:
   workflow_dispatch:
 
 concurrency:
@@ -22,9 +18,16 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: custom-build
+
   build:
     name: Custom Plugin Build
-    runs-on: ubuntu-22.04
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04' }}
     timeout-minutes: 60
 
     defaults:
@@ -32,6 +35,13 @@ jobs:
         shell: bash
 
     steps:
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
@@ -40,52 +50,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 1
 
-      - name: Enable custom build
-        uses: ./.github/actions/custom-build
-
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Setup Build Environment
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Release
+          save-cache: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Install Dependencies
-        run: python3 ./tools/setup/install_dependencies.py --platform debian
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: linux
-          target: linux_gcc_64
-          build-type: Release
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: false
-
-      - name: Install Qt for Linux
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: linux
-          arch: linux_gcc_64
-          modules: ${{ steps.config.outputs.qt_modules }}
+        uses: ./.github/actions/install-dependencies
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=Release
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
+          extra-args: -DQGC_CUSTOM_DIR=custom-example
 
       - name: Build
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config Release --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
 
       - name: Create AppImage
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config Release
+        uses: ./.github/actions/cmake-install
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
 
       - name: Verify Custom AppImage
-        working-directory: ${{ runner.temp }}/build
-        run: xvfb-run -a ./Custom-QGroundControl-x86_64.AppImage --simple-boot-test
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: Custom-QGroundControl-x86_64.AppImage
+          type: appimage
+          working-dir: ${{ runner.temp }}/build

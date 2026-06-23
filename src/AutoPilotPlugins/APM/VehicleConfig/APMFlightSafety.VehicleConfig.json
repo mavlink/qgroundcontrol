@@ -1,0 +1,377 @@
+{
+    "fileType": "VehicleConfig",
+    "version": 1,
+    "constants": {
+        "_rtlAltParamValueCurrentAltitude": 0,
+        "_rtlLoitTimeParamValueDefault": 60,
+        "_planeRtlAltParamValueCurrentAltitude": -1,
+        "_planeRtlAltParamValueDefaultSpecified": 10000,
+        "_planeFenceActionRtl": 1,
+        "_planeFenceActionAutoLandOrRtl": 8
+    },
+    "params": {
+        "_rtlAltIsMeters": {
+            "name": "noremap.RTL_ALT_M",
+            "existsOnly": true
+        },
+        "_rtlAltFact": "RTL_ALT_M",
+        "_rtlLoitTimeFact": "RTL_LOIT_TIME",
+        "_planeRtlAltFact": "RTL_ALTITUDE",
+        "_fenceAction": "FENCE_ACTION",
+        "_fenceEnable": "FENCE_ENABLE",
+        "_fenceRetAlt": "FENCE_RET_ALT",
+        "_fenceType": "FENCE_TYPE",
+        "_armingCheck": "ARMING_CHECK",
+        "_armingSkipCheck": "ARMING_SKIPCHK"
+    },
+    "bindings": {
+        "_fenceEnabled": "_fenceEnable && _fenceEnable.rawValue !== 0",
+        "_fenceActionIsRtl": "_fenceAction && (_fenceAction.rawValue === _planeFenceActionRtl || _fenceAction.rawValue === _planeFenceActionAutoLandOrRtl)",
+        "_rtlAltParamValueDefaultSpecified": "(_rtlAltIsMeters ? 15 : 1500)"
+    },
+    "sections": [
+        {
+            "title": "Return to Launch",
+            "keywords": [
+                "rtl",
+                "return home",
+                "return to launch",
+                "loiter",
+                "land",
+                "altitude"
+            ],
+            "image": "/qmlimages/ReturnToHomeAltitude.svg",
+            "showWhen": "controller.vehicle.multiRotor",
+            "controls": [
+                {
+                    "param": "RTL_ALT_M",
+                    "label": "Return at specified altitude:",
+                    "control": "radiogroup",
+                    "options": [
+                        {
+                            "label": "Return at current altitude",
+                            "value": "_rtlAltParamValueCurrentAltitude",
+                            "checked": "_rtlAltFact.value === _rtlAltParamValueCurrentAltitude"
+                        },
+                        {
+                            "label": "Return at specified altitude",
+                            "value": "_rtlAltParamValueDefaultSpecified",
+                            "checked": "_rtlAltFact.value !== _rtlAltParamValueCurrentAltitude"
+                        }
+                    ]
+                },
+                {
+                    "param": "RTL_ALT_M",
+                    "label": "Return altitude",
+                    "enableWhen": "_rtlAltFact && _rtlAltFact.value !== _rtlAltParamValueCurrentAltitude"
+                },
+                {
+                    "param": "RTL_LOIT_TIME",
+                    "label": "Loiter above Home",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_rtlLoitTimeFact.value > 0",
+                        "onChecked": "_rtlLoitTimeFact.value = _rtlLoitTimeParamValueDefault",
+                        "onUnchecked": "_rtlLoitTimeFact.value = 0"
+                    }
+                },
+                {
+                    "param": "RTL_LOIT_TIME",
+                    "label": "Loiter time",
+                    "enableWhen": "_rtlLoitTimeFact && _rtlLoitTimeFact.value > 0"
+                },
+                {
+                    "param": "RTL_ALT_FINAL_M",
+                    "label": "Final land stage altitude"
+                },
+                {
+                    "param": "LAND_SPD_MS",
+                    "label": "Final land stage descent speed"
+                }
+            ]
+        },
+        {
+            "title": "Return to Launch",
+            "keywords": [
+                "rtl",
+                "return home",
+                "return to launch",
+                "loiter",
+                "land",
+                "altitude"
+            ],
+            "image": "/qmlimages/ReturnToHomeAltitude.svg",
+            "showWhen": "controller.vehicle.fixedWing",
+            "controls": [
+                {
+                    "param": "RTL_ALTITUDE",
+                    "label": "Return altitude:",
+                    "optional": true,
+                    "control": "radiogroup",
+                    "options": [
+                        {
+                            "label": "Return at current altitude",
+                            "value": "_planeRtlAltParamValueCurrentAltitude",
+                            "checked": "_planeRtlAltFact && _planeRtlAltFact.value < 0"
+                        },
+                        {
+                            "label": "Return at specified altitude",
+                            "value": "_planeRtlAltParamValueDefaultSpecified",
+                            "checked": "_planeRtlAltFact && _planeRtlAltFact.value >= 0"
+                        }
+                    ]
+                },
+                {
+                    "param": "RTL_ALTITUDE",
+                    "label": "Return altitude",
+                    "optional": true,
+                    "enableWhen": "_planeRtlAltFact && _planeRtlAltFact.value >= 0"
+                },
+                {
+                    "param": "RTL_RADIUS",
+                    "label": "Loiter radius",
+                    "optional": true
+                },
+                {
+                    "control": "label",
+                    "label": "0 = use Waypoint Loiter Radius (WP_LOITER_RAD), negative = counter-clockwise",
+                    "indent": true,
+                    "smallFont": true
+                },
+                {
+                    "param": "RTL_AUTOLAND",
+                    "label": "Auto land after RTL",
+                    "optional": true,
+                    "control": "combobox"
+                }
+            ]
+        },
+        {
+            "title": "GeoFence",
+            "keywords": [
+                "geofence",
+                "boundary",
+                "fence",
+                "containment",
+                "rally",
+                "breach",
+                "radius",
+                "inclusion",
+                "exclusion"
+            ],
+            "showWhen": "controller.vehicle.multiRotor",
+            "controls": [
+                {
+                    "param": "FENCE_ENABLE",
+                    "label": "Enabled",
+                    "control": "checkbox"
+                },
+                {
+                    "param": "FENCE_TYPE",
+                    "label": "Maximum Altitude",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 1,
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_ALT_MAX",
+                    "label": "Maximum altitude",
+                    "showWhen": "_fenceEnabled && _fenceType && (_fenceType.rawValue & 1)"
+                },
+                {
+                    "param": "FENCE_TYPE",
+                    "label": "Minimum Altitude",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 8,
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_ALT_MIN",
+                    "label": "Minimum altitude",
+                    "optional": true,
+                    "showWhen": "_fenceEnabled && _fenceType && (_fenceType.rawValue & 8)"
+                },
+                {
+                    "param": "FENCE_TYPE",
+                    "label": "Circle centered on Home",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 2,
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_RADIUS",
+                    "label": "Circle radius",
+                    "showWhen": "_fenceEnabled && _fenceType && (_fenceType.rawValue & 2)"
+                },
+                {
+                    "param": "FENCE_TYPE",
+                    "label": "Inclusion/Exclusion Circles+Polygons",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 4,
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_MARGIN",
+                    "label": "Fence margin",
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_AUTOENABLE",
+                    "label": "Auto-enable",
+                    "optional": true,
+                    "control": "combobox",
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_ACTION",
+                    "label": "Breach action",
+                    "control": "combobox",
+                    "showWhen": "_fenceEnabled"
+                }
+            ]
+        },
+        {
+            "title": "GeoFence",
+            "keywords": [
+                "geofence",
+                "boundary",
+                "fence",
+                "containment",
+                "rally",
+                "breach",
+                "radius",
+                "inclusion",
+                "exclusion"
+            ],
+            "showWhen": "controller.vehicle.fixedWing",
+            "controls": [
+                {
+                    "param": "FENCE_ENABLE",
+                    "label": "Enabled",
+                    "control": "checkbox"
+                },
+                {
+                    "param": "FENCE_TYPE",
+                    "label": "Maximum Altitude",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 1,
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_ALT_MAX",
+                    "label": "Maximum altitude",
+                    "showWhen": "_fenceEnabled && _fenceType && (_fenceType.rawValue & 1)"
+                },
+                {
+                    "param": "FENCE_TYPE",
+                    "label": "Minimum Altitude",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 8,
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_ALT_MIN",
+                    "label": "Minimum altitude",
+                    "optional": true,
+                    "showWhen": "_fenceEnabled && _fenceType && (_fenceType.rawValue & 8)"
+                },
+                {
+                    "param": "FENCE_TYPE",
+                    "label": "Circle centered on Home",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 2,
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_RADIUS",
+                    "label": "Circle radius",
+                    "showWhen": "_fenceEnabled && _fenceType && (_fenceType.rawValue & 2)"
+                },
+                {
+                    "param": "FENCE_TYPE",
+                    "label": "Inclusion/Exclusion Circles+Polygons",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 4,
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_MARGIN",
+                    "label": "Fence margin",
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_AUTOENABLE",
+                    "label": "Auto-enable",
+                    "optional": true,
+                    "control": "combobox",
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_ACTION",
+                    "label": "Breach action",
+                    "control": "combobox",
+                    "showWhen": "_fenceEnabled"
+                },
+                {
+                    "param": "FENCE_RET_ALT",
+                    "label": "Custom return altitude",
+                    "optional": true,
+                    "control": "toggleCheckbox",
+                    "indent": true,
+                    "showWhen": "_fenceEnabled && _fenceActionIsRtl",
+                    "toggleCheckbox": {
+                        "checked": "_fenceRetAlt && _fenceRetAlt.value > 0",
+                        "onChecked": "_fenceRetAlt.value = (_planeRtlAltFact ? _planeRtlAltFact.value : 100)",
+                        "onUnchecked": "_fenceRetAlt.value = 0"
+                    }
+                },
+                {
+                    "param": "FENCE_RET_ALT",
+                    "label": "Return altitude",
+                    "optional": true,
+                    "indent": true,
+                    "showWhen": "_fenceEnabled && _fenceActionIsRtl && _fenceRetAlt && _fenceRetAlt.value > 0"
+                },
+                {
+                    "param": "FENCE_RET_RALLY",
+                    "label": "Return to nearest rally point",
+                    "optional": true,
+                    "control": "checkbox",
+                    "indent": true,
+                    "showWhen": "_fenceEnabled && _fenceActionIsRtl"
+                }
+            ]
+        },
+        {
+            "title": "Arming Checks",
+            "keywords": [
+                "arming",
+                "pre-arm",
+                "preflight",
+                "safety check"
+            ],
+            "controls": [
+                {
+                    "control": "label",
+                    "label": "Warning: Skipping arming checks can lead to loss of Vehicle control.",
+                    "warning": true
+                },
+                {
+                    "param": "ARMING_CHECK",
+                    "label": "Arming checks",
+                    "control": "bitmask",
+                    "optional": true,
+                    "firstEntryIsAll": true,
+                    "showWhen": "_armingCheck"
+                },
+                {
+                    "param": "ARMING_SKIPCHK",
+                    "label": "Skip arming checks",
+                    "control": "bitmask",
+                    "optional": true,
+                    "showWhen": "!_armingCheck && _armingSkipCheck"
+                }
+            ]
+        }
+    ]
+}

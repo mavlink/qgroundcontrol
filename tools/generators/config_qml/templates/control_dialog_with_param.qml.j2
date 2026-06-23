@@ -1,0 +1,40 @@
+{{ indent }}QGCPopupDialogFactory {
+{{ indent }}    id: {{ factory_id }}
+{{ indent }}    dialogComponent: {{ comp_id }}
+{{ indent }}}
+{{ indent }}Component {
+{{ indent }}    id: {{ comp_id }}
+{{ indent }}    {{ dialog_component }} { }
+{{ indent }}}
+{{ indent }}RowLayout {
+{{ indent }}    Layout.fillWidth: true
+{{ indent }}    spacing: ScreenTools.defaultFontPixelWidth
+{% if button_after %}
+{{ textfield_qml }}
+{{ ri }}QGCButton {
+{{ ri }}    text: {{ button_text }}
+{{ ri }}    onClicked: {{ factory_id }}.open({{ open_arg }})
+{% if enable_when %}
+{{ ri }}    enabled: {{ enable_when }}
+{% endif %}
+{{ ri }}}
+{% else %}
+{{ ri }}QGCLabel {
+{{ ri }}    text: {{ label_qtr }}
+{{ ri }}    Layout.fillWidth: true
+{{ ri }}}
+{{ ri }}QGCButton {
+{{ ri }}    text: {{ button_text }}
+{{ ri }}    onClicked: {{ factory_id }}.open({{ open_arg }})
+{% if enable_when %}
+{{ ri }}    enabled: {{ enable_when }}
+{% endif %}
+{{ ri }}}
+{{ ri }}FactTextField {
+{{ ri }}    fact: {{ fact_ref }}
+{% if enable_when %}
+{{ ri }}    enabled: {{ enable_when }}
+{% endif %}
+{{ ri }}}
+{% endif %}
+{{ indent }}}

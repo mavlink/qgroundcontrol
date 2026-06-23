@@ -9,13 +9,10 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
 #include <archive.h>
-
-Q_DECLARE_LOGGING_CATEGORY(QGClibarchiveLog)
 
 namespace QGClibarchive {
 
@@ -44,7 +41,8 @@ enum class ReaderMode {
 // RAII Archive Reader
 // ============================================================================
 
-/// RAII wrapper for libarchive reader with automatic cleanup
+/// \brief RAII wrapper for libarchive reader with automatic cleanup
+///
 class ArchiveReader {
 public:
     ArchiveReader() = default;

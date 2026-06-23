@@ -1,4 +1,5 @@
 #include "SettingsManager.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "ADSBVehicleManagerSettings.h"
 #ifndef QGC_NO_ARDUPILOT_DIALECT
@@ -7,7 +8,6 @@
 #include "AppSettings.h"
 #include "AutoConnectSettings.h"
 #include "BatteryIndicatorSettings.h"
-#include "BrandImageSettings.h"
 #include "MavlinkActionsSettings.h"
 #include "FirmwareUpgradeSettings.h"
 #include "FlightMapSettings.h"
@@ -24,14 +24,13 @@
 #include "VideoSettings.h"
 #include "MavlinkSettings.h"
 #include "JoystickManagerSettings.h"
+#include "LogManagerSettings.h"
+#include "LogViewerSettings.h"
 #include "Viewer3DSettings.h"
-#include "JsonHelper.h"
 #include "JsonParsing.h"
 #include "QGCCorePlugin.h"
-#include "QGCApplication.h"
 
 #include <QtCore/QApplicationStatic>
-#include <QtQml/qqml.h>
 
 QGC_LOGGING_CATEGORY(SettingsManagerLog, "Utilities.SettingsManager")
 
@@ -53,13 +52,6 @@ SettingsManager *SettingsManager::instance()
     return _settingsManagerInstance();
 }
 
-void SettingsManager::registerQmlTypes()
-{
-    (void) qmlRegisterUncreatableType<SettingsManager>("QGroundControl.SettingsManager", 1, 0, "SettingsManager", "Reference only");
-    (void) qmlRegisterUncreatableType<NTRIPSettings>("QGroundControl", 1, 0, "NTRIPSettings", "Reference only");
-
-}
-
 void SettingsManager::init()
 {
     _unitsSettings = new UnitsSettings(this); // Must be first since AppSettings references it
@@ -69,7 +61,6 @@ void SettingsManager::init()
 
     _autoConnectSettings = new AutoConnectSettings(this);
     _batteryIndicatorSettings = new BatteryIndicatorSettings(this);
-    _brandImageSettings = new BrandImageSettings(this);
     _mavlinkActionsSettings = new MavlinkActionsSettings(this);
     _firmwareUpgradeSettings = new FirmwareUpgradeSettings(this);
     _flightMapSettings = new FlightMapSettings(this);
@@ -85,6 +76,8 @@ void SettingsManager::init()
     _videoSettings = new VideoSettings(this);
     _mavlinkSettings = new MavlinkSettings(this);
     _joystickManagerSettings = new JoystickManagerSettings(this);
+    _logManagerSettings = new LogManagerSettings(this);
+    _logViewerSettings = new LogViewerSettings(this);
     _viewer3DSettings = new Viewer3DSettings(this);
     _adsbVehicleManagerSettings = new ADSBVehicleManagerSettings(this);
 #ifndef QGC_NO_ARDUPILOT_DIALECT
@@ -99,7 +92,6 @@ APMMavlinkStreamRateSettings *SettingsManager::apmMavlinkStreamRateSettings() co
 AppSettings *SettingsManager::appSettings() const { return _appSettings; }
 AutoConnectSettings *SettingsManager::autoConnectSettings() const { return _autoConnectSettings; }
 BatteryIndicatorSettings *SettingsManager::batteryIndicatorSettings() const { return _batteryIndicatorSettings; }
-BrandImageSettings *SettingsManager::brandImageSettings() const { return _brandImageSettings; }
 MavlinkActionsSettings *SettingsManager::mavlinkActionsSettings() const { return _mavlinkActionsSettings; }
 FirmwareUpgradeSettings *SettingsManager::firmwareUpgradeSettings() const { return _firmwareUpgradeSettings; }
 FlightMapSettings *SettingsManager::flightMapSettings() const { return _flightMapSettings; }
@@ -116,6 +108,8 @@ NTRIPSettings *SettingsManager::ntripSettings() const { return _ntripSettings; }
 VideoSettings *SettingsManager::videoSettings() const { return _videoSettings; }
 MavlinkSettings *SettingsManager::mavlinkSettings() const { return _mavlinkSettings; }
 JoystickManagerSettings *SettingsManager::joystickManagerSettings() const { return _joystickManagerSettings; }
+LogManagerSettings *SettingsManager::logManagerSettings() const { return _logManagerSettings; }
+LogViewerSettings *SettingsManager::logViewerSettings() const { return _logViewerSettings; }
 Viewer3DSettings *SettingsManager::viewer3DSettings() const { return _viewer3DSettings; }
 
 void SettingsManager::_loadSettingsFiles()
@@ -164,7 +158,7 @@ void SettingsManager::_loadSettingsFiles()
 
         // Validate the settings file
         int version;
-        if (!JsonHelper::validateInternalQGCJsonFile(jsonObject, "Settings", 1, 1, version, errorString)) {
+        if (!JsonParsing::validateInternalQGCJsonFile(jsonObject, "Settings", 1, 1, version, errorString)) {
             qCWarning(SettingsManagerLog) << "Settings file failed validation:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }
@@ -172,10 +166,10 @@ void SettingsManager::_loadSettingsFiles()
         // Validate the remainder of the file
 
         // groups key is an object
-        static const QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        static const QList<JsonParsing::KeyValidateInfo> keyInfoList = {
             { kJsonGroupsObjectKey, QJsonValue::Object, true },
         };
-        if (!JsonHelper::validateKeys(jsonObject, keyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(jsonObject, keyInfoList, errorString)) {
             qCWarning(SettingsManagerLog) << "Settings file incorrect format:" << fileInfo.absoluteFilePath() << errorString;
             continue;
         }
@@ -209,9 +203,9 @@ void SettingsManager::_loadSettingsFiles()
     }
 }
 
-void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &visible)
+void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMetaData &metaData, bool &userVisible)
 {
-    visible = true; // By default all settings are visible
+    userVisible = true; // By default all settings are visible
 
     SettingsManager *settingsManager = SettingsManager::instance();
     if (!settingsManager) {
@@ -219,7 +213,7 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
         return;
     }
 
-    if (!qgcApp()->runningUnitTests()) {
+    if (!QGC::runningUnitTests()) {
         // Apply settings file overrides
         const auto &groupOverrides = settingsManager->_settingsFileOverrides;
         if (groupOverrides.contains(settingsGroup) && groupOverrides[settingsGroup].contains(metaData.name())) {
@@ -237,11 +231,11 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
             for (const QString &metaDataName : settingOverrideJsonObject.keys()) {
                 if (metaDataName == kJsonVisibleKey) {
                     qCDebug(SettingsManagerLog) << "  Setting visibility to" << settingOverrideJsonObject[kJsonVisibleKey].toBool();
-                    visible = settingOverrideJsonObject[kJsonVisibleKey].toBool();
+                    userVisible = settingOverrideJsonObject[kJsonVisibleKey].toBool();
                 } else if (metaDataName == kJsonForceRawValueKey) {
                     qCDebug(SettingsManagerLog) << "  Setting forceRawValue to" << settingOverrideJsonObject[kJsonForceRawValueKey];
                     metaData.setRawDefaultValue(settingOverrideJsonObject[kJsonForceRawValueKey].toVariant());
-                    visible = false;
+                    userVisible = false;
                 } else if (metaDataName == FactMetaData::_defaultValueJsonKey) {
                     qCDebug(SettingsManagerLog) << "  Setting default to" << overrideMetaData->rawDefaultValue();
                     metaData.setRawDefaultValue(overrideMetaData->rawDefaultValue());
@@ -272,5 +266,5 @@ void SettingsManager::adjustSettingMetaData(const QString &settingsGroup, FactMe
     }
 
     // Give QGCCorePlugin a whack at it too
-    QGCCorePlugin::instance()->adjustSettingMetaData(settingsGroup, metaData, visible);
+    QGCCorePlugin::instance()->adjustSettingMetaData(settingsGroup, metaData, userVisible);
 }

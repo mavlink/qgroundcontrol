@@ -4,16 +4,19 @@ This directory contains development tools, scripts, and configuration files for 
 
 ## Directory Structure
 
-```
+```text
 tools/
-├── analyze.py               # Static analysis (clang-tidy, cppcheck)
-├── check-deps.sh            # Check for outdated dependencies
-├── clean.sh                 # Clean build artifacts and caches
-├── common.sh                # Shared shell functions
-├── coverage.sh              # Code coverage reports
-├── format-check.sh          # Check/apply clang-format
-├── generate-docs.sh         # Generate API docs (Doxygen)
+├── analyze.py               # Static analysis and formatting (clang-format, clang-tidy, cppcheck, clazy)
+├── build_profile.py         # Summarize Ninja and Clang time-trace build hotspots
+├── check_deps.py            # Check for outdated dependencies
+├── clean.py                 # Clean build artifacts and caches
+├── configure.py             # CMake configuration wrapper
+├── coverage.py              # Code coverage reports
+├── generate_docs.py         # Generate API docs (Doxygen)
 ├── param-docs.py            # Generate parameter documentation
+├── pre_commit.py            # Pre-commit hook runner
+├── release.py               # Semantic versioning and release automation
+├── run_tests.py             # Qt unit test runner
 ├── configs/                 # Tool configuration files
 │   └── ccache.conf          # ccache configuration
 ├── analyzers/               # Static analysis scripts
@@ -45,83 +48,88 @@ tools/
 
 ## Quick Start
 
-The repository includes **Makefile** and **justfile** wrappers for common commands:
+Common commands are wrapped in a `justfile` (requires `just` >=1.30; install with `python tools/setup/install_python.py dev` to pull `rust-just` into `.venv`, or use `brew install just` / `cargo install just` / `pipx install rust-just`. `apt install just` on Ubuntu ships 1.21 which is too old):
 
 ```bash
-# Using make (pre-installed on most systems)
-make help        # Show all available commands
-make configure   # Configure CMake build
-make build       # Build the project
-make test        # Run unit tests
-make lint        # Run pre-commit checks
-make check       # Run lint + test
-
-# Using just (install: cargo install just, brew install just, or apt install just)
 just             # Show all available commands
 just configure   # Configure CMake build
 just build       # Build the project
+just test        # Run unit tests
+just lint        # Run pre-commit checks
+just check       # Run lint + test
 just setup       # Full setup: deps, submodules, configure, build
 ```
 
-Both read configuration from `.github/build-config.json` for consistent versioning.
+`just` reads configuration from `.github/build-config.json` for consistent versioning.
 
 ### Direct Script Usage
 
 ```bash
 # Format changed files
-./tools/format-check.sh
+./tools/analyze.py --tool clang-format --fix
 
 # Run static analysis
 ./tools/analyze.py
 
+# Report build hotspots
+python3 ./tools/build_profile.py -B build
+
 # Clean build
-./tools/clean.sh
+./tools/clean.py
+
+# Run tools/ Python tests
+cd tools && uv run --extra scripts --extra test pytest tests/ -q
 ```
 
 ## Development Scripts
 
-### format-check.sh
-
-Check or apply clang-format to source files.
-
-```bash
-./tools/format-check.sh                # Format changed files (vs master)
-./tools/format-check.sh --check        # Check only (for CI)
-./tools/format-check.sh --all          # Format all source files
-./tools/format-check.sh src/Vehicle/   # Format specific directory
-```
-
 ### analyze.py
 
-Run static analysis on source code.
+Run static analysis and formatting on source code.
 
 ```bash
-./tools/analyze.py                     # Analyze changed files
-./tools/analyze.py --all               # Analyze all files
-./tools/analyze.py --tool cppcheck     # Use cppcheck instead of clang-tidy
-./tools/analyze.py src/Vehicle/        # Analyze specific directory
+./tools/analyze.py                              # Analyze changed files
+./tools/analyze.py --all                        # Analyze all files
+./tools/analyze.py --tool clang-format --fix    # Format changed files
+./tools/analyze.py --tool clang-format --all    # Check formatting (all files)
+./tools/analyze.py --tool cppcheck              # Use cppcheck instead of clang-tidy
+./tools/analyze.py src/Vehicle/                 # Analyze specific directory
 ```
 
-### clean.sh
+### clean.py
 
 Clean build artifacts and caches.
 
 ```bash
-./tools/clean.sh              # Clean build directory
-./tools/clean.sh --all        # Clean everything (build, caches)
-./tools/clean.sh --cache      # Clean only caches
-./tools/clean.sh --dry-run    # Show what would be removed
+./tools/clean.py              # Clean build directory
+./tools/clean.py --all        # Clean everything (build, caches)
+./tools/clean.py --cache      # Clean only caches
+./tools/clean.py --dry-run    # Show what would be removed
 ```
 
-### coverage.sh
+### build_profile.py
+
+Summarize build-time hotspots from Ninja logs and optional Clang time traces.
+
+```bash
+python3 ./tools/build_profile.py -B build                 # Report slowest Ninja edges and rebuild churn
+python3 ./tools/build_profile.py -B build --limit 25      # Show more rows per section
+python3 ./tools/build_profile.py -B build --json          # Machine-readable output
+```
+
+For per-translation-unit trace details, configure with `-DQGC_TIME_TRACE=ON`,
+rebuild, then run the same report. The script scans the build directory for
+Clang `-ftime-trace` JSON files and highlights the slowest traces and events.
+
+### coverage.py
 
 Generate code coverage reports. Wrapper around CMake coverage targets.
 
 ```bash
-./tools/coverage.sh              # Build with coverage, run tests, generate report
-./tools/coverage.sh --report     # Generate report only (after tests)
-./tools/coverage.sh --open       # Generate and open in browser
-./tools/coverage.sh --clean      # Clean coverage data
+python3 ./tools/coverage.py              # Build with coverage, run tests, generate report
+python3 ./tools/coverage.py --report     # Generate report only (after tests)
+python3 ./tools/coverage.py --open       # Generate and open in browser
+python3 ./tools/coverage.py --clean      # Clean coverage data
 ```
 
 Requires: `gcovr` (`pip install gcovr`)
@@ -132,8 +140,8 @@ Requires: `gcovr` (`pip install gcovr`)
 cmake -B build -DQGC_ENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build
-cmake --build build --target coverage-report  # XML + HTML
-cmake --build build --target coverage-html    # HTML only
+cmake --build build --target coverage-report  # XML + HTML from existing data
+cmake --build build --target coverage         # Run tests + generate XML + HTML
 cmake --build build --target coverage-clean   # Clean .gcda files
 ```
 
@@ -150,26 +158,26 @@ Profile QGC for performance and memory issues.
 ./tools/debuggers/profile.sh --sanitize     # Build with AddressSanitizer
 ```
 
-### check-deps.sh
+### check_deps.py
 
 Check for outdated dependencies and submodules.
 
 ```bash
-./tools/check-deps.sh              # Check all dependencies
-./tools/check-deps.sh --submodules # Check git submodules only
-./tools/check-deps.sh --qt         # Check Qt version
-./tools/check-deps.sh --update     # Update submodules to latest
+python3 ./tools/check_deps.py              # Check all dependencies
+python3 ./tools/check_deps.py --submodules # Check git submodules only
+python3 ./tools/check_deps.py --qt         # Check Qt version
+python3 ./tools/check_deps.py --update     # Update submodules to latest
 ```
 
-### generate-docs.sh
+### generate_docs.py
 
 Generate API documentation using Doxygen.
 
 ```bash
-./tools/generate-docs.sh          # Generate HTML docs
-./tools/generate-docs.sh --open   # Generate and open in browser
-./tools/generate-docs.sh --pdf    # Generate PDF (requires LaTeX)
-./tools/generate-docs.sh --clean  # Clean generated docs
+python3 ./tools/generate_docs.py          # Generate HTML docs
+python3 ./tools/generate_docs.py --open   # Generate and open in browser
+python3 ./tools/generate_docs.py --pdf    # Generate PDF (requires LaTeX)
+python3 ./tools/generate_docs.py --clean  # Clean generated docs
 ```
 
 Requires: `doxygen`, `graphviz`
@@ -190,34 +198,36 @@ Generate parameter documentation from FactMetaData JSON files.
 
 Scripts in `setup/` help configure development environments. They read configuration from `.github/build-config.json` for consistent versioning.
 
-| Script | Platform | Description |
-|--------|----------|-------------|
-| `install_dependencies.py --platform debian` | Linux | Install build dependencies via apt |
-| `install_dependencies.py --platform macos` | macOS | Install dependencies via Homebrew + GStreamer |
-| `install-dependencies-windows.ps1` | Windows | Install GStreamer (Vulkan SDK optional) |
-| `install-qt-debian.sh` | Linux | Install Qt via aqtinstall |
-| `install-qt-macos.sh` | macOS | Install Qt via aqtinstall |
-| `install-qt-windows.ps1` | Windows | Install Qt via aqtinstall |
-| `build-gstreamer.sh` | Linux | Build GStreamer from source (optional) |
-| `read-config.sh` | All | Helper to read `.github/build-config.json` |
+|Script|Platform|Description|
+|------|--------|-----------|
+|`install_dependencies --platform debian`|Linux|Install build dependencies via apt|
+|`install_dependencies --platform macos`|macOS|Install dependencies via Homebrew + GStreamer|
+|`install_dependencies --platform windows`|Windows|Install GStreamer (Vulkan SDK optional)|
+|`install_python.py`|All|Install Python tools via uv or pip|
+|`build-gstreamer.py`|All|Build GStreamer from source (optional)|
+|`download_artifacts.py`|All|Download build artifacts (in `.github/scripts/`)|
+|`read_config.py`|All|Read `.github/build-config.json` (Python, cross-platform)|
 
 ### Usage Examples
 
 ```bash
 # Linux: Install all dependencies
-python3 ./tools/setup/install_dependencies.py --platform debian
-./tools/setup/install-qt-debian.sh
+python3 ./tools/setup/install_dependencies --platform debian
 
 # macOS: Install all dependencies
-python3 ./tools/setup/install_dependencies.py --platform macos
-./tools/setup/install-qt-macos.sh
+python3 ./tools/setup/install_dependencies --platform macos
 
-# Windows (PowerShell as Admin):
-.\tools\setup\install-dependencies-windows.ps1
-.\tools\setup\install-qt-windows.ps1
+# Windows (as Admin):
+python .\tools\setup\install_dependencies --platform windows
 
-# Build GStreamer from source (Linux, optional)
-./tools/setup/build-gstreamer.sh -p /opt/gstreamer
+# Install Python tooling (pre-commit, test, coverage, etc.)
+python3 ./tools/setup/install_python.py precommit,test,coverage
+
+# Build GStreamer from source (optional — CMake auto-downloads pre-built SDKs)
+python3 ./tools/setup/build-gstreamer.py --platform linux --prefix /opt/gstreamer
+
+# Read build config values
+python3 ./tools/setup/read_config.py --get qt_version
 ```
 
 ## Static Analyzers
@@ -243,6 +253,7 @@ pre-commit run vehicle-null-check --all-files
 ```
 
 **Detects:**
+
 - `activeVehicle()->method()` without prior null check
 - `getParameter()` result used without validation
 
@@ -276,6 +287,7 @@ python3 -m tools.generators.factgroup.cli --spec wind.yaml --validate
 ```
 
 **Generates:**
+
 - `VehicleWindFactGroup.h` - Header with Q_PROPERTY, accessors, members
 - `VehicleWindFactGroup.cc` - Implementation with constructor, handlers
 - `WindFact.json` - FactMetaData JSON
@@ -290,6 +302,7 @@ Common utilities in `common/` are used by multiple tools:
 
 - `patterns.py` - QGC-specific regex patterns (Fact, FactGroup, MAVLink)
 - `file_traversal.py` - File discovery with proper filtering
+- `gh_actions.py` - GitHub API helpers (httpx with `gh` CLI fallback) for workflow runs and artifacts
 
 See [common/README.md](common/README.md) for API documentation.
 
@@ -341,38 +354,66 @@ Analyze QGC application logs and telemetry files.
 
 ```bash
 # Analyze application log
-./tools/log-analyzer/analyze_log.py ~/.local/share/QGroundControl/Logs/QGCConsole.log
+./tools/log-analyzer/analyze_log.py ~/.local/share/QGroundControl/Logs/AppLog.log
 
 # Show only errors
-./tools/log-analyzer/analyze_log.py --errors QGCConsole.log
+./tools/log-analyzer/analyze_log.py --errors AppLog.log
 
 # Analyze MAVLink telemetry log
 ./tools/log-analyzer/analyze_log.py flight.tlog
 
 # Show statistics
-./tools/log-analyzer/analyze_log.py --stats QGCConsole.log
+./tools/log-analyzer/analyze_log.py --stats AppLog.log
 
 # Filter by component
-./tools/log-analyzer/analyze_log.py --component Vehicle QGCConsole.log
+./tools/log-analyzer/analyze_log.py --component Vehicle AppLog.log
 ```
 
 See [log-analyzer/README.md](log-analyzer/README.md) for details.
+
+### locators/
+
+Search for Facts, FactGroups, MAVLink messages, and parameter metadata from the command line.
+
+```bash
+# Find Fact names containing 'lat'
+python3 ./tools/locators/qgc_locator.py fact lat
+
+# Find MAVLink message usage
+python3 ./tools/locators/qgc_locator.py mavlink HEARTBEAT
+```
+
+See [locators/README.md](locators/README.md) for editor integration examples.
+
+### lsp/
+
+Run the QGC language server for editor diagnostics and QGC-specific completions.
+
+```bash
+# Start LSP server on stdio (editor integration)
+python3 -m tools.lsp
+
+# Start in TCP mode for debugging
+python3 -m tools.lsp --tcp --port 2087
+```
+
+See [lsp/README.md](lsp/README.md) for setup and client configuration.
 
 ## Translation Tools
 
 Scripts in `translations/` manage internationalization.
 
-| Script | Description |
-|--------|-------------|
-| `qgc-lupdate.sh` | Update Qt translation files (runs lupdate + JSON extractor) |
-| `qgc-lupdate-json.py` | Extract translatable strings from JSON files |
+|Script|Description|
+|------|-----------|
+|`qgc_lupdate.py`|Update Qt translation files (runs lupdate + JSON extractor + pseudo-loc)|
+|`qgc_lupdate_json.py`|Extract translatable strings from JSON files|
 
 ```bash
 # From repository root:
-source tools/translations/qgc-lupdate.sh
+python3 tools/translations/qgc_lupdate.py
 
 # Or run JSON extractor directly:
-python3 tools/translations/qgc-lupdate-json.py --verbose
+python3 tools/translations/qgc_lupdate_json.py
 ```
 
 See [translations/README.md](translations/README.md) for Crowdin integration.
@@ -416,8 +457,8 @@ Version numbers and build settings are centralized in `.github/build-config.json
 ```json
 {
   "qt_version": "6.10.1",
-  "qt_modules": "qtcharts qtlocation ...",
-  "gstreamer_version": "1.24.12",
+  "qt_modules": "qtgraphs qtlocation ...",
+  "gstreamer_default_version": "1.24.13",
   "ndk_version": "r27c",
   ...
 }

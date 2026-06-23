@@ -1,12 +1,13 @@
 #pragma once
 
 #include "QmlObjectListModel.h"
-#include "QGCMAVLink.h"
+#include "MAVLinkMessageType.h"
 #include "FactGroupWithId.h"
 
 #include <QList>
 
-/// Dynamically manages FactGroupWithIds based on incoming messages.
+/// \brief Dynamically manages FactGroupWithIds based on incoming messages.
+///
 class FactGroupListModel : public QmlObjectListModel
 {
     Q_OBJECT

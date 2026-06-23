@@ -1,5 +1,5 @@
 #include "ADSBVehicle.h"
-#include "QGC.h"
+#include "QGCMath.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QtNumeric>

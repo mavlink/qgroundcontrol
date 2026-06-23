@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import QtCharts
+import QtGraphs
 import QtQuick.Layouts
 
 import QGroundControl
@@ -9,6 +9,8 @@ import QGroundControl.FactControls
 
 RowLayout {
     spacing: _margins
+
+    QGCPalette { id: qgcPal }
 
     property real   availableHeight
     property real   availableWidth
@@ -19,6 +21,7 @@ RowLayout {
     property double chartDisplaySec:    8 // number of seconds to display
     property bool   showAutoModeChange: false
     property bool   showAutoTuning:     false
+    property bool   useAutoTuning:      false
 
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property int    _currentAxis:       0
@@ -30,6 +33,15 @@ RowLayout {
 
     readonly property int _tickSeparation:      5
     readonly property int _maxTickSections:     10
+
+    property string _chartTitle:        ""
+    readonly property var _seriesColors: ["#21be2b", "#c62828", "#1565c0", "#f9a825", "#6a1b9a", "#00838f"]
+    property var _legendModel:          []
+
+    Component {
+        id: lineSeriesComponent
+        LineSeries { }
+    }
 
     function adjustYAxisMin(yAxis, newValue) {
         var newMin = Math.min(yAxis.min, newValue)
@@ -50,8 +62,8 @@ RowLayout {
     }
 
     function resetGraphs() {
-        for (var i = 0; i < chart.count; ++i) {
-            chart.series(i).removePoints(0, chart.series(i).count)
+        for (var i = 0; i < chart.seriesList.length; ++i) {
+            chart.seriesList[i].clear()
         }
         _xAxis.min = 0
         _xAxis.max = 0
@@ -80,14 +92,27 @@ RowLayout {
     }
 
     function axisIndexChanged() {
-        chart.removeAllSeries()
-        axis[_currentAxis].plot.forEach(function(e) {
-            chart.createSeries(ChartView.SeriesTypeLine, e.name, xAxis, yAxis);
+        while (chart.seriesList.length > 0) {
+            // Do not call s.destroy() here. QGraphsView holds an internal
+            // pointer to the series that is only cleared during the next
+            // updatePolish() pass. Destroying the series before that pass
+            // causes a SIGSEGV in QGraphsView::updatePolish(). The series is
+            // parented to chart so it is freed when the chart is destroyed.
+            // GPU/graph resources are released by removeSeries().
+            chart.removeSeries(chart.seriesList[0])
+        }
+        var legendItems = []
+        axis[_currentAxis].plot.forEach(function(e, idx) {
+            var color = _seriesColors[idx % _seriesColors.length]
+            var series = lineSeriesComponent.createObject(chart, {name: e.name, color: color})
+            chart.addSeries(series)
+            legendItems.push({name: e.name, color: color})
         })
+        _legendModel = legendItems
         var chartTitle = axis[_currentAxis].plotTitle
         if (chartTitle == null)
             chartTitle = axis[_currentAxis].name
-        chart.title = chartTitle + " " + title
+        _chartTitle = chartTitle + " " + title
         saveTuningParamValues()
         resetGraphs()
     }
@@ -100,31 +125,6 @@ RowLayout {
 
     Component.onDestruction: globals.activeVehicle.setPIDTuningTelemetryMode(Vehicle.ModeDisabled)
     on_CurrentAxisChanged: axisIndexChanged()
-
-    ValueAxis {
-        id:                     xAxis
-        min:                    0
-        max:                    0
-        labelFormat:            "%.1f"
-        titleText:              ScreenTools.isShortScreen ? "" : qsTr("sec") // Save space on small screens
-        tickCount:              Math.min(Math.max(Math.floor(chart.width / (ScreenTools.defaultFontPixelWidth * 7)), 4), 11)
-        labelsFont.pointSize:   ScreenTools.defaultFontPointSize
-        labelsFont.family:      ScreenTools.normalFontFamily
-        titleFont.pointSize:    ScreenTools.defaultFontPointSize
-        titleFont.family:       ScreenTools.normalFontFamily
-    }
-
-    ValueAxis {
-        id:                     yAxis
-        min:                    0
-        max:                    10
-        titleText:              unit
-        tickCount:              Math.min(((max - min) / _tickSeparation), _maxTickSections) + 1
-        labelsFont.pointSize:   ScreenTools.defaultFontPointSize
-        labelsFont.family:      ScreenTools.normalFontFamily
-        titleFont.pointSize:    ScreenTools.defaultFontPointSize
-        titleFont.family:       ScreenTools.normalFontFamily
-    }
 
     Timer {
         id:         dataTimer
@@ -142,7 +142,7 @@ RowLayout {
             for (var i = 0; i < len; ++i) {
                 var value = axis[_currentAxis].plot[i].value
                 if (!isNaN(value)) {
-                    chart.series(i).append(_msecs/1000, value)
+                    chart.seriesList[i].append(_msecs/1000, value)
                     if (firstPoint) {
                         _yAxis.min = value
                         _yAxis.max = value
@@ -152,8 +152,8 @@ RowLayout {
                     }
                     // limit history
                     var minSec = _msecs/1000 - 3*60
-                    while (chart.series(i).count > 0 && chart.series(i).at(0).x < minSec) {
-                        chart.series(i).remove(0)
+                    while (chart.seriesList[i].count > 0 && chart.seriesList[i].at(0).x < minSec) {
+                        chart.seriesList[i].remove(0)
                     }
                 }
             }
@@ -169,24 +169,56 @@ RowLayout {
 
     Column {
         id:                 leftPanel
+        Layout.fillWidth:   true
         Layout.alignment:   Qt.AlignTop
         spacing:            ScreenTools.defaultFontPixelHeight / 4
         clip:               true // chart has redraw problems
 
-        ChartView {
+        QGCLabel {
+            id:                 chartTitleLabel
+            text:               _chartTitle
+            font.pointSize:     ScreenTools.defaultFontPointSize
+            font.family:        ScreenTools.normalFontFamily
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+
+        GraphsView {
             id:                     chart
             width:                  Math.max(_minChartWidth, availableWidth - rightPanel.width - parent.spacing - _margins)
-            height:                 Math.max(_minChartHeight, availableHeight - leftPanelBottomColumn.height - parent.spacing - _margins)
-            antialiasing:           true
-            legend.alignment:       Qt.AlignBottom
-            legend.font.pointSize:  ScreenTools.defaultFontPointSize
-            legend.font.family:     ScreenTools.normalFontFamily
-            titleFont.pointSize:    ScreenTools.defaultFontPointSize
-            titleFont.family:       ScreenTools.normalFontFamily
+            height:                 Math.max(_minChartHeight, availableHeight - leftPanelBottomColumn.height - chartTitleLabel.height - legendRow.height - parent.spacing * 3 - _margins)
 
-            property real _chartMargin: 0
             property real _minChartWidth:   ScreenTools.defaultFontPixelWidth * 40
             property real _minChartHeight:  ScreenTools.defaultFontPixelHeight * 15
+
+            theme: GraphsTheme {
+                colorScheme:            qgcPal.globalTheme === QGCPalette.Light ? GraphsTheme.ColorScheme.Light : GraphsTheme.ColorScheme.Dark
+                plotAreaBackgroundColor: qgcPal.window
+                grid.mainColor:         Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.5)
+                grid.subColor:          Qt.rgba(qgcPal.text.r, qgcPal.text.g, qgcPal.text.b, 0.3)
+                grid.mainWidth:         1
+                labelBackgroundVisible: false
+                labelTextColor:         qgcPal.text
+            }
+
+            axisX: ValueAxis {
+                id:                     xAxis
+                min:                    0
+                max:                    0
+                labelFormat:            "%.1f"
+                titleText:              ScreenTools.isShortScreen ? "" : qsTr("sec")
+                titleFont.pointSize:    ScreenTools.defaultFontPointSize
+                titleFont.family:       ScreenTools.normalFontFamily
+            }
+
+            axisY: ValueAxis {
+                id:                     yAxis
+                min:                    0
+                max:                    10
+                titleText:              unit
+                tickInterval:           _tickSeparation
+                titleFont.pointSize:    ScreenTools.defaultFontPointSize
+                titleFont.family:       ScreenTools.normalFontFamily
+            }
 
             // enable mouse dragging
             MouseArea {
@@ -195,9 +227,11 @@ RowLayout {
                 anchors.fill: parent
                 onPressed: (mouse) => {
                     _startPoint = Qt.point(mouse.x, mouse.y)
-                    var start = chart.mapToValue(_startPoint)
-                    var next = chart.mapToValue(Qt.point(mouse.x+1, mouse.y+1))
-                    _scaling = next.x - start.x
+                    if (chart.seriesList.length > 0) {
+                        var start = chart.seriesList[0].dataPointCoordinatesAt(_startPoint.x, _startPoint.y)
+                        var next = chart.seriesList[0].dataPointCoordinatesAt(mouse.x+1, mouse.y+1)
+                        _scaling = next.x - start.x
+                    }
                 }
                 onWheel: (wheel) => {
                     if (wheel.angleDelta.y > 0)
@@ -219,6 +253,29 @@ RowLayout {
 
                 onReleased: {
                     _startPoint = undefined
+                }
+            }
+        }
+
+        Row {
+            id:         legendRow
+            spacing:    ScreenTools.defaultFontPixelWidth
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            Repeater {
+                model: _legendModel
+                Row {
+                    spacing: ScreenTools.defaultFontPixelWidth / 2
+                    Rectangle {
+                        width:  ScreenTools.defaultFontPixelHeight
+                        height: ScreenTools.defaultFontPixelHeight / 3
+                        color:  modelData.color
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    QGCLabel {
+                        text:               modelData.name
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                    }
                 }
             }
         }
@@ -319,6 +376,7 @@ RowLayout {
                     Repeater {
                         model: axis
                         QGCRadioButton {
+                            objectName:     "pidTuning_axisButton_" + modelData.name.replace(/ /g, "")
                             text:           modelData.name
                             checked:        index == _currentAxis
                             onClicked: _currentAxis = index
@@ -333,13 +391,16 @@ RowLayout {
                 model: axis
 
                 Repeater {
+                    id: paramRepeater
                     model: axis[index].params
+
+                    property int axisIndex: index
 
                     SettingsGroupLayout {
                         id:                     tuningGroup
                         heading:                title
                         headingDescription:     description
-                        visible:                _currentAxis === index
+                        visible:                _currentAxis === paramRepeater.axisIndex
                         Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 40
 
                         FactSlider {

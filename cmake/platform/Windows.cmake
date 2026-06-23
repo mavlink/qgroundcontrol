@@ -11,16 +11,15 @@ endif()
 # ----------------------------------------------------------------------------
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PRIVATE
-        _USE_MATH_DEFINES    # Enable M_PI and other math constants
-        NOMINMAX             # Prevent min/max macro conflicts
-        WIN32_LEAN_AND_MEAN  # Reduce Windows.h bloat
+        _USE_MATH_DEFINES       # Enable M_PI and other math constants
+        NOMINMAX                # Prevent min/max macro conflicts
+        WIN32_LEAN_AND_MEAN     # Reduce Windows.h bloat
+        _CRT_SECURE_NO_WARNINGS # Disable warnings for unsafe C functions
 )
 
 # ----------------------------------------------------------------------------
 # Windows Executable Configuration
 # ----------------------------------------------------------------------------
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
-
 if(COMMAND _qt_internal_generate_win32_rc_file)
     set_target_properties(${CMAKE_PROJECT_NAME}
         PROPERTIES

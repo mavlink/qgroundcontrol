@@ -389,7 +389,7 @@ class MockVehicle:
             self.running = False
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Mock MAVLink vehicle for QGroundControl testing",
         formatter_class=argparse.RawDescriptionHelpFormatter,

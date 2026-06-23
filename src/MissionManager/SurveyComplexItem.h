@@ -3,10 +3,6 @@
 #include "TransectStyleComplexItem.h"
 #include "SettingsFact.h"
 
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(SurveyComplexItemLog)
-
 class PlanMasterController;
 class MissionItem;
 
@@ -31,7 +27,8 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
-    QString         patternName         (void) const final { return name; }
+    QString         patternName         (void) const final { return tr(canonicalName); }
+    void            applyPreviousAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrame prevAltFrame, double prevAltitude) final;
     bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     QString         mapVisualQML        (void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
     QString         presetsSettingsGroup(void) { return settingsGroup; }
@@ -63,7 +60,7 @@ public:
         EntryLocationLast = EntryLocationBottomRight
     };
 
-    static const QString name;
+    static constexpr const char* canonicalName = QT_TR_NOOP("Survey");
 
     static constexpr const char* jsonComplexItemTypeValue =   "survey";
     static constexpr const char* jsonV3ComplexItemTypeValue = "survey";
@@ -115,23 +112,7 @@ private:
     bool _loadV3(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
     bool _loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version, bool forPresets);
     void _saveCommon(QJsonObject& complexObject);
-    void _rebuildTransectsPhase1Worker(bool refly);
     void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
-    /// Adds to the _transects array from one polygon
-    void _rebuildTransectsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint);
-
-#if 0
-    // Splitting polygons is not supported since this code would get stuck in a infinite loop
-    // Code is left here in case someone wants to try to resurrect it
-
-    void _rebuildTransectsPhase1WorkerSplitPolygons(bool refly);
-
-    // Decompose polygon into list of convex sub polygons
-    void _PolygonDecomposeConvex(const QPolygonF& polygon, QList<QPolygonF>& decomposedPolygons);
-    // return true if vertex a can see vertex b
-    bool _VertexCanSeeOther(const QPolygonF& polygon, const QPointF* vertexA, const QPointF* vertexB);
-    bool _VertexIsReflex(const QPolygonF& polygon, QList<QPointF>::const_iterator& vertexIter);
-#endif
 
     QMap<QString, FactMetaData*> _metaDataMap;
 

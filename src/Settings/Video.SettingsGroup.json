@@ -1,210 +1,268 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":             "videoSource",
-    "shortDesc": "Video source",
-    "longDesc":  "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "udpUrl",
-    "shortDesc": "Video UDP Url",
-    "longDesc":  "UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600",
-    "type":             "string",
-    "default":     "0.0.0.0:5600"
-},
-{
-    "name":             "rtspUrl",
-    "shortDesc": "Video RTSP Url",
-    "longDesc":  "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "tcpUrl",
-    "shortDesc": "Video TCP Url",
-    "longDesc":  "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "httpUrl",
-    "shortDesc": "HTTP Video URL",
-    "longDesc":  "HTTP/HTTPS URL for MJPEG video stream. Format: http://host:port/path (e.g., http://192.168.1.100:5077/video_feed for PixEagle, or http://camera-ip/mjpeg for IP cameras).",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "httpTimeout",
-    "shortDesc": "HTTP Stream Timeout",
-    "longDesc":  "Connection timeout for HTTP video streams in seconds.",
-    "type":             "uint32",
-    "min":              5,
-    "max":              60,
-    "units":            "s",
-    "default":     10
-},
-{
-    "name":             "httpRetryAttempts",
-    "shortDesc": "HTTP Retry Attempts",
-    "longDesc":  "Number of automatic retry attempts when HTTP stream connection fails.",
-    "type":             "uint32",
-    "min":              0,
-    "max":              10,
-    "default":     3
-},
-{
-    "name":             "httpKeepAlive",
-    "shortDesc": "HTTP Keep-Alive",
-    "longDesc":  "Enable HTTP keep-alive for persistent connections. Recommended for better performance.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "websocketUrl",
-    "shortDesc": "WebSocket Video URL",
-    "longDesc":  "WebSocket URL for video stream. Format: ws://host:port/path (e.g., ws://192.168.1.100:5077/ws/video_feed for PixEagle).",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "websocketTimeout",
-    "shortDesc": "WebSocket Timeout",
-    "longDesc":  "Connection timeout for WebSocket video streams in seconds.",
-    "type":             "uint32",
-    "min":              5,
-    "max":              60,
-    "units":            "s",
-    "default":     10
-},
-{
-    "name":             "websocketReconnectDelay",
-    "shortDesc": "WebSocket Reconnect Delay",
-    "longDesc":  "Delay in milliseconds before attempting to reconnect after WebSocket disconnection.",
-    "type":             "uint32",
-    "min":              500,
-    "max":              10000,
-    "units":            "ms",
-    "default":     2000
-},
-{
-    "name":             "websocketHeartbeat",
-    "shortDesc": "WebSocket Heartbeat Interval",
-    "longDesc":  "Interval in milliseconds for sending heartbeat/ping messages to keep WebSocket connection alive.",
-    "type":             "uint32",
-    "min":              1000,
-    "max":              30000,
-    "units":            "ms",
-    "default":     5000
-},
-{
-    "name":             "videoSavePath",
-    "shortDesc": "Video save directory",
-    "longDesc":  "Directory to save videos to.",
-    "type":             "string",
-    "default":     ""
-},
-{
-    "name":             "aspectRatio",
-    "shortDesc": "Video Aspect Ratio",
-    "longDesc":  "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
-    "type":             "float",
-    "decimalPlaces":    6,
-    "default":     1.777777
-},
-{
-    "name":         "gridLines",
-    "shortDesc":    "Video Grid Lines",
-    "longDesc":     "Displays a grid overlaid over the video view.",
-    "type":         "bool",
-    "default":      false
-},
-{
-    "name":             "videoFit",
-    "shortDesc": "Video Display Fit",
-    "longDesc":  "Handle Video Aspect Ratio.",
-    "type":             "uint32",
-    "enumStrings":      "Fit Width,Fit Height,Fill,No Crop",
-    "enumValues":       "0,1,2,3",
-    "default":     1
-},
-{
-    "name":             "showRecControl",
-    "shortDesc": "Show Video Record Control",
-    "longDesc":  "Show recording control in the UI.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "recordingFormat",
-    "shortDesc": "Video Recording Format",
-    "longDesc":  "Video recording file format.",
-    "type":             "uint32",
-    "enumStrings":      "mp4,mov,mkv",
-    "enumValues":       "2,1,0",
-    "default":     2
-},
-{
-    "name":             "maxVideoSize",
-    "shortDesc": "Max Video Storage Usage",
-    "longDesc":  "Maximum amount of disk space used by video recording.",
-    "type":             "uint32",
-    "min":              100,
-    "units":            "MB",
-    "default":     10240,
-    "mobileDefault":   2048
-},
-{
-    "name":             "enableStorageLimit",
-    "shortDesc": "Enable/Disable Limits on Storage Usage",
-    "longDesc":  "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
-    "type":             "bool",
-    "default":     false,
-    "mobileDefault":   true
-},
-{
-    "name":             "rtspTimeout",
-    "shortDesc": "RTSP Video Timeout",
-    "longDesc":  "How long to wait before assuming RTSP link is gone.",
-    "type":             "uint32",
-    "min":              1,
-    "units":            "s",
-    "default":     8
-},
-{
-    "name":             "streamEnabled",
-    "shortDesc": "Video Stream Enabled",
-    "longDesc":  "Start/Stop Video Stream.",
-    "type":             "bool",
-    "default":     true
-},
-{
-    "name":             "disableWhenDisarmed",
-    "shortDesc": "Video Stream Disnabled When Armed",
-    "longDesc":  "Disable Video Stream when disarmed.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "lowLatencyMode",
-    "shortDesc": "Tweaks video for lower latency",
-    "longDesc":  "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
-    "type":             "bool",
-    "default":     false
-},
-{
-    "name":             "forceVideoDecoder",
-    "shortDesc":        "Force video decoder priority",
-    "longDesc":         "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
-    "type":             "uint32",
-    "enumStrings":      "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
-    "enumValues":       "0,1,8,2,3,4,5,6,7",
-    "default":           0,
-    "qgcRebootRequired": true
-}
-]
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "videoSource",
+            "shortDesc": "Source for video stream (UDP, TCP, RTSP, or connected USB camera).",
+            "longDesc": "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
+            "type": "string",
+            "default": "",
+            "label": "Source",
+            "keywords": "video source,camera,stream"
+        },
+        {
+            "name": "udpUrl",
+            "shortDesc": "Network address and port for UDP video stream (e.g. 0.0.0.0:5600).",
+            "longDesc": "UDP url address and port to bind to for video stream. Example: 0.0.0.0:5600",
+            "type": "string",
+            "default": "0.0.0.0:5600",
+            "label": "UDP URL",
+            "keywords": "udp,mpegts,video url,stream url"
+        },
+        {
+            "name": "rtspUrl",
+            "shortDesc": "Network address for RTSP video stream (e.g. rtsp://192.168.42.1:554/live).",
+            "longDesc": "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
+            "type": "string",
+            "default": "",
+            "label": "RTSP URL",
+            "keywords": "rtsp,video url,stream url"
+        },
+        {
+            "name": "tcpUrl",
+            "shortDesc": "Network address and port for TCP video stream (e.g. 192.168.143.200:3001).",
+            "longDesc": "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
+            "type": "string",
+            "default": "",
+            "label": "TCP URL",
+            "keywords": "tcp,video url,stream url"
+        },
+        {
+            "name": "httpMjpegUrl",
+            "shortDesc": "HTTP or HTTPS URL for a multipart MJPEG stream.",
+            "longDesc": "URL for a standard multipart/x-mixed-replace MJPEG source. Anonymous HTTP is intended for local or trusted test networks. Credentials require HTTPS.",
+            "type": "string",
+            "default": "",
+            "label": "HTTP MJPEG URL",
+            "keywords": "http,https,mjpeg,video url,stream url"
+        },
+        {
+            "name": "websocketJpegUrl",
+            "shortDesc": "WebSocket URL that sends each JPEG image as one binary message.",
+            "longDesc": "URL for a WebSocket JPEG source. Text messages are ignored. Anonymous WS is intended for local or trusted test networks. Credentials require WSS.",
+            "type": "string",
+            "default": "",
+            "label": "WebSocket JPEG URL",
+            "keywords": "websocket,ws,wss,jpeg,video url,stream url"
+        },
+        {
+            "name": "networkVideoAuthType",
+            "shortDesc": "Authentication method for HTTP MJPEG and WebSocket JPEG sources.",
+            "longDesc": "Authentication is optional. Basic and Bearer credentials are accepted only with HTTPS or WSS and are never stored directly in QGroundControl settings.",
+            "type": "uint32",
+            "enumStrings": "None,Basic,Bearer token",
+            "enumValues": "0,1,2",
+            "default": 0,
+            "label": "Authentication",
+            "keywords": "authentication,basic,bearer,token,password"
+        },
+        {
+            "name": "networkVideoUsername",
+            "shortDesc": "Username used with Basic authentication.",
+            "type": "string",
+            "default": "",
+            "label": "Username",
+            "keywords": "authentication,basic,username"
+        },
+        {
+            "name": "networkVideoSecretFile",
+            "shortDesc": "Optional file containing one password or token.",
+            "longDesc": "For unattended desktop deployments, load the credential from a regular owner-only file containing a single line. A session credential entered in the UI takes precedence.",
+            "type": "string",
+            "default": "",
+            "label": "Credential file",
+            "keywords": "authentication,credential file,secret file,token,password"
+        },
+        {
+            "name": "networkVideoOrigin",
+            "shortDesc": "Optional Origin value required by some HTTP or WebSocket servers.",
+            "longDesc": "Sets the Origin request header. Leave blank unless the source server requires an exact Origin.",
+            "type": "string",
+            "default": "",
+            "label": "Origin",
+            "keywords": "origin,websocket,http,security"
+        },
+        {
+            "name": "networkVideoCaCertificateFile",
+            "shortDesc": "Optional PEM trust file for HTTPS or WSS certificate validation.",
+            "longDesc": "WSS adds these authorities to the system trust store. For HTTP MJPEG, the PEM file is the complete trust database and must include every required root. Strict certificate validation remains enabled.",
+            "type": "string",
+            "default": "",
+            "label": "CA certificate file",
+            "keywords": "tls,ssl,certificate,ca,https,wss"
+        },
+        {
+            "name": "videoSavePath",
+            "shortDesc": "Video save directory",
+            "longDesc": "Directory to save videos to.",
+            "type": "string",
+            "default": "",
+            "label": "Video save directory"
+        },
+        {
+            "name": "aspectRatio",
+            "shortDesc": "Video frame aspect ratio as width divided by height. Use 0 to auto-detect.",
+            "longDesc": "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
+            "type": "float",
+            "decimalPlaces": 6,
+            "default": 1.777777,
+            "label": "Aspect Ratio",
+            "keywords": "aspect ratio"
+        },
+        {
+            "name": "gridLines",
+            "shortDesc": "Video Grid Lines",
+            "longDesc": "Displays a grid overlaid over the video view.",
+            "type": "bool",
+            "default": false,
+            "label": "Video Grid Lines"
+        },
+        {
+            "name": "videoFit",
+            "shortDesc": "Video Display Fit",
+            "longDesc": "Handle Video Aspect Ratio.",
+            "type": "uint32",
+            "enumStrings": "Fit Width,Fit Height,Fill,No Crop",
+            "enumValues": "0,1,2,3",
+            "default": 1,
+            "label": "Video Display Fit"
+        },
+        {
+            "name": "showRecControl",
+            "shortDesc": "Show Video Record Control",
+            "longDesc": "Show recording control in the UI.",
+            "type": "bool",
+            "default": true,
+            "label": "Show Video Record Control"
+        },
+        {
+            "name": "recordingFormat",
+            "shortDesc": "File format for saved video recordings.",
+            "longDesc": "Video recording file format.",
+            "type": "uint32",
+            "enumStrings": "mp4,mov,mkv",
+            "enumValues": "2,1,0",
+            "default": 2,
+            "label": "Record File Format",
+            "keywords": "record,recording format,mp4,mkv"
+        },
+        {
+            "name": "maxVideoSize",
+            "shortDesc": "Maximum disk space available for video recording storage.",
+            "longDesc": "Maximum amount of disk space used by video recording.",
+            "type": "uint32",
+            "min": 100,
+            "units": "MB",
+            "default": 10240,
+            "mobileDefault": 2048,
+            "label": "Max Storage Usage",
+            "keywords": "storage limit,video file"
+        },
+        {
+            "name": "enableStorageLimit",
+            "shortDesc": "Automatically delete oldest recordings when the storage limit is exceeded.",
+            "longDesc": "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
+            "type": "bool",
+            "default": false,
+            "mobileDefault": true,
+            "label": "Auto-Delete Saved Recordings",
+            "keywords": "storage limit"
+        },
+        {
+            "name": "rtspTimeout",
+            "shortDesc": "RTSP Video Timeout",
+            "longDesc": "How long to wait before assuming RTSP link is gone.",
+            "type": "uint32",
+            "min": 1,
+            "units": "s",
+            "default": 8,
+            "label": "RTSP Video Timeout"
+        },
+        {
+            "name": "streamEnabled",
+            "shortDesc": "Video Stream Enabled",
+            "longDesc": "Start/Stop Video Stream.",
+            "type": "bool",
+            "default": true,
+            "label": "Video Stream Enabled"
+        },
+        {
+            "name": "disableWhenDisarmed",
+            "shortDesc": "Disables the video stream when the vehicle is disarmed to save bandwidth.",
+            "longDesc": "Disable Video Stream when disarmed.",
+            "type": "bool",
+            "default": false,
+            "label": "Stop recording when disarmed",
+            "keywords": "disable when disarmed"
+        },
+        {
+            "name": "lowLatencyMode",
+            "shortDesc": "Reduce video latency by approximately 200ms using optimized streaming settings.",
+            "longDesc": "If this option is enabled, the rtpjitterbuffer is removed and the video sink is set to assynchronous mode, reducing the latency by about 200 ms.",
+            "type": "bool",
+            "default": false,
+            "label": "Low Latency Mode",
+            "keywords": "low latency"
+        },
+        {
+            "name": "forceVideoDecoder",
+            "shortDesc": "Override automatic video decoder selection to force a specific decoding method.",
+            "longDesc": "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
+            "type": "uint32",
+            "enumStrings": "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
+            "enumValues": "0,1,8,2,3,4,5,6,7",
+            "default": 0,
+            "qgcRebootRequired": true,
+            "label": "Force video decoder priority",
+            "keywords": "decoder,hardware decode"
+        },
+        {
+            "name": "forceCpuVideoPath",
+            "shortDesc": "Force the video pipeline to copy frames through CPU instead of importing GPU memory directly.",
+            "longDesc": "By default, when a hardware decoder produces GPU-backed frames (DMABuf, GLMemory, D3D11, IOSurface, AHardwareBuffer), the pipeline imports them directly into Qt's render thread to avoid a per-frame CPU copy. The pipeline already falls back to the CPU path automatically when a GPU import fails, so this option is only needed for debugging or to work around a broken driver.",
+            "type": "bool",
+            "default": false,
+            "qgcRebootRequired": true,
+            "label": "Force CPU video path",
+            "keywords": "gpu,zero-copy,dmabuf,cpu,performance,force"
+        },
+        {
+            "name": "videoConversionElement",
+            "shortDesc": "Override the GStreamer color-conversion element used in the CPU video sink path.",
+            "longDesc": "Leave blank to auto-probe (SoC-native imxvideoconvert_g2d / nvvidconv when present, otherwise videoconvert). Set to a specific GStreamer factory name to force that element. Used as a workaround when an SoC's preferred element has a defect; takes effect on next stream restart.",
+            "type": "string",
+            "default": "",
+            "label": "Video conversion element override",
+            "keywords": "videoconvert,nvvidconv,imxvideoconvert,gstreamer,advanced"
+        },
+        {
+            "name": "disablePixelAspectRatio",
+            "shortDesc": "Skip the PAR=1/1 capsfilter in the CPU video sink path.",
+            "longDesc": "QGC normally inserts a pixel-aspect-ratio=1/1 capsfilter so non-square-pixel sources (some RTSP cams, DVB) don't render geometrically distorted. A few v4l2 drivers without VIDIOC_CROPCAP deadlock negotiation when PAR is forced; enable this option as a workaround. Takes effect on next stream restart.",
+            "type": "bool",
+            "default": false,
+            "label": "Disable pixel-aspect-ratio normalization",
+            "keywords": "pixel aspect ratio,capsfilter,v4l2,workaround,advanced"
+        },
+        {
+            "name": "frameSmoothingEnabled",
+            "shortDesc": "Buffer up to 3 decoded frames and pace delivery to the display refresh rate.",
+            "longDesc": "Off by default — appsink frames are delivered to the renderer immediately. When enabled, the adapter holds a 3-frame ring and a display-rate timer picks the frame closest to the expected presentation time (PTS-anchored, 70 ms tolerance). Smooths out jitter from bursty decoders or variable network at the cost of up to one frame of added latency. Frozen sources keep the last good frame on screen. Takes effect on next stream restart.",
+            "type": "bool",
+            "default": false,
+            "label": "Smooth frame pacing (experimental)",
+            "keywords": "smoothing,jitter,pacing,latency,obs"
+        }
+    ]
 }

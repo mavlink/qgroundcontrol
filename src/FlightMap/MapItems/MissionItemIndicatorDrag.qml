@@ -62,6 +62,7 @@ Rectangle {
         drag.maximumY:      itemDragger.parent.height - parent.height
         preventStealing:    true
         enabled:            itemDragger.visible
+        cursorShape:        drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
         onClicked: {
             focus = true

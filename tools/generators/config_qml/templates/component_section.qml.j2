@@ -1,0 +1,16 @@
+{{ ind }}QGCLabel {
+{{ ind }}    text: {{ title_qtr }} + " ⚙"
+{{ ind }}    visible: {{ visible }}
+{{ ind }}}
+{{ ind }}Row {
+{{ ind }}    visible: {{ visible }}
+{{ ind }}    spacing: 0
+{{ ind }}    Rectangle {
+{{ ind }}        width: 3
+{{ ind }}        height: parent.height
+{{ ind }}        color: "orange"
+{{ ind }}    }
+{{ ind }}    {{ component }} {
+{{ ind }}        controller: controller
+{{ ind }}    }
+{{ ind }}}

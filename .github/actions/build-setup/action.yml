@@ -1,0 +1,232 @@
+name: Build Setup
+description: Common setup for platform builds — calls build-prerequisites + the mode-specific Qt installer.
+
+inputs:
+  mode:
+    description: "Setup mode: desktop, android, or ios"
+    required: false
+    default: desktop
+  qt-host:
+    description: "Qt host platform (linux/linux_arm64/windows/windows_arm64/mac). Required for desktop and android modes; ignored for ios."
+    required: false
+    default: ""
+  qt-arch:
+    description: "Qt target architecture. Required for desktop and android modes; ignored for ios."
+    required: false
+    default: ""
+  qt-modules:
+    description: Qt modules to install (overrides build-config)
+    required: false
+    default: ""
+  qt-version:
+    description: Qt version to install (overrides build-config)
+    required: false
+    default: ""
+  build-type:
+    description: Build type for cache key
+    required: false
+    default: "Release"
+  save-cache:
+    description: "Whether to save cache (auto = save for pushes/schedule/dispatch, skip for PRs)"
+    required: false
+    default: "auto"
+  cache-variant:
+    description: Optional ccache key discriminator for compile-flag-distinct builds (e.g. coverage|asan).
+    required: false
+    default: ""
+  cpm-modules:
+    description: CPM cache path (mobile modes; desktop derives this internally)
+    required: false
+    default: ""
+  abis:
+    description: "Android ABIs (e.g., 'arm64-v8a;armeabi-v7a'). android mode only."
+    required: false
+    default: "arm64-v8a;armeabi-v7a"
+  ios-modules:
+    description: Qt modules for iOS target (defaults to build-config qt_modules_ios)
+    required: false
+    default: ""
+  aqt-source:
+    description: >-
+      Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>)
+      for unreleased fixes. Forwarded to every qt-install step in this setup. Blank uses PyPI.
+    required: false
+    default: ""
+
+outputs:
+  qt_modules:
+    description: Qt modules used for this build
+    value: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
+  qt_modules_ios:
+    description: Qt modules for iOS target
+    value: ${{ inputs.ios-modules || steps.prereq.outputs.qt_modules_ios }}
+  qt_version:
+    description: Resolved Qt version for this build
+    value: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
+  gstreamer_version:
+    description: GStreamer version (generic/minimum)
+    value: ${{ steps.prereq.outputs.gstreamer_version }}
+  gstreamer_macos_version:
+    description: GStreamer version for macOS
+    value: ${{ steps.prereq.outputs.gstreamer_macos_version }}
+  gstreamer_android_version:
+    description: GStreamer version for Android
+    value: ${{ steps.prereq.outputs.gstreamer_android_version }}
+  gstreamer_windows_version:
+    description: GStreamer version for Windows
+    value: ${{ steps.prereq.outputs.gstreamer_windows_version }}
+  xcode_version:
+    description: Xcode version for macOS
+    value: ${{ steps.prereq.outputs.xcode_version }}
+  xcode_ios_version:
+    description: Xcode version for iOS
+    value: ${{ steps.prereq.outputs.xcode_ios_version }}
+  ndk_full_version:
+    description: Android NDK full version
+    value: ${{ steps.prereq.outputs.ndk_full_version }}
+  java_version:
+    description: Java version
+    value: ${{ steps.prereq.outputs.java_version }}
+  android_platform:
+    description: Android platform/API level
+    value: ${{ steps.prereq.outputs.android_platform }}
+  android_build_tools:
+    description: Android build-tools version
+    value: ${{ steps.prereq.outputs.android_build_tools }}
+  android_cmdline_tools:
+    description: Android cmdline-tools version
+    value: ${{ steps.prereq.outputs.android_cmdline_tools }}
+  qt_root_dir:
+    description: Installed Qt root directory (desktop mode)
+    value: ${{ steps.qt-desktop.outputs.qt_root_dir }}
+  host_qt_root_dir:
+    description: Host Qt root directory (cross-compile modes — mobile and Windows ARM64-cross)
+    value: ${{ steps.qt-desktop-host.outputs.qt_root_dir || steps.qt-android.outputs.host_qt_root_dir || steps.qt-ios.outputs.host_qt_root_dir }}
+  target_qt_root_dir:
+    description: Target Qt root directory (mobile modes)
+    value: ${{ steps.qt-android.outputs.target_qt_root_dir || steps.qt-ios.outputs.target_qt_root_dir }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate inputs
+      shell: bash
+      env:
+        MODE: ${{ inputs.mode }}
+        QT_HOST: ${{ inputs.qt-host }}
+        QT_ARCH: ${{ inputs.qt-arch }}
+      run: |
+        if [[ "$MODE" == "desktop" || "$MODE" == "android" ]]; then
+          missing=()
+          [[ -z "$QT_HOST" ]] && missing+=(qt-host)
+          [[ -z "$QT_ARCH" ]] && missing+=(qt-arch)
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "::error::build-setup mode=$MODE requires inputs: ${missing[*]}"
+            exit 1
+          fi
+        fi
+
+    - name: Build prerequisites
+      id: prereq
+      uses: ./.github/actions/build-prerequisites
+      with:
+        build-type: ${{ inputs.build-type }}
+        mode: ${{ inputs.mode }}
+
+    - name: Setup caching (desktop)
+      if: inputs.mode == 'desktop'
+      uses: ./.github/actions/cache
+      with:
+        host: ${{ inputs.qt-host }}
+        target: ${{ inputs.qt-arch }}
+        build-type: ${{ inputs.build-type }}
+        variant: ${{ inputs.cache-variant }}
+        cpm-modules: ${{ runner.temp }}/build/cpm_modules
+        save-cache: ${{ inputs.save-cache }}
+
+    # Desktop macOS toolchain. iOS gets its own Xcode pin inside qt-ios (uses xcode_ios_version, which can differ from desktop's).
+    - name: Setup Xcode (macOS desktop)
+      if: inputs.mode == 'desktop' && runner.os == 'macOS'
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ steps.prereq.outputs.xcode_version }}
+
+    - name: Install Qt (desktop)
+      if: inputs.mode == 'desktop'
+      id: qt-desktop
+      uses: ./.github/actions/qt-install
+      with:
+        version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
+        host: ${{ inputs.qt-host }}
+        arch: ${{ inputs.qt-arch }}
+        modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
+        aqt-source: ${{ inputs.aqt-source }}
+
+    # ARM64 cross-compile needs an x64 host Qt for moc/qmlcachegen/etc. that run on the build machine. export-env=false so QT_ROOT_DIR keeps pointing at the target Qt.
+    - name: Install host Qt (Windows ARM64 cross-compile)
+      if: inputs.mode == 'desktop' && inputs.qt-arch == 'win64_msvc2022_arm64_cross_compiled'
+      id: qt-desktop-host
+      uses: ./.github/actions/qt-install
+      with:
+        version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
+        host: windows
+        arch: win64_msvc2022_64
+        modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
+        export-env: 'false'
+        aqt-source: ${{ inputs.aqt-source }}
+
+    # Required only when compiling C++ with MSVC (desktop Windows builds). Android-on-Windows uses NDK clang and skips this.
+    - name: Setup MSVC environment (Windows desktop)
+      if: inputs.mode == 'desktop' && runner.os == 'Windows'
+      uses: TheMrMilchmann/setup-msvc-dev@v4
+      with:
+        arch: ${{ (inputs.qt-arch == 'win64_msvc2022_64' && 'x64') || (inputs.qt-arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
+
+    # windows-11-arm's PATH puts Git for Windows' /usr/bin/link.exe (GNU coreutils hardlink tool) ahead of MSVC's link.exe, breaking Rust crates that shell out to `link.exe` for MSVC targets. windows-2022 doesn't have this ordering issue. See rust-lang/rust#42825.
+    - name: Fix Rust linker resolution (Windows ARM64 native)
+      if: inputs.mode == 'desktop' && runner.os == 'Windows' && runner.arch == 'ARM64'
+      shell: bash
+      run: |
+        git_link="/c/Program Files/Git/usr/bin/link.exe"
+        if [ -f "$git_link" ]; then
+          mv "$git_link" "${git_link}.bak"
+          echo "Renamed Git link.exe to prevent Rust linker conflict"
+        fi
+
+    - name: Setup Gradle (Android)
+      if: inputs.mode == 'android'
+      uses: gradle/actions/setup-gradle@v6
+      with:
+        cache-disabled: true
+
+    - name: Install Qt for Android
+      if: inputs.mode == 'android'
+      id: qt-android
+      uses: ./.github/actions/qt-android
+      with:
+        host: ${{ inputs.qt-host }}
+        arch: ${{ inputs.qt-arch }}
+        version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
+        modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
+        abis: ${{ inputs.abis }}
+        cpm-modules: ${{ inputs.cpm-modules }}
+        build-type: ${{ inputs.build-type }}
+        ndk-full-version: ${{ steps.prereq.outputs.ndk_full_version }}
+        java-version: ${{ steps.prereq.outputs.java_version }}
+        android-platform: ${{ steps.prereq.outputs.android_platform }}
+        android-cmdline-tools: ${{ steps.prereq.outputs.android_cmdline_tools }}
+        android-build-tools: ${{ steps.prereq.outputs.android_build_tools }}
+        save-cache: ${{ inputs.save-cache }}
+
+    - name: Install Qt for iOS
+      if: inputs.mode == 'ios'
+      id: qt-ios
+      uses: ./.github/actions/qt-ios
+      with:
+        version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
+        modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
+        ios-modules: ${{ inputs.ios-modules || steps.prereq.outputs.qt_modules_ios }}
+        xcode-version: ${{ steps.prereq.outputs.xcode_ios_version }}
+        cpm-modules: ${{ inputs.cpm-modules }}
+        build-type: ${{ inputs.build-type }}
+        save-cache: ${{ inputs.save-cache }}

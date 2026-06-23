@@ -10,103 +10,171 @@ inputs:
   build-type:
     description: Build Type
     required: true
+  variant:
+    description: Optional discriminator (e.g. coverage|asan) — distinct compile flags must not share a ccache key.
+    required: false
+    default: ''
   cpm-modules:
     description: Path to CPM Modules
     required: false
   save-cache:
-    description: Save cache (set to false for PR builds to save storage)
+    description: "Whether to save cache (auto = save for pushes and same-repo PRs, skip for fork PRs)"
     required: false
-    default: 'true'
+    default: 'auto'
 runs:
   using: composite
   steps:
+    - name: Resolve save-cache
+      id: cache-policy
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        PR_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        THIS_REPO: ${{ github.repository }}
+        REQUESTED: ${{ inputs.save-cache }}
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cache_policy.py" --requested "${REQUESTED}"
+
+    - name: Determine cache scope
+      id: cache-scope
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        REF_NAME: ${{ github.ref_name }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" scope --event-name "${EVENT_NAME}" --ref-name "${REF_NAME}" --pr-number "${PR_NUMBER:-}"
+
     - name: Get ccache config
       id: ccache-config
       shell: bash
       run: |
-        # Pin ccache version for reproducibility and to avoid API calls
-        # Update periodically via Dependabot or manually
-        CCACHE_VERSION="4.10.2"
-
-        # Validate version format (defense in depth)
-        if [[ ! "$CCACHE_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-          echo "Error: Invalid ccache version format: $CCACHE_VERSION" >&2
-          exit 1
-        fi
-        echo "version=${CCACHE_VERSION}" >> "$GITHUB_OUTPUT"
-
-        # Read max_size from tools/configs/ccache.conf (single source of truth)
-        CCACHE_CONF_PATH="${{ github.workspace }}/tools/configs/ccache.conf"
-        CCACHE_MAX_SIZE="2G"  # Default
-        if [[ -f "$CCACHE_CONF_PATH" ]]; then
-          # Single awk pass to extract value (more robust than grep|sed)
-          CCACHE_MAX_SIZE=$(awk -F'=' '/^max_size[[:space:]]*=/{gsub(/[[:space:]]/,"",$2); print $2; exit}' "$CCACHE_CONF_PATH")
-          CCACHE_MAX_SIZE="${CCACHE_MAX_SIZE:-2G}"
-        else
-          echo "Warning: ccache config not found at $CCACHE_CONF_PATH, using default max_size" >&2
-        fi
-        echo "max_size=${CCACHE_MAX_SIZE}" >> "$GITHUB_OUTPUT"
-
-    - name: Cache ccache binary (Linux)
-      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64'
-      id: ccache-binary
-      uses: actions/cache@v5
-      with:
-        path: /usr/local/bin/ccache
-        key: ccache-binary-${{ steps.ccache-config.outputs.version }}-linux-x86_64
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" config \
+          --target "${{ inputs.target }}" \
+          --conf "${GITHUB_WORKSPACE}/tools/configs/ccache.conf"
 
     - name: Install ccache (Linux)
-      if: runner.os == 'Linux' && inputs.target != 'linux_gcc_arm64' && steps.ccache-binary.outputs.cache-hit != 'true'
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install \
+          --version "${{ steps.ccache-config.outputs.version }}" \
+          --arch "${{ steps.ccache-config.outputs.arch }}"
+
+    - name: Install mold (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/mold_helper.py" install \
+          --arch "${{ steps.ccache-config.outputs.arch }}"
+
+    - name: Resolve macOS ccache SHA256
+      if: runner.os == 'macOS'
+      id: mac-ccache
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" macos-config
+
+    - name: Install ccache (macOS)
+      if: runner.os == 'macOS'
       shell: bash
       env:
         CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+        CCACHE_MAC_SHA256: ${{ steps.mac-ccache.outputs.sha256 }}
       run: |
-        set -e
-        # Download pre-built binary (not source tarball)
-        wget --quiet --tries=3 --waitretry=5 "https://github.com/ccache/ccache/releases/download/v${CCACHE_VERSION}/ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        tar -xf "ccache-${CCACHE_VERSION}-linux-x86_64.tar.xz"
-        # Copy pre-built binary directly (no compilation needed)
-        sudo cp "ccache-${CCACHE_VERSION}-linux-x86_64/ccache" /usr/local/bin/ccache
-        sudo chmod +x /usr/local/bin/ccache
+        sudo python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install-macos \
+          --version "${CCACHE_VERSION}" \
+          --sha256 "${CCACHE_MAC_SHA256}"
+        ccache --version
 
-    - name: Setup sccache (Windows x64 only)
-      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
-      uses: mozilla-actions/sccache-action@v0.0.9
-
-    - run: echo "SCCACHE_GHA_ENABLED=${{ inputs.save-cache == 'true' && 'true' || 'false' }}" >> "$GITHUB_ENV"
-      if: runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64'
+    - name: Determine Windows ccache arch
+      if: runner.os == 'Windows'
+      id: win-ccache
       shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" windows-config --host "${{ inputs.host }}" --target "${{ inputs.target }}"
 
-    - name: Setup Build Cache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-        variant: ${{ runner.os == 'Windows' && inputs.target != 'android' && inputs.host != 'windows_arm64' && 'sccache' || 'ccache' }}
-        key: ${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}
-        restore-keys: |
-          ${{ inputs.host }}-${{ inputs.target }}
-          ${{ inputs.host }}-
-        max-size: ${{ steps.ccache-config.outputs.max_size }}
-        verbose: 2
-        evict-old-files: job
-        save: ${{ inputs.save-cache == 'true' }}
+    - name: Install ccache (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      env:
+        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+        CCACHE_ARCH: ${{ steps.win-ccache.outputs.arch }}
+        CCACHE_WIN_SHA256: ${{ steps.win-ccache.outputs.sha256 }}
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install-windows \
+          --version "${CCACHE_VERSION}" \
+          --arch "${CCACHE_ARCH}" \
+          --sha256 "${CCACHE_WIN_SHA256}" \
+          --runner-temp "${RUNNER_TEMP//\\//}"
 
-    - name: Ensure cpm-modules directory exists
+    - name: Add ccache to PATH (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      env:
+        CCACHE_VERSION: ${{ steps.ccache-config.outputs.version }}
+        CCACHE_ARCH: ${{ steps.win-ccache.outputs.arch }}
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" add-windows-path --version "${CCACHE_VERSION}" --arch "${CCACHE_ARCH}" --runner-temp "${RUNNER_TEMP//\\//}"
+
+    - name: Configure ccache environment
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" configure-env --workspace "${GITHUB_WORKSPACE//\\//}"
+
+    - name: Configure CPM source cache
       if: inputs.cpm-modules != ''
-      run: mkdir -p "${{ inputs.cpm-modules }}"
+      id: cpm-cache
       shell: bash
+      env:
+        CPM_MODULES_INPUT: ${{ inputs.cpm-modules }}
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" configure-cache --path "${CPM_MODULES_INPUT}"
 
-    - name: Cache CPM Modules (restore and save)
-      if: inputs.cpm-modules != '' && inputs.save-cache == 'true'
+    - name: Compute CPM dependency fingerprint
+      if: inputs.cpm-modules != ''
+      id: cpm-key
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/cpm_helper.py" fingerprint --root "${GITHUB_WORKSPACE}"
+
+    - name: Restore Build Cache (ccache, save)
+      if: steps.cache-policy.outputs.save == 'true' && inputs.variant != 'coverage'
       uses: actions/cache@v5
       with:
-        path: ${{ inputs.cpm-modules }}
-        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-        restore-keys: ${{ github.workflow }}-cpm-modules-
+        path: ${{ github.workspace }}/.ccache
+        key: ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        restore-keys: |
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-shared-
+          ${{ inputs.variant && format('ccache-{0}-{1}-{2}-shared-', inputs.host, inputs.target, inputs.build-type) || '' }}
 
-    - name: Cache CPM Modules (restore only)
-      if: inputs.cpm-modules != '' && inputs.save-cache != 'true'
+    - name: Restore Build Cache (ccache, read-only)
+      if: steps.cache-policy.outputs.save != 'true' && inputs.variant != 'coverage'
       uses: actions/cache/restore@v5
       with:
-        path: ${{ inputs.cpm-modules }}
-        key: ${{ github.workflow }}-cpm-modules-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-        restore-keys: ${{ github.workflow }}-cpm-modules-
+        path: ${{ github.workspace }}/.ccache
+        key: ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
+        restore-keys: |
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-${{ steps.cache-scope.outputs.scope }}-
+          ccache-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.build-type }}${{ inputs.variant && format('-{0}', inputs.variant) }}-shared-
+          ${{ inputs.variant && format('ccache-{0}-{1}-{2}-shared-', inputs.host, inputs.target, inputs.build-type) || '' }}
+
+    - name: Initialize ccache stats
+      shell: bash
+      run: ccache -z
+
+    # CPM is content-identical across build types; only Release writes the
+    # cache. Debug + sanitizer + coverage jobs are read-only to avoid parallel
+    # save races on the same key (last-writer-wins waste).
+    - name: Cache CPM Modules (restore and save)
+      if: inputs.cpm-modules != '' && steps.cache-policy.outputs.save == 'true' && inputs.build-type == 'Release'
+      uses: actions/cache@v5
+      with:
+        path: ${{ steps.cpm-cache.outputs.path }}
+        key: cpm-modules-${{ steps.cache-scope.outputs.scope }}-${{ steps.cpm-key.outputs.fingerprint }}
+        restore-keys: |
+          cpm-modules-${{ steps.cache-scope.outputs.scope }}-
+          cpm-modules-shared-
+
+    - name: Cache CPM Modules (restore only)
+      if: inputs.cpm-modules != '' && (steps.cache-policy.outputs.save != 'true' || inputs.build-type != 'Release')
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ steps.cpm-cache.outputs.path }}
+        key: cpm-modules-${{ steps.cache-scope.outputs.scope }}-${{ steps.cpm-key.outputs.fingerprint }}
+        restore-keys: |
+          cpm-modules-${{ steps.cache-scope.outputs.scope }}-
+          cpm-modules-shared-

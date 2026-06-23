@@ -1,7 +1,8 @@
 #include "VehicleLinkManager.h"
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 #include "LinkManager.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "AudioOutput.h"
 #ifndef QGC_NO_SERIAL_LINK
     #include "SerialLink.h"
@@ -21,7 +22,7 @@ VehicleLinkManager::VehicleLinkManager(Vehicle *vehicle)
     (void) connect(_commLostCheckTimer, &QTimer::timeout, this, &VehicleLinkManager::_commLostCheck);
 
     _commLostCheckTimer->setSingleShot(false);
-    _commLostCheckTimer->setInterval(_commLostCheckTimeoutMSecs);
+    _commLostCheckTimer->setInterval(QGC::runningUnitTests() ? kTestCommLostCheckTimeoutMs : _commLostCheckTimeoutMSecs);
 }
 
 VehicleLinkManager::~VehicleLinkManager()
@@ -80,7 +81,7 @@ void VehicleLinkManager::_commRegainedOnLink(LinkInterface *link)
 
     if (!primarySwitchMessage.isEmpty()) {
         AudioOutput::instance()->say(primarySwitchMessage.toLower());
-        qgcApp()->showAppMessage(primarySwitchMessage);
+        QGC::showAppMessage(primarySwitchMessage);
     }
 
     emit linkStatusesChanged();
@@ -111,7 +112,7 @@ void VehicleLinkManager::_commLostCheck()
     }
 
     // Use much shorter heartbeat timeout in unit tests since MockLink sends heartbeats instantly
-    const int heartbeatTimeout = qgcApp()->runningUnitTests() ? kTestHeartbeatTimeoutMs : _heartbeatMaxElpasedMSecs;
+    const int heartbeatTimeout = QGC::runningUnitTests() ? kTestHeartbeatTimeoutMs : _heartbeatMaxElpasedMSecs;
 
     bool linkStatusChange = false;
     for (LinkInfo_t &linkInfo: _rgLinkInfo) {
@@ -135,7 +136,7 @@ void VehicleLinkManager::_commLostCheck()
     if (_updatePrimaryLink()) {
         QString msg = tr("%1Switching communication to secondary link.").arg(_vehicle->_vehicleIdSpeech());
         AudioOutput::instance()->say(msg.toLower());
-        qgcApp()->showAppMessage(msg);
+        QGC::showAppMessage(msg);
     }
 
     if (_communicationLost) {
@@ -237,7 +238,7 @@ void VehicleLinkManager::_removeLink(LinkInterface *link)
 
 void VehicleLinkManager::_linkDisconnected()
 {
-    qCDebug(VehicleLog) << Q_FUNC_INFO << "linkCount" << _rgLinkInfo.count();
+    qCDebug(VehicleLinkManagerLog) << Q_FUNC_INFO << "linkCount" << _rgLinkInfo.count();
 
     LinkInterface *link = qobject_cast<LinkInterface*>(sender());
     if (!link) {
@@ -247,7 +248,7 @@ void VehicleLinkManager::_linkDisconnected()
     _removeLink(link);
     _updatePrimaryLink();
     if (_rgLinkInfo.isEmpty() && !_allLinksRemovedSignalledByCloseVehicle) {
-        qCDebug(VehicleLog) << "signalling allLinksRemoved";
+        qCDebug(VehicleLinkManagerLog) << "signalling allLinksRemoved";
         // Stop command processing timers immediately to prevent callbacks during the
         // asynchronous vehicle destruction sequence
         _vehicle->_stopCommandProcessing();

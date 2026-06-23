@@ -1,12 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(JoystickManagerLog)
 
 class Joystick;
 class JoystickManagerSettings;
@@ -23,13 +20,15 @@ class JoystickManager : public QObject
     ///     Note: The active joystick name may be not in this list if the joystick is not currently connected
     Q_PROPERTY(QStringList  availableJoystickNames READ availableJoystickNames NOTIFY availableJoystickNamesChanged)
 
-    /// Currently active joystick
     Q_PROPERTY(Joystick *activeJoystick READ activeJoystick NOTIFY activeJoystickChanged)
+    Q_PROPERTY(bool activeJoystickEnabledForActiveVehicle READ activeJoystickEnabledForActiveVehicle WRITE setActiveJoystickEnabledForActiveVehicle NOTIFY activeJoystickEnabledForActiveVehicleChanged)
 
     /// Number of connected joysticks
     Q_PROPERTY(int joystickCount READ joystickCount NOTIFY availableJoystickNamesChanged)
 
+#ifdef QGC_UNITTEST_BUILD
     friend class JoystickManagerTest;
+#endif
 
 public:
     explicit JoystickManager(QObject *parent = nullptr);
@@ -41,9 +40,8 @@ public:
     int joystickCount() const { return _name2JoystickMap.count(); }
 
     Joystick *activeJoystick();
-
-    Q_INVOKABLE bool joystickEnabledForVehicle(Vehicle *vehicle) const;
-    Q_INVOKABLE void setJoystickEnabledForVehicle(Vehicle *vehicle, bool enabled);
+    bool activeJoystickEnabledForActiveVehicle() const;
+    void setActiveJoystickEnabledForActiveVehicle(bool enabled);
 
     /// Get all joysticks in a linked group
     /// Returns empty list if groupId is empty or no matches found
@@ -54,8 +52,8 @@ public:
 
 signals:
     void activeJoystickChanged(Joystick *joystick);
+    void activeJoystickEnabledForActiveVehicleChanged();
     void availableJoystickNamesChanged();
-    void joystickEnabledChanged();
 
 public slots:
     void init();
@@ -76,6 +74,8 @@ private slots:
 private:
     void _setActiveJoystickFromSettings();
     void _setActiveJoystick(Joystick *joystick);
+    bool _joystickEnabledForVehicle(Vehicle *vehicle) const;
+    void _setJoystickEnabledForVehicle(Vehicle *vehicle, bool enabled);
     Joystick *_findJoystickByInstanceId(int instanceId);
     void _updatePollingTimer();
 

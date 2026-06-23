@@ -70,10 +70,10 @@
 /// 5. **Commutativity**: f(a, b) == f(b, a)
 /// 6. **Associativity**: f(f(a, b), c) == f(a, f(b, c))
 
+#include <QtTest/QTest>
+
 #include <rapidcheck.h>
 #include <rapidcheck/detail/Results.h>
-
-#include <QtTest/QTest>
 
 /// Run a RapidCheck property test integrated with Qt Test.
 /// On failure, reports the failing case through QFAIL.
@@ -89,43 +89,43 @@
 ///     RC_ASSERT(a + b == b + a);
 /// });
 /// @endcode
-#define RC_QT_PROP(name, ...)                                                                           \
-    do {                                                                                                \
-        const auto _rc_result = rc::detail::checkTestable(__VA_ARGS__);                                 \
-        if (_rc_result.template is<rc::detail::FailureResult>()) {                                      \
-            const auto& _rc_fail = _rc_result.template get<rc::detail::FailureResult>();                \
-            const QString _rc_msg = QStringLiteral("Property '%1' failed:\n%2")                         \
-                                        .arg(QString::fromUtf8(name))                                   \
-                                        .arg(QString::fromStdString(_rc_fail.description));             \
-            QFAIL(qPrintable(_rc_msg));                                                                 \
-        } else if (_rc_result.template is<rc::detail::GaveUpResult>()) {                                \
-            const auto& _rc_gave = _rc_result.template get<rc::detail::GaveUpResult>();                 \
-            const QString _rc_msg = QStringLiteral("Property '%1' gave up: %2")                         \
-                                        .arg(QString::fromUtf8(name))                                   \
-                                        .arg(QString::fromStdString(_rc_gave.description));             \
-            QFAIL(qPrintable(_rc_msg));                                                                 \
-        } else if (_rc_result.template is<rc::detail::Error>()) {                                       \
-            const auto& _rc_err = _rc_result.template get<rc::detail::Error>();                         \
-            const QString _rc_msg = QStringLiteral("Property '%1' error: %2")                           \
-                                        .arg(QString::fromUtf8(name))                                   \
-                                        .arg(QString::fromStdString(_rc_err.description));              \
-            QFAIL(qPrintable(_rc_msg));                                                                 \
-        }                                                                                               \
+#define RC_QT_PROP(name, ...)                                                               \
+    do {                                                                                    \
+        const auto _rc_result = rc::detail::checkTestable(__VA_ARGS__);                     \
+        if (_rc_result.template is<rc::detail::FailureResult>()) {                          \
+            const auto& _rc_fail = _rc_result.template get<rc::detail::FailureResult>();    \
+            const QString _rc_msg = QStringLiteral("Property '%1' failed:\n%2")             \
+                                        .arg(QString::fromUtf8(name))                       \
+                                        .arg(QString::fromStdString(_rc_fail.description)); \
+            QFAIL(qPrintable(_rc_msg));                                                     \
+        } else if (_rc_result.template is<rc::detail::GaveUpResult>()) {                    \
+            const auto& _rc_gave = _rc_result.template get<rc::detail::GaveUpResult>();     \
+            const QString _rc_msg = QStringLiteral("Property '%1' gave up: %2")             \
+                                        .arg(QString::fromUtf8(name))                       \
+                                        .arg(QString::fromStdString(_rc_gave.description)); \
+            QFAIL(qPrintable(_rc_msg));                                                     \
+        } else if (_rc_result.template is<rc::detail::Error>()) {                           \
+            const auto& _rc_err = _rc_result.template get<rc::detail::Error>();             \
+            const QString _rc_msg = QStringLiteral("Property '%1' error: %2")               \
+                                        .arg(QString::fromUtf8(name))                       \
+                                        .arg(QString::fromStdString(_rc_err.description));  \
+            QFAIL(qPrintable(_rc_msg));                                                     \
+        }                                                                                   \
     } while (false)
 
 /// Namespace for QGC-specific RapidCheck generators
 namespace rc::qgc {
 
-/// Generator for valid latitude values [-90, 90]
+/// Generator for valid latitude values [-90, 90] at ~0.1m resolution
 inline auto latitude()
 {
-    return rc::gen::map(rc::gen::inRange(-9000, 9001), [](int i) { return static_cast<double>(i) / 100.0; });
+    return rc::gen::map(rc::gen::inRange(-90000000, 90000001), [](int i) { return static_cast<double>(i) / 1000000.0; });
 }
 
-/// Generator for valid longitude values [-180, 180]
+/// Generator for valid longitude values [-180, 180] at ~0.1m resolution
 inline auto longitude()
 {
-    return rc::gen::map(rc::gen::inRange(-18000, 18001), [](int i) { return static_cast<double>(i) / 100.0; });
+    return rc::gen::map(rc::gen::inRange(-180000000, 180000001), [](int i) { return static_cast<double>(i) / 1000000.0; });
 }
 
 /// Generator for valid altitude values (reasonable range for aircraft)
@@ -134,4 +134,4 @@ inline auto altitude()
     return rc::gen::map(rc::gen::inRange(-100, 50000), [](int i) { return static_cast<double>(i); });
 }
 
-} // namespace rc::qgc
+}  // namespace rc::qgc

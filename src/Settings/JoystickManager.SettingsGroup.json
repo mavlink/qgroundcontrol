@@ -1,19 +1,20 @@
 {
-    "version":      1,
-    "fileType":  "FactMetaData",
-    "QGC.MetaData.Facts":
-[
-{
-    "name":              "activeJoystickName",
-    "shortDesc":         "Currenetly active joystick name",
-    "type":              "string",
-    "default":           ""
-},
-{
-    "name":              "joystickEnabledVehiclesIds",
-    "shortDesc":         "Comma separated list of vehicle IDs with joystick enabled",
-    "type":              "string",
-    "default":           ""
-}
-]
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "activeJoystickName",
+            "shortDesc": "Currenetly active joystick name",
+            "type": "string",
+            "default": "",
+            "label": "Currenetly active joystick name"
+        },
+        {
+            "name": "joystickEnabledVehiclesIds",
+            "shortDesc": "Comma separated list of vehicle IDs with joystick enabled",
+            "type": "string",
+            "default": "",
+            "label": "Comma separated list of vehicle IDs with joystick enabled"
+        }
+    ]
 }

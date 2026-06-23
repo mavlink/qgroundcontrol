@@ -1,0 +1,39 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "component": "PX4LogControl",
+            "sectionName": "Log Control",
+            "keywords": [
+                "px4 log",
+                "logging",
+                "start log",
+                "stop log",
+                "auto log"
+            ]
+        },
+        {
+            "component": "PX4LogUploadSettings",
+            "sectionName": "Upload Settings",
+            "keywords": [
+                "upload",
+                "flight review",
+                "email",
+                "description",
+                "wind",
+                "rating"
+            ]
+        },
+        {
+            "component": "PX4LogFileManager",
+            "sectionName": "Log Files",
+            "keywords": [
+                "log files",
+                "download",
+                "delete",
+                "upload logs"
+            ]
+        }
+    ]
+}

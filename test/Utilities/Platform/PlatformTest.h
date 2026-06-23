@@ -18,4 +18,9 @@ private slots:
     // Root detection tests (Linux only)
     void _testIsRunningAsRootNormal();
 #endif
+
+#if defined(QGC_UNITTEST_BUILD)
+    // Unit-test initialization environment setup
+    void _testInitializeSetsUnitTestEnvironment();
+#endif
 };

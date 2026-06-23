@@ -1,18 +1,16 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtNetwork/QHostAddress>
 
 #include "ADSB.h"
 
-Q_DECLARE_LOGGING_CATEGORY(ADSBTCPLinkLog)
-
 class QTcpSocket;
 class QTimer;
 
-/// The ADSBTCPLink class handles the TCP connection to an ADS-B server
+/// \brief The ADSBTCPLink class handles the TCP connection to an ADS-B server
 /// and processes incoming ADS-B data.
+
 class ADSBTCPLink : public QObject
 {
     Q_OBJECT

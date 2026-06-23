@@ -1,9 +1,10 @@
 #include "PlanManager.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
-#include "QGCApplication.h"
 #include "MissionCommandTree.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManager.PlanManager")
@@ -241,8 +242,8 @@ void PlanManager::_ackTimeout(void)
 void PlanManager::_startAckTimeout(AckType_t ack)
 {
     // Use much shorter timeouts in unit tests since MockLink responds instantly
-    const int retryTimeout = qgcApp()->runningUnitTests() ? 10 : _retryTimeoutMilliseconds;
-    const int ackTimeout = qgcApp()->runningUnitTests() ? kTestAckTimeoutMs : _ackTimeoutMilliseconds;
+    const int retryTimeout = QGC::runningUnitTests() ? 10 : _retryTimeoutMilliseconds;
+    const int ackTimeout = QGC::runningUnitTests() ? kTestAckTimeoutMs : _ackTimeoutMilliseconds;
 
     switch (ack) {
     case AckMissionItem:

@@ -1,12 +1,9 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(Viewer3DGeoCoordinateTypeLog)
 
 class Viewer3DGeoCoordinateType : public QObject
 {

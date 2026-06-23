@@ -1,11 +1,7 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-
 #include "LandingComplexItem.h"
 #include "Fact.h"
-
-Q_DECLARE_LOGGING_CATEGORY(FixedWingLandingComplexItemLog)
 
 class FWLandingPatternTest;
 class PlanMasterController;
@@ -36,7 +32,7 @@ public:
     // Overrides from VisualMissionItem
     void                save                        (QJsonArray&  missionItems) final;
 
-    static const QString name;
+    static constexpr const char* canonicalName = QT_TR_NOOP("Fixed Wing Landing");
 
     static constexpr const char* settingsGroup                      = "FixedWingLanding";
     static constexpr const char* jsonComplexItemTypeValue           = "fwLandingPattern";

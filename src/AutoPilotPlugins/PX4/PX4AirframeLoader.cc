@@ -1,5 +1,5 @@
 #include "PX4AirframeLoader.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "AirframeComponentAirframes.h"
 #include "AutoPilotPlugin.h"
@@ -47,7 +47,7 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
     QString airframeFilename;
 
     // We want unit test builds to always use the resource based meta data to provide repeatable results
-    if (!qgcApp()->runningUnitTests()) {
+    if (!QGC::runningUnitTests()) {
         // First look for meta data that comes from a firmware download. Fall back to resource if not there.
         airframeFilename = aiframeMetaDataFile();
     }

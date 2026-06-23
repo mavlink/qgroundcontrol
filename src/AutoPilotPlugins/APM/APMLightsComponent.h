@@ -12,7 +12,7 @@ public:
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
 
     QString name() const final { return _name; }
-    QString description() const final { return tr("Lights setup is used to adjust light output channels."); }
+    QString description() const final { return tr("Configure light output channels."); }
     QString iconResource() const final { return QStringLiteral("/qmlimages/LightsComponentIcon.png"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }

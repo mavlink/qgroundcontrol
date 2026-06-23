@@ -1,5 +1,15 @@
 name: Install Qt
-description: Install Qt with standard QGroundControl modules
+description: Install Qt using aqtinstall with caching
+outputs:
+  arch_dir:
+    description: Resolved Qt architecture directory name
+    value: ${{ steps.qt-meta.outputs.arch_dir }}
+  qt_root_dir:
+    description: Absolute Qt root directory
+    value: ${{ steps.qt-install.outputs.qt_root_dir || steps.qt-cached.outputs.qt_root_dir }}
+  qt_bin_dir:
+    description: Qt bin directory
+    value: ${{ steps.qt-install.outputs.qt_bin_dir || steps.qt-cached.outputs.qt_bin_dir }}
 inputs:
   version:
     description: Qt version to install
@@ -17,22 +27,109 @@ inputs:
   dir:
     description: Installation directory
     required: false
-    default: ${{ runner.temp }}
+    default: ${{ github.workspace }}/.qt
   modules:
     description: Qt modules to install (use build-config.outputs.qt_modules)
+    required: false
+    default: ''
+  archives:
+    description: Optional Qt archives subset to install (space-separated)
+    required: false
+    default: ''
+  export-env:
+    description: Export QT_ROOT_DIR and prepend the Qt bin directory to PATH
+    required: false
+    default: 'true'
+  aqt-source:
+    description: >-
+      Optional pip spec used to install aqtinstall (e.g. git+https://github.com/miurahr/aqtinstall.git@<sha>).
+      Blank uses the PyPI `aqtinstall` package. Forces a reinstall so any preinstalled aqt is replaced.
     required: false
     default: ''
 runs:
   using: composite
   steps:
-    - name: Install Qt ${{ inputs.version }}
-      uses: jurplel/install-qt-action@v4
+    - name: Resolve arch directory and cache key
+      id: qt-meta
+      shell: bash
+      env:
+        QT_ARCH: ${{ inputs.arch }}
+        QT_MODULES: ${{ inputs.modules }}
+        QT_ARCHIVES: ${{ inputs.archives }}
+      run: python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" cache-key --arch "${QT_ARCH}" --modules "${QT_MODULES}" --archives "${QT_ARCHIVES}"
+
+    # Cache is keyed on host+target+arch+version+modules-digest. PRs save too (GHA evicts LRU under the 10 GB repo cap) so amend+force-push iterations don't re-download Qt every time. Forks can't write to the parent's cache.
+    # Transient cache-service blips have surfaced as silent step exit on Windows runners; degrade to a cache miss instead of failing the build.
+    - name: Restore Qt cache
+      id: qt-cache
+      uses: actions/cache/restore@v5
+      continue-on-error: true
       with:
-        version: ${{ inputs.version }}
-        host: ${{ inputs.host }}
-        target: ${{ inputs.target }}
-        arch: ${{ inputs.arch }}
-        dir: ${{ inputs.dir }}
-        modules: ${{ inputs.modules }}
-        setup-python: false
-        cache: true
+        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
+        # `runner.os` is implied by `inputs.host` (linux/mac/windows...) so it's omitted.
+        key: qt-${{ inputs.host }}-${{ inputs.target }}-${{ inputs.arch }}-${{ inputs.version }}-${{ steps.qt-meta.outputs.digest }}
+
+    - name: Install Qt ${{ inputs.version }}
+      if: steps.qt-cache.outputs.cache-hit != 'true'
+      id: qt-install
+      shell: bash
+      env:
+        QT_VERSION: ${{ inputs.version }}
+        QT_HOST: ${{ inputs.host }}
+        QT_TARGET: ${{ inputs.target }}
+        QT_ARCH: ${{ inputs.arch }}
+        QT_OUTDIR: ${{ inputs.dir }}/Qt
+        QT_MODULES: ${{ inputs.modules }}
+        QT_ARCHIVES: ${{ inputs.archives }}
+        QT_AQT_SOURCE: ${{ inputs.aqt-source }}
+      run: |
+        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" install \
+          --version "${QT_VERSION}" \
+          --host "${QT_HOST}" \
+          --target "${QT_TARGET}" \
+          --arch "${QT_ARCH}" \
+          --outdir "${QT_OUTDIR}" \
+          --modules "${QT_MODULES}" \
+          --archives "${QT_ARCHIVES}" \
+          --aqt-source "${QT_AQT_SOURCE}"
+
+    - name: Re-check Qt cache before save
+      id: qt-presave
+      if: steps.qt-cache.outputs.cache-hit != 'true' && inputs.target != 'ios' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      uses: actions/cache/restore@v5
+      continue-on-error: true
+      with:
+        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
+        key: ${{ steps.qt-cache.outputs.cache-primary-key }}
+        lookup-only: true
+
+    # Forks can't write to the parent repo's cache (token is read-only), so skip the save attempt there to avoid noisy warnings. Same-repo PRs save normally.
+    - name: Save Qt cache
+      if: steps.qt-cache.outputs.cache-hit != 'true' && steps.qt-presave.outputs.cache-hit != 'true' && inputs.target != 'ios' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ inputs.dir }}/Qt/${{ inputs.version }}
+        key: ${{ steps.qt-cache.outputs.cache-primary-key }}
+
+    - name: Resolve Qt paths (cache hit)
+      if: steps.qt-cache.outputs.cache-hit == 'true'
+      id: qt-cached
+      shell: bash
+      env:
+        QT_OUTDIR: ${{ inputs.dir }}/Qt
+        QT_VERSION: ${{ inputs.version }}
+        ARCH_DIR: ${{ steps.qt-meta.outputs.arch_dir }}
+      run: |
+        python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" resolve-paths \
+          --outdir "${QT_OUTDIR}" \
+          --version "${QT_VERSION}" \
+          --arch-dir "${ARCH_DIR}"
+
+    - name: Set Qt environment
+      if: ${{ inputs.export-env == 'true' }}
+      shell: bash
+      run: |
+        qt_root="${{ steps.qt-install.outputs.qt_root_dir || steps.qt-cached.outputs.qt_root_dir }}"
+        echo "QT_ROOT_DIR=${qt_root}" >> "$GITHUB_ENV"
+        echo "${qt_root}/bin" >> "$GITHUB_PATH"
+        echo "Qt installed at ${qt_root}"

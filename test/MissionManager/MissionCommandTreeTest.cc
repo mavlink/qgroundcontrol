@@ -6,9 +6,17 @@
 #include "UnitTest.h"
 #include "Vehicle.h"
 
+#include <QtCore/QRegularExpression>
+
 void MissionCommandTreeTest::init()
 {
+    UnitTest::init();
     _commandTree = new MissionCommandTree(true /* unitTest */, this);
+}
+
+void MissionCommandTreeTest::cleanup()
+{
+    UnitTest::cleanup();
 }
 
 QString MissionCommandTreeTest::_rawName(int id) const
@@ -170,6 +178,7 @@ void MissionCommandTreeTest::testOverride()
 
 void MissionCommandTreeTest::testAllTrees()
 {
+    ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg, QRegularExpression("Skipping invalid enum value"));
     QList<MAV_AUTOPILOT> firmwareList;
     QList<MAV_TYPE> vehicleList;
     firmwareList << MAV_AUTOPILOT_GENERIC << MAV_AUTOPILOT_PX4 << MAV_AUTOPILOT_ARDUPILOTMEGA;
@@ -182,13 +191,22 @@ void MissionCommandTreeTest::testAllTrees()
                 // VTOL in ArduPilot shows up as plane so we can test this pair
                 continue;
             }
-            qDebug() << firmwareType << vehicleType;
+            qCDebug(UnitTestLog) << firmwareType << vehicleType;
             Vehicle* const vehicle = new Vehicle(firmwareType, vehicleType, this);
             QVERIFY(MissionCommandTree::instance()->getUIInfo(vehicle, QGCMAVLink::VehicleClassMultiRotor,
                                                               MAV_CMD_NAV_WAYPOINT) != nullptr);
             delete vehicle;
         }
     }
+}
+
+void MissionCommandTreeTest::testUnknownCommandFallbacks()
+{
+    constexpr MAV_CMD unknownCommand = static_cast<MAV_CMD>(9999);
+    QCOMPARE(_commandTree->friendlyName(unknownCommand), QStringLiteral("MAV_CMD(9999)"));
+    QCOMPARE(_commandTree->rawName(unknownCommand), QStringLiteral("MAV_CMD(9999)"));
+    QVERIFY(!_commandTree->isLandCommand(unknownCommand));
+    QVERIFY(!_commandTree->isTakeoffCommand(unknownCommand));
 }
 
 UT_REGISTER_TEST(MissionCommandTreeTest, TestLabel::Unit, TestLabel::MissionManager)

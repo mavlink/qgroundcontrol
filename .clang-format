@@ -28,9 +28,9 @@ BraceWrapping:
   BeforeCatch: false
   BeforeElse: false
   IndentBraces: false
-  SplitEmptyFunction: true
+  SplitEmptyFunction: false
   SplitEmptyRecord: true
-AllowShortFunctionsOnASingleLine: None
+AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
@@ -42,7 +42,7 @@ ReferenceAlignment: Left
 DerivePointerAlignment: false
 
 # Spacing
-SpaceAfterCStyleCast: false
+SpaceAfterCStyleCast: true
 SpaceAfterLogicalNot: false
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeParens: ControlStatements
@@ -56,11 +56,11 @@ SpacesInSquareBrackets: false
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^<Q.*>'  # Qt headers
+  - Regex: '^<[a-z].*>'  # System/STL headers
     Priority: 1
-  - Regex: '^<.*>'   # System/STL headers
+  - Regex: '^<Q.*>'      # Qt headers
     Priority: 2
-  - Regex: '.*'      # Project headers
+  - Regex: '.*'           # Project headers
     Priority: 3
 
 # Alignment

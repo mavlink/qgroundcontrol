@@ -1,7 +1,16 @@
 name: iOS
 
-# iOS builds are experimental - manual trigger only until stable
 on:
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+  merge_group:
   workflow_dispatch:
 
 concurrency:
@@ -15,7 +24,14 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: ios
+
   build:
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
     runs-on: macos-15
     timeout-minutes: 120
 
@@ -39,71 +55,39 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
 
-      - name: Restore file timestamps
-        uses: chetan/git-restore-mtime-action@v2
-
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
-
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+      - name: Build Setup (iOS)
+        id: setup
+        uses: ./.github/actions/build-setup
         with:
-          xcode-version: ${{ steps.config.outputs.xcode_ios_version }}
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: mac
-          target: ios
+          mode: ios
           build-type: ${{ matrix.build_type }}
           cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt for MacOS
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: mac
-          arch: clang_64
-          modules: ${{ steps.config.outputs.qt_modules }}
-
-      - name: Install Qt for iOS
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: mac
-          target: ios
-          arch: ios
-          modules: ${{ steps.config.outputs.qt_modules_ios }}
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-              -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../macos"
-              -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
+          # Qt6LinguistTools cmake config ships with the desktop qtbase install (host),
+          # not iOS qtbase; point CMake at the host copy directly.
+          extra-args: >-
+            -DQT_HOST_PATH=${{ env.QT_ROOT_DIR }}/../macos
+            -DQt6LinguistTools_DIR=${{ env.QT_ROOT_DIR }}/../macos/lib/cmake/Qt6LinguistTools
 
       - name: Build
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
-
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
+        uses: ./.github/actions/cmake-build
         with:
-          subject-path: '${{ runner.temp }}/build/${{ env.PACKAGE }}.app'
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
 
-      - name: Upload Build File
-        uses: ./.github/actions/upload
+      - name: Attest and Upload
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/attest-and-upload
         with:
-          artifact_name: ${{ env.PACKAGE }}.app
-          package_name: ${{ env.PACKAGE }}
-          upload_aws: 'false'
+          artifact-name: ${{ env.PACKAGE }}.app
+          # iOS uses Ninja Multi-Config; the .app lands in build/<config>/, not build/.
+          artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
+          package-name: ${{ env.PACKAGE }}
+          upload-aws: 'false'

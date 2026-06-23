@@ -28,7 +28,7 @@ Rectangle {
                                                 maximumHeight,
                                                 topRightPanelColumnLayout.implicitHeight + topRightPanelColumnLayout.anchors.margins * 2
                                             )
-    property real  minimumHeight:           swipeViewContainer.height
+    property real  minimumHeight:           swipeViewContainer.implicitHeight
     property real  maximumHeight
 
     QGCPalette { id: qgcPal }

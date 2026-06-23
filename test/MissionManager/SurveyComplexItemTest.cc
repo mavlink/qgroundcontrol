@@ -1,14 +1,19 @@
 #include "SurveyComplexItemTest.h"
 
+#include "CoordFixtures.h"
 #include "MultiSignalSpy.h"
 #include "PlanViewSettings.h"
 #include "SurveyComplexItem.h"
+#include "TransectStyleComplexItem.h"
+
+#include <QtCore/QRegularExpression>
+#include <QtTest/QSignalSpy>
 
 SurveyComplexItemTest::SurveyComplexItemTest()
 {
     // We use a 100m by 100m square test polygon
     const double edgeDistance = 100;
-    _polyVertices.append(QGeoCoordinate(47.633550640000003, -122.08982199));
+    _polyVertices.append(TestFixtures::Coord::missionTestOrigin());
     _polyVertices.append(_polyVertices[0].atDistanceAndAzimuth(edgeDistance, 90));
     _polyVertices.append(_polyVertices[1].atDistanceAndAzimuth(edgeDistance, 180));
     _polyVertices.append(_polyVertices[2].atDistanceAndAzimuth(edgeDistance, -90.0));
@@ -33,15 +38,14 @@ void SurveyComplexItemTest::init()
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can
     // lead to incorrect ui or perf impact of uneeded signals propogating ui change.
-    _multiSpy = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpy);
+    _multiSpy = std::make_unique<MultiSignalSpy>();
+    QVERIFY(_multiSpy);
     QCOMPARE(_multiSpy->init(_surveyItem), true);
 }
 
 void SurveyComplexItemTest::cleanup()
 {
-    delete _multiSpy;
-    _multiSpy = nullptr;
+    _multiSpy.reset();
     TransectStyleComplexItemTestBase::cleanup();
     // These items are deleted when planController() is deleted
     _surveyItem = nullptr;
@@ -66,7 +70,7 @@ void SurveyComplexItemTest::_testDirty()
     QList<Fact*> rgFacts;
     rgFacts << _surveyItem->gridAngle() << _surveyItem->flyAlternateTransects();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         QVERIFY(!_surveyItem->dirty());
         if (fact->typeIsBool()) {
             fact->setRawValue(!fact->rawValue().toBool());
@@ -108,7 +112,7 @@ void SurveyComplexItemTest::_testGridAngle()
         QGeoCoordinate firstTransectEntry = gridPoints[0].value<QGeoCoordinate>();
         QGeoCoordinate firstTransectExit = gridPoints[1].value<QGeoCoordinate>();
         double azimuth = firstTransectEntry.azimuthTo(firstTransectExit);
-        // qDebug() << gridAngle << azimuth << _clampGridAngle180(gridAngle) << _clampGridAngle180(azimuth);
+        // qCDebug(UnitTestLog) << gridAngle << azimuth << _clampGridAngle180(gridAngle) << _clampGridAngle180(azimuth);
         int clampGridAngle = qRound(_clampGridAngle180(gridAngle));
         int clampAzimuth = qRound(_clampGridAngle180(azimuth));
         QCOMPARE(clampGridAngle, clampAzimuth);
@@ -133,13 +137,12 @@ void SurveyComplexItemTest::_testEntryLocation()
 
 void SurveyComplexItemTest::_testItemCount()
 {
-    typedef struct
-    {
+    struct TestCase_t {
         bool hoverAndCapture;
         bool triggerInTurnAround;
         bool refly90;
         bool hasTurnaround;
-    } TestCase_t;
+    };
 
     QList<TestCase_t> rgTestCases;
     for (int i = 0; i < 2; i++) {
@@ -158,7 +161,7 @@ void SurveyComplexItemTest::_testItemCount()
     }
     QList<MissionItem*> items;
     for (const TestCase_t& testCase : rgTestCases) {
-        qDebug() << "hoverAndCapture:triggerInTurnAround:refly90:hasTuraround" << testCase.hoverAndCapture
+        qCDebug(UnitTestLog) << "hoverAndCapture:triggerInTurnAround:refly90:hasTurnaround" << testCase.hoverAndCapture
                  << testCase.triggerInTurnAround << testCase.refly90 << testCase.hasTurnaround;
         _surveyItem->hoverAndCapture()->setRawValue(testCase.hoverAndCapture);
         _surveyItem->cameraTriggerInTurnAround()->setRawValue(testCase.triggerInTurnAround);
@@ -199,7 +202,7 @@ QList<MAV_CMD> SurveyComplexItemTest::_createExpectedCommands(bool hasTurnaround
 void SurveyComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaround, bool hasTurnaround,
                                                       bool useConditionGate, const QList<MAV_CMD>& expectedCommands)
 {
-    qDebug() << QStringLiteral("_testItemGenerationWorker imagesInTuraround:%1 turnaround:%2 gate:%3")
+    qCDebug(UnitTestLog) << QStringLiteral("_testItemGenerationWorker imagesInTurnaround:%1 turnaround:%2 gate:%3")
                     .arg(imagesInTurnaround)
                     .arg(hasTurnaround)
                     .arg(useConditionGate);
@@ -208,18 +211,10 @@ void SurveyComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaround, b
     _planViewSettings->useConditionGate()->setRawValue(useConditionGate);
     QList<MissionItem*> items;
     _surveyItem->appendMissionItems(items, this);
-#if 0
-    // Handy for debugging failures
-    _printItemCommands(items);
-#endif
     QCOMPARE(items.count(), expectedCommands.count());
     for (int i = 0; i < expectedCommands.count(); i++) {
         int actualCommand = items[i]->command();
         int expectedCommand = expectedCommands[i];
-#if 0
-        // Handy for debugging failures
-        qDebug() << "Index" << i;
-#endif
         QCOMPARE(actualCommand, expectedCommand);
     }
 }
@@ -227,11 +222,10 @@ void SurveyComplexItemTest::_testItemGenerationWorker(bool imagesInTurnaround, b
 void SurveyComplexItemTest::_testItemGeneration()
 {
     // Test all the combinations of: cameraTriggerInTurnAround: false, hasTurnAround: *, useConditionGate: *
-    typedef struct
-    {
+    struct TestCase_t {
         bool hasTurnaround;
         bool useConditionGate;
-    } TestCase_t;
+    };
 
     static const TestCase_t rgTestCases[] = {
         {false, false},
@@ -246,7 +240,7 @@ void SurveyComplexItemTest::_testItemGeneration()
     // Test cameraTriggerInTurnAround = true cases
     QList<MAV_CMD> imagesInTurnaroundWithTurnaroundDistanceCommands = {
         // Transect 1
-        MAV_CMD_CONDITION_GATE,         // First turaround
+        MAV_CMD_CONDITION_GATE,         // First turnaround
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,
         MAV_CMD_CONDITION_GATE,         // Survey entry
         MAV_CMD_DO_SET_CAM_TRIGG_DIST,  // Survey entry also has trigger start
@@ -316,6 +310,30 @@ void SurveyComplexItemTest::_testHoverCaptureItemGeneration()
                               expectedCommands);
     _testItemGenerationWorker(false /* imagesInTurnaround */, true /* hasTurnaround */, false /* useConditionGate */,
                               expectedCommands);
+}
+
+void SurveyComplexItemTest::_testMaxTransectCount()
+{
+    ignoreLogMessage("Plan.SurveyComplexItem", QtWarningMsg, QRegularExpression("Transect spacing.*raised"));
+    ignoreLogMessage("Plan.SurveyComplexItem", QtWarningMsg, QRegularExpression("Grid spacing 0 is invalid"));
+    // Tiny spacing triggers the cap: transect count must not exceed maxTransectCount.
+    // cameraShotsChanged is emitted at the end of every _rebuildTransects(); the rebuild
+    // fires synchronously (direct connection) so the spy count is already 1 on return.
+    {
+        QSignalSpy rebuildSpy(_surveyItem, &TransectStyleComplexItem::cameraShotsChanged);
+        _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(0.001);
+        QCOMPARE(rebuildSpy.count(), 1);
+        QVERIFY(_surveyItem->_transectCount() <= TransectStyleComplexItem::maxTransectCount);
+        QVERIFY(_surveyItem->_transectCount() > 0);
+    }
+
+    // Zero spacing must not crash and must fall back to a single center transect.
+    {
+        QSignalSpy rebuildSpy(_surveyItem, &TransectStyleComplexItem::cameraShotsChanged);
+        _surveyItem->cameraCalc()->adjustedFootprintSide()->setRawValue(0);
+        QCOMPARE(rebuildSpy.count(), 1);
+        QCOMPARE(_surveyItem->_transectCount(), 1);
+    }
 }
 
 UT_REGISTER_TEST(SurveyComplexItemTest, TestLabel::Unit, TestLabel::MissionManager)

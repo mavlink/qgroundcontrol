@@ -1,6 +1,7 @@
 #include "MultiSignalSpyTest.h"
 
 #include <QtCore/QObject>
+#include <QtCore/QRegularExpression>
 #include <QtTest/QTest>
 
 #include "MultiSignalSpy.h"
@@ -59,7 +60,9 @@ signals:
 void MultiSignalSpyTest::_testInitWithNullEmitter()
 {
     MultiSignalSpy spy;
+    expectLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Null signalEmitter")));
     QVERIFY(!spy.init(nullptr));
+    verifyExpectedLogMessage();
     QVERIFY(!spy.isValid());
 }
 
@@ -88,7 +91,9 @@ void MultiSignalSpyTest::_testInitWithEmptySignalList()
 {
     TestEmitter emitter;
     MultiSignalSpy spy;
+    expectLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Empty signal list")));
     QVERIFY(!spy.init(&emitter, {}));
+    verifyExpectedLogMessage();
     QVERIFY(!spy.isValid());
 }
 
@@ -96,7 +101,9 @@ void MultiSignalSpyTest::_testInitWithInvalidSignalName()
 {
     TestEmitter emitter;
     MultiSignalSpy spy;
+    expectLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Signal not found:")));
     QVERIFY(!spy.init(&emitter, {"nonExistentSignal"}));
+    verifyExpectedLogMessage();
     QVERIFY(!spy.isValid());
 }
 
@@ -204,6 +211,9 @@ void MultiSignalSpyTest::_testCheckNoSignal()
     QVERIFY(spy.notEmitted("signal1"));
     emitter.emitSignal1();
     QVERIFY(!spy.notEmitted("signal1"));
+
+    ignoreLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Signal not monitored")));
+    QVERIFY(!spy.notEmitted("unmonitoredSignal"));
 }
 
 void MultiSignalSpyTest::_testCheckNoSignals()
@@ -214,40 +224,6 @@ void MultiSignalSpyTest::_testCheckNoSignals()
     QVERIFY(spy.noneEmitted());
     emitter.emitSignal1();
     QVERIFY(!spy.noneEmitted());
-}
-
-// ============================================================================
-// Mask Tests
-// ============================================================================
-void MultiSignalSpyTest::_testMaskForKnownSignal()
-{
-    TestEmitter emitter;
-    MultiSignalSpy spy;
-    spy.init(&emitter, {"signal1", "signal2"});
-    quint64 mask1 = spy.mask("signal1");
-    quint64 mask2 = spy.mask("signal2");
-    QVERIFY(mask1 != 0);
-    QVERIFY(mask2 != 0);
-    QVERIFY(mask1 != mask2);
-}
-
-void MultiSignalSpyTest::_testMaskForUnknownSignal()
-{
-    TestEmitter emitter;
-    MultiSignalSpy spy;
-    spy.init(&emitter, {"signal1"});
-    quint64 mask = spy.mask("nonExistent");
-    QCOMPARE(mask, 0ULL);
-}
-
-void MultiSignalSpyTest::_testMaskCombination()
-{
-    TestEmitter emitter;
-    MultiSignalSpy spy;
-    spy.init(&emitter, {"signal1", "signal2"});
-    quint64 combined = spy.mask("signal1", "signal2");
-    quint64 individual = spy.mask("signal1") | spy.mask("signal2");
-    QCOMPARE(combined, individual);
 }
 
 // ============================================================================
@@ -277,7 +253,7 @@ void MultiSignalSpyTest::_testClearAllSignals()
     QCOMPARE(spy.count("signal2"), 0);
 }
 
-void MultiSignalSpyTest::_testClearSignalsByMask()
+void MultiSignalSpyTest::_testClearMultipleSignals()
 {
     TestEmitter emitter;
     MultiSignalSpy spy;
@@ -285,7 +261,8 @@ void MultiSignalSpyTest::_testClearSignalsByMask()
     emitter.emitSignal1();
     emitter.emitSignal2();
     emitter.emitSignal3();
-    spy.clearSignalsByMask(spy.mask("signal1", "signal2"));
+    spy.clearSignal("signal1");
+    spy.clearSignal("signal2");
     QCOMPARE(spy.count("signal1"), 0);
     QCOMPARE(spy.count("signal2"), 0);
     QCOMPARE(spy.count("signal3"), 1);
@@ -322,7 +299,9 @@ void MultiSignalSpyTest::_testSpyForUnknownSignal()
     TestEmitter emitter;
     MultiSignalSpy spy;
     spy.init(&emitter, {"signal1"});
+    expectLogMessage("Test.MultiSignalSpy", QtWarningMsg, QRegularExpression(QStringLiteral("Signal not monitored:")));
     QSignalSpy* s = spy.spy("nonExistent");
+    verifyExpectedLogMessage();
     QVERIFY(s == nullptr);
 }
 
@@ -496,7 +475,7 @@ void MultiSignalSpyTest::_testExpectWait()
 
     // Emit first, then wait should return immediately
     emitter.emitSignal1();
-    QVERIFY(spy.expect("signal1").wait(100));
+    QVERIFY(spy.expect("signal1").wait(TestTimeout::shortMs()));
 }
 
 void MultiSignalSpyTest::_testExpectClear()

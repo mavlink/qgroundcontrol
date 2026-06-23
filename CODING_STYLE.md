@@ -130,8 +130,36 @@ Q_DECLARE_LOGGING_CATEGORY(MyComponentLog)
 QGC_LOGGING_CATEGORY(MyComponentLog, "qgc.component.name")
 
 // Use categorized logging
+
+// qCDebug is used for general logging. These logs only display when turned on.
+// Do not use qCInfo, always use qCDebug.
 qCDebug(MyComponentLog) << "Debug message";
+
+// Do not prefix the message with the function or method name — the logging
+// formatter already includes it, so repeating it is redundant.
+qCDebug(MyComponentLog) << "download(): fromURI:" << fromURI; // This is wrong
+qCDebug(MyComponentLog) << "fromURI:" << fromURI;             // Correct
+
+// When logging multiple values, stream each value on its own line, aligned
+// under the first operand. Keeps long log statements readable and diffs minimal.
+qCDebug(MyComponentLog) << "fromCompId:" << fromCompId
+                        << "fromURI:" << fromURI
+                        << "toDir:" << toDir
+                        << "fileName:" << fileName;
+
+// qCWarning is used for logging of error flows which are handled but unusual.
+// For example the vehicle failed to respond to a request.
+// These logs will display even when the category is not enabled to display.
 qCWarning(MyComponentLog) << "Warning message";
+
+// qCCritical is used to indicate a coding error.
+// Example: An internal  Fact is using an unsupported Fact type.
+// These logs will cause unit tests to fail if they are hit.
+// These logs will display even when the category is not enabled to display.
+qCCritical(MyComponentLog) << "Internal Error: ...";
+
+// Never use uncategorized logging
+qDebug() << "..."; // This is wrong
 ```
 
 ## Qt6 / QML Integration
@@ -246,6 +274,24 @@ Connections {
 5. **Mixing cookedValue/rawValue** - Understand the difference
 6. **Hardcoded QML sizes/colors** - Use ScreenTools and QGCPalette
 
+### Examples
+
+```cpp
+// Always null-check vehicle
+Vehicle* vehicle = MultiVehicleManager::instance()->activeVehicle();
+if (!vehicle) return;
+
+// Access parameters via Fact System
+Fact* param = vehicle->parameterManager()->getParameter(-1, "PARAM_NAME");
+if (param) param->setCookedValue(newValue);
+```
+
+```qml
+// QML vehicle access
+property var vehicle: QGroundControl.multiVehicleManager.activeVehicle
+enabled: vehicle && vehicle.armed
+```
+
 ## Formatting Tools
 
 The repository includes configuration for automatic formatting:
@@ -256,7 +302,7 @@ The repository includes configuration for automatic formatting:
 - `.qmllint.ini` - QML linting
 - `.editorconfig` - Editor settings
 
-Run pre-commit checks:
+See [.pre-commit-config.yaml](.pre-commit-config.yaml) for the full list of enforced hooks. Run pre-commit checks:
 
 ```bash
 pre-commit run --all-files

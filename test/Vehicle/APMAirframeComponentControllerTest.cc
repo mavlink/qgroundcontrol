@@ -1,12 +1,11 @@
 #include "APMAirframeComponentControllerTest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QGuiApplication>
 
-#define private public
 #include "APMAirframeComponentController.h"
-#undef private
 
 APMAirframeComponentControllerTest::APMAirframeComponentControllerTest()
 {
@@ -15,6 +14,18 @@ APMAirframeComponentControllerTest::APMAirframeComponentControllerTest()
 
 void APMAirframeComponentControllerTest::_downloadCompleteSlotsRestoreCursor()
 {
+    // ArduPilot mock link has no metadata source; failure to load metadata is expected.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression("failed to load metadata"));
+    // The test explicitly injects download and parse errors; all resulting showAppMessage logs are expected.
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression("Param file.*failed"));
+    // Invalid JSON parse warning from APMAirframeComponentController is expected.
+    ignoreLogMessage("AutoPilotPlugins.APMAirframeComponentController", QtWarningMsg,
+                     QRegularExpression("Unable to open json document"));
+    // Empty URL warning from QGCFileDownload when download_url is missing from JSON.
+    ignoreLogMessage("Utilities.QGCFileDownload", QtWarningMsg,
+                     QRegularExpression("Empty URL provided"));
     APMAirframeComponentController controller(this);
 
     // Failure path for github metadata download should restore wait cursor.

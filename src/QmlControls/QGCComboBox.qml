@@ -45,10 +45,10 @@ T.ComboBox {
     }
 
     function _calcPopupWidth() {
-        if (_onCompleted && sizeToContents && model) {
+        if (_onCompleted && sizeToContents && control.count > 0) {
             _largestTextWidth = 0
-            for (var i = 0; i < model.length; i++){
-                textMetrics.text = control.textRole ? model[i][control.textRole] : model[i]
+            for (let i = 0; i < control.count; i++) {
+                textMetrics.text = control.textAt(i)
                 _largestTextWidth = Math.max(textMetrics.width, _largestTextWidth)
             }
             _popupWidth = _largestTextWidth + itemDelegateMetrics.leftPadding + itemDelegateMetrics.rightPadding
@@ -56,6 +56,7 @@ T.ComboBox {
     }
 
     onModelChanged: _calcPopupWidth()
+    onCountChanged: _calcPopupWidth()
 
     Component.onCompleted: {
         _onCompleted = true
@@ -107,6 +108,7 @@ T.ComboBox {
         text: control.alternateText === "" ? control.currentText : control.alternateText
         font: control.font
         color: qgcPal.buttonText
+        elide: Text.ElideRight
     }
 
     background: Rectangle {
@@ -124,12 +126,17 @@ T.ComboBox {
     }
 
     popup: T.Popup {
-        x: control.width - _popupWidth
-        y: control.height
+        x: Math.max(-_controlPos.x, Math.min(control.width - _popupWidth, control.Window.width - _controlPos.x - _popupWidth))
+        y: _openAbove ? -height : control.height
         width: _popupWidth
-        height: Math.min(contentItem.implicitHeight, control.Window.height - topMargin - bottomMargin)
+        height: Math.min(contentItem.implicitHeight, _openAbove ? _spaceAbove : _spaceBelow)
         topMargin: 6
         bottomMargin: 6
+
+        readonly property point _controlPos:    control.mapToItem(null, 0, 0)
+        readonly property real  _spaceBelow:    Math.max(0, control.Window.height - _controlPos.y - control.height - bottomMargin)
+        readonly property real  _spaceAbove:    Math.max(0, _controlPos.y - topMargin)
+        readonly property bool  _openAbove:     contentItem.implicitHeight > _spaceBelow && _spaceAbove > _spaceBelow
 
         contentItem: ListView {
             clip: true

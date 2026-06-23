@@ -394,8 +394,13 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
     QStringList createdDirs;
     QSet<QString> existingDirs;
 
-    // Get canonical output directory for symlink validation
-    const QString canonicalOutputDir = QFileInfo(outputDirectoryPath).absoluteFilePath();
+    // Resolve the extraction root to a canonical path when possible so platforms
+    // with symlinked temp roots (for example, /var -> /private/var on macOS)
+    // do not trip libarchive's secure symlink checks for parent directories.
+    QString canonicalOutputDir = QFileInfo(outputDirectoryPath).canonicalFilePath();
+    if (canonicalOutputDir.isEmpty()) {
+        canonicalOutputDir = QFileInfo(outputDirectoryPath).absoluteFilePath();
+    }
     existingDirs.insert(canonicalOutputDir);
 
     bool formatLogged = false;
@@ -408,7 +413,7 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
 
         const char* currentFile = archive_entry_pathname(entry);
         QString entryName = QString::fromUtf8(currentFile);
-        QString outputPath = QGCFileHelper::joinPath(outputDirectoryPath, entryName);
+        QString outputPath = QGCFileHelper::joinPath(canonicalOutputDir, entryName);
 
         // Prevent path traversal attacks
         QFileInfo outputInfo(outputPath);

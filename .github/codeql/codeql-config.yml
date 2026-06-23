@@ -2,7 +2,9 @@ name: "QGroundControl CodeQL Config"
 
 paths:
   - src
-  - test
+  - android/src
+  - tools
+  - .github
 
 paths-ignore:
   - '**/moc_*'
@@ -12,15 +14,15 @@ paths-ignore:
   - '**/libs/**'
   - '**/3rdparty/**'
   - '**/build/**'
+  # Vendored Android Java sources — upstream libsdl/freedesktop, not ours to fix.
+  - 'android/src/org/libsdl/**'
+  - 'android/src/org/freedesktop/**'
 
 queries:
   - uses: security-extended
-  - uses: security-and-quality
 
 query-filters:
   - exclude:
       # Excluded due to frequent false positives with Qt/moc-heavy call patterns.
       # Re-evaluate before enabling if CodeQL signal quality improves.
       id: cpp/mistyped-function-arguments
-
-trap-caching: true

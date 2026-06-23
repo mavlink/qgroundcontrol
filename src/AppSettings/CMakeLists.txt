@@ -1,0 +1,103 @@
+# ---------------------------------------------------------------------------
+# Code-generation: produce QML settings pages from JSON definitions
+# ---------------------------------------------------------------------------
+
+set(SETTINGS_QML_GENERATOR_DIR "${CMAKE_SOURCE_DIR}/tools/generators/settings_qml")
+set(SETTINGS_PAGES_DIR         "${CMAKE_CURRENT_SOURCE_DIR}/pages")
+set(SETTINGS_METADATA_DIR      "${CMAKE_SOURCE_DIR}/src/Settings")
+set(SETTINGS_QML_GEN_DIR       "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+# Generator source files (changes here should trigger regeneration)
+file(GLOB _generator_sources CONFIGURE_DEPENDS "${SETTINGS_QML_GENERATOR_DIR}/*.py")
+
+# JSON inputs: page definitions + settings metadata
+file(GLOB _page_definitions  CONFIGURE_DEPENDS "${SETTINGS_PAGES_DIR}/*.json")
+file(GLOB _settings_metadata CONFIGURE_DEPENDS "${SETTINGS_METADATA_DIR}/*.SettingsGroup.json")
+
+# Generated QML outputs (must match what generate_pages.py produces)
+set(_generated_qml_names
+    ADSBServerSettings.qml
+    CommLinksSettings.qml
+    FlyViewSettings.qml
+    GeneralSettings.qml
+    LoggingSettings.qml
+    MapsSettings.qml
+    NTRIPSettings.qml
+    PlanViewSettings.qml
+    PX4LogTransferSettings.qml
+    RemoteIDSettings.qml
+    SettingsPagesModel.qml
+    TelemetrySettings.qml
+    VideoSettings.qml
+    Viewer3DSettings.qml
+)
+
+qgc_add_qml_codegen(GenerateSettingsQml
+    GENERATOR_MODULE tools.generators.settings_qml.generate_pages
+    OUTPUT_DIR       "${SETTINGS_QML_GEN_DIR}"
+    QML_NAMES        ${_generated_qml_names}
+    DEPENDS          ${_generator_sources} ${_page_definitions} ${_settings_metadata}
+    COMMENT          "Generating QML settings pages from JSON definitions"
+)
+set(_generated_qml ${GenerateSettingsQml_OUTPUTS})
+
+# ---------------------------------------------------------------------------
+# QML module
+# ---------------------------------------------------------------------------
+
+qt_add_library(AppSettingsModule STATIC)
+
+# Ensure generated files exist before the module is built
+add_dependencies(AppSettingsModule GenerateSettingsQml)
+
+qt_add_qml_module(AppSettingsModule
+    URI QGroundControl.AppSettings
+    VERSION 1.0
+    RESOURCE_PREFIX /qml
+    DEPENDENCIES
+        QGroundControl.Controls
+        QGroundControl.LogManager
+    QML_FILES
+        # Generated from SettingsUI.json definitions (output in build tree)
+        ${_generated_qml}
+
+        # Hand-coded pages and components
+        AppLogging.qml
+        BluetoothSettings.qml
+        DebugWindow.qml
+        GcsPositionStatus.qml
+        HelpSettings.qml
+        LinkConfigurationManager.qml
+        LogReplaySettings.qml
+        MapProviderSettings.qml
+        MavlinkActionSettings.qml
+        MavlinkLinkStatus.qml
+        SigningKeyManager.qml
+        MockLink.qml
+        MockLinkSettings.qml
+        NmeaGpsSettings.qml
+        NtripConnectionStatus.qml
+        NtripMountpointBrowser.qml
+        NtripServerSettings.qml
+        OfflineMapEditor.qml
+        OfflineMapInfo.qml
+        OfflineMapSettings.qml
+        PX4LogControl.qml
+        PX4LogFileManager.qml
+        PX4LogUploadSettings.qml
+        QmlTest.qml
+        RemoteIDGpsLocation.qml
+        SerialSettings.qml
+        SettingsPage.qml
+        TcpSettings.qml
+        UdpSettings.qml
+        VideoNetworkSecuritySettings.qml
+    NO_PLUGIN
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} appsettings_resources
+    PREFIX "/res"
+    BASE "${CMAKE_SOURCE_DIR}/resources"
+    FILES
+        "${CMAKE_SOURCE_DIR}/resources/pencil.svg"
+)

@@ -11,7 +11,7 @@ include(CreateCPackCommon)
 list(APPEND CPACK_GENERATOR "NSIS")
 set(CPACK_BINARY_NSIS ON)
 
-set(QGC_INSTALLER_SOURCE "${CMAKE_BINARY_DIR}/deploy/windows")
+set(QGC_INSTALLER_SOURCE "${CMAKE_SOURCE_DIR}/deploy/windows")
 
 # ----------------------------------------------------------------------------
 # Installer Appearance

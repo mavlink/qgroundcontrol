@@ -12,7 +12,8 @@ public:
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
 
     QString name() const final { return _name; }
-    QString description() const final { return tr("Tuning Setup is used to tune the flight characteristics of the Vehicle."); }
+    QString description() const final { return tr("Configure flight performance and controller parameters."); }
+    QString vehicleConfigJson() const final;
     QString iconResource() const final { return QStringLiteral("/qmlimages/TuningComponentIcon.png"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }

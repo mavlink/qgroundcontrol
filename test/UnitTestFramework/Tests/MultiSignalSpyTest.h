@@ -36,15 +36,11 @@ private slots:
     void _testCheckNoSignal();
     void _testCheckNoSignals();
 
-    // Mask tests
-    void _testMaskForKnownSignal();
-    void _testMaskForUnknownSignal();
-    void _testMaskCombination();
 
     // Clear tests
     void _testClearSignal();
     void _testClearAllSignals();
-    void _testClearSignalsByMask();
+    void _testClearMultipleSignals();
 
     // Wait tests
     void _testWaitForSignalAlreadyEmitted();

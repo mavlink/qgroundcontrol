@@ -2,6 +2,8 @@
 
 #include "UnitTest.h"
 
+#include <memory>
+
 class MissionCommandTree;
 class MissionCommandUIInfo;
 
@@ -12,10 +14,12 @@ class MissionCommandTreeTest : public UnitTest
 
 private slots:
     void init();
+    void cleanup();
 
     void testJsonLoad();
     void testOverride();
     void testAllTrees();
+    void testUnknownCommandFallbacks();
 
 private:
     QString _rawName(int id) const;

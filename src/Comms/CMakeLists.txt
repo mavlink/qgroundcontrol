@@ -22,6 +22,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         MAVLinkProtocol.h
         TCPLink.cc
         TCPLink.h
+        UdpIODevice.cc
+        UdpIODevice.h
         UDPLink.cc
         UDPLink.h
 )
@@ -54,12 +56,9 @@ else()
             QGCSerialPortInfo.h
             SerialLink.cc
             SerialLink.h
-            UdpIODevice.cc
-            UdpIODevice.h
     )
 
-    # Qt SerialPort not available on mobile platforms
-    if(NOT ANDROID AND NOT IOS)
+    if(NOT ANDROID)
         target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::SerialPort)
     endif()
 endif()
@@ -67,39 +66,7 @@ endif()
 # ----------------------------------------------------------------------------
 # Bluetooth Communication
 # ----------------------------------------------------------------------------
-if(QGC_ENABLE_BLUETOOTH)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Bluetooth)
-    target_sources(${CMAKE_PROJECT_NAME}
-        PRIVATE
-            BluetoothLink.cc
-            BluetoothLink.h
-    )
-
-    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ENABLE_BLUETOOTH)
-endif()
-
-# ----------------------------------------------------------------------------
-# ZeroConf/mDNS Service Discovery
-# ----------------------------------------------------------------------------
-if(QGC_ZEROCONF_ENABLED)
-    CPMAddPackage(
-        NAME qmdnsengine
-        GITHUB_REPOSITORY nitroshare/qmdnsengine
-        GIT_TAG master
-        OPTIONS
-            "BUILD_DOC OFF"
-            "BUILD_EXAMPLES OFF"
-            "BUILD_TESTS OFF"
-    )
-
-    if(TARGET qmdnsengine)
-        qgc_disable_dependency_warnings(qmdnsengine)
-        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE qmdnsengine)
-        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_ZEROCONF_ENABLED)
-    else()
-        message(WARNING "QGC: qmdnsengine target not created, ZeroConf will be disabled")
-    endif()
-endif()
+add_subdirectory(Bluetooth)
 
 # ============================================================================
 # Communication Link Subdirectories

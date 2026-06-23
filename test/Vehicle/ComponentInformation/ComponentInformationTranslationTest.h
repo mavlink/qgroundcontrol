@@ -17,7 +17,10 @@ private slots:
     void _basic_test();
     void _downloadAndTranslateFromSummary_test();
     void _downloadAndTranslateMissingLocale_test();
+    void _downloadAndTranslateMissingUrl_test();
+    void _downloadAndTranslateInvalidSummaryJson_test();
     void _onDownloadCompletedFailurePropagatesError_test();
+    void _onDownloadCompletedMissingTsPropagatesError_test();
 
 private:
     void readJson(const QByteArray& bytes, QJsonDocument& jsonDoc);

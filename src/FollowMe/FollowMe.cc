@@ -1,3 +1,4 @@
+#include "QmlObjectListModel.h"
 #include "FollowMe.h"
 #include "MultiVehicleManager.h"
 #include "FirmwarePlugin.h"

@@ -2,9 +2,11 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QTemporaryFile>
 #include <QtTest/QSignalSpy>
 
 #include "FTPController.h"
+#include "QGCArchiveModel.h"
 #include "UnitTest.h"
 
 void FTPControllerTest::_extractArchiveRejectsInvalidInput()
@@ -32,7 +34,7 @@ void FTPControllerTest::_extractArchiveHappyPath()
     QVERIFY(controller.extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), outputDir.path()));
     QVERIFY(controller.extracting());
 
-    QVERIFY(completeSpy.wait(10000));
+    QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::longMs());
     QCOMPARE(completeSpy.count(), 1);
     const QList<QVariant> args = completeSpy.takeFirst();
     QCOMPARE(args.at(0).toString(), outputDir.path());
@@ -58,8 +60,38 @@ void FTPControllerTest::_extractArchiveConcurrentRejected()
 
     QSignalSpy completeSpy(&controller, &FTPController::extractionComplete);
     QVERIFY(completeSpy.isValid());
-    QVERIFY(completeSpy.wait(10000));
+    QVERIFY_SIGNAL_WAIT(completeSpy, TestTimeout::longMs());
     QVERIFY(!controller.extracting());
+}
+
+void FTPControllerTest::_browseArchiveRejectsInvalidInput()
+{
+    FTPController controller(this);
+
+    QVERIFY(!controller.browseArchive(QString()));
+    QVERIFY(controller.errorString().contains(QStringLiteral("No archive path specified")));
+
+    QVERIFY(!controller.browseArchive(QStringLiteral("/nonexistent/archive.zip")));
+    QVERIFY(controller.errorString().contains(QStringLiteral("Archive file not found")));
+
+    QTemporaryFile tempFile;
+    QVERIFY(tempFile.open());
+    tempFile.write("not an archive");
+    tempFile.flush();
+
+    QVERIFY(!controller.browseArchive(tempFile.fileName()));
+    QVERIFY(controller.errorString().contains(QStringLiteral("Not a supported archive format")));
+}
+
+void FTPControllerTest::_browseArchiveHappyPath()
+{
+    FTPController controller(this);
+
+    QVERIFY(controller.browseArchive(QStringLiteral(":/unittest/manifest.json.zip")));
+    QVERIFY(controller.errorString().isEmpty());
+    QCOMPARE(controller.archiveModel()->archivePath(), QStringLiteral(":/unittest/manifest.json.zip"));
+    QVERIFY(controller.archiveModel()->count() > 0);
+    QVERIFY(controller.archiveModel()->contains(QStringLiteral("manifest.json")));
 }
 
 UT_REGISTER_TEST(FTPControllerTest, TestLabel::Integration, TestLabel::Vehicle)

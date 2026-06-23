@@ -1,6 +1,5 @@
 #include "KMLPlanDomDocument.h"
 #include "QGCPalette.h"
-#include "QGCApplication.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "MissionItem.h"

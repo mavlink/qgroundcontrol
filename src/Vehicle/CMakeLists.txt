@@ -13,16 +13,24 @@ target_sources(${CMAKE_PROJECT_NAME}
         FTPManager.h
         InitialConnectStateMachine.cc
         InitialConnectStateMachine.h
+        MavCommandQueue.cc
+        MavCommandQueue.h
         MAVLinkLogManager.cc
         MAVLinkLogManager.h
+        MessageIntervalManager.cc
+        MessageIntervalManager.h
         MultiVehicleManager.cc
         MultiVehicleManager.h
         RemoteIDManager.cc
         RemoteIDManager.h
+        RequestMessageCoordinator.cc
+        RequestMessageCoordinator.h
         StandardModes.cc
         StandardModes.h
         TerrainProtocolHandler.cc
         TerrainProtocolHandler.h
+        TerrainQueryCoordinator.cc
+        TerrainQueryCoordinator.h
         TrajectoryPoints.cc
         TrajectoryPoints.h
         Vehicle.cc
@@ -31,6 +39,11 @@ target_sources(${CMAKE_PROJECT_NAME}
         VehicleLinkManager.h
         VehicleObjectAvoidance.cc
         VehicleObjectAvoidance.h
+        VehicleSigningController.cc
+        VehicleSigningController.h
+        VehicleSupports.cc
+        VehicleSupports.h
+        VehicleTypes.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

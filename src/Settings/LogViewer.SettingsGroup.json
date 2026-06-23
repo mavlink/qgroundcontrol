@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "fileType": "FactMetaData",
+    "QGC.MetaData.Facts": [
+        {
+            "name": "xAxisShowLocalTime",
+            "shortDesc": "Show local time on the x-axis instead of elapsed time",
+            "type": "bool",
+            "default": false,
+            "label": "Show local time on x-axis"
+        }
+    ]
+}

@@ -71,8 +71,8 @@ SetupPage {
             property var    _mapPosition:                    QGroundControl.flightMapPosition
 
             function showOrientationsDialog(calType) {
-                var dialogTitle
-                var dialogButtons = Dialog.Ok
+                let dialogTitle
+                let dialogButtons = Dialog.Ok
                 _showSimpleAccelCalOption = false
 
                 _orientationDialogCalType = calType
@@ -103,10 +103,18 @@ SetupPage {
                 _showSimpleAccelCalOption = true
             }
 
+            // Maps the APM controller per-side done/inProgress bools to a VehicleRotationCal.CalState
+            function sideCalState(done, inProgress) {
+                if (inProgress) {
+                    return VehicleRotationCal.CalState.InProgress
+                }
+                return done ? VehicleRotationCal.CalState.Completed : VehicleRotationCal.CalState.Incomplete
+            }
+
             function compassLabel(index) {
-                var label = qsTr("Compass %1 ").arg(index+1)
-                var addOpenParan = true
-                var addComma = false
+                let label = qsTr("Compass %1 ").arg(index+1)
+                let addOpenParan = true
+                let addComma = false
                 if (sensorParams.compassPrimaryFactAvailable) {
                     label += sensorParams.rgCompassPrimary[index] ? qsTr("(primary") : qsTr("(secondary")
                     addComma = true
@@ -148,7 +156,7 @@ SetupPage {
                     }
                 }
 
-                onCalibrationComplete: {
+                onCalibrationComplete: (calType) => {
                     switch (calType) {
                     case MAVLink.CalibrationAccel:
                     case MAVLink.CalibrationMag:
@@ -158,10 +166,20 @@ SetupPage {
                     }
                 }
 
-                onSetAllCalButtonsEnabled: {
+                onSetAllCalButtonsEnabled: (enabled) => {
                     buttonColumn.enabled = enabled
                 }
+
+                onCalibrationActiveChanged: {
+                    if (controller.calibrationActive) {
+                        globals.navigationBlockedReason = qsTr("Complete or cancel the current calibration first")
+                    } else {
+                        globals.navigationBlockedReason = ""
+                    }
+                }
             }
+
+            Component.onDestruction: globals.navigationBlockedReason = ""
 
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -195,8 +213,8 @@ SetupPage {
                 id: singleCompassOnboardResultsComponent
 
                 Column {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
+                    anchors.left:   parent ? parent.left : undefined
+                    anchors.right:  parent ? parent.right : undefined
                     spacing:        Math.round(ScreenTools.defaultFontPixelHeight / 2)
                     visible:        sensorParams.rgCompassAvailable[index] && sensorParams.rgCompassUseFact[index].value
 
@@ -366,9 +384,8 @@ SetupPage {
 
                                 function selectPriorityfromParams() {
                                     currentIndex = 3
-                                    var compassId = sensorParams.rgCompassId[_compassIndex].rawValue
-                                    for (var prioIndex=0; prioIndex<3; prioIndex++) {
-                                        console.log(`comparing ${compassId} with ${sensorParams.rgCompassPrio[prioIndex].rawValue} (index ${prioIndex})`)
+                                    let compassId = sensorParams.rgCompassId[_compassIndex].rawValue
+                                    for (let prioIndex=0; prioIndex<3; prioIndex++) {
                                         if (compassId == sensorParams.rgCompassPrio[prioIndex].rawValue) {
                                             currentIndex = prioIndex
                                             break
@@ -415,7 +432,7 @@ SetupPage {
 
                 QGCPopupDialog {
                     function compassMask () {
-                        var mask = 0
+                        let mask = 0
                         mask |=  (0 + (sensorParams.rgCompassPrio[0].rawValue !== 0)) << 0
                         mask |=  (0 + (sensorParams.rgCompassPrio[1].rawValue !== 0)) << 1
                         mask |=  (0 + (sensorParams.rgCompassPrio[2].rawValue !== 0)) << 2
@@ -429,8 +446,8 @@ SetupPage {
                             if (!northCalibrationCheckBox.checked) {
                                 controller.calibrateCompass()
                             } else {
-                                var lat = parseFloat(northCalLat.text)
-                                var lon = parseFloat(northCalLon.text)
+                                let lat = parseFloat(northCalLat.text)
+                                let lon = parseFloat(northCalLon.text)
                                 if (useMapPositionCheckbox.checked) {
                                     lat = _mapPosition.latitude
                                     lon = _mapPosition.longitude
@@ -670,6 +687,7 @@ SetupPage {
                     Layout.alignment:   Qt.AlignLeft | Qt.AlignTop
 
                     IndicatorButton {
+                        objectName:     "sensorsSetup_calibrateAccel"
                         width:          _buttonWidth
                         text:           qsTr("Accelerometer")
                         indicatorGreen: !accelCalNeeded
@@ -681,6 +699,7 @@ SetupPage {
                     }
 
                     IndicatorButton {
+                        objectName:     "sensorsSetup_calibrateCompass"
                         width:          _buttonWidth
                         text:           qsTr("Compass")
                         indicatorGreen: !compassCalNeeded
@@ -738,7 +757,7 @@ SetupPage {
                     QGCButton {
                         width:      _buttonWidth
                         text:       qsTr("CompassMot")
-                        visible:    globals.activeVehicle ? globals.activeVehicle.supportsMotorInterference : false
+                        visible:    globals.activeVehicle ? globals.activeVehicle.supports.motorInterference : false
                         onClicked:  compassMotDialogFactory.open()
                     }
 
@@ -758,6 +777,7 @@ SetupPage {
 
                     QGCButton {
                         id:         nextButton
+                        objectName: "sensorsSetup_nextButton"
                         width:      _buttonWidth
                         text:       qsTr("Next")
                         enabled:    false
@@ -765,11 +785,12 @@ SetupPage {
                     }
 
                     QGCButton {
-                        id:         cancelButton
-                        width:      _buttonWidth
-                        text:       qsTr("Cancel")
-                        enabled:    false
-                        onClicked:  controller.cancelCalibration()
+                        id:             cancelButton
+                        objectName:     "sensorsSetup_cancelButton"
+                        width:          _buttonWidth
+                        text:           qsTr("Cancel")
+                        enabled:        false
+                        onClicked:      controller.cancelCalibration()
                     }
                 }
             } // QGCFlickable - buttons
@@ -784,6 +805,7 @@ SetupPage {
 
                 ProgressBar {
                     id:             progressBar
+                    objectName:     "sensorsSetup_progressBar"
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                 }
@@ -832,56 +854,56 @@ SetupPage {
                             property real indicatorHeight:  (height / 2) - spacing
 
                             VehicleRotationCal {
+                                objectName:         "sensorsCal_downSide"
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalDownSideVisible
-                                calValid:           controller.orientationCalDownSideDone
-                                calInProgress:      controller.orientationCalDownSideInProgress
+                                calState:           sideCalState(controller.orientationCalDownSideDone, controller.orientationCalDownSideInProgress)
                                 calInProgressText:  controller.orientationCalDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleDown.png"
                             }
                             VehicleRotationCal {
+                                objectName:         "sensorsCal_leftSide"
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalLeftSideVisible
-                                calValid:           controller.orientationCalLeftSideDone
-                                calInProgress:      controller.orientationCalLeftSideInProgress
+                                calState:           sideCalState(controller.orientationCalLeftSideDone, controller.orientationCalLeftSideInProgress)
                                 calInProgressText:  controller.orientationCalLeftSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleLeft.png"
                             }
                             VehicleRotationCal {
+                                objectName:         "sensorsCal_rightSide"
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalRightSideVisible
-                                calValid:           controller.orientationCalRightSideDone
-                                calInProgress:      controller.orientationCalRightSideInProgress
+                                calState:           sideCalState(controller.orientationCalRightSideDone, controller.orientationCalRightSideInProgress)
                                 calInProgressText:  controller.orientationCalRightSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleRight.png"
                             }
                             VehicleRotationCal {
+                                objectName:         "sensorsCal_noseDownSide"
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalNoseDownSideVisible
-                                calValid:           controller.orientationCalNoseDownSideDone
-                                calInProgress:      controller.orientationCalNoseDownSideInProgress
+                                calState:           sideCalState(controller.orientationCalNoseDownSideDone, controller.orientationCalNoseDownSideInProgress)
                                 calInProgressText:  controller.orientationCalNoseDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleNoseDown.png"
                             }
                             VehicleRotationCal {
+                                objectName:         "sensorsCal_tailDownSide"
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalTailDownSideVisible
-                                calValid:           controller.orientationCalTailDownSideDone
-                                calInProgress:      controller.orientationCalTailDownSideInProgress
+                                calState:           sideCalState(controller.orientationCalTailDownSideDone, controller.orientationCalTailDownSideInProgress)
                                 calInProgressText:  controller.orientationCalTailDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleTailDown.png"
                             }
                             VehicleRotationCal {
+                                objectName:         "sensorsCal_upsideDownSide"
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
                                 visible:            controller.orientationCalUpsideDownSideVisible
-                                calValid:           controller.orientationCalUpsideDownSideDone
-                                calInProgress:      controller.orientationCalUpsideDownSideInProgress
+                                calState:           sideCalState(controller.orientationCalUpsideDownSideDone, controller.orientationCalUpsideDownSideInProgress)
                                 calInProgressText:  controller.orientationCalUpsideDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
                                 imageSource:        "qrc:///qmlimages/VehicleUpsideDown.png"
                             }

@@ -1,5 +1,5 @@
 #include "SettingsFact.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
@@ -26,17 +26,17 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
     }
 
     // Allow core plugin a chance to override the default value
-    SettingsManager::adjustSettingMetaData(settingsGroup, *metaData, _visible);
+    SettingsManager::adjustSettingMetaData(settingsGroup, *metaData, _userVisible);
     setMetaData(metaData);
 
     if (metaData->defaultValueAvailable()) {
         const QVariant rawDefaultValue = metaData->rawDefaultValue();
         QVariant resolvedValue;
 
-        if (qgcApp()->runningUnitTests()) {
+        if (QGC::runningUnitTests()) {
             // Don't use saved settings
             resolvedValue = rawDefaultValue;
-        } else if (_visible) {
+        } else if (_userVisible) {
             QVariant typedValue;
             QString errorString;
             (void) metaData->convertAndValidateRaw(settings.value(_name, rawDefaultValue), true /* conertOnly */, typedValue, errorString);
@@ -49,7 +49,6 @@ SettingsFact::SettingsFact(const QString &settingsGroup, FactMetaData *metaData,
 
         QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
         _rawValue = resolvedValue;
-        _rawValueIsNotSet = false;
     }
 
     (void) connect(this, &Fact::rawValueChanged, this, &SettingsFact::_rawValueChanged);

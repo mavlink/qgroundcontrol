@@ -1,6 +1,7 @@
 #include "FlightPathSegment.h"
-#include "QGC.h"
+#include "QGCMath.h"
 #include "QGCLoggingCategory.h"
+#include "TerrainQuery.h"
 
 QGC_LOGGING_CATEGORY(FlightPathSegmentLog, "Plan.FlightPathSegment")
 
@@ -94,7 +95,7 @@ void FlightPathSegment::_sendTerrainPathQuery(void)
     }
 }
 
-void FlightPathSegment::_terrainDataReceived(bool success, const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo)
+void FlightPathSegment::_terrainDataReceived(bool success, const TerrainPathHeightInfo& pathHeightInfo)
 {
     qCDebug(FlightPathSegmentLog) << this << "_terrainDataReceived" << success << pathHeightInfo.heights.count();
     if (success) {

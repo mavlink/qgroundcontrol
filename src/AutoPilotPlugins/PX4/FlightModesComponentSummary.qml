@@ -1,20 +1,25 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.FactControls
 import QGroundControl.Controls
 
 Item {
-    anchors.fill:   parent
+    implicitWidth: mainLayout.implicitWidth
+    implicitHeight: mainLayout.implicitHeight
+    width: parent.width  // grows when Loader is wider than implicitWidth
 
     FactPanelController { id: controller; }
 
     property Fact _nullFact
     property Fact _rcMapFltmode:    controller.parameterExists(-1, "RC_MAP_FLTMODE") ? controller.getParameterFact(-1, "RC_MAP_FLTMODE") : _nullFact
 
-	Column {
-		anchors.fill:       parent
+	ColumnLayout {
+		id: mainLayout
+		spacing: 0
+
 		VehicleSummaryRow {
 			labelText: qsTr("Mode switch")
 			valueText: _rcMapFltmode.value === 0 ? qsTr("Setup required") : _rcMapFltmode.enumStringValue

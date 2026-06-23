@@ -1,5 +1,7 @@
 #include "ToolStripAction.h"
 
+#include <QtQml/QQmlComponent>
+
 ToolStripAction::ToolStripAction(QObject* parent)
     : QObject(parent)
 {

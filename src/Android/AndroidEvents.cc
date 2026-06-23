@@ -1,19 +1,19 @@
 #include "AndroidEvents.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QApplicationStatic>
+
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(AndroidEventsLog, "Android.AndroidEvents")
 
 Q_APPLICATION_STATIC(AndroidEvents, _androidEvents);
 
-AndroidEvents *AndroidEvents::instance()
+AndroidEvents* AndroidEvents::instance()
 {
     return _androidEvents();
 }
 
-AndroidEvents::AndroidEvents(QObject *parent)
-    : QObject(parent)
+AndroidEvents::AndroidEvents(QObject* parent) : QObject(parent)
 {
     QtAndroidPrivate::registerResumePauseListener(this);
     QtAndroidPrivate::registerActivityResultListener(this);
@@ -48,9 +48,8 @@ bool AndroidEvents::handleActivityResult(jint requestCode, jint resultCode, jobj
     return true;
 }
 
-bool AndroidEvents::handleNewIntent(JNIEnv *env, jobject intent)
+bool AndroidEvents::handleNewIntent(JNIEnv*, jobject intent)
 {
-    Q_UNUSED(env);
     qCDebug(AndroidEventsLog) << "New intent received";
     emit newIntent(QJniObject(intent));
     return true;

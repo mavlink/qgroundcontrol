@@ -1,7 +1,5 @@
 name: Release
 
-# Disabled: semantic-release blocked by branch protection (can't push CHANGELOG.md)
-# To fix: either remove @semantic-release/git plugin or use a PAT from allowed pusher
 on:
   workflow_dispatch:
 
@@ -9,16 +7,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
+# Per-job permissions narrow each scope; the top-level only grants read.
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+  contents: read
 
 jobs:
   semantic-release:
     name: Semantic Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write       # @semantic-release/git pushes CHANGELOG.md
+      issues: write         # @semantic-release/github comments on closed issues
+      pull-requests: write  # @semantic-release/github comments on closed PRs
     outputs:
       new_release: ${{ steps.release.outputs.new_release }}
       version: ${{ steps.release.outputs.version }}
@@ -43,25 +44,27 @@ jobs:
       - name: Run semantic-release
         id: release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          ./tools/release.sh --install
+          set -euo pipefail
+          ./tools/release.py --install
+          # @semantic-release/exec verifyReleaseCmd writes .release-version
+          # iff a release was actually published. Reading from a file is
+          # immune to log-format drift across SR major versions.
+          rm -f .release-version
+          ./tools/release.py --run
 
-          # Capture semantic-release output
-          set +e
-          OUTPUT=$(./tools/release.sh --run 2>&1)
-          EXIT_CODE=$?
-          echo "$OUTPUT"
-          set -e
-
-          # Check if a new release was created
-          if echo "$OUTPUT" | grep -q "Published release"; then
-            VERSION=$(printf '%s\n' "$OUTPUT" | sed -n 's/.*Published release \([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p' | head -n1)
-            echo "new_release=true" >> $GITHUB_OUTPUT
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "New release: v$VERSION"
+          if [[ -f .release-version ]]; then
+            version=$(tr -d '[:space:]' < .release-version)
+            if [[ -z "${version}" ]]; then
+              echo "::error::semantic-release wrote an empty version file"
+              exit 1
+            fi
+            echo "new_release=true" >> "${GITHUB_OUTPUT}"
+            echo "version=${version}" >> "${GITHUB_OUTPUT}"
+            echo "New release: v${version}"
           else
-            echo "new_release=false" >> $GITHUB_OUTPUT
+            echo "new_release=false" >> "${GITHUB_OUTPUT}"
             echo "No new release"
           fi
 
@@ -71,6 +74,8 @@ jobs:
     if: needs.semantic-release.outputs.new_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    permissions:
+      actions: read  # wait-for-workflows-action polls workflow runs
 
     steps:
       - name: Wait for builds to complete
@@ -82,7 +87,7 @@ jobs:
             MacOS
             Android
           timeout-minutes: 170
-          poll-interval-minutes: 1
+          poll-interval-minutes: 5
 
   upload-artifacts:
     name: Upload Release Artifacts
@@ -106,24 +111,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate SBOM (SPDX)
-        uses: anchore/sbom-action@v0
-        with:
-          path: .
-          format: spdx-json
-          output-file: sbom.spdx.json
-          artifact-name: sbom-spdx
-
-      - name: Generate SBOM (CycloneDX)
-        uses: anchore/sbom-action@v0
-        with:
-          path: .
-          format: cyclonedx-json
-          output-file: sbom.cdx.json
-          artifact-name: sbom-cyclonedx
-
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
           merge-multiple: true
@@ -131,36 +120,97 @@ jobs:
       - name: List artifacts
         run: find artifacts -type f | head -50 || echo "No artifacts found"
 
-      - name: Attest Linux AppImage
-        uses: actions/attest-sbom@v3
+      - name: Resolve artifact paths
+        id: paths
+        shell: bash
+        run: |
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py" \
+            --build-dir artifacts \
+            --match "appimage=QGroundControl*.AppImage" \
+            --match "apk=*.apk" \
+            --match "dmg=*.dmg" \
+            --match "exe=QGroundControl*.exe"
+
+      # Source-tree SBOM is kept as a release artifact for source traceability,
+      # but it is NOT used as the attestation evidence (per-platform SBOMs are).
+      - name: Generate source SBOM (SPDX)
+        uses: anchore/sbom-action@v0
         with:
-          subject-path: artifacts/**/QGroundControl*.AppImage
-          sbom-path: sbom.spdx.json
+          path: .
+          format: spdx-json
+          output-file: sbom-source.spdx.json
+          artifact-name: sbom-source-spdx
+
+      - name: Generate source SBOM (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom-source.cdx.json
+          artifact-name: sbom-source-cyclonedx
+
+      - name: Extract AppImage contents
+        if: steps.paths.outputs.appimage != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p extracted/linux
+          cp "${{ steps.paths.outputs.appimage }}" extracted/linux/qgc.AppImage
+          chmod +x extracted/linux/qgc.AppImage
+          (cd extracted/linux && ./qgc.AppImage --appimage-extract >/dev/null)
+          rm extracted/linux/qgc.AppImage
+
+      - name: Attest Linux AppImage
+        id: attest-linux
+        if: steps.paths.outputs.appimage != ''
+        uses: ./.github/actions/attest-sbom
+        with:
+          subject-path: ${{ steps.paths.outputs.appimage }}
+          subject-name: linux-appimage
+          scan-path: extracted/linux/squashfs-root
         continue-on-error: true
 
-      - name: Attest macOS DMG
-        uses: actions/attest-sbom@v3
+      - name: Extract APK contents
+        if: steps.paths.outputs.apk != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p extracted/android
+          unzip -q -o "${{ steps.paths.outputs.apk }}" -d extracted/android
+
+      - name: Attest Android APK
+        id: attest-android
+        if: steps.paths.outputs.apk != ''
+        uses: ./.github/actions/attest-sbom
         with:
-          subject-path: artifacts/**/QGroundControl.dmg
-          sbom-path: sbom.spdx.json
+          subject-path: ${{ steps.paths.outputs.apk }}
+          subject-name: android-apk
+          scan-path: extracted/android
+        continue-on-error: true
+
+      # DMG/EXE: Linux runner can't deeply extract these; Syft scans the file
+      # best-effort. For full coverage, mac/Windows builds should emit their
+      # own SBOM as an artifact (followup).
+      - name: Attest macOS DMG
+        id: attest-macos
+        if: steps.paths.outputs.dmg != ''
+        uses: ./.github/actions/attest-sbom
+        with:
+          subject-path: ${{ steps.paths.outputs.dmg }}
+          subject-name: macos-dmg
         continue-on-error: true
 
       - name: Attest Windows EXE
-        uses: actions/attest-sbom@v3
+        id: attest-windows
+        if: steps.paths.outputs.exe != ''
+        uses: ./.github/actions/attest-sbom
         with:
-          subject-path: artifacts/**/QGroundControl*.exe
-          sbom-path: sbom.spdx.json
-        continue-on-error: true
-
-      - name: Attest Android APK
-        uses: actions/attest-sbom@v3
-        with:
-          subject-path: artifacts/**/QGroundControl.apk
-          sbom-path: sbom.spdx.json
+          subject-path: ${{ steps.paths.outputs.exe }}
+          subject-name: windows-exe
         continue-on-error: true
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ needs.semantic-release.outputs.version }}
           files: |
@@ -168,6 +218,10 @@ jobs:
             artifacts/**/*.dmg
             artifacts/**/*.exe
             artifacts/**/*.apk
-            sbom.spdx.json
-            sbom.cdx.json
+            sbom-source.spdx.json
+            sbom-source.cdx.json
+            ${{ steps.attest-linux.outputs.sbom-path }}
+            ${{ steps.attest-android.outputs.sbom-path }}
+            ${{ steps.attest-macos.outputs.sbom-path }}
+            ${{ steps.attest-windows.outputs.sbom-path }}
           fail_on_unmatched_files: false

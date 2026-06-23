@@ -2,11 +2,9 @@
 
 #include <QtCore/QList>
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
 
-#include "MAVLinkLib.h"
-
-Q_DECLARE_LOGGING_CATEGORY(StatusTextHandlerLog)
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
 
 class StatusTextHandler;
 class QTimer;

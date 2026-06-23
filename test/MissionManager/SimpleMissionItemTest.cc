@@ -1,5 +1,9 @@
 #include "SimpleMissionItemTest.h"
 
+#include <memory>
+
+#include <QtPositioning/QGeoCoordinate>
+
 #include "AppSettings.h"
 #include "CameraSection.h"
 #include "MissionCommandTree.h"
@@ -9,8 +13,8 @@
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 #include "SpeedSection.h"
+#include "UnitTest.h"
 #include "Vehicle.h"
-
 
 void SimpleMissionItemTest::init()
 {
@@ -24,62 +28,62 @@ void SimpleMissionItemTest::init()
     _simpleItem = new SimpleMissionItem(planController(), false /* flyView */, missionItem);
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be.
-    _spySimpleItem = new MultiSignalSpy();
+    _spySimpleItem = std::make_unique<MultiSignalSpy>();
     QVERIFY(_spySimpleItem->init(_simpleItem));
-    VisualMissionItemTest::_createSpy(_simpleItem, &_spyVisualItem);
+    MultiSignalSpy* visualSpy = nullptr;
+    VisualMissionItemTest::_createSpy(_simpleItem, &visualSpy);
+    _spyVisualItem.reset(visualSpy);
 }
 
 void SimpleMissionItemTest::cleanup()
 {
-    delete _spySimpleItem;
-    delete _spyVisualItem;
-    _spySimpleItem = nullptr;
-    _spyVisualItem = nullptr;
+    _spySimpleItem.reset();
+    _spyVisualItem.reset();
     VisualMissionItemTest::cleanup();
     // _simpleItem is deleted when planController() is deleted
     _simpleItem = nullptr;
 }
 
-bool SimpleMissionItemTest::_classMatch(QGCMAVLink::VehicleClass_t vehicleClass, QGCMAVLink::VehicleClass_t testClass)
+bool SimpleMissionItemTest::_classMatch(QGCMAVLinkTypes::VehicleClass_t vehicleClass, QGCMAVLinkTypes::VehicleClass_t testClass)
 {
     return vehicleClass == QGCMAVLink::VehicleClassGeneric || vehicleClass == testClass;
 }
 
-void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t vehicleClass,
-                                                   QGCMAVLink::VehicleClass_t vtolMode)
+void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLinkTypes::VehicleClass_t vehicleClass,
+                                                   QGCMAVLinkTypes::VehicleClass_t vtolMode)
 {
-    qDebug() << "vehicleClass:vtolMode" << QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass)
-             << QGCMAVLink::vehicleClassToUserVisibleString(vtolMode);
+    TEST_DEBUG(QStringLiteral("vehicleClass:vtolMode %1 %2")
+                   .arg(QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass),
+                        QGCMAVLink::vehicleClassToUserVisibleString(vtolMode)));
 
-    typedef struct
-    {
+    struct TestCase_t {
         MAV_CMD command;
         MAV_FRAME frame;
         double altValue;
-        QGroundControlQmlGlobal::AltMode altMode;
-    } TestCase_t;
+        QGroundControlQmlGlobal::AltitudeFrame altFrame;
+    };
 
     TestCase_t testCases[] = {
         {MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 70.1234567,
-         QGroundControlQmlGlobal::AltitudeModeRelative},
-        {MAV_CMD_NAV_LOITER_UNLIM, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeModeAbsolute},
+         QGroundControlQmlGlobal::AltitudeFrameRelative},
+        {MAV_CMD_NAV_LOITER_UNLIM, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeFrameAbsolute},
         {MAV_CMD_NAV_LOITER_TURNS, MAV_FRAME_GLOBAL_RELATIVE_ALT, 70.1234567,
-         QGroundControlQmlGlobal::AltitudeModeRelative},
-        {MAV_CMD_NAV_LOITER_TIME, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeModeAbsolute},
-        {MAV_CMD_NAV_LAND, MAV_FRAME_GLOBAL_RELATIVE_ALT, 70.1234567, QGroundControlQmlGlobal::AltitudeModeRelative},
-        {MAV_CMD_NAV_TAKEOFF, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeModeAbsolute},
-        {MAV_CMD_DO_JUMP, MAV_FRAME_MISSION, qQNaN(), QGroundControlQmlGlobal::AltitudeModeRelative},
+         QGroundControlQmlGlobal::AltitudeFrameRelative},
+        {MAV_CMD_NAV_LOITER_TIME, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeFrameAbsolute},
+        {MAV_CMD_NAV_LAND, MAV_FRAME_GLOBAL_RELATIVE_ALT, 70.1234567, QGroundControlQmlGlobal::AltitudeFrameRelative},
+        {MAV_CMD_NAV_TAKEOFF, MAV_FRAME_GLOBAL, 70.1234567, QGroundControlQmlGlobal::AltitudeFrameAbsolute},
+        {MAV_CMD_DO_JUMP, MAV_FRAME_MISSION, qQNaN(), QGroundControlQmlGlobal::AltitudeFrameRelative},
     };
     PlanMasterController planController(MAV_AUTOPILOT_PX4, QGCMAVLink::vehicleClassToMavType(vehicleClass));
     QGCMAVLink::VehicleClass_t commandVehicleClass =
         vtolMode == QGCMAVLink::VehicleClassGeneric ? vehicleClass : vtolMode;
-    QScopedPointer<Vehicle> vehicle(new Vehicle(MAV_AUTOPILOT_PX4, QGCMAVLink::vehicleClassToMavType(vehicleClass)));
+    std::unique_ptr<Vehicle> vehicle(new Vehicle(MAV_AUTOPILOT_PX4, QGCMAVLink::vehicleClassToMavType(vehicleClass)));
     for (size_t testIdx = 0; testIdx < sizeof(testCases) / sizeof(testCases[0]); testIdx++) {
         auto& testCase = testCases[testIdx];
         auto* missionCommandTree = MissionCommandTree::instance();
         const MissionCommandUIInfo* uiInfo =
-            missionCommandTree->getUIInfo(vehicle.data(), commandVehicleClass, testCase.command);
-        qDebug() << "Command" << missionCommandTree->rawName(testCase.command);
+            missionCommandTree->getUIInfo(vehicle.get(), commandVehicleClass, testCase.command);
+        TEST_DEBUG(QStringLiteral("Command %1").arg(missionCommandTree->rawName(testCase.command)));
         typedef QPair<int, QString> FactInfoPair_t;
         QList<FactInfoPair_t> cExpectedTextFieldInfo;
         QList<FactInfoPair_t> cExpectedComboBoxInfo;
@@ -126,47 +130,47 @@ void SimpleMissionItemTest::_testEditorFactsWorker(QGCMAVLink::VehicleClass_t ve
         QCOMPARE(simpleMissionItem.textFieldFacts()->count(), cExpectedTextFieldInfo.count());
         for (int j = 0; j < simpleMissionItem.textFieldFacts()->count(); j++) {
             Fact* fact = qobject_cast<Fact*>(simpleMissionItem.textFieldFacts()->get(j));
-            qDebug() << "textFieldFact" << fact->name();
+            TEST_DEBUG(QStringLiteral("textFieldFact %1").arg(fact->name()));
             QCOMPARE(fact->name(), cExpectedTextFieldInfo[j].second);
             QCOMPARE(fact->rawValue().toDouble(), (cExpectedTextFieldInfo[j].first * 10.0) + 0.1234567);
         }
         QCOMPARE(simpleMissionItem.comboboxFacts()->count(), cExpectedComboBoxInfo.count());
         for (int j = 0; j < simpleMissionItem.comboboxFacts()->count(); j++) {
             Fact* fact = qobject_cast<Fact*>(simpleMissionItem.comboboxFacts()->get(j));
-            qDebug() << "comboBoxFact" << fact->name();
+            TEST_DEBUG(QStringLiteral("comboBoxFact %1").arg(fact->name()));
             QCOMPARE(fact->name(), cExpectedComboBoxInfo[j].second);
             QCOMPARE(fact->rawValue().toDouble(), (cExpectedComboBoxInfo[j].first * 10.0) + 0.1234567);
         }
         QCOMPARE(simpleMissionItem.nanFacts()->count(), cExpectedNaNFieldInfo.count());
         for (int j = 0; j < simpleMissionItem.nanFacts()->count(); j++) {
             Fact* fact = qobject_cast<Fact*>(simpleMissionItem.nanFacts()->get(j));
-            qDebug() << "nanFieldFact" << fact->name();
+            TEST_DEBUG(QStringLiteral("nanFieldFact %1").arg(fact->name()));
             QCOMPARE(fact->name(), cExpectedNaNFieldInfo[j].second);
             QCOMPARE(fact->rawValue().toDouble(), qQNaN());
         }
         QCOMPARE(simpleMissionItem.textFieldFactsAdvanced()->count(), cExpectedAdvancedTextFieldInfo.count());
         for (int j = 0; j < simpleMissionItem.textFieldFactsAdvanced()->count(); j++) {
             Fact* fact = qobject_cast<Fact*>(simpleMissionItem.textFieldFactsAdvanced()->get(j));
-            qDebug() << "advancedTextFieldFact" << fact->name();
+            TEST_DEBUG(QStringLiteral("advancedTextFieldFact %1").arg(fact->name()));
             QCOMPARE(fact->name(), cExpectedAdvancedTextFieldInfo[j].second);
             QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedTextFieldInfo[j].first * 10.0) + 0.1234567);
         }
         QCOMPARE(simpleMissionItem.comboboxFactsAdvanced()->count(), cExpectedAdvancedComboBoxInfo.count());
         for (int j = 0; j < simpleMissionItem.comboboxFactsAdvanced()->count(); j++) {
             Fact* fact = qobject_cast<Fact*>(simpleMissionItem.comboboxFactsAdvanced()->get(j));
-            qDebug() << "advancedComboBoxFact" << fact->name();
+            TEST_DEBUG(QStringLiteral("advancedComboBoxFact %1").arg(fact->name()));
             QCOMPARE(fact->name(), cExpectedAdvancedComboBoxInfo[j].second);
             QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedComboBoxInfo[j].first * 10.0) + 0.1234567);
         }
         QCOMPARE(simpleMissionItem.nanFactsAdvanced()->count(), cExpectedAdvancedNaNFieldInfo.count());
         for (int j = 0; j < simpleMissionItem.nanFactsAdvanced()->count(); j++) {
             Fact* fact = qobject_cast<Fact*>(simpleMissionItem.nanFactsAdvanced()->get(j));
-            qDebug() << "advancedNaNFieldFact" << fact->name();
+            TEST_DEBUG(QStringLiteral("advancedNaNFieldFact %1").arg(fact->name()));
             QCOMPARE(fact->name(), cExpectedAdvancedNaNFieldInfo[j].second);
             QCOMPARE(fact->rawValue().toDouble(), (cExpectedAdvancedNaNFieldInfo[j].first * 10.0) + 0.1234567);
         }
         if (!qIsNaN(testCase.altValue)) {
-            QCOMPARE(simpleMissionItem.altitudeMode(), testCase.altMode);
+            QCOMPARE(simpleMissionItem.altitudeFrame(), testCase.altFrame);
             QCOMPARE(simpleMissionItem.altitude()->rawValue().toDouble(), testCase.altValue);
         }
     }
@@ -201,15 +205,13 @@ void SimpleMissionItemTest::_testSignals()
     //      amslEntryAltChanged, amslExitAltChanged, terrainAltitudeChanged (altitude depends on position)
     // Check that actually changing coordinate signals correctly
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5() + 1, missionItem.param6(), missionItem.param7()));
-    QVERIFY(_spyVisualItem->onlyEmittedOnceByMask(
-        _spyVisualItem->mask("coordinateChanged", "exitCoordinateChanged", "dirtyChanged", "amslEntryAltChanged",
-                             "amslExitAltChanged", "terrainAltitudeChanged")));
+    QVERIFY(_spyVisualItem->onlyEmittedOnce("coordinateChanged", "entryCoordinateChanged", "exitCoordinateChanged", "dirtyChanged",
+                             "amslEntryAltChanged", "amslExitAltChanged", "terrainAltitudeChanged"));
     _spyVisualItem->clearAllSignals();
     _spySimpleItem->clearAllSignals();
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6() + 1, missionItem.param7()));
-    QVERIFY(_spyVisualItem->onlyEmittedOnceByMask(
-        _spyVisualItem->mask("coordinateChanged", "exitCoordinateChanged", "dirtyChanged", "amslEntryAltChanged",
-                             "amslExitAltChanged", "terrainAltitudeChanged")));
+    QVERIFY(_spyVisualItem->onlyEmittedOnce("coordinateChanged", "entryCoordinateChanged", "exitCoordinateChanged", "dirtyChanged",
+                             "amslEntryAltChanged", "amslExitAltChanged", "terrainAltitudeChanged"));
     _spyVisualItem->clearAllSignals();
     _spySimpleItem->clearAllSignals();
     // Altitude in coordinate is not used in setCoordinate
@@ -239,12 +241,11 @@ void SimpleMissionItemTest::_testSignals()
     missionItem.setParam1(missionItem.param4() + 1);
     QVERIFY(_spyVisualItem->emitted("dirtyChanged"));
     _spyVisualItem->clearAllSignals();
-    // Changing altitude mode should emit these signals (may also emit other related signals)
-    _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == QGroundControlQmlGlobal::AltitudeModeRelative
-                                     ? QGroundControlQmlGlobal::AltitudeModeAbsolute
-                                     : QGroundControlQmlGlobal::AltitudeModeRelative);
-    QVERIFY(_spySimpleItem->emittedByMask(
-        _spySimpleItem->mask("dirtyChanged", "friendlyEditAllowedChanged", "altitudeModeChanged")));
+    // Changing altitude frame should emit these signals (may also emit other related signals)
+    _simpleItem->setAltitudeFrame(_simpleItem->altitudeFrame() == QGroundControlQmlGlobal::AltitudeFrameRelative
+                                     ? QGroundControlQmlGlobal::AltitudeFrameAbsolute
+                                     : QGroundControlQmlGlobal::AltitudeFrameRelative);
+    QVERIFY(_spySimpleItem->emitted("dirtyChanged", "friendlyEditAllowedChanged", "altitudeFrameChanged"));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
     // Check commandChanged signalling. Call setCommand should trigger:
@@ -257,7 +258,7 @@ void SimpleMissionItemTest::_testSignals()
     QVERIFY(_spySimpleItem->noneEmitted());
     _simpleItem->setCommand(MAV_CMD_NAV_LOITER_TIME);
     QVERIFY(_spySimpleItem->emitted("commandChanged"));
-    QVERIFY(_spyVisualItem->emittedByMask(_spyVisualItem->mask("commandNameChanged", "dirtyChanged")));
+    QVERIFY(_spyVisualItem->emitted("commandNameChanged", "dirtyChanged"));
 }
 
 void SimpleMissionItemTest::_testCameraSectionDirty()
@@ -317,14 +318,58 @@ void SimpleMissionItemTest::_testSpeedSection()
 void SimpleMissionItemTest::_testAltitudePropogation()
 {
     // Make sure that changes to altitude propogate to param 7 of the mission item
-    _simpleItem->setAltitudeMode(QGroundControlQmlGlobal::AltitudeModeRelative);
+    _simpleItem->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameRelative);
     _simpleItem->altitude()->setRawValue(_simpleItem->altitude()->rawValue().toDouble() + 1);
     QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    _simpleItem->setAltitudeMode(QGroundControlQmlGlobal::AltitudeModeAbsolute);
+    _simpleItem->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameAbsolute);
     _simpleItem->altitude()->setRawValue(_simpleItem->altitude()->rawValue().toDouble() + 1);
     QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL);
+}
+
+void SimpleMissionItemTest::_testCalcAboveTerrainSaveLoad()
+{
+    // Regression test for https://github.com/mavlink/qgroundcontrol/issues/13513
+    // When saving/loading a mission with CalcAboveTerrain altitude mode, the AMSL altitude
+    // must be preserved correctly rather than being overwritten with the above-terrain value.
+
+    const double terrainAlt         = 500.0;    // Terrain elevation at the waypoint
+    const double aboveTerrainAlt    = 250.0;    // User-specified height above terrain
+    const double amslAlt            = terrainAlt + aboveTerrainAlt;
+
+    // Setup the item with CalcAboveTerrain mode and simulate terrain calculation having completed
+    _simpleItem->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain);
+    _simpleItem->altitude()->setRawValue(aboveTerrainAlt);
+    _simpleItem->amslAltAboveTerrain()->setRawValue(amslAlt);
+    // For CalcAboveTerrain, param7 should be the AMSL altitude
+    _simpleItem->missionItem().setParam7(amslAlt);
+
+    // Save
+    QJsonArray missionItems;
+    _simpleItem->save(missionItems);
+    QVERIFY(missionItems.count() > 0);
+    QJsonObject savedJson = missionItems[0].toObject();
+
+    // Verify saved JSON contains the correct altitude data
+    QVERIFY(savedJson.contains("AltitudeMode"));
+    QVERIFY(savedJson.contains("Altitude"));
+    QVERIFY(savedJson.contains("AMSLAltAboveTerrain"));
+    QCOMPARE(savedJson["AltitudeMode"].toInt(), static_cast<int>(QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain));
+    QCOMPARE(savedJson["Altitude"].toDouble(), aboveTerrainAlt);
+    QCOMPARE(savedJson["AMSLAltAboveTerrain"].toDouble(), amslAlt);
+
+    // Load into a new SimpleMissionItem (forLoad=true matches production MissionController behavior)
+    QString errorString;
+    SimpleMissionItem loadedItem(planController(), false /* flyView */, true /* forLoad */);
+    QVERIFY(loadedItem.load(savedJson, 1, errorString));
+
+    // Verify state immediately after load — before any terrain query
+    QCOMPARE(loadedItem.altitudeFrame(), QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain);
+    QCOMPARE(loadedItem.altitude()->rawValue().toDouble(), aboveTerrainAlt);
+    QCOMPARE(loadedItem.amslAltAboveTerrain()->rawValue().toDouble(), amslAlt);
+    QCOMPARE(loadedItem.missionItem().frame(), MAV_FRAME_GLOBAL);
+    QCOMPARE(loadedItem.missionItem().param7(), amslAlt);
 }
 
 UT_REGISTER_TEST(SimpleMissionItemTest, TestLabel::Unit, TestLabel::MissionManager)

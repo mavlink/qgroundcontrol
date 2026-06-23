@@ -2,8 +2,8 @@
 
 #include "TerrainTileManager.h"
 
-/// Point Nemo is a point on Earth furthest from land
-static const QGeoCoordinate pointNemo = QGeoCoordinate(-48.875556, -123.392500);
+// Use the canonical definition from TerrainTest::pointNemo()
+static const QGeoCoordinate pointNemo = TerrainTest::pointNemo();
 
 const UnitTestTerrainQuery::Flat10Region UnitTestTerrainQuery::flat10Region{
     {pointNemo, QGeoCoordinate{pointNemo.latitude() - UnitTestTerrainQuery::regionSizeDeg,
@@ -43,7 +43,6 @@ void UnitTestTerrainQuery::requestPathHeights(const QGeoCoordinate& fromCoord, c
 void UnitTestTerrainQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord,
                                                 bool statsOnly)
 {
-    Q_UNUSED(statsOnly);
     QList<QList<double>> carpet;
     if ((swCoord.longitude() > neCoord.longitude()) || (swCoord.latitude() > neCoord.latitude())) {
         emit carpetHeightsReceived(false, qQNaN(), qQNaN(), carpet);
@@ -63,7 +62,9 @@ void UnitTestTerrainQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, c
             min = qMin(val, min);
             max = qMax(val, max);
         }
-        (void)carpet.append(row);
+        if (!statsOnly) {
+            (void)carpet.append(row);
+        }
     }
     emit carpetHeightsReceived(true, min, max, carpet);
 }

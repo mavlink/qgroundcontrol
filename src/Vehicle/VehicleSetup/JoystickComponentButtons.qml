@@ -75,11 +75,7 @@ ColumnLayout {
         QGCCheckBox {
             text: qsTr("Repeat")
             checked: joystick.getButtonRepeat(buttonAssignmentRow.selectedButtonIndex)
-            enabled: {
-                if (buttonActionCombo.currentIndex < 0) return false
-                var action = joystick.assignableActions.get(buttonActionCombo.currentIndex)
-                return action ? action.canRepeat : false
-            }
+            enabled: buttonActionCombo.currentIndex === -1 ? false : (joystick.assignableActions.get(buttonActionCombo.currentIndex) ? joystick.assignableActions.get(buttonActionCombo.currentIndex).canRepeat : false)
 
             onClicked: {
                 joystick.setButtonRepeat(buttonAssignmentRow.selectedButtonIndex, checked)
@@ -111,7 +107,7 @@ ColumnLayout {
     /*Column {
         id:         buttonCol
         Layout.fillWidth: true
-        visible:    globals.activeVehicle.supportsJSButton
+        visible:    globals.activeVehicle.supports.jsButton
         spacing:    ScreenTools.defaultFontPixelHeight / 3
 
         Row {
@@ -127,7 +123,7 @@ ColumnLayout {
             }
             QGCLabel {
                 width: ScreenTools.defaultFontPixelWidth * 26
-                visible: globals.activeVehicle.supportsJSButton
+                visible: globals.activeVehicle.supports.jsButton
                 text: qsTr("Shift Function: ")
             }
         }
@@ -137,7 +133,7 @@ ColumnLayout {
 
             Row {
                 spacing: ScreenTools.defaultFontPixelWidth
-                visible: globals.activeVehicle.supportsJSButton
+                visible: globals.activeVehicle.supports.jsButton
                 property var parameterName: `BTN${index}_FUNCTION`
                 property var parameterShiftName: `BTN${index}_SFUNCTION`
                 property bool hasFirmwareSupport: controller.parameterExists(-1, parameterName)
@@ -221,7 +217,7 @@ ColumnLayout {
                     id: repeatCheck
                     text: qsTr("Repeat")
                     enabled: currentAssignableAction && joystick.calibrated && currentAssignableAction.canRepeat
-                    visible: !globals.activeVehicle.supportsJSButton
+                    visible: !globals.activeVehicle.supports.jsButton
 
                     onClicked: {
                         joystick.setButtonRepeat(modelData, checked)

@@ -11,12 +11,13 @@
 
 #include "ElevationMapProvider.h"
 #include "FlightMapSettings.h"
-#include "QGCApplication.h"
 #include "QGCCachedTileSet.h"
+#include "QGCFormat.h"
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
+#include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 #include "QGeoFileTileCacheQGC.h"
 #include "QmlObjectListModel.h"
@@ -82,12 +83,12 @@ void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double 
 
 QString QGCMapEngineManager::tileCountStr() const
 {
-    return qgcApp()->numberToString(_imageSet.tileCount + _elevationSet.tileCount);
+    return QGC::numberToString(_imageSet.tileCount + _elevationSet.tileCount);
 }
 
 QString QGCMapEngineManager::tileSizeStr() const
 {
-    return qgcApp()->bigSizeToString(_imageSet.tileSize + _elevationSet.tileSize);
+    return QGC::bigSizeToString(_imageSet.tileSize + _elevationSet.tileSize);
 }
 
 void QGCMapEngineManager::loadTileSets()

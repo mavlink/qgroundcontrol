@@ -108,7 +108,4 @@ void RunGuardTest::_testDifferentKeysIndependent()
     QVERIFY(guard1.isLocked());
     QVERIFY(guard2.isLocked());
 }
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-#endif
-
 UT_REGISTER_TEST(RunGuardTest, TestLabel::Unit, TestLabel::Utilities)

@@ -15,7 +15,7 @@ public:
     QStringList setupCompleteChangedTriggerList() const final;
 
     QString name() const final { return _name; }
-    QString description() const final { return tr("Sensors Setup is used to calibrate the sensors within your vehicle."); }
+    QString description() const final { return tr("Configure and calibrate compass, accelerometer, and other onboard sensors."); }
     QString iconResource() const final { return QStringLiteral("/qmlimages/SensorsComponentIcon.png"); }
     bool requiresSetup() const final { return true; }
     bool setupComplete() const final { return (!compassSetupNeeded() && !accelSetupNeeded()); }

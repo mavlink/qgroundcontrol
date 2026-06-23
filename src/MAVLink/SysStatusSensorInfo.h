@@ -1,14 +1,12 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 
 #include "MAVLinkLib.h"
 
-Q_DECLARE_LOGGING_CATEGORY(SysStatusSensorInfoLog)
-
-/// Class which represents sensor info from the SYS_STATUS mavlink message
+/// \brief Class which represents sensor info from the SYS_STATUS mavlink message
+///
 class SysStatusSensorInfo : public QObject
 {
     Q_OBJECT

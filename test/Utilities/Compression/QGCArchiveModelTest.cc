@@ -1,10 +1,13 @@
 #include "QGCArchiveModelTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
 
 #include "QGCArchiveModel.h"
+#include "UnitTest.h"
 
 // ============================================================================
 // Basic Model Functionality
@@ -283,8 +286,9 @@ void QGCArchiveModelTest::_testRefresh()
 // ============================================================================
 void QGCArchiveModelTest::_testInvalidArchive()
 {
+    QTemporaryDir tempDir;
     // Create a corrupt archive
-    const QString corruptPath = tempDir()->path() + "/corrupt.zip";
+    const QString corruptPath = tempDir.path() + "/corrupt.zip";
     QFile corrupt(corruptPath);
     QVERIFY(corrupt.open(QIODevice::WriteOnly));
     corrupt.write("This is not a valid ZIP file");
@@ -292,7 +296,10 @@ void QGCArchiveModelTest::_testInvalidArchive()
     QGCArchiveModel model;
     QSignalSpy errorSpy(&model, &QGCArchiveModel::errorStringChanged);
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*"));
+    // libarchive's error text (e.g. "Unrecognized archive format") and the number of
+    // warnings emitted vary across platforms/libarchive versions, so suppress the noise
+    // and assert the failure via loadingComplete/errorString instead.
+    ignoreLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Failed to open file:"));
     model.setArchivePath(corruptPath);
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), false);
@@ -304,8 +311,11 @@ void QGCArchiveModelTest::_testNonExistentArchive()
 {
     QGCArchiveModel model;
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*"));
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
     model.setArchivePath("/nonexistent/path/archive.zip");
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), false);
     QVERIFY(!model.errorString().isEmpty());
@@ -317,6 +327,7 @@ void QGCArchiveModelTest::_testNonExistentArchive()
 // ============================================================================
 void QGCArchiveModelTest::_testArchiveUrl()
 {
+    QTemporaryDir tempDir;
     QGCArchiveModel model;
     QSignalSpy pathSpy(&model, &QGCArchiveModel::archivePathChanged);
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
@@ -336,13 +347,13 @@ void QGCArchiveModelTest::_testArchiveUrl()
     pathSpy.clear();
     loadingSpy.clear();
     // Create a temp file to test file:// URL
-    const QString tempZipPath = tempDir()->path() + "/test_url.zip";
+    const QString tempZipPath = tempDir.path() + "/test_url.zip";
     QFile::copy(QStringLiteral(":/unittest/manifest.json.zip"), tempZipPath);
     QVERIFY(QFileInfo::exists(tempZipPath));
     const QUrl fileUrl = QUrl::fromLocalFile(tempZipPath);
     model.setArchiveUrl(fileUrl);
     QCOMPARE(pathSpy.count(), 1);
-    QCOMPARE(model.archivePath(), tempZipPath);
+    QCOMPARE(QDir::cleanPath(model.archivePath()), QDir::cleanPath(tempZipPath));
     QVERIFY(loadingSpy.count() >= 1);
     QVERIFY(model.count() > 0);
     // Test that plain Qt resource path works (already tested in other tests)
@@ -365,7 +376,7 @@ void QGCArchiveModelTest::_testArchiveUrlRejectsRemote()
     QSignalSpy pathSpy(&model, &QGCArchiveModel::archivePathChanged);
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
 
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*Unsupported archive URL.*"));
+    expectLogMessage("Utilities.QGCArchiveModel", QtWarningMsg, QRegularExpression(".*Unsupported archive URL.*"));
     model.setArchiveUrl(QUrl(QStringLiteral("https://example.com/archive.zip")));
 
     QCOMPARE(pathSpy.count(), 1);
@@ -373,6 +384,7 @@ void QGCArchiveModelTest::_testArchiveUrlRejectsRemote()
     QCOMPARE(model.count(), 0);
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), true);
+    verifyExpectedLogMessage();
 }
 
 // ============================================================================
@@ -476,7 +488,5 @@ void QGCArchiveModelTest::_testModelTesterClearAndReload()
     model.setArchivePath(QStringLiteral(":/unittest/manifest.json.zip"));
     QVERIFY(model.rowCount() > 0);
 }
-
-#include "UnitTest.h"
 
 UT_REGISTER_TEST(QGCArchiveModelTest, TestLabel::Unit, TestLabel::Utilities)

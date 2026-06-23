@@ -1,11 +1,14 @@
 #include "Viewer3DTerrainTexture.h"
 
+#include "Fact.h"
 #include "FlightMapSettings.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
 #include "SettingsManager.h"
 #include "Viewer3DMapProvider.h"
+#include "Viewer3DTileQuery.h"
+#include "Viewer3DTileStatistics.h"
 
 QGC_LOGGING_CATEGORY(Viewer3DTerrainTextureLog, "Viewer3d.Viewer3DTerrainTexture")
 
@@ -141,7 +144,7 @@ void Viewer3DTerrainTexture::setTextureDownloadProgress(float newTextureDownload
     emit textureDownloadProgressChanged();
 }
 
-void Viewer3DTerrainTexture::setTextureGeometry(const Viewer3DTileQuery::TileStatistics_t &tileInfo)
+void Viewer3DTerrainTexture::setTextureGeometry(const Viewer3DTileStatistics &tileInfo)
 {
     setRoiMinCoordinate(tileInfo.coordinateMin);
     setRoiMaxCoordinate(tileInfo.coordinateMax);

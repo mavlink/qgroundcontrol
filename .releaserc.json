@@ -37,14 +37,9 @@
         ]
       }
     }],
-    ["@semantic-release/changelog", {
-      "changelogFile": "CHANGELOG.md",
-      "changelogTitle": "# Changelog\n\nAll notable changes to QGroundControl are documented in this file."
-    }],
-    ["@semantic-release/git", {
-      "assets": ["CHANGELOG.md"],
-      "message": "chore(release): v${nextRelease.version}\n\n${nextRelease.notes}"
-    }],
-    "@semantic-release/github"
+    "@semantic-release/github",
+    ["@semantic-release/exec", {
+      "verifyReleaseCmd": "echo '${nextRelease.version}' > .release-version"
+    }]
   ]
 }

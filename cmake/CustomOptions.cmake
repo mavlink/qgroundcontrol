@@ -8,6 +8,8 @@ include(CMakeDependentOption)
 # Load centralized build configuration from .github/build-config.json
 include(BuildConfig)
 
+set(QGC_CUSTOM_DIR "custom" CACHE STRING "Custom build overlay directory, relative to the source root")
+
 # ============================================================================
 # Application Metadata
 # ============================================================================
@@ -35,10 +37,22 @@ option(QGC_BUILD_INSTALLER "Build platform installers/packages" ON)
 option(QGC_ENABLE_WERROR "Treat compiler warnings as errors for QGC source code" ON)
 
 # Debug-dependent options
-cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
-cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
-cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "CMAKE_BUILD_TYPE STREQUAL Debug" OFF)
+# Note: CMAKE_BUILD_TYPE is empty on multi-config generators (VS, Ninja Multi-Config).
+# Multi-config generators always get _QGC_DEBUG_BUILD=TRUE because Debug is selected
+# at build time, not configure time. Release-only CI jobs should pass
+# -DQGC_BUILD_TESTING=OFF explicitly to skip test compilation.
+if(CMAKE_CONFIGURATION_TYPES OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(_QGC_DEBUG_BUILD TRUE)
+else()
+    set(_QGC_DEBUG_BUILD FALSE)
+endif()
+cmake_dependent_option(QGC_BUILD_TESTING "Enable unit tests" ON "_QGC_DEBUG_BUILD" OFF)
+cmake_dependent_option(QGC_DEBUG_QML "Enable QML debugging/profiling" ON "_QGC_DEBUG_BUILD" OFF)
+cmake_dependent_option(QGC_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF "_QGC_DEBUG_BUILD" OFF)
+cmake_dependent_option(QT_QML_NO_CACHEGEN "Skip qmlcachegen (faster Debug builds, slower QML startup)" ON "_QGC_DEBUG_BUILD" OFF)
 option(QGC_ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during build" OFF)
+option(QGC_TIME_TRACE "Emit per-TU Clang -ftime-trace JSON for build profiling (Clang only)" OFF)
+option(QGC_SPLIT_DWARF "Use -gsplit-dwarf + --gdb-index for faster Debug links (Linux/Android ELF only; marginal win with mold)" OFF)
 
 # Git options
 option(GIT_SUBMODULE "Update submodules during configuration" OFF)
@@ -62,15 +76,10 @@ set(QGC_VALGRIND_TIMEOUT_MULTIPLIER 20 CACHE STRING "Timeout multiplier for Valg
 option(QGC_ENABLE_BZIP2 "Enable BZip2 decompression support" OFF)
 option(QGC_ENABLE_LZ4 "Enable LZ4 decompression support" OFF)
 
-# MAVLink Inspector is disabled by default due to GPL licensing of QtCharts
-# option(QGC_DISABLE_MAVLINK_INSPECTOR "Disable MAVLink Inspector" OFF)
-
 # ============================================================================
 # Communication Options
 # ============================================================================
 
-option(QGC_ENABLE_BLUETOOTH "Enable Bluetooth communication links" ON)
-option(QGC_ZEROCONF_ENABLED "Enable ZeroConf/Bonjour discovery" OFF)
 option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 
 # ============================================================================
@@ -79,7 +88,6 @@ option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 
 option(QGC_ENABLE_UVC "Enable UVC (USB Video Class) device support" ON)
 option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer video backend" ON)
-cmake_dependent_option(QGC_CUSTOM_GST_PACKAGE "Use QGC-provided GStreamer packages" OFF "QGC_ENABLE_GST_VIDEOSTREAMING" OFF)
 option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
 
 # ============================================================================
@@ -87,7 +95,7 @@ option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
 # ============================================================================
 
 set(QGC_MAVLINK_GIT_REPO "https://github.com/mavlink/mavlink.git" CACHE STRING "MAVLink repository URL")
-set(QGC_MAVLINK_GIT_TAG "b1fb5a1a32c41c6e46fea70600d626a0b5a8edbe" CACHE STRING "MAVLink repository commit/tag")
+set(QGC_MAVLINK_GIT_TAG "c409cf690454db6d3e004bd14173bc6c7ff1e0ff" CACHE STRING "MAVLink repository commit/tag")
 set(QGC_MAVLINK_DIALECT "all" CACHE STRING "MAVLink dialect")
 set(QGC_MAVLINK_VERSION "2.0" CACHE STRING "MAVLink protocol version")
 
@@ -167,11 +175,19 @@ set(QML_IMPORT_PATH "${QT_QML_OUTPUT_DIRECTORY}" CACHE STRING "Additional QML im
 option(QT_SILENCE_MISSING_DEPENDENCY_TARGET_WARNING "Silence missing dependency warnings" OFF)
 option(QT_ENABLE_VERBOSE_DEPLOYMENT "Enable verbose deployment output" OFF)
 option(QT_DEBUG_FIND_PACKAGE "Print search paths when package not found" ON)
-option(QT_QML_GENERATE_QMLLS_INI "Generate qmlls.ini for QML language server" ON)
-option(QGC_ENABLE_QMLLINT "Enable automatic QML linting during build" OFF)
+# qmlls.ini writes into the source tree dirty the CI checkout.
+if(DEFINED ENV{CI})
+    set(_qmlls_ini_default OFF)
+else()
+    set(_qmlls_ini_default ON)
+endif()
+option(QT_QML_GENERATE_QMLLS_INI "Generate qmlls.ini for QML language server" ${_qmlls_ini_default})
+unset(_qmlls_ini_default)
+option(QT_QMLLINT_CONTEXT_PROPERTY_DUMP "Emit qmllint context property data (Qt 6.11+; no-op on older)" ON)
+option(QT_QML_GENERATE_QMLLINT "Run qmllint at build time" OFF)
 
-set(QGC_QT_DISABLE_DEPRECATED_UP_TO "0x061000" CACHE STRING "Disable Qt APIs deprecated before this version")
-set(QGC_QT_ENABLE_STRICT_MODE_UP_TO "0x061000" CACHE STRING "Enable strict Qt API mode up to this version")
+set(QGC_QT_DISABLE_DEPRECATED_UP_TO "0x060A00" CACHE STRING "Disable Qt APIs deprecated before this version")
+set(QGC_QT_ENABLE_STRICT_MODE_UP_TO "0x060A00" CACHE STRING "Enable strict Qt API mode up to this version")
 
 # Debug environment variables (uncomment to enable)
 # set(ENV{QT_DEBUG_PLUGINS} "1")

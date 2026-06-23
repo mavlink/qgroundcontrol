@@ -30,12 +30,12 @@ public:
 
     bool wasInitCalled() const
     {
-        return _initCalled;
+        return _initWasCalled;
     }
 
     bool wasCleanupCalled() const
     {
-        return _cleanupCalled;
+        return _cleanupWasCalled;
     }
 
     bool hadVehicle() const
@@ -43,17 +43,14 @@ public:
         return _hadVehicle;
     }
 
-    // Public wrappers for testing
     void doInit()
     {
-        UnitTest::initTestCase();
         init();
     }
 
     void doCleanup()
     {
         cleanup();
-        UnitTest::cleanupTestCase();
     }
 
 public slots:
@@ -61,26 +58,19 @@ public slots:
     void init() override
     {
         VehicleTest::init();
-        _initCalled = true;
+        _initWasCalled = true;
         _hadVehicle = (vehicle() != nullptr);
     }
 
     void cleanup() override
     {
-        _cleanupCalled = true;
+        _cleanupWasCalled = true;
         VehicleTest::cleanup();
     }
 
-private slots:
-
-    void _dummyTest()
-    {
-        // Just a placeholder test method
-    }
-
 private:
-    bool _initCalled = false;
-    bool _cleanupCalled = false;
+    bool _initWasCalled = false;
+    bool _cleanupWasCalled = false;
     bool _hadVehicle = false;
 };
 
@@ -98,17 +88,14 @@ public:
         return missionController() != nullptr;
     }
 
-    // Public wrappers for testing
     void doInit()
     {
-        UnitTest::initTestCase();
         init();
     }
 
     void doCleanup()
     {
         cleanup();
-        UnitTest::cleanupTestCase();
     }
 
 public slots:
@@ -121,12 +108,6 @@ public slots:
     void cleanup() override
     {
         OfflineMissionTest::cleanup();
-    }
-
-private slots:
-
-    void _dummyTest()
-    {
     }
 };
 
@@ -144,17 +125,14 @@ public:
         return linkManager() != nullptr;
     }
 
-    // Public wrappers for testing - expose protected methods
     void doInit()
     {
-        UnitTest::initTestCase();
         init();
     }
 
     void doCleanup()
     {
         cleanup();
-        UnitTest::cleanupTestCase();
     }
 
     SharedLinkInterfacePtr doCreateMockLink(const QString& name)
@@ -177,11 +155,5 @@ public slots:
     void cleanup() override
     {
         CommsTest::cleanup();
-    }
-
-private slots:
-
-    void _dummyTest()
-    {
     }
 };

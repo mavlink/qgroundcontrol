@@ -1,10 +1,54 @@
 #include "QmlObjectListModel.h"
 
+#include <QtCore/QMetaMethod>
 #include <QtQml/QQmlEngine>
 
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QmlObjectListModelLog, "API.QmlObjectListModel")
+
+namespace {
+
+constexpr const char* kDirtyChangedSignature = "dirtyChanged(bool)";
+constexpr const char* kChildDirtyChangedSlotSignature = "_childDirtyChanged(bool)";
+
+QMetaMethod childDirtyChangedSlot()
+{
+    const QMetaObject* metaObject = &ObjectListModelBase::staticMetaObject;
+    const int slotIndex = metaObject->indexOfSlot(kChildDirtyChangedSlotSignature);
+    Q_ASSERT_X(slotIndex >= 0, "childDirtyChangedSlot", "slot signature mismatch — update kChildDirtyChangedSlotSignature");
+    return (slotIndex >= 0) ? metaObject->method(slotIndex) : QMetaMethod();
+}
+
+QMetaMethod dirtyChangedSignal(const QObject* object)
+{
+    if (!object) {
+        return QMetaMethod();
+    }
+
+    const int signalIndex = object->metaObject()->indexOfSignal(kDirtyChangedSignature);
+    return (signalIndex >= 0) ? object->metaObject()->method(signalIndex) : QMetaMethod();
+}
+
+void connectDirtyChangedIfAvailable(QObject* object, ObjectListModelBase* receiver)
+{
+    const QMetaMethod signal = dirtyChangedSignal(object);
+    const QMetaMethod slot = childDirtyChangedSlot();
+    if (signal.isValid() && slot.isValid()) {
+        QObject::connect(object, signal, receiver, slot);
+    }
+}
+
+void disconnectDirtyChangedIfAvailable(QObject* object, ObjectListModelBase* receiver)
+{
+    const QMetaMethod signal = dirtyChangedSignal(object);
+    const QMetaMethod slot = childDirtyChangedSlot();
+    if (signal.isValid() && slot.isValid()) {
+        QObject::disconnect(object, signal, receiver, slot);
+    }
+}
+
+}  // namespace
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
     : ObjectListModelBase(parent)
@@ -66,8 +110,10 @@ bool QmlObjectListModel::insertRows(int position, int rows, const QModelIndex& p
         qCWarning(QmlObjectListModelLog) << "Invalid position - position:count" << position << _objectList.count() << this;
     }
 
-    beginInsertRows(QModelIndex(), position, position + rows - 1);
-    endInsertRows();
+    if (_resetModelNestingCount == 0) {
+        beginInsertRows(QModelIndex(), position, position + rows - 1);
+        endInsertRows();
+    }
 
     _signalCountChangedIfNotNested();
 
@@ -84,11 +130,15 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
         qCWarning(QmlObjectListModelLog) << "Invalid rows - position:rows:count" << position << rows << _objectList.count() << this;
     }
 
-    beginRemoveRows(QModelIndex(), position, position + rows - 1);
+    if (_resetModelNestingCount == 0) {
+        beginRemoveRows(QModelIndex(), position, position + rows - 1);
+    }
     for (int row=0; row<rows; row++) {
         _objectList.removeAt(position);
     }
-    endRemoveRows();
+    if (_resetModelNestingCount == 0) {
+        endRemoveRows();
+    }
 
     _signalCountChangedIfNotNested();
 
@@ -137,12 +187,9 @@ void QmlObjectListModel::clear()
 QObject* QmlObjectListModel::removeAt(int i)
 {
     QObject* removedObject = _objectList[i];
-    if(removedObject) {
-        // Look for a dirtyChanged signal on the object
-        if (_objectList[i]->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)").constData()) != -1) {
-            if (!_skipDirtyFirstItem || i != 0) {
-                QObject::disconnect(_objectList[i], SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
-            }
+    if (removedObject) {
+        if (!_skipDirtyFirstItem || i != 0) {
+            disconnectDirtyChangedIfAvailable(_objectList[i], this);
         }
     }
     removeRows(i, 1);
@@ -155,13 +202,10 @@ void QmlObjectListModel::insert(int i, QObject* object)
     if (i < 0 || i > _objectList.count()) {
         qCWarning(QmlObjectListModelLog) << "Invalid index - index:count" << i << _objectList.count() << this;
     }
-    if(object) {
+    if (object) {
         QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
-        // Look for a dirtyChanged signal on the object
-        if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)").constData()) != -1) {
-            if (!_skipDirtyFirstItem || i != 0) {
-                QObject::connect(object, SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
-            }
+        if (!_skipDirtyFirstItem || i != 0) {
+            connectDirtyChangedIfAvailable(object, this);
         }
     }
     _objectList.insert(i, object);
@@ -179,11 +223,8 @@ void QmlObjectListModel::insert(int i, QList<QObject*> objects)
     for (QObject* object: objects) {
         QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
 
-        // Look for a dirtyChanged signal on the object
-        if (object->metaObject()->indexOfSignal(QMetaObject::normalizedSignature("dirtyChanged(bool)").constData()) != -1) {
-            if (!_skipDirtyFirstItem || j != 0) {
-                QObject::connect(object, SIGNAL(dirtyChanged(bool)), this, SLOT(_childDirtyChanged(bool)));
-            }
+        if (!_skipDirtyFirstItem || j != 0) {
+            connectDirtyChangedIfAvailable(object, this);
         }
 
         _objectList.insert(j, object);

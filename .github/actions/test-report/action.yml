@@ -1,0 +1,47 @@
+name: Test Report
+description: Publish and upload test results
+
+inputs:
+  name:
+    description: Test report name
+    required: true
+  build-dir:
+    description: Build directory path
+    required: true
+  junit-file:
+    description: JUnit XML file name (relative to build-dir)
+    required: false
+    default: junit-results.xml
+  output-file:
+    description: Test output file name (relative to build-dir)
+    required: false
+    default: test-output.txt
+  artifact-name:
+    description: Artifact name for uploaded results
+    required: true
+  retention-days:
+    description: Days to retain artifacts
+    required: false
+    default: "14"
+
+runs:
+  using: composite
+  steps:
+    - name: Publish Test Results
+      if: always()
+      uses: dorny/test-reporter@v3
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.build-dir }}/${{ inputs.junit-file }}
+        reporter: java-junit
+        fail-on-error: false
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ inputs.build-dir }}/${{ inputs.output-file }}
+          ${{ inputs.build-dir }}/${{ inputs.junit-file }}
+        retention-days: ${{ inputs.retention-days }}

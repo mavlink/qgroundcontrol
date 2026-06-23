@@ -15,7 +15,7 @@ QString PX4FlightBehavior::name() const
 
 QString PX4FlightBehavior::description() const
 {
-    return tr("Flight Behavior is used to configure flight characteristics.");
+    return tr("Configure mission, position hold, and altitude mode settings.");
 }
 
 QString PX4FlightBehavior::iconResource() const

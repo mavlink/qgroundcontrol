@@ -1,29 +1,10 @@
 #pragma once
 
-#include <QtLocation/private/qgeomaptype_p.h>
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
-#include <QtCore/QLoggingCategory>
+#include <QtCore/QUrl>
 
 #include "QGCTileSet.h"
-
-Q_DECLARE_LOGGING_CATEGORY(MapProviderLog)
-
-// qgeomaptype_p.h
-/*enum MapStyle {
-    NoMap = 0,
-    StreetMap,
-    SatelliteMapDay,
-    SatelliteMapNight,
-    TerrainMap,
-    HybridMap,
-    TransitMap,
-    GrayStreetMap,
-    PedestrianMap,
-    CarNavigationMap,
-    CycleMap,
-    CustomMap = 100
-};*/
 
 #define QGC_MAX_MAP_ZOOM 23
 static constexpr const quint32 QGC_AVERAGE_TILE_SIZE = 13652;
@@ -32,8 +13,26 @@ static constexpr const quint32 QGC_AVERAGE_TILE_SIZE = 13652;
 class MapProvider
 {
 public:
+    // Mirror of QGeoMapType::MapStyle (kept in sync manually so this header
+    // doesn't need to pull QtLocation/private/qgeomaptype_p.h). Converted at
+    // the boundary in QGeoTiledMappingManagerEngineQGC.cpp.
+    enum MapStyle {
+        NoMap = 0,
+        StreetMap,
+        SatelliteMapDay,
+        SatelliteMapNight,
+        TerrainMap,
+        HybridMap,
+        TransitMap,
+        GrayStreetMap,
+        PedestrianMap,
+        CarNavigationMap,
+        CycleMap,
+        CustomMap = 100
+    };
+
     MapProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize = QGC_AVERAGE_TILE_SIZE,
-                QGeoMapType::MapStyle mapStyle = QGeoMapType::CustomMap);
+                MapStyle mapStyle = CustomMap);
     virtual ~MapProvider();
 
     QUrl getTileURL(int x, int y, int zoom) const;
@@ -43,7 +42,7 @@ public:
     // TODO: Download Random Tile And Use That Size Instead?
     quint32 getAverageSize() const { return _averageSize; }
 
-    QGeoMapType::MapStyle getMapStyle() const { return _mapStyle; }
+    MapStyle getMapStyle() const { return _mapStyle; }
     const QString& getMapName() const { return _mapName; }
     int getMapId() const { return _mapId; }
     const QString& getReferrer() const { return _referrer; }
@@ -71,7 +70,7 @@ protected:
     const QString _referrer;
     const QString _imageFormat;
     const quint32 _averageSize;
-    const QGeoMapType::MapStyle _mapStyle;
+    const MapStyle _mapStyle;
     const QString _language;
     const int _mapId;
 

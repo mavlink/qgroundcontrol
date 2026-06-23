@@ -9,27 +9,27 @@
 
 using namespace TestFixtures;
 
-
 void FWLandingPatternTest::init()
 {
     VisualMissionItemTest::init();
     _fwItem = new FixedWingLandingComplexItem(planController(), false /* flyView */);
-    _createSpy(_fwItem, &_viSpy);
+    MultiSignalSpy* viSpyRaw = nullptr;
+    _createSpy(_fwItem, &viSpyRaw);
+    _viSpy.reset(viSpyRaw);
     // Start in a clean state
     QVERIFY(!_fwItem->dirty());
     _fwItem->setLandingCoordinate(Coord::seattle());
     _fwItem->setDirty(false);
     QVERIFY(!_fwItem->dirty());
     _viSpy->clearAllSignals();
-    _validStopVideoItem = CameraSectionTest::createValidStopTimeItem(planController());
-    _validStopDistanceItem = CameraSectionTest::createValidStopTimeItem(planController());
+    _validStopVideoItem = CameraSectionTest::createValidStopVideoItem(planController());
+    _validStopDistanceItem = CameraSectionTest::createValidStopDistanceItem(planController());
     _validStopTimeItem = CameraSectionTest::createValidStopTimeItem(planController());
 }
 
 void FWLandingPatternTest::cleanup()
 {
-    delete _viSpy;
-    _viSpy = nullptr;
+    _viSpy.reset();
     VisualMissionItemTest::cleanup();
     // These items go away when planController() goes away
     _fwItem = nullptr;
@@ -56,7 +56,7 @@ void FWLandingPatternTest::_testDirty()
     QList<Fact*> rgFacts;
     rgFacts << _fwItem->glideSlope() << _fwItem->valueSetIsDistance();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         QVERIFY(!_fwItem->dirty());
         changeFactValue(fact);
         QVERIFY(_viSpy->emittedOnce("dirtyChanged"));
@@ -75,7 +75,7 @@ void FWLandingPatternTest::_testSaveLoad()
     FixedWingLandingComplexItem* newItem = new FixedWingLandingComplexItem(planController(), false /* flyView */);
     bool success = newItem->load(items[0].toObject(), 10, errorString);
     if (!success) {
-        qDebug() << errorString;
+        qCDebug(UnitTestLog) << errorString;
     }
     QVERIFY(success);
     QVERIFY(errorString.isEmpty());

@@ -8,13 +8,13 @@ PreFlightCheckButton {
     telemetryFailure:   _unhealthySensors & _allCheckedSensors
 
     property int    _unhealthySensors:  globals.activeVehicle ? globals.activeVehicle.sensorsUnhealthyBits : 1
-    property int    _allCheckedSensors: Vehicle.SysStatusSensor3dMag |
-                                        Vehicle.SysStatusSensor3dAccel |
-                                        Vehicle.SysStatusSensor3dGyro |
-                                        Vehicle.SysStatusSensorAbsolutePressure |
-                                        Vehicle.SysStatusSensorDifferentialPressure |
-                                        Vehicle.SysStatusSensorGPS |
-                                        Vehicle.SysStatusSensorAHRS
+    property int    _allCheckedSensors: MAVLinkEnums.MAV_SYS_STATUS_SENSOR_3D_MAG |
+                                        MAVLinkEnums.MAV_SYS_STATUS_SENSOR_3D_ACCEL |
+                                        MAVLinkEnums.MAV_SYS_STATUS_SENSOR_3D_GYRO |
+                                        MAVLinkEnums.MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE |
+                                        MAVLinkEnums.MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE |
+                                        MAVLinkEnums.MAV_SYS_STATUS_SENSOR_GPS |
+                                        MAVLinkEnums.MAV_SYS_STATUS_AHRS
 
     on_UnhealthySensorsChanged: updateTelemetryTextFailure()
 
@@ -22,13 +22,13 @@ PreFlightCheckButton {
 
     function updateTelemetryTextFailure() {
         if(_unhealthySensors & _allCheckedSensors) {
-            if (_unhealthySensors & Vehicle.SysStatusSensor3dMag)                       telemetryTextFailure = qsTr("Failure. Magnetometer issues. Check console.")
-            else if(_unhealthySensors & Vehicle.SysStatusSensor3dAccel)                 telemetryTextFailure = qsTr("Failure. Accelerometer issues. Check console.")
-            else if(_unhealthySensors & Vehicle.SysStatusSensor3dGyro)                  telemetryTextFailure = qsTr("Failure. Gyroscope issues. Check console.")
-            else if(_unhealthySensors & Vehicle.SysStatusSensorAbsolutePressure)        telemetryTextFailure = qsTr("Failure. Barometer issues. Check console.")
-            else if(_unhealthySensors & Vehicle.SysStatusSensorDifferentialPressure)    telemetryTextFailure = qsTr("Failure. Airspeed sensor issues. Check console.")
-            else if(_unhealthySensors & Vehicle.SysStatusSensorAHRS)                    telemetryTextFailure = qsTr("Failure. AHRS issues. Check console.")
-            else if(_unhealthySensors & Vehicle.SysStatusSensorGPS)                     telemetryTextFailure = qsTr("Failure. GPS issues. Check console.")
+            if (_unhealthySensors & MAVLinkEnums.MAV_SYS_STATUS_SENSOR_3D_MAG)                       telemetryTextFailure = qsTr("Failure. Magnetometer issues. Check console.")
+            else if(_unhealthySensors & MAVLinkEnums.MAV_SYS_STATUS_SENSOR_3D_ACCEL)                 telemetryTextFailure = qsTr("Failure. Accelerometer issues. Check console.")
+            else if(_unhealthySensors & MAVLinkEnums.MAV_SYS_STATUS_SENSOR_3D_GYRO)                  telemetryTextFailure = qsTr("Failure. Gyroscope issues. Check console.")
+            else if(_unhealthySensors & MAVLinkEnums.MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE)        telemetryTextFailure = qsTr("Failure. Barometer issues. Check console.")
+            else if(_unhealthySensors & MAVLinkEnums.MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE)    telemetryTextFailure = qsTr("Failure. Airspeed sensor issues. Check console.")
+            else if(_unhealthySensors & MAVLinkEnums.MAV_SYS_STATUS_AHRS)                            telemetryTextFailure = qsTr("Failure. AHRS issues. Check console.")
+            else if(_unhealthySensors & MAVLinkEnums.MAV_SYS_STATUS_SENSOR_GPS)                      telemetryTextFailure = qsTr("Failure. GPS issues. Check console.")
         }
     }
 }

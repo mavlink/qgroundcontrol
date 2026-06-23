@@ -1,7 +1,13 @@
 #include "TestFixturesTest.h"
+#include "SignalEmitter.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QJsonObject>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QTimer>
+#include <QtCore/QUuid>
+#include <QtNetwork/QNetworkRequest>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
@@ -13,38 +19,6 @@
 #include "SettingsManager.h"
 #include "UnitTest.h"
 using namespace TestFixtures;
-
-// ============================================================================
-// Helper class for SignalSpyFixture tests
-// ============================================================================
-class SignalEmitter : public QObject
-{
-    Q_OBJECT
-public:
-    explicit SignalEmitter(QObject* parent = nullptr) : QObject(parent)
-    {
-    }
-
-    void emitValueChanged(int value)
-    {
-        emit valueChanged(value);
-    }
-
-    void emitStateChanged(bool state)
-    {
-        emit stateChanged(state);
-    }
-
-    void emitErrorOccurred(const QString& error)
-    {
-        emit errorOccurred(error);
-    }
-
-signals:
-    void valueChanged(int value);
-    void stateChanged(bool state);
-    void errorOccurred(const QString& error);
-};
 
 // ============================================================================
 // Coordinate Fixtures Tests
@@ -174,6 +148,25 @@ void TestFixturesTest::_testTempFileFixtureWithTemplate()
     QCOMPARE(tempFile.readAll(), QByteArray("Test content"));
 }
 
+void TestFixturesTest::_testTempJsonFileFixture()
+{
+    TempJsonFileFixture tempJson;
+    QVERIFY(tempJson.isValid());
+    QVERIFY(tempJson.path().endsWith(".json"));
+
+    const QJsonObject object = {
+        {QStringLiteral("name"), QStringLiteral("qgc")},
+        {QStringLiteral("value"), 42}
+    };
+    QVERIFY(tempJson.writeJson(object));
+
+    QJsonParseError error {};
+    const QJsonDocument parsed = tempJson.readJson(&error);
+    QCOMPARE(error.error, QJsonParseError::NoError);
+    QCOMPARE(parsed.object().value(QStringLiteral("name")).toString(), QStringLiteral("qgc"));
+    QCOMPARE(parsed.object().value(QStringLiteral("value")).toInt(), 42);
+}
+
 void TestFixturesTest::_testTempDirFixture()
 {
     QString dirPath;
@@ -203,60 +196,62 @@ void TestFixturesTest::_testTempDirFixtureCreateFile()
     QCOMPARE(file.readAll(), content);
 }
 
-// ============================================================================
-// SignalSpyFixture Tests
-// ============================================================================
-void TestFixturesTest::_testSignalSpyFixtureExpect()
+void TestFixturesTest::_testNetworkReplyFixture()
 {
-    SignalEmitter emitter;
-    SignalSpyFixture spy(&emitter);
-    spy.expect("valueChanged");
-    // Signal not yet emitted - should fail verification
-    QVERIFY(!spy.verify());
-    // Emit the signal
-    emitter.emitValueChanged(42);
-    // Now verification should pass
-    QVERIFY(spy.verify());
-    QVERIFY(spy.wasEmitted("valueChanged"));
+    const QByteArray body = R"({"ok":true})";
+    NetworkReplyFixture reply(QUrl(QStringLiteral("https://example.com/api/v1/source")));
+    reply.setHttpStatus(302);
+    reply.setRedirectTarget(QUrl(QStringLiteral("../next")));
+    reply.setNetworkError(QNetworkReply::ConnectionRefusedError, QStringLiteral("connection refused"));
+    reply.setBody(body, QStringLiteral("application/json"));
+
+    QCOMPARE(reply.attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(), 302);
+    QCOMPARE(reply.attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl(), QUrl(QStringLiteral("../next")));
+    QCOMPARE(reply.error(), QNetworkReply::ConnectionRefusedError);
+    QCOMPARE(reply.errorString(), QStringLiteral("connection refused"));
+    QCOMPARE(reply.header(QNetworkRequest::ContentTypeHeader).toString(), QStringLiteral("application/json"));
+    QCOMPARE(reply.header(QNetworkRequest::ContentLengthHeader).toLongLong(), static_cast<qint64>(body.size()));
+    QCOMPARE(reply.readAll(), body);
 }
 
-void TestFixturesTest::_testSignalSpyFixtureExpectExactly()
+void TestFixturesTest::_testSingleInstanceLockFixture()
 {
-    SignalEmitter emitter;
-    SignalSpyFixture spy(&emitter);
-    spy.expectExactly("valueChanged", 2);
-    // Emit once - should fail (expecting 2)
-    emitter.emitValueChanged(1);
-    QVERIFY(!spy.verify());
-    // Emit twice - should pass
-    emitter.emitValueChanged(2);
-    QVERIFY(spy.verify());
-    // Emit third time - should fail again
-    emitter.emitValueChanged(3);
-    QVERIFY(!spy.verify());
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    QSKIP("Single-instance lock fixture is only relevant on desktop targets");
+#else
+    const QString key = QStringLiteral("SingleInstanceLockFixtureTest_%1")
+                            .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+
+    SingleInstanceLockFixture primary(key);
+    QVERIFY(primary.isLocked());
+
+    SingleInstanceLockFixture secondary(key, false);
+    QVERIFY(!secondary.isLocked());
+    QVERIFY(!secondary.tryAcquire());
+
+    primary.release();
+    QVERIFY(!primary.isLocked());
+
+    QVERIFY(secondary.tryAcquire());
+    QVERIFY(secondary.isLocked());
+#endif
 }
 
-void TestFixturesTest::_testSignalSpyFixtureExpectNot()
+void TestFixturesTest::_testWaitForSignalCountHelper()
 {
-    SignalEmitter emitter;
-    SignalSpyFixture spy(&emitter);
-    spy.expectNot("errorOccurred");
-    // No error emitted - should pass
-    QVERIFY(spy.verify());
-    // Emit error - should fail
-    emitter.emitErrorOccurred("Test error");
-    QVERIFY(!spy.verify());
-}
+    TestFixturesSignalEmitter emitter;
+    QSignalSpy spy(&emitter, &TestFixturesSignalEmitter::valueChanged);
+    QVERIFY(spy.isValid());
 
-void TestFixturesTest::_testSignalSpyFixtureWaitAndVerify()
-{
-    SignalEmitter emitter;
-    SignalSpyFixture spy(&emitter);
-    spy.expect("stateChanged");
-    // Schedule signal emission after 50ms
-    QTimer::singleShot(50, &emitter, [&emitter]() { emitter.emitStateChanged(true); });
-    // Wait and verify - should succeed within timeout
-    QVERIFY(spy.waitAndVerify(1000));
+    QTimer::singleShot(20, &emitter, [&emitter]() { emitter.emitValueChanged(1); });
+    QTimer::singleShot(40, &emitter, [&emitter]() { emitter.emitValueChanged(2); });
+
+    QVERIFY_SIGNAL_COUNT_WAIT(spy, 2, TestTimeout::mediumMs());
+    QCOMPARE(spy.count(), 2);
+
+    expectLogMessage("Test.UnitTest", QtWarningMsg, QRegularExpression(QStringLiteral("Timeout waiting for signal count")));
+    QVERIFY(!UnitTest::waitForSignalCount(spy, 3, 100, QStringLiteral("valueChanged")));
+    verifyExpectedLogMessage();
 }
 
 // ============================================================================
@@ -295,8 +290,5 @@ void TestFixturesTest::_testSettingsFixtureFactValue()
     // After fixture destruction, original value should be restored
     QCOMPARE(testFact->rawValue(), originalValue);
 }
-
-// Required for SignalEmitter Q_OBJECT
-#include "TestFixturesTest.moc"
 
 UT_REGISTER_TEST(TestFixturesTest, TestLabel::Unit)

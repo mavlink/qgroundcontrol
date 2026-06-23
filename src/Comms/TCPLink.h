@@ -4,7 +4,6 @@
 #include "LinkInterface.h"
 
 #include <QtCore/QByteArray>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 #include <QtNetwork/QAbstractSocket>
 
@@ -12,8 +11,6 @@
 
 class QTcpSocket;
 class QThread;
-
-Q_DECLARE_LOGGING_CATEGORY(TCPLinkLog)
 
 /*===========================================================================*/
 

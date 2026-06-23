@@ -37,6 +37,9 @@ target_sources(${CMAKE_PROJECT_NAME}
         MissionCommandUIInfo.h
         MissionController.cc
         MissionController.h
+        MissionFlightStatus.h
+        MissionFlightStatusCalculator.cc
+        MissionFlightStatusCalculator.h
         MissionItem.cc
         MissionItem.h
         MissionManager.cc
@@ -83,10 +86,23 @@ target_sources(${CMAKE_PROJECT_NAME}
 # ----------------------------------------------------------------------------
 # Mission Definition JSON Resources
 # ----------------------------------------------------------------------------
-file(GLOB_RECURSE JSON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*.json)
-qt_add_resources(${CMAKE_PROJECT_NAME} json_mission_manager
-    PREFIX "/json"
-    FILES ${JSON_FILES}
+qgc_add_json_resources(json_mission_manager)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} missionmanager_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/CogWheel.svg"
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} missionmanager_plancreator_images
+    PREFIX "/qmlimages/PlanCreator"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/BlankPlanCreator.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/CorridorScanPlanCreator.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/StructureScanPlanCreator.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/SurveyPlanCreator.png"
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

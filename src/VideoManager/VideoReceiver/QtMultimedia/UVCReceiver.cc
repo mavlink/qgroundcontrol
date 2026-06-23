@@ -1,4 +1,5 @@
 #include "UVCReceiver.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
@@ -88,7 +89,7 @@ void UVCReceiver::checkPermission()
     if (qApp->checkPermission(cameraPermission) == Qt::PermissionStatus::Undetermined) {
         qApp->requestPermission(cameraPermission, qgcApp(), [](const QPermission &permission) {
             if (permission.status() != Qt::PermissionStatus::Granted) {
-                qgcApp()->showAppMessage(QStringLiteral("Failed to get camera permission"));
+                QGC::showAppMessage(QStringLiteral("Failed to get camera permission"));
             }
         });
     }

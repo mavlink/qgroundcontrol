@@ -35,6 +35,8 @@
         { "vendorID": 12677, "productID": 57,       "boardClass": "Pixhawk",    "name": "ARK FMU V6X" },
         { "vendorID": 12677, "productID": 58,       "boardClass": "Pixhawk",    "name": "ARK Pi6X" },
         { "vendorID": 12677, "productID": 59,       "boardClass": "Pixhawk",    "name": "ARK FPV" },
+        { "vendorID": 12677, "productID": 61,       "boardClass": "Pixhawk",    "name": "ARK FMU V6S" },
+        { "vendorID": 12677, "productID": 62,       "boardClass": "Pixhawk",    "name": "ARK FMU V6XRT" },
 
         { "vendorID": 1155, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
         { "vendorID": 4617, "productID": 22336,     "boardClass": "Pixhawk",    "name": "ArduPilot ChibiOS" },
@@ -55,8 +57,12 @@
         { "vendorID": 9900, "productID": 4131,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7" },
         { "vendorID": 9900, "productID": 4132,      "boardClass": "Pixhawk",    "name": "mRo Control Zero H7 OEM" },
         { "vendorID": 9900, "productID": 4388,      "boardClass": "Pixhawk",    "name": "3DR Control Zero H7 OEM Rev G" },
+        { "vendorID": 9900, "productID": 80,        "boardClass": "Pixhawk",    "name": "Gear Up AirBrainH743" },
+        { "vendorID": 5840, "productID": 5374,      "boardClass": "Pixhawk",    "name": "AEDROX AEDROXH7" },
 
         { "vendorID": 2106, "productID": 7120,      "boardClass": "Pixhawk",    "name": "PX4 Accton Godwit GA1" },
+
+        { "vendorID": 4617, "productID": 4115,      "boardClass": "Pixhawk",    "name": "MATEK H743-Slim" },
 
         { "vendorID": 1027, "productID": 24597,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio" },
         { "vendorID": 4292, "productID": 60000,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
@@ -72,7 +78,10 @@
         { "vendorID": 8352, "productID": 16848,     "boardClass": "OpenPilot",  "name": "Taulabs Sparky2" },
         { "vendorID": 13891, "productID": 5600,     "boardClass": "Pixhawk",    "name": "ZeroOne X6" },
         { "vendorID": 8355, "productID": 16888,     "boardClass": "Pixhawk",    "name": "Svehicle e2" },
-        { "vendorID": 16325, "productID": 71,     "boardClass": "Pixhawk",    "name": "VOLOLAND NarinFC-H7" }
+        { "vendorID": 16325, "productID": 71,       "boardClass": "Pixhawk",    "name": "VOLOLAND NarinFC-H7" },
+        { "vendorID": 5840,  "productID": 5318,     "boardClass": "Pixhawk",    "name": "CBU H753-SOM" },
+        { "vendorID": 5840,  "productID": 5387,     "boardClass": "Pixhawk",    "name": "CORVON 743V2" },
+        { "vendorID": 5840,  "productID": 5418,     "boardClass": "Pixhawk",    "name": "CORVON V5" }
     ],
 
     "boardDescriptionFallback": [
@@ -118,6 +127,10 @@
         { "regExp": "^ARK BL FPV.x$",       "boardClass": "Pixhawk" },
         { "regExp": "^ARK Pi6X.x$",         "boardClass": "Pixhawk" },
         { "regExp": "^ARK BL Pi6X.x$",      "boardClass": "Pixhawk" },
+        { "regExp": "^ARK FMU v6S$",        "boardClass": "Pixhawk" },
+        { "regExp": "^ARK BL FMU v6S$",     "boardClass": "Pixhawk" },
+        { "regExp": "^ARK FMU v6XRT$",      "boardClass": "Pixhawk" },
+        { "regExp": "^ARK BL FMU v6XRT$",   "boardClass": "Pixhawk" },
         { "regExp": "^PX4 TROPIC Community","boardClass": "Pixhawk" },
         { "regExp": "^PX4 MR-TROPIC",       "boardClass": "Pixhawk" },
         { "regExp": "^PX4 BL MR-TROPIC",    "boardClass": "Pixhawk" },
@@ -128,6 +141,7 @@
     "boardManufacturerFallback": [
         { "regExp": "^ArduPilot$",      "boardClass": "Pixhawk" },
         { "regExp": "^ARK$",            "boardClass": "Pixhawk" },
+        { "regExp": "^CORVON$",         "boardClass": "Pixhawk" },
         { "regExp": "^Hex/ProfiCNC$",   "boardClass": "Pixhawk" },
         { "regExp": "^Holybro$",        "boardClass": "Pixhawk" },
         { "regExp": "^mRo$",            "boardClass": "Pixhawk" },

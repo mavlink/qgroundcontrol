@@ -1,8 +1,9 @@
 #include "GeoTagImageModelTest.h"
-#include "GeoTagImageModel.h"
 
-#include <QtTest/QSignalSpy>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtTest/QSignalSpy>
+
+#include "GeoTagImageModel.h"
 
 void GeoTagImageModelTest::_addImageTest()
 {

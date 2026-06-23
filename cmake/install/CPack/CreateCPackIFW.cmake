@@ -8,9 +8,9 @@ include(CreateCPackCommon)
 # ----------------------------------------------------------------------------
 # Qt Installer Framework Detection
 # ----------------------------------------------------------------------------
-# Hints for finding QtIFW
-set(CPACK_IFW_ROOT "${Qt6_ROOT_DIR}/../../Tools/QtInstallerFramework/*")
-set(QTIFWDIR "${Qt6_ROOT_DIR}/../../Tools/QtInstallerFramework/*")
+# Hints for finding QtIFW; CPackIFW appends Tools/QtInstallerFramework/<ver>/bin itself.
+set(CPACK_IFW_ROOT "$ENV{QT_ROOT_DIR}/../..")
+set(QTIFWDIR "$ENV{QT_ROOT_DIR}/../..")
 
 include(CPackIFW)
 
@@ -26,7 +26,7 @@ set(CPACK_IFW_VERBOSE ON)
 # ----------------------------------------------------------------------------
 # Package Appearance
 # ----------------------------------------------------------------------------
-set(CPACK_IFW_PACKAGE_TITLE "${QGC_INSTALLER_NAME}")
+set(CPACK_IFW_PACKAGE_TITLE "${CMAKE_PROJECT_NAME}")
 set(CPACK_IFW_PACKAGE_PUBLISHER "${QGC_ORG_NAME}")
 set(CPACK_IFW_PRODUCT_URL "${CMAKE_PROJECT_HOMEPAGE_URL}")
 set(CPACK_IFW_PACKAGE_ICON "${QGC_APP_ICON}")

@@ -1,10 +1,10 @@
 #include "LinkInterface.h"
+#include "MAVLinkLib.h"
 #include "LinkManager.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
-#include "MAVLinkSigning.h"
-#include "SettingsManager.h"
-#include "MavlinkSettings.h"
+#include "SigningController.h"
 
 #include <QtQml/QQmlEngine>
 
@@ -40,27 +40,6 @@ bool LinkInterface::mavlinkChannelIsSet() const
     return (LinkManager::invalidMavlinkChannel() != _mavlinkChannel);
 }
 
-bool LinkInterface::initMavlinkSigning()
-{
-    if (!isSecureConnection()) {
-        auto mavlinkSettings = SettingsManager::instance()->mavlinkSettings();
-        const QByteArray signingKeyBytes = mavlinkSettings->mavlink2SigningKey()->rawValue().toByteArray();
-        if (MAVLinkSigning::initSigning(static_cast<mavlink_channel_t>(_mavlinkChannel), signingKeyBytes, MAVLinkSigning::insecureConnectionAccceptUnsignedCallback)) {
-            if (signingKeyBytes.isEmpty()) {
-                qCDebug(LinkInterfaceLog) << "Signing disabled on channel" << _mavlinkChannel;
-            } else {
-                qCDebug(LinkInterfaceLog) << "Signing enabled on channel" << _mavlinkChannel;
-            }
-        } else {
-            qCWarning(LinkInterfaceLog) << "Failed To enable Signing on channel" << _mavlinkChannel;
-            // FIXME: What should we do here?
-            return false;
-        }
-    }
-
-    return true;
-}
-
 bool LinkInterface::_allocateMavlinkChannel()
 {
     Q_ASSERT(!mavlinkChannelIsSet());
@@ -80,7 +59,12 @@ bool LinkInterface::_allocateMavlinkChannel()
     qCDebug(LinkInterfaceLog) << "_allocateMavlinkChannel" << _mavlinkChannel;
 
     mavlink_set_proto_version(_mavlinkChannel, MAVLINK_VERSION); // We only support v2 protcol
-    initMavlinkSigning();
+
+    _signingController = std::make_unique<SigningController>(static_cast<mavlink_channel_t>(_mavlinkChannel));
+    _signingController->clearSigning();
+
+    qCDebug(LinkInterfaceLog) << "SigningController created for channel" << _mavlinkChannel
+                              << (isSecureConnection() ? "(secure)" : "(will auto-detect)");
 
     return true;
 }
@@ -93,6 +77,15 @@ void LinkInterface::_freeMavlinkChannel()
         return;
     }
 
+    // Destroy the controller before freeing the channel so it can flush the final timestamp.
+    _signingController.reset();
+
+    // mavlink_reset_channel_status only resets parse_state — null signing/streams explicitly to avoid dangling derefs.
+    mavlink_status_t* const status = mavlink_get_channel_status(_mavlinkChannel);
+    status->signing = nullptr;
+    status->signing_streams = nullptr;
+    mavlink_reset_channel_status(_mavlinkChannel);
+
     LinkManager::instance()->freeMavlinkChannel(_mavlinkChannel);
     _mavlinkChannel = LinkManager::invalidMavlinkChannel();
 }
@@ -101,6 +94,20 @@ void LinkInterface::writeBytesThreadSafe(const char *bytes, int length)
 {
     const QByteArray data(bytes, length);
     (void) QMetaObject::invokeMethod(this, "_writeBytes", Qt::AutoConnection, data);
+}
+
+void LinkInterface::sendMessageThreadSafe(mavlink_message_t &message)
+{
+    // Re-sign with a current timestamp; the cached-resend path (Vehicle::sendMessageMultiple) otherwise ships frozen
+    // signed bytes whose timestamp drifts behind wall clock and gets OLD_TIMESTAMP-rejected. No-op when signing is
+    // disabled or the message isn't outgoing-signed. The secret key stays in the signing layer.
+    if (_signingController) {
+        (void) _signingController->signOutgoing(message);
+    }
+
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    const int len = mavlink_msg_to_send_buffer(buffer, &message);
+    writeBytesThreadSafe(reinterpret_cast<const char *>(buffer), len);
 }
 
 void LinkInterface::removeVehicleReference()
@@ -123,16 +130,6 @@ void LinkInterface::_connectionRemoved()
     }
 }
 
-void LinkInterface::setSigningSignatureFailure(bool failure)
-{
-    if (_signingSignatureFailure != failure) {
-        _signingSignatureFailure = failure;
-        if (_signingSignatureFailure) {
-            emit communicationError(tr("Signing Failure"), tr("Signing signature mismatch"));
-        }
-    }
-}
-
 void LinkInterface::reportMavlinkV1Traffic()
 {
     if (!_mavlinkV1TrafficReported) {
@@ -145,6 +142,6 @@ void LinkInterface::reportMavlinkV1Traffic()
                                    "%2 only supports MAVLink v2. "
                                    "Please ensure your vehicle is configured to use MAVLink v2.")
                                     .arg(linkName).arg(qgcApp()->applicationName());
-        qgcApp()->showAppMessage(message);
+        QGC::showAppMessage(message);
     }
 }

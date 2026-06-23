@@ -5,7 +5,6 @@
 #include "QGroundControlQmlGlobal.h"
 #include "TerrainQueryTest.h"
 
-
 void TransectStyleComplexItemTest::init()
 {
     TransectStyleComplexItemTestBase::init();
@@ -15,14 +14,13 @@ void TransectStyleComplexItemTest::init()
     _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(true);
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(100);
     _transectStyleItem->setDirty(false);
-    _multiSpy = new MultiSignalSpy;
+    _multiSpy = std::make_unique<MultiSignalSpy>();
     QVERIFY(_multiSpy->init(_transectStyleItem));
 }
 
 void TransectStyleComplexItemTest::cleanup()
 {
-    delete _multiSpy;
-    _multiSpy = nullptr;
+    _multiSpy.reset();
     TransectStyleComplexItemTestBase::cleanup();
     // These items are deleted when planController() is deleted
     _transectStyleItem = nullptr;
@@ -48,7 +46,7 @@ void TransectStyleComplexItemTest::_testDirty()
     rgFacts << _transectStyleItem->turnAroundDistance() << _transectStyleItem->cameraTriggerInTurnAround()
             << _transectStyleItem->hoverAndCapture() << _transectStyleItem->refly90Degrees();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         QVERIFY(!_transectStyleItem->dirty());
         changeFactValue(fact);
         QVERIFY(_multiSpy->emittedOnce("dirtyChanged"));
@@ -57,8 +55,7 @@ void TransectStyleComplexItemTest::_testDirty()
     }
     rgFacts.clear();
     _transectStyleItem->adjustSurveAreaPolygon();
-    QTest::qWait(100);  // Let event loop process deferred pathChanged signal
-    QVERIFY(_transectStyleItem->dirty());
+    QVERIFY_TRUE_WAIT(_transectStyleItem->dirty(), TestTimeout::mediumMs());
     _transectStyleItem->setDirty(false);
     QVERIFY(!_transectStyleItem->surveyAreaPolygon()->dirty());
     _multiSpy->clearAllSignals();
@@ -77,10 +74,10 @@ void TransectStyleComplexItemTest::_testRebuildTransects()
     //  coveredAreaChanged signal
     //  lastSequenceNumberChanged signal
     _transectStyleItem->adjustSurveAreaPolygon();
-    QTest::qWait(100);  // Let event loop process deferred pathChanged signal
-    QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
-    QVERIFY(_transectStyleItem->recalcCameraShotsCalled);
-    QVERIFY(_multiSpy->emittedByMask(_multiSpy->mask("coveredAreaChanged", "lastSequenceNumberChanged")));
+    QVERIFY_TRUE_WAIT(_transectStyleItem->rebuildTransectsPhase1Called, TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(_transectStyleItem->recalcCameraShotsCalled, TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(_multiSpy->emitted("coveredAreaChanged", "lastSequenceNumberChanged"),
+                      TestTimeout::mediumMs());
     _transectStyleItem->rebuildTransectsPhase1Called = false;
     _transectStyleItem->recalcCameraShotsCalled = false;
     _transectStyleItem->recalcComplexDistanceCalled = false;
@@ -94,7 +91,7 @@ void TransectStyleComplexItemTest::_testRebuildTransects()
             << _transectStyleItem->hoverAndCapture() << _transectStyleItem->refly90Degrees()
             << _transectStyleItem->cameraCalc()->frontalOverlap() << _transectStyleItem->cameraCalc()->sideOverlap();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         changeFactValue(fact);
         QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
         QVERIFY(_transectStyleItem->recalcCameraShotsCalled);
@@ -129,17 +126,17 @@ void TransectStyleComplexItemTest::_testRebuildTransects()
 void TransectStyleComplexItemTest::_testDistanceSignalling()
 {
     _transectStyleItem->adjustSurveAreaPolygon();
-    QTest::qWait(100);  // Let event loop process deferred pathChanged signal
-    QVERIFY(_multiSpy->emittedByMask(_multiSpy->mask("complexDistanceChanged", "greatestDistanceToChanged")));
+    QVERIFY_TRUE_WAIT(_multiSpy->emitted("complexDistanceChanged", "greatestDistanceToChanged"),
+                      TestTimeout::mediumMs());
     _transectStyleItem->setDirty(false);
     _multiSpy->clearAllSignals();
     QList<Fact*> rgFacts;
     rgFacts << _transectStyleItem->turnAroundDistance() << _transectStyleItem->hoverAndCapture()
             << _transectStyleItem->refly90Degrees();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         changeFactValue(fact);
-        QVERIFY(_multiSpy->emittedByMask(_multiSpy->mask("complexDistanceChanged", "greatestDistanceToChanged")));
+        QVERIFY(_multiSpy->emitted("complexDistanceChanged", "greatestDistanceToChanged"));
         _transectStyleItem->setDirty(false);
         _multiSpy->clearAllSignals();
     }
@@ -151,12 +148,12 @@ void TransectStyleComplexItemTest::_testAltitudes()
     _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(50);
     _transectStyleItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(10);
     _transectStyleItem->cameraCalc()->adjustedFootprintSide()->setRawValue(10);
-    qDebug() << _transectStyleItem->_transectCount();
+    qCDebug(UnitTestLog) << _transectStyleItem->_transectCount();
     QList<MissionItem*> rgItems;
     _transectStyleItem->appendMissionItems(rgItems, this);
     for (const MissionItem* missionItem : rgItems) {
         if (missionItem->command() == MAV_CMD_NAV_WAYPOINT) {
-            qDebug() << missionItem->param7();
+            qCDebug(UnitTestLog) << missionItem->param7();
         }
     }
 }
@@ -199,24 +196,5 @@ void TestTransectStyleItem::adjustSurveAreaPolygon()
     vertex.setLatitude(vertex.latitude() + 1);
     surveyAreaPolygon()->adjustVertex(0, vertex);
 }
-
-// TODO: Move To Terrain Testing
-/*void TransectStyleComplexItemTest::_testFollowTerrain()
-{
-    _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(50);
-    _transectStyleItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(0);
-    _transectStyleItem->cameraCalc()->setDistanceMode(QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain);
-    QVERIFY(QTest::qWaitFor([&]() { return _transectStyleItem->readyForSaveState() ==
-TransectStyleComplexItem::ReadyForSave; }, 2000)); QList<MissionItem*> rgItems;
-    _transectStyleItem->appendMissionItems(rgItems, this);
-    QList<double> expectedTerrainValues {497, 509, 512, 512 };
-    //QCOMPARE(rgItems.count(), expectedTerrainValues.count());
-    for (const MissionItem* missionItem : rgItems) {
-        QCOMPARE(missionItem->command(), MAV_CMD_NAV_WAYPOINT);
-        QCOMPARE(missionItem->frame(), MAV_FRAME_GLOBAL);
-        QCOMPARE(missionItem->param7(), expectedTerrainValues.front());
-        expectedTerrainValues.pop_front();
-    }
-}*/
 
 UT_REGISTER_TEST(TransectStyleComplexItemTest, TestLabel::Unit, TestLabel::MissionManager)

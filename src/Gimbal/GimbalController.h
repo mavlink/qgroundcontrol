@@ -1,13 +1,10 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "Gimbal.h"
-#include "MAVLinkLib.h"
-
-Q_DECLARE_LOGGING_CATEGORY(GimbalControllerLog)
+#include "MAVLinkMessageType.h"
 
 class QmlObjectListModel;
 class Vehicle;
@@ -60,6 +57,7 @@ public slots:
     void gimbalYawStop();
 
 private slots:
+    void _initialConnectCompleted();
     void _mavlinkMessageReceived(const mavlink_message_t& message);
     void _rateSenderTimeout();
 
@@ -115,6 +113,7 @@ private:
 
     QMap<GimbalPairId, Gimbal*> _potentialGimbals;
     QmlObjectListModel *_gimbals = nullptr;
+    bool _initialConnectComplete = false;
 
     static constexpr const char *_gimbalFactGroupNamePrefix = "gimbal";
 };

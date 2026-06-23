@@ -6,7 +6,13 @@
   ],
   "include": [
     "tools/**/*.py",
-    "test/**/*.py"
+    "test/**/*.py",
+    ".github/scripts/**/*.py"
+  ],
+  "extraPaths": [
+    "tools",
+    "tools/translations",
+    ".github/scripts"
   ],
   "pythonVersion": "3.10",
   "reportMissingImports": "warning",

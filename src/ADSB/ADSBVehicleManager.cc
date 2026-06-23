@@ -1,5 +1,6 @@
 #include "ADSBVehicleManager.h"
-#include "QGCApplication.h"
+#include "MAVLinkLib.h"
+#include "AppMessages.h"
 #include "SettingsManager.h"
 #include "ADSBVehicleManagerSettings.h"
 #include "ADSBTCPLink.h"
@@ -206,5 +207,5 @@ void ADSBVehicleManager::_linkError(const QString &errorMsg, bool stopped)
         _adsbSettings->adsbServerConnectEnabled()->setRawValue(false);
     }
 
-    qgcApp()->showAppMessage(msg);
+    QGC::showAppMessage(msg);
 }

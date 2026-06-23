@@ -1,20 +1,17 @@
 #include "gstqgcelements.h"
+#include "qgc_version.h"
 
 static gboolean
 plugin_init(GstPlugin *plugin)
 {
-    gboolean ret = FALSE;
-
-    ret |= GST_ELEMENT_REGISTER(qgcvideosinkbin, plugin);
-
-    return ret;
+    return GST_ELEMENT_REGISTER(qgcvideosinkbin, plugin);
 }
 
 #define GST_PACKAGE_NAME   "GStreamer plugin for QGC's Video Receiver"
 #define GST_PACKAGE_ORIGIN "https://qgroundcontrol.com/"
 #define GST_LICENSE        "LGPL"
 #define PACKAGE            "QGC Video Receiver"
-#define PACKAGE_VERSION    "current"
+#define PACKAGE_VERSION    QGC_APP_VERSION_STR
 
 GST_PLUGIN_DEFINE(
     GST_VERSION_MAJOR, GST_VERSION_MINOR,

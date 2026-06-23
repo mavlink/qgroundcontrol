@@ -1,15 +1,12 @@
 #pragma once
 
 #include "FirmwarePlugin.h"
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QMap>
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(StandardModesLog)
-
 class Vehicle;
 
 class StandardModes : public QObject

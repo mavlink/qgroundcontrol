@@ -1,29 +1,30 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "QmlObjectListModel.h"
 #include "FactPanelController.h"
 
 class APMAirframeModel;
 class APMAirframeType;
 class QmlObjectListModel;
 
-Q_DECLARE_LOGGING_CATEGORY(APMAirframeComponentControllerLog)
-
-/// MVC Controller for APMAirframeComponent.qml.
+/// \brief MVC Controller for APMAirframeComponent.qml.
+///
 class APMAirframeComponentController : public FactPanelController
 {
     Q_OBJECT
     QML_ELEMENT
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_PROPERTY(QmlObjectListModel *frameClassModel MEMBER _frameClassModel CONSTANT)
+#ifdef QGC_UNITTEST_BUILD
+    friend class APMAirframeComponentControllerTest; // Unit test
+#endif
 
 public:
     explicit APMAirframeComponentController(QObject *parent = nullptr);
     ~APMAirframeComponentController();
-
 
     Q_INVOKABLE void loadParameters(const QString &paramFile);
 

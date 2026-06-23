@@ -4,9 +4,9 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
-#include "QGCMAVLink.h"
 
-/// MVC Controller for PX4SimpleFlightModes.qml
+/// \brief MVC Controller for PX4SimpleFlightModes.qml
+///
 class PX4SimpleFlightModesController : public FactPanelController
 {
     Q_OBJECT

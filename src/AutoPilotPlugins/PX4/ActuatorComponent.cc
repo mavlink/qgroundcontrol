@@ -1,7 +1,9 @@
 #include "ActuatorComponent.h"
+#include "MAVLinkLib.h"
 #include "QGCApplication.h"
 #include "GeometryImage.h"
 #include "Actuators/Actuators.h"
+#include "Vehicle.h"
 
 #include <QtQml/QQmlApplicationEngine>
 

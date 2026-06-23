@@ -13,15 +13,25 @@ Item {
     property Fact   _editorDialogFact: Fact { }
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
     property int    _rowWidth:          10 // Dynamic adjusted at runtime
-    property bool   _searchFilter:      searchText.text.trim() != "" || controller.showModifiedOnly  ///< true: showing results of search
+    property bool   _searchFilter:      searchText.text.trim() != "" || controller.showModifiedOnly || controller.showFavoritesOnly  ///< true: showing results of search
     property var    _searchResults      ///< List of parameter names from search results
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _showRCToParam:     _activeVehicle.px4Firmware
     property var    _appSettings:       QGroundControl.settingsManager.appSettings
     property var    _controller:        controller
+    property var    _favorites:         controller.favoriteParameterNames
+    property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
 
     ParameterEditorController {
         id: controller
+    }
+
+    Connections {
+        target: controller
+        function onMissingParamsFromFile(missingParams) {
+            QGroundControl.showMessageDialog(_root, qsTr("Missing Parameters"),
+                qsTr("The following parameters from the file were not found on the vehicle and were skipped: %1").arg(missingParams.join("\n")))
+        }
     }
 
     Timer {
@@ -71,6 +81,11 @@ Item {
                 fileDialog.openForSave()
             }
         }
+        QGCMenuSeparator { }
+        QGCMenuItem {
+            text:           qsTr("Clear all favorites")
+            onTriggered:    controller.clearAllFavorites()
+        }
         QGCMenuSeparator { visible: _showRCToParam }
         QGCMenuItem {
             text:           qsTr("Clear all RC to Param")
@@ -91,7 +106,7 @@ Item {
     QGCFileDialog {
         id:             fileDialog
         folder:         _appSettings.parameterSavePath
-        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension) , qsTr("All Files (*)") ]
+        nameFilters:    [ qsTr("Parameter Files (*.%1)").arg(_appSettings.parameterFileExtension), qsTr("Mission Planner Files (*.param)"), qsTr("All Files (*)") ]
 
         onAcceptedForSave: (file) => {
             controller.saveToFile(file)
@@ -161,10 +176,9 @@ Item {
             }
 
             QGCCheckBox {
-                text:       qsTr("Show modified only")
-                checked:    controller.showModifiedOnly
-                onClicked:  controller.showModifiedOnly = checked
-                visible:    QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
+                text:       qsTr("Hide read-only")
+                checked:    controller.hideReadOnly
+                onClicked:  controller.hideReadOnly = checked
             }
         }
 
@@ -175,11 +189,29 @@ Item {
         }
     }
 
+    QGCTabBar {
+        id:             tabBar
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.top:        header.bottom
+        anchors.topMargin:  _margins
+
+        QGCTabButton { text: qsTr("Full List") }
+        QGCTabButton { text: qsTr("Modified") }
+        QGCTabButton { text: qsTr("Favorites") }
+
+        onCurrentIndexChanged: {
+            controller.showModifiedOnly  = (currentIndex === 1)
+            controller.showFavoritesOnly = (currentIndex === 2)
+        }
+    }
+
     /// Group buttons
     QGCFlickable {
         id :                groupScroll
         width:              ScreenTools.defaultFontPixelWidth * 25
-        anchors.top:        header.bottom
+        anchors.top:        tabBar.bottom
+        anchors.topMargin:  _margins
         anchors.bottom:     parent.bottom
         clip:               true
         pixelAligned:       true
@@ -237,15 +269,74 @@ Item {
         }
     }
 
+    HorizontalHeaderView {
+        id:                 headerView
+        anchors.left:       tableView.left
+        anchors.right:      tableView.right
+        anchors.top:        tabBar.bottom
+        anchors.topMargin:  _margins
+        syncView:           tableView
+        clip:               true
+
+        delegate: Rectangle {
+            implicitWidth:  column === 0 ? ScreenTools.implicitCheckBoxHeight + ScreenTools.defaultFontPixelWidth
+                                         : headerLabel.contentWidth + ScreenTools.defaultFontPixelWidth
+            implicitHeight: headerLabel.contentHeight + ScreenTools.defaultFontPixelHeight * 0.5
+            color:          qgcPal.windowShade
+
+            QGCLabel {
+                id:                     headerLabel
+                anchors.left:           parent.left
+                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
+                anchors.verticalCenter: parent.verticalCenter
+                text:                   display
+                font.bold:              true
+            }
+
+            // Top border
+            Rectangle {
+                anchors.top:    parent.top
+                width:          parent.width
+                height:         1
+                color:          qgcPal.groupBorder
+            }
+
+            // Left border
+            Rectangle {
+                anchors.left:   parent.left
+                height:         parent.height
+                width:          1
+                color:          qgcPal.groupBorder
+            }
+
+            // Right border (last column only)
+            Rectangle {
+                anchors.right:  parent.right
+                height:         parent.height
+                width:          1
+                color:          qgcPal.groupBorder
+                visible:        column == 3
+            }
+
+            // Bottom border
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width:          parent.width
+                height:         1
+                color:          qgcPal.groupBorder
+            }
+        }
+    }
+
     TableView {
         id:                 tableView
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-        anchors.top:        header.bottom
+        anchors.top:        headerView.bottom
         anchors.bottom:     parent.bottom
         anchors.left:       _searchFilter ? parent.left : groupScroll.right
         anchors.right:      parent.right
-        columnSpacing:      ScreenTools.defaultFontPixelWidth
-        rowSpacing:         ScreenTools.defaultFontPixelHeight / 4
+        columnSpacing:      0
+        rowSpacing:         0
         model:              controller.parameters
         contentWidth:       width
         clip:               true
@@ -265,26 +356,85 @@ Item {
             forceLayoutTimer.start()
         }
 
-        delegate: Item {
-            implicitWidth:  label.contentWidth
-            implicitHeight: label.contentHeight
+        delegate: Rectangle {
+            implicitWidth:  column === 0 ? ScreenTools.implicitCheckBoxHeight + ScreenTools.defaultFontPixelWidth
+                                         : column === 1 ? nameRow.implicitWidth + ScreenTools.defaultFontPixelWidth
+                                         : column === 2 ? ScreenTools.defaultFontPixelWidth * 16
+                                                        : label.contentWidth + ScreenTools.defaultFontPixelWidth
+            implicitHeight: label.contentHeight + ScreenTools.defaultFontPixelHeight * 0.5
+            color:          row % 2 === 0 ? "transparent" : qgcPal.windowShade
             clip:           true
+
+            // Bottom grid line
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width:          parent.width
+                height:         1
+                color:          qgcPal.groupBorder
+            }
+
+            // Left grid line
+            Rectangle {
+                anchors.left:   parent.left
+                height:         parent.height
+                width:          1
+                color:          qgcPal.groupBorder
+            }
+
+            // Right grid line (last column only)
+            Rectangle {
+                anchors.right:  parent.right
+                height:         parent.height
+                width:          1
+                color:          qgcPal.groupBorder
+                visible:        column == 3
+            }
+
+            QGCCheckBox {
+                visible:                column === 0
+                anchors.centerIn:       parent
+                checked:                _root._favorites.indexOf(fact.name) >= 0
+                z:                      1
+                onClicked:              controller.toggleFavorite(fact.name)
+            }
+
+            Row {
+                id:                     nameRow
+                visible:                column === 1
+                anchors.left:           parent.left
+                anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
+                anchors.verticalCenter: parent.verticalCenter
+                spacing:               lockIcon.visible ? ScreenTools.defaultFontPixelWidth / 3 : 0
+
+                QGCLabel {
+                    text:               column === 1 ? display : ""
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
+                QGCColoredImage {
+                    id:                 lockIcon
+                    visible:            fact.readOnly
+                    source:             "qrc:/InstrumentValueIcons/lock-closed.svg"
+                    color:              qgcPal.text
+                    width:              ScreenTools.defaultFontPixelHeight * 0.8
+                    height:             width
+                    sourceSize.width:   width
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
 
             QGCLabel {
                 id:                 label
-                width:              column == 1 ? ScreenTools.defaultFontPixelWidth * 15 : contentWidth
-                text:               column == 1 ? col1String() : display
-                color:              column == 1 ? col1Color() : qgcPal.text
+                visible:            column !== 0 && column !== 1
+                anchors.left:       parent.left
+                anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
+                anchors.verticalCenter: parent.verticalCenter
+                width:              column == 2 ? ScreenTools.defaultFontPixelWidth * 15 : implicitWidth
+                text:               column == 2 ? col1String() : display
+                color:              column == 2 && fact.defaultValueAvailable && !fact.valueEqualsDefault ? qgcPal.modifiedParamValue : qgcPal.text
+                font.bold:          column == 2 && fact.defaultValueAvailable && !fact.valueEqualsDefault
                 maximumLineCount:   1
-                elide:              column == 1 ? Text.ElideRight : Text.ElideNone
-
-                Component.onCompleted: {
-                    return
-                    if (tableView.columnWidth(column) < width) {
-                        console.log("setColumnWidth", column, width)
-                        tableView.setColumnWidth(column, width)
-                    }
-                }
+                elide:              column == 2 ? Text.ElideRight : Text.ElideNone
 
                 function col1String() {
                     if (fact.enumStrings.length === 0) {
@@ -295,18 +445,11 @@ Item {
                     }
                     return fact.enumStringValue
                 }
-
-                function col1Color() {
-                    if (fact.defaultValueAvailable) {
-                        return fact.valueEqualsDefault ? qgcPal.text : qgcPal.warningText
-                    } else {
-                        return qgcPal.text
-                    }
-                }
             }
 
             QGCMouseArea {
                 anchors.fill: parent
+                visible:      column !== 0
                 onClicked: mouse => {
                     _editorDialogFact = fact
                     editorDialogFactory.open()

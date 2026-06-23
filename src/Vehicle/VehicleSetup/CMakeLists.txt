@@ -7,6 +7,9 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         JoystickConfigController.cc
         JoystickConfigController.h
+        # Base class for RadioComponentController and JoystickConfigController — must build unconditionally.
+        RemoteControlCalibrationController.cc
+        RemoteControlCalibrationController.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -25,8 +28,6 @@ if(NOT QGC_NO_SERIAL_LINK)
             FirmwareUpgradeController.h
             PX4FirmwareUpgradeThread.cc
             PX4FirmwareUpgradeThread.h
-            RemoteControlCalibrationController.cc
-            RemoteControlCalibrationController.h
     )
 endif()
 
@@ -50,7 +51,15 @@ qt_add_qml_module(VehicleSetupModule
         RemoteControlChannelMonitor.qml
         RemoteControlChannelValueDisplay.qml
         SetupParameterEditor.qml
-        SetupView.qml
+        VehicleConfigView.qml
         VehicleSummary.qml
     NO_PLUGIN
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} vehiclesetup_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/FirmwareUpgradeIcon.png"
+        "${CMAKE_CURRENT_SOURCE_DIR}/VehicleSummaryIcon.png"
 )

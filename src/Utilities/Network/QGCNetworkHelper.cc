@@ -1,6 +1,7 @@
 #include "QGCNetworkHelper.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QFile>
 #include <QtCore/QIODevice>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QUrlQuery>
@@ -14,9 +15,7 @@
 #include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
 
-#ifdef QGC_ENABLE_BLUETOOTH
 #include <QtBluetooth/QBluetoothLocalDevice>
-#endif
 
 QGC_LOGGING_CATEGORY(QGCNetworkHelperLog, "Utilities.QGCNetworkHelper")
 
@@ -368,6 +367,22 @@ QUrl urlWithoutQuery(const QUrl& url)
     return result;
 }
 
+QString redactedUrlForLogging(const QUrl& url)
+{
+    if (!url.isValid() || url.scheme().isEmpty()) {
+        return QStringLiteral("<invalid-url>");
+    }
+
+    QUrl result = urlWithoutQuery(url);
+    result.setUserInfo(QString());
+    return result.toDisplayString(QUrl::FullyEncoded);
+}
+
+QString redactedUrlForLogging(const QString& url)
+{
+    return redactedUrlForLogging(QUrl(url, QUrl::StrictMode));
+}
+
 // ============================================================================
 // Request Configuration
 // ============================================================================
@@ -534,6 +549,46 @@ QSslConfiguration createInsecureSslConfig()
 void applySslConfig(QNetworkRequest& request, const QSslConfiguration& config)
 {
     request.setSslConfiguration(config);
+}
+
+QList<QSslCertificate> loadCaCertificates(const QString& filePath, QString* errorOut)
+{
+    const auto certs = QSslCertificate::fromPath(filePath, QSsl::Pem);
+    if (certs.isEmpty() && errorOut) {
+        *errorOut = QStringLiteral("No certificates found in %1").arg(filePath);
+    }
+    return certs;
+}
+
+bool loadClientCertAndKey(const QString& certPath, const QString& keyPath,
+                          QSslCertificate& certOut, QSslKey& keyOut,
+                          QString* errorOut)
+{
+    const auto certs = QSslCertificate::fromPath(certPath, QSsl::Pem);
+    if (certs.isEmpty()) {
+        if (errorOut) *errorOut = QStringLiteral("No certificate found in %1").arg(certPath);
+        return false;
+    }
+
+    QFile keyFile(keyPath);
+    if (!keyFile.open(QIODevice::ReadOnly)) {
+        if (errorOut) *errorOut = QStringLiteral("Cannot open key file %1").arg(keyPath);
+        return false;
+    }
+
+    QSslKey key(&keyFile, QSsl::Rsa);
+    if (key.isNull()) {
+        keyFile.seek(0);
+        key = QSslKey(&keyFile, QSsl::Ec);
+    }
+    if (key.isNull()) {
+        if (errorOut) *errorOut = QStringLiteral("Invalid key in %1").arg(keyPath);
+        return false;
+    }
+
+    certOut = certs.first();
+    keyOut = key;
+    return true;
 }
 
 // ============================================================================
@@ -753,12 +808,8 @@ bool isNetworkEthernet()
 
 bool isBluetoothAvailable()
 {
-#ifdef QGC_ENABLE_BLUETOOTH
     const QList<QBluetoothHostInfo> devices = QBluetoothLocalDevice::allDevices();
     return !devices.isEmpty();
-#else
-    return false;
-#endif
 }
 
 ConnectionType connectionType()
@@ -882,34 +933,6 @@ void configureProxy(QNetworkAccessManager* manager)
     proxy.setType(QNetworkProxy::DefaultProxy);
     manager->setProxy(proxy);
 #endif
-}
-
-// ============================================================================
-// Compressed Data Helpers
-// ============================================================================
-
-bool looksLikeCompressedData(const QByteArray& data)
-{
-    return QGCCompression::isCompressionFormat(QGCCompression::detectFormatFromData(data));
-}
-
-QJsonDocument parseCompressedJson(const QByteArray& data, QJsonParseError* error)
-{
-    QByteArray jsonData = data;
-
-    // Decompress if needed
-    if (looksLikeCompressedData(data)) {
-        jsonData = QGCCompression::decompressData(data);
-        if (jsonData.isEmpty()) {
-            if (error) {
-                error->error = QJsonParseError::IllegalValue;
-                error->offset = 0;
-            }
-            return {};
-        }
-    }
-
-    return QJsonDocument::fromJson(jsonData, error);
 }
 
 }  // namespace QGCNetworkHelper

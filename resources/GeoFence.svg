@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+    <!-- drone scaled to 82%, left-anchored, vertically centred -->
+    <g transform="scale(0.82) translate(-0.7 2.5)">
+        <path d="M12 4h4.27a2 2 0 1 1 0 2h-2.14a9 9 0 0 1 4.84 7.25 2 2 0 1 1-2 .04 7 7 0 0 0-4.97-6V8H8v-.71a7 7 0 0 0-4.96 6 2 2 0 1 1-2-.04A9 9 0 0 1 5.86 6H3.73a2 2 0 1 1 0-2H8V3h4z"/>
+    </g>
+    <!-- dashed geofence wall, right-anchored, 3 dashes with small gaps -->
+    <path d="M18 2h2v4.7h-2ZM18 7.7h2v4.7h-2ZM18 13.4h2v4.6h-2Z"/>
+</svg>

@@ -1,11 +1,8 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 #include "TerrainQueryInterface.h"
-
-Q_DECLARE_LOGGING_CATEGORY(TerrainQueryCopernicusLog)
 
 class QGeoCoordinate;
 

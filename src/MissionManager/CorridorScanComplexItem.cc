@@ -1,16 +1,15 @@
 #include "CorridorScanComplexItem.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "PlanMasterController.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QJsonArray>
 
-QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "Plan.CorridorScanComplexItemL")
-
-const QString CorridorScanComplexItem::name(CorridorScanComplexItem::tr("Corridor Scan"));
+QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "Plan.CorridorScanComplexItem")
 
 CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterController, bool flyView, const QString& kmlOrShpFile)
     : TransectStyleComplexItem  (masterController, flyView, settingsGroup)
@@ -18,7 +17,7 @@ CorridorScanComplexItem::CorridorScanComplexItem(PlanMasterController* masterCon
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
     , _corridorWidthFact        (settingsGroup, _metaDataMap[corridorWidthName])
 {
-    _editorQml = "qrc:/qml/QGroundControl/Controls/CorridorScanEditor.qml";
+    _editorQml = "qrc:/qml/QGroundControl/PlanView/CorridorScanEditor.qml";
 
     // We override the altitude to the mission default
     if (_cameraCalc.isManualCamera() || !_cameraCalc.valueSetIsDistance()->rawValue().toBool()) {
@@ -63,7 +62,7 @@ void CorridorScanComplexItem::_saveCommon(QJsonObject& saveObject)
 {
     TransectStyleComplexItem::_save(saveObject);
 
-    saveObject[JsonHelper::jsonVersionKey] =                    2;
+    saveObject[JsonParsing::jsonVersionKey] =                    2;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
     saveObject[corridorWidthName] =                             _corridorWidthFact.rawValue().toDouble();
@@ -78,7 +77,7 @@ void CorridorScanComplexItem::loadPreset(const QString& presetName)
 
     QJsonObject presetObject = _loadPresetJson(presetName);
     if (!_loadWorker(presetObject, 0, errorString, true /* forPresets */)) {
-        qgcApp()->showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(presetName).arg(errorString));
+        QGC::showAppMessage(QStringLiteral("Internal Error: Preset load failed. Name: %1 Error: %2").arg(presetName).arg(errorString));
     }
     _rebuildTransects();
 }
@@ -87,15 +86,15 @@ bool CorridorScanComplexItem::_loadWorker(const QJsonObject& complexObject, int 
 {
     _ignoreRecalc = !forPresets;
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,                   QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
+        { JsonParsing::jsonVersionKey,                   QJsonValue::Double, true },
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
         { corridorWidthName,                            QJsonValue::Double, true },
         { _jsonEntryPointKey,                           QJsonValue::Double, true },
         { QGCMapPolyline::jsonPolylineKey,              QJsonValue::Array,  true },
     };
-    if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(complexObject, keyInfoList, errorString)) {
         _ignoreRecalc = false;
         return false;
     }
@@ -108,7 +107,7 @@ bool CorridorScanComplexItem::_loadWorker(const QJsonObject& complexObject, int 
         return false;
     }
 
-    int version = complexObject[JsonHelper::jsonVersionKey].toInt();
+    int version = complexObject[JsonParsing::jsonVersionKey].toInt();
     if (version != 2) {
         errorString = tr("%1 complex item version %2 not supported").arg(jsonComplexItemTypeValue).arg(version);
         _ignoreRecalc = false;
@@ -154,10 +153,33 @@ bool CorridorScanComplexItem::specifiesCoordinate(void) const
     return _corridorPolyline.count() > 1;
 }
 
+void CorridorScanComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
+{
+    if (!coordinate.isValid() || !_entryCoordinate.isValid() || _corridorPolyline.count() < 2) {
+        return;
+    }
+
+    const double distanceMeters = _entryCoordinate.distanceTo(coordinate);
+    const double azimuthDegrees = _entryCoordinate.azimuthTo(coordinate);
+    const QList<QGeoCoordinate> vertices = _corridorPolyline.coordinateList();
+
+    QList<QGeoCoordinate> translatedVertices;
+    translatedVertices.reserve(vertices.count());
+    for (const QGeoCoordinate& vertex: vertices) {
+        translatedVertices.append(vertex.atDistanceAndAzimuth(distanceMeters, azimuthDegrees));
+    }
+
+    _corridorPolyline.setPath(translatedVertices);
+}
+
 int CorridorScanComplexItem::_calcTransectCount(void) const
 {
     double fullWidth = _corridorWidthFact.rawValue().toDouble();
-    return fullWidth > 0.0 ? qCeil(fullWidth / _calcTransectSpacing()) : 1;
+    if (fullWidth <= 0.0) {
+        return 1;
+    }
+    const double spacing = _calcTransectSpacing();
+    return spacing > 0.0 ? qMin(qCeil(fullWidth / spacing), maxTransectCount) : 1;
 }
 
 void CorridorScanComplexItem::_polylineDirtyChanged(bool dirty)
@@ -385,11 +407,20 @@ double CorridorScanComplexItem::timeBetweenShots(void)
 double CorridorScanComplexItem::_calcTransectSpacing(void) const
 {
     double transectSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
-    if (transectSpacing < _minimumTransectSpacingMeters) {
-        // We can't let spacing get too small otherwise we will end up with too many transects.
-        // So we limit the spacing to be above a small increment and below that value we set to huge spacing
-        // which will cause a single transect to be added instead of having things blow up.
-        transectSpacing = _forceLargeTransectSpacingMeters;
+    if (transectSpacing <= 0) {
+        return 0;
+    }
+
+    // Cap spacing so the corridor never generates more than maxTransectCount transects.
+    // The relevant extent is the corridor width (transects run perpendicular to the path).
+    const double corridorWidth = _corridorWidthFact.rawValue().toDouble();
+    if (corridorWidth <= 0.0) {
+        qCWarning(CorridorScanComplexItemLog) << "Corridor width" << corridorWidth << "is invalid, skipping transect count cap";
+        return transectSpacing;
+    }
+    if (transectSpacing < corridorWidth / maxTransectCount) {
+        qCWarning(CorridorScanComplexItemLog) << "Transect spacing" << transectSpacing << "raised to" << corridorWidth / maxTransectCount << "to limit transect count to" << maxTransectCount;
+        transectSpacing = corridorWidth / maxTransectCount;
     }
 
     return transectSpacing;

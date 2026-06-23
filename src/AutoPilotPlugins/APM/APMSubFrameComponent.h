@@ -12,10 +12,7 @@ public:
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
 
     QString name() const final { return _name; }
-    QString description() const final { return tr("Frame setup allows you to choose your vehicle's motor configuration. Install <b>clockwise</b>" \
-                                                  "<br>propellers on the <b>green thrusters</b> and <b>counter-clockwise</b> propellers on the <b>blue thrusters</b>" \
-                                                  "<br>(or vice-versa). The flight controller will need to be rebooted to apply changes." \
-                                                  "<br>When selecting a frame, you can choose to load the default parameter set for that frame configuration if available."); }
+    QString description() const final { return tr("Configure the submarine motor layout and load default parameters."); }
     QString iconResource() const final { return QStringLiteral("/qmlimages/SubFrameComponentIcon.png"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }

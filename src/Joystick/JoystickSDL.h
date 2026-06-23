@@ -2,7 +2,6 @@
 
 #include <atomic>
 
-#include <QtCore/QLoggingCategory>
 #include <QtGui/QVector3D>
 
 #include "Joystick.h"
@@ -16,13 +15,13 @@ typedef struct SDL_Gamepad SDL_Gamepad;
 struct SDL_Haptic;
 typedef struct SDL_Haptic SDL_Haptic;
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickSDLLog)
-
 class JoystickSDL : public Joystick
 {
     Q_OBJECT
 
+#ifdef QGC_UNITTEST_BUILD
     friend class JoystickTest;
+#endif
     friend class MockJoystick;
 
 public:
@@ -139,7 +138,7 @@ public:
     bool setMapping(const QString &mapping) override;
 
     [[nodiscard]] static bool init();
-    static void shutdown();
+    static void shutdown(bool deleteDiscoveryCache = true);
     static QMap<QString, Joystick*> discover();
 
 private:

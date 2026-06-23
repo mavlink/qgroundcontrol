@@ -17,24 +17,11 @@ Versions are provided for all platforms.
 Source code for _QGroundControl_ is kept on [GitHub](https://github.com/mavlink/qgroundcontrol).
 It is [dual-licensed under Apache 2.0 and GPLv3](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md).
 
-To get the source files:
+To get the source files, clone the repo (or your fork):
 
-1. Clone the repo (or your fork) including submodules:
-
-   ```sh
-   git clone --recursive -j8 https://github.com/mavlink/qgroundcontrol.git
-   ```
-
-2. Update submodules (required each time you pull new source code):
-
-   ```sh
-   git submodule update --recursive
-   ```
-
-:::tip
-Github source-code zip files cannot be used because these do not contain the appropriate submodule source code.
-You must use git!
-:::
+```sh
+git clone -j8 https://github.com/mavlink/qgroundcontrol.git
+```
 
 ## Build QGroundControl
 
@@ -85,11 +72,11 @@ To install Qt:
 
 1. Install Additional Packages (Platform Specific)
 
-   - **Ubuntu:** `python3 ./qgroundcontrol/tools/setup/install_dependencies.py --platform debian`
+   - **Ubuntu:** `python3 ./qgroundcontrol/tools/setup/install_dependencies --platform debian`
    - **Fedora:** `sudo dnf install speech-dispatcher SDL2-devel SDL2 systemd-devel patchelf`
    - **Arch Linux:** `pacman -Sy speech-dispatcher patchelf`
-   - **Mac:** `python3 ./qgroundcontrol/tools/setup/install_dependencies.py --platform macos`
-   - **Windows:** `qgroundcontrol/tools/setup/install-depedencies-windows.ps1`
+   - **Mac:** `python3 ./qgroundcontrol/tools/setup/install_dependencies --platform macos`
+   - **Windows:** `python3 ./qgroundcontrol/tools/setup/install_dependencies --platform windows`
    - **Android:** Installing dependencies for android is quite involved. You are better off using Qt documentation for android setup instructions. Read [Qt 6 for Android](https://doc.qt.io/qt-6/android.html) carefully to the extend. Continue with [Gettting Started with Qt 6 for Android](https://doc.qt.io/qt-6/android-getting-started.html).
 
 1. Install OS-Specific Functionalities
@@ -106,9 +93,7 @@ To install Qt:
 
 Install [Visual Studio 2022 Community Edition](https://visualstudio.microsoft.com/downloads/).
 
-When installing, select _Desktop development with C++_ as shown:
-
-![Visual Studio 2019 - Select Desktop Environment with C++](../../../assets/dev_getting_started/visual_studio_select_features.png)
+When installing, select _Desktop development with C++_.
 
    ::: info
    Visual Studio is ONLY used to get the compiler. Building _QGroundControl_ is done using [Qt Creator](#qt-creator) or [cmake](#cmake) directly as outlined below.
@@ -125,13 +110,11 @@ When installing, select _Desktop development with C++_ as shown:
 
 1. Build using the "hammer" icon. After that, in order to deploy the build, use the "play" icon. Or use the menu Build on top for a detailed alternative.
 
-   ![QtCreator Build Button](../../../assets/dev_getting_started/qt_creator_build_qgc.png)
-
 #### Build using CMake on CLI {#cmake}
 
 Example commands to build a default QGC and run it afterwards:
 
-1. Make sure you cloned the repository and updated the submodules before, see chapter _Source Code_ above and switch into the repository folder:
+1. Make sure you cloned the repository before, see chapter _Source Code_ above and switch into the repository folder:
 
    ```sh
    cd qgroundcontrol

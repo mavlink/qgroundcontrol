@@ -6,17 +6,16 @@
 #include <QtCore/QUrl>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "MAVLink/MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "QGCArchiveModel.h"
 #include "QGCLoggingCategory.h"
-
-Q_DECLARE_LOGGING_CATEGORY(FTPControllerLog)
 
 class FTPManager;
 class Vehicle;
-class QGCArchiveModel;
 class QGCCompressionJob;
 
-/// QML-facing controller for MAVLink FTP operations.
+/// \brief QML-facing controller for MAVLink FTP operations.
+///
 class FTPController : public QObject
 {
     Q_OBJECT

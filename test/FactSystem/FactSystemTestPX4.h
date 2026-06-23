@@ -24,14 +24,4 @@ private slots:
     {
         _parameter_specific_component_id_test();
     }
-
-    void qml_test()
-    {
-        _qml_test();
-    }
-
-    void qmlUpdate_test()
-    {
-        _qmlUpdate_test();
-    }
 };

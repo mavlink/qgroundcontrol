@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <QtPositioning/QGeoCoordinate>
 
 #include "BaseClasses/VehicleTestManualConnect.h"
@@ -12,6 +14,9 @@ class MissionControllerManagerTest : public VehicleTestManualConnect
 {
     Q_OBJECT
 
+public:
+    ~MissionControllerManagerTest() override;
+
 protected slots:
     void cleanup() override;
 
@@ -21,8 +26,7 @@ protected:
 
     MissionManager* _missionManager;
 
-    typedef struct
-    {
+    struct ItemInfo_t {
         int sequenceNumber;
         QGeoCoordinate coordinate;
         MAV_CMD command;
@@ -33,15 +37,14 @@ protected:
         bool autocontinue;
         bool isCurrentItem;
         MAV_FRAME frame;
-    } ItemInfo_t;
+    };
 
-    typedef struct
-    {
+    struct TestCase_t {
         const char* itemStream;
         const ItemInfo_t expectedItem;
-    } TestCase_t;
+    };
 
-    MultiSignalSpy* _multiSpyMissionManager;
+    std::unique_ptr<MultiSignalSpy> _multiSpyMissionManager;
 
     static const int _missionManagerSignalWaitTime =
         MissionManager::_ackTimeoutMilliseconds * MissionManager::_maxRetryCount * 2;

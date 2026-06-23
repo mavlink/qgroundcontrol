@@ -12,6 +12,7 @@ Checks: >
   modernize-*,
   -modernize-use-trailing-return-type,
   -modernize-avoid-c-arrays,
+  -modernize-use-default-member-init,
   performance-*,
   readability-*,
   -readability-magic-numbers,
@@ -22,9 +23,20 @@ Checks: >
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-pro-type-static-cast-downcast,
   -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
 
-WarningsAsErrors: ''  # Don't treat warnings as errors by default
+# Promote high-signal bug classes to errors; everything else stays a warning.
+WarningsAsErrors: >
+  bugprone-use-after-move,
+  bugprone-undefined-memory-manipulation,
+  bugprone-dangling-handle,
+  bugprone-string-constructor,
+  clang-analyzer-core.NullDereference,
+  clang-analyzer-core.uninitialized.*,
+  clang-analyzer-cplusplus.Move
 
 CheckOptions:
   # Naming conventions (match QGC style)
@@ -61,6 +73,7 @@ CheckOptions:
   - key: readability-braces-around-statements.ShortStatementLines
     value: '0'  # Always require braces
 
-HeaderFilterRegex: '.*'
+HeaderFilterRegex: '^.*/(src|test|tools)/.*\.(h|hpp)$'
+ExcludeHeaderFilterRegex: '.*(moc_|qrc_|ui_).*|.*_autogen/.*|.*/(build|libs|3rdparty)/.*'
 FormatStyle: file
 ...

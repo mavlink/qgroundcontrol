@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QObject>
+
 #include "MapProvider.h"
 
 static constexpr const quint32 AVERAGE_TIANDITU_STREET_MAP = 1297;
@@ -9,7 +11,7 @@ class TianDiTuProvider : public MapProvider
 {
 protected:
     TianDiTuProvider(const QString &mapName, const QString &mapTypeCode, const QString &imageFormat, quint32 averageSize,
-                    QGeoMapType::MapStyle mapType)
+                    MapProvider::MapStyle mapType)
         : MapProvider(mapName, QStringLiteral("https://map.tianditu.gov.cn/"), imageFormat, averageSize, mapType)
         , _mapType(mapTypeCode) {}
 
@@ -29,7 +31,7 @@ public:
             QStringLiteral("cia_w"),
             QStringLiteral("png"),
             AVERAGE_TIANDITU_STREET_MAP,
-            QGeoMapType::StreetMap) {}
+            MapProvider::StreetMap) {}
 };
 
 class TianDiTuSatelliteProvider : public TianDiTuProvider
@@ -41,5 +43,5 @@ public:
             QStringLiteral("img_w"),
             QStringLiteral("jpg"),
             AVERAGE_TIANDITU_SAT_MAP,
-            QGeoMapType::SatelliteMapDay) {}
+            MapProvider::SatelliteMapDay) {}
 };

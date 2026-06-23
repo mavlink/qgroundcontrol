@@ -1,0 +1,103 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "bindings": {
+        "videoSource": "QGroundControl.settingsManager.videoSettings.videoSource.rawValue",
+        "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
+        "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource",
+        "isStreamSource": "QGroundControl.videoManager.isStreamSource",
+        "isGST": "QGroundControl.videoManager.gstreamerEnabled",
+        "isHttpMjpeg": "videoSource === QGroundControl.settingsManager.videoSettings.httpMjpegVideoSource",
+        "isWebsocketJpeg": "videoSource === QGroundControl.settingsManager.videoSettings.websocketJpegVideoSource",
+        "isNetworkJpeg": "isHttpMjpeg || isWebsocketJpeg"
+    },
+    "groups": [
+        {
+            "heading": "Video Source",
+            "keywords": ["video source", "camera", "stream"],
+            "enableWhen": "!autoStreamConfig",
+            "headingDescription": "autoStreamConfig ? qsTr(\"Mavlink camera stream is automatically configured\") : \"\"",
+            "controls": [
+                {
+                    "setting": "videoSettings.videoSource",
+                    "control": "combobox"
+                }
+            ]
+        },
+        {
+            "heading": "Connection",
+            "keywords": ["rtsp", "tcp", "udp", "mpegts", "video url", "stream url"],
+            "showWhen": "!sourceDisabled && !autoStreamConfig",
+            "controls": [
+                {
+                    "setting": "videoSettings.rtspUrl",
+                    "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource"
+                },
+                {
+                    "setting": "videoSettings.tcpUrl",
+                    "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource"
+                },
+                {
+                    "setting": "videoSettings.udpUrl",
+                    "showWhen": "videoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource || videoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource || videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource"
+                },
+                {
+                    "setting": "videoSettings.httpMjpegUrl",
+                    "showWhen": "isHttpMjpeg"
+                },
+                {
+                    "setting": "videoSettings.websocketJpegUrl",
+                    "showWhen": "isWebsocketJpeg"
+                }
+            ]
+        },
+        {
+            "component": "VideoNetworkSecuritySettings",
+            "sectionName": "Network Video Security",
+            "keywords": ["authentication", "basic", "bearer", "token", "password", "origin", "tls", "certificate"],
+            "showWhen": "isNetworkJpeg && !autoStreamConfig"
+        },
+        {
+            "heading": "Settings",
+            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy"],
+            "showWhen": "!sourceDisabled",
+            "controls": [
+                {
+                    "setting": "videoSettings.aspectRatio",
+                    "showWhen": "!autoStreamConfig && isStreamSource"
+                },
+                {
+                    "setting": "videoSettings.disableWhenDisarmed",
+                    "showWhen": "!autoStreamConfig && isStreamSource"
+                },
+                {
+                    "setting": "videoSettings.lowLatencyMode",
+                    "showWhen": "!autoStreamConfig && isStreamSource && isGST"
+                },
+                {
+                    "setting": "videoSettings.forceCpuVideoPath",
+                    "showWhen": "isGST && QGroundControl.settingsManager.videoSettings.forceCpuVideoPath.userVisible"
+                },
+                {
+                    "setting": "videoSettings.forceVideoDecoder"
+                }
+            ]
+        },
+        {
+            "heading": "Local Video Storage",
+            "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file"],
+            "controls": [
+                {
+                    "setting": "videoSettings.recordingFormat"
+                },
+                {
+                    "setting": "videoSettings.enableStorageLimit"
+                },
+                {
+                    "setting": "videoSettings.maxVideoSize",
+                    "enableWhen": "QGroundControl.settingsManager.videoSettings.enableStorageLimit.rawValue"
+                }
+            ]
+        }
+    ]
+}

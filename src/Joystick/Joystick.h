@@ -2,19 +2,17 @@
 
 #include "QGCMAVLink.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QThread>
 #include <QtCore/QVariantMap>
 #include <QtGui/QVector3D>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "RemoteControlCalibrationController.h"
-#include "Fact.h"
-#include "JoystickSettings.h"
+#include <functional>
+#include <array>
 
-Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
-Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
+#include "RemoteControlCalibrationController.h"
+#include "JoystickSettings.h"
 
 class MavlinkActionManager;
 class QmlObjectListModel;
@@ -39,14 +37,23 @@ class AvailableButtonAction : public QObject
     Q_PROPERTY(bool     canRepeat   READ canRepeat  CONSTANT)
 
 public:
-    AvailableButtonAction(const QString &actionName, bool canRepeat, QObject *parent = nullptr);
+    AvailableButtonAction(const QString &actionName,
+                          std::function<void()> onDown,
+                          std::function<void()> onUp = nullptr,
+                          std::function<void()> onRepeat = nullptr,
+                          QObject *parent = nullptr);
 
     const QString &action() const { return _actionName; }
-    bool canRepeat() const { return _repeat; }
+    bool canRepeat() const { return bool(_onRepeat); }
+    const std::function<void()> &onDown() const { return _onDown; }
+    const std::function<void()> &onRepeat() const { return _onRepeat; }
+    const std::function<void()> &onUp() const { return _onUp; }
 
 private:
     const QString _actionName;
-    const bool _repeat = false;
+    const std::function<void()> _onDown;
+    const std::function<void()> _onRepeat;
+    const std::function<void()> _onUp;
 };
 
 // There is only one Joystick instance active in the system at a time.
@@ -62,7 +69,9 @@ class Joystick : public QThread
 
     friend class JoystickManager;
     friend class JoystickConfigController;
+#ifdef QGC_UNITTEST_BUILD
     friend class JoystickTest;
+#endif
 
 public:
     Q_PROPERTY(QString                  name                    READ    name                                                CONSTANT)
@@ -99,7 +108,7 @@ public:
     Joystick(const QString &name, int axisCount, int buttonCount, int hatCount, QObject *parent = nullptr);
     virtual ~Joystick();
 
-    static constexpr int AxisMin = -32767;
+    static constexpr int AxisMin = -32768;
     static constexpr int AxisMax = 32767;
 
     enum ButtonEvent_t {
@@ -115,6 +124,14 @@ public:
         int center = 0;
         int deadband = 0;
         bool reversed = false;
+
+        void reset() {
+            min = AxisMin;
+            max = AxisMax;
+            center = 0;
+            deadband = 0;
+            reversed = false;
+        }
     };
 
     enum AxisFunction_t {
@@ -122,9 +139,15 @@ public:
         pitchFunction,
         yawFunction,
         throttleFunction,
-        gimbalPitchFunction,
-        gimbalYawFunction,
-        maxAxisFunction // If the value of this is changed, be sure to update JoystickAxis.SettingsGroup.json/stickFunction metadata
+        pitchExtensionFunction,
+        rollExtensionFunction,
+        additionalAxis1Function,
+        additionalAxis2Function,
+        additionalAxis3Function,
+        additionalAxis4Function,
+        additionalAxis5Function,
+        additionalAxis6Function,
+        maxAxisFunction
     };
     static QString axisFunctionToString(AxisFunction_t function);
 
@@ -297,8 +320,6 @@ public:
     QString linkedGroupRole() const { return _linkedGroupRole; }
     void setLinkedGroupRole(const QString &role);
 
-    void setFunctionAxis(AxisFunction_t function, int axis);
-    int getFunctionAxis(AxisFunction_t function) const;
     void setAxisCalibration(int axis, const AxisCalibration_t &calibration);
     Joystick::AxisCalibration_t getAxisCalibration(int axis) const;
 
@@ -324,6 +345,9 @@ signals:
     void startContinuousZoom(int direction);
     void stopContinuousZoom();
     void stepZoom(int direction);
+    void startContinuousFocus(int direction);
+    void stopContinuousFocus();
+    void stepFocus(int direction);
     void stepCamera(int direction);
     void stepStream(int direction);
     void triggerCamera();
@@ -340,7 +364,7 @@ signals:
     void setVtolInFwdFlight(bool set);
     void setFlightMode(const QString &flightMode);
     void emergencyStop();
-    void gripperAction(QGCMAVLink::GripperActions gripperAction);
+    void gripperAction(GRIPPER_ACTIONS gripperAction);
     void landingGearDeploy();
     void landingGearRetract();
     void motorInterlock(bool enable);
@@ -365,9 +389,18 @@ protected:
     int _hatCount = 0;
 
 private slots:
-    void _flightModesChanged() { _buildActionList(_pollingVehicle); }
+    void _flightModesChanged() { _buildAvailableButtonsActionList(_pollingVehicle); }
 
 private:
+    enum PollingFlag {
+        PollingNone             = 0x0,
+        PollingForVehicle       = 0x1, ///< Normal polling for joystick output to Vehicle
+        PollingForConfiguration = 0x2, ///< Polling for configuration/calibration display
+    };
+    using PollingFlags = QFlags<PollingFlag>;
+
+    using AxisFunctionMap_t = QMap<AxisFunction_t, int>;
+
     virtual bool _open() = 0;
     virtual void _close() = 0;
     virtual bool _update() = 0;
@@ -378,25 +411,37 @@ private:
 
     void run() override;
 
-    enum PollingType {
-        NotPolling, ///< Not currrently polling
-        PollingForConfiguration, ///< Polling for configuration/calibration display
-        PollingForVehicle, ///< Normal polling for joystick output to Vehicle
-    };
     void _startPollingForVehicle(Vehicle &vehicle);
+    void _startPollingForActiveVehicle();
     void _startPollingForConfiguration();
     void _stopPollingForConfiguration();
-    void _stopAllPolling();
-    QString _pollingTypeToString(PollingType pollingType) const;
-    PollingType _currentPollingType = NotPolling;
-    PollingType _previousPollingType = NotPolling;
+    void _stopAllPollingForVehicle();
+    void _startPollingThread();
+    void _stopPollingThread();
+    QString _pollingFlagsToString(PollingFlags flags) const;
+    PollingFlags _pollingFlags = PollingNone;
+
     Vehicle* _pollingVehicle = nullptr;
 
+    void _resetFunctionToAxisMap();
+    void _resetAxisCalibrationData();
+    void _resetButtonActionData();
+    void _resetButtonEventStates();
+
+    void _foundInvalidAxisSettingsCleanup();
+
+    void _loadButtonSettings();
+    void _loadAxisSettings(bool joystickCalibrated, int transmitterMode);
+    void _saveButtonSettings();
+    void _saveAxisSettings(int transmitterMode);
     void _loadFromSettingsIntoCalibrationData();
     void _saveFromCalibrationDataIntoSettings();
+    void _clearAxisSettings();
+    void _clearButtonSettings();
 
     /// Adjust the raw axis value to the -1:1 range given calibration information
-    float _adjustRange(int value, const AxisCalibration_t &calibration, bool withDeadbands);
+    float _adjustRange(int reversedAxisValue, const AxisCalibration_t &calibration, bool withDeadbands);
+    uint16_t _adjustRangeToRcOverridePwm(int value, const AxisCalibration_t &calibration, bool withDeadbands);
 
     void _executeButtonAction(const QString &action, const ButtonEvent_t buttonEvent);
     int  _findAvailableButtonActionIndex(const QString &action);
@@ -404,18 +449,15 @@ private:
     bool _validButton(int button) const;
     void _handleAxis();
     void _handleButtons();
-    void _buildActionList(Vehicle *vehicle);
-    AxisFunction_t _getFunctionForAxis(int axis) const;
+    void _buildAvailableButtonsActionList(Vehicle *vehicle);
+    AxisFunction_t _getAxisFunctionForJoystickAxis(int joystickAxis) const;
+    int _getJoystickAxisForAxisFunction(AxisFunction_t axisFunction) const;
+    void _setJoystickAxisForAxisFunction(AxisFunction_t axisFunction, int axis);
     void _updateButtonEventState(int buttonIndex, const bool buttonPressed, ButtonEvent_t &buttonEventState);
     void _updateButtonEventStates(QVector<ButtonEvent_t> &buttonEventStates);
-    void _migrateLegacySettings();
-
-
-    /// Relative mappings of axis functions between different TX modes
-    int _mapFunctionMode(int mode, int function);
 
     /// Remap current axis functions from current TX mode to new TX mode
-    void _remapAxes(int fromMode, int toMode, int (&newMapping)[maxAxisFunction]);
+    void _remapFunctionsInFunctionMapToNewTransmittedMode(int fromMode, int toMode);
 
     int _hatButtonCount = 0;
     int _totalButtonCount = 0;
@@ -424,25 +466,20 @@ private:
     QVector<AssignedButtonAction*> _assignedButtonActions;
     MavlinkActionManager *_mavlinkActionManager = nullptr;
     QmlObjectListModel *_availableButtonActions = nullptr;
+
+    JoystickManager* _joystickManager = nullptr;
     JoystickSettings _joystickSettings;
 
-    int _rgFunctionAxis[maxAxisFunction] = {};
+    AxisFunctionMap_t _axisFunctionToJoystickAxisMap; ///< Map from AxisFunction_t to axis index, kJoystickAxisNotAssigned if not assigned
+    static constexpr const int kJoystickAxisNotAssigned = -1;
+
     QElapsedTimer _axisElapsedTimer;
     QStringList _availableActionTitles;
-    std::atomic<bool> _exitThread = false;    ///< true: signal thread to exit
+    std::atomic<bool> _exitPollingThread = false;    ///< true: signal thread to exit
 
     // HOTAS/Multi-device linking
     QString _linkedGroupId;
     QString _linkedGroupRole;
-
-    static constexpr const char *_rgFunctionSettingsKey[maxAxisFunction] = {
-        "RollAxis",
-        "PitchAxis",
-        "YawAxis",
-        "ThrottleAxis",
-        "GimbalPitchAxis",
-        "GimbalYawAxis"
-    };
 
     static constexpr const char *_buttonActionNone =               QT_TR_NOOP("No Action");
     static constexpr const char *_buttonActionArm =                QT_TR_NOOP("Arm");
@@ -454,6 +491,10 @@ private:
     static constexpr const char *_buttonActionContinuousZoomOut =  QT_TR_NOOP("Continuous Zoom Out");
     static constexpr const char *_buttonActionStepZoomIn =         QT_TR_NOOP("Step Zoom In");
     static constexpr const char *_buttonActionStepZoomOut =        QT_TR_NOOP("Step Zoom Out");
+    static constexpr const char *_buttonActionContinuousFocusIn =  QT_TR_NOOP("Continuous Focus In");
+    static constexpr const char *_buttonActionContinuousFocusOut = QT_TR_NOOP("Continuous Focus Out");
+    static constexpr const char *_buttonActionStepFocusIn =        QT_TR_NOOP("Step Focus In");
+    static constexpr const char *_buttonActionStepFocusOut =       QT_TR_NOOP("Step Focus Out");
     static constexpr const char *_buttonActionNextStream =         QT_TR_NOOP("Next Video Stream");
     static constexpr const char *_buttonActionPreviousStream =     QT_TR_NOOP("Previous Video Stream");
     static constexpr const char *_buttonActionNextCamera =         QT_TR_NOOP("Next Camera");

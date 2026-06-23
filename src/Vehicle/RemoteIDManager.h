@@ -2,14 +2,11 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QDateTime>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoPositionInfo>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "MAVLinkLib.h"
-
-Q_DECLARE_LOGGING_CATEGORY(RemoteIDManagerLog)
+#include "MAVLinkMessageType.h"
 
 class RemoteIDSettings;
 class Vehicle;
@@ -31,7 +28,6 @@ public:
     Q_PROPERTY(bool    basicIDGood          READ basicIDGood        NOTIFY basicIDGoodChanged)
     Q_PROPERTY(bool    emergencyDeclared    READ emergencyDeclared  NOTIFY emergencyDeclaredChanged)
     Q_PROPERTY(bool    operatorIDGood       READ operatorIDGood     NOTIFY operatorIDGoodChanged)
-
 
     Q_INVOKABLE void checkOperatorID(const QString& operatorID);
     Q_INVOKABLE void setOperatorID();
@@ -82,7 +78,7 @@ private:
 
     // Self ID
     void        _sendSelfIDMsg ();
-    const char* _getSelfIDDescription();
+    QByteArray _getSelfIDDescription() const;
 
     // Operator ID
     void        _sendOperatorID ();
@@ -93,6 +89,9 @@ private:
 
     // Basic ID
     void        _sendBasicID();
+
+    // GCS GPS status
+    void        _updateGcsGpsStatus(bool gpsGood, const QString& error = QString());
 
     bool _isEUOperatorIDValid(const QString& operatorID) const;
     QChar _calculateLuhnMod36(const QString& input) const;
@@ -106,6 +105,7 @@ private:
     QString _armStatusError;
     bool    _commsGood;
     bool    _gcsGPSGood;
+    QString _gcsGPSError;
     bool    _basicIDGood;
     bool    _GCSBasicIDValid;
     bool    _operatorIDGood;

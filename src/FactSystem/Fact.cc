@@ -1,5 +1,12 @@
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <limits>
+
 #include "Fact.h"
 #include "FactValueSliderListModel.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
@@ -44,13 +51,12 @@ Fact::Fact(const QString& settingsGroup, FactMetaData *metaData, QObject *parent
     SettingsManager::adjustSettingMetaData(settingsGroup, *metaData, visible);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
 
-    if (!qgcApp()->runningUnitTests()) {
+    if (!QGC::runningUnitTests()) {
         if (metaData->defaultValueAvailable() && !visible) {
             // If setting is not visible, we force to default value
             const QVariant defaultValue = metaData->rawDefaultValue();
             QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
             _rawValue = defaultValue;
-            _rawValueIsNotSet = false;
         }
     }
 
@@ -89,7 +95,6 @@ const Fact &Fact::operator=(const Fact& other)
     _name = other._name;
     _componentId = other._componentId;
     _rawValue = other._rawValue;
-    _rawValueIsNotSet = other._rawValueIsNotSet;
     _type = other._type;
     _sendValueChangedSignals = other._sendValueChangedSignals;
     _deferredValueChangeSignal = other._deferredValueChangeSignal;
@@ -113,7 +118,6 @@ void Fact::forceSetRawValue(const QVariant &value)
             {
                 QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
                 _rawValue = typedValue;
-                _rawValueIsNotSet = false;
             }
 
             const QVariant cooked = _metaData->rawTranslator()(typedValue);
@@ -139,7 +143,6 @@ void Fact::setRawValue(const QVariant &value)
                 QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
                 if (typedValue != _rawValue) {
                     _rawValue = typedValue;
-                    _rawValueIsNotSet = false;
                     changed = true;
                 }
             }
@@ -201,7 +204,6 @@ void Fact::containerSetRawValue(const QVariant &value)
         QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
         if (_rawValue != value) {
             _rawValue = value;
-            _rawValueIsNotSet = false;
             changed = true;
         }
         currentRaw = _rawValue;
@@ -357,12 +359,6 @@ QStringList Fact::selectedBitmaskStrings() const
 
 QString Fact::_variantToString(const QVariant &variant, int decimalPlaces) const
 {
-    QMutexLocker<QRecursiveMutex> locker(&_rawValueMutex);
-    if (_rawValueIsNotSet) {
-        return invalidValueString(decimalPlaces);
-    }
-    locker.unlock();
-
     QString valueString;
 
     const auto stripNegativeZero = [](QString &candidate) {
@@ -437,7 +433,40 @@ QString Fact::invalidValueString(int decimalPlaces) const {
 
 QString Fact::rawValueStringFullPrecision() const
 {
-    return _variantToString(rawValue(), 18);
+    if (type() == FactMetaData::valueTypeFloat) {
+        const float fValue = rawValue().toFloat();
+        if (std::isnan(fValue)) {
+            return invalidValueString(0);
+        }
+        // Find the shortest decimal string that round-trips back to the same float bits.
+        // snprintf with "%.*g" formats to p significant digits; strtof checks the round-trip.
+        // TODO: replace with std::to_chars once macOS min target >= 13.3
+        char buf[32];
+        for (int p = 1; p <= std::numeric_limits<float>::max_digits10; ++p) {
+            std::snprintf(buf, sizeof(buf), "%.*g", p, static_cast<double>(fValue));
+            if (std::strtof(buf, nullptr) == fValue) {
+                break;
+            }
+        }
+        if (std::strcmp(buf, "-0") == 0) {
+            buf[0] = '0';
+            buf[1] = '\0';
+        }
+        return QString::fromLatin1(buf);
+    } else if (type() == FactMetaData::valueTypeDouble) {
+        const double dValue = rawValue().toDouble();
+        if (std::isnan(dValue)) {
+            return invalidValueString(0);
+        }
+        // TODO: replace with std::to_chars once macOS min target >= 13.3
+        QString result = QString::number(dValue, 'g', QLocale::FloatingPointShortest);
+        if (result == QStringLiteral("-0")) {
+            result = QStringLiteral("0");
+        }
+        return result;
+    } else {
+        return _variantToString(rawValue(), 0);
+    }
 }
 
 QString Fact::rawValueString() const
@@ -485,6 +514,16 @@ QString Fact::shortDescription() const
 {
     if (_metaData) {
         return _metaData->shortDescription();
+    } else {
+        qCWarning(FactLog) << kMissingMetadata << name();
+        return QString();
+    }
+}
+
+QString Fact::label() const
+{
+    if (_metaData) {
+        return _metaData->label();
     } else {
         qCWarning(FactLog) << kMissingMetadata << name();
         return QString();
@@ -867,11 +906,11 @@ FactValueSliderListModel *Fact::valueSliderModel()
 void Fact::_checkForRebootMessaging()
 {
     if (qgcApp()) {
-        if (!qgcApp()->runningUnitTests()) {
+        if (!QGC::runningUnitTests()) {
             if (vehicleRebootRequired()) {
-                qgcApp()->showRebootAppMessage(tr("Reboot vehicle for changes to take effect."));
+                QGC::showRebootAppMessage(tr("Reboot vehicle for changes to take effect."));
             } else if (qgcRebootRequired()) {
-                qgcApp()->showRebootAppMessage(tr("Restart application for changes to take effect."));
+                QGC::showRebootAppMessage(tr("Restart application for changes to take effect."));
             }
         }
     }

@@ -7,6 +7,7 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         CameraCalcTest.cc CameraCalcTest.h
         CameraSectionTest.cc CameraSectionTest.h
+        CameraSpecTest.cc CameraSpecTest.h
         CorridorScanComplexItemTest.cc CorridorScanComplexItemTest.h
         FWLandingPatternTest.cc FWLandingPatternTest.h
         LandingComplexItemTest.cc LandingComplexItemTest.h
@@ -14,12 +15,14 @@ target_sources(${CMAKE_PROJECT_NAME}
         MissionCommandTreeTest.cc MissionCommandTreeTest.h
         MissionControllerManagerTest.cc MissionControllerManagerTest.h
         MissionControllerTest.cc MissionControllerTest.h
+        MissionControllerTreeTest.cc MissionControllerTreeTest.h
         MissionItemTest.cc MissionItemTest.h
         MissionManagerTest.cc MissionManagerTest.h
         MissionSettingsTest.cc MissionSettingsTest.h
         PlanMasterControllerTest.cc PlanMasterControllerTest.h
         QGCMapPolygonTest.cc QGCMapPolygonTest.h
         QGCMapPolylineTest.cc QGCMapPolylineTest.h
+        RallyPointTest.cc RallyPointTest.h
         SectionTest.cc SectionTest.h
         SimpleMissionItemTest.cc SimpleMissionItemTest.h
         SpeedSectionTest.cc SpeedSectionTest.h
@@ -73,3 +76,26 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "MissionManagerTest_res1"
 # )
 #
 # target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE MissionManagerTestModule)
+
+add_qgc_test(CameraCalcTest LABELS Unit MissionManager)
+add_qgc_test(CameraSectionTest LABELS Unit MissionManager)
+add_qgc_test(CameraSpecTest LABELS Unit MissionManager)
+add_qgc_test(CorridorScanComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
+add_qgc_test(FWLandingPatternTest LABELS Unit MissionManager)
+add_qgc_test(LandingComplexItemTest LABELS Unit MissionManager)
+add_qgc_test(MissionCommandTreeEditorTest LABELS Integration MissionManager TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
+add_qgc_test(MissionCommandTreeTest LABELS Unit MissionManager)
+add_qgc_test(MissionControllerTest LABELS Integration MissionManager)
+add_qgc_test(MissionControllerTreeTest LABELS Integration MissionManager)
+add_qgc_test(MissionItemTest LABELS Unit MissionManager)
+add_qgc_test(MissionManagerTest LABELS Integration MissionManager)
+add_qgc_test(MissionSettingsTest LABELS Unit MissionManager)
+add_qgc_test(PlanMasterControllerTest LABELS Integration MissionManager)
+add_qgc_test(QGCMapPolygonTest LABELS Unit MissionManager)
+add_qgc_test(QGCMapPolylineTest LABELS Unit MissionManager)
+add_qgc_test(RallyPointTest LABELS Unit MissionManager)
+add_qgc_test(SimpleMissionItemTest LABELS Unit MissionManager)
+add_qgc_test(SpeedSectionTest LABELS Unit MissionManager)
+add_qgc_test(StructureScanComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
+add_qgc_test(SurveyComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
+add_qgc_test(TransectStyleComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)

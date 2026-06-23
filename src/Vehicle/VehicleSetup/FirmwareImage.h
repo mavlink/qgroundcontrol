@@ -6,7 +6,8 @@
 #include <QtCore/QList>
 #include <QtCore/QTextStream>
 
-/// Support for Intel Hex firmware file
+/// \brief Support for Intel Hex firmware file
+///
 class FirmwareImage : public QObject
 {
     Q_OBJECT

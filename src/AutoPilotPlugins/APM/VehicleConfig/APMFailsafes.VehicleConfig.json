@@ -1,0 +1,898 @@
+{
+    "fileType": "VehicleConfig",
+    "version": 1,
+    "constants": {
+        "_monitorParamValueDisabled": 0,
+        "_copterGcsParamValueRtl": 1,
+        "_copterGcsParamValueSmartRtlOrRtl": 3,
+        "_copterGcsParamValueSmartRtlOrLand": 4,
+        "_copterGcsParamValueLand": 5,
+        "_copterGcsParamValueAutoDoLandOrRtl": 6,
+        "_copterGcsParamValueBrakeOrLand": 7,
+        "_copterThrParamValueRtl": 1,
+        "_copterThrParamValueLand": 3,
+        "_copterThrParamValueSmartRtlOrRtl": 4,
+        "_copterThrParamValueSmartRtlOrLand": 5,
+        "_copterThrParamValueAutoDoLandOrRtl": 6,
+        "_copterThrParamValueBrakeOrLand": 7,
+        "_planeGcsParamValueHeartbeat": 1,
+        "_planeGcsParamValueHeartbeatAndRssi": 2,
+        "_planeGcsParamValueHeartbeatAndAuto": 3,
+        "_planeThrFsParamValueEnabled": 1,
+        "_roverFsParamValueEnabled": 1,
+        "_roverFsParamValueEnabledIgnoreAuto": 2,
+        "_roverFsActionParamValueNothing": 0,
+        "_roverFsActionParamValueRtl": 1,
+        "_roverFsActionParamValueHold": 2,
+        "_roverFsActionParamValueSmartRtlOrRtl": 3,
+        "_roverFsActionParamValueSmartRtlOrHold": 4,
+        "_roverFsActionParamValueTerminate": 5,
+        "_roverFsActionParamValueLoiterOrHold": 6,
+        "_copterEkfParamValueLandIfPosRequired": 1,
+        "_copterEkfParamValueAltHoldIfPosRequired": 2,
+        "_copterEkfParamValueLandAllModes": 3,
+        "_roverEkfParamValueHold": 1,
+        "_roverEkfParamValueReportOnly": 2,
+        "_drParamValueLand": 1,
+        "_drParamValueRtl": 2,
+        "_drParamValueSmartRtlOrRtl": 3,
+        "_drParamValueSmartRtlOrLand": 4,
+        "_drParamValueAutoLandOrRtl": 6,
+        "_roverCrashParamValueHold": 1,
+        "_roverCrashParamValueHoldAndDisarm": 2
+    },
+    "params": {
+        "_roverFirmware": {
+            "name": "MODE1",
+            "existsOnly": true
+        },
+        "_fsOptionsAvailable": {
+            "name": "FS_OPTIONS",
+            "existsOnly": true
+        },
+        "_copterGcsEnable": "FS_GCS_ENABLE",
+        "_planeGcsEnable": "FS_GCS_ENABL",
+        "_roverGcsEnable": "FS_GCS_ENABLE",
+        "_planeThrFailsafe": "THR_FAILSAFE",
+        "_copterThrEnable": "FS_THR_ENABLE",
+        "_roverThrEnable": "FS_THR_ENABLE",
+        "_roverFsAction": "FS_ACTION",
+        "_copterEkfAction": "FS_EKF_ACTION",
+        "_roverEkfAction": "FS_EKF_ACTION",
+        "_drEnable": "FS_DR_ENABLE",
+        "_roverCrashCheck": "FS_CRASH_CHECK"
+    },
+    "bindings": {
+        "_copterGcsEnabled": "_copterGcsEnable && _copterGcsEnable.rawValue !== 0",
+        "_planeGcsEnabled": "_planeGcsEnable && _planeGcsEnable.rawValue !== 0",
+        "_roverGcsEnabled": "_roverGcsEnable && _roverGcsEnable.rawValue !== 0",
+        "_copterThrEnabled": "_copterThrEnable && _copterThrEnable.rawValue !== 0",
+        "_roverThrEnabled": "_roverThrEnable && _roverThrEnable.rawValue !== 0",
+        "_planeThrEnabled": "_planeThrFailsafe && _planeThrFailsafe.value === _planeThrFsParamValueEnabled",
+        "_copterEkfEnabled": "_copterEkfAction && _copterEkfAction.rawValue !== 0",
+        "_roverEkfEnabled": "_roverEkfAction && _roverEkfAction.rawValue !== 0",
+        "_drEnabled": "_drEnable && _drEnable.rawValue !== 0",
+        "_roverCrashEnabled": "_roverCrashCheck && _roverCrashCheck.rawValue !== 0"
+    },
+    "sections": [
+        {
+            "title": "Battery Failsafe",
+            "keywords": [
+                "voltage",
+                "mah",
+                "capacity",
+                "low battery",
+                "critical battery",
+                "lipo",
+                "power"
+            ],
+            "image": "/qmlimages/Battery.svg",
+            "repeat": {
+                "paramPrefix": "BATT",
+                "probePostfix": "MONITOR",
+                "indexing": "apm_battery",
+                "enableParam": "MONITOR",
+                "disabledParamValue": "_monitorParamValueDisabled"
+            },
+            "controls": [
+                {
+                    "param": "FS_LOW_ACT",
+                    "label": "Low action",
+                    "control": "combobox",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"FS_LOW_ACT\"))"
+                },
+                {
+                    "param": "FS_CRT_ACT",
+                    "label": "Critical action",
+                    "control": "combobox",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"FS_CRT_ACT\"))"
+                },
+                {
+                    "param": "LOW_VOLT",
+                    "label": "Low voltage threshold",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"LOW_VOLT\"))"
+                },
+                {
+                    "param": "CRT_VOLT",
+                    "label": "Critical voltage threshold",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"CRT_VOLT\"))"
+                },
+                {
+                    "param": "LOW_MAH",
+                    "label": "Low mAh threshold",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"LOW_MAH\"))"
+                },
+                {
+                    "param": "CRT_MAH",
+                    "label": "Critical mAh threshold",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"CRT_MAH\"))"
+                }
+            ]
+        },
+        {
+            "title": "Ground Station Failsafe",
+            "keywords": [
+                "gcs",
+                "ground station",
+                "heartbeat",
+                "telemetry",
+                "link loss",
+                "disconnect",
+                "rssi"
+            ],
+            "showWhen": "controller.vehicle.multiRotor",
+            "controls": [
+                {
+                    "label": "Enabled",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_copterGcsEnabled",
+                        "onChecked": "_copterGcsEnable.rawValue = _copterGcsParamValueRtl",
+                        "onUnchecked": "_copterGcsEnable.rawValue = 0"
+                    }
+                },
+                {
+                    "param": "FS_GCS_TIMEOUT",
+                    "label": "Timeout",
+                    "showWhen": "_copterGcsEnabled"
+                },
+                {
+                    "param": "FS_GCS_ENABLE",
+                    "label": "Action:",
+                    "control": "radiogroup",
+                    "raw": true,
+                    "showWhen": "_copterGcsEnabled",
+                    "options": [
+                        {
+                            "label": "RTL",
+                            "value": "_copterGcsParamValueRtl",
+                            "checked": "_copterGcsEnable.rawValue === _copterGcsParamValueRtl"
+                        },
+                        {
+                            "label": "Land",
+                            "value": "_copterGcsParamValueLand",
+                            "checked": "_copterGcsEnable.rawValue === _copterGcsParamValueLand"
+                        },
+                        {
+                            "label": "SmartRTL or RTL",
+                            "value": "_copterGcsParamValueSmartRtlOrRtl",
+                            "checked": "_copterGcsEnable.rawValue === _copterGcsParamValueSmartRtlOrRtl"
+                        },
+                        {
+                            "label": "SmartRTL or Land",
+                            "value": "_copterGcsParamValueSmartRtlOrLand",
+                            "checked": "_copterGcsEnable.rawValue === _copterGcsParamValueSmartRtlOrLand"
+                        },
+                        {
+                            "label": "Auto DO_LAND_START or RTL",
+                            "value": "_copterGcsParamValueAutoDoLandOrRtl",
+                            "checked": "_copterGcsEnable.rawValue === _copterGcsParamValueAutoDoLandOrRtl"
+                        },
+                        {
+                            "label": "Brake or Land",
+                            "value": "_copterGcsParamValueBrakeOrLand",
+                            "checked": "_copterGcsEnable.rawValue === _copterGcsParamValueBrakeOrLand"
+                        }
+                    ]
+                },
+                {
+                    "control": "label",
+                    "label": "Ignore failsafe if:",
+                    "showWhen": "_fsOptionsAvailable && _copterGcsEnabled"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "In Auto mode",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 2,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable && _copterGcsEnabled"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "In pilot control",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 16,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable && _copterGcsEnabled"
+                }
+            ]
+        },
+        {
+            "title": "Ground Station Failsafe",
+            "keywords": [
+                "gcs",
+                "ground station",
+                "heartbeat",
+                "telemetry",
+                "link loss",
+                "disconnect",
+                "rssi"
+            ],
+            "showWhen": "controller.vehicle.fixedWing",
+            "controls": [
+                {
+                    "label": "Enabled",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_planeGcsEnabled",
+                        "onChecked": "_planeGcsEnable.rawValue = _planeGcsParamValueHeartbeat",
+                        "onUnchecked": "_planeGcsEnable.rawValue = 0"
+                    }
+                },
+                {
+                    "param": "FS_GCS_ENABL",
+                    "label": "Trigger:",
+                    "control": "radiogroup",
+                    "raw": true,
+                    "showWhen": "_planeGcsEnabled",
+                    "options": [
+                        {
+                            "label": "Heartbeat",
+                            "value": "_planeGcsParamValueHeartbeat",
+                            "checked": "_planeGcsEnable && _planeGcsEnable.rawValue === _planeGcsParamValueHeartbeat"
+                        },
+                        {
+                            "label": "Heartbeat and Remote RSSI",
+                            "value": "_planeGcsParamValueHeartbeatAndRssi",
+                            "checked": "_planeGcsEnable && _planeGcsEnable.rawValue === _planeGcsParamValueHeartbeatAndRssi"
+                        },
+                        {
+                            "label": "Heartbeat and AUTO",
+                            "value": "_planeGcsParamValueHeartbeatAndAuto",
+                            "checked": "_planeGcsEnable && _planeGcsEnable.rawValue === _planeGcsParamValueHeartbeatAndAuto"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "Ground Station Failsafe",
+            "keywords": [
+                "gcs",
+                "ground station",
+                "heartbeat",
+                "telemetry",
+                "link loss",
+                "disconnect",
+                "rssi"
+            ],
+            "showWhen": "_roverFirmware",
+            "controls": [
+                {
+                    "label": "Enabled",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_roverGcsEnabled",
+                        "onChecked": "_roverGcsEnable.rawValue = _roverFsParamValueEnabled",
+                        "onUnchecked": "_roverGcsEnable.rawValue = 0"
+                    }
+                },
+                {
+                    "param": "FS_GCS_TIMEOUT",
+                    "label": "Timeout",
+                    "showWhen": "_roverGcsEnabled"
+                },
+                {
+                    "control": "label",
+                    "label": "Ignore failsafe if:",
+                    "showWhen": "_roverGcsEnabled"
+                },
+                {
+                    "label": "In Auto mode",
+                    "control": "toggleCheckbox",
+                    "indent": true,
+                    "showWhen": "_roverGcsEnabled",
+                    "toggleCheckbox": {
+                        "checked": "_roverGcsEnable ? _roverGcsEnable.rawValue === _roverFsParamValueEnabledIgnoreAuto : false",
+                        "onChecked": "_roverGcsEnable.rawValue = _roverFsParamValueEnabledIgnoreAuto",
+                        "onUnchecked": "_roverGcsEnable.rawValue = _roverFsParamValueEnabled"
+                    }
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "In Hold mode",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 1,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable && _roverGcsEnabled"
+                }
+            ]
+        },
+        {
+            "title": "Failsafe Triggers",
+            "keywords": [
+                "throttle",
+                "pwm",
+                "short failsafe",
+                "long failsafe",
+                "vtol transition"
+            ],
+            "showWhen": "controller.vehicle.fixedWing",
+            "controls": [
+                {
+                    "label": "Throttle PWM threshold",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_planeThrEnabled",
+                        "onChecked": "_planeThrFailsafe.value = _planeThrFsParamValueEnabled",
+                        "onUnchecked": "_planeThrFailsafe.value = 0"
+                    }
+                },
+                {
+                    "param": "THR_FS_VALUE",
+                    "label": "PWM threshold",
+                    "optional": true,
+                    "showWhen": "_planeThrEnabled"
+                },
+                {
+                    "param": "FS_SHORT_ACTN",
+                    "label": "Short failsafe action",
+                    "control": "combobox",
+                    "optional": true
+                },
+                {
+                    "param": "FS_LONG_ACTN",
+                    "label": "Long failsafe action",
+                    "control": "combobox",
+                    "optional": true
+                },
+                {
+                    "param": "FS_LONG_TIMEOUT",
+                    "label": "Long failsafe timeout",
+                    "optional": true
+                },
+                {
+                    "param": "Q_TRANS_FAIL_ACT",
+                    "label": "VTOL transition failure action",
+                    "control": "combobox",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, \"Q_TRANS_FAIL\")"
+                },
+                {
+                    "param": "Q_TRANS_FAIL",
+                    "label": "VTOL transition failure timeout",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, \"Q_TRANS_FAIL\")"
+                }
+            ]
+        },
+        {
+            "title": "RC Failsafe",
+            "keywords": [
+                "radio",
+                "receiver",
+                "transmitter",
+                "rc loss",
+                "signal loss"
+            ],
+            "showWhen": "controller.vehicle.multiRotor",
+            "controls": [
+                {
+                    "control": "label",
+                    "label": "Always enabled"
+                },
+                {
+                    "control": "label",
+                    "label": "Ignore failsafe if:",
+                    "showWhen": "_fsOptionsAvailable"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "In Auto mode",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 1,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "In Guided mode",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 4,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "Landing",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 8,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable"
+                }
+            ]
+        },
+        {
+            "title": "Throttle Failsafe",
+            "keywords": [
+                "throttle",
+                "pwm",
+                "receiver",
+                "rc loss",
+                "signal loss"
+            ],
+            "showWhen": "controller.vehicle.multiRotor",
+            "controls": [
+                {
+                    "label": "Enabled",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_copterThrEnabled",
+                        "onChecked": "_copterThrEnable.rawValue = _copterThrParamValueRtl",
+                        "onUnchecked": "_copterThrEnable.rawValue = 0"
+                    }
+                },
+                {
+                    "param": "FS_THR_VALUE",
+                    "label": "PWM threshold",
+                    "showWhen": "_copterThrEnabled"
+                },
+                {
+                    "param": "FS_THR_ENABLE",
+                    "label": "Action:",
+                    "control": "radiogroup",
+                    "raw": true,
+                    "showWhen": "_copterThrEnabled",
+                    "options": [
+                        {
+                            "label": "Always RTL",
+                            "value": "_copterThrParamValueRtl",
+                            "checked": "_copterThrEnable.rawValue === _copterThrParamValueRtl"
+                        },
+                        {
+                            "label": "Always Land",
+                            "value": "_copterThrParamValueLand",
+                            "checked": "_copterThrEnable.rawValue === _copterThrParamValueLand"
+                        },
+                        {
+                            "label": "Always SmartRTL or RTL",
+                            "value": "_copterThrParamValueSmartRtlOrRtl",
+                            "checked": "_copterThrEnable.rawValue === _copterThrParamValueSmartRtlOrRtl"
+                        },
+                        {
+                            "label": "Always SmartRTL or Land",
+                            "value": "_copterThrParamValueSmartRtlOrLand",
+                            "checked": "_copterThrEnable.rawValue === _copterThrParamValueSmartRtlOrLand"
+                        },
+                        {
+                            "label": "Auto DO_LAND_START or RTL",
+                            "value": "_copterThrParamValueAutoDoLandOrRtl",
+                            "checked": "_copterThrEnable.rawValue === _copterThrParamValueAutoDoLandOrRtl"
+                        },
+                        {
+                            "label": "Always Brake or Land",
+                            "value": "_copterThrParamValueBrakeOrLand",
+                            "checked": "_copterThrEnable.rawValue === _copterThrParamValueBrakeOrLand"
+                        }
+                    ]
+                },
+                {
+                    "control": "label",
+                    "label": "Ignore failsafe if:",
+                    "showWhen": "_fsOptionsAvailable && _copterThrEnabled"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "In Auto mode",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 1,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable && _copterThrEnabled"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "In Guided mode",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 4,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable && _copterThrEnabled"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "Landing",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 8,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable && _copterThrEnabled"
+                }
+            ]
+        },
+        {
+            "title": "Throttle Failsafe",
+            "keywords": [
+                "throttle",
+                "pwm",
+                "receiver",
+                "rc loss",
+                "signal loss"
+            ],
+            "showWhen": "_roverFirmware",
+            "controls": [
+                {
+                    "label": "Enabled",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_roverThrEnabled",
+                        "onChecked": "_roverThrEnable.rawValue = _roverFsParamValueEnabled",
+                        "onUnchecked": "_roverThrEnable.rawValue = 0"
+                    }
+                },
+                {
+                    "param": "FS_THR_VALUE",
+                    "label": "PWM threshold",
+                    "optional": true,
+                    "showWhen": "_roverThrEnabled"
+                },
+                {
+                    "param": "FS_TIMEOUT",
+                    "label": "Timeout",
+                    "optional": true,
+                    "showWhen": "_roverThrEnabled"
+                },
+                {
+                    "param": "FS_ACTION",
+                    "label": "Action:",
+                    "control": "radiogroup",
+                    "raw": true,
+                    "optional": true,
+                    "showWhen": "_roverThrEnabled",
+                    "options": [
+                        {
+                            "label": "Nothing",
+                            "value": "_roverFsActionParamValueNothing",
+                            "checked": "_roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueNothing"
+                        },
+                        {
+                            "label": "RTL",
+                            "value": "_roverFsActionParamValueRtl",
+                            "checked": "_roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueRtl"
+                        },
+                        {
+                            "label": "Hold",
+                            "value": "_roverFsActionParamValueHold",
+                            "checked": "_roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueHold"
+                        },
+                        {
+                            "label": "SmartRTL or RTL",
+                            "value": "_roverFsActionParamValueSmartRtlOrRtl",
+                            "checked": "_roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueSmartRtlOrRtl"
+                        },
+                        {
+                            "label": "SmartRTL or Hold",
+                            "value": "_roverFsActionParamValueSmartRtlOrHold",
+                            "checked": "_roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueSmartRtlOrHold"
+                        },
+                        {
+                            "label": "Terminate",
+                            "value": "_roverFsActionParamValueTerminate",
+                            "checked": "_roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueTerminate"
+                        },
+                        {
+                            "label": "Loiter or Hold",
+                            "value": "_roverFsActionParamValueLoiterOrHold",
+                            "checked": "_roverFsAction && _roverFsAction.rawValue === _roverFsActionParamValueLoiterOrHold"
+                        }
+                    ]
+                },
+                {
+                    "control": "label",
+                    "label": "Ignore failsafe if:",
+                    "showWhen": "_roverThrEnabled"
+                },
+                {
+                    "label": "In Auto mode",
+                    "control": "toggleCheckbox",
+                    "indent": true,
+                    "showWhen": "_roverThrEnabled",
+                    "toggleCheckbox": {
+                        "checked": "_roverThrEnable ? _roverThrEnable.rawValue === _roverFsParamValueEnabledIgnoreAuto : false",
+                        "onChecked": "_roverThrEnable.rawValue = _roverFsParamValueEnabledIgnoreAuto",
+                        "onUnchecked": "_roverThrEnable.rawValue = _roverFsParamValueEnabled"
+                    }
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "In Hold mode",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 1,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable && _roverThrEnabled"
+                }
+            ]
+        },
+        {
+            "title": "EKF Failsafe",
+            "keywords": [
+                "ekf",
+                "extended kalman filter",
+                "position estimate",
+                "navigation",
+                "gps loss"
+            ],
+            "showWhen": "controller.vehicle.multiRotor",
+            "controls": [
+                {
+                    "label": "Enabled",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_copterEkfEnabled",
+                        "onChecked": "_copterEkfAction.rawValue = _copterEkfParamValueLandIfPosRequired",
+                        "onUnchecked": "_copterEkfAction.rawValue = 0"
+                    }
+                },
+                {
+                    "param": "FS_EKF_THRESH",
+                    "label": "Threshold",
+                    "showWhen": "_copterEkfEnabled"
+                },
+                {
+                    "param": "FS_EKF_ACTION",
+                    "label": "Action:",
+                    "control": "radiogroup",
+                    "raw": true,
+                    "showWhen": "_copterEkfEnabled",
+                    "options": [
+                        {
+                            "label": "Land if position required",
+                            "value": "_copterEkfParamValueLandIfPosRequired",
+                            "checked": "_copterEkfAction.rawValue === _copterEkfParamValueLandIfPosRequired"
+                        },
+                        {
+                            "label": "AltHold if position required",
+                            "value": "_copterEkfParamValueAltHoldIfPosRequired",
+                            "checked": "_copterEkfAction.rawValue === _copterEkfParamValueAltHoldIfPosRequired"
+                        },
+                        {
+                            "label": "Land from all modes",
+                            "value": "_copterEkfParamValueLandAllModes",
+                            "checked": "_copterEkfAction.rawValue === _copterEkfParamValueLandAllModes"
+                        }
+                    ]
+                },
+                {
+                    "control": "label",
+                    "label": "Ignore failsafe if:",
+                    "showWhen": "_fsOptionsAvailable && _copterEkfEnabled"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "Landing",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 8,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable && _copterEkfEnabled"
+                }
+            ]
+        },
+        {
+            "title": "EKF Failsafe",
+            "keywords": [
+                "ekf",
+                "extended kalman filter",
+                "position estimate",
+                "navigation",
+                "gps loss"
+            ],
+            "showWhen": "_roverFirmware",
+            "controls": [
+                {
+                    "label": "Enabled",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_roverEkfEnabled",
+                        "onChecked": "_roverEkfAction.rawValue = _roverEkfParamValueHold",
+                        "onUnchecked": "_roverEkfAction.rawValue = 0"
+                    }
+                },
+                {
+                    "param": "FS_EKF_THRESH",
+                    "label": "Threshold",
+                    "optional": true,
+                    "showWhen": "_roverEkfEnabled"
+                },
+                {
+                    "param": "FS_EKF_ACTION",
+                    "label": "Action:",
+                    "control": "radiogroup",
+                    "raw": true,
+                    "optional": true,
+                    "showWhen": "_roverEkfEnabled",
+                    "options": [
+                        {
+                            "label": "Hold",
+                            "value": "_roverEkfParamValueHold",
+                            "checked": "_roverEkfAction && _roverEkfAction.rawValue === _roverEkfParamValueHold"
+                        },
+                        {
+                            "label": "Report only",
+                            "value": "_roverEkfParamValueReportOnly",
+                            "checked": "_roverEkfAction && _roverEkfAction.rawValue === _roverEkfParamValueReportOnly"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "title": "Dead Reckoning Failsafe",
+            "keywords": [
+                "dead reckoning",
+                "gps loss",
+                "navigation",
+                "position estimate"
+            ],
+            "showWhen": "controller.vehicle.multiRotor && controller.parameterExists(-1, \"FS_DR_ENABLE\")",
+            "controls": [
+                {
+                    "label": "Enabled",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_drEnabled",
+                        "onChecked": "_drEnable.rawValue = _drParamValueLand",
+                        "onUnchecked": "_drEnable.rawValue = 0"
+                    }
+                },
+                {
+                    "param": "FS_DR_TIMEOUT",
+                    "label": "Timeout",
+                    "optional": true,
+                    "showWhen": "_drEnabled"
+                },
+                {
+                    "param": "FS_DR_ENABLE",
+                    "label": "Action:",
+                    "control": "radiogroup",
+                    "raw": true,
+                    "showWhen": "_drEnabled",
+                    "options": [
+                        {
+                            "label": "Land",
+                            "value": "_drParamValueLand",
+                            "checked": "_drEnable.rawValue === _drParamValueLand"
+                        },
+                        {
+                            "label": "RTL",
+                            "value": "_drParamValueRtl",
+                            "checked": "_drEnable.rawValue === _drParamValueRtl"
+                        },
+                        {
+                            "label": "SmartRTL or RTL",
+                            "value": "_drParamValueSmartRtlOrRtl",
+                            "checked": "_drEnable.rawValue === _drParamValueSmartRtlOrRtl"
+                        },
+                        {
+                            "label": "SmartRTL or Land",
+                            "value": "_drParamValueSmartRtlOrLand",
+                            "checked": "_drEnable.rawValue === _drParamValueSmartRtlOrLand"
+                        },
+                        {
+                            "label": "Auto Land/Return or RTL",
+                            "value": "_drParamValueAutoLandOrRtl",
+                            "checked": "_drEnable.rawValue === _drParamValueAutoLandOrRtl"
+                        }
+                    ]
+                },
+                {
+                    "control": "label",
+                    "label": "Ignore failsafe if:",
+                    "showWhen": "_fsOptionsAvailable && _drEnabled"
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "Landing",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 8,
+                    "indent": true,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable && _drEnabled"
+                }
+            ]
+        },
+        {
+            "title": "Other Failsafe Options",
+            "keywords": [
+                "crash",
+                "vibration",
+                "gripper"
+            ],
+            "showWhen": "controller.vehicle.multiRotor",
+            "controls": [
+                {
+                    "param": "FS_CRASH_CHECK",
+                    "label": "Crash check failsafe",
+                    "control": "checkbox"
+                },
+                {
+                    "param": "FS_VIBE_ENABLE",
+                    "label": "Vibration failsafe",
+                    "control": "checkbox",
+                    "optional": true
+                },
+                {
+                    "param": "FS_OPTIONS",
+                    "label": "Release gripper on any failsafe",
+                    "control": "bitmaskCheckbox",
+                    "bitMask": 32,
+                    "optional": true,
+                    "showWhen": "_fsOptionsAvailable"
+                }
+            ]
+        },
+        {
+            "title": "Other Failsafe Options",
+            "keywords": [
+                "crash",
+                "vibration",
+                "gripper"
+            ],
+            "showWhen": "_roverFirmware",
+            "controls": [
+                {
+                    "label": "Crash check failsafe",
+                    "control": "toggleCheckbox",
+                    "toggleCheckbox": {
+                        "checked": "_roverCrashEnabled",
+                        "onChecked": "_roverCrashCheck.rawValue = _roverCrashParamValueHold",
+                        "onUnchecked": "_roverCrashCheck.rawValue = 0"
+                    }
+                },
+                {
+                    "param": "FS_CRASH_CHECK",
+                    "label": "Action:",
+                    "control": "radiogroup",
+                    "raw": true,
+                    "showWhen": "_roverCrashEnabled",
+                    "options": [
+                        {
+                            "label": "Hold",
+                            "value": "_roverCrashParamValueHold",
+                            "checked": "_roverCrashCheck.rawValue === _roverCrashParamValueHold"
+                        },
+                        {
+                            "label": "Hold and Disarm",
+                            "value": "_roverCrashParamValueHoldAndDisarm",
+                            "checked": "_roverCrashCheck.rawValue === _roverCrashParamValueHoldAndDisarm"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

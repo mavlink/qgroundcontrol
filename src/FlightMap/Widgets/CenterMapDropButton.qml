@@ -175,7 +175,7 @@ DropButton {
             }
 
             QGCButton {
-                text:               qsTr("Launch")
+                text:               qsTr("Home")
                 Layout.fillWidth:   true
                 enabled:            !followVehicleCheckBox.checked
 

@@ -31,9 +31,13 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TextIO
 
+from .env import is_debug, is_verbose
 
-class Color(Enum):
+
+class Color(str, Enum):
     """ANSI color codes for terminal output."""
+
+    __str__ = str.__str__  # StrEnum-equivalent; stdlib StrEnum is 3.11+
 
     RED = "\033[0;31m"
     GREEN = "\033[0;32m"
@@ -44,10 +48,9 @@ class Color(Enum):
     BOLD = "\033[1m"
     DIM = "\033[2m"
     RESET = "\033[0m"
-    NC = "\033[0m"  # Alias for RESET
 
 
-def use_color(stream: TextIO = None) -> bool:
+def use_color(stream: TextIO | None = None) -> bool:
     """
     Determine if colored output should be used.
 
@@ -71,7 +74,7 @@ def use_color(stream: TextIO = None) -> bool:
     return hasattr(stream, "isatty") and stream.isatty()
 
 
-def colorize(text: str, color: Color, stream: TextIO = None) -> str:
+def colorize(text: str, color: Color, stream: TextIO | None = None) -> str:
     """
     Apply ANSI color code to text if colors are enabled.
 
@@ -84,18 +87,8 @@ def colorize(text: str, color: Color, stream: TextIO = None) -> str:
         Colorized text or original text if colors disabled.
     """
     if use_color(stream):
-        return f"{color.value}{text}{Color.RESET.value}"
+        return f"{color}{text}{Color.RESET}"
     return text
-
-
-def is_debug() -> bool:
-    """Check if debug mode is enabled via DEBUG environment variable."""
-    return bool(os.environ.get("DEBUG"))
-
-
-def is_verbose() -> bool:
-    """Check if verbose mode is enabled via VERBOSE environment variable."""
-    return bool(os.environ.get("VERBOSE"))
 
 
 # Module-level convenience functions
@@ -133,7 +126,7 @@ def log_verbose(msg: str, *, prefix: str = "[VERBOSE]") -> None:
         print(f"{colorize(prefix, Color.DIM)} {msg}")
 
 
-def log_step(msg: str, step: int = None, total: int = None) -> None:
+def log_step(msg: str, step: int | None = None, total: int | None = None) -> None:
     """Log a step in a multi-step process."""
     if step is not None and total is not None:
         prefix = f"[{step}/{total}]"
@@ -167,7 +160,7 @@ class Logger:
         prefix_error: Prefix for error messages. Default: "[ERROR]"
     """
 
-    color: bool = None
+    color: bool | None = None
     prefix_info: str = "[INFO]"
     prefix_ok: str = "[OK]"
     prefix_warn: str = "[WARN]"
@@ -180,7 +173,7 @@ class Logger:
 
     def _colorize(self, text: str, color: Color) -> str:
         if self.color:
-            return f"{color.value}{text}{Color.RESET.value}"
+            return f"{color}{text}{Color.RESET}"
         return text
 
     def info(self, msg: str) -> None:
@@ -202,11 +195,9 @@ class Logger:
     def debug(self, msg: str) -> None:
         """Log a debug message (only if DEBUG env var is set)."""
         if is_debug():
-            print(
-                f"{self._colorize(self.prefix_debug, Color.DIM)} {msg}", file=sys.stderr
-            )
+            print(f"{self._colorize(self.prefix_debug, Color.DIM)} {msg}", file=sys.stderr)
 
-    def step(self, msg: str, step: int = None, total: int = None) -> None:
+    def step(self, msg: str, step: int | None = None, total: int | None = None) -> None:
         """Log a step in a multi-step process."""
         if step is not None and total is not None:
             prefix = f"[{step}/{total}]"
@@ -221,7 +212,3 @@ class Logger:
         if isinstance(cmd, list):
             cmd = " ".join(cmd)
         self.debug(f"$ {cmd}")
-
-
-# Convenience aliases for backward compatibility
-Colors = Color  # Some scripts use "Colors" instead of "Color"

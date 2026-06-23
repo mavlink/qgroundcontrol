@@ -4,17 +4,18 @@
 #include <QtQuick/QQuickItem>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "QmlObjectListModel.h"
-#include "QGCMAVLink.h"
-#include "Vehicle.h"
+#include "QGCMAVLinkTypes.h"
 
 class InstrumentValueData;
+class QmlObjectListModel;
+class Vehicle;
 
 class FactValueGrid : public QQuickItem
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_MOC_INCLUDE("QmlObjectListModel.h")
 public:
     FactValueGrid(QQuickItem *parent = nullptr);
     ~FactValueGrid();
@@ -25,7 +26,7 @@ public:
         MediumFontSize,
         LargeFontSize,
     };
-    Q_ENUMS(FontSize)
+    Q_ENUM(FontSize)
 
     Q_PROPERTY(QmlObjectListModel*  columns         MEMBER _columns                                     NOTIFY columnsChanged)
     Q_PROPERTY(int                  rowCount        MEMBER _rowCount                                    NOTIFY rowCountChanged)
@@ -47,7 +48,7 @@ public:
     QString                     settingsGroup           (void) const { return _settingsGroup; }
     FontSize                    fontSize                (void) const { return _fontSize; }
     QStringList                 iconNames               (void) const { return _iconNames; }
-    QGCMAVLink::VehicleClass_t  vehicleClass            (void) const;
+    QGCMAVLinkTypes::VehicleClass_t  vehicleClass            (void) const;
     Vehicle*                    currentVehicle          (void) const { return _specificVehicleForCard ? _specificVehicleForCard : _activeVehicle; }
     Vehicle*                    specificVehicleForCard  (void) const { return _specificVehicleForCard; }
 
@@ -91,7 +92,7 @@ private:
 
     // These are user facing string for the various enums.
     static       QStringList _iconNames;
-    static const QStringList _fontSizeNames;
+    QStringList _fontSizeNames;
 
     static constexpr const char* _columnsKey          = "columns";
     static constexpr const char* _rowsKey             = "rows";
@@ -115,5 +116,3 @@ private:
 };
 
 QML_DECLARE_TYPE(FactValueGrid)
-
-Q_DECLARE_METATYPE(FactValueGrid::FontSize)

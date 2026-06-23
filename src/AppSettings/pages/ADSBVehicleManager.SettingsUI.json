@@ -1,0 +1,21 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "heading": "ADSB Server",
+            "keywords": ["adsb", "ads-b", "traffic", "aircraft", "tracking", "sbs", "server", "host", "port"],
+            "controls": [
+                {
+                    "setting": "adsbVehicleManagerSettings.adsbServerConnectEnabled"
+                },
+                {
+                    "setting": "adsbVehicleManagerSettings.adsbServerHostAddress"
+                },
+                {
+                    "setting": "adsbVehicleManagerSettings.adsbServerPort"
+                }
+            ]
+        }
+    ]
+}

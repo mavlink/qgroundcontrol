@@ -1,7 +1,9 @@
+#include "QmlObjectListModel.h"
 #include "AirframeComponentController.h"
+#include <QtGui/QGuiApplication>
 #include "AirframeComponentAirframes.h"
 #include "MultiVehicleManager.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "LinkManager.h"
 #include "Fact.h"
 #include "Vehicle.h"
@@ -34,10 +36,7 @@ AirframeComponentController::AirframeComponentController(void) :
     _autostartId = getParameterFact(ParameterManager::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt();
     _currentVehicleName = QString::number(_autostartId); // Temp val. Replaced with actual vehicle name if found
 
-    for (int tindex = 0; tindex < AirframeComponentAirframes::get().count(); tindex++) {
-
-        const AirframeComponentAirframes::AirframeType_t* pType = AirframeComponentAirframes::get().values().at(tindex);
-
+    for (const AirframeComponentAirframes::AirframeType_t* pType : AirframeComponentAirframes::sortedTypes()) {
         AirframeType* airframeType = new AirframeType(pType->name, pType->imageResource, this);
         Q_CHECK_PTR(airframeType);
 
@@ -74,7 +73,7 @@ AirframeComponentController::~AirframeComponentController()
 void AirframeComponentController::changeAutostart(void)
 {
     if (MultiVehicleManager::instance()->vehicles()->count() > 1) {
-        qgcApp()->showAppMessage(tr("You cannot change airframe configuration while connected to multiple vehicles."));
+        QGC::showAppMessage(tr("You cannot change airframe configuration while connected to multiple vehicles."));
 		return;
 	}
 

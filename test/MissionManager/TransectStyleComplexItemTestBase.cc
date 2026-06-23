@@ -5,7 +5,6 @@
 #include "PlanViewSettings.h"
 #include "SettingsManager.h"
 
-
 void TransectStyleComplexItemTestBase::init()
 {
     OfflineMissionTest::init();
@@ -22,11 +21,3 @@ void TransectStyleComplexItemTestBase::cleanup()
     OfflineMissionTest::cleanup();
 }
 
-void TransectStyleComplexItemTestBase::_printItemCommands(QList<MissionItem*> items)
-{
-    // Handy for debugging failures
-    for (int i = 0; i < items.count(); i++) {
-        MissionItem* item = items[i];
-        qDebug() << "Index:Cmd" << i << item->command();
-    }
-}

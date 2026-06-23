@@ -1,19 +1,15 @@
 #pragma once
 
 #include <QtCore/QList>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-#include "MAVLinkLib.h"
+#include "MAVLinkEnums.h"
+#include "MAVLinkMessageType.h"
+#include "QGCMAVLinkTypes.h"
 
-Q_DECLARE_LOGGING_CATEGORY(QGCMAVLinkLog)
-// Q_DECLARE_METATYPE(mavlink_message_t)
-Q_DECLARE_METATYPE(MAV_TYPE)
-Q_DECLARE_METATYPE(MAV_AUTOPILOT)
-
-class QGCMAVLink : public QObject
+class QGCMAVLink : public QObject, public QGCMAVLinkTypes
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(MAVLink)
@@ -24,8 +20,7 @@ public:
     QGCMAVLink(QObject *parent = nullptr);
     ~QGCMAVLink();
 
-    typedef int FirmwareClass_t;
-    typedef int VehicleClass_t;
+    // FirmwareClass_t, VehicleClass_t, VehicleClassGeneric, maxRcChannels inherited from QGCMAVLinkTypes
 
     static constexpr const FirmwareClass_t FirmwareClassPX4       = MAV_AUTOPILOT_PX4;
     static constexpr const FirmwareClass_t FirmwareClassArduPilot = MAV_AUTOPILOT_ARDUPILOTMEGA;
@@ -38,9 +33,8 @@ public:
     static constexpr const VehicleClass_t VehicleClassSpacecraft  = MAV_TYPE_SPACECRAFT_ORBITER;
     static constexpr const VehicleClass_t VehicleClassMultiRotor  = MAV_TYPE_QUADROTOR;
     static constexpr const VehicleClass_t VehicleClassVTOL        = MAV_TYPE_VTOL_TAILSITTER_QUADROTOR;
-    static constexpr const VehicleClass_t VehicleClassGeneric     = MAV_TYPE_GENERIC;
-
-    static constexpr const uint8_t        maxRcChannels           = 18; // mavlink_rc_channels_t->chancount
+    // VehicleClassGeneric inherited from QGCMAVLinkTypes
+    static_assert(QGCMAVLinkTypes::VehicleClassGeneric == MAV_TYPE_GENERIC, "VehicleClassGeneric value mismatch");
 
     static bool                     isPX4FirmwareClass          (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_PX4; }
     static bool                     isArduPilotFirmwareClass    (MAV_AUTOPILOT autopilot) { return autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA; }
@@ -48,6 +42,7 @@ public:
     static FirmwareClass_t          firmwareClass               (MAV_AUTOPILOT autopilot);
     static MAV_AUTOPILOT            firmwareClassToAutopilot    (FirmwareClass_t firmwareClass) { return static_cast<MAV_AUTOPILOT>(firmwareClass); }
     static QString                  firmwareClassToString       (FirmwareClass_t firmwareClass);
+    static const char*              firmwareClassToCanonicalString(FirmwareClass_t firmwareClass);
     static MAV_AUTOPILOT            firmwareTypeFromString      (const QString &firmwareTypeStr);
     static QList<FirmwareClass_t>   allFirmwareClasses          ();
 
@@ -62,6 +57,7 @@ public:
     static MAV_TYPE                 vehicleClassToMavType       (VehicleClass_t vehicleClass) { return static_cast<MAV_TYPE>(vehicleClass); }
     static QString                  vehicleClassToUserVisibleString(VehicleClass_t vehicleClass);
     static QString                  vehicleClassToInternalString(VehicleClass_t vehicleClass);
+    static const char*              vehicleClassToCanonicalString(VehicleClass_t vehicleClass);
     static MAV_TYPE                 vehicleTypeFromString(const QString &vehicleStr);
     static QList<VehicleClass_t>    allVehicleClasses           (void);
 
@@ -74,85 +70,6 @@ public:
     static int                      motorCount                  (MAV_TYPE mavType, uint8_t frameType = 0);
     static uint32_t                 highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& highLatency2);
     static QString                  compIdToString              (uint8_t compId);
-
-    // Expose mavlink enums to Qml. I've tried various way to make this work without duping, but haven't found anything that works.
-
-#if defined(__clang__) || defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-#endif
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable: 4456)
-#endif
-
-    enum MAV_BATTERY_FUNCTION {
-        MAV_BATTERY_FUNCTION_UNKNOWN=0, /* Battery function is unknown | */
-        MAV_BATTERY_FUNCTION_ALL=1, /* Battery supports all flight systems | */
-        MAV_BATTERY_FUNCTION_PROPULSION=2, /* Battery for the propulsion system | */
-        MAV_BATTERY_FUNCTION_AVIONICS=3, /* Avionics battery | */
-        MAV_BATTERY_TYPE_PAYLOAD=4, /* Payload battery | */
-    };
-    Q_ENUM(MAV_BATTERY_FUNCTION)
-
-    enum MAV_BATTERY_CHARGE_STATE
-    {
-       MAV_BATTERY_CHARGE_STATE_UNDEFINED=0, /* Low battery state is not provided | */
-       MAV_BATTERY_CHARGE_STATE_OK=1, /* Battery is not in low state. Normal operation. | */
-       MAV_BATTERY_CHARGE_STATE_LOW=2, /* Battery state is low, warn and monitor close. | */
-       MAV_BATTERY_CHARGE_STATE_CRITICAL=3, /* Battery state is critical, return or abort immediately. | */
-       MAV_BATTERY_CHARGE_STATE_EMERGENCY=4, /* Battery state is too low for ordinary abort sequence. Perform fastest possible emergency stop to prevent damage. | */
-       MAV_BATTERY_CHARGE_STATE_FAILED=5, /* Battery failed, damage unavoidable. | */
-       MAV_BATTERY_CHARGE_STATE_UNHEALTHY=6, /* Battery is diagnosed to be defective or an error occurred, usage is discouraged / prohibited. | */
-       MAV_BATTERY_CHARGE_STATE_CHARGING=7, /* Battery is charging. | */
-    };
-    Q_ENUM(MAV_BATTERY_CHARGE_STATE)
-
-#if defined(__clang__) || defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
-    /// Sensor bits from sensors*Bits properties
-    enum MavlinkSysStatus {
-        SysStatusSensor3dGyro =                 MAV_SYS_STATUS_SENSOR_3D_GYRO,
-        SysStatusSensor3dAccel =                MAV_SYS_STATUS_SENSOR_3D_ACCEL,
-        SysStatusSensor3dMag =                  MAV_SYS_STATUS_SENSOR_3D_MAG,
-        SysStatusSensorAbsolutePressure =       MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE,
-        SysStatusSensorDifferentialPressure =   MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE,
-        SysStatusSensorGPS =                    MAV_SYS_STATUS_SENSOR_GPS,
-        SysStatusSensorOpticalFlow =            MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW,
-        SysStatusSensorVisionPosition =         MAV_SYS_STATUS_SENSOR_VISION_POSITION,
-        SysStatusSensorLaserPosition =          MAV_SYS_STATUS_SENSOR_LASER_POSITION,
-        SysStatusSensorExternalGroundTruth =    MAV_SYS_STATUS_SENSOR_EXTERNAL_GROUND_TRUTH,
-        SysStatusSensorAngularRateControl =     MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL,
-        SysStatusSensorAttitudeStabilization =  MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION,
-        SysStatusSensorYawPosition =            MAV_SYS_STATUS_SENSOR_YAW_POSITION,
-        SysStatusSensorZAltitudeControl =       MAV_SYS_STATUS_SENSOR_Z_ALTITUDE_CONTROL,
-        SysStatusSensorXYPositionControl =      MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL,
-        SysStatusSensorMotorOutputs =           MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS,
-        SysStatusSensorRCReceiver =             MAV_SYS_STATUS_SENSOR_RC_RECEIVER,
-        SysStatusSensor3dGyro2 =                MAV_SYS_STATUS_SENSOR_3D_GYRO2,
-        SysStatusSensor3dAccel2 =               MAV_SYS_STATUS_SENSOR_3D_ACCEL2,
-        SysStatusSensor3dMag2 =                 MAV_SYS_STATUS_SENSOR_3D_MAG2,
-        SysStatusSensorGeoFence =               MAV_SYS_STATUS_GEOFENCE,
-        SysStatusSensorAHRS =                   MAV_SYS_STATUS_AHRS,
-        SysStatusSensorTerrain =                MAV_SYS_STATUS_TERRAIN,
-        SysStatusSensorReverseMotor =           MAV_SYS_STATUS_REVERSE_MOTOR,
-        SysStatusSensorLogging =                MAV_SYS_STATUS_LOGGING,
-        SysStatusSensorBattery =                MAV_SYS_STATUS_SENSOR_BATTERY,
-    };
-    Q_ENUM(MavlinkSysStatus)
-
-    enum GripperActions {
-        GripperActionRelease  = GRIPPER_ACTION_RELEASE,
-        GripperActionGrab     = GRIPPER_ACTION_GRAB,
-        GripperActionHold     = GRIPPER_ACTION_HOLD,
-        GripperOptionInvalid  = GRIPPER_ACTIONS_ENUM_END,
-    };
-    Q_ENUM(GripperActions)
 
     enum CalibrationType {
         CalibrationNone,
@@ -197,4 +114,3 @@ public:
 
     static const QHash<int, QString> mavlinkCompIdHash;
 };
-Q_DECLARE_METATYPE(QGCMAVLink::GripperActions)

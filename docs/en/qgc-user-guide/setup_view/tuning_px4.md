@@ -5,7 +5,6 @@ Tuning only needs to be done once, and is recommended unless you're using vehicl
 [Auto-tuning](#autotune) should generally be used for frame types and controllers that support it (multicopter, fixed wing, and hybrid VTOL fixed wing vehicles).
 The tuning UI also supports manual tuning of all controllers.
 
-![Tuning Setup > Autotune](../../../assets/setup/tuning/px4_autotune_hero.png)
 
 ::: info
 During [Airframe Setup](airframe.md) you should have selected the frame that most closely matches your vehicle.
@@ -56,7 +55,7 @@ Be ready to abort the autotuning process by moving the RC controller sticks.
 
 The test steps are:
 
-1. Perform the [pre-tuning test](#pre-tuning-test) above.
+1. Perform the [pre-autotuning test](#pre-autotuning-test) above.
 1. Takeoff using RC control and prepare for test:
    - **Multicopters:** Takeoff using the remote controller in **Altitude mode**.
      Hover the vehicle at a safe distance and at a few meters above ground (between 4 and 20m).
@@ -64,7 +63,6 @@ The test steps are:
      This will guide the plane to fly in circle at constant altitude and speed.
 1. In QGroundControl, open the menu: **Vehicle setup > PID Tuning**
 
-   ![Tuning Setup > Autotune Enabled](../../../assets/setup/tuning/px4_autotune.png)
 
 1. Select either the _Rate Controller_ or _Attitude Controller_ tabs.
    Ensure that the **Autotune enabled** button is enabled (this will display the **Autotune** button and remove the manual tuning selectors).
@@ -108,7 +106,6 @@ In overview:
 1. Select the _Rate Controller_ tab.
    Ensure that the **Autotune enabled** button is is turned off.
 
-   ![PX4 Tuning - Manual - Rate controller](../../../assets/setup/tuning/px4_copter_manual_rate.png)
 
 1. Select the _Tuning axis_ to tune: **Roll**, **Pitch** or **Yaw** (each axis is tuned separately).
 1. Fly the vehicle, observing the tracking on the chart.
@@ -119,6 +116,3 @@ In overview:
 1. Switch to the other controllers and repeat the process.
    Screenshots of the tuning pages are shown below.
 
-   ![PX4 Tuning - Manual - Attitude controller](../../../assets/setup/tuning/px4_copter_manual_attitude.png)
-   ![PX4 Tuning - Manual - Velocity controller](../../../assets/setup/tuning/px4_copter_manual_velocity.png)
-   ![PX4 Tuning - Manual - Position controller](../../../assets/setup/tuning/px4_copter_manual_velocity.png)

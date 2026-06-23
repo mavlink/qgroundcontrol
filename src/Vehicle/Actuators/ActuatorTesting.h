@@ -2,11 +2,16 @@
 
 
 #include "QmlObjectListModel.h"
-#include "Vehicle.h"
-#include "MAVLinkLib.h"
+#include "VehicleTypes.h"
+#include "MAVLinkMessageType.h"
+#include "MAVLinkEnums.h"
+#include "QGCMAVLinkTypes.h"
+
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QTimer>
+
+class Vehicle;
 
 namespace ActuatorTesting {
 
@@ -100,8 +105,8 @@ private:
 
     void resetStates();
 
-    static void ackHandlerEntry(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, Vehicle::MavCmdResultFailureCode_t failureCode);
-    void ackHandler(MAV_RESULT commandResult, Vehicle::MavCmdResultFailureCode_t failureCode);
+    static void ackHandlerEntry(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, VehicleTypes::MavCmdResultFailureCode_t failureCode);
+    void ackHandler(MAV_RESULT commandResult, VehicleTypes::MavCmdResultFailureCode_t failureCode);
     void sendMavlinkRequest(int function, float value, float timeout);
 
     void sendNext();

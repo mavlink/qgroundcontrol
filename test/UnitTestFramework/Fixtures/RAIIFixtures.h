@@ -1,86 +1,27 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QList>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonParseError>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
+#include <QtCore/QUrl>
 #include <QtCore/QVariant>
+#include <QtNetwork/QNetworkReply>
 
 #include <memory>
 
-#include "BaseClasses/VehicleTest.h"
-#include "MAVLinkLib.h"
-#include "MultiSignalSpy.h"
+#include "MAVLinkMessageType.h"
 
-class MockLink;
-class Vehicle;
+class RunGuard;
 class Fact;
 
 /// @file
 /// @brief RAII wrappers for test resources
 
 namespace TestFixtures {
-
-// ============================================================================
-// VehicleFixture - RAII wrapper for MockLink vehicle connection
-// ============================================================================
-
-/// RAII fixture that connects a MockLink vehicle and auto-disconnects on destruction
-/// Usage:
-///   VehicleFixture vehicle(this, MAV_AUTOPILOT_PX4);
-///   QVERIFY(vehicle.isConnected());
-///   vehicle->doSomething();  // Access via operator->
-class VehicleFixture
-{
-public:
-    /// Connect a MockLink vehicle
-    /// @param test The VehicleTest instance (for access to _connectMockLink)
-    /// @param autopilot Autopilot type to simulate
-    /// @param waitForInitialConnect If true, wait for full initial connect sequence
-    explicit VehicleFixture(VehicleTest* test, MAV_AUTOPILOT autopilot = MAV_AUTOPILOT_PX4,
-                            bool waitForInitialConnect = true);
-
-    /// Disconnects the MockLink automatically
-    ~VehicleFixture();
-
-    // Non-copyable
-    VehicleFixture(const VehicleFixture&) = delete;
-    VehicleFixture& operator=(const VehicleFixture&) = delete;
-
-    /// Check if vehicle is connected
-    bool isConnected() const
-    {
-        return _vehicle != nullptr;
-    }
-
-    /// Get the Vehicle pointer
-    Vehicle* vehicle() const
-    {
-        return _vehicle;
-    }
-
-    /// Get the MockLink pointer
-    MockLink* mockLink() const
-    {
-        return _mockLink;
-    }
-
-    /// Pointer-like access to Vehicle
-    Vehicle* operator->() const
-    {
-        return _vehicle;
-    }
-
-    /// Simulate communication loss
-    void setCommLost(bool lost);
-
-    /// Simulate connection removed
-    void simulateConnectionRemoved();
-
-private:
-    VehicleTest* _test = nullptr;
-    Vehicle* _vehicle = nullptr;
-    MockLink* _mockLink = nullptr;
-};
 
 // ============================================================================
 // SettingsFixture - RAII wrapper for settings save/restore
@@ -107,9 +48,6 @@ public:
     /// Set offline editing vehicle type
     void setOfflineVehicleType(MAV_TYPE vehicleType);
 
-    /// Set global altitude mode
-    void setAltitudeMode(int altitudeMode);
-
     /// Set a Fact value (will be restored on destruction)
     void setFactValue(Fact* fact, const QVariant& value);
 
@@ -127,81 +65,55 @@ private:
 };
 
 // ============================================================================
-// SignalSpyFixture - Enhanced signal monitoring with expectations
+// NetworkReplyFixture - Lightweight fake QNetworkReply for helper tests
 // ============================================================================
 
-/// Enhanced signal spy that tracks expected signals and provides verification
-/// Usage:
-///   SignalSpyFixture spy(myObject);
-///   spy.expect("valueChanged");
-///   spy.expect("stateChanged");
-///   // ... do something that should emit signals ...
-///   QVERIFY(spy.verify());
-class SignalSpyFixture
+/// Fake QNetworkReply with configurable status/redirect/error/body data
+class NetworkReplyFixture final : public QNetworkReply
 {
 public:
-    /// Create a signal spy for the given object
-    /// @param target Object to monitor for signals
-    explicit SignalSpyFixture(QObject* target);
+    explicit NetworkReplyFixture(const QUrl& url, QObject* parent = nullptr);
+    ~NetworkReplyFixture() override;
 
-    ~SignalSpyFixture();
+    void setHttpStatus(int statusCode);
+    void setRedirectTarget(const QUrl& target);
+    void setNetworkError(QNetworkReply::NetworkError errorCode, const QString& message);
+    void setContentType(const QString& contentType);
+    void setContentLength(qint64 length);
+    void setBody(const QByteArray& body, const QString& contentType = QString());
 
-    // Non-copyable
-    SignalSpyFixture(const SignalSpyFixture&) = delete;
-    SignalSpyFixture& operator=(const SignalSpyFixture&) = delete;
+    void abort() override;
 
-    /// Expect a signal to be emitted (at least once)
-    /// @param signalName Signal name without SIGNAL() macro
-    void expect(const char* signalName);
-
-    /// Expect a signal to be emitted exactly N times
-    /// @param signalName Signal name
-    /// @param count Expected emission count
-    void expectExactly(const char* signalName, int count);
-
-    /// Expect a signal to NOT be emitted
-    /// @param signalName Signal name
-    void expectNot(const char* signalName);
-
-    /// Clear all signals and expectations
-    void clear();
-
-    /// Verify all expectations are met
-    /// @return true if all expectations passed
-    bool verify() const;
-
-    /// Verify and return detailed error message if failed
-    /// @param errorMsg Output: error message if verification fails
-    /// @return true if all expectations passed
-    bool verify(QString& errorMsg) const;
-
-    /// Wait for expected signals with timeout
-    /// @param timeoutMs Maximum time to wait
-    /// @return true if all expected signals received within timeout
-    bool waitAndVerify(int timeoutMs = TestTimeout::mediumMs());
-
-    /// Get underlying MultiSignalSpy for advanced usage
-    MultiSignalSpy* spy() const
-    {
-        return _spy.get();
-    }
-
-    /// Check if a specific signal was emitted
-    bool wasEmitted(const char* signalName) const;
-
-    /// Get emission count for a signal
-    int emissionCount(const char* signalName) const;
+protected:
+    qint64 readData(char* data, qint64 maxSize) override;
 
 private:
-    struct Expectation
-    {
-        QString signalName;
-        int expectedCount;  // -1 = at least once, 0 = never, >0 = exactly N times
-    };
+    QByteArray _body;
+    qint64 _readOffset = 0;
+};
 
-    QObject* _target = nullptr;
-    std::unique_ptr<MultiSignalSpy> _spy;
-    QList<Expectation> _expectations;
+// ============================================================================
+// SingleInstanceLockFixture - RAII wrapper for RunGuard lock ownership
+// ============================================================================
+
+class SingleInstanceLockFixture
+{
+public:
+    explicit SingleInstanceLockFixture(const QString& lockKey, bool acquireOnCreate = true);
+    ~SingleInstanceLockFixture();
+
+    SingleInstanceLockFixture(const SingleInstanceLockFixture&) = delete;
+    SingleInstanceLockFixture& operator=(const SingleInstanceLockFixture&) = delete;
+
+    bool tryAcquire();
+    void release();
+
+    bool isLocked() const;
+    QString key() const;
+
+private:
+    QString _lockKey;
+    std::unique_ptr<RunGuard> _guard;
 };
 
 // ============================================================================
@@ -246,6 +158,75 @@ public:
 
 private:
     std::unique_ptr<QTemporaryFile> _file;
+};
+
+// ============================================================================
+// TempJsonFileFixture - JSON-focused temp file helper
+// ============================================================================
+
+class TempJsonFileFixture
+{
+public:
+    explicit TempJsonFileFixture(const QString& templateName = QStringLiteral("test_json_XXXXXX.json"));
+    ~TempJsonFileFixture();
+
+    TempJsonFileFixture(const TempJsonFileFixture&) = delete;
+    TempJsonFileFixture& operator=(const TempJsonFileFixture&) = delete;
+
+    bool isValid() const;
+    QString path() const;
+
+    bool writeJson(const QJsonDocument& json, bool compact = true);
+    bool writeJson(const QJsonObject& object, bool compact = true);
+    QJsonDocument readJson(QJsonParseError* error = nullptr);
+
+private:
+    TempFileFixture _file;
+};
+
+// ============================================================================
+// EnvVarFixture - RAII guard for environment variable save/restore
+// ============================================================================
+
+/// RAII guard that saves an environment variable on construction and restores it on destruction.
+class EnvVarFixture
+{
+public:
+    explicit EnvVarFixture(const char* name)
+        : _name(name)
+        , _wasSet(qEnvironmentVariableIsSet(name))
+    {
+        if (_wasSet) {
+            _value = qgetenv(name);
+        }
+    }
+
+    ~EnvVarFixture()
+    {
+        if (!_name) return; // moved-from
+        if (_wasSet) {
+            qputenv(_name, _value);
+        } else {
+            qunsetenv(_name);
+        }
+    }
+
+    EnvVarFixture(EnvVarFixture&& other) noexcept
+        : _name(other._name)
+        , _value(std::move(other._value))
+        , _wasSet(other._wasSet)
+    {
+        other._name = nullptr;
+    }
+
+    EnvVarFixture(const EnvVarFixture&) = delete;
+    EnvVarFixture& operator=(const EnvVarFixture&) = delete;
+    EnvVarFixture& operator=(EnvVarFixture&&) = delete;
+
+private:
+    const char* _name;
+    QByteArray _value;
+    bool _wasSet;
 };
 
 // ============================================================================

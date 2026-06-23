@@ -7,8 +7,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         CameraMetaData.cc
         CameraMetaData.h
-        MavlinkCameraControl.cc
-        MavlinkCameraControl.h
+        MavlinkCameraControlInterface.cc
+        MavlinkCameraControlInterface.h
         QGCCameraIO.cc
         QGCCameraIO.h
         QGCCameraManager.cc
@@ -29,4 +29,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 qt_add_resources(${CMAKE_PROJECT_NAME} json_mavlink_camera
     PREFIX "/json"
     FILES CameraMetaData.json
+)
+
+qt_add_resources(${CMAKE_PROJECT_NAME} camera_qmlimages
+    PREFIX "/qmlimages"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}/images"
+    FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/images/camera_photo.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/images/camera_video.svg"
 )

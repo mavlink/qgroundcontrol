@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QByteArray>
+#include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "SettingsGroup.h"
@@ -11,20 +13,20 @@ class VideoSettings : public SettingsGroup
     QML_UNCREATABLE("")
 public:
     VideoSettings(QObject* parent = nullptr);
+    ~VideoSettings() override;
     DEFINE_SETTING_NAME_GROUP()
 
     DEFINE_SETTINGFACT(videoSource)
     DEFINE_SETTINGFACT(udpUrl)
     DEFINE_SETTINGFACT(tcpUrl)
     DEFINE_SETTINGFACT(rtspUrl)
-    DEFINE_SETTINGFACT(httpUrl)
-    DEFINE_SETTINGFACT(httpTimeout)
-    DEFINE_SETTINGFACT(httpRetryAttempts)
-    DEFINE_SETTINGFACT(httpKeepAlive)
-    DEFINE_SETTINGFACT(websocketUrl)
-    DEFINE_SETTINGFACT(websocketTimeout)
-    DEFINE_SETTINGFACT(websocketReconnectDelay)
-    DEFINE_SETTINGFACT(websocketHeartbeat)
+    DEFINE_SETTINGFACT(httpMjpegUrl)
+    DEFINE_SETTINGFACT(websocketJpegUrl)
+    DEFINE_SETTINGFACT(networkVideoAuthType)
+    DEFINE_SETTINGFACT(networkVideoUsername)
+    DEFINE_SETTINGFACT(networkVideoSecretFile)
+    DEFINE_SETTINGFACT(networkVideoOrigin)
+    DEFINE_SETTINGFACT(networkVideoCaCertificateFile)
     DEFINE_SETTINGFACT(aspectRatio)
     DEFINE_SETTINGFACT(videoFit)
     DEFINE_SETTINGFACT(gridLines)
@@ -37,6 +39,10 @@ public:
     DEFINE_SETTINGFACT(disableWhenDisarmed)
     DEFINE_SETTINGFACT(lowLatencyMode)
     DEFINE_SETTINGFACT(forceVideoDecoder)
+    DEFINE_SETTINGFACT(forceCpuVideoPath)
+    DEFINE_SETTINGFACT(videoConversionElement)
+    DEFINE_SETTINGFACT(disablePixelAspectRatio)
+    DEFINE_SETTINGFACT(frameSmoothingEnabled)
 
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
@@ -44,19 +50,42 @@ public:
     Q_PROPERTY(QString  udp265VideoSource       READ udp265VideoSource      CONSTANT)
     Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
     Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
-    Q_PROPERTY(QString  httpVideoSource         READ httpVideoSource        CONSTANT)
-    Q_PROPERTY(QString  websocketVideoSource    READ websocketVideoSource   CONSTANT)
+    Q_PROPERTY(QString httpMjpegVideoSource READ httpMjpegVideoSource CONSTANT)
+    Q_PROPERTY(QString websocketJpegVideoSource READ websocketJpegVideoSource CONSTANT)
     Q_PROPERTY(QString  disabledVideoSource     READ disabledVideoSource    CONSTANT)
+    Q_PROPERTY(bool networkVideoSessionSecretConfigured READ networkVideoSessionSecretConfigured NOTIFY
+                   networkVideoSecretChanged)
+    Q_PROPERTY(QString networkVideoConfigurationError READ networkVideoConfigurationError NOTIFY
+                   networkVideoConfigurationErrorChanged)
+
+    enum NetworkVideoAuthentication
+    {
+        NetworkVideoAuthNone = 0,
+        NetworkVideoAuthBasic,
+        NetworkVideoAuthBearer,
+    };
+    Q_ENUM(NetworkVideoAuthentication)
 
     bool     streamConfigured       ();
     QString  rtspVideoSource        () { return videoSourceRTSP; }
     QString  udp264VideoSource      () { return videoSourceUDPH264; }
     QString  udp265VideoSource      () { return videoSourceUDPH265; }
     QString  tcpVideoSource         () { return videoSourceTCP; }
-    QString  mpegtsVideoSource      () { return videoSourceMPEGTS; }
-    QString  httpVideoSource        () { return videoSourceHTTP; }
-    QString  websocketVideoSource   () { return videoSourceWebSocket; }
+    QString mpegtsVideoSource() { return videoSourceMPEGTS; }
+
+    QString httpMjpegVideoSource() { return videoSourceHTTPMJPEG; }
+
+    QString websocketJpegVideoSource() { return videoSourceWebSocketJPEG; }
     QString  disabledVideoSource    () { return videoDisabled; }
+
+    bool networkVideoSessionSecretConfigured();
+    QString networkVideoConfigurationError();
+    bool resolveNetworkVideoSecret(QByteArray& secret, QString& error) const;
+
+    Q_INVOKABLE QString setNetworkVideoSecret(const QString& secret);
+    Q_INVOKABLE void clearNetworkVideoSecret();
+
+    static bool validateNetworkVideoUrl(const QString& value, const QStringList& allowedSchemes, QString& error);
 
     static constexpr const char* videoSourceNoVideo           = QT_TRANSLATE_NOOP("VideoSettings", "No Video Available");
     static constexpr const char* videoDisabled                = QT_TRANSLATE_NOOP("VideoSettings", "Video Stream Disabled");
@@ -65,8 +94,9 @@ public:
     static constexpr const char* videoSourceUDPH265           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.265 Video Stream");
     static constexpr const char* videoSourceTCP               = QT_TRANSLATE_NOOP("VideoSettings", "TCP-MPEG2 Video Stream");
     static constexpr const char* videoSourceMPEGTS            = QT_TRANSLATE_NOOP("VideoSettings", "MPEG-TS Video Stream");
-    static constexpr const char* videoSourceHTTP              = QT_TRANSLATE_NOOP("VideoSettings", "HTTP MJPEG Video Stream");
-    static constexpr const char* videoSourceWebSocket         = QT_TRANSLATE_NOOP("VideoSettings", "WebSocket Video Stream");
+    static constexpr const char* videoSourceHTTPMJPEG = QT_TRANSLATE_NOOP("VideoSettings", "HTTP MJPEG Video Stream");
+    static constexpr const char* videoSourceWebSocketJPEG =
+        QT_TRANSLATE_NOOP("VideoSettings", "WebSocket JPEG Video Stream");
     static constexpr const char* videoSource3DRSolo           = QT_TRANSLATE_NOOP("VideoSettings", "3DR Solo (requires restart)");
     static constexpr const char* videoSourceParrotDiscovery   = QT_TRANSLATE_NOOP("VideoSettings", "Parrot Discovery");
     static constexpr const char* videoSourceYuneecMantisG     = QT_TRANSLATE_NOOP("VideoSettings", "Yuneec Mantis G");
@@ -75,6 +105,8 @@ public:
 
 signals:
     void streamConfiguredChanged    (bool configured);
+    void networkVideoSecretChanged();
+    void networkVideoConfigurationErrorChanged();
 
 private slots:
     void _configChanged             (QVariant value);
@@ -85,5 +117,5 @@ private:
 
 private:
     bool _noVideo = false;
-
+    QByteArray _networkVideoSecret;
 };

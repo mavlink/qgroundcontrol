@@ -3,11 +3,13 @@
 #include "FirmwarePlugin.h"
 #include "Joystick.h"
 #include "JoystickManager.h"
-#include "MavlinkCameraControl.h"
+#include "MAVLinkLib.h"
+#include "MavlinkCameraControlInterface.h"
 #include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
 #include "QGCVideoStreamInfo.h"
 #include "SimulatedCameraControl.h"
+#include "Vehicle.h"
 
 #include <cmath>
 #include "GimbalControllerSettings.h"
@@ -81,14 +83,21 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 
     _addCameraControlToLists(_simulatedCameraControl);
 
+    (void) connect(_vehicle, &Vehicle::initialConnectComplete, this, &QGCCameraManager::_initialConnectCompleted, Qt::UniqueConnection);
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &QGCCameraManager::_vehicleReady);
     (void) connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &QGCCameraManager::_mavlinkMessageReceived);
     (void) connect(&_camerasLostHeartbeatTimer, &QTimer::timeout, this, &QGCCameraManager::_checkForLostCameras);
 
     _camerasLostHeartbeatTimer.setSingleShot(false);
     _lastZoomChange.start();
+    _lastFocusChange.start();
     _lastCameraChange.start();
     _camerasLostHeartbeatTimer.start(kHeartbeatTickMs);
+}
+
+void QGCCameraManager::_initialConnectCompleted()
+{
+    _initialConnectComplete = true;
 }
 
 QGCCameraManager::~QGCCameraManager()
@@ -133,20 +142,28 @@ void QGCCameraManager::_vehicleReady(bool ready)
 
 void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t &message)
 {
+    if (!_initialConnectComplete) {
+        return;
+    }
+
     // Only pay attention to camera components (MAV_COMP_ID_CAMERA..CAMERA6)
-    // and the autopilot (it might proxy a non-MAVLink camera).
+    // and camera-related messages proxied by the autopilot.
     const bool fromAutopilot = message.compid == MAV_COMP_ID_AUTOPILOT1;
     const bool fromCamera = (message.compid >= MAV_COMP_ID_CAMERA) && (message.compid <= MAV_COMP_ID_CAMERA6);
     if ((message.sysid == _vehicle->id()) && (fromAutopilot || fromCamera)) {
         switch (message.msgid) {
         case MAVLINK_MSG_ID_CAMERA_CAPTURE_STATUS:
-            _handleCaptureStatus(message);
+            _handleCameraCaptureStatus(message);
             break;
         case MAVLINK_MSG_ID_STORAGE_INFORMATION:
-            _handleStorageInfo(message);
+            _handleStorageInformation(message);
             break;
         case MAVLINK_MSG_ID_HEARTBEAT:
-            _handleHeartbeat(message);
+            // Autopilot heartbeats should not be treated as camera discovery.
+            // Only actual camera component heartbeats should start CAMERA_INFORMATION requests.
+            if (fromCamera) {
+                _handleHeartbeat(message);
+            }
             break;
         case MAVLINK_MSG_ID_CAMERA_INFORMATION:
             _handleCameraInfo(message);
@@ -155,13 +172,13 @@ void QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t &message)
             _handleCameraSettings(message);
             break;
         case MAVLINK_MSG_ID_PARAM_EXT_ACK:
-            _handleParamAck(message);
+            _handleParamExtAck(message);
             break;
         case MAVLINK_MSG_ID_PARAM_EXT_VALUE:
-            _handleParamValue(message);
+            _handleParamExtValue(message);
             break;
         case MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION:
-            _handleVideoStreamInfo(message);
+            _handleVideoStreamInformation(message);
             break;
         case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
             _handleVideoStreamStatus(message);
@@ -217,10 +234,10 @@ void QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
     pInfo->lastHeartbeat.start();
 }
 
-MavlinkCameraControl *QGCCameraManager::currentCameraInstance()
+MavlinkCameraControlInterface *QGCCameraManager::currentCameraInstance()
 {
     if ((_currentCameraIndex < _cameras.count()) && !_cameras.isEmpty()) {
-        MavlinkCameraControl *pCamera = qobject_cast<MavlinkCameraControl*>(_cameras[_currentCameraIndex]);
+        MavlinkCameraControlInterface *pCamera = qobject_cast<MavlinkCameraControlInterface*>(_cameras[_currentCameraIndex]);
         return pCamera;
     }
     return nullptr;
@@ -228,7 +245,7 @@ MavlinkCameraControl *QGCCameraManager::currentCameraInstance()
 
 QGCVideoStreamInfo *QGCCameraManager::currentStreamInstance()
 {
-    MavlinkCameraControl *pCamera = currentCameraInstance();
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
     if (pCamera) {
         QGCVideoStreamInfo *pInfo = pCamera->currentStreamInstance();
         return pInfo;
@@ -238,7 +255,7 @@ QGCVideoStreamInfo *QGCCameraManager::currentStreamInstance()
 
 QGCVideoStreamInfo *QGCCameraManager::thermalStreamInstance()
 {
-    MavlinkCameraControl *pCamera = currentCameraInstance();
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
     if (pCamera) {
         QGCVideoStreamInfo *pInfo = pCamera->thermalStreamInstance();
         return pInfo;
@@ -246,15 +263,15 @@ QGCVideoStreamInfo *QGCCameraManager::thermalStreamInstance()
     return nullptr;
 }
 
-MavlinkCameraControl *QGCCameraManager::_findCamera(int id)
+MavlinkCameraControlInterface *QGCCameraManager::_findCamera(int id)
 {
     for (int i = 0; i < _cameras.count(); i++) {
         if (!_cameras[i]) {
             continue;
         }
-        MavlinkCameraControl *pCamera = qobject_cast<MavlinkCameraControl*>(_cameras[i]);
+        MavlinkCameraControlInterface *pCamera = qobject_cast<MavlinkCameraControlInterface*>(_cameras[i]);
         if (!pCamera) {
-            qCCritical(CameraManagerLog) << "Invalid MavlinkCameraControl instance";
+            qCCritical(CameraManagerLog) << "Invalid MavlinkCameraControlInterface instance";
             continue;
         }
         if (pCamera->compID() == id) {
@@ -266,7 +283,7 @@ MavlinkCameraControl *QGCCameraManager::_findCamera(int id)
     return nullptr;
 }
 
-void QGCCameraManager::_addCameraControlToLists(MavlinkCameraControl *cameraControl)
+void QGCCameraManager::_addCameraControlToLists(MavlinkCameraControlInterface *cameraControl)
 {
     if (qobject_cast<SimulatedCameraControl*>(cameraControl)) {
         qCDebug(CameraManagerLog) << "Adding simulated camera to list";
@@ -305,9 +322,9 @@ void QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
     mavlink_msg_camera_information_decode(&message, &info);
     qCDebug(CameraManagerLog) << "Camera information received from" << QGCMAVLink::compIdToString(message.compid)
                           << "Model:" << reinterpret_cast<const char*>(info.model_name);
-    qCDebug(CameraManagerLog) << "Creating MavlinkCameraControl for camera";
+    qCDebug(CameraManagerLog) << "Creating MavlinkCameraControlInterface for camera";
 
-    MavlinkCameraControl *pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);
+    MavlinkCameraControlInterface *pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);
     if (pCamera) {
         _addCameraControlToLists(pCamera);
 
@@ -348,7 +365,7 @@ void QGCCameraManager::_checkForLostCameras()
             continue;
         }
 
-        MavlinkCameraControl* pCamera = _findCamera(pInfo->compID);
+        MavlinkCameraControlInterface* pCamera = _findCamera(pInfo->compID);
         if (pCamera) {
             const int idx = _cameras.indexOf(pCamera);
             if (idx >= 0) {
@@ -381,23 +398,23 @@ void QGCCameraManager::_checkForLostCameras()
     emit streamChanged();
 }
 
-void QGCCameraManager::_handleCaptureStatus(const mavlink_message_t &message)
+void QGCCameraManager::_handleCameraCaptureStatus(const mavlink_message_t &message)
 {
-    MavlinkCameraControl *pCamera = _findCamera(message.compid);
+    MavlinkCameraControlInterface *pCamera = _findCamera(message.compid);
     if (pCamera) {
         mavlink_camera_capture_status_t cap{};
         mavlink_msg_camera_capture_status_decode(&message, &cap);
-        pCamera->handleCaptureStatus(cap);
+        pCamera->handleCameraCaptureStatus(cap);
     }
 }
 
-void QGCCameraManager::_handleStorageInfo(const mavlink_message_t &message)
+void QGCCameraManager::_handleStorageInformation(const mavlink_message_t &message)
 {
-    MavlinkCameraControl *pCamera = _findCamera(message.compid);
+    MavlinkCameraControlInterface *pCamera = _findCamera(message.compid);
     if (pCamera) {
         mavlink_storage_information_t st{};
         mavlink_msg_storage_information_decode(&message, &st);
-        pCamera->handleStorageInfo(st);
+        pCamera->handleStorageInformation(st);
     }
 }
 
@@ -407,7 +424,7 @@ void QGCCameraManager::_handleCameraSettings(const mavlink_message_t& message)
     if (pCamera) {
         mavlink_camera_settings_t settings{};
         mavlink_msg_camera_settings_decode(&message, &settings);
-        pCamera->handleSettings(settings);
+        pCamera->handleCameraSettings(settings);
 
         const int newZoom = static_cast<int>(settings.zoomLevel);
         if (QThread::currentThread() == thread()) {
@@ -425,50 +442,50 @@ void QGCCameraManager::_handleCameraSettings(const mavlink_message_t& message)
     }
 }
 
-void QGCCameraManager::_handleParamAck(const mavlink_message_t &message)
+void QGCCameraManager::_handleParamExtAck(const mavlink_message_t &message)
 {
-    MavlinkCameraControl *pCamera = _findCamera(message.compid);
+    MavlinkCameraControlInterface *pCamera = _findCamera(message.compid);
     if (pCamera) {
         mavlink_param_ext_ack_t ack{};
         mavlink_msg_param_ext_ack_decode(&message, &ack);
-        pCamera->handleParamAck(ack);
+        pCamera->handleParamExtAck(ack);
     }
 }
 
-void QGCCameraManager::_handleParamValue(const mavlink_message_t &message)
+void QGCCameraManager::_handleParamExtValue(const mavlink_message_t &message)
 {
-    MavlinkCameraControl *pCamera = _findCamera(message.compid);
+    MavlinkCameraControlInterface *pCamera = _findCamera(message.compid);
     if (pCamera) {
         mavlink_param_ext_value_t value{};
         mavlink_msg_param_ext_value_decode(&message, &value);
-        pCamera->handleParamValue(value);
+        pCamera->handleParamExtValue(value);
     }
 }
 
-void QGCCameraManager::_handleVideoStreamInfo(const mavlink_message_t &message)
+void QGCCameraManager::_handleVideoStreamInformation(const mavlink_message_t &message)
 {
-    MavlinkCameraControl *pCamera = _findCamera(message.compid);
+    MavlinkCameraControlInterface *pCamera = _findCamera(message.compid);
     if (pCamera) {
         mavlink_video_stream_information_t streamInfo{};
         mavlink_msg_video_stream_information_decode(&message, &streamInfo);
-        pCamera->handleVideoInfo(&streamInfo);
+        pCamera->handleVideoStreamInformation(streamInfo);
         emit streamChanged();
     }
 }
 
 void QGCCameraManager::_handleVideoStreamStatus(const mavlink_message_t &message)
 {
-    MavlinkCameraControl *pCamera = _findCamera(message.compid);
+    MavlinkCameraControlInterface *pCamera = _findCamera(message.compid);
     if (pCamera) {
         mavlink_video_stream_status_t streamStatus{};
         mavlink_msg_video_stream_status_decode(&message, &streamStatus);
-        pCamera->handleVideoStatus(&streamStatus);
+        pCamera->handleVideoStreamStatus(streamStatus);
     }
 }
 
 void QGCCameraManager::_handleBatteryStatus(const mavlink_message_t &message)
 {
-    MavlinkCameraControl *pCamera = _findCamera(message.compid);
+    MavlinkCameraControlInterface *pCamera = _findCamera(message.compid);
     if (pCamera) {
         mavlink_battery_status_t batteryStatus{};
         mavlink_msg_battery_status_decode(&message, &batteryStatus);
@@ -478,11 +495,11 @@ void QGCCameraManager::_handleBatteryStatus(const mavlink_message_t &message)
 
 void QGCCameraManager::_handleTrackingImageStatus(const mavlink_message_t &message)
 {
-    MavlinkCameraControl *pCamera = _findCamera(message.compid);
+    MavlinkCameraControlInterface *pCamera = _findCamera(message.compid);
     if (pCamera) {
         mavlink_camera_tracking_image_status_t tis{};
         mavlink_msg_camera_tracking_image_status_decode(&message, &tis);
-        pCamera->handleTrackingImageStatus(&tis);
+        pCamera->handleTrackingImageStatus(tis);
     }
 }
 
@@ -598,9 +615,12 @@ void QGCCameraManager::_activeJoystickChanged(Joystick *joystick)
 {
     qCDebug(CameraManagerLog) << "Joystick changed";
     if (_activeJoystick) {
-        (void) disconnect(_activeJoystick, &Joystick::stepZoom,            this, &QGCCameraManager::_stepZoom);
-        (void) disconnect(_activeJoystick, &Joystick::startContinuousZoom, this, &QGCCameraManager::_startZoom);
-        (void) disconnect(_activeJoystick, &Joystick::stopContinuousZoom,  this, &QGCCameraManager::_stopZoom);
+        (void) disconnect(_activeJoystick, &Joystick::stepZoom,             this, &QGCCameraManager::_stepZoom);
+        (void) disconnect(_activeJoystick, &Joystick::startContinuousZoom,  this, &QGCCameraManager::_startZoom);
+        (void) disconnect(_activeJoystick, &Joystick::stopContinuousZoom,   this, &QGCCameraManager::_stopZoom);
+        (void) disconnect(_activeJoystick, &Joystick::stepFocus,            this, &QGCCameraManager::_stepFocus);
+        (void) disconnect(_activeJoystick, &Joystick::startContinuousFocus, this, &QGCCameraManager::_startFocus);
+        (void) disconnect(_activeJoystick, &Joystick::stopContinuousFocus,  this, &QGCCameraManager::_stopFocus);
         (void) disconnect(_activeJoystick, &Joystick::stepCamera,          this, &QGCCameraManager::_stepCamera);
         (void) disconnect(_activeJoystick, &Joystick::stepStream,          this, &QGCCameraManager::_stepStream);
         (void) disconnect(_activeJoystick, &Joystick::triggerCamera,       this, &QGCCameraManager::_triggerCamera);
@@ -612,9 +632,12 @@ void QGCCameraManager::_activeJoystickChanged(Joystick *joystick)
     _activeJoystick = joystick;
 
     if (_activeJoystick) {
-        (void) connect(_activeJoystick, &Joystick::stepZoom,            this, &QGCCameraManager::_stepZoom, Qt::UniqueConnection);
-        (void) connect(_activeJoystick, &Joystick::startContinuousZoom, this, &QGCCameraManager::_startZoom, Qt::UniqueConnection);
-        (void) connect(_activeJoystick, &Joystick::stopContinuousZoom,  this, &QGCCameraManager::_stopZoom, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::stepZoom,             this, &QGCCameraManager::_stepZoom, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::startContinuousZoom,  this, &QGCCameraManager::_startZoom, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::stopContinuousZoom,   this, &QGCCameraManager::_stopZoom, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::stepFocus,            this, &QGCCameraManager::_stepFocus, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::startContinuousFocus, this, &QGCCameraManager::_startFocus, Qt::UniqueConnection);
+        (void) connect(_activeJoystick, &Joystick::stopContinuousFocus,  this, &QGCCameraManager::_stopFocus, Qt::UniqueConnection);
         (void) connect(_activeJoystick, &Joystick::stepCamera,          this, &QGCCameraManager::_stepCamera, Qt::UniqueConnection);
         (void) connect(_activeJoystick, &Joystick::stepStream,          this, &QGCCameraManager::_stepStream, Qt::UniqueConnection);
         (void) connect(_activeJoystick, &Joystick::triggerCamera,       this, &QGCCameraManager::_triggerCamera, Qt::UniqueConnection);
@@ -626,7 +649,7 @@ void QGCCameraManager::_activeJoystickChanged(Joystick *joystick)
 
 void QGCCameraManager::_triggerCamera()
 {
-    MavlinkCameraControl *pCamera = currentCameraInstance();
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
     if (pCamera) {
         pCamera->takePhoto();
     }
@@ -634,7 +657,7 @@ void QGCCameraManager::_triggerCamera()
 
 void QGCCameraManager::_startVideoRecording()
 {
-    MavlinkCameraControl *pCamera = currentCameraInstance();
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
     if (pCamera) {
         pCamera->startVideoRecording();
     }
@@ -642,7 +665,7 @@ void QGCCameraManager::_startVideoRecording()
 
 void QGCCameraManager::_stopVideoRecording()
 {
-    MavlinkCameraControl *pCamera = currentCameraInstance();
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
     if (pCamera) {
         pCamera->stopVideoRecording();
     }
@@ -650,7 +673,7 @@ void QGCCameraManager::_stopVideoRecording()
 
 void QGCCameraManager::_toggleVideoRecording()
 {
-    MavlinkCameraControl *pCamera = currentCameraInstance();
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
     if (pCamera) {
         pCamera->toggleVideoRecording();
     }
@@ -661,7 +684,7 @@ void QGCCameraManager::_stepZoom(int direction)
     if (_lastZoomChange.elapsed() > 40) {
         _lastZoomChange.start();
         qCDebug(CameraManagerLog) << "Step Camera Zoom" << direction;
-        MavlinkCameraControl *pCamera = currentCameraInstance();
+        MavlinkCameraControlInterface *pCamera = currentCameraInstance();
         if (pCamera) {
             pCamera->stepZoom(direction);
         }
@@ -671,7 +694,7 @@ void QGCCameraManager::_stepZoom(int direction)
 void QGCCameraManager::_startZoom(int direction)
 {
     qCDebug(CameraManagerLog) << "Start Camera Zoom" << direction;
-    MavlinkCameraControl *pCamera = currentCameraInstance();
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
     if (pCamera) {
         pCamera->startZoom(direction);
     }
@@ -680,9 +703,39 @@ void QGCCameraManager::_startZoom(int direction)
 void QGCCameraManager::_stopZoom()
 {
     qCDebug(CameraManagerLog) << "Stop Camera Zoom";
-    MavlinkCameraControl *pCamera = currentCameraInstance();
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
     if (pCamera) {
         pCamera->stopZoom();
+    }
+}
+
+void QGCCameraManager::_stepFocus(int direction)
+{
+    if (_lastFocusChange.elapsed() > 40) {
+        _lastFocusChange.start();
+        qCDebug(CameraManagerLog) << "Step Camera Focus" << direction;
+        MavlinkCameraControlInterface *pCamera = currentCameraInstance();
+        if (pCamera) {
+            pCamera->stepFocus(direction);
+        }
+    }
+}
+
+void QGCCameraManager::_startFocus(int direction)
+{
+    qCDebug(CameraManagerLog) << "Start Camera Focus" << direction;
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
+    if (pCamera) {
+        pCamera->startFocus(direction);
+    }
+}
+
+void QGCCameraManager::_stopFocus()
+{
+    qCDebug(CameraManagerLog) << "Stop Camera Focus";
+    MavlinkCameraControlInterface *pCamera = currentCameraInstance();
+    if (pCamera) {
+        pCamera->stopFocus();
     }
 }
 
@@ -705,7 +758,7 @@ void QGCCameraManager::_stepStream(int direction)
 {
     if (_lastCameraChange.elapsed() > 1000) {
         _lastCameraChange.start();
-        MavlinkCameraControl *pCamera = currentCameraInstance();
+        MavlinkCameraControlInterface *pCamera = currentCameraInstance();
         if (pCamera) {
             qCDebug(CameraManagerLog) << "Step Camera Stream" << direction;
             int stream = pCamera->currentStream() + direction;
@@ -782,8 +835,8 @@ void QGCCameraManager::_handleCameraFovStatus(const mavlink_message_t& message)
     }
 
     auto* settings = SettingsManager::instance()->gimbalControllerSettings();
-    settings->CameraHFov()->setRawValue(fov.hfov);
-    settings->CameraVFov()->setRawValue(vfovDeg);
+    settings->cameraHFov()->setRawValue(fov.hfov);
+    settings->cameraVFov()->setRawValue(vfovDeg);
 }
 
 void QGCCameraManager::_setCurrentZoomLevel(int level)

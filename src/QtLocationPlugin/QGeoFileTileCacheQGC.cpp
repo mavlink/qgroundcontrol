@@ -6,7 +6,8 @@
 
 #include "AppSettings.h"
 #include "MapsSettings.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
+#include "QGCCacheTile.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
@@ -204,7 +205,7 @@ void QGeoFileTileCacheQGC::_initCache()
     }
 
     if (_cacheWasReset) {
-        qgcApp()->showAppMessage(tr(
+        QGC::showAppMessage(tr(
             "The Offline Map Cache database has been upgraded. "
             "Your old map cache sets have been reset."));
     }

@@ -1,9 +1,10 @@
+#include "QmlObjectListModel.h"
 #include "APMAirframeComponentController.h"
 #include "ArduCopterFirmwarePlugin.h"
 #include "ArduRoverFirmwarePlugin.h"
 #include "MultiVehicleManager.h"
 #include "ParameterManager.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "QGCFileDownload.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
@@ -103,7 +104,7 @@ void APMAirframeComponentController::loadParameters(const QString &paramFile)
     (void) connect(downloader, &QGCFileDownload::finished, this, &APMAirframeComponentController::_githubJsonDownloadComplete);
     const QString paramFileUrl = QStringLiteral("https://api.github.com/repos/ArduPilot/ardupilot/contents/Tools/Frame_params/%1?ref=master");
     if (!downloader->start(paramFileUrl.arg(paramFile))) {
-        qgcApp()->showAppMessage(tr("Param file github json download failed to start: %1").arg(downloader->errorString()));
+        QGC::showAppMessage(tr("Param file github json download failed to start: %1").arg(downloader->errorString()));
         QGuiApplication::restoreOverrideCursor();
         downloader->deleteLater();
     }
@@ -134,12 +135,12 @@ void APMAirframeComponentController::_githubJsonDownloadComplete(bool success, c
         (void) connect(downloader, &QGCFileDownload::finished, this, &APMAirframeComponentController::_paramFileDownloadComplete);
         const QJsonObject json = doc.object();
         if (!downloader->start(json[QLatin1String("download_url")].toString())) {
-            qgcApp()->showAppMessage(tr("Param file download failed to start: %1").arg(downloader->errorString()));
+            QGC::showAppMessage(tr("Param file download failed to start: %1").arg(downloader->errorString()));
             QGuiApplication::restoreOverrideCursor();
             downloader->deleteLater();
         }
     } else if (!errorMsg.isEmpty()) {
-        qgcApp()->showAppMessage(tr("Param file github json download failed: %1").arg(errorMsg));
+        QGC::showAppMessage(tr("Param file github json download failed: %1").arg(errorMsg));
         QGuiApplication::restoreOverrideCursor();
     }
 }
@@ -149,7 +150,7 @@ void APMAirframeComponentController::_paramFileDownloadComplete(bool success, co
     if (success) {
         _loadParametersFromDownloadFile(localFile);
     } else if (!errorMsg.isEmpty()) {
-        qgcApp()->showAppMessage(tr("Param file download failed: %1").arg(errorMsg));
+        QGC::showAppMessage(tr("Param file download failed: %1").arg(errorMsg));
         QGuiApplication::restoreOverrideCursor();
     }
 }

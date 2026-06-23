@@ -1,0 +1,144 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "bindings": {
+        "ridSettings": "QGroundControl.settingsManager.remoteIDSettings",
+        "isEURegion": "ridSettings.region.rawValue === RemoteIDSettings.RegionOperation.EU",
+        "isFAARegion": "ridSettings.region.rawValue === RemoteIDSettings.RegionOperation.FAA",
+        "sendBasicIDOn": "ridSettings.sendBasicID.rawValue",
+        "sendSelfIDOn": "ridSettings.sendSelfID.rawValue",
+        "locationIsFixed": "ridSettings.locationType.rawValue === RemoteIDSettings.LocationType.FIXED",
+        "classificationIsEU": "ridSettings.classificationType.rawValue === RemoteIDSettings.ClassificationType.EU"
+    },
+    "groups": [
+        {
+            "heading": "Region",
+            "keywords": ["region", "faa", "eu", "remote id", "regulation"],
+            "controls": [
+                {
+                    "setting": "remoteIDSettings.region"
+                }
+            ]
+        },
+        {
+            "heading": "Basic ID",
+            "keywords": ["basic id", "serial number", "drone id", "ua type", "registration", "broadcast"],
+            "controls": [
+                {
+                    "setting": "remoteIDSettings.sendBasicID"
+                },
+                {
+                    "setting": "remoteIDSettings.basicIDType",
+                    "enableWhen": "sendBasicIDOn"
+                },
+                {
+                    "setting": "remoteIDSettings.basicIDUaType",
+                    "enableWhen": "sendBasicIDOn"
+                },
+                {
+                    "setting": "remoteIDSettings.basicID",
+                    "enableWhen": "sendBasicIDOn"
+                }
+            ]
+        },
+        {
+            "heading": "Operator ID",
+            "keywords": ["operator", "pilot", "registration", "broadcast"],
+            "controls": [
+                {
+                    "setting": "remoteIDSettings.sendOperatorID",
+                    "enableWhen": "isFAARegion"
+                },
+                {
+                    "setting": "remoteIDSettings.operatorIDType"
+                },
+                {
+                    "setting": "remoteIDSettings.operatorID"
+                }
+            ]
+        },
+        {
+            "heading": "Self ID",
+            "keywords": ["self id", "flight purpose", "emergency", "broadcast", "description"],
+            "controls": [
+                {
+                    "setting": "remoteIDSettings.sendSelfID"
+                },
+                {
+                    "setting": "remoteIDSettings.selfIDType",
+                    "enableWhen": "sendSelfIDOn"
+                },
+                {
+                    "setting": "remoteIDSettings.selfIDFree",
+                    "enableWhen": "sendSelfIDOn"
+                },
+                {
+                    "setting": "remoteIDSettings.selfIDExtended",
+                    "enableWhen": "sendSelfIDOn"
+                },
+                {
+                    "setting": "remoteIDSettings.selfIDEmergency"
+                }
+            ]
+        },
+        {
+            "heading": "GroundStation Location",
+            "keywords": ["ground station", "gcs location", "latitude", "longitude", "altitude", "fixed position", "gnss"],
+            "controls": [
+                {
+                    "setting": "remoteIDSettings.locationType"
+                },
+                {
+                    "setting": "remoteIDSettings.latitudeFixed",
+                    "enableWhen": "locationIsFixed"
+                },
+                {
+                    "setting": "remoteIDSettings.longitudeFixed",
+                    "enableWhen": "locationIsFixed"
+                },
+                {
+                    "setting": "remoteIDSettings.altitudeFixed",
+                    "enableWhen": "locationIsFixed"
+                }
+            ]
+        },
+        {
+            "component": "GcsPositionStatus",
+            "sectionName": "GCS Position",
+            "keywords": [
+                "latitude",
+                "longitude",
+                "hdop",
+                "gcs position"
+            ]
+        },
+        {
+            "component": "RemoteIDGpsLocation",
+            "sectionName": "GPS Location",
+            "keywords": [
+                "gps",
+                "nmea",
+                "hdop",
+                "position"
+            ]
+        },
+        {
+            "heading": "EU Vehicle Info",
+            "keywords": ["eu", "classification", "category", "class", "ce marking"],
+            "showWhen": "isEURegion",
+            "controls": [
+                {
+                    "setting": "remoteIDSettings.classificationType"
+                },
+                {
+                    "setting": "remoteIDSettings.categoryEU",
+                    "enableWhen": "classificationIsEU"
+                },
+                {
+                    "setting": "remoteIDSettings.classEU",
+                    "enableWhen": "classificationIsEU"
+                }
+            ]
+        }
+    ]
+}

@@ -1,7 +1,7 @@
 #include "QGCCachedTileSet.h"
 
 #include "ElevationMapProvider.h"
-#include "QGCApplication.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
@@ -300,35 +300,35 @@ void QGCCachedTileSet::setSelected(bool sel)
 
 QString QGCCachedTileSet::errorCountStr() const
 {
-    return qgcApp()->numberToString(_errorCount);
+    return QGC::numberToString(_errorCount);
 }
 
 QString QGCCachedTileSet::totalTileCountStr() const
 {
-    return qgcApp()->numberToString(_totalTileCount);
+    return QGC::numberToString(_totalTileCount);
 }
 
 QString QGCCachedTileSet::totalTilesSizeStr() const
 {
-    return qgcApp()->bigSizeToString(_totalTileSize);
+    return QGC::bigSizeToString(_totalTileSize);
 }
 
 QString QGCCachedTileSet::uniqueTileSizeStr() const
 {
-    return qgcApp()->bigSizeToString(_uniqueTileSize);
+    return QGC::bigSizeToString(_uniqueTileSize);
 }
 
 QString QGCCachedTileSet::uniqueTileCountStr() const
 {
-    return qgcApp()->numberToString(_uniqueTileCount);
+    return QGC::numberToString(_uniqueTileCount);
 }
 
 QString QGCCachedTileSet::savedTileCountStr() const
 {
-    return qgcApp()->numberToString(_savedTileCount);
+    return QGC::numberToString(_savedTileCount);
 }
 
 QString QGCCachedTileSet::savedTileSizeStr() const
 {
-    return qgcApp()->bigSizeToString(_savedTileSize);
+    return QGC::bigSizeToString(_savedTileSize);
 }

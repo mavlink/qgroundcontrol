@@ -7,7 +7,8 @@ on:
     types: [opened]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # github.ref is always 'master' on issue/PR-open events, so key per item to avoid mutual cancels.
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
@@ -21,8 +22,13 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
       - name: Welcome first-time contributor
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const isPR = !!context.payload.pull_request;

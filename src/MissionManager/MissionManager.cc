@@ -1,8 +1,9 @@
 #include "MissionManager.h"
 #include "Vehicle.h"
+#include "VehicleLinkManager.h"
 #include "FirmwarePlugin.h"
 #include "MAVLinkProtocol.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "MissionCommandTree.h"
 #include "MissionCommandUIInfo.h"
 #include "QGCLoggingCategory.h"
@@ -79,7 +80,7 @@ void MissionManager::generateResumeMission(int resumeIndex)
     for (int i=0; i<_missionItems.count(); i++) {
         MissionItem* item = _missionItems[i];
         if (item->command() == MAV_CMD_DO_JUMP) {
-            qgcApp()->showAppMessage(tr("Unable to generate resume mission due to MAV_CMD_DO_JUMP command."));
+            QGC::showAppMessage(tr("Unable to generate resume mission due to MAV_CMD_DO_JUMP command."));
             return;
         }
     }

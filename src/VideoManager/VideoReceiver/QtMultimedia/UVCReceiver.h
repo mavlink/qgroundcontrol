@@ -4,8 +4,6 @@
 
 #include "QtMultimediaReceiver.h"
 
-Q_DECLARE_LOGGING_CATEGORY(UVCReceiverLog)
-
 class QCamera;
 class QImageCapture;
 class QQuickItem;

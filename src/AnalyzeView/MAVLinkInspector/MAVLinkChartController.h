@@ -1,0 +1,87 @@
+#pragma once
+
+#include <QtCore/QObject>
+#include <QtCore/QVariantList>
+#include <QtQmlIntegration/QtQmlIntegration>
+
+class MAVLinkInspectorController;
+class QAbstractSeries;
+class QGCMAVLinkMessageField;
+class QTimer;
+
+class MAVLinkChartController : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT
+    Q_MOC_INCLUDE("MAVLinkInspectorController.h")
+    Q_MOC_INCLUDE("MAVLinkMessageField.h")
+    Q_MOC_INCLUDE("QtGraphs/qabstractseries.h")
+
+    Q_PROPERTY(MAVLinkInspectorController*  inspectorController READ inspectorController WRITE setInspectorController REQUIRED)
+    Q_PROPERTY(int          chartIndex  MEMBER _chartIndex                          REQUIRED)
+    Q_PROPERTY(QVariantList chartFields READ chartFields                            NOTIFY chartFieldsChanged)
+    Q_PROPERTY(qreal        rangeXMin   READ rangeXMin                              NOTIFY rangeXMinChanged)
+    Q_PROPERTY(qreal        rangeXMax   READ rangeXMax                              NOTIFY rangeXMaxChanged)
+    Q_PROPERTY(qreal        rangeYMin   READ rangeYMin                              NOTIFY rangeYMinChanged)
+    Q_PROPERTY(qreal        rangeYMax   READ rangeYMax                              NOTIFY rangeYMaxChanged)
+    Q_PROPERTY(quint32      rangeYIndex READ rangeYIndex    WRITE setRangeYIndex    NOTIFY rangeYIndexChanged)
+    Q_PROPERTY(quint32      rangeXIndex READ rangeXIndex    WRITE setRangeXIndex    NOTIFY rangeXIndexChanged)
+    Q_PROPERTY(qreal        rangeXMs    READ rangeXMs                               NOTIFY rangeXIndexChanged)
+    Q_PROPERTY(int          plotPixelWidth READ plotPixelWidth WRITE setPlotPixelWidth NOTIFY plotPixelWidthChanged)
+
+public:
+    explicit MAVLinkChartController(QObject *parent = nullptr);
+    ~MAVLinkChartController();
+
+    Q_INVOKABLE void addSeries(QGCMAVLinkMessageField *field, QAbstractSeries *series);
+    Q_INVOKABLE void delSeries(QGCMAVLinkMessageField *field);
+
+    void setInspectorController(MAVLinkInspectorController *inspectorController);
+    MAVLinkInspectorController *inspectorController() const { return _inspectorController; }
+    QVariantList chartFields() const { return _chartFields; }
+    qreal rangeXMin() const { return _rangeXMin; }
+    qreal rangeXMax() const { return _rangeXMax; }
+    qreal rangeYMin() const { return _rangeYMin; }
+    qreal rangeYMax() const { return _rangeYMax; }
+    quint32 rangeXIndex() const { return _rangeXIndex; }
+    qreal rangeXMs() const;
+    quint32 rangeYIndex() const { return _rangeYIndex; }
+    int chartIndex() const { return _chartIndex; }
+    int plotPixelWidth() const { return _plotPixelWidth; }
+
+    void setRangeXIndex(quint32 index);
+    void setRangeYIndex(quint32 index);
+    void setPlotPixelWidth(int width);
+    void updateXRange();
+    void updateYRange();
+
+signals:
+    void chartFieldsChanged();
+    void rangeXMinChanged();
+    void rangeXMaxChanged();
+    void rangeYMinChanged();
+    void rangeYMaxChanged();
+    void rangeYIndexChanged();
+    void rangeXIndexChanged();
+    void plotPixelWidthChanged();
+
+private slots:
+    void _refreshSeries();
+
+private:
+    void _resetFieldBucketing();
+    int _chartIndex = 0;
+    MAVLinkInspectorController *_inspectorController = nullptr;
+    QTimer *_updateSeriesTimer = nullptr;
+
+    qreal _rangeXMin = 0;
+    qreal _rangeXMax = 0;
+    qreal _rangeYMin = 0;
+    qreal _rangeYMax = 1;
+    quint32 _rangeXIndex = 0;   ///< 5 Seconds
+    quint32 _rangeYIndex = 0;   ///< Auto Range
+    int _plotPixelWidth = 0;
+    QVariantList _chartFields;
+
+    static constexpr int kUpdateFrequency = 1000 / 15;  ///< 15Hz
+};

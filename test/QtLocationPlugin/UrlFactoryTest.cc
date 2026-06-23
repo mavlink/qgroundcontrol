@@ -2,6 +2,7 @@
 
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCTileSet.h"
 
 static const QString kBingRoad = QStringLiteral("Bing Road");
 static const QString kBingSatellite = QStringLiteral("Bing Satellite");
@@ -31,9 +32,8 @@ void UrlFactoryTest::_testGetElevationProviderTypes()
     QVERIFY(elevTypes.contains(kCopernicus));
 
     const QStringList allTypes = UrlFactory::getProviderTypes();
-    for (const auto &t : elevTypes) {
-        QVERIFY2(allTypes.contains(t),
-                 qPrintable(QStringLiteral("Elevation type '%1' not in allTypes").arg(t)));
+    for (const auto& t : elevTypes) {
+        QVERIFY2(allTypes.contains(t), qPrintable(QStringLiteral("Elevation type '%1' not in allTypes").arg(t)));
     }
 }
 
@@ -48,7 +48,7 @@ void UrlFactoryTest::_testMapIdFromProviderTypeValid()
 void UrlFactoryTest::_testProviderTypeFromMapIdRoundtrip()
 {
     const QStringList types = UrlFactory::getProviderTypes();
-    for (const auto &type : types) {
+    for (const auto& type : types) {
         const int id = UrlFactory::getQtMapIdFromProviderType(type);
         QVERIFY2(id > 0, qPrintable(QStringLiteral("Bad id for type: %1").arg(type)));
         const QString recovered = UrlFactory::getProviderTypeFromQtMapId(id);
@@ -63,13 +63,17 @@ void UrlFactoryTest::_testMapIdFromEmptyType()
 
 void UrlFactoryTest::_testMapIdFromInvalidType()
 {
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
     QCOMPARE(UrlFactory::getQtMapIdFromProviderType(QStringLiteral("Nonexistent")), -1);
+    verifyExpectedLogMessage();
 }
 
 void UrlFactoryTest::_testProviderTypeFromInvalidId()
 {
     QVERIFY(UrlFactory::getProviderTypeFromQtMapId(-1).isEmpty());
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("map id not found:"));
     QVERIFY(UrlFactory::getProviderTypeFromQtMapId(99999).isEmpty());
+    verifyExpectedLogMessage();
 }
 
 // --- Hash <-> ProviderType roundtrip ---
@@ -84,7 +88,7 @@ void UrlFactoryTest::_testHashFromProviderTypeValid()
 void UrlFactoryTest::_testProviderTypeFromHashRoundtrip()
 {
     const QStringList types = UrlFactory::getProviderTypes();
-    for (const auto &type : types) {
+    for (const auto& type : types) {
         const int hash = UrlFactory::hashFromProviderType(type);
         QVERIFY2(hash > 0, qPrintable(QStringLiteral("Bad hash for: %1").arg(type)));
         const QString recovered = UrlFactory::providerTypeFromHash(hash);
@@ -94,12 +98,16 @@ void UrlFactoryTest::_testProviderTypeFromHashRoundtrip()
 
 void UrlFactoryTest::_testHashFromInvalidType()
 {
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found for type:"));
     QCOMPARE(UrlFactory::hashFromProviderType(QString()), -1);
+    verifyExpectedLogMessage();
 }
 
 void UrlFactoryTest::_testProviderTypeFromInvalidHash()
 {
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found from hash:"));
     QVERIFY(UrlFactory::providerTypeFromHash(0).isEmpty());
+    verifyExpectedLogMessage();
 }
 
 // --- Tile hash encode/decode ---
@@ -114,7 +122,7 @@ void UrlFactoryTest::_testGetTileHashFormat()
 void UrlFactoryTest::_testTileHashToTypeRoundtrip()
 {
     const QStringList types = UrlFactory::getProviderTypes();
-    for (const auto &type : types) {
+    for (const auto& type : types) {
         const QString hash = UrlFactory::getTileHash(type, 42, 99, 7);
         const QString recovered = UrlFactory::tileHashToType(hash);
         QCOMPARE(recovered, type);
@@ -123,21 +131,29 @@ void UrlFactoryTest::_testTileHashToTypeRoundtrip()
 
 void UrlFactoryTest::_testTileHashToTypeInvalid()
 {
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found from hash:"));
     QVERIFY(UrlFactory::tileHashToType(QStringLiteral("garbage")).isEmpty());
+    verifyExpectedLogMessage();
 }
 
 // --- Image format via facade ---
 
 void UrlFactoryTest::_testGetImageFormatByType()
 {
-    const QByteArray png("\x89\x50\x4E\x47\x0D\x0A\x1A\x0A" "data", 12);
+    const QByteArray png(
+        "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
+        "data",
+        12);
     QCOMPARE(UrlFactory::getImageFormat(kBingRoad, png), QStringLiteral("png"));
 }
 
 void UrlFactoryTest::_testGetImageFormatByMapId()
 {
     const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
-    const QByteArray jpeg("\xFF\xD8\xFF\xE0" "data", 8);
+    const QByteArray jpeg(
+        "\xFF\xD8\xFF\xE0"
+        "data",
+        8);
     QCOMPARE(UrlFactory::getImageFormat(id, jpeg), QStringLiteral("jpg"));
 }
 
@@ -146,6 +162,30 @@ void UrlFactoryTest::_testGetImageFormatInvalidInputs()
     const QByteArray png("\x89\x50\x4E\x47\x0D\x0A\x1A\x0A", 8);
     QVERIFY(UrlFactory::getImageFormat(QString(), png).isEmpty());
     QVERIFY(UrlFactory::getImageFormat(-1, png).isEmpty());
+}
+
+void UrlFactoryTest::_testGetTileURLByType()
+{
+    const QUrl url = UrlFactory::getTileURL(kBingRoad, 301, 385, 10);
+    QVERIFY(url.isValid());
+    QVERIFY(!url.isEmpty());
+    QVERIFY(url.scheme().startsWith(QStringLiteral("http")));
+}
+
+void UrlFactoryTest::_testGetTileURLByMapId()
+{
+    const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
+    QVERIFY(id > 0);
+    const QUrl url = UrlFactory::getTileURL(id, 301, 385, 10);
+    QVERIFY(url.isValid());
+    QVERIFY(!url.isEmpty());
+    QVERIFY(url.scheme().startsWith(QStringLiteral("http")));
+}
+
+void UrlFactoryTest::_testGetTileURLInvalidInputs()
+{
+    QVERIFY(UrlFactory::getTileURL(QString(), 0, 0, 1).isEmpty());
+    QVERIFY(UrlFactory::getTileURL(-1, 0, 0, 1).isEmpty());
 }
 
 // --- averageSizeForType ---
@@ -159,7 +199,9 @@ void UrlFactoryTest::_testAverageSizeForKnownProviders()
 
 void UrlFactoryTest::_testAverageSizeForInvalidType()
 {
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
     QCOMPARE(UrlFactory::averageSizeForType(QStringLiteral("Nonexistent")), QGC_AVERAGE_TILE_SIZE);
+    verifyExpectedLogMessage();
 }
 
 // --- isElevation ---
@@ -275,7 +317,9 @@ void UrlFactoryTest::_testGetMapProviderInvalid()
 {
     QVERIFY(UrlFactory::getMapProviderFromQtMapId(-1) == nullptr);
     QVERIFY(UrlFactory::getMapProviderFromProviderType(QString()) == nullptr);
+    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
     QVERIFY(UrlFactory::getMapProviderFromProviderType(QStringLiteral("Nonexistent")) == nullptr);
+    verifyExpectedLogMessage();
 }
 
 UT_REGISTER_TEST(UrlFactoryTest, TestLabel::Unit)

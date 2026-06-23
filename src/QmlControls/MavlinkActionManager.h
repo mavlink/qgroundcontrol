@@ -1,17 +1,16 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
-
-Q_DECLARE_LOGGING_CATEGORY(MavlinkActionManagerLog)
 
 class Fact;
 class QmlObjectListModel;
 
-/// Loads the specified action file and provides access to the actions it contains.
+/// \brief Loads the specified action file and provides access to the actions it contains.
+///
 /// Action files are loaded from the default MavlinkActions directory.
 /// The actions file name is filename only, no path.
+///
 class MavlinkActionManager : public QObject
 {
     Q_OBJECT

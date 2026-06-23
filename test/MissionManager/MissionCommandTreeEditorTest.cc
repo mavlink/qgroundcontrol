@@ -1,5 +1,7 @@
 #include "MissionCommandTreeEditorTest.h"
 
+#include <QtCore/QRegularExpression>
+#include <QtCore/QStandardPaths>
 #include <QtQml/QQmlApplicationEngine>
 #include <QtQml/QQmlContext>
 
@@ -11,9 +13,8 @@
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 
-
-void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_t firmwareClass,
-                                                      QGCMAVLink::VehicleClass_t vehicleClass)
+void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLinkTypes::FirmwareClass_t firmwareClass,
+                                                      QGCMAVLinkTypes::VehicleClass_t vehicleClass)
 {
     QString firmwareClassString = QGCMAVLink::firmwareClassToString(firmwareClass).replace(" ", "");
     QString vehicleClassString = QGCMAVLink::vehicleClassToUserVisibleString(vehicleClass).replace(" ", "");
@@ -41,15 +42,22 @@ void MissionCommandTreeEditorTest::_testEditorsWorker(QGCMAVLink::FirmwareClass_
     qmlAppEngine->rootContext()->setContextProperty("missionItems", varSimpleItems);
     qmlAppEngine->rootContext()->setContextProperty("cColumns", cColumns);
     qmlAppEngine->rootContext()->setContextProperty(
-        "imagePath",
-        QStringLiteral("/home/parallels/Downloads/%1-%2.png").arg(firmwareClassString).arg(vehicleClassString));
+        "imagePath", QStringLiteral("%1/%2-%3.png")
+                         .arg(QStandardPaths::writableLocation(QStandardPaths::TempLocation), firmwareClassString,
+                              vehicleClassString));
     qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MissionCommandTreeEditorTestWindow.qml")));
-    QTest::qWait(1000);
+    QVERIFY_TRUE_WAIT(!qmlAppEngine->rootObjects().isEmpty(), TestTimeout::mediumMs());
     delete qmlAppEngine;
 }
 
 void MissionCommandTreeEditorTest::testEditors()
 {
+    // Qt font alias lookup warning is a platform-level timing artifact.
+    ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
+                     QRegularExpression("Populating font family aliases"));
+    // RTL_CONE_SLOPE has an invalid enum value of 0 in ArduPilot metadata; skip warning is expected.
+    ignoreLogMessage("FirmwarePlugin.ParameterMetaData", QtWarningMsg,
+                     QRegularExpression("Skipping invalid enum value"));
     for (const QGCMAVLink::FirmwareClass_t& firmwareClass : QGCMAVLink::allFirmwareClasses()) {
         for (const QGCMAVLink::VehicleClass_t& vehicleClass : QGCMAVLink::allVehicleClasses()) {
             _testEditorsWorker(firmwareClass, vehicleClass);
@@ -57,4 +65,4 @@ void MissionCommandTreeEditorTest::testEditors()
     }
 }
 
-UT_REGISTER_TEST(MissionCommandTreeEditorTest, TestLabel::Unit, TestLabel::MissionManager)
+UT_REGISTER_TEST(MissionCommandTreeEditorTest, TestLabel::Integration, TestLabel::MissionManager)

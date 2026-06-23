@@ -11,11 +11,15 @@ The parser handles the MAVLink XML format including:
 - Field units and types
 """
 
+from __future__ import annotations
+
+import contextlib
 import logging
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Optional
+from pathlib import Path  # noqa: TC003
+from xml.etree.ElementTree import Element  # noqa: TC003
+
+import defusedxml.ElementTree as ET
 
 from .mavlink_data import MAVLinkField, MAVLinkMessage
 
@@ -25,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MAVLinkDialect:
     """A parsed MAVLink dialect (XML file)."""
+
     name: str
     version: int
     messages: list[MAVLinkMessage] = field(default_factory=list)
@@ -32,7 +37,7 @@ class MAVLinkDialect:
     includes: list[str] = field(default_factory=list)
 
 
-def find_mavlink_definitions(project_root: Path) -> Optional[Path]:
+def find_mavlink_definitions(project_root: Path) -> Path | None:
     """Find the MAVLink message_definitions directory in a project.
 
     Searches common locations:
@@ -48,10 +53,7 @@ def find_mavlink_definitions(project_root: Path) -> Optional[Path]:
     ]
 
     for pattern in search_patterns:
-        import glob
-        matches = glob.glob(str(project_root / pattern))
-        for match in matches:
-            path = Path(match)
+        for path in project_root.glob(pattern):
             if path.is_dir() and (path / "common.xml").exists():
                 logger.info(f"Found MAVLink definitions at: {path}")
                 return path
@@ -59,16 +61,8 @@ def find_mavlink_definitions(project_root: Path) -> Optional[Path]:
     return None
 
 
-def parse_mavlink_xml(xml_path: Path, definitions_dir: Optional[Path] = None) -> MAVLinkDialect:
-    """Parse a MAVLink XML file and its includes.
-
-    Args:
-        xml_path: Path to the XML file to parse
-        definitions_dir: Directory containing XML files (for resolving includes)
-
-    Returns:
-        MAVLinkDialect with parsed messages and enums
-    """
+def parse_mavlink_xml(xml_path: Path, definitions_dir: Path | None = None) -> MAVLinkDialect:
+    """Parse a MAVLink XML file and its includes."""
     if definitions_dir is None:
         definitions_dir = xml_path.parent
 
@@ -84,10 +78,8 @@ def parse_mavlink_xml(xml_path: Path, definitions_dir: Optional[Path] = None) ->
     # Parse version
     version_elem = root.find("version")
     if version_elem is not None and version_elem.text:
-        try:
+        with contextlib.suppress(ValueError):  # non-numeric version → default 0
             dialect.version = int(version_elem.text)
-        except ValueError:
-            pass  # Non-numeric version, use default 0
 
     # Parse includes (process these first to get base messages)
     for include in root.findall("include"):
@@ -114,7 +106,9 @@ def parse_mavlink_xml(xml_path: Path, definitions_dir: Optional[Path] = None) ->
                 entry_name = entry.get("name", "")
                 entry_value = int(entry.get("value", "0"))
                 desc_elem = entry.find("description")
-                entry_desc = desc_elem.text.strip() if desc_elem is not None and desc_elem.text else ""
+                entry_desc = (
+                    desc_elem.text.strip() if desc_elem is not None and desc_elem.text else ""
+                )
                 entries.append((entry_name, entry_value, entry_desc))
             if enum_name:
                 dialect.enums[enum_name] = entries
@@ -135,7 +129,7 @@ def parse_mavlink_xml(xml_path: Path, definitions_dir: Optional[Path] = None) ->
     return dialect
 
 
-def _parse_message(msg_elem: ET.Element, enums: dict) -> Optional[MAVLinkMessage]:
+def _parse_message(msg_elem: Element, enums: dict) -> MAVLinkMessage | None:
     """Parse a single message element."""
     msg_id_str = msg_elem.get("id", "")
     msg_name = msg_elem.get("name", "")
@@ -179,7 +173,7 @@ def _parse_message(msg_elem: ET.Element, enums: dict) -> Optional[MAVLinkMessage
     )
 
 
-def _parse_field(field_elem: ET.Element) -> Optional[MAVLinkField]:
+def _parse_field(field_elem: Element) -> MAVLinkField | None:
     """Parse a single field element."""
     name = field_elem.get("name", "")
     field_type = field_elem.get("type", "")
@@ -251,18 +245,7 @@ def _categorize_message(msg_id: int, msg_name: str) -> str:
 
 
 def load_all_messages(project_root: Path) -> list[MAVLinkMessage]:
-    """Load all MAVLink messages from the project's definitions.
-
-    This is the main entry point for loading MAVLink data.
-    It finds the definitions directory and parses common.xml (which
-    includes all standard messages).
-
-    Args:
-        project_root: Root directory of the QGC project
-
-    Returns:
-        List of MAVLinkMessage objects
-    """
+    """Load all MAVLink messages from the project's definitions."""
     definitions_dir = find_mavlink_definitions(project_root)
 
     if definitions_dir is None:

@@ -2,17 +2,15 @@
 
 #include "MAVLinkLib.h"
 
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(MockLinkCameraLog)
+#include <QtCore/QMutex>
 
 class MockLink;
 
-/// Simulates MAVLink Camera Protocol v2 components for MockLink.
+/// \brief Simulates MAVLink Camera Protocol v2 components for MockLink.
 ///
 /// Two cameras are provided:
 ///   Camera 1 (MAV_COMP_ID_CAMERA)  – full-featured: video capture, photo capture,
-///       mode switching, basic zoom, basic focus, video streaming
+///       mode switching, basic zoom, video streaming
 ///       (udp://127.0.0.1:5600, H.264 RTP, 1920×1080 @ 30 fps),
 ///       and image capture while in video mode.
 ///   Camera 2 (MAV_COMP_ID_CAMERA2) – photo-only: image capture only; video,
@@ -33,6 +31,7 @@ class MockLink;
 ///   MAV_CMD_CAMERA_TRACK_POINT / TRACK_RECTANGLE / STOP_TRACKING
 ///
 /// Simulated storage: 16 GiB total, 8 GiB free, SD card.
+///
 class MockLinkCamera
 {
 public:
@@ -56,12 +55,28 @@ public:
         uint8_t  image_status        = ImageCaptureIdle;     ///< ImageCaptureStatus enum
         float    image_interval      = 0.0f;                 ///< Interval between image captures (seconds)
         qint64   singleShotStartMs   = 0;                    ///< Timestamp when single-shot capture started (0 = not active)
+
+        // Tracking state
+        uint8_t  trackingMode        = CAMERA_TRACKING_MODE_NONE; ///< CAMERA_TRACKING_MODE enum
+        float    trackPointX         = 0.0f;
+        float    trackPointY         = 0.0f;
+        float    trackRadius         = 0.0f;
+        float    trackRecTopX        = 0.0f;
+        float    trackRecTopY        = 0.0f;
+        float    trackRecBottomX     = 0.0f;
+        float    trackRecBottomY     = 0.0f;
+        qint64   trackingStatusIntervalUs = -1;               ///< Interval for CAMERA_TRACKING_IMAGE_STATUS (-1 = disabled)
+        qint64   trackingStatusLastSentMs = 0;                ///< Timestamp of last tracking status message
+        qint64   trackingStartMs     = 0;                     ///< Timestamp when tracking was started (for drift animation)
+        float    trackAnchorX        = 0.0f;                  ///< Original center X of tracked target
+        float    trackAnchorY        = 0.0f;                  ///< Original center Y of tracked target
     };
 
     explicit MockLinkCamera(MockLink *mockLink,
                             bool captureVideo = true,
                             bool captureImage = true,
                             bool hasModes = true,
+                            bool hasVideoStream = true,
                             bool canCaptureImageInVideoMode = true,
                             bool canCaptureVideoInImageMode = false,
                             bool hasBasicZoom = true,
@@ -75,15 +90,19 @@ public:
     /// Update camera states (call from 10Hz tasks)
     void run10HzTasks();
 
+    /// Handle all incoming MAVLink messages for camera.
+    /// @return true if the message was handled by the camera
+    bool handleMavlinkMessage(const mavlink_message_t &msg);
+
+private:
     /// Handle a COMMAND_LONG that targets a camera component.
     /// @return true if the command was handled (ack already sent)
-    bool handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId);
+    bool _handleCameraCommand(const mavlink_command_long_t &request, uint8_t targetCompId);
 
     /// Handle a MAV_CMD_REQUEST_MESSAGE for camera-related message IDs.
     /// @return true if the message ID was handled
-    bool handleRequestMessage(const mavlink_command_long_t &request, uint8_t targetCompId);
+    bool _handleRequestMessage(const mavlink_command_long_t &request, uint8_t targetCompId);
 
-private:
     void _sendCameraInformation(uint8_t compId);
     void _sendCameraSettings(uint8_t compId);
     void _sendStorageInformation(uint8_t compId);
@@ -91,6 +110,7 @@ private:
     void _sendCameraImageCaptured(uint8_t compId);
     void _sendVideoStreamInformation(uint8_t compId, uint8_t streamId);
     void _sendVideoStreamStatus(uint8_t compId, uint8_t streamId);
+    void _sendCameraTrackingImageStatus(uint8_t compId);
     void _sendCommandAck(uint8_t compId, uint16_t command, uint8_t result, int requestedMsgId = -1);
 
     CameraState *_findCamera(uint8_t compId);
@@ -103,4 +123,9 @@ private:
 
     MockLink   *_mockLink = nullptr;
     CameraState _cameras[kNumCameras];           ///< Simulated cameras
+    /// Protects _cameras array from race conditions between:
+    ///   - Main thread: _handleCameraCommand() modifying camera state on MAVLink commands
+    ///   - Worker thread: run10HzTasks() reading capture status and updating capture counts
+    ///   Race example: Main sets singleShotStartMs while Worker checks it for completion
+    QMutex      _camerasMutex;
 };

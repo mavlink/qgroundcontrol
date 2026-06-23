@@ -1,4 +1,7 @@
 #include "FactGroup.h"
+
+#include <QtCore/QJsonArray>
+
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(FactGroupLog, "FactSystem.FactGroup")

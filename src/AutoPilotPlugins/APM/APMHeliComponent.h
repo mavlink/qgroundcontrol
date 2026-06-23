@@ -12,7 +12,7 @@ public:
     QStringList setupCompleteChangedTriggerList() const final { return QStringList(); }
 
     QString name() const final { return _name; }
-    QString description() const final { return tr("Heli Setup is used to setup parameters which are specific to a helicopter."); }
+    QString description() const final { return tr("Configure swashplate, governor, and rotor parameters."); }
     QString iconResource() const final { return QStringLiteral("/res/helicoptericon.svg"); }
     bool requiresSetup() const final { return false; }
     bool setupComplete() const final { return true; }

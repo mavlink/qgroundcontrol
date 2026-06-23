@@ -6,10 +6,6 @@ on:
   push:
     branches: [master]
     paths: ['docs/en/**']
-  pull_request:
-    types: [closed]
-    branches: [master]
-    paths: ['docs/en/**']
   schedule:
     - cron: '0 0 * * 0'  # Download translations every Sunday
   workflow_dispatch:
@@ -25,32 +21,44 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions: {}
+  cancel-in-progress: false
 
 jobs:
-  upload:
-    name: Upload Sources
-    if: >-
-      github.event_name == 'push' ||
-      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-      (github.event_name == 'workflow_dispatch' && inputs.action == 'upload')
+  sync:
+    name: Crowdin Sync
+    if: github.repository_owner == 'mavlink'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
 
     steps:
+      - name: Determine action
+        id: action
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ACTION: ${{ inputs.action }}
+        run: |
+          if [[ "$EVENT_NAME" == "schedule" ]] || [[ "$EVENT_NAME" == "workflow_dispatch" && "$INPUT_ACTION" == "download" ]]; then
+            echo "mode=download" >> "$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "push" ]] || [[ "$EVENT_NAME" == "workflow_dispatch" && "$INPUT_ACTION" == "upload" ]]; then
+            echo "mode=upload" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=skip" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Harden Runner
+        if: steps.action.outputs.mode != 'skip'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
 
       - name: Checkout
+        if: steps.action.outputs.mode != 'skip'
         uses: actions/checkout@v6
 
       - name: Upload sources to Crowdin
+        if: steps.action.outputs.mode == 'upload'
         uses: crowdin/github-action@v2
         with:
           config: 'docs/crowdin_docs.yml'
@@ -63,27 +71,8 @@ jobs:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_DOCS_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.PX4BUILDBOT_CROWDIN_PERSONAL_TOKEN }}
 
-  download:
-    name: Download Translations
-    if: >-
-      github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && inputs.action == 'download')
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-      pull-requests: write
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@v2
-        with:
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@v6
-
       - name: Download translations from Crowdin
+        if: steps.action.outputs.mode == 'download'
         uses: crowdin/github-action@v2
         with:
           config: 'docs/crowdin_docs.yml'

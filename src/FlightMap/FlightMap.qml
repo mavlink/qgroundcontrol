@@ -29,7 +29,6 @@ Map {
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
 
     function setVisibleRegion(region) {
-        // TODO: Is this still necessary with Qt 5.11?
         // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
         // and then you set the same visibleRegion the map will not move/scale appropriately since it thinks there
         // is nothing to do.
@@ -120,29 +119,44 @@ Map {
         id:     pinchHandler
         target: null
 
-        property var pinchStartCentroid
+        property var pinchStartGeoCoord     // geo coordinate under centroid at pinch start
+        property var pinchStartScreenPoint  // screen point of centroid at pinch start
 
         onActiveChanged: {
             if (active) {
-                pinchStartCentroid = _map.toCoordinate(pinchHandler.centroid.position, false)
+                // Capture both the screen point and its geo coordinate once at pinch start.
+                // alignCoordinateToPoint requires a fixed screen anchor; using the live
+                // centroid.position causes the map to pan as fingers drift.
+                pinchStartScreenPoint = pinchHandler.centroid.position
+                pinchStartGeoCoord    = _map.toCoordinate(pinchStartScreenPoint, false)
             }
         }
         onScaleChanged: (delta) => {
-            let newZoomLevel = Math.max(_map.zoomLevel + Math.log2(delta), 0)
-            _map.zoomLevel = newZoomLevel
-            _map.alignCoordinateToPoint(pinchStartCentroid, pinchHandler.centroid.position)
+            _map.zoomLevel = Math.max(_map.zoomLevel + Math.log2(delta), 0)
+            _map.alignCoordinateToPoint(pinchStartGeoCoord, pinchStartScreenPoint)
         }
     }
 
     WheelHandler {
-        // workaround for QTBUG-87646 / QTBUG-112394 / QTBUG-112432:
-        // Magic Mouse pretends to be a trackpad but doesn't work with PinchHandler
-        // and we don't yet distinguish mice and trackpads on Wayland either
-        acceptedDevices:    Qt.platform.pluginName === "cocoa" || Qt.platform.pluginName === "wayland" ?
-                                PointerDevice.Mouse | PointerDevice.TouchPad : PointerDevice.Mouse
+        // WheelHandler's default acceptedDevices=Mouse silently drops trackpad scroll events on
+        // multiple platforms:
+        //   - Linux/Wayland (QTBUG-112394 / QTBUG-112432): the Wayland
+        //     protocol exposes no way to distinguish a mouse from a trackpad, so Qt registers all
+        //     pointer devices as TouchPad.
+        //   - xcb / XWayland: Wayland pointer events are translated back to X11 and device-type
+        //     metadata is lost — physical mouse scroll events arrive as PointerDevice.TouchPad.
+        //   - macOS (cocoa): trackpad scroll events are correctly reported as PointerDevice.TouchPad
+        //     but are excluded by the Mouse-only default.
+        // Accepting both Mouse and TouchPad on all platforms is harmless and covers every case.
+        acceptedDevices:    PointerDevice.Mouse | PointerDevice.TouchPad
         rotationScale:      1 / 120
-        property:           "zoomLevel"
 
+        onWheel: (event) => {
+            const zoomDelta = event.angleDelta.y * rotationScale
+            const mouseGeoPos = _map.toCoordinate(Qt.point(event.x, event.y), false)
+            _map.zoomLevel = Math.max(_map.zoomLevel + zoomDelta, 0)
+            _map.alignCoordinateToPoint(mouseGeoPos, Qt.point(event.x, event.y))
+        }
     }
 
     // We specifically do not use a DragHandler for panning. It just causes too many problems if you overlay anything else like a Flickable above it.
@@ -229,7 +243,7 @@ Map {
     MapQuickItem {
         anchorPoint.x:  sourceItem.width / 2
         anchorPoint.y:  sourceItem.height / 2
-        visible:        gcsPosition.isValid
+        visible:        gcsPosition.isValid && !planView
         coordinate:     gcsPosition
 
         sourceItem: Image {

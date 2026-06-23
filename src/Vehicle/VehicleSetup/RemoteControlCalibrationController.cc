@@ -1,59 +1,76 @@
 #include "RemoteControlCalibrationController.h"
 #include "Fact.h"
 #include "ParameterManager.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
 #include <algorithm>
 
 QGC_LOGGING_CATEGORY(RemoteControlCalibrationControllerLog, "RemoteControl.RemoteControlCalibrationController")
 QGC_LOGGING_CATEGORY(RemoteControlCalibrationControllerVerboseLog, "RemoteControl.RemoteControlCalibrationController:verbose")
 
-static constexpr const char *msgBeginThrottleDown = QT_TR_NOOP(
+static constexpr const char *msgBeginThrottleDown = QT_TRANSLATE_NOOP("RemoteControlCalibrationController",
         "* Lower the Throttle stick all the way down as shown in diagram\n"
         "* Please ensure all motor power is disconnected AND all props are removed from the vehicle.\n"
         "* Click Next to continue"
 );
-static constexpr const char *msgBeginThrottleCenter = QT_TR_NOOP(
+static constexpr const char *msgBeginThrottleCenter = QT_TRANSLATE_NOOP("RemoteControlCalibrationController",
     "* Center all sticks as shown in diagram.\n"
+    "* Make sure any additional axes are at a neutral position.\n"
     "* Please ensure all motor power is disconnected from the vehicle.\n"
     "* Click Next to continue"
 );
-static constexpr const char *msgThrottleUp =            QT_TR_NOOP("Move the Throttle stick all the way up and hold it there...");
-static constexpr const char *msgThrottleDown =          QT_TR_NOOP("Move the Throttle stick all the way down and leave it there...");
-static constexpr const char *msgYawLeft =               QT_TR_NOOP("Move the Yaw stick all the way to the left and hold it there...");
-static constexpr const char *msgYawRight =              QT_TR_NOOP("Move the Yaw stick all the way to the right and hold it there...");
-static constexpr const char *msgRollLeft =              QT_TR_NOOP("Move the Roll stick all the way to the left and hold it there...");
-static constexpr const char *msgRollRight =             QT_TR_NOOP("Move the Roll stick all the way to the right and hold it there...");
-static constexpr const char *msgPitchDown =             QT_TR_NOOP("Move the Pitch stick all the way down and hold it there...");
-static constexpr const char *msgPitchUp =               QT_TR_NOOP("Move the Pitch stick all the way up and hold it there...");
-static constexpr const char *msgPitchCenter =           QT_TR_NOOP("Allow the Pitch stick to move back to center...");
-static constexpr const char *msgSwitchMinMaxRC =        QT_TR_NOOP("Move all the transmitter switches and/or dials back and forth to their extreme positions.");
-static constexpr const char *msgSwitchMinMaxJoystick =  QT_TR_NOOP("Move all sticks to their extreme positions.");
-static constexpr const char *msgComplete =              QT_TR_NOOP("All settings have been captured. Click Next to write the new parameters to your board.");
+static constexpr const char *msgThrottleUp =            QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Throttle stick all the way up and hold it there...");
+static constexpr const char *msgThrottleDown =          QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Throttle stick all the way down and leave it there...");
+static constexpr const char *msgYawLeft =               QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Yaw stick all the way to the left and hold it there...");
+static constexpr const char *msgYawRight =              QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Yaw stick all the way to the right and hold it there...");
+static constexpr const char *msgRollLeft =              QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Roll stick all the way to the left and hold it there...");
+static constexpr const char *msgRollRight =             QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Roll stick all the way to the right and hold it there...");
+static constexpr const char *msgPitchDown =             QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Pitch stick all the way down and hold it there...");
+static constexpr const char *msgPitchUp =               QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the Pitch stick all the way up and hold it there...");
+static constexpr const char *msgPitchCenter =           QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Allow the Pitch stick to move back to center...");
+static constexpr const char *msgExtensionHigh =         QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move the %1 Extension stick to its high value position and hold it there...");
+static constexpr const char *msgExtensionLow =          QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "* Move the %1 Extension stick to its low value position and hold it there...\n* Select 'One-Sided' for controls like gamepad triggers.");
+static constexpr const char *msgSwitchMinMaxRC =        QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Move all the transmitter switches and/or dials back and forth to their extreme positions.");
+static constexpr const char *msgComplete =              QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "All settings have been captured. Click Next to write the new parameters to your board.");
 
 RemoteControlCalibrationController::RemoteControlCalibrationController(QObject *parent)
     : FactPanelController(parent)
     , _stateMachine{
-        // stickFunction,           stepFunction,                   channelInputFn,                                             nextButtonFn
-        { stickFunctionMax,         StateMachineStepStickNeutral,   &RemoteControlCalibrationController::_inputCenterWaitBegin, &RemoteControlCalibrationController::_saveAllTrims },
-        { stickFunctionThrottle,    StateMachineStepThrottleUp,     &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionThrottle,    StateMachineStepThrottleDown,   &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionYaw,         StateMachineStepYawRight,       &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionYaw,         StateMachineStepYawLeft,        &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionRoll,        StateMachineStepRollRight,      &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionRoll,        StateMachineStepRollLeft,       &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionPitch,       StateMachineStepPitchUp,        &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
-        { stickFunctionPitch,       StateMachineStepPitchDown,      &RemoteControlCalibrationController::_inputStickMin,        nullptr },
-        { stickFunctionPitch,       StateMachineStepPitchCenter,    &RemoteControlCalibrationController::_inputCenterWait,      nullptr },
-        { stickFunctionMax,         StateMachineStepSwitchMinMax,   &RemoteControlCalibrationController::_inputSwitchMinMax,    &RemoteControlCalibrationController::_advanceState },
-        { stickFunctionMax,         StateMachineStepComplete,       nullptr,                                                    &RemoteControlCalibrationController::_saveCalibrationValues },
+        // stickFunction,               stepFunction,                   channelInputFn,                                             nextButtonFn
+        { stickFunctionMax,             StateMachineStepStickNeutral,   &RemoteControlCalibrationController::_inputCenterWaitBegin, &RemoteControlCalibrationController::_saveAllTrims },
+        { stickFunctionThrottle,        StateMachineStepThrottleUp,     &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionThrottle,        StateMachineStepThrottleDown,   &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionYaw,             StateMachineStepYawRight,       &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionYaw,             StateMachineStepYawLeft,        &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionRoll,            StateMachineStepRollRight,      &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionRoll,            StateMachineStepRollLeft,       &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionPitch,           StateMachineStepPitchUp,        &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionPitch,           StateMachineStepPitchDown,      &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionPitchExtension,  StateMachineStepExtensionHighVert, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionPitchExtension,  StateMachineStepExtensionLowVert,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionRollExtension,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionRollExtension,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis1,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis1,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis2,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis2,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis3,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis3,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis4,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis4,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis5,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis5,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+        { stickFunctionAdditionalAxis6,   StateMachineStepExtensionHighHorz, &RemoteControlCalibrationController::_inputStickDetect,     nullptr },
+        { stickFunctionAdditionalAxis6,   StateMachineStepExtensionLowHorz,  &RemoteControlCalibrationController::_inputStickMin,        nullptr },
+
+        { stickFunctionMax,             StateMachineStepSwitchMinMax,   &RemoteControlCalibrationController::_inputSwitchMinMax,    &RemoteControlCalibrationController::_advanceState },
+        { stickFunctionMax,             StateMachineStepComplete,       nullptr,                                                    &RemoteControlCalibrationController::_saveCalibrationValues },
     }
 {
-    // qCDebug(RemoteControlCalibrationControllerLog) << Q_FUNC_INFO << this;
-
     _resetInternalCalibrationValues();
     _loadCalibrationUISettings();
 
@@ -65,18 +82,22 @@ RemoteControlCalibrationController::RemoteControlCalibrationController(QObject *
     }
 
     _stepFunctionToMsgStringMap = {
-        { StateMachineStepStickNeutral,    msgBeginThrottleCenter }, // Adjusted based on throttle centered or not
-        { StateMachineStepThrottleUp,      msgThrottleUp },
-        { StateMachineStepThrottleDown,    msgThrottleDown },
-        { StateMachineStepYawRight,        msgYawRight },
-        { StateMachineStepYawLeft,         msgYawLeft },
-        { StateMachineStepRollRight,       msgRollRight },
-        { StateMachineStepRollLeft,        msgRollLeft },
-        { StateMachineStepPitchUp,         msgPitchUp },
-        { StateMachineStepPitchDown,       msgPitchDown },
-        { StateMachineStepPitchCenter,     msgPitchCenter },
-        { StateMachineStepSwitchMinMax,    msgSwitchMinMaxRC }, // Adjusted based on joystick mode or not
-        { StateMachineStepComplete,        msgComplete },
+        { StateMachineStepStickNeutral,      msgBeginThrottleCenter }, // Adjusted based on throttle centered or not
+        { StateMachineStepThrottleUp,        msgThrottleUp },
+        { StateMachineStepThrottleDown,      msgThrottleDown },
+        { StateMachineStepYawRight,          msgYawRight },
+        { StateMachineStepYawLeft,           msgYawLeft },
+        { StateMachineStepRollRight,         msgRollRight },
+        { StateMachineStepRollLeft,          msgRollLeft },
+        { StateMachineStepPitchUp,           msgPitchUp },
+        { StateMachineStepPitchDown,         msgPitchDown },
+        { StateMachineStepExtensionHighHorz, msgExtensionHigh },
+        { StateMachineStepExtensionLowHorz,  msgExtensionLow },
+        { StateMachineStepExtensionHighVert, msgExtensionHigh },
+        { StateMachineStepExtensionLowVert,  msgExtensionLow },
+        { StateMachineStepPitchCenter,       msgPitchCenter },
+        { StateMachineStepSwitchMinMax,      msgSwitchMinMaxRC },
+        { StateMachineStepComplete,          msgComplete },
     };
 
     // Map for throttle centered neutral position
@@ -140,6 +161,30 @@ RemoteControlCalibrationController::RemoteControlCalibrationController(QObject *
             { 2, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
             { 3, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
             { 4, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepExtensionHighHorz, {
+            { 1, { _stickDisplayPositionXRightYCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXRightYCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionXRightYCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXRightYCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepExtensionHighVert, {
+            { 1, { _stickDisplayPositionXCenteredYUp, _stickDisplayPositionXCenteredYUp } },
+            { 2, { _stickDisplayPositionXCenteredYUp, _stickDisplayPositionXCenteredYUp } },
+            { 3, { _stickDisplayPositionXCenteredYUp, _stickDisplayPositionXCenteredYUp } },
+            { 4, { _stickDisplayPositionXCenteredYUp, _stickDisplayPositionXCenteredYUp } },
+        }},
+        { StateMachineStepExtensionLowHorz, {
+            { 1, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepExtensionLowVert, {
+            { 1, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
         }},
         { StateMachineStepSwitchMinMax, {
             { 1, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
@@ -217,6 +262,30 @@ RemoteControlCalibrationController::RemoteControlCalibrationController(QObject *
             { 3, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
             { 4, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
         }},
+        { StateMachineStepExtensionHighHorz, {
+            { 1, { _stickDisplayPositionXRightYCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXRightYCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionXRightYCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXRightYCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepExtensionHighVert, {
+            { 1, { _stickDisplayPositionXCenteredYUp, _stickDisplayPositionXCenteredYUp } },
+            { 2, { _stickDisplayPositionXCenteredYUp, _stickDisplayPositionXCenteredYUp } },
+            { 3, { _stickDisplayPositionXCenteredYUp, _stickDisplayPositionXCenteredYUp } },
+            { 4, { _stickDisplayPositionXCenteredYUp, _stickDisplayPositionXCenteredYUp } },
+        }},
+        { StateMachineStepExtensionLowHorz, {
+            { 1, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXLeftYCentered, _stickDisplayPositionCentered } },
+        }},
+        { StateMachineStepExtensionLowVert, {
+            { 1, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 2, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 3, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+            { 4, { _stickDisplayPositionXCenteredYDown, _stickDisplayPositionCentered } },
+        }},
         { StateMachineStepSwitchMinMax, {
             { 1, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
             { 2, { _stickDisplayPositionCentered, _stickDisplayPositionCentered } },
@@ -270,19 +339,49 @@ void RemoteControlCalibrationController::_setupCurrentState()
 {
     auto state = _getStateMachineEntry(_currentStep);
 
+    // If the stick function for this step is not enabled, skip to next step
+    if (state.stickFunction != stickFunctionMax && !_stickFunctionEnabled(state.stickFunction)) {
+        qCDebug(RemoteControlCalibrationControllerLog) << "Skipping step" << _currentStep << "for disabled stick function" << _stickFunctionToString(state.stickFunction);
+        _advanceState();
+        return;
+    }
+
+    // StateMachineStepSwitchMinMax is only used for RC transmitters
+    if (_joystickMode && state.stepFunction == StateMachineStepSwitchMinMax) {
+        _advanceState();
+        return;
+    }
+
     _stepFunctionToMsgStringMap[StateMachineStepStickNeutral] = _centeredThrottle ? msgBeginThrottleCenter : msgBeginThrottleDown;
-    _stepFunctionToMsgStringMap[StateMachineStepSwitchMinMax] = _joystickMode ? msgSwitchMinMaxJoystick : msgSwitchMinMaxRC;
 
     BothSticksDisplayPositions defaultPositions = { _stickDisplayPositionCentered, _stickDisplayPositionCentered };
     BothSticksDisplayPositions bothStickPositions = _centeredThrottle
         ? _bothStickDisplayPositionThrottleCenteredMap.value(state.stepFunction).value(_transmitterMode, defaultPositions)
         : _bothStickDisplayPositionThrottleDownMap.value(state.stepFunction).value(_transmitterMode, defaultPositions);
 
-    _statusText->setProperty("text", _stepFunctionToMsgStringMap.value(state.stepFunction, QString()));
+    QString msg = QCoreApplication::translate("RemoteControlCalibrationController", _stepFunctionToMsgStringMap.value(state.stepFunction, ""));
+    if (state.stepFunction == StateMachineStepExtensionHighHorz || state.stepFunction == StateMachineStepExtensionHighVert ||
+        state.stepFunction == StateMachineStepExtensionLowHorz  || state.stepFunction == StateMachineStepExtensionLowVert) {
+        static const QMap <StickFunction, const char*> extensionNameMap = {
+            { stickFunctionPitchExtension,  QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Pitch") },
+            { stickFunctionRollExtension,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Roll") },
+            { stickFunctionAdditionalAxis1,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 1") },
+            { stickFunctionAdditionalAxis2,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 2") },
+            { stickFunctionAdditionalAxis3,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 3") },
+            { stickFunctionAdditionalAxis4,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 4") },
+            { stickFunctionAdditionalAxis5,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 5") },
+            { stickFunctionAdditionalAxis6,   QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Aux 6") },
+        };
+        const char* extName = extensionNameMap.value(state.stickFunction, QT_TRANSLATE_NOOP("RemoteControlCalibrationController", "Unknown"));
+        msg = msg.arg(QCoreApplication::translate("RemoteControlCalibrationController", extName));
+    }
+
+    _setSingleStickDisplay(state.stepFunction == StateMachineStepExtensionHighHorz || state.stepFunction == StateMachineStepExtensionHighVert ||
+                           state.stepFunction == StateMachineStepExtensionLowHorz  || state.stepFunction == StateMachineStepExtensionLowVert);
+
+    _statusText->setProperty("text", msg);
     _stickDisplayPositions = { bothStickPositions.leftStick.horizontal, bothStickPositions.leftStick.vertical,
                                bothStickPositions.rightStick.horizontal, bothStickPositions.rightStick.vertical };
-    qDebug() << "_setupCurrentState stepFunction:" << state.stepFunction << "leftStick(h,v):" << bothStickPositions.leftStick.horizontal << bothStickPositions.leftStick.vertical
-             << "rightStick(h,v):" << bothStickPositions.rightStick.horizontal << bothStickPositions.rightStick.vertical;
     emit stickDisplayPositionsChanged();
 
     _stickDetectChannel = _chanMax;
@@ -291,9 +390,10 @@ void RemoteControlCalibrationController::_setupCurrentState()
     _saveCurrentRawValues();
 
     _nextButton->setEnabled(state.nextButtonFn != nullptr);
+    emit oneSidedButtonVisibleChanged(oneSidedButtonVisible());
 }
 
-void RemoteControlCalibrationController::rawChannelValuesChanged(QVector<int> channelValues)
+void RemoteControlCalibrationController::_processChannelValues(QVector<int> channelValues)
 {
     auto channelCount = channelValues.size();
     if (channelCount > _chanMax) {
@@ -326,6 +426,30 @@ void RemoteControlCalibrationController::rawChannelValuesChanged(QVector<int> ch
             case stickFunctionThrottle:
                 emit adjustedThrottleChannelValueChanged(adjustedValue);
                 break;
+            case stickFunctionRollExtension:
+                emit adjustedRollExtensionChannelValueChanged(adjustedValue);
+                break;
+            case stickFunctionPitchExtension:
+                emit adjustedPitchExtensionChannelValueChanged(adjustedValue);
+                break;
+            case stickFunctionAdditionalAxis1:
+                emit adjustedAdditionalAxis1ChannelValueChanged(adjustedValue);
+                break;
+            case stickFunctionAdditionalAxis2:
+                emit adjustedAdditionalAxis2ChannelValueChanged(adjustedValue);
+                break;
+            case stickFunctionAdditionalAxis3:
+                emit adjustedAdditionalAxis3ChannelValueChanged(adjustedValue);
+                break;
+            case stickFunctionAdditionalAxis4:
+                emit adjustedAdditionalAxis4ChannelValueChanged(adjustedValue);
+                break;
+            case stickFunctionAdditionalAxis5:
+                emit adjustedAdditionalAxis5ChannelValueChanged(adjustedValue);
+                break;
+            case stickFunctionAdditionalAxis6:
+                emit adjustedAdditionalAxis6ChannelValueChanged(adjustedValue);
+                break;
             default:
                 break;
             }
@@ -350,7 +474,7 @@ void RemoteControlCalibrationController::nextButtonClicked()
     if (_currentStep == -1) {
         // Need to have enough channels
         if (_chanCount < _chanMinimum) {
-            qgcApp()->showAppMessage(QStringLiteral("Detected %1 channels. To operate vehicle, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
+            QGC::showAppMessage(QStringLiteral("Detected %1 channels. To operate vehicle, you need at least %2 channels.").arg(_chanCount).arg(_chanMinimum));
             return;
         }
         _startCalibration();
@@ -360,6 +484,15 @@ void RemoteControlCalibrationController::nextButtonClicked()
             (this->*state.nextButtonFn)();
         }
     }
+}
+
+void RemoteControlCalibrationController::oneSidedButtonClicked()
+{
+    if (!oneSidedButtonVisible()) {
+        return;
+    }
+
+    _applyOneSidedCalibration();
 }
 
 void RemoteControlCalibrationController::cancelButtonClicked()
@@ -375,7 +508,7 @@ void RemoteControlCalibrationController::_saveAllTrims()
     // trims reset to correct values.
 
     for (int i=0; i<_chanCount; i++) {
-        qCDebug(RemoteControlCalibrationControllerLog) << "_saveAllTrims channel trim" << i<< _channelRawValue[i];
+        qCDebug(RemoteControlCalibrationControllerLog) << "_saveAllTrims channel:trim" << i << _channelRawValue[i];
         _rgChannelInfo[i].channelTrim = _channelRawValue[i];
     }
     _advanceState();
@@ -405,11 +538,9 @@ bool RemoteControlCalibrationController::_stickSettleComplete(int value)
 
     if (abs(_stickDetectValue - value) > _calSettleDelta) {
         // Stick is moving too much to consider stopped
-
-        qCDebug(RemoteControlCalibrationControllerLog) << "_stickSettleComplete Still moving, _stickDetectValue:value" << _stickDetectValue << value;
-
         _stickDetectValue = value;
         _stickDetectSettleStarted = false;
+        qCDebug(RemoteControlCalibrationControllerLog) << "Still moving - _stickDetectValue" << value;
     } else {
         // Stick is still positioned within the specified small range
 
@@ -423,7 +554,7 @@ bool RemoteControlCalibrationController::_stickSettleComplete(int value)
         } else {
             // Start waiting for the stick to stay settled for _stickDetectSettleWaitMSecs msecs
 
-            qCDebug(RemoteControlCalibrationControllerLog) << "_stickSettleComplete Starting settle timer, _stickDetectValue:value" << _stickDetectValue << value;
+            qCDebug(RemoteControlCalibrationControllerLog) << "Starting settle timer - _stickDetectValue:value" << _stickDetectValue << value;
 
             _stickDetectSettleStarted = true;
             _stickDetectSettleElapsed.start();
@@ -451,7 +582,7 @@ void RemoteControlCalibrationController::_inputStickDetect(StickFunction stickFu
         if (abs(_channelValueSave[channel] - value) > _calMoveDelta) {
             // Stick has moved far enough to consider it as being selected for the function
 
-            qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickDetect Starting settle wait";
+            qCDebug(RemoteControlCalibrationControllerLog) << "Starting settle wait - function:channel" << _stickFunctionToString(stickFunction) << channel;
 
             // Setup up to detect stick being pegged to min or max value
             _stickDetectChannel = channel;
@@ -473,7 +604,10 @@ void RemoteControlCalibrationController::_inputStickDetect(StickFunction stickFu
                 _rgChannelInfo[channel].channelMax = value;
             }
 
-            qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickDetect Settle complete, reversed:min:max" << info->channelReversed << info->channelMin << info->channelMax;
+            qCDebug(RemoteControlCalibrationControllerLog) <<
+                QStringLiteral("Stick detected - function:channel:reversed:trim:%1").arg(info->channelReversed ? "min" : "max") <<
+                _stickFunctionToString(stickFunction) << channel << info->channelReversed << info->channelTrim <<
+                (info->channelReversed ? info->channelMin : info->channelMax);
 
             _signalAllAttitudeValueChanges();
 
@@ -492,31 +626,15 @@ void RemoteControlCalibrationController::_inputStickMin(StickFunction stickFunct
     qCDebug(RemoteControlCalibrationControllerVerboseLog) << "_inputStickMin function:channel:value" << _stickFunctionToString(stickFunction) << channel << value;
 
     if (_stickDetectChannel == _chanMax) {
-        // Setup up to detect stick being pegged to extreme position
-        // Check both: 1) significant movement from saved position, AND 2) value is in the expected half of range
-        const bool movedSignificantly = abs(_channelValueSave[channel] - value) > _calMoveDelta;
-
         if (_rgChannelInfo[channel].channelReversed) {
-            // Reversed channel: "min" is actually in the positive direction
-            // Also check if already at the max extreme (user moved stick before step started)
-            const bool alreadyAtExtreme = abs(value - _calValidMaxValue) < _calSettleDelta;
-
-            if ((movedSignificantly && value > _calCenterPoint) || alreadyAtExtreme) {
-                qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Movement detected, starting settle wait"
-                                                               << "movedSignificantly:" << movedSignificantly
-                                                               << "alreadyAtExtreme:" << alreadyAtExtreme;
+            if (value > _calCenterPoint + _calMoveDelta) {
+                qCDebug(RemoteControlCalibrationControllerLog) << "Movement detected, starting settle wait";
                 _stickDetectChannel = channel;
                 _stickDetectValue = value;
             }
         } else {
-            // Normal channel: "min" is in the negative direction
-            // Also check if already at the min extreme (user moved stick before step started)
-            const bool alreadyAtExtreme = abs(value - _calValidMinValue) < _calSettleDelta;
-
-            if ((movedSignificantly && value < _calCenterPoint) || alreadyAtExtreme) {
-                qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Movement detected, starting settle wait"
-                                                               << "movedSignificantly:" << movedSignificantly
-                                                               << "alreadyAtExtreme:" << alreadyAtExtreme;
+            if (value < _calCenterPoint - _calMoveDelta) {
+                qCDebug(RemoteControlCalibrationControllerLog) << "Movement detected, starting settle wait";
                 _stickDetectChannel = channel;
                 _stickDetectValue = value;
             }
@@ -524,23 +642,21 @@ void RemoteControlCalibrationController::_inputStickMin(StickFunction stickFunct
     } else {
         // We are waiting for the selected channel to settle out
         if (_stickSettleComplete(value)) {
-            const ChannelInfo *const info = &_rgChannelInfo[channel];
+            auto& channelInfo = _rgChannelInfo[channel];
 
             // Stick detection is complete. Stick should be at extreme position.
-            if (info->channelReversed) {
-                _rgChannelInfo[channel].channelMax = value;
+            if (channelInfo.channelReversed) {
+                channelInfo.channelMax = value;
             } else {
-                _rgChannelInfo[channel].channelMin = value;
+                channelInfo.channelMin = value;
             }
-
-            qCDebug(RemoteControlCalibrationControllerLog) << "_inputStickMin Settle complete";
 
             // Check if this is throttle and set trim accordingly
-            if (stickFunction == stickFunctionThrottle) {
-                _rgChannelInfo[channel].channelTrim = value;
+            if (!_joystickMode && stickFunction == stickFunctionThrottle) {
+                channelInfo.channelTrim = value;
             }
-            // XXX to support configs which can reverse they need to check a reverse
-            // flag here and not do this.
+
+            qCDebug(RemoteControlCalibrationControllerLog) << "Settle complete - function:channel:min:max:trim" << _stickFunctionToString(stickFunction) << channel << channelInfo.channelMin << channelInfo.channelMax << channelInfo.channelTrim;
 
             _advanceState();
         }
@@ -569,6 +685,38 @@ void RemoteControlCalibrationController::_inputCenterWait(StickFunction stickFun
             _advanceState();
         }
     }
+}
+
+void RemoteControlCalibrationController::_applyOneSidedCalibration()
+{
+    if (!_isOneSidedCalibrationStep(_currentStep)) {
+        return;
+    }
+
+    const StateMachineEntry &state = _getStateMachineEntry(_currentStep);
+    const int channel = _rgFunctionChannelMapping[state.stickFunction];
+    if (channel < 0 || channel >= _chanMax) {
+        return;
+    }
+
+    ChannelInfo &channelInfo = _rgChannelInfo[channel];
+    const int trimValue = channelInfo.channelTrim;
+    if (channelInfo.channelReversed) {
+        channelInfo.channelMax = trimValue;
+    } else {
+        channelInfo.channelMin = trimValue;
+    }
+
+    qCDebug(RemoteControlCalibrationControllerLog)
+        << "Applying one-sided calibration - function:channel:reversed:trim:min:max"
+        << _stickFunctionToString(state.stickFunction)
+        << channel
+        << channelInfo.channelReversed
+        << channelInfo.channelTrim
+        << channelInfo.channelMin
+        << channelInfo.channelMax;
+
+    _advanceState();
 }
 
 void RemoteControlCalibrationController::_inputSwitchMinMax(StickFunction /*stickFunction*/, int channel, int value)
@@ -620,45 +768,62 @@ void RemoteControlCalibrationController::_resetInternalCalibrationValues()
 void RemoteControlCalibrationController::_validateAndAdjustCalibrationValues()
 {
     for (int chan = 0; chan<_chanMax; chan++) {
-        ChannelInfo *info = &_rgChannelInfo[chan];
+        auto& channelInfo = _rgChannelInfo[chan];
 
         if (chan < _chanCount) {
+            const bool extensionFunction = channelInfo.stickFunction == stickFunctionPitchExtension ||
+                                           channelInfo.stickFunction == stickFunctionRollExtension ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis1 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis2 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis3 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis4 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis5 ||
+                                           channelInfo.stickFunction == stickFunctionAdditionalAxis6;
+            const bool positiveOnlyExtension = extensionFunction &&
+                                               (channelInfo.channelTrim == channelInfo.channelMin) &&
+                                               (channelInfo.channelMax >= _calValidMaxValue);
+            const bool negativeOnlyExtension = extensionFunction &&
+                                               (channelInfo.channelTrim == channelInfo.channelMax) &&
+                                               (channelInfo.channelMin <= _calValidMinValue);
+            const bool oneSidedExtension = positiveOnlyExtension || negativeOnlyExtension;
+
             // Validate Min/Max values. Although the channel appears as available we still may
             // not have good min/max/trim values for it. Set to defaults if needed.
-            if (info->channelMin > _calValidMinValue || info->channelMax < _calValidMaxValue) {
-                qCDebug(RemoteControlCalibrationControllerLog) << "_validateAndAdjustCalibrationValues resetting channel" << chan;
-                info->channelMin = _calDefaultMinValue;
-                info->channelMax = _calDefaultMaxValue;
-                info->channelTrim = info->channelMin + ((info->channelMax - info->channelMin) / 2);
+            if (!oneSidedExtension && (channelInfo.channelMin > _calValidMinValue || channelInfo.channelMax < _calValidMaxValue)) {
+                qCDebug(RemoteControlCalibrationControllerLog) << "resetting channel invalid min/max - chan:channelMin:calValidMinValue:channelMax:calValidMaxValue"
+                    << chan << channelInfo.channelMin << _calValidMinValue << channelInfo.channelMax << _calValidMaxValue;
+                channelInfo.channelMin = _calDefaultMinValue;
+                channelInfo.channelMax = _calDefaultMaxValue;
+                channelInfo.channelTrim = channelInfo.channelMin + ((channelInfo.channelMax - channelInfo.channelMin) / 2);
             } else {
-                switch (_rgChannelInfo[chan].stickFunction) {
+                if (oneSidedExtension) {
+                    continue;
+                }
+
+                switch (channelInfo.stickFunction) {
                 case stickFunctionThrottle:
                 case stickFunctionYaw:
                 case stickFunctionRoll:
                 case stickFunctionPitch:
                     // Make sure trim is within min/max
-                    if (info->channelTrim < info->channelMin) {
-                        info->channelTrim = info->channelMin;
-                    } else if (info->channelTrim > info->channelMax) {
-                        info->channelTrim = info->channelMax;
-                    }
+                    channelInfo.channelTrim = std::clamp(channelInfo.channelTrim, channelInfo.channelMin, channelInfo.channelMax);
                     break;
                 default:
                     // Non-attitude control channels have calculated trim
-                    info->channelTrim = info->channelMin + ((info->channelMax - info->channelMin) / 2);
+                    channelInfo.channelTrim = channelInfo.channelMin + ((channelInfo.channelMax - channelInfo.channelMin) / 2);
                     break;
                 }
 
             }
         } else {
             // Unavailable channels are set to defaults
-            qCDebug(RemoteControlCalibrationControllerLog) << "_validateAndAdjustCalibrationValues resetting unavailable channel" << chan;
-            info->channelMin = _calDefaultMinValue;
-            info->channelMax = _calDefaultMaxValue;
-            info->channelTrim = info->channelMin + ((info->channelMax - info->channelMin) / 2);
-            info->channelReversed = false;
-            info->deadband = 0;
-            info->stickFunction = stickFunctionMax;
+            qCDebug(RemoteControlCalibrationControllerLog) << "resetting unavailable channel" << chan;
+            channelInfo.channelMin = _calDefaultMinValue;
+            channelInfo.channelMax = _calDefaultMaxValue;
+            channelInfo.channelTrim = channelInfo.channelMin + ((channelInfo.channelMax - channelInfo.channelMin) / 2);
+            channelInfo.channelReversed = false;
+            channelInfo.deadband = 0;
+            channelInfo.stickFunction = stickFunctionMax;
 
         }
     }
@@ -683,6 +848,14 @@ void RemoteControlCalibrationController::_startCalibration()
 
     _currentStep = 0;
     _setupCurrentState();
+}
+
+void RemoteControlCalibrationController::_setSingleStickDisplay(bool singleStickDisplay)
+{
+    if (_singleStickDisplay != singleStickDisplay) {
+        _singleStickDisplay = singleStickDisplay;
+        emit singleStickDisplayChanged(singleStickDisplay);
+    }
 }
 
 void RemoteControlCalibrationController::_stopCalibration()
@@ -714,6 +887,24 @@ void RemoteControlCalibrationController::_stopCalibration()
     _stickDisplayPositions = { _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical,
                                _stickDisplayPositionCentered.horizontal, _stickDisplayPositionCentered.vertical };
     emit stickDisplayPositionsChanged();
+    emit oneSidedButtonVisibleChanged(false);
+}
+
+bool RemoteControlCalibrationController::oneSidedButtonVisible() const
+{
+    return _calibrating && _isOneSidedCalibrationStep(_currentStep);
+}
+
+bool RemoteControlCalibrationController::_isOneSidedCalibrationStep(int step) const
+{
+    if (step < 0 || step >= _stateMachine.size()) {
+        return false;
+    }
+
+    const StateMachineEntry &entry = _stateMachine[step];
+    const bool isLowStep = entry.stepFunction == StateMachineStepExtensionLowHorz || entry.stepFunction == StateMachineStepExtensionLowVert;
+    const bool isAdditionalAxis = entry.stickFunction >= stickFunctionAdditionalAxis1 && entry.stickFunction < stickFunctionMax;
+    return isLowStep && isAdditionalAxis;
 }
 
 void RemoteControlCalibrationController::_saveCurrentRawValues()
@@ -797,6 +988,86 @@ int RemoteControlCalibrationController::adjustedThrottleChannelValue()
     }
 }
 
+int RemoteControlCalibrationController::adjustedRollExtensionChannelValue()
+{
+    int channel = _rgFunctionChannelMapping[stickFunctionRollExtension];
+    if (channel != _chanMax) {
+        return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
+    } else {
+        return _calCenterPoint;
+    }
+}
+
+int RemoteControlCalibrationController::adjustedPitchExtensionChannelValue()
+{
+    int channel = _rgFunctionChannelMapping[stickFunctionPitchExtension];
+    if (channel != _chanMax) {
+        return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
+    } else {
+        return _calCenterPoint;
+    }
+}
+
+int RemoteControlCalibrationController::adjustedAdditionalAxis1ChannelValue()
+{
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis1];
+    if (channel != _chanMax) {
+        return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
+    } else {
+        return _calCenterPoint;
+    }
+}
+
+int RemoteControlCalibrationController::adjustedAdditionalAxis2ChannelValue()
+{
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis2];
+    if (channel != _chanMax) {
+        return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
+    } else {
+        return _calCenterPoint;
+    }
+}
+
+int RemoteControlCalibrationController::adjustedAdditionalAxis3ChannelValue()
+{
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis3];
+    if (channel != _chanMax) {
+        return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
+    } else {
+        return _calCenterPoint;
+    }
+}
+
+int RemoteControlCalibrationController::adjustedAdditionalAxis4ChannelValue()
+{
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis4];
+    if (channel != _chanMax) {
+        return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
+    } else {
+        return _calCenterPoint;
+    }
+}
+
+int RemoteControlCalibrationController::adjustedAdditionalAxis5ChannelValue()
+{
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis5];
+    if (channel != _chanMax) {
+        return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
+    } else {
+        return _calCenterPoint;
+    }
+}
+
+int RemoteControlCalibrationController::adjustedAdditionalAxis6ChannelValue()
+{
+    int channel = _rgFunctionChannelMapping[stickFunctionAdditionalAxis6];
+    if (channel != _chanMax) {
+        return _adjustChannelRawValue(_rgChannelInfo[channel], _channelRawValue[channel]);
+    } else {
+        return _calCenterPoint;
+    }
+}
+
 bool RemoteControlCalibrationController::rollChannelMapped()
 {
     return (_rgFunctionChannelMapping[stickFunctionRoll] != _chanMax);
@@ -807,6 +1078,46 @@ bool RemoteControlCalibrationController::pitchChannelMapped()
     return (_rgFunctionChannelMapping[stickFunctionPitch] != _chanMax);
 }
 
+bool RemoteControlCalibrationController::rollExtensionChannelMapped()
+{
+    return (_rgFunctionChannelMapping[stickFunctionRollExtension] != _chanMax);
+}
+
+bool RemoteControlCalibrationController::pitchExtensionChannelMapped()
+{
+    return (_rgFunctionChannelMapping[stickFunctionPitchExtension] != _chanMax);
+}
+
+bool RemoteControlCalibrationController::additionalAxis1ChannelMapped()
+{
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis1] != _chanMax);
+}
+
+bool RemoteControlCalibrationController::additionalAxis2ChannelMapped()
+{
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis2] != _chanMax);
+}
+
+bool RemoteControlCalibrationController::additionalAxis3ChannelMapped()
+{
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis3] != _chanMax);
+}
+
+bool RemoteControlCalibrationController::additionalAxis4ChannelMapped()
+{
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis4] != _chanMax);
+}
+
+bool RemoteControlCalibrationController::additionalAxis5ChannelMapped()
+{
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis5] != _chanMax);
+}
+
+bool RemoteControlCalibrationController::additionalAxis6ChannelMapped()
+{
+    return (_rgFunctionChannelMapping[stickFunctionAdditionalAxis6] != _chanMax);
+}
+
 bool RemoteControlCalibrationController::yawChannelMapped()
 {
     return (_rgFunctionChannelMapping[stickFunctionYaw] != _chanMax);
@@ -815,6 +1126,46 @@ bool RemoteControlCalibrationController::yawChannelMapped()
 bool RemoteControlCalibrationController::throttleChannelMapped()
 {
     return (_rgFunctionChannelMapping[stickFunctionThrottle] != _chanMax);
+}
+
+bool RemoteControlCalibrationController::pitchExtensionEnabled()
+{
+    return _stickFunctionEnabled(stickFunctionPitchExtension);
+}
+
+bool RemoteControlCalibrationController::rollExtensionEnabled()
+{
+    return _stickFunctionEnabled(stickFunctionRollExtension);
+}
+
+bool RemoteControlCalibrationController::additionalAxis1Enabled()
+{
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis1);
+}
+
+bool RemoteControlCalibrationController::additionalAxis2Enabled()
+{
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis2);
+}
+
+bool RemoteControlCalibrationController::additionalAxis3Enabled()
+{
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis3);
+}
+
+bool RemoteControlCalibrationController::additionalAxis4Enabled()
+{
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis4);
+}
+
+bool RemoteControlCalibrationController::additionalAxis5Enabled()
+{
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis5);
+}
+
+bool RemoteControlCalibrationController::additionalAxis6Enabled()
+{
+    return _stickFunctionEnabled(stickFunctionAdditionalAxis6);
 }
 
 bool RemoteControlCalibrationController::rollChannelReversed()
@@ -830,6 +1181,78 @@ bool RemoteControlCalibrationController::pitchChannelReversed()
 {
     if (_rgFunctionChannelMapping[stickFunctionPitch] != _chanMax) {
         return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionPitch]].channelReversed;
+    } else {
+        return false;
+    }
+}
+
+bool RemoteControlCalibrationController::rollExtensionChannelReversed()
+{
+    if (_rgFunctionChannelMapping[stickFunctionRollExtension] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionRollExtension]].channelReversed;
+    } else {
+        return false;
+    }
+}
+
+bool RemoteControlCalibrationController::pitchExtensionChannelReversed()
+{
+    if (_rgFunctionChannelMapping[stickFunctionPitchExtension] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionPitchExtension]].channelReversed;
+    } else {
+        return false;
+    }
+}
+
+bool RemoteControlCalibrationController::additionalAxis1ChannelReversed()
+{
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis1] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis1]].channelReversed;
+    } else {
+        return false;
+    }
+}
+
+bool RemoteControlCalibrationController::additionalAxis2ChannelReversed()
+{
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis2] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis2]].channelReversed;
+    } else {
+        return false;
+    }
+}
+
+bool RemoteControlCalibrationController::additionalAxis3ChannelReversed()
+{
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis3] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis3]].channelReversed;
+    } else {
+        return false;
+    }
+}
+
+bool RemoteControlCalibrationController::additionalAxis4ChannelReversed()
+{
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis4] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis4]].channelReversed;
+    } else {
+        return false;
+    }
+}
+
+bool RemoteControlCalibrationController::additionalAxis5ChannelReversed()
+{
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis5] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis5]].channelReversed;
+    } else {
+        return false;
+    }
+}
+
+bool RemoteControlCalibrationController::additionalAxis6ChannelReversed()
+{
+    if (_rgFunctionChannelMapping[stickFunctionAdditionalAxis6] != _chanMax) {
+        return _rgChannelInfo[_rgFunctionChannelMapping[stickFunctionAdditionalAxis6]].channelReversed;
     } else {
         return false;
     }
@@ -869,16 +1292,40 @@ void RemoteControlCalibrationController::_signalAllAttitudeValueChanges()
 {
     emit rollChannelMappedChanged(rollChannelMapped());
     emit pitchChannelMappedChanged(pitchChannelMapped());
+    emit rollExtensionChannelMappedChanged(rollExtensionChannelMapped());
+    emit pitchExtensionChannelMappedChanged(pitchExtensionChannelMapped());
+    emit additionalAxis1ChannelMappedChanged(additionalAxis1ChannelMapped());
+    emit additionalAxis2ChannelMappedChanged(additionalAxis2ChannelMapped());
+    emit additionalAxis3ChannelMappedChanged(additionalAxis3ChannelMapped());
+    emit additionalAxis4ChannelMappedChanged(additionalAxis4ChannelMapped());
+    emit additionalAxis5ChannelMappedChanged(additionalAxis5ChannelMapped());
+    emit additionalAxis6ChannelMappedChanged(additionalAxis6ChannelMapped());
     emit yawChannelMappedChanged(yawChannelMapped());
     emit throttleChannelMappedChanged(throttleChannelMapped());
 
     emit rollChannelReversedChanged(rollChannelReversed());
     emit pitchChannelReversedChanged(pitchChannelReversed());
+    emit rollExtensionChannelReversedChanged(rollExtensionChannelReversed());
+    emit pitchExtensionChannelReversedChanged(pitchExtensionChannelReversed());
+    emit additionalAxis1ChannelReversedChanged(additionalAxis1ChannelReversed());
+    emit additionalAxis2ChannelReversedChanged(additionalAxis2ChannelReversed());
+    emit additionalAxis3ChannelReversedChanged(additionalAxis3ChannelReversed());
+    emit additionalAxis4ChannelReversedChanged(additionalAxis4ChannelReversed());
+    emit additionalAxis5ChannelReversedChanged(additionalAxis5ChannelReversed());
+    emit additionalAxis6ChannelReversedChanged(additionalAxis6ChannelReversed());
     emit yawChannelReversedChanged(yawChannelReversed());
     emit throttleChannelReversedChanged(throttleChannelReversed());
 
     _emitDeadbandChanged(stickFunctionRoll);
     _emitDeadbandChanged(stickFunctionPitch);
+    _emitDeadbandChanged(stickFunctionRollExtension);
+    _emitDeadbandChanged(stickFunctionPitchExtension);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis1);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis2);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis3);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis4);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis5);
+    _emitDeadbandChanged(stickFunctionAdditionalAxis6);
     _emitDeadbandChanged(stickFunctionYaw);
     _emitDeadbandChanged(stickFunctionThrottle);
 }
@@ -891,6 +1338,46 @@ int RemoteControlCalibrationController::rollDeadband()
 int RemoteControlCalibrationController::pitchDeadband()
 {
     return _deadbandForFunction(stickFunctionPitch);
+}
+
+int RemoteControlCalibrationController::rollExtensionDeadband()
+{
+    return _deadbandForFunction(stickFunctionRollExtension);
+}
+
+int RemoteControlCalibrationController::pitchExtensionDeadband()
+{
+    return _deadbandForFunction(stickFunctionPitchExtension);
+}
+
+int RemoteControlCalibrationController::additionalAxis1Deadband()
+{
+    return _deadbandForFunction(stickFunctionAdditionalAxis1);
+}
+
+int RemoteControlCalibrationController::additionalAxis2Deadband()
+{
+    return _deadbandForFunction(stickFunctionAdditionalAxis2);
+}
+
+int RemoteControlCalibrationController::additionalAxis3Deadband()
+{
+    return _deadbandForFunction(stickFunctionAdditionalAxis3);
+}
+
+int RemoteControlCalibrationController::additionalAxis4Deadband()
+{
+    return _deadbandForFunction(stickFunctionAdditionalAxis4);
+}
+
+int RemoteControlCalibrationController::additionalAxis5Deadband()
+{
+    return _deadbandForFunction(stickFunctionAdditionalAxis5);
+}
+
+int RemoteControlCalibrationController::additionalAxis6Deadband()
+{
+    return _deadbandForFunction(stickFunctionAdditionalAxis6);
 }
 
 int RemoteControlCalibrationController::yawDeadband()
@@ -919,6 +1406,22 @@ QString RemoteControlCalibrationController::_stickFunctionToString(StickFunction
         return tr("Yaw");
     case stickFunctionThrottle:
         return tr("Throttle");
+    case stickFunctionAdditionalAxis1:
+        return tr("Additional Axis 1");
+    case stickFunctionAdditionalAxis2:
+        return tr("Additional Axis 2");
+    case stickFunctionAdditionalAxis3:
+        return tr("Additional Axis 3");
+    case stickFunctionAdditionalAxis4:
+        return tr("Additional Axis 4");
+    case stickFunctionAdditionalAxis5:
+        return tr("Additional Axis 5");
+    case stickFunctionAdditionalAxis6:
+        return tr("Additional Axis 6");
+    case stickFunctionPitchExtension:
+        return tr("Pitch Extension");
+    case stickFunctionRollExtension:
+        return tr("Roll Extension");
     default:
         return tr("Unknown");
     }
@@ -961,18 +1464,18 @@ void RemoteControlCalibrationController::_emitDeadbandChanged(StickFunction stic
 {
     const int deadband = _deadbandForFunction(stickFunction);
     switch (stickFunction) {
-    case stickFunctionRoll:
-        emit rollDeadbandChanged(deadband);
-        break;
-    case stickFunctionPitch:
-        emit pitchDeadbandChanged(deadband);
-        break;
-    case stickFunctionYaw:
-        emit yawDeadbandChanged(deadband);
-        break;
-    case stickFunctionThrottle:
-        emit throttleDeadbandChanged(deadband);
-        break;
+    case stickFunctionRoll:                emit rollDeadbandChanged(deadband);                break;
+    case stickFunctionPitch:               emit pitchDeadbandChanged(deadband);               break;
+    case stickFunctionYaw:                 emit yawDeadbandChanged(deadband);                 break;
+    case stickFunctionThrottle:            emit throttleDeadbandChanged(deadband);            break;
+    case stickFunctionRollExtension:       emit rollExtensionDeadbandChanged(deadband);       break;
+    case stickFunctionPitchExtension:      emit pitchExtensionDeadbandChanged(deadband);      break;
+    case stickFunctionAdditionalAxis1:     emit additionalAxis1DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis2:     emit additionalAxis2DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis3:     emit additionalAxis3DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis4:     emit additionalAxis4DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis5:     emit additionalAxis5DeadbandChanged(deadband);     break;
+    case stickFunctionAdditionalAxis6:     emit additionalAxis6DeadbandChanged(deadband);     break;
     default:
         break;
     }
@@ -983,4 +1486,18 @@ void RemoteControlCalibrationController::_saveCalibrationValues()
     _saveStoredCalibrationValues();
     emit calibrationCompleted();
     _advanceState();
+}
+
+bool RemoteControlCalibrationController::_stickFunctionEnabled(StickFunction stickFunction)
+{
+    // By default only calibrate attitude control functions
+    switch (stickFunction) {
+    case stickFunctionRoll:
+    case stickFunctionPitch:
+    case stickFunctionYaw:
+    case stickFunctionThrottle:
+        return true;
+    default:
+        return false;
+    }
 }

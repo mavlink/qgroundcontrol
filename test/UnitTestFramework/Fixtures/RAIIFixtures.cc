@@ -2,110 +2,21 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
-#include <QtTest/QSignalSpy>
-#include <QtTest/QTest>
+#include <QtNetwork/QNetworkRequest>
 
 #include "AppSettings.h"
 #include "Fact.h"
-#include "LinkManager.h"
-#include "MockLink.h"
-#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
+#include "RunGuard.h"
 #include "SettingsManager.h"
-#include "Vehicle.h"
+
+#include <cstring>
+#include <memory>
 
 QGC_LOGGING_CATEGORY(RAIIFixturesLog, "Test.RAIIFixtures")
 
 namespace TestFixtures {
-
-// ============================================================================
-// VehicleFixture Implementation
-// ============================================================================
-
-VehicleFixture::VehicleFixture(VehicleTest* test, MAV_AUTOPILOT autopilot, bool waitForInitialConnect) : _test(test)
-{
-    if (!_test) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: null VehicleTest";
-        return;
-    }
-
-    QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-
-    // Create MockLink configuration
-    MockConfiguration* mockConfig = new MockConfiguration(QStringLiteral("VehicleFixture"));
-    mockConfig->setDynamic(true);
-    mockConfig->setFirmwareType(autopilot);
-
-    SharedLinkConfigurationPtr sharedConfig(mockConfig);
-
-    if (!LinkManager::instance()->createConnectedLink(sharedConfig)) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: failed to create MockLink";
-        return;
-    }
-
-    _mockLink = qobject_cast<MockLink*>(mockConfig->link());
-    if (!_mockLink) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: link is not MockLink";
-        return;
-    }
-
-    // Wait for vehicle to connect
-    if (!spyVehicle.wait(TestTimeout::longMs())) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: timeout waiting for vehicle";
-        return;
-    }
-
-    _vehicle = MultiVehicleManager::instance()->activeVehicle();
-    if (!_vehicle) {
-        qCWarning(RAIIFixturesLog) << "VehicleFixture: no active vehicle after connection";
-        return;
-    }
-
-    // Wait for initial connect sequence if requested
-    if (waitForInitialConnect && autopilot != MAV_AUTOPILOT_INVALID) {
-        QSignalSpy spyConnect(_vehicle, &Vehicle::initialConnectComplete);
-        if (!spyConnect.wait(TestTimeout::longMs())) {
-            qCWarning(RAIIFixturesLog) << "VehicleFixture: timeout waiting for initialConnectComplete";
-        }
-    }
-}
-
-VehicleFixture::~VehicleFixture()
-{
-    if (_mockLink) {
-        QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
-
-        _mockLink->disconnect();
-
-        // Wait for vehicle to disconnect
-        if (!spyVehicle.wait(TestTimeout::longMs())) {
-            qCWarning(RAIIFixturesLog) << "~VehicleFixture: timeout waiting for vehicle disconnect";
-        }
-
-        // Process pending events for cleanup
-        for (int i = 0; i < 5; ++i) {
-            QCoreApplication::processEvents(QEventLoop::AllEvents);
-            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-            if (i < 4) {
-                QTest::qWait(10);
-            }
-        }
-    }
-}
-
-void VehicleFixture::setCommLost(bool lost)
-{
-    if (_mockLink) {
-        _mockLink->setCommLost(lost);
-    }
-}
-
-void VehicleFixture::simulateConnectionRemoved()
-{
-    if (_mockLink) {
-        _mockLink->simulateConnectionRemoved();
-    }
-}
 
 // ============================================================================
 // SettingsFixture Implementation
@@ -152,11 +63,6 @@ void SettingsFixture::setOfflineVehicleType(MAV_TYPE vehicleType)
     appSettings->offlineEditingVehicleClass()->setRawValue(QGCMAVLink::vehicleClass(vehicleType));
 }
 
-void SettingsFixture::setAltitudeMode(int altitudeMode)
-{
-    Q_UNUSED(altitudeMode);
-}
-
 void SettingsFixture::setFactValue(Fact* fact, const QVariant& value)
 {
     if (!fact) {
@@ -172,139 +78,119 @@ void SettingsFixture::setFactValue(Fact* fact, const QVariant& value)
 }
 
 // ============================================================================
-// SignalSpyFixture Implementation
+// NetworkReplyFixture Implementation
 // ============================================================================
 
-SignalSpyFixture::SignalSpyFixture(QObject* target) : _target(target), _spy(std::make_unique<MultiSignalSpy>())
+NetworkReplyFixture::NetworkReplyFixture(const QUrl& url, QObject* parent) : QNetworkReply(parent)
 {
-    if (_target) {
-        _spy->init(_target);
-    } else {
-        qCWarning(RAIIFixturesLog) << "SignalSpyFixture: null target";
+    setUrl(url);
+    open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+    setFinished(true);
+    setHeader(QNetworkRequest::ContentLengthHeader, 0);
+}
+
+NetworkReplyFixture::~NetworkReplyFixture() = default;
+
+void NetworkReplyFixture::setHttpStatus(int statusCode)
+{
+    setAttribute(QNetworkRequest::HttpStatusCodeAttribute, statusCode);
+}
+
+void NetworkReplyFixture::setRedirectTarget(const QUrl& target)
+{
+    setAttribute(QNetworkRequest::RedirectionTargetAttribute, target);
+}
+
+void NetworkReplyFixture::setNetworkError(QNetworkReply::NetworkError errorCode, const QString& message)
+{
+    setError(errorCode, message);
+}
+
+void NetworkReplyFixture::setContentType(const QString& contentType)
+{
+    if (contentType.isEmpty()) {
+        setHeader(QNetworkRequest::ContentTypeHeader, QVariant());
+        return;
+    }
+
+    setHeader(QNetworkRequest::ContentTypeHeader, contentType);
+}
+
+void NetworkReplyFixture::setContentLength(qint64 length)
+{
+    setHeader(QNetworkRequest::ContentLengthHeader, length);
+}
+
+void NetworkReplyFixture::setBody(const QByteArray& body, const QString& contentType)
+{
+    _body = body;
+    _readOffset = 0;
+    setContentLength(_body.size());
+
+    if (!contentType.isEmpty()) {
+        setContentType(contentType);
     }
 }
 
-SignalSpyFixture::~SignalSpyFixture() = default;
-
-void SignalSpyFixture::expect(const char* signalName)
+void NetworkReplyFixture::abort()
 {
-    _expectations.append({QString::fromLatin1(signalName), -1});  // -1 = at least once
 }
 
-void SignalSpyFixture::expectExactly(const char* signalName, int count)
+qint64 NetworkReplyFixture::readData(char* data, qint64 maxSize)
 {
-    _expectations.append({QString::fromLatin1(signalName), count});
-}
-
-void SignalSpyFixture::expectNot(const char* signalName)
-{
-    _expectations.append({QString::fromLatin1(signalName), 0});  // 0 = never
-}
-
-void SignalSpyFixture::clear()
-{
-    _spy->clearAllSignals();
-    _expectations.clear();
-}
-
-bool SignalSpyFixture::verify() const
-{
-    QString errorMsg;
-    return verify(errorMsg);
-}
-
-bool SignalSpyFixture::verify(QString& errorMsg) const
-{
-    errorMsg.clear();
-
-    for (const Expectation& exp : _expectations) {
-        const int count = emissionCount(qPrintable(exp.signalName));
-
-        if (exp.expectedCount == -1) {
-            // At least once
-            if (count < 1) {
-                errorMsg = QStringLiteral("Expected signal '%1' to be emitted at least once, but was emitted %2 times")
-                               .arg(exp.signalName)
-                               .arg(count);
-                return false;
-            }
-        } else if (exp.expectedCount == 0) {
-            // Never
-            if (count > 0) {
-                errorMsg = QStringLiteral("Expected signal '%1' to NOT be emitted, but was emitted %2 times")
-                               .arg(exp.signalName)
-                               .arg(count);
-                return false;
-            }
-        } else {
-            // Exactly N times
-            if (count != exp.expectedCount) {
-                errorMsg = QStringLiteral("Expected signal '%1' to be emitted %2 times, but was emitted %3 times")
-                               .arg(exp.signalName)
-                               .arg(exp.expectedCount)
-                               .arg(count);
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-bool SignalSpyFixture::waitAndVerify(int timeoutMs)
-{
-    // Wait for signals with polling
-    const int pollInterval = 50;
-    int elapsed = 0;
-
-    while (elapsed < timeoutMs) {
-        QTest::qWait(pollInterval);
-        elapsed += pollInterval;
-
-        // Check if all expectations are met
-        bool allMet = true;
-        for (const Expectation& exp : _expectations) {
-            const int count = emissionCount(qPrintable(exp.signalName));
-            if (exp.expectedCount == -1 && count < 1) {
-                allMet = false;
-                break;
-            } else if (exp.expectedCount > 0 && count < exp.expectedCount) {
-                allMet = false;
-                break;
-            }
-        }
-
-        if (allMet) {
-            return verify();
-        }
-    }
-
-    return verify();
-}
-
-bool SignalSpyFixture::wasEmitted(const char* signalName) const
-{
-    return emissionCount(signalName) > 0;
-}
-
-int SignalSpyFixture::emissionCount(const char* signalName) const
-{
-    if (!_spy)
+    if (maxSize <= 0) {
         return 0;
-
-    // Try with SIGNAL() macro format first
-    QString sigWithMacro = QStringLiteral("2") + QString::fromLatin1(signalName);
-    if (!sigWithMacro.contains('(')) {
-        sigWithMacro += QStringLiteral("()");
     }
 
-    int result = _spy->count(qPrintable(sigWithMacro));
-    if (result >= 0) {
-        return result;
+    if (_readOffset >= _body.size()) {
+        return -1;
     }
 
-    // Try without macro format
-    return _spy->count(signalName);
+    const qint64 remaining = _body.size() - _readOffset;
+    const qint64 toCopy = qMin(maxSize, remaining);
+    std::memcpy(data, _body.constData() + _readOffset, static_cast<size_t>(toCopy));
+    _readOffset += toCopy;
+    return toCopy;
+}
+
+// ============================================================================
+// SingleInstanceLockFixture Implementation
+// ============================================================================
+
+SingleInstanceLockFixture::SingleInstanceLockFixture(const QString& lockKey, bool acquireOnCreate)
+    : _lockKey(lockKey)
+    , _guard(std::make_unique<RunGuard>(lockKey))
+{
+    if (acquireOnCreate) {
+        (void) tryAcquire();
+    }
+}
+
+SingleInstanceLockFixture::~SingleInstanceLockFixture()
+{
+    release();
+}
+
+bool SingleInstanceLockFixture::tryAcquire()
+{
+    return _guard && _guard->tryToRun();
+}
+
+void SingleInstanceLockFixture::release()
+{
+    if (_guard && _guard->isLocked()) {
+        _guard->release();
+    }
+}
+
+bool SingleInstanceLockFixture::isLocked() const
+{
+    return _guard && _guard->isLocked();
+}
+
+QString SingleInstanceLockFixture::key() const
+{
+    return _lockKey;
 }
 
 // ============================================================================
@@ -354,6 +240,53 @@ QByteArray TempFileFixture::readAll()
 
     _file->seek(0);
     return _file->readAll();
+}
+
+// ============================================================================
+// TempJsonFileFixture Implementation
+// ============================================================================
+
+TempJsonFileFixture::TempJsonFileFixture(const QString& templateName) : _file(templateName)
+{
+}
+
+TempJsonFileFixture::~TempJsonFileFixture() = default;
+
+bool TempJsonFileFixture::isValid() const
+{
+    return _file.isValid();
+}
+
+QString TempJsonFileFixture::path() const
+{
+    return _file.path();
+}
+
+bool TempJsonFileFixture::writeJson(const QJsonDocument& json, bool compact)
+{
+    if (!_file.isValid()) {
+        return false;
+    }
+
+    return _file.write(compact ? json.toJson(QJsonDocument::Compact) : json.toJson(QJsonDocument::Indented));
+}
+
+bool TempJsonFileFixture::writeJson(const QJsonObject& object, bool compact)
+{
+    return writeJson(QJsonDocument(object), compact);
+}
+
+QJsonDocument TempJsonFileFixture::readJson(QJsonParseError* error)
+{
+    if (!_file.isValid()) {
+        if (error) {
+            error->error = QJsonParseError::IllegalValue;
+            error->offset = 0;
+        }
+        return {};
+    }
+
+    return QJsonDocument::fromJson(_file.readAll(), error);
 }
 
 // ============================================================================

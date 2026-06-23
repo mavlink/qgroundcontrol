@@ -24,54 +24,90 @@
 #
 # ============================================================================
 
+include_guard(GLOBAL)
+
 include(CMakeDependentOption)
+include(CheckCXXSourceCompiles)
+include(CMakePushCheckState)
+
+function(_qgc_require_sanitizer name flag)
+    cmake_push_check_state(RESET)
+    set(CMAKE_REQUIRED_FLAGS "${flag}")
+    set(CMAKE_REQUIRED_LINK_OPTIONS "${flag}")
+    check_cxx_source_compiles("int main(){return 0;}" QGC_SANITIZER_${name}_LINKS)
+    cmake_pop_check_state()
+    if(NOT QGC_SANITIZER_${name}_LINKS)
+        message(FATAL_ERROR
+            "QGC: ${name} requested but the toolchain cannot link '${flag}' "
+            "(missing sanitizer runtime?). Install the matching lib and reconfigure.")
+    endif()
+endfunction()
 
 # ############################################################################
 # PART 1: COMPILE-TIME SANITIZERS
 # ############################################################################
 
-# Sanitizer options (only available in Debug/RelWithDebInfo)
+# Sanitizer options
+#
+# For multi-config generators (Visual Studio, Xcode, Ninja Multi-Config),
+# CMAKE_BUILD_TYPE is typically empty at configure time. In that case, allow
+# sanitizer options to be configured and validate selected configs later.
+set(_qgc_sanitizers_config_supported TRUE)
+if(NOT CMAKE_CONFIGURATION_TYPES)
+    if(NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|RelWithDebInfo)$")
+        set(_qgc_sanitizers_config_supported FALSE)
+    endif()
+endif()
+
 cmake_dependent_option(QGC_ENABLE_ASAN
     "Enable AddressSanitizer (memory error detection)"
     OFF
-    "CMAKE_BUILD_TYPE MATCHES Debug|RelWithDebInfo"
+    "_qgc_sanitizers_config_supported"
     OFF)
 
 cmake_dependent_option(QGC_ENABLE_UBSAN
     "Enable UndefinedBehaviorSanitizer"
     OFF
-    "CMAKE_BUILD_TYPE MATCHES Debug|RelWithDebInfo"
+    "_qgc_sanitizers_config_supported"
     OFF)
 
 cmake_dependent_option(QGC_ENABLE_TSAN
     "Enable ThreadSanitizer (data race detection)"
     OFF
-    "CMAKE_BUILD_TYPE MATCHES Debug|RelWithDebInfo"
+    "_qgc_sanitizers_config_supported"
     OFF)
 
 cmake_dependent_option(QGC_ENABLE_MSAN
     "Enable MemorySanitizer (uninitialized memory detection)"
     OFF
-    "CMAKE_BUILD_TYPE MATCHES Debug|RelWithDebInfo"
+    "_qgc_sanitizers_config_supported"
     OFF)
+
+if((QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN OR QGC_ENABLE_MSAN)
+   AND NOT CMAKE_CONFIGURATION_TYPES
+   AND NOT CMAKE_BUILD_TYPE MATCHES "^(Debug|RelWithDebInfo)$")
+    message(FATAL_ERROR
+        "Sanitizers require Debug or RelWithDebInfo builds for single-config generators. "
+        "Current CMAKE_BUILD_TYPE='${CMAKE_BUILD_TYPE}'.")
+endif()
 
 # Validate incompatible combinations
 if(QGC_ENABLE_ASAN AND QGC_ENABLE_TSAN)
-    message(FATAL_ERROR "ASan and TSan cannot be used together. Choose one.")
+    message(FATAL_ERROR "QGC: ASan and TSan cannot be used together. Choose one.")
 endif()
 
 if(QGC_ENABLE_ASAN AND QGC_ENABLE_MSAN)
-    message(FATAL_ERROR "ASan and MSan cannot be used together. Choose one.")
+    message(FATAL_ERROR "QGC: ASan and MSan cannot be used together. Choose one.")
 endif()
 
 if(QGC_ENABLE_TSAN AND QGC_ENABLE_MSAN)
-    message(FATAL_ERROR "TSan and MSan cannot be used together. Choose one.")
+    message(FATAL_ERROR "QGC: TSan and MSan cannot be used together. Choose one.")
 endif()
 
 # Check compiler support
 if(QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN OR QGC_ENABLE_MSAN)
     if(NOT (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang"))
-        message(FATAL_ERROR "Sanitizers are only supported with GCC and Clang")
+        message(FATAL_ERROR "QGC: Sanitizers are only supported with GCC and Clang")
     endif()
 endif()
 
@@ -81,6 +117,7 @@ endif()
 # Detects: buffer overflows, use-after-free, memory leaks, double-free
 
 if(QGC_ENABLE_ASAN)
+    _qgc_require_sanitizer(ASAN "-fsanitize=address")
     message(STATUS "AddressSanitizer (ASan) enabled")
 
     set(ASAN_FLAGS -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls)
@@ -113,10 +150,16 @@ endif()
 if(QGC_ENABLE_UBSAN)
     message(STATUS "UndefinedBehaviorSanitizer (UBSan) enabled")
 
-    set(UBSAN_CHECKS "undefined" "integer" "nullability")
+    # GCC does not support Clang's grouped UBSan checks ("integer", "nullability").
+    # Keep a common baseline and extend checks only where the compiler supports them.
+    set(UBSAN_CHECKS "undefined")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        list(APPEND UBSAN_CHECKS "integer" "nullability")
+    endif()
     set(UBSAN_EXCLUDES "-fno-sanitize=vptr")  # Qt triggers this
 
     string(REPLACE ";" "," UBSAN_CHECKS_STR "${UBSAN_CHECKS}")
+    _qgc_require_sanitizer(UBSAN "-fsanitize=undefined")
     set(UBSAN_FLAGS -fsanitize=${UBSAN_CHECKS_STR} ${UBSAN_EXCLUDES} -fno-omit-frame-pointer)
 
     target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE ${UBSAN_FLAGS})
@@ -132,6 +175,7 @@ endif()
 # Detects: data races, deadlocks, lock order inversions
 
 if(QGC_ENABLE_TSAN)
+    _qgc_require_sanitizer(TSAN "-fsanitize=thread")
     message(STATUS "ThreadSanitizer (TSan) enabled")
 
     set(TSAN_FLAGS -fsanitize=thread -fno-omit-frame-pointer)
@@ -152,11 +196,12 @@ endif()
 
 if(QGC_ENABLE_MSAN)
     if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        message(FATAL_ERROR "MemorySanitizer is only supported with Clang")
+        message(FATAL_ERROR "QGC: MemorySanitizer is only supported with Clang")
     endif()
 
+    _qgc_require_sanitizer(MSAN "-fsanitize=memory")
     message(STATUS "MemorySanitizer (MSan) enabled")
-    message(WARNING "MSan requires ALL dependencies (including Qt) to be MSan-instrumented!")
+    message(WARNING "QGC: MSan requires ALL dependencies (including Qt) to be MSan-instrumented!")
 
     set(MSAN_FLAGS -fsanitize=memory -fno-omit-frame-pointer -fsanitize-memory-track-origins=2)
 
@@ -178,6 +223,10 @@ leak:libQt
 leak:qt_
 leak:libfontconfig
 leak:libpulse
+leak:QGCCorePlugin::QGCCorePlugin
+leak:QGCOptions::QGCOptions
+leak:AirframeComponentAirframes::insert
+leak:PX4AirframeLoader::loadAirframeMetaData
 ")
 
     file(WRITE ${CMAKE_BINARY_DIR}/tsan_suppressions.txt
@@ -213,6 +262,18 @@ if(QGC_BUILD_TESTING)
         add_dependencies(check-asan ${CMAKE_PROJECT_NAME})
     endif()
 
+    if(QGC_ENABLE_UBSAN)
+        add_custom_target(check-ubsan
+            COMMAND ${CMAKE_COMMAND} -E env
+                "UBSAN_OPTIONS=${UBSAN_DEFAULT_OPTIONS}:suppressions=${CMAKE_BINARY_DIR}/ubsan_suppressions.txt"
+                ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running unit tests with UndefinedBehaviorSanitizer"
+            VERBATIM
+        )
+        add_dependencies(check-ubsan ${CMAKE_PROJECT_NAME})
+    endif()
+
     if(QGC_ENABLE_TSAN)
         add_custom_target(check-tsan
             COMMAND ${CMAKE_COMMAND} -E env
@@ -224,12 +285,27 @@ if(QGC_BUILD_TESTING)
         )
         add_dependencies(check-tsan ${CMAKE_PROJECT_NAME})
     endif()
+
+    if(QGC_ENABLE_MSAN)
+        add_custom_target(check-msan
+            COMMAND ${CMAKE_COMMAND} -E env
+                "MSAN_OPTIONS=${MSAN_DEFAULT_OPTIONS}"
+                ${CMAKE_CTEST_COMMAND} --output-on-failure -L Unit
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running unit tests with MemorySanitizer"
+            VERBATIM
+        )
+        add_dependencies(check-msan ${CMAKE_PROJECT_NAME})
+    endif()
 endif()
 
 # ############################################################################
 # PART 2: VALGRIND RUNTIME ANALYSIS
 # ############################################################################
 # No rebuild required - runs existing binary under Valgrind
+# Valgrind is Linux/macOS only; skip entirely on Windows.
+
+if(NOT WIN32)
 
 # ----------------------------------------------------------------------------
 # Find Valgrind
@@ -419,3 +495,5 @@ if(VALGRIND_EXECUTABLE)
 else()
     message(STATUS "Valgrind not found - runtime analysis targets not available")
 endif()
+
+endif() # NOT WIN32

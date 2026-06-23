@@ -9,16 +9,14 @@ target_sources(${CMAKE_PROJECT_NAME}
         Viewer3DManager.h
         Viewer3DMapProvider.cc
         Viewer3DMapProvider.h
-        Viewer3DGeoCoordinateType.h
-        Viewer3DGeoCoordinateType.cc
-        Viewer3DInstancing.cc
-        Viewer3DInstancing.h
         Viewer3DTerrainGeometry.cc
         Viewer3DTerrainGeometry.h
         Viewer3DTerrainTexture.cc
         Viewer3DTerrainTexture.h
         Viewer3DTileQuery.cc
         Viewer3DTileQuery.h
+        Viewer3DTileInfo.h
+        Viewer3DTileStatistics.h
         Viewer3DTileReply.cc
         Viewer3DTileReply.h
 )
@@ -29,19 +27,25 @@ add_subdirectory(Providers/Osm)
 
 # ----------------------------------------------------------------------------
 # 3D QML Module
+# QML_ELEMENT classes live here so their MOC + qmltyperegistrar run on this
+# smaller target instead of the 47s ${CMAKE_PROJECT_NAME}_autogen step.
 # ----------------------------------------------------------------------------
 qt_add_library(Viewer3DModule STATIC)
 
 set_source_files_properties(Viewer3DQml/Images/city_3d_map_icon.svg PROPERTIES QT_RESOURCE_ALIAS City3DMapIcon.svg)
 set_source_files_properties(Viewer3DQml/Models3D/Shaders/earthMaterial.frag PROPERTIES QT_RESOURCE_ALIAS ShaderFragment/earthMaterial.frag)
 set_source_files_properties(Viewer3DQml/Models3D/Shaders/earthMaterial.vert PROPERTIES QT_RESOURCE_ALIAS ShaderVertex/earthMaterial.vert)
-set_source_files_properties(Viewer3DQml/Viewer3DSettings.qml PROPERTIES QT_RESOURCE_ALIAS Viewer3DSettings.qml)
 set_source_files_properties(Viewer3DQml/Models3D/Viewer3DModel.qml PROPERTIES QT_RESOURCE_ALIAS Models3D/Viewer3DModel.qml)
 
 qt_add_qml_module(Viewer3DModule
     URI QGroundControl.Viewer3D
     VERSION 1.0
     RESOURCE_PREFIX /qml
+    SOURCES
+        Viewer3DGeoCoordinateType.cc
+        Viewer3DGeoCoordinateType.h
+        Viewer3DInstancing.cc
+        Viewer3DInstancing.h
     QML_FILES
         Viewer3DQml/Models3D/CameraLightModel.qml
         Viewer3DQml/Models3D/Viewer3DModel.qml
@@ -50,7 +54,6 @@ qt_add_qml_module(Viewer3DModule
         Viewer3DQml/Drones/DroneModelDjiF450.qml
         Viewer3DQml/Models3D/Viewer3DVehicleItems.qml
         Viewer3DQml/Viewer3DProgressBar.qml
-        Viewer3DQml/Viewer3DSettings.qml
         Viewer3DQml/Viewer3DShowAction.qml
     RESOURCES
         Viewer3DQml/Images/city_3d_map_icon.svg
@@ -75,5 +78,19 @@ qt_add_qml_module(Viewer3DModule
         QtQuick
         QtQuick3D
         QtQuick3D.Helpers
-    NO_PLUGIN
 )
+
+target_link_libraries(Viewer3DModule
+    PRIVATE
+        QGCLogging
+        QGCGeoMath
+    PUBLIC
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Positioning
+        Qt6::Qml
+        Qt6::QmlIntegration
+        Qt6::Quick3D
+)
+
+target_include_directories(Viewer3DModule PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

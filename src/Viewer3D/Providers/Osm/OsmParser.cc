@@ -1,9 +1,12 @@
 #include "OsmParser.h"
 
+#include "Fact.h"
 #include "OsmParserThread.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
+
+#include <QtCore/QThread>
 
 #include <mapbox/earcut.hpp>
 
@@ -19,6 +22,16 @@ OsmParser::OsmParser(QObject *parent)
     _setBuildingLevelHeight(viewer3DSettings->buildingLevelHeight()->rawValue());
     connect(viewer3DSettings->buildingLevelHeight(), &Fact::rawValueChanged, this, &OsmParser::_setBuildingLevelHeight);
     connect(_osmParserWorker, &OsmParserThread::fileParsed, this, &OsmParser::_onOsmParserFinished);
+}
+
+OsmParser::~OsmParser()
+{
+    // Stop the worker thread's event loop and wait for it to finish.
+    // Once the thread is joined, no events are being processed and
+    // the destructor chain is safe to run from our thread.
+    _osmParserWorker->thread()->quit();
+    _osmParserWorker->thread()->wait();
+    delete _osmParserWorker;
 }
 
 void OsmParser::setGpsRef(const QGeoCoordinate &gpsRef)

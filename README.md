@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/mavlink/QGroundControl/releases">
-    <img src="https://img.shields.io/github/release/mavlink/QGroundControl.svg" alt="Latest Release">
+    <img src="https://img.shields.io/github/v/release/mavlink/QGroundControl" alt="Latest Release">
   </a>
 </p>
 
@@ -29,8 +29,6 @@
 - ⚙️ *Vehicle Setup*: Tailored configuration for *PX4* and *ArduPilot* platforms.
 - 🔧 *Fully Open Source*: Customize and extend the software to suit your needs.
 
-🎯 Check out the latest updates in our [New Features and Release Notes](https://github.com/mavlink/qgroundcontrol/blob/master/CHANGELOG.md).
-
 ---
 
 ### 💻 *Get Involved!*
@@ -47,7 +45,7 @@ QGroundControl is *open-source*, meaning you have the power to shape it! Whether
 - 📘 [User Manual](https://docs.qgroundcontrol.com/en/)
 - 🛠️ [Developer Guide](https://dev.qgroundcontrol.com/en/)
 - 💬 [Discussion & Support](https://docs.qgroundcontrol.com/en/Support/Support.html)
-- 🤝 [Contributing](https://dev.qgroundcontrol.com/en/contribute/)
+- 🤝 [Contributing](.github/CONTRIBUTING.md) ([Dev Guide](https://dev.qgroundcontrol.com/en/contribute/))
 - 📜 [License Information](https://github.com/mavlink/qgroundcontrol/blob/master/.github/COPYING.md)
 
 ---

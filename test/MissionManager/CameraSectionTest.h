@@ -1,6 +1,9 @@
 #pragma once
 
+#include "MultiSignalSpy.h"
 #include "SectionTest.h"
+
+#include <memory>
 
 class CameraSection;
 class PlanMasterController;
@@ -40,12 +43,11 @@ private slots:
     void _testSpecifiedGimbalValuesChanged();
 
 private:
-    void _createSpy(CameraSection* cameraSection, MultiSignalSpy** cameraSpy);
     void _validateItemScan(SimpleMissionItem* validItem);
     void _resetSection();
 
-    MultiSignalSpy* _spyCamera = nullptr;
-    MultiSignalSpy* _spySection = nullptr;
+    std::unique_ptr<MultiSignalSpy> _spyCamera;
+    std::unique_ptr<MultiSignalSpy> _spySection;
     CameraSection* _cameraSection = nullptr;
     SimpleMissionItem* _validGimbalItem = nullptr;
     SimpleMissionItem* _validDistanceItem = nullptr;

@@ -3,10 +3,6 @@
 #include "LandingComplexItem.h"
 #include "Fact.h"
 
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(VTOLLandingComplexItemLog)
-
 class VTOLLandingPatternTest;
 class PlanMasterController;
 class MissionItem;
@@ -29,7 +25,7 @@ public:
     // Overrides from VisualMissionItem
     void                save                        (QJsonArray&  missionItems) final;
 
-    static const QString name;
+    static constexpr const char* canonicalName = QT_TR_NOOP("VTOL Landing");
 
     static constexpr const char* settingsGroup =            "VTOLLanding";
     static constexpr const char* jsonComplexItemTypeValue = "vtolLandingPattern";

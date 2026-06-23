@@ -1,0 +1,97 @@
+{
+    "fileType": "VehicleConfig",
+    "version": 1,
+    "imports": [
+        "QGroundControl.AutoPilotPlugins.APM",
+        "QGroundControl.AutoPilotPlugins.Common"
+    ],
+    "controllerType": "PowerModulePresetController",
+    "constants": {
+        "_monitorParamValueDisabled": 0,
+        "_monitorParamValueAnalogVoltageOnly": 3,
+        "_monitorParamValueAnalogVoltageAndCurrent": 4,
+        "_monitorParamValueAnalogVoltageSyntheticCurrent": 25,
+        "_monitorParamValueAnalogCurrentOnly": 31
+    },
+    "sections": [
+        {
+            "title": "Battery",
+            "keywords": [
+                "battery",
+                "voltage",
+                "current",
+                "power module",
+                "sensor",
+                "capacity",
+                "amps"
+            ],
+            "image": "/qmlimages/Battery.svg",
+            "repeat": {
+                "paramPrefix": "BATT",
+                "probePostfix": "MONITOR",
+                "indexing": "apm_battery",
+                "enableParam": "MONITOR",
+                "disabledParamValue": "_monitorParamValueDisabled",
+                "disabledSection": {
+                    "heading": "Disabled Batteries",
+                    "enabledParamValue": "_monitorParamValueAnalogVoltageAndCurrent"
+                }
+            },
+            "controls": [
+                {
+                    "param": "MONITOR",
+                    "label": "Battery monitor",
+                    "control": "combobox"
+                },
+                {
+                    "param": "CAPACITY",
+                    "label": "Battery capacity",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"CAPACITY\"))"
+                },
+                {
+                    "param": "ARM_VOLT",
+                    "label": "Minimum arming voltage",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"ARM_VOLT\"))"
+                },
+                {
+                    "param": "VOLT_MULT",
+                    "label": "Voltage multiplier",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"VOLT_MULT\")) && [_monitorParamValueAnalogVoltageOnly, _monitorParamValueAnalogVoltageAndCurrent, _monitorParamValueAnalogVoltageSyntheticCurrent].includes(controller.getParameterFact(-1, _fullParamName(\"MONITOR\")).rawValue)",
+                    "control": "dialogButton",
+                    "dialogButton": {
+                        "text": "Calculate",
+                        "dialogComponent": "APMCalcVoltageDividerDialog",
+                        "buttonAfter": false,
+                        "dialogParams": {
+                            "batteryIndex": "_rawIndex"
+                        }
+                    }
+                },
+                {
+                    "param": "AMP_PERVLT",
+                    "label": "Amps per volt",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"AMP_PERVLT\")) && [_monitorParamValueAnalogVoltageAndCurrent, _monitorParamValueAnalogCurrentOnly].includes(controller.getParameterFact(-1, _fullParamName(\"MONITOR\")).rawValue)",
+                    "control": "dialogButton",
+                    "dialogButton": {
+                        "text": "Calculate",
+                        "dialogComponent": "APMCalcAmpsPerVoltDialog",
+                        "buttonAfter": false,
+                        "dialogParams": {
+                            "batteryIndex": "_rawIndex"
+                        }
+                    }
+                },
+                {
+                    "param": "AMP_OFFSET",
+                    "label": "Amps offset",
+                    "optional": true,
+                    "showWhen": "controller.parameterExists(-1, _fullParamName(\"AMP_OFFSET\")) && [_monitorParamValueAnalogVoltageAndCurrent, _monitorParamValueAnalogCurrentOnly].includes(controller.getParameterFact(-1, _fullParamName(\"MONITOR\")).rawValue)"
+                }
+            ]
+        }
+    ]
+}

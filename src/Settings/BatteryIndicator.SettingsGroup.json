@@ -8,27 +8,31 @@
             "enumStrings": "Percentage,Voltage,Percentage and Voltage",
             "enumValues": "0,1,2",
             "type": "uint32",
-            "default": false
+            "default": false,
+            "label": "Select values to display in indicator"
         },
         {
             "name": "threshold1",
             "shortDesc": "Battery level threshold 1",
             "type": "uint32",
             "default": 80,
-            "units": "%"
+            "units": "%",
+            "label": "Battery level threshold 1"
         },
         {
             "name": "threshold2",
             "shortDesc": "Battery level threshold 2",
             "type": "uint32",
             "default": 60,
-            "units": "%"
+            "units": "%",
+            "label": "Battery level threshold 2"
         },
         {
             "name": "consolidateMultipleBatteries",
             "shortDesc": "Consolidate multiple battery readings",
             "type": "bool",
-            "default": true
+            "default": true,
+            "label": "Consolidate multiple battery readings"
         }
     ]
 }

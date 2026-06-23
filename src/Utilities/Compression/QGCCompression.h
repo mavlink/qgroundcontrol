@@ -3,7 +3,10 @@
 #include "QGCCompressionTypes.h"
 
 #include <QtCore/QByteArray>
+#include <QtCore/QCryptographicHash>
 #include <QtCore/QIODevice>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonParseError>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
@@ -304,5 +307,67 @@ bool extractFromDevice(QIODevice *device, const QString &outputDirectoryPath,
 /// @param fileName Name of file inside archive
 /// @return File contents, or empty QByteArray if not found
 QByteArray extractFileDataFromDevice(QIODevice *device, const QString &fileName);
+
+// ============================================================================
+// In-Memory Compression (zlib via qCompress/qUncompress)
+// ============================================================================
+
+enum class CompressionLevel {
+    None    = 0,
+    Fast    = 1,
+    Default = 6,
+    Best    = 9
+};
+
+/// Compress data using qCompress (4-byte size header + zlib payload).
+/// @param data Raw data to compress
+/// @param level Compression level
+/// @return Compressed data in qCompress format, or empty on failure
+QByteArray compress(const QByteArray &data,
+                    CompressionLevel level = CompressionLevel::Default);
+
+/// Decompress data using qUncompress (expects 4-byte size header + zlib payload).
+/// @param data Compressed data in qCompress format
+/// @return Decompressed data, or empty on failure
+QByteArray uncompress(const QByteArray &data);
+
+/// Compress data in memory with a framing header byte.
+/// Returns header(1) + payload. If compression doesn't reduce size, returns uncompressed with header.
+/// @param data Raw data to compress
+/// @param level Compression level
+/// @param minSize Minimum data size to attempt compression (smaller data returned uncompressed)
+QByteArray compressData(const QByteArray &data,
+                        CompressionLevel level = CompressionLevel::Default,
+                        int minSize = 256);
+
+/// Decompress data produced by compressData().
+/// @param data Header byte + payload (as produced by compressData)
+/// @param maxDecompressedSize Maximum allowed decompressed size (0 = no limit)
+QByteArray uncompressData(const QByteArray &data, qint64 maxDecompressedSize = 64LL * 1024 * 1024);
+
+/// Check if data has the compressed framing header.
+bool isDataCompressed(const QByteArray &data);
+
+/// Compression ratio from the last compressData() call (thread-local, percentage of original size).
+int lastCompressionRatio();
+
+/// Read file contents, transparently decompressing .gz/.xz/.zst/.bz2/.lz4 files.
+QByteArray readFile(const QString &filePath, QString *errorString = nullptr,
+                    qint64 maxBytes = 0);
+
+/// Hash file contents post-decompression.
+QString computeFileHash(const QString &filePath,
+                        QCryptographicHash::Algorithm algorithm = QCryptographicHash::Sha256);
+
+// ============================================================================
+// Compressed JSON Helpers
+// ============================================================================
+
+/// Quick check whether `data` begins with a recognized compression magic
+/// (gzip / xz / zstd / bzip2 / lz4). Wraps detectFormatFromData + isCompressionFormat.
+bool looksLikeCompressedData(const QByteArray &data);
+
+/// Parse JSON from data that may be compressed. Auto-detects gzip/xz/zstd/bzip2/lz4.
+QJsonDocument parseCompressedJson(const QByteArray &data, QJsonParseError *error = nullptr);
 
 } // namespace QGCCompression

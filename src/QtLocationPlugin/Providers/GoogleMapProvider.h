@@ -24,7 +24,7 @@ class GoogleMapProvider : public MapProvider
 {
 protected:
     GoogleMapProvider(const QString &mapName, const QString &versionRequest, const QString &version, const QString &imageFormat, quint32 averageSize,
-                      QGeoMapType::MapStyle mapType)
+                      MapProvider::MapStyle mapType)
         : MapProvider(
             mapName,
             QStringLiteral("https://www.google.com/maps/preview"),
@@ -55,7 +55,7 @@ public:
             QStringLiteral("m"),
             QStringLiteral("png"),
             AVERAGE_GOOGLE_STREET_MAP,
-            QGeoMapType::StreetMap) {}
+            MapProvider::StreetMap) {}
 };
 
 class GoogleSatelliteMapProvider : public GoogleMapProvider
@@ -68,7 +68,7 @@ public:
             QStringLiteral("s"),
             QStringLiteral("jpg"),
             AVERAGE_GOOGLE_SAT_MAP,
-            QGeoMapType::SatelliteMapDay) {}
+            MapProvider::SatelliteMapDay) {}
 };
 
 class GoogleLabelsMapProvider : public GoogleMapProvider
@@ -81,7 +81,7 @@ public:
             QStringLiteral("h"),
             QStringLiteral("png"),
             QGC_AVERAGE_TILE_SIZE,
-            QGeoMapType::CustomMap) {}
+            MapProvider::CustomMap) {}
 };
 
 class GoogleTerrainMapProvider : public GoogleMapProvider
@@ -94,7 +94,7 @@ public:
             QStringLiteral("t,r"),
             QStringLiteral("png"),
             AVERAGE_GOOGLE_TERRAIN_MAP,
-            QGeoMapType::TerrainMap) {}
+            MapProvider::TerrainMap) {}
 };
 
 class GoogleHybridMapProvider : public GoogleMapProvider
@@ -107,5 +107,5 @@ public:
             QStringLiteral("y"),
             QStringLiteral("png"),
             AVERAGE_GOOGLE_SAT_MAP,
-            QGeoMapType::HybridMap) {}
+            MapProvider::HybridMap) {}
 };

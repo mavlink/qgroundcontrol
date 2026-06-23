@@ -1,10 +1,10 @@
 #include "BlankPlanCreator.h"
 #include "PlanMasterController.h"
+#include "QGCMAVLink.h"
 
-BlankPlanCreator::BlankPlanCreator(PlanMasterController* planMasterController, QObject* parent)
-    : PlanCreator(planMasterController, tr("No Template"), QStringLiteral("/qmlimages/PlanCreator/BlankPlanCreator.png"), parent)
+BlankPlanCreator::BlankPlanCreator(PlanMasterController* planMasterController)
+    : PlanCreator(planMasterController, tr("No Template"), QStringLiteral("/qmlimages/PlanCreator/BlankPlanCreator.png"), QGCMAVLink::allVehicleClasses(), true)
 {
-    _blankPlan = true;
 }
 
 void BlankPlanCreator::createPlan(const QGeoCoordinate& /*mapCenterCoord*/)

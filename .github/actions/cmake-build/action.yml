@@ -18,6 +18,10 @@ inputs:
     description: 'Enable parallel builds'
     required: false
     default: 'true'
+  parallel-jobs:
+    description: 'Optional max parallel jobs when parallel is enabled'
+    required: false
+    default: ''
   output-file:
     description: 'File to capture build output (optional)'
     required: false
@@ -26,66 +30,62 @@ inputs:
     description: 'Continue even if build fails'
     required: false
     default: 'false'
-
-outputs:
-  success:
-    description: 'Whether the build succeeded'
-    value: ${{ steps.build.outputs.success }}
-  duration:
-    description: 'Build duration in seconds'
-    value: ${{ steps.build.outputs.duration }}
+  reviewdog:
+    description: 'Enable reviewdog to annotate compiler warnings on PRs'
+    required: false
+    default: 'false'
+  reviewdog-token:
+    description: 'GitHub token for reviewdog (typically github.token)'
+    required: false
+    default: ''
 
 runs:
   using: composite
   steps:
     - name: Build
-      id: build
       shell: bash
       working-directory: ${{ inputs.build-dir }}
       env:
         BUILD_TYPE: ${{ inputs.build-type }}
         TARGET: ${{ inputs.target }}
         PARALLEL: ${{ inputs.parallel }}
+        PARALLEL_JOBS: ${{ inputs.parallel-jobs }}
         OUTPUT_FILE: ${{ inputs.output-file }}
         CONTINUE: ${{ inputs.continue-on-error }}
+        REVIEWDOG: ${{ inputs.reviewdog }}
       run: |
-        set -euo pipefail
+        ARGS=(build)
+        [[ -n "$TARGET" ]] && ARGS+=(--target "$TARGET")
+        [[ -n "$BUILD_TYPE" ]] && ARGS+=(--build-type "$BUILD_TYPE")
+        [[ "$PARALLEL" == "true" ]] && ARGS+=(--parallel)
+        [[ -n "$PARALLEL_JOBS" ]] && ARGS+=(--parallel-jobs "$PARALLEL_JOBS")
+        [[ -n "$OUTPUT_FILE" ]] && ARGS+=(--output-file "$OUTPUT_FILE")
+        [[ "$CONTINUE" == "true" ]] && ARGS+=(--continue-on-error)
+        [[ "$REVIEWDOG" == "true" ]] && ARGS+=(--reviewdog)
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"
 
-        # Build command
-        cmd=(cmake --build .)
+    - name: Setup reviewdog
+      if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != ''
+      uses: reviewdog/action-setup@v1
 
-        # Add target
-        [[ -n "$TARGET" ]] && cmd+=(--target "$TARGET")
+    - name: Annotate compiler warnings
+      if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != ''
+      shell: bash
+      env:
+        REVIEWDOG_GITHUB_API_TOKEN: ${{ inputs.reviewdog-token }}
+      run: |
+        reviewdog \
+          -f=gcc \
+          -reporter=github-pr-check \
+          -filter-mode=added \
+          -fail-level=none \
+          -name="compiler-warnings" \
+          < "$REVIEWDOG_LOG" || true
 
-        # Add config for multi-config generators
-        [[ -n "$BUILD_TYPE" ]] && cmd+=(--config "$BUILD_TYPE")
-
-        # Add parallel flag
-        [[ "$PARALLEL" == "true" ]] && cmd+=(--parallel)
-
-        echo "Running: ${cmd[*]}"
-        start_time=$(date +%s)
-
-        set +e
-        if [[ -n "$OUTPUT_FILE" ]]; then
-          "${cmd[@]}" 2>&1 | tee "$OUTPUT_FILE"
-          exit_code=${PIPESTATUS[0]}
-        else
-          "${cmd[@]}"
-          exit_code=$?
-        fi
-        set -e
-
-        end_time=$(date +%s)
-        duration=$((end_time - start_time))
-
-        echo "duration=$duration" >> "$GITHUB_OUTPUT"
-
-        if [[ $exit_code -eq 0 ]]; then
-          echo "✓ Build completed in ${duration}s"
-          echo "success=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "::error::Build failed after ${duration}s"
-          echo "success=false" >> "$GITHUB_OUTPUT"
-          [[ "$CONTINUE" != "true" ]] && exit $exit_code
+    - name: Compiler Cache Stats
+      if: always()
+      shell: bash
+      run: |
+        if command -v ccache >/dev/null 2>&1; then
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" summary
         fi

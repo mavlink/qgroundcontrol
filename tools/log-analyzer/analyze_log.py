@@ -31,7 +31,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
-# Try to import pymavlink for tlog support
 try:
     from pymavlink import mavutil
 
@@ -88,7 +87,7 @@ class QGCLogParser:
     def parse_file(self, filepath):
         """Parse a QGC log file."""
         with open(filepath, encoding="utf-8", errors="replace") as f:
-            for _line_num, line in enumerate(f, 1):
+            for line in f:
                 line = line.strip()
                 if not line:
                     continue

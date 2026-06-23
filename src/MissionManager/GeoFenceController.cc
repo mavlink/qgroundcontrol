@@ -1,7 +1,8 @@
 #include "GeoFenceController.h"
 #include "Vehicle.h"
 #include "ParameterManager.h"
-#include "JsonHelper.h"
+#include "GeoJsonHelper.h"
+#include "JsonParsing.h"
 #include "PlanMasterController.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
@@ -109,23 +110,23 @@ bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
 
     errorString.clear();
 
-    if (!json.contains(JsonHelper::jsonVersionKey) ||
-            (json.contains(JsonHelper::jsonVersionKey) && json[JsonHelper::jsonVersionKey].toInt() == 1)) {
+    if (!json.contains(JsonParsing::jsonVersionKey) ||
+            (json.contains(JsonParsing::jsonVersionKey) && json[JsonParsing::jsonVersionKey].toInt() == 1)) {
         // We just ignore old version 1 or prior data
         return true;
     }
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
+        { JsonParsing::jsonVersionKey,   QJsonValue::Double, true },
         { _jsonCirclesKey,              QJsonValue::Array,  true },
         { _jsonPolygonsKey,             QJsonValue::Array,  true },
         { _jsonBreachReturnKey,         QJsonValue::Array,  false },
     };
-    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
-    if (json[JsonHelper::jsonVersionKey].toInt() != _jsonCurrentVersion) {
+    if (json[JsonParsing::jsonVersionKey].toInt() != _jsonCurrentVersion) {
         errorString = tr("GeoFence supports version %1").arg(_jsonCurrentVersion);
         return false;
     }
@@ -159,7 +160,7 @@ bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
     }
 
     if (json.contains(_jsonBreachReturnKey)) {
-        if (!JsonHelper::loadGeoCoordinate(json[_jsonBreachReturnKey], true /* altitudeRequred */, _breachReturnPoint, errorString)) {
+        if (!GeoJsonHelper::loadGeoCoordinate(json[_jsonBreachReturnKey], true /* altitudeRequred */, _breachReturnPoint, errorString)) {
             return false;
         }
         _breachReturnAltitudeFact.setRawValue(_breachReturnPoint.altitude());
@@ -176,7 +177,7 @@ bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
 
 void GeoFenceController::save(QJsonObject& json)
 {
-    json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;
+    json[JsonParsing::jsonVersionKey] = _jsonCurrentVersion;
 
     QJsonArray jsonPolygonArray;
     for (int i=0; i<_polygons.count(); i++) {
@@ -200,7 +201,7 @@ void GeoFenceController::save(QJsonObject& json)
         QJsonValue jsonCoordinate;
 
         _breachReturnPoint.setAltitude(_breachReturnAltitudeFact.rawValue().toDouble());
-        JsonHelper::saveGeoCoordinate(_breachReturnPoint, true /* writeAltitude */, jsonCoordinate);
+        GeoJsonHelper::saveGeoCoordinate(_breachReturnPoint, true /* writeAltitude */, jsonCoordinate);
         json[_jsonBreachReturnKey] = jsonCoordinate;
     }
 }
@@ -215,9 +216,9 @@ void GeoFenceController::removeAll(void)
 void GeoFenceController::removeAllFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while syncInProgress";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::removeAllFromVehicle called while syncInProgress";
     } else {
         _geoFenceManager->removeAll();
     }
@@ -226,9 +227,9 @@ void GeoFenceController::removeAllFromVehicle(void)
 void GeoFenceController::loadFromVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while syncInProgress";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::loadFromVehicle called while syncInProgress";
     } else {
         _itemsRequested = true;
         _geoFenceManager->loadFromVehicle();
@@ -238,9 +239,9 @@ void GeoFenceController::loadFromVehicle(void)
 void GeoFenceController::sendToVehicle(void)
 {
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while offline";
     } else if (syncInProgress()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(GeoFenceControllerLog) << "GeoFenceController::sendToVehicle";
         _geoFenceManager->sendToVehicle(_breachReturnPoint, _polygons, _circles);
@@ -357,7 +358,7 @@ bool GeoFenceController::showPlanFromManagerVehicle(void)
 {
     qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle _flyView" << _flyView;
     if (_masterController->offline()) {
-        qCWarning(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
+        qCCritical(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propagation of showPlanFromManagerVehicle due to error
     } else {
         _itemsRequested = true;

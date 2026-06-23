@@ -177,6 +177,12 @@
     "shortDesc": "Imu temperature",
     "type":             "int16",
     "units":            "°C"
+},
+{
+    "name":             "rcRSSI",
+    "shortDesc": "RC RSSI",
+    "type":             "uint8",
+    "units":            "%"
 }
 ]
 }

@@ -6,13 +6,13 @@
 # Profile QGroundControl using various tools
 #
 # Usage:
-#   ./tools/profile.sh                     # Run with perf (default)
-#   ./tools/profile.sh --memcheck          # Check for memory leaks (valgrind)
-#   ./tools/profile.sh --callgrind         # CPU profiling (valgrind)
-#   ./tools/profile.sh --massif            # Heap profiling (valgrind)
-#   ./tools/profile.sh --heaptrack         # Heap profiling (heaptrack)
-#   ./tools/profile.sh --perf              # CPU profiling (perf)
-#   ./tools/profile.sh --sanitize          # Build with sanitizers
+#   ./tools/debuggers/profile.sh                     # Run with perf (default)
+#   ./tools/debuggers/profile.sh --memcheck          # Check for memory leaks (valgrind)
+#   ./tools/debuggers/profile.sh --callgrind         # CPU profiling (valgrind)
+#   ./tools/debuggers/profile.sh --massif            # Heap profiling (valgrind)
+#   ./tools/debuggers/profile.sh --heaptrack         # Heap profiling (heaptrack)
+#   ./tools/debuggers/profile.sh --perf              # CPU profiling (perf)
+#   ./tools/debuggers/profile.sh --sanitize          # Build with sanitizers
 #
 # Requirements:
 #   - valgrind (for memcheck, callgrind, massif)
@@ -23,19 +23,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-log_info()  { echo -e "${BLUE}[INFO]${NC} $*"; }
-log_ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$REPO_ROOT/tools/common/shell-utils.sh"
 
 # Defaults
 BUILD_DIR="$REPO_ROOT/build"
@@ -122,8 +111,8 @@ run_memcheck() {
         --track-origins=yes \
         --verbose \
         --log-file="$output" \
-        --suppressions="$REPO_ROOT/tools/debuggers/valgrind.supp" 2>/dev/null || true \
-        "$EXECUTABLE" $EXTRA_ARGS
+        --suppressions="$REPO_ROOT/tools/debuggers/valgrind.supp" \
+        "$EXECUTABLE" $EXTRA_ARGS || true
 
     log_ok "Memcheck complete. Results: $output"
 
@@ -251,13 +240,14 @@ run_sanitize() {
     log_info "Building with sanitizers..."
 
     local sanitize_build="$REPO_ROOT/build-sanitize"
+    local sanitize_flags="-fsanitize=address,undefined -fno-omit-frame-pointer"
 
-    cmake -B "$sanitize_build" -S "$REPO_ROOT" \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
-        -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
-        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
-        -G Ninja
+    python3 "$REPO_ROOT/tools/configure.py" \
+        -B "$sanitize_build" -S "$REPO_ROOT" --debug \
+        -- \
+        "-DCMAKE_C_FLAGS=$sanitize_flags" \
+        "-DCMAKE_CXX_FLAGS=$sanitize_flags" \
+        "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address,undefined"
 
     cmake --build "$sanitize_build" --parallel
 
@@ -265,7 +255,6 @@ run_sanitize() {
     log_info "Run: $sanitize_build/QGroundControl"
     log_info "Errors will be reported at runtime"
 
-    # Set sanitizer options
     export ASAN_OPTIONS="detect_leaks=1:halt_on_error=0:print_stats=1"
     export UBSAN_OPTIONS="print_stacktrace=1"
 

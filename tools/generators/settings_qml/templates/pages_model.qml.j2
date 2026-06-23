@@ -1,0 +1,30 @@
+import QtQml.Models
+
+import QGroundControl
+import QGroundControl.Controls
+
+ListModel {
+{% for entry in entries %}
+
+{% if entry.divider %}
+    ListElement {
+        name: "Divider"
+    }
+{% else %}
+    ListElement {
+        name: qsTranslate("SettingsPages.json", "{{ entry.name }}")
+        nameKey: "{{ entry.name }}"
+        url: "{{ entry.url }}"
+        iconUrl: "{{ entry.icon }}"
+        sections: '{{ entry.sections_json }}'
+        searchTerms: '{{ entry.search_json }}'
+        translatableTerms: '{{ entry.translatable_json }}'
+{% if entry.visible %}
+        pageVisible: function() { return {{ entry.visible }} }
+{% else %}
+        pageVisible: function() { return true }
+{% endif %}
+    }
+{% endif %}
+{% endfor %}
+}

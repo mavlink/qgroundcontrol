@@ -21,3 +21,9 @@ if(NOT ANDROID AND NOT IOS)
 endif()
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+if(NOT ANDROID AND NOT IOS)
+    add_qgc_test(PlatformTest LABELS Unit Utilities)
+    add_qgc_test(RunGuardTest LABELS Unit Utilities)
+    add_qgc_test(SignalHandlerTest LABELS Unit Utilities)
+endif()

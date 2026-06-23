@@ -14,11 +14,13 @@
   "ignorePaths": [
     ".github/workflows/**"
   ],
+  "description": "Manages npm, git-submodules, pip, pre-commit. GitHub Actions are handled by Dependabot (see dependabot.yml).",
   "enabledManagers": [
     "npm",
     "git-submodules",
     "pip_requirements",
     "pip_setup",
+    "pep621",
     "pre-commit"
   ],
   "packageRules": [

@@ -1,12 +1,11 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
-typedef struct __mavlink_gps_rtcm_data_t mavlink_gps_rtcm_data_t;
+#include <atomic>
 
-Q_DECLARE_LOGGING_CATEGORY(RTCMMavlinkLog)
+typedef struct __mavlink_gps_rtcm_data_t mavlink_gps_rtcm_data_t;
 
 class RTCMMavlink : public QObject
 {
@@ -18,6 +17,11 @@ public:
 
 public slots:
     void RTCMDataUpdate(QByteArrayView data);
+
+public:
+    /// Stream synthetic RTCM frames to vehicles until requestStop, for the
+    /// SIMULATE_RTCM_OUTPUT dev build. Blocks the calling thread.
+    void sendSimulatedData(const std::atomic_bool &requestStop);
 
 private:
     void _calculateBandwith(qsizetype bytes);

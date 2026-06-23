@@ -12,15 +12,26 @@ QGCComboBox {
 
     currentIndex: fact ? (indexModel ? fact.value : fact.enumIndex) : 0
 
-    onModelChanged: {
-        // When the model changes, the index gets reset to 0, so make sure to
-        // restore it correctly.
-        // Since enumIndex could trigger a model change, we use callLater() to
-        // avoid an event binding loop (the 2. call will for certain not trigger
-        // another model change)
+    function _updateCurrentIndex() {
         Qt.callLater(function() {
-            currentIndex = fact ? (indexModel ? fact.value : fact.enumIndex) : 0
+            currentIndex = Qt.binding(function() {
+                return fact ? (indexModel ? fact.value : fact.enumIndex) : 0
+            })
         })
+    }
+
+    onModelChanged: {
+        // When the model changes, the index gets reset to 0, so re-establish
+        // the declarative currentIndex binding. callLater() avoids a binding
+        // loop since enumIndex could trigger a model change.
+        _updateCurrentIndex()
+    }
+
+    onFactChanged: {
+        // When the fact changes to a different Fact object with the same
+        // enumStrings, modelChanged does not fire, so the binding must be
+        // re-established here to point at the new Fact.
+        _updateCurrentIndex()
     }
 
     onActivated: (index) => {

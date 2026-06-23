@@ -1,10 +1,11 @@
 #include "CustomPlugin.h"
+#include "PerimeterScanComplexItem.h"
+#include "PerimeterScanPlanCreator.h"
 #include "QmlComponentInfo.h"
 #include "QGCLoggingCategory.h"
 #include "QGCPalette.h"
 #include "QGCMAVLink.h"
 #include "AppSettings.h"
-#include "BrandImageSettings.h"
 
 #include <QtCore/QApplicationStatic>
 #include <QtQml/QQmlApplicationEngine>
@@ -74,31 +75,20 @@ void CustomPlugin::_addSettingsEntry(const QString &title, const char *qmlFile, 
     );
 }
 
-bool CustomPlugin::overrideSettingsGroupVisibility(const QString &name)
+void CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool &userVisible)
 {
-    // We have set up our own specific brand imaging.
-    // Hide the brand image settings such that the end user can't change it.
-    if (name == BrandImageSettings::name) {
-        return false;
-    }
-
-    return true;
-}
-
-void CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool &visible)
-{
-    QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData, visible);
+    QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData, userVisible);
 
     if (settingsGroup == AppSettings::settingsGroup) {
         // This tells QGC than when you are creating Plans while not connected to a vehicle
         // the specific firmware/vehicle the plan is for.
         if (metaData.name() == AppSettings::offlineEditingFirmwareClassName) {
             metaData.setRawDefaultValue(QGCMAVLink::FirmwareClassPX4);
-            visible = false;
+            userVisible = false;
             return;
         } else if (metaData.name() == AppSettings::offlineEditingVehicleClassName) {
             metaData.setRawDefaultValue(QGCMAVLink::VehicleClassMultiRotor);
-            visible = false;
+            userVisible = false;
             return;
         }
     }
@@ -268,6 +258,7 @@ QQmlApplicationEngine* CustomPlugin::createQmlApplicationEngine(QObject* parent)
 {
     _qmlEngine = QGCCorePlugin::createQmlApplicationEngine(parent);
     _qmlEngine->addImportPath("qrc:/qml/Custom/Widgets");
+    _qmlEngine->addImportPath("qrc:/qml/Custom/Plan");
     // TODO: Investigate _qmlEngine->setExtraSelectors({"custom"})
 
     _selector = new CustomOverrideInterceptor();
@@ -306,4 +297,40 @@ QUrl CustomOverrideInterceptor::intercept(const QUrl &url, QQmlAbstractUrlInterc
     }
 
     return url;
+}
+
+/*===========================================================================*/
+
+QVariantList CustomPlugin::complexMissionItemNames(Vehicle *vehicle)
+{
+    // Start with the standard set, then append our custom item.
+    QVariantList items = QGCCorePlugin::complexMissionItemNames(vehicle);
+
+    QVariantMap entry;
+    entry[QStringLiteral("canonicalName")]  = QString(PerimeterScanComplexItem::canonicalName);
+    entry[QStringLiteral("translatedName")] = PerimeterScanComplexItem::tr(PerimeterScanComplexItem::canonicalName);
+    items.append(entry);
+
+    return items;
+}
+
+ComplexMissionItem *CustomPlugin::createComplexMissionItem(const QString &complexItemType,
+                                                            PlanMasterController *masterController,
+                                                            bool flyView,
+                                                            const QString &kmlOrShpFile)
+{
+    if (complexItemType == PerimeterScanComplexItem::canonicalName
+            || complexItemType == PerimeterScanComplexItem::jsonComplexItemTypeValue) {
+        return new PerimeterScanComplexItem(masterController, flyView, kmlOrShpFile);
+    }
+    // Fall back to the built-in factory for all standard item types.
+    return QGCCorePlugin::createComplexMissionItem(complexItemType, masterController, flyView, kmlOrShpFile);
+}
+
+QList<PlanCreator *> CustomPlugin::planCreators(PlanMasterController *planMasterController)
+{
+    // Start with the standard creators, then add ours.
+    QList<PlanCreator *> creators = QGCCorePlugin::planCreators(planMasterController);
+    creators.append(new PerimeterScanPlanCreator(planMasterController));
+    return creators;
 }

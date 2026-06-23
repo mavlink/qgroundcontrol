@@ -1,4 +1,5 @@
 #include "BatteryFactGroupListModel.h"
+#include "MAVLinkLib.h"
 
 BatteryFactGroupListModel::BatteryFactGroupListModel(QObject* parent)
     : FactGroupListModel("battery", parent)

@@ -18,14 +18,14 @@ QtObject {
     property Fact battNumCells:                 controller.getParameterFact(-1, "BAT#_N_CELLS".replace      ("#", batteryIndex), false)
     property Fact battHighVolt:                 controller.getParameterFact(-1, "BAT#_V_CHARGED".replace    ("#", batteryIndex), false)
     property Fact battLowVolt:                  controller.getParameterFact(-1, "BAT#_V_EMPTY".replace      ("#", batteryIndex), false)
-    property Fact battVoltLoadDrop:             controller.getParameterFact(-1, "BAT#_V_LOAD_DROP".replace  ("#", batteryIndex), false)
+    property Fact battCapacity:                 controller.getParameterFact(-1, "BAT#_CAPACITY".replace     ("#", batteryIndex), false)
     property Fact battVoltageDivider:           controller.getParameterFact(-1, "BAT#_V_DIV".replace        ("#", batteryIndex), false)
     property Fact battAmpsPerVolt:              controller.getParameterFact(-1, "BAT#_A_PER_V".replace      ("#", batteryIndex), false)
 
     property bool battNumCellsAvailable:        controller.parameterExists(-1, "BAT#_N_CELLS".replace       ("#", batteryIndex))
     property bool battHighVoltAvailable:        controller.parameterExists(-1, "BAT#_V_CHARGED".replace     ("#", batteryIndex))
     property bool battLowVoltAvailable:         controller.parameterExists(-1, "BAT#_V_EMPTY".replace       ("#", batteryIndex))
-    property bool battVoltLoadDropAvailable:    controller.parameterExists(-1, "BAT#_V_LOAD_DROP".replace   ("#", batteryIndex))
+    property bool battCapacityAvailable:        controller.parameterExists(-1, "BAT#_CAPACITY".replace      ("#", batteryIndex))
     property bool battVoltageDividerAvailable:  controller.parameterExists(-1, "BAT#_V_DIV".replace         ("#", batteryIndex))
     property bool battAmpsPerVoltAvailable:     controller.parameterExists(-1, "BAT#_A_PER_V".replace       ("#", batteryIndex))
 }

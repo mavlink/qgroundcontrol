@@ -1,15 +1,16 @@
 #include "StructureScanComplexItemTest.h"
 
 #include <QtCore/QJsonArray>
+#include <QtCore/QRegularExpression>
 
+#include "CoordFixtures.h"
 #include "MultiSignalSpy.h"
 #include "PlanMasterController.h"
 #include "StructureScanComplexItem.h"
 
 StructureScanComplexItemTest::StructureScanComplexItemTest()
 {
-    _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199)
-                << QGeoCoordinate(47.634129020000003, -122.08887249)
+    _polyPoints << TestFixtures::Coord::missionTestOrigin() << QGeoCoordinate(47.634129020000003, -122.08887249)
                 << QGeoCoordinate(47.633619320000001, -122.08811074)
                 << QGeoCoordinate(47.633189139999999, -122.08900124);
 }
@@ -19,16 +20,15 @@ void StructureScanComplexItemTest::init()
     OfflineMissionTest::init();
     _structureScanItem = new StructureScanComplexItem(planController(), false /* flyView */, QString() /* kmlFile */);
     _structureScanItem->setDirty(false);
-    _multiSpy = new MultiSignalSpy();
-    Q_CHECK_PTR(_multiSpy);
+    _multiSpy = std::make_unique<MultiSignalSpy>();
+    QVERIFY(_multiSpy);
     QCOMPARE(_multiSpy->init(_structureScanItem), true);
 }
 
 void StructureScanComplexItemTest::cleanup()
 {
-    delete _multiSpy;
+    _multiSpy.reset();
     _structureScanItem = nullptr;  // Deleted when planController is deleted
-    _multiSpy = nullptr;
     OfflineMissionTest::cleanup();
 }
 
@@ -52,7 +52,7 @@ void StructureScanComplexItemTest::_testDirty()
     QList<Fact*> rgFacts;
     rgFacts << _structureScanItem->entranceAlt() << _structureScanItem->layers();
     for (Fact* fact : rgFacts) {
-        qDebug() << fact->name();
+        qCDebug(UnitTestLog) << fact->name();
         QVERIFY(!_structureScanItem->dirty());
         if (fact->typeIsBool()) {
             fact->setRawValue(!fact->rawValue().toBool());
@@ -109,6 +109,7 @@ void StructureScanComplexItemTest::_testSaveLoad()
 void StructureScanComplexItemTest::_testItemCount()
 {
     QList<MissionItem*> items;
+    ignoreLogMessage("QMLControls.QGCMapPolygon", QtWarningMsg, QRegularExpression("bad vertex requested"));
     _initItem();
     _structureScanItem->appendMissionItems(items, this);
     QCOMPARE(items.count() - 1, _structureScanItem->lastSequenceNumber());

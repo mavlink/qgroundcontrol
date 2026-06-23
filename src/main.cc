@@ -1,6 +1,6 @@
 #include "QGCApplication.h"
 #include "QGCCommandLineParser.h"
-#include "QGCLogging.h"
+#include "LogManager.h"
 #include "QGCLoggingCategory.h"
 #include "Platform.h"
 
@@ -8,7 +8,7 @@
     #include "UnitTestList.h"
 #endif
 
-QGC_LOGGING_CATEGORY(MainLog, "Main")
+QGC_LOGGING_CATEGORY_ON(MainLog, "Main")
 
 int main(int argc, char *argv[])
 {
@@ -25,11 +25,14 @@ int main(int argc, char *argv[])
 
     QGCApplication app(argc, argv, args);
 
-    QGCLogging::installHandler();
+    LogManager::installHandler();
 
     Platform::setupPostApp();
 
     app.init();
+
+    // Apply after installFilter() (called during app.init) so rules aren't overwritten.
+    LogManager::applyEnvironmentLogLevel();
 
     // --- Run application or tests ---
     const auto run = [&]() -> int {
@@ -41,6 +44,10 @@ int main(int argc, char *argv[])
             return QGCUnitTest::handleTestOptions(args);
 #endif
         case AppMode::BootTest:
+            if (!app.bootTestPassed()) {
+                qCCritical(MainLog) << "Simple boot test failed during GStreamer initialization";
+                return 1;
+            }
             qCInfo(MainLog) << "Simple boot test completed";
             return 0;
         case AppMode::Gui:
@@ -56,5 +63,9 @@ int main(int argc, char *argv[])
     app.shutdown();
 
     qCInfo(MainLog) << "Exiting main";
+
+    // Destroy LogManager while Qt is still fully functional (before static destruction).
+    delete LogManager::instance();
+
     return exitCode;
 }

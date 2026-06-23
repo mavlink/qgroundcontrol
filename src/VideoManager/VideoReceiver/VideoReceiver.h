@@ -1,9 +1,13 @@
 #pragma once
 
+#include <QtCore/QByteArray>
+#include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
+#include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
+#include <cstdint>
 
 class QGCVideoStreamInfo;
 class QQuickItem;
@@ -14,9 +18,30 @@ class VideoReceiver : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
 public:
-    explicit VideoReceiver(QObject *parent = nullptr)
-        : QObject(parent)
-    {}
+    struct NetworkSourceConfig
+    {
+        enum class Authentication : uint8_t
+        {
+            None = 0,
+            Basic,
+            Bearer,
+        };
+
+        Authentication authentication = Authentication::None;
+        QString username;
+        QByteArray secret;
+        QString origin;
+        QString caCertificateFile;
+
+        bool operator==(const NetworkSourceConfig& other) const = default;
+
+        bool hasAuthentication() const { return authentication != Authentication::None; }
+
+        void clearSecret();
+    };
+
+    explicit VideoReceiver(QObject* parent = nullptr);
+    ~VideoReceiver() override;
 
     bool isThermal() const { return (_name == QStringLiteral("thermalVideo")); }
 
@@ -36,6 +61,9 @@ public:
     void setStarted(bool started) { if (started != _started) { _started = started; emit startedChanged(_started); } }
     void setLowLatency(bool lowLatency) { if (lowLatency != _lowLatency) { _lowLatency = lowLatency; emit lowLatencyChanged(_lowLatency); } }
     void setVideoStreamInfo(QGCVideoStreamInfo *videoStreamInfo) { if (videoStreamInfo != _videoStreamInfo) { _videoStreamInfo = videoStreamInfo; emit videoStreamInfoChanged(); } }
+
+    bool setNetworkSourceConfig(const NetworkSourceConfig& config);
+    NetworkSourceConfig networkSourceConfig() const;
 
     // QMediaFormat::FileFormat
     enum FILE_FORMAT {
@@ -119,6 +147,8 @@ protected:
     uint32_t _signalDepth = 0;
     uint32_t _timeout = 0;
     QString _recordingOutput;
+    mutable QMutex _networkSourceConfigMutex;
+    NetworkSourceConfig _networkSourceConfig;
 
     // bool _initialized = false;
     // bool _fullScreen = false;

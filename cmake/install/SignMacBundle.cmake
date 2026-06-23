@@ -5,6 +5,36 @@
 
 message(STATUS "QGC: Signing Bundle using signing identity")
 
+include(ProcessorCount)
+ProcessorCount(_nproc)
+if(_nproc EQUAL 0)
+    set(_nproc 4)
+endif()
+
+# Helper: find files and codesign them in parallel. Safely handles empty
+# find results (BSD xargs runs the command even with no input).
+function(_parallel_codesign IDENTITY)
+    string(RANDOM LENGTH 8 _cs_rand)
+    set(_cs_list "${CMAKE_BINARY_DIR}/_codesign_${_cs_rand}.bin")
+    execute_process(
+        COMMAND find ${ARGN} -print0
+        OUTPUT_FILE "${_cs_list}"
+        RESULT_VARIABLE _find_rc
+    )
+    if(NOT _find_rc EQUAL 0)
+        message(FATAL_ERROR "QGC: find failed during codesign (exit ${_find_rc})")
+    endif()
+    file(SIZE "${_cs_list}" _cs_size)
+    if(_cs_size GREATER 0)
+        execute_process(
+            COMMAND xargs -0 -P ${_nproc} codesign --timestamp --options=runtime --force -s "${IDENTITY}"
+            INPUT_FILE "${_cs_list}"
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+    endif()
+    file(REMOVE "${_cs_list}")
+endfunction()
+
 # ----------------------------------------------------------------------------
 # Environment Variable Validation
 # ----------------------------------------------------------------------------
@@ -22,33 +52,18 @@ if(NOT DEFINED ENV{QGC_MACOS_NOTARIZATION_PASSWORD} OR "$ENV{QGC_MACOS_NOTARIZAT
 endif()
 
 # ----------------------------------------------------------------------------
-# Clean Up GStreamer Symlinks
+# Sign All Shared Libraries (.dylib and .so) Outside Frameworks
 # ----------------------------------------------------------------------------
-file(REMOVE "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Commands")
-file(REMOVE "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/Commands")
-
-# ----------------------------------------------------------------------------
-# Sign All Libraries and Executables
-# ----------------------------------------------------------------------------
-# Sign all dynamic libraries
-execute_process(
-    COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents" -type f -name "*.dylib" -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
-    COMMAND_ERROR_IS_FATAL ANY
-)
-
-# Sign all shared objects
-execute_process(
-    COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents" -type f -name "*.so" -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
-    COMMAND_ERROR_IS_FATAL ANY
+_parallel_codesign("$ENV{QGC_MACOS_SIGNING_IDENTITY}"
+    "${QGC_STAGING_BUNDLE_PATH}/Contents" -path "*/Frameworks/*.framework" -prune -o -type f "(" -name "*.dylib" -o -name "*.so" ")"
 )
 
 # ----------------------------------------------------------------------------
-# Sign GStreamer Framework Components
+# Sign GStreamer Helpers
 # ----------------------------------------------------------------------------
 if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
-    execute_process(
-        COMMAND find "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0" -type f -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
-        COMMAND_ERROR_IS_FATAL ANY
+    _parallel_codesign("$ENV{QGC_MACOS_SIGNING_IDENTITY}"
+        "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/libexec/gstreamer-1.0" -type f
     )
     execute_process(
         COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/GStreamer"
@@ -60,30 +75,45 @@ if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
     )
 endif()
 
+if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0")
+    _parallel_codesign("$ENV{QGC_MACOS_SIGNING_IDENTITY}"
+        "${QGC_STAGING_BUNDLE_PATH}/Contents/libexec/gstreamer-1.0" -type f -perm +111
+    )
+endif()
+
 # ----------------------------------------------------------------------------
 # Sign All Frameworks
 # ----------------------------------------------------------------------------
 file(GLOB FRAMEWORK_DIRS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/*.framework")
 foreach(FRAMEWORK_DIR ${FRAMEWORK_DIRS})
-    if(EXISTS "${FRAMEWORK_DIR}/Versions/1.0")
-        execute_process(
-            COMMAND find "${FRAMEWORK_DIR}/Versions/1.0" -type f -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
-            COMMAND_ERROR_IS_FATAL ANY
-        )
-    endif()
-    if(EXISTS "${FRAMEWORK_DIR}/Versions/A")
-        execute_process(
-            COMMAND find "${FRAMEWORK_DIR}/Versions/A" -type f -exec codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "{}" \\;
-            COMMAND_ERROR_IS_FATAL ANY
-        )
-    endif()
+    # Sign Mach-O binaries inside the framework, then seal the outer bundle.
+    _parallel_codesign("$ENV{QGC_MACOS_SIGNING_IDENTITY}"
+        "${FRAMEWORK_DIR}" -type f "(" -name "*.dylib" -o -name "*.so" -o -perm +111 ")"
+    )
+    execute_process(
+        COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${FRAMEWORK_DIR}"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
 endforeach()
+
+# Verify GStreamer framework signing
+if(EXISTS "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework")
+    execute_process(
+        COMMAND codesign --verify --deep --strict --verbose=2 "${QGC_STAGING_BUNDLE_PATH}/Contents/Frameworks/GStreamer.framework"
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+endif()
 
 # ----------------------------------------------------------------------------
 # Sign Main Application Bundle
 # ----------------------------------------------------------------------------
 execute_process(
     COMMAND codesign --timestamp --options=runtime --force -s "$ENV{QGC_MACOS_SIGNING_IDENTITY}" "${QGC_STAGING_BUNDLE_PATH}"
+    COMMAND_ERROR_IS_FATAL ANY
+)
+
+execute_process(
+    COMMAND codesign --verify --deep --strict --verbose=2 "${QGC_STAGING_BUNDLE_PATH}"
     COMMAND_ERROR_IS_FATAL ANY
 )
 

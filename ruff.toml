@@ -10,6 +10,9 @@ exclude = [
     ".git",
     "__pycache__",
     "*.egg-info",
+    ".venv",
+    "**/.venv",
+    "tools/skills",
 ]
 
 [lint]
@@ -37,10 +40,35 @@ known-first-party = ["qgc"]
 
 [lint.per-file-ignores]
 "test/**/*.py" = ["B011"]  # Allow assert in tests
+# Bootstrap scripts manipulate sys.path before importing project modules.
+"tools/_bootstrap.py" = ["E402"]
+"tools/check_deps.py" = ["E402"]
+"tools/clean.py" = ["E402"]
+"tools/configure.py" = ["E402"]
+"tools/coverage.py" = ["E402"]
+"tools/generate_docs.py" = ["E402"]
+"tools/pre_commit.py" = ["E402"]
+"tools/release.py" = ["E402"]
+"tools/analyzers/*.py" = ["E402"]
+"tools/generators/config_qml/generate_pages.py" = ["E402"]
+"tools/locators/qgc_locator.py" = ["E402"]
+"tools/setup/build-gstreamer.py" = ["E402"]
+"tools/setup/install_dependencies.py" = ["E402"]
+"tools/setup/install_python.py" = ["E402"]
+"tools/setup/install_qt.py" = ["E402"]
+"tools/tests/test_factgroup_generator.py" = ["E402"]
+".github/scripts/*.py" = ["E402"]
+".github/scripts/tests/*.py" = ["E402"]
+# pseudo_loc.py deliberately uses look-alike characters for pseudo-localization.
+"tools/pseudo_loc.py" = ["RUF001"]
+# settings_qml/model.py's regex must match fullwidth + enumeration commas that translators use.
+"tools/generators/settings_qml/model.py" = ["RUF001", "RUF003"]
+# fact_schema.py has × (multiplication sign) in unit descriptions intentionally.
+"tools/lsp/fact_schema.py" = ["RUF001"]
 
 [format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
-line-ending = "auto"
+line-ending = "lf"
 docstring-code-format = true

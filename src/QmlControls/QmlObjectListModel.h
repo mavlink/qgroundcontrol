@@ -2,10 +2,6 @@
 
 #include "ObjectListModelBase.h"
 
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(QmlObjectListModelLog)
-
 class QmlObjectListModel : public ObjectListModelBase
 {
     Q_OBJECT

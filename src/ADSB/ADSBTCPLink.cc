@@ -1,5 +1,5 @@
 #include "ADSBTCPLink.h"
-// #include "DeviceInfo.h"
+// #include "QGCSensors.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QTimer>

@@ -1,22 +1,28 @@
 #include "MapProviderTest.h"
 
-#include "MapProvider.h"
-
 #include <QtCore/QtMath>
+
+#include "MapProvider.h"
+#include "QGCTileSet.h"
 
 class TestableMapProvider : public MapProvider
 {
 public:
-    explicit TestableMapProvider(const QString &name = QStringLiteral("TestProvider"),
-                                const QString &imageFormat = QStringLiteral("png"),
-                                quint32 avgSize = QGC_AVERAGE_TILE_SIZE)
-        : MapProvider(name, QString(), imageFormat, avgSize, QGeoMapType::CustomMap) {}
+    explicit TestableMapProvider(const QString& name = QStringLiteral("TestProvider"),
+                                 const QString& imageFormat = QStringLiteral("png"),
+                                 quint32 avgSize = QGC_AVERAGE_TILE_SIZE)
+        : MapProvider(name, QString(), imageFormat, avgSize, MapProvider::CustomMap)
+    {
+    }
 
-    using MapProvider::_tileXYToQuadKey;
     using MapProvider::_getServerNum;
+    using MapProvider::_tileXYToQuadKey;
 
 private:
-    QString _getURL(int, int, int) const override { return {}; }
+    QString _getURL(int, int, int) const override
+    {
+        return {};
+    }
 };
 
 // --- Image format detection ---
@@ -24,14 +30,20 @@ private:
 void MapProviderTest::_testGetImageFormatPng()
 {
     TestableMapProvider p;
-    const QByteArray png("\x89\x50\x4E\x47\x0D\x0A\x1A\x0A" "rest_of_data", 20);
+    const QByteArray png(
+        "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
+        "rest_of_data",
+        20);
     QCOMPARE(p.getImageFormat(png), QStringLiteral("png"));
 }
 
 void MapProviderTest::_testGetImageFormatJpeg()
 {
     TestableMapProvider p;
-    const QByteArray jpeg("\xFF\xD8\xFF\xE0" "jpeg_data", 13);
+    const QByteArray jpeg(
+        "\xFF\xD8\xFF\xE0"
+        "jpeg_data",
+        13);
     QCOMPARE(p.getImageFormat(jpeg), QStringLiteral("jpg"));
 }
 
@@ -193,7 +205,7 @@ void MapProviderTest::_testGettersReturnConstructorValues()
     TestableMapProvider p(QStringLiteral("MyMap"), QStringLiteral("jpg"), 7777);
     QCOMPARE(p.getMapName(), QStringLiteral("MyMap"));
     QCOMPARE(p.getAverageSize(), static_cast<quint32>(7777));
-    QCOMPARE(p.getMapStyle(), QGeoMapType::CustomMap);
+    QCOMPARE(p.getMapStyle(), MapProvider::CustomMap);
     QVERIFY(!p.isElevationProvider());
     QVERIFY(!p.isBingProvider());
     QVERIFY(p.getMapId() > 0);

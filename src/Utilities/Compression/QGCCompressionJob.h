@@ -9,12 +9,10 @@
 #include <memory>
 #include <QtCore/QFuture>
 #include <QtCore/QFutureWatcher>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
-Q_DECLARE_LOGGING_CATEGORY(QGCCompressionJobLog)
-
-/// QObject wrapper for compression operations with progress signals
+/// \brief QObject wrapper for compression operations with progress signals
+///
 /// Uses QtConcurrent and QPromise for modern async operations
 /// Can be used from C++ or QML
 ///
@@ -57,6 +55,7 @@ Q_DECLARE_LOGGING_CATEGORY(QGCCompressionJobLog)
 /// });
 /// watcher->setFuture(future);
 /// @endcode
+///
 class QGCCompressionJob : public QObject
 {
     Q_OBJECT

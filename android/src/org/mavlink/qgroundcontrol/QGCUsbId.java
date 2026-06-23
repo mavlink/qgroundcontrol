@@ -2,10 +2,17 @@ package org.mavlink.qgroundcontrol;
 
 public final class QGCUsbId {
 
+    public static final int VENDOR_FTDI = 0x0403;
+    public static final int DEVICE_FTDI_FT232R = 0x6001;
+    public static final int DEVICE_FTDI_FT2232H = 0x6010;
+    public static final int DEVICE_FTDI_FT4232H = 0x6011;
+    public static final int DEVICE_FTDI_FT232H = 0x6014;
+    public static final int DEVICE_FTDI_FT231X = 0x6015;
+
     public static final int VENDOR_PX4 = 0x26AC;
     public static final int DEVICE_PX4FMU_V1 = 0x0010;
     public static final int DEVICE_PX4FMU_V2 = 0x0011;
-    public static final int DEVICE_PX4FMU_V3 = 0x0011;
+    public static final int DEVICE_PX4FMU_V3 = 0x0011; // V3 shares V2 USB PID
     public static final int DEVICE_PX4FMU_V4 = 0x0012;
     public static final int DEVICE_PX4FMU_V4PRO = 0x0013;
     public static final int DEVICE_PX4FMU_V5 = 0x0032;
@@ -28,7 +35,6 @@ public final class QGCUsbId {
     public static final int DEVICE_SPARKY2 = 0x41D0;
     public static final int DEVICE_CC3D = 0x415D;
 
-    public static final int VENDOR_STMICROELECTRONICS = 0x0483;
     public static final int VENDOR_ARDUPILOT = 0x1209;
     public static final int DEVICE_ARDUPILOT_CHIBIOS = 0x5740;
     public static final int DEVICE_ARDUPILOT_CHIBIOS2 = 0x5741;
@@ -50,7 +56,7 @@ public final class QGCUsbId {
 
     public static final int VENDOR_CUAV = 0x3163;
     public static final int DEVICE_CUAV_NORA = 0x004C;
-    public static final int DEVICE_CUAV_X7PRO = 0x004C;
+    public static final int DEVICE_CUAV_X7PRO = 0x004C; // X7PRO shares NORA USB PID
 
     public static final int VENDOR_HOLYBRO = 0x3162;
     public static final int DEVICE_PIXHAWK4 = 0x0047;
@@ -67,5 +73,13 @@ public final class QGCUsbId {
     private QGCUsbId()
     {
         throw new IllegalAccessError("Non-instantiable class");
+    }
+
+    public static boolean isSupportedFtdiProductId(final int productId) {
+        return productId == DEVICE_FTDI_FT232R
+            || productId == DEVICE_FTDI_FT2232H
+            || productId == DEVICE_FTDI_FT4232H
+            || productId == DEVICE_FTDI_FT232H
+            || productId == DEVICE_FTDI_FT231X;
     }
 }

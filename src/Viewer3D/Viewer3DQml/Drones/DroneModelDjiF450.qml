@@ -3,6 +3,7 @@ import QtQuick3D
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.Viewer3D
 
 Node {
     id: body

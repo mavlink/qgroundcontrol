@@ -20,173 +20,141 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
   security-events: write
 
 jobs:
   changes:
-    name: Detect Changes
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    timeout-minutes: 5
-    outputs:
-      linux: ${{ steps.filter.outputs.linux }}
-      android: ${{ steps.filter.outputs.android }}
-      shared: ${{ steps.filter.outputs.shared }}
-    steps:
-      - name: Detect changed paths
-        uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            shared:
-              - 'src/**'
-              - 'cmake/**'
-              - 'CMakeLists.txt'
-              - 'tools/setup/**'
-              - '.github/workflows/docker.yml'
-              - '.github/actions/docker/**'
-              - '.github/build-config.json'
-            linux:
-              - 'deploy/linux/**'
-              - 'deploy/docker/Dockerfile-build-ubuntu'
-            android:
-              - 'android/**'
-              - 'deploy/android/**'
-              - 'deploy/docker/Dockerfile-build-android'
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: docker-linux docker-android
 
-  build:
-    name: Docker ${{ matrix.platform }}
+  plan-builds:
+    name: Plan Docker Builds
     runs-on: ubuntu-latest
     needs: changes
     if: always() && !cancelled()
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      has_jobs: ${{ steps.plan.outputs.has_jobs }}
+    steps:
+      - name: Checkout planner
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          # Bootstrap shim (ci_bootstrap.py + tools/_bootstrap.py + common/__init__.py + common/gh_actions.py)
+          # also appears in linux.yml (debug-matrix), pr-checks.yml (size), _cache-cleanup.yml. Keep aligned —
+          # GHA composite actions can't run before checkout, so this list can't be deduplicated structurally.
+          sparse-checkout: |
+            .github/scripts/plan_docker_builds.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common/__init__.py
+            tools/common/file_traversal.py
+            tools/common/gh_actions.py
+          sparse-checkout-cone-mode: false
+
+      - name: Plan matrix
+        id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          LINUX: ${{ needs.changes.outputs.docker_linux }}
+          ANDROID: ${{ needs.changes.outputs.docker_android }}
+        run: python3 "${GITHUB_WORKSPACE}/.github/scripts/plan_docker_builds.py"
+
+  build:
+    name: Docker ${{ matrix.platform }}
+    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=80gb', github.run_id) || 'ubuntu-latest' }}
+    needs: [changes, plan-builds]
+    if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
     timeout-minutes: 120
+    permissions:
+      contents: read
+      security-events: write
+      packages: write
 
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - platform: Linux
-            dockerfile: Dockerfile-build-ubuntu
-            fuse: true
-            artifact_pattern: "*.AppImage"
-
-          - platform: Android
-            dockerfile: Dockerfile-build-android
-            fuse: false
-            artifact_pattern: "*.apk"
+      matrix: ${{ fromJSON(needs.plan-builds.outputs.matrix) }}
 
     defaults:
       run:
         shell: bash
 
     steps:
-      - name: Check if build needed
-        id: check
-        run: |
-          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
-            echo "Not a PR - building all platforms"
-            exit 0
-          fi
-
-          SHARED="${{ needs.changes.outputs.shared }}"
-          LINUX="${{ needs.changes.outputs.linux }}"
-          ANDROID="${{ needs.changes.outputs.android }}"
-          PLATFORM="${{ matrix.platform }}"
-
-          if [[ "$SHARED" == "true" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
-            echo "Shared files changed - building $PLATFORM"
-          elif [[ "$PLATFORM" == "Linux" && "$LINUX" == "true" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
-            echo "Linux-specific files changed - building Linux"
-          elif [[ "$PLATFORM" == "Android" && "$ANDROID" == "true" ]]; then
-            echo "should_build=true" >> $GITHUB_OUTPUT
-            echo "Android-specific files changed - building Android"
-          else
-            echo "should_build=false" >> $GITHUB_OUTPUT
-            echo "No relevant changes for $PLATFORM - skipping"
-          fi
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
 
       - name: Harden Runner
-        if: steps.check.outputs.should_build == 'true'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
 
-      - name: Free Disk Space
-        if: steps.check.outputs.should_build == 'true'
-        uses: jlumbroso/free-disk-space@v1.3.1
-        with:
-          tool-cache: true
-          android: ${{ matrix.platform != 'Android' }}
-          dotnet: true
-          haskell: true
-          large-packages: false  # Slowest option (~5min) - disabled for faster builds
-          docker-images: true
-          swap-storage: true
-
       - name: Checkout
-        if: steps.check.outputs.should_build == 'true'
         uses: actions/checkout@v6
         with:
-          submodules: recursive
           fetch-depth: 1
-          fetch-tags: true
+
+      - name: Free Disk Space
+        uses: ./.github/actions/free-disk-space
+
+      - name: Resolve push target
+        id: push-target
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref }}
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/docker_helper.py" resolve-push-target
+          --event-name "${EVENT_NAME}"
+          --repo "${REPO}"
+          --ref "${REF}"
 
       - name: Build with Docker
-        if: steps.check.outputs.should_build == 'true'
         uses: ./.github/actions/docker
         with:
-          dockerfile: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          variant: ${{ matrix.variant }}
+          build-args: ${{ matrix.build_args }}
           fuse: ${{ matrix.fuse }}
+          docker-username: ${{ secrets.DOCKERHUB_USERNAME }}
           docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
+          push-image: ${{ steps.push-target.outputs.ref }}
 
       - name: Find build artifact
-        if: steps.check.outputs.should_build == 'true'
         id: artifact
-        run: |
-          set +o pipefail  # Disable pipefail to handle find | head gracefully
-          BUILD_DIR="${{ github.workspace }}/build"
-          echo "Searching for ${{ matrix.artifact_pattern }} in ${BUILD_DIR}"
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
+          --build-dir "${{ github.workspace }}/build"
+          --pattern "${{ matrix.artifact_pattern }}"
 
-          # Check if build directory exists
-          if [ ! -d "${BUILD_DIR}" ]; then
-            echo "::warning::Build directory does not exist: ${BUILD_DIR}"
-            echo "found=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Show build directory structure for debugging (ignore permission errors from Docker-created dirs)
-          echo "Build directory contents:"
-          find "${BUILD_DIR}" -maxdepth 4 \( -name "*.apk" -o -name "*.AppImage" \) -type f 2>/dev/null || true
-
-          # Find the produced artifact (APK or AppImage)
-          # Use -quit for efficiency and to avoid broken pipe with head
-          ARTIFACT=$(find "${BUILD_DIR}" -name "${{ matrix.artifact_pattern }}" -type f -print -quit 2>/dev/null)
-          if [ -z "$ARTIFACT" ]; then
-            echo "::warning::No artifact matching ${{ matrix.artifact_pattern }} found"
-            echo "found=false" >> $GITHUB_OUTPUT
-          else
-            echo "Found artifact: $ARTIFACT"
-            echo "path=$ARTIFACT" >> $GITHUB_OUTPUT
-            echo "found=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Scan artifact for vulnerabilities
+      - name: Generate CPM dependency SBOM
         if: steps.artifact.outputs.found == 'true'
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          scan-type: 'fs'
-          scan-ref: ${{ steps.artifact.outputs.path }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          trivy-config: '.github/trivy.yaml'
-          cache-dir: ${{ runner.temp }}/.cache/trivy
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/generate_cpm_sbom.py"
+          --build-dir "${{ github.workspace }}/build"
+          -o cpm-sbom.cdx.json
 
-      - name: Upload Trivy results to GitHub Security
+      - name: Scan SBOM with Grype
+        if: steps.artifact.outputs.found == 'true'
+        id: grype
+        uses: anchore/scan-action@v7
+        with:
+          sbom: cpm-sbom.cdx.json
+          fail-build: false
+          severity-cutoff: high
+          only-fixed: true
+          output-format: sarif
+
+      - name: Upload Grype results to GitHub Security
         if: steps.artifact.outputs.found == 'true'
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: 'trivy-results.sarif'
-          category: 'trivy-${{ matrix.platform }}'
+          sarif_file: ${{ steps.grype.outputs.sarif }}
+          category: 'grype-${{ matrix.platform }}'

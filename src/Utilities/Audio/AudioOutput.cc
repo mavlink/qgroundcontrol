@@ -1,11 +1,14 @@
 #include "AudioOutput.h"
 #include "Fact.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
-#include "QGCApplication.h"
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QApplicationStatic>
 #include <QtTextToSpeech/QTextToSpeech>
+#include <QtTextToSpeech/QVoice>
+
+#include <algorithm>
 
 QGC_LOGGING_CATEGORY(AudioOutputLog, "Utilities.AudioOutput");
 // qt.speech.tts.flite
@@ -36,7 +39,11 @@ Q_APPLICATION_STATIC(AudioOutput, _audioOutput);
 
 AudioOutput::AudioOutput(QObject *parent)
     : QObject(parent)
-    , _engine(new QTextToSpeech(QStringLiteral("none"), this))
+    // Auto-select a real engine, except under unit tests where the "none" backend avoids probing
+    // system plugins (e.g. speechd) that emit critical load errors and trip the strict log check.
+    , _engine(QGC::runningUnitTests()
+                  ? new QTextToSpeech(QStringLiteral("none"), this)
+                  : new QTextToSpeech(this))
 {
     // qCDebug(AudioOutputLog) << this;
 }
@@ -51,50 +58,72 @@ AudioOutput *AudioOutput::instance()
     return _audioOutput();
 }
 
-void AudioOutput::init(Fact *mutedFact)
+void AudioOutput::init(Fact* volumeFact, Fact* mutedFact)
 {
+    Q_CHECK_PTR(volumeFact);
     Q_CHECK_PTR(mutedFact);
 
     if (_initialized) {
         return;
     }
 
-    if (QTextToSpeech::availableEngines().isEmpty()) {
-        qCWarning(AudioOutputLog) << "No available QTextToSpeech engines found.";
-        return;
-    }
+    _volumeFact = volumeFact;
+    _mutedFact = mutedFact;
 
-    // Autoselect engine by priority
-    if (!_engine->setEngine(QString())) {
-        qCWarning(AudioOutputLog) << "Failed to set the TTS engine.";
-        return;
-    }
+    // Some QTextToSpeech backends (notably Android) initialize asynchronously, so finalize on Ready rather than bailing (Qt docs).
+    (void) connect(_engine, &QTextToSpeech::stateChanged, this, [this](QTextToSpeech::State state) {
+        if (state == QTextToSpeech::State::Ready) {
+            _textQueueSize = 0;
+            if (!_initialized) {
+                _finishInit();
+            }
+        }
+        qCDebug(AudioOutputLog) << "TTS State changed to:" << state;
+    });
 
-    (void) connect(_engine, &QTextToSpeech::engineChanged, this, [this](const QString &engine) {
-        qCDebug(AudioOutputLog) << "TTS Engine set to:" << engine;
-        const QLocale defaultLocale = QLocale("en_US");
-        if (_engine->availableLocales().contains(defaultLocale)) {
-            _engine->setLocale(defaultLocale);
+    (void) connect(_engine, &QTextToSpeech::errorOccurred, this, [this](QTextToSpeech::ErrorReason reason, const QString &errorString) {
+        qCWarning(AudioOutputLog) << "TTS error occurred. Reason:" << reason << ", Message:" << errorString;
+        _textQueueSize = 0;
+    });
+
+    // Decrement as each utterance leaves the queue so the counter tracks live backlog, not cumulative enqueues since drain.
+    (void) connect(_engine, &QTextToSpeech::aboutToSynthesize, this, [this](qsizetype) {
+        if (_textQueueSize > 0) {
+            _textQueueSize--;
         }
     });
 
-    (void) connect(_engine, &QTextToSpeech::aboutToSynthesize, this, [this](qsizetype id) {
-        qCDebug(AudioOutputLog) << "TTS About To Synthesize ID:" << id;
-        _textQueueSize--;
-        qCDebug(AudioOutputLog) << "Queue Size:" << _textQueueSize;
+    (void) connect(_engine, &QTextToSpeech::engineChanged, this, [this](const QString &engine) {
+        qCDebug(AudioOutputLog) << "TTS Engine set to:" << engine;
+        _applyEngineSettings();
     });
 
-    (void) connect(mutedFact, &Fact::valueChanged, this, [this](QVariant value) {
-        setMuted(value.toBool());
+    switch (_engine->state()) {
+    case QTextToSpeech::State::Ready:
+        _finishInit();
+        break;
+    case QTextToSpeech::State::Error:
+        qCWarning(AudioOutputLog) << "No usable QTextToSpeech engine available.";
+        break;
+    default:
+        qCDebug(AudioOutputLog) << "QTextToSpeech engine not ready; deferring init. State:" << _engine->state();
+        break;
+    }
+}
+
+void AudioOutput::_finishInit()
+{
+    _applyEngineSettings();
+
+    (void) connect(_volumeFact, &Fact::valueChanged, this, [this]() {
+        _setVolume();
+    });
+
+    (void) connect(_mutedFact, &Fact::valueChanged, this, [this]() {
+        _setVolume();
     });
 
     if (AudioOutputLog().isDebugEnabled()) {
-        (void) connect(_engine, &QTextToSpeech::stateChanged, this, [](QTextToSpeech::State state) {
-            qCDebug(AudioOutputLog) << "TTS State changed to:" << state;
-        });
-        (void) connect(_engine, &QTextToSpeech::errorOccurred, this, [](QTextToSpeech::ErrorReason reason, const QString &errorString) {
-            qCDebug(AudioOutputLog) << "TTS Error occurred. Reason:" << reason << ", Message:" << errorString;
-        });
         (void) connect(_engine, &QTextToSpeech::localeChanged, this, [](const QLocale &locale) {
             qCDebug(AudioOutputLog) << "TTS Locale change to:" << locale;
         });
@@ -106,42 +135,82 @@ void AudioOutput::init(Fact *mutedFact)
         });
     }
 
-    setMuted(mutedFact->rawValue().toBool());
     _initialized = true;
+    _setVolume();
 
-    qCDebug(AudioOutputLog) << "AudioOutput initialized with muted state:" << _muted;
+    qCDebug(AudioOutputLog) << "AudioOutput initialized with volume:" << _volumeSetting() << "%";
 }
 
-void AudioOutput::setMuted(bool muted)
+double AudioOutput::_volumeSetting() const
 {
-    if (_muted.exchange(muted) != muted) {
-        (void) QMetaObject::invokeMethod(_engine, "setVolume", Qt::AutoConnection, muted ? 0.0 : 1.0);
-        qCDebug(AudioOutputLog) << "AudioOutput muted state set to:" << muted;
+    return std::clamp(_volumeFact->rawValue().toDouble(), 0.0, 100.0);
+}
+
+bool AudioOutput::_mutedSetting() const
+{
+    return _mutedFact->rawValue().toBool();
+}
+
+void AudioOutput::_applyEngineSettings()
+{
+    if (_engine->state() != QTextToSpeech::State::Ready) {
+        return;
     }
+
+    const QLocale defaultLocale("en_US");
+    if (_engine->availableLocales().contains(defaultLocale)) {
+        _engine->setLocale(defaultLocale);
+    }
+
+    // Pin an explicit voice so output doesn't depend on the engine's per-OS default.
+    const QList<QVoice> voices = _engine->availableVoices();
+    if (!voices.isEmpty()) {
+        _engine->setVoice(voices.constFirst());
+    }
+
+    _speakCapable = _engine->engineCapabilities().testFlag(QTextToSpeech::Capability::Speak);
+}
+
+void AudioOutput::_setVolume()
+{
+    const bool muted = _mutedSetting();
+    const double volume = muted ? 0.0 : _volumeSetting();
+
+    // qFuzzyCompare fails near zero; adding 1.0 shifts values into a safe range
+    if (qFuzzyCompare(1.0 + volume, 1.0 + _lastVolume)) {
+        return;
+    }
+    _lastVolume = volume;
+
+    // Must normalize volume to 0.0 - 1.0 for QTextToSpeech
+    const double normalizedVolume = volume / 100.0;
+    (void) QMetaObject::invokeMethod(_engine, [this, volume, normalizedVolume]() {
+        if (volume == 0.0) {
+            // Prevent any queued text from being spoken once muted
+            _engine->stop(QTextToSpeech::BoundaryHint::Immediate);
+            _textQueueSize = 0;
+        }
+        _engine->setVolume(normalizedVolume);
+    });
+    qCDebug(AudioOutputLog) << "AudioOutput volume set to:" << volume << "%";
 }
 
 void AudioOutput::say(const QString &text, TextMods textMods)
 {
     if (!_initialized) {
-        if (!qgcApp()->runningUnitTests()) {
+        if (!QGC::runningUnitTests()) {
             qCWarning(AudioOutputLog) << "AudioOutput not initialized. Call init() before using say().";
         }
         return;
     }
 
-    if (_muted) {
+    if (_volumeSetting() <= 0.0 || _mutedSetting()) {
         return;
     }
 
-    if (!_engine->engineCapabilities().testFlag(QTextToSpeech::Capability::Speak)) {
+    if (!_speakCapable) {
         qCWarning(AudioOutputLog) << "Speech Not Supported:" << text;
         return;
-    }
-
-    if (_textQueueSize >= kMaxTextQueueSize) {
-        (void) QMetaObject::invokeMethod(_engine, "stop", Qt::AutoConnection, QTextToSpeech::BoundaryHint::Default);
-        _textQueueSize = 0;
-        qCWarning(AudioOutputLog) << "Text queue exceeded maximum size. Stopped current speech.";
     }
 
     QString outText = _fixTextMessageForAudio(text);
@@ -150,15 +219,43 @@ void AudioOutput::say(const QString &text, TextMods textMods)
         outText = tr("%1").arg(outText);
     }
 
-    qsizetype index;
-    if (QMetaObject::invokeMethod(_engine, "enqueue", Qt::AutoConnection, qReturnArg(index), outText)) {
-        if (index != -1) {
-            _textQueueSize++;
-            qCDebug(AudioOutputLog) << "Enqueued text with index:" << index << ", Queue Size:" << _textQueueSize;
-        }
-    } else {
-        qCWarning(AudioOutputLog) << "Failed to invoke Enqueue method.";
+    if (outText.isEmpty()) {
+        return;
     }
+
+    // All queue/counter mutation must stay on the engine thread (where stateChanged resets it).
+    (void) QMetaObject::invokeMethod(_engine, [this, outText]() {
+        if (_textQueueSize >= kMaxTextQueueSize) {
+            _engine->stop(QTextToSpeech::BoundaryHint::Immediate);
+            _textQueueSize = 0;
+            qCWarning(AudioOutputLog) << "Text queue exceeded maximum size. Stopped current speech.";
+        }
+
+        const qsizetype index = _engine->enqueue(outText);
+        if (index < 0) {
+            qCWarning(AudioOutputLog) << "Failed to enqueue speech. State:" << _engine->state()
+                                      << "Reason:" << _engine->errorReason();
+            return;
+        }
+
+        _textQueueSize++;
+        qCDebug(AudioOutputLog) << "Enqueued text with index:" << index << ", Queue Size:" << _textQueueSize;
+    });
+}
+
+void AudioOutput::testAudioOutput()
+{
+    if (!_initialized) {
+        qCWarning(AudioOutputLog) << "AudioOutput not initialized. Call init() before using testAudioOutput().";
+        return;
+    }
+
+    // Main-thread only (QML-invoked): mutates the engine and counter directly without marshaling.
+    _engine->stop(QTextToSpeech::BoundaryHint::Immediate);
+    _textQueueSize = 0;
+
+    const QString testText = tr("Audio test. Volume is %1 percent").arg(_volumeSetting(), 0, 'f', 1);
+    say(testText);
 }
 
 QString AudioOutput::_fixTextMessageForAudio(const QString &string)
@@ -174,17 +271,15 @@ QString AudioOutput::_fixTextMessageForAudio(const QString &string)
 
 QString AudioOutput::_replaceAbbreviations(const QString &input)
 {
-    QString output = input;
-
-    const QStringList wordList = input.split(' ', Qt::SkipEmptyParts);
-    for (const QString &word : wordList) {
-        const QString upperWord = word.toUpper();
-        if (_textHash.contains(upperWord)) {
-            (void) output.replace(word, _textHash.value(upperWord));
+    QStringList words = input.split(' ');
+    for (QString &word : words) {
+        const auto it = _textHash.constFind(word.toUpper());
+        if (it != _textHash.constEnd()) {
+            word = it.value();
         }
     }
 
-    return output;
+    return words.join(' ');
 }
 
 QString AudioOutput::_replaceNegativeSigns(const QString &input)

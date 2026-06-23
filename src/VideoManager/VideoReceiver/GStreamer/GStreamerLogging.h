@@ -1,0 +1,21 @@
+#pragma once
+
+#include <QtCore/QString>
+#include <gst/gst.h>
+
+namespace GStreamer
+{
+    void redirectGLibLogging();
+    void resetExternalPluginLoaderFailure();
+    bool didExternalPluginLoaderFail();
+    QString redactDiagnosticForLogging(const QString& diagnostic);
+
+    void qtGstLog(GstDebugCategory *category,
+                  GstDebugLevel level,
+                  const gchar *file,
+                  const gchar *function,
+                  gint line,
+                  GObject *object,
+                  GstDebugMessage *message,
+                  gpointer data);
+}

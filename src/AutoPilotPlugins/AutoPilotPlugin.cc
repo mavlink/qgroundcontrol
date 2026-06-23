@@ -1,5 +1,6 @@
 #include "AutoPilotPlugin.h"
 #include "FirmwarePlugin.h"
+#include "AppMessages.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "Vehicle.h"
@@ -62,7 +63,7 @@ void AutoPilotPlugin::parametersReadyPreChecks()
         // Take the user to Vehicle Config Summary
         qgcApp()->showVehicleConfig();
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-        qgcApp()->showAppMessage(tr("One or more vehicle components require setup prior to flight."));
+        QGC::showAppMessage(tr("One or more vehicle components require setup prior to flight."));
     }
 }
 

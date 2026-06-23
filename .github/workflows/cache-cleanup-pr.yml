@@ -1,0 +1,16 @@
+name: Cache Cleanup (PR)
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    uses: ./.github/workflows/_cache-cleanup.yml
+    with:
+      branch: refs/pull/${{ github.event.pull_request.number }}/merge
+      dry-run: false
+      timeout-minutes: 5

@@ -5,8 +5,13 @@
 
 target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
+        JsonHelperTest.cc
+        JsonHelperTest.h
         JsonParsingTest.cc
         JsonParsingTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_qgc_test(JsonHelperTest LABELS Unit Utilities)
+add_qgc_test(JsonParsingTest LABELS Unit Utilities)

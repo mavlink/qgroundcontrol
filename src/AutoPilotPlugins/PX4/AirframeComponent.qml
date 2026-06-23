@@ -102,6 +102,7 @@ SetupPage {
 
                 QGCButton {
                     id:             applyButton
+                    objectName:     "airframeSetup_applyButton"
                     anchors.right:  parent.right
                     text:           qsTr("Apply and Restart")
                     onClicked:      QGroundControl.showMessageDialog(airframePage, qsTr("Apply and Restart"),
@@ -134,9 +135,13 @@ SetupPage {
 
                     // Outer summary item rectangle
                     Rectangle {
+                        objectName: "airframeTypeBox_" + index
                         width:  _boxWidth
                         height: ScreenTools.defaultFontPixelHeight * 14
                         color:  qgcPal.window
+
+                        property string airframeTypeName:     modelData.name
+                        property bool   airframeTypeSelected: airframeCheckBox.checked
 
                         readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.75
                         readonly property real innerMargin: ScreenTools.defaultFontPixelWidth
@@ -185,7 +190,6 @@ SetupPage {
 
                                 onCheckedChanged: {
                                     if (checked && combo.currentIndex !== -1) {
-                                        console.log("check box change", combo.currentIndex)
                                         controller.autostartId = modelData.airframes[combo.currentIndex].autostartId
                                     }
                                 }
@@ -193,7 +197,7 @@ SetupPage {
 
                             QGCComboBox {
                                 id:                 combo
-                                objectName:         modelData.airframeType + "ComboBox"
+                                objectName:         modelData.name + "ComboBox"
                                 anchors.margins:    innerMargin
                                 anchors.bottom:     parent.bottom
                                 anchors.left:       parent.left

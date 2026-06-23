@@ -1,15 +1,12 @@
 #pragma once
 
 #include <QtCore/QFile>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QSize>
 #include <QtCore/QTime>
 #include <QtCore/QTimer>
 
 class Fact;
-
-Q_DECLARE_LOGGING_CATEGORY(SubtitleWriterLog)
 
 class SubtitleWriter : public QObject
 {

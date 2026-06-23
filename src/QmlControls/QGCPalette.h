@@ -110,7 +110,6 @@ public:
     DEFINE_QGC_COLOR(windowShade,                   setWindowShade)
     DEFINE_QGC_COLOR(windowShadeDark,               setWindowShadeDark)
     DEFINE_QGC_COLOR(text,                          setText)
-    DEFINE_QGC_COLOR(windowTransparentText,         setWindowTransparentText)
     DEFINE_QGC_COLOR(warningText,                   setWarningText)
     DEFINE_QGC_COLOR(button,                        setButton)
     DEFINE_QGC_COLOR(buttonBorder,                  setButtonBorder)
@@ -150,6 +149,7 @@ public:
     DEFINE_QGC_COLOR(toolStripFGColor,              setToolStripFGColor)
     DEFINE_QGC_COLOR(toolStripHoverColor,           setToolStripHoverColor)
     DEFINE_QGC_COLOR(groupBorder,                   setGroupBorder)
+    DEFINE_QGC_COLOR(modifiedParamValue,            setModifiedParamValue)
     DEFINE_QGC_COLOR(photoCaptureButtonColor,       setPhotoCaptureButtonColor)
     DEFINE_QGC_COLOR(videoCaptureButtonColor,       setVideoCaptureButtonColor)
 

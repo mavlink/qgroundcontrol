@@ -1,0 +1,50 @@
+name: Deploy Docs
+description: Deploy built documentation to an external GitHub Pages repository
+
+inputs:
+  artifact-name:
+    description: Name of the uploaded artifact to download
+    required: true
+  target-repo:
+    description: 'Target repository in owner/repo format'
+    required: true
+  target-branch:
+    description: 'Branch to push to in target repo'
+    required: false
+    default: main
+  deploy-token:
+    description: 'GitHub token with push access to target repo'
+    required: true
+  source-branch:
+    description: 'Source branch name (used as subdirectory in target repo)'
+    required: true
+  commit-message:
+    description: 'Commit message prefix'
+    required: false
+    default: 'Docs update'
+
+runs:
+  using: composite
+  steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ~/_docs_build
+
+    - name: Checkout target repo
+      uses: actions/checkout@v6
+      with:
+        repository: ${{ inputs.target-repo }}
+        token: ${{ inputs.deploy-token }}
+        path: _deploy_target
+
+    - name: Deploy docs
+      shell: bash
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/deploy_docs.py" \
+          --source-dir ~/_docs_build \
+          --target-dir _deploy_target \
+          --branch "${{ inputs.source-branch }}" \
+          --target-branch "${{ inputs.target-branch }}" \
+          --commit-message "${{ inputs.commit-message }}"

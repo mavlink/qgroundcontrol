@@ -1,0 +1,85 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "component": "MapProviderSettings",
+            "sectionName": "Map Provider",
+            "keywords": [
+                "map provider",
+                "satellite",
+                "terrain",
+                "street",
+                "hybrid",
+                "google",
+                "bing"
+            ]
+        },
+        {
+            "component": "OfflineMapSettings",
+            "sectionName": "Offline Maps",
+            "keywords": [
+                "offline",
+                "download",
+                "cache",
+                "tile set"
+            ]
+        },
+        {
+            "heading": "Tokens",
+            "keywords": ["token", "api key", "tianditu", "mapbox", "esri", "vworld", "openaip"],
+            "headingDescription": "qsTr(\"Allows access to additional providers\")",
+            "controls": [
+                {
+                    "setting": "appSettings.tiandituToken"
+                },
+                {
+                    "setting": "appSettings.mapboxToken"
+                },
+                {
+                    "setting": "appSettings.esriToken"
+                },
+                {
+                    "setting": "appSettings.vworldToken"
+                },
+                {
+                    "setting": "appSettings.openaipToken"
+                }
+            ]
+        },
+        {
+            "heading": "Mapbox Login",
+            "keywords": ["mapbox", "account", "style"],
+            "controls": [
+                {
+                    "setting": "appSettings.mapboxAccount"
+                },
+                {
+                    "setting": "appSettings.mapboxStyle"
+                }
+            ]
+        },
+        {
+            "heading": "Custom Map URL",
+            "keywords": ["custom map", "wms", "tile url", "tile server"],
+            "headingDescription": "qsTr(\"URL with {x} {y} {z} or {zoom} substitutions\")",
+            "controls": [
+                {
+                    "setting": "appSettings.customURL"
+                }
+            ]
+        },
+        {
+            "heading": "Tile Cache",
+            "keywords": ["cache", "disk size", "memory size", "tile cache"],
+            "controls": [
+                {
+                    "setting": "mapsSettings.maxCacheDiskSize"
+                },
+                {
+                    "setting": "mapsSettings.maxCacheMemorySize"
+                }
+            ]
+        }
+    ]
+}

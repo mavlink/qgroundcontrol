@@ -1,0 +1,82 @@
+name: Gate on Platform Workflows
+description: >-
+  Check that every platform workflow has completed (and optionally succeeded)
+  for a given head SHA. Caches the API response to a JSON file so downstream
+  scripts can reuse it instead of re-paginating.
+
+inputs:
+  platform-workflows:
+    description: Comma-separated platform workflow names (e.g. "Linux,Windows,MacOS,Android")
+    required: true
+  head-sha:
+    description: Head SHA to look up runs for
+    required: true
+  event:
+    description: "Workflow trigger event to filter on: 'pull_request' or 'push'"
+    required: true
+  require-success:
+    description: "If true, every run must be conclusion=success (not just completed)"
+    required: false
+    default: 'false'
+  runs-cache-path:
+    description: File path to write the workflow-runs JSON cache to
+    required: true
+
+outputs:
+  ready:
+    description: "'true' when every platform workflow meets the gate condition"
+    value: ${{ steps.gate.outputs.ready }}
+
+runs:
+  using: composite
+  steps:
+    - id: gate
+      uses: actions/github-script@v9
+      env:
+        PLATFORM_WORKFLOWS: ${{ inputs.platform-workflows }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        GATE_EVENT: ${{ inputs.event }}
+        REQUIRE_SUCCESS: ${{ inputs.require-success }}
+        RUNS_CACHE: ${{ inputs.runs-cache-path }}
+      with:
+        script: |
+          const fs = require('fs');
+          const wanted = new Set(process.env.PLATFORM_WORKFLOWS.split(',').map(s => s.trim()));
+          const requireSuccess = process.env.REQUIRE_SUCCESS === 'true';
+          const runs = await github.paginate(
+            github.rest.actions.listWorkflowRunsForRepo,
+            {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: process.env.HEAD_SHA,
+              event: process.env.GATE_EVENT,
+              per_page: 100
+            }
+          );
+          fs.writeFileSync(process.env.RUNS_CACHE, JSON.stringify(runs));
+          const latest = new Map();
+          for (const run of runs) {
+            if (!wanted.has(run.name)) continue;
+            const prev = latest.get(run.name);
+            if (!prev || new Date(run.created_at) > new Date(prev.created_at)) {
+              latest.set(run.name, run);
+            }
+          }
+          const missing = [...wanted].filter(n => !latest.has(n));
+          const notReady = [...latest.values()].filter(r => {
+            if (r.status !== 'completed') return true;
+            return requireSuccess && r.conclusion !== 'success';
+          });
+          const ready = missing.length === 0 && notReady.length === 0;
+          if (!ready) {
+            const reasons = [];
+            if (missing.length) reasons.push(`missing: ${missing.join(', ')}`);
+            if (notReady.length) {
+              const detail = requireSuccess
+                ? notReady.map(r => `${r.name} (${r.status}/${r.conclusion})`).join(', ')
+                : notReady.map(r => r.name).join(', ');
+              reasons.push(requireSuccess ? `not successful: ${detail}` : `still running: ${detail}`);
+            }
+            core.info(`Gate not ready — ${reasons.join('; ')}`);
+          }
+          core.setOutput('ready', ready ? 'true' : 'false');

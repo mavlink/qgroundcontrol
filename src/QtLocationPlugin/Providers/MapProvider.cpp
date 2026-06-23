@@ -1,9 +1,29 @@
 #include "MapProvider.h"
 #include <QGCLoggingCategory.h>
 
+#include "QGCTileSet.h"
+
 #include <QtCore/QLocale>
+#include <QtCore/QUrl>
+#include <QtLocation/private/qgeomaptype_p.h>
 
 QGC_LOGGING_CATEGORY(MapProviderLog, "QtLocationPlugin.MapProvider")
+
+// MapProvider::MapStyle mirrors QGeoMapType::MapStyle to keep the public
+// header free of <QtLocation/private/qgeomaptype_p.h>. Catch drift at compile
+// time so the two enums never disagree.
+static_assert(static_cast<int>(MapProvider::NoMap)            == static_cast<int>(QGeoMapType::NoMap));
+static_assert(static_cast<int>(MapProvider::StreetMap)        == static_cast<int>(QGeoMapType::StreetMap));
+static_assert(static_cast<int>(MapProvider::SatelliteMapDay)  == static_cast<int>(QGeoMapType::SatelliteMapDay));
+static_assert(static_cast<int>(MapProvider::SatelliteMapNight)== static_cast<int>(QGeoMapType::SatelliteMapNight));
+static_assert(static_cast<int>(MapProvider::TerrainMap)       == static_cast<int>(QGeoMapType::TerrainMap));
+static_assert(static_cast<int>(MapProvider::HybridMap)        == static_cast<int>(QGeoMapType::HybridMap));
+static_assert(static_cast<int>(MapProvider::TransitMap)       == static_cast<int>(QGeoMapType::TransitMap));
+static_assert(static_cast<int>(MapProvider::GrayStreetMap)    == static_cast<int>(QGeoMapType::GrayStreetMap));
+static_assert(static_cast<int>(MapProvider::PedestrianMap)    == static_cast<int>(QGeoMapType::PedestrianMap));
+static_assert(static_cast<int>(MapProvider::CarNavigationMap) == static_cast<int>(QGeoMapType::CarNavigationMap));
+static_assert(static_cast<int>(MapProvider::CycleMap)         == static_cast<int>(QGeoMapType::CycleMap));
+static_assert(static_cast<int>(MapProvider::CustomMap)        == static_cast<int>(QGeoMapType::CustomMap));
 
 // QtLocation expects MapIds to start at 1 and be sequential.
 int MapProvider::_mapIdIndex = 1;
@@ -13,7 +33,7 @@ MapProvider::MapProvider(
     const QString &referrer,
     const QString &imageFormat,
     quint32 averageSize,
-    QGeoMapType::MapStyle mapStyle)
+    MapStyle mapStyle)
     : _mapName(mapName)
     , _referrer(referrer)
     , _imageFormat(imageFormat)

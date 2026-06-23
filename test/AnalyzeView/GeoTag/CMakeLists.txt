@@ -34,3 +34,10 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "GeoTagTest_res"
     FILES
         DSCN0010.jpg
 )
+
+add_qgc_test(DataFlashParserTest LABELS Integration AnalyzeView RESOURCE_LOCK TempFiles)
+add_qgc_test(ExifParserTest LABELS Integration AnalyzeView RESOURCE_LOCK TempFiles)
+add_qgc_test(GeoTagControllerTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFiles)
+add_qgc_test(GeoTagDataTest LABELS Unit AnalyzeView)
+add_qgc_test(GeoTagImageModelTest LABELS Unit AnalyzeView)
+add_qgc_test(ULogParserTest LABELS Integration AnalyzeView RESOURCE_LOCK TempFiles)

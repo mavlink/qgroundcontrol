@@ -1,5 +1,4 @@
 #include "SimulatedPosition.h"
-#include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"

@@ -166,6 +166,7 @@ Item {
     MapScale {
         id:                 mapScale
         anchors.left:       toolStrip.right
+        anchors.leftMargin: _toolsMargin
         anchors.top:        parent.top
         mapControl:         _mapControl
         autoHide:           true

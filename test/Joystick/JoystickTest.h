@@ -19,6 +19,7 @@ class JoystickTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
     void init() override;
     void cleanup() override;
 
@@ -47,6 +48,7 @@ private slots:
     // Calibration tests
     void _calibrationDataTest();
     void _adjustRangeTest();
+    void _adjustRangeToRcOverridePwmTest();
 
     // Error handling tests
     void _invalidAxisIndexTest();
@@ -55,6 +57,8 @@ private slots:
 
     // Hot-plug tests
     void _joystickDisconnectTest();
+    void _instanceIdReuseNameMismatchTest();
+    void _staleCacheDeletedAfterRediscoverTest();
 
     // Hat-to-button mapping tests
     void _hatButtonMappingTest();

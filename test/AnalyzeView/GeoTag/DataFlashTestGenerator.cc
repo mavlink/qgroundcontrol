@@ -1,12 +1,11 @@
 #include "DataFlashTestGenerator.h"
 
-#include <QtCore/QFile>
 #include <QtCore/QDataStream>
+#include <QtCore/QFile>
 
 #include <cstring>
 
-namespace DataFlashTestGenerator
-{
+namespace DataFlashTestGenerator {
 
 namespace {
 
@@ -19,19 +18,19 @@ constexpr uint8_t kCamMessageType = 129;
 // FMT message is 86 bytes after header (89 total)
 // Type(1) + Length(1) + Name(4) + Format(16) + Columns(64) = 86 bytes payload
 
-void writeByte(QDataStream &stream, uint8_t value)
+void writeByte(QDataStream& stream, uint8_t value)
 {
     stream.writeRawData(reinterpret_cast<const char*>(&value), 1);
 }
 
-void writeHeader(QDataStream &stream)
+void writeHeader(QDataStream& stream)
 {
     writeByte(stream, kHeaderByte1);
     writeByte(stream, kHeaderByte2);
 }
 
-void writeFmtMessage(QDataStream &stream, uint8_t type, uint8_t length,
-                     const char *name, const char *format, const char *columns)
+void writeFmtMessage(QDataStream& stream, uint8_t type, uint8_t length, const char* name, const char* format,
+                     const char* columns)
 {
     writeHeader(stream);
     writeByte(stream, kFmtMessageType);
@@ -55,7 +54,7 @@ void writeFmtMessage(QDataStream &stream, uint8_t type, uint8_t length,
     stream.writeRawData(columnsBuf, 64);
 }
 
-void writeCamMessage(QDataStream &stream, const CameraCaptureEvent &event)
+void writeCamMessage(QDataStream& stream, const CameraCaptureEvent& event)
 {
     writeHeader(stream);
     writeByte(stream, kCamMessageType);
@@ -88,9 +87,9 @@ void writeCamMessage(QDataStream &stream, const CameraCaptureEvent &event)
     stream.writeRawData(reinterpret_cast<const char*>(&event.yaw), sizeof(event.yaw));
 }
 
-} // namespace
+}  // namespace
 
-bool generateDataFlashLog(const QString &filename, const QList<CameraCaptureEvent> &events)
+bool generateDataFlashLog(const QString& filename, const QList<CameraCaptureEvent>& events)
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly)) {
@@ -110,7 +109,7 @@ bool generateDataFlashLog(const QString &filename, const QList<CameraCaptureEven
     writeFmtMessage(stream, kCamMessageType, 39, "CAM", "QILLffff", "TimeUS,Img,Lat,Lng,Alt,R,P,Y");
 
     // Write CAM messages
-    for (const CameraCaptureEvent &event : events) {
+    for (const CameraCaptureEvent& event : events) {
         writeCamMessage(stream, event);
     }
 

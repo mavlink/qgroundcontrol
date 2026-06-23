@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
@@ -8,8 +7,6 @@
 #include "MAVLinkLib.h"
 
 class MockLink;
-
-Q_DECLARE_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog)
 
 class MockLinkMissionItemHandler : public QObject
 {
@@ -25,7 +22,7 @@ public:
     /// Called to handle mission item related messages. All messages should be passed to this method.
     /// It will handle the appropriate set.
     ///     @return true: message handled
-    bool handleMessage(const mavlink_message_t &msg);
+    bool handleMavlinkMessage(const mavlink_message_t &msg);
 
     enum FailureMode_t {
         FailNone,                           // No failures
@@ -65,9 +62,16 @@ public:
     void sendUnexpectedMissionRequest();
 
     /// Reset the state of the MissionItemHandler to no items, no transactions in progress.
-    void reset() { _missionItems.clear(); }
+    void reset() { _missionItems.clear(); _requestListCounts.clear(); }
+
+    /// Test-only: seeds a simple multirotor mission (takeoff, waypoint, RTL) so that a
+    /// connecting GCS will download a non-empty mission.
+    void loadSimpleMultirotorMission();
 
     void setSendHomePositionOnEmptyList(bool sendHomePositionOnEmptyList) { _sendHomePositionOnEmptyList = sendHomePositionOnEmptyList; }
+
+    int requestListCount(MAV_MISSION_TYPE type) const { return _requestListCounts.value(type, 0); }
+    void clearRequestListCounts() { _requestListCounts.clear(); }
 
 private slots:
     void _missionItemResponseTimeout();
@@ -101,4 +105,5 @@ private:
     bool _failReadRequestListFirstResponse = true;
     bool _failReadRequest1FirstResponse = true;
     bool _failWriteMissionCountFirstResponse = true;
+    QMap<MAV_MISSION_TYPE, int> _requestListCounts;
 };

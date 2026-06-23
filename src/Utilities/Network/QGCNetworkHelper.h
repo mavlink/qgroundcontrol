@@ -11,7 +11,9 @@
 #include <QtNetwork/QHttpPart>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
+#include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslConfiguration>
+#include <QtNetwork/QSslKey>
 
 class QIODevice;
 class QNetworkAccessManager;
@@ -140,6 +142,10 @@ QString urlFileName(const QUrl& url);
 /// Get URL without query string and fragment
 QUrl urlWithoutQuery(const QUrl& url);
 
+/// Return a URL safe for logs by removing user info, query, and fragment.
+QString redactedUrlForLogging(const QUrl& url);
+QString redactedUrlForLogging(const QString& url);
+
 // ============================================================================
 // Request Configuration
 // ============================================================================
@@ -249,6 +255,24 @@ QSslConfiguration createInsecureSslConfig();
 /// @param request Request to modify
 /// @param config SSL configuration to apply
 void applySslConfig(QNetworkRequest& request, const QSslConfiguration& config);
+
+/// Load CA certificates from a PEM file
+/// @param filePath Path to PEM file containing one or more certificates
+/// @param errorOut Optional pointer to receive error message
+/// @return List of certificates (empty on failure)
+QList<QSslCertificate> loadCaCertificates(const QString& filePath, QString* errorOut = nullptr);
+
+/// Load a client certificate and private key from PEM files
+/// Tries RSA first, then EC for the key format
+/// @param certPath Path to PEM file containing the client certificate
+/// @param keyPath Path to PEM file containing the private key
+/// @param certOut Receives the loaded certificate
+/// @param keyOut Receives the loaded key
+/// @param errorOut Optional pointer to receive error message
+/// @return true on success
+bool loadClientCertAndKey(const QString& certPath, const QString& keyPath,
+                          QSslCertificate& certOut, QSslKey& keyOut,
+                          QString* errorOut = nullptr);
 
 // ============================================================================
 // JSON Response Helpers
@@ -367,22 +391,5 @@ QNetworkAccessManager* createNetworkManager(QObject* parent = nullptr);
 
 /// Set up default proxy configuration on a network manager
 void configureProxy(QNetworkAccessManager* manager);
-
-// ============================================================================
-// Compressed Data Helpers
-// ============================================================================
-
-/// Check if data appears to be compressed based on magic bytes
-/// Detects: gzip, xz, zstd, bzip2, lz4
-/// @param data Data to check (needs at least 4 bytes)
-/// @return true if data has a recognized compression magic signature
-bool looksLikeCompressedData(const QByteArray& data);
-
-/// Parse JSON that may be compressed
-/// Automatically detects and decompresses gzip, xz, zstd, bzip2, lz4 data
-/// @param data Raw data (compressed or uncompressed JSON)
-/// @param error Optional pointer to receive parse error details
-/// @return Parsed JSON document (null if parsing failed)
-QJsonDocument parseCompressedJson(const QByteArray& data, QJsonParseError* error = nullptr);
 
 }  // namespace QGCNetworkHelper

@@ -1,14 +1,12 @@
 #pragma once
 
 #include <QtQuick/QQuickItem>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactPanelController.h"
 
-Q_DECLARE_LOGGING_CATEGORY(SensorsComponentControllerLog)
-
-/// Sensors Component MVC Controller for SensorsComponent.qml.
+/// \brief Sensors Component MVC Controller for SensorsComponent.qml.
+///
 class SensorsComponentController : public FactPanelController
 {
     Q_OBJECT
@@ -16,26 +14,32 @@ class SensorsComponentController : public FactPanelController
 public:
     SensorsComponentController(void);
 
+    /// Calibration state of a single orientation side shown in the preview.
+    /// Values must stay in sync with the VehicleRotationCal.CalState QML enum.
+    enum SideCalState {
+        SideCalStateIdle,       ///< No calibration data to show (neutral preview)
+        SideCalStateIncomplete, ///< Calibration running, side not yet calibrated
+        SideCalStateInProgress, ///< Side actively being calibrated
+        SideCalStateCompleted   ///< Side calibration complete
+    };
+    Q_ENUM(SideCalState)
+
     Q_PROPERTY(QQuickItem* statusLog MEMBER _statusLog)
     Q_PROPERTY(QQuickItem* progressBar MEMBER _progressBar)
 
-    Q_PROPERTY(QQuickItem* compassButton MEMBER _compassButton)
-    Q_PROPERTY(QQuickItem* gyroButton MEMBER _gyroButton)
-    Q_PROPERTY(QQuickItem* accelButton MEMBER _accelButton)
-    Q_PROPERTY(QQuickItem* airspeedButton MEMBER _airspeedButton)
-    Q_PROPERTY(QQuickItem* levelButton MEMBER _levelButton)
-    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
-    Q_PROPERTY(QQuickItem* setOrientationsButton MEMBER _setOrientationsButton)
     Q_PROPERTY(QQuickItem* orientationCalAreaHelpText MEMBER _orientationCalAreaHelpText)
+
+    Q_PROPERTY(bool calibrationActive READ calibrationActive NOTIFY calibrationActiveChanged)
+    Q_PROPERTY(bool magCalInProgress MEMBER _magCalInProgress NOTIFY calibrationActiveChanged)
 
     Q_PROPERTY(bool showOrientationCalArea MEMBER _showOrientationCalArea NOTIFY showOrientationCalAreaChanged)
 
-    Q_PROPERTY(bool orientationCalDownSideDone MEMBER _orientationCalDownSideDone NOTIFY orientationCalSidesDoneChanged)
-    Q_PROPERTY(bool orientationCalUpsideDownSideDone MEMBER _orientationCalUpsideDownSideDone NOTIFY orientationCalSidesDoneChanged)
-    Q_PROPERTY(bool orientationCalLeftSideDone MEMBER _orientationCalLeftSideDone NOTIFY orientationCalSidesDoneChanged)
-    Q_PROPERTY(bool orientationCalRightSideDone MEMBER _orientationCalRightSideDone NOTIFY orientationCalSidesDoneChanged)
-    Q_PROPERTY(bool orientationCalNoseDownSideDone MEMBER _orientationCalNoseDownSideDone NOTIFY orientationCalSidesDoneChanged)
-    Q_PROPERTY(bool orientationCalTailDownSideDone MEMBER _orientationCalTailDownSideDone NOTIFY orientationCalSidesDoneChanged)
+    Q_PROPERTY(SideCalState orientationCalDownSideState MEMBER _orientationCalDownSideState NOTIFY orientationCalSidesStateChanged)
+    Q_PROPERTY(SideCalState orientationCalUpsideDownSideState MEMBER _orientationCalUpsideDownSideState NOTIFY orientationCalSidesStateChanged)
+    Q_PROPERTY(SideCalState orientationCalLeftSideState MEMBER _orientationCalLeftSideState NOTIFY orientationCalSidesStateChanged)
+    Q_PROPERTY(SideCalState orientationCalRightSideState MEMBER _orientationCalRightSideState NOTIFY orientationCalSidesStateChanged)
+    Q_PROPERTY(SideCalState orientationCalNoseDownSideState MEMBER _orientationCalNoseDownSideState NOTIFY orientationCalSidesStateChanged)
+    Q_PROPERTY(SideCalState orientationCalTailDownSideState MEMBER _orientationCalTailDownSideState NOTIFY orientationCalSidesStateChanged)
 
     Q_PROPERTY(bool orientationCalDownSideVisible MEMBER _orientationCalDownSideVisible NOTIFY orientationCalSidesVisibleChanged)
     Q_PROPERTY(bool orientationCalUpsideDownSideVisible MEMBER _orientationCalUpsideDownSideVisible NOTIFY orientationCalSidesVisibleChanged)
@@ -43,20 +47,6 @@ public:
     Q_PROPERTY(bool orientationCalRightSideVisible MEMBER _orientationCalRightSideVisible NOTIFY orientationCalSidesVisibleChanged)
     Q_PROPERTY(bool orientationCalNoseDownSideVisible MEMBER _orientationCalNoseDownSideVisible NOTIFY orientationCalSidesVisibleChanged)
     Q_PROPERTY(bool orientationCalTailDownSideVisible MEMBER _orientationCalTailDownSideVisible NOTIFY orientationCalSidesVisibleChanged)
-
-    Q_PROPERTY(bool orientationCalDownSideInProgress MEMBER _orientationCalDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
-    Q_PROPERTY(bool orientationCalUpsideDownSideInProgress MEMBER _orientationCalUpsideDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
-    Q_PROPERTY(bool orientationCalLeftSideInProgress MEMBER _orientationCalLeftSideInProgress NOTIFY orientationCalSidesInProgressChanged)
-    Q_PROPERTY(bool orientationCalRightSideInProgress MEMBER _orientationCalRightSideInProgress NOTIFY orientationCalSidesInProgressChanged)
-    Q_PROPERTY(bool orientationCalNoseDownSideInProgress MEMBER _orientationCalNoseDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
-    Q_PROPERTY(bool orientationCalTailDownSideInProgress MEMBER _orientationCalTailDownSideInProgress NOTIFY orientationCalSidesInProgressChanged)
-
-    Q_PROPERTY(bool orientationCalDownSideRotate MEMBER _orientationCalDownSideRotate NOTIFY orientationCalSidesRotateChanged)
-    Q_PROPERTY(bool orientationCalUpsideDownSideRotate MEMBER _orientationCalUpsideDownSideRotate NOTIFY orientationCalSidesRotateChanged)
-    Q_PROPERTY(bool orientationCalLeftSideRotate MEMBER _orientationCalLeftSideRotate NOTIFY orientationCalSidesRotateChanged)
-    Q_PROPERTY(bool orientationCalRightSideRotate MEMBER _orientationCalRightSideRotate NOTIFY orientationCalSidesRotateChanged)
-    Q_PROPERTY(bool orientationCalNoseDownSideRotate MEMBER _orientationCalNoseDownSideRotate NOTIFY orientationCalSidesRotateChanged)
-    Q_PROPERTY(bool orientationCalTailDownSideRotate MEMBER _orientationCalTailDownSideRotate NOTIFY orientationCalSidesRotateChanged)
 
     Q_PROPERTY(bool waitingForCancel MEMBER _waitingForCancel NOTIFY waitingForCancelChanged)
 
@@ -68,17 +58,19 @@ public:
     Q_INVOKABLE void cancelCalibration(void);
     Q_INVOKABLE bool usingUDPLink(void);
     Q_INVOKABLE void resetFactoryParameters();
+    Q_INVOKABLE void resetSidesToIdle(void);
+
+    bool calibrationActive() const { return _magCalInProgress || _gyroCalInProgress || _accelCalInProgress || _airspeedCalInProgress || _levelCalInProgress; }
 
 signals:
     void showGyroCalAreaChanged(void);
     void showOrientationCalAreaChanged(void);
-    void orientationCalSidesDoneChanged(void);
+    void orientationCalSidesStateChanged(void);
     void orientationCalSidesVisibleChanged(void);
-    void orientationCalSidesInProgressChanged(void);
-    void orientationCalSidesRotateChanged(void);
     void resetStatusTextArea(void);
     void waitingForCancelChanged(void);
     void magCalComplete(void);
+    void calibrationActiveChanged(void);
 
 private slots:
     void _handleUASTextMessage(int uasId, int compId, int severity, QString text, const QString &description);
@@ -90,7 +82,7 @@ private:
     void _appendStatusLog(const QString& text);
     void _refreshParams(void);
     void _hideAllCalAreas(void);
-    void _resetInternalState(void);
+    void _setAllSidesState(SideCalState state);
 
     enum StopCalibrationCode {
         StopCalibrationSuccess,
@@ -103,13 +95,6 @@ private:
 
     QQuickItem* _statusLog;
     QQuickItem* _progressBar;
-    QQuickItem* _compassButton;
-    QQuickItem* _gyroButton;
-    QQuickItem* _accelButton;
-    QQuickItem* _airspeedButton;
-    QQuickItem* _levelButton;
-    QQuickItem* _cancelButton;
-    QQuickItem* _setOrientationsButton;
     QQuickItem* _orientationCalAreaHelpText;
 
     bool _showGyroCalArea;
@@ -121,13 +106,6 @@ private:
     bool _airspeedCalInProgress;
     bool _levelCalInProgress;
 
-    bool _orientationCalDownSideDone;
-    bool _orientationCalUpsideDownSideDone;
-    bool _orientationCalLeftSideDone;
-    bool _orientationCalRightSideDone;
-    bool _orientationCalNoseDownSideDone;
-    bool _orientationCalTailDownSideDone;
-
     bool _orientationCalDownSideVisible;
     bool _orientationCalUpsideDownSideVisible;
     bool _orientationCalLeftSideVisible;
@@ -135,19 +113,12 @@ private:
     bool _orientationCalNoseDownSideVisible;
     bool _orientationCalTailDownSideVisible;
 
-    bool _orientationCalDownSideInProgress;
-    bool _orientationCalUpsideDownSideInProgress;
-    bool _orientationCalLeftSideInProgress;
-    bool _orientationCalRightSideInProgress;
-    bool _orientationCalNoseDownSideInProgress;
-    bool _orientationCalTailDownSideInProgress;
-
-    bool _orientationCalDownSideRotate;
-    bool _orientationCalUpsideDownSideRotate;
-    bool _orientationCalLeftSideRotate;
-    bool _orientationCalRightSideRotate;
-    bool _orientationCalNoseDownSideRotate;
-    bool _orientationCalTailDownSideRotate;
+    SideCalState _orientationCalDownSideState;
+    SideCalState _orientationCalUpsideDownSideState;
+    SideCalState _orientationCalLeftSideState;
+    SideCalState _orientationCalRightSideState;
+    SideCalState _orientationCalNoseDownSideState;
+    SideCalState _orientationCalTailDownSideState;
 
     bool _unknownFirmwareVersion;
     bool _waitingForCancel;

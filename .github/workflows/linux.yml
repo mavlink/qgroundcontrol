@@ -10,72 +10,78 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths:
-      - '.github/workflows/linux.yml'
-      - '.github/actions/**'
-      - 'deploy/linux/**'
-      - 'src/**'
-      - 'test/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
-      - 'tools/setup/*debian*'
-      - 'tools/setup/install_dependencies.py'
   merge_group:
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'Build type'
-        required: false
-        default: 'Release'
-        type: choice
-        options:
-          - Release
-          - Debug
-  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
+env:
+  # build-mode:manual can't produce overlay DBs (those need build-mode:none); disable the
+  # overlay attempt so CodeQL doesn't log the "falling back to a full database" message.
+  CODEQL_ACTION_OVERLAY_ANALYSIS: "false"
+
 permissions:
   contents: read
   id-token: write
   attestations: write
-  security-events: write
   actions: read
+  checks: write
 
 jobs:
+  changes:
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: linux
+
   build:
-    name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
-    runs-on: ${{ matrix.os }}
+    name: Release ${{ matrix.arch }}
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 120
+
+    # security-events: write is scoped here (CodeQL runs only in this job),
+    # not at workflow level — the debug/changes jobs cannot upload SARIF.
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      security-events: write
+      actions: read
+      checks: write
 
     strategy:
       fail-fast: false
       matrix:
-        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Debug", "Release"]') }}
-        os: [ubuntu-24.04-arm, ubuntu-22.04]
         include:
-          - os: ubuntu-24.04-arm
+          - arch: linux_gcc_arm64
+            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=c8g.2xlarge/image=ubuntu24-full-arm64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04-arm' }}
             package: QGroundControl-aarch64
             host: linux_arm64
-            arch: linux_gcc_arm64
 
-          - os: ubuntu-22.04
+          - arch: linux_gcc_64
+            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04' }}
             package: QGroundControl-x86_64
             host: linux
-            arch: linux_gcc_64
-
-        exclude:
-          - os: ubuntu-24.04-arm
-            build_type: Debug
 
     defaults:
       run:
         shell: bash
 
     steps:
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
+      # harden-runner is x86_64 Linux only — skip on the ubuntu-24.04-arm matrix entry.
+      # macOS/Windows runners no-op silently, so other workflows don't need the guard.
       - name: Harden Runner
+        if: runner.arch != 'ARM64'
         uses: step-security/harden-runner@v2
         with:
           egress-policy: audit
@@ -83,129 +89,299 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Initial Setup
-        uses: ./.github/actions/common
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: ${{ matrix.host }}
+          qt-arch: ${{ matrix.arch }}
+          build-type: Release
 
       - name: Install Dependencies
-        run: python3 ./tools/setup/install_dependencies.py --platform debian
-
-      - name: Setup Caching
-        uses: ./.github/actions/cache
-        with:
-          host: ${{ matrix.host }}
-          target: ${{ matrix.arch }}
-          build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}/build/cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt for Linux
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ steps.config.outputs.qt_version }}
-          host: ${{ matrix.host }}
-          arch: ${{ matrix.arch }}
-          modules: ${{ steps.config.outputs.qt_modules }}
+        uses: ./.github/actions/install-dependencies
 
       - name: Initialize CodeQL
-        if: matrix.build_type == 'Debug'
+        if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/master')) && runner.arch != 'ARM64'
         uses: github/codeql-action/init@v4
         with:
           languages: c-cpp
+          # c-cpp can't use overlay DBs (those require build-mode: none, interpreted-only); declare manual to match the cmake-build step below and silence the "undefined build-mode" fallback warning.
+          build-mode: manual
           config-file: ./.github/codeql/codeql-config.yml
+          trap-caching: false
+          dependency-caching: false
 
       - name: Configure
-        working-directory: ${{ runner.temp }}/build
-        run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-              -DQGC_BUILD_TESTING=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
-              -DQGC_ENABLE_COVERAGE=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }}
-              -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }}
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
 
       - name: Build
-        working-directory: ${{ runner.temp }}/build
-        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
+          reviewdog: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+          reviewdog-token: ${{ github.token }}
 
       - name: Perform CodeQL Analysis
-        if: matrix.build_type == 'Debug'
+        id: codeql
+        if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/master')) && runner.arch != 'ARM64'
         continue-on-error: true
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:c-cpp"
 
-      # Run tests via CTest for timeouts, parallel execution, and failure detection
-      # CTest sets QT_QPA_PLATFORM=offscreen automatically via test properties
-      - name: Run Unit Tests
-        if: matrix.build_type == 'Debug'
-        id: tests
-        working-directory: ${{ runner.temp }}/build
-        run: |
-          set +e
-          ctest --output-on-failure --parallel $(nproc) -LE Flaky --output-junit junit-results.xml 2>&1 | tee test-output.txt
-          TEST_EXIT_CODE=${PIPESTATUS[0]}
-          echo "exit_code=$TEST_EXIT_CODE" >> $GITHUB_OUTPUT
-          exit $TEST_EXIT_CODE
+      - name: Annotate CodeQL failure
+        if: steps.codeql.outcome == 'failure'
+        run: echo "::warning::CodeQL analysis failed — see step log for details"
 
-      - name: Upload Test Results
-        if: matrix.build_type == 'Debug' && always()
-        uses: actions/upload-artifact@v6
+      - name: Verify Executable
+        uses: ./.github/actions/verify-executable
         with:
-          name: test-results-${{ matrix.arch }}
-          path: |
-            ${{ runner.temp }}/build/test-output.txt
-            ${{ runner.temp }}/build/junit-results.xml
-            ${{ runner.temp }}/build/junit-results-*.xml
+          binary-path: ${{ runner.temp }}/build/Release/QGroundControl
+
+      - name: Analyze binary size
+        if: matrix.arch == 'linux_gcc_64'
+        uses: ./.github/actions/size-analysis
+        with:
+          binary-path: ${{ runner.temp }}/build/Release/QGroundControl
+          output-file: ${{ runner.temp }}/build/metrics.json
+
+      - name: Upload metrics artifact
+        if: matrix.arch == 'linux_gcc_64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: size-metrics
+          path: ${{ runner.temp }}/build/metrics.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Create AppImage
+        uses: ./.github/actions/cmake-install
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Release
+
+      - name: Verify AppImage
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
+          type: appimage
+
+      - name: Attest and Upload
+        uses: ./.github/actions/attest-and-upload
+        with:
+          artifact-name: ${{ matrix.package }}.AppImage
+          package-name: ${{ matrix.package }}
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+
+  debug-matrix:
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      include: ${{ steps.build.outputs.include }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/scripts/linux_debug_matrix.py
+            .github/scripts/ci_bootstrap.py
+            tools/_bootstrap.py
+            tools/common/__init__.py
+            tools/common/file_traversal.py
+            tools/common/gh_actions.py
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+      - name: Build matrix
+        id: build
+        env:
+          IS_PR: ${{ github.event_name == 'pull_request' && '1' || '0' }}
+        run: python3 .github/scripts/linux_debug_matrix.py
+
+  debug-validation:
+    name: ${{ matrix.job_name }}
+    needs: [changes, debug-matrix]
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=m8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04' }}
+    timeout-minutes: ${{ matrix.timeout_minutes }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.debug-matrix.outputs.include) }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: linux
+          qt-arch: linux_gcc_64
+          build-type: Debug
+          cache-variant: ${{ matrix.mode }}
+
+      - name: Install Dependencies
+        uses: ./.github/actions/install-dependencies
+
+      - name: Ensure coverage tools are available
+        if: matrix.mode == 'coverage'
+        run: |
+          if ! command -v gcovr >/dev/null 2>&1; then
+            pipx install gcovr
+          fi
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+          testing: 'true'
+          coverage: ${{ matrix.mode == 'coverage' && 'true' || 'false' }}
+          extra-args: ${{ matrix.configure_extra }}
+
+      - name: Build
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: Debug
+
+      # Split by label so Unit parallelizes; Integration serializes on shared MockLink/LinkManager state.
+      - name: Run Unit Tests (parallel)
+        id: unit_tests
+        uses: ./.github/actions/run-unit-tests
+        env:
+          ASAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
+          LSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
+          UBSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-linux-${{ matrix.mode }}-unit.xml
+          ctest-output: test-output-linux-${{ matrix.mode }}-unit.txt
+          include-labels: 'Unit'
+          exclude-labels: ${{ matrix.exclude_labels }}
+          # Coverage requires serial execution (gcov writes race); sanitizers don't.
+          parallel: ${{ matrix.mode == 'coverage' && '1' || 'auto' }}
+
+      - name: Run Integration Tests (serial)
+        id: integration_tests
+        if: always() && !cancelled() && steps.unit_tests.conclusion != 'cancelled'
+        uses: ./.github/actions/run-unit-tests
+        env:
+          ASAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && 'detect_leaks=1:halt_on_error=1:check_initialization_order=1' || '' }}
+          LSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('suppressions={0}/build/asan_suppressions.txt', runner.temp) || '' }}
+          UBSAN_OPTIONS: ${{ matrix.mode == 'sanitizers' && format('print_stacktrace=1:halt_on_error=1:suppressions={0}/build/ubsan_suppressions.txt', runner.temp) || '' }}
+        with:
+          build-dir: ${{ runner.temp }}/build
+          junit-output: junit-results-linux-${{ matrix.mode }}-integration.xml
+          ctest-output: test-output-linux-${{ matrix.mode }}-integration.txt
+          include-labels: 'Integration'
+          exclude-labels: ${{ matrix.exclude_labels }}
+          parallel: '1'
+
+      - name: Analyze Unit Test Durations (unit)
+        if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
+        uses: ./.github/actions/test-duration-report
+        with:
+          junit-path: ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}-unit.xml
+          report-json-path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}-unit.json
+          top-n: '20'
+          slow-threshold-seconds: '60'
+
+      - name: Analyze Unit Test Durations (integration)
+        if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
+        uses: ./.github/actions/test-duration-report
+        with:
+          junit-path: ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}-integration.xml
+          report-json-path: ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}-integration.json
+          top-n: '20'
+          slow-threshold-seconds: '60'
+
+      - name: Report Test Results (unit)
+        if: always() && !cancelled() && steps.unit_tests.conclusion != 'skipped'
+        uses: ./.github/actions/test-report
+        with:
+          name: Unit Tests (${{ matrix.mode }})
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-results-linux-${{ matrix.mode }}-unit.xml
+          output-file: test-output-linux-${{ matrix.mode }}-unit.txt
+          artifact-name: test-results-linux-${{ matrix.mode }}-unit
           retention-days: 7
 
-      - name: Upload to Trunk Flaky Tests
-        if: matrix.build_type == 'Debug' && always() && github.event_name != 'pull_request'
-        continue-on-error: true
-        uses: trunk-io/analytics-uploader@v1
+      - name: Report Test Results (integration)
+        if: always() && !cancelled() && steps.integration_tests.conclusion != 'skipped'
+        uses: ./.github/actions/test-report
         with:
-          junit-paths: ${{ runner.temp }}/build/junit-results*.xml
-          org-slug: ${{ vars.TRUNK_ORG_SLUG }}
-          token: ${{ secrets.TRUNK_TOKEN }}
+          name: Integration Tests (${{ matrix.mode }})
+          build-dir: ${{ runner.temp }}/build
+          junit-file: junit-results-linux-${{ matrix.mode }}-integration.xml
+          output-file: test-output-linux-${{ matrix.mode }}-integration.txt
+          artifact-name: test-results-linux-${{ matrix.mode }}-integration
+          retention-days: 7
+
+      - name: Upload Test Artifacts
+        if: always() && !cancelled() && (steps.unit_tests.conclusion != 'skipped' || steps.integration_tests.conclusion != 'skipped')
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-artifacts-linux-${{ matrix.mode }}
+          path: |
+            ${{ runner.temp }}/build/test-output-linux-${{ matrix.mode }}-*.txt
+            ${{ runner.temp }}/build/junit-results-linux-${{ matrix.mode }}-*.xml
+            ${{ runner.temp }}/build/test-duration-linux-${{ matrix.mode }}-*.json
+          retention-days: 7
+
+      - name: Verify coverage data files exist
+        if: matrix.mode == 'coverage'
+        working-directory: ${{ runner.temp }}/build
+        run: |
+          gcda_count=$(find . -name '*.gcda' | wc -l | tr -d '[:space:]')
+          echo "Detected ${gcda_count} .gcda files"
+          if [ "${gcda_count}" -eq 0 ]; then
+            echo "::error::No .gcda files were produced by test execution"
+            exit 1
+          fi
 
       - name: Coverage Report
-        if: matrix.build_type == 'Debug'
+        if: matrix.mode == 'coverage'
         uses: ./.github/actions/coverage
         with:
           build-dir: ${{ runner.temp }}/build
+          mode: report-only
 
-      - name: Verify Executable
-        if: matrix.build_type == 'Release'
-        working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
-        run: xvfb-run -a ./QGroundControl --simple-boot-test
-
-      - name: Create AppImage
+      - name: Verify Coverage Thresholds
+        if: matrix.mode == 'coverage'
         working-directory: ${{ runner.temp }}/build
-        run: cmake --install . --config ${{ matrix.build_type }}
-
-      - name: Verify AppImage
-        if: matrix.build_type == 'Release'
-        working-directory: ${{ runner.temp }}/build
-        run: xvfb-run -a ./${{ matrix.package }}.AppImage --simple-boot-test
-
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: '${{ runner.temp }}/build/${{ matrix.package }}.AppImage'
-
-      - name: Upload Build File
-        if: matrix.build_type == 'Release'
-        uses: ./.github/actions/upload
-        with:
-          artifact_name: ${{ matrix.package }}.AppImage
-          package_name: ${{ matrix.package }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+        run: |
+          line_thresh=$(python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" \
+            cache-var --build-dir . --name QGC_COVERAGE_LINE_THRESHOLD --default 30)
+          branch_thresh=$(python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" \
+            cache-var --build-dir . --name QGC_COVERAGE_BRANCH_THRESHOLD --default 20)
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_coverage_thresholds.py" \
+            --coverage-xml coverage.xml \
+            --line-threshold "${line_thresh}" \
+            --branch-threshold "${branch_thresh}"

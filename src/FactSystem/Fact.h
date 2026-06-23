@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutexLocker>
 #include <QtCore/QObject>
 #include <QtCore/QRecursiveMutex>
@@ -12,9 +11,8 @@
 
 class FactValueSliderListModel;
 
-Q_DECLARE_LOGGING_CATEGORY(FactLog)
-
-/// A Fact is used to hold a single value within the system.
+/// \brief A Fact is used to hold a single value within the system.
+///
 class Fact : public QObject
 {
     Q_OBJECT
@@ -49,6 +47,7 @@ class Fact : public QObject
     Q_PROPERTY(bool         vehicleRebootRequired   READ vehicleRebootRequired                                  CONSTANT)
     Q_PROPERTY(bool         qgcRebootRequired       READ qgcRebootRequired                                      CONSTANT)
     Q_PROPERTY(QString      shortDescription        READ shortDescription                                       CONSTANT)
+    Q_PROPERTY(QString      label                   READ label                                                  CONSTANT)
     Q_PROPERTY(QString      units                   READ cookedUnits                                            CONSTANT)
     Q_PROPERTY(QVariant     value                   READ cookedValue                WRITE setCookedValue        NOTIFY valueChanged)
     Q_PROPERTY(QVariant     rawValue                READ rawValue                   WRITE setRawValue           NOTIFY rawValueChanged)
@@ -120,6 +119,7 @@ public:
     QVariant cookedUserMax() const;
     QString cookedUserMaxString() const;
     QString name() const { return _name; }
+    QString label() const;
     QString shortDescription() const;
     FactMetaData::ValueType_t type() const { return _type; }
     QString cookedUnits() const;
@@ -202,7 +202,6 @@ protected:
     QString _name;
     int _componentId = -1;
     QVariant _rawValue{0};
-    bool _rawValueIsNotSet = true;
     mutable QRecursiveMutex _rawValueMutex;
     FactMetaData::ValueType_t _type = FactMetaData::valueTypeInt32;
     FactMetaData *_metaData = nullptr;

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QSet>
 #include <QtCore/QTimer>
 #include <QtCore/QTranslator>
-#include <QtWidgets/QApplication>
+#include <QtGui/QGuiApplication>
 
 namespace QGCCommandLineParser {
     struct CommandLineParseResult;
@@ -24,7 +24,7 @@ struct QMetaObject;
 #if defined(qApp)
 #undef qApp
 #endif
-#define qApp (static_cast<QGCApplication*>(QApplication::instance()))
+#define qApp (static_cast<QGCApplication*>(QGuiApplication::instance()))
 
 #if defined(qGuiApp)
 #undef qGuiApp
@@ -33,12 +33,9 @@ struct QMetaObject;
 
 #define qgcApp() qApp
 
-Q_DECLARE_LOGGING_CATEGORY(QGCApplicationLog)
-
-/// The main application and management class.
-/// Needs QApplication base to support QtCharts module.
-/// TODO: Use QtGraphs to convert to QGuiApplication
-class QGCApplication : public QApplication
+/// \brief The main application and management class.
+///
+class QGCApplication : public QGuiApplication
 {
     Q_OBJECT
 
@@ -48,14 +45,9 @@ public:
     QGCApplication(int &argc, char *argv[], const QGCCommandLineParser::CommandLineParseResult &args);
     ~QGCApplication();
 
-    /// Sets the persistent flag to delete all settings the next time QGroundControl is started.
-    static void deleteAllSettingsNextBoot();
-
-    /// Clears the persistent flag to delete all settings the next time QGroundControl is started.
-    static void clearDeleteAllSettingsNextBoot();
-
     bool runningUnitTests() const { return _runningUnitTests; }
     bool simpleBootTest() const { return _simpleBootTest; }
+    bool bootTestPassed() const { return _bootTestPassed; }
 
     /// Returns true if Qt debug output should be logged to a file
     bool logOutput() const { return _logOutput; }
@@ -70,9 +62,6 @@ public:
     void setLanguage();
     QQuickWindow *mainRootWindow();
     uint64_t msecsSinceBoot() const { return _msecsElapsedTime.elapsed(); }
-    QString numberToString(quint64 number);
-    QString bigSizeToString(quint64 size);
-    QString bigSizeMBToString(quint64 size_MB);
 
     /// Registers the signal such that only the last duplicate signal added is left in the queue.
     void addCompressedSignal(const QMetaMethod &method);
@@ -125,7 +114,9 @@ private slots:
 private:
     bool compressEvent(QEvent *event, QObject *receiver, QPostEventList *postedEvents) final;
 
-    void _initVideo();
+    bool _initVideo();
+
+    bool _initQmlRootWindow();
 
     /// Initialize the application for normal application boot. Or in other words we are not going to run unit tests.
     void _initForNormalAppBoot();
@@ -156,6 +147,7 @@ private:
     bool _showErrorsInToolbar = false;
     QElapsedTimer _msecsElapsedTime;
     bool _videoManagerInitialized = false;
+    bool _bootTestPassed = true;
 
     QList<QPair<QString /* title */, QString /* message */>> _delayedAppMessages;
 
@@ -179,7 +171,8 @@ private:
     CompressedSignalList _compressedSignals;
 
     const QString _settingsVersionKey = QStringLiteral("SettingsVersion"); ///< Settings key which hold settings version
-    static constexpr const char *_deleteAllSettingsKey = "DeleteAllSettingsNextBoot"; ///< If this settings key is set on boot, all settings will be deleted
 
     const QString _qgcImageProviderId = QStringLiteral("QGCImages");
 };
+
+Q_DECLARE_LOGGING_CATEGORY(QGCAppMessageLog)

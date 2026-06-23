@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 
 #ifdef Q_OS_ANDROID
@@ -9,12 +8,10 @@
 #include <QtSerialPort/QSerialPort>
 #endif
 
-Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeLog)
-Q_DECLARE_LOGGING_CATEGORY(FirmwareUpgradeVerboseLog)
-
 class FirmwareImage;
 
-/// Bootloader Utility routines. Works with PX4 and 3DR Radio bootloaders.
+/// \brief Bootloader Utility routines. Works with PX4 and 3DR Radio bootloaders.
+///
 class Bootloader : public QObject
 {
     Q_OBJECT

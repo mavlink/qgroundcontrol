@@ -1,9 +1,9 @@
 import QtQuick
+import QtQuick.Effects
 
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
-import Qt5Compat.GraphicalEffects
 
 Item {
     id: root
@@ -87,18 +87,25 @@ Item {
         }
     }
 
-    Rectangle {
-        id:             mask
-        anchors.fill:   instrument
-        radius:         width / 2
-        color:          "black"
-        visible:        false
+    MultiEffect {
+        source:       instrument
+        anchors.fill: instrument
+        maskEnabled:  true
+        maskSource:   mask
     }
 
-    OpacityMask {
-        anchors.fill:   instrument
-        source:         instrument
-        maskSource:     mask
+    Item {
+        id:            mask
+        width:         instrument.width
+        height:        instrument.height
+        layer.enabled: true
+        visible:       false
+        Rectangle {
+            width:  parent.width
+            height: parent.height
+            radius: width / 2
+            color:  "black"
+        }
     }
 
     Rectangle {

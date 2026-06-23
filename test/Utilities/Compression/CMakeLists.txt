@@ -40,3 +40,7 @@ qt_add_resources(${CMAKE_PROJECT_NAME} "UtilitiesTest_CompressionTest_res"
     PREFIX "/unittest"
     FILES ${_COMPRESSION_TEST_FILES}
 )
+
+add_qgc_test(QGCArchiveModelTest LABELS Unit Utilities)
+add_qgc_test(QGCCompressionTest LABELS Unit Utilities RESOURCE_LOCK TempFiles)
+add_qgc_test(QGCStreamingDecompressionTest LABELS Unit Utilities)

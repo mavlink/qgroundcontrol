@@ -1,0 +1,11 @@
+{{ indent }}LabelledLabel {
+{{ indent }}    Layout.fillWidth: true
+{{ indent }}    label: {{ label_expr }}
+{{ indent }}    labelText: {{ value }}
+{% if show_when %}
+{{ indent }}    visible: {{ show_when }}
+{% endif %}
+{% if enable_when %}
+{{ indent }}    enabled: {{ enable_when }}
+{% endif %}
+{{ indent }}}

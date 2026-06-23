@@ -34,14 +34,16 @@ endif()
 # ----------------------------------------------------------------------------
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(CMAKE_AUTOGEN_USE_SYSTEM_INCLUDE ON)
 
 # Include compiler warnings configuration
 include(CompilerWarnings)
 
 # set(CMAKE_EXPORT_BUILD_DATABASE ON)
 
-if(CMAKE_EXPORT_COMPILE_COMMANDS AND NOT WIN32)
+# In-source builds make link and target the same path, which CREATE_LINK rejects.
+if(CMAKE_EXPORT_COMPILE_COMMANDS AND NOT WIN32 AND NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
     file(CREATE_LINK
         "${CMAKE_BINARY_DIR}/compile_commands.json"
         "${CMAKE_SOURCE_DIR}/compile_commands.json"
@@ -83,11 +85,31 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         qgc_set_linker()
     endif()
 
+    # Split-DWARF for faster Debug links. Must run after qgc_set_linker()
+    # so QGC_LINKER is populated when deciding whether to add --gdb-index.
+    qgc_enable_split_dwarf()
+
+    # Build profiling: -ftime-trace emits per-TU Chrome-tracing JSON next to each .o.
+    # Aggregate with ClangBuildAnalyzer; see docs in tools/README.md.
+    if(QGC_TIME_TRACE)
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            add_compile_options(-ftime-trace -ftime-trace-granularity=100)
+            # ccache rejects -ftime-trace; clear the launcher so profile builds
+            # don't pay fork overhead per TU only to be marked unsupported.
+            set(CMAKE_C_COMPILER_LAUNCHER "")
+            set(CMAKE_CXX_COMPILER_LAUNCHER "")
+            message(STATUS "QGC: -ftime-trace enabled (granularity=100us); compiler launcher disabled")
+        else()
+            message(WARNING "QGC: QGC_TIME_TRACE requires Clang; ignoring with ${CMAKE_CXX_COMPILER_ID}")
+        endif()
+    endif()
+
     # LTO is handled by qgc_enable_ipo() above
 elseif(MSVC)
     # MSVC-specific optimizations
     add_link_options("$<$<CONFIG:Release>:/LTCG:INCREMENTAL>")
-    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug>:Embedded>")
+    # /Z7 not /Zi — /Zi's absolute PDB paths break ccache hashing (ccache#1040); linker still emits a sidecar PDB.
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "Embedded")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
@@ -118,11 +140,11 @@ endif()
 # ----------------------------------------------------------------------------
 if(CMAKE_CROSSCOMPILING)
     if(NOT DEFINED QT_HOST_PATH OR QT_HOST_PATH STREQUAL "")
-        message(FATAL_ERROR "Cross-compilation requires QT_HOST_PATH to be defined and set to a valid Qt host installation path")
+        message(FATAL_ERROR "QGC: Cross-compilation requires QT_HOST_PATH to be defined and set to a valid Qt host installation path")
     endif()
 
     if(NOT IS_DIRECTORY "${QT_HOST_PATH}")
-        message(FATAL_ERROR "Cross-compilation QT_HOST_PATH is not a valid directory: ${QT_HOST_PATH}")
+        message(FATAL_ERROR "QGC: Cross-compilation QT_HOST_PATH is not a valid directory: ${QT_HOST_PATH}")
     endif()
 
     if(ANDROID)

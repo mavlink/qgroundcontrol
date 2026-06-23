@@ -1,6 +1,6 @@
 #include "PX4AutoPilotPlugin.h"
 #include "PX4AirframeLoader.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "FlightModesComponent.h"
 #include "PX4RadioComponent.h"
 #include "PX4TuningComponent.h"
@@ -11,6 +11,11 @@
 #include "Vehicle.h"
 #include "Actuators.h"
 #include "ActuatorComponent.h"
+#include "QGCLoggingCategory.h"
+
+#include <algorithm>
+
+QGC_LOGGING_CATEGORY(PX4AutoPilotPluginLog, "Vehicle.Actuators.PX4AutoPilotPlugin")
 
 PX4AutoPilotPlugin::PX4AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : AutoPilotPlugin(vehicle, parent)
@@ -75,12 +80,31 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
                 if (_vehicle->actuators()) {
                     _vehicle->actuators()->init(); // At this point params are loaded, so we can init the actuators
                 }
-                if (_vehicle->actuators() && _vehicle->actuators()->showUi()) {
+
+                // Decide between new Actuators page or legacy Motor page
+                bool showActuatorsPage = false;
+                if (!_vehicle->actuators()) {
+                    qCDebug(PX4AutoPilotPluginLog) << "Actuators page will NOT show because:";
+                    qCDebug(PX4AutoPilotPluginLog) << "  - Vehicle did not provide actuators metadata via component information";
+                } else if (!_vehicle->actuators()->showUi()) {
+                    qCDebug(PX4AutoPilotPluginLog) << "Actuators page will NOT show because:";
+                    if (!_vehicle->actuators()->isInitialized()) {
+                        qCDebug(PX4AutoPilotPluginLog) << "  - Actuators initialization failed:" << _vehicle->actuators()->initializationError();
+                    } else {
+                        qCDebug(PX4AutoPilotPluginLog) << "  - Condition 'show-ui-if' evaluated to false";
+                        qCDebug(PX4AutoPilotPluginLog) << "    (see 'Evaluating [show-ui-if]' log above for details)";
+                    }
+                } else {
+                    showActuatorsPage = true;
+                    qCDebug(PX4AutoPilotPluginLog) << "Actuators page WILL show (all conditions passed)";
+                }
+
+                if (showActuatorsPage) {
                     _actuatorComponent = new ActuatorComponent(_vehicle, this, this);
                     _actuatorComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_actuatorComponent)));
                 } else {
-                    // show previous motor UI instead
+                    qCDebug(PX4AutoPilotPluginLog) << "  → Using legacy Motor page instead";
                     _motorComponent = new MotorComponent(_vehicle, this, this);
                     _motorComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue(static_cast<VehicleComponent*>(_motorComponent)));
@@ -123,6 +147,10 @@ const QVariantList& PX4AutoPilotPlugin::vehicleComponents(void)
         } else {
             qWarning() << "Internal error";
         }
+
+        std::sort(_components.begin(), _components.end(), [](const QVariant &a, const QVariant &b) {
+            return a.value<VehicleComponent*>()->name().toLower() < b.value<VehicleComponent*>()->name().toLower();
+        });
     }
 
     return _components;
@@ -136,7 +164,7 @@ void PX4AutoPilotPlugin::parametersReadyPreChecks(void)
     QString hitlParam("SYS_HITL");
     if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, hitlParam) &&
             _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, hitlParam)->rawValue().toBool()) {
-        qgcApp()->showAppMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
+        QGC::showAppMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
     }
 }
 

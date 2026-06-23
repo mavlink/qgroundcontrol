@@ -1,6 +1,6 @@
 #include "QGCSerialPortInfo.h"
 
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "QGCLoggingCategory.h"
 
 #include <QtCore/QFile>
@@ -43,23 +43,23 @@ bool QGCSerialPortInfo::_loadJsonData()
 
     QString errorString;
     int version;
-    const QJsonObject json = JsonHelper::openInternalQGCJsonFile(QStringLiteral(":/json/USBBoardInfo.json"), QString(_jsonFileTypeValue), 1, 1, version, errorString);
+    const QJsonObject json = JsonParsing::openInternalQGCJsonFile(QStringLiteral(":/json/USBBoardInfo.json"), QString(_jsonFileTypeValue), 1, 1, version, errorString);
     if (!errorString.isEmpty()) {
         qCWarning(QGCSerialPortInfoLog) << "Internal Error:" << errorString;
         return false;
     }
 
-    static const QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> rootKeyInfoList = {
         { _jsonBoardInfoKey, QJsonValue::Array, true },
         { _jsonBoardDescriptionFallbackKey, QJsonValue::Array, true },
         { _jsonBoardManufacturerFallbackKey, QJsonValue::Array, true },
     };
-    if (!JsonHelper::validateKeys(json, rootKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(json, rootKeyInfoList, errorString)) {
         qCWarning(QGCSerialPortInfoLog) << errorString;
         return false;
     }
 
-    static const QList<JsonHelper::KeyValidateInfo> boardKeyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> boardKeyInfoList = {
         { _jsonVendorIDKey, QJsonValue::Double, true },
         { _jsonProductIDKey, QJsonValue::Double, true },
         { _jsonBoardClassKey, QJsonValue::String, true },
@@ -73,7 +73,7 @@ bool QGCSerialPortInfo::_loadJsonData()
         }
 
         const QJsonObject boardObject = jsonValue.toObject();
-        if (!JsonHelper::validateKeys(boardObject, boardKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(boardObject, boardKeyInfoList, errorString)) {
             qCWarning(QGCSerialPortInfoLog) << errorString;
             return false;
         }
@@ -92,7 +92,7 @@ bool QGCSerialPortInfo::_loadJsonData()
         _boardInfoList.append(boardInfo);
     }
 
-    static const QList<JsonHelper::KeyValidateInfo> fallbackKeyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> fallbackKeyInfoList = {
         { _jsonRegExpKey, QJsonValue::String, true },
         { _jsonBoardClassKey, QJsonValue::String, true },
         { _jsonAndroidOnlyKey, QJsonValue::Bool, false },
@@ -105,13 +105,20 @@ bool QGCSerialPortInfo::_loadJsonData()
         }
 
         const QJsonObject fallbackObject = jsonValue.toObject();
-        if (!JsonHelper::validateKeys(fallbackObject, fallbackKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(fallbackObject, fallbackKeyInfoList, errorString)) {
             qCWarning(QGCSerialPortInfoLog) << errorString;
             return false;
         }
 
+        const QRegularExpression regExp(fallbackObject[_jsonRegExpKey].toString(), QRegularExpression::CaseInsensitiveOption);
+        if (!regExp.isValid()) {
+            qCWarning(QGCSerialPortInfoLog) << "Invalid regular expression in board description fallback:"
+                                             << regExp.errorString()
+                                             << "pattern:" << fallbackObject[_jsonRegExpKey].toString();
+            return false;
+        }
         const BoardRegExpFallback_t boardFallback = {
-            fallbackObject[_jsonRegExpKey].toString(),
+            regExp,
             _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
             fallbackObject[_jsonAndroidOnlyKey].toBool(false)
         };
@@ -131,13 +138,20 @@ bool QGCSerialPortInfo::_loadJsonData()
         }
 
         const QJsonObject fallbackObject = jsonValue.toObject();
-        if (!JsonHelper::validateKeys(fallbackObject, fallbackKeyInfoList, errorString)) {
+        if (!JsonParsing::validateKeys(fallbackObject, fallbackKeyInfoList, errorString)) {
             qCWarning(QGCSerialPortInfoLog) << errorString;
             return false;
         }
 
+        const QRegularExpression regExp(fallbackObject[_jsonRegExpKey].toString(), QRegularExpression::CaseInsensitiveOption);
+        if (!regExp.isValid()) {
+            qCWarning(QGCSerialPortInfoLog) << "Invalid regular expression in board manufacturer fallback:"
+                                             << regExp.errorString()
+                                             << "pattern:" << fallbackObject[_jsonRegExpKey].toString();
+            return false;
+        }
         const BoardRegExpFallback_t boardFallback = {
-            fallbackObject[_jsonRegExpKey].toString(),
+            regExp,
             _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString()),
             fallbackObject[_jsonAndroidOnlyKey].toBool(false)
         };
@@ -195,7 +209,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t &boardType, 
     Q_ASSERT(boardType == BoardTypeUnknown);
 
     for (const BoardRegExpFallback_t &boardFallback : _boardDescriptionFallbackList) {
-        if (description().contains(QRegularExpression(boardFallback.regExp, QRegularExpression::CaseInsensitiveOption))) {
+        if (description().contains(boardFallback.regExp)) {
 #ifndef Q_OS_ANDROID
             if (boardFallback.androidOnly) {
                 continue;
@@ -208,7 +222,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t &boardType, 
     }
 
     for (const BoardRegExpFallback_t &boardFallback : _boardManufacturerFallbackList) {
-        if (manufacturer().contains(QRegularExpression(boardFallback.regExp, QRegularExpression::CaseInsensitiveOption))) {
+        if (manufacturer().contains(boardFallback.regExp)) {
 #ifndef Q_OS_ANDROID
             if (boardFallback.androidOnly) {
                 continue;

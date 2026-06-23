@@ -1,5 +1,5 @@
 #include "CameraCalc.h"
-#include "JsonHelper.h"
+#include "JsonParsing.h"
 #include "Vehicle.h"
 #include "CameraMetaData.h"
 #include "PlanMasterController.h"
@@ -8,7 +8,7 @@
 
 CameraCalc::CameraCalc(PlanMasterController* masterController, const QString& settingsGroup, QObject* parent)
     : CameraSpec                    (settingsGroup, parent)
-    , _distanceMode                 (masterController->missionController()->globalAltitudeModeDefault())
+    , _distanceMode                 (masterController->missionController()->globalAltitudeFrameDefault())
     , _knownCameraList              (masterController->controllerVehicle()->staticCameraList())
     , _metaDataMap                  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraCalc.FactMetaData.json"), this))
     , _cameraNameFact               (settingsGroup, _metaDataMap[cameraNameName])
@@ -110,9 +110,9 @@ void CameraCalc::_cameraNameChanged(void)
     }
 
     _recalcTriggerDistance();
-    if (!isManualCamera() && distanceMode() == QGroundControlQmlGlobal::AltitudeModeAbsolute) {
+    if (!isManualCamera() && distanceMode() == QGroundControlQmlGlobal::AltitudeFrameAbsolute) {
         // Manual grids support absolute alts whereas nothing else does. Make sure we are not left in absolute
-        setDistanceMode(QGroundControlQmlGlobal::AltitudeModeRelative);
+        setDistanceMode(QGroundControlQmlGlobal::AltitudeFrameRelative);
     }
 }
 
@@ -161,7 +161,7 @@ void CameraCalc::_recalcTriggerDistance(void)
 
 void CameraCalc::save(QJsonObject& json) const
 {
-    json[JsonHelper::jsonVersionKey]    = 2;
+    json[JsonParsing::jsonVersionKey]    = 2;
     json[adjustedFootprintSideName]     = _adjustedFootprintSideFact.rawValue().toDouble();
     json[adjustedFootprintFrontalName]  = _adjustedFootprintFrontalFact.rawValue().toDouble();
     json[distanceToSurfaceName]         = _distanceToSurfaceFact.rawValue().toDouble();
@@ -182,13 +182,13 @@ bool CameraCalc::load(const QJsonObject& originalJson, bool deprecatedFollowTerr
     QJsonObject json = originalJson;
 
     int version = 0;
-    if (json.contains(JsonHelper::jsonVersionKey)) {
-        version = json[JsonHelper::jsonVersionKey].toInt();
+    if (json.contains(JsonParsing::jsonVersionKey)) {
+        version = json[JsonParsing::jsonVersionKey].toInt();
     }
 
     if (version == 0) {
         // Version 0->1 differences:
-        //  - JsonHelper::jsonVersionKey not stored
+        //  - JsonParsing::jsonVersionKey not stored
         //  - _jsonCameraSpecTypeKeyDeprecated is only in v0 files and stores CameraSpecType. V2 files store same info in cameraNameName.
         //  - _jsonCameraNameKey only set if CameraSpecKnown
         int cameraSpec = json[_jsonCameraSpecTypeKeyDeprecated].toInt(CameraSpecNone);
@@ -203,11 +203,11 @@ bool CameraCalc::load(const QJsonObject& originalJson, bool deprecatedFollowTerr
     if (version == 1) {
         // Version 1->2 differences:
         //  - _jsonDistanceToSurfaceRelativeKeyDeprecated changed to distanceMode
-        //  - deprecatedFollowTerrain value was loaded from upper level callers and represents AltitudeModeCalcAboveTerrain. AtitudeModeTerrainFrame was not supported yet.
+        //  - deprecatedFollowTerrain value was loaded from upper level callers and represents AltitudeFrameCalcAboveTerrain. AltitudeFrameTerrain was not supported yet.
         if (deprecatedFollowTerrain) {
-            json[distanceModeName] = QGroundControlQmlGlobal::AltitudeModeCalcAboveTerrain;
+            json[distanceModeName] = QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain;
         } else {
-            json[distanceModeName] = json[_jsonDistanceToSurfaceRelativeKeyDeprecated].toBool() ? QGroundControlQmlGlobal::AltitudeModeRelative : QGroundControlQmlGlobal::AltitudeModeAbsolute;
+            json[distanceModeName] = json[_jsonDistanceToSurfaceRelativeKeyDeprecated].toBool() ? QGroundControlQmlGlobal::AltitudeFrameRelative : QGroundControlQmlGlobal::AltitudeFrameAbsolute;
         }
         json.remove(_jsonDistanceToSurfaceRelativeKeyDeprecated);
         version = 2;
@@ -217,14 +217,14 @@ bool CameraCalc::load(const QJsonObject& originalJson, bool deprecatedFollowTerr
         return false;
     }
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList1 = {
+    QList<JsonParsing::KeyValidateInfo> keyInfoList1 = {
         { cameraNameName,                   QJsonValue::String, true },
         { adjustedFootprintSideName,        QJsonValue::Double, true },
         { adjustedFootprintFrontalName,     QJsonValue::Double, true },
         { distanceToSurfaceName,            QJsonValue::Double, true },
         { distanceModeName,                 QJsonValue::Double, true },
     };
-    if (!JsonHelper::validateKeys(json, keyInfoList1, errorString)) {
+    if (!JsonParsing::validateKeys(json, keyInfoList1, errorString)) {
         return false;
     }
 
@@ -235,20 +235,20 @@ bool CameraCalc::load(const QJsonObject& originalJson, bool deprecatedFollowTerr
     QString canonicalCameraName = _validCanonicalCameraName(json[cameraNameName].toString());
     _cameraNameFact.setRawValue(canonicalCameraName);
 
-    setDistanceMode(static_cast<QGroundControlQmlGlobal::AltMode>(json[distanceModeName].toInt()));
+    setDistanceMode(static_cast<QGroundControlQmlGlobal::AltitudeFrame>(json[distanceModeName].toInt()));
 
     _adjustedFootprintSideFact.setRawValue      (json[adjustedFootprintSideName].toDouble());
     _adjustedFootprintFrontalFact.setRawValue   (json[adjustedFootprintFrontalName].toDouble());
     _distanceToSurfaceFact.setRawValue          (json[distanceToSurfaceName].toDouble());
 
     if (!isManualCamera()) {
-        QList<JsonHelper::KeyValidateInfo> keyInfoList2 = {
+        QList<JsonParsing::KeyValidateInfo> keyInfoList2 = {
             { valueSetIsDistanceName,   QJsonValue::Bool,   true },
             { imageDensityName,         QJsonValue::Double, true },
             { frontalOverlapName,       QJsonValue::Double, true },
             { sideOverlapName,          QJsonValue::Double, true },
         };
-        if (!JsonHelper::validateKeys(json, keyInfoList2, errorString)) {
+        if (!JsonParsing::validateKeys(json, keyInfoList2, errorString)) {
             _disableRecalc = false;
             return false;
         }
@@ -293,10 +293,10 @@ QString CameraCalc::xlatManualCameraName(void)
     return tr("Manual (no camera specs)");
 }
 
-void CameraCalc::setDistanceMode(QGroundControlQmlGlobal::AltMode altMode)
+void CameraCalc::setDistanceMode(QGroundControlQmlGlobal::AltitudeFrame altFrame)
 {
-    if (altMode != _distanceMode) {
-        _distanceMode = altMode;
+    if (altFrame != _distanceMode) {
+        _distanceMode = altFrame;
         emit distanceModeChanged(_distanceMode);
     }
 }

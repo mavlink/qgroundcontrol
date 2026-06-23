@@ -1,16 +1,20 @@
 #include "FirmwareImage.h"
 #include "JsonParsing.h"
 #include "QGCApplication.h"
-#include "CompInfoParam.h"
+#include "FirmwarePlugin.h"
+#include "FirmwarePluginManager.h"
 #include "Bootloader.h"
 #include "QGCLoggingCategory.h"
 
+#include <QtCore/QDir>
+
+QGC_LOGGING_CATEGORY(FirmwareImageLog, "Vehicle.VehicleSetup.FirmwareImage")
+QGC_LOGGING_CATEGORY(FirmwareImageVerboseLog, "Vehicle.VehicleSetup.FirmwareImage.Verbose")
 #include <QtCore/QFile>
-#include <QtCore/QTextStream>
+#include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
-#include <QtCore/QFileInfo>
-#include <QtCore/QDir>
+#include <QtCore/QTextStream>
 
 FirmwareImage::FirmwareImage(QObject* parent) :
     QObject(parent),
@@ -143,7 +147,7 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
             if (appendToLastBlock) {
                 _ihxBlocks[_ihxBlocks.length() - 1].bytes += bytes;
                 // Too noisy even for verbose
-                //qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+                //qCDebug(FirmwareImageVerboseLog) << QString("_ihxLoad - append - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
             } else {
                 IntelHexBlock_t block;
 
@@ -151,13 +155,13 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
                 block.bytes = bytes;
 
                 _ihxBlocks += block;
-                qCDebug(FirmwareUpgradeVerboseLog) << QString("_ihxLoad - new block - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
+                qCDebug(FirmwareImageVerboseLog) << QString("_ihxLoad - new block - address:%1 size:%2 block:%3").arg(address).arg(blockByteCount).arg(ihxBlockCount());
             }
 
             _imageSize += blockByteCount;
         } else if (recordType == 1) {
             // EOF
-            qCDebug(FirmwareUpgradeLog) << QString("_ihxLoad - EOF");
+            qCDebug(FirmwareImageLog) << QString("_ihxLoad - EOF");
             break;
         }
 
@@ -235,9 +239,14 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
 
     // What firmware type is this?
     MAV_AUTOPILOT firmwareType = (MAV_AUTOPILOT)px4Json[_jsonMavAutopilotKey].toInt(MAV_AUTOPILOT_PX4);
-    emit statusMessage(QString("MAV_AUTOPILOT = %1").arg(firmwareType));
 
-    // Decompress the parameter xml and save to file
+    // NOTE: PX4 firmware currently embeds parameter metadata as XML
+    // ("parameter_xml" key), but the metadata system now expects JSON.
+    // cacheParameterMetaDataFile() skips non-JSON content (debug-level
+    // log only). This is a no-op until PX4 upstream switches px_mkfw.py
+    // to embed JSON. Modern PX4 vehicles (v1.13+) serve metadata via
+    // the component metadata protocol on connect, so this only affects
+    // pre-v1.13 boards that lack that capability.
     QByteArray decompressedBytes;
     bool success = _decompressJsonValue(px4Json,               // JSON object
                                         bytes,                 // Raw bytes of JSON document
@@ -246,7 +255,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
                                         decompressedBytes);    // Returned decompressed bytes
     if (success) {
         QString parameterFilename = QGCApplication::cachedParameterMetaDataFile();
-        QFile parameterFile(QGCApplication::cachedParameterMetaDataFile());
+        QFile parameterFile(parameterFilename);
 
         if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = parameterFile.write(decompressedBytes);
@@ -261,8 +270,10 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
             emit statusMessage(tr("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename, parameterFile.errorString()));
         }
 
-        // Cache this file with the system
-        CompInfoParam::_cachePX4MetaDataFile(parameterFilename);
+        FirmwarePlugin *fwPlugin = FirmwarePluginManager::instance()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_GENERIC);
+        if (fwPlugin) {
+            fwPlugin->cacheParameterMetaDataFile(parameterFilename);
+        }
     }
 
     // Decompress the airframe xml and save to file
@@ -383,8 +394,6 @@ bool FirmwareImage::_decompressJsonValue(const QJsonObject&	jsonObject,			///< J
         emit statusMessage(tr("Size for decompressed %1 does not match stored size: Expected(%1) Actual(%2)").arg(decompressedSize).arg(decompressedBytes.length()));
         return false;
     }
-
-    emit statusMessage(tr("Successfully decompressed %1").arg(bytesKey));
 
     return true;
 }

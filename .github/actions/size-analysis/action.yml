@@ -22,9 +22,6 @@ outputs:
   symbol_count:
     description: 'Number of symbols in binary'
     value: ${{ steps.metrics.outputs.symbol_count }}
-  metrics_file:
-    description: 'Path to the metrics JSON file'
-    value: ${{ inputs.output-file }}
 
 runs:
   using: composite
@@ -32,11 +29,15 @@ runs:
     - name: Analyze binary size
       id: metrics
       shell: bash
+      env:
+        INPUT_BINARY_PATH: ${{ inputs.binary-path }}
+        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+        INPUT_INSTALL_BLOATY: ${{ inputs.install-bloaty }}
       run: |
         args=(
-          --binary "${{ inputs.binary-path }}"
-          --output "${{ inputs.output-file }}"
+          --binary "$INPUT_BINARY_PATH"
+          --output "$INPUT_OUTPUT_FILE"
         )
-        [[ "${{ inputs.install-bloaty }}" == "true" ]] && args+=(--install-bloaty)
+        [[ "$INPUT_INSTALL_BLOATY" == "true" ]] && args+=(--install-bloaty)
 
-        python3 "${{ github.workspace }}/.github/scripts/size_analysis.py" "${args[@]}"
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/size_analysis.py" "${args[@]}"

@@ -1,5 +1,6 @@
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.Viewer3D
 import QtQuick3D
 import QtQuick3D.Helpers
 
@@ -162,7 +163,11 @@ Node {
 
     ListModel {
         id: missionWaypointListModel
+    }
 
+    Component.onDestruction: {
+        // This is necessary insurance to prevent crashes after destruction when "keepSceneAlive" setting is disabled.
+        missionWaypointListModel.clear()
     }
 
     DroneModelDjiF450 {
@@ -229,7 +234,7 @@ Node {
     }
 
     Connections {
-        function onVisualItemsChanged() {
+        function onVisualItemsReset() {
             addMissionItemsToListModel();
             addSegmentToMissionPathModel();
         }

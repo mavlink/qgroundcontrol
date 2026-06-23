@@ -217,4 +217,14 @@ T clampValue(T value, T min, T max)
 {
     return std::clamp(value, min, max);
 }
+
+// Stream each value on its own line aligned under the first operand, and don't
+// repeat the function name in the message (the logging formatter already adds it).
+void exampleMultiValueLogging(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName)
+{
+    qCDebug(CodingStyleLog) << "fromCompId:" << fromCompId
+                            << "fromURI:" << fromURI
+                            << "toDir:" << toDir
+                            << "fileName:" << fileName;
+}
 }  // anonymous namespace

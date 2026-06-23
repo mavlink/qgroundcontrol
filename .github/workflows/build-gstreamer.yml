@@ -1,0 +1,245 @@
+name: Build GStreamer
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Target platform'
+        required: true
+        default: 'linux'
+        type: choice
+        options:
+          - linux
+          - macos
+          - windows
+          - android
+          - ios
+      version:
+        description: 'GStreamer version (empty for default)'
+        required: false
+        default: ''
+        type: string
+      arch:
+        description: 'Architecture'
+        required: true
+        default: 'x86_64'
+        type: choice
+        options:
+          - x86_64
+          - arm64
+          - aarch64
+          - universal
+          - armv7
+          - x86
+          - x64
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+      simulator:
+        description: 'iOS Simulator build'
+        required: false
+        default: false
+        type: boolean
+      upload_s3:
+        description: 'Upload to S3'
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: gstreamer-${{ inputs.platform }}-${{ inputs.arch }}-${{ inputs.simulator }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    name: ${{ inputs.platform }} ${{ inputs.arch }}${{ inputs.simulator && ' (Simulator)' || '' }}
+    runs-on: >-
+      ${{
+        inputs.platform == 'linux' && (inputs.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04') ||
+        inputs.platform == 'macos' && 'macos-15' ||
+        inputs.platform == 'windows' && (inputs.arch == 'arm64' && 'windows-11-arm' || 'windows-2022') ||
+        inputs.platform == 'android' && 'ubuntu-24.04' ||
+        inputs.platform == 'ios' && 'macos-15' ||
+        'ubuntu-24.04'
+      }}
+    timeout-minutes: 120
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github
+            tools
+          sparse-checkout-cone-mode: false
+
+      - name: Build Config
+        id: buildconfig
+        uses: ./.github/actions/build-config
+
+      - name: Resolve GStreamer version
+        id: config
+        shell: bash
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          VERSION: ${{ inputs.version }}
+          PLATFORM_VERSION: >-
+            ${{
+              (inputs.platform == 'macos'   && steps.buildconfig.outputs.gstreamer_macos_version)   ||
+              (inputs.platform == 'windows' && steps.buildconfig.outputs.gstreamer_windows_version) ||
+              (inputs.platform == 'android' && steps.buildconfig.outputs.gstreamer_android_version) ||
+              (inputs.platform == 'ios'     && steps.buildconfig.outputs.gstreamer_ios_version)     ||
+              ''
+            }}
+          FALLBACK_VERSION: ${{ steps.buildconfig.outputs.gstreamer_version }}
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/resolve_gstreamer_config.py"
+          --platform "$PLATFORM"
+          --version "$VERSION"
+          --platform-version "$PLATFORM_VERSION"
+          --fallback-version "$FALLBACK_VERSION"
+
+      - name: Install dependencies (Linux)
+        if: inputs.platform == 'linux'
+        run: |
+          sudo apt-get -o Acquire::Retries=3 update -qq
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+            build-essential pkg-config git \
+            libx11-dev libxext-dev libxv-dev \
+            libwayland-dev wayland-protocols \
+            libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev \
+            libdrm-dev libgbm-dev \
+            libasound2-dev libpulse-dev \
+            libva-dev nasm yasm
+
+      - name: Install dependencies (macOS)
+        if: inputs.platform == 'macos' || inputs.platform == 'ios'
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          command: brew install pkg-config gettext
+
+      - name: Install dependencies (Android)
+        if: inputs.platform == 'android'
+        run: |
+          sudo apt-get -o Acquire::Retries=3 update -qq
+          sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+            python3-pip git autoconf automake libtool \
+            pkg-config gettext bison flex cmake ninja-build
+
+      # Android/iOS GStreamer builds don't link against host Qt — skip build-setup there. The desktop platforms run through build-setup so we get qt-install + setup-python + platform compiler toolchain in one shot.
+      - name: Build Setup
+        if: inputs.platform == 'linux' || inputs.platform == 'macos' || inputs.platform == 'windows'
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: >-
+            ${{
+              (inputs.platform == 'linux' && 'linux') ||
+              (inputs.platform == 'macos' && 'mac') ||
+              (inputs.platform == 'windows' && 'windows')
+            }}
+          qt-arch: >-
+            ${{
+              (inputs.platform == 'linux' && inputs.arch == 'aarch64' && 'linux_gcc_arm64') ||
+              (inputs.platform == 'linux' && 'linux_gcc_64') ||
+              (inputs.platform == 'macos' && 'clang_64') ||
+              (inputs.platform == 'windows' && inputs.arch == 'arm64' && 'win64_msvc2022_arm64') ||
+              (inputs.platform == 'windows' && 'win64_msvc2022_64')
+            }}
+          qt-version: ${{ steps.buildconfig.outputs.qt_version }}
+
+      - name: Build GStreamer
+        shell: bash
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          ARCH: ${{ inputs.arch }}
+          VERSION: ${{ steps.config.outputs.version }}
+          BUILD_TYPE: ${{ inputs.build_type }}
+          SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
+          QT_PREFIX: ${{ env.QT_ROOT_DIR }}
+          WORK_DIR: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          arch="$ARCH"
+          # Windows toolchain uses 'x64' / 'arm64' naming; map x86_64 here.
+          if [[ "$PLATFORM" == 'windows' && "$arch" == 'x86_64' ]]; then
+            arch='x64'
+          fi
+
+          if [[ "$PLATFORM" == 'windows' ]]; then
+            prefix="C:\\gstreamer-$arch"
+          else
+            prefix="$WORK_DIR/gstreamer"
+          fi
+
+          args=(
+            --platform "$PLATFORM"
+            --version "$VERSION"
+            --type "$BUILD_TYPE"
+            --prefix "$prefix"
+            --clean
+            --verify
+          )
+          # Linux build defaults to the host arch; the other platforms need --arch.
+          [[ "$PLATFORM" != 'linux' ]] && args+=(--arch "$arch")
+          [[ "$PLATFORM" =~ ^(macos|windows)$ ]] && args+=(--qt-prefix "$QT_PREFIX")
+          [[ "$PLATFORM" == 'windows' ]] && args+=(--work-dir "$WORK_DIR")
+          [[ "$PLATFORM" == 'ios' && "$SIMULATOR" == 'true' ]] && args+=(--simulator)
+
+          python3 ./tools/setup/build-gstreamer.py "${args[@]}"
+
+      - name: Configure AWS Credentials
+        if: inputs.upload_s3
+        uses: ./.github/actions/aws-credentials
+        with:
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Create archive
+        id: archive
+        shell: bash
+        env:
+          PLATFORM: ${{ inputs.platform }}
+          ARCH: ${{ inputs.arch }}
+          VERSION: ${{ steps.config.outputs.version }}
+          OUTPUT_DIR: ${{ runner.temp }}
+          SIMULATOR: ${{ inputs.simulator && 'true' || 'false' }}
+          UPLOAD_S3: ${{ inputs.upload_s3 && 'true' || 'false' }}
+          WORKSPACE: ${{ github.workspace }}
+          AWS_DEFAULT_REGION: us-west-2
+        run: |
+          set -euo pipefail
+          args=(
+            --platform "$PLATFORM"
+            --arch "$ARCH"
+            --version "$VERSION"
+            --output-dir "$OUTPUT_DIR"
+          )
+          [[ "$SIMULATOR" == "true" ]] && args+=(--simulator)
+          [[ "$UPLOAD_S3" == "true" ]] && args+=(--upload-s3)
+
+          python3 "${WORKSPACE}/.github/scripts/gstreamer_archive.py" "${args[@]}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.archive.outputs.name }}
+          path: ${{ steps.archive.outputs.path }}
+          retention-days: 30
+          compression-level: 0  # Archive already compressed

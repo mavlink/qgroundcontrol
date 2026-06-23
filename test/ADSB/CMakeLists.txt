@@ -17,3 +17,5 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 #     FILES
 #         ADSB_Simulator.py
 # )
+
+add_qgc_test(ADSBTest LABELS Unit)

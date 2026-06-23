@@ -1,20 +1,53 @@
 #include "UnitTest.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QEvent>
 #include <QtCore/QHash>
+#include <QtCore/QSet>
+#include <QtCore/QSettings>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include <atomic>
+#include <cstring>
 #include <iterator>
 
 #include "AppSettings.h"
-#include "Fact.h"
-#include "MissionItem.h"
-#include "QGC.h"
+#include "LinkManager.h"
+#include "LogEntry.h"
+#include "MultiVehicleManager.h"
+#include "QGCApplication.h"
+#include "LogManager.h"
 #include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "Vehicle.h"
+
+struct UnitTest::ExpectedLogMessages
+{
+    struct Entry
+    {
+        LogEntry::Level level;
+        QRegularExpression pattern;
+        QString category;
+    };
+
+    struct PendingExpectation
+    {
+        Entry entry;
+        int startIndex = 0;
+    };
+
+    QList<Entry> ignored;
+    QList<PendingExpectation> pending;
+    QSet<int> consumedMessageIndices;
+};
 
 QGC_LOGGING_CATEGORY(UnitTestLog, "Test.UnitTest")
 
@@ -24,6 +57,7 @@ QGC_LOGGING_CATEGORY(UnitTestLog, "Test.UnitTest")
 
 QStringList& TestContext::stack()
 {
+    // QTest runs test functions sequentially on the main thread — no TLS needed.
     static QStringList s_stack;
     return s_stack;
 }
@@ -78,9 +112,7 @@ bool& TestDebug::verbose()
 void TestDebug::log(const QString& message)
 {
     messages().append(message);
-
-    // Keep only last 50 messages to avoid memory bloat
-    while (messages().size() > 50) {
+    while (messages().size() > kMaxBufferedMessages) {
         messages().removeFirst();
     }
 
@@ -111,6 +143,7 @@ void TestDebug::clearMessages()
 
 namespace {
 constexpr int kFileCompareBufferSize = 8192;
+constexpr int kMaxTimeoutDebugMessages = 10;
 
 // Single source of truth for label name/value mapping
 struct LabelMapping
@@ -147,6 +180,34 @@ const QHash<QString, TestLabel>& labelMap()
         return m;
     }();
     return map;
+}
+
+QString currentTestName()
+{
+    const char* functionName = QTest::currentTestFunction();
+    const char* dataTag = QTest::currentDataTag();
+
+    QString testName = functionName ? QString::fromLatin1(functionName) : QStringLiteral("<unknown>");
+    if (dataTag && dataTag[0] != '\0') {
+        testName += QStringLiteral(" [") + QString::fromLatin1(dataTag) + QStringLiteral("]");
+    }
+
+    return testName;
+}
+
+void logRecentDebugMessages(const char* header)
+{
+    const QStringList debugMessages = TestDebug::recentMessages();
+    if (debugMessages.isEmpty()) {
+        return;
+    }
+
+    qCWarning(UnitTestLog) << header;
+
+    const int startIndex = qMax(0, debugMessages.size() - kMaxTimeoutDebugMessages);
+    for (int i = startIndex; i < debugMessages.size(); ++i) {
+        qCWarning(UnitTestLog) << "  " << debugMessages.at(i);
+    }
 }
 
 }  // anonymous namespace
@@ -218,7 +279,9 @@ QStringList availableLabelNames()
 // UnitTest Implementation
 // ============================================================================
 
-UnitTest::UnitTest(QObject* parent) : QObject(parent)
+UnitTest::UnitTest(QObject* parent)
+    : QObject(parent)
+    , _expectedLogMessages(std::make_unique<ExpectedLogMessages>())
 {
 }
 
@@ -283,6 +346,30 @@ int UnitTest::testCount()
     return _testList().size();
 }
 
+QStringList UnitTest::registeredLightweightTests(TestLabels labelFilter)
+{
+    QStringList names;
+    for (const UnitTest* test : _testList()) {
+        if (!test->lightweight() || test->standalone()) {
+            continue;
+        }
+        if (labelFilter == TestLabels() || test->hasAnyLabel(labelFilter)) {
+            names.append(test->objectName());
+        }
+    }
+    return names;
+}
+
+bool UnitTest::isLightweightTest(QStringView testName)
+{
+    for (const UnitTest* test : _testList()) {
+        if (testName == test->objectName()) {
+            return test->lightweight();
+        }
+    }
+    return false;
+}
+
 void UnitTest::setVerbose(bool verbose)
 {
     TestDebug::setVerbose(verbose);
@@ -291,6 +378,163 @@ void UnitTest::setVerbose(bool verbose)
 bool UnitTest::isVerbose()
 {
     return TestDebug::isVerbose();
+}
+
+bool UnitTest::waitForSignal(QSignalSpy& spy, std::chrono::milliseconds timeout, QStringView signalName)
+{
+    QElapsedTimer waitTimer;
+    waitTimer.start();
+
+    if (spy.wait(timeout)) {
+        return true;
+    }
+
+    const QString displayName = signalName.isEmpty() ? QStringLiteral("<unnamed>") : signalName.toString();
+    qCWarning(UnitTestLog) << "Timeout waiting for signal" << displayName << "in" << currentTestName() << "after"
+                           << waitTimer.elapsed() << "ms (timeout:" << timeout.count() << "ms, count:" << spy.count()
+                           << ")";
+
+    const QString context = TestContext::current();
+    if (!context.isEmpty()) {
+        qCWarning(UnitTestLog) << "Context:" << context;
+    }
+
+    logRecentDebugMessages("Recent test debug messages:");
+
+    return false;
+}
+
+bool UnitTest::waitForNoSignal(QSignalSpy& spy, std::chrono::milliseconds timeout, QStringView signalName)
+{
+    const int initialCount = spy.count();
+    QElapsedTimer waitTimer;
+    waitTimer.start();
+
+    const bool signalReceived = QTest::qWaitFor([&spy, initialCount]() { return spy.count() > initialCount; }, timeout);
+    if (!signalReceived) {
+        return true;
+    }
+
+    const QString displayName = signalName.isEmpty() ? QStringLiteral("<unnamed>") : signalName.toString();
+    qCWarning(UnitTestLog) << "Unexpected signal" << displayName << "in" << currentTestName() << "after"
+                           << waitTimer.elapsed() << "ms (timeout:" << timeout.count() << "ms, initial:" << initialCount
+                           << ", current:" << spy.count() << ")";
+
+    const QString context = TestContext::current();
+    if (!context.isEmpty()) {
+        qCWarning(UnitTestLog) << "Context:" << context;
+    }
+
+    logRecentDebugMessages("Recent test debug messages:");
+    return false;
+}
+
+bool UnitTest::waitForSignalCount(QSignalSpy& spy, int expectedCount, std::chrono::milliseconds timeout, QStringView signalName)
+{
+    if (expectedCount <= 0 || spy.count() >= expectedCount) {
+        return true;
+    }
+
+    QElapsedTimer waitTimer;
+    waitTimer.start();
+
+    if (QTest::qWaitFor([&spy, expectedCount]() { return spy.count() >= expectedCount; }, timeout)) {
+        return true;
+    }
+
+    const QString displayName = signalName.isEmpty() ? QStringLiteral("<unnamed>") : signalName.toString();
+    qCWarning(UnitTestLog) << "Timeout waiting for signal count" << displayName << "in" << currentTestName()
+                           << "after" << waitTimer.elapsed() << "ms (timeout:" << timeout.count() << "ms, expected:"
+                           << expectedCount << ", actual:" << spy.count() << ")";
+
+    const QString context = TestContext::current();
+    if (!context.isEmpty()) {
+        qCWarning(UnitTestLog) << "Context:" << context;
+    }
+
+    logRecentDebugMessages("Recent test debug messages:");
+
+    return false;
+}
+
+bool UnitTest::waitForCondition(const std::function<bool()>& condition, std::chrono::milliseconds timeout, QStringView conditionName)
+{
+    QElapsedTimer waitTimer;
+    waitTimer.start();
+
+    if (QTest::qWaitFor(condition, timeout)) {
+        return true;
+    }
+
+    const QString displayName = conditionName.isEmpty() ? QStringLiteral("<unnamed>") : conditionName.toString();
+    qCWarning(UnitTestLog) << "Timeout waiting for condition" << displayName << "in" << currentTestName() << "after"
+                           << waitTimer.elapsed() << "ms (timeout:" << timeout.count() << "ms)";
+
+    const QString context = TestContext::current();
+    if (!context.isEmpty()) {
+        qCWarning(UnitTestLog) << "Context:" << context;
+    }
+
+    logRecentDebugMessages("Recent test debug messages:");
+
+    return false;
+}
+
+bool UnitTest::waitForDeleted(const QPointer<QObject>& objectPtr, std::chrono::milliseconds timeout, QStringView objectName)
+{
+    if (objectPtr.isNull()) {
+        return true;
+    }
+
+    if (timeout <= std::chrono::milliseconds::zero()) {
+        timeout = std::chrono::milliseconds(TestTimeout::mediumMs());
+    }
+
+    QElapsedTimer waitTimer;
+    waitTimer.start();
+
+    const bool deleted = QTest::qWaitFor(
+        [&objectPtr]() {
+            QCoreApplication::processEvents(QEventLoop::AllEvents);
+            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+            return objectPtr.isNull();
+        },
+        timeout);
+    if (deleted) {
+        return true;
+    }
+
+    const QString displayName = objectName.isEmpty() ? QStringLiteral("<unnamed>") : objectName.toString();
+    qCWarning(UnitTestLog) << "Timeout waiting for QObject deletion" << displayName << "in" << currentTestName()
+                           << "after" << waitTimer.elapsed() << "ms (timeout:" << timeout.count()
+                           << "ms, ptr:" << objectPtr.data() << ")";
+
+    const QString context = TestContext::current();
+    if (!context.isEmpty()) {
+        qCWarning(UnitTestLog) << "Context:" << context;
+    }
+
+    logRecentDebugMessages("Recent test debug messages:");
+
+    return false;
+}
+
+void UnitTest::settleEventLoopForCleanup(int iterations, int waitMs)
+{
+    if (iterations <= 0) {
+        iterations = TestTimeout::isCI() ? 6 : 3;
+    }
+    if (waitMs < 0) {
+        waitMs = TestTimeout::isCI() ? 10 : 5;
+    }
+
+    for (int i = 0; i < iterations; ++i) {
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        if (i < iterations - 1 && waitMs > 0) {
+            QTest::qWait(waitMs);
+        }
+    }
 }
 
 int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels labelFilter)
@@ -348,8 +592,12 @@ int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels 
         // Clear debug messages before each test class
         TestDebug::clearMessages();
 
+        bool maxWarningsOk = false;
+        const int configuredMaxWarnings = qEnvironmentVariableIntValue("QGC_TEST_MAXWARNINGS", &maxWarningsOk);
+        const int maxWarnings = (maxWarningsOk && configuredMaxWarnings >= 0) ? configuredMaxWarnings : 100;
+
         QStringList args;
-        args << "*" << "-maxwarnings" << "0";
+        args << "*" << "-maxwarnings" << QString::number(maxWarnings);
 
         // Add JUnit XML output if configured
         if (!_outputFile().isEmpty()) {
@@ -430,49 +678,276 @@ int UnitTest::run(QStringView singleTest, const QString& outputFile, TestLabels 
     return ret;
 }
 
+// ============================================================================
+// Test‑time capture handler
+// ============================================================================
+// QTest::qExec() replaces the application message handler with its own.
+// Our LogManager::msgHandler is therefore NOT called during test execution.
+// We work around this by installing a thin wrapper ON TOP of QTest's handler
+// inside initTestCase() and restoring it in cleanupTestCase().
+// The wrapper captures messages for the test log‑capture API and then chains
+// to QTest's handler so QWARN / QCRITICAL output keeps working.
+
+static std::atomic<QtMessageHandler> s_qtestHandler{nullptr};
+
+static void testCaptureHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    // Capture for unit‑test introspection
+    LogManager::captureIfEnabled(type, context, msg);
+
+    // Chain to QTest's handler for normal test output
+    const QtMessageHandler handler = s_qtestHandler.load(std::memory_order_acquire);
+    if (handler) {
+        handler(type, context, msg);
+    }
+}
+
 void UnitTest::initTestCase()
 {
     // Reset test tracking state at start of each test class
     _resetTestState();
+
+    // Install the capture wrapper on top of QTest's handler
+    s_qtestHandler.store(qInstallMessageHandler(testCaptureHandler), std::memory_order_release);
 }
 
 void UnitTest::cleanupTestCase()
 {
-    // Override in derived classes for one-time teardown
+    // Restore QTest's handler so qExec teardown stays consistent
+    const QtMessageHandler prev = s_qtestHandler.exchange(nullptr, std::memory_order_acq_rel);
+    if (prev) {
+        (void)qInstallMessageHandler(prev);
+    }
+}
+
+void UnitTest::expectLogMessage(const char *category, QtMsgType type, const QRegularExpression &pattern)
+{
+    Q_ASSERT_X(category && *category != '\0', "expectLogMessage", "category must not be empty — use the exact Qt logging category string (e.g. \"Utilities.QGCFileHelper\")");
+    _expectedLogMessages->pending.append({
+        .entry = {LogEntry::fromQtMsgType(type), pattern, QString::fromLatin1(category)},
+        .startIndex = static_cast<int>(LogManager::capturedMessages().size()),
+    });
+}
+
+void UnitTest::verifyExpectedLogMessage()
+{
+    if (_expectedLogMessages->pending.isEmpty()) {
+        QFAIL("verifyExpectedLogMessage called with no pending expectLogMessage.");
+    }
+
+    auto matches = [](const LogEntry &m, const ExpectedLogMessages::Entry &e) {
+        if (e.level != m.level) {
+            return false;
+        }
+        if (!e.pattern.match(m.message).hasMatch()) {
+            return false;
+        }
+        if (e.category != m.category) {
+            return false;
+        }
+        return true;
+    };
+
+    const ExpectedLogMessages::PendingExpectation expected = _expectedLogMessages->pending.front();
+
+    const auto allMsgs = LogManager::capturedMessages();
+    for (int i = expected.startIndex; i < allMsgs.size(); ++i) {
+        if (_expectedLogMessages->consumedMessageIndices.contains(i)) {
+            continue;
+        }
+        if (!matches(allMsgs[i], expected.entry)) {
+            continue;
+        }
+
+        _expectedLogMessages->consumedMessageIndices.insert(i);
+        _expectedLogMessages->pending.removeFirst();
+        return;
+    }
+
+    const QString detail = QStringLiteral("Expected log message was not captured after expectLogMessage. pattern='%1' category='%2'")
+                               .arg(expected.entry.pattern.pattern(),
+                                    expected.entry.category);
+    _expectedLogMessages->pending.removeFirst();
+    QFAIL(qPrintable(detail));
+}
+
+void UnitTest::expectAppMessage(const QRegularExpression &messagePattern)
+{
+    expectLogMessage("API.QGCApplication.AppMessage", QtDebugMsg, messagePattern);
+}
+
+void UnitTest::ignoreLogMessage(const char *category, QtMsgType type, const QRegularExpression &pattern)
+{
+    Q_ASSERT_X(category && *category != '\0', "ignoreLogMessage", "category must not be empty — use the exact Qt logging category string (e.g. \"Utilities.QGCFileHelper\")");
+    _expectedLogMessages->ignored.append({LogEntry::fromQtMsgType(type), pattern, QString::fromLatin1(category)});
 }
 
 void UnitTest::init()
 {
     _initCalled = true;
+    _failureContextDumped = false;
+    _expectedLogMessages->ignored.clear();
+    _expectedLogMessages->pending.clear();
+    _expectedLogMessages->consumedMessageIndices.clear();
 
-    // Force offline vehicle back to defaults
-    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
-    appSettings->offlineEditingFirmwareClass()->setRawValue(
-        appSettings->offlineEditingFirmwareClass()->rawDefaultValue());
-    appSettings->offlineEditingVehicleClass()->setRawValue(
-        appSettings->offlineEditingVehicleClass()->rawDefaultValue());
+    // MockLink emulates an Open Drone ID device (sends OPEN_DRONE_ID_ARM_STATUS at
+    // 1Hz), which makes RemoteIDManager start its periodic send timer. That timer
+    // warns about the missing GCS GPS fix — but headless unit tests never have a
+    // GCS GPS source, so this is expected noise. Whether the timer ticks inside a
+    // given test's strict-mode capture window is timing-dependent, so without this
+    // ignore the warning lands in a random test each full run, causing flaky
+    // failures across many vehicle/UI tests. Ignore it globally.
+    ignoreLogMessage("Vehicle.RemoteIDManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^GCS GPS error:")));
+
+    // Start capturing log messages for this test (cleared from previous test)
+    LogManager::clearCapturedMessages();
+    LogManager::setCaptureEnabled(true);
+
+    // Per-test settings isolation. QGCApplication clears settings once at process startup
+    // when running unit tests, but every test function of a class shares that one process,
+    // so persisted QSettings values written by one test function (or left over from a prior
+    // crashed run) otherwise bleed into the next. Clear the persistent store at the start of
+    // every test function so each starts from an empty scope. Facts re-read defaults below.
+    {
+        QSettings settings;
+        settings.clear();
+        settings.sync();
+    }
+
+    // Force offline vehicle back to defaults. Lightweight (bare QCoreApplication) tests run
+    // without the SettingsManager toolbox, so guard against a missing AppSettings rather than
+    // dereferencing null. On the default full-app path appSettings is always present.
+    if (AppSettings* const appSettings = SettingsManager::instance()->appSettings()) {
+        appSettings->offlineEditingFirmwareClass()->setRawValue(
+            appSettings->offlineEditingFirmwareClass()->rawDefaultValue());
+        appSettings->offlineEditingVehicleClass()->setRawValue(
+            appSettings->offlineEditingVehicleClass()->rawDefaultValue());
+    }
 }
 
 void UnitTest::cleanup()
 {
     _cleanupCalled = true;
+    dumpFailureContextIfTestFailed(QStringLiteral("cleanup"));
 
-    _cleanupTempFiles();
+    // Keep log capture enabled through the settle/verification phase so warnings
+    // emitted while draining queued events are still subject to strict checking.
+    // The scope guard guarantees capture is disabled on every exit path, including
+    // the early returns taken by the QFAIL macros below.
+    const auto captureGuard = qScopeGuard([] { LogManager::setCaptureEnabled(false); });
 
-    // Process any lingering events to prevent cross-test contamination
-    for (int i = 0; i < 3; ++i) {
-        QCoreApplication::processEvents(QEventLoop::AllEvents);
-        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    // Drain queued events and flush DeferredDelete across several passes to
+    // prevent cross-test contamination; a single qWait(0) pass is insufficient.
+    settleEventLoopForCleanup();
+
+    // Fail the test if any unexpected captured log messages were emitted (strict mode).
+    // Skip if the test already failed to avoid noisy double-failure reports.
+    if (!QTest::currentTestFailed()) {
+        if (!_expectedLogMessages->pending.isEmpty()) {
+            const auto expected = _expectedLogMessages->pending.front().entry;
+            _expectedLogMessages->pending.clear();
+            const QString detail = QStringLiteral("expectLogMessage was called without a matching verifyExpectedLogMessage. pattern='%1' category='%2'")
+                                       .arg(expected.pattern.pattern(), expected.category);
+            QFAIL(qPrintable(detail));
+        }
+
+        auto isIgnored = [this](const LogEntry &m) {
+            for (const auto &e : _expectedLogMessages->ignored) {
+                if (e.level != m.level) continue;
+                if (!e.pattern.match(m.message).hasMatch()) continue;
+                if (e.category != m.category) continue;
+                return true;
+            }
+            return false;
+        };
+
+        const auto allMsgs = LogManager::capturedMessages();
+        QString strictDetails;
+        for (int i = 0; i < allMsgs.size(); ++i) {
+            if (_expectedLogMessages->consumedMessageIndices.contains(i)) {
+                continue;
+            }
+            const LogEntry &m = allMsgs[i];
+            if (isIgnored(m)) {
+                continue;
+            }
+            const char *lvl = (m.level == LogEntry::Debug)    ? "debug"
+                            : (m.level == LogEntry::Warning)  ? "warning"
+                            : (m.level == LogEntry::Info)     ? "info"
+                            : (m.level == LogEntry::Critical) ? "critical"
+                                                              : "other";
+            strictDetails += QStringLiteral("  [%1][%2] %3\n")
+                                 .arg(QLatin1String(lvl), m.category, m.message);
+        }
+
+        if (!strictDetails.isEmpty()) {
+            QFAIL(qPrintable(QStringLiteral("Unexpected log messages (strict mode):\n%1").arg(strictDetails)));
+        }
     }
 }
 
-void UnitTest::_cleanupTempFiles()
+void UnitTest::dumpFailureContextIfTestFailed(QStringView reason)
 {
-    qDeleteAll(_tempFiles);
-    _tempFiles.clear();
+    if (_failureContextDumped || !QTest::currentTestFailed()) {
+        return;
+    }
 
-    qDeleteAll(_tempDirs);
-    _tempDirs.clear();
+    _failureContextDumped = true;
+
+    const QString testFunction = currentTestName();
+    if (reason.isEmpty()) {
+        qCWarning(UnitTestLog) << "Failure context dump for" << objectName() << "::" << testFunction;
+    } else {
+        qCWarning(UnitTestLog) << "Failure context dump for" << objectName() << "::" << testFunction << "("
+                               << reason.toString() << ")";
+    }
+
+    const QString context = TestContext::current();
+    if (!context.isEmpty()) {
+        qCWarning(UnitTestLog) << "Context:" << context;
+    }
+
+    const QString fixtureSummary = failureContextSummary();
+    if (!fixtureSummary.isEmpty()) {
+        qCWarning(UnitTestLog) << "Fixture state:";
+        const QStringList lines = fixtureSummary.split('\n', Qt::SkipEmptyParts);
+        for (const QString& line : lines) {
+            qCWarning(UnitTestLog).noquote() << "  " << line;
+        }
+    }
+
+    logRecentDebugMessages("Recent test debug messages:");
+}
+
+QString UnitTest::failureContextSummary() const
+{
+    QStringList lines;
+
+    if (!qgcApp()) {
+        lines.append(QStringLiteral("QGC application instance is not available"));
+        return lines.join('\n');
+    }
+
+    MultiVehicleManager* vehicleManager = MultiVehicleManager::instance();
+    QmlObjectListModel* vehicles = vehicleManager ? vehicleManager->vehicles() : nullptr;
+    const int vehicleCount = vehicles ? vehicles->count() : 0;
+    Vehicle* activeVehicle = vehicleManager ? vehicleManager->activeVehicle() : nullptr;
+
+    lines.append(QStringLiteral("MultiVehicleManager: vehicles=%1 activeVehicle=%2")
+                     .arg(vehicleCount)
+                     .arg(activeVehicle ? QStringLiteral("present") : QStringLiteral("null")));
+    if (activeVehicle) {
+        lines.append(QStringLiteral("Active vehicle: id=%1 initialConnectComplete=%2")
+                         .arg(activeVehicle->id())
+                         .arg(activeVehicle->isInitialConnectComplete()));
+    }
+
+    LinkManager* linkManager = LinkManager::instance();
+    const int linkCount = linkManager ? linkManager->links().count() : 0;
+    lines.append(QStringLiteral("LinkManager: links=%1").arg(linkCount));
+
+    return lines.join('\n');
 }
 
 void UnitTest::_resetTestState()
@@ -484,14 +959,6 @@ void UnitTest::_resetTestState()
 
 bool UnitTest::fileCompare(const QString& file1, const QString& file2)
 {
-    const QFileInfo info1(file1);
-    const QFileInfo info2(file2);
-
-    if (info1.size() != info2.size()) {
-        qCWarning(UnitTestLog) << "fileCompare: sizes differ -" << info1.size() << "vs" << info2.size();
-        return false;
-    }
-
     QFile f1(file1);
     QFile f2(file2);
 
@@ -504,14 +971,42 @@ bool UnitTest::fileCompare(const QString& file1, const QString& file2)
         return false;
     }
 
-    // Use buffered comparison for efficiency
+    const qint64 size1 = f1.size();
+    const qint64 size2 = f2.size();
+    if (size1 != size2) {
+        qCWarning(UnitTestLog) << "fileCompare: sizes differ -" << size1 << "vs" << size2;
+        return false;
+    }
+
+    if (size1 == 0) {
+        return true;
+    }
+
+    // Memory-map both files for zero-copy comparison
+    const uchar* m1 = f1.map(0, size1);
+    const uchar* m2 = f2.map(0, size2);
+
+    if (m1 && m2) {
+        if (std::memcmp(m1, m2, static_cast<size_t>(size1)) == 0) {
+            return true;
+        }
+        // Find exact mismatch position for diagnostics
+        for (qint64 i = 0; i < size1; ++i) {
+            if (m1[i] != m2[i]) {
+                qCWarning(UnitTestLog) << "fileCompare: mismatch at offset" << i << "- got"
+                                       << static_cast<int>(m1[i]) << "expected" << static_cast<int>(m2[i]);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    // Fallback to buffered read if mapping fails (e.g. special filesystems)
     qint64 offset = 0;
     while (!f1.atEnd()) {
         const QByteArray buf1 = f1.read(kFileCompareBufferSize);
         const QByteArray buf2 = f2.read(kFileCompareBufferSize);
-
         if (buf1 != buf2) {
-            // Find exact mismatch position
             for (int i = 0; i < buf1.size() && i < buf2.size(); ++i) {
                 if (buf1[i] != buf2[i]) {
                     qCWarning(UnitTestLog) << "fileCompare: mismatch at offset" << (offset + i) << "- got"
@@ -548,67 +1043,6 @@ bool UnitTest::fileContentsEqual(const QString& filePath, const QByteArray& expe
     }
 
     return true;
-}
-
-void UnitTest::_missionItemsEqual(const MissionItem& actual, const MissionItem& expected)
-{
-    QCOMPARE(static_cast<int>(actual.command()), static_cast<int>(expected.command()));
-    QCOMPARE(static_cast<int>(actual.frame()), static_cast<int>(expected.frame()));
-    QCOMPARE(actual.autoContinue(), expected.autoContinue());
-
-    QVERIFY(QGC::fuzzyCompare(actual.param1(), expected.param1()));
-    QVERIFY(QGC::fuzzyCompare(actual.param2(), expected.param2()));
-    QVERIFY(QGC::fuzzyCompare(actual.param3(), expected.param3()));
-    QVERIFY(QGC::fuzzyCompare(actual.param4(), expected.param4()));
-    QVERIFY(QGC::fuzzyCompare(actual.param5(), expected.param5()));
-    QVERIFY(QGC::fuzzyCompare(actual.param6(), expected.param6()));
-    QVERIFY(QGC::fuzzyCompare(actual.param7(), expected.param7()));
-}
-
-void UnitTest::changeFactValue(Fact* fact, double increment)
-{
-    if (fact->typeIsBool()) {
-        fact->setRawValue(!fact->rawValue().toBool());
-    } else {
-        if (qFuzzyIsNull(increment)) {
-            increment = 1.0;
-        }
-        fact->setRawValue(fact->rawValue().toDouble() + increment);
-    }
-}
-
-QGeoCoordinate UnitTest::changeCoordinateValue(const QGeoCoordinate& coordinate)
-{
-    return coordinate.atDistanceAndAzimuth(1, 0);
-}
-
-QTemporaryFile* UnitTest::createTempFile(const QString& templateName)
-{
-    auto* tempFile = templateName.isEmpty() ? new QTemporaryFile(this)
-                                            : new QTemporaryFile(QDir::tempPath() + "/" + templateName, this);
-
-    if (!tempFile->open()) {
-        qCWarning(UnitTestLog) << "createTempFile: failed to create temp file:" << tempFile->errorString();
-        delete tempFile;
-        return nullptr;
-    }
-
-    _tempFiles.append(tempFile);
-    return tempFile;
-}
-
-QTemporaryDir* UnitTest::createTempDir()
-{
-    auto* tempDir = new QTemporaryDir();
-
-    if (!tempDir->isValid()) {
-        qCWarning(UnitTestLog) << "createTempDir: failed to create temp directory";
-        delete tempDir;
-        return nullptr;
-    }
-
-    _tempDirs.append(tempDir);
-    return tempDir;
 }
 
 QString UnitTest::testResourcePath(const QString& relativePath)

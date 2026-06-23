@@ -1,17 +1,21 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
 
 Item {
-    anchors.fill: parent
+    implicitWidth: mainLayout.implicitWidth
+    implicitHeight: mainLayout.implicitHeight
+    width: parent.width  // grows when Loader is wider than implicitWidth
 
     readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property var _activeJoystick: joystickManager.activeJoystick
 
-    Column {
-        anchors.fill: parent
+    ColumnLayout {
+        id: mainLayout
+        spacing: 0
 
         VehicleSummaryRow {
             labelText: qsTr("Status")

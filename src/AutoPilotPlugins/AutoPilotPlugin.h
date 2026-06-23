@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtCore/QVariantList>
@@ -10,12 +9,12 @@ class FirmwarePlugin;
 class Vehicle;
 class VehicleComponent;
 
-Q_DECLARE_LOGGING_CATEGORY(AutoPilotPluginLog)
+/// \brief The AutoPilotPlugin class is an abstract base class which represents the methods and objects
+/// which are specific to a certain AutoPilot.
+///
+/// This is the only place where AutoPilot specific code should reside in QGroundControl. The remainder
+/// of the QGroundControl source is generic to a common mavlink implementation.
 
-/// The AutoPilotPlugin class is an abstract base class which represent the methods and objects
-/// which are specific to a certain AutoPilot. This is the only place where AutoPilot specific
-/// code should reside in QGroundControl. The remainder of the QGroundControl source is
-/// generic to a common mavlink implementation.
 class AutoPilotPlugin : public QObject
 {
     Q_OBJECT
@@ -36,6 +35,7 @@ public:
         KnownSafetyVehicleComponent,
         KnownPowerVehicleComponent,
         KnownJoystickVehicleComponent,
+        KnownESCVehicleComponent,
         UnknownVehicleComponent // Firmware specific vehicle components
     };
     Q_ENUM(KnownVehicleComponent)

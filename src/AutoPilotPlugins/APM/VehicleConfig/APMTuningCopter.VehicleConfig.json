@@ -1,0 +1,137 @@
+{
+    "fileType": "VehicleConfig",
+    "version": 1,
+    "constants": {},
+    "params": {},
+    "bindings": {},
+    "sections": [
+        {
+            "title": "Flight Response",
+            "showWhen": "controller.vehicle.multiRotor",
+            "keywords": [
+                "tuning",
+                "pid",
+                "roll",
+                "pitch",
+                "climb",
+                "sensitivity",
+                "thrust",
+                "motor"
+            ],
+            "controls": [
+                {
+                    "param": "ATC_RAT_RLL_P",
+                    "label": "Roll/Pitch Sensitivity",
+                    "description": "Slide to the right if the copter is sluggish or slide to the left if the copter is twitchy",
+                    "control": "factslider",
+                    "sliderFrom": 0.08,
+                    "sliderTo": 0.4,
+                    "majorTickStepSize": 0.02,
+                    "decimalPlaces": 3,
+                    "linkedParams": {
+                        "ATC_RAT_RLL_I": "value",
+                        "ATC_RAT_PIT_P": "value",
+                        "ATC_RAT_PIT_I": "value"
+                    }
+                },
+                {
+                    "param": "PSC_D_ACC_P",
+                    "label": "Climb Sensitivity",
+                    "description": "Slide to the right to climb more aggressively or slide to the left to climb more gently",
+                    "control": "factslider",
+                    "sliderFrom": 0.03,
+                    "sliderTo": 1.0,
+                    "majorTickStepSize": 0.05,
+                    "decimalPlaces": 3,
+                    "linkedParams": {
+                        "PSC_D_ACC_I": "value * 2"
+                    }
+                },
+                {
+                    "param": "ATC_INPUT_TC",
+                    "label": "RC Roll/Pitch Feel",
+                    "description": "Slide to the left for soft control, slide to the right for crisp control",
+                    "control": "factslider",
+                    "optional": true
+                },
+                {
+                    "param": "MOT_SPIN_ARM",
+                    "label": "Spin While Armed",
+                    "description": "Adjust the amount the motors spin to indicate armed. Should be lower than Minimum Thrust.",
+                    "control": "factslider",
+                    "sliderFrom": 0,
+                    "sliderTo": 0.3,
+                    "majorTickStepSize": 0.1,
+                    "decimalPlaces": 1
+                },
+                {
+                    "param": "MOT_SPIN_MIN",
+                    "label": "Minimum Thrust",
+                    "description": "Adjust the minimum amount of thrust required for the vehicle to move. Should be higher than Spin While Armed.",
+                    "control": "factslider",
+                    "sliderFrom": 0,
+                    "sliderTo": 0.3,
+                    "majorTickStepSize": 0.1,
+                    "decimalPlaces": 1
+                }
+            ]
+        },
+        {
+            "title": "AutoTune",
+            "showWhen": "controller.vehicle.multiRotor",
+            "keywords": [
+                "autotune",
+                "auto tune",
+                "axes",
+                "channel",
+                "switch"
+            ],
+            "controls": [
+                {
+                    "param": "AUTOTUNE_AXES",
+                    "label": "Axes to AutoTune",
+                    "control": "bitmask"
+                },
+                {
+                    "control": "component",
+                    "component": "APMAutoTuneChannelSelector"
+                },
+                {
+                    "param": "AUTOTUNE_AGGR",
+                    "label": "Aggressiveness",
+                    "optional": true
+                },
+                {
+                    "param": "AUTOTUNE_MIN_D",
+                    "label": "Minimum D gain",
+                    "optional": true
+                }
+            ]
+        },
+        {
+            "title": "In Flight Tuning",
+            "showWhen": "controller.vehicle.multiRotor",
+            "keywords": [
+                "in flight tuning",
+                "tune",
+                "channel 6",
+                "rc tuning"
+            ],
+            "controls": [
+                {
+                    "param": "TUNE",
+                    "label": "RC Channel 6 Option (Tuning)",
+                    "control": "combobox"
+                },
+                {
+                    "param": "TUNE_MIN",
+                    "label": "Min"
+                },
+                {
+                    "param": "TUNE_MAX",
+                    "label": "Max"
+                }
+            ]
+        }
+    ]
+}

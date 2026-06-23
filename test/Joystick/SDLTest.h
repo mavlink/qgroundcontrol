@@ -8,6 +8,7 @@ class SDLTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
     void init() override;
     void cleanup() override;
 

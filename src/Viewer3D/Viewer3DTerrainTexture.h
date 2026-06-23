@@ -1,17 +1,15 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QSize>
+#include <QtCore/QString>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DTextureData>
 
-#include "Viewer3DTileQuery.h"
-
-Q_DECLARE_LOGGING_CATEGORY(Viewer3DTerrainTextureLog)
-
 class FlightMapSettings;
 class Viewer3DMapProvider;
+class Viewer3DTileQuery;
+struct Viewer3DTileStatistics;
 
 class Viewer3DTerrainTexture : public QQuick3DTextureData
 {
@@ -50,7 +48,7 @@ public:
 
     void setTextureGeometryDone(bool newTextureGeometryDone);
     void setTextureDownloadProgress(float newTextureDownloadProgress);
-    void setTextureGeometry(const Viewer3DTileQuery::TileStatistics_t &tileInfo);
+    void setTextureGeometry(const Viewer3DTileStatistics &tileInfo);
 
 signals:
     void mapProviderChanged();

@@ -2,7 +2,6 @@
 
 #include "QGCMAVLink.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QVariantList>
@@ -13,7 +12,7 @@ class MissionCommandTreeTest;
 class MissionCommandUIInfo;
 class Vehicle;
 
-/// Manages a hierarchy of MissionCommandUIInfo.
+/// \brief Manages a hierarchy of MissionCommandUIInfo.
 ///
 /// The static hierarchy allows for overriding mission command ui info based on firmware and vehicle class. The hierarchy of the tree is:
 ///     FirmwareClassGeneric - VehicleClassGeneric - Base set of all command definitions for any firmware, any vehicle, ui defined by mavlink spec
@@ -39,7 +38,9 @@ class MissionCommandTree : public QObject
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("Vehicle.h")
 
+#ifdef QGC_UNITTEST_BUILD
     friend class MissionCommandTreeTest;
+#endif
 
 public:
     /// Constructs an MissionCommandTree object.

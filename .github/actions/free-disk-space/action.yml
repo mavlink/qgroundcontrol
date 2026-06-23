@@ -1,0 +1,24 @@
+name: Free Disk Space
+description: >-
+  Thin wrapper around endersonmenezes/free-disk-space that pins QGC's shared
+  defaults (packages, rm_cmd, dotnet/haskell removal) so callers only declare
+  the knobs that actually vary by workload.
+
+inputs:
+  remove-android:
+    description: 'Remove Android SDK/NDK. Keep when building Android.'
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - uses: endersonmenezes/free-disk-space@v3
+      with:
+        remove_android: ${{ inputs.remove-android }}
+        remove_dotnet: true
+        remove_haskell: true
+        remove_packages: azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-* julia*
+        remove_packages_one_command: true
+        remove_folders: /usr/share/swift /usr/share/miniconda /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-sam-cli
+        rm_cmd: rmz

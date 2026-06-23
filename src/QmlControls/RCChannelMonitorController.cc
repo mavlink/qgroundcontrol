@@ -9,12 +9,32 @@ RCChannelMonitorController::RCChannelMonitorController(QObject *parent)
 {
     // qCDebug(RCChannelMonitorControllerLog) << Q_FUNC_INFO << this;
 
-    (void) connect(_vehicle, &Vehicle::rcChannelsChanged, this, &RCChannelMonitorController::channelValuesChanged);
+    _connectToSignal();
 }
 
 RCChannelMonitorController::~RCChannelMonitorController()
 {
     // qCDebug(RCChannelMonitorControllerLog) << Q_FUNC_INFO << this;
+}
+
+void RCChannelMonitorController::setClampValues(bool clamp)
+{
+    if (_clampValues != clamp) {
+        _clampValues = clamp;
+        _connectToSignal();
+        emit clampValuesChanged();
+    }
+}
+
+void RCChannelMonitorController::_connectToSignal()
+{
+    disconnect(_vehicle, &Vehicle::rcChannelsClampedChanged, this, &RCChannelMonitorController::channelValuesChanged);
+    disconnect(_vehicle, &Vehicle::rcChannelsRawChanged, this, &RCChannelMonitorController::channelValuesChanged);
+    if (_clampValues) {
+        (void) connect(_vehicle, &Vehicle::rcChannelsClampedChanged, this, &RCChannelMonitorController::channelValuesChanged);
+    } else {
+        (void) connect(_vehicle, &Vehicle::rcChannelsRawChanged, this, &RCChannelMonitorController::channelValuesChanged);
+    }
 }
 
 void RCChannelMonitorController::channelValuesChanged(QVector<int> pwmValues)

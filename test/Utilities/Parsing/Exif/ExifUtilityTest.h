@@ -19,6 +19,8 @@ private slots:
     void _testLoadFromBuffer();
     void _testLoadFromBufferInvalid();
     void _testSaveToBuffer();
+    void _testSaveToBufferRejectsNonJpeg();
+    void _testSaveToBufferRejectsTiff();
 
     // Tag reading
     void _testReadString();
@@ -33,4 +35,6 @@ private slots:
     void _testWriteGpsCoordinate();
     void _testWriteRational();
     void _testGpsRationalToDecimal();
+    void _testWriteDateTimeOriginalRejectsInvalidInput();
+    void _testWriteDateTimeOriginalWritesBothTags();
 };

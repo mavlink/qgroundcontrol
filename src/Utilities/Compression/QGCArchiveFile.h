@@ -6,11 +6,8 @@
 #include "QGCArchiveDeviceBase.h"
 
 #include <QtCore/QDateTime>
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(QGCArchiveFileLog)
-
-/// QIODevice for reading a single entry from an archive without full extraction
+/// \brief QIODevice for reading a single entry from an archive without full extraction
+///
 /// Supports ZIP, TAR, 7z, and other libarchive-supported formats
 /// Read-only, sequential access only
 ///
@@ -20,6 +17,7 @@ Q_DECLARE_LOGGING_CATEGORY(QGCArchiveFileLog)
 /// file.open(QIODevice::ReadOnly);
 /// QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
 /// @endcode
+///
 class QGCArchiveFile : public QGCArchiveDeviceBase
 {
     Q_OBJECT

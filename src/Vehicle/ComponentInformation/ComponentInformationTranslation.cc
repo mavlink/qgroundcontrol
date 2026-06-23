@@ -19,12 +19,18 @@ ComponentInformationTranslation::ComponentInformationTranslation(QObject* parent
 }
 
 bool ComponentInformationTranslation::downloadAndTranslate(const QString& summaryJsonFile,
-                                                           const QString& toTranslateJsonFile, int maxCacheAgeSec)
+                                                           const QString& toTranslateJsonFile, int maxCacheAgeSec, const QString& componentName)
 {
+    // Metadata is authored in English, no translation needed
+    const QString locale = QLocale::system().name();
+    if (locale.startsWith(QLatin1String("en"))) {
+        qCDebug(ComponentInformationTranslationLog) << "Skipping translation for English locale" << locale << "for" << componentName;
+        return false;
+    }
+
     // Parse summary: find url for current locale
     _toTranslateJsonFile = toTranslateJsonFile;
-    QString locale = QLocale::system().name();
-    QString url = getUrlFromSummaryJson(summaryJsonFile, locale);
+    QString url = getUrlFromSummaryJson(summaryJsonFile, locale, componentName);
     if (url.isEmpty()) {
         return false;
     }
@@ -39,26 +45,26 @@ bool ComponentInformationTranslation::downloadAndTranslate(const QString& summar
     return true;
 }
 
-QString ComponentInformationTranslation::getUrlFromSummaryJson(const QString &summaryJsonFile, const QString &locale)
+QString ComponentInformationTranslation::getUrlFromSummaryJson(const QString &summaryJsonFile, const QString &locale, const QString &componentName)
 {
     QString         errorString;
     QJsonDocument   jsonDoc;
 
     if (!JsonParsing::isJsonFile(summaryJsonFile, jsonDoc, errorString)) {
-        qCWarning(ComponentInformationTranslationLog) << "Metadata translation summary json file open failed:" << errorString;
+        qCWarning(ComponentInformationTranslationLog) << "Metadata translation summary json file open failed for" << componentName << ":" << errorString;
         return "";
     }
     QJsonObject jsonObj = jsonDoc.object();
 
     QJsonObject localeObj = jsonObj[locale].toObject();
     if (localeObj.isEmpty()) {
-        qCWarning(ComponentInformationTranslationLog) << "Locale " << locale << " not found in json";
+        qCWarning(ComponentInformationTranslationLog) << "Locale" << locale << "not found in translation json for" << componentName;
         return "";
     }
 
     QString url = localeObj["url"].toString();
     if (url.isEmpty()) {
-        qCWarning(ComponentInformationTranslationLog) << "Locale " << locale << ": no url set";
+        qCWarning(ComponentInformationTranslationLog) << "Locale" << locale << "has no url in translation json for" << componentName;
     }
     return url;
 }
@@ -98,7 +104,7 @@ void ComponentInformationTranslation::onDownloadCompleted(bool success, const QS
 
 QString ComponentInformationTranslation::translateJsonUsingTS(const QString &toTranslateJsonFile, const QString &tsFile)
 {
-    qCInfo(ComponentInformationTranslationLog) << "Translating" << toTranslateJsonFile << "using" << tsFile;
+    qCDebug(ComponentInformationTranslationLog) << "Translating" << toTranslateJsonFile << "using" << tsFile;
 
     // Open JSON and get the 'translation' object
     QString         errorString;
@@ -200,7 +206,7 @@ QString ComponentInformationTranslation::translateJsonUsingTS(const QString &toT
     translatedFile.write(jsonDoc.toJson());
     translatedFile.close();
 
-    qCInfo(ComponentInformationTranslationLog) << "JSON file" << toTranslateJsonFile << "successfully translated to" << translatedFileName;
+    qCDebug(ComponentInformationTranslationLog) << "JSON file" << toTranslateJsonFile << "successfully translated to" << translatedFileName;
     return translatedFileName;
 }
 

@@ -1,4 +1,5 @@
 #include "StatusTextHandler.h"
+#include "MAVLinkLib.h"
 #include <QGCLoggingCategory.h>
 
 #include <QtCore/QTimer>

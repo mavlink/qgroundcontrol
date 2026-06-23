@@ -6,9 +6,10 @@
 /// Include this header to get access to all test fixtures:
 /// - Coord namespace: origin(), zurich(), sanFrancisco(), polygon(), waypointPath()
 /// - Mission namespace: addWaypoints(), addTakeoff(), addLand(), addRTL()
-/// - VehicleFixture, SettingsFixture, SignalSpyFixture
-/// - TempFileFixture, TempDirFixture
+/// - NetworkReplyFixture, SingleInstanceLockFixture
+/// - TempFileFixture, TempJsonFileFixture, TempDirFixture
 
 #include "CoordFixtures.h"
 #include "MissionFixtures.h"
 #include "RAIIFixtures.h"
+#include "LocalHttpTestServer.h"

@@ -1,21 +1,27 @@
 #include "ComponentInformationCacheTest.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QStandardPaths>
+#include <QtCore/QUuid>
 
 #include "ComponentInformationCache.h"
 #include "UnitTest.h"
 
 ComponentInformationCacheTest::ComponentInformationCacheTest()
 {
-    _cacheDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/QGCCacheTest");
-    _tmpFilesDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/QGCTestFiles");
+    const QString uniqueSuffix = QStringLiteral("%1_%2")
+                                     .arg(QCoreApplication::applicationPid())
+                                     .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+    const QString tempRoot = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    _cacheDir = tempRoot + QLatin1String("/QGCCacheTest_") + uniqueSuffix;
+    _tmpFilesDir = tempRoot + QLatin1String("/QGCTestFiles_") + uniqueSuffix;
     _cleanup();
 }
 
 void ComponentInformationCacheTest::_setup()
 {
-    QDir d(_tmpFilesDir);
-    d.mkdir(_tmpFilesDir);
+    QDir d;
+    QVERIFY(d.mkpath(_tmpFilesDir));
     _tmpFiles.clear();
     for (int i = 0; i < 30; ++i) {
         TmpFile t;

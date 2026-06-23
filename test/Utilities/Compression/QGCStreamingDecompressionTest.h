@@ -1,10 +1,10 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include "UnitTest.h"
 
 /// Tests for QGCDecompressDevice and QGCArchiveFile
 /// Streaming decompression via QIODevice interface
-class QGCStreamingDecompressionTest : public TempDirectoryTest
+class QGCStreamingDecompressionTest : public UnitTest
 {
     Q_OBJECT
 

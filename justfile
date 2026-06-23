@@ -1,8 +1,11 @@
 # QGroundControl Development Commands
-# Install: cargo install just, brew install just, or apt install just
+# Install (requires just >=1.30 for home_directory()):
+#   python tools/setup/install_python.py dev   (recommended; pulls rust-just into .venv)
+#   brew install just / cargo install just / pipx install rust-just
+# `apt install just` on Ubuntu ships 1.21 which is too old.
 
 # Configuration from build-config.json
-qt_version := `./tools/setup/read-config.sh qt_version 2>/dev/null || echo "6.10.1"`
+qt_version := `python3 ./tools/setup/read_config.py --get qt_version 2>/dev/null || echo "6.10.1"`
 qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "gcc_64")
 build_type := env_var_or_default("BUILD_TYPE", "Debug")
 build_dir := "build"
@@ -18,7 +21,7 @@ default:
 # Install system dependencies (Debian/Ubuntu)
 deps:
     @echo "Installing dependencies (requires sudo)..."
-    python3 ./tools/setup/install_dependencies.py --platform debian
+    python3 ./tools/setup/install_dependencies --platform debian
 
 # Initialize git submodules
 submodules:
@@ -45,9 +48,9 @@ release:
         -DQGC_BUILD_TESTING=OFF
     cmake --build {{build_dir}} --config Release --parallel
 
-# Clean build directory
-clean:
-    rm -rf {{build_dir}}
+# Clean build directory (forwards to tools/clean.py; pass --cache, --all, --dry-run)
+clean *ARGS:
+    ./tools/clean.py {{ARGS}}
 
 # Clean, configure, and build
 rebuild: clean configure build
@@ -59,9 +62,9 @@ setup: deps submodules configure build
 # Quality
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Run unit tests
-test:
-    cd {{build_dir}} && ctest --output-on-failure
+# Run unit tests (matches CI label filters; override with `LABELS=... EXCLUDE=... just test`)
+test labels=env_var_or_default("LABELS", "Unit|Integration") exclude=env_var_or_default("EXCLUDE", "Flaky|Network"):
+    cd {{build_dir}} && ctest --output-on-failure -L "{{labels}}" -LE "{{exclude}}"
 
 # Run pre-commit checks
 lint:
@@ -81,7 +84,7 @@ analyze:
 
 # Generate coverage report
 coverage:
-    ./tools/coverage.sh
+    python3 ./tools/coverage.py
 
 # Run lint + test
 check: lint test
@@ -92,7 +95,7 @@ check: lint test
 
 # Launch QGroundControl
 run:
-    ./{{build_dir}}/staging/QGroundControl
+    ./{{build_dir}}/{{build_type}}/QGroundControl
 
 # Build documentation
 docs:
@@ -100,7 +103,7 @@ docs:
 
 # Build using Docker (Ubuntu)
 docker:
-    ./deploy/docker/run-docker-ubuntu.sh
+    ./deploy/docker/run-docker.sh ubuntu
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Utilities
@@ -115,9 +118,9 @@ info:
 
 # Check dependency versions
 check-deps:
-    ./tools/check-deps.sh
+    python3 ./tools/check_deps.py
 
-# Clean all caches and build artifacts
-distclean: clean
-    rm -rf .cache
+# Clean build, caches, and generated files
+distclean:
+    ./tools/clean.py --all
     rm -rf node_modules

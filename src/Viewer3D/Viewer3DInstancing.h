@@ -1,13 +1,12 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
+#include <QtCore/QByteArray>
+#include <QtCore/QList>
 #include <QtGui/QColor>
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DInstancing>
-
-Q_DECLARE_LOGGING_CATEGORY(Viewer3DInstancingLog)
 
 class Viewer3DInstancing : public QQuick3DInstancing
 {

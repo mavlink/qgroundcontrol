@@ -1,5 +1,5 @@
 #include "ComplexMissionItem.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "PlanMasterController.h"
@@ -41,19 +41,19 @@ QStringList ComplexMissionItem::presetNames(void)
 void ComplexMissionItem::loadPreset(const QString& name)
 {
     Q_UNUSED(name);
-    qgcApp()->showAppMessage(tr("This Pattern does not support Presets."));
+    QGC::showAppMessage(tr("This Pattern does not support Presets."));
 }
 
 void ComplexMissionItem::savePreset(const QString& name)
 {
     Q_UNUSED(name);
-    qgcApp()->showAppMessage(tr("This Pattern does not support Presets."));
+    QGC::showAppMessage(tr("This Pattern does not support Presets."));
 }
 
 void ComplexMissionItem::deletePreset(const QString& name)
 {
     if (QGCCorePlugin::instance()->options()->surveyBuiltInPresetNames().contains(name)) {
-        qgcApp()->showAppMessage(tr("'%1' is a built-in preset which cannot be deleted.").arg(name));
+        QGC::showAppMessage(tr("'%1' is a built-in preset which cannot be deleted.").arg(name));
         return;
     }
 

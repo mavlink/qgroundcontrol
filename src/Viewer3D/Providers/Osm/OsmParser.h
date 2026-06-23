@@ -1,16 +1,17 @@
 #pragma once
 
-#include <QtCore/QLoggingCategory>
-#include <QtCore/QVariant>
+#include <QtCore/QByteArray>
+#include <QtCore/QString>
 #include <QtGui/QVector2D>
 #include <QtGui/QVector3D>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include <vector>
+
 #include "Viewer3DMapProvider.h"
 
-Q_DECLARE_LOGGING_CATEGORY(OsmParserLog)
-
 class OsmParserThread;
+class QVariant;
 
 class OsmParser : public Viewer3DMapProvider
 {
@@ -22,6 +23,7 @@ class OsmParser : public Viewer3DMapProvider
 
 public:
     explicit OsmParser(QObject *parent = nullptr);
+    ~OsmParser() override;
 
     bool mapLoaded() const override { return _mapLoadedFlag; }
     QGeoCoordinate gpsRef() const override { return _gpsRefPoint; }

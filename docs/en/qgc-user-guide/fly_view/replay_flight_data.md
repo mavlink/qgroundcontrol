@@ -19,7 +19,6 @@ To replay a flight:
 1. Select **Application Settings > General > Fly View**
 1. Check **Show Telemetry Log Replay Status Bar** to toggle the flight replay bar at the bottom of the screen.
 
-   ![Toggle Flight Replay](../../../assets/fly/flight_replay/flight_replay_toggle.jpg)
 
 1. Select the **Load Telemetry Log** button in the bar to display a _file selection_ dialog.
    - Choose a log file to replay from the available telemetry logs.

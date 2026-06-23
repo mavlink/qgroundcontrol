@@ -26,6 +26,7 @@ class Fact;
 class ParameterTest : public VehicleTest
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(ParameterTest)
 
 public:
     explicit ParameterTest(QObject* parent = nullptr);

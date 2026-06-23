@@ -10,72 +10,41 @@
 #include "ObjectListModelBase.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QDebug>
-#include <QtQml/QQmlEngine>
-
 QGC_LOGGING_CATEGORY(ObjectListModelBaseLog, "API.ObjectListModelBase")
 
 ObjectListModelBase::ObjectListModelBase(QObject* parent)
-    : QAbstractListModel        (parent)
-    , _dirty                    (false)
-    , _skipDirtyFirstItem       (false)
+    : ObjectItemModelBase(parent)
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 ObjectListModelBase::~ObjectListModelBase()
 {
-    if (_resetModelNestingCount > 0) {
-        qCWarning(ObjectListModelBaseLog) << "Destroyed with unbalanced nesting of begin/endResetModel calls - _resetModelNestingCount:" << _resetModelNestingCount << this;
-    }
 }
 
-QHash<int, QByteArray> ObjectListModelBase::roleNames(void) const
+// Flat-list overrides — same semantics as QAbstractListModel
+
+QModelIndex ObjectListModelBase::index(int row, int column, const QModelIndex& parent) const
 {
-    QHash<int, QByteArray> hash;
-
-    hash[ObjectRole] = "object";
-    hash[TextRole] = "text";
-
-    return hash;
+    if (parent.isValid() || column != 0 || row < 0 || row >= rowCount()) {
+        return {};
+    }
+    return createIndex(row, 0);
 }
 
-void ObjectListModelBase::_childDirtyChanged(bool dirty)
+QModelIndex ObjectListModelBase::parent(const QModelIndex& child) const
 {
-    _dirty |= dirty;
-    // We want to emit dirtyChanged even if the actual value of _dirty didn't change. It can be a useful
-    // signal to know when a child has changed dirty state
-    emit dirtyChanged(_dirty);
+    Q_UNUSED(child);
+    return {};
 }
 
-void ObjectListModelBase::beginResetModel()
+int ObjectListModelBase::columnCount(const QModelIndex& parent) const
 {
-    if (_resetModelNestingCount == 0) {
-        qCDebug(ObjectListModelBaseLog) << "First call to begiResetModel - calling QAbstractListModel::beginResetModel" << this;
-        QAbstractListModel::beginResetModel();
-    }
-    _resetModelNestingCount++;
-    qCDebug(ObjectListModelBaseLog) << "Reset model nesting count" << _resetModelNestingCount << this;
+    Q_UNUSED(parent);
+    return 1;
 }
 
-void ObjectListModelBase::endResetModel()
+bool ObjectListModelBase::hasChildren(const QModelIndex& parent) const
 {
-    if (_resetModelNestingCount == 0) {
-        qCWarning(ObjectListModelBaseLog) << "Internal Error: endResetModel called without prior beginResetModel";
-        return;
-    }
-    _resetModelNestingCount--;
-    qCDebug(ObjectListModelBaseLog) << "Reset model nesting count" << _resetModelNestingCount << this;
-    if (_resetModelNestingCount == 0) {
-        qCDebug(ObjectListModelBaseLog) << "Last call to endResetModel - calling QAbstractListModel::endResetModel" << this;
-        QAbstractListModel::endResetModel();
-        emit countChanged(count());
-    }
-}
-
-void ObjectListModelBase::_signalCountChangedIfNotNested()
-{
-    if (_resetModelNestingCount == 0) {
-        emit countChanged(count());
-    }
+    // Only the root (invalid parent) has children in a flat list
+    return !parent.isValid() && rowCount() > 0;
 }

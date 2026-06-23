@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ArduCopter SITL Test Environment
 # Runs ArduCopter in Docker for testing QGC without hardware
 #
@@ -7,7 +7,7 @@
 # Options:
 #   --with-latency  Simulate 100ms round-trip latency (Herelink-like conditions)
 
-set -e
+set -euo pipefail
 
 COPTER_VERSION="Copter-4.5.6"
 IMAGE_NAME="ardupilot-sitl-4.5.6"
@@ -36,7 +36,7 @@ DOCKER_CMD="docker run -d --name $CONTAINER_NAME -p 5760:5760"
 ARDUPILOT_CMD="/ardupilot/build/sitl/bin/arducopter -S --model + --speedup 1 --defaults /ardupilot/Tools/autotest/default_params/copter.parm --home 42.3898,-71.1476,14.0,270.0 --serial0 tcp:0:5760:wait"
 
 # Check for latency simulation flag
-if [[ "$1" == "--with-latency" ]]; then
+if [[ "${1:-}" == "--with-latency" ]]; then
     echo ""
     echo "Starting SITL with simulated latency (100ms round-trip)..."
     echo "This simulates Herelink-like network conditions."

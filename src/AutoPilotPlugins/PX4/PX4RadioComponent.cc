@@ -15,8 +15,7 @@ QString PX4RadioComponent::name(void) const
 
 QString PX4RadioComponent::description(void) const
 {
-    return tr("Radio Setup is used to calibrate your transmitter. "
-              "It also assign channels for Roll, Pitch, Yaw and Throttle vehicle control as well as determining whether they are reversed.");
+    return tr("Configure and calibrate your transmitter and assign control channels.");
 }
 
 QString PX4RadioComponent::iconResource(void) const

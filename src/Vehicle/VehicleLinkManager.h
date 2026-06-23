@@ -1,15 +1,12 @@
 #pragma once
 
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "LinkInterface.h"
-#include "MAVLinkLib.h"
-
-Q_DECLARE_LOGGING_CATEGORY(VehicleLinkManagerLog)
+#include "MAVLinkMessageType.h"
 
 class Vehicle;
 class VehicleLinkManagerTest;
@@ -28,7 +25,9 @@ class VehicleLinkManager : public QObject
     Q_PROPERTY(bool         autoDisconnect              MEMBER _autoDisconnect                                              NOTIFY autoDisconnectChanged)
 
     friend class Vehicle;
+#ifdef QGC_UNITTEST_BUILD
     friend class VehicleLinkManagerTest;
+#endif
 
 public:
     VehicleLinkManager(Vehicle *vehicle);
@@ -86,10 +85,13 @@ private:
     static constexpr int _heartbeatMaxElpasedMSecs = 3500;  ///< No heartbeat for longer than this indicates comm loss
 
 public:
-    /// Heartbeat timeout used in unit tests (much shorter for faster tests)
-    static constexpr int kTestHeartbeatTimeoutMs = 500;
+    /// Heartbeat timeout used in unit tests (shorter for faster tests). Margin kept wide so an
+    /// ASan-stalled event loop can't be mistaken for a missed heartbeat (false comm-loss).
+    static constexpr int kTestHeartbeatTimeoutMs = 1500;
+
+    static constexpr int kTestCommLostCheckTimeoutMs = 250;
 
     /// Full comm loss detection timeout for tests: accounts for timer interval + heartbeat timeout + margin.
     /// Use this in tests waiting for communicationLostChanged or linkStatusesChanged signals.
-    static constexpr int kTestCommLostDetectionTimeoutMs = _commLostCheckTimeoutMSecs + kTestHeartbeatTimeoutMs + 500;
+    static constexpr int kTestCommLostDetectionTimeoutMs = kTestCommLostCheckTimeoutMs + kTestHeartbeatTimeoutMs + 300;
 };

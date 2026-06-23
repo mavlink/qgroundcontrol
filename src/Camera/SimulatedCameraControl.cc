@@ -1,6 +1,6 @@
 #include "SimulatedCameraControl.h"
 #include "FlyViewSettings.h"
-#include "QGCApplication.h"
+#include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
@@ -9,19 +9,38 @@
 QGC_LOGGING_CATEGORY(SimulatedCameraControlLog, "Camera.SimulatedCameraControl")
 
 SimulatedCameraControl::SimulatedCameraControl(Vehicle *vehicle, QObject *parent)
-    : MavlinkCameraControl(vehicle, parent)
+    : MavlinkCameraControlInterface(vehicle, parent)
 {
     qCDebug(SimulatedCameraControlLog) << this;
 
     auto videoManager = VideoManager::instance();
     (void) connect(videoManager, &VideoManager::recordingChanged, this, [this](bool recording) {
-        _videoCaptureStatus = recording ? VIDEO_CAPTURE_STATUS_RUNNING : VIDEO_CAPTURE_STATUS_STOPPED;
+        _videoCaptureStatusValue = recording ? VIDEO_CAPTURE_STATUS_RUNNING : VIDEO_CAPTURE_STATUS_STOPPED;
         emit videoCaptureStatusChanged();
     });
-    connect(videoManager, &VideoManager::hasVideoChanged, this, &SimulatedCameraControl::infoChanged);
-    connect(videoManager, &VideoManager::decodingChanged, this, &SimulatedCameraControl::infoChanged);
+
+    (void) connect(videoManager, &VideoManager::hasVideoChanged, this, &SimulatedCameraControl::infoChanged);
+    (void) connect(videoManager, &VideoManager::decodingChanged, this, &SimulatedCameraControl::infoChanged);
+
+    (void) connect(videoManager, &VideoManager::hasVideoChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
+    (void) connect(videoManager, &VideoManager::decodingChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
+
+    (void) connect(videoManager, &VideoManager::recordingChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
+    (void) connect(this, &SimulatedCameraControl::videoCaptureStatusChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
+    (void) connect(this, &SimulatedCameraControl::photoCaptureStatusChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
+    (void) connect(this, &SimulatedCameraControl::cameraModeChanged, this, &SimulatedCameraControl::captureVideoStateChanged);
+    (void) connect(this, &SimulatedCameraControl::photoCaptureStatusChanged, this, &SimulatedCameraControl::capturePhotosStateChanged);
+    (void) connect(this, &SimulatedCameraControl::cameraModeChanged, this, &SimulatedCameraControl::capturePhotosStateChanged);
 
     (void) connect(SettingsManager::instance()->flyViewSettings()->showSimpleCameraControl(), &Fact::rawValueChanged, this, &SimulatedCameraControl::infoChanged);
+
+    if (capturesVideo()) {
+        _cameraMode = CAM_MODE_VIDEO;
+    } else if (capturesPhotos()) {
+        _cameraMode = CAM_MODE_PHOTO;
+    } else {
+        _cameraMode = CAM_MODE_UNDEFINED;
+    }
 
     _videoRecordTimeUpdateTimer.setInterval(1000);
     (void) connect(&_videoRecordTimeUpdateTimer, &QTimer::timeout, this, &SimulatedCameraControl::recordTimeChanged);
@@ -37,16 +56,16 @@ QString SimulatedCameraControl::recordTimeStr() const
     return QTime(0, 0).addMSecs(static_cast<int>(recordTime())).toString("hh:mm:ss");
 }
 
-void SimulatedCameraControl::setCameraMode(CameraMode mode)
+void SimulatedCameraControl::setCameraMode(CameraMode cameraMode)
 {
-    qCDebug(CameraControlLog) << cameraModeToStr(mode);
+    qCDebug(SimulatedCameraControlLog) << cameraModeToStr(cameraMode);
 
     if (!hasModes()) {
-        qCWarning(CameraControlLog) << "called when camera does not support modes";
+        qCWarning(SimulatedCameraControlLog) << "Set camera mode denied - camera does not support modes";
         return;
     }
 
-    switch (mode) {
+    switch (cameraMode) {
         case CAM_MODE_VIDEO:
             _setCameraMode(CAM_MODE_VIDEO);
             break;
@@ -54,7 +73,7 @@ void SimulatedCameraControl::setCameraMode(CameraMode mode)
             _setCameraMode(CAM_MODE_PHOTO);
             break;
         default:
-            qCWarning(CameraControlLog) << "invalid mode" << mode;
+            qCWarning(SimulatedCameraControlLog) << "Invalid mode" << cameraMode;
             break;
     }
 }
@@ -69,22 +88,26 @@ void SimulatedCameraControl::_setCameraMode(CameraMode mode)
 
 void SimulatedCameraControl::toggleCameraMode()
 {
-    if ((cameraMode() == CAM_MODE_PHOTO) || (cameraMode() == CAM_MODE_SURVEY)) {
+    if (!hasModes()) {
+        qCWarning(SimulatedCameraControlLog) << "Toggle camera mode denied - camera does not support modes";
+        return;
+    }
+    if ((_cameraMode == CAM_MODE_PHOTO) || (_cameraMode == CAM_MODE_SURVEY)) {
         setCameraModeVideo();
-    } else if(cameraMode() == CAM_MODE_VIDEO) {
+    } else if(_cameraMode == CAM_MODE_VIDEO) {
         setCameraModePhoto();
     }
 }
 
 bool SimulatedCameraControl::toggleVideoRecording()
 {
-    return ((videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING) ? stopVideoRecording() : startVideoRecording());
+    return ((_videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING) ? stopVideoRecording() : startVideoRecording());
 }
 
 void SimulatedCameraControl::setCameraModeVideo()
 {
     if (!hasModes()) {
-        qCWarning(CameraControlLog) << "Camera does not support modes";
+        qCWarning(SimulatedCameraControlLog) << "Camera does not support modes";
         return;
     }
 
@@ -94,7 +117,7 @@ void SimulatedCameraControl::setCameraModeVideo()
 void SimulatedCameraControl::setCameraModePhoto()
 {
     if (!hasModes()) {
-        qCWarning(CameraControlLog) << "Camera does not support modes";
+        qCWarning(SimulatedCameraControlLog) << "Camera does not support modes";
         return;
     }
 
@@ -104,62 +127,61 @@ void SimulatedCameraControl::setCameraModePhoto()
 bool SimulatedCameraControl::takePhoto()
 {
     if (!capturesPhotos()) {
-        qCWarning(CameraControlLog) << "Camera does not handle image capture";
+        qCWarning(SimulatedCameraControlLog) << "Camera does not handle image capture";
         return false;
     }
 
-    if (photoCaptureStatus() != PHOTO_CAPTURE_IDLE) {
-        qCWarning(CameraControlLog) << "Camera not idle";
+    if (_photoCaptureStatus() != PHOTO_CAPTURE_IDLE) {
+        qCWarning(SimulatedCameraControlLog) << "Camera not idle";
         return false;
     }
 
-    if ((cameraMode() != CAM_MODE_PHOTO) && (cameraMode() != CAM_MODE_SURVEY)) {
-        qCWarning(CameraControlLog) << "Camera not in correct mode:" << cameraModeToStr(cameraMode());
+    if ((_cameraMode != CAM_MODE_PHOTO) && (_cameraMode != CAM_MODE_SURVEY)) {
+        qCWarning(SimulatedCameraControlLog) << "Camera not in correct mode:" << cameraModeToStr(_cameraMode);
         return false;
     }
 
     switch (photoCaptureMode()) {
     case PHOTO_CAPTURE_SINGLE:
         _vehicle->triggerSimpleCamera();
-        _photoCaptureStatus = PHOTO_CAPTURE_IN_PROGRESS;
+        _photoCaptureStatusValue = PHOTO_CAPTURE_IN_PROGRESS;
         emit photoCaptureStatusChanged();
-        QTimer::singleShot(500, [this]() { _photoCaptureStatus = PHOTO_CAPTURE_IDLE; emit photoCaptureStatusChanged(); });
-        break;
+        QTimer::singleShot(500, this, [this]() { _photoCaptureStatusValue = PHOTO_CAPTURE_IDLE; emit photoCaptureStatusChanged(); });
+        return true;
     case PHOTO_CAPTURE_TIMELAPSE:
-        qgcApp()->showAppMessage(tr("Time lapse capture not supported by this camera"));
-        break;
+        QGC::showAppMessage(tr("Time lapse capture not supported by this camera"));
     default:
         break;
     }
 
-    return true;
+    return false;
 }
 
 bool SimulatedCameraControl::startVideoRecording()
 {
     if (!capturesVideo()) {
-        qCWarning(CameraControlLog) << "Camera does not handle video capture";
+        qCWarning(SimulatedCameraControlLog) << "Camera does not handle video capture";
         return false;
     }
-    if (cameraMode() == CAM_MODE_PHOTO) {
-        qCWarning(CameraControlLog) << "Camera does not take video in photo mode";
+    if (_cameraMode == CAM_MODE_PHOTO) {
+        qCWarning(SimulatedCameraControlLog) << "Camera does not take video in photo mode";
         return false;
     }
-    if (videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-        qCWarning(CameraControlLog) << "Camera already recording";
+    if (_videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+        qCWarning(SimulatedCameraControlLog) << "Camera already recording";
         return false;
     }
 
     _videoRecordTimeUpdateTimer.start();
     _videoRecordTimeElapsedTimer.start();
     VideoManager::instance()->startRecording();
-    return false;
+    return true;
 }
 
 bool SimulatedCameraControl::stopVideoRecording()
 {
-    if (videoCaptureStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
-        qCWarning(CameraControlLog) << "Camera not recording";
+    if (_videoCaptureStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
+        qCWarning(SimulatedCameraControlLog) << "Camera not recording";
         return false;
     }
 
@@ -183,13 +205,48 @@ bool SimulatedCameraControl::capturesPhotos() const
     return SettingsManager::instance()->flyViewSettings()->showSimpleCameraControl()->rawValue().toBool();
 }
 
+
+bool SimulatedCameraControl::hasModes() const
+{
+    return (capturesPhotos() && capturesVideo());
+}
+
 bool SimulatedCameraControl::hasVideoStream() const
 {
     return VideoManager::instance()->decoding();
 }
 
-void SimulatedCameraControl::setPhotoCaptureMode(MavlinkCameraControl::PhotoCaptureMode photoCaptureMode)
+MavlinkCameraControlInterface::CaptureVideoState SimulatedCameraControl::captureVideoState() const
 {
+    if (!capturesVideo()) {
+        return CaptureVideoStateDisabled;
+    }
+    if (_videoCaptureStatus() == VIDEO_CAPTURE_STATUS_RUNNING || VideoManager::instance()->recording()) {
+        return CaptureVideoStateCapturing;
+    }
+    if (_photoCaptureStatus() != PHOTO_CAPTURE_IDLE) {
+        return CaptureVideoStateDisabled;
+    }
+    return CaptureVideoStateIdle;
+}
+
+MavlinkCameraControlInterface::CapturePhotosState SimulatedCameraControl::capturePhotosState() const
+{
+    if (_photoCaptureStatus() == PHOTO_CAPTURE_IN_PROGRESS) {
+        return CapturePhotosStateCapturingSinglePhoto;
+    }
+    if (_photoCaptureStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS || _photoCaptureStatus() == PHOTO_CAPTURE_INTERVAL_IDLE) {
+        return CapturePhotosStateCapturingMultiplePhotos;
+    }
+    return capturesPhotos() ? CapturePhotosStateIdle : CapturePhotosStateDisabled;
+}
+
+void SimulatedCameraControl::setPhotoCaptureMode(MavlinkCameraControlInterface::PhotoCaptureMode photoCaptureMode)
+{
+    if (photoCaptureMode == PHOTO_CAPTURE_TIMELAPSE) {
+        qCWarning(SimulatedCameraControlLog) << "Time lapse capture not supported by simulated camera";
+        return;
+    }
     if (_photoCaptureMode != photoCaptureMode) {
         _photoCaptureMode = photoCaptureMode;
         emit photoCaptureModeChanged();

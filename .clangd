@@ -10,17 +10,16 @@ CompileFlags:
     - "-m*"  # Remove machine-specific flags
 
 Diagnostics:
-  # Qt macros and moc generate code that triggers false positives
-  UnusedIncludes: None
+  # Strict catches real unused includes; Qt/moc false positives are rare enough to accept
+  UnusedIncludes: Strict
   MissingIncludes: None
-  # Suppress common Qt-related warnings
   Suppress:
     - "unknown_typename"
     - "expansion_to_defined"
 
 Index:
   Background: Build
-  StandardLibrary: Yes
+  StandardLibrary: No
 
 InlayHints:
   Enabled: Yes
@@ -30,3 +29,9 @@ InlayHints:
 
 Hover:
   ShowAKA: Yes
+
+Completion:
+  AllScopes: No
+
+Style:
+  FullyQualifiedNamespaces: No

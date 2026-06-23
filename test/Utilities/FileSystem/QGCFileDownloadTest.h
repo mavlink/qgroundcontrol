@@ -13,6 +13,8 @@ private slots:
     void _testFileDownloadHashVerificationFailure();
     void _testFileDownloadHashVerificationSuccess();
     void _testFileDownloadCustomOutputPath();
+    void _testFileDownloadNonExistentLocalFile();
+    void _testFileDownloadOutputPathIsDirectory();
     void _testFileDownloadCancelSingleCompletion();
     void _testAutoDecompressGzip();
     void _testAutoDecompressDisabled();

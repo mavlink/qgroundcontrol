@@ -1,6 +1,5 @@
 # ArduCopter Tuning
 
-![ArduCopter Tuning Page](../../../assets/setup/tuning/arducopter.png)
 
 ## Basic Tuning
 

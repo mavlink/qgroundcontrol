@@ -1,0 +1,37 @@
+{
+    "version": 1,
+    "fileType": "SettingsUI",
+    "groups": [
+        {
+            "heading": "General",
+            "keywords": ["3d view", "3d map", "enable 3d", "map provider"],
+            "controls": [
+                {
+                    "setting": "viewer3DSettings.enabled"
+                },
+                {
+                    "setting": "viewer3DSettings.mapProvider"
+                },
+                {
+                    "setting": "viewer3DSettings.keepSceneAlive"
+                }
+            ]
+        },
+        {
+            "heading": "Data",
+            "keywords": ["osm", "openstreetmap", "3d data", "building height", "altitude bias"],
+            "enableWhen": "QGroundControl.settingsManager.viewer3DSettings.enabled.rawValue",
+            "controls": [
+                {
+                    "setting": "viewer3DSettings.osmFilePath"
+                },
+                {
+                    "setting": "viewer3DSettings.buildingLevelHeight"
+                },
+                {
+                    "setting": "viewer3DSettings.altitudeBias"
+                }
+            ]
+        }
+    ]
+}

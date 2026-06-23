@@ -4,86 +4,70 @@ import QGroundControl
 import QGroundControl.Controls
 
 Item {
-    id:             rootItem
-    anchors.fill:   parent
+    id: rootItem
+    anchors.fill: parent
 
-    property var screenX
-    property var screenY
-    property var screenXrateInitCoocked
-    property var screenYrateInitCoocked
+    required property bool cameraTrackingEnabled
 
-    property var  activeVehicle:                QGroundControl.multiVehicleManager.activeVehicle
-    property var  gimbalController:             activeVehicle ? activeVehicle.gimbalController : undefined
-    property var  activeGimbal:                 gimbalController ? gimbalController.activeGimbal : undefined
-    property bool gimbalAvailable:              activeGimbal != undefined
-    property var  gimbalControllerSettings:     QGroundControl.settingsManager.gimbalControllerSettings
-    property bool cameraTrackingEnabled:        false // Used to ignore clicks when camera tracking operation is active, otherwise it would collide with these gimbal controls
-    property bool shouldProcessClicks:          gimbalControllerSettings.EnableOnScreenControl.value && activeGimbal && !cameraTrackingEnabled ? true : false
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property var _gimbalController: _activeVehicle ? _activeVehicle.gimbalController : undefined
+    property var _activeGimbal: _gimbalController ? _gimbalController.activeGimbal : undefined
+    property bool _gimbalAvailable: _activeGimbal != undefined
+    property var _gimbalControllerSettings: QGroundControl.settingsManager.gimbalControllerSettings
+    property bool _shouldProcessClicks: _gimbalControllerSettings.enableOnScreenControl.value && _activeGimbal && !cameraTrackingEnabled ? true : false
 
-    function clickControl() {
-        if (!shouldProcessClicks) {
+    property real _mouseX: 0
+    property real _mouseY: 0
+    property real _dragStartNormX: 0
+    property real _dragStartNormY: 0
+
+    function _toNormX(mouseX) { return  ((mouseX / width)  * 2) - 1 }
+    function _toNormY(mouseY) { return -((mouseY / height) * 2) + 1 }
+
+    function mouseClicked(mouseX, mouseY) {
+        if (!_shouldProcessClicks) {
             return
         }
-        // If click and slide control, return, it uses press and release
-        if (!gimbalControllerSettings.ControlType.rawValue == 0) {
+        if (_gimbalControllerSettings.clickAndDrag.rawValue) {
             return
         }
-        clickAndPoint(x, y)
-    }
-
-    // Sends a +-(0-1) xy value to vehicle.gimbalController.gimbalOnScreenControl
-    function clickAndPoint() {
-        if (rootItem.gimbalAvailable) {
-            var xCoocked =  ( (screenX / parent.width)  * 2) - 1
-            var yCoocked = -( (screenY / parent.height) * 2) + 1
-            // console.log("X global: " + x + " Y global: " + y)
-            // console.log("X coocked: " + xCoocked + " Y coocked: " + yCoocked)
-            gimbalController.gimbalOnScreenControl(xCoocked, yCoocked, true, false, false)
-        } else {
-            // We should never be here
-            console.log("gimbal not available")
+        if (rootItem._gimbalAvailable) {
+            _gimbalController.gimbalOnScreenControl(_toNormX(mouseX), _toNormY(mouseY), true, false, false)
         }
     }
 
-    function pressControl() {
-        if (!shouldProcessClicks) {
+    function mouseDragStart(mouseX, mouseY) {
+        if (!_shouldProcessClicks) {
             return
         }
-        // If click and point control return, that is handled exclusively on clickAndPoint()
-        if (!gimbalControllerSettings.ControlType.rawValue == 1) {
+        if (!_gimbalControllerSettings.clickAndDrag.rawValue) {
             return
         }
+        _mouseX = mouseX
+        _mouseY = mouseY
+        _dragStartNormX = _toNormX(mouseX)
+        _dragStartNormY = _toNormY(mouseY)
         sendRateTimer.start()
-        screenXrateInitCoocked =  ( ( screenX / parent.width)  * 2) - 1
-        screenYrateInitCoocked = -( ( screenY / parent.height) * 2) + 1
     }
 
-    function releaseControl() {
-        if (!shouldProcessClicks) {
-            return
-        }
-        // If click and point control return, that is handled exclusively on clickAndPoint()
-        if (!gimbalControllerSettings.ControlType.rawValue == 1) {
-            return
-        }
+    function mouseDragPositionChanged(mouseX, mouseY) {
+        _mouseX = mouseX
+        _mouseY = mouseY
+    }
+
+    function mouseDragEnd() {
         sendRateTimer.stop()
-        screenXrateInitCoocked = null
-        screenYrateInitCoocked = null
     }
 
     Timer {
-        id:             sendRateTimer
-        interval:       100
-        repeat:         true
+        id: sendRateTimer
+        interval: 100
+        repeat: true
         onTriggered: {
-            if (rootItem.gimbalAvailable) {
-                var xCoocked =  ( ( screenX / parent.width)  * 2) - 1
-                var yCoocked = -( ( screenY / parent.height) * 2) + 1
-                xCoocked -= screenXrateInitCoocked
-                yCoocked -= screenYrateInitCoocked
-                gimbalController.gimbalOnScreenControl(xCoocked, yCoocked, false, true, true)
-            } else {
-                console.log("gimbal not available")
+            if (rootItem._gimbalAvailable) {
+                var dx = rootItem._toNormX(rootItem._mouseX) - rootItem._dragStartNormX
+                var dy = rootItem._toNormY(rootItem._mouseY) - rootItem._dragStartNormY
+                _gimbalController.gimbalOnScreenControl(dx, dy, false, true, true)
             }
         }
     }

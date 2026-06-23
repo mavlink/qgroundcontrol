@@ -191,7 +191,7 @@ Select the following options and install it under `~/devel/Qt`:
 ### Clone and Build QGC
 
 ```
-git clone --recursive https://github.com/mavlink/qgroundcontrol.git
+git clone https://github.com/mavlink/qgroundcontrol.git
 mkdir build
 cd build
 ```

@@ -10,15 +10,6 @@ on:
     paths-ignore:
       - 'docs/**'
   pull_request:
-    paths:
-      - '.github/workflows/windows.yml'
-      - '.github/actions/**'
-      - 'deploy/windows/**'
-      - 'src/**'
-      - 'test/**'
-      - 'CMakeLists.txt'
-      - 'cmake/**'
-      - 'tools/setup/*windows*'
   merge_group:
   workflow_dispatch:
     inputs:
@@ -30,7 +21,6 @@ on:
         options:
           - Release
           - Debug
-  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -43,44 +33,55 @@ permissions:
   actions: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/_detect-changes.yml
+    with:
+      platform: windows
+
   build:
     name: Build ${{ matrix.arch }} ${{ matrix.build_type }}
-    runs-on: ${{ matrix.os }}
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 120
 
     strategy:
       fail-fast: false
       matrix:
-        build_type: ${{ inputs.build_type && fromJSON(format('["{0}"]', inputs.build_type)) || fromJSON('["Release"]') }}
+        build_type: ['${{ inputs.build_type || ''Release'' }}']
         variant: [amd64, arm64, arm64-cross]
         include:
           - variant: amd64
-            os: windows-2022
+            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_64
             package: QGroundControl-installer-AMD64
 
           - variant: arm64
-            os: windows-11-arm
+            runs_on: windows-11-arm
             host: windows_arm64
             arch: win64_msvc2022_arm64
             package: QGroundControl-installer-ARM64
 
-          # TODO: Remove qt_version override once aqtinstall supports Qt 6.10.1+ for cross-compiled ARM64
-          # Workaround: Pin to Qt 6.10.0 until aqtinstall fix is released
-          # Tracking: https://github.com/miurahr/aqtinstall/pull/952
           - variant: arm64-cross
-            os: windows-2022
+            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             package: QGroundControl-installer-AMD64-ARM64
-            qt_version: '6.10.0'
+            aqt_source: 'git+https://github.com/miurahr/aqtinstall.git@c84e1470349e5bedbeee977bd62ec495d50d65b6'
 
     defaults:
       run:
         shell: cmd
 
     steps:
+      - name: Enable RunsOn magic cache
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+          show_costs: summary
+
       - name: Harden Runner
         uses: step-security/harden-runner@v2
         with:
@@ -89,83 +90,130 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          submodules: recursive
-          fetch-depth: 0
-          fetch-tags: true
+          fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
 
-      - name: Get build config
-        id: config
-        uses: ./.github/actions/build-config
-
-      - name: Common setup
-        uses: ./.github/actions/common
-
-      - name: Install GStreamer
-        if: matrix.arch == 'win64_msvc2022_64'
-        shell: pwsh
-        run: |
-          ./tools/setup/install-dependencies-windows.ps1 `
-            -GStreamerVersion ${{ steps.config.outputs.gstreamer_windows_version }} `
-            -SkipVulkan
-
-      - name: Setup cache
-        uses: ./.github/actions/cache
+      - name: Install Visual Studio Build Tools
+        if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
+        uses: ./.github/actions/install-dependencies
         with:
-          host: ${{ matrix.host }}
-          target: ${{ matrix.arch }}
+          gstreamer: 'false'
+          msvc: 'true'
+          msvc-arm64: ${{ matrix.variant == 'arm64-cross' }}
+          nsis: 'true'
+
+      - name: Build Setup
+        id: build-setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: ${{ matrix.host }}
+          qt-arch: ${{ matrix.arch }}
+          aqt-source: ${{ matrix.aqt_source || '' }}
           build-type: ${{ matrix.build_type }}
-          cpm-modules: ${{ runner.temp }}\build\cpm_modules
-          save-cache: ${{ github.event_name != 'pull_request' }}
-
-      - name: Install Qt ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-        uses: ./.github/actions/qt-install
-        with:
-          version: ${{ matrix.qt_version || steps.config.outputs.qt_version }}
-          host: ${{ matrix.host }}
-          arch: ${{ matrix.arch }}
-          modules: ${{ steps.config.outputs.qt_modules }}
-
-      - name: Set up MSVC environment
-        uses: TheMrMilchmann/setup-msvc-dev@v4
-        with:
-          arch: ${{ (matrix.arch == 'win64_msvc2022_64' && 'x64') || (matrix.arch == 'win64_msvc2022_arm64' && 'arm64') || 'amd64_arm64' }}
 
       - name: Configure
-        working-directory: ${{ runner.temp }}\build
+        uses: ./.github/actions/cmake-configure
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
+          extra-args: >-
+            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch != 'win64_msvc2022_arm64_cross_compiled' && 'ON' || 'OFF' }}
+            ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && format('-DQT_HOST_PATH={0}', steps.build-setup.outputs.host_qt_root_dir) || '' }}
+
+      - name: Resolve GStreamer root
+        id: gst-root
+        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: bash
         run: |
-          ${{ env.QT_ROOT_DIR }}\bin\qt-cmake -S ${{ github.workspace }} -B . -G Ninja ^
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ^
-            -DQGC_STABLE_BUILD=${{ (github.ref_type == 'tag' || contains(github.ref, 'Stable')) && 'ON' || 'OFF' }} ^
-            -DQGC_ENABLE_GST_VIDEOSTREAMING=${{ matrix.arch == 'win64_msvc2022_64' && 'ON' || 'OFF' }} ^
-            -DQT_HOST_PATH=${{ (matrix.arch == 'win64_msvc2022_arm64_cross_compiled') && format('{0}\\..\\msvc2022_64', env.QT_ROOT_DIR) || '' }}
+          python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" cache-var \
+            --build-dir "${RUNNER_TEMP}/build" \
+            --name GStreamer_ROOT_DIR \
+            --required \
+            --output-key gst_root
+
+      - name: Add GStreamer to PATH
+        if: matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: bash
+        run: echo "${{ steps.gst-root.outputs.gst_root }}/bin" >> "$GITHUB_PATH"
 
       - name: Build
-        working-directory: ${{ runner.temp }}\build
-        run: cmake --build . --target all --config ${{ matrix.build_type }} --parallel
+        uses: ./.github/actions/cmake-build
+        with:
+          build-dir: ${{ runner.temp }}/build
+          build-type: ${{ matrix.build_type }}
 
       - name: Verify Executable
         if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
-        working-directory: ${{ runner.temp }}\build\${{ matrix.build_type }}
-        run: QGroundControl.exe --simple-boot-test
+        uses: ./.github/actions/verify-executable
+        with:
+          binary-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/QGroundControl.exe
+          type: exe
+          build-dir: ${{ runner.temp }}/build
 
       - name: Create Installer
-        working-directory: ${{ runner.temp }}\build
-        run: cmake --install . --config ${{ matrix.build_type }}
-
-      - name: Attest Build Provenance
-        if: matrix.build_type == 'Release' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
-        uses: actions/attest-build-provenance@v3
+        uses: ./.github/actions/cmake-install
         with:
-          subject-path: '${{ runner.temp }}\build\${{ matrix.package }}.exe'
+          build-dir: ${{ runner.temp }}\build
+          build-type: ${{ matrix.build_type }}
 
-      - name: Upload artifact (installer)
+      - name: Install and verify installer
+        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: pwsh
+        run: |
+          $buildDir = "${{ runner.temp }}\build"
+          $installerExe = Get-ChildItem -Path $buildDir -Filter "*installer*.exe" | Select-Object -First 1
+          if (-not $installerExe) {
+            Write-Error "Installer .exe not found in $buildDir"
+            exit 1
+          }
+          $installDir = "${{ runner.temp }}\qgc-install-test"
+          Write-Host "Installing $($installerExe.Name) to $installDir"
+          Start-Process -FilePath $installerExe.FullName -ArgumentList "/S", "/D=$installDir" -Wait -NoNewWindow
+          $binary = Join-Path $installDir "bin\QGroundControl.exe"
+          if (-not (Test-Path $binary)) {
+            Write-Error "QGroundControl.exe not found at $binary after install"
+            Get-ChildItem -Path $installDir -Recurse | Select-Object FullName
+            exit 1
+          }
+          $pluginDir = Join-Path $installDir "lib\gstreamer-1.0"
+          if (Test-Path $pluginDir) {
+            $pluginCount = (Get-ChildItem -Path $pluginDir -Filter "*.dll" | Measure-Object).Count
+            Write-Host "GStreamer plugins found: $pluginCount"
+            if ($pluginCount -eq 0) {
+              Write-Error "No GStreamer plugin DLLs found in $pluginDir"
+              exit 1
+            }
+          } else {
+            Write-Error "GStreamer plugin directory not found: $pluginDir"
+            exit 1
+          }
+
+      - name: Remove build SDK from PATH for installed verification
+        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        shell: pwsh
+        env:
+          GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
+        run: |
+          $sdkBin = Join-Path $env:GST_ROOT "bin"
+          $sanitizedPath = (($env:PATH -split ';') | Where-Object { $_ -and ($_ -ne $sdkBin) }) -join ';'
+          "QGC_VERIFY_INSTALLED_PATH=$sanitizedPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Verify installed executable
+        if: matrix.build_type == 'Release' && matrix.arch != 'win64_msvc2022_arm64_cross_compiled'
+        uses: ./.github/actions/verify-executable
+        env:
+          PATH: ${{ env.QGC_VERIFY_INSTALLED_PATH }}
+        with:
+          binary-path: ${{ runner.temp }}\qgc-install-test\bin\QGroundControl.exe
+          type: exe
+
+      - name: Attest and Upload
         if: matrix.build_type == 'Release'
-        uses: ./.github/actions/upload
+        uses: ./.github/actions/attest-and-upload
         with:
-          artifact_name: ${{ matrix.package }}.exe
-          package_name: ${{ matrix.package }}
-          aws_role_arn: ${{ secrets.AWS_ROLE_ARN }}
-          aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws_distribution_id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          upload_aws: ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && 'false' || 'true' }}
+          artifact-name: ${{ matrix.package }}.exe
+          package-name: ${{ matrix.package }}
+          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
+          upload-aws: ${{ matrix.arch == 'win64_msvc2022_arm64_cross_compiled' && 'false' || 'true' }}

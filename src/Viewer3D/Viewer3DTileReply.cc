@@ -1,6 +1,7 @@
 #include "Viewer3DTileReply.h"
 
 #include "MapProvider.h"
+#include "QGCCacheTile.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
@@ -9,6 +10,7 @@
 #include "QGeoTileFetcherQGC.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QString>
 #include <QtCore/QTimer>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>

@@ -1,4 +1,5 @@
 #include "ElevationMapProvider.h"
+#include "QGCTileSet.h"
 #include "TerrainTileCopernicus.h"
 
 #include <QtCore/QDir>

@@ -1,4 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="-89 46 72 72">
-    <path fill="#FFF" d="M-40.4 82.098-53 67.397l-12.6 14.701h3.15v10.501h6.3v-8.4h6.3v8.4h6.3V82.098z"/>
-    <circle cx="-53" cy="82" r="22.38" fill="none" stroke="#FFF" stroke-miterlimit="10" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="-75.38 59.62 44.76 44.76">
+  <!-- Green filled circle background -->
+  <circle cx="-53" cy="82" r="22.38" fill="#008000"/>
+  <!-- White border: 1px wide, inset 1px from outer edge -->
+  <circle cx="-53" cy="82" r="20.88" fill="none" stroke="#FFF" stroke-width="1"/>
+  <!-- House icon -->
+  <path fill="#FFF" d="M-38.5 79-53 66l-14.5 13h3.6v17h21.8V79z"/>
+  <!-- Waypoint icon centered in house body -->
+  <g transform="translate(-61.6, 74.8) scale(0.242)">
+    <path fill="#008000" fill-rule="evenodd"
+      d="M36 0C21.089 0 9 12.089 9 27s22.5 45 27 45 27-30.089 27-45S50.911 0 36 0m0 45c-9.927 0-18-8.077-18-18S26.073 9 36 9s18 8.077 18 18-8.073 18-18 18"/>
+  </g>
 </svg>

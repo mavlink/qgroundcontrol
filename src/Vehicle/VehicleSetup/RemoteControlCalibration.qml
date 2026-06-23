@@ -41,83 +41,103 @@ ColumnLayout {
 
                 QGCLabel { text: qsTr("Attitude Controls") }
 
-                RowLayout {
-                    Layout.fillWidth: true
+                Repeater {
+                    model: [
+                        { name: qsTr("Pitch"),      mapped: controller.pitchChannelMapped,      value: controller.adjustedPitchChannelValue,      deadband: controller.pitchDeadband },
+                        { name: qsTr("Roll"),       mapped: controller.rollChannelMapped,       value: controller.adjustedRollChannelValue,       deadband: controller.rollDeadband },
+                        { name: qsTr("Yaw"),        mapped: controller.yawChannelMapped,        value: controller.adjustedYawChannelValue,        deadband: controller.yawDeadband },
+                        { name: qsTr("Throttle"),   mapped: controller.throttleChannelMapped,   value: controller.adjustedThrottleChannelValue,   deadband: controller.throttleDeadband }
+                    ]
 
-                    QGCLabel {
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: qsTr("Roll")
-                    }
 
-                    RemoteControlChannelValueDisplay {
-                        Layout.preferredWidth: root._channelValueDisplayWidth
-                        mode: RemoteControlChannelValueDisplay.MappedValue
-                        channelValueMin: controller.channelValueMin
-                        channelValueMax: controller.channelValueMax
-                        channelMapped: controller.rollChannelMapped
-                        channelValue: controller.adjustedRollChannelValue
-                        deadbandValue: controller.rollDeadband
-                        deadbandEnabled: root._deadbandActive
+                        QGCLabel {
+                            Layout.fillWidth: true
+                            text: modelData.name
+                        }
+
+                        RemoteControlChannelValueDisplay {
+                            Layout.preferredWidth: root._channelValueDisplayWidth
+                            mode: RemoteControlChannelValueDisplay.MappedValue
+                            channelValueMin: controller.channelValueMin
+                            channelValueMax: controller.channelValueMax
+                            channelMapped: modelData.mapped
+                            channelValue: modelData.value
+                            deadbandValue: modelData.deadband
+                            deadbandEnabled: root._deadbandActive
+                        }
                     }
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
+                QGCLabel {
+                    text: qsTr("Aux Extensions")
+                    visible: controller.pitchExtensionEnabled || controller.rollExtensionEnabled
+                }
 
-                    QGCLabel {
+                Repeater {
+                    model: [
+                        { name: qsTr("Pitch"),  extensionEnabled: controller.pitchExtensionEnabled, mapped: controller.pitchExtensionChannelMapped, value: controller.adjustedPitchExtensionChannelValue,   deadband: controller.pitchExtensionDeadband },
+                        { name: qsTr("Roll"),   extensionEnabled: controller.rollExtensionEnabled,  mapped: controller.rollExtensionChannelMapped,  value: controller.adjustedRollExtensionChannelValue,    deadband: controller.rollExtensionDeadband },
+                    ]
+
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: qsTr("Pitch")
-                    }
+                        visible: modelData.extensionEnabled
 
-                    RemoteControlChannelValueDisplay {
-                        Layout.preferredWidth: root._channelValueDisplayWidth
-                        mode: RemoteControlChannelValueDisplay.MappedValue
-                        channelValueMin: controller.channelValueMin
-                        channelValueMax: controller.channelValueMax
-                        channelMapped: controller.pitchChannelMapped
-                        channelValue: controller.adjustedPitchChannelValue
-                        deadbandValue: controller.pitchDeadband
-                        deadbandEnabled: root._deadbandActive
+                        QGCLabel {
+                            Layout.fillWidth: true
+                            text: modelData.name
+                        }
+
+                        RemoteControlChannelValueDisplay {
+                            Layout.preferredWidth: root._channelValueDisplayWidth
+                            mode: RemoteControlChannelValueDisplay.MappedValue
+                            channelValueMin: controller.channelValueMin
+                            channelValueMax: controller.channelValueMax
+                            channelMapped: modelData.mapped
+                            channelValue: modelData.value
+                            deadbandValue: modelData.deadband
+                            deadbandEnabled: root._deadbandActive
+                        }
                     }
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
-
-                    QGCLabel {
-                        Layout.fillWidth: true
-                        text: qsTr("Yaw")
-                    }
-
-                    RemoteControlChannelValueDisplay {
-                        Layout.preferredWidth: root._channelValueDisplayWidth
-                        mode: RemoteControlChannelValueDisplay.MappedValue
-                        channelValueMin: controller.channelValueMin
-                        channelValueMax: controller.channelValueMax
-                        channelMapped: controller.yawChannelMapped
-                        channelValue: controller.adjustedYawChannelValue
-                        deadbandValue: controller.yawDeadband
-                        deadbandEnabled: root._deadbandActive
-                    }
+                QGCLabel {
+                    text: qsTr("Additional Axes")
+                    visible: controller.additionalAxis1Enabled || controller.additionalAxis2Enabled || controller.additionalAxis3Enabled ||
+                             controller.additionalAxis4Enabled || controller.additionalAxis5Enabled || controller.additionalAxis6Enabled
                 }
 
-                RowLayout {
-                    Layout.fillWidth: true
+                Repeater {
+                    model: [
+                        { name: qsTr("Aux 1"),  extensionEnabled: controller.additionalAxis1Enabled,  mapped: controller.additionalAxis1ChannelMapped,  value: controller.adjustedAdditionalAxis1ChannelValue,    deadband: controller.additionalAxis1Deadband },
+                        { name: qsTr("Aux 2"),  extensionEnabled: controller.additionalAxis2Enabled,  mapped: controller.additionalAxis2ChannelMapped,  value: controller.adjustedAdditionalAxis2ChannelValue,    deadband: controller.additionalAxis2Deadband },
+                        { name: qsTr("Aux 3"),  extensionEnabled: controller.additionalAxis3Enabled,  mapped: controller.additionalAxis3ChannelMapped,  value: controller.adjustedAdditionalAxis3ChannelValue,    deadband: controller.additionalAxis3Deadband },
+                        { name: qsTr("Aux 4"),  extensionEnabled: controller.additionalAxis4Enabled,  mapped: controller.additionalAxis4ChannelMapped,  value: controller.adjustedAdditionalAxis4ChannelValue,    deadband: controller.additionalAxis4Deadband },
+                        { name: qsTr("Aux 5"),  extensionEnabled: controller.additionalAxis5Enabled,  mapped: controller.additionalAxis5ChannelMapped,  value: controller.adjustedAdditionalAxis5ChannelValue,    deadband: controller.additionalAxis5Deadband },
+                        { name: qsTr("Aux 6"),  extensionEnabled: controller.additionalAxis6Enabled,  mapped: controller.additionalAxis6ChannelMapped,  value: controller.adjustedAdditionalAxis6ChannelValue,    deadband: controller.additionalAxis6Deadband }
+                    ]
 
-                    QGCLabel {
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: qsTr("Throttle")
-                    }
+                        visible: modelData.extensionEnabled
 
-                    RemoteControlChannelValueDisplay {
-                        Layout.preferredWidth: root._channelValueDisplayWidth
-                        mode: RemoteControlChannelValueDisplay.MappedValue
-                        channelValueMin: controller.channelValueMin
-                        channelValueMax: controller.channelValueMax
-                        channelMapped: controller.throttleChannelMapped
-                        channelValue: controller.adjustedThrottleChannelValue
-                        deadbandValue: controller.throttleDeadband
-                        deadbandEnabled: root._deadbandActive
+                        QGCLabel {
+                            Layout.fillWidth: true
+                            text: modelData.name
+                        }
+
+                        RemoteControlChannelValueDisplay {
+                            Layout.preferredWidth: root._channelValueDisplayWidth
+                            mode: RemoteControlChannelValueDisplay.MappedValue
+                            channelValueMin: controller.channelValueMin
+                            channelValueMax: controller.channelValueMax
+                            channelMapped: modelData.mapped
+                            channelValue: modelData.value
+                            deadbandValue: modelData.deadband
+                            deadbandEnabled: root._deadbandActive
+                        }
                     }
                 }
             }
@@ -204,6 +224,7 @@ ColumnLayout {
                             border.color: qgcPal.buttonHighlight
                             border.width: 1
                             color: qgcPal.window
+                            visible: !controller.singleStickDisplay
 
                             Rectangle {
                                 x: parent.width / 2 + stickDisplayContainer._stickAdjust * controller.stickDisplayPositions[2] - width / 2
@@ -232,6 +253,12 @@ ColumnLayout {
         }
 
         QGCButton {
+            text: qsTr("One-Sided")
+            visible: controller.oneSidedButtonVisible
+            onClicked: controller.oneSidedButtonClicked()
+        }
+
+        QGCButton {
             id: nextButton
             primary: true
             text: qsTr("Calibrate")
@@ -239,11 +266,16 @@ ColumnLayout {
             onClicked: {
                 if (text === qsTr("Calibrate")) {
                     if (controller.channelCount < controller.minChannelCount) {
-                        QGroundControl.showMessageDialog(root, qsTr("Remote Not Ready"),
-                                                        controller.channelCount == 0 ? qsTr("Please turn on remote.") :
-                                                                                    (controller.channelCount < controller.minChannelCount ?
-                                                                                            qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount) :
-                                                                                            qsTr("Ready to calibrate.")))
+                        let errorMessage = ""
+                        let title = ""
+                        if (controller.joystickMode) {
+                            title = qsTr("Joystick Not Ready")
+                            errorMessage = qsTr("%1 axes or more are needed to fly. Joystick is reporting %2 axes.").arg(controller.minChannelCount).arg(controller.channelCount)
+                        } else {
+                            title = qsTr("Not Ready")
+                            errorMessage = controller.channelCount === 0 ? qsTr("Please turn on RC transmitter.") : qsTr("%1 channels or more are needed to fly.").arg(controller.minChannelCount)
+                        }
+                        QGroundControl.showMessageDialog(root, title, errorMessage)
                         return
                     } else if (!controller.joystickMode) {
                         QGroundControl.showMessageDialog(root, qsTr("Zero Trims"),

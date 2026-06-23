@@ -2,7 +2,7 @@
 #include <QtCore/QJsonArray>
 
 #include "MissionItem.h"
-#include "JsonHelper.h"
+#include "GeoJsonHelper.h"
 #include "JsonParsing.h"
 #include "VisualMissionItem.h"
 
@@ -177,14 +177,14 @@ bool MissionItem::_convertJsonV1ToV2(const QJsonObject& json, QJsonObject& v2Jso
         return true;
     }
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         { VisualMissionItem::jsonTypeKey,   QJsonValue::String, true },
         { _jsonParam1Key,                   QJsonValue::Double, true },
         { _jsonParam2Key,                   QJsonValue::Double, true },
         { _jsonParam3Key,                   QJsonValue::Double, true },
         { _jsonParam4Key,                   QJsonValue::Double, true },
     };
-    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
@@ -212,15 +212,15 @@ bool MissionItem::_convertJsonV2ToV3(QJsonObject& json, QString& errorString)
         return true;
     }
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         { _jsonCoordinateKey, QJsonValue::Array, true },
     };
-    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
     QGeoCoordinate coordinate;
-    if (!JsonHelper::loadGeoCoordinate(json[_jsonCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
+    if (!GeoJsonHelper::loadGeoCoordinate(json[_jsonCoordinateKey], true /* altitudeRequired */, coordinate, errorString)) {
         return false;
     }
 
@@ -245,7 +245,7 @@ bool MissionItem::load(const QJsonObject& json, int sequenceNumber, QString& err
         return false;
     }
 
-    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+    QList<JsonParsing::KeyValidateInfo> keyInfoList = {
         { VisualMissionItem::jsonTypeKey,   QJsonValue::String, true },
         { _jsonFrameKey,                    QJsonValue::Double, true },
         { _jsonCommandKey,                  QJsonValue::Double, true },
@@ -253,7 +253,7 @@ bool MissionItem::load(const QJsonObject& json, int sequenceNumber, QString& err
         { _jsonAutoContinueKey,             QJsonValue::Bool,   true },
         { _jsonDoJumpIdKey,                 QJsonValue::Double, false },
     };
-    if (!JsonHelper::validateKeys(convertedJson, keyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(convertedJson, keyInfoList, errorString)) {
         return false;
     }
 

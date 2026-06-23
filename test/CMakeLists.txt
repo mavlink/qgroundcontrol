@@ -25,6 +25,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UNITTEST_BUILD)
 
+target_precompile_headers(${CMAKE_PROJECT_NAME} PRIVATE
+    <QtTest/QTest>
+    <UnitTest.h>
+    <MultiSignalSpy.h>
+)
+
 # ----------------------------------------------------------------------------
 # CTest Integration (CTest included in root CMakeLists.txt)
 # ----------------------------------------------------------------------------
@@ -32,199 +38,71 @@ include(QGCTest)
 include(Coverage)
 include(Sanitizers)
 
-# ============================================================================
-# Test Subdirectories & Registration
-# ============================================================================
-
 # ----------------------------------------------------------------------------
-# Unit Test Framework (must be first - provides MultiSignalSpy, etc.)
+# Optional separate test binary (QGC_BUILD_TEST_BINARY, default OFF)
 # ----------------------------------------------------------------------------
-add_subdirectory(UnitTestFramework)
-add_qgc_test(MultiSignalSpyTest LABELS Unit)
-add_qgc_test(QmlTestRunner LABELS Unit)
-
-# ----------------------------------------------------------------------------
-# ADSB
-# ----------------------------------------------------------------------------
-add_subdirectory(ADSB)
-add_qgc_test(ADSBTest LABELS Unit)
-
-# ----------------------------------------------------------------------------
-# AnalyzeView
-# ----------------------------------------------------------------------------
-add_subdirectory(AnalyzeView)
-add_qgc_test(DataFlashParserTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFiles)
-add_qgc_test(ExifParserTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFiles)
-add_qgc_test(GeoTagControllerTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFiles)
-add_qgc_test(GeoTagDataTest LABELS Unit AnalyzeView)
-add_qgc_test(GeoTagImageModelTest LABELS Unit AnalyzeView)
-add_qgc_test(ULogParserTest LABELS Unit AnalyzeView RESOURCE_LOCK TempFiles)
-add_qgc_test(LogDownloadTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
-# add_qgc_test(MavlinkLogTest LABELS Integration)
-
-# ----------------------------------------------------------------------------
-# Camera
-# ----------------------------------------------------------------------------
-add_subdirectory(Camera)
-add_qgc_test(QGCCameraManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
-
-# ----------------------------------------------------------------------------
-# Comms
-# ----------------------------------------------------------------------------
-add_subdirectory(Comms)
-add_qgc_test(QGCSerialPortInfoTest LABELS Unit Comms)
-
-# ----------------------------------------------------------------------------
-# FactSystem
-# ----------------------------------------------------------------------------
-add_subdirectory(FactSystem)
-add_qgc_test(FactSystemTestGeneric LABELS Integration Vehicle RESOURCE_LOCK MockLink)
-add_qgc_test(FactSystemTestPX4 LABELS Integration Vehicle RESOURCE_LOCK MockLink)
-add_qgc_test(ParameterManagerTest LABELS Integration Vehicle SERIAL TIMEOUT 180)
-
-# ----------------------------------------------------------------------------
-# FollowMe
-# ----------------------------------------------------------------------------
-add_subdirectory(FollowMe)
-add_qgc_test(FollowMeTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
-
-# ----------------------------------------------------------------------------
-# GPS
-# ----------------------------------------------------------------------------
-add_subdirectory(GPS)
-# add_qgc_test(GpsTest LABELS Unit)  # Not registered in UnitTestList.cc
-
-# ----------------------------------------------------------------------------
-# Joystick
-# ----------------------------------------------------------------------------
-add_subdirectory(Joystick)
-add_qgc_test(JoystickTest LABELS Unit)
-add_qgc_test(JoystickManagerTest LABELS Unit)
-
-# ----------------------------------------------------------------------------
-# MAVLink
-# ----------------------------------------------------------------------------
-add_subdirectory(MAVLink)
-add_qgc_test(StatusTextHandlerTest LABELS Unit MAVLink)
-add_qgc_test(SigningTest LABELS Unit MAVLink)
-
-# ----------------------------------------------------------------------------
-# MissionManager
-# ----------------------------------------------------------------------------
-add_subdirectory(MissionManager)
-add_qgc_test(CameraCalcTest LABELS Unit MissionManager)
-add_qgc_test(CameraSectionTest LABELS Unit MissionManager)
-add_qgc_test(CorridorScanComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
-# add_qgc_test(FWLandingPatternTest LABELS Unit MissionManager)
-# add_qgc_test(LandingComplexItemTest LABELS Unit MissionManager)
-# add_qgc_test(MissionCommandTreeEditorTest LABELS Unit MissionManager)
-add_qgc_test(MissionCommandTreeTest LABELS Unit MissionManager)
-add_qgc_test(MissionControllerManagerTest LABELS Integration MissionManager RESOURCE_LOCK MockLink)
-add_qgc_test(MissionControllerTest LABELS Integration MissionManager RESOURCE_LOCK MockLink)
-add_qgc_test(MissionItemTest LABELS Unit MissionManager)
-add_qgc_test(MissionManagerTest LABELS Integration MissionManager SERIAL)
-add_qgc_test(MissionSettingsTest LABELS Unit MissionManager)
-add_qgc_test(PlanMasterControllerTest LABELS Integration MissionManager RESOURCE_LOCK MockLink)
-add_qgc_test(QGCMapPolygonTest LABELS Unit MissionManager)
-add_qgc_test(QGCMapPolylineTest LABELS Unit MissionManager)
-# add_qgc_test(SectionTest LABELS Unit MissionManager)
-add_qgc_test(SimpleMissionItemTest LABELS Unit MissionManager)
-add_qgc_test(SpeedSectionTest LABELS Unit MissionManager)
-add_qgc_test(StructureScanComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
-add_qgc_test(SurveyComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
-add_qgc_test(TransectStyleComplexItemTest LABELS Unit MissionManager RESOURCE_LOCK PlanViewSettings)
-# add_qgc_test(VisualMissionItemTest LABELS Unit MissionManager)
-
-# add_qgc_test(FileDialogTest LABELS Unit)
-# add_qgc_test(MainWindowTest LABELS Integration Slow)
-# add_qgc_test(MessageBoxTest LABELS Unit)
-
-# ----------------------------------------------------------------------------
-# QtLocationPlugin
-# ----------------------------------------------------------------------------
-add_subdirectory(QtLocationPlugin)
-add_qgc_test(MapProviderTest LABELS Unit)
-add_qgc_test(QGCCacheWorkerTest LABELS Unit)
-add_qgc_test(QGCCachedTileSetTest LABELS Unit)
-add_qgc_test(QGCMapEngineManagerArchiveTest LABELS Unit)
-add_qgc_test(QGCTileCacheDatabaseTest LABELS Unit)
-add_qgc_test(QGCTileSetTest LABELS Unit)
-add_qgc_test(UrlFactoryTest LABELS Unit)
-
-# ----------------------------------------------------------------------------
-# Terrain
-# ----------------------------------------------------------------------------
-add_subdirectory(Terrain)
-add_qgc_test(TerrainQueryTest LABELS Integration Network)
-add_qgc_test(TerrainTileTest LABELS Unit)
-
-# ----------------------------------------------------------------------------
-# Utilities
-# ----------------------------------------------------------------------------
-add_subdirectory(Utilities)
-# Audio
-add_qgc_test(AudioOutputTest LABELS Unit Utilities)
-# Compression
-add_qgc_test(QGCArchiveModelTest LABELS Unit Utilities)
-add_qgc_test(QGCCompressionTest LABELS Unit Utilities)
-add_qgc_test(QGCStreamingDecompressionTest LABELS Unit Utilities)
-# Network
-add_qgc_test(QGCNetworkHelperTest LABELS Unit Utilities Network)
-# Parsing
-add_qgc_test(DataFlashUtilityTest LABELS Unit Utilities)
-add_qgc_test(ExifUtilityTest LABELS Unit Utilities)
-add_qgc_test(JsonParsingTest LABELS Unit Utilities)
-add_qgc_test(ULogUtilityTest LABELS Unit Utilities)
-# FileSystem
-add_qgc_test(QGCArchiveWatcherTest LABELS Unit Utilities)
-add_qgc_test(QGCCachedFileDownloadTest LABELS Integration Network Utilities)
-add_qgc_test(QGCFileDownloadTest LABELS Integration Network Utilities)
-add_qgc_test(QGCFileHelperTest LABELS Unit Utilities)
-add_qgc_test(QGCFileWatcherTest LABELS Unit Utilities)
-# Geo
-add_qgc_test(GeoTest LABELS Unit Utilities)
-# Platform (desktop only)
-if(NOT ANDROID AND NOT IOS)
-    add_qgc_test(PlatformTest LABELS Unit Utilities)
-    add_qgc_test(RunGuardTest LABELS Unit Utilities)
-    add_qgc_test(SignalHandlerTest LABELS Unit Utilities)
+# When ON, test object code is built into a standalone `qgc_tests` executable so
+# editing a single test relinks only test objects instead of the entire app.
+# add_qgc_test() already dispatches through $<TARGET_FILE:qgc_tests> whenever the
+# target exists (see cmake/QGCTest.cmake).
+#
+# FULL WIRING IS NOT YET COMPLETE — this is intentional scaffolding. The default
+# OFF path is unaffected: tests stay compiled into ${CMAKE_PROJECT_NAME} via the
+# target_sources() calls below and in each test subdirectory.
+#
+# Remaining wiring required to make ON functional (all CMake-only EXCEPT item 3):
+#   1. Collect every test subdirectory's sources into an OBJECT library (e.g.
+#      qgc_test_objects) instead of target_sources(${CMAKE_PROJECT_NAME} ...).
+#      Each test/**/CMakeLists.txt would target a shared variable/target rather
+#      than the app target.
+#   2. add_executable(qgc_tests) linking qgc_test_objects + the app's core
+#      libraries (the same libs QGroundControl links) + Qt6::Test.
+#   3. C++ ENTRY POINT (not owned here): qgc_tests needs a main() that parses
+#      `--unittest:<name>` and runs the UnitTestList dispatch, mirroring the app's
+#      existing --unittest handling. Without this the binary cannot run tests.
+#   4. Mirror QGC_UNITTEST_BUILD compile definition, include dirs, and PCH onto
+#      qgc_tests.
+# Until items 1-4 land, configuring with -DQGC_BUILD_TEST_BINARY=ON builds no
+# qgc_tests target, so add_qgc_test() falls back to the app binary (no breakage).
+if(QGC_BUILD_TEST_BINARY)
+    message(WARNING
+        "QGC_BUILD_TEST_BINARY=ON: qgc_tests target wiring is not yet implemented; "
+        "tests will continue to run from the main app binary. See test/CMakeLists.txt.")
 endif()
-# Shape
-add_qgc_test(ShapeTest LABELS Unit Utilities)
 
-# ----------------------------------------------------------------------------
-# Viewer3D
-# ----------------------------------------------------------------------------
+# Sanitizers add significant runtime overhead; expand CTest per-test limits to
+# avoid false timeout failures in CI sanitizer jobs.
+if(QGC_ENABLE_ASAN OR QGC_ENABLE_UBSAN OR QGC_ENABLE_TSAN OR QGC_ENABLE_MSAN)
+    set(QGC_TEST_TIMEOUT_UNIT 180 CACHE STRING "Timeout for unit tests (seconds)" FORCE)
+    set(QGC_TEST_TIMEOUT_INTEGRATION 360 CACHE STRING "Timeout for integration tests (seconds)" FORCE)
+    set(QGC_TEST_TIMEOUT_SLOW 540 CACHE STRING "Timeout for slow tests (seconds)" FORCE)
+    set(QGC_TEST_TIMEOUT_DEFAULT 270 CACHE STRING "Default test timeout (seconds)" FORCE)
+    set(QGC_TEST_TIMEOUT_EXTENDED 360)
+else()
+    set(QGC_TEST_TIMEOUT_EXTENDED 180)
+endif()
+
+# ============================================================================
+# Test Subdirectories
+# ============================================================================
+
+add_subdirectory(UnitTestFramework)
+add_subdirectory(ADSB)
+add_subdirectory(AnalyzeView)
+add_subdirectory(AutoPilotPlugins)
+add_subdirectory(Camera)
+add_subdirectory(VideoManager)
+add_subdirectory(Comms)
+add_subdirectory(FactSystem)
+add_subdirectory(FollowMe)
+add_subdirectory(GPS)
+add_subdirectory(Joystick)
+add_subdirectory(MAVLink)
+add_subdirectory(MissionManager)
+add_subdirectory(QtLocationPlugin)
+add_subdirectory(QmlControls)
+add_subdirectory(Terrain)
+add_subdirectory(Utilities)
 add_subdirectory(Viewer3D)
-add_qgc_test(CityMapGeometryTest LABELS Unit Viewer3D)
-add_qgc_test(OsmParserTest LABELS Unit Viewer3D)
-add_qgc_test(OsmParserThreadTest LABELS Unit Viewer3D)
-add_qgc_test(Viewer3DTerrainGeometryTest LABELS Unit Viewer3D)
-add_qgc_test(Viewer3DTileQueryTest LABELS Unit Viewer3D)
-add_qgc_test(GeoCoordinateTypeTest LABELS Unit Viewer3D)
-add_qgc_test(Viewer3DInstancingTest LABELS Unit Viewer3D)
-add_qgc_test(Viewer3DManagerTest LABELS Unit Viewer3D)
-add_qgc_test(Viewer3DMapProviderTest LABELS Unit Viewer3D)
-
-# ----------------------------------------------------------------------------
-# Vehicle
-# ----------------------------------------------------------------------------
 add_subdirectory(Vehicle)
-add_qgc_test(APMAirframeComponentControllerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
-add_qgc_test(ComponentInformationCacheTest LABELS Unit Vehicle)
-add_qgc_test(ComponentInformationTranslationTest LABELS Unit Vehicle)
-add_qgc_test(FTPControllerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
-add_qgc_test(FTPManagerTest LABELS Integration Vehicle SERIAL)
-add_qgc_test(FirmwareUpgradeControllerTest LABELS Unit Vehicle)
-# add_qgc_test(InitialConnectTest LABELS Integration Vehicle)
-add_qgc_test(MAVLinkLogManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
-# add_qgc_test(RequestMessageTest LABELS Integration Vehicle)
-# add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle)
-# add_qgc_test(SendMavCommandWithSignalingTest LABELS Integration Vehicle)
-add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle RESOURCE_LOCK MockLink)
-
-# Disabled tests
-# add_qgc_test(FlightGearUnitTest LABELS Integration)
-# add_qgc_test(LinkManagerTest LABELS Integration Comms)
-# add_qgc_test(SendMavCommandTest LABELS Integration Vehicle)
-# add_qgc_test(TCPLinkTest LABELS Integration Comms Network)
+add_subdirectory(QmlUITests)

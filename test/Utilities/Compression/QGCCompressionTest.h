@@ -1,15 +1,20 @@
 #pragma once
 
-#include "BaseClasses/TempDirectoryTest.h"
+#include "UnitTest.h"
 
 /// Tests for QGCCompression (decompression-only: format detection, extraction, decompression)
-class QGCCompressionTest : public TempDirectoryTest
+class QGCCompressionTest : public UnitTest
 {
     Q_OBJECT
 
 private slots:
     // Format detection
+    void _testFormatDetection_data();
     void _testFormatDetection();
+    void _testDetectFormatFromFile_data();
+    void _testDetectFormatFromFile();
+    void _testDetectFormatFromMagicBytes_data();
+    void _testDetectFormatFromMagicBytes();
     void _testFormatDetectionFromContent();
     void _testFormatHelpers();
 
@@ -69,6 +74,7 @@ private slots:
 
     // Cross-platform path handling
     void _testWindowsPathSeparators();
+    void _testExtractArchiveToSymlinkedOutputPath();
     void _testSpecialCharactersInPath();
     void _testUnicodePaths();
 

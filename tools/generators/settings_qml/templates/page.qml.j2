@@ -1,0 +1,40 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+
+import QGroundControl
+import QGroundControl.FactControls
+import QGroundControl.Controls
+{% for imp in imports %}
+import {{ imp }}
+{% endfor %}
+
+SettingsPage {
+{% if object_name %}
+    objectName: "settingsPage_{{ object_name }}"
+{% endif %}
+{% if has_string_fields %}
+    property real _stringFieldWidth: ScreenTools.defaultFontPixelWidth * 30
+{% endif %}
+{% for b in bindings %}
+    property {{ b.type }} {{ b.name }}: {{ b.expr }}
+{% endfor %}
+
+{% if section_cases %}
+    function sectionVisible(index) {
+        switch (index) {
+{% for case in section_cases %}
+        case {{ case.idx }}: return {{ case.expr }}
+{% endfor %}
+        default: return true
+        }
+    }
+
+{% endif %}
+{% for group_qml in groups %}
+{{ group_qml }}
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}
+}

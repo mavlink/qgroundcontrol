@@ -14,9 +14,13 @@ void CameraSectionTest::init()
 {
     SectionTest::init();
     _cameraSection = _simpleItem->cameraSection();
-    _createSpy(_cameraSection, &_spyCamera);
+    MultiSignalSpy* cameraSpy = nullptr;
+    _createSpy(_cameraSection, &cameraSpy);
+    _spyCamera.reset(cameraSpy);
     QVERIFY(_spyCamera);
-    SectionTest::_createSpy(_cameraSection, &_spySection);
+    MultiSignalSpy* sectionSpy = nullptr;
+    SectionTest::_createSpy(_cameraSection, &sectionSpy);
+    _spySection.reset(sectionSpy);
     QVERIFY(_spySection);
     _validGimbalItem = new SimpleMissionItem(
         planController(),
@@ -94,10 +98,8 @@ void CameraSectionTest::init()
 
 void CameraSectionTest::cleanup()
 {
-    delete _spyCamera;
-    delete _spySection;
-    _spyCamera = nullptr;
-    _spySection = nullptr;
+    _spyCamera.reset();
+    _spySection.reset();
     _cameraSection = nullptr;
     SectionTest::cleanup();
     // Deletion of planController() will delete these obects
@@ -112,14 +114,6 @@ void CameraSectionTest::cleanup()
     _validCameraPhotoModeItem = nullptr;
     _validCameraVideoModeItem = nullptr;
     _validCameraSurveyPhotoModeItem = nullptr;
-}
-
-void CameraSectionTest::_createSpy(CameraSection* cameraSection, MultiSignalSpy** cameraSpy)
-{
-    *cameraSpy = nullptr;
-    MultiSignalSpy* spy = new MultiSignalSpy();
-    QCOMPARE(spy->init(cameraSection), true);
-    *cameraSpy = spy;
 }
 
 void CameraSectionTest::_testDirty()
@@ -344,7 +338,7 @@ void CameraSectionTest::_testItemCount()
                     << CameraSection::StopTakingPhotos << CameraSection::TakeVideo << CameraSection::StopTakingVideo
                     << CameraSection::TakePhoto;
     for (int cameraAction : rgCameraActions) {
-        qDebug() << "camera action" << cameraAction;
+        TEST_DEBUG(QStringLiteral("camera action %1").arg(cameraAction));
         // Reset
         _cameraSection->cameraAction()->setRawValue(CameraSection::CameraActionNone);
         QCOMPARE(_cameraSection->itemCount(), 0);
@@ -924,7 +918,7 @@ void CameraSectionTest::_testScanForMultipleItems()
             item2->missionItem() = cameraItem->missionItem();
             visualItems.append(item1);
             visualItems.append(item2);
-            // qDebug() << MissionCommandTree::instance()->getUIInfo(_controllerVehicle,
+            // qCDebug(UnitTestLog) << MissionCommandTree::instance()->getUIInfo(_controllerVehicle,
             // QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item1->command())->rawName() <<
             // MissionCommandTree::instance()->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric,
             // (MAV_CMD)item2->command())->rawName();
@@ -946,13 +940,13 @@ void CameraSectionTest::_testScanForMultipleItems()
             item2->missionItem() = cameraItem->missionItem();
             visualItems.append(item1);
             visualItems.append(item2);
-            qDebug() << MissionCommandTree::instance()
-                            ->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item1->command())
-                            ->rawName()
-                     << MissionCommandTree::instance()
-                            ->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item2->command())
-                            ->rawName();
-            ;
+            TEST_DEBUG(MissionCommandTree::instance()
+                           ->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item1->command())
+                           ->rawName() +
+                       QStringLiteral(" ") +
+                       MissionCommandTree::instance()
+                           ->getUIInfo(_controllerVehicle, QGCMAVLink::VehicleClassGeneric, (MAV_CMD)item2->command())
+                           ->rawName());
             scanIndex = 0;
             QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), true);
             _validateItemScan(cameraItem);

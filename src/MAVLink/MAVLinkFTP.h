@@ -1,11 +1,7 @@
 #pragma once
 
 #include <QtCore/QString>
-#include <QtCore/QLoggingCategory>
-
 #include "MAVLinkLib.h"
-
-Q_DECLARE_LOGGING_CATEGORY(MavlinkFTPLog)
 
 class MavlinkFTP {
 public:
@@ -56,6 +52,7 @@ public:
         kCmdRename,				///< Rename <path1> to <path2>
         kCmdCalcFileCRC32,		///< Calculate CRC32 for file at <path>
         kCmdBurstReadFile,      ///< Burst download session file
+        kCmdListDirectoryWithTime,  ///< List directory as kCmdListDirectory, each entry additionally carrying trailing \t<modification time>
 
         kRspAck = 128,          ///< Ack response
         kRspNak,                ///< Nak response

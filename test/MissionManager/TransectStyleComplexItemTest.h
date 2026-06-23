@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <QGeoCoordinate>
 
 #include "TransectStyleComplexItem.h"
@@ -22,10 +24,9 @@ private slots:
     void _testRebuildTransects();
     void _testDistanceSignalling();
     void _testAltitudes();
-    // void _testFollowTerrain(void);
 
 private:
-    MultiSignalSpy* _multiSpy = nullptr;
+    std::unique_ptr<MultiSignalSpy> _multiSpy;
     TestTransectStyleItem* _transectStyleItem = nullptr;
 };
 

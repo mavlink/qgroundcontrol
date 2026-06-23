@@ -1,5 +1,5 @@
 #include "ULogParser.h"
-#include "ULogUtility.h"
+#include "PX4ULogUtility.h"
 #include "QGCLoggingCategory.h"
 
 #include <cmath>
@@ -58,7 +58,7 @@ bool getTagsFromLog(const char *data, qint64 size, QList<GeoTagData> &cameraFeed
 {
     cameraFeedback.clear();
 
-    const bool success = ULogUtility::iterateMessages(data, size, "camera_capture",
+    const bool success = PX4ULogUtility::iterateMessages(data, size, "camera_capture",
         [&](const ulog_cpp::TypedDataView &sample) {
             cameraFeedback.append(parseGeoTagData(sample));
             return true;

@@ -2,7 +2,6 @@
 
 #include "TerrainQueryInterface.h"
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
@@ -11,8 +10,6 @@
 class TerrainTile;
 class QNetworkAccessManager;
 class UnitTestTerrainQuery;
-
-Q_DECLARE_LOGGING_CATEGORY(TerrainTileManagerLog)
 
 class TerrainTileManager : public QObject
 {
@@ -43,6 +40,9 @@ private:
     void _tileFailed();
     void _cacheTile(const QByteArray &data, const QString &hash);
     TerrainTile *_getCachedTile(const QString &hash);
+    bool _isFailedTile(const QString &hash);
+    bool _recordFailedTile(const QString &hash);    ///< Records a failed fetch; returns true if this is the first failure for the tile
+    void _clearFailedTile(const QString &hash);
     static void _processCarpetResults(const QList<double> &altitudes, int gridSizeLat, int gridSizeLon,
                                       bool statsOnly, double &minHeight, double &maxHeight, QList<QList<double>> &carpet);
 
@@ -60,8 +60,12 @@ private:
     QQueue<QueuedRequestInfo_t> _requestQueue;
     TerrainQuery::State _state = TerrainQuery::State::Idle;
 
-    QMutex _tilesMutex;
+    QMutex _tilesMutex;                     ///< Guards both _tiles and _failedTiles
     QHash<QString, TerrainTile*> _tiles;
+    QHash<QString, qint64> _failedTiles;  ///< Tile hash -> ms since epoch of last failed fetch; suppresses immediate retries
+    qint64 _lastFailedTileSweepMs = 0;      ///< ms since epoch of last expired-entry sweep of _failedTiles
 
     QNetworkAccessManager *_networkManager = nullptr;
+
+    static constexpr qint64 kFailedTileBackoffMs = 5000;
 };

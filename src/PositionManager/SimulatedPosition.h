@@ -1,10 +1,6 @@
 #pragma once
 
 #include <QtPositioning/QGeoPositionInfoSource>
-#include <QtCore/QLoggingCategory>
-
-Q_DECLARE_LOGGING_CATEGORY(SimulatedPositionLog)
-
 class Vehicle;
 class QTimer;
 

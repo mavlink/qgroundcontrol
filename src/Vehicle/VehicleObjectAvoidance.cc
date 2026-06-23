@@ -1,6 +1,8 @@
 #include "VehicleObjectAvoidance.h"
+#include "MAVLinkLib.h"
 #include "Vehicle.h"
 #include "ParameterManager.h"
+#include "VehicleSetpointFactGroup.h"
 
 //-----------------------------------------------------------------------------
 VehicleObjectAvoidance::VehicleObjectAvoidance(Vehicle *vehicle, QObject* parent)

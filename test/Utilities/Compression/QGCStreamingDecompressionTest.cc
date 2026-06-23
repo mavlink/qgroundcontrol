@@ -4,22 +4,26 @@
 #include <QtCore/QFile>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
 
 #include "QGCArchiveFile.h"
 #include "QGCDecompressDevice.h"
+#include "UnitTest.h"
 
 // ============================================================================
 // QGCDecompressDevice Tests
 // ============================================================================
 void QGCStreamingDecompressionTest::_testDecompressDeviceFromFile()
 {
+    QTemporaryDir tempDir;
     // Copy resource to temp file for testing
     QFile resource(":/unittest/manifest.json.gz");
     QVERIFY(resource.open(QIODevice::ReadOnly));
     const QByteArray compressedData = resource.readAll();
     resource.close();
-    const QString tempFile = tempDir()->filePath("test.json.gz");
+    const QString tempFile = tempDir.filePath("test.json.gz");
     QFile outFile(tempFile);
     QVERIFY(outFile.open(QIODevice::WriteOnly));
     outFile.write(compressedData);
@@ -120,10 +124,12 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceErrors()
     // Test non-existent file
     QGCDecompressDevice device3("/nonexistent/file.gz");
     QVERIFY(!device3.open(QIODevice::ReadOnly));
-    // Test writeData returns -1
+    // Test writeData returns -1 (QIODevice short-circuits write calls on ReadOnly devices)
     QGCDecompressDevice device4(":/unittest/manifest.json.gz");
     QVERIFY(device4.open(QIODevice::ReadOnly));
+    expectLogMessage("default", QtWarningMsg, QRegularExpression("ReadOnly device"));
     QCOMPARE(device4.write("test", 4), qint64(-1));
+    verifyExpectedLogMessage();
     device4.close();
 }
 
@@ -238,7 +244,9 @@ void QGCStreamingDecompressionTest::_testArchiveFileErrors()
     // Test writeData returns -1
     QGCArchiveFile device4(":/unittest/manifest.json.zip", "manifest.json");
     QVERIFY(device4.open(QIODevice::ReadOnly));
+    expectLogMessage("default", QtWarningMsg, QRegularExpression("ReadOnly device"));
     QCOMPARE(device4.write("test", 4), qint64(-1));
+    verifyExpectedLogMessage();
     device4.close();
 }
 
@@ -285,7 +293,5 @@ void QGCStreamingDecompressionTest::_testMultipleOpens()
     device.close();
     QCOMPARE(data1, data2);
 }
-
-#include "UnitTest.h"
 
 UT_REGISTER_TEST(QGCStreamingDecompressionTest, TestLabel::Unit, TestLabel::Utilities)

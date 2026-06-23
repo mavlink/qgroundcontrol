@@ -4,9 +4,9 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 
-#include "JsonHelper.h"
+#include "JsonParsing.h"
+#include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
 
 QGC_LOGGING_CATEGORY(TerrainTileCopernicusLog, "Terrain.TerrainTileCopernicus");
 
@@ -23,7 +23,7 @@ TerrainTileCopernicus::~TerrainTileCopernicus()
 QJsonValue TerrainTileCopernicus::getJsonFromData(const QByteArray& input)
 {
     QJsonParseError parseError;
-    const QJsonDocument document = QGCNetworkHelper::parseCompressedJson(input, &parseError);
+    const QJsonDocument document = QGCCompression::parseCompressedJson(input, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
         qCWarning(TerrainTileCopernicusLog)
             << "Terrain tile json doc parse error" << parseError.errorString();
@@ -37,12 +37,12 @@ QJsonValue TerrainTileCopernicus::getJsonFromData(const QByteArray& input)
 
     const QJsonObject rootObject = document.object();
 
-    static const QList<JsonHelper::KeyValidateInfo> rootVersionKeyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> rootVersionKeyInfoList = {
         {_jsonStatusKey, QJsonValue::String, true},
         {_jsonDataKey, QJsonValue::Object, true},
     };
     QString errorString;
-    if (!JsonHelper::validateKeys(rootObject, rootVersionKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(rootObject, rootVersionKeyInfoList, errorString)) {
         qCWarning(TerrainTileCopernicusLog) << "Error in reading json: " << errorString;
         return QJsonValue();
     }
@@ -55,13 +55,13 @@ QJsonValue TerrainTileCopernicus::getJsonFromData(const QByteArray& input)
     const QJsonValue& jsonData = rootObject[_jsonDataKey];
     const QJsonObject& dataObject = jsonData.toObject();
 
-    QList<JsonHelper::KeyValidateInfo> dataVersionKeyInfoList = {
+    QList<JsonParsing::KeyValidateInfo> dataVersionKeyInfoList = {
         {_jsonBoundsKey, QJsonValue::Object, true},
         {_jsonStatsKey, QJsonValue::Object, true},
         {_jsonCarpetKey, QJsonValue::Array, true},
     };
 
-    if (!JsonHelper::validateKeys(dataObject, dataVersionKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(dataObject, dataVersionKeyInfoList, errorString)) {
         qCWarning(TerrainTileCopernicusLog) << "Error in reading json: " << errorString;
         return QJsonValue();
     }
@@ -79,12 +79,12 @@ QByteArray TerrainTileCopernicus::serializeFromData(const QByteArray& input)
     const QJsonObject& dataObject = jsonData.toObject();
 
     const QJsonObject& boundsObject = dataObject[_jsonBoundsKey].toObject();
-    static const QList<JsonHelper::KeyValidateInfo> boundsVersionKeyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> boundsVersionKeyInfoList = {
         {_jsonSouthWestKey, QJsonValue::Array, true},
         {_jsonNorthEastKey, QJsonValue::Array, true},
     };
     QString errorString;
-    if (!JsonHelper::validateKeys(boundsObject, boundsVersionKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(boundsObject, boundsVersionKeyInfoList, errorString)) {
         qCWarning(TerrainTileCopernicusLog) << "Error in reading json: " << errorString;
         return QByteArray();
     }
@@ -97,12 +97,12 @@ QByteArray TerrainTileCopernicus::serializeFromData(const QByteArray& input)
     }
 
     const QJsonObject& statsObject = dataObject[_jsonStatsKey].toObject();
-    static const QList<JsonHelper::KeyValidateInfo> statsVersionKeyInfoList = {
+    static const QList<JsonParsing::KeyValidateInfo> statsVersionKeyInfoList = {
         {_jsonMinElevationKey, QJsonValue::Double, true},
         {_jsonMaxElevationKey, QJsonValue::Double, true},
         {_jsonAvgElevationKey, QJsonValue::Double, true},
     };
-    if (!JsonHelper::validateKeys(statsObject, statsVersionKeyInfoList, errorString)) {
+    if (!JsonParsing::validateKeys(statsObject, statsVersionKeyInfoList, errorString)) {
         qCWarning(TerrainTileCopernicusLog) << "Error in reading json: " << errorString;
         return QByteArray();
     }

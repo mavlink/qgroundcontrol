@@ -1,0 +1,67 @@
+name: Run Unit Tests
+description: Run unit tests via CTest and generate standardized test artifacts.
+
+inputs:
+  build-dir:
+    description: Path to CMake build directory
+    required: true
+  junit-output:
+    description: JUnit XML output filename
+    required: false
+    default: junit-results.xml
+  ctest-output:
+    description: Captured CTest stdout/stderr filename
+    required: false
+    default: test-output.txt
+  include-labels:
+    description: CTest labels regex to include
+    required: false
+    default: Unit
+  exclude-labels:
+    description: CTest labels regex to exclude
+    required: false
+    default: 'Flaky|Network'
+  parallel:
+    description: Number of parallel CTest jobs, or 'auto'
+    required: false
+    default: auto
+  repeat:
+    description: CTest --repeat spec (e.g. 'until-fail:5'). Empty = no repeat.
+    required: false
+    default: ''
+  shard-index:
+    description: 0-based shard index. Ignored unless shard-count > 1.
+    required: false
+    default: '0'
+  shard-count:
+    description: Total shards. 0 or 1 disables sharding (default).
+    required: false
+    default: '0'
+
+runs:
+  using: composite
+  steps:
+    - name: Detect parallel jobs
+      id: jobs
+      shell: bash
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" detect-jobs \
+          --parallel "${{ inputs.parallel }}"
+
+    - name: Run CTest
+      shell: bash
+      working-directory: ${{ inputs.build-dir }}
+      run: |
+        args=(
+          --junit-output "${{ inputs.junit-output }}"
+          --ctest-output "${{ inputs.ctest-output }}"
+          --jobs "${{ steps.jobs.outputs.jobs }}"
+          --include-labels "${{ inputs.include-labels }}"
+          --exclude-labels "${{ inputs.exclude-labels }}"
+        )
+        [[ -n "${{ inputs.repeat }}" ]] && args+=(--repeat "${{ inputs.repeat }}")
+        [[ "${{ inputs.shard-count }}" -gt 1 ]] && args+=(
+          --shard-index "${{ inputs.shard-index }}"
+          --shard-count "${{ inputs.shard-count }}"
+        )
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" ctest "${args[@]}"

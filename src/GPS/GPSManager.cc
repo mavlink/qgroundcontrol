@@ -12,12 +12,12 @@ GPSManager::GPSManager(QObject *parent)
     : QObject(parent)
     , _gpsRtk(new GPSRtk(this))
 {
-    // qCDebug(GPSManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(GPSManagerLog) << this;
 }
 
 GPSManager::~GPSManager()
 {
-    // qCDebug(GPSManagerLog) << Q_FUNC_INFO << this;
+    qCDebug(GPSManagerLog) << this;
 }
 
 GPSManager *GPSManager::instance()

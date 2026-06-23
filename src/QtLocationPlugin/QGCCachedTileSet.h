@@ -2,14 +2,11 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QHash>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
 #include <QtNetwork/QNetworkReply>
-
-Q_DECLARE_LOGGING_CATEGORY(QGCCachedTileSetLog)
 
 struct QGCTile;
 class QGCMapEngineManager;

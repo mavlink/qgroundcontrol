@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Ignore lint findings from third-party Java sources only. -->
+    <issue id="all">
+        <ignore regexp=".*/extra_java_sources/.*" />
+        <ignore regexp=".*/src/org/libsdl/.*" />
+        <ignore regexp=".*/src/org/freedesktop/gstreamer/.*" />
+        <ignore regexp=".*/src/org/qtproject/.*" />
+        <ignore regexp=".*/src/org/kde/necessitas/.*" />
+        <ignore regexp=".*/src/ru/dublgis/.*" />
+        <ignore regexp=".*/src/com/falsinsoft/qtandroidtools/.*" />
+        <ignore regexp=".*/java/org/libsdl/.*" />
+        <ignore regexp=".*/java/org/freedesktop/gstreamer/.*" />
+        <ignore regexp=".*/java/org/qtproject/.*" />
+        <ignore regexp=".*/java/org/kde/necessitas/.*" />
+        <ignore regexp=".*/java/ru/dublgis/.*" />
+        <ignore regexp=".*/java/com/falsinsoft/qtandroidtools/.*" />
+    </issue>
+
+    <!-- Third-party manifest contributions (Qt, SDL, GStreamer) that we cannot fix -->
+    <issue id="InvalidWakeLockTag" severity="warning" />
+    <issue id="MissingPermission" severity="warning" />
+    <issue id="UnusedAttribute" severity="warning" />
+    <issue id="Deprecated" severity="warning" />
+    <issue id="ExportedReceiver" severity="warning" />
+    <issue id="QueryAllPackagesPermission" severity="warning" />
+</lint>

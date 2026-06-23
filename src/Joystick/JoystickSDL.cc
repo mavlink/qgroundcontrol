@@ -10,6 +10,12 @@
 
 #include <SDL3/SDL.h>
 
+// This is used for testing manual control extensions which require additional axes but all you have is a gamepad/joystick with limited axes.
+// Only available on debug builds.
+#ifdef QT_DEBUG
+//#define TEST_WITH_VIRTUAL_AXES
+#endif
+
 QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
 
 /// Discovery cache - main thread only, cleared in shutdown()
@@ -98,7 +104,11 @@ static bool sdlEventWatcher(void *userdata, SDL_Event *event)
 }
 
 JoystickSDL::JoystickSDL(const QString &name, const QList<int> &gamepadAxes, const QList<int> &nonGamepadAxes, int buttonCount, int hatCount, int instanceId, QObject *parent)
-    : Joystick(name, gamepadAxes.length() + nonGamepadAxes.length(), buttonCount, hatCount, parent)
+    : Joystick(name, gamepadAxes.length() + nonGamepadAxes.length()
+#ifdef TEST_WITH_VIRTUAL_AXES
+               + 2  // Add 2 virtual axes for testing
+#endif
+               , buttonCount, hatCount, parent)
     , _gamepadAxes(gamepadAxes)
     , _nonGamepadAxes(nonGamepadAxes)
     , _instanceId(instanceId)
@@ -154,11 +164,14 @@ bool JoystickSDL::init()
     return true;
 }
 
-void JoystickSDL::shutdown()
+void JoystickSDL::shutdown(bool deleteDiscoveryCache)
 {
     SDL_RemoveEventWatch(sdlEventWatcher, nullptr);
     SDLJoystick::shutdown();
 
+    if (deleteDiscoveryCache) {
+        qDeleteAll(s_discoveryCache);
+    }
     s_discoveryCache.clear();
 }
 
@@ -184,14 +197,18 @@ QMap<QString, Joystick*> JoystickSDL::discover()
 
     qCDebug(JoystickSDLLog) << "SDL_GetJoysticks returned" << count << "joysticks";
     for (int n = 0; n < count; ++n) {
+        const QString joystickName = SDLJoystick::getNameForInstanceId(ids[n]);
         qCDebug(JoystickSDLLog) << "  [" << n << "] ID:" << ids[n]
-                                << "Name:" << SDL_GetJoystickNameForID(ids[n])
+                                << "Name:" << joystickName
                                 << "IsGamepad:" << SDL_IsGamepad(ids[n]);
     }
 
     for (int n = 0; n < count; ++n) {
         const SDL_JoystickID jid = ids[n];
-        QString baseName = QString::fromUtf8(SDL_GetJoystickNameForID(jid));
+        QString baseName = SDLJoystick::getNameForInstanceId(jid);
+        if (baseName.isEmpty()) {
+            baseName = QStringLiteral("Joystick %1").arg(jid);
+        }
         QString name = baseName;
 
         // Check cache by instance ID (reconnection of same device)
@@ -199,10 +216,17 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         for (auto it = s_discoveryCache.begin(); it != s_discoveryCache.end(); ++it) {
             auto *cachedJs = static_cast<JoystickSDL*>(it.value());
             if (static_cast<SDL_JoystickID>(cachedJs->instanceId()) == jid) {
-                name = it.key();
-                current[name] = cachedJs;
-                s_discoveryCache.erase(it);
-                foundInCache = true;
+                if (cachedJs->name() == baseName) {
+                    name = it.key();
+                    current[name] = cachedJs;
+                    s_discoveryCache.erase(it);
+                    foundInCache = true;
+                } else {
+                    // SDL instance ids can be recycled. If the id matches but the reported
+                    // name changed, treat it as a new device and drop the stale cached object.
+                    cachedJs->deleteLater();
+                    s_discoveryCache.erase(it);
+                }
                 break;
             }
         }
@@ -340,7 +364,7 @@ void JoystickSDL::_close()
         return;
     }
 
-    qCDebug(JoystickSDLLog) << "Closing" << SDL_GetJoystickName(_sdlJoystick) << "joystick at" << _sdlJoystick;
+    qCDebug(JoystickSDLLog) << "Closing joystick" << _name << "at" << _sdlJoystick;
 
     if (_sdlHaptic) {
         SDL_CloseHaptic(_sdlHaptic);
@@ -397,6 +421,43 @@ int JoystickSDL::_getAxisValue(int idx) const
     if (idx < 0) {
         return 0;
     }
+
+#ifdef TEST_WITH_VIRTUAL_AXES
+    // Handle virtual axes (last 2 axes)
+    const int totalPhysicalAxes = _gamepadAxes.length() + _nonGamepadAxes.length();
+    if (idx >= totalPhysicalAxes && idx < totalPhysicalAxes + 2) {
+        // Check if button 0 is pressed
+        bool button0Down = false;
+        if (_sdlGamepad) {
+            button0Down = SDL_GetGamepadButton(_sdlGamepad, static_cast<SDL_GamepadButton>(0));
+        } else if (_sdlJoystick) {
+            button0Down = SDL_GetJoystickButton(_sdlJoystick, 0);
+        }
+
+        if (button0Down) {
+            // When button 0 is down, return values from axis 0 and 1
+            const int virtualAxisIdx = idx - totalPhysicalAxes;
+            if (virtualAxisIdx == 0) {
+                // First virtual axis maps to axis 0
+                if (_sdlGamepad && _gamepadAxes.length() > 0) {
+                    return SDL_GetGamepadAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(_gamepadAxes[0]));
+                } else if (_sdlJoystick) {
+                    return SDL_GetJoystickAxis(_sdlJoystick, 0);
+                }
+            } else {
+                // Second virtual axis maps to axis 1
+                if (_sdlGamepad && _gamepadAxes.length() > 1) {
+                    return SDL_GetGamepadAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(_gamepadAxes[1]));
+                } else if (_sdlJoystick) {
+                    return SDL_GetJoystickAxis(_sdlJoystick, 1);
+                }
+            }
+        } else {
+            // When button 0 is up, return centered values
+            return 0;
+        }
+    }
+#endif
 
     if (_sdlGamepad) {
         if (idx < _gamepadAxes.length()) {
@@ -999,7 +1060,11 @@ bool JoystickSDL::hasAxis(int axis) const
         return SDL_GamepadHasAxis(_sdlGamepad, static_cast<SDL_GamepadAxis>(_gamepadAxes[axis]));
     }
     if (_sdlJoystick) {
-        const int totalAxes = _gamepadAxes.length() + _nonGamepadAxes.length();
+        const int totalAxes = _gamepadAxes.length() + _nonGamepadAxes.length()
+#ifdef TEST_WITH_VIRTUAL_AXES
+                            + 2  // Add 2 virtual axes for testing
+#endif
+                            ;
         return axis >= 0 && axis < totalAxes;
     }
     return false;

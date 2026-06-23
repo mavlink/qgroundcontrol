@@ -14,7 +14,7 @@ public:
     QStringList setupCompleteChangedTriggerList() const final;
 
     QString name() const final { return _name; }
-    QString description() const final { return tr("Frame Setup is used to select the airframe which matches your vehicle."); }
+    QString description() const final { return tr("Configure the airframe type that matches your vehicle."); }
     QString iconResource() const final { return QStringLiteral("/qmlimages/AirframeComponentIcon.png"); }
     bool requiresSetup() const final { return _requiresFrameSetup; }
     bool setupComplete() const final;

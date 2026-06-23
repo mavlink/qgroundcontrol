@@ -10,8 +10,10 @@
 
 class KMLDomDocument;
 
-/// The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
+/// \brief The QGCMapPolygon class provides a polygon which can be displayed on a map using a map visuals control.
+///
 /// It maintains a representation of the polygon on QVariantList and QmlObjectListModel format.
+///
 class QGCMapPolygon : public QObject
 {
     Q_OBJECT
@@ -27,11 +29,14 @@ public:
 
     Q_PROPERTY(int                  count           READ count                                  NOTIFY countChanged)
     Q_PROPERTY(QVariantList         path            READ path                                   NOTIFY pathChanged)
+    Q_PROPERTY(QVariantList         dragPath        READ path                                   NOTIFY dragPathChanged)
     Q_PROPERTY(double               area            READ area                                   NOTIFY pathChanged)
     Q_PROPERTY(QmlObjectListModel*  pathModel       READ qmlPathModel                           CONSTANT)
     Q_PROPERTY(bool                 dirty           READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
     Q_PROPERTY(QGeoCoordinate       center          READ center         WRITE setCenter         NOTIFY centerChanged)
+    Q_PROPERTY(QGeoCoordinate       dragCenter      READ center                                 NOTIFY dragCenterChanged)
     Q_PROPERTY(bool                 centerDrag      READ centerDrag     WRITE setCenterDrag     NOTIFY centerDragChanged)
+    Q_PROPERTY(bool                 vertexDrag      READ vertexDrag     WRITE setVertexDrag     NOTIFY vertexDragChanged)
     Q_PROPERTY(bool                 interactive     READ interactive    WRITE setInteractive    NOTIFY interactiveChanged)
     Q_PROPERTY(bool                 isValid         READ isValid                                NOTIFY isValidChanged)
     Q_PROPERTY(bool                 empty           READ empty                                  NOTIFY isEmptyChanged)
@@ -102,6 +107,7 @@ public:
     void            setDirty    (bool dirty);
     QGeoCoordinate  center      (void) const { return _center; }
     bool            centerDrag  (void) const { return _centerDrag; }
+    bool            vertexDrag  (void) const { return _vertexDrag; }
     bool            interactive (void) const { return _interactive; }
     bool            isValid     (void) const { return _polygonModel.count() >= 3; }
     bool            empty       (void) const { return _polygonModel.count() == 0; }
@@ -117,6 +123,7 @@ public:
     void setPath        (const QVariantList& path);
     void setCenter      (QGeoCoordinate newCenter);
     void setCenterDrag  (bool centerDrag);
+    void setVertexDrag  (bool vertexDrag);
     void setInteractive (bool interactive);
     void setTraceMode   (bool traceMode);
     void setShowAltColor(bool showAltColor);
@@ -127,10 +134,13 @@ public:
 signals:
     void countChanged       (int count);
     void pathChanged        (void);
+    void dragPathChanged    (void);
     void dirtyChanged       (bool dirty);
     void cleared            (void);
     void centerChanged      (QGeoCoordinate center);
+    void dragCenterChanged  (QGeoCoordinate center);
     void centerDragChanged  (bool centerDrag);
+    void vertexDragChanged  (bool vertexDrag);
     void interactiveChanged (bool interactive);
     bool isValidChanged     (void);
     bool isEmptyChanged     (void);
@@ -154,6 +164,7 @@ private:
     bool                _dirty =                false;
     QGeoCoordinate      _center;
     bool                _centerDrag =           false;
+    bool                _vertexDrag =           false;
     bool                _ignoreCenterUpdates =  false;
     bool                _interactive =          false;
     bool                _traceMode =            false;

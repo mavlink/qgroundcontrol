@@ -1,15 +1,12 @@
 #pragma once
 
 #include <QtCore/QObject>
-#include <QtCore/QLoggingCategory>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class LinkInterface;
 class Vehicle;
 class QmlObjectListModel;
 class QTimer;
-
-Q_DECLARE_LOGGING_CATEGORY(MultiVehicleManagerLog)
 
 class MultiVehicleManager : public QObject
 {
@@ -19,8 +16,8 @@ class MultiVehicleManager : public QObject
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("LinkInterface.h")
     Q_MOC_INCLUDE("Vehicle.h")
-    Q_PROPERTY(bool                 activeVehicleAvailable          READ _getActiveVehicleAvailable                                         NOTIFY activeVehicleAvailableChanged)
-    Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ _getParameterReadyVehicleAvailable                                 NOTIFY parameterReadyVehicleAvailableChanged)
+    Q_PROPERTY(bool                 activeVehicleAvailable          READ activeVehicleAvailable                                             NOTIFY activeVehicleAvailableChanged)
+    Q_PROPERTY(bool                 parameterReadyVehicleAvailable  READ parameterReadyVehicleAvailable                                     NOTIFY parameterReadyVehicleAvailableChanged)
     Q_PROPERTY(Vehicle              *activeVehicle                  READ activeVehicle                      WRITE setActiveVehicle          NOTIFY activeVehicleChanged)
     Q_PROPERTY(QmlObjectListModel   *vehicles                       READ vehicles                                                           CONSTANT)
     Q_PROPERTY(QmlObjectListModel   *selectedVehicles               READ selectedVehicles                                                   CONSTANT)
@@ -31,7 +28,6 @@ public:
     ~MultiVehicleManager();
 
     static MultiVehicleManager *instance();
-    static void registerQmlTypes();
 
     void init();
     Q_INVOKABLE Vehicle *getVehicleById(int vehicleId) const;
@@ -43,6 +39,8 @@ public:
     Vehicle *offlineEditingVehicle() const { return _offlineEditingVehicle; }
     Vehicle *activeVehicle() const { return _activeVehicle; }
     void setActiveVehicle(Vehicle *vehicle);
+    bool activeVehicleAvailable() const { return _activeVehicleAvailable; }
+    bool parameterReadyVehicleAvailable() const { return _parameterReadyVehicleAvailable; }
 
 signals:
     void vehicleAdded(Vehicle *vehicle);
@@ -63,9 +61,7 @@ private:
     bool _vehicleExists(int vehicleId);
     bool _vehicleSelected(int vehicleId);
     void _setActiveVehicle(Vehicle *vehicle);
-    bool _getActiveVehicleAvailable() const { return _activeVehicleAvailable; }
     void _setActiveVehicleAvailable(bool activeVehicleAvailable);
-    bool _getParameterReadyVehicleAvailable() const { return _parameterReadyVehicleAvailable; }
     void _setParameterReadyVehicleAvailable(bool parametersReady);
 
     QTimer *_gcsHeartbeatTimer = nullptr;           ///< Timer to emit heartbeats

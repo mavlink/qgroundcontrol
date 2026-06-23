@@ -1,0 +1,36 @@
+name: Verify Executable
+description: Run simple boot test on QGroundControl binary or package
+
+inputs:
+  binary-path:
+    description: "Path to executable or package to verify"
+    required: true
+  type:
+    description: "Type of executable (binary, appimage, dmg, exe) - currently informational"
+    required: false
+    default: "binary"
+  working-dir:
+    description: "Working directory (defaults to binary parent directory)"
+    required: false
+    default: ""
+  build-dir:
+    description: "CMake build directory (used to locate auto-downloaded GStreamer SDK for dev builds)"
+    required: false
+    default: ""
+  timeout:
+    description: "Timeout in seconds"
+    required: false
+    default: "60"
+
+runs:
+  using: composite
+  steps:
+    - name: Verify executable
+      shell: bash
+      run: |
+        python3 "${GITHUB_WORKSPACE}/.github/scripts/verify_executable.py" \
+          --binary-path "${{ inputs.binary-path }}" \
+          --type "${{ inputs.type }}" \
+          --working-dir "${{ inputs.working-dir }}" \
+          --build-dir "${{ inputs.build-dir }}" \
+          --timeout "${{ inputs.timeout }}"

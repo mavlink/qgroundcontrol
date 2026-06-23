@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "BaseClasses/MissionTest.h"
 
 class MultiSignalSpy;
@@ -19,6 +21,6 @@ private slots:
     void _testAltDensityRecalc();
 
 private:
-    MultiSignalSpy* _multiSpy = nullptr;
+    std::unique_ptr<MultiSignalSpy> _multiSpy;
     CameraCalc* _cameraCalc = nullptr;
 };

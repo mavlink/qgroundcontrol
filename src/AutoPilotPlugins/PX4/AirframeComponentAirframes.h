@@ -3,7 +3,8 @@
 #include <QtCore/QList>
 #include <QtCore/QMap>
 
-/// MVC Controller for AirframeComponent.qml.
+/// \brief MVC Controller for AirframeComponent.qml.
+///
 class AirframeComponentAirframes
 {
 public:
@@ -19,6 +20,11 @@ public:
     } AirframeType_t;
 
     static QMap<QString, AirframeComponentAirframes::AirframeType_t*>& get();
+
+    /// Airframe types in display order: standard frames first, then the rest
+    /// alphabetically by group name.
+    static QList<AirframeType_t*> sortedTypes();
+
     static void clear();
     static void insert(QString& group, QString& image, QString& name, int id);
 

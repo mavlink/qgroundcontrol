@@ -4,10 +4,17 @@
 #include "SDLJoystick.h"
 #include "SDLPlatform.h"
 
+#include <QtCore/QRegularExpression>
+
+void SDLTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    QVERIFY(JoystickSDL::init());
+}
+
 void SDLTest::init()
 {
     UnitTest::init();
-    QVERIFY(JoystickSDL::init());
 }
 
 void SDLTest::cleanup()
@@ -480,6 +487,7 @@ void SDLTest::_virtualJoystickTest()
     // After destruction, should not be virtual anymore
     QVERIFY2(!SDLJoystick::isVirtualJoystick(instanceId), "Should not be virtual after destruction");
     // Destroying again should fail gracefully
+    ignoreLogMessage("qgc.utilities.sdl.joystick", QtWarningMsg, QRegularExpression("Failed to destroy virtual joystick"));
     bool destroyedAgain = SDLJoystick::destroyVirtualJoystick(instanceId);
     QVERIFY2(!destroyedAgain, "Destroying non-existent joystick should fail");
 }
@@ -507,6 +515,7 @@ void SDLTest::_mappingManagementTest()
     // Note: SDL may not store mappings for GUIDs that don't correspond to actual devices,
     // so we don't verify retrieval here. The important thing is that addMapping succeeded.
     // Test adding an invalid mapping - should fail gracefully
+    ignoreLogMessage("qgc.utilities.sdl.joystick", QtWarningMsg, QRegularExpression("Failed to add gamepad mapping"));
     bool invalidAdded = SDLJoystick::addMapping(QStringLiteral("invalid mapping string"));
     Q_UNUSED(invalidAdded);  // May or may not fail depending on SDL's parser
     // Test adding empty mapping
