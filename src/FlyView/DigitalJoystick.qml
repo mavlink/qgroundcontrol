@@ -3,13 +3,14 @@ import QtQuick.Shapes 2.15
 
 Item {
     id: root
-    //signal degreeChanged(real degrees)
+    signal buttonClicked(int id)
 
     property real _t: 0.5
     property color _joystickColor: "#FF0000"
     property int _strokeWidth: 3
     property color _strokeColor: "white"
-    property int _hover: 0
+    property int _hover: -1
+    property int _strength: 10
 
     function getDegreeFromCoords(mouseX, mouseY) {
         let size = (height / 2);
@@ -17,19 +18,16 @@ Item {
         let dy = mouseY - size;
         let angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-        if (angle < 0) {
-            angle += 360;
-        }
+        if (angle < 0) angle += 360;
 
         let id = idFromDegrees(angle);
 
         if(root._t != 1) {
             let innerDeadzone = size * (1 - root._t);
             if(Math.abs(dx) < innerDeadzone && Math.abs(dy) < innerDeadzone) {
-                return id + 4;
+                id += 4;
             }
         }
-
         return id;
     }
 
@@ -50,6 +48,8 @@ Item {
             _buttonColor: (modelData === root._hover) ? "#FF0000" : "black"
             _strokeWidth: root._strokeWidth
             _strokeColor: root._strokeColor
+            _arrowSize: 0.7
+
         }
     }
 
@@ -66,29 +66,25 @@ Item {
             _t: 1
             rotation: (modelData - 4) * 90
             _buttonColor: (modelData === root._hover) ? "#FF0000" : "black"
-            _strokeWidth: root._strokeWidth
+            _strokeWidth: 1
             _strokeColor: root._strokeColor
+            _arrowSize: 0.3
         }
     }
 
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
+        z: 999
 
         onPositionChanged: (mouse) => { root._hover = root.getDegreeFromCoords(mouse.x, mouse.y); }
 
-        onExited: { root._hover = -1; }
+        onExited: { 
+            root._hover = -1; }
 
         onClicked: (mouse) => {
-            let targetDegree = root.getDegreeFromCoords(mouse.x, mouse.y);
-            
-            /*switch (targetDegree) {
-                case 0:   root.upClicked();    break;
-                case 1:  root.rightClicked(); break;
-                case 2: root.downClicked();  break;
-                case 3: root.leftClicked();  break;
-            }
-            */
+            root.buttonClicked(getDegreeFromCoords(mouse.x, mouse.y))
+
         }
     }
 
