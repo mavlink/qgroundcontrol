@@ -126,7 +126,7 @@ void lambdaFallbackResultHandler(void* resultHandlerData, int /*compId*/, const 
 
 } // namespace
 
-void MavCommandQueue::sendCommandWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+void MavCommandQueue::sendCommandWithLambdaFallbackWorker(std::function<void()> lambda, bool commandInt, int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
 {
     auto* instanceData = _vehicle->firmwarePluginInstanceData();
 
@@ -135,7 +135,11 @@ void MavCommandQueue::sendCommandWithLambdaFallback(std::function<void()> lambda
         lambda();
         break;
     case FirmwarePluginInstanceData::CommandSupportedResult::SUPPORTED:
-        sendCommand(compId, command, showError, param1, param2, param3, param4, param5, param6, param7);
+        if (commandInt) {
+            sendCommandInt(compId, command, frame, showError, param1, param2, param3, param4, param5, param6, param7);
+        } else {
+            sendCommand(compId, command, showError, param1, param2, param3, param4, param5, param6, param7);
+        }
         break;
     case FirmwarePluginInstanceData::CommandSupportedResult::UNKNOWN: {
         auto* data = new LambdaFallbackHandlerData { _vehicle, showError, std::move(lambda) };
@@ -145,10 +149,24 @@ void MavCommandQueue::sendCommandWithLambdaFallback(std::function<void()> lambda
             /* .progressHandler       = */ nullptr,
             /* .progressHandlerData   = */ nullptr,
         };
-        sendCommandWithHandler(&handlerInfo, compId, command, param1, param2, param3, param4, param5, param6, param7);
+        if (commandInt) {
+            sendCommandIntWithHandler(&handlerInfo, compId, command, frame, param1, param2, param3, param4, param5, param6, param7);
+        } else {
+            sendCommandWithHandler(&handlerInfo, compId, command, param1, param2, param3, param4, param5, param6, param7);
+        }
         break;
     }
     }
+}
+
+void MavCommandQueue::sendCommandWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+{
+    sendCommandWithLambdaFallbackWorker(std::move(lambda), false /* commandInt */, compId, command, MAV_FRAME_GLOBAL, showError, param1, param2, param3, param4, param5, param6, param7);
+}
+
+void MavCommandQueue::sendCommandIntWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
+{
+    sendCommandWithLambdaFallbackWorker(std::move(lambda), true /* commandInt */, compId, command, frame, showError, param1, param2, param3, param4, param5, param6, param7);
 }
 
 bool MavCommandQueue::isPending(int targetCompId, MAV_CMD command) const

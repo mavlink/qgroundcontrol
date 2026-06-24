@@ -35,6 +35,7 @@ public:
     void sendCommandIntWithHandler (const MavCmdAckHandlerInfo_t* ackHandlerInfo, int compId, MAV_CMD command, MAV_FRAME frame, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0, double param6 = 0.0, float param7 = 0.0f);
 
     void sendCommandWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, bool showError, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
+    void sendCommandIntWithLambdaFallback(std::function<void()> lambda, int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, double param5 = 0.0, double param6 = 0.0, float param7 = 0.0f);
 
     /// Full-control entry point used by higher-level coordinators (e.g. RequestMessageCoordinator)
     /// that need to set commandInt/frame/handlers explicitly. Consumers should prefer the
@@ -91,6 +92,8 @@ private:
         QElapsedTimer           elapsedTimer;
         int                     ackTimeoutMSecs     = 0;
     } MavCommandListEntry_t;
+
+    void sendCommandWithLambdaFallbackWorker(std::function<void()> lambda, bool commandInt, int compId, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7);
 
     void _sendFromList(int index);
     static bool _shouldRetry(MAV_CMD command);
