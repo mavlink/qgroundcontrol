@@ -17,8 +17,6 @@
 #include <array>
 #include <atomic>
 
-#include "SvMavlinkHandler.h"
-
 #include "QGCMAVLink.h"
 #include "VehicleFactGroup.h"
 #include "VehicleSigningController.h"  // Q_PROPERTY needs the full QObject type for moc/QML metatype registration
@@ -273,7 +271,6 @@ public:
     Q_PROPERTY(QString  vehicleUIDStr               READ vehicleUIDStr              NOTIFY vehicleUIDChanged)
 
     Q_PROPERTY(VehicleSigningController* signingController READ signingController CONSTANT)
-    Q_PROPERTY(SvMavlinkHandler* svMavlinkHandler READ svMavlinkHandler CONSTANT)
 
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
@@ -547,7 +544,6 @@ public:
     Actuators*      actuators                   () const { return _actuators; }
     VehicleSigningController* signingController() { return _signingController; }
     const VehicleSigningController* signingController() const { return _signingController; }
-    SvMavlinkHandler* svMavlinkHandler() { return _svMavlinkHandler; }
 
     void startCalibration   (QGCMAVLink::CalibrationType calType);
     void stopCalibration    (bool showError);
@@ -1059,7 +1055,6 @@ private:
 
     MavCommandQueue*            _mavCmdQueue    = nullptr;
     RequestMessageCoordinator*  _reqMsgCoord    = nullptr;
-    SvMavlinkHandler*            _svMavlinkHandler = nullptr;
 
 public:
     /// Test-only helper: forwards to MavCommandQueue::findEntryIndex.

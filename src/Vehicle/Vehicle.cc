@@ -172,8 +172,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
     _csvLogTimer.start(1000);
 
-    _svMavlinkHandler = new SvMavlinkHandler(this, this);
-
 }
 
 // Disconnected Vehicle for offline editing
@@ -591,9 +589,6 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     for (FactGroup* factGroup : factGroups()) {
         factGroup->handleMessage(this, message);
     }
-
-    _svMavlinkHandler->handleMessage(message);
-
 
     this->handleMessage(this, message);
 

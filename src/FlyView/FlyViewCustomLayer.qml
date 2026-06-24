@@ -36,21 +36,6 @@ Item {
         bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
     }
 
-    QGCButton {
-            Layout.fillWidth:   true
-            text:               "test"
-            
-            anchors {
-                top: parent.top
-                right: parent.right
-            }
-
-            onClicked: {
-            }
-        }
-
-    
-
     Item {
         width: 400
         height: 250
@@ -59,12 +44,6 @@ Item {
             horizontalCenter: parent.horizontalCenter
             bottom: parent.bottom
         }
-
-        Rectangle {
-            color: "gray"
-            opacity: 0.5
-            anchors.fill: parent
-        }        
 
         DigitalJoystick {
             anchors {
@@ -79,13 +58,10 @@ Item {
             _strokeColor: "white"
                 
             onButtonClicked: (id) => {
-                var vehicle = QGroundControl.multiVehicleManager.activeVehicle
-    console.log("vehicle:", vehicle)
-                if (!vehicle || !vehicle.svMavlinkHandler) return
-                
-                console.log("knapp tryckt")
+                var digiviewManager = QGroundControl.digiviewManager
+                if (!digiviewManager) return
 
-                var step = 5.0
+                var step = 10.0
                 var yaw = 0.0
                 var pitch = 0.0
 
@@ -102,18 +78,20 @@ Item {
                     default: return                 // -1, nothing
                 }
 
-                vehicle.svMavlinkHandler.sendCamTargetingParameters(
-                    "main",   // stream_name
+                digiviewManager.sendCamTargetingParameters(
+                    "stream",   // stream_name
                     0,        // cam_id
                     1,        // targeting_mode — euler delta mode
-                    1,        // euler_delta = true
+                    true,        // euler_delta = true
                     yaw,      // yaw
                     pitch,    // pitch
                     0,        // roll
                     0,        // lock_flags
                     0, 0,     // x_offset, y_offset
                     0, 0, 0,  // target lat/lon/alt (unused in delta mode)
-                    -1        // detection_id (none)
+                    0,        //track-id
+                    -1,
+                    false        // detection_id (none)
                 )
 
                 
