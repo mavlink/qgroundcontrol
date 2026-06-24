@@ -7,6 +7,7 @@
 #include <QtCore/QVariantList>
 
 #ifdef Q_OS_UNIX
+#include <cerrno>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -449,14 +450,28 @@ bool VideoSettings::resolveNetworkVideoSecret(QByteArray& secret, QString& error
         return false;
     }
 
-    QFile file;
-    if (!file.open(fileDescriptor, QIODevice::ReadOnly, QFileDevice::AutoCloseHandle)) {
-        ::close(fileDescriptor);
-        error = tr("Credential file could not be opened.");
-        return false;
+    secret.resize(4097);
+    qsizetype bytesRead = 0;
+    while (bytesRead < secret.size()) {
+        const ssize_t result =
+            ::read(fileDescriptor, secret.data() + bytesRead, static_cast<size_t>(secret.size() - bytesRead));
+        if (result == 0) {
+            break;
+        }
+        if (result < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            QGC::secureZero(secret);
+            ::close(fileDescriptor);
+            error = tr("Credential file could not be read.");
+            return false;
+        }
+        bytesRead += static_cast<qsizetype>(result);
     }
-    secret = file.read(4097);
-    if (secret.size() > 4096 || !file.atEnd()) {
+    ::close(fileDescriptor);
+    secret.resize(bytesRead);
+    if (secret.size() > 4096) {
         QGC::secureZero(secret);
         error = tr("Credential file exceeds the 4096 byte limit.");
         return false;
