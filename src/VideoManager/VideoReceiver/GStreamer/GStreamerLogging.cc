@@ -34,12 +34,12 @@ QString _redactDiagnostic(const QString& diagnostic)
                                                QRegularExpression::CaseInsensitiveOption);
     QString result = diagnostic;
     QList<QRegularExpressionMatch> matches;
-    QRegularExpressionMatchIterator iterator = urlPattern.globalMatch(result);
-    while (iterator.hasNext()) {
-        matches.append(iterator.next());
+    QRegularExpressionMatchIterator matchIterator = urlPattern.globalMatch(result);
+    while (matchIterator.hasNext()) {
+        matches.append(matchIterator.next());
     }
-    for (auto iterator = matches.crbegin(); iterator != matches.crend(); ++iterator) {
-        const QRegularExpressionMatch& match = *iterator;
+    for (auto reverseIterator = matches.crbegin(); reverseIterator != matches.crend(); ++reverseIterator) {
+        const QRegularExpressionMatch& match = *reverseIterator;
         result.replace(match.capturedStart(), match.capturedLength(),
                        QGCNetworkHelper::redactedUrlForLogging(match.captured()));
     }

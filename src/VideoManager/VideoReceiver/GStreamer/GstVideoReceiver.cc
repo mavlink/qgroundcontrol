@@ -29,7 +29,18 @@
 #include <QtCore/QFile>
 #include <QtCore/QUrl>
 #include <QtQuick/QQuickItem>
+
+#if defined(signals)
+#pragma push_macro("signals")
+#undef signals
+#define QGC_RESTORE_QT_SIGNALS_MACRO
+#endif
 #include <gio/gio.h>
+#if defined(QGC_RESTORE_QT_SIGNALS_MACRO)
+#pragma pop_macro("signals")
+#undef QGC_RESTORE_QT_SIGNALS_MACRO
+#endif
+
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 #include <gst/video/video.h>
