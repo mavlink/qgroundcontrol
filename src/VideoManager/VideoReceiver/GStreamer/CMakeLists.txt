@@ -21,7 +21,9 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
 
     if(NOT GStreamer_USE_XCFRAMEWORK)
         find_package(PkgConfig REQUIRED)
-        pkg_check_modules(QGCGio REQUIRED IMPORTED_TARGET gio-2.0)
+        # Qt's autogen dependency target is created outside this directory.
+        # Keep the imported GIO target visible there as well.
+        pkg_check_modules(QGCGio REQUIRED IMPORTED_TARGET GLOBAL gio-2.0)
     endif()
 
     target_sources(${CMAKE_PROJECT_NAME}
