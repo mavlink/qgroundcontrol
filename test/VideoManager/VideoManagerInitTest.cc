@@ -6,6 +6,7 @@
 #include <QtQuick/QQuickWindow>
 
 #include "VideoManager.h"
+#include "VideoReceiver.h"
 #include "VideoSettings.h"
 
 void VideoManagerInitTest::init()
@@ -104,7 +105,7 @@ void VideoManagerInitTest::_testGstInitFailure()
 
 void VideoManagerInitTest::_testNetworkJpegRecordingFormatPolicy()
 {
-    for (const QString source : {
+    for (const QString& source : {
              QString::fromLatin1(VideoSettings::videoSourceHTTPMJPEG),
              QString::fromLatin1(VideoSettings::videoSourceWebSocketJPEG),
          }) {
