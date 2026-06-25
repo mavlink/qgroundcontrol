@@ -29,7 +29,6 @@ public:
 signals:
     void connected();
     void disconnected();
-    void jpegFramePushed(qint64 bytes);
 
 private slots:
     void _onConnected();

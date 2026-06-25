@@ -31,6 +31,7 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include <QtTest/QTest>
 #include <atomic>
 #include <cstring>
+#include <mutex>
 #include <gst/app/gstappsink.h>
 #include <gst/gst.h>
 #include <iterator>
@@ -376,7 +377,7 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     GstElement* pipeline = gst_parse_launch(
         "appsrc name=source is-live=true do-timestamp=true format=time "
         "caps=image/jpeg "
-        "! appsink name=sink sync=false",
+        "! fakesink name=sink sync=false",
         &pipelineError);
     if (pipelineError) {
         const QString message = QString::fromUtf8(pipelineError->message);
@@ -386,14 +387,46 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     QVERIFY(pipeline);
 
     GstElement* appsrc = gst_bin_get_by_name(GST_BIN(pipeline), "source");
-    GstElement* appsink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
     QVERIFY(appsrc);
-    QVERIFY(appsink);
     g_object_set(appsrc,
                  "block", FALSE,
                  "max-bytes", static_cast<guint64>(64U * 1024U * 1024U),
                  "leaky-type", 2,
                  nullptr);
+    struct ProbeContext
+    {
+        std::mutex mutex;
+        QByteArray data;
+        std::atomic_bool observed{false};
+    } probeContext;
+    GstPad* appsrcPad = gst_element_get_static_pad(appsrc, "src");
+    QVERIFY(appsrcPad);
+    const gulong bufferProbeId = gst_pad_add_probe(
+        appsrcPad, GST_PAD_PROBE_TYPE_BUFFER,
+        [](GstPad*, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
+            GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+            if (!buffer) {
+                return GST_PAD_PROBE_OK;
+            }
+            GstMapInfo map = GST_MAP_INFO_INIT;
+            if (gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+                auto* context = static_cast<ProbeContext*>(userData);
+                {
+                    std::lock_guard<std::mutex> lock(context->mutex);
+                    context->data =
+                        QByteArray(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size));
+                }
+                context->observed.store(true, std::memory_order_release);
+                gst_buffer_unmap(buffer, &map);
+            }
+            return GST_PAD_PROBE_OK;
+        },
+        &probeContext, nullptr);
+    QVERIFY(bufferProbeId != 0);
+    auto removeBufferProbe = qScopeGuard([appsrcPad, bufferProbeId]() {
+        gst_pad_remove_probe(appsrcPad, bufferProbeId);
+        gst_object_unref(appsrcPad);
+    });
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
     GstState currentState = GST_STATE_NULL;
     GstState pendingState = GST_STATE_NULL;
@@ -410,7 +443,6 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     source->moveToThread(&webSocketThread);
     connect(&webSocketThread, &QThread::finished, source, &QObject::deleteLater);
     QSignalSpy connectedSpy(source, &QGCWebSocketVideoSource::connected);
-    QSignalSpy framePushedSpy(source, &QGCWebSocketVideoSource::jpegFramePushed);
     webSocketThread.start();
     auto stopWebSocketSource = qScopeGuard([source, &webSocketThread]() {
         if (webSocketThread.isRunning()) {
@@ -438,20 +470,13 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     serverSocket->flush();
     QTRY_VERIFY_WITH_TIMEOUT(bytesWrittenSpy.count() > 0 || serverSocket->bytesToWrite() == 0,
                              TestTimeout::mediumMs());
-    QTRY_COMPARE_WITH_TIMEOUT(framePushedSpy.count(), 1, TestTimeout::mediumMs());
-    QCOMPARE(framePushedSpy.first().at(0).toLongLong(), static_cast<qint64>(jpeg.size()));
-
-    GstSample* sample = nullptr;
-    QTRY_VERIFY_WITH_TIMEOUT(
-        (sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 100 * GST_MSECOND)) != nullptr,
-        TestTimeout::mediumMs());
-    GstBuffer* buffer = gst_sample_get_buffer(sample);
-    QVERIFY(buffer);
-    GstMapInfo map = GST_MAP_INFO_INIT;
-    QVERIFY(gst_buffer_map(buffer, &map, GST_MAP_READ));
-    QCOMPARE(QByteArray(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size)), jpeg);
-    gst_buffer_unmap(buffer, &map);
-    gst_sample_unref(sample);
+    QTRY_VERIFY_WITH_TIMEOUT(probeContext.observed.load(std::memory_order_acquire), TestTimeout::mediumMs());
+    QByteArray observedJpeg;
+    {
+        std::lock_guard<std::mutex> lock(probeContext.mutex);
+        observedJpeg = probeContext.data;
+    }
+    QCOMPARE(observedJpeg, jpeg);
 
     QMetaObject::invokeMethod(source, [source]() { source->stop(); }, Qt::BlockingQueuedConnection);
     webSocketThread.quit();
@@ -460,7 +485,9 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     serverSocket->close();
     serverSocket->deleteLater();
     gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_clear_object(&appsink);
+    removeBufferProbe.dismiss();
+    gst_pad_remove_probe(appsrcPad, bufferProbeId);
+    gst_object_unref(appsrcPad);
     gst_clear_object(&appsrc);
     gst_clear_object(&pipeline);
 #else
