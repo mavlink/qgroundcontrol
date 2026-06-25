@@ -23,7 +23,7 @@ std::optional<int> initialize(int argc, char* argv[],
 /// @note Call after Q(Core)Application exists and logging is installed
 void setupPostApp();
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
 /// @brief Check if running as root (dangerous on Linux)
 /// @return true if running as root
 bool isRunningAsRoot();

@@ -15,7 +15,7 @@
     #include "SignalHandler.h"
 #endif
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
     #include <cstdio>
     #include <unistd.h>
     #include <sys/types.h>
@@ -38,7 +38,7 @@
 
 namespace {
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
 static void showLinuxErrorDialog(const QByteArray& msg)
 {
     // Try to show a GUI dialog — important for AppImage users where stderr is invisible.
@@ -159,7 +159,7 @@ void setWindowsErrorModes(bool quietWindowsAsserts)
 std::optional<int> Platform::initialize(int argc, char* argv[],
                                          const QGCCommandLineParser::CommandLineParseResult& args)
 {
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
     if (isRunningAsRoot()) {
         return showRootError(argc, argv);
     }
@@ -234,7 +234,7 @@ void Platform::setupPostApp()
 #endif
 }
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
 bool Platform::isRunningAsRoot()
 {
     return ::getuid() == 0;
