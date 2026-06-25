@@ -17,6 +17,8 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QThread>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryFile>
 #include <QtCore/QUrl>
@@ -402,10 +404,28 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     VideoReceiver::NetworkSourceConfig config;
     config.origin = QStringLiteral("https://operator.example.test");
     const QUrl url(QStringLiteral("ws://127.0.0.1:%1/video").arg(server.serverPort()));
-    QGCWebSocketVideoSource source(url, config, appsrc);
-    QSignalSpy connectedSpy(&source, &QGCWebSocketVideoSource::connected);
+    QThread webSocketThread;
+    webSocketThread.setObjectName(QStringLiteral("QGCWebSocketVideoDeliveryTest"));
+    QGCWebSocketVideoSource* source = new QGCWebSocketVideoSource(url, config, appsrc);
+    source->moveToThread(&webSocketThread);
+    connect(&webSocketThread, &QThread::finished, source, &QObject::deleteLater);
+    QSignalSpy connectedSpy(source, &QGCWebSocketVideoSource::connected);
+    QSignalSpy framePushedSpy(source, &QGCWebSocketVideoSource::jpegFramePushed);
+    webSocketThread.start();
+    auto stopWebSocketSource = qScopeGuard([source, &webSocketThread]() {
+        if (webSocketThread.isRunning()) {
+            QMetaObject::invokeMethod(source, [source]() { source->stop(); }, Qt::BlockingQueuedConnection);
+            webSocketThread.quit();
+            webSocketThread.wait(TestTimeout::mediumMs());
+        }
+    });
+
     QString startError;
-    QVERIFY2(source.start(startError), qPrintable(startError));
+    bool started = false;
+    QMetaObject::invokeMethod(
+        source, [source, &started, &startError]() { started = source->start(startError); },
+        Qt::BlockingQueuedConnection);
+    QVERIFY2(started, qPrintable(startError));
     QTRY_COMPARE_WITH_TIMEOUT(connectedSpy.count(), 1, TestTimeout::mediumMs());
     QTRY_VERIFY_WITH_TIMEOUT(serverSocket != nullptr, TestTimeout::mediumMs());
 
@@ -418,6 +438,8 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     serverSocket->flush();
     QTRY_VERIFY_WITH_TIMEOUT(bytesWrittenSpy.count() > 0 || serverSocket->bytesToWrite() == 0,
                              TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(framePushedSpy.count(), 1, TestTimeout::mediumMs());
+    QCOMPARE(framePushedSpy.first().at(0).toLongLong(), static_cast<qint64>(jpeg.size()));
 
     GstSample* sample = nullptr;
     QTRY_VERIFY_WITH_TIMEOUT(
@@ -431,7 +453,10 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     gst_buffer_unmap(buffer, &map);
     gst_sample_unref(sample);
 
-    source.stop();
+    QMetaObject::invokeMethod(source, [source]() { source->stop(); }, Qt::BlockingQueuedConnection);
+    webSocketThread.quit();
+    QVERIFY(webSocketThread.wait(TestTimeout::mediumMs()));
+    stopWebSocketSource.dismiss();
     serverSocket->close();
     serverSocket->deleteLater();
     gst_element_set_state(pipeline, GST_STATE_NULL);

@@ -188,7 +188,9 @@ void QGCWebSocketVideoSource::_pushFrameToAppsrc(const QByteArray& jpegData)
     GST_BUFFER_DURATION(buffer) = GST_CLOCK_TIME_NONE;
 
     const GstFlowReturn result = gst_app_src_push_buffer(GST_APP_SRC(_appsrc), buffer);
-    if (result != GST_FLOW_OK && result != GST_FLOW_FLUSHING) {
+    if (result == GST_FLOW_OK) {
+        emit jpegFramePushed(jpegData.size());
+    } else if (result != GST_FLOW_FLUSHING) {
         qCWarning(QGCWebSocketVideoSourceLog) << "Failed to push JPEG buffer:" << result;
     }
 }
