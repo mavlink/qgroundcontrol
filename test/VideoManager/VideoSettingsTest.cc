@@ -51,8 +51,8 @@ void VideoSettingsTest::_testAuthenticatedTransportPolicy()
 #ifndef QGC_GST_STREAMING
     QSKIP("GStreamer not enabled");
 #else
-    TestFixtures::SettingsFixture fixture;
     VideoSettings settings;
+    TestFixtures::SettingsFixture fixture;
     fixture.setFactValue(settings.videoSource(), QString::fromLatin1(VideoSettings::videoSourceHTTPMJPEG));
     fixture.setFactValue(settings.httpMjpegUrl(), QStringLiteral("http://192.0.2.1:8080/video"));
     fixture.setFactValue(settings.networkVideoAuthType(), VideoSettings::NetworkVideoAuthBasic);
@@ -82,8 +82,8 @@ void VideoSettingsTest::_testOriginValidation()
 #ifndef QGC_HAS_WEBSOCKET_VIDEO
     QSKIP("Qt WebSockets unavailable");
 #else
-    TestFixtures::SettingsFixture fixture;
     VideoSettings settings;
+    TestFixtures::SettingsFixture fixture;
     fixture.setFactValue(settings.videoSource(), QString::fromLatin1(VideoSettings::videoSourceWebSocketJPEG));
     fixture.setFactValue(settings.websocketJpegUrl(), QStringLiteral("ws://192.0.2.1:8080/video"));
 
@@ -100,8 +100,8 @@ void VideoSettingsTest::_testSecretFileValidation()
 #ifndef Q_OS_UNIX
     QSKIP("Owner-only credential file validation is Unix-specific");
 #else
-    TestFixtures::SettingsFixture fixture;
     VideoSettings settings;
+    TestFixtures::SettingsFixture fixture;
     QTemporaryFile file;
     QVERIFY(file.open());
     QCOMPARE(file.write("file-secret\n"), 12);
@@ -136,8 +136,8 @@ void VideoSettingsTest::_testSecretFileRejectsAliases()
 #ifndef Q_OS_UNIX
     QSKIP("Owner-only credential file validation is Unix-specific");
 #else
-    TestFixtures::SettingsFixture fixture;
     VideoSettings settings;
+    TestFixtures::SettingsFixture fixture;
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
 
