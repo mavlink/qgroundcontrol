@@ -387,7 +387,17 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     GstElement* appsink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
     QVERIFY(appsrc);
     QVERIFY(appsink);
+    g_object_set(appsrc,
+                 "block", FALSE,
+                 "max-bytes", static_cast<guint64>(64U * 1024U * 1024U),
+                 "leaky-type", 2,
+                 nullptr);
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    GstState currentState = GST_STATE_NULL;
+    GstState pendingState = GST_STATE_NULL;
+    QVERIFY2(gst_element_get_state(pipeline, &currentState, &pendingState, 2 * GST_SECOND) !=
+                 GST_STATE_CHANGE_FAILURE,
+             "WebSocket JPEG test pipeline failed to reach a usable state");
 
     VideoReceiver::NetworkSourceConfig config;
     config.origin = QStringLiteral("https://operator.example.test");
@@ -403,11 +413,16 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     QVERIFY(!serverSocket->request().rawHeader("User-Agent").isEmpty());
 
     const QByteArray jpeg = QByteArray::fromHex("ffd800ffd9");
+    QSignalSpy bytesWrittenSpy(serverSocket, &QWebSocket::bytesWritten);
     QCOMPARE(serverSocket->sendBinaryMessage(jpeg), static_cast<qint64>(jpeg.size()));
+    serverSocket->flush();
+    QTRY_VERIFY_WITH_TIMEOUT(bytesWrittenSpy.count() > 0 || serverSocket->bytesToWrite() == 0,
+                             TestTimeout::mediumMs());
 
     GstSample* sample = nullptr;
-    QTRY_VERIFY_WITH_TIMEOUT((sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 0)) != nullptr,
-                             TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(
+        (sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 100 * GST_MSECOND)) != nullptr,
+        TestTimeout::mediumMs());
     GstBuffer* buffer = gst_sample_get_buffer(sample);
     QVERIFY(buffer);
     GstMapInfo map = GST_MAP_INFO_INIT;
