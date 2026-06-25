@@ -373,6 +373,7 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     GError* pipelineError = nullptr;
     GstElement* pipeline = gst_parse_launch(
         "appsrc name=source is-live=true do-timestamp=true format=time "
+        "caps=image/jpeg "
         "! appsink name=sink sync=false",
         &pipelineError);
     if (pipelineError) {
@@ -395,8 +396,8 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     QSignalSpy connectedSpy(&source, &QGCWebSocketVideoSource::connected);
     QString startError;
     QVERIFY2(source.start(startError), qPrintable(startError));
-    QTRY_COMPARE_WITH_TIMEOUT(connectedSpy.count(), 1, 3000);
-    QTRY_VERIFY_WITH_TIMEOUT(serverSocket != nullptr, 3000);
+    QTRY_COMPARE_WITH_TIMEOUT(connectedSpy.count(), 1, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(serverSocket != nullptr, TestTimeout::mediumMs());
 
     QCOMPARE(serverSocket->origin(), config.origin);
     QVERIFY(!serverSocket->request().rawHeader("User-Agent").isEmpty());
@@ -405,7 +406,8 @@ void GStreamerTest::_testWebSocketJpegDelivery()
     QCOMPARE(serverSocket->sendBinaryMessage(jpeg), static_cast<qint64>(jpeg.size()));
 
     GstSample* sample = nullptr;
-    QTRY_VERIFY_WITH_TIMEOUT((sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 0)) != nullptr, 3000);
+    QTRY_VERIFY_WITH_TIMEOUT((sample = gst_app_sink_try_pull_sample(GST_APP_SINK(appsink), 0)) != nullptr,
+                             TestTimeout::mediumMs());
     GstBuffer* buffer = gst_sample_get_buffer(sample);
     QVERIFY(buffer);
     GstMapInfo map = GST_MAP_INFO_INIT;
@@ -445,7 +447,7 @@ void GStreamerTest::_testWebSocketThreadTeardown()
         const QUrl url(QStringLiteral("ws://127.0.0.1:%1/video").arg(server.serverPort()));
         GstElement* sourceBin = receiver._makeWebSocketJpegSource(url, config);
         QVERIFY(sourceBin);
-        QTRY_COMPARE_WITH_TIMEOUT(serverSockets.size(), iteration + 1, 3000);
+        QTRY_COMPARE_WITH_TIMEOUT(serverSockets.size(), iteration + 1, TestTimeout::mediumMs());
 
         receiver._stopWebSocketSource();
         QVERIFY(receiver._webSocketSource == nullptr);
@@ -1870,7 +1872,7 @@ void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
 
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
     // Wait for a few frames to confirm baseline delivery works.
-    QTRY_VERIFY_WITH_TIMEOUT(deliveredFrames.load() > 0, 3000);
+    QTRY_VERIFY_WITH_TIMEOUT(deliveredFrames.load() > 0, TestTimeout::mediumMs());
     const int beforeFlush = deliveredFrames.load(std::memory_order_relaxed);
 
     // Send FLUSH_START upstream of the appsink. identity element forwards events.
