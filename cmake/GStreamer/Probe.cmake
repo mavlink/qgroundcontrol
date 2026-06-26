@@ -72,6 +72,8 @@ function(_qgc_probe_gst_d3d_path VERSION OUT)
 
     if(PkgConfig_FOUND)
         pkg_check_modules(${_pc_var} QUIET gstreamer-d3d${VERSION}-1.0)
+        _gst_coalesce_existing_paths(${_pc_var}_INCLUDE_DIRS)
+        _gst_coalesce_existing_paths(${_pc_var}_LIBRARY_DIRS)
     endif()
 
     # Always resolve the absolute import-lib path and link THAT, not the bare

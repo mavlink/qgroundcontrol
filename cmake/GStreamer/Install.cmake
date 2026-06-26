@@ -76,27 +76,13 @@ function(gstreamer_install_libs)
         return()
     endif()
 
-    set(_blocked_prefixes
-        /usr/lib /usr/local/lib /opt/homebrew/lib /opt/homebrew/opt
-        "C:/Windows" "C:/Program Files" "C:/Program Files (x86)"
-    )
-    # Normalize case + separators so the guard isn't bypassed by C:\Windows or c:/windows.
-    cmake_path(CONVERT "${ARG_SOURCE_DIR}" TO_CMAKE_PATH_LIST _src_norm NORMALIZE)
-    if(WIN32)
-        string(TOLOWER "${_src_norm}" _src_norm)
+    _gstreamer_is_blocked_lib_copy_source("${ARG_SOURCE_DIR}" _blocked_lib_source)
+    if(_blocked_lib_source)
+        message(FATAL_ERROR
+            "gstreamer_install_libs: refusing to copy from system/shared prefix '${ARG_SOURCE_DIR}'.\n"
+            "This function copies ALL shared libraries unfiltered. Use an auto-downloaded SDK "
+            "or set GStreamer_ROOT_DIR to an isolated installation.")
     endif()
-    foreach(_prefix IN LISTS _blocked_prefixes)
-        if(WIN32)
-            string(TOLOWER "${_prefix}" _prefix)
-        endif()
-        cmake_path(IS_PREFIX _prefix "${_src_norm}" NORMALIZE _is_system)
-        if(_is_system)
-            message(FATAL_ERROR
-                "gstreamer_install_libs: refusing to copy from system/shared prefix '${ARG_SOURCE_DIR}'.\n"
-                "This function copies ALL shared libraries unfiltered. Use an auto-downloaded SDK "
-                "or set GStreamer_ROOT_DIR to an isolated installation.")
-        endif()
-    endforeach()
 
     # Deliberately copies every lib in the isolated SDK dir — shared transitive deps are
     # not enumerable from the plugin set, and the system-prefix guard above bounds the blast.
@@ -112,6 +98,66 @@ function(gstreamer_install_libs)
             "gstreamer_install_libs: no *.${ARG_EXTENSION} found in '${ARG_SOURCE_DIR}'. "
             "The GStreamer SDK must be fully expanded at configure time before install.")
     endif()
+endfunction()
+
+function(_gstreamer_is_blocked_lib_copy_source SOURCE_DIR OUT_VAR)
+    set(_blocked_prefixes
+        /usr/lib /usr/local/lib /opt/homebrew/lib /opt/homebrew/opt)
+    set(_allowed_prefixes)
+    set(_is_windows_guard ${WIN32})
+    if(QGC_GSTREAMER_TEST_WIN32)
+        set(_is_windows_guard TRUE)
+    endif()
+
+    if(_is_windows_guard)
+        list(APPEND _blocked_prefixes
+            "C:/Windows" "C:/Program Files" "C:/Program Files (x86)")
+        # The official GStreamer MSVC SDK installs here by default; it is an SDK
+        # root, not an arbitrary shared system DLL directory.
+        list(APPEND _allowed_prefixes
+            "C:/Program Files/gstreamer" "C:/Program Files (x86)/gstreamer")
+    endif()
+
+    # Normalize case + separators so the guard isn't bypassed by C:\Windows or c:/windows.
+    cmake_path(SET _src_norm NORMALIZE "${SOURCE_DIR}")
+    if(_is_windows_guard)
+        string(TOLOWER "${_src_norm}" _src_norm)
+    endif()
+
+    foreach(_prefix IN LISTS _allowed_prefixes)
+        if(_is_windows_guard)
+            string(TOLOWER "${_prefix}" _prefix)
+            string(FIND "${_src_norm}/" "${_prefix}/" _is_allowed_pos)
+            if(_is_allowed_pos EQUAL 0)
+                set(${OUT_VAR} FALSE PARENT_SCOPE)
+                return()
+            endif()
+            continue()
+        endif()
+        cmake_path(IS_PREFIX _prefix "${_src_norm}" NORMALIZE _is_allowed)
+        if(_is_allowed)
+            set(${OUT_VAR} FALSE PARENT_SCOPE)
+            return()
+        endif()
+    endforeach()
+
+    foreach(_prefix IN LISTS _blocked_prefixes)
+        if(_is_windows_guard)
+            string(TOLOWER "${_prefix}" _prefix)
+            string(FIND "${_src_norm}/" "${_prefix}/" _is_system_pos)
+            if(_is_system_pos EQUAL 0)
+                set(${OUT_VAR} TRUE PARENT_SCOPE)
+                return()
+            endif()
+            continue()
+        endif()
+        cmake_path(IS_PREFIX _prefix "${_src_norm}" NORMALIZE _is_system)
+        if(_is_system)
+            set(${OUT_VAR} TRUE PARENT_SCOPE)
+            return()
+        endif()
+    endforeach()
+    set(${OUT_VAR} FALSE PARENT_SCOPE)
 endfunction()
 
 # ─────────────────────────────────────────────────────────────────────────────

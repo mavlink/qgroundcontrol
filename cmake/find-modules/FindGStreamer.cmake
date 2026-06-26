@@ -85,6 +85,7 @@ endif()
 # runs — see QGC patch #2 in the vendoring header.
 
 macro(_gst_filter_missing_directories GST_INCLUDE_DIRS)
+    _gst_coalesce_existing_paths(${GST_INCLUDE_DIRS})
     set(_gst_include_dirs)
     foreach(DIR IN LISTS ${GST_INCLUDE_DIRS})
         string(MAKE_C_IDENTIFIER "${DIR}" _gst_dir_id)
@@ -177,6 +178,7 @@ if(PC_GStreamer_FOUND AND (NOT TARGET GStreamer::GStreamer))
 
     if (GStreamer_USE_STATIC_LIBS)
         _gst_filter_missing_directories(PC_GStreamer_STATIC_INCLUDE_DIRS)
+        _gst_coalesce_existing_paths(PC_GStreamer_STATIC_LIBRARY_DIRS)
         set_target_properties(GStreamer::GStreamer PROPERTIES
             INTERFACE_COMPILE_OPTIONS "${PC_GStreamer_STATIC_CFLAGS_OTHER}"
         )
@@ -189,6 +191,8 @@ if(PC_GStreamer_FOUND AND (NOT TARGET GStreamer::GStreamer))
         _gst_resolve_and_link_libraries(GStreamer::GStreamer INTERFACE "${PC_GStreamer_LIBRARIES}" "${PC_GStreamer_STATIC_LIBRARY_DIRS}")
         _gst_resolve_and_link_libraries(GStreamer::deps INTERFACE "${PC_GStreamer_STATIC_LIBRARIES}" "${PC_GStreamer_STATIC_LIBRARY_DIRS}" HIDE)
     else()
+        _gst_filter_missing_directories(PC_GStreamer_INCLUDE_DIRS)
+        _gst_coalesce_existing_paths(PC_GStreamer_LIBRARY_DIRS)
         set_target_properties(GStreamer::GStreamer PROPERTIES
             INTERFACE_COMPILE_OPTIONS "${PC_GStreamer_CFLAGS_OTHER}"
             INTERFACE_INCLUDE_DIRECTORIES "${PC_GStreamer_INCLUDE_DIRS}"
@@ -255,9 +259,11 @@ function(_gst_create_component_target _gst_PLUGIN _gst_PC_NAME)
     endif()
 
     if (GStreamer_USE_STATIC_LIBS)
+        _gst_coalesce_existing_paths(${_pc}_STATIC_LIBRARY_DIRS)
         _gst_apply_frameworks(${_ldflags_var} GStreamer::${_gst_PLUGIN})
         _gst_resolve_and_link_libraries(GStreamer::${_gst_PLUGIN} INTERFACE "${${_pc}_STATIC_LIBRARIES}" "${${_pc}_STATIC_LIBRARY_DIRS}")
     else()
+        _gst_coalesce_existing_paths(${_pc}_LIBRARY_DIRS)
         _gst_strip_macos_absent_link_libs(${_pc}_LINK_LIBRARIES)
         set_target_properties(GStreamer::${_gst_PLUGIN} PROPERTIES
             INTERFACE_LINK_OPTIONS "${${_ldflags_var}}"

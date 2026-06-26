@@ -17,9 +17,11 @@ set(_qgc_findmod_tests
     test_layout
     test_plugin_scan
     test_plugin_policy
+    test_path_list
     test_pkgconfig_env
     test_download_helper
     test_install_filter
+    test_install_libs_guard_windows
     test_orchestrator_idempotent
 )
 

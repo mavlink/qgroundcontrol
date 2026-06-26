@@ -19,6 +19,45 @@ if(NOT DEFINED _gst_SRT_REGEX_PATCH)
     set(_gst_SRT_REGEX_PATCH "^:lib(.+)\\.(a|so|lib|dylib)$")
 endif()
 
+# CMake's FindPkgConfig can split pkg-config paths containing escaped spaces
+# (for example `C:/Program\ Files/...`) into multiple list items. Rejoin adjacent
+# tokens when they form a real path, preserving unresolved tokens so callers can
+# still warn or fall back normally.
+function(_gst_coalesce_existing_paths _gcep_VAR)
+    set(_gcep_in ${${_gcep_VAR}})
+    set(_gcep_out "")
+    list(LENGTH _gcep_in _gcep_len)
+    set(_gcep_i 0)
+    while(_gcep_i LESS _gcep_len)
+        list(GET _gcep_in ${_gcep_i} _gcep_candidate)
+        set(_gcep_joined "${_gcep_candidate}")
+        set(_gcep_found FALSE)
+        if(EXISTS "${_gcep_joined}")
+            set(_gcep_found TRUE)
+        else()
+            math(EXPR _gcep_j "${_gcep_i} + 1")
+            while(_gcep_j LESS _gcep_len)
+                list(GET _gcep_in ${_gcep_j} _gcep_next)
+                string(APPEND _gcep_joined " ${_gcep_next}")
+                if(EXISTS "${_gcep_joined}")
+                    set(_gcep_i ${_gcep_j})
+                    set(_gcep_found TRUE)
+                    break()
+                endif()
+                math(EXPR _gcep_j "${_gcep_j} + 1")
+            endwhile()
+        endif()
+
+        if(_gcep_found)
+            list(APPEND _gcep_out "${_gcep_joined}")
+        else()
+            list(APPEND _gcep_out "${_gcep_candidate}")
+        endif()
+        math(EXPR _gcep_i "${_gcep_i} + 1")
+    endwhile()
+    set(${_gcep_VAR} "${_gcep_out}" PARENT_SCOPE)
+endfunction()
+
 # Strip link libs that the prebuilt macOS GStreamer distribution references but does not ship.
 # gstreamer-gl-1.0.pc carries gstvulkan-1.0 in Libs.private, yet no libgstvulkan-1.0 exists on
 # macOS — and these names reach INTERFACE_LINK_LIBRARIES verbatim (the shared-lib path bypasses
@@ -69,6 +108,7 @@ endmacro()
 #   WARN_MISSING - Warn and skip missing libraries instead of failing
 function(_gst_resolve_and_link_libraries _grll_TARGET _grll_SCOPE _grll_LIBS _grll_HINTS)
     cmake_parse_arguments(_grll "HIDE;WARN_MISSING" "" "" ${ARGN})
+    _gst_coalesce_existing_paths(_grll_HINTS)
 
     if(_grll_HIDE AND APPLE)
         target_link_directories(${_grll_TARGET} ${_grll_SCOPE} ${_grll_HINTS})
