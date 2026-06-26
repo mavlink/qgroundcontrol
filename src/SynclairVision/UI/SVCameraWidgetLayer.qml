@@ -14,12 +14,10 @@ import QGroundControl.FlyView
 import QGroundControl.FlightMap
 
 Item {
-    id: _root
+    id: root
 
     property var parentToolInsets
-    property var totalToolInsets: _toolInsets
-    property var mapControl
-
+ 
     QGCToolInsets {
         id: _toolInsets
         leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
@@ -35,4 +33,16 @@ Item {
         bottomEdgeCenterInset:  parentToolInsets.bottomEdgeCenterInset
         bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
     }
+
+    Rectangle {
+        id: rect
+        anchors.fill: parent
+        color: "purple"
+                opacity: 0.3
+
+    }
+
+    
+
 }
+

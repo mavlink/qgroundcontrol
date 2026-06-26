@@ -14,11 +14,12 @@ import QGroundControl.FlyView
 import QGroundControl.FlightMap
 
 Item {
-    id: _root
-
+    id: root
+    
     property var parentToolInsets
-    property var totalToolInsets: _toolInsets
-    property var mapControl
+
+    property int _widgetMargin: 0
+    property int _toolBarHeight: 0
 
     QGCToolInsets {
         id: _toolInsets
@@ -34,5 +35,31 @@ Item {
         bottomEdgeLeftInset:    parentToolInsets.bottomEdgeLeftInset
         bottomEdgeCenterInset:  parentToolInsets.bottomEdgeCenterInset
         bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
+    }
+
+    SVCameraLayer {
+        id: cameraLayer
+        anchors.left: parent.left
+        anchors.top: parent.top
+        width: parent.width / 2
+        height: parent.height / 2
+        parentToolInsets: root.parentToolInsets
+        _widgetMargin: root._widgetMargin
+    }
+
+    SVFlyViewWidgetLayer {
+        id: widgetLayer
+        anchors.fill: parent
+        anchors.margins: _widgetMargin
+        anchors.topMargin: _widgetMargin + _toolBarHeight
+        parentToolInsets: root.parentToolInsets
+
+    }
+
+    Rectangle {
+        id: rect
+        anchors.fill: parent
+        color: "blue"
+        opacity: 0.3
     }
 }

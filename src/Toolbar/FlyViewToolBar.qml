@@ -20,9 +20,6 @@ Item {
     property real   _leftRightMargin:   ScreenTools.defaultFontPixelWidth * 0.75
     property var    _guidedController:  globals.guidedControllerFlyView
 
-    property string _ip_adress
-    property bool   overlay
-
     function dropMainStatusIndicatorTool() {
         mainStatusIndicator.dropMainStatusIndicator();
     }
@@ -186,44 +183,5 @@ Item {
 
     ParameterDownloadProgress {
         anchors.fill: parent
-    }
-
-    QGCCheckBox {
-        text:    qsTr("Toggle Overlay")
-        checked: _overlay
-        onClicked: {
-            _overlay = !_overlay
-        }
-
-        anchors {
-            right: parent.right
-            verticalCenter: parent.verticalCenter
-        }
-    }
-
-    QGCTextField {
-        id: ipField
-        placeholderText: qsTr("IP-adress")
-        placeholderTextColor: Qt.rgba(qgcPal.textFieldText.r, qgcPal.textFieldText.g, qgcPal.textFieldText.b, 0.7)
-        
-        function updateIp() {
-            console.log("IP: ", ipField.text)
-        }
-
-        width: 300
-        height: 40
-
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            verticalCenter: parent.verticalCenter
-        }
-
-        onTextChanged: updateIp()
-        onAccepted: updateIp()
-
-        visible: overlay === true
-
-
-        
     }
 }

@@ -15,6 +15,8 @@ import QGroundControl.FlightMap
 import QGroundControl.Toolbar
 import QGroundControl.Viewer3D
 
+import QGroundControl.SynclairVisionUI
+
 Item {
     id: _root
 
@@ -155,13 +157,24 @@ Item {
             visible:                !QGroundControl.videoManager.fullScreen && !_overlay
         }
 
+        SVFlyView   {
+            id:                 synclairVisionLayer
+            anchors.fill:       parent
+            _widgetMargin:      _root._widgetMargin
+            _toolBarHeight:     toolbar.height
+            z:                  _fullItemZorder + 2
+
+            parentToolInsets:   _toolInsets
+            visible:            !QGroundControl.videoManager.fullScreen && _overlay
+        }
+
         FlyViewCustomLayer {
             id:                 customOverlay
             anchors.fill:       widgetLayer
             z:                  _fullItemZorder + 2
             parentToolInsets:   widgetLayer.totalToolInsets
             mapControl:         _mapControl
-            visible:            !QGroundControl.videoManager.fullScreen && _overlay
+            visible:            false
         }
 
         // Development tool for visualizing the insets for a paticular layer, show if needed
@@ -219,6 +232,5 @@ Item {
         id:                 toolbar
         guidedValueSlider:  _guidedValueSlider
         visible:            !QGroundControl.videoManager.fullScreen
-        overlay: _overlay
     }
 }
