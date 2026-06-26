@@ -42,7 +42,7 @@ DigiviewManager::DigiviewManager(QObject* parent)
     : QObject(parent)
     , _connection(new DigiviewConnection(this))
     , _senderSystemId(252)
-    , _senderComponentId(66)
+    , _senderComponentId(69)
 {
     connect(_connection, &DigiviewConnection::hostChanged, this, &DigiviewManager::hostChanged);
     connect(_connection, &DigiviewConnection::portChanged, this, &DigiviewManager::portChanged);
@@ -300,7 +300,7 @@ void DigiviewManager::sendCamTargetingParameters(
     float yaw, float pitch, float roll, uint8_t lock_flags,
     float x_offset, float y_offset,
     float target_latitude, float target_longitude, float target_altitude,
-    int16_t detection_id)
+    uint16_t track_id, int16_t view_id, uint8_t lock_target)
 {
     mavlink_message_t msg;
     mavlink_cam_targeting_parameters_t payload {};
@@ -318,7 +318,9 @@ void DigiviewManager::sendCamTargetingParameters(
     payload.target_latitude = target_latitude;
     payload.target_longitude = target_longitude;
     payload.target_altitude = target_altitude;
-    payload.detection_id = detection_id;
+    payload.track_id = track_id;
+    payload.view_id = view_id;
+    payload.lock_target = lock_target;
 
     _encodeMessage(msg, payload, mavlink_msg_cam_targeting_parameters_encode);
     _sendMessage(msg);
@@ -595,7 +597,9 @@ void DigiviewManager::_handleMessage(const mavlink_message_t& message)
             payload.target_latitude,
             payload.target_longitude,
             payload.target_altitude,
-            payload.detection_id);
+            payload.track_id,
+            payload.view_id,
+            payload.lock_target);
         break;
     }
     case MAVLINK_MSG_ID_CAM_OPTICS_AND_CONTROL_PARAMETERS: {

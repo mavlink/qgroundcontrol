@@ -80,7 +80,7 @@ public:
         float yaw, float pitch, float roll, uint8_t lock_flags,
         float x_offset, float y_offset,
         float target_latitude, float target_longitude, float target_altitude,
-        int16_t detection_id);
+        uint16_t track_id, int16_t view_id, uint8_t lock_target);
     Q_INVOKABLE void sendCamOpticsAndControlParameters(
         QString stream_name, uint8_t cam_id, int8_t zoom, float fov, uint8_t crop_mode);
     Q_INVOKABLE void sendCamOffsetParameters(
@@ -148,7 +148,7 @@ signals:
         float yaw, float pitch, float roll, uint8_t lock_flags,
         float x_offset, float y_offset,
         float target_latitude, float target_longitude, float target_altitude,
-        int16_t detection_id);
+        uint16_t track_id, int16_t view_id, uint8_t lock_target);
     void camOpticsAndControlParametersReceived(
         const QString& stream_name, uint8_t cam_id, int8_t zoom, float fov, uint8_t crop_mode);
     void camOffsetParametersReceived(

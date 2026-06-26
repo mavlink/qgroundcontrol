@@ -66,7 +66,6 @@ Item {
                 var pitch = 0.0
 
 
-
                 switch (id) {
                     case 0: yaw   = -step; break   // left
                     case 1: yaw   =  step; break   // right
@@ -81,8 +80,8 @@ Item {
                 digiviewManager.sendCamTargetingParameters(
                     "stream",   // stream_name
                     0,        // cam_id
-                    1,        // targeting_mode — euler delta mode
-                    true,        // euler_delta = true
+                    0,        // targeting_mode — euler delta mode
+                    1,        // euler_delta = true
                     yaw,      // yaw
                     pitch,    // pitch
                     0,        // roll
@@ -90,8 +89,8 @@ Item {
                     0, 0,     // x_offset, y_offset
                     0, 0, 0,  // target lat/lon/alt (unused in delta mode)
                     0,        //track-id
-                    -1,
-                    false        // detection_id (none)
+                    -1,       //view-id
+                    0         //lock target
                 )
 
                 
