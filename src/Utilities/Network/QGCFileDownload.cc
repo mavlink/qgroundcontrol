@@ -482,7 +482,7 @@ QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const
     }
 
     // Extract filename from URL
-    QString fileName = QGCNetworkHelper::urlFileName(QUrl(remoteUrl));
+    QString fileName = QUrl(remoteUrl).fileName();
     if (fileName.isEmpty()) {
         fileName = QStringLiteral("DownloadedFile");
     }

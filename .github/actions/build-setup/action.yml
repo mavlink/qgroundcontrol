@@ -217,6 +217,7 @@ runs:
         android-cmdline-tools: ${{ steps.prereq.outputs.android_cmdline_tools }}
         android-build-tools: ${{ steps.prereq.outputs.android_build_tools }}
         save-cache: ${{ inputs.save-cache }}
+        aqt-source: ${{ inputs.aqt-source }}
 
     - name: Install Qt for iOS
       if: inputs.mode == 'ios'

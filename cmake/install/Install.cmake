@@ -30,12 +30,17 @@ if(MACOS OR WIN32)
     if(MACOS)
         list(APPEND deploy_tool_options_arg "-appstore-compliant")
     endif()
+    if(WIN32)
+        # windeployqt and qt6_deploy_qml_imports both deploy QML plugins into qml/
+        # and relock qtquick2plugin.dll; -no-quick-import lets CMake own QML deploy.
+        list(APPEND deploy_tool_options_arg "-no-quick-import")
+    endif()
 endif()
 
 if(NOT ANDROID AND NOT IOS)
     set(deploy_include_plugins INCLUDE_PLUGINS qoffscreen)
     if(LINUX)
-        # Qt 6.10+ renamed wayland platform plugin to libqwayland.so
+        # Wayland platform plugin (libqwayland.so)
         list(APPEND deploy_include_plugins qwayland)
     endif()
 endif()

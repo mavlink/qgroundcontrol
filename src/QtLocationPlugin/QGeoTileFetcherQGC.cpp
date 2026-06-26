@@ -3,6 +3,7 @@
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkRequest>
+#include <chrono>
 
 #include "MapProvider.h"
 #include "QGCLoggingCategory.h"
@@ -12,9 +13,17 @@
 
 QGC_LOGGING_CATEGORY(QGeoTileFetcherQGCLog, "QtLocationPlugin.QGeoTileFetcherQGC")
 
-QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager *networkManager, const QVariantMap &parameters, QGeoTiledMappingManagerEngineQGC *parent)
-    : QGeoTileFetcher(parent)
-    , m_networkManager(networkManager)
+namespace {
+// Keep pooled sockets warm across sparse tile/terrain fetches; Qt 6.11 otherwise reaps idle ones after 2 min.
+constexpr int kConnectionCacheExpirySecs = 300;
+constexpr std::chrono::seconds kTcpKeepAliveIdle{60};
+constexpr std::chrono::seconds kTcpKeepAliveInterval{30};
+constexpr int kTcpKeepAliveProbeCount = 3;
+}  // namespace
+
+QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager* networkManager, const QVariantMap& parameters,
+                                       QGeoTiledMappingManagerEngineQGC* parent)
+    : QGeoTileFetcher(parent), m_networkManager(networkManager)
 {
     Q_ASSERT(networkManager);
 
@@ -31,7 +40,7 @@ QGeoTileFetcherQGC::~QGeoTileFetcherQGC()
     qCDebug(QGeoTileFetcherQGCLog) << this;
 }
 
-QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
+QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec& spec)
 {
     const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(spec.mapId());
     if (!provider) {
@@ -47,7 +56,7 @@ QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
         return nullptr;
     }
 
-    QGeoTiledMapReplyQGC *tileImage = new QGeoTiledMapReplyQGC(m_networkManager, request, spec);
+    QGeoTiledMapReplyQGC* tileImage = new QGeoTiledMapReplyQGC(m_networkManager, request, spec);
     if (!tileImage->init()) {
         tileImage->deleteLater();
         return nullptr;
@@ -66,12 +75,12 @@ bool QGeoTileFetcherQGC::fetchingEnabled() const
     return initialized();
 }
 
-void QGeoTileFetcherQGC::timerEvent(QTimerEvent *event)
+void QGeoTileFetcherQGC::timerEvent(QTimerEvent* event)
 {
     QGeoTileFetcher::timerEvent(event);
 }
 
-void QGeoTileFetcherQGC::handleReply(QGeoTiledMapReply *reply, const QGeoTileSpec &spec)
+void QGeoTileFetcherQGC::handleReply(QGeoTiledMapReply* reply, const QGeoTileSpec& spec)
 {
     if (!reply) {
         return;
@@ -115,6 +124,10 @@ QNetworkRequest QGeoTileFetcherQGC::getNetworkRequest(int mapId, int x, int y, i
         request.setRawHeader(QByteArrayLiteral("User-Token"), token);
     }
     request.setRawHeader(QByteArrayLiteral("Connection"), QByteArrayLiteral("keep-alive"));
+    request.setAttribute(QNetworkRequest::ConnectionCacheExpiryTimeoutSecondsAttribute, kConnectionCacheExpirySecs);
+    request.setTcpKeepAliveIdleTimeBeforeProbes(kTcpKeepAliveIdle);
+    request.setTcpKeepAliveIntervalBetweenProbes(kTcpKeepAliveInterval);
+    request.setTcpKeepAliveProbeCount(kTcpKeepAliveProbeCount);
     // request.setRawHeader(QByteArrayLiteral("Accept-Encoding"), QByteArrayLiteral("gzip, deflate, br"));
 
     // Attributes
