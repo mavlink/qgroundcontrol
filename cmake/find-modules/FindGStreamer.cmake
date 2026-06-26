@@ -151,6 +151,12 @@ if(GStreamer_FIND_VERSION)
 else()
     pkg_check_modules(PC_GStreamer REQUIRED gstreamer-1.0)
 endif()
+_gst_recover_split_pkgconfig_paths(PC_GStreamer
+    INCLUDE_DIRS CFLAGS_OTHER
+    STATIC_INCLUDE_DIRS STATIC_CFLAGS_OTHER
+    LIBRARY_DIRS LDFLAGS_OTHER
+    STATIC_LIBRARY_DIRS STATIC_LDFLAGS_OTHER
+)
 
 if(PC_GStreamer_VERSION)
     set(GStreamer_VERSION "${PC_GStreamer_VERSION}")
@@ -219,6 +225,12 @@ function(_gst_create_component_target _gst_PLUGIN _gst_PC_NAME)
     endif()
 
     pkg_check_modules(PC_GStreamer_${_gst_PLUGIN} ${_gst_PLUGIN_REQUIRED} "${_gst_PC_NAME}")
+    _gst_recover_split_pkgconfig_paths(PC_GStreamer_${_gst_PLUGIN}
+        INCLUDE_DIRS CFLAGS_OTHER
+        STATIC_INCLUDE_DIRS STATIC_CFLAGS_OTHER
+        LIBRARY_DIRS LDFLAGS_OTHER
+        STATIC_LIBRARY_DIRS STATIC_LDFLAGS_OTHER
+    )
 
     set(GStreamer_${_gst_PLUGIN}_FOUND "${PC_GStreamer_${_gst_PLUGIN}_FOUND}" PARENT_SCOPE)
     if (NOT PC_GStreamer_${_gst_PLUGIN}_FOUND)

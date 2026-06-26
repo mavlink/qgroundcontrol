@@ -58,6 +58,72 @@ function(_gst_coalesce_existing_paths _gcep_VAR)
     set(${_gcep_VAR} "${_gcep_out}" PARENT_SCOPE)
 endfunction()
 
+# Some Windows pkg-config builds split `C:/Program\ Files/...` across different
+# FindPkgConfig output variables: the path list gets `C:/Program`, while the
+# suffixes land in CFLAGS_OTHER/LDFLAGS_OTHER as `Files/...`. Rebuild paths only
+# when root + suffix exists, then remove the consumed suffixes from options.
+function(_gst_recover_split_pkgconfig_paths _grspp_PREFIX)
+    set(_grspp_pairs ${ARGN})
+    list(LENGTH _grspp_pairs _grspp_len)
+    math(EXPR _grspp_remainder "${_grspp_len} % 2")
+    if(_grspp_remainder)
+        message(FATAL_ERROR "_gst_recover_split_pkgconfig_paths requires path/option suffix pairs")
+    endif()
+
+    set(_grspp_i 0)
+    while(_grspp_i LESS _grspp_len)
+        list(GET _grspp_pairs ${_grspp_i} _grspp_path_suffix)
+        math(EXPR _grspp_next_i "${_grspp_i} + 1")
+        list(GET _grspp_pairs ${_grspp_next_i} _grspp_option_suffix)
+
+        set(_grspp_path_var "${_grspp_PREFIX}_${_grspp_path_suffix}")
+        set(_grspp_option_var "${_grspp_PREFIX}_${_grspp_option_suffix}")
+        if(DEFINED ${_grspp_path_var} AND DEFINED ${_grspp_option_var})
+            set(_grspp_paths ${${_grspp_path_var}})
+            set(_grspp_options ${${_grspp_option_var}})
+            _gst_coalesce_existing_paths(_grspp_paths)
+
+            set(_grspp_recovered_paths "")
+            set(_grspp_consumed_options "")
+            foreach(_grspp_path IN LISTS _grspp_paths)
+                if(EXISTS "${_grspp_path}")
+                    list(APPEND _grspp_recovered_paths "${_grspp_path}")
+                    continue()
+                endif()
+
+                set(_grspp_recovered FALSE)
+                foreach(_grspp_option IN LISTS _grspp_options)
+                    if(_grspp_option MATCHES "^-")
+                        continue()
+                    endif()
+                    set(_grspp_joined "${_grspp_path} ${_grspp_option}")
+                    if(EXISTS "${_grspp_joined}")
+                        list(APPEND _grspp_recovered_paths "${_grspp_joined}")
+                        list(APPEND _grspp_consumed_options "${_grspp_option}")
+                        set(_grspp_recovered TRUE)
+                    endif()
+                endforeach()
+                if(NOT _grspp_recovered)
+                    list(APPEND _grspp_recovered_paths "${_grspp_path}")
+                endif()
+            endforeach()
+
+            list(REMOVE_DUPLICATES _grspp_recovered_paths)
+            set(_grspp_filtered_options "")
+            foreach(_grspp_option IN LISTS _grspp_options)
+                if(NOT _grspp_option IN_LIST _grspp_consumed_options)
+                    list(APPEND _grspp_filtered_options "${_grspp_option}")
+                endif()
+            endforeach()
+
+            set(${_grspp_path_var} "${_grspp_recovered_paths}" PARENT_SCOPE)
+            set(${_grspp_option_var} "${_grspp_filtered_options}" PARENT_SCOPE)
+        endif()
+
+        math(EXPR _grspp_i "${_grspp_i} + 2")
+    endwhile()
+endfunction()
+
 # Strip link libs that the prebuilt macOS GStreamer distribution references but does not ship.
 # gstreamer-gl-1.0.pc carries gstvulkan-1.0 in Libs.private, yet no libgstvulkan-1.0 exists on
 # macOS — and these names reach INTERFACE_LINK_LIBRARIES verbatim (the shared-lib path bypasses
