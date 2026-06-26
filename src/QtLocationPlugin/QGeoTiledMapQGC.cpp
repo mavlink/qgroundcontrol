@@ -20,7 +20,8 @@ QGeoMap::Capabilities QGeoTiledMapQGC::capabilities() const
 {
     return Capabilities(SupportsVisibleRegion
                         | SupportsAnchoringCoordinate
-                        | SupportsVisibleArea);
+                        | SupportsVisibleArea
+                        | SupportsSetBearing);
 }
 
 /*void QGeoTiledMapQGC::evaluateCopyrights(const QSet<QGeoTileSpec> &visibleTiles)

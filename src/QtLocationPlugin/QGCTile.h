@@ -10,7 +10,8 @@ struct QGCTile
         StatePending = 0,
         StateDownloading,
         StateError,
-        StateComplete
+        StateComplete,
+        StatePaused
     };
 
     int x = 0;
@@ -18,7 +19,7 @@ struct QGCTile
     int z = 0;
     quint64 tileSet = UINT64_MAX;
     QString hash;
-    int type = -1;
+    QString type;
 };
 Q_DECLARE_METATYPE(QGCTile)
 Q_DECLARE_METATYPE(QGCTile*)

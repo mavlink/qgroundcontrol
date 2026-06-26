@@ -39,9 +39,17 @@ qt_add_plugin(QGCLocation
     QGCTileCacheDatabase.cpp
     QGCTileCacheDatabase.h
     QGCTileCacheTypes.h
+    QGCTileDatabaseSchema.cpp
+    QGCTileDatabaseSchema.h
+    QGCTileFallback.cpp
+    QGCTileFallback.h
     QGCTileCacheWorker.cpp
     QGCTileCacheWorker.h
+    QGCTileSetImporter.cpp
+    QGCTileSetImporter.h
     QGCTileSet.h
+    QGCTileCache.cpp
+    QGCTileCache.h
     QGeoFileTileCacheQGC.cpp
     QGeoFileTileCacheQGC.h
     QGeoMapReplyQGC.cpp
@@ -54,6 +62,8 @@ qt_add_plugin(QGCLocation
     QGeoTiledMapQGC.h
     QGeoTileFetcherQGC.cpp
     QGeoTileFetcherQGC.h
+    TileFetchMetrics.cpp
+    TileFetchMetrics.h
 )
 
 if(IOS)
@@ -71,6 +81,7 @@ target_link_libraries(QGCLocation
         QGCNetwork
     PUBLIC
         Qt6::Core
+        Qt6::Gui
         Qt6::Location
         Qt6::LocationPrivate
         Qt6::Network

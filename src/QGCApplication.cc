@@ -35,6 +35,7 @@
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
 #include "QGCLoggingCategoryManager.h"
+#include "QGCMapEngineManager.h"
 #include "SettingsManager.h"
 #include "MavlinkSettings.h"
 #include "AppSettings.h"
@@ -241,6 +242,10 @@ void QGCApplication::init()
     if (QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
         qCWarning(QGCApplicationLog) << "Could not load /fonts/opensans-demibold font";
     }
+
+    // Register here, not in _initQmlRootWindow, so the unit-test harness (which builds
+    // its own engine) also resolves the QGroundControl.QGCMapEngineManager QML import.
+    QGCMapEngineManager::registerQmlTypes();
 
     if (_simpleBootTest) {
         // Since GStream builds are so problematic we initialize video during the simple boot test

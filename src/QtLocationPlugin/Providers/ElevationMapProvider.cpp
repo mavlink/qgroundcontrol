@@ -17,6 +17,15 @@ int CopernicusElevationProvider::lat2tileY(double lat, int z) const
     return static_cast<int>(floor((lat + 90.0) / TerrainTileCopernicus::kTileSizeDegrees));
 }
 
+bool CopernicusElevationProvider::isValidTileCoordinate(int x, int y, int zoom) const
+{
+    // Copernicus tiles a global 0.01° grid, not a 2^zoom web-mercator pyramid, so the
+    // base bound rejects every real tile. Bound by the provider's own grid extents.
+    const int maxX = long2tileX(180.0, zoom);
+    const int maxY = lat2tileY(90.0, zoom);
+    return (x >= 0) && (x <= maxX) && (y >= 0) && (y <= maxY);
+}
+
 QString CopernicusElevationProvider::_getURL(int x, int y, int zoom) const
 {
     Q_UNUSED(zoom)
@@ -37,6 +46,14 @@ QGCTileSet CopernicusElevationProvider::getTileCount(int zoom, double topleftLon
     set.tileY0 = lat2tileY(bottomRightLat, zoom);
     set.tileX1 = long2tileX(bottomRightLon, zoom);
     set.tileY1 = lat2tileY(topleftLat, zoom);
+
+    // Guard against an inverted bbox: an unsigned subtraction with tileX1 < tileX0
+    // (or tileY1 < tileY0) would underflow to ~2^64 and report a bogus tile count.
+    if ((set.tileX1 < set.tileX0) || (set.tileY1 < set.tileY0)) {
+        set.tileCount = 0;
+        set.tileSize = 0;
+        return set;
+    }
 
     set.tileCount = (static_cast<quint64>(set.tileX1) -
                      static_cast<quint64>(set.tileX0) + 1) *

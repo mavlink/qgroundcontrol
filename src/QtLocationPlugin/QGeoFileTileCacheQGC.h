@@ -1,46 +1,57 @@
 #pragma once
 
-#include <atomic>
+#include <QtLocation/private/qabstractgeotilecache_p.h>
 
-#include <QtLocation/private/qgeofiletilecache_p.h>
-
-class QGCFetchTileTask;
-
-class QGeoFileTileCacheQGC : public QGeoFileTileCache
+// SQLite-backed tile cache. The flat-file QGeoFileTileCache is deliberately NOT
+// used as a base: the SQLite tile store (QGCTileCacheDatabase via the cache
+// worker) is the sole authoritative cache and owns expiry, ETag/Last-Modified
+// revalidation and LRU. This subclasses QAbstractGeoTileCache directly so none
+// of QGeoFileTileCache's memory/disk/texture QCache3Q caches or its startup
+// loadTiles() disk scan are allocated. get() returns a null texture so every
+// visible tile is routed through the fetcher -> reply -> SQLite path; insert()
+// is a no-op so the engine never writes a duplicate flat-file copy.
+//
+// The cache facade (paths, tile-save tasks, validator refresh) lives in the
+// free QGCTileCache namespace; this class holds only the QtLocation vtable.
+class QGeoFileTileCacheQGC : public QAbstractGeoTileCache
 {
     Q_OBJECT
 
 public:
-    explicit QGeoFileTileCacheQGC(const QVariantMap &parameters, QObject *parent = nullptr);
+    explicit QGeoFileTileCacheQGC(const QVariantMap& parameters, QObject* parent = nullptr);
     ~QGeoFileTileCacheQGC();
 
-    static quint32 getMaxDiskCacheSetting();
-    static void cacheTile(const QString &type, int x, int y, int z, const QByteArray &image, const QString &format, qulonglong set = UINT64_MAX);
-    static void cacheTile(const QString &type, const QString &hash, const QByteArray &image, const QString &format, qulonglong set = UINT64_MAX);
-    static QGCFetchTileTask *createFetchTileTask(const QString &type, int x, int y, int z);
-    static QString getDatabaseFilePath() { return _databaseFilePath; }
-    static QString getCachePath() { return _cachePath; }
+    QSharedPointer<QGeoTileTexture> get(const QGeoTileSpec& spec) override;
+    void insert(const QGeoTileSpec& spec, const QByteArray& bytes, const QString& format,
+                QAbstractGeoTileCache::CacheAreas areas = QAbstractGeoTileCache::AllCaches) override;
 
-private:
-    // QString tileSpecToFilename(const QGeoTileSpec &spec, const QString &format, const QString &directory) const final;
-    // QGeoTileSpec filenameToTileSpec(const QString &filename) const final;
+    void init() override {}
 
-    static void _initCache();
-    static bool _wipeDirectory(const QString &dirPath);
-    static void _wipeOldCaches();
+    // No in-process caches to size, so the texture/cost-strategy knobs are inert.
+    void setMinTextureUsage(int) override {}
 
-    static QString _getCachePath(const QVariantMap &parameters);
-    static uint32_t _getMemLimit(const QVariantMap &Parameters);
+    void setExtraTextureUsage(int) override {}
 
-    static uint32_t _getDefaultMaxMemLimit() { return (3 * qPow(1024, 2)); }
-    static uint32_t _getDefaultMaxDiskCache() { return 0; } // (50 * pow(1024, 2));
-    static uint32_t _getDefaultExtraTexture() { return (6 * qPow(1024, 2)); }
-    static uint32_t _getDefaultMinTexture() { return 0; }
+    int maxTextureUsage() const override { return 0; }
 
-    static quint32 _getMaxMemCacheSetting();
+    int minTextureUsage() const override { return 0; }
 
-    // Initialized once via std::call_once in constructor before worker thread starts
-    static QString _databaseFilePath;
-    static QString _cachePath;
-    static std::atomic<bool> _cacheWasReset;
+    int textureUsage() const override { return 0; }
+
+    void clearAll() override {}
+
+    void setCostStrategyDisk(CostStrategy) override {}
+
+    CostStrategy costStrategyDisk() const override { return ByteSize; }
+
+    void setCostStrategyMemory(CostStrategy) override {}
+
+    CostStrategy costStrategyMemory() const override { return ByteSize; }
+
+    void setCostStrategyTexture(CostStrategy) override {}
+
+    CostStrategy costStrategyTexture() const override { return ByteSize; }
+
+protected:
+    void printStats() override {}
 };

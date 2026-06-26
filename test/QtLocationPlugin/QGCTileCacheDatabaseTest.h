@@ -16,6 +16,9 @@ private slots:
     void _testConnectDisconnect();
     void _testDefaultTileSetCreated();
     void _testSaveTileAndGetTile();
+    void _testSaveTileBatch();
+    void _testSaveTileBatchEmpty();
+    void _testSaveTileBatchDuplicateHash();
     void _testGetTileNotFound();
     void _testFindTile();
     void _testGetTileSetsMultiple();
@@ -45,8 +48,8 @@ private slots:
     void _testPruneCacheMultipleBatches();
     void _testSchemaVersionSetOnFreshDB();
     void _testSchemaVersionResetsLegacyDB();
-    void _testSaveTileTypeStoredAsInteger();
-    void _testCreateTileSetTypeStoredAsInteger();
+    void _testSaveTileTypeStoredAsString();
+    void _testCreateTileSetTypeStoredAsString();
     void _testTablesExist();
     void _testTilesTableColumns();
     void _testTileSetsTableColumns();
@@ -54,9 +57,16 @@ private slots:
     void _testTilesDownloadTableColumns();
     void _testIndexesExist();
     void _testForeignKeyCascadeDelete();
+    void _testSaveTileWithValidators();
+    void _testRefreshTileValidators();
+    void _testMigrateV1ToV2PreservesTiles();
+    void _testUpdateAllTileDownloadStatesFiltered();
+    void _testPruneCacheLruOrder();
+    void _testSaveTileMustRevalidate();
+    void _testMigrateV2ToV3AddsColumns();
 
 private:
-    std::unique_ptr<QGCTileCacheDatabase> _createInitializedDB(QTemporaryDir &tempDir);
+    std::unique_ptr<QGCTileCacheDatabase> _createInitializedDB(QTemporaryDir& tempDir);
     void _insertTileSet(QGCTileCacheDatabase* db, const QString& name, quint64& outSetID);
     void _insertDownloadRecord(QGCTileCacheDatabase* db, quint64 setID, const QString& hash, int state = 0);
     void _linkTileToSet(QGCTileCacheDatabase* db, quint64 tileID, quint64 setID);

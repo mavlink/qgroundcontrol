@@ -57,6 +57,15 @@ private slots:
     void _testParseJsonReplyNull();
     void _testReplyHelpersNullReply();
 
+    // Retry / transient error helpers tests
+    void _testIsTransientErrorClassifiesStatusAndErrorCodes();
+    void _testRetryAfterFromReplyNull();
+    void _testRetryAfterFromReplyParsesSeconds();
+    void _testRetryAfterFromReplyClampsHugeValue();
+    void _testRetryAfterFromReplyClampsOverflowValue();
+    void _testRetryAfterFromReplyHttpDate();
+    void _testRetryAfterFromReplyUnparseable();
+
     // Network availability tests
     void _testIsNetworkAvailable();
     void _testConnectionTypeName();

@@ -5,18 +5,13 @@
 class ElevationProvider : public MapProvider
 {
 protected:
-    ElevationProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize,
+    ElevationProvider(const QString& mapName, const QString& referrer, const QString& imageFormat, quint32 averageSize,
                       MapProvider::MapStyle mapType)
-        : MapProvider(
-            mapName,
-            referrer,
-            imageFormat,
-            averageSize,
-            mapType) {}
+        : MapProvider(mapName, referrer, imageFormat, averageSize, mapType)
+    {}
 
 public:
-    bool isElevationProvider() const final { return true; }
-    virtual QByteArray serialize(const QByteArray &image) const = 0;
+    virtual QByteArray serialize(const QByteArray& image) const = 0;
 };
 
 /// \brief https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model
@@ -25,25 +20,22 @@ class CopernicusElevationProvider : public ElevationProvider
 {
 public:
     CopernicusElevationProvider()
-        : ElevationProvider(
-            kProviderKey,
-            kProviderURL,
-            QStringLiteral("bin"),
-            kAvgElevSize,
-            MapProvider::TerrainMap) {}
+        : ElevationProvider(kProviderKey, kProviderURL, QStringLiteral("bin"), kAvgElevSize, MapProvider::TerrainMap)
+    {}
 
     int long2tileX(double lon, int z) const final;
     int lat2tileY(double lat, int z) const final;
 
-    QGCTileSet getTileCount(int zoom, double topleftLon,
-                            double topleftLat, double bottomRightLon,
+    bool isValidTileCoordinate(int x, int y, int zoom) const final;
+
+    QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon,
                             double bottomRightLat) const final;
 
-    QByteArray serialize(const QByteArray &image) const final;
+    QByteArray serialize(const QByteArray& image) const final;
 
-    static constexpr const char *kProviderKey = "Copernicus";
-    static constexpr const char *kProviderNotice = "© Airbus Defence and Space GmbH";
-    static constexpr const char *kProviderURL = "https://terrain-ce.suite.auterion.com";
+    static constexpr const char* kProviderKey = "Copernicus";
+    static constexpr const char* kProviderNotice = "© Airbus Defence and Space GmbH";
+    static constexpr const char* kProviderURL = "https://terrain-ce.suite.auterion.com";
     static constexpr quint32 kAvgElevSize = 2786;
 
 private:

@@ -96,6 +96,11 @@ void NetworkReplyFixture::setHttpStatus(int statusCode)
     setAttribute(QNetworkRequest::HttpStatusCodeAttribute, statusCode);
 }
 
+void NetworkReplyFixture::setRawHeader(const QByteArray& name, const QByteArray& value)
+{
+    QNetworkReply::setRawHeader(name, value);
+}
+
 void NetworkReplyFixture::setRedirectTarget(const QUrl& target)
 {
     setAttribute(QNetworkRequest::RedirectionTargetAttribute, target);

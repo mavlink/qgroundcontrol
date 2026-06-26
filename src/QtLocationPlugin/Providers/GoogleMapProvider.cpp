@@ -1,5 +1,7 @@
 #include "GoogleMapProvider.h"
 
+#include "QGCMapUrlEngine.h"
+
 void GoogleMapProvider::_getSecGoogleWords(int x, int y, QString& sec1, QString& sec2) const
 {
     sec1 = QStringLiteral(""); // after &x=...
@@ -17,11 +19,11 @@ QString GoogleMapProvider::_getURL(int x, int y, int zoom) const
     QString sec2;
     _getSecGoogleWords(x, y, sec1, sec2);
     return _mapUrl
-        .arg(_getServerNum(x, y, 4))
+        .arg(_getServerNum(x, y, kServerCount))
         .arg(_versionRequest, _version, _language)
         .arg(x)
         .arg(sec1)
         .arg(y)
         .arg(zoom)
-        .arg(sec2, _scale);
+        .arg(sec2, QString::number(UrlFactory::tilePixelScale()));
 }

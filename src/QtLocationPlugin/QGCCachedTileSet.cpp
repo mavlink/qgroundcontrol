@@ -1,21 +1,55 @@
 #include "QGCCachedTileSet.h"
 
+#include <QtCore/QTimer>
+#include <chrono>
+#include <utility>
+
 #include "ElevationMapProvider.h"
 #include "QGCFormat.h"
+#include "QGCHostCircuitBreaker.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
-#include "QGCNetworkHelper.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
-#include "QGeoFileTileCacheQGC.h"
+#include "QGCNetworkHelper.h"
+#include "QGCTile.h"
+#include "QGCTileCache.h"
+#include "QGCTileCacheDatabase.h"
+#include "QGCTileCacheWorker.h"
 #include "QGeoTileFetcherQGC.h"
 
 QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "QtLocationPlugin.QGCCachedTileSet")
 
-QGCCachedTileSet::QGCCachedTileSet(const QString &name, QObject *parent)
-    : QObject(parent)
-    , _name(name)
+namespace {
+// O1: builds the fire-and-forget tile-download-state update as a generic command
+// task, keeping the "*" wildcard (all-tiles) vs single-hash branch in one place.
+QGCCommandTask* makeUpdateStateTask(quint64 setID, QGCTile::TileState state, const QString& hash,
+                                    QGCTile::TileState fromState = QGCTile::StatePending,
+                                    bool filterByFromState = false)
+{
+    return new QGCCommandTask(
+        QGCMapTask::TaskType::taskUpdateTileDownloadState,
+        [setID, state, hash, fromState, filterByFromState](QGCCacheWorker& worker, QGCMapTask& self) {
+            if (!worker.validateDatabase(&self)) {
+                return false;
+            }
+            bool ok;
+            if (hash == QStringLiteral("*")) {
+                const int from = filterByFromState ? static_cast<int>(fromState) : -1;
+                ok = worker.database()->updateAllTileDownloadStates(setID, static_cast<int>(state), from);
+            } else {
+                ok = worker.database()->updateTileDownloadState(setID, static_cast<int>(state), hash);
+            }
+            if (!ok) {
+                self.setError("Error updating tile download state");
+            }
+            return true;
+        });
+}
+}  // namespace
+
+QGCCachedTileSet::QGCCachedTileSet(const QString& name, QObject* parent) : QObject(parent), _name(name)
 {
     qCDebug(QGCCachedTileSetLog) << this;
 }
@@ -40,7 +74,7 @@ QString QGCCachedTileSet::downloadStatus() const
 
 void QGCCachedTileSet::createDownloadTask()
 {
-    if (_cancelPending) {
+    if (_cancelPending || _paused) {
         setDownloading(false);
         return;
     }
@@ -49,10 +83,14 @@ void QGCCachedTileSet::createDownloadTask()
         setErrorCount(0);
         setDownloading(true);
         _noMoreTiles = false;
+        _maxConcurrentDownloads = QGeoTileFetcherQGC::concurrentDownloads(_type);
     }
 
-    QGCGetTileDownloadListTask *task = new QGCGetTileDownloadListTask(_id, kTileBatchSize);
-    (void) connect(task, &QGCGetTileDownloadListTask::tileListFetched, this, &QGCCachedTileSet::_tileListFetched);
+    QGCGetTileDownloadListTask* task = new QGCGetTileDownloadListTask(_id, kTileBatchSize);
+    // Queued: the task signal is emitted from the cache-worker thread; this slot
+    // must run on the main thread where all download state lives.
+    (void) connect(task, &QGCGetTileDownloadListTask::tileListFetched, this, &QGCCachedTileSet::_tileListFetched,
+                   Qt::QueuedConnection);
     if (_manager) {
         (void) connect(task, &QGCMapTask::error, _manager, &QGCMapEngineManager::taskError);
     }
@@ -69,8 +107,12 @@ void QGCCachedTileSet::createDownloadTask()
 void QGCCachedTileSet::resumeDownloadTask()
 {
     _cancelPending = false;
+    setPaused(false);
 
-    QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, "*");
+    // Reactivate tiles parked by a pause (Paused -> Pending) without disturbing
+    // already-completed rows.
+    QGCCommandTask* task =
+        makeUpdateStateTask(_id, QGCTile::StatePending, QStringLiteral("*"), QGCTile::StatePaused, true);
     if (!getQGCMapEngine()->addTask(task)) {
         task->deleteLater();
     }
@@ -78,12 +120,58 @@ void QGCCachedTileSet::resumeDownloadTask()
     createDownloadTask();
 }
 
+void QGCCachedTileSet::pauseDownloadTask()
+{
+    if (!_downloading && !_paused) {
+        return;
+    }
+
+    setPaused(true);
+    ++_downloadEpoch;
+
+    // Abort in-flight replies without letting their finished/error slots run, so
+    // they don't mutate state or re-enter _prepareDownload after the pause. Their
+    // gate slots would otherwise leak (the handlers that release are blocked), so
+    // release here.
+    for (const DownloadReply& pending : std::as_const(_replies)) {
+        pending.reply->blockSignals(true);
+        pending.reply->abort();
+        pending.reply->deleteLater();
+        HostConcurrencyGate::instance().release(pending.host);
+    }
+    _replies.clear();
+
+    qDeleteAll(_tilesToDownload);
+    _tilesToDownload.clear();
+
+    QGCMapEngine* engine = getQGCMapEngine();
+
+    // Park both in-flight (Downloading) and queued (Pending) tiles as Paused so
+    // getTileDownloadList (which only pulls Pending) stops handing them out.
+    QGCCommandTask* downloadingTask =
+        makeUpdateStateTask(_id, QGCTile::StatePaused, QStringLiteral("*"), QGCTile::StateDownloading, true);
+    if (!engine || !engine->addTask(downloadingTask)) {
+        downloadingTask->deleteLater();
+    }
+
+    QGCCommandTask* pendingTask =
+        makeUpdateStateTask(_id, QGCTile::StatePaused, QStringLiteral("*"), QGCTile::StatePending, true);
+    if (!engine || !engine->addTask(pendingTask)) {
+        pendingTask->deleteLater();
+    }
+
+    _noMoreTiles = false;
+    _batchRequested = false;
+    setDownloading(false);
+}
+
 void QGCCachedTileSet::cancelDownloadTask()
 {
     _cancelPending = true;
+    ++_downloadEpoch;
 }
 
-void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*> &tiles)
+void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*>& tiles)
 {
     _batchRequested = false;
     if (tiles.size() < kTileBatchSize) {
@@ -92,6 +180,11 @@ void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*> &tiles)
 
     if (tiles.isEmpty()) {
         _doneWithDownload();
+        return;
+    }
+
+    if (_paused || _cancelPending) {
+        qDeleteAll(tiles);
         return;
     }
 
@@ -136,12 +229,18 @@ void QGCCachedTileSet::_prepareDownload()
         return;
     }
 
-    for (qsizetype i = _replies.count(); i < QGeoTileFetcherQGC::concurrentDownloads(_type); i++) {
+    if (_paused || _cancelPending) {
+        return;
+    }
+
+    const qsizetype maxConcurrent = _maxConcurrentDownloads;
+
+    for (qsizetype i = _replies.count(); i < maxConcurrent; i++) {
         if (_tilesToDownload.isEmpty()) {
             break;
         }
+        QGCTile* tile = _tilesToDownload.dequeue();
 
-        QGCTile* const tile = _tilesToDownload.dequeue();
         QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(tile->type, tile->x, tile->y, tile->z);
         if (!request.url().isValid()) {
             qCWarning(QGCCachedTileSetLog) << "Invalid URL for tile" << tile->hash << "- skipping";
@@ -152,32 +251,64 @@ void QGCCachedTileSet::_prepareDownload()
         request.setOriginatingObject(this);
         request.setAttribute(QNetworkRequest::User, tile->hash);
 
-        QNetworkReply* const reply = _networkManager->get(request);
-        reply->setParent(this);
-        QGCNetworkHelper::ignoreSslErrorsIfNeeded(reply);
-        (void) connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
-        (void) connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
-        {
-            QMutexLocker lock(&_repliesMutex);
-            (void) _replies.insert(tile->hash, reply);
+        const QString host = request.url().host();
+
+        // Circuit breaker (R2): a host the live fetcher has tripped is skipped here
+        // too, so bulk downloads don't keep hammering a dead endpoint.
+        if (!HostCircuitBreaker::instance().allowRequest(host)) {
+            qCDebug(QGCCachedTileSetLog) << "Circuit breaker open; skipping tile" << tile->hash;
+            setErrorCount(_errorCount + 1);
+            QGCCommandTask* task = makeUpdateStateTask(_id, QGCTile::StateError, tile->hash);
+            if (!getQGCMapEngine()->addTask(task)) {
+                task->deleteLater();
+            }
+            delete tile;
+            continue;
         }
 
+        // Shared cross-path gate (A2): the combined live+bulk in-flight count for
+        // this host must stay under the provider cap. If the live fetcher already
+        // holds the host's slots, re-queue this tile (front) and stop filling; a
+        // gate release (here or in the live path) plus the next completion's
+        // _prepareDownload drains the backlog.
+        const SharedMapProvider provider = UrlFactory::getMapProviderFromProviderType(tile->type);
+        const bool isOSM = provider && provider->isOSMProvider();
+        if (!HostConcurrencyGate::instance().tryAcquire(host, static_cast<int>(maxConcurrent), isOSM)) {
+            _tilesToDownload.prepend(tile);
+            break;
+        }
+
+        _startTileGet(tile->hash, request, 0, host);
         delete tile;
-        if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (QGeoTileFetcherQGC::concurrentDownloads(_type) * 10))) {
+
+        if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (maxConcurrent * 10))) {
             createDownloadTask();
         }
     }
 }
 
-void QGCCachedTileSet::_networkReplyFinished()
+void QGCCachedTileSet::_startTileGet(const QString& hash, const QNetworkRequest& request, int attempt,
+                                     const QString& host)
 {
-    QNetworkReply* const reply = qobject_cast<QNetworkReply*>(QObject::sender());
+    QNetworkReply* const reply = _networkManager->get(request);
+    reply->setParent(this);
+    QGCNetworkHelper::ignoreSslErrorsIfNeeded(reply);
+    (void) connect(reply, &QNetworkReply::finished, this, [this, hash, reply]() { _replyFinished(hash, reply); });
+    (void) connect(reply, &QNetworkReply::errorOccurred, this,
+                   [this, hash, reply](QNetworkReply::NetworkError error) { _replyError(hash, reply, error); });
+    _replies.insert(hash, DownloadReply{reply, request, attempt, host});
+}
+
+void QGCCachedTileSet::_replyFinished(const QString& hash, QNetworkReply* reply)
+{
     if (!reply) {
         qCWarning(QGCCachedTileSetLog) << "NULL Reply";
         return;
     }
     reply->deleteLater();
 
+    // errorOccurred fires before finished and owns the failure/retry path; bail
+    // here so a retried reply isn't also treated as a (failed) completion.
     if (reply->error() != QNetworkReply::NoError) {
         return;
     }
@@ -187,20 +318,18 @@ void QGCCachedTileSet::_networkReplyFinished()
         return;
     }
 
-    const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
-    if (hash.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << "Empty Hash";
-        return;
+    const auto replyIt = _replies.constFind(hash);
+    const QString host = (replyIt != _replies.constEnd()) ? replyIt->host : reply->request().url().host();
+    if (replyIt != _replies.constEnd()) {
+        (void) _replies.erase(replyIt);
+    } else {
+        qCWarning(QGCCachedTileSetLog) << "Reply not in list: " << hash;
     }
 
-    {
-        QMutexLocker lock(&_repliesMutex);
-        if (_replies.contains(hash)) {
-            (void) _replies.remove(hash);
-        } else {
-            qCWarning(QGCCachedTileSetLog) << "Reply not in list: " << hash;
-        }
-    }
+    // Release the shared per-host slot claimed in _prepareDownload so a parked
+    // live/bulk request for this host can proceed.
+    HostConcurrencyGate::instance().release(host);
+    HostCircuitBreaker::instance().recordSuccess(host);
     qCDebug(QGCCachedTileSetLog) << "Tile fetched:" << hash;
 
     QByteArray image = reply->readAll();
@@ -216,8 +345,8 @@ void QGCCachedTileSet::_networkReplyFinished()
         return;
     }
 
-    if (mapProvider->isElevationProvider()) {
-        const SharedElevationProvider elevationProvider = std::dynamic_pointer_cast<const ElevationProvider>(mapProvider);
+    if (const SharedElevationProvider elevationProvider =
+            std::dynamic_pointer_cast<const ElevationProvider>(mapProvider)) {
         image = elevationProvider->serialize(image);
         if (image.isEmpty()) {
             qCWarning(QGCCachedTileSetLog) << "Failed to Serialize Terrain Tile";
@@ -231,9 +360,9 @@ void QGCCachedTileSet::_networkReplyFinished()
         return;
     }
 
-    QGeoFileTileCacheQGC::cacheTile(type, hash, image, format, _id);
+    QGCTileCache::cacheTile(type, hash, image, format, _id);
 
-    QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateComplete, hash);
+    QGCCommandTask* task = makeUpdateStateTask(_id, QGCTile::StateComplete, hash);
     if (!getQGCMapEngine()->addTask(task)) {
         task->deleteLater();
     }
@@ -250,41 +379,79 @@ void QGCCachedTileSet::_networkReplyFinished()
     _prepareDownload();
 }
 
-void QGCCachedTileSet::_networkReplyError(QNetworkReply::NetworkError error)
+void QGCCachedTileSet::_replyError(const QString& hash, QNetworkReply* reply, QNetworkReply::NetworkError error)
 {
-    QNetworkReply* const reply = qobject_cast<QNetworkReply*>(QObject::sender());
     if (!reply) {
         return;
     }
     qCDebug(QGCCachedTileSetLog) << "Error fetching tile" << reply->errorString();
 
-    setErrorCount(_errorCount + 1);
+    const auto it = _replies.constFind(hash);
+    const DownloadReply context = (it != _replies.constEnd()) ? *it : DownloadReply{};
+    if (it != _replies.constEnd()) {
+        (void) _replies.remove(hash);
+    } else {
+        qCWarning(QGCCachedTileSetLog) << "Reply not in list:" << hash;
+    }
 
-    const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
-    if (hash.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << "Empty Hash";
+    const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (_retryOrFail(hash, context, statusCode, error, reply)) {
+        // Retry scheduled: the per-host slot stays held across the backoff timer
+        // and is reused by the re-issued GET (no re-acquire, no double-count).
         return;
     }
 
-    {
-        QMutexLocker lock(&_repliesMutex);
-        if (_replies.contains(hash)) {
-            (void) _replies.remove(hash);
-        } else {
-            qCWarning(QGCCachedTileSetLog) << "Reply not in list:" << hash;
-        }
-    }
-
+    // Terminal failure: release the per-host slot claimed in _prepareDownload.
+    HostConcurrencyGate::instance().release(context.host);
+    setErrorCount(_errorCount + 1);
     if (error != QNetworkReply::OperationCanceledError) {
         qCWarning(QGCCachedTileSetLog) << "Error:" << reply->errorString();
     }
 
-    QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateError, hash);
+    QGCCommandTask* task = makeUpdateStateTask(_id, QGCTile::StateError, hash);
     if (!getQGCMapEngine()->addTask(task)) {
         task->deleteLater();
     }
 
     _prepareDownload();
+}
+
+bool QGCCachedTileSet::_retryOrFail(const QString& hash, const DownloadReply& context, int statusCode,
+                                    QNetworkReply::NetworkError error, const QNetworkReply* reply)
+{
+    if (!QGCNetworkHelper::isTransientError(error, statusCode)) {
+        return false;
+    }
+    HostCircuitBreaker::instance().recordFailure(context.request.url().host());
+    if ((context.attempt >= kMaxRetryAttempts) || _paused || _cancelPending) {
+        return false;
+    }
+
+    std::chrono::milliseconds delay = QGCNetworkHelper::retryBackoff(context.attempt);
+    if (statusCode == QGCNetworkHelper::kHttpTooManyRequests) {
+        delay = QGCNetworkHelper::retryAfterFromReply(reply).value_or(QGCNetworkHelper::kDefaultRateLimitDelay);
+    }
+
+    const QNetworkRequest request = context.request;
+    const int nextAttempt = context.attempt + 1;
+    const quint64 epoch = _downloadEpoch;
+    qCDebug(QGCCachedTileSetLog) << "Retrying tile" << hash << "attempt" << nextAttempt << "in" << delay.count()
+                                 << "ms";
+
+    const QString host = context.host;
+    QTimer::singleShot(delay, this, [this, hash, request, nextAttempt, epoch, host]() {
+        // A pause/cancel between scheduling and firing bumps _downloadEpoch; bail so
+        // a resumed session that already re-queued this tile doesn't get a duplicate
+        // GET. The held per-host slot must be released on the bail path; pause/cancel
+        // teardown released the rest of the in-flight slots but this retry was not yet
+        // back in _replies, so it owns its slot here.
+        if ((epoch != _downloadEpoch) || _paused || _cancelPending || !_networkManager) {
+            HostConcurrencyGate::instance().release(host);
+            return;
+        }
+        _startTileGet(hash, request, nextAttempt, host);
+    });
+    return true;
 }
 
 void QGCCachedTileSet::setSelected(bool sel)

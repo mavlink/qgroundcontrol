@@ -14,7 +14,6 @@ struct TileSetRecord {
     double bottomRightLon = 0.;
     int minZoom = 3;
     int maxZoom = 3;
-    int type = -1;
     quint32 numTiles = 0;
     bool defaultSet = false;
     quint64 date = 0;

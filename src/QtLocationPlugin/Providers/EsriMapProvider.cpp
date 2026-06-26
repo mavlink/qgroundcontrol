@@ -4,7 +4,7 @@
 
 QByteArray EsriMapProvider::getToken() const
 {
-    return SettingsManager::instance()->appSettings()->esriToken()->rawValue().toString().toUtf8();
+    return factString(appSettings()->esriToken()).toUtf8();
 }
 
 QString EsriMapProvider::_getURL(int x, int y, int zoom) const

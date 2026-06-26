@@ -1,21 +1,26 @@
 #include "QGCNetworkHelper.h"
 
+#include <QtBluetooth/QBluetoothLocalDevice>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QIODevice>
 #include <QtCore/QJsonDocument>
+#include <QtCore/QLocale>
+#include <QtCore/QRandomGenerator>
+#include <QtCore/QTimeZone>
 #include <QtCore/QUrlQuery>
+#include <QtNetwork/QHttpHeaders>
 #include <QtNetwork/QHttpPart>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkInformation>
 #include <QtNetwork/QNetworkProxy>
 #include <QtNetwork/QNetworkProxyFactory>
 #include <QtNetwork/QSslSocket>
+#include <algorithm>
 
 #include "QGCCompression.h"
 #include "QGCLoggingCategory.h"
-
-#include <QtBluetooth/QBluetoothLocalDevice>
 
 QGC_LOGGING_CATEGORY(QGCNetworkHelperLog, "Utilities.QGCNetworkHelper")
 
@@ -414,11 +419,9 @@ void configureRequest(QNetworkRequest& request, const RequestConfig& config)
         request.setHeader(QNetworkRequest::ContentTypeHeader, config.contentType);
     }
 
-    for (const auto &[attribute, value] : config.requestAttributes) {
+    for (const auto& [attribute, value] : config.requestAttributes) {
         request.setAttribute(attribute, value);
     }
-
-    request.setRawHeader("Connection", "keep-alive");
 }
 
 QNetworkRequest createRequest(const QUrl& url, const RequestConfig& config)
@@ -434,7 +437,6 @@ void setStandardHeaders(QNetworkRequest& request, const QString& userAgent)
     request.setHeader(QNetworkRequest::UserAgentHeader, ua);
     request.setRawHeader("Accept", "*/*");
     request.setRawHeader("Accept-Encoding", "gzip, deflate");
-    request.setRawHeader("Connection", "keep-alive");
 }
 
 void setJsonHeaders(QNetworkRequest& request)
@@ -452,7 +454,7 @@ QString defaultUserAgent()
 {
     static QString userAgent;
     if (userAgent.isEmpty()) {
-        userAgent = QStringLiteral("%1/%2 (Qt %3)")
+        userAgent = QStringLiteral("%1/%2 (+https://qgroundcontrol.com; Qt %3)")
                         .arg(QCoreApplication::applicationName())
                         .arg(QCoreApplication::applicationVersion())
                         .arg(QString::fromLatin1(qVersion()));
@@ -544,19 +546,20 @@ QList<QSslCertificate> loadCaCertificates(const QString& filePath, QString* erro
     return certs;
 }
 
-bool loadClientCertAndKey(const QString& certPath, const QString& keyPath,
-                          QSslCertificate& certOut, QSslKey& keyOut,
+bool loadClientCertAndKey(const QString& certPath, const QString& keyPath, QSslCertificate& certOut, QSslKey& keyOut,
                           QString* errorOut)
 {
     const auto certs = QSslCertificate::fromPath(certPath, QSsl::Pem);
     if (certs.isEmpty()) {
-        if (errorOut) *errorOut = QStringLiteral("No certificate found in %1").arg(certPath);
+        if (errorOut)
+            *errorOut = QStringLiteral("No certificate found in %1").arg(certPath);
         return false;
     }
 
     QFile keyFile(keyPath);
     if (!keyFile.open(QIODevice::ReadOnly)) {
-        if (errorOut) *errorOut = QStringLiteral("Cannot open key file %1").arg(keyPath);
+        if (errorOut)
+            *errorOut = QStringLiteral("Cannot open key file %1").arg(keyPath);
         return false;
     }
 
@@ -566,7 +569,8 @@ bool loadClientCertAndKey(const QString& certPath, const QString& keyPath,
         key = QSslKey(&keyFile, QSsl::Ec);
     }
     if (key.isNull()) {
-        if (errorOut) *errorOut = QStringLiteral("Invalid key in %1").arg(keyPath);
+        if (errorOut)
+            *errorOut = QStringLiteral("Invalid key in %1").arg(keyPath);
         return false;
     }
 
@@ -646,6 +650,81 @@ int httpStatusCode(const QNetworkReply* reply)
     }
     const QVariant statusAttr = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
     return statusAttr.isValid() ? statusAttr.toInt() : -1;
+}
+
+std::chrono::milliseconds retryBackoff(int attempt)
+{
+    constexpr qint64 kBaseMs = 1000;
+    constexpr qint64 kCapMs = 32000;
+    const int shift = qBound(0, attempt, 20);  // cap shift so 2^attempt can't overflow
+    const qint64 base = kBaseMs * (qint64(1) << shift);
+    const qint64 jitter = QRandomGenerator::global()->bounded(1000);
+    return std::chrono::milliseconds(std::min(base + jitter, kCapMs));
+}
+
+bool isTransientError(QNetworkReply::NetworkError error, int statusCode)
+{
+    // 408 Request Timeout and 429 Too Many Requests are the standard transient
+    // HTTP signals; treat them as retriable so callers can back off / honour
+    // Retry-After. 401/403/404 are deliberately absent: they are permanent.
+    if ((statusCode == kHttpRequestTimeout) || (statusCode == kHttpTooManyRequests)) {
+        return true;
+    }
+
+    if ((statusCode >= 500) && (statusCode < 600)) {
+        return true;
+    }
+
+    switch (error) {
+        case QNetworkReply::TimeoutError:
+        case QNetworkReply::TemporaryNetworkFailureError:
+        case QNetworkReply::NetworkSessionFailedError:
+        case QNetworkReply::ProxyTimeoutError:
+        case QNetworkReply::ServiceUnavailableError:
+        case QNetworkReply::UnknownNetworkError:
+        case QNetworkReply::RemoteHostClosedError:
+        case QNetworkReply::ConnectionRefusedError:
+        case QNetworkReply::HostNotFoundError:
+        case QNetworkReply::ProxyConnectionRefusedError:
+        case QNetworkReply::ProxyConnectionClosedError:
+        case QNetworkReply::ProxyNotFoundError:
+            return true;
+        default:
+            return false;
+    }
+}
+
+std::optional<std::chrono::milliseconds> retryAfterFromReply(const QNetworkReply* reply)
+{
+    if (!reply) {
+        return std::nullopt;
+    }
+
+    const QByteArray raw = reply->headers().combinedValue(QHttpHeaders::WellKnownHeader::RetryAfter).trimmed();
+    if (raw.isEmpty()) {
+        return std::nullopt;
+    }
+
+    bool ok = false;
+    const qint64 seconds = raw.toLongLong(&ok);
+    if (ok && (seconds >= 0)) {
+        // Clamp before the *1000 so a huge-but-parseable value can't overflow qint64.
+        const qint64 cappedSeconds = std::min<qint64>(seconds, kMaxRateLimitDelay.count() / 1000);
+        return std::chrono::milliseconds(cappedSeconds * 1000);
+    }
+
+    // Retry-After HTTP-date is an IMF-fixdate; Qt::RFC2822Date rejects its trailing "GMT", so parse with the C locale.
+    QDateTime when = QLocale::c().toDateTime(QString::fromLatin1(raw), QStringLiteral("ddd, dd MMM yyyy HH:mm:ss 'GMT'"));
+    if (when.isValid()) {
+        when.setTimeZone(QTimeZone::UTC);
+        const qint64 deltaMs = QDateTime::currentDateTimeUtc().msecsTo(when.toUTC());
+        if (deltaMs <= 0) {
+            return std::chrono::milliseconds::zero();
+        }
+        return std::min(std::chrono::milliseconds(deltaMs), kMaxRateLimitDelay);
+    }
+
+    return std::nullopt;
 }
 
 QUrl redirectUrl(const QNetworkReply* reply)

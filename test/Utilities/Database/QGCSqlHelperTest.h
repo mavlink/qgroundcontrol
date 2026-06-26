@@ -14,4 +14,7 @@ private slots:
     void _scopedConnectionUniqueNames();
     void _scopedConnectionCleanup();
     void _applySqlitePragmas();
+    void _execPreparedSuccess();
+    void _execPreparedPrepareFailure();
+    void _execPreparedExecFailure();
 };

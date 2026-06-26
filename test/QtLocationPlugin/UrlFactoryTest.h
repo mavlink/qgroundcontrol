@@ -21,13 +21,16 @@ private slots:
     void _testProviderTypeFromInvalidHash();
     void _testGetTileHashFormat();
     void _testTileHashToTypeRoundtrip();
+    void _testRetinaTileHashDisjointFrom1x();
     void _testTileHashToTypeInvalid();
     void _testGetImageFormatByType();
     void _testGetImageFormatByMapId();
     void _testGetImageFormatInvalidInputs();
     void _testGetTileURLByType();
     void _testGetTileURLByMapId();
+    void _testGetTileURLUsesLayerSlugNotName();
     void _testGetTileURLInvalidInputs();
+    void _testGetTileURLGoldenStrings();
     void _testAverageSizeForKnownProviders();
     void _testAverageSizeForInvalidType();
     void _testIsElevationTrue();
