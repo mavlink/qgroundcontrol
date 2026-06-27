@@ -196,6 +196,7 @@ if(WIN32)
         if(_d3d${_ver}_FOUND)
             target_include_directories(QGCGStreamer PRIVATE ${_d3d${_ver}_INCLUDE_DIRS})
             target_link_directories(QGCGStreamer PRIVATE ${_d3d${_ver}_LIBRARY_DIRS})
+            target_compile_definitions(QGCGStreamer PRIVATE GST_USE_UNSTABLE_API)
             _qgc_register_gpu_path(NAME D3D${_ver}
                 SOURCES
                     ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3D${_ver}VideoBuffer.cc

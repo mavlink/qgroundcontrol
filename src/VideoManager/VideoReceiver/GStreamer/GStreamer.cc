@@ -420,11 +420,9 @@ static const char* zeroCopyFamilyForApi(QSGRendererInterface::GraphicsApi api)
             return "CPU";
 #endif
         case QSGRendererInterface::Direct3D12:
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-            return "D3D12";
-#else
-            return "CPU";
-#endif
+            // GStreamer 1.28 can match adapter LUID but cannot wrap Qt's ID3D12Device; D3D12 zero-copy disabled until
+            // same-device import is possible.
+            return "CPU (D3D12 import disabled)";
         case QSGRendererInterface::Metal:
 #if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
             return "IOSurface/VideoToolbox";

@@ -100,6 +100,23 @@ function(gstreamer_install_libs)
     endif()
 endfunction()
 
+function(_gstreamer_windows_runtime_dependency_dirs ROOT_DIR OUT_VAR)
+    set(_runtime_dirs)
+
+    # giolibproxy.dll loads proxy-1.dll, which loads pxbackend-1.0.dll from
+    # lib/libproxy in the official Windows SDK. Install those backend DLLs next
+    # to the executable because startup only prepends the app bin dir to PATH.
+    foreach(_relative_dir IN ITEMS "lib/libproxy")
+        set(_candidate_dir "${ROOT_DIR}/${_relative_dir}")
+        file(GLOB _candidate_dlls "${_candidate_dir}/*.dll")
+        if(_candidate_dlls)
+            list(APPEND _runtime_dirs "${_candidate_dir}")
+        endif()
+    endforeach()
+
+    set(${OUT_VAR} "${_runtime_dirs}" PARENT_SCOPE)
+endfunction()
+
 function(_gstreamer_is_blocked_lib_copy_source SOURCE_DIR OUT_VAR)
     set(_blocked_prefixes
         /usr/lib /usr/local/lib /opt/homebrew/lib /opt/homebrew/opt)
@@ -204,6 +221,14 @@ function(gstreamer_install_windows_sdk)
         DEST_DIR "${CMAKE_INSTALL_BINDIR}"
         EXTENSION "dll"
     )
+    _gstreamer_windows_runtime_dependency_dirs("${GStreamer_ROOT_DIR}" _gst_win_runtime_dependency_dirs)
+    foreach(_dependency_dir IN LISTS _gst_win_runtime_dependency_dirs)
+        gstreamer_install_libs(
+            SOURCE_DIR "${_dependency_dir}"
+            DEST_DIR "${CMAKE_INSTALL_BINDIR}"
+            EXTENSION "dll"
+        )
+    endforeach()
     gstreamer_install_gio_modules(
         SOURCE_DIR "${GSTREAMER_LIB_PATH}/gio/modules"
         DEST_DIR "${CMAKE_INSTALL_LIBDIR}/gio/modules"

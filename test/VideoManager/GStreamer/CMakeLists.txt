@@ -5,6 +5,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         GStreamerTest.cc
         GStreamerTest.h
         HwBuffers/common/GStreamerHwBuffersCommonTest.cc
+        HwBuffers/d3d/GStreamerD3DTest.cc
         HwBuffers/dmabuf/GStreamerDmaBufTest.cc
         HwBuffers/gl/GStreamerGlTest.cc
         HwBuffers/vulkan/GStreamerVulkanTest.cc

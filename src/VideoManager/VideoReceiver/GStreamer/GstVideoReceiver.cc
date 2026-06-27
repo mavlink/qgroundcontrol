@@ -39,6 +39,22 @@ gboolean grabFirstSrcPad(GstElement * /*element*/, GstPad *pad, gpointer userDat
     return FALSE;
 }
 
+bool isRecoverableH265PaciError(GstMessage *msg, const GError *error, const gchar *debug)
+{
+    if (!msg || !error || (error->domain != GST_STREAM_ERROR) || (error->code != GST_STREAM_ERROR_FORMAT) ||
+        !debug || !g_strrstr(debug, "NAL unit type 50 not supported yet")) {
+        return false;
+    }
+
+    GstObject *src = GST_MESSAGE_SRC(msg);
+    if (!src || !GST_IS_ELEMENT(src)) {
+        return false;
+    }
+
+    GstElementFactory *factory = gst_element_get_factory(GST_ELEMENT(src));
+    return factory && (g_strcmp0(GST_OBJECT_NAME(factory), "rtph265depay") == 0);
+}
+
 } // namespace
 
 GstVideoReceiver::GstVideoReceiver(QObject *parent)
@@ -1291,14 +1307,18 @@ gboolean GstVideoReceiver::_onBusMessage(GstBus * /* bus */, GstMessage *msg, gp
     GstVideoReceiver *pThis = static_cast<GstVideoReceiver*>(data);
 
     // Fan out to cross-cutting observers (GPU device reset on ERROR, future telemetry
-    // / crash-dump hooks). Receiver stays oblivious to what each observer does.
-    HwBuffers::dispatchBusMessage(msg);
+    // / crash-dump hooks). ERROR messages are dispatched after recoverable stream errors
+    // are filtered so a bad RTP packet does not look like a GPU/device failure.
+    if (GST_MESSAGE_TYPE(msg) != GST_MESSAGE_ERROR) {
+        HwBuffers::dispatchBusMessage(msg);
+    }
 
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_ERROR: {
-        gchar *debug;
-        GError *error;
+        gchar *debug = nullptr;
+        GError *error = nullptr;
         gst_message_parse_error(msg, &error, &debug);
+        const bool recoverableH265PaciError = isRecoverableH265PaciError(msg, error, debug);
 
         if (debug) {
             qCDebug(GstVideoReceiverLog) << "GStreamer debug:" << debug;
@@ -1306,9 +1326,20 @@ gboolean GstVideoReceiver::_onBusMessage(GstBus * /* bus */, GstMessage *msg, gp
         }
 
         if (error) {
-            qCCritical(GstVideoReceiverLog) << "GStreamer error:" << error->message;
+            if (recoverableH265PaciError) {
+                qCWarning(GstVideoReceiverLog)
+                    << "Ignoring unsupported H.265 RTP PACI packet from rtph265depay:" << error->message;
+            } else {
+                qCCritical(GstVideoReceiverLog) << "GStreamer error:" << error->message;
+            }
             g_clear_error(&error);
         }
+
+        if (recoverableH265PaciError) {
+            break;
+        }
+
+        HwBuffers::dispatchBusMessage(msg);
 
         if (GstElement *pipelineRef = pThis->_acquirePipelineRef()) {
             // Native dump path (no-op without GST_DEBUG_DUMP_DOT_DIR) plus an unconditional

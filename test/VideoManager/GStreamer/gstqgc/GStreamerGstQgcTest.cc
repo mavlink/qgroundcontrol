@@ -2,38 +2,19 @@
 
 #ifdef QGC_GST_STREAMING
 
-#include <QtCore/QDir>
-#include <QtCore/QFileInfo>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
-#include <QtCore/QStandardPaths>
-#include <atomic>
-#include <cstring>
-#include <gst/gst.h>
-#include <iterator>
-#include <memory>
-#include <vector>
-
+#include "CpuVideoFramePool.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "Fact.h"
 #include "GStreamer.h"
+#include "GStreamerFrameMap.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
 #include "GstVideoReceiver.h"
-
-// New sink controller + telemetry includes (GstAppSinkAdapter removed).
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
-#include <gst/video/gstvideometa.h>
-
-#include "GStreamer.h"
-#include "GStreamerFrameMap.h"
-#include "CpuVideoFramePool.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBufferFactory.h"
 #include "GstSourceFactory.h"
-#include "QGCQVideoSinkController.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
+#include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcAllocation.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcVideoFormats.h"
@@ -54,18 +35,31 @@
 #endif
 #include "GstContextBridgeRegistry.h"
 #include "GstHwVideoBuffer.h"
-#include "GstHwVideoBufferFactory.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "QGCRhiCapture.h"
 #endif
 #include <QtCore/QCoreApplication>
+#include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
+#include <QtCore/QFileInfo>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QStandardPaths>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoSink>
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
+#include <gst/gst.h>
+#include <gst/video/gstvideometa.h>
+#include <atomic>
+#include <cstring>
+#include <iterator>
+#include <memory>
 #include <string_view>
+#include <vector>
 
 void GStreamerTest::_testAppsinkFrameDelivery()
 {
@@ -396,7 +390,7 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         gst_object_unref(bin);
     }
 
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#if defined(QGC_HAS_ANY_GPU_PATH)
     {
         GstElement* bin = gst_element_factory_create_full(factory, "gpu-zerocopy", TRUE, NULL);
         QVERIFY2(bin, "Failed to create qgcvideosinkbin (GPU branch)");
@@ -482,6 +476,33 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
                  qUtf8Printable(QStringLiteral("GLMemory caps must force RGB(A), not multi-plane NV12: ") + s));
         QVERIFY2(s.contains(QStringLiteral("RGBA")) || s.contains(QStringLiteral("BGRA")),
                  qUtf8Printable(QStringLiteral("GLMemory caps missing RGB(A) format: ") + s));
+#elif defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
+        // Windows: format_capsfilter -> qgcqvideosink (2 children). D3D memory must be offered before
+        // GLMemory when both are compiled, because Qt Quick's Windows QRhi is D3D-backed.
+        QCOMPARE(elementCount, 2);
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+        QVERIFY2(s.contains(QStringLiteral("memory:D3D11Memory")),
+                 qUtf8Printable(QStringLiteral("GPU bin caps missing memory:D3D11Memory: ") + s));
+#endif
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+        QVERIFY2(s.contains(QStringLiteral("memory:D3D12Memory")),
+                 qUtf8Printable(QStringLiteral("GPU bin caps missing memory:D3D12Memory: ") + s));
+#endif
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+        const qsizetype glIndex = s.indexOf(QStringLiteral("memory:GLMemory"));
+        if (glIndex >= 0) {
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+            const qsizetype d3d11Index = s.indexOf(QStringLiteral("memory:D3D11Memory"));
+            QVERIFY2(d3d11Index >= 0 && d3d11Index < glIndex,
+                     qUtf8Printable(QStringLiteral("D3D11Memory must be advertised before GLMemory: ") + s));
+#endif
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+            const qsizetype d3d12Index = s.indexOf(QStringLiteral("memory:D3D12Memory"));
+            QVERIFY2(d3d12Index >= 0 && d3d12Index < glIndex,
+                     qUtf8Printable(QStringLiteral("D3D12Memory must be advertised before GLMemory: ") + s));
+#endif
+        }
+#endif
 #else
         // Direct DMABuf: format_capsfilter → qgcqvideosink (2 children).
         QCOMPARE(elementCount, 2);
@@ -536,13 +557,16 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, QGCQVideoS
         g_clear_error(&err);
         return r;
     }
+    if (!pipeline) {
+        r.errorMessage = QStringLiteral("Pipeline construction failed");
+        return r;
+    }
     GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-    auto* owner = new QObject();
-    if (!sinkBin || !GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, owner)) {
+    const std::unique_ptr<QObject> owner = std::make_unique<QObject>();
+    if (!sinkBin || !GStreamer::setupQVideoSinkElement(sinkBin, &videoSink, owner.get())) {
         r.errorMessage = QStringLiteral("setupQVideoSinkElement() failed");
         if (sinkBin)
             gst_object_unref(sinkBin);
-        delete owner;
         gst_object_unref(pipeline);
         return r;
     }
@@ -550,11 +574,10 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, QGCQVideoS
     if (!outController) {
         r.errorMessage = QStringLiteral("controller not created by setupQVideoSinkElement()");
         gst_object_unref(sinkBin);
-        delete owner;
         gst_object_unref(pipeline);
         return r;
     }
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, owner, [&](const QVideoFrame& f) {
+    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, owner.get(), [&](const QVideoFrame& f) {
         ++r.frameCount;
         r.lastFrameSize = f.size();
         r.lastPixelFormat = f.pixelFormat();
@@ -563,7 +586,6 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, QGCQVideoS
 
     if (gst_element_set_state(pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
         r.errorMessage = QStringLiteral("set_state(PLAYING) failed");
-        delete owner;
         outController = nullptr;
         gst_element_set_state(pipeline, GST_STATE_NULL);
         gst_object_unref(pipeline);
@@ -596,7 +618,6 @@ PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, QGCQVideoS
             QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
         }
     }
-    delete owner;
     outController = nullptr;
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
@@ -737,7 +758,7 @@ void GStreamerTest::_testFrameCountsTelemetrySignal()
 
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
 
-    QTRY_VERIFY_WITH_TIMEOUT(spy.count() > 0, 5000);
+    QTRY_VERIFY_WITH_TIMEOUT(spy.size() > 0, 5000);
 
     QVERIFY(GstHwPathTelemetry::peekDeliveredCount(HwVideoBufferPath::None) > 0);
     quint64 gpuFallback = 0;
@@ -1149,10 +1170,10 @@ void GStreamerTest::_testCpuCapsFormatsRoundTripToQt()
 void GStreamerTest::_testAllocationQueryHwMemoryPoolHint()
 {
     // HW-memory ALLOCATION: populateAllocationQuery (the qgcqvideosink propose_allocation path) must
-    // advertise a pool-less min-buffer hint (NULL pool, min>0) plus the consumed metas so upstream
-    // va/v4l2 skip their copy threshold — the zero-copy path. Regression guard for the GstQgcAllocation extraction.
+    // advertise a pool-less min-buffer hint plus the consumed metas. Native producers such as gst-va own the
+    // platform allocator/pool; QGC only needs VideoMeta visible before they decide allocation.
     GstCaps* caps = gst_caps_from_string(
-        "video/x-raw(memory:GLMemory), format=(string)RGBA, width=(int)64, height=(int)64, framerate=(fraction)30/1");
+        "video/x-raw(memory:DMABuf), format=(string)NV12, width=(int)64, height=(int)64, framerate=(fraction)30/1");
     QVERIFY2(caps, "HW caps did not parse");
 
     GstQuery* query = gst_query_new_allocation(caps, TRUE);
@@ -1162,13 +1183,46 @@ void GStreamerTest::_testAllocationQueryHwMemoryPoolHint()
     GstBufferPool* pool = nullptr;
     guint size = 0, minBuffers = 0, maxBuffers = 0;
     gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &minBuffers, &maxBuffers);
-    QVERIFY2(pool == nullptr, "HW path must propose a pool-less hint, not a CPU pool");
+    QVERIFY2(pool == nullptr, "HW path must not propose a generic pool for native memory");
     QVERIFY2(minBuffers > 0, "min-buffer hint must be non-zero");
     QVERIFY2(gst_query_find_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr),
              "VideoMeta not advertised on HW path");
 
     gst_query_unref(query);
     gst_caps_unref(caps);
+}
+
+void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
+{
+    QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
+
+    GstElement* bin = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
+    QVERIFY2(bin, "qgcvideosinkbin factory did not create an element");
+    auto binGuard = qScopeGuard([&] { gst_object_unref(bin); });
+
+    GstPad* sinkPad = gst_element_get_static_pad(bin, "sink");
+    QVERIFY2(sinkPad, "qgcvideosinkbin has no sink pad");
+    auto sinkPadGuard = qScopeGuard([&] { gst_object_unref(sinkPad); });
+
+    GstCaps* caps = gst_caps_from_string(
+        "video/x-raw(memory:DMABuf), format=(string)NV12, width=(int)64, height=(int)64, framerate=(fraction)30/1");
+    QVERIFY2(caps, "HW caps did not parse");
+    auto capsGuard = qScopeGuard([&] { gst_caps_unref(caps); });
+
+    GstQuery* query = gst_query_new_allocation(caps, TRUE);
+    QVERIFY2(query, "Could not allocate ALLOCATION query");
+    auto queryGuard = qScopeGuard([&] { gst_query_unref(query); });
+
+    QVERIFY2(gst_pad_query(sinkPad, query), "qgcvideosinkbin did not answer ALLOCATION query");
+    QVERIFY2(gst_query_find_allocation_meta(query, GST_VIDEO_META_API_TYPE, nullptr),
+             "qgcvideosinkbin ALLOCATION query must advertise VideoMeta for gst-va DMABuf");
+
+    QCOMPARE(gst_query_get_n_allocation_pools(query), 1U);
+    GstBufferPool* pool = nullptr;
+    guint size = 0, minBuffers = 0, maxBuffers = 0;
+    gst_query_parse_nth_allocation_pool(query, 0, &pool, &size, &minBuffers, &maxBuffers);
+    QVERIFY2(pool == nullptr, "qgcvideosinkbin must not propose a generic pool for native memory");
+    QVERIFY2(minBuffers > 0, "qgcvideosinkbin min-buffer hint must be non-zero");
 }
 
 void GStreamerTest::_testAllocationQuerySystemMemoryNoPoolStillAdvertisesMetas()
@@ -1354,7 +1408,7 @@ void GStreamerTest::_testApplyOrientationToFrameMapping()
         {GST_VIDEO_ORIENTATION_UR_LL, QtVideo::Rotation::Clockwise270, true},
     };
     for (const Case& c : cases) {
-        QVideoFrame frame{QVideoFrameFormat(QSize(2, 2), QVideoFrameFormat::Format_BGRA8888)};
+        QVideoFrame frame = QVideoFrame(QVideoFrameFormat(QSize(2, 2), QVideoFrameFormat::Format_BGRA8888));
         // Pre-poison so a no-op switch case (default branch) wouldn't accidentally match.
         frame.setRotation(QtVideo::Rotation::Clockwise90);
         frame.setMirrored(true);

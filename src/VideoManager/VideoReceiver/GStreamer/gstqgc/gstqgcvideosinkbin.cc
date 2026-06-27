@@ -178,7 +178,7 @@ static void gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass* klass)
     element_class->change_state = gst_qgc_video_sink_bin_change_state;
 
     properties[PROP_GPU_ZEROCOPY] = g_param_spec_boolean(
-        "gpu-zerocopy", "GPU zero-copy", "Enable DMABuf zero-copy path (Linux only). Construct-only.", FALSE,
+        "gpu-zerocopy", "GPU zero-copy", "Enable the platform GPU zero-copy path. Construct-only.", FALSE,
         (GParamFlags) (G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 
     properties[PROP_CONVERSION_ELEMENT] =

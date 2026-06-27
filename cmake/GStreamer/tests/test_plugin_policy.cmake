@@ -36,6 +36,13 @@ qgc_test_assert_in_list("apple has vtenc" vtenc _plugins_apple)
 qgc_test_assert_in_list("apple has vtdec" vtdec _plugins_apple)
 qgc_test_pass("plugins_for apple addenda")
 
+# ── repository build config: Windows ships both D3D plugin families ─────────
+file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
+gstreamer_plugins_for(PLATFORM windows OUT_VAR _plugins_windows_real)
+qgc_test_assert_in_list("windows has d3d11" d3d11 _plugins_windows_real)
+qgc_test_assert_in_list("windows has d3d12" d3d12 _plugins_windows_real)
+qgc_test_pass("plugins_for real windows d3d addenda")
+
 # ── gstreamer_filter_alternates: scale alternate satisfied by fused plugin ──
 set(_req videoconvertscale videoconvert videoscale x264enc)
 set(_avail videoconvertscale x264enc)

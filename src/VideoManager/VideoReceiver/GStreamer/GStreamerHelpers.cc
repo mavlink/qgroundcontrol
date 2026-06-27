@@ -170,20 +170,20 @@ bool isHardwareDecoderFactory(GstElementFactory* factory)
     return false;
 }
 
-void changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank)
+bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank)
 {
     if (!registry || !featureName) {
-        return;
+        return false;
     }
 
     const GstFeaturePtr feature = adoptFeature(gst_registry_lookup_feature(registry, featureName));
     if (!feature) {
-        qCDebug(GStreamerHelpersLog) << "Failed to change ranking of feature. Feature does not exist:" << featureName;
-        return;
+        return false;
     }
 
     qCDebug(GStreamerHelpersLog) << "  Changing feature (" << featureName << ") to use rank:" << rank;
     gst_plugin_feature_set_rank(feature.get(), rank);
+    return true;
 }
 
 namespace {
@@ -298,7 +298,7 @@ void prioritizeByHardwareClass(GstRegistry* registry, uint16_t prioritizedRank, 
 
 #ifdef Q_OS_WIN
 // A decoder whose D3D family mismatches the active QRhi backend can't be sampled zero-copy and drops to a CPU copy.
-void alignD3DDecoderRanksToRhi(GstRegistry* registry)
+void alignD3DDecoderRanksToRhi(GstRegistry* registry, bool promoteMatchedFamily)
 {
     // Prefer the resolved QRhi backend; ranks usually apply before the scene graph resolves, so cachedRhi() is often
     // null here and graphicsApi() Unknown — fall back to QSG_RHI_BACKEND (Qt's D3D11 default) in that Windows case.
@@ -330,10 +330,17 @@ void alignD3DDecoderRanksToRhi(GstRegistry* registry)
                                                      "d3d11mpeg2dec", "d3d11vp8dec",  "d3d11vp9dec"};
     static constexpr const char* kD3D12Decoders[] = {"d3d12av1dec",   "d3d12h264dec", "d3d12h265dec",
                                                      "d3d12mpeg2dec", "d3d12vp8dec",  "d3d12vp9dec"};
+    const char* const* matched = wantD3D12 ? kD3D12Decoders : kD3D11Decoders;
     const char* const* mismatched = wantD3D12 ? kD3D11Decoders : kD3D12Decoders;
     qCDebug(GStreamerHelpersLog) << "Aligning D3D decoder ranks to" << (wantD3D12 ? "D3D12" : "D3D11")
-                                 << "RHI — demoting the mismatched decoder family";
+                                 << "RHI - demoting the mismatched decoder family";
     static_assert(std::size(kD3D11Decoders) == std::size(kD3D12Decoders));
+    if (promoteMatchedFamily) {
+        static constexpr uint16_t ZeroCopyRank = GST_RANK_PRIMARY + 2;
+        for (size_t i = 0; i < std::size(kD3D11Decoders); ++i) {
+            changeFeatureRank(registry, matched[i], ZeroCopyRank);
+        }
+    }
     for (size_t i = 0; i < std::size(kD3D11Decoders); ++i) {
         changeFeatureRank(registry, mismatched[i], GST_RANK_NONE);
     }
@@ -424,7 +431,9 @@ void setCodecPriorities(VideoDecoderOptions option)
 #ifdef Q_OS_WIN
     // After any option-driven rank changes, force the D3D decoder API to match the active QRhi
     // backend so a D3D12 decoder never wins over D3D11 on Qt's default Windows RHI (and vice-versa).
-    alignD3DDecoderRanksToRhi(registry);
+    const bool promoteMatchingD3D = (option == ForceVideoDecoderDefault) || (option == ForceVideoDecoderHardware) ||
+                                    (option == ForceVideoDecoderDirectX3D);
+    alignD3DDecoderRanksToRhi(registry, promoteMatchingD3D);
 #endif
 }
 

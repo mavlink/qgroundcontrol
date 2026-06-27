@@ -42,12 +42,6 @@ std::string buildGpuCapsString()
     capsStr += kFormats;
     capsStr += "; ";
 #endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_GST_BIN_USE_DMABUF)
-    // No glupload in USE_DMABUF bin — offering GLMemory lets upstream try (and fail) it.
-    capsStr += "video/x-raw(memory:GLMemory), format=";
-    capsStr += kFormats;
-    capsStr += "; ";
-#endif
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     capsStr += "video/x-raw(memory:D3D11Memory), format=";
     capsStr += kFormats;
@@ -55,6 +49,13 @@ std::string buildGpuCapsString()
 #endif
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
     capsStr += "video/x-raw(memory:D3D12Memory), format=";
+    capsStr += kFormats;
+    capsStr += "; ";
+#endif
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_GST_BIN_USE_DMABUF)
+    // Keep GLMemory after native platform-memory paths. On Windows the active QRhi is D3D, so D3D11/D3D12 memory must
+    // win negotiation before the GL fallback is offered.
+    capsStr += "video/x-raw(memory:GLMemory), format=";
     capsStr += kFormats;
     capsStr += "; ";
 #endif

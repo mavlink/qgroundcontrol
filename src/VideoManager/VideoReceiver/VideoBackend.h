@@ -20,6 +20,9 @@ VideoReceiver *createReceiver(QObject *parent);
 void *createSink(QQuickItem *widget, QObject *parent);
 void releaseSink(void *sink);
 
+/// Applies backend-wide sink policy before constructing the GStreamer sink.
+bool gpuZeroCopyAllowedForCurrentGraphicsApi(bool forceCpuVideoPath, bool forceSoftwareDecoder);
+
 // --- Lifecycle ---
 
 /// True when a streaming backend that requires asynchronous global init is compiled in

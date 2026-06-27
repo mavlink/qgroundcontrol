@@ -16,8 +16,6 @@ target_sources(${CMAKE_PROJECT_NAME}
         NMEAUtils.h
         QGCCommandLineParser.cc
         QGCCommandLineParser.h
-        QGCGraphicsSetup.cc
-        QGCGraphicsSetup.h
         RTCMParser.cc
         RTCMParser.h
 )

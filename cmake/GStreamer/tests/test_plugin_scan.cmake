@@ -15,14 +15,14 @@ gstreamer_scan_plugin_basenames(_empty "${_sandbox}/does-not-exist")
 qgc_test_assert_streq("missing path returns empty" "" "${_empty}")
 qgc_test_pass("missing path")
 
-# ── linux-style plugin set (libgst*.so) ─────────────────────────────────────
-# Tests run on Linux so platform_plugin_attrs returns libgst/.so.
-file(TOUCH "${_sandbox}/libgstcoreelements.so")
-file(TOUCH "${_sandbox}/libgstplayback.so")
-file(TOUCH "${_sandbox}/libgstvideoconvertscale.so")
-file(TOUCH "${_sandbox}/libgstx264.so")
-file(TOUCH "${_sandbox}/notaplugin.so")            # Non-plugin file — must be excluded by the libgst* glob
-file(TOUCH "${_sandbox}/libgst-helper.so")         # Dash-prefixed name — alphanumeric regex captures empty group, deduped away
+# ── platform plugin set ─────────────────────────────────────────────────────
+gstreamer_platform_plugin_attrs(_ext _prefix _glob)
+file(TOUCH "${_sandbox}/${_prefix}coreelements.${_ext}")
+file(TOUCH "${_sandbox}/${_prefix}playback.${_ext}")
+file(TOUCH "${_sandbox}/${_prefix}videoconvertscale.${_ext}")
+file(TOUCH "${_sandbox}/${_prefix}x264.${_ext}")
+file(TOUCH "${_sandbox}/notaplugin.${_ext}")            # Non-plugin file — must be excluded by the plugin glob
+file(TOUCH "${_sandbox}/${_prefix}-helper.${_ext}")     # Dash-prefixed name — alphanumeric regex captures empty group, deduped away
 
 gstreamer_scan_plugin_basenames(_names "${_sandbox}")
 
@@ -31,6 +31,6 @@ qgc_test_assert_in_list("found playback"            playback            _names)
 qgc_test_assert_in_list("found videoconvertscale"   videoconvertscale   _names)
 qgc_test_assert_in_list("found x264"                x264                _names)
 qgc_test_assert_not_in_list("notaplugin not scanned" notaplugin _names)
-qgc_test_pass("scan_plugin_basenames linux")
+qgc_test_pass("scan_plugin_basenames platform")
 
 file(REMOVE_RECURSE "${_sandbox}")

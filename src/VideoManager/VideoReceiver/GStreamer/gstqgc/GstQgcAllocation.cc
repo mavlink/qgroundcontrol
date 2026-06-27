@@ -140,6 +140,25 @@ bool tryProposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInf
     return false;
 }
 
+bool tryProposeMetaPool(GstQuery* query, GstCaps* caps, gsize size)
+{
+    GstBufferPool* pool = gst_buffer_pool_new();
+    if (!pool) {
+        return false;
+    }
+
+    bool proposed = false;
+    GstStructure* config = gst_buffer_pool_get_config(pool);
+    gst_buffer_pool_config_set_params(config, caps, size, kProposedMinBuffers, 0);
+    gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+    if (gst_buffer_pool_set_config(pool, config)) {
+        gst_query_add_allocation_pool(query, pool, size, kProposedMinBuffers, 0);
+        proposed = true;
+    }
+    gst_object_unref(pool);
+    return proposed;
+}
+
 }  // namespace
 
 void populateAllocationQuery(GstQuery* query)
@@ -166,8 +185,8 @@ void populateAllocationQuery(GstQuery* query)
         !features || gst_caps_features_is_equal(features, GST_CAPS_FEATURES_MEMORY_SYSTEM_MEMORY);
 
     if (!is_system_memory) {
-        // Prefer a shared-device D3D pool (same-device import); else a pool-less min-buffer hint so
-        // upstream v4l2/VA still skips its copy threshold.
+        // Prefer a shared-device D3D pool (same-device import). Other HW-memory producers own their native
+        // allocator/pool; QGC only advertises VideoMeta plus a min-buffer hint so gst-va/v4l2 can build the right pool.
         if (!tryProposeDeviceBoundPool(query, caps, &vinfo, size)) {
             gst_query_add_allocation_pool(query, NULL, size, kProposedMinBuffers, 0);
         }
@@ -181,20 +200,10 @@ void populateAllocationQuery(GstQuery* query)
         return;
     }
 
-    GstBufferPool* pool = gst_buffer_pool_new();
-    if (!pool) {
-        return;
-    }
-    GstStructure* config = gst_buffer_pool_get_config(pool);
-    gst_buffer_pool_config_set_params(config, caps, size, kProposedMinBuffers, 0);
-    gst_buffer_pool_config_add_option(config, GST_BUFFER_POOL_OPTION_VIDEO_META);
-    if (gst_buffer_pool_set_config(pool, config)) {
-        gst_query_add_allocation_pool(query, pool, size, kProposedMinBuffers, 0);
-    }
+    (void) tryProposeMetaPool(query, caps, size);
     // Advertise accepted metas even if the pool config was rejected, else upstream va/v4l2 strips
     // VideoMeta/crop and mapSampleToFrame falls back to a full copy.
     addConsumedAllocationMetas(query);
-    gst_object_unref(pool);
 }
 
 GstPadProbeReturn videosinkQueryProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
@@ -207,8 +216,12 @@ GstPadProbeReturn videosinkQueryProbe(GstPad* pad, GstPadProbeInfo* info, gpoint
     }
 
     switch (GST_QUERY_TYPE(query)) {
-        // ALLOCATION is now answered natively by qgcqvideosink::propose_allocation; the probe only
-        // handles CONTEXT, which has no GstBaseSink vmethod and must be answered synchronously here.
+        case GST_QUERY_ALLOCATION:
+            // The bin path has capsfilters/ghost pads in front of qgcqvideosink. Answer the allocation query at the
+            // terminal sink pad too so transform elements such as gst-va always see VideoMeta before deciding their
+            // DMABuf pool. qgcqvideosink's vmethod still covers direct use of the element.
+            populateAllocationQuery(query);
+            return GST_PAD_PROBE_HANDLED;
         case GST_QUERY_CONTEXT:
             // Synchronous answer for gst.gl.GLDisplay/app_context — bus NEED_CONTEXT fallback races state changes and
             // can isolate glupload from Qt's RHI context.

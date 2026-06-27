@@ -21,6 +21,7 @@ set(_qgc_findmod_tests
     test_pkgconfig_env
     test_download_helper
     test_install_filter
+    test_windows_runtime_libproxy
     test_install_libs_guard_windows
     test_orchestrator_idempotent
 )

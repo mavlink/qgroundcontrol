@@ -18,8 +18,8 @@ QString writePipelineDot(GstElement* pipeline, const char* tag);
 bool isHardwareDecoderFactory(GstElementFactory* factory);
 
 /// Look up @p featureName in @p registry and set its autoplug rank to @p rank, releasing the
-/// transfer-full feature ref. No-op when the registry/name is null or the feature is absent.
-void changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank);
+/// transfer-full feature ref. Returns false when the registry/name is null or the feature is absent.
+bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank);
 
 /// Apply decoder rank overrides for @p option to the global GStreamer registry. Defined here
 /// alongside the decoder-rank table it drives; re-exported through the GStreamer facade.

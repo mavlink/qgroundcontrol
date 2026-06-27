@@ -27,6 +27,19 @@ namespace GstD3DVideoBufferCommon {
 
 using GstHw::kMaxPlanes;
 
+inline bool canAliasSingleResourceAcrossPlanes(QVideoFrameFormat::PixelFormat pixelFormat) noexcept
+{
+    switch (pixelFormat) {
+        case QVideoFrameFormat::Format_NV12:
+        case QVideoFrameFormat::Format_NV21:
+        case QVideoFrameFormat::Format_P010:
+        case QVideoFrameFormat::Format_P016:
+            return true;
+        default:
+            return false;
+    }
+}
+
 /// D3D-specific failure causes added to the shared GstHw::MapDiagnostics; each .cc keeps its own instance so the
 /// per-cause log throttle stays separated per API.
 struct MapDiagnostics : GstHw::MapDiagnostics
@@ -159,15 +172,36 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
 {
     using BundleT = FrameTextures<HandleT>;
 
+    const auto* desc = QVideoTextureHelper::textureDescription(pixelFormat);
+    if (!desc || desc->nplanes <= 0) {
+        return GstHwPathTelemetry::fail(path);
+    }
+
+    const int textureCount = (std::min)(desc->nplanes, kMaxPlanes);
+    if (resolvedCount <= 0 || resolvedCount > kMaxPlanes) {
+        return GstHwPathTelemetry::fail(path);
+    }
+
     std::array<HandleT*, kMaxPlanes> handles{};
-    for (int i = 0; i < resolvedCount; ++i) {
+    for (int i = 0; i < (std::min)(resolvedCount, textureCount); ++i) {
         handles[i] = resolvedHandles[i];
+    }
+
+    if (resolvedCount < textureCount) {
+        if (resolvedCount != 1 || !handles[0] || !canAliasSingleResourceAcrossPlanes(pixelFormat)) {
+            return GstHwPathTelemetry::fail(path);
+        }
+        // D3D NV12/P010-style decoder output is one native texture with multiple shader-resource planes. Qt's video
+        // renderer still asks QVideoFrameTextures for one texture per pixel-format plane (R8 luma, RG8 chroma).
+        for (int i = resolvedCount; i < textureCount; ++i) {
+            handles[i] = handles[0];
+        }
     }
 
     // Pooled staging handles keep stable pointers across frames, so the prior bundle's QRhiTexture views can be reused
     // when the handles match.
     if (auto* prev = GstHwFrameTexturesBase::reusableBundle<BundleT>(old, path)) {
-        if (prev->matches(&rhi, frameSize, pixelFormat, handles, resolvedCount)) {
+        if (prev->matches(&rhi, frameSize, pixelFormat, handles, textureCount)) {
             GstHwPathTelemetry::recordTextureReuse(path);
             prev->setSourceSample(self.takeSample());
             QVideoFrameTexturesUPtr reused = std::move(old);
@@ -181,24 +215,24 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
     }
 
     // FrameTextures takes ownership of AddRef'd refs; the buffer dtor releases the originals independently.
-    for (int i = 0; i < resolvedCount; ++i) {
+    for (int i = 0; i < textureCount; ++i) {
         if (handles[i])
             handles[i]->AddRef();
     }
 
-    auto textures = std::make_unique<BundleT>(path, &rhi, frameSize, pixelFormat, handles, resolvedCount);
+    auto textures = std::make_unique<BundleT>(path, &rhi, frameSize, pixelFormat, handles, textureCount);
     // Check all planes: NV12 chroma can fail while luma succeeds, and a partial bundle renders with missing planes.
-    for (int i = 0; i < resolvedCount; ++i) {
+    for (int i = 0; i < textureCount; ++i) {
         if (!textures->texture(static_cast<uint>(i))) {
             QGC_HW_WARN_ONCE(catFn, loggedTextureCreateFail,
                              "mapTextures: QRhiTexture::createFrom failed plane="
                                  << i << " (size=" << frameSize << " format=" << int(pixelFormat)
-                                 << " planes=" << resolvedCount << ")");
+                                 << " planes=" << textureCount << ")");
             return GstHwPathTelemetry::fail(path);
         }
     }
 
-    GstHwVideoBuffer::logFirstSuccess(loggedFirstSuccess, catFn(), tag, frameSize, pixelFormat, resolvedCount);
+    GstHwVideoBuffer::logFirstSuccess(loggedFirstSuccess, catFn(), tag, frameSize, pixelFormat, textureCount);
     textures->setSourceSample(self.takeSample());
     return textures;
 }

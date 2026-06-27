@@ -19,6 +19,7 @@
 #include "AudioOutput.h"
 #include "ColoredSvgImageProvider.h"
 #include "FollowMe.h"
+#include "GraphicsSetup.h"
 #include "JoystickManager.h"
 #include "JsonParsing.h"
 #include "LinkManager.h"
@@ -32,7 +33,6 @@
 #include "QGCCommandLineParser.h"
 #include "QGCCorePlugin.h"
 #include "QGCFileDownload.h"
-#include "QGCGraphicsSetup.h"
 #include "QGCImageProvider.h"
 #include "QGCLoggingCategory.h"
 #include "QGCLoggingCategoryManager.h"
@@ -289,7 +289,7 @@ bool QGCApplication::_initQmlRootWindow()
 
     // The root QQuickWindow exists now (load() is synchronous) but its scene graph has not been
     // initialized yet -- the only safe point to apply RHI graphics config / forced device.
-    QGCGraphicsSetup::configureMainWindow(mainRootWindow());
+    GraphicsSetup::configureMainWindow(mainRootWindow());
 
     return mainRootWindow() != nullptr;
 }

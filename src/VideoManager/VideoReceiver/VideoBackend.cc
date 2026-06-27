@@ -4,6 +4,7 @@
 #include "QGCApplication.h"
 
 #include <QtCore/QThread>
+#include <QtQuick/QQuickWindow>
 
 #ifdef QGC_GST_STREAMING
 #include "GStreamer.h"
@@ -14,6 +15,35 @@
 #else
 #include "QtMultimediaReceiver.h"
 #endif
+
+#ifdef QGC_GST_STREAMING
+namespace {
+
+bool d3d12ZeroCopyUnsupported()
+{
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    // GStreamer 1.28 can match adapter LUID but cannot wrap Qt's ID3D12Device; D3D12 zero-copy disabled until
+    // same-device import is possible.
+    return QQuickWindow::graphicsApi() == QSGRendererInterface::Direct3D12 ||
+           qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) == 0;
+#else
+    return false;
+#endif
+}
+
+}  // namespace
+#endif
+
+bool VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(bool forceCpuVideoPath, bool forceSoftwareDecoder)
+{
+#ifdef QGC_GST_STREAMING
+    return !forceCpuVideoPath && !forceSoftwareDecoder && !d3d12ZeroCopyUnsupported();
+#else
+    Q_UNUSED(forceCpuVideoPath);
+    Q_UNUSED(forceSoftwareDecoder);
+    return false;
+#endif
+}
 
 VideoReceiver *VideoBackend::createReceiver(QObject *parent)
 {
@@ -38,7 +68,7 @@ void *VideoBackend::createSink(QQuickItem *widget, QObject *parent)
     config.disablePixelAspectRatio = vs->disablePixelAspectRatio()->rawValue().toBool();
     const bool forceCpu = vs->forceCpuVideoPath()->rawValue().toBool();
     const bool swDecoder = vs->forceVideoDecoder()->rawValue().toInt() == GStreamer::ForceVideoDecoderSoftware;
-    config.gpuZeroCopy = !forceCpu && !swDecoder;
+    config.gpuZeroCopy = gpuZeroCopyAllowedForCurrentGraphicsApi(forceCpu, swDecoder);
     return GStreamer::createVideoSink(config);
 #else
     return QtMultimediaReceiver::createVideoSink(widget, parent);

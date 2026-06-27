@@ -12,6 +12,9 @@ private slots:
     void _testIsValidRtspUri();
     void _testIsHardwareDecoderFactory();
     void _testSetCodecPrioritiesDefault();
+    void _testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder();
+    void _testSetCodecPrioritiesSkipsAbsentD3DDecoders();
+    void _testD3D12RhiDisablesGpuZeroCopySink();
     void _testSetCodecPrioritiesSoftware();
     void _testSetCodecPrioritiesHardware();
     void _testRedirectGLibLogging();
@@ -29,6 +32,12 @@ private slots:
     void _testQgcVideoSinkBinGpuZeroCopyProperty();
     void _testQgcVideoSinkBinRejectsFailedAdopt();
     void _testGlMemoryDispatch();
+    void _testD3D11MemoryDispatch();
+    void _testD3D12MemoryDispatch();
+    void _testD3D11MapTexturesWithQRhi();
+    void _testD3D11MapNv12TexturesWithQRhi();
+    void _testD3D12MapTexturesWithQRhi();
+    void _testD3D12MapNv12TexturesWithQRhi();
     void _testDmaBufDispatch();
     void _testDmaDrmCapsRejectNonLinearModifiers();
     void _testDmaBufRejectsNonLinearDirectImport();
@@ -59,6 +68,7 @@ private slots:
     void _testColorimetryPixelFormatMapping();
     void _testCpuCapsFormatsRoundTripToQt();
     void _testAllocationQueryHwMemoryPoolHint();
+    void _testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta();
     void _testAllocationQuerySystemMemoryNoPoolStillAdvertisesMetas();
     void _testColorimetryColorSpaceMapping();
     void _testColorimetryResolutionHeuristicMatchesQt();
@@ -76,6 +86,7 @@ private slots:
     void _testSourceFactoryTcpMpegTs();
     void _testSourceFactoryRejectsBadTcpUri();
     void _testSourceFactoryUdp265Caps();
+    void _testSourceFactoryUdp265UsesExplicitDepayAndParser();
     void _testSourceFactoryUdpH264Caps();
     void _testSourceFactoryUdpMpegTs();
     void _testSourceFactorySchemeCaseInsensitive();

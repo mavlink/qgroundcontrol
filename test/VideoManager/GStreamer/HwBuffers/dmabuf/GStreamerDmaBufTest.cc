@@ -79,6 +79,95 @@ void GStreamerTest::_testDmaBufDispatch()
         gst_object_unref(f);
     }
 
+    const auto onlyDmaBufCaps = [](GstCaps* caps) -> GstCaps* {
+        GstCaps* out = gst_caps_new_empty();
+        if (!caps) {
+            return out;
+        }
+        const guint n = gst_caps_get_size(caps);
+        for (guint i = 0; i < n; ++i) {
+            GstCapsFeatures* features = gst_caps_get_features(caps, i);
+            if (!features || !gst_caps_features_contains(features, "memory:DMABuf")) {
+                continue;
+            }
+            gst_caps_append_structure_full(out, gst_structure_copy(gst_caps_get_structure(caps, i)),
+                                           gst_caps_features_copy(features));
+        }
+        return out;
+    };
+
+    GstCaps* qgcGpuCaps = gst_caps_from_string(GstQgc::buildGpuCapsString().c_str());
+    QVERIFY2(qgcGpuCaps, "QGC GPU caps did not parse");
+    auto qgcGpuCapsGuard = qScopeGuard([&] { gst_caps_unref(qgcGpuCaps); });
+
+    GstCaps* qgcDmaBufCaps = onlyDmaBufCaps(qgcGpuCaps);
+    QVERIFY2(qgcDmaBufCaps, "QGC DMABuf caps did not parse");
+    auto qgcDmaBufCapsGuard = qScopeGuard([&] { gst_caps_unref(qgcDmaBufCaps); });
+    QVERIFY2(!gst_caps_is_empty(qgcDmaBufCaps), "QGC GPU caps did not include a DMABuf structure");
+
+    {
+        GError* preflightError = nullptr;
+        GstElement* preflight = gst_parse_launch(
+            "videotestsrc num-buffers=2 ! "
+            "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
+            "vah264enc ! h264parse ! vah264dec ! vapostproc ! "
+            "capsfilter name=qgccaps ! fakesink sync=false",
+            &preflightError);
+        if (preflightError) {
+            const QString msg = QString::fromUtf8(preflightError->message);
+            g_clear_error(&preflightError);
+            QSKIP(qPrintable(QStringLiteral("DMABuf preflight parse skipped: %1").arg(msg)));
+        }
+        QVERIFY2(preflight, "Failed to create DMABuf preflight pipeline");
+        auto preflightGuard = qScopeGuard([&] {
+            gst_element_set_state(preflight, GST_STATE_NULL);
+            gst_object_unref(preflight);
+        });
+
+        GstElement* capsFilter = gst_bin_get_by_name(GST_BIN(preflight), "qgccaps");
+        QVERIFY2(capsFilter, "Could not find DMABuf preflight capsfilter");
+        g_object_set(capsFilter, "caps", qgcDmaBufCaps, nullptr);
+        gst_object_unref(capsFilter);
+
+        const GstStateChangeReturn preflightRet = gst_element_set_state(preflight, GST_STATE_PLAYING);
+        if (preflightRet == GST_STATE_CHANGE_FAILURE) {
+            QSKIP("DMABuf preflight failed to PLAY (no VA driver / DRI device?)");
+        }
+
+        GstBus* bus = gst_element_get_bus(preflight);
+        GstMessage* msg = gst_bus_timed_pop_filtered(bus, 5 * GST_SECOND,
+                                                     static_cast<GstMessageType>(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+        gst_object_unref(bus);
+
+        bool sawPreflightError = false;
+        QString errMsg;
+        if (msg && GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
+            GError* err = nullptr;
+            gchar* debug = nullptr;
+            gst_message_parse_error(msg, &err, &debug);
+            errMsg = QStringLiteral("%1 (%2)")
+                         .arg(err ? QString::fromUtf8(err->message) : QStringLiteral("?"))
+                         .arg(debug ? QString::fromUtf8(debug) : QString());
+            g_clear_error(&err);
+            g_free(debug);
+            sawPreflightError = true;
+        }
+        if (msg) {
+            gst_message_unref(msg);
+        }
+
+        if (!msg || sawPreflightError) {
+            gchar* qgcCapsStr = gst_caps_to_string(qgcDmaBufCaps);
+            const QString reason = !msg ? QStringLiteral("timed out waiting for EOS")
+                                        : QStringLiteral("negotiation failed: %1").arg(errMsg);
+            const QString message =
+                QStringLiteral("VA driver cannot produce QGC-compatible direct DMABuf caps (%1). QGC: %2")
+                    .arg(reason, QString::fromUtf8(qgcCapsStr ? qgcCapsStr : ""));
+            g_free(qgcCapsStr);
+            QSKIP(qPrintable(message));
+        }
+    }
+
     QVideoSink videoSink;
 
     GError* error = nullptr;
@@ -86,7 +175,7 @@ void GStreamerTest::_testDmaBufDispatch()
         "videotestsrc num-buffers=10 ! "
         "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! "
         "vah264enc ! h264parse ! vah264dec ! vapostproc ! "
-        "video/x-raw(memory:DMABuf) ! "
+        "capsfilter name=qgccaps ! "
         "qgcvideosinkbin name=sink gpu-zerocopy=true",
         &error);
     if (error) {
@@ -99,6 +188,11 @@ void GStreamerTest::_testDmaBufDispatch()
         gst_element_set_state(pipeline, GST_STATE_NULL);
         gst_object_unref(pipeline);
     });
+
+    GstElement* capsFilter = gst_bin_get_by_name(GST_BIN(pipeline), "qgccaps");
+    QVERIFY2(capsFilter, "Could not find DMABuf capsfilter");
+    g_object_set(capsFilter, "caps", qgcDmaBufCaps, nullptr);
+    gst_object_unref(capsFilter);
 
     GstElement* sinkBin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
     QVERIFY2(sinkBin, "Could not find 'sink' element");

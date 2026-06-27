@@ -115,6 +115,19 @@ gboolean padProbe([[maybe_unused]] GstElement* element, GstPad* pad, gpointer us
     return TRUE;
 }
 
+bool addStaticGhostPad(GstElement* element)
+{
+    GstPad* srcPad = gst_element_get_static_pad(element, "src");
+    if (!srcPad) {
+        qCCritical(GstSourceFactoryLog) << "gst_element_get_static_pad('src') failed";
+        return false;
+    }
+
+    wrapWithGhostPad(element, srcPad, nullptr);
+    gst_object_unref(srcPad);
+    return true;
+}
+
 bool validPort(int port)
 {
     return port > 0 && port <= 65535;
@@ -438,6 +451,39 @@ bool linkSourceToParser(GstElement* bin, GstElement* upstream, GstElement* binPa
     return true;
 }
 
+bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement* depay, GstElement* parser,
+                                const Config& config, guint latencyMs)
+{
+    if (config.jitterBuffer == JitterBuffer::None) {
+        if (!gst_element_link_many(source, depay, parser, nullptr)) {
+            qCCritical(GstSourceFactoryLog) << "gst_element_link_many(source, depay, parser) failed";
+            return false;
+        }
+        return true;
+    }
+
+    GstElement* buffer = gst_element_factory_make("rtpjitterbuffer", nullptr);
+    if (!buffer) {
+        qCCritical(GstSourceFactoryLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
+        return false;
+    }
+
+    configureJitterBuffer(buffer, config, latencyMs);
+
+    if (!gst_bin_add(GST_BIN(bin), buffer)) {
+        qCCritical(GstSourceFactoryLog) << "gst_bin_add(rtpjitterbuffer) failed";
+        gst_object_unref(buffer);
+        return false;
+    }
+
+    if (!gst_element_link_many(source, buffer, depay, parser, nullptr)) {
+        qCCritical(GstSourceFactoryLog) << "gst_element_link_many(source, rtpjitterbuffer, depay, parser) failed";
+        return false;
+    }
+
+    return true;
+}
+
 }  // namespace
 
 GstElement* create(const QString& uri, const Config& config)
@@ -467,6 +513,7 @@ GstElement* create(const QString& uri, const Config& config)
     // unconditional gst_clear_object cleanup at the bottom stays safe.
     GstElement* source = nullptr;
     GstElement* parser = nullptr;
+    GstElement* rtpDepay = nullptr;
     GstElement* tsdemux = nullptr;
     GstElement* bin = nullptr;
     GstElement* srcbin = nullptr;
@@ -489,16 +536,31 @@ GstElement* create(const QString& uri, const Config& config)
             break;
         }
 
-        parser = gst_element_factory_make("parsebin", "parser");
+        parser = gst_element_factory_make(isUdpH265 ? "h265parse" : "parsebin", "parser");
         if (!parser) {
-            qCCritical(GstSourceFactoryLog) << "gst_element_factory_make('parsebin') failed";
+            qCCritical(GstSourceFactoryLog) << "gst_element_factory_make("
+                                            << (isUdpH265 ? "'h265parse'" : "'parsebin'") << ") failed";
             break;
+        }
+
+        if (isUdpH265) {
+            // UDP H.265 has no SDP/RTSP control plane. Make depayloading and parser config explicit
+            // so hardware decoders, especially Android MediaCodec, see repeated VPS/SPS/PPS at IDR
+            // boundaries instead of depending on parsebin's defaults after startup or reconnect.
+            rtpDepay = gst_element_factory_make("rtph265depay", nullptr);
+            if (!rtpDepay) {
+                qCCritical(GstSourceFactoryLog) << "gst_element_factory_make('rtph265depay') failed";
+                break;
+            }
+            g_object_set(parser, "config-interval", -1, nullptr);
         }
 
         // GStreamer <1.28 misnegotiates parser->decoder caps; force avc/hvc1. 1.28+ fixes it
         // and the forced caps break byte-stream HW decoders (Qualcomm AMC, D3D12).
 #if !GST_CHECK_VERSION(1, 28, 0)
-        (void) g_signal_connect(parser, "autoplug-query", G_CALLBACK(filterParserCaps), nullptr);
+        if (!isUdpH265) {
+            (void) g_signal_connect(parser, "autoplug-query", G_CALLBACK(filterParserCaps), nullptr);
+        }
 #endif
 
         // Add individually so ownership is unambiguous on failure: gst_bin_add sinks the ref only
@@ -509,6 +571,13 @@ GstElement* create(const QString& uri, const Config& config)
         }
         GstElement* upstream = source;
         source = nullptr;
+
+        if (rtpDepay && !gst_bin_add(GST_BIN(bin), rtpDepay)) {
+            qCCritical(GstSourceFactoryLog) << "gst_bin_add(rtph265depay) failed";
+            break;
+        }
+        GstElement* depay = rtpDepay;
+        rtpDepay = nullptr;
 
         if (!gst_bin_add(GST_BIN(bin), parser)) {
             qCCritical(GstSourceFactoryLog) << "gst_bin_add(parser) failed";
@@ -540,8 +609,17 @@ GstElement* create(const QString& uri, const Config& config)
             upstream = demux;
         }
 
-        if (!linkSourceToParser(bin, upstream, binParser, config, latencyMs, isTcpMPEGTS || isUdpMPEGTS, isRtsp)) {
-            break;  // helper logged the specific failure
+        if (isUdpH265) {
+            if (!linkUdpRtpToDepayAndParser(bin, upstream, depay, binParser, config, latencyMs)) {
+                break;  // helper logged the specific failure
+            }
+            if (!addStaticGhostPad(binParser)) {
+                break;
+            }
+        } else {
+            if (!linkSourceToParser(bin, upstream, binParser, config, latencyMs, isTcpMPEGTS || isUdpMPEGTS, isRtsp)) {
+                break;  // helper logged the specific failure
+            }
         }
 
         srcbin = bin;
@@ -550,6 +628,7 @@ GstElement* create(const QString& uri, const Config& config)
 
     gst_clear_object(&bin);
     gst_clear_object(&parser);
+    gst_clear_object(&rtpDepay);
     gst_clear_object(&tsdemux);
     gst_clear_object(&source);
 

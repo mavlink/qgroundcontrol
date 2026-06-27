@@ -15,11 +15,11 @@ class QQuickWindow;
 ///   QGC_RHI_DEBUG           - enable RHI debug layer, debug markers and GPU timestamps
 ///   QGC_RHI_PIPELINE_CACHE  - "0" disables the on-disk pipeline cache (default on)
 ///   QGC_HDR_OUTPUT          - request HDR display output (diagnostic; see note in .cc)
-///   QGC_FORCE_VIDEO_GPU     - "low:high" LUID hex pair to force a specific D3D adapter (Windows)
-namespace QGCGraphicsSetup {
+///   QGC_FORCE_VIDEO_GPU     - "low:high" LUID hex pair to force a specific D3D adapter (Windows only)
+namespace GraphicsSetup {
 
 /// Apply pre-scene-graph-init configuration (graphics config + optional forced device) and schedule
 /// the deferred HDR diagnostic probe. No-op with a warning if the SG is already initialized.
 void configureMainWindow(QQuickWindow* window);
 
-}  // namespace QGCGraphicsSetup
+}  // namespace GraphicsSetup

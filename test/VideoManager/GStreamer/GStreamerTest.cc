@@ -8,6 +8,7 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStandardPaths>
@@ -21,6 +22,8 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
 #include "GstVideoReceiver.h"
+#include "LogManager.h"
+#include "VideoBackend.h"
 
 void GStreamerTest::init()
 {
@@ -117,6 +120,123 @@ void GStreamerTest::_testSetCodecPrioritiesDefault()
 
     GstRegistry* registry = gst_registry_get();
     QVERIFY(registry != nullptr);
+}
+
+void GStreamerTest::_testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder()
+{
+#ifndef Q_OS_WIN
+    QSKIP("D3D decoder rank steering is Windows-only");
+#else
+    GstRegistry* registry = gst_registry_get();
+    QVERIFY(registry != nullptr);
+
+    auto lookup = [registry](const char* featureName) {
+        return gst_registry_lookup_feature(registry, featureName);
+    };
+
+    GstPluginFeature* software = lookup("avdec_h265");
+    GstPluginFeature* d3d11 = lookup("d3d11h265dec");
+    GstPluginFeature* d3d12 = lookup("d3d12h265dec");
+    if (!software || !d3d11 || !d3d12) {
+        if (software) {
+            gst_object_unref(software);
+        }
+        if (d3d11) {
+            gst_object_unref(d3d11);
+        }
+        if (d3d12) {
+            gst_object_unref(d3d12);
+        }
+        QSKIP("Required H.265 software/D3D decoder factories are not installed");
+    }
+
+    const guint oldSoftwareRank = gst_plugin_feature_get_rank(software);
+    const guint oldD3D11Rank = gst_plugin_feature_get_rank(d3d11);
+    const guint oldD3D12Rank = gst_plugin_feature_get_rank(d3d12);
+    const auto restoreRanks = qScopeGuard([software, d3d11, d3d12, oldSoftwareRank, oldD3D11Rank, oldD3D12Rank]() {
+        gst_plugin_feature_set_rank(software, oldSoftwareRank);
+        gst_plugin_feature_set_rank(d3d11, oldD3D11Rank);
+        gst_plugin_feature_set_rank(d3d12, oldD3D12Rank);
+        gst_object_unref(software);
+        gst_object_unref(d3d11);
+        gst_object_unref(d3d12);
+    });
+
+    const QByteArray oldRhiBackend = qgetenv("QSG_RHI_BACKEND");
+    qputenv("QSG_RHI_BACKEND", QByteArray("d3d11"));
+    const auto restoreRhiEnv = qScopeGuard([oldRhiBackend]() {
+        if (oldRhiBackend.isEmpty()) {
+            qunsetenv("QSG_RHI_BACKEND");
+        } else {
+            qputenv("QSG_RHI_BACKEND", oldRhiBackend);
+        }
+    });
+
+    gst_plugin_feature_set_rank(software, GST_RANK_PRIMARY + 1);
+    gst_plugin_feature_set_rank(d3d11, GST_RANK_MARGINAL);
+    gst_plugin_feature_set_rank(d3d12, GST_RANK_PRIMARY + 2);
+
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
+
+    const guint softwareRank = gst_plugin_feature_get_rank(software);
+    const guint d3d11Rank = gst_plugin_feature_get_rank(d3d11);
+    const guint d3d12Rank = gst_plugin_feature_get_rank(d3d12);
+
+    QVERIFY2(d3d11Rank > softwareRank, "Default Windows D3D11 RHI must prefer d3d11h265dec over avdec_h265");
+    QCOMPARE(d3d12Rank, static_cast<guint>(GST_RANK_NONE));
+#endif
+}
+
+void GStreamerTest::_testSetCodecPrioritiesSkipsAbsentD3DDecoders()
+{
+#ifndef Q_OS_WIN
+    QSKIP("D3D decoder rank steering is Windows-only");
+#else
+    GstRegistry* registry = gst_registry_get();
+    QVERIFY(registry != nullptr);
+
+    const QByteArray oldLoggingRules = qgetenv("QT_LOGGING_RULES");
+    QLoggingCategory::setFilterRules(QStringLiteral("*.debug=false\nVideo.GStreamer.GStreamerHelpers.debug=true"));
+    const auto restoreLoggingRules = qScopeGuard([oldLoggingRules]() {
+        QLoggingCategory::setFilterRules(QString::fromUtf8(oldLoggingRules));
+    });
+
+    LogManager::clearCapturedMessages();
+    QVERIFY(!GStreamer::changeFeatureRank(registry, "__qgc_missing_d3d_decoder_for_test__", GST_RANK_NONE));
+
+    const QList<LogEntry> helperMessages =
+        LogManager::capturedMessages(QStringLiteral("Video.GStreamer.GStreamerHelpers"));
+    for (const LogEntry& entry : helperMessages) {
+        QVERIFY2(!entry.message.contains(QStringLiteral("Feature does not exist")),
+                 qPrintable(QStringLiteral("Optional D3D decoder factory was logged as a failure: %1")
+                                 .arg(entry.message)));
+    }
+#endif
+}
+
+void GStreamerTest::_testD3D12RhiDisablesGpuZeroCopySink()
+{
+#if !defined(Q_OS_WIN) || !defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    QSKIP("D3D12 sink policy is Windows D3D12-only");
+#else
+    const QByteArray oldRhiBackend = qgetenv("QSG_RHI_BACKEND");
+    qputenv("QSG_RHI_BACKEND", QByteArray("d3d12"));
+    const auto restoreRhiEnv = qScopeGuard([oldRhiBackend]() {
+        if (oldRhiBackend.isEmpty()) {
+            qunsetenv("QSG_RHI_BACKEND");
+        } else {
+            qputenv("QSG_RHI_BACKEND", oldRhiBackend);
+        }
+    });
+
+    QVERIFY2(!VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
+             "D3D12 RHI must force the CPU sink path because gst-d3d12 cannot wrap Qt's ID3D12Device");
+    QVERIFY(VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(false, true) == false);
+    QVERIFY(VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(true, false) == false);
+
+    qputenv("QSG_RHI_BACKEND", QByteArray("d3d11"));
+    QVERIFY(VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false));
+#endif
 }
 
 void GStreamerTest::_testSetCodecPrioritiesSoftware()
@@ -381,6 +501,8 @@ void GStreamerTest::init()
 QGC_GST_SKIP_TEST(_testIsValidRtspUri)
 QGC_GST_SKIP_TEST(_testIsHardwareDecoderFactory)
 QGC_GST_SKIP_TEST(_testSetCodecPrioritiesDefault)
+QGC_GST_SKIP_TEST(_testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder)
+QGC_GST_SKIP_TEST(_testSetCodecPrioritiesSkipsAbsentD3DDecoders)
 QGC_GST_SKIP_TEST(_testSetCodecPrioritiesSoftware)
 QGC_GST_SKIP_TEST(_testSetCodecPrioritiesHardware)
 QGC_GST_SKIP_TEST(_testRedirectGLibLogging)

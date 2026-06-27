@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
     QGCApplication app(argc, argv, args);
 
-    LogManager::installHandler();
+    LogManager::installHandler(args.logOutput);
 
     Platform::setupPostApp();
 

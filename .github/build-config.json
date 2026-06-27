@@ -42,7 +42,7 @@
       ],
       "android": ["androidmedia", "dav1d"],
       "apple": ["applemedia", "dav1d"],
-      "windows": ["d3d", "d3d11", "dav1d", "nvcodec"],
+      "windows": ["d3d", "d3d11", "d3d12", "dav1d", "nvcodec"],
       "linux": ["nvcodec", "qsv", "va", "vulkan"]
     },
     "checksums": {

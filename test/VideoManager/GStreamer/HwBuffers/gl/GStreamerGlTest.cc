@@ -69,11 +69,13 @@
 void GStreamerTest::_testGlMemoryDispatch()
 {
     // Runtime glupload probe (not the build macro) so this runs in a direct-DMABuf build too.
-#ifdef Q_OS_MACOS
-    // On macOS, Qt's Cocoa platform plugin emits an uncategorized warning when
-    // GStreamer tries to create an OpenGL context outside the main thread.
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
+    // Headless/off-main-thread platform plugins can emit an uncategorized
+    // warning when GStreamer-GL probes an OpenGL context.
     ignoreLogMessage("default", QtWarningMsg,
                      QRegularExpression(QStringLiteral("This plugin does not support createPlatformOpenGLContext")));
+#endif
+#ifdef Q_OS_MACOS
     // GStreamer-GL emits an NSApplication warning on macOS when running outside the main thread.
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("An NSApplication needs to be running")));

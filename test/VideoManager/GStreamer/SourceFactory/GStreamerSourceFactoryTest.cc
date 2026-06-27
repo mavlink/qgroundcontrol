@@ -210,6 +210,28 @@ void GStreamerTest::_testSourceFactoryUdp265Caps()
     QVERIFY2(!findChildByFactoryName(bin, "tsdemux"), "udp265 is RTP, not MPEG-TS; no tsdemux");
 }
 
+void GStreamerTest::_testSourceFactoryUdp265UsesExplicitDepayAndParser()
+{
+    if (!gst_element_factory_find("udpsrc") || !gst_element_factory_find("rtph265depay") ||
+        !gst_element_factory_find("h265parse")) {
+        QSKIP("udp265 RTP/H265 plugins unavailable");
+    }
+
+    GStreamer::SourceFactory::Config config;
+    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("udp265://127.0.0.1:5600"), config);
+    QVERIFY(bin);
+    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
+
+    QVERIFY2(findChildByFactoryName(bin, "rtph265depay"), "udp265:// must depayload H265 RTP explicitly");
+
+    GstElement* parser = findChildByFactoryName(bin, "h265parse");
+    QVERIFY2(parser, "udp265:// must parse H265 explicitly");
+
+    gint configInterval = 0;
+    g_object_get(parser, "config-interval", &configInterval, nullptr);
+    QCOMPARE(configInterval, -1);
+}
+
 void GStreamerTest::_testSourceFactoryUdpH264Caps()
 {
     if (!gst_element_factory_find("udpsrc")) {
