@@ -140,7 +140,7 @@ def check_gstreamer_version() -> None:
     """Check configured and installed GStreamer versions."""
     log_info("Checking GStreamer version...")
     current_version = get_build_config_value(
-        "gstreamer_version",
+        "gstreamer.version.default",
         "unknown",
         start=Path(__file__).resolve(),
     )

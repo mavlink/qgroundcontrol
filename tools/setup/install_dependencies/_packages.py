@@ -172,9 +172,11 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libgstreamer-plugins-base1.0-dev",
         "libgstreamer-plugins-bad1.0-dev",
         # Runtime plugin .so packages for the AppDir (the -dev packages above are link-only);
-        # install verification needs playback/tcp (base) and rtsp/rtp/rtpmanager/udp (good).
+        # install verification needs base/good/bad (openh264) + gl (opengl) to match the native set.
         "gstreamer1.0-plugins-base",
         "gstreamer1.0-plugins-good",
+        "gstreamer1.0-plugins-bad",
+        "gstreamer1.0-gl",
         "libusb-1.0-0-dev",
         "libsdl2-dev",
     ],

@@ -79,6 +79,13 @@ endif()
 
 # Link parallelism (Ninja only)
 set(QGC_LINK_PARALLEL_LEVEL 2 CACHE STRING "Maximum parallel link jobs (prevents OOM during LTO)")
+# ---- GStreamer SDK download / debug ----
+# Fail closed: only the SDK-download platforms (Android/macOS/iOS/Windows) hit this path;
+# Linux uses system pkg-config and never downloads, so ON is a no-op there.
+option(GStreamer_REQUIRE_CHECKSUM "Fail if an SDK download's checksum cannot be verified (set OFF to bypass)" ON)
+option(GStreamer_DEBUG "Print GStreamer CMake debug messages" OFF)
+set(QGC_GST_DOWNLOAD_TIMEOUT "" CACHE STRING "GStreamer SDK download wall-clock timeout (seconds, default 1200)")
+set(QGC_GST_DOWNLOAD_INACTIVITY_TIMEOUT "" CACHE STRING "GStreamer SDK download inactivity timeout (seconds, default 60)")
 
 # Coverage thresholds
 set(QGC_COVERAGE_LINE_THRESHOLD 30 CACHE STRING "Minimum line coverage percentage")
@@ -106,9 +113,7 @@ option(QGC_NO_SERIAL_LINK "Disable serial port communication" OFF)
 # Video Streaming Options
 # ============================================================================
 
-option(QGC_ENABLE_UVC "Enable UVC (USB Video Class) device support" ON)
 option(QGC_ENABLE_GST_VIDEOSTREAMING "Enable GStreamer video backend" ON)
-option(QGC_ENABLE_QT_VIDEOSTREAMING "Enable QtMultimedia video backend" OFF)
 
 # ============================================================================
 # MAVLink Configuration

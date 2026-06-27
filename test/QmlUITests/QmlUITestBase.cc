@@ -122,6 +122,14 @@ void QmlUITestBase::startUI()
                      QRegularExpression(QStringLiteral("Error transferring")));
     ignoreLogMessage("Terrain.TerrainTileManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Elevation tile fetching returned error")));
+
+    // Slow headless/software-GL runners can leave async-incubated QML items still
+    // creating when the engine is torn down (destroyUIEngine drains best-effort but
+    // cannot guarantee completion). Benign at shutdown, so ignore it rather than fail
+    // strict mode on a timing artifact.
+    ignoreLogMessage("default", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("items in the process of being created at engine destruction")));
+
 #ifdef QT_DEBUG
     // Debug builds on macOS are ad-hoc signed with an unbound Info.plist, so
     // macOS never shows the camera permission dialog and silently denies access.

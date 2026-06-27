@@ -13,15 +13,12 @@ static constexpr bool kGstEnabled = true;
 #else
 static constexpr bool kGstEnabled = false;
 #endif
-#ifndef QGC_DISABLE_UVC
 #include "UVCReceiver.h"
-#endif
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
     // Setup enum values for videoSource settings into meta data
     QVariantList videoSourceList;
-#if defined(QGC_GST_STREAMING) || defined(QGC_QT_STREAMING)
     videoSourceList.append(videoSourceRTSP);
     videoSourceList.append(videoSourceUDPH264);
     videoSourceList.append(videoSourceUDPH265);
@@ -31,18 +28,15 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceParrotDiscovery);
     videoSourceList.append(videoSourceYuneecMantisG);
 
-    #ifdef QGC_HERELINK_AIRUNIT_VIDEO
-        videoSourceList.append(videoSourceHerelinkAirUnit);
-    #else
-        videoSourceList.append(videoSourceHerelinkHotspot);
-    #endif
+#ifdef QGC_HERELINK_AIRUNIT_VIDEO
+    videoSourceList.append(videoSourceHerelinkAirUnit);
+#else
+    videoSourceList.append(videoSourceHerelinkHotspot);
 #endif
-#ifndef QGC_DISABLE_UVC
     QStringList uvcDevices = UVCReceiver::getDeviceNameList();
     for (const QString& device : uvcDevices) {
         videoSourceList.append(device);
     }
-#endif
     if (videoSourceList.count() == 0) {
         _noVideo = true;
         videoSourceList.append(videoSourceNoVideo);
@@ -141,6 +135,26 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, lowLatencyMode)
     return _lowLatencyModeFact;
 }
 
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtpJitterLatencyMs)
+{
+    if (!_rtpJitterLatencyMsFact) {
+        _rtpJitterLatencyMsFact = _createSettingsFact(rtpJitterLatencyMsName);
+        _rtpJitterLatencyMsFact->setUserVisible(kGstEnabled);
+        connect(_rtpJitterLatencyMsFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _rtpJitterLatencyMsFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspAutoReconnect)
+{
+    if (!_rtspAutoReconnectFact) {
+        _rtspAutoReconnectFact = _createSettingsFact(rtspAutoReconnectName);
+        _rtspAutoReconnectFact->setUserVisible(kGstEnabled);
+        connect(_rtspAutoReconnectFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _rtspAutoReconnectFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceCpuVideoPath)
 {
     if (!_forceCpuVideoPathFact) {
@@ -155,8 +169,8 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceCpuVideoPath)
     return _forceCpuVideoPathFact;
 }
 
-// videoConversionElement / disablePixelAspectRatio are read by GStreamer::createVideoSink()
-// at bin construction and passed as construct-only properties — no env-var indirection.
+// videoConversionElement / disablePixelAspectRatio are read by VideoBackend::createSink()
+// into a VideoSinkConfig and passed as construct-only bin properties — no env-var indirection.
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoConversionElement)
 {
     if (!_videoConversionElementFact) {
@@ -175,14 +189,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, disablePixelAspectRatio)
     return _disablePixelAspectRatioFact;
 }
 
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, frameSmoothingEnabled)
-{
-    if (!_frameSmoothingEnabledFact) {
-        _frameSmoothingEnabledFact = _createSettingsFact(frameSmoothingEnabledName);
-        _frameSmoothingEnabledFact->setUserVisible(kGstEnabled);
-    }
-    return _frameSmoothingEnabledFact;
-}
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspTimeout)
 {
@@ -265,12 +271,10 @@ bool VideoSettings::streamConfigured(void)
         qCDebug(VideoSettingsLog) << "Stream configured for Herelink Hotspot";
         return true;
     }
-#ifndef QGC_DISABLE_UVC
     if (UVCReceiver::enabled() && UVCReceiver::deviceExists(vSource)) {
         qCDebug(VideoSettingsLog) << "Stream configured for UVC";
         return true;
     }
-#endif
     return false;
 }
 
@@ -308,6 +312,46 @@ void VideoSettings::_setForceVideoDecodeList()
 
     for (const auto &value : removeForceVideoDecodeList) {
         _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(value);
+    }
+#endif
+}
+
+void VideoSettings::pruneUnavailableDecoders()
+{
+#ifdef QGC_GST_STREAMING
+    static const QList<GStreamer::VideoDecoderOptions> hardwareFamilies{
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderIntel,
+        GStreamer::VideoDecoderOptions::ForceVideoDecoderVulkan,
+    };
+
+    const QList<GStreamer::VideoDecoderOptions> available = GStreamer::availableDecoderFamilies();
+    const auto metaIt = _nameToMetaDataMap.constFind(forceVideoDecoderName);
+    if (metaIt == _nameToMetaDataMap.constEnd() || !metaIt.value()) {
+        return;
+    }
+    FactMetaData* const metaData = metaIt.value();
+    bool pruned = false;
+    for (const auto family : hardwareFamilies) {
+        // removeEnumInfo() qWarns on an absent value, so skip families not in the enum; values are
+        // stored as QVariant(int), so match that representation.
+        const QVariant familyValue = static_cast<int>(family);
+        if (!available.contains(family) && metaData->enumValues().contains(familyValue)) {
+            metaData->removeEnumInfo(familyValue);
+            pruned = true;
+        }
+    }
+
+    Fact* const fact = forceVideoDecoder();
+    if (pruned) {
+        // Backend init is async — refresh any live FactComboBox bound to this fact.
+        emit fact->enumsChanged();
+    }
+    if (!metaData->enumValues().contains(fact->rawValue())) {
+        fact->setRawValue(GStreamer::VideoDecoderOptions::ForceVideoDecoderDefault);
     }
 #endif
 }

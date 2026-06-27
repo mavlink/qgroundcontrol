@@ -7,37 +7,66 @@
   "android_min_sdk": "28",
   "android_platform": "36",
   "cmake_minimum_version": "3.25",
-  "gstreamer_android_version": "1.28.1",
-  "gstreamer_ios_version": "1.28.1",
-  "gstreamer_macos_version": "1.28.1",
-  "gstreamer_minimum_version": "1.20.0",
-  "gstreamer_default_version": "1.28.1",
-  "gstreamer_windows_version": "1.28.1",
+  "gstreamer": {
+    "version": {
+      "default": "1.28.4",
+      "minimum": "1.20.0",
+      "android": "1.28.4",
+      "ios": "1.28.4",
+      "macos": "1.28.4",
+      "windows": "1.28.4"
+    },
+    "plugins": {
+      "common": [
+        "app",
+        "coreelements",
+        "isomp4",
+        "libav",
+        "matroska",
+        "mpegtsdemux",
+        "opengl",
+        "openh264",
+        "playback",
+        "rtp",
+        "rtpmanager",
+        "rtsp",
+        "sdpelem",
+        "tcp",
+        "typefindfunctions",
+        "udp",
+        "videoparsersbad",
+        "vpx",
+        "videoconvertscale",
+        "videoconvert",
+        "videoscale"
+      ],
+      "android": ["androidmedia", "dav1d"],
+      "apple": ["applemedia", "dav1d"],
+      "windows": ["d3d", "d3d11", "d3d12", "dav1d", "nvcodec"],
+      "linux": ["nvcodec", "qsv", "va", "vulkan"]
+    },
+    "checksums": {
+      "1.28.4": {
+        "android": "a48aeb1b4fbae67a2fe0a0daa55af4a6af22b48f15a9c09f09dcd9ab3e8e943e",
+        "windows_msvc_x64": "1a745d67225e43394a4a5db929c97397cb56e74b1c38bb77c6ded4b037d3c040",
+        "windows_msvc_arm64": "6f810ad85e0fe7b566ab2f2841c0fec52e010265af6883427652e0a159a40fc7",
+        "macos": "9f9ae8ba1a25eb42d6740c4e5f15b09ee6b9127b7359e9662c45a2b9a5029f85",
+        "macos_devel": "2758abb2abe10b79ad4cf17cbcf0a75e3cb71ee8ce01724960b8f3e0b715e065",
+        "ios": "d82c51bd81eafa77fd322c39ce7e6d663a5b860359ace6ed98060c87092e4845"
+      }
+    },
+    "ca_bundle_sha256": "86a1f3366afac7c6f8ae9f3c779ac221129328c43f0ab2b8817eb2f362a5025c"
+  },
   "ios_deployment_target": "17.0",
   "java_version": "21",
   "macos_deployment_target": "13.0",
   "ndk_full_version": "27.2.12479018",
-  "platform_workflows": "Linux,Windows,MacOS,Android",
   "ndk_version": "r27c",
+  "platform_workflows": "Linux,Windows,MacOS,Android",
   "qt_minimum_version": "6.11.0",
   "qt_modules": "qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver",
   "qt_version": "6.11.1",
   "vulkan_sdk_version": "1.4.304.1",
   "xcode_ios_version": "latest-stable",
-  "xcode_version": "16.x",
-  "gstreamer_checksums": {
-    "1.28.1": {
-      "android": "7b3f7cfd289aa1ac237899220b3d8fbfa722337c23175c047e06ec881c505481",
-      "windows_msvc_x64": "2ec50356d2d0937a9ead0f99d322f81d8413b9514c9d58ed41ca58fbcf25bfde",
-      "windows_msvc_arm64": "0a1938b7a8568ee5695c4c1755743cacc4a1643538cacdfc5be3c82426c0e193",
-      "macos": "02803f73435daabe8fb12b79c38c6775d0efb83af001474558ba25c4f874d305",
-      "macos_devel": "df167b41559afbcd743276c6b068cba2ada8f5b69eb68095415a7a5a7515e52c",
-      "ios": "3255cd01f8c4d92322be0c5825a192b998fef05989a161dcae3cef22c517ae71",
-      "good_plugins": "738e26aee41b7a62050e40b81adc017a110a7f32d1ec49fa6a0300846c44368d"
-    },
-    "1.22.12": {
-      "android": "be92cf477d140c270b480bd8ba0e26b1e01c8db042c46b9e234d87352112e485",
-      "windows_msvc_x64": "e5cbc6fb9f40fc2850806163df4b9d92012f967c842dc000a2b254cbcd7901d6"
-    }
-  }
+  "xcode_version": "16.x"
 }

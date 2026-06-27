@@ -232,7 +232,7 @@ def install_windows(
         return False
 
     if not skip_gstreamer:
-        version = gstreamer_version or _c.get_config_value("gstreamer_windows_version")
+        version = gstreamer_version or _c.get_config_value("gstreamer.version.windows")
         if not version:
             print(
                 "Error: GStreamer version not found. "
