@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
     QGCApplication app(argc, argv, args);
 
-    LogManager::installHandler();
+    LogManager::installHandler(args.logOutput);
 
     Platform::setupPostApp();
 
@@ -45,11 +45,11 @@ int main(int argc, char *argv[])
 #endif
         case AppMode::BootTest:
             if (!app.bootTestPassed()) {
-                qCCritical(MainLog) << "Simple boot test failed during GStreamer initialization";
-                return 1;
+                qCCritical(MainLog) << "Simple boot test failed";
+                return EXIT_FAILURE;
             }
             qCInfo(MainLog) << "Simple boot test completed";
-            return 0;
+            return EXIT_SUCCESS;
         case AppMode::Gui:
             qCInfo(MainLog) << "Starting application event loop";
             return app.exec();
