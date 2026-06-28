@@ -34,14 +34,14 @@ Item {
         bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
     }
 
-    Rectangle {
-        id: rect
-        anchors.fill: parent
-        color: "red"
-                opacity: 0.3
-
+    SVControlPanel {
+        id: controlPanel
+        anchors.bottom: root.bottom
+        anchors.horizontalCenter: root.horizontalCenter
     }
+}
 
+/*
     Item {
         width: 400
         height: 250
@@ -50,6 +50,8 @@ Item {
             horizontalCenter: parent.horizontalCenter
             bottom: parent.bottom
         }
+    }
+}
 
     DigitalJoystick {
         anchors {
@@ -106,7 +108,8 @@ Item {
 
             }
         }
+        */
 
 
-}
+
 

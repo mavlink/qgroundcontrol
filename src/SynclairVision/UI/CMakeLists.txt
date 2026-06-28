@@ -3,6 +3,10 @@
 # ============================================================================
 qt_add_library(SynclairVisionUIModule STATIC)
 
+set_source_files_properties(SVState.qml
+    PROPERTIES QT_QML_SINGLETON_TYPE TRUE
+)
+
 qt_add_qml_module(SynclairVisionUIModule
     URI QGroundControl.SynclairVisionUI
     VERSION 1.0
@@ -10,12 +14,13 @@ qt_add_qml_module(SynclairVisionUIModule
     QML_FILES
         SVFlyView.qml
         SVFlyViewWidgetLayer.qml
-
+        SVState.qml
         SVCameraLayer.qml
         SVCameraWidgetLayer.qml
-
-        DigitalJoystick.qml
-        DigitalJoystickButton.qml
+        SVControlPanel.qml
+        SVVirtualJoystick.qml
+        SVJoystickArea.qml
+        SVJoystickButtonSegment.qml
     NO_PLUGIN
 )
 

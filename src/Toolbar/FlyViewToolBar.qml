@@ -6,6 +6,8 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlyView
+import QGroundControl.SynclairVisionUI
+
 
 Item {
     required property var guidedValueSlider
@@ -19,6 +21,7 @@ Item {
     property color  _mainStatusBGColor: qgcPal.brandPrimary
     property real   _leftRightMargin:   ScreenTools.defaultFontPixelWidth * 0.75
     property var    _guidedController:  globals.guidedControllerFlyView
+
 
     function dropMainStatusIndicatorTool() {
         mainStatusIndicator.dropMainStatusIndicator();
@@ -102,6 +105,8 @@ Item {
                         Layout.fillHeight:  true
                         visible:            _activeVehicle
                     }
+
+
                 }
             }
             Item {
@@ -139,6 +144,17 @@ Item {
                     id:     flyViewIndicators
                     height: parent.height
                 }
+
+                QGCCheckBoxSlider {
+                    id: overlayButton
+                    text: "Synclair Vision: QGroundControl"
+                    checked: SVState.svOverlay
+                    onCheckedChanged: SVState.svOverlay = checked
+                    anchors.right: flyViewIndicators.right
+                    anchors.rightMargin: _margins * 2
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                
             }
         }
     }
@@ -165,6 +181,10 @@ Item {
             text:       guidedActionConfirm.message
         }
 
+        
+
+        
+
         PropertyAnimation {
             id:         messageOpacityAnimation
             target:     guidedActionMessageDisplay
@@ -184,4 +204,10 @@ Item {
     ParameterDownloadProgress {
         anchors.fill: parent
     }
+
+
+
+    
+
+
 }

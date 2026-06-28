@@ -52,8 +52,6 @@ Item {
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
 
-    property bool   _overlay:           true
-
     function _calcCenterViewPort() {
         var newToolInset = Qt.rect(0, 0, width, height)
         toolstrip.adjustToolInset(newToolInset)
@@ -154,7 +152,7 @@ Item {
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
             viewer3DCameraController: viewer3DLoader.item ? viewer3DLoader.item.cameraController : null
-            visible:                !QGroundControl.videoManager.fullScreen && !_overlay
+            visible:                !QGroundControl.videoManager.fullScreen
         }
 
         SVFlyView   {
@@ -165,7 +163,7 @@ Item {
             z:                  _fullItemZorder + 2
 
             parentToolInsets:   _toolInsets
-            visible:            !QGroundControl.videoManager.fullScreen && _overlay
+            visible:            !QGroundControl.videoManager.fullScreen && SVState.svOverlay
         }
 
         FlyViewCustomLayer {

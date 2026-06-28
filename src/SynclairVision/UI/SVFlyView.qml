@@ -56,10 +56,5 @@ Item {
 
     }
 
-    Rectangle {
-        id: rect
-        anchors.fill: parent
-        color: "blue"
-        opacity: 0.3
-    }
+    
 }

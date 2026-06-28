@@ -19,13 +19,6 @@ Item {
     property var parentToolInsets
     property int _widgetMargin: 0
 
-    Rectangle {
-        id: rect
-        anchors.fill: parent
-        color: "yellow"
-                opacity: 0.3
-
-    }
  
     SVCameraWidgetLayer {
         id: widgetLayer

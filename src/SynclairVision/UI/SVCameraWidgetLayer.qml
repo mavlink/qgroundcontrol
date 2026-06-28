@@ -34,13 +34,6 @@ Item {
         bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
     }
 
-    Rectangle {
-        id: rect
-        anchors.fill: parent
-        color: "purple"
-                opacity: 0.3
-
-    }
 
     
 
