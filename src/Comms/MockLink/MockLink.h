@@ -235,6 +235,7 @@ private:
     void _handleParamRequestRead(const mavlink_message_t &msg);
     void _handleFTP(const mavlink_message_t &msg);
     void _handleCommandLong(const mavlink_message_t &msg);
+    void _handleCommandInt(const mavlink_message_t &msg);
     void _handleInProgressCommandLong(const mavlink_command_long_t &request);
     void _handleCommandLongSetMessageInterval(const mavlink_command_long_t &request, bool &acccepted);
     void _handleManualControl(const mavlink_message_t &msg);
