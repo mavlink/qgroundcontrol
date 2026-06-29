@@ -186,7 +186,7 @@ jobs:
 
       - name: Restore baseline sizes
         if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           path: baseline-sizes.json
@@ -194,7 +194,7 @@ jobs:
 
       - name: Restore baseline coverage
         if: steps.pr.outputs.result != '' && steps.builds.outputs.all_complete == 'true'
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           path: baseline-coverage.xml
