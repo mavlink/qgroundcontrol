@@ -7,11 +7,33 @@ import QGroundControl
 Item {
     id: root
 
-    property var _t: 0.5
-    property var _hoveredButton: -1
-    property bool _pressed: false
+    property real t: 0.5
+    property int hoverIndex: -1
+    property int pressedIndex: -1
+
+    property var  innerClicked: [false, false, false, false]
+    property var  outerClicked: [false, false, false, false]
 
     QGCPalette { id: qgcPalette}
+
+    function getAngleStep(dx, dy) {
+        let angle = Math.atan2(dy, dx)
+        if (angle < 0) angle += Math.PI * 2;
+        angle /= (Math.PI / 4);
+        return angle
+    }
+
+    function getButton(angleStep) {
+        if(angleStep >= 5 && angleStep < 7) {
+            return 3;
+        } else if(angleStep >= 3 && angleStep < 5) {
+            return 2;
+        } else if(angleStep >= 1 && angleStep < 3) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 
     function getHoveredButton(mouseX, mouseY) {
         const radius = root.width / 2;
@@ -26,43 +48,77 @@ Item {
         }
 
         const offset = distance < innerRadius ? 4 : 0;
+        const angleStep = getAngleStep(dx, dy);
+        const buttonIndex = offset + getButton(angleStep);
+        return buttonIndex;
+    }
 
-        let angle = Math.atan2(dy, dx)
-        if (angle < 0) angle += Math.PI * 2;
-        const angleStep = Math.PI / 4
+    function setClicked(index) {
+        if (index < 0) {
+            return
+        }
 
-        if(angle >= angleStep * 5 && angle < angleStep * 7) {
-            return offset + 3;
-        } else if(angle >= angleStep * 3 && angle < angleStep * 5) {
-            return offset + 2;
-        } else if(angle >= angleStep && angle < angleStep * 3) {
-            return offset + 1
+        if (index < 4) {
+            let next = outerClicked.slice()
+            next[index] = true
+            outerClicked = next
         } else {
-            return offset;
+            let next = innerClicked.slice()
+            next[index - 4] = true
+            innerClicked = next
         }
     }
+
+    
+
+    function clearClicked(index) {
+        if (index < 0) {
+            return
+        }
+
+        if (index < 4) {
+            let next = outerClicked.slice()
+            next[index] = false
+            outerClicked = next
+        } else {
+            let next = innerClicked.slice()
+            next[index - 4] = false
+            innerClicked = next
+        }
+    }
+
+     
 
     SVJoystickButtonSegment {
         id: outerButtons
         anchors.fill: parent
-        _buttonColor: qgcPalette.windowShade
-        _buttonHoveredColor: (_pressed) ? qgcPalette.buttonHighlight : qgcPalette.primaryButton
-        _borderColor: qgcPalette.windowShadeLight
-        _outerBorderColor: qgcPalette.text
-        _hover: _hoveredButton
+        buttonColor: qgcPalette.windowShade
+        hoveredButtonColor: qgcPalette.windowShadeLight
+        clickedButtonColor: qgcPalette.buttonHighlight
+        borderColor: qgcPalette.windowShadeLight
+        outerBorderColor: qgcPalette.statusPassedText
+        hoverIndex: (root.hoverIndex >= 0 && root.hoverIndex < 4) ? root.hoverIndex : -1
+        clicked: outerClicked 
+        arrowSize: 0.45  
+        arrowSpace: 1 - root.t
     }
 
-    SVJoystickButtonSegment {
+     SVJoystickButtonSegment {
         id: innerButtons
-        width: root.width * 0.5
-        height: root.height * 0.5
-        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width * root.t
+        height: parent.height * root.t
         anchors.horizontalCenter: parent.horizontalCenter
-        _buttonColor: qgcPalette.window
-        _buttonHoveredColor: (_pressed) ? qgcPalette.buttonHighlight : qgcPalette.primaryButton
-        _borderColor: qgcPalette.windowShadeLight
-        _outerBorderColor: qgcPalette.windowShadeLight
-        _hover: _hoveredButton - 4
+        anchors.verticalCenter: parent.verticalCenter
+        buttonColor: qgcPalette.window
+        hoveredButtonColor: qgcPalette.windowShadeLight
+        clickedButtonColor: qgcPalette.buttonHighlight
+        borderColor: qgcPalette.windowShadeLight
+        outerBorderColor: qgcPalette.statusPassedText
+        hoverIndex: (root.hoverIndex >= 4) ? root.hoverIndex - 4 : -1
+
+        clicked: innerClicked
+        arrowSize: 0.3
+        arrowSpace: 0.8
     }
 
     MouseArea {
@@ -71,27 +127,38 @@ Item {
         z: 999
 
         onPositionChanged: (mouse) => {
-            root._hoveredButton = root.getHoveredButton(mouse.x, mouse.y)
+            const index = root.getHoveredButton(mouse.x, mouse.y)
+            root.hoverIndex = index
+
+            if (pressed && index !== root.pressedIndex) {
+                root.clearClicked(root.pressedIndex)
+                root.setClicked(index)
+                root.pressedIndex = index
+            }
         }
 
-        onExited: { 
-            root._hoveredButton = -1; 
-            _pressed = false
+        onExited: {
+            root.hoverIndex = -1
+            root.clearClicked(root.pressedIndex)
+            root.pressedIndex = -1
         }
 
-        onPressed: {
-            _pressed = true
+        onPressed: (mouse) => {
+            const index = root.getHoveredButton(mouse.x, mouse.y)
+            root.hoverIndex = index
+            root.pressedIndex = index
+            root.setClicked(index)
         }
 
         onReleased: {
-            _pressed = false
+            root.clearClicked(root.pressedIndex)
+            root.pressedIndex = -1
         }
+
         onCanceled: {
-    _       pressed = false
-        }   
-
-
-
-
+            root.clearClicked(root.pressedIndex)
+            root.pressedIndex = -1
+            root.hoverIndex = -1
+        }
     }
 }

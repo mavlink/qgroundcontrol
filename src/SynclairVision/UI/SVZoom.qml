@@ -1,8 +1,6 @@
 import QtQuick
 import QtQuick.Shapes 2.15
-
 import QGroundControl
-
 
 Item {
     id: root
@@ -15,12 +13,15 @@ Item {
         id: border
         anchors.fill: parent
         radius: width / 2
-        color: qgcPalette.window
+        //color: qgcPalette.window
+        color: "red"
     }
 
-    SVJoystickArea {
-        id: joystick
+    SVZoomArea {
+        id: zoomArea
         anchors.fill: parent
         anchors.margins: borderWidth
     }
+
+    
 }

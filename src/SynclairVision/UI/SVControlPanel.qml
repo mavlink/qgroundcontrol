@@ -1,18 +1,33 @@
 import QtQuick
 import QtQuick.Shapes 2.15
 
+import QGroundControl
+
 Item {
     id: root
 
-    width: 230
-    height: 230
+    property int borderWidth: 0
+
+    QGCPalette { id: qgcPalette}
+
+    implicitWidth: joystick.width + zoom.width - borderWidth
+    implicitHeight: Math.max(joystick.height, zoom.height)
 
     SVVirtualJoystick {
-        height: root.height
-        width: root.height
+        id: joystick
+        height: 200
+        width: height
+        x: 0
+        y: 0
+        borderWidth: root.borderWidth
+    }
 
-        anchors.left: root.left
-
-
+    SVZoom {
+        id: zoom
+        height: 140
+        width: height / 2
+        x: joystick.width - borderWidth
+        y: root.implicitHeight - height
+        borderWidth: root.borderWidth
     }
 }
