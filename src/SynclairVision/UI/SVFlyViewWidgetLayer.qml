@@ -34,11 +34,15 @@ Item {
         bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
     }
 
+    QGCPalette { id: qgcPalette}
+
     SVControlPanel {
         id: controlPanel
         anchors.bottom: root.bottom
         anchors.horizontalCenter: root.horizontalCenter
     }
+
+
 }
 
 /*
@@ -109,7 +113,6 @@ Item {
             }
         }
         */
-
 
 
 

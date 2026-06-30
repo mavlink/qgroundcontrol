@@ -34,6 +34,14 @@ Item {
         bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
     }
 
+    HorizontalCompassAttitude {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+
+        width: 200
+    }
+
+
 
     
 

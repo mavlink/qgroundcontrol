@@ -84,7 +84,7 @@ Item {
         anchors.bottom:     parent.bottom
         anchors.right:      parent.right
         spacing:            _layoutSpacing
-        visible:            !SVState.svOverlay
+        visible:            !SVState.svOverlay || _mainWindowIsMap
 
         property real bottomEdgeRightInset:     height + _layoutMargin
         property real bottomEdgeCenterInset:    bottomEdgeRightInset
@@ -156,7 +156,7 @@ Item {
         anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
         maxHeight:              parent.height - y - parentToolInsets.bottomEdgeLeftInset - _toolsMargin
-        visible:                !QGroundControl.videoManager.fullScreen
+        visible:                !QGroundControl.videoManager.fullScreen 
 
         onDisplayPreFlightChecklist: {
             if (!preFlightChecklistLoader.active) {

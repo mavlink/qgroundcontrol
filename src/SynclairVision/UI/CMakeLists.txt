@@ -21,6 +21,15 @@ qt_add_qml_module(SynclairVisionUIModule
         SVVirtualJoystick.qml
         SVJoystickArea.qml
         SVJoystickButtonSegment.qml
+        SVZoom.qml
+        SVZoomArea.qml
+        SVZoomButton.qml
+
+        SVCameraLayouts.js
+    RESOURCES
+        Images/no-video-camera-background.png
+        Images/no_video_background.png
+
     NO_PLUGIN
 )
 
