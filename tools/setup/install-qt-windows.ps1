@@ -11,13 +11,27 @@
 # ————————————————————————————————
 # 1) Defaults (env overrides supported)
 # ————————————————————————————————
-$QT_VERSION = $env:QT_VERSION      -or '6.8.3'
-$QT_PATH    = $env:QT_PATH         -or 'C:\Qt'
-$QT_HOST    = $env:QT_HOST         -or 'windows'
-$QT_TARGET  = $env:QT_TARGET       -or 'desktop'
-# Windows arch must be one of: win64_msvc2017_64, win64_msvc2019_64, win64_mingw81, etc. :contentReference[oaicite:0]{index=0}
-$QT_ARCH    = $env:QT_ARCH         -or 'win64_msvc2022_64'
-$QT_MODULES = $env:QT_MODULES      -or 'qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors'
+function Get-EnvOrDefault {
+    param(
+        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory=$true)][string]$Default
+    )
+
+    $value = [Environment]::GetEnvironmentVariable($Name, 'Process')
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return $Default
+    }
+
+    return $value
+}
+
+$QT_VERSION = Get-EnvOrDefault 'QT_VERSION' '6.8.3'
+$QT_PATH    = Get-EnvOrDefault 'QT_PATH' 'C:\Qt'
+$QT_HOST    = Get-EnvOrDefault 'QT_HOST' 'windows'
+$QT_TARGET  = Get-EnvOrDefault 'QT_TARGET' 'desktop'
+# Windows arch must be one of: win64_msvc2022_64, win64_mingw, etc.
+$QT_ARCH    = Get-EnvOrDefault 'QT_ARCH' 'win64_msvc2022_64'
+$QT_MODULES = Get-EnvOrDefault 'QT_MODULES' 'qtcharts qtlocation qtpositioning qtspeech qt5compat qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors'
 
 Write-Host "Using:"
 Write-Host "  QT_VERSION    = $QT_VERSION"
@@ -59,7 +73,27 @@ if (Get-Command aqt -ErrorAction SilentlyContinue) {
 # ————————————————————————————————
 # 4) Update environment for this session
 # ————————————————————————————————
-$qtRoot = Join-Path $QT_PATH "$QT_VERSION\$QT_ARCH"
+$qtVersionDir = Join-Path $QT_PATH $QT_VERSION
+$qtRootCandidates = @(
+    (Join-Path $qtVersionDir $QT_ARCH),
+    (Join-Path $qtVersionDir ($QT_ARCH -replace '^win64_', ''))
+)
+
+$qtRoot = $qtRootCandidates |
+    Where-Object { Test-Path (Join-Path $_ 'lib\cmake\Qt6\qt.toolchain.cmake') } |
+    Select-Object -First 1
+
+if (-not $qtRoot -and (Test-Path $qtVersionDir)) {
+    $qtRoot = Get-ChildItem -Path $qtVersionDir -Directory |
+        Where-Object { Test-Path (Join-Path $_.FullName 'lib\cmake\Qt6\qt.toolchain.cmake') } |
+        Select-Object -First 1 -ExpandProperty FullName
+}
+
+if (-not $qtRoot) {
+    Write-Error "Could not find a Qt toolchain under $qtVersionDir after installation."
+    exit 1
+}
+
 $qtBin  = Join-Path $qtRoot 'bin'
 $qtLib  = Join-Path $qtRoot 'lib'
 
