@@ -61,5 +61,12 @@ Rectangle {
                 visible: _showCameraSection && cameraSection.checked
             }
         }
+
+        FactTextFieldSlider {
+            Layout.fillWidth: true
+            label: qsTr("Waypoint Radius")
+            fact: root.missionItem.waypointRadius
+            visible: fact !== null
+        }
     }
 }
