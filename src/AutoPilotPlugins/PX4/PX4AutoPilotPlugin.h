@@ -6,6 +6,7 @@
 #include "AirframeComponent.h"
 #include "PX4RadioComponent.h"
 #include "ESP8266Component.h"
+#include "FailureInjectionComponent.h"
 #include "FlightModesComponent.h"
 #include "SensorsComponent.h"
 #include "SafetyComponent.h"
@@ -37,6 +38,7 @@ protected:
     AirframeComponent*      _airframeComponent;
     PX4RadioComponent*      _radioComponent;
     ESP8266Component*       _esp8266Component;
+    FailureInjectionComponent* _failureInjectionComponent;
     FlightModesComponent*   _flightModesComponent;
     SensorsComponent*       _sensorsComponent;
     SafetyComponent*        _safetyComponent;
