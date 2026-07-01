@@ -6,6 +6,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         PX4/AirframeComponentAirframesTest.cc
         PX4/AirframeComponentAirframesTest.h
+        PX4/FailureInjectionTest.cc
+        PX4/FailureInjectionTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME}
@@ -14,3 +16,4 @@ target_include_directories(${CMAKE_PROJECT_NAME}
 )
 
 add_qgc_test(AirframeComponentAirframesTest LABELS Unit)
+add_qgc_test(FailureInjectionTest LABELS Unit)

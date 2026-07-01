@@ -127,8 +127,35 @@ extern "C" {
     return ''.join(parts), enum_names
 
 
-def build_qml_header(enum_names):
-    using_lines = '\n'.join(f'    using ::{n};' for n in enum_names)
+# Enums listed here get a full local redeclaration inside the namespace, giving Q_ENUM_NS real
+# enumerator metadata for them. Everything else gets a `using`-alias to the global mavlink typedef.
+_QML_REFLECTED_ENUMS = ("FAILURE_UNIT", "FAILURE_TYPE")
+_RAW_ENUM_ENTRY_RE = re.compile(r'([A-Z][A-Z0-9_]*)\s*=\s*(\d+)')
+
+
+def _raw_enum_entries(enums_text, enum_name):
+    """Parse `NAME=VALUE` entries of a single enum out of the generated enum text, names unmodified."""
+    m = re.search(r'typedef\s+enum\s+' + re.escape(enum_name) + r'\b', enums_text)
+    if not m:
+        return []
+    start = enums_text.find('{', m.end())
+    close = re.search(r'\}\s*' + re.escape(enum_name) + r'\s*;', enums_text)
+    if start < 0 or not close:
+        return []
+    block = enums_text[start + 1:close.start()]
+    return _RAW_ENUM_ENTRY_RE.findall(block)
+
+
+def build_qml_header(enum_names, enums_text):
+    decl_lines = []
+    for n in enum_names:
+        if n in _QML_REFLECTED_ENUMS:
+            entries = _raw_enum_entries(enums_text, n)
+            body = ",\n".join(f"        {name} = {value}" for name, value in entries)
+            decl_lines.append(f"    enum {n} {{\n{body}\n    }};")
+        else:
+            decl_lines.append(f"    using ::{n};")
+    using_or_decl_lines = "\n".join(decl_lines)
     q_enum_lines = '\n'.join(f'    Q_ENUM_NS({n})' for n in enum_names)
     return f"""\
 #pragma once
@@ -146,7 +173,7 @@ namespace MAVLinkEnums {{
     Q_NAMESPACE
     QML_NAMED_ELEMENT(MAVLinkEnums)
 
-{using_lines}
+{using_or_decl_lines}
 
 {q_enum_lines}
 }}
@@ -194,7 +221,7 @@ def main():
     written: list[Path] = []
     if write_if_changed(enums_h_path, enums_h):
         written.append(enums_h_path)
-    if write_if_changed(qml_h_path, build_qml_header(enum_names)):
+    if write_if_changed(qml_h_path, build_qml_header(enum_names, enums_h)):
         written.append(qml_h_path)
     if write_if_changed(qml_cc_path, build_qml_anchor_cc()):
         written.append(qml_cc_path)
