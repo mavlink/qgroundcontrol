@@ -34,7 +34,7 @@ dev = [
   "jinja2",
   "pyyaml",
   "pymavlink",
-  "rust-just>=1.53.0",
+  "rust-just>=1.55.1",
   "tomli>=2.0; python_version < '3.11'",
 ]
 lint = [
