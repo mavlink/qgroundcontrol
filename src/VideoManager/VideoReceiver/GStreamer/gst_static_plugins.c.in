@@ -1,0 +1,79 @@
+/*
+ * QGC GStreamer static-plugin registration shim. Auto-generated.
+ *
+ * Provides gst_init_static_plugins() — invoked by GStreamer::_registerPlugins()
+ * on platforms where GStreamer ships as a static archive:
+ *   • Android: plugin .a's whole-archived into the app (_qgc_create_android_mobile_target)
+ *   • iOS:     GStreamer.xcframework   (cmake/GStreamer/platform/IOS.cmake)
+ *
+ * Each platform fills the PLUGINS_DECLARATION / PLUGINS_REGISTRATION / G_IO_MODULES_*
+ * substitution slots (slot names kept @-free here so configure_file(@ONLY) doesn't expand
+ * the plugin blocks into this comment). GIO+TLS block ports upstream gstreamer_android-1.0.c.in.
+ */
+
+#include <gst/gst.h>
+#include <gio/gio.h>
+
+#define GST_G_IO_MODULE_DECLARE(name) \
+extern void G_PASTE(g_io_, G_PASTE(name, _load)) (gpointer data)
+
+/* Skip the load when the backend GType is already present: the Android SDK gst_init() loads
+ * gioopenssl, and re-registering its GType warns. Type name is openssl-specific (QGC's only module). */
+#define GST_G_IO_MODULE_LOAD(name) \
+  do { \
+    if (g_type_from_name ("GTlsBackendOpenssl") == 0) { \
+      G_PASTE(g_io_, G_PASTE(name, _load)) (NULL); \
+    } \
+  } while (0)
+
+/* Registry-guard each register: the Android SDK gst_init() pre-registers its bundled static
+ * plugins, so an unconditional re-register aborts ("cannot register existing type GstBaseQTMux").
+ * Lookup keys on the plugin short name, which matches the GST_PLUGIN_STATIC_REGISTER arg. */
+#define QGC_REGISTER_STATIC_PLUGIN(name) \
+  do { \
+    GstPlugin *_qgc_p = gst_registry_find_plugin (gst_registry_get (), G_STRINGIFY (name)); \
+    if (_qgc_p == NULL) { \
+      GST_PLUGIN_STATIC_REGISTER (name); \
+    } else { \
+      gst_object_unref (_qgc_p); \
+    } \
+  } while (0)
+
+@PLUGINS_DECLARATION@
+
+@G_IO_MODULES_DECLARE@
+
+/* Load static GIO modules and install the bundled CA bundle as the default TLS database.
+ * Port of upstream gstreamer_android-1.0.c:gst_android_load_gio_modules(); no-op when the slot is empty. */
+static void
+qgc_load_gio_modules_and_ca (void)
+{
+    const gchar *ca_certs;
+    GTlsBackend *backend;
+
+@G_IO_MODULES_LOAD@
+
+    ca_certs = g_getenv ("CA_CERTIFICATES");
+    backend = g_tls_backend_get_default ();
+    if (backend && ca_certs && *ca_certs) {
+        GTlsDatabase *db;
+        GError *error = NULL;
+
+        db = g_tls_file_database_new (ca_certs, &error);
+        if (db) {
+            g_tls_backend_set_default_database (backend, db);
+            g_object_unref (db);
+        } else {
+            g_warning ("QGC: failed to load CA bundle '%s': %s",
+                ca_certs, error ? error->message : "unknown error");
+            g_clear_error (&error);
+        }
+    }
+}
+
+void
+gst_init_static_plugins (void)
+{
+@PLUGINS_REGISTRATION@
+    qgc_load_gio_modules_and_ca ();
+}

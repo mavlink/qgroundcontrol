@@ -14,12 +14,12 @@ DEFAULT_EXPORT_KEYS = [
     "qt_version",
     "qt_minimum_version",
     "qt_modules",
-    "gstreamer_minimum_version",
-    "gstreamer_default_version",
-    "gstreamer_macos_version",
-    "gstreamer_ios_version",
-    "gstreamer_android_version",
-    "gstreamer_windows_version",
+    "gstreamer.version.minimum",
+    "gstreamer.version.default",
+    "gstreamer.version.macos",
+    "gstreamer.version.ios",
+    "gstreamer.version.android",
+    "gstreamer.version.windows",
     "xcode_version",
     "xcode_ios_version",
     "ndk_version",
@@ -87,6 +87,8 @@ def get_build_config_value(
 ) -> str:
     """Return a string value from the build config or *default*.
 
+    Dotted keys (e.g. "gstreamer.version.default") walk nested objects.
+
     File-missing / unreadable → silent default (callers may run outside the repo).
     Parse / schema errors → raise: an existing-but-corrupted config silently
     swapping defaults can produce wrong artifacts without warning.
@@ -95,7 +97,12 @@ def get_build_config_value(
         config = load_build_config(config_file, start=start, extra_candidates=extra_candidates)
     except (FileNotFoundError, OSError):
         return default
-    value = config.get(key, default)
+    value: Any = config
+    for part in key.split("."):
+        if isinstance(value, dict) and part in value:
+            value = value[part]
+        else:
+            return default
     return str(value) if value is not None else default
 
 
@@ -105,8 +112,15 @@ def derive_ios_qt_modules(qt_modules: str) -> str:
     return " ".join(modules)
 
 
-_EXPORT_KEY_ALIASES: dict[str, str] = {
-    "gstreamer_default_version": "GSTREAMER_VERSION",
+_EXPORT_KEY_ALIASES: dict[str, str] = {}
+
+_GSTREAMER_VERSION_ENV_NAMES: dict[str, str] = {
+    "gstreamer.version.default": "GSTREAMER_VERSION",
+    "gstreamer.version.minimum": "GSTREAMER_MINIMUM_VERSION",
+    "gstreamer.version.android": "GSTREAMER_ANDROID_VERSION",
+    "gstreamer.version.ios":     "GSTREAMER_IOS_VERSION",
+    "gstreamer.version.macos":   "GSTREAMER_MACOS_VERSION",
+    "gstreamer.version.windows": "GSTREAMER_WINDOWS_VERSION",
 }
 
 
@@ -118,9 +132,19 @@ def export_build_config_values(
     """Return uppercase env-style values exported from the config."""
     exported: dict[str, str] = {}
     for key in keys or DEFAULT_EXPORT_KEYS:
-        if key in config:
-            export_name = _EXPORT_KEY_ALIASES.get(key, key.upper())
-            exported[export_name] = str(config[key])
+        value: Any = config
+        for part in key.split("."):
+            if isinstance(value, dict) and part in value:
+                value = value[part]
+            else:
+                value = None
+                break
+        if value is not None:
+            primary = _GSTREAMER_VERSION_ENV_NAMES.get(key, key.replace(".", "_").upper())
+            exported[primary] = str(value)
+            alias = _EXPORT_KEY_ALIASES.get(key)
+            if alias:
+                exported[alias] = str(value)
     return exported
 
 

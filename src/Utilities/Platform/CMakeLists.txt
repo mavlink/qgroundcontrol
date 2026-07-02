@@ -7,6 +7,8 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         Platform.cc
         Platform.h
+        GraphicsSetup.cc
+        GraphicsSetup.h
         RunGuard.cc
         RunGuard.h
 )

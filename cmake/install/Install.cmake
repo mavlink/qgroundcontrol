@@ -86,7 +86,14 @@ endif()
 # are inside the framework's lib/ directory, but the binary's @rpath resolves to
 # Contents/Frameworks/ (flat). Add the framework lib path so dyld finds them.
 # Runs after Qt deploy to survive any rpath rewriting by macdeployqt.
-if(MACOS AND GSTREAMER_FRAMEWORK)
+set(_qgc_gst_framework_bundle "")
+if(MACOS AND TARGET GStreamer::Layout)
+    get_target_property(_qgc_gst_framework_bundle GStreamer::Layout GSTREAMER_FRAMEWORK_BUNDLE)
+    if(_qgc_gst_framework_bundle STREQUAL "_qgc_gst_framework_bundle-NOTFOUND")
+        set(_qgc_gst_framework_bundle "")
+    endif()
+endif()
+if(MACOS AND _qgc_gst_framework_bundle)
     install(CODE "
         set(_binary \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app/Contents/MacOS/${CMAKE_PROJECT_NAME}\")
         if(EXISTS \"\${_binary}\")

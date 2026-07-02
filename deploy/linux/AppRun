@@ -140,6 +140,7 @@ if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
 fi
 
 export GST_REGISTRY_REUSE_PLUGIN_SCANNER="no"
+export GST_REGISTRY_FORK="no"
 
 GST_PLUGIN_DIR="${APPDIR}/usr/lib/gstreamer-1.0"
 GST_SCANNER="${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"

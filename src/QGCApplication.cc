@@ -19,6 +19,7 @@
 #include "AudioOutput.h"
 #include "ColoredSvgImageProvider.h"
 #include "FollowMe.h"
+#include "GraphicsSetup.h"
 #include "JoystickManager.h"
 #include "JsonParsing.h"
 #include "LinkManager.h"
@@ -37,9 +38,7 @@
 #include "QGCLoggingCategoryManager.h"
 #include "QGCNetworkHelper.h"
 #include "SettingsManager.h"
-#include "UDPLink.h"
 #include "Vehicle.h"
-#include "VehicleComponent.h"
 #include "VideoManager.h"
 #include "qgc_version.h"
 
@@ -265,8 +264,8 @@ bool QGCApplication::_initVideo()
 
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
     VideoManager* videoManager = VideoManager::instance();
-    videoManager->startGStreamerInit();
-    const bool initSucceeded = !_simpleBootTest || videoManager->waitForGStreamerInit();
+    videoManager->startVideoBackendInit();
+    const bool initSucceeded = !_simpleBootTest || videoManager->waitForVideoBackendReady();
     _videoManagerInitialized = true;
     return initSucceeded;
 }
@@ -287,6 +286,10 @@ bool QGCApplication::_initQmlRootWindow()
     _qmlAppEngine->addImageProvider(QLatin1String(ColoredSvgImageProvider::ProviderId), new ColoredSvgImageProvider());
 
     QGCCorePlugin::instance()->createRootWindow(_qmlAppEngine);
+
+    // The root QQuickWindow exists now (load() is synchronous) but its scene graph has not been
+    // initialized yet -- the only safe point to apply RHI graphics config / forced device.
+    GraphicsSetup::configureMainWindow(mainRootWindow());
 
     return mainRootWindow() != nullptr;
 }

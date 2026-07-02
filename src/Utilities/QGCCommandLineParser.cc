@@ -42,7 +42,6 @@ constexpr QLatin1StringView kOptOnscreen       = QLatin1StringView("onscreen");
 
 #ifdef Q_OS_WIN
 // --- Windows-only options ---
-constexpr QLatin1StringView kOptDesktop       = QLatin1StringView("desktop");
 constexpr QLatin1StringView kOptNoWinAssertUI = QLatin1StringView("no-windows-assert-ui");
 #endif
 
@@ -220,11 +219,6 @@ CommandLineParseResult parseCommandLine()
 
 #ifdef Q_OS_WIN
     // --- Windows-only options ---
-    const QCommandLineOption desktopOpt(
-        QString(kOptDesktop),
-        QCoreApplication::translate("main", "Force Desktop OpenGL."));
-    (void) parser.addOption(desktopOpt);
-
     const QCommandLineOption quietWinAssertOpt(
         QString(kOptNoWinAssertUI),
         QCoreApplication::translate("main", "Disable Windows assert dialog boxes."));
@@ -268,11 +262,10 @@ CommandLineParseResult parseCommandLine()
 
 #ifndef Q_OS_WIN
         // Non-Windows platforms don't support Windows-specific options
-        if (out.unknownOptions.contains(QLatin1String("desktop")) ||
-            out.unknownOptions.contains(QLatin1String("no-windows-assert-ui"))) {
+        if (out.unknownOptions.contains(QLatin1String("no-windows-assert-ui"))) {
             out.statusCode = CommandLineParseResult::Status::Error;
             out.errorString = QCoreApplication::translate("main",
-                "--desktop/--no-windows-assert-ui are only supported on Windows.");
+                "--no-windows-assert-ui is only supported on Windows.");
             qCWarning(QGCCommandLineParserLog) << out.errorString.value();
             return out;
         }
@@ -409,10 +402,8 @@ CommandLineParseResult parseCommandLine()
 
     // --- Parse graphics options ---
 #ifdef Q_OS_WIN
-    out.useDesktopGL = parser.isSet(desktopOpt);
     out.quietWindowsAsserts = parser.isSet(quietWinAssertOpt);
 #else
-    out.useDesktopGL = false;
     out.quietWindowsAsserts = false;
 #endif
 

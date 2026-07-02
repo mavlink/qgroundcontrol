@@ -29,8 +29,9 @@
 # SDL - native method stubs required for JNI registration
 -keep class org.libsdl.app.** { *; }
 
-# GStreamer - native callbacks
+# GStreamer - Java callback classes are reached from native plugin code
 -keep class org.freedesktop.gstreamer.** { *; }
+-keep class org.freedesktop.gstreamer.androidmedia.** { *; }
 
 # usb-serial-for-android
 -keep class com.hoho.android.usbserial.** { *; }
