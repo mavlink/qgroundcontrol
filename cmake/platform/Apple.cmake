@@ -29,9 +29,15 @@ endif()
 # ----------------------------------------------------------------------------
 cmake_path(GET QGC_MACOS_ICON_PATH FILENAME MACOSX_BUNDLE_ICON_FILE)
 
+if(IOS)
+    set(_qgc_bundle_plist "${CMAKE_SOURCE_DIR}/deploy/ios/iOSBundleInfo.plist.in")
+else()
+    set(_qgc_bundle_plist "${QGC_MACOS_PLIST_PATH}")
+endif()
+
 set_target_properties(${CMAKE_PROJECT_NAME}
     PROPERTIES
-        MACOSX_BUNDLE_INFO_PLIST "${QGC_MACOS_PLIST_PATH}"
+        MACOSX_BUNDLE_INFO_PLIST "${_qgc_bundle_plist}"
         MACOSX_BUNDLE_BUNDLE_NAME "${CMAKE_PROJECT_NAME}"
         MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
         MACOSX_BUNDLE_COPYRIGHT "${QGC_APP_COPYRIGHT}"
@@ -61,6 +67,19 @@ if(MACOS)
 
     message(STATUS "QGC: macOS platform configuration applied")
 elseif(IOS)
+    function(_qgc_ios_embed_gstreamer_mobile target)
+        if(NOT TARGET GStreamerMobile)
+            return()
+        endif()
+        add_custom_command(TARGET "${target}" POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "$<TARGET_FILE_DIR:GStreamerMobile>"
+                "$<TARGET_BUNDLE_DIR:${target}>/Frameworks/gstreamer_mobile.framework"
+            COMMENT "Embedding gstreamer_mobile.framework"
+            VERBATIM
+        )
+        message(STATUS "QGC: GStreamerMobile will be embedded at build time (Ninja)")
+    endfunction()
     # iOS-specific configuration
 
     # set(CMAKE_XCODE_ATTRIBUTE_ARCHS
@@ -87,6 +106,49 @@ elseif(IOS)
     # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
     if(COMMAND qt_add_ios_ffmpeg_libraries)
         qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})
+    endif()
+
+    # With Ninja generator, Xcode's "Embed Frameworks" build phase doesn't run.
+    # Manually copy FFmpeg xcframeworks into the bundle and set rpath so dyld
+    # finds them on device instead of the CI runner's absolute Qt path.
+    if(NOT CMAKE_GENERATOR MATCHES "Xcode")
+        cmake_path(GET Qt6_DIR PARENT_PATH _qt_cmake_dir)
+        cmake_path(GET _qt_cmake_dir PARENT_PATH _qt_lib_dir)
+        set(_ffmpeg_xcfw_dir "${_qt_lib_dir}/ffmpeg")
+
+        if(EXISTS "${_ffmpeg_xcfw_dir}")
+            file(GLOB _xcframeworks LIST_DIRECTORIES true "${_ffmpeg_xcfw_dir}/*.xcframework")
+            foreach(_xcfw IN LISTS _xcframeworks)
+                cmake_path(GET _xcfw STEM _fw_name)
+                foreach(_slice ios-arm64 ios-arm64_arm64e)
+                    set(_fw_src "${_xcfw}/${_slice}/${_fw_name}.framework")
+                    if(EXISTS "${_fw_src}")
+                        add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+                            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                                "${_fw_src}"
+                                "$<TARGET_BUNDLE_DIR:${CMAKE_PROJECT_NAME}>/Frameworks/${_fw_name}.framework"
+                            COMMENT "Embedding ${_fw_name}.framework"
+                            VERBATIM
+                        )
+                        break()
+                    endif()
+                endforeach()
+            endforeach()
+            message(STATUS "QGC: FFmpeg xcframeworks will be embedded at build time (Ninja)")
+        else()
+            message(STATUS "QGC: No FFmpeg xcframeworks found at ${_ffmpeg_xcfw_dir}")
+        endif()
+
+        set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+            BUILD_RPATH "@executable_path/Frameworks"
+        )
+
+        # GStreamerMobile is created by find_package(GStreamerMobile) inside
+        # add_subdirectory(src), which hasn't run yet. Defer the post-build
+        # copy until after all subdirectories are processed.
+        set(_qgc_target "${CMAKE_PROJECT_NAME}")
+        cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}"
+            CALL _qgc_ios_embed_gstreamer_mobile "${_qgc_target}")
     endif()
 
     message(STATUS "QGC: iOS platform configuration applied")
