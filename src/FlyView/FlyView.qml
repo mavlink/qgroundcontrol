@@ -139,12 +139,13 @@ Item {
             property real leftEdgeBottomInset: visible ? width + anchors.margins : 0
             property real bottomEdgeLeftInset: visible ? height + anchors.margins : 0
         }
-        
+
         SVFlyView   {
             id:                 synclairVisionLayer
             anchors.fill:       parent
             _widgetMargin:      _root._widgetMargin
             _toolBarHeight:     toolbar.height
+            leftToolStripBottom: widgetLayer.leftToolStripBottom
             z:                  _fullItemZorder + 2
 
             parentToolInsets:   _toolInsets
@@ -163,7 +164,7 @@ Item {
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
             viewer3DCameraController: viewer3DLoader.item ? viewer3DLoader.item.cameraController : null
-            visible:                !QGroundControl.videoManager.fullScreen
+            visible:                !QGroundControl.videoManager.fullScreen && SVState.svHUD
         }
 
         

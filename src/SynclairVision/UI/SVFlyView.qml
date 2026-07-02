@@ -18,6 +18,7 @@ Item {
     id: root
 
     property var parentToolInsets
+    property real leftToolStripBottom: 0
 
     property int _widgetMargin: 0
     property int _toolBarHeight: 0
@@ -89,6 +90,7 @@ Item {
             y: modelData.y * root.height
             width: modelData.w * root.width
             height: modelData.h * root.height
+            
 
             parentToolInsets: root.parentToolInsets
             _widgetMargin: root._widgetMargin
@@ -126,6 +128,11 @@ Item {
         anchors.fill: parent
         anchors.margins: _widgetMargin
         anchors.topMargin: _widgetMargin + _toolBarHeight
+        leftToolStripBottom: root.leftToolStripBottom
         parentToolInsets: root.parentToolInsets
+        activeLayoutId: root.activeLayoutId
+        onLayoutSelected: (layoutId) => {
+            root.setActiveLayout(layoutId)
+        }
     }
 }

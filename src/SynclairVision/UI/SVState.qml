@@ -4,4 +4,5 @@ import QtQuick
 QtObject {
     id: root
     property bool svOverlay: false
+    property bool svHUD: true
 }

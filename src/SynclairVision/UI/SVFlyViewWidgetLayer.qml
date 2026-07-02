@@ -17,7 +17,34 @@ Item {
     id: root
 
     property var parentToolInsets
- 
+    property real leftToolStripBottom: 0
+    property string activeLayoutId: "four_square"
+    property string activeSettingsId: ""
+    property bool recordActive: false
+    property var settingsModel: [
+        { id: "general",  text: "General",  checkable: true },
+        { id: "conotrols",  text: "Controls",  checkable: true },
+        { id: "dev", text: "Dev", checkable: true }
+    ]
+
+    signal layoutSelected(string layoutId)
+
+    readonly property bool settingsPanelVisible: activeSettingsId !== ""
+    readonly property var settingsOverlayParent: settingsModalOverlay.contentItem
+    readonly property bool settingsInOverlay: settingsPanelVisible && !!settingsOverlayParent
+    readonly property var activeSettingsEntry: {
+        for (var index = 0; index < root.settingsModel.length; index++) {
+            var entry = root.settingsModel[index]
+
+            if (entry.id === activeSettingsId) {
+                return entry
+            }
+        }
+
+        return null
+    }
+
+
     QGCToolInsets {
         id: _toolInsets
         leftEdgeTopInset:       parentToolInsets.leftEdgeTopInset
@@ -34,85 +61,132 @@ Item {
         bottomEdgeRightInset:   parentToolInsets.bottomEdgeRightInset
     }
 
-    QGCPalette { id: qgcPalette}
+    QGCPalette { id: qgcPalette }
 
     SVControlPanel {
         id: controlPanel
         anchors.bottom: root.bottom
         anchors.horizontalCenter: root.horizontalCenter
+        visible: SVState.svHUD
     }
 
-
-}
-
-/*
     Item {
-        width: 400
-        height: 250
+        id: settingsHost
+        anchors.top: parent.top
+        anchors.right: parent.right
+        visible: SVState.svHUD
+        z: 3
 
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            bottom: parent.bottom
+        width: settings.width
+        height: settings.height
+    }
+
+    SVMenuStrip {
+        id: settingsMenu
+        anchors.top: parent.top
+        anchors.right: parent.right
+        visible: SVState.svHUD
+
+
+        menuText: "Settings"
+        source: "/qmlimages/settings_main.svg"
+        direction: vertical
+        open: false
+        autoUpdateActiveId: false
+        activeId: root.activeSettingsId
+
+        model: [
+            { id: "General",  text: "General",  checkable: true, iconSource: "/qmlimages/settings_general.svg" },
+            { id: "Controls", text: "Controls", checkable: true, iconSource: "/qmlimages/settings_controls.svg" },
+            { id: "Dev",      text: "Dev",      checkable: true, iconSource: "/qmlimages/settings_dev.svg" },
+        ]
+
+        onItemSelected: (id) => {
+            activeSettingsId = (activeSettingsId === id) ? "" : id
         }
     }
-}
 
-    DigitalJoystick {
-        anchors {
-            left: parent.left
-            margins: 5
+    SVMenuStrip {
+        id: oneshots
+        headerless: true
+        exclusiveSelection: false
+        autoUpdateActiveId: false
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 7 + ScreenTools.defaultFontPixelWidth * 0.5
+
+        direction: horizontal
+
+        activeIds: {
+            var ids = []
+            if (!SVState.svHUD) ids.push("hud")
+            if (root.recordActive) ids.push("record")
+            return ids
         }
-        height: parent.height
-        width: height
-        _t: 0.4
-        _joystickColor: "black"
-        _strokeWidth: 5
-        _strokeColor: "white"
-                    
-        onButtonClicked: (id) => {
-            var digiviewManager = QGroundControl.digiviewManager
-            if (!digiviewManager) return
 
-            var step = 10.0
-            var yaw = 0.0
-            var pitch = 0.0
+        model: [
+            { 
+                id: "hud",
+                text: "HUD",
+                checkable: true,
+                iconSource: "/qmlimages/hud_eye.svg",
+                alternateIconSource: "/qmlimages/hud_eye_closed.svg",
+                iconActive: !SVState.svHUD
+            },
+            { 
+                id: "photo",  
+                text: "Photo",  
+                checkable: false, 
+                iconSource: "/qmlimages/camera_photo.svg" 
+            },
+            { 
+                id: "record", 
+                text: "Record", 
+                checkable: true, 
+                iconSource: "/qmlimages/camera_record.svg" 
+            }
+        ]
 
+        onItemSelected: (id) => {
+            if (id === "hud") {
+                SVState.svHUD = !SVState.svHUD
+                return
+            }
 
-            switch (id) {
-                case 0: yaw   = -step; break   // left
-                        case 1: yaw   =  step; break   // right
-                        case 2: pitch =  step; break   // up
-                        case 3: pitch = -step; break   // down
-                        case 4: case 5: case 6: case 7:
-                            // center quadrants — stop or hover
-                            break
-                        default: return                 // -1, nothing
-                    }
-
-                    digiviewManager.sendCamTargetingParameters(
-                        "stream",   // stream_name
-                        0,        // cam_id
-                        0,        // targeting_mode — euler delta mode
-                        1,        // euler_delta = true
-                        yaw,      // yaw
-                        pitch,    // pitch
-                        0,        // roll
-                        0,        // lock_flags
-                        0, 0,     // x_offset, y_offset
-                        0, 0, 0,  // target lat/lon/alt (unused in delta mode)
-                        0,        //track-id
-                        -1,       //view-id
-                        0         //lock target
-                    )
-
-                    
-                }
-
-                
-
+            if (id === "record") {
+                root.recordActive = !root.recordActive
+                return
             }
         }
-        */
+    }
+
+    SVMenuStrip {
+        id: layout
+        anchors.top: parent.top
+        anchors.topMargin: root.leftToolStripBottom + 5
+        anchors.left: parent.left
+        visible: SVState.svHUD
 
 
+        menuText: "Layout"
+        source: "/qmlimages/layout_main.svg"
+        direction: vertical
+        open: false
+        autoUpdateActiveId: false
+        activeId: root.activeLayoutId
 
+        model: [
+            { id: "single",                     checkable: true, iconSource: "/qmlimages/layout_single.svg" },
+            { id: "two_stacked_square",         checkable: true, iconSource: "/qmlimages/layout_double.svg" },
+            { id: "four_square",                checkable: true, iconSource: "/qmlimages/layout_quadruple.svg" },
+            { id: "two_stacked_panorama",       checkable: true, iconSource: "/qmlimages/layout_double_panorama.svg" },
+            { id: "two_square_one_panorama",    checkable: true, iconSource: "/qmlimages/layout_double+panorama.svg" },
+            { id: "three_square_one_panorama",  checkable: true, iconSource: "/qmlimages/layout_triple+panorama.svg" },
+            { id: "entire_picture",             checkable: true, iconSource: "/qmlimages/layout_single_panorama.svg" }
+        ]
+
+        onItemSelected: (id) => {
+            root.layoutSelected(id)
+        }
+    }
+}
