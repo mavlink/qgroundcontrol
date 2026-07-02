@@ -40,7 +40,7 @@ struct APMPlaneMode
         QACRO         = 23,
         THERMAL       = 24,
         LOITER2QLAND  = 25,
-        AUTOLAND      = 26,
+        FOLLOW_TARGET = 90,
     };
 };
 
@@ -89,7 +89,7 @@ protected:
     const QString _qAcroFlightMode = tr("QuadPlane Acro");
     const QString _thermalFlightMode = tr("Thermal");
     const QString _loiter2qlandFlightMode = tr("Loiter to QLand");
-    const QString _autolandFlightMode = tr("Autoland");
+    const QString _followTargetFlightMode = tr("Follow Target");
 
 private:
     static bool _remapParamNameIntialized;

@@ -115,6 +115,7 @@ private:
     void _handleIncomingHeartbeat(Vehicle *vehicle, mavlink_message_t *message);
     void _handleOutgoingParamSetThreadSafe(Vehicle *vehicle, LinkInterface *outgoingLink, mavlink_message_t *message);
     void _soloVideoHandshake();
+    bool _isArduPlaneQuadPlane(const Vehicle *vehicle) const;
     bool _guidedModeTakeoff(Vehicle *vehicle, double altitudeRel) const;
     void _handleRCChannels(Vehicle *vehicle, mavlink_message_t* message);
     void _handleRCChannelsRaw(Vehicle *vehicle, mavlink_message_t* message);

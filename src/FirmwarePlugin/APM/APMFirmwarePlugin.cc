@@ -39,6 +39,8 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
 
+#include <limits>
+
 QGC_LOGGING_CATEGORY(APMFirmwarePluginLog, "APMFirmwarePluginLog")
 
 APMFirmwarePlugin::APMFirmwarePlugin(QObject *parent)
@@ -81,8 +83,12 @@ AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle *vehicle) const
 bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities) const
 {
     uint32_t available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability | ROIModeCapability;
+    const bool ardupilotQuadPlane = _isArduPlaneQuadPlane(vehicle);
     if (vehicle->fixedWing()) {
         available |= TakeoffVehicleCapability;
+        if (ardupilotQuadPlane) {
+            available |= GuidedTakeoffCapability;
+        }
     } else if (vehicle->multiRotor()) {
         available |= TakeoffVehicleCapability;
         available |= GuidedTakeoffCapability;
@@ -95,6 +101,21 @@ bool APMFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities c
     }
 
     return (capabilities & available) == capabilities;
+}
+
+bool APMFirmwarePlugin::_isArduPlaneQuadPlane(const Vehicle *vehicle) const
+{
+    if (!vehicle || !qobject_cast<const ArduPlaneFirmwarePlugin*>(this)) {
+        return false;
+    }
+
+    ParameterManager *const parameterManager = vehicle->parameterManager();
+    if (!parameterManager ||
+        !parameterManager->parameterExists(ParameterManager::defaultComponentId, QStringLiteral("Q_ENABLE"))) {
+        return false;
+    }
+
+    return parameterManager->getParameter(ParameterManager::defaultComponentId, QStringLiteral("Q_ENABLE"))->rawValue().toInt() > 0;
 }
 
 QStringList APMFirmwarePlugin::flightModes(Vehicle *vehicle) const
@@ -983,7 +1004,7 @@ double APMFirmwarePlugin::minimumTakeoffAltitudeMeters(Vehicle* vehicle) const
 
 bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle *vehicle, double altitudeRel) const
 {
-    if (!vehicle->multiRotor() && !vehicle->vtol()) {
+    if (!vehicle->multiRotor() && !vehicle->vtol() && !_isArduPlaneQuadPlane(vehicle)) {
         qgcApp()->showAppMessage(tr("Vehicle does not support guided takeoff"));
         return false;
     }
@@ -1024,6 +1045,11 @@ void APMFirmwarePlugin::startTakeoff(Vehicle *vehicle) const
 {
     if (vehicle->flying()) {
         qgcApp()->showAppMessage(tr("Unable to start takeoff: Vehicle is already in the air."));
+        return;
+    }
+
+    if (_isArduPlaneQuadPlane(vehicle)) {
+        _guidedModeTakeoff(vehicle, std::numeric_limits<double>::quiet_NaN());
         return;
     }
 
