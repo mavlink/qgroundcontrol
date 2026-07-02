@@ -11,7 +11,7 @@ QGCPopupDialog {
     id:         root
     title:      fact.componentId > 0 ? fact.name : qsTr("Value Editor")
 
-    buttons:    fact.readOnly ? Dialog.Close : (Dialog.Save | (validate ? 0 : Dialog.Cancel))
+    buttons:    _readOnlyDisplay ? Dialog.Close : (Dialog.Save | (validate ? 0 : Dialog.Cancel))
 
     property Fact   fact
     property bool   showRCToParam:  false
@@ -25,13 +25,15 @@ QGCPopupDialog {
     property bool   _allowForceSave:            QGroundControl.corePlugin.showAdvancedUI && _editingParameter
     property bool   _allowDefaultReset:         fact.defaultValueAvailable
     property bool   _showCombo:                 fact.enumStrings.length !== 0 && fact.bitmaskStrings.length === 0 && !validate
+    property bool   _readOnlyDisplay:           fact.readOnly && !forceEdit.checked
+    property bool   _allowForceEdit:            fact.readOnly && _allowForceSave
 
     ParameterEditorController { id: controller; }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     onAccepted: {
-        if (fact.readOnly) return
+        if (_readOnlyDisplay) return
         if (bitmaskColumn.visible && !manualEntry.checked) {
             fact.value = bitmaskValue();
             fact.valueChanged(fact.value)
@@ -82,7 +84,10 @@ QGCPopupDialog {
         QGCLabel {
             Layout.fillWidth:   true
             wrapMode:           Text.WordWrap
-            text:               qsTr("This parameter is read-only and cannot be modified.")
+            text:               forceEdit.checked
+                                    ? qsTr("Warning: This parameter is read-only. Force edit is enabled.")
+                                    : qsTr("This parameter is read-only and cannot be modified.")
+            color:              forceEdit.checked ? qgcPal.warningText : qgcPal.text
             visible:            fact.readOnly
         }
 
@@ -97,7 +102,7 @@ QGCPopupDialog {
         RowLayout {
             id:         editRow
             spacing:    ScreenTools.defaultFontPixelWidth
-            visible:    !fact.readOnly
+            visible:    !_readOnlyDisplay
 
             QGCTextField {
                 id:                 valueField
@@ -147,14 +152,14 @@ QGCPopupDialog {
         }
 
         QGCLabel {
-            visible:            fact.readOnly
+            visible:            _readOnlyDisplay
             text:               qsTr("Value: ") + fact.valueString + (fact.units != "" ? (" " + fact.units) : "")
         }
 
         Column {
             id:         bitmaskColumn
             spacing:    ScreenTools.defaultFontPixelHeight / 2
-            visible:    fact.bitmaskStrings.length > 0 && !fact.readOnly
+            visible:    fact.bitmaskStrings.length > 0 && !_readOnlyDisplay
 
             Repeater {
                 id:     bitmaskRepeater
@@ -221,7 +226,7 @@ QGCPopupDialog {
             wrapMode:   Text.WordWrap
             text:       qsTr("Warning: Modifying values while vehicle is in flight can lead to vehicle instability and possible vehicle loss. ") +
                         qsTr("Make sure you know what you are doing and double-check your values before Save!")
-            visible:    fact.componentId != -1 && !fact.readOnly
+            visible:    fact.componentId != -1 && !_readOnlyDisplay
         }
 
         QGCCheckBox {
@@ -233,7 +238,19 @@ QGCPopupDialog {
         QGCCheckBox {
             id:         _advanced
             text:       qsTr("Advanced settings")
-            visible:    !fact.readOnly && (showRCToParam || factCombo.visible || bitmaskColumn.visible)
+            visible:    _allowForceEdit || (!_readOnlyDisplay && (showRCToParam || factCombo.visible || bitmaskColumn.visible))
+        }
+
+        // Force-edit escape hatch for read-only params. Nested under the
+        // Advanced settings checkbox so it is never shown without opt-in.
+        QGCCheckBox {
+            id:         forceEdit
+            visible:    _allowForceEdit && _advanced.checked
+            text:       qsTr("Force edit read-only param")
+
+            // Re-lock the param if Advanced settings is unchecked, so edit
+            // mode can never persist without the Advanced checkbox checked.
+            onVisibleChanged: if (!visible) checked = false
         }
 
         // Checkbox to allow manual entry of enumerated or bitmask parameters
