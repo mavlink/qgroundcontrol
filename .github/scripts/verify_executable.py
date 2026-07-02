@@ -15,6 +15,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+from ci_bootstrap import ensure_tools_dir
+
+ensure_tools_dir(__file__)
+
 from cmake_helper import read_cache_var
 from common.gh_actions import gh_error
 
