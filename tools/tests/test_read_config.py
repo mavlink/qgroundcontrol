@@ -7,13 +7,19 @@ import json
 import os
 import subprocess
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-TOOLS_DIR = Path(__file__).parent.parent
+from ._helpers import TOOLS_DIR
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
 SCRIPT = TOOLS_DIR / "setup" / "read_config.py"
 
 
-def _run_read_config(*args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def _run_read_config(
+    *args: str, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     run_env = os.environ.copy()
     if env:
         run_env.update(env)

@@ -2,26 +2,27 @@
 
 from __future__ import annotations
 
-import subprocess
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import gh_pr_size_label as mod
 import pytest
+from _helpers import completed
 
+if TYPE_CHECKING:
+    import subprocess
+    from pathlib import Path
 
-def _completed(stdout: str = "", returncode: int = 0, stderr: str = "") -> subprocess.CompletedProcess:
-    return subprocess.CompletedProcess(args=[], returncode=returncode, stdout=stdout, stderr=stderr)
 
 def test_list_size_labels_filters_to_size_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: _completed("size/M\nsize/L\n"))
+    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed("size/M\nsize/L\n"))
     assert mod.list_size_labels("owner/repo", "42") == ["size/L", "size/M"]
 
 def test_list_size_labels_empty_when_none(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: _completed(""))
+    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed(""))
     assert mod.list_size_labels("owner/repo", "42") == []
 
 def test_list_size_labels_exits_on_gh_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: _completed("", returncode=1, stderr="boom"))
+    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed("", returncode=1, stderr="boom"))
     with pytest.raises(SystemExit):
         mod.list_size_labels("owner/repo", "42")
 
@@ -30,7 +31,7 @@ def test_remove_label_url_encodes_slash(monkeypatch: pytest.MonkeyPatch) -> None
 
     def fake_gh(*args: str, **kwargs: Any) -> subprocess.CompletedProcess:
         calls.append(args)
-        return _completed()
+        return completed()
 
     monkeypatch.setattr(mod, "gh", fake_gh)
     assert mod.remove_label("owner/repo", "42", "size/XL") is True
@@ -38,35 +39,31 @@ def test_remove_label_url_encodes_slash(monkeypatch: pytest.MonkeyPatch) -> None
 
 def test_remove_label_treats_404_as_success(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        mod, "gh", lambda *a, **kw: _completed(returncode=1, stderr="HTTP 404: Not Found"),
+        mod, "gh", lambda *a, **kw: completed(returncode=1, stderr="HTTP 404: Not Found"),
     )
     assert mod.remove_label("owner/repo", "42", "size/M") is True
 
 def test_remove_label_returns_false_on_other_errors(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        mod, "gh", lambda *a, **kw: _completed(returncode=1, stderr="HTTP 500: internal"),
+        mod, "gh", lambda *a, **kw: completed(returncode=1, stderr="HTTP 500: internal"),
     )
     assert mod.remove_label("owner/repo", "42", "size/M") is False
 
-def test_cmd_current_writes_label(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-    output_file = tmp_path / "out"
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
+def test_cmd_current_writes_label(gh_output: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
     monkeypatch.setenv("PR_NUMBER", "42")
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: _completed("size/M\n"))
+    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed("size/M\n"))
 
     assert mod.main(["current"]) == 0
-    assert "label=size/M\n" in output_file.read_text()
+    assert "label=size/M\n" in gh_output.read_text()
 
-def test_cmd_current_writes_empty_when_no_label(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-    output_file = tmp_path / "out"
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output_file))
+def test_cmd_current_writes_empty_when_no_label(gh_output: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")
     monkeypatch.setenv("PR_NUMBER", "42")
-    monkeypatch.setattr(mod, "gh", lambda *a, **kw: _completed(""))
+    monkeypatch.setattr(mod, "gh", lambda *a, **kw: completed(""))
 
     assert mod.main(["current"]) == 0
-    assert "label=\n" in output_file.read_text()
+    assert "label=\n" in gh_output.read_text()
 
 def test_cmd_prune_noop_when_one_label(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GH_REPO", "owner/repo")

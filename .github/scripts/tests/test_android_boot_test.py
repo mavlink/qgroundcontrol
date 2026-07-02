@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 from unittest.mock import patch
 
@@ -57,9 +58,6 @@ def test_logcat_poller_only_emits_new_lines_for_repeated_timestamp_window() -> N
     assert content2.splitlines()[-1].endswith("three")
     assert observed_cmds[1][-2:] == ["-T", "02-24 10:00:00.001"]
 
-
-# Pre-compiled patterns used across run_boot_attempt tests.
-import re
 
 _APP_PATTERN = re.compile(r"QGroundControl")
 _LAUNCH_PATTERN = re.compile(r"ActivityManager.*START.*qgroundcontrol")

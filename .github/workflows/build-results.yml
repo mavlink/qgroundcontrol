@@ -39,6 +39,8 @@ jobs:
             tools/setup/read_config.py
             tools/common/__init__.py
             tools/common/build_config.py
+            tools/common/file_traversal.py
+            tools/common/gh_actions.py
             tools/common/io.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1

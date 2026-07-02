@@ -4,15 +4,11 @@
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
 import download_artifacts as mod
-
-
-def _cp(stdout: str = "", stderr: str = "", returncode: int = 0) -> subprocess.CompletedProcess:
-    return subprocess.CompletedProcess(args=["gh"], returncode=returncode, stdout=stdout, stderr=stderr)
+from _helpers import completed
 
 
 def test_parse_args_defaults() -> None:
@@ -88,13 +84,13 @@ def test_get_workflow_runs_filters_by_event() -> None:
 
 
 def test_download_run_artifacts_failure_returns_false() -> None:
-    with patch.object(mod, "gh", return_value=_cp(stderr="bad", returncode=1)):
+    with patch.object(mod, "gh", return_value=completed(stderr="bad", returncode=1)):
         ok = mod.download_run_artifacts(123, "owner/repo", Path("artifacts"))
     assert ok is False
 
 
 def test_download_run_artifacts_passes_selected_names() -> None:
-    with patch.object(mod, "gh", return_value=_cp()) as mock_gh:
+    with patch.object(mod, "gh", return_value=completed()) as mock_gh:
         ok = mod.download_run_artifacts(
             123,
             "owner/repo",
