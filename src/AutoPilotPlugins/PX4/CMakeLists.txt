@@ -113,6 +113,7 @@ qt_add_qml_module(AutoPilotPluginsPX4Module
         CalcVoltageDividerDialog.qml
         ESCCalibrationDialog.qml
         FailureInjectionComponent.qml
+        FailureInjectionInstances.js
         FlightModesComponentSummary.qml
         PowerComponentSummary.qml
         PX4FlightBehaviorCopter.qml
