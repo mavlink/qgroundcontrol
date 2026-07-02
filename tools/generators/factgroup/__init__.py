@@ -1,1 +1,0 @@
-# FactGroup Generator

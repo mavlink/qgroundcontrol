@@ -145,6 +145,18 @@ repos:
         exclude: ^(translations/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
 
   # Prose linting (documentation quality)
+  # vale-sync downloads the Packages declared in .vale.ini into the gitignored
+  # .github/styles/ before vale runs; without it vale has no styles and no-ops.
+  - repo: local
+    hooks:
+      - id: vale-sync
+        name: vale sync (download styles)
+        language: golang
+        additional_dependencies:
+          - 'github.com/errata-ai/vale/v3@v3.14.2'
+        entry: vale sync
+        files: ^(docs/|\.vale\.ini$)
+        pass_filenames: false
   - repo: https://github.com/errata-ai/vale
     rev: v3.15.1
     hooks:

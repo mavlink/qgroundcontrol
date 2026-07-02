@@ -7,16 +7,12 @@ target_sources(${CMAKE_PROJECT_NAME}
     PRIVATE
         JoystickConfigController.cc
         JoystickConfigController.h
-        # Base class for RadioComponentController and JoystickConfigController — must build unconditionally.
         RemoteControlCalibrationController.cc
         RemoteControlCalibrationController.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# ----------------------------------------------------------------------------
-# Firmware Upgrade (requires serial link)
-# ----------------------------------------------------------------------------
 if(NOT QGC_NO_SERIAL_LINK)
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
@@ -31,9 +27,6 @@ if(NOT QGC_NO_SERIAL_LINK)
     )
 endif()
 
-# ----------------------------------------------------------------------------
-# Vehicle Setup QML Module
-# ----------------------------------------------------------------------------
 qt_add_library(VehicleSetupModule STATIC)
 
 qt_add_qml_module(VehicleSetupModule

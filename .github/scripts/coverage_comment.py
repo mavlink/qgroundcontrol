@@ -5,7 +5,12 @@ import argparse
 import os
 import sys
 
+from ci_bootstrap import ensure_tools_dir
 from xml_utils import XMLParseError, xml_parse
+
+ensure_tools_dir(__file__)
+
+from common.markdown import md_table
 
 
 def parse_coverage(xml_path: str) -> dict | None:
@@ -103,9 +108,6 @@ def main() -> int:
 
     if pr_cov:
         line_badge = coverage_badge(pr_cov["line"])
-        lines.extend(
-            ["| Metric | Coverage | \u0394 from master |", "|--------|----------|---------------|"]
-        )
 
         if baseline_cov:
             line_delta = delta_str(baseline_cov["line"], pr_cov["line"])
@@ -118,12 +120,12 @@ def main() -> int:
             line_delta = "*No baseline*"
             branch_delta = "*No baseline*"
 
-        lines.append(f"| {line_badge} Lines | {pr_cov['line']:.2f}% | {line_delta} |")
-
+        rows = [[f"{line_badge} Lines", f"{pr_cov['line']:.2f}%", line_delta]]
         if pr_cov.get("branch") is not None:
             branch_badge = coverage_badge(pr_cov["branch"])
-            lines.append(f"| {branch_badge} Branches | {pr_cov['branch']:.2f}% | {branch_delta} |")
+            rows.append([f"{branch_badge} Branches", f"{pr_cov['branch']:.2f}%", branch_delta])
 
+        lines.append(md_table(["Metric", "Coverage", "\u0394 from master"], rows))
         lines.append("")
 
         if pr_cov["line"] < 60:

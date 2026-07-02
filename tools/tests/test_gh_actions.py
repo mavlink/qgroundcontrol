@@ -157,6 +157,30 @@ class TestWriteStepSummary:
             mod.write_step_summary("test")
 
 
+class TestAnnotations:
+    def test_gh_error_format(self, capsys) -> None:
+        mod.gh_error("boom")
+        assert capsys.readouterr().out == "::error::boom\n"
+
+    def test_gh_warning_format(self, capsys) -> None:
+        mod.gh_warning("careful")
+        assert capsys.readouterr().out == "::warning::careful\n"
+
+    def test_gh_notice_format(self, capsys) -> None:
+        mod.gh_notice("fyi")
+        assert capsys.readouterr().out == "::notice::fyi\n"
+
+    def test_escapes_newlines_and_percent(self, capsys) -> None:
+        mod.gh_error("a\nb\rc%d")
+        assert capsys.readouterr().out == "::error::a%0Ab%0Dc%25d\n"
+
+    def test_emits_to_stdout_not_stderr(self, capsys) -> None:
+        mod.gh_warning("x")
+        captured = capsys.readouterr()
+        assert captured.out == "::warning::x\n"
+        assert captured.err == ""
+
+
 class TestAppendGithubEnv:
     def test_writes_env_vars(self, tmp_path) -> None:
         out = tmp_path / "env"

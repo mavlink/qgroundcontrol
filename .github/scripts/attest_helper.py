@@ -12,7 +12,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output
+from common.gh_actions import gh_error, gh_warning, write_github_output
 
 
 def cmd_check(args: argparse.Namespace) -> None:
@@ -25,7 +25,7 @@ def cmd_check(args: argparse.Namespace) -> None:
         return
 
     if not subject.exists():
-        print(f"::warning::Artifact not found: {subject}")
+        gh_warning(f"Artifact not found: {subject}")
         write_github_output({"skip": "true"})
         return
 
@@ -49,7 +49,7 @@ def cmd_resolve_path(args: argparse.Namespace) -> None:
     path = args.override or args.default
     p = Path(path)
     if not p.exists():
-        print(f"::error::attest-and-upload: artifact not found at '{path}'")
+        gh_error(f"attest-and-upload: artifact not found at '{path}'")
         parent = p.parent
         if parent.is_dir():
             for entry in sorted(parent.iterdir()):

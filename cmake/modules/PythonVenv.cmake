@@ -33,9 +33,17 @@ function(_qgc_sync_venv_if_stale _py)
     endif()
 endfunction()
 
+# Pin Python3_EXECUTABLE and Python_EXECUTABLE to the venv: upstream deps (mavlink) call
+# find_package(Python), which otherwise picks system Python (3.14 on Windows CI crashes pymavlink mavgen).
+macro(_qgc_pin_python _py)
+    set(Python3_EXECUTABLE "${_py}" CACHE FILEPATH "Python interpreter (workspace .venv)" FORCE)
+    set(Python_EXECUTABLE "${_py}" CACHE FILEPATH "Python interpreter (workspace .venv)" FORCE)
+endmacro()
+
 if(DEFINED CACHE{Python3_EXECUTABLE})
     if(EXISTS "${_qgc_venv_python}" AND "${Python3_EXECUTABLE}" STREQUAL "${_qgc_venv_python}")
         _qgc_sync_venv_if_stale("${_qgc_venv_python}")
+        _qgc_pin_python("${_qgc_venv_python}")
     endif()
     return()
 endif()
@@ -77,7 +85,7 @@ endif()
 
 if(EXISTS "${_qgc_venv_python}")
     _qgc_sync_venv_if_stale("${_qgc_venv_python}")
-    set(Python3_EXECUTABLE "${_qgc_venv_python}" CACHE FILEPATH "Python interpreter (workspace .venv)" FORCE)
+    _qgc_pin_python("${_qgc_venv_python}")
     message(STATUS "QGC: using Python venv interpreter ${Python3_EXECUTABLE}")
 else()
     message(WARNING "QGC: no .venv found and QGC_AUTO_PYTHON_VENV=OFF; generators will use system "

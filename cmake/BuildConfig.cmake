@@ -8,7 +8,6 @@ if(NOT EXISTS "${QGC_BUILD_CONFIG_FILE}")
     message(FATAL_ERROR "QGC: BuildConfig: Config file not found: ${QGC_BUILD_CONFIG_FILE}")
 endif()
 
-# Read the JSON file
 file(READ "${QGC_BUILD_CONFIG_FILE}" QGC_BUILD_CONFIG_CONTENT)
 
 # Extract value from JSON using CMake's native JSON parser

@@ -20,7 +20,7 @@ ensure_tools_dir(__file__)
 
 from typing import TYPE_CHECKING
 
-from common.gh_actions import write_github_output
+from common.gh_actions import gh_warning, write_github_output
 from common.git import run_git
 
 if TYPE_CHECKING:
@@ -216,7 +216,7 @@ def main(argv: list[str] | None = None) -> int:
 
     changed = get_changed_files()
     if changed is None:
-        print("::warning::Unable to compute changed files reliably; forcing build for safety.")
+        gh_warning("Unable to compute changed files reliably; forcing build for safety.")
         outputs = dict.fromkeys(platforms, "true")
         outputs["any"] = "true"
         write_github_output(outputs)

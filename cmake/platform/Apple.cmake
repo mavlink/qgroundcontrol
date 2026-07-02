@@ -84,7 +84,6 @@ elseif(IOS)
             XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
     )
 
-    # Add FFmpeg libraries for iOS if needed
     # set(QT_NO_FFMPEG_XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY ON)
     if(COMMAND qt_add_ios_ffmpeg_libraries)
         qt_add_ios_ffmpeg_libraries(${CMAKE_PROJECT_NAME})

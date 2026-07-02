@@ -57,12 +57,12 @@ jobs:
       matrix:
         include:
           - arch: linux_gcc_arm64
-            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=c8g.2xlarge/image=ubuntu24-full-arm64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04-arm' }}
+            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-arm64-builder', github.run_id) || 'ubuntu-24.04-arm' }}
             package: QGroundControl-aarch64
             host: linux_arm64
 
           - arch: linux_gcc_64
-            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04' }}
+            runs_on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-builder-60gb', github.run_id) || 'ubuntu-24.04' }}
             package: QGroundControl-x86_64
             host: linux
 
@@ -210,7 +210,7 @@ jobs:
     name: ${{ matrix.job_name }}
     needs: [changes, debug-matrix]
     if: needs.changes.outputs.should_build == 'true'
-    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/family=m8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=60gb', github.run_id) || 'ubuntu-24.04' }}
+    runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-tester', github.run_id) || 'ubuntu-24.04' }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
 
     strategy:

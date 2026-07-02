@@ -16,11 +16,9 @@ message(STATUS "QGC: Creating macOS DMG disk image...")
 
 set(QGC_DMG_PATH "${CMAKE_BINARY_DIR}/package")
 
-# Clean and create package directory
 file(REMOVE_RECURSE "${QGC_DMG_PATH}")
 file(MAKE_DIRECTORY "${QGC_DMG_PATH}")
 
-# Copy the application bundle to package directory
 file(COPY "${QGC_STAGING_BUNDLE_PATH}" DESTINATION "${QGC_DMG_PATH}")
 
 # ============================================================================

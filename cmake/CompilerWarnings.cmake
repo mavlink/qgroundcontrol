@@ -82,7 +82,6 @@ function(qgc_set_warning_flags target)
             /wd4996                     # deprecated functions (strncpy, etc)
             /wd4389                     # signed/unsigned mismatch
 
-            # Disable specific warnings
             /wd4068                     # unknown pragma (for clang pragmas)
             /wd4127                     # conditional expression is constant (Qt macros)
             /wd4251                     # needs to have dll-interface (Qt classes)
@@ -108,13 +107,11 @@ endfunction()
 # warnings within them without affecting QGC source code.
 # ----------------------------------------------------------------------------
 function(qgc_disable_dependency_warnings target)
-    # Check if target exists
     if(NOT TARGET ${target})
         message(WARNING "QGC: qgc_disable_dependency_warnings: Target '${target}' does not exist")
         return()
     endif()
 
-    # Get target type
     get_target_property(_target_type ${target} TYPE)
     if(_target_type STREQUAL "INTERFACE_LIBRARY")
         message(WARNING "QGC: qgc_disable_dependency_warnings: Target '${target}' is an INTERFACE library. "

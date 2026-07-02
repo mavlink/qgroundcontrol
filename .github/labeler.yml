@@ -55,7 +55,6 @@ Video:
   - changed-files:
       - any-glob-to-any-file:
           - 'src/VideoManager/**'
-          - 'src/VideoReceiver/**'
 
 Translations:
   - changed-files:
@@ -69,7 +68,7 @@ MAVLink:
   - changed-files:
       - any-glob-to-any-file:
           - 'src/MAVLink/**'
-          - 'src/comm/**'
+          - 'src/Comms/**'
 
 Tools:
   - changed-files:

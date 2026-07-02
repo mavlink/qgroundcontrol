@@ -44,6 +44,7 @@ from common.gh_actions import (
     write_step_summary,
 )
 from common.io import require_tar_data_filter
+from common.markdown import md_table
 from common.net import download_with_retry
 from common.proc import run_captured
 from common.tool_version import probe_version
@@ -436,21 +437,17 @@ def build_summary_markdown(stats: dict) -> str:
         )
     )
 
-    lines = [
-        "### CCache Statistics",
-        "",
-        "| Metric | Value |",
-        "|--------|-------|",
-        f"| Cache hits | {hits} / {total} ({pct}%) |",
-        f"| Direct hits | {direct} |",
-        f"| Preprocessed hits | {preprocessed} |",
-        f"| Misses | {misses} |",
-        f"| Cache size | {size_kib / 1024:.0f} MiB / {max_kib / 1048576:.1f} GiB ({size_pct}%) |",
-        f"| Cleanups (LRU evictions) | {cleanups} |",
+    rows = [
+        ["Cache hits", f"{hits} / {total} ({pct}%)"],
+        ["Direct hits", direct],
+        ["Preprocessed hits", preprocessed],
+        ["Misses", misses],
+        ["Cache size", f"{size_kib / 1024:.0f} MiB / {max_kib / 1048576:.1f} GiB ({size_pct}%)"],
+        ["Cleanups (LRU evictions)", cleanups],
     ]
     if errors:
-        lines.append(f"| ⚠ Errors | {errors} |")
-    return "\n".join(lines) + "\n"
+        rows.append(["⚠ Errors", errors])
+    return f"### CCache Statistics\n\n{md_table(['Metric', 'Value'], rows)}\n"
 
 
 def get_ccache_verbose_stats() -> str | None:

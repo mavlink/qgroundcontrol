@@ -213,7 +213,6 @@ Groups:
   qt        Qt installation tools (aqtinstall)
   coverage  Code coverage tools (gcovr)
   dev       Development tools (jinja2, pyyaml, pymavlink)
-  lsp       LSP server (pygls, lsprotocol)
   all       Everything
 
 Examples:

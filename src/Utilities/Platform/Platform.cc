@@ -4,6 +4,8 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QProcessEnvironment>
 
+#include <cstdio>
+
 #include "QGCCommandLineParser.h"
 
 #ifdef Q_OS_ANDROID
@@ -16,7 +18,6 @@
 #endif
 
 #if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
-    #include <cstdio>
     #include <unistd.h>
     #include <sys/types.h>
     #include <sys/wait.h>
@@ -32,7 +33,6 @@
     #if defined(_MSC_VER)
         #include <crtdbg.h>
         #include <stdlib.h>
-        #include <cstdio> // _snwprintf_s
     #endif
 #endif
 
@@ -258,6 +258,8 @@ int Platform::showMultipleInstanceError([[maybe_unused]] int argc, [[maybe_unuse
         "A second instance of %1 is already running. "
         "Please close the other instance and try again.").arg(QLatin1String(QGC_APP_NAME));
 #if defined(Q_OS_MACOS)
+    // The native alert is GUI-only; also write to stderr so a CLI/headless launch sees the reason.
+    fprintf(stderr, "Error: %s\n", message.toLocal8Bit().constData());
     CFStringRef cfMessage = CFStringCreateWithCString(nullptr, message.toUtf8().constData(), kCFStringEncodingUTF8);
     CFUserNotificationDisplayAlert(0, kCFUserNotificationStopAlertLevel,
                                    nullptr, nullptr, nullptr,
@@ -265,6 +267,8 @@ int Platform::showMultipleInstanceError([[maybe_unused]] int argc, [[maybe_unuse
                                    nullptr, nullptr, nullptr, nullptr);
     CFRelease(cfMessage);
 #elif defined(Q_OS_WIN)
+    // MessageBoxW is GUI-only; also write to stderr so a CLI/headless launch sees the reason.
+    fprintf(stderr, "Error: %s\n", message.toLocal8Bit().constData());
     MessageBoxW(nullptr, message.toStdWString().c_str(), L"Error", MB_OK | MB_ICONERROR);
 #else
     showLinuxErrorDialog(message.toLocal8Bit());

@@ -50,7 +50,7 @@ jobs:
       matrix:
         include:
           - host: linux
-            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=80gb', github.run_id) || 'ubuntu-latest' }}
+            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-builder', github.run_id) || 'ubuntu-latest' }}
             arch: linux_gcc_64
             qt_host_path: gcc_64
             shell: bash
@@ -64,7 +64,7 @@ jobs:
             primary: false
             emulator: false
           - host: windows
-            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
+            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
             arch: win64_msvc2022_64
             qt_host_path: msvc2022_64
             shell: pwsh
@@ -72,7 +72,7 @@ jobs:
             emulator: false
           - host: linux-emulator
             qt_host: linux
-            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/nested-virt=true/volume=80gb', github.run_id) || 'ubuntu-latest' }}
+            runner: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-emulator', github.run_id) || 'ubuntu-latest' }}
             arch: linux_gcc_64
             qt_host_path: gcc_64
             shell: bash

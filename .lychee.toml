@@ -25,6 +25,7 @@ exclude = [
     '^https?://www\.gnu\.org/',
     '^https?://logs\.px4\.io',
     '^https?://review\.px4\.io',
+    '^https?://discuss\.px4\.io',
 
     # Dead/restructured external sites
     '^https?://www\.cplusplus\.com/',

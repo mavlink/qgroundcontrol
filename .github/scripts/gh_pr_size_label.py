@@ -24,7 +24,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh, write_github_output
+from common.gh_actions import gh, gh_error, gh_warning, write_github_output
 
 SIZE_PREFIX = "size/"
 
@@ -32,14 +32,16 @@ SIZE_PREFIX = "size/"
 def _repo() -> str:
     repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
     if not repo:
-        sys.exit("::error::GH_REPO or GITHUB_REPOSITORY must be set")
+        gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
+        sys.exit(1)
     return repo
 
 
 def _pr_number(arg: str | None) -> str:
     pr = arg or os.environ.get("PR_NUMBER", "")
     if not pr:
-        sys.exit("::error::--pr-number or PR_NUMBER must be set")
+        gh_error("--pr-number or PR_NUMBER must be set")
+        sys.exit(1)
     return str(pr)
 
 
@@ -53,7 +55,8 @@ def list_size_labels(repo: str, pr: str) -> list[str]:
         check=False,
     )
     if result.returncode != 0:
-        sys.exit(f"::error::gh api failed ({result.returncode}): {result.stderr.strip()}")
+        gh_error(f"gh api failed ({result.returncode}): {result.stderr.strip()}")
+        sys.exit(1)
     return sorted(line for line in result.stdout.splitlines() if line.startswith(SIZE_PREFIX))
 
 
@@ -72,7 +75,7 @@ def remove_label(repo: str, pr: str, label: str) -> bool:
     # 404 means the label was already removed (e.g. concurrent run); treat as success.
     if "Not Found" in result.stderr or "404" in result.stderr:
         return True
-    print(f"::warning::failed to remove label {label!r}: {result.stderr.strip()}", file=sys.stderr)
+    gh_warning(f"failed to remove label {label!r}: {result.stderr.strip()}")
     return False
 
 

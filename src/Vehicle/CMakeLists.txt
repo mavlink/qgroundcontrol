@@ -48,9 +48,6 @@ target_sources(${CMAKE_PROJECT_NAME}
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# ----------------------------------------------------------------------------
-# Vehicle Subsystems
-# ----------------------------------------------------------------------------
 add_subdirectory(Actuators)
 add_subdirectory(ComponentInformation)
 add_subdirectory(FactGroups)

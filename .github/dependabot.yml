@@ -28,18 +28,6 @@ updates:
       npm-all:
         patterns: ["*"]
 
-  - package-ecosystem: "npm"
-    directory: "/tools/lsp/vscode-extension"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    open-pull-requests-limit: 3
-    groups:
-      vscode-ext-all:
-        patterns: ["*"]
-
   - package-ecosystem: "uv"
     directory: "/tools"
     schedule:
