@@ -35,7 +35,7 @@ repos:
 
   # Secret detection
   - repo: https://github.com/trufflesecurity/trufflehog
-    rev: v3.95.6
+    rev: v3.95.7
     hooks:
       - id: trufflehog
         args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
@@ -52,7 +52,7 @@ repos:
 
   # Python formatting (report-only)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.18
+    rev: v0.15.20
     hooks:
       - id: ruff
       - id: ruff-format
@@ -60,7 +60,7 @@ repos:
 
   # Python type checking
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.410
+    rev: v1.1.411
     hooks:
       - id: pyright
         files: ^(tools|test|\.github/scripts)/.*\.py$
@@ -77,7 +77,7 @@ repos:
 
   # uv lockfile sync (keeps tools/uv.lock current with tools/pyproject.toml)
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.23
+    rev: 0.11.26
     hooks:
       - id: uv-lock
         files: ^tools/(pyproject\.toml|uv\.lock)$
@@ -123,7 +123,7 @@ repos:
 
   # JSON Schema validation for build-config.json
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.3
+    rev: 0.37.4
     hooks:
       - id: check-jsonschema
         name: Validate .github/build-config.json
@@ -132,7 +132,7 @@ repos:
 
   # Renovate config validation (schema-checks the dormant renovate.json)
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 43.234.1
+    rev: 43.249.6
     hooks:
       - id: renovate-config-validator
         files: ^\.github/renovate\.json$
@@ -166,7 +166,7 @@ repos:
 
   # Spell checking (report-only, doesn't auto-fix)
   - repo: https://github.com/crate-ci/typos
-    rev: v1.47.2
+    rev: v1.48.0
     hooks:
       - id: typos
         args: []  # Empty args disables auto-fix mode
