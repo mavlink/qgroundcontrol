@@ -71,6 +71,7 @@ class RequestMessageCoordinator;
 class QGCCameraManager;
 class RallyPointManager;
 class RemoteIDManager;
+class GCSControlManager;
 class RequestMessageTest;
 class RetryableRequestMessageStateTest;
 class SendMavCommandWithHandlerTest;
@@ -98,6 +99,7 @@ class Vehicle : public VehicleFactGroup, public VehicleTypes
     Q_MOC_INCLUDE("QGCMapCircle.h")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("RemoteIDManager.h")
+    Q_MOC_INCLUDE("GCSControlManager.h")
     Q_MOC_INCLUDE("TrajectoryPoints.h")
     Q_MOC_INCLUDE("VehicleLinkManager.h")
     Q_MOC_INCLUDE("VehicleObjectAvoidance.h")
@@ -230,6 +232,7 @@ public:
     Q_PROPERTY(VehicleObjectAvoidance*  objectAvoidance     READ objectAvoidance    CONSTANT)
     Q_PROPERTY(Autotune*                autotune            READ autotune           CONSTANT)
     Q_PROPERTY(RemoteIDManager*         remoteIDManager     READ remoteIDManager    CONSTANT)
+    Q_PROPERTY(GCSControlManager*       gcsControlManager   READ gcsControlManager  CONSTANT)
 
     // FactGroup object model properties
 
@@ -579,6 +582,7 @@ public:
     VehicleObjectAvoidance*         objectAvoidance     () { return _objectAvoidance; }
     Autotune*                       autotune            () const { return _autotune; }
     RemoteIDManager*                remoteIDManager     () { return _remoteIDManager; }
+    GCSControlManager*              gcsControlManager   () { return _gcsControlManager; }
 
     static void showCommandAckError(const mavlink_command_ack_t& ack);
 
@@ -948,6 +952,7 @@ private:
     bool            _allSensorsHealthy                      = true;
     VehicleSigningController* _signingController            = nullptr;
     std::atomic<bool> _joystickAuxRcOverrideActive           = false;
+    std::atomic<bool> _joystickSendAllowed                   = true;
 
     std::unique_ptr<SysStatusSensorInfo> _sysStatusSensorInfo;
 
@@ -1119,6 +1124,7 @@ public:
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
     Actuators*                      _actuators                  = nullptr;
     RemoteIDManager*                _remoteIDManager            = nullptr;
+    GCSControlManager*              _gcsControlManager          = nullptr;
     StandardModes*                  _standardModes              = nullptr;
 
     // All terrain query workflows (doSetHome, ROI, altAboveTerrain) live in the coordinator.
@@ -1150,44 +1156,12 @@ public:
 /*                         CONTROL STATUS HANDLER                            */
 /*===========================================================================*/
 public:
-    Q_INVOKABLE void startTimerRevertAllowTakeover();
-    Q_INVOKABLE void requestOperatorControl(bool allowOverride, int requestTimeoutSecs = 0);
-
-private:
-    void _handleControlStatus(const mavlink_message_t& message);
-    void _handleCommandRequestOperatorControl(const mavlink_command_long_t commandLong);
-    static void _requestOperatorControlAckHandler(void* resultHandlerData, int compId, const mavlink_command_ack_t& ack, MavCmdResultFailureCode_t failureCode);
-
-    Q_PROPERTY(uint8_t gcsMain                               READ gcsMain                               NOTIFY gcsControlStatusChanged)
-    Q_PROPERTY(bool    gcsControlStatusFlags_SystemManager   READ gcsControlStatusFlags_SystemManager   NOTIFY gcsControlStatusChanged)
-    Q_PROPERTY(bool    gcsControlStatusFlags_TakeoverAllowed READ gcsControlStatusFlags_TakeoverAllowed NOTIFY gcsControlStatusChanged)
-    Q_PROPERTY(bool    firstControlStatusReceived            READ firstControlStatusReceived            NOTIFY gcsControlStatusChanged)
-    Q_PROPERTY(int     operatorControlTakeoverTimeoutMsecs   READ operatorControlTakeoverTimeoutMsecs   CONSTANT)
-    Q_PROPERTY(int     requestOperatorControlRemainingMsecs  READ requestOperatorControlRemainingMsecs  CONSTANT)
-    Q_PROPERTY(bool    sendControlRequestAllowed             READ sendControlRequestAllowed             NOTIFY sendControlRequestAllowedChanged)
-
-    uint8_t gcsMain() const { return _gcsMain; }
-    bool    gcsControlStatusFlags_SystemManager() const { return _gcsControlStatusFlags_SystemManager; }
-    bool    gcsControlStatusFlags_TakeoverAllowed() const { return _gcsControlStatusFlags_TakeoverAllowed; }
-    bool    firstControlStatusReceived() const { return _firstControlStatusReceived; }
-    int     operatorControlTakeoverTimeoutMsecs() const;
-    int     requestOperatorControlRemainingMsecs() const { return _timerRequestOperatorControl.remainingTime(); }
-    bool    sendControlRequestAllowed() const { return _sendControlRequestAllowed; }
-    void    requestOperatorControlStartTimer(int requestTimeoutMsecs);
-
-    uint8_t _gcsMain = 0;
-    uint8_t _gcsControlStatusFlags = 0;
-    bool    _gcsControlStatusFlags_SystemManager = 0;
-    bool    _gcsControlStatusFlags_TakeoverAllowed = 0;
-    bool    _firstControlStatusReceived = false;
-    QTimer  _timerRevertAllowTakeover;
-    QTimer  _timerRequestOperatorControl;
-    bool    _sendControlRequestAllowed = true;
-
-signals:
-    void gcsControlStatusChanged();
-    void requestOperatorControlReceived(int sysIdRequestingControl, int allowTakeover, int requestTimeoutSecs);
-    void sendControlRequestAllowedChanged(bool sendControlRequestAllowed);
+    /// Gate for joystick / RC override output. Set by GCSControlManager from the
+    /// MAVLink receive thread when CONTROL_STATUS changes which GCS is in control;
+    /// read on the joystick send path. The atomic lives here because it gates the
+    /// Vehicle's own send methods. Uses release/acquire ordering so the gate change
+    /// is properly ordered with the control status update that caused it.
+    void setJoystickSendAllowed(bool allowed) { _joystickSendAllowed.store(allowed, std::memory_order_release); }
 
 /*===========================================================================*/
 /*                         STATUS TEXT HANDLER                               */

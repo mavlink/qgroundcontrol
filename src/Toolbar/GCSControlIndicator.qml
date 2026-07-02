@@ -7,19 +7,37 @@ import QGroundControl.FactControls
 
 Item {
     id:             control
-    width:          controlIndicatorIconGCS.width * 1.1
+    width:          controlIndicatorIconRole.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
 
     property var    activeVehicle:                          QGroundControl.multiVehicleManager.activeVehicle
-    property bool   showIndicator:                          activeVehicle && activeVehicle.firstControlStatusReceived
-    property var    gcsMain:                                activeVehicle ?  activeVehicle.gcsMain : 0
-    property bool   gcsControlStatusFlags_SystemManager:    activeVehicle ? activeVehicle.gcsControlStatusFlags_SystemManager : false
-    property bool   gcsControlStatusFlags_TakeoverAllowed:  activeVehicle ? activeVehicle.gcsControlStatusFlags_TakeoverAllowed : false
+    property var    gcsControlManager:                      activeVehicle ? activeVehicle.gcsControlManager : null
+    property bool   showIndicator:                          gcsControlManager && gcsControlManager.firstControlStatusReceived
+    property var    sysidInControl:                         gcsControlManager ? gcsControlManager.sysidInControl : 0
+    property var    secondaryGCSList:                       gcsControlManager ? gcsControlManager.secondaryGCSList : []
+    property bool   gcsControlStatusFlags_SystemManager:    gcsControlManager ? gcsControlManager.gcsControlStatusFlags_SystemManager : false
+    property bool   gcsControlStatusFlags_TakeoverAllowed:  gcsControlManager ? gcsControlManager.gcsControlStatusFlags_TakeoverAllowed : false
     property Fact   requestControlAllowTakeoverFact:        QGroundControl.settingsManager.flyViewSettings.requestControlAllowTakeover
     property bool   requestControlAllowTakeover:            requestControlAllowTakeoverFact.rawValue
-    property bool   isThisGCSinControl:                     gcsMain == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
-    property bool   sendControlRequestAllowed:              activeVehicle ? activeVehicle.sendControlRequestAllowed : false
+    property bool   isThisGCSinControl:                     sysidInControl == QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
+    property bool   sendControlRequestAllowed:              gcsControlManager ? gcsControlManager.sendControlRequestAllowed : false
+    // When nobody is in control (uncontrolled) or takeover is allowed, the autopilot grants control
+    // immediately, so there is no owner to ask and no request countdown
+    property bool   controlGrantedImmediately:              sysidInControl == 0 || gcsControlStatusFlags_TakeoverAllowed
+    // Someone (anyone) holds control of the vehicle
+    property bool   someoneInControl:                       sysidInControl != 0
+    // This GCS is a recognized secondary operator: the vehicle lists us in its secondary range.
+    // This holds even when uncontrolled (gcs_main == 0): a GCS within the recognized range is an
+    // owner that can command the vehicle, just not the one holding manual control.
+    property bool   isThisGCSsecondary:                     !isThisGCSinControl &&
+                                                            secondaryGCSList.indexOf(Number(QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue)) >= 0
+    // This GCS has an operator role (primary or secondary) on the vehicle
+    property bool   isThisGCSoperator:                      isThisGCSinControl || isThisGCSsecondary
+
+    property Fact   secondaryGCSSettingFact:                QGroundControl.settingsManager.flyViewSettings.operatorControlSecondaryGCS
+    property string secondaryGCSSetting:                    secondaryGCSSettingFact.rawValue
+    property bool   hasConfiguredSecondaryGCS:              secondaryGCSSetting.length > 0
 
     property var    margins:                                ScreenTools.defaultFontPixelWidth
     property var    panelRadius:                            ScreenTools.defaultFontPixelWidth * 0.5
@@ -37,7 +55,7 @@ Item {
     signal triggerAnimations // Used to trigger animation inside the popup component
 
     Connections {
-        target: activeVehicle
+        target: gcsControlManager
         // Popup prompting user to accept control from other GCS
         function onRequestOperatorControlReceived(sysIdRequestingControl, allowTakeover, requestTimeoutSecs) {
             // If we don't have the indicator visible ( not receiving CONTROL_STATUS ) don't proceed
@@ -114,11 +132,11 @@ Item {
                     Layout.alignment:       Qt.AlignBottom
                     Layout.fillHeight:      true
                     onClicked: {
-                        control.activeVehicle.requestOperatorControl(true) // Allow takeover
+                        control.gcsControlManager.requestOperatorControl(true) // Allow takeover
                         mainWindow.closeIndicatorDrawer()
                         // After allowing takeover, if other GCS does not take control within 10 seconds
                         // takeover will be set to not allowed again. Notify user about this
-                        control.activeVehicle.startTimerRevertAllowTakeover()
+                        control.gcsControlManager.startTimerRevertAllowTakeover()
                         mainWindow.showIndicatorDrawer(allowTakeoverExpirationPopup, control)
                     }
                 }
@@ -155,7 +173,7 @@ Item {
             // that after vehicle::REQUEST_OPERATOR_CONTROL_ALLOW_TAKEOVER_TIMEOUT_MSECS seconds, this GCS will change back to takeover not allowed, as per mavlink specs
             TimedProgressTracker {
                 id:                     revertTakeoverProgressTracker
-                timeoutSeconds:         control.activeVehicle.operatorControlTakeoverTimeoutMsecs * 0.001
+                timeoutSeconds:         control.gcsControlManager.operatorControlTakeoverTimeoutMsecs * 0.001
                 onTimeout:              {
                     mainWindow.closeIndicatorDrawer()
                 }
@@ -199,6 +217,7 @@ Item {
         id: controlPopup
 
         ToolIndicatorPage {
+            showExpand: true
 
             TimedProgressTracker {
                 id:                     sendRequestProgressTracker
@@ -211,13 +230,27 @@ Item {
                     sendRequestProgressTracker.stop()
                 }
             }
+            // Also stop it if we gained control, or the vehicle became uncontrolled/the request expired,
+            // which the C++ side reports through sendControlRequestAllowed
+            property bool isThisGCSinControlLocal: control.isThisGCSinControl
+            onIsThisGCSinControlLocalChanged: {
+                if (isThisGCSinControlLocal && sendRequestProgressTracker.running) {
+                    sendRequestProgressTracker.stop()
+                }
+            }
+            property bool sendControlRequestAllowedLocal: control.sendControlRequestAllowed
+            onSendControlRequestAllowedLocalChanged: {
+                if (sendControlRequestAllowedLocal && sendRequestProgressTracker.running) {
+                    sendRequestProgressTracker.stop()
+                }
+            }
 
             Component.onCompleted: {
                 // If send control request is not allowed it means we recently sent a request, closed the popup, and opened again
                 // before the other request timeout expired. This way we can keep track of the time remaining and update UI accordingly
                 if (!sendControlRequestAllowed) {
                     // vehicle.requestOperatorControlRemainingMsecs holds the time remaining for the current request
-                    startProgressTracker(control.activeVehicle.requestOperatorControlRemainingMsecs * 0.001)
+                    startProgressTracker(control.gcsControlManager.requestOperatorControlRemainingMsecs * 0.001)
                 }
             }
 
@@ -230,12 +263,36 @@ Item {
                 id:                 mainLayout
                 columns:            2
 
+                // --- Status (read-only) ---
+                // 1. My situation: in control (main or secondary), else whether control is acquirable
                 QGCLabel {
-                    text:                   qsTr("System in control: ")
+                    text:                   qsTr("Control status:")
                     font.bold:              true
                 }
                 QGCLabel {
-                    text:                   isThisGCSinControl ? (qsTr("This GCS") + " (" + gcsMain + ")" ) : gcsMain
+                    text:                   isThisGCSinControl ? qsTr("In Control, FULL")
+                                                : (isThisGCSsecondary ? qsTr("In control, COMMANDS ONLY")
+                                                : (controlGrantedImmediately ? qsTr("Unlocked") : qsTr("Request Needed")))
+                    font.bold:              isThisGCSoperator
+                    color:                  isThisGCSoperator ? qgcPal.colorGreen : qgcPal.text
+                    Layout.alignment:       Qt.AlignRight
+                    Layout.fillWidth:       true
+                    horizontalAlignment:    Text.AlignRight
+                }
+                // 2. Takeover permission
+                QGCLabel {
+                    text:                   controlGrantedImmediately ? qsTr("Takeover <b>ALLOWED</b>") : qsTr("Takeover <b>NOT ALLOWED</b>")
+                    Layout.columnSpan:      2
+                    Layout.alignment:       Qt.AlignRight
+                }
+                // 3. Ownership roster: the main GCS and any secondaries, each labelled (this GCS marked)
+                QGCLabel {
+                    text:                   qsTr("Main GCS:")
+                    font.bold:              true
+                }
+                QGCLabel {
+                    text:                   isThisGCSinControl ? (sysidInControl + qsTr(" (This GCS)"))
+                                                              : (someoneInControl ? ("" + sysidInControl) : qsTr("Nobody"))
                     font.bold:              isThisGCSinControl
                     color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
                     Layout.alignment:       Qt.AlignRight
@@ -243,31 +300,40 @@ Item {
                     horizontalAlignment:    Text.AlignRight
                 }
                 QGCLabel {
-                    text:                   gcsControlStatusFlags_TakeoverAllowed ? qsTr("Takeover allowed") : qsTr("Takeover NOT allowed")
-                    Layout.columnSpan:      2
+                    text:                   qsTr("Secondary GCS:")
+                    font.bold:              true
+                    visible:                secondaryGCSList.length > 0
+                }
+                QGCLabel {
+                    visible:                secondaryGCSList.length > 0
+                    color:                  qgcPal.text
+                    textFormat:             Text.StyledText
                     Layout.alignment:       Qt.AlignRight
                     Layout.fillWidth:       true
                     horizontalAlignment:    Text.AlignRight
-                    color:                  gcsControlStatusFlags_TakeoverAllowed ? qgcPal.colorGreen : qgcPal.text
+                    // List secondaries; colour only the entry that is this GCS green
+                    text: {
+                        var myId = Number(QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue)
+                        var out = []
+                        for (var i = 0; i < secondaryGCSList.length; i++) {
+                            var id = secondaryGCSList[i]
+                            if (id === myId) {
+                                out.push('<font color="' + qgcPal.colorGreen + '"><b>' + id + qsTr(" (This GCS)") + '</b></font>')
+                            } else {
+                                out.push("" + id)
+                            }
+                        }
+                        return out.join(", ")
+                    }
                 }
                 // Separator
                 Rectangle {
                     Layout.columnSpan:      2
-                    Layout.preferredWidth:  parent.width
-                    Layout.alignment:       Qt.AlignHCenter
+                    Layout.fillWidth:       true
                     color:                  qgcPal.windowShade
                     height:                 outdoorPalette ? 1 : 2
                 }
-                QGCLabel {
-                    text:                   qsTr("Send Control Request:")
-                    Layout.columnSpan:      2
-                    visible:                !isThisGCSinControl
-                }
-                QGCLabel {
-                    text:                   qsTr("Change takeover condition:")
-                    Layout.columnSpan:      2
-                    visible:                isThisGCSinControl
-                }
+                // --- Actions ---
                 QGCLabel {
                     id:                     requestSentTimeoutLabel
                     text:                   qsTr("Request sent: ") + sendRequestProgressTracker.progressLabel
@@ -280,12 +346,13 @@ Item {
                     enabled:                gcsControlStatusFlags_TakeoverAllowed || isThisGCSinControl
                 }
                 QGCButton {
-                    text:                   gcsControlStatusFlags_TakeoverAllowed ? qsTr("Adquire Control") : qsTr("Send Request")
+                    // Requesting always targets the main (full) role, so a secondary that already has
+                    // command authority sees that this upgrades it to full/manual control
+                    text:                   controlGrantedImmediately ? qsTr("Take full control") : qsTr("Request full control")
                     onClicked: {
-                        var timeout = gcsControlStatusFlags_TakeoverAllowed ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
-                        control.activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
+                        var timeout = controlGrantedImmediately ? 0 : QGroundControl.settingsManager.flyViewSettings.requestControlTimeout.rawValue
+                        control.gcsControlManager.requestOperatorControl(requestControlAllowTakeoverFact.rawValue, timeout)
                         if (timeout > 0) {
-                            // Start UI timeout animation
                             startProgressTracker(timeout)
                         }
                     }
@@ -293,79 +360,208 @@ Item {
                     visible:                !isThisGCSinControl
                     enabled:                !sendRequestProgressTracker.running
                 }
-                QGCLabel {
-                    text:                   qsTr("Request Timeout (sec):")
-                    visible:                !isThisGCSinControl && !gcsControlStatusFlags_TakeoverAllowed
-                }
-                FactTextField {
-                    fact:                   QGroundControl.settingsManager.flyViewSettings.requestControlTimeout
-                    visible:                !isThisGCSinControl && !gcsControlStatusFlags_TakeoverAllowed
-                    Layout.alignment:       Qt.AlignRight
-                    Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 7
-                }
                 QGCButton {
                     text:                   qsTr("Change")
-                    onClicked:              control.activeVehicle.requestOperatorControl(requestControlAllowTakeoverFact.rawValue)
+                    onClicked:              control.gcsControlManager.requestOperatorControl(requestControlAllowTakeoverFact.rawValue)
                     visible:                isThisGCSinControl
                     Layout.alignment:       Qt.AlignRight
                     enabled:                gcsControlStatusFlags_TakeoverAllowed != requestControlAllowTakeoverFact.rawValue
+                    // padding to the right, otherwise the panel will get too narrow and the UI will look inconsistent when only this button is present.
+                    Layout.leftMargin:      ScreenTools.defaultFontPixelWidth * 5
                 }
-                // Separator
-                Rectangle {
+                QGCButton {
+                    text:                   qsTr("Release Control")
+                    onClicked: {
+                        control.gcsControlManager.releaseOperatorControl()
+                    }
                     Layout.columnSpan:      2
-                    Layout.preferredWidth:  parent.width
-                    Layout.alignment:       Qt.AlignHCenter
-                    color:                  qgcPal.windowShade
-                    height:                 outdoorPalette ? 1 : 2
+                    Layout.alignment:       Qt.AlignRight
+                    visible:                isThisGCSinControl
                 }
-                LabelledFactTextField {
-                    Layout.fillWidth:       true
-                    Layout.columnSpan:      2
-                    label:                  qsTr("This GCS Mavlink System ID: ")
-                    fact:                   QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID
+            }
+
+            // Editable settings, shown to the right of the status/actions panel via the standard
+            // ToolIndicatorPage expand button, matching the rest of the toolbar indicators.
+            // Wrapped in an Item with an explicit implicitWidth: the grid is loaded inside a Loader,
+            // so Layout.* on it is ignored. Without a width source the wrapping labels below
+            // (preferredWidth 0 + fillWidth) collapse and pile up; the fixed-width wrapper gives the
+            // anchored grid a stable width to wrap within regardless of which rows are visible.
+            expandedComponent: Item {
+                id:             settingsRoot
+                implicitWidth:  ScreenTools.defaultFontPixelWidth * 30
+                implicitHeight: settingsLayout.implicitHeight
+
+                GridLayout {
+                    id:                 settingsLayout
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    anchors.top:        parent.top
+                    columns:            2
+
+                // This GCS system ID setting. Label on its own wrapping row so the long text doesn't
+                    // drive the panel width; small field below.
+                    QGCLabel {
+                        text:                   qsTr("This GCS System ID:")
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        wrapMode:               Text.WordWrap
+                    }
+                    FactTextField {
+                        fact:                   QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID
+                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 8
+                        Layout.alignment:       Qt.AlignRight
+                    }
+                    // Request timeout setting (same wrapping-label treatment)
+                    QGCLabel {
+                        text:                   qsTr("Takeover request timeout (s):")
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        wrapMode:               Text.WordWrap
+                    }
+                    FactTextField {
+                        fact:                   QGroundControl.settingsManager.flyViewSettings.requestControlTimeout
+                        Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 8
+                        Layout.alignment:       Qt.AlignRight
+                    }
+                    // Multi-owner toggle: reveals the secondary GCS field. The label is a separate wrapping,
+                    // clickable QGCLabel (QGCCheckBox text can't wrap) so the long text doesn't drive panel
+                    // width. Initialised from whether secondaries are configured; unticking clears the list.
+                    RowLayout {
+                        Layout.columnSpan:      2
+                        Layout.fillWidth:       true
+                        spacing:                ScreenTools.defaultFontPixelWidth
+                        QGCCheckBox {
+                            id:                 multiGcsCheckBox
+                            checked:            hasConfiguredSecondaryGCS
+                            onCheckedChanged:   if (!checked) secondaryGCSSettingFact.rawValue = ""
+                        }
+                        QGCLabel {
+                            text:               qsTr("This GCS is part of a control group")
+                            Layout.fillWidth:   true
+                            Layout.preferredWidth: 0
+                            wrapMode:           Text.WordWrap
+                            MouseArea {
+                                anchors.fill:   parent
+                                onClicked:      multiGcsCheckBox.checked = !multiGcsCheckBox.checked
+                            }
+                        }
+                    }
+                    // Secondary GCS list setting. This label is unusually long, so let it wrap instead of
+                    // inflating the panel width: preferredWidth 0 + fillWidth makes it take the width the
+                    // rest of the panel already establishes and wrap within it.
+                    QGCLabel {
+                        text:                   qsTr("Secondary GCS IDs (comma or space separated):")
+                        Layout.columnSpan:      2
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        wrapMode:               Text.WordWrap
+                        visible:                multiGcsCheckBox.checked
+                    }
+                    FactTextField {
+                        fact:                   secondaryGCSSettingFact
+                        // Full-width own row with preferredWidth 0: keeps the typed list from widening a
+                        // shared column (which would shove the right-justified fields on the rows above).
+                        Layout.columnSpan:      2
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        visible:                multiGcsCheckBox.checked
+                    }
+                    QGCLabel {
+                        id:                     rangeSummaryLabel
+                        // Full-width own row so it never lands in the field column above and inflate it
+                        Layout.columnSpan:      2
+                        visible:                multiGcsCheckBox.checked && hasConfiguredSecondaryGCS
+                        color:                  qgcPal.buttonHighlight
+                        // Number of sysids inside the computed range which are neither this GCS nor a configured secondary.
+                        // The protocol encodes the request as a contiguous range, so these would be granted control too
+                        property int unconfiguredIdsInRange: 0
+                        text: {
+                            var myId = QGroundControl.settingsManager.mavlinkSettings.gcsMavlinkSystemID.rawValue
+                            // Accept any non-digit separator (commas, spaces, or a mix), matching _computeOperatorControlRange
+                            var parts = secondaryGCSSetting.match(/\d+/g) || []
+                            var ids = [ myId ]
+                            var lo = myId
+                            var hi = myId
+                            for (var i = 0; i < parts.length; i++) {
+                                var val = parseInt(parts[i])
+                                if (!isNaN(val) && val >= 1 && val <= 255) {
+                                    if (val < lo) lo = val
+                                    if (val > hi) hi = val
+                                    if (ids.indexOf(val) < 0) ids.push(val)
+                                }
+                            }
+                            rangeSummaryLabel.unconfiguredIdsInRange = (hi - lo + 1) - ids.length
+                            return qsTr("Request range: ") + lo + " - " + hi
+                        }
+                    }
+                    QGCLabel {
+                        visible:                rangeSummaryLabel.visible && rangeSummaryLabel.unconfiguredIdsInRange > 0
+                        Layout.columnSpan:      2
+                        // preferredWidth 0 keeps the long warning text from inflating the
+                        // panel's natural width; fillWidth then stretches it to whatever
+                        // width the other panel elements already establish, wrapping inside it
+                        Layout.fillWidth:       true
+                        Layout.preferredWidth:  0
+                        wrapMode:               Text.WordWrap
+                        color:                  qgcPal.colorOrange
+                        text:                   qsTr("Warning: %1 other GCS id(s) inside this range will also be accepted as operators").arg(rangeSummaryLabel.unconfiguredIdsInRange)
+                    }
                 }
             }
         }
     }
 
-    // Actual top toolbar indicator
-    QGCColoredImage {
-        id:                      controlIndicatorIconLine
-        width:                   height
-        anchors.top:             parent.top
-        anchors.bottom:          parent.bottom
-        source:                  "/gcscontrolIndicator/gcscontrol_line.svg"
-        fillMode:                Image.PreserveAspectFit
-        sourceSize.height:       height
-        color:                   isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
-    }
+    // Actual top toolbar indicator. Three stacked layers occupying different quadrants:
+    //   aircraft (top-left)  - green when the vehicle has a controller or this GCS is an operator
+    //   line     (bottom-left) - green only when THIS GCS has an operator role (its control link)
+    //   role glyph (right)   - solid device = primary, outlined device = secondary,
+    //                          lock open/closed = no role (open when control is acquirable now).
+    //                          Always white: it's your station; green is reserved for the control
+    //                          relationship (aircraft + line + MAIN/SEC label).
     QGCColoredImage {
         id:                      controlIndicatorIconAircraft
         width:                   height
         anchors.top:             parent.top
         anchors.bottom:          parent.bottom
-        source:                  "/gcscontrolIndicator/gcscontrol_device.svg"
+        source:                  "/gcscontrolIndicator/multigcs_aircraft.svg"
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
-        color:                   (isThisGCSinControl || gcsControlStatusFlags_TakeoverAllowed) ? qgcPal.colorGreen : qgcPal.text
+        // Green when the vehicle has a controller (a main) or when this GCS is itself an operator
+        // (covers the gcs_main==0 case where this GCS is a recognized secondary)
+        color:                   (someoneInControl || isThisGCSoperator) ? qgcPal.colorGreen : qgcPal.text
     }
     QGCColoredImage {
-        id:                      controlIndicatorIconGCS
+        id:                      controlIndicatorIconLine
         width:                   height
         anchors.top:             parent.top
         anchors.bottom:          parent.bottom
-        source:                  "/gcscontrolIndicator/gcscontrol_gcs.svg"
+        source:                  "/gcscontrolIndicator/multigcs_line.svg"
+        fillMode:                Image.PreserveAspectFit
+        sourceSize.height:       height
+        color:                   isThisGCSoperator ? qgcPal.colorGreen : qgcPal.text
+    }
+    QGCColoredImage {
+        id:                      controlIndicatorIconRole
+        width:                   height
+        anchors.top:             parent.top
+        anchors.bottom:          parent.bottom
+        source:                  isThisGCSoperator
+                                     ? (isThisGCSinControl ? "/gcscontrolIndicator/multigcs_device.svg"
+                                                           : "/gcscontrolIndicator/multigcs_device_alt.svg")
+                                     : (controlGrantedImmediately ? "/gcscontrolIndicator/multigcs_lock_open.svg"
+                                                                  : "/gcscontrolIndicator/multigcs_lock_closed.svg")
         fillMode:                Image.PreserveAspectFit
         sourceSize.height:       height
         color:                   qgcPal.text
 
-        // Current GCS in control indicator
+        // MAIN/SEC role label, only shown when this GCS has an operator role
         QGCLabel {
-            id:                     gcsInControlIndicator
-            text:                   gcsMain
+            id:                     roleLabel
+            text:                   isThisGCSinControl ? qsTr("MAIN") : qsTr("SEC")
+            visible:                isThisGCSoperator
             font.bold:              true
-            font.pointSize:         ScreenTools.smallFontPointSize * 1.1
-            color:                  isThisGCSinControl ? qgcPal.colorGreen : qgcPal.text
+            font.pointSize:         ScreenTools.smallFontPointSize
+            color:                  qgcPal.colorGreen
             anchors.bottom:         parent.bottom
             anchors.bottomMargin:   -margins * 0.7
             anchors.right:          parent.right

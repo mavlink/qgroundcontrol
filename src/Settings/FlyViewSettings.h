@@ -30,4 +30,5 @@ public:
     DEFINE_SETTINGFACT(requestControlAllowTakeover)
     DEFINE_SETTINGFACT(requestControlTimeout)
     DEFINE_SETTINGFACT(enableAutomaticMissionPopups)
+    DEFINE_SETTINGFACT(operatorControlSecondaryGCS)
 };

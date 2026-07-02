@@ -136,6 +136,13 @@
             "default": true,
             "label": "Enable automatic mission start/resume popups",
             "keywords": "mission popup"
+        },
+        {
+            "name": "operatorControlSecondaryGCS",
+            "shortDesc": "List of GCS system IDs to include in the control range when requesting operator control, separated by commas or spaces. Empty means single-GCS mode.",
+            "type": "string",
+            "default": "",
+            "label": "Secondary GCS system IDs to include in control range"
         }
     ]
 }
