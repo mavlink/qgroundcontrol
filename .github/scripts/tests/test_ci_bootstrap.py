@@ -5,12 +5,11 @@ from __future__ import annotations
 import subprocess
 import sys
 import textwrap
-from pathlib import Path
 
 import pytest
+from _helpers import REPO_ROOT
 from ci_bootstrap import ensure_tools_dir
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
 
 class TestEnsureToolsDir:
     def test_resolves_tools_as_sibling_of_ancestor(self, tmp_path):

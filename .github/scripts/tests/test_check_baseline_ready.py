@@ -2,15 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from check_baseline_ready import evaluate_readiness
-from common.gh_actions import write_github_output
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    import pytest
 
 PLATFORMS = ["Linux", "Windows", "MacOS", "Android"]
 
@@ -76,19 +68,3 @@ def test_evaluate_readiness_filters_by_event() -> None:
     assert missing == PLATFORMS
     assert incomplete == []
     assert failed == []
-
-
-def test_write_output_multiline_uses_collision_resistant_delimiter(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    out_path = tmp_path / "out.txt"
-    monkeypatch.setenv("GITHUB_OUTPUT", str(out_path))
-
-    value = "line1\nEOF_missing_deadbeef\ntail"
-    write_github_output({"missing": value})
-
-    text = out_path.read_text(encoding="utf-8")
-    assert "missing<<EOF_missing_" in text
-    assert "EOF_missing\n" not in text
-    assert "line1\nEOF_missing_deadbeef\ntail" in text

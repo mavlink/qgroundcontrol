@@ -13,16 +13,11 @@ from generators.settings_qml.page_generator import (
     load_page_def,
 )
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+from ._helpers import REPO_ROOT
+
 
 def _make_settings_dir(tmp_path: Path, facts: dict[str, list[dict]]) -> Path:
-    """Create a temporary Settings directory with SettingsGroup.json files.
-
-    Args:
-        facts: mapping of stem (e.g. "App") to list of fact dicts.
-    """
+    """Create a Settings dir with one SettingsGroup.json per stem in `facts`."""
     settings_dir = tmp_path / "Settings"
     settings_dir.mkdir()
     for stem, fact_list in facts.items():
@@ -31,9 +26,7 @@ def _make_settings_dir(tmp_path: Path, facts: dict[str, list[dict]]) -> Path:
             "fileType": "FactMetaData",
             "QGC.MetaData.Facts": fact_list,
         }
-        (settings_dir / f"{stem}.SettingsGroup.json").write_text(
-            json.dumps(data), encoding="utf-8"
-        )
+        (settings_dir / f"{stem}.SettingsGroup.json").write_text(json.dumps(data), encoding="utf-8")
     return settings_dir
 
 
@@ -43,10 +36,6 @@ def _make_page_json(tmp_path: Path, page_data: dict) -> Path:
     p.write_text(json.dumps(page_data, indent=2), encoding="utf-8")
     return p
 
-
-# ---------------------------------------------------------------------------
-# Tests: load_page_def
-# ---------------------------------------------------------------------------
 
 class TestLoadPageDef:
     def test_loads_groups(self, tmp_path: Path):
@@ -111,7 +100,11 @@ class TestLoadPageDef:
                     "showWhen": "someCondition",
                     "enableWhen": "anotherCondition",
                     "controls": [
-                        {"setting": "appSettings.x", "showWhen": "ctrl_cond", "enableWhen": "ctrl_en"},
+                        {
+                            "setting": "appSettings.x",
+                            "showWhen": "ctrl_cond",
+                            "enableWhen": "ctrl_en",
+                        },
                     ],
                 }
             ],
@@ -128,10 +121,6 @@ class TestLoadPageDef:
         assert page.groups == []
 
 
-# ---------------------------------------------------------------------------
-# Tests: ControlDef properties
-# ---------------------------------------------------------------------------
-
 class TestControlDef:
     def test_settings_group(self):
         ctrl = ControlDef(setting="appSettings.myFact")
@@ -146,10 +135,6 @@ class TestControlDef:
         assert ctrl.fact_name == "nested.fact"
 
 
-# ---------------------------------------------------------------------------
-# Tests: GroupDef.display_name
-# ---------------------------------------------------------------------------
-
 class TestGroupDef:
     def test_display_name_from_heading(self):
         grp = GroupDef(heading="My Heading")
@@ -160,102 +145,146 @@ class TestGroupDef:
         assert grp.display_name == "Override"
 
 
-# ---------------------------------------------------------------------------
-# Tests: generate_page_qml
-# ---------------------------------------------------------------------------
-
 class TestGeneratePageQml:
     @pytest.fixture
     def settings_dir(self, tmp_path: Path) -> Path:
-        return _make_settings_dir(tmp_path, {
-            "App": [
-                {"name": "enableFeature", "type": "bool", "shortDesc": "Enable", "label": "Enable Feature"},
-                {"name": "maxAlt", "type": "double", "shortDesc": "Max alt", "label": "Maximum Altitude"},
-                {"name": "colorScheme", "type": "uint32", "shortDesc": "Color",
-                 "enumStrings": "Light,Dark", "enumValues": "0,1", "label": "Color Scheme"},
-                {"name": "savePath", "type": "string", "shortDesc": "Save path", "label": "Save Path"},
-            ],
-        })
+        return _make_settings_dir(
+            tmp_path,
+            {
+                "App": [
+                    {
+                        "name": "enableFeature",
+                        "type": "bool",
+                        "shortDesc": "Enable",
+                        "label": "Enable Feature",
+                    },
+                    {
+                        "name": "maxAlt",
+                        "type": "double",
+                        "shortDesc": "Max alt",
+                        "label": "Maximum Altitude",
+                    },
+                    {
+                        "name": "colorScheme",
+                        "type": "uint32",
+                        "shortDesc": "Color",
+                        "enumStrings": "Light,Dark",
+                        "enumValues": "0,1",
+                        "label": "Color Scheme",
+                    },
+                    {
+                        "name": "savePath",
+                        "type": "string",
+                        "shortDesc": "Save path",
+                        "label": "Save Path",
+                    },
+                ],
+            },
+        )
 
     def test_has_imports(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "import QtQuick" in qml
         assert "import QGroundControl.FactControls" in qml
         assert "import QGroundControl.Controls" in qml
 
     def test_root_element(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "SettingsPage {" in qml
         assert qml.rstrip().endswith("}")
 
     def test_page_name_emits_object_name(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir, page_name="Fly View")
         assert 'objectName: "settingsPage_FlyView"' in qml
 
     def test_page_name_empty_no_object_name(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(heading="G", controls=[ControlDef(setting="appSettings.enableFeature")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir, page_name="")
         assert "objectName:" not in qml
 
     def test_bool_generates_checkbox(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(setting="appSettings.enableFeature")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.enableFeature")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "FactCheckBoxSlider {" in qml
         assert "QGroundControl.settingsManager.appSettings.enableFeature" in qml
 
     def test_enum_generates_combobox(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(setting="appSettings.colorScheme")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.colorScheme")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledFactComboBox {" in qml
         assert "indexModel: false" in qml
 
     def test_numeric_generates_textfield(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(setting="appSettings.maxAlt")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.maxAlt")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledFactTextField {" in qml
 
     def test_explicit_control_override(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(setting="appSettings.maxAlt", control="combobox")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.maxAlt", control="combobox")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledFactComboBox {" in qml
 
     def test_heading(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="My Section", controls=[ControlDef(setting="appSettings.enableFeature")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="My Section", controls=[ControlDef(setting="appSettings.enableFeature")]
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert 'heading: qsTr("My Section")' in qml
 
     def test_no_heading_when_empty(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(setting="appSettings.enableFeature")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.enableFeature")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "heading:" not in qml
 
     def test_component_group(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(component="MyCustomWidget"),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(component="MyCustomWidget"),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "MyCustomWidget {" in qml
         assert "Layout.fillWidth: true" in qml
@@ -265,21 +294,28 @@ class TestGeneratePageQml:
         assert "spacing: 0" in qml
 
     def test_component_group_with_showWhen(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(component="MyCustomWidget", showWhen="someFlag"),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(component="MyCustomWidget", showWhen="someFlag"),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "ColumnLayout {" in qml
         assert "(someFlag)" in qml
         assert "MyCustomWidget {" in qml
 
     def test_component_control(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", controls=[
-                ControlDef(setting="appSettings.enableFeature"),
-                ControlDef(setting="", control="component", component="MyInlineWidget"),
-            ]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G",
+                    controls=[
+                        ControlDef(setting="appSettings.enableFeature"),
+                        ControlDef(setting="", control="component", component="MyInlineWidget"),
+                    ],
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "MyInlineWidget {" in qml
         assert "Layout.fillWidth: true" in qml
@@ -289,99 +325,158 @@ class TestGeneratePageQml:
         assert "ColumnLayout {" not in lines[idx - 1]
 
     def test_component_control_with_showWhen(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", controls=[
-                ControlDef(setting="", control="component", component="MyWidget", showWhen="featureEnabled"),
-            ]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G",
+                    controls=[
+                        ControlDef(
+                            setting="",
+                            control="component",
+                            component="MyWidget",
+                            showWhen="featureEnabled",
+                        ),
+                    ],
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "MyWidget {" in qml
         assert "visible: featureEnabled" in qml
 
     def test_component_control_with_enableWhen(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", controls=[
-                ControlDef(setting="", control="component", component="MyWidget", enableWhen="isReady"),
-            ]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G",
+                    controls=[
+                        ControlDef(
+                            setting="",
+                            control="component",
+                            component="MyWidget",
+                            enableWhen="isReady",
+                        ),
+                    ],
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "MyWidget {" in qml
         assert "enabled: isReady" in qml
 
     def test_showWhen_on_group(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", showWhen="someFlag", controls=[
-                ControlDef(setting="appSettings.enableFeature"),
-            ]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G",
+                    showWhen="someFlag",
+                    controls=[
+                        ControlDef(setting="appSettings.enableFeature"),
+                    ],
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "(someFlag)" in qml
 
     def test_enableWhen_on_group(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", enableWhen="otherFlag", controls=[
-                ControlDef(setting="appSettings.enableFeature"),
-            ]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G",
+                    enableWhen="otherFlag",
+                    controls=[
+                        ControlDef(setting="appSettings.enableFeature"),
+                    ],
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "enabled: otherFlag" in qml
 
     def test_showWhen_on_control(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[
-                ControlDef(setting="appSettings.enableFeature", showWhen="x === 1"),
-            ]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    controls=[
+                        ControlDef(setting="appSettings.enableFeature", showWhen="x === 1"),
+                    ]
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "(x === 1)" in qml
         assert "appSettings.enableFeature.userVisible" in qml
 
     def test_enableWhen_on_control(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[
-                ControlDef(setting="appSettings.enableFeature", enableWhen="enabled_expr"),
-            ]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    controls=[
+                        ControlDef(setting="appSettings.enableFeature", enableWhen="enabled_expr"),
+                    ]
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "enabled: enabled_expr" in qml
 
     def test_explicit_label(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[
-                ControlDef(setting="appSettings.maxAlt", label="Custom Label"),
-            ]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    controls=[
+                        ControlDef(setting="appSettings.maxAlt", label="Custom Label"),
+                    ]
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert 'qsTr("Custom Label")' in qml
 
     def test_browse_control(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(setting="appSettings.savePath", control="browse")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.savePath", control="browse")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledFactBrowse {" in qml
 
     def test_slider_control(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(setting="appSettings.maxAlt", control="slider")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.maxAlt", control="slider")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "FactTextFieldSlider {" in qml
 
     def test_scaler_control(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(setting="appSettings.maxAlt", control="scaler")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.maxAlt", control="scaler")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledFactIncrementer {" in qml
 
     def test_info_control(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(
-                setting="", control="info", label="Log files are saved to", value="logSavePath",
-                showWhen="diskLoggingEnabledValue",
-            )]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    controls=[
+                        ControlDef(
+                            setting="",
+                            control="info",
+                            label="Log files are saved to",
+                            value="logSavePath",
+                            showWhen="diskLoggingEnabledValue",
+                        )
+                    ]
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledLabel {" in qml
         assert 'label: qsTr("Log files are saved to")' in qml
@@ -389,11 +484,20 @@ class TestGeneratePageQml:
         assert "visible: diskLoggingEnabledValue" in qml
 
     def test_info_control_no_show_when(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(
-                setting="", control="info", label="Some info", value="someBinding",
-            )]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    controls=[
+                        ControlDef(
+                            setting="",
+                            control="info",
+                            label="Some info",
+                            value="someBinding",
+                        )
+                    ]
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledLabel {" in qml
         assert "visible:" not in qml.split("LabelledLabel")[1].split("}")[0]
@@ -401,13 +505,23 @@ class TestGeneratePageQml:
     def test_info_control_with_button(self, settings_dir: Path):
         from generators.common.controls import ButtonDef
         from generators.settings_qml.page_generator import ControlDef as CD
-        page = PageDef(groups=[
-            GroupDef(controls=[CD(
-                setting="", control="info", label="Bytes sent", value="sink.bytesSentDisplay",
-                showWhen="sink && sink.enabled",
-                button=ButtonDef(text="Reset", onClicked="sink.resetBytesSent()"),
-            )]),
-        ])
+
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    controls=[
+                        CD(
+                            setting="",
+                            control="info",
+                            label="Bytes sent",
+                            value="sink.bytesSentDisplay",
+                            showWhen="sink && sink.enabled",
+                            button=ButtonDef(text="Reset", onClicked="sink.resetBytesSent()"),
+                        )
+                    ]
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "RowLayout {" in qml
         assert "LabelledLabel {" in qml
@@ -419,12 +533,21 @@ class TestGeneratePageQml:
         assert "visible: sink && sink.enabled" in qml
 
     def test_info_control_with_enable_when(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(
-                setting="", control="info", label="Info", value="someValue",
-                enableWhen="someCondition",
-            )]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    controls=[
+                        ControlDef(
+                            setting="",
+                            control="info",
+                            label="Info",
+                            value="someValue",
+                            enableWhen="someCondition",
+                        )
+                    ]
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "LabelledLabel {" in qml
         assert "enabled: someCondition" in qml
@@ -438,35 +561,40 @@ class TestGeneratePageQml:
         assert "property var _mgr: QGroundControl.settingsManager" in qml
 
     def test_string_field_width_added(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(controls=[ControlDef(setting="appSettings.savePath")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(controls=[ControlDef(setting="appSettings.savePath")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "_stringFieldWidth" in qml
 
     def test_layout_fill_width(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="G", controls=[
-                ControlDef(setting="appSettings.enableFeature"),
-                ControlDef(setting="appSettings.maxAlt"),
-            ]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(
+                    heading="G",
+                    controls=[
+                        ControlDef(setting="appSettings.enableFeature"),
+                        ControlDef(setting="appSettings.maxAlt"),
+                    ],
+                ),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert qml.count("Layout.fillWidth: true") >= 3  # group + 2 controls
 
     def test_section_filter_visibility(self, settings_dir: Path):
-        page = PageDef(groups=[
-            GroupDef(heading="A", controls=[ControlDef(setting="appSettings.enableFeature")]),
-            GroupDef(heading="B", controls=[ControlDef(setting="appSettings.maxAlt")]),
-        ])
+        page = PageDef(
+            groups=[
+                GroupDef(heading="A", controls=[ControlDef(setting="appSettings.enableFeature")]),
+                GroupDef(heading="B", controls=[ControlDef(setting="appSettings.maxAlt")]),
+            ]
+        )
         qml = generate_page_qml(page, settings_dir)
         assert "sectionFilter === 0" in qml
         assert "sectionFilter === 1" in qml
 
-
-# ---------------------------------------------------------------------------
-# Tests: generate_pages_model_qml
-# ---------------------------------------------------------------------------
 
 class TestGeneratePagesModelQml:
     @pytest.fixture
@@ -483,9 +611,7 @@ class TestGeneratePagesModelQml:
                 {"heading": "Section B", "controls": [{"setting": "appSettings.y"}]},
             ],
         }
-        (pages_dir / "Test.SettingsUI.json").write_text(
-            json.dumps(page_def), encoding="utf-8"
-        )
+        (pages_dir / "Test.SettingsUI.json").write_text(json.dumps(page_def), encoding="utf-8")
 
         # Settings metadata
         settings_dir = pages_dir.parent.parent.parent / "Settings"
@@ -498,9 +624,7 @@ class TestGeneratePagesModelQml:
                 {"name": "y", "type": "bool", "shortDesc": "Y", "label": "Y"},
             ],
         }
-        (settings_dir / "App.SettingsGroup.json").write_text(
-            json.dumps(meta), encoding="utf-8"
-        )
+        (settings_dir / "App.SettingsGroup.json").write_text(json.dumps(meta), encoding="utf-8")
 
         # Pages JSON
         pages_json = {
@@ -568,18 +692,13 @@ class TestGeneratePagesModelQml:
         assert "QGroundControl.someFlag" in qml
 
 
-# ---------------------------------------------------------------------------
-# Tests: Real page definitions (integration)
-# ---------------------------------------------------------------------------
-
 class TestRealPageDefinitions:
     """Test against real QGC page definition files if available."""
 
     @pytest.fixture
     def repo_root(self) -> Path:
-        root = Path(__file__).resolve().parent.parent.parent
-        if (root / "src" / "Settings").is_dir():
-            return root
+        if (REPO_ROOT / "src" / "Settings").is_dir():
+            return REPO_ROOT
         pytest.skip("Not running from QGC repo root")
 
     def test_all_page_defs_load(self, repo_root: Path):

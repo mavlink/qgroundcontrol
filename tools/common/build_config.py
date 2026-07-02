@@ -124,10 +124,10 @@ def export_build_config_values(
     return exported
 
 
-def format_github_output(values: dict[str, str]) -> str:
-    """Format values for writing to $GITHUB_OUTPUT."""
-    lines = [f"{key.lower()}={value}" for key, value in sorted(values.items())]
+def github_output_values(values: dict[str, str]) -> dict[str, str]:
+    """Lowercase-key outputs for $GITHUB_OUTPUT, plus derived qt_modules_ios."""
+    outputs = {key.lower(): value for key, value in sorted(values.items())}
     qt_modules = values.get("QT_MODULES", "")
     if qt_modules:
-        lines.append(f"qt_modules_ios={derive_ios_qt_modules(qt_modules)}")
-    return "\n".join(lines)
+        outputs["qt_modules_ios"] = derive_ios_qt_modules(qt_modules)
+    return outputs

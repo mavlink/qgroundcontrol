@@ -3,28 +3,22 @@
 
 from __future__ import annotations
 
-import importlib.util
-
-# Import module with a hyphen in the filename
-import sys as _sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
 
-_SCRIPT = Path(__file__).parent.parent / "setup" / "build-gstreamer.py"
-_spec = importlib.util.spec_from_file_location("build_gstreamer", _SCRIPT)
-_mod = importlib.util.module_from_spec(_spec)
-_sys.modules["build_gstreamer"] = _mod
-_spec.loader.exec_module(_mod)
+from ._helpers import load_script_module
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+_mod = load_script_module("setup/build-gstreamer.py", "build_gstreamer")
 
 BuildConfig = _mod.BuildConfig
 MesonBuilder = _mod.MesonBuilder
 detect_host_arch = _mod.detect_host_arch
 detect_jobs = _mod.detect_jobs
-
-
-# ── detect_jobs ──────────────────────────────────────────────────────────
 
 
 def test_detect_jobs_with_override() -> None:
@@ -41,9 +35,6 @@ def test_detect_jobs_fallback_when_cpu_count_none() -> None:
         assert detect_jobs() == 4
 
 
-# ── detect_host_arch ──────────────────────────────────────────────────────
-
-
 @pytest.mark.parametrize(
     "machine, expected",
     [
@@ -57,9 +48,6 @@ def test_detect_jobs_fallback_when_cpu_count_none() -> None:
 def test_detect_host_arch(machine: str, expected: str) -> None:
     with patch("platform.machine", return_value=machine):
         assert detect_host_arch() == expected
-
-
-# ── BuildConfig ───────────────────────────────────────────────────────────
 
 
 def test_build_config_defaults(tmp_path: Path) -> None:
@@ -84,9 +72,6 @@ def test_build_config_archive_name() -> None:
 def test_build_config_archive_name_simulator() -> None:
     cfg = BuildConfig(platform="ios", arch="arm64", version="1.24.0", simulator=True)
     assert cfg.archive_name == "gstreamer-1.0-ios-arm64-1.24.0-simulator"
-
-
-# ── MesonBuilder.get_meson_args ──────────────────────────────────────────
 
 
 def test_get_meson_args_contains_prefix(tmp_path: Path) -> None:

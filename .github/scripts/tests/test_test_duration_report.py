@@ -1,27 +1,24 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from test_duration_report import analyze_test_durations, main
 
-
-def _write_junit(path, xml: str) -> None:
-    path.write_text(xml, encoding="utf-8")
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_analyze_test_durations_reports_slow_tests(tmp_path):
     junit = tmp_path / "junit.xml"
-    _write_junit(
-        junit,
+    junit.write_text(
         """<testsuite>
         <testcase classname="Suite" name="fast" time="1.0" />
         <testcase classname="Suite" name="slow" time="10.0" />
         </testsuite>""",
+        encoding="utf-8",
     )
 
-    report = analyze_test_durations(
-        junit,
-        top_n=5,
-        slow_threshold=5.0,
-    )
+    report = analyze_test_durations(junit, top_n=5, slow_threshold=5.0)
 
     assert report["slow_count"] == 1
     assert report["total_tests"] == 2
@@ -29,12 +26,10 @@ def test_analyze_test_durations_reports_slow_tests(tmp_path):
     assert report["top_slowest"][0]["test"] == "Suite::slow"
 
 
-def test_test_duration_report_main_missing_junit(tmp_path, monkeypatch):
+def test_test_duration_report_main_missing_junit(tmp_path, monkeypatch, gh_output: Path):
     summary = tmp_path / "summary.md"
-    output = tmp_path / "output.txt"
     monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
-    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
     result = main(["--junit-path", str(tmp_path / "missing.xml")])
     assert result == 0
-    assert "slow_count=0" in output.read_text(encoding="utf-8")
+    assert "slow_count=0" in gh_output.read_text(encoding="utf-8")
     assert "WARNING" in summary.read_text(encoding="utf-8")

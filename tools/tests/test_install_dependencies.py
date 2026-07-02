@@ -3,8 +3,7 @@
 
 from __future__ import annotations
 
-import subprocess
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import call, patch
 
 import pytest
@@ -36,9 +35,10 @@ from setup.install_dependencies import (
     validate_extra_packages,
 )
 
-# ---------------------------------------------------------------------------
-# Package list integrity
-# ---------------------------------------------------------------------------
+from ._helpers import REPO_ROOT, completed
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_debian_packages_not_empty() -> None:
@@ -91,9 +91,7 @@ def test_cross_arm64_excluded_from_aggregate() -> None:
 
 
 def test_sysroot_script_single_sources_cross_arm64() -> None:
-    script = (
-        Path(__file__).resolve().parents[2] / "deploy" / "docker" / "install-sysroot-aarch64.sh"
-    ).read_text()
+    script = (REPO_ROOT / "deploy" / "docker" / "install-sysroot-aarch64.sh").read_text()
     assert "--category cross_arm64" in script
     for pkg in ("libxcb1-dev", "libgstreamer1.0-dev", "libssl-dev"):
         assert f"{pkg}:arm64" not in script, (
@@ -153,11 +151,6 @@ def test_get_macos_packages() -> None:
     assert "ccache" in pkgs
 
 
-# ---------------------------------------------------------------------------
-# Fedora / Arch package lists
-# ---------------------------------------------------------------------------
-
-
 @pytest.mark.parametrize(
     ("table", "getter"),
     [(FEDORA_PACKAGES, get_fedora_packages), (ARCH_PACKAGES, get_arch_packages)],
@@ -185,11 +178,6 @@ def test_get_arch_packages_categories() -> None:
     assert "base-devel" in get_arch_packages("core")
     assert "gstreamer" in get_arch_packages("gstreamer")
     assert get_arch_packages("nonexistent") == []
-
-
-# ---------------------------------------------------------------------------
-# Platform detection
-# ---------------------------------------------------------------------------
 
 
 _OS_RELEASE = "setup.install_dependencies._common._os_release_ids"
@@ -248,11 +236,6 @@ def test_detect_platform_unknown_linux() -> None:
         patch(_OS_RELEASE, return_value=set()),
     ):
         assert detect_platform() == "linux"
-
-
-# ---------------------------------------------------------------------------
-# Argument parsing
-# ---------------------------------------------------------------------------
 
 
 def test_parse_args_defaults() -> None:
@@ -322,11 +305,6 @@ def test_validate_extra_packages_rejects_invalid_names() -> None:
         validate_extra_packages(["good", "bad;rm"])
 
 
-# ---------------------------------------------------------------------------
-# download_file (network call mocked)
-# ---------------------------------------------------------------------------
-
-
 def test_download_file_dry_run(tmp_path: Path) -> None:
     from setup.install_dependencies import download_file
 
@@ -344,11 +322,6 @@ def test_download_file_network_error(tmp_path: Path) -> None:
     with patch("urllib.request.urlopen", side_effect=OSError("unreachable")):
         result = download_file("https://example.com/test.bin", dest, dry_run=False)
     assert result is False
-
-
-# ---------------------------------------------------------------------------
-# apt install retry behavior
-# ---------------------------------------------------------------------------
 
 
 def test_run_apt_install_with_retry_success_first_try() -> None:
@@ -375,14 +348,10 @@ def test_run_apt_install_with_retry_refreshes_index_then_retries() -> None:
     )
 
 
-def _brew_list_result(stdout: str, returncode: int = 0):
-    return type("R", (), {"stdout": stdout, "returncode": returncode})()
-
-
 def test_get_brew_install_command_filters_already_installed() -> None:
     with patch(
         "setup.install_dependencies._common.subprocess.run",
-        return_value=_brew_list_result("pkgconf\nqt\ncmake\n"),
+        return_value=completed("pkgconf\nqt\ncmake\n"),
     ):
         cmd = get_brew_install_command(["pkgconf", "ninja", "qt"])
     assert cmd == ["brew", "install", "--quiet", "ninja"]
@@ -391,7 +360,7 @@ def test_get_brew_install_command_filters_already_installed() -> None:
 def test_get_brew_install_command_all_installed_returns_noop() -> None:
     with patch(
         "setup.install_dependencies._common.subprocess.run",
-        return_value=_brew_list_result("pkgconf\nninja\n"),
+        return_value=completed("pkgconf\nninja\n"),
     ):
         cmd = get_brew_install_command(["pkgconf", "ninja"])
     assert cmd == ["true"]
@@ -406,7 +375,7 @@ def test_get_brew_install_command_brew_list_failure_passes_all() -> None:
     # brew list failure (e.g. brew not yet on PATH) shouldn't suppress installs.
     with patch(
         "setup.install_dependencies._common.subprocess.run",
-        return_value=_brew_list_result("", returncode=1),
+        return_value=completed(returncode=1),
     ):
         cmd = get_brew_install_command(["pkgconf", "ninja"])
     assert cmd == ["brew", "install", "--quiet", "pkgconf", "ninja"]
@@ -418,19 +387,19 @@ def test_detect_just_version_absent() -> None:
 
 
 def test_detect_just_version_parses_output() -> None:
-    completed = type("R", (), {"stdout": "just 1.36.0\n"})()
+    result = completed("just 1.36.0\n")
     with (
         patch("setup.install_dependencies._common.has_command", return_value=True),
-        patch("setup.install_dependencies._debian.subprocess.run", return_value=completed),
+        patch("setup.install_dependencies._debian.subprocess.run", return_value=result),
     ):
         assert _detect_just_version() == (1, 36, 0)
 
 
 def test_detect_just_version_handles_missing_patch() -> None:
-    completed = type("R", (), {"stdout": "just 1.30\n"})()
+    result = completed("just 1.30\n")
     with (
         patch("setup.install_dependencies._common.has_command", return_value=True),
-        patch("setup.install_dependencies._debian.subprocess.run", return_value=completed),
+        patch("setup.install_dependencies._debian.subprocess.run", return_value=result),
     ):
         assert _detect_just_version() == (1, 30, 0)
 
@@ -547,7 +516,7 @@ def test_verify_msvc_fails_when_component_missing(monkeypatch, tmp_path: Path) -
     with patch.object(
         _windows.subprocess,
         "run",
-        return_value=subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+        return_value=completed(),
     ):
         assert _windows._verify_msvc(arm64=False) is False
 
@@ -571,11 +540,6 @@ def test_install_windows_dispatch_invokes_msvc_and_nsis() -> None:
         )
     msvc.assert_called_once_with(False, True)
     nsis.assert_called_once_with(False)
-
-
-# ---------------------------------------------------------------------------
-# Linux install orchestration (Fedora / Arch)
-# ---------------------------------------------------------------------------
 
 
 def test_install_fedora_installs_packages_pipx_then_cleans() -> None:

@@ -12,7 +12,8 @@
   "extraPaths": [
     "tools",
     "tools/translations",
-    ".github/scripts"
+    ".github/scripts",
+    ".github/scripts/tests"
   ],
   "pythonVersion": "3.10",
   "reportMissingImports": "warning",
