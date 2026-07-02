@@ -509,7 +509,8 @@ void LinkManager::_updateAutoConnectLinks()
     _reconnectAutoConnectLinks();
 
     // check to see if nmea gps is configured for UDP input, if so, set it up to connect
-    if (_autoConnectSettings->autoConnectNmeaPort()->cookedValueString() == "UDP Port") {
+    const QString nmeaPortValue = _autoConnectSettings->autoConnectNmeaPort()->cookedValueString();
+    if (nmeaPortValue == "UDP Port") {
         if ((_nmeaSocket->localPort() != _autoConnectSettings->nmeaUdpPort()->rawValue().toUInt()) || (_nmeaSocket->state() != UdpIODevice::BoundState)) {
             qCDebug(LinkManagerLog) << "Changing port for UDP NMEA stream";
             _nmeaSocket->close();
@@ -526,6 +527,22 @@ void LinkManager::_updateAutoConnectLinks()
 #endif
     } else {
         _nmeaSocket->close();
+
+        // Only tear things down when NMEA is switched off entirely ("Disabled"). Any other
+        // value is a serial NMEA port, which is set up by _addSerialAutoConnectLink() below;
+        // touching _nmeaPort / the position source here would break it on every tick.
+        if (nmeaPortValue == "Disabled") {
+#ifndef QGC_NO_SERIAL_LINK
+            if (_nmeaPort) {
+                _nmeaPort->close();
+                delete _nmeaPort;
+                _nmeaPort = nullptr;
+                _nmeaDeviceName = "";
+            }
+#endif
+            // Revert QGCPositionManager to the integrated GPS if it was using an NMEA source
+            QGCPositionManager::instance()->resetNmeaSourceDevice();
+        }
     }
 
 #ifndef QGC_NO_SERIAL_LINK
