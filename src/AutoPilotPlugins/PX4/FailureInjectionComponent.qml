@@ -14,6 +14,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
+import "FailureInjectionInstances.js" as Instances
+
 SetupPage {
     id:             failureInjectionPage
     pageComponent:  pageComponent
@@ -81,21 +83,8 @@ SetupPage {
                                    0, 0, 0)                            // param5..7
     }
 
-    // Map the current instance selection to the command form:
-    // All -> {p3:0, p4:0};  one instance n -> {p3:n, p4:0};  many -> {p3:NaN, p4:bitmask}.
     function _instanceSend() {
-        var sel = _selectedInstances.slice().sort(function(a, b){ return a - b })
-        if (sel.indexOf(0) >= 0) {
-            return { param3: 0, param4: 0, label: "all" }
-        }
-        if (sel.length === 1) {
-            return { param3: sel[0], param4: 0, label: "" + sel[0] }
-        }
-        var mask = 0
-        for (var i = 0; i < sel.length; ++i) {
-            mask |= (1 << (sel[i] - 1))
-        }
-        return { param3: NaN, param4: mask, label: sel.join(", ") }
+        return Instances.instanceSend(_selectedInstances)
     }
 
     // Queue one command; kick off sending if the queue was idle.
@@ -150,12 +139,7 @@ SetupPage {
     }
 
     function _toggleInstance(n) {
-        var arr = _selectedInstances.slice()
-        var zero = arr.indexOf(0)            // picking a specific instance clears the "All" selection
-        if (zero >= 0) { arr.splice(zero, 1) }
-        var idx = arr.indexOf(n)
-        if (idx >= 0) { arr.splice(idx, 1) } else { arr.push(n) }
-        _selectedInstances = arr
+        _selectedInstances = Instances.toggleInstance(_selectedInstances, n)
     }
 
     function _setEnabled(on) {
@@ -166,17 +150,11 @@ SetupPage {
     }
 
     function _unitName(unitEnum) {
-        for (var i = 0; i < _units.length; ++i) {
-            if (_units[i].unit === unitEnum) { return _units[i].name }
-        }
-        return "" + unitEnum
+        return Instances.unitName(_units, unitEnum)
     }
 
     function _typeName(typeEnum) {
-        for (var i = 0; i < _types.length; ++i) {
-            if (_types[i].type === typeEnum) { return _types[i].name }
-        }
-        return "" + typeEnum
+        return Instances.typeName(_types, typeEnum)
     }
 
     // Send FAILURE_TYPE_OK (all instances) to every unit injected this session and log each as a row.
@@ -226,24 +204,28 @@ SetupPage {
                         spacing:          ScreenTools.defaultFontPixelWidth * 2
 
                         QGCCheckBox {
+                            objectName: "failureInjection_enableCheckbox"
                             text:       qsTr("SYS_FAILURE_EN")
                             enabled:    _sysFailureEn !== null
                             checked:    _paramSet
                             onClicked:  _setEnabled(checked)
                         }
                         QGCLabel {
+                            objectName: "failureInjection_pendingRebootLabel"
                             Layout.fillWidth: true
                             color:      qgcPal.colorOrange
                             visible:    _pendingReboot
                             text:       qsTr("Parameter written — reboot required before it takes effect.")
                         }
                         QGCLabel {
+                            objectName: "failureInjection_armedLabel"
                             Layout.fillWidth: true
                             color:      qgcPal.colorGreen
                             visible:    _armed && !_pendingReboot
                             text:       qsTr("Active — injection armed.")
                         }
                         QGCButton {
+                            objectName: "failureInjection_rebootButton"
                             text:       qsTr("Reboot Vehicle")
                             visible:    _pendingReboot
                             onClicked: {
@@ -299,6 +281,7 @@ SetupPage {
                         }
                         Item { Layout.fillWidth: true }
                         QGCButton {
+                            objectName: "failureInjection_injectButton"
                             text:       qsTr("Inject failure")
                             primary:    true
                             enabled:    _armed && _selectedInstances.length > 0
@@ -363,7 +346,7 @@ SetupPage {
                 enabled:          _armed
                 opacity:          _armed ? 1.0 : 0.4
                 QGCLabel { Layout.fillWidth: true; text: qsTr("Activity — newest first") }
-                QGCButton { text: qsTr("Reset all"); onClicked: _resetAll() }
+                QGCButton { objectName: "failureInjection_resetAllButton"; text: qsTr("Reset all"); onClicked: _resetAll() }
             }
             // Column header, aligned with the rows below.
             RowLayout {
@@ -388,21 +371,25 @@ SetupPage {
                 opacity:                _armed ? 1.0 : 0.4
 
                 QGCListView {
+                    objectName:         "failureInjection_activityList"
                     anchors.fill:       parent
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
                     clip:               true
                     model:              FailureInjection.activity
                     delegate: RowLayout {
                         required property var modelData
+                        required property int index
                         readonly property bool _pending: modelData.result === "pending"
                         readonly property bool _accepted: modelData.result === "accepted"
+                        objectName: "failureInjection_activityRow_" + index
                         width:   ListView.view.width
                         spacing: ScreenTools.defaultFontPixelWidth * 2
                         QGCLabel { Layout.preferredWidth: _colTimeWidth; font.family: ScreenTools.fixedFontFamily; color: qgcPal.colorOrange; text: modelData.time }
-                        QGCLabel { Layout.preferredWidth: _colUnitWidth; font.family: ScreenTools.fixedFontFamily; text: modelData.unitName }
-                        QGCLabel { Layout.preferredWidth: _colTypeWidth; font.family: ScreenTools.fixedFontFamily; text: modelData.typeName }
-                        QGCLabel { Layout.fillWidth: true;               font.family: ScreenTools.fixedFontFamily; elide: Text.ElideRight; text: modelData.instance }
+                        QGCLabel { objectName: "failureInjection_unitName_" + index; Layout.preferredWidth: _colUnitWidth; font.family: ScreenTools.fixedFontFamily; text: modelData.unitName }
+                        QGCLabel { objectName: "failureInjection_typeName_" + index; Layout.preferredWidth: _colTypeWidth; font.family: ScreenTools.fixedFontFamily; text: modelData.typeName }
+                        QGCLabel { objectName: "failureInjection_instance_" + index; Layout.fillWidth: true; font.family: ScreenTools.fixedFontFamily; elide: Text.ElideRight; text: modelData.instance }
                         QGCLabel {
+                            objectName:  "failureInjection_result_" + index
                             font.family: ScreenTools.fixedFontFamily
                             color:       _pending ? qgcPal.colorOrange : (_accepted ? qgcPal.colorGreen : qgcPal.colorRed)
                             text:        _pending ? qsTr("…") : (_accepted ? qsTr("✓ Accepted") : ("✗ " + modelData.result))
