@@ -19,6 +19,13 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
         )
     endif()
 
+    if(NOT GStreamer_USE_XCFRAMEWORK)
+        find_package(PkgConfig REQUIRED)
+        # Qt's autogen dependency target is created outside this directory.
+        # Keep the imported GIO target visible there as well.
+        pkg_check_modules(QGCGio REQUIRED IMPORTED_TARGET GLOBAL gio-2.0)
+    endif()
+
     target_sources(${CMAKE_PROJECT_NAME}
         PRIVATE
             GStreamer.cc
@@ -38,6 +45,21 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING)
             Qt6::Multimedia
             Qt6::MultimediaQuickPrivate  # found by root CMakeLists.txt find_package
     )
+    if(TARGET PkgConfig::QGCGio)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE PkgConfig::QGCGio)
+    endif()
+
+    if(TARGET Qt6::WebSockets)
+        target_sources(${CMAKE_PROJECT_NAME}
+            PRIVATE
+                QGCWebSocketVideoSource.cc
+                QGCWebSocketVideoSource.h
+        )
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::WebSockets)
+        target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_HAS_WEBSOCKET_VIDEO)
+    else()
+        message(STATUS "Qt WebSockets unavailable - WebSocket JPEG video source disabled")
+    endif()
 
     # iOS GStreamer.cc references gst_ios_{pre,post}_init defined in GStreamer::mobile.
     if(IOS AND TARGET GStreamer::mobile)
@@ -275,7 +297,7 @@ elseif(LINUX)
 endif()
 
 if(_gst_verify_dest)
-    set(_gst_required_plugins coreelements playback rtsp rtp rtpmanager tcp udp)
+    set(_gst_required_plugins coreelements jpeg jpegformat multipart playback rtsp rtp rtpmanager soup tcp udp)
     set(_gst_required_check "")
     foreach(_p IN LISTS _gst_required_plugins)
         list(APPEND _gst_required_check "${_gst_verify_prefix}${_p}.${_gst_verify_ext}")

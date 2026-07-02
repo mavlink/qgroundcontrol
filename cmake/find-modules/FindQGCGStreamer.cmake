@@ -790,9 +790,12 @@ if(NOT DEFINED GSTREAMER_PLUGINS)
         app
         coreelements
         isomp4
+        jpeg
+        jpegformat
         libav
         matroska
         mpegtsdemux
+        multipart
         opengl
         openh264
         playback
@@ -800,6 +803,7 @@ if(NOT DEFINED GSTREAMER_PLUGINS)
         rtpmanager
         rtsp
         sdpelem
+        soup
         tcp
         typefindfunctions
         udp

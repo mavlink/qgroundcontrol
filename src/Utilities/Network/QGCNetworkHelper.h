@@ -142,6 +142,10 @@ QString urlFileName(const QUrl& url);
 /// Get URL without query string and fragment
 QUrl urlWithoutQuery(const QUrl& url);
 
+/// Return a URL safe for logs by removing user info, query, and fragment.
+QString redactedUrlForLogging(const QUrl& url);
+QString redactedUrlForLogging(const QString& url);
+
 // ============================================================================
 // Request Configuration
 // ============================================================================

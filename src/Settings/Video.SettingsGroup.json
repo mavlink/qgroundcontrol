@@ -39,6 +39,70 @@
             "keywords": "tcp,video url,stream url"
         },
         {
+            "name": "httpMjpegUrl",
+            "shortDesc": "HTTP or HTTPS URL for a multipart MJPEG stream.",
+            "longDesc": "URL for a standard multipart/x-mixed-replace MJPEG source. Anonymous HTTP is intended for local or trusted test networks. Credentials require HTTPS.",
+            "type": "string",
+            "default": "",
+            "label": "HTTP MJPEG URL",
+            "keywords": "http,https,mjpeg,video url,stream url"
+        },
+        {
+            "name": "websocketJpegUrl",
+            "shortDesc": "WebSocket URL that sends each JPEG image as one binary message.",
+            "longDesc": "URL for a WebSocket JPEG source. Text messages are ignored. Anonymous WS is intended for local or trusted test networks. Credentials require WSS.",
+            "type": "string",
+            "default": "",
+            "label": "WebSocket JPEG URL",
+            "keywords": "websocket,ws,wss,jpeg,video url,stream url"
+        },
+        {
+            "name": "networkVideoAuthType",
+            "shortDesc": "Authentication method for HTTP MJPEG and WebSocket JPEG sources.",
+            "longDesc": "Authentication is optional. Basic and Bearer credentials are accepted only with HTTPS or WSS and are never stored directly in QGroundControl settings.",
+            "type": "uint32",
+            "enumStrings": "None,Basic,Bearer token",
+            "enumValues": "0,1,2",
+            "default": 0,
+            "label": "Authentication",
+            "keywords": "authentication,basic,bearer,token,password"
+        },
+        {
+            "name": "networkVideoUsername",
+            "shortDesc": "Username used with Basic authentication.",
+            "type": "string",
+            "default": "",
+            "label": "Username",
+            "keywords": "authentication,basic,username"
+        },
+        {
+            "name": "networkVideoSecretFile",
+            "shortDesc": "Optional file containing one password or token.",
+            "longDesc": "For unattended desktop deployments, load the credential from a regular owner-only file containing a single line. A session credential entered in the UI takes precedence.",
+            "type": "string",
+            "default": "",
+            "label": "Credential file",
+            "keywords": "authentication,credential file,secret file,token,password"
+        },
+        {
+            "name": "networkVideoOrigin",
+            "shortDesc": "Optional Origin value required by some HTTP or WebSocket servers.",
+            "longDesc": "Sets the Origin request header. Leave blank unless the source server requires an exact Origin.",
+            "type": "string",
+            "default": "",
+            "label": "Origin",
+            "keywords": "origin,websocket,http,security"
+        },
+        {
+            "name": "networkVideoCaCertificateFile",
+            "shortDesc": "Optional PEM trust file for HTTPS or WSS certificate validation.",
+            "longDesc": "WSS adds these authorities to the system trust store. For HTTP MJPEG, the PEM file is the complete trust database and must include every required root. Strict certificate validation remains enabled.",
+            "type": "string",
+            "default": "",
+            "label": "CA certificate file",
+            "keywords": "tls,ssl,certificate,ca,https,wss"
+        },
+        {
             "name": "videoSavePath",
             "shortDesc": "Video save directory",
             "longDesc": "Directory to save videos to.",

@@ -113,6 +113,7 @@ private:
     };
 
     static bool _shouldSkipGStreamerForUnitTests();
+    static bool _recordingFormatSupportedForSource(const QString& source, int format);
     void _initAfterQmlIsReady();
     void _onGstInitComplete(bool success);
     void _createVideoReceivers();

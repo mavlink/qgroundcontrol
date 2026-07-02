@@ -48,15 +48,19 @@ G_BEGIN_DECLS
 GST_PLUGIN_STATIC_DECLARE(app);
 GST_PLUGIN_STATIC_DECLARE(coreelements);
 GST_PLUGIN_STATIC_DECLARE(isomp4);
+GST_PLUGIN_STATIC_DECLARE(jpeg);
+GST_PLUGIN_STATIC_DECLARE(jpegformat);
 GST_PLUGIN_STATIC_DECLARE(libav);
 GST_PLUGIN_STATIC_DECLARE(matroska);
 GST_PLUGIN_STATIC_DECLARE(mpegtsdemux);
+GST_PLUGIN_STATIC_DECLARE(multipart);
 GST_PLUGIN_STATIC_DECLARE(openh264);
 GST_PLUGIN_STATIC_DECLARE(playback);
 GST_PLUGIN_STATIC_DECLARE(rtp);
 GST_PLUGIN_STATIC_DECLARE(rtpmanager);
 GST_PLUGIN_STATIC_DECLARE(rtsp);
 GST_PLUGIN_STATIC_DECLARE(sdpelem);
+GST_PLUGIN_STATIC_DECLARE(soup);
 GST_PLUGIN_STATIC_DECLARE(tcp);
 GST_PLUGIN_STATIC_DECLARE(typefindfunctions);
 GST_PLUGIN_STATIC_DECLARE(udp);
@@ -128,15 +132,19 @@ void _registerPlugins()
     GST_PLUGIN_STATIC_REGISTER(app);
     GST_PLUGIN_STATIC_REGISTER(coreelements);
     GST_PLUGIN_STATIC_REGISTER(isomp4);
+    GST_PLUGIN_STATIC_REGISTER(jpeg);
+    GST_PLUGIN_STATIC_REGISTER(jpegformat);
     GST_PLUGIN_STATIC_REGISTER(libav);
     GST_PLUGIN_STATIC_REGISTER(matroska);
     GST_PLUGIN_STATIC_REGISTER(mpegtsdemux);
+    GST_PLUGIN_STATIC_REGISTER(multipart);
     GST_PLUGIN_STATIC_REGISTER(openh264);
     GST_PLUGIN_STATIC_REGISTER(playback);
     GST_PLUGIN_STATIC_REGISTER(rtp);
     GST_PLUGIN_STATIC_REGISTER(rtpmanager);
     GST_PLUGIN_STATIC_REGISTER(rtsp);
     GST_PLUGIN_STATIC_REGISTER(sdpelem);
+    GST_PLUGIN_STATIC_REGISTER(soup);
     GST_PLUGIN_STATIC_REGISTER(tcp);
     GST_PLUGIN_STATIC_REGISTER(typefindfunctions);
     GST_PLUGIN_STATIC_REGISTER(udp);
@@ -600,9 +608,8 @@ bool _verifyPlugins()
     }
 
     bool result = true;
-    // Mirror the install-time verification list so a stripped registry fails loudly here
-    // instead of waiting for first stream attempt with a misleading "no source element".
-    static constexpr const char *requiredPlugins[] = {
+    // These plugins are required by every supported GStreamer video path.
+    static constexpr const char* requiredPlugins[] = {
         "qgc", "coreelements", "playback", "rtp", "rtpmanager", "rtsp", "tcp", "udp",
     };
     for (const char *name : requiredPlugins) {
@@ -610,6 +617,24 @@ bool _verifyPlugins()
         if (!plugin) {
             qCCritical(GStreamerLog) << "Required QGC plugin not found:" << name;
             result = false;
+            continue;
+        }
+        gst_clear_object(&plugin);
+    }
+
+    // Official packages verify these at build/install time. Keep runtime
+    // installations without network-JPEG plugins usable for RTSP/UDP/TCP.
+    static constexpr const char* optionalNetworkVideoPlugins[] = {
+        "jpeg",
+        "jpegformat",
+        "multipart",
+        "soup",
+    };
+    for (const char* name : optionalNetworkVideoPlugins) {
+        GstPlugin* plugin = gst_registry_find_plugin(registry, name);
+        if (!plugin) {
+            qCWarning(GStreamerLog) << "Optional network-JPEG plugin not found; HTTP/WebSocket JPEG may be unavailable:"
+                                    << name;
             continue;
         }
         gst_clear_object(&plugin);

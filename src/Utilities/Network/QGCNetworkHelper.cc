@@ -367,6 +367,22 @@ QUrl urlWithoutQuery(const QUrl& url)
     return result;
 }
 
+QString redactedUrlForLogging(const QUrl& url)
+{
+    if (!url.isValid() || url.scheme().isEmpty()) {
+        return QStringLiteral("<invalid-url>");
+    }
+
+    QUrl result = urlWithoutQuery(url);
+    result.setUserInfo(QString());
+    return result.toDisplayString(QUrl::FullyEncoded);
+}
+
+QString redactedUrlForLogging(const QString& url)
+{
+    return redactedUrlForLogging(QUrl(url, QUrl::StrictMode));
+}
+
 // ============================================================================
 // Request Configuration
 // ============================================================================

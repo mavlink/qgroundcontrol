@@ -2,10 +2,12 @@
 
 #ifdef QGC_GST_STREAMING
 
-#include "VideoManager.h"
-
 #include <QtCore/QRegularExpression>
 #include <QtQuick/QQuickWindow>
+
+#include "VideoManager.h"
+#include "VideoReceiver.h"
+#include "VideoSettings.h"
 
 void VideoManagerInitTest::init()
 {
@@ -101,12 +103,31 @@ void VideoManagerInitTest::_testGstInitFailure()
     QCOMPARE(createReceiversCount, 0);
 }
 
+void VideoManagerInitTest::_testNetworkJpegRecordingFormatPolicy()
+{
+    for (const QString& source : {
+             QString::fromLatin1(VideoSettings::videoSourceHTTPMJPEG),
+             QString::fromLatin1(VideoSettings::videoSourceWebSocketJPEG),
+         }) {
+        QVERIFY(VideoManager::_recordingFormatSupportedForSource(source, VideoReceiver::FILE_FORMAT_MKV));
+        QVERIFY(VideoManager::_recordingFormatSupportedForSource(source, VideoReceiver::FILE_FORMAT_MOV));
+        QVERIFY(!VideoManager::_recordingFormatSupportedForSource(source, VideoReceiver::FILE_FORMAT_MP4));
+    }
+
+    QVERIFY(VideoManager::_recordingFormatSupportedForSource(QString::fromLatin1(VideoSettings::videoSourceRTSP),
+                                                             VideoReceiver::FILE_FORMAT_MP4));
+}
+
 #else
 
 void VideoManagerInitTest::init() { UnitTest::init(); QSKIP("GStreamer not enabled"); }
 void VideoManagerInitTest::_testQmlReadyBeforeGstReady() { QSKIP("GStreamer not enabled"); }
 void VideoManagerInitTest::_testGstReadyBeforeQmlReady() { QSKIP("GStreamer not enabled"); }
 void VideoManagerInitTest::_testGstInitFailure() { QSKIP("GStreamer not enabled"); }
+void VideoManagerInitTest::_testNetworkJpegRecordingFormatPolicy()
+{
+    QSKIP("GStreamer not enabled");
+}
 
 #endif
 

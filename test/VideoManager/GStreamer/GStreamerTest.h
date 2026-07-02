@@ -15,7 +15,14 @@ private slots:
     void _testSetCodecPrioritiesSoftware();
     void _testSetCodecPrioritiesHardware();
     void _testRedirectGLibLogging();
+    void _testSensitiveDiagnosticRedaction();
     void _testVerifyRequiredPlugins();
+    void _testNetworkVideoFactories();
+    void _testHttpMjpegSourceConfiguration();
+    void _testHttpMjpegCustomCaConfiguration();
+    void _testWebSocketJpegValidation();
+    void _testWebSocketJpegDelivery();
+    void _testWebSocketThreadTeardown();
     void _testEnvironmentSetup();
     void _testCompleteInit();
     void _testCreateVideoReceiver();

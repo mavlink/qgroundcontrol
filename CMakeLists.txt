@@ -239,6 +239,7 @@ find_package(Qt6
         QuickTest
         SerialPort
         Test
+        WebSockets
 )
 
 if(LINUX AND NOT ANDROID)

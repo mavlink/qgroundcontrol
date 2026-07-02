@@ -10,20 +10,39 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
 #include "GstVideoReceiver.h"
+#include "SecureMemory.h"
+#ifdef QGC_HAS_WEBSOCKET_VIDEO
+#include "QGCWebSocketVideoSource.h"
+#endif
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QThread>
 #include <QtCore/QRegularExpression>
-#include <gst/gst.h>
-
+#include <QtCore/QTemporaryFile>
+#include <QtCore/QUrl>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoSink>
+#include <QtNetwork/QHostAddress>
+#include <QtNetwork/QSslCertificate>
+#include <QtNetwork/QSslConfiguration>
+#include <QtTest/QSignalSpy>
+#include <QtTest/QTest>
 #include <atomic>
+#include <cstring>
+#include <mutex>
+#include <gst/app/gstappsink.h>
+#include <gst/gst.h>
 #include <iterator>
 #include <memory>
 #include <vector>
 
 #include "GstAppSinkAdapter.h"
-#include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoSink>
+#ifdef QGC_HAS_WEBSOCKET_VIDEO
+#include <QtWebSockets/QWebSocket>
+#include <QtWebSockets/QWebSocketServer>
+#endif
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #  include "GstDmaBufVideoBuffer.h"
@@ -45,7 +64,6 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #  include "QGCRhiCapture.h"
 #endif
-#include <QtTest/QSignalSpy>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
@@ -218,6 +236,22 @@ void GStreamerTest::_testRedirectGLibLogging()
     verifyExpectedLogMessage();
 }
 
+void GStreamerTest::_testSensitiveDiagnosticRedaction()
+{
+    const QString headerDiagnostic = QStringLiteral("Appending extra header: Authorization: Bearer secret-token");
+    const QString redactedHeader = GStreamer::redactDiagnosticForLogging(headerDiagnostic);
+    QCOMPARE(redactedHeader, QStringLiteral("<redacted sensitive GStreamer diagnostic>"));
+    QVERIFY(!redactedHeader.contains(QStringLiteral("secret-token")));
+
+    const QString urlDiagnostic =
+        QStringLiteral("Request failed, URL: https://user:secret@example.test/live?token=abc, status 401");
+    const QString redactedUrl = GStreamer::redactDiagnosticForLogging(urlDiagnostic);
+    QVERIFY(redactedUrl.contains(QStringLiteral("https://example.test/live")));
+    QVERIFY(!redactedUrl.contains(QStringLiteral("user")));
+    QVERIFY(!redactedUrl.contains(QStringLiteral("secret")));
+    QVERIFY(!redactedUrl.contains(QStringLiteral("token")));
+}
+
 void GStreamerTest::_testVerifyRequiredPlugins()
 {
     GstRegistry *registry = gst_registry_get();
@@ -235,6 +269,266 @@ void GStreamerTest::_testVerifyRequiredPlugins()
     GstElementFactory *playbinFactory = gst_element_factory_find("playbin");
     QVERIFY2(playbinFactory, "Required factory not found: playbin");
     gst_object_unref(playbinFactory);
+}
+
+void GStreamerTest::_testNetworkVideoFactories()
+{
+    for (const char* factoryName : {"appsrc", "jpegdec", "jpegparse", "multipartdemux", "souphttpsrc"}) {
+        GstElementFactory* factory = gst_element_factory_find(factoryName);
+        QVERIFY2(
+            factory,
+            qPrintable(
+                QStringLiteral("Required network-video factory not found: %1").arg(QString::fromLatin1(factoryName))));
+        gst_object_unref(factory);
+    }
+}
+
+void GStreamerTest::_testHttpMjpegSourceConfiguration()
+{
+    GstVideoReceiver receiver;
+    VideoReceiver::NetworkSourceConfig config;
+    config.authentication = VideoReceiver::NetworkSourceConfig::Authentication::Basic;
+    config.username = QStringLiteral("viewer");
+    config.secret = QByteArrayLiteral("test-password");
+
+    GstElement* bin = receiver._makeHttpMjpegSource(
+        QUrl(QStringLiteral("https://camera.example.test:8443/video?quality=high")), config);
+    config.clearSecret();
+    QVERIFY(bin);
+
+    GstElement* source = gst_bin_get_by_name(GST_BIN(bin), "source");
+    QVERIFY(source);
+
+    gchar* location = nullptr;
+    gchar* username = nullptr;
+    gchar* password = nullptr;
+    gboolean automaticRedirect = TRUE;
+    gboolean sslStrict = FALSE;
+    gint retries = -1;
+    g_object_get(source, "location", &location, "user-id", &username, "user-pw", &password, "automatic-redirect",
+                 &automaticRedirect, "ssl-strict", &sslStrict, "retries", &retries, nullptr);
+
+    QCOMPARE(QString::fromUtf8(location), QStringLiteral("https://camera.example.test:8443/video?quality=high"));
+    QCOMPARE(QString::fromUtf8(username), QStringLiteral("viewer"));
+    QCOMPARE(QByteArray(password), QByteArrayLiteral("test-password"));
+    QVERIFY(!automaticRedirect);
+    QVERIFY(sslStrict);
+    QCOMPARE(retries, 0);
+
+    QGC::secureZero(password, password ? std::strlen(password) : 0);
+    g_free(location);
+    g_free(username);
+    g_free(password);
+    gst_clear_object(&source);
+    gst_clear_object(&bin);
+}
+
+void GStreamerTest::_testHttpMjpegCustomCaConfiguration()
+{
+    const QList<QSslCertificate> systemCertificates = QSslConfiguration::systemCaCertificates();
+    if (systemCertificates.isEmpty()) {
+        QSKIP("No system CA certificate is available for the custom trust-database test");
+    }
+
+    QTemporaryFile caFile;
+    QVERIFY(caFile.open());
+    const QByteArray pem = systemCertificates.constFirst().toPem();
+    QCOMPARE(caFile.write(pem), static_cast<qint64>(pem.size()));
+    QVERIFY(caFile.flush());
+
+    GstVideoReceiver receiver;
+    VideoReceiver::NetworkSourceConfig config;
+    config.caCertificateFile = caFile.fileName();
+    GstElement* bin = receiver._makeHttpMjpegSource(QUrl(QStringLiteral("https://camera.example.test/video")), config);
+    QVERIFY(bin);
+
+    GstElement* source = gst_bin_get_by_name(GST_BIN(bin), "source");
+    QVERIFY(source);
+    GObject* tlsDatabase = nullptr;
+    g_object_get(source, "tls-database", &tlsDatabase, nullptr);
+    QVERIFY(tlsDatabase);
+    g_object_unref(tlsDatabase);
+    gst_clear_object(&source);
+    gst_clear_object(&bin);
+}
+
+void GStreamerTest::_testWebSocketJpegValidation()
+{
+#ifdef QGC_HAS_WEBSOCKET_VIDEO
+    QVERIFY(QGCWebSocketVideoSource::isCompleteJpeg(QByteArray::fromHex("ffd800ffd9")));
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(QByteArray::fromHex("ffd800")));
+    QVERIFY(!QGCWebSocketVideoSource::isCompleteJpeg(QByteArray::fromHex("000000ffd9")));
+#else
+    QSKIP("Qt WebSockets unavailable");
+#endif
+}
+
+void GStreamerTest::_testWebSocketJpegDelivery()
+{
+#ifdef QGC_HAS_WEBSOCKET_VIDEO
+    QWebSocketServer server(QStringLiteral("QGC video test"), QWebSocketServer::NonSecureMode);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+
+    QWebSocket* serverSocket = nullptr;
+    connect(&server, &QWebSocketServer::newConnection, this,
+            [&server, &serverSocket]() { serverSocket = server.nextPendingConnection(); });
+
+    GError* pipelineError = nullptr;
+    GstElement* pipeline = gst_parse_launch(
+        "appsrc name=source is-live=true do-timestamp=true format=time "
+        "caps=image/jpeg "
+        "! fakesink name=sink sync=false",
+        &pipelineError);
+    if (pipelineError) {
+        const QString message = QString::fromUtf8(pipelineError->message);
+        g_clear_error(&pipelineError);
+        QFAIL(qPrintable(message));
+    }
+    QVERIFY(pipeline);
+
+    GstElement* appsrc = gst_bin_get_by_name(GST_BIN(pipeline), "source");
+    QVERIFY(appsrc);
+    g_object_set(appsrc,
+                 "block", FALSE,
+                 "max-bytes", static_cast<guint64>(64U * 1024U * 1024U),
+                 "leaky-type", 2,
+                 nullptr);
+    struct ProbeContext
+    {
+        std::mutex mutex;
+        QByteArray data;
+        std::atomic_bool observed{false};
+    } probeContext;
+    GstPad* appsrcPad = gst_element_get_static_pad(appsrc, "src");
+    QVERIFY(appsrcPad);
+    const gulong bufferProbeId = gst_pad_add_probe(
+        appsrcPad, GST_PAD_PROBE_TYPE_BUFFER,
+        [](GstPad*, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
+            GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+            if (!buffer) {
+                return GST_PAD_PROBE_OK;
+            }
+            GstMapInfo map = GST_MAP_INFO_INIT;
+            if (gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+                auto* context = static_cast<ProbeContext*>(userData);
+                {
+                    std::lock_guard<std::mutex> lock(context->mutex);
+                    context->data =
+                        QByteArray(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size));
+                }
+                context->observed.store(true, std::memory_order_release);
+                gst_buffer_unmap(buffer, &map);
+            }
+            return GST_PAD_PROBE_OK;
+        },
+        &probeContext, nullptr);
+    QVERIFY(bufferProbeId != 0);
+    auto removeBufferProbe = qScopeGuard([appsrcPad, bufferProbeId]() {
+        gst_pad_remove_probe(appsrcPad, bufferProbeId);
+        gst_object_unref(appsrcPad);
+    });
+    QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    GstState currentState = GST_STATE_NULL;
+    GstState pendingState = GST_STATE_NULL;
+    QVERIFY2(gst_element_get_state(pipeline, &currentState, &pendingState, 2 * GST_SECOND) !=
+                 GST_STATE_CHANGE_FAILURE,
+             "WebSocket JPEG test pipeline failed to reach a usable state");
+
+    VideoReceiver::NetworkSourceConfig config;
+    config.origin = QStringLiteral("https://operator.example.test");
+    const QUrl url(QStringLiteral("ws://127.0.0.1:%1/video").arg(server.serverPort()));
+    QThread webSocketThread;
+    webSocketThread.setObjectName(QStringLiteral("QGCWebSocketVideoDeliveryTest"));
+    QGCWebSocketVideoSource* source = new QGCWebSocketVideoSource(url, config, appsrc);
+    source->moveToThread(&webSocketThread);
+    connect(&webSocketThread, &QThread::finished, source, &QObject::deleteLater);
+    QSignalSpy connectedSpy(source, &QGCWebSocketVideoSource::connected);
+    webSocketThread.start();
+    auto stopWebSocketSource = qScopeGuard([source, &webSocketThread]() {
+        if (webSocketThread.isRunning()) {
+            QMetaObject::invokeMethod(source, [source]() { source->stop(); }, Qt::BlockingQueuedConnection);
+            webSocketThread.quit();
+            webSocketThread.wait(TestTimeout::mediumMs());
+        }
+    });
+
+    QString startError;
+    bool started = false;
+    QMetaObject::invokeMethod(
+        source, [source, &started, &startError]() { started = source->start(startError); },
+        Qt::BlockingQueuedConnection);
+    QVERIFY2(started, qPrintable(startError));
+    QTRY_COMPARE_WITH_TIMEOUT(connectedSpy.count(), 1, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(serverSocket != nullptr, TestTimeout::mediumMs());
+
+    QCOMPARE(serverSocket->origin(), config.origin);
+    QVERIFY(!serverSocket->request().rawHeader("User-Agent").isEmpty());
+
+    const QByteArray jpeg = QByteArray::fromHex("ffd800ffd9");
+    QSignalSpy bytesWrittenSpy(serverSocket, &QWebSocket::bytesWritten);
+    QCOMPARE(serverSocket->sendBinaryMessage(jpeg), static_cast<qint64>(jpeg.size()));
+    serverSocket->flush();
+    QTRY_VERIFY_WITH_TIMEOUT(bytesWrittenSpy.count() > 0 || serverSocket->bytesToWrite() == 0,
+                             TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(probeContext.observed.load(std::memory_order_acquire), TestTimeout::mediumMs());
+    QByteArray observedJpeg;
+    {
+        std::lock_guard<std::mutex> lock(probeContext.mutex);
+        observedJpeg = probeContext.data;
+    }
+    QCOMPARE(observedJpeg, jpeg);
+
+    QMetaObject::invokeMethod(source, [source]() { source->stop(); }, Qt::BlockingQueuedConnection);
+    webSocketThread.quit();
+    QVERIFY(webSocketThread.wait(TestTimeout::mediumMs()));
+    stopWebSocketSource.dismiss();
+    serverSocket->close();
+    serverSocket->deleteLater();
+    gst_element_set_state(pipeline, GST_STATE_NULL);
+    removeBufferProbe.dismiss();
+    gst_pad_remove_probe(appsrcPad, bufferProbeId);
+    gst_object_unref(appsrcPad);
+    gst_clear_object(&appsrc);
+    gst_clear_object(&pipeline);
+#else
+    QSKIP("Qt WebSockets unavailable");
+#endif
+}
+
+void GStreamerTest::_testWebSocketThreadTeardown()
+{
+#ifdef QGC_HAS_WEBSOCKET_VIDEO
+    QWebSocketServer server(QStringLiteral("QGC video teardown test"), QWebSocketServer::NonSecureMode);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+
+    QList<QWebSocket*> serverSockets;
+    connect(&server, &QWebSocketServer::newConnection, this, [&server, &serverSockets]() {
+        while (server.hasPendingConnections()) {
+            serverSockets.append(server.nextPendingConnection());
+        }
+    });
+
+    for (int iteration = 0; iteration < 3; ++iteration) {
+        GstVideoReceiver receiver;
+        VideoReceiver::NetworkSourceConfig config;
+        const QUrl url(QStringLiteral("ws://127.0.0.1:%1/video").arg(server.serverPort()));
+        GstElement* sourceBin = receiver._makeWebSocketJpegSource(url, config);
+        QVERIFY(sourceBin);
+        QTRY_COMPARE_WITH_TIMEOUT(serverSockets.size(), iteration + 1, TestTimeout::mediumMs());
+
+        receiver._stopWebSocketSource();
+        QVERIFY(receiver._webSocketSource == nullptr);
+        QVERIFY(receiver._webSocketThread == nullptr);
+        gst_clear_object(&sourceBin);
+    }
+
+    for (QWebSocket* socket : std::as_const(serverSockets)) {
+        socket->close();
+        socket->deleteLater();
+    }
+#else
+    QSKIP("Qt WebSockets unavailable");
+#endif
 }
 
 void GStreamerTest::_testEnvironmentSetup()
@@ -1645,7 +1939,7 @@ void GStreamerTest::_testAdapterFlushDropsInFlightSamples()
 
     QVERIFY(gst_element_set_state(pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
     // Wait for a few frames to confirm baseline delivery works.
-    QTRY_VERIFY_WITH_TIMEOUT(deliveredFrames.load() > 0, 3000);
+    QTRY_VERIFY_WITH_TIMEOUT(deliveredFrames.load() > 0, TestTimeout::mediumMs());
     const int beforeFlush = deliveredFrames.load(std::memory_order_relaxed);
 
     // Send FLUSH_START upstream of the appsink. identity element forwards events.
@@ -1692,7 +1986,46 @@ void GStreamerTest::_testSetCodecPrioritiesDefault() { QSKIP("GStreamer not enab
 void GStreamerTest::_testSetCodecPrioritiesSoftware() { QSKIP("GStreamer not enabled"); }
 void GStreamerTest::_testSetCodecPrioritiesHardware() { QSKIP("GStreamer not enabled"); }
 void GStreamerTest::_testRedirectGLibLogging() { QSKIP("GStreamer not enabled"); }
-void GStreamerTest::_testVerifyRequiredPlugins() { QSKIP("GStreamer not enabled"); }
+
+void GStreamerTest::_testSensitiveDiagnosticRedaction()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testVerifyRequiredPlugins()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testNetworkVideoFactories()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testHttpMjpegSourceConfiguration()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testHttpMjpegCustomCaConfiguration()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testWebSocketJpegValidation()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testWebSocketJpegDelivery()
+{
+    QSKIP("GStreamer not enabled");
+}
+
+void GStreamerTest::_testWebSocketThreadTeardown()
+{
+    QSKIP("GStreamer not enabled");
+}
 void GStreamerTest::_testEnvironmentSetup() { QSKIP("GStreamer not enabled"); }
 void GStreamerTest::_testCompleteInit() { QSKIP("GStreamer not enabled"); }
 void GStreamerTest::_testCreateVideoReceiver() { QSKIP("GStreamer not enabled"); }

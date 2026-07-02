@@ -39,6 +39,10 @@ private:
 /*===========================================================================*/
 
 typedef struct _GstElement GstElement;
+class QUrl;
+#ifdef QGC_HAS_WEBSOCKET_VIDEO
+class QGCWebSocketVideoSource;
+#endif
 
 class GstVideoReceiver : public VideoReceiver
 {
@@ -53,6 +57,8 @@ class GstVideoReceiver : public VideoReceiver
 public:
     explicit GstVideoReceiver(QObject *parent = nullptr);
     ~GstVideoReceiver();
+
+    friend class GStreamerTest;
 
     QString decoderName()     const { return _decoderName; }
     quint64 processedFrames() const { return _processedFrames; }
@@ -79,7 +85,12 @@ private slots:
     void _handleEOS();
 
 private:
-    GstElement *_makeSource(const QString &input);
+    GstElement* _makeSource(const QString& input, const NetworkSourceConfig& networkConfig);
+    GstElement* _makeHttpMjpegSource(const QUrl& url, const NetworkSourceConfig& networkConfig);
+#ifdef QGC_HAS_WEBSOCKET_VIDEO
+    GstElement* _makeWebSocketJpegSource(const QUrl& url, const NetworkSourceConfig& networkConfig);
+    void _stopWebSocketSource();
+#endif
     GstElement *_makeDecoder();
     GstElement *_makeFileSink(const QString &videoFile, FILE_FORMAT format);
 
@@ -129,6 +140,10 @@ private:
     GstPad *_eosProbePad = nullptr;  // ref-held: probe install pad, kept so removal targets the right pad regardless of _decoder lifecycle
     gulong _keyframeWatchId = 0;
     bool _recordingStopRequested = false;
+#ifdef QGC_HAS_WEBSOCKET_VIDEO
+    QGCWebSocketVideoSource* _webSocketSource = nullptr;
+    QThread* _webSocketThread = nullptr;
+#endif
 
     QString _decoderName;
     quint64 _processedFrames = 0;

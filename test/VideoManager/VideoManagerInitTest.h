@@ -12,4 +12,5 @@ private slots:
     void _testQmlReadyBeforeGstReady();
     void _testGstReadyBeforeQmlReady();
     void _testGstInitFailure();
+    void _testNetworkJpegRecordingFormatPolicy();
 };
