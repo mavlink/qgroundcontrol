@@ -22,7 +22,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import gh, write_github_output, write_step_summary
+from common.gh_actions import gh, gh_error, write_github_output, write_step_summary
 
 # Build caches are the expensive-to-rebuild data the GC must never evict; the
 # 10 GiB/repo pool is reclaimed from everything else first.
@@ -48,7 +48,8 @@ class CacheUsage:
 def _repo() -> str:
     repo = os.environ.get("GH_REPO") or os.environ.get("GITHUB_REPOSITORY", "")
     if not repo:
-        sys.exit("::error::GH_REPO or GITHUB_REPOSITORY must be set")
+        gh_error("GH_REPO or GITHUB_REPOSITORY must be set")
+        sys.exit(1)
     return repo
 
 

@@ -15,7 +15,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output
+from common.gh_actions import gh_error, write_github_output
 
 
 def resolve_version(requested: str, platform_default: str, fallback: str) -> str:
@@ -48,9 +48,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     version = resolve_version(args.version, args.platform_version, args.fallback_version)
     if not version:
-        print(
-            f"::error::No GStreamer version resolved for platform={args.platform}", file=sys.stderr
-        )
+        gh_error(f"No GStreamer version resolved for platform={args.platform}")
         return 1
     write_github_output({"version": version})
     print(f"Building GStreamer {version} for {args.platform}")

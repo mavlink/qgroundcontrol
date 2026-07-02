@@ -37,7 +37,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_AUTOGEN_USE_SYSTEM_INCLUDE ON)
 
-# Include compiler warnings configuration
 include(CompilerWarnings)
 
 # set(CMAKE_EXPORT_BUILD_DATABASE ON)

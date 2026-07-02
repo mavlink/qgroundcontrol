@@ -235,6 +235,20 @@ function(qgc_enable_ipo)
     endif()
 endfunction()
 
+# ----------------------------------------------------------------------------
+# qgc_require_cpm_added
+# Fails configuration if a required CPM package was not added
+# Args: package_name - the CPMAddPackage NAME (checks <package_name>_ADDED)
+# ----------------------------------------------------------------------------
+function(qgc_require_cpm_added package_name)
+    if(NOT ${package_name}_ADDED)
+        message(FATAL_ERROR
+            "QGC: ${package_name} (required dependency) was not added by CPM. "
+            "This package must be vendored from source; if QGC_USE_SYSTEM_LIBS or "
+            "QGC_SYSTEM_LIBS_ONLY resolved it via find_package(), configure without them.")
+    endif()
+endfunction()
+
 function(qgc_add_json_resources name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "NO_RECURSE" "PREFIX;PATTERN" "")
     if(NOT ARG_PREFIX)

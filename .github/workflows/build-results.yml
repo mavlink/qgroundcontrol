@@ -35,6 +35,7 @@ jobs:
         with:
           sparse-checkout: |
             .github/build-config.json
+            tools/_bootstrap.py
             tools/setup/read_config.py
             tools/common/__init__.py
             tools/common/build_config.py

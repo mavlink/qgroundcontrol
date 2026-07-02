@@ -52,7 +52,7 @@ jobs:
         variant: [amd64, arm64, arm64-cross]
         include:
           - variant: amd64
-            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
+            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_64
             package: QGroundControl-installer-AMD64
@@ -64,7 +64,7 @@ jobs:
             package: QGroundControl-installer-ARM64
 
           - variant: arm64-cross
-            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=windows22-full-x64/spot=false/extras=s3-cache/volume=100gb', github.run_id) || 'windows-2022' }}
+            runs_on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=windows-x64-builder', github.run_id) || 'windows-2022' }}
             host: windows
             arch: win64_msvc2022_arm64_cross_compiled
             package: QGroundControl-installer-AMD64-ARM64

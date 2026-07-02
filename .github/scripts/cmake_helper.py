@@ -24,7 +24,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import append_github_env, write_github_output
+from common.gh_actions import append_github_env, gh_error, gh_notice, write_github_output
 
 
 def _run_with_tee(cmd: list[str], output_file: str) -> int:
@@ -51,7 +51,7 @@ def detect_jobs(requested: str = "auto") -> int:
     """Detect number of parallel jobs for the current platform."""
     if requested != "auto":
         if not re.match(r"^[1-9]\d*$", requested):
-            print(f"::error::Invalid parallel job count: {requested}", file=sys.stderr)
+            gh_error(f"Invalid parallel job count: {requested}")
             sys.exit(1)
         return int(requested)
 
@@ -74,9 +74,8 @@ def cmd_build(args: argparse.Namespace) -> None:
     if args.parallel:
         if args.parallel_jobs:
             if not re.match(r"^[1-9]\d*$", args.parallel_jobs):
-                print(
-                    f"::error::parallel-jobs must be a positive integer, got '{args.parallel_jobs}'",
-                    file=sys.stderr,
+                gh_error(
+                    f"parallel-jobs must be a positive integer, got '{args.parallel_jobs}'"
                 )
                 sys.exit(1)
             cmd += ["--parallel", args.parallel_jobs]
@@ -102,9 +101,9 @@ def cmd_build(args: argparse.Namespace) -> None:
     duration = int(time.monotonic() - start)
 
     if exit_code == 0:
-        print(f"::notice::Build completed in {duration}s")
+        gh_notice(f"Build completed in {duration}s")
     else:
-        print(f"::error::Build failed after {duration}s")
+        gh_error(f"Build failed after {duration}s")
         if not args.continue_on_error:
             sys.exit(exit_code)
 
@@ -141,7 +140,7 @@ def cmd_configure(args: argparse.Namespace) -> None:
     start = time.monotonic()
     result = subprocess.run(cmd, check=False)
     duration = int(time.monotonic() - start)
-    print(f"::notice::Configure completed in {duration}s")
+    gh_notice(f"Configure completed in {duration}s")
     sys.exit(result.returncode)
 
 
@@ -169,7 +168,7 @@ def cmd_ctest(args: argparse.Namespace) -> None:
     start = time.monotonic()
     exit_code = _run_with_tee(cmd, args.ctest_output)
     duration = int(time.monotonic() - start)
-    print(f"::notice::Tests completed in {duration}s")
+    gh_notice(f"Tests completed in {duration}s")
     sys.exit(exit_code)
 
 
@@ -202,10 +201,7 @@ def cmd_cache_var(args: argparse.Namespace) -> None:
         if args.default is not None:
             value = args.default
         elif args.required:
-            print(
-                f"::error::CMake cache variable {args.name} not found in {cache_path}",
-                file=sys.stderr,
-            )
+            gh_error(f"CMake cache variable {args.name} not found in {cache_path}")
             sys.exit(1)
         else:
             value = ""

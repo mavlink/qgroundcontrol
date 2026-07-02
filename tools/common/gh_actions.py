@@ -145,3 +145,33 @@ def parse_bool(value: str | None) -> bool:
     if value is None:
         return False
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _escape_annotation(message: str) -> str:
+    # Workflow commands are newline-delimited; literal CR/LF truncates the
+    # annotation, so percent-encode them (and bare % to keep decoding unambiguous).
+    return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def annotate(level: str, message: str) -> None:
+    """Emit a GitHub Actions workflow annotation to stdout.
+
+    level is one of "error", "warning", "notice". The runner parses these from
+    the step log and renders them in the run UI; outside CI it is plain text.
+    """
+    print(f"::{level}::{_escape_annotation(message)}", flush=True)
+
+
+def gh_error(message: str) -> None:
+    """Emit a GitHub Actions error annotation."""
+    annotate("error", message)
+
+
+def gh_warning(message: str) -> None:
+    """Emit a GitHub Actions warning annotation."""
+    annotate("warning", message)
+
+
+def gh_notice(message: str) -> None:
+    """Emit a GitHub Actions notice annotation."""
+    annotate("notice", message)

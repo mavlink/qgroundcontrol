@@ -24,7 +24,6 @@ qt_add_qml_module(QGroundControlModule
     NO_PLUGIN
 )
 
-# iOS has no Qt SerialPort module — force no-serial-link before subdirectories read it.
 if(IOS)
     set(QGC_NO_SERIAL_LINK ON CACHE BOOL "Disable serial port communication" FORCE)
 endif()
@@ -169,7 +168,6 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}
         $<$<BOOL:${QGC_DISABLE_APM_MAVLINK}>:QGC_NO_ARDUPILOT_DIALECT>
 )
 
-# Build configuration-specific definitions
 target_compile_definitions(${CMAKE_PROJECT_NAME}
     PRIVATE
         QT_DISABLE_DEPRECATED_UP_TO=${QGC_QT_DISABLE_DEPRECATED_UP_TO}

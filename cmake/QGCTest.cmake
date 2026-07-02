@@ -154,7 +154,6 @@ function(add_qgc_test test_name)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
-    # Determine timeout based on labels or explicit value
     if(ARG_TIMEOUT)
         set(_timeout ${ARG_TIMEOUT})
     elseif("Slow" IN_LIST ARG_LABELS)

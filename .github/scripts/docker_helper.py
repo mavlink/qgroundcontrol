@@ -18,7 +18,7 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output
+from common.gh_actions import gh_error, write_github_output
 
 VALID_TARGETS = {"linux", "linux-cross", "android"}
 VALID_BUILD_TYPES = {"Release", "Debug"}
@@ -27,11 +27,11 @@ VALID_BUILD_TYPES = {"Release", "Debug"}
 def cmd_validate(args: argparse.Namespace) -> None:
     ok = True
     if args.target not in VALID_TARGETS:
-        print(f"::error::Invalid target '{args.target}'", file=sys.stderr)
+        gh_error(f"Invalid target '{args.target}'")
         print(f"Allowed values: {', '.join(sorted(VALID_TARGETS))}", file=sys.stderr)
         ok = False
     if args.build_type not in VALID_BUILD_TYPES:
-        print(f"::error::Invalid build-type '{args.build_type}'", file=sys.stderr)
+        gh_error(f"Invalid build-type '{args.build_type}'")
         print(f"Allowed values: {', '.join(sorted(VALID_BUILD_TYPES))}", file=sys.stderr)
         ok = False
     if not ok:
@@ -73,7 +73,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         if result.returncode == 0:
             return
         if attempt >= args.max_attempts:
-            print(f"::error::Docker build failed after {attempt} attempt(s).", file=sys.stderr)
+            gh_error(f"Docker build failed after {attempt} attempt(s).")
             sys.exit(1)
         print(
             f"Docker build failed on attempt {attempt}. Retrying in {args.retry_delay} seconds..."

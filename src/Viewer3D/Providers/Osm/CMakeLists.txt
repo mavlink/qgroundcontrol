@@ -34,8 +34,10 @@ endif()
 # libexpat — XML parser backend for libosmium
 # ----------------------------------------------------------------------------
 
+# Package name is EXPAT (not libexpat) so QGC_USE_SYSTEM_LIBS resolves via the
+# builtin FindEXPAT module; CPM checks ${NAME}_FOUND = EXPAT_FOUND.
 CPMAddPackage(
-    NAME libexpat
+    NAME EXPAT
     GITHUB_REPOSITORY libexpat/libexpat
     GIT_TAG R_2_7_5
     SOURCE_SUBDIR expat
@@ -47,7 +49,17 @@ CPMAddPackage(
         "EXPAT_SHARED_LIBS OFF"
 )
 
-qgc_disable_dependency_warnings(expat)
+# EXPAT_ADDED: CPM built the static lib (target expat). Otherwise FindEXPAT resolved
+# a system copy; alias its EXPAT::EXPAT onto the bare `expat` name Osm3D links.
+if(EXPAT_ADDED)
+    qgc_disable_dependency_warnings(expat)
+elseif(EXPAT_FOUND)
+    if(NOT TARGET expat AND TARGET EXPAT::EXPAT)
+        add_library(expat ALIAS EXPAT::EXPAT)
+    endif()
+else()
+    message(FATAL_ERROR "QGC: EXPAT (required dependency) was not resolved")
+endif()
 
 target_link_libraries(Osm3D PRIVATE expat)
 

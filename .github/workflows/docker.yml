@@ -66,7 +66,7 @@ jobs:
 
   build:
     name: Docker ${{ matrix.platform }}
-    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/family=c8i.2xlarge/image=ubuntu24-full-x64/spot=false/extras=s3-cache/volume=80gb', github.run_id) || 'ubuntu-latest' }}
+    runs-on: ${{ github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && format('runs-on={0}/runner=linux-x64-builder', github.run_id) || 'ubuntu-latest' }}
     needs: [changes, plan-builds]
     if: always() && !cancelled() && needs.plan-builds.outputs.has_jobs == 'true'
     timeout-minutes: 120

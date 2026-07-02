@@ -14,7 +14,7 @@ from pathlib import Path
 from . import _common as _c
 from ._packages import DEBIAN_PACKAGES, get_debian_packages
 
-JUST_VERSION = "1.51.0"
+JUST_VERSION = "1.53.0"
 JUST_MIN_VERSION = (1, 30)
 JUST_TARGETS: dict[str, str] = {
     "x86_64": "x86_64-unknown-linux-musl",

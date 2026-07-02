@@ -13,7 +13,6 @@ tools/
 ├── configure.py             # CMake configuration wrapper
 ├── coverage.py              # Code coverage reports
 ├── generate_docs.py         # Generate API docs (Doxygen)
-├── param-docs.py            # Generate parameter documentation
 ├── pre_commit.py            # Pre-commit hook runner
 ├── release.py               # Semantic versioning and release automation
 ├── run_tests.py             # Qt unit test runner
@@ -30,14 +29,7 @@ tools/
 │   ├── profile.sh           # Profiling (valgrind, perf)
 │   ├── qt6.natvis           # Visual Studio debugger visualizers
 │   └── valgrind.supp        # Valgrind suppressions
-├── generators/              # Code generation tools
-│   └── factgroup/           # FactGroup generator
-├── log-analyzer/            # QGC log analysis tools
-├── locators/                # CLI search tools (Facts, MAVLink)
-├── qtcreator/               # QtCreator IDE integration
-│   ├── lua/                 # Lua extension (Qt Creator 14+)
-│   ├── plugin/              # Native C++ plugin
-│   └── snippets/            # QtCreator snippets
+├── generators/              # Build-time code generation (mavlink enums, config/settings QML)
 ├── schemas/                 # JSON schemas for editor validation
 ├── setup/                   # Environment setup scripts
 ├── simulation/              # Vehicle simulators
@@ -182,18 +174,6 @@ python3 ./tools/generate_docs.py --clean  # Clean generated docs
 
 Requires: `doxygen`, `graphviz`
 
-### param-docs.py
-
-Generate parameter documentation from FactMetaData JSON files.
-
-```bash
-./tools/param-docs.py                    # Generate markdown
-./tools/param-docs.py --format html      # Generate HTML
-./tools/param-docs.py --format json      # Generate JSON
-./tools/param-docs.py --group "Battery"  # Filter by group
-./tools/param-docs.py --output params.md # Custom output file
-```
-
 ## Setup Scripts
 
 Scripts in `setup/` help configure development environments. They read configuration from `.github/build-config.json` for consistent versioning.
@@ -261,41 +241,6 @@ pre-commit run vehicle-null-check --all-files
 
 See [analyzers/README.md](analyzers/README.md) for details.
 
-## Code Generators
-
-Scripts in `generators/` generate boilerplate code from specifications.
-
-### FactGroup Generator
-
-Generate complete FactGroup boilerplate (header, source, JSON metadata).
-
-```bash
-# From YAML spec (recommended)
-python3 -m tools.generators.factgroup.cli \
-  --spec tools/generators/factgroup/examples/wind.yaml \
-  --dry-run
-
-# From CLI arguments
-python3 -m tools.generators.factgroup.cli \
-  --name Wind \
-  --facts "direction:double:deg,speed:double:m/s" \
-  --mavlink "WIND_COV,HIGH_LATENCY2" \
-  --output src/Vehicle/FactGroups/
-
-# Validate spec only
-python3 -m tools.generators.factgroup.cli --spec wind.yaml --validate
-```
-
-**Generates:**
-
-- `VehicleWindFactGroup.h` - Header with Q_PROPERTY, accessors, members
-- `VehicleWindFactGroup.cc` - Implementation with constructor, handlers
-- `WindFact.json` - FactMetaData JSON
-
-**Requires:** `pip install jinja2` (and `pyyaml` for YAML specs)
-
-See [generators/factgroup/README.md](generators/factgroup/README.md) for spec format and examples.
-
 ## Shared Utilities
 
 Common utilities in `common/` are used by multiple tools:
@@ -347,57 +292,6 @@ pip install pymavlink
 ```
 
 See [simulation/README.md](simulation/README.md) for details.
-
-### log-analyzer/
-
-Analyze QGC application logs and telemetry files.
-
-```bash
-# Analyze application log
-./tools/log-analyzer/analyze_log.py ~/.local/share/QGroundControl/Logs/AppLog.log
-
-# Show only errors
-./tools/log-analyzer/analyze_log.py --errors AppLog.log
-
-# Analyze MAVLink telemetry log
-./tools/log-analyzer/analyze_log.py flight.tlog
-
-# Show statistics
-./tools/log-analyzer/analyze_log.py --stats AppLog.log
-
-# Filter by component
-./tools/log-analyzer/analyze_log.py --component Vehicle AppLog.log
-```
-
-See [log-analyzer/README.md](log-analyzer/README.md) for details.
-
-### locators/
-
-Search for Facts, FactGroups, MAVLink messages, and parameter metadata from the command line.
-
-```bash
-# Find Fact names containing 'lat'
-python3 ./tools/locators/qgc_locator.py fact lat
-
-# Find MAVLink message usage
-python3 ./tools/locators/qgc_locator.py mavlink HEARTBEAT
-```
-
-See [locators/README.md](locators/README.md) for editor integration examples.
-
-### lsp/
-
-Run the QGC language server for editor diagnostics and QGC-specific completions.
-
-```bash
-# Start LSP server on stdio (editor integration)
-python3 -m tools.lsp
-
-# Start in TCP mode for debugging
-python3 -m tools.lsp --tcp --port 2087
-```
-
-See [lsp/README.md](lsp/README.md) for setup and client configuration.
 
 ## Translation Tools
 

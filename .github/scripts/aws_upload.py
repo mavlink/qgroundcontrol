@@ -21,17 +21,16 @@ from ci_bootstrap import ensure_tools_dir
 
 ensure_tools_dir(__file__)
 
-from common.gh_actions import write_github_output
+from common.gh_actions import gh_error, write_github_output
 from common.proc import run_captured
 
 
 def validate_credentials(role_arn: str, key_id: str, secret_key: str) -> None:
     """Ensure either OIDC role or static credentials are provided."""
     if not role_arn and (not key_id or not secret_key):
-        print(
-            "::error::Either aws_role_arn (OIDC) or both aws_key_id and "
-            "aws_secret_access_key (static credentials) must be provided",
-            file=sys.stderr,
+        gh_error(
+            "Either aws_role_arn (OIDC) or both aws_key_id and "
+            "aws_secret_access_key (static credentials) must be provided"
         )
         sys.exit(1)
 
@@ -39,14 +38,11 @@ def validate_credentials(role_arn: str, key_id: str, secret_key: str) -> None:
 def validate_artifact(artifact_path: str, artifact_name: str) -> None:
     """Validate artifact exists and name is safe."""
     if not Path(artifact_path).is_file():
-        print(f"::error::Artifact not found: {artifact_path}", file=sys.stderr)
+        gh_error(f"Artifact not found: {artifact_path}")
         sys.exit(1)
 
     if re.search(r"[/\\]", artifact_name) or ".." in artifact_name:
-        print(
-            f"::error::Invalid artifact name (contains path separators or ..): {artifact_name}",
-            file=sys.stderr,
-        )
+        gh_error(f"Invalid artifact name (contains path separators or ..): {artifact_name}")
         sys.exit(1)
 
 
@@ -105,10 +101,7 @@ def cmd_upload_latest(args: argparse.Namespace) -> None:
 
 def cmd_invalidate(args: argparse.Namespace) -> None:
     if re.search(r"[/\\]", args.artifact_name) or ".." in args.artifact_name:
-        print(
-            f"::error::Invalid artifact name (contains path separators or ..): {args.artifact_name}",
-            file=sys.stderr,
-        )
+        gh_error(f"Invalid artifact name (contains path separators or ..): {args.artifact_name}")
         sys.exit(1)
     _run_aws(
         [

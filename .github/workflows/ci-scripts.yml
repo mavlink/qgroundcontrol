@@ -14,9 +14,6 @@ on:
       - 'tools/common/**'
       - 'tools/generators/**'
       - 'tools/analyzers/**'
-      - 'tools/locators/**'
-      - 'tools/log-analyzer/**'
-      - 'tools/lsp/**'
       - 'tools/simulation/**'
       - 'tools/translations/**'
       - 'deploy/docker/**'
@@ -36,9 +33,6 @@ on:
       - 'tools/common/**'
       - 'tools/generators/**'
       - 'tools/analyzers/**'
-      - 'tools/locators/**'
-      - 'tools/log-analyzer/**'
-      - 'tools/lsp/**'
       - 'tools/simulation/**'
       - 'tools/translations/**'
       - 'deploy/docker/**'
@@ -113,9 +107,6 @@ jobs:
             tools/common
             tools/generators
             tools/analyzers
-            tools/locators
-            tools/log-analyzer
-            tools/lsp
             tools/simulation
             tools/translations
             deploy/docker
@@ -128,7 +119,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Python syntax smoke test
-        run: python3 -m compileall .github/scripts tools/*.py tools/setup tools/common tools/generators tools/analyzers tools/locators tools/log-analyzer tools/lsp tools/simulation tools/translations
+        run: python3 -m compileall .github/scripts tools/*.py tools/setup tools/common tools/generators tools/analyzers tools/simulation tools/translations
 
       - name: Run CI script tests
         run: pytest -q tools/tests .github/scripts/tests

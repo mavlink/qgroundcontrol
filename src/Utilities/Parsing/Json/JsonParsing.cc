@@ -103,10 +103,15 @@ bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorS
         return true;
     }
 
-    const int startPos = qMax(0, parseError.offset - 100);
-    const int length = qMin(bytes.length() - startPos, 200);
-    qCDebug(JsonParsingLog) << "Json read error" << bytes.mid(startPos, length).constData();
-    errorString = parseError.errorString();
+    if (QGCCompression::looksLikeCompressedData(bytes)) {
+        // parseError.offset refers to the decompressed text, so a slice of `bytes` would be garbage.
+        qCDebug(JsonParsingLog) << "Json read error (compressed input) offset" << parseError.offset;
+    } else {
+        const int startPos = qMax(0, parseError.offset - 100);
+        const int length = qMin(bytes.length() - startPos, 200);
+        qCDebug(JsonParsingLog) << "Json read error" << bytes.mid(startPos, length).constData();
+    }
+    errorString = QStringLiteral("%1 (offset %2)").arg(parseError.errorString()).arg(parseError.offset);
 
     return false;
 }
@@ -115,6 +120,7 @@ bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorS
 {
     const QByteArray jsonBytes = QGCCompression::readFile(fileName, &errorString);
     if (jsonBytes.isEmpty() && !errorString.isEmpty()) {
+        jsonDoc = {};
         return false;
     }
 
@@ -167,7 +173,7 @@ bool validateKeysStrict(const QJsonObject& jsonObject, const QList<KeyValidateIn
 
     for (const QString &key : jsonObject.keys()) {
         if (!expectedKeys.contains(key)) {
-            errorString = QStringLiteral("Unknown key: %1").arg(key);
+            errorString = QObject::tr("Unknown key: %1").arg(key);
             return false;
         }
     }
@@ -337,17 +343,9 @@ QJsonObject openInternalQGCJsonFile(const QString &jsonFilename, const QString &
                                     const QStringList &defaultTranslateKeys,
                                     const QStringList &defaultArrayIDKeys)
 {
-    const QByteArray bytes = QGCCompression::readFile(jsonFilename, &errorString);
-    if (bytes.isEmpty() && !errorString.isEmpty()) {
-        return {};
-    }
-
-    QJsonParseError jsonParseError;
-    const QJsonDocument doc = QGCCompression::parseCompressedJson(bytes, &jsonParseError);
-    if (jsonParseError.error != QJsonParseError::NoError) {
-        errorString = QObject::tr("Unable to parse json file: %1 error: %2 offset: %3")
-                          .arg(jsonFilename, jsonParseError.errorString())
-                          .arg(jsonParseError.offset);
+    QJsonDocument doc;
+    if (!isJsonFile(jsonFilename, doc, errorString)) {
+        errorString = QObject::tr("Unable to parse json file: %1 error: %2").arg(jsonFilename, errorString);
         return {};
     }
 

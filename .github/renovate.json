@@ -5,19 +5,15 @@
     ":dependencyDashboard",
     ":semanticCommitTypeAll(chore)"
   ],
-  "git-submodules": {
-    "enabled": true
-  },
   "labels": [
     "dependencies"
   ],
   "ignorePaths": [
     ".github/workflows/**"
   ],
-  "description": "Manages npm, git-submodules, pip, pre-commit. GitHub Actions are handled by Dependabot (see dependabot.yml).",
+  "description": "Manages npm, pip, pre-commit. GitHub Actions are handled by Dependabot (see dependabot.yml).",
   "enabledManagers": [
     "npm",
-    "git-submodules",
     "pip_requirements",
     "pip_setup",
     "pep621",
@@ -28,16 +24,6 @@
       "description": "Auto-merge patch updates after CI passes",
       "matchUpdateTypes": ["patch"],
       "automerge": true
-    },
-    {
-      "description": "Group all git submodule updates",
-      "groupName": "Git Submodules",
-      "matchManagers": [
-        "git-submodules"
-      ],
-      "schedule": [
-        "before 6am on monday"
-      ]
     },
     {
       "description": "Group Node.js updates (docs)",

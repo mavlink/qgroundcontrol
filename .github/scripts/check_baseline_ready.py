@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+from pathlib import Path
 from typing import Any
 
 from ci_bootstrap import ensure_tools_dir
@@ -13,6 +13,7 @@ ensure_tools_dir(__file__)
 
 from common.gh_actions import list_workflow_runs_for_sha, parse_csv_list, write_github_output
 from common.github_runs import select_latest_runs_by_name
+from common.io import read_json, write_json
 
 
 def evaluate_readiness(
@@ -25,11 +26,13 @@ def evaluate_readiness(
 
     missing = [name for name in platforms if name not in latest_by_name]
     incomplete = [
-        name for name in platforms
+        name
+        for name in platforms
         if name in latest_by_name and str(latest_by_name[name].get("status", "")) != "completed"
     ]
     failed = [
-        name for name in platforms
+        name
+        for name in platforms
         if name in latest_by_name
         and str(latest_by_name[name].get("status", "")) == "completed"
         and str(latest_by_name[name].get("conclusion", "")) != "success"
@@ -39,9 +42,10 @@ def evaluate_readiness(
     return ready, missing, incomplete, failed
 
 
-
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Check baseline readiness for build-results workflow.")
+    parser = argparse.ArgumentParser(
+        description="Check baseline readiness for build-results workflow."
+    )
     parser.add_argument("--repo", required=True, help="Repository in owner/repo format")
     parser.add_argument("--head-sha", required=True, help="Commit SHA to inspect")
     parser.add_argument(
@@ -71,23 +75,23 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     platforms = parse_csv_list(args.platform_workflows)
     if args.runs_input:
-        with open(args.runs_input, encoding="utf-8") as f:
-            runs = json.load(f)
+        runs = read_json(Path(args.runs_input))
     else:
         runs = list_workflow_runs_for_sha(args.repo, args.head_sha)
 
     if args.runs_cache:
-        with open(args.runs_cache, "w", encoding="utf-8") as f:
-            json.dump(runs, f)
+        write_json(Path(args.runs_cache), runs)
 
     ready, missing, incomplete, failed = evaluate_readiness(runs, platforms, args.event)
 
-    write_github_output({
-        "ready": "true" if ready else "false",
-        "missing": ",".join(missing),
-        "incomplete": ",".join(incomplete),
-        "failed": ",".join(failed),
-    })
+    write_github_output(
+        {
+            "ready": "true" if ready else "false",
+            "missing": ",".join(missing),
+            "incomplete": ",".join(incomplete),
+            "failed": ",".join(failed),
+        }
+    )
 
     if ready:
         print(f"Baseline ready for {args.head_sha}.")

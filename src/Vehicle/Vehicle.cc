@@ -1263,12 +1263,13 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
 }
 
 void Vehicle::setActuatorsMetadata([[maybe_unused]] uint8_t compid,
-                                   const QString &metadataJsonFileName)
+                                   const QString &metadataJsonFileName,
+                                   const QJsonDocument &metadataJson)
 {
     if (!_actuators) {
         _actuators = new Actuators(this, this);
     }
-    _actuators->load(metadataJsonFileName);
+    _actuators->load(metadataJsonFileName, metadataJson);
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)

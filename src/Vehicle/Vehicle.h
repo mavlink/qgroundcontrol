@@ -26,6 +26,7 @@ class Actuators;
 class HealthAndArmingCheckReport;
 class MAVLinkStreamConfig;
 class QGCMapCircle;
+class QJsonDocument;
 class QmlObjectListModel;
 class SysStatusSensorInfo;
 class VehicleLinkManager;
@@ -726,7 +727,7 @@ public:
 
     double loadProgress                 () const { return _loadProgress; }
 
-    void setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName);
+    void setActuatorsMetadata(uint8_t compid, const QString& metadataJsonFileName, const QJsonDocument& metadataJson);
 
     GimbalController* gimbalController  () { return _gimbalController; }
 

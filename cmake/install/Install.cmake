@@ -188,42 +188,8 @@ elseif(LINUX)
         install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateAppImage.cmake" COMPONENT appimage)
     endif()
 
-    # Optional native package (.deb/.rpm) alongside the AppImage; CPACK_COMPONENTS_ALL
-    # keeps the "appimage" component out of cpack staging.
-    if(QGC_CPACK_GENERATOR STREQUAL "DEB" AND DEFINED QGC_LINUX_DISTRO_FAMILY
-            AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "" AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "debian")
-        message(WARNING "QGC: QGC_CPACK_GENERATOR=DEB on a non-Debian host (${QGC_LINUX_DISTRO}); "
-            "cpack needs dpkg-dev/dpkg-shlibdeps to build the .deb.")
-    elseif(QGC_CPACK_GENERATOR STREQUAL "RPM" AND DEFINED QGC_LINUX_DISTRO_FAMILY
-            AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "" AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "rhel")
-        message(WARNING "QGC: QGC_CPACK_GENERATOR=RPM on a non-RPM host (${QGC_LINUX_DISTRO}); "
-            "cpack needs rpmbuild to build the .rpm.")
-    endif()
-    if(QGC_CPACK_GENERATOR STREQUAL "DEB")
-        include("${CMAKE_SOURCE_DIR}/cmake/install/CPack/CreateCPackDeb.cmake")
-    elseif(QGC_CPACK_GENERATOR STREQUAL "RPM")
-        include("${CMAKE_SOURCE_DIR}/cmake/install/CPack/CreateCPackRPM.cmake")
-    endif()
-
-    # Single `qgc-package` target; the distro→method dispatch (DEB/RPM via CPack,
-    # Arch via makepkg) lives here, driven by LinuxDistro detection.
-    if(QGC_CPACK_GENERATOR STREQUAL "DEB" OR QGC_CPACK_GENERATOR STREQUAL "RPM")
-        add_custom_target(qgc-package
-            COMMAND "${CMAKE_CPACK_COMMAND}" -G "${QGC_CPACK_GENERATOR}"
-            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            VERBATIM
-            COMMENT "QGC: building ${QGC_CPACK_GENERATOR} package via CPack"
-        )
-    elseif(QGC_LINUX_DISTRO_FAMILY STREQUAL "arch")
-        include("${CMAKE_SOURCE_DIR}/cmake/install/CreateArchPackage.cmake")
-    else()
-        add_custom_target(qgc-package
-            COMMAND "${CMAKE_COMMAND}" -E echo
-                "QGC: no native package for distro '${QGC_LINUX_DISTRO}'; AppImage only"
-            VERBATIM
-            COMMENT "QGC: no native package generator for this distro"
-        )
-    endif()
+    # Native package (.deb/.rpm via CPack, Arch via makepkg) is built by the
+    # shared qgc-package dispatch at the end of this file.
 
 # ----------------------------------------------------------------------------
 # Windows Installation & Installer Creation
@@ -257,7 +223,6 @@ elseif(MACOS)
         )
     endif()
 
-    # Set bundle path for subsequent operations
     install(CODE "set(QGC_STAGING_BUNDLE_PATH \"${CMAKE_BINARY_DIR}/staging/${CMAKE_PROJECT_NAME}.app\")")
 
     # Code signing
@@ -280,7 +245,6 @@ elseif(MACOS)
         ")
     endif()
 
-    # Find or fetch create-dmg tool
     find_program(CREATE_DMG_PROGRAM create-dmg)
     if(NOT CREATE_DMG_PROGRAM)
         message(STATUS "QGC: Fetching create-dmg tool via CPM")
@@ -295,4 +259,60 @@ elseif(MACOS)
 
     install(CODE "set(CREATE_DMG_PROGRAM \"${CREATE_DMG_PROGRAM}\")")
     install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/install/CreateMacDMG.cmake")
+endif()
+
+# ============================================================================
+# Optional CPack native package — `qgc-package` target, opt-in via
+# QGC_CPACK_GENERATOR. Runs alongside the platform's default installer
+# (AppImage / NSIS .exe / DMG), which `cmake --install` still produces.
+# Must follow all install() rules above: each CreateCPack*.cmake ends in
+# include(CPack), which snapshots the install layout.
+# ============================================================================
+set(_qgc_cpack_module "")
+if(QGC_CPACK_GENERATOR STREQUAL "DEB")
+    set(_qgc_cpack_module "CPack/CreateCPackDeb.cmake")
+elseif(QGC_CPACK_GENERATOR STREQUAL "RPM")
+    set(_qgc_cpack_module "CPack/CreateCPackRPM.cmake")
+elseif(QGC_CPACK_GENERATOR STREQUAL "NSIS")
+    set(_qgc_cpack_module "CPack/CreateCPackNSIS.cmake")
+elseif(QGC_CPACK_GENERATOR STREQUAL "IFW")
+    set(_qgc_cpack_module "CPack/CreateCPackIFW.cmake")
+elseif(QGC_CPACK_GENERATOR STREQUAL "DragNDrop")
+    set(_qgc_cpack_module "CPack/CreateCPackDMG.cmake")
+elseif(QGC_CPACK_GENERATOR STREQUAL "Bundle")
+    set(_qgc_cpack_module "CPack/CreateCPackBundle.cmake")
+elseif(QGC_CPACK_GENERATOR STREQUAL "productbuild")
+    set(_qgc_cpack_module "CPack/CreateCPackProductBuild.cmake")
+elseif(QGC_CPACK_GENERATOR STREQUAL "TXZ")
+    set(_qgc_cpack_module "CPack/CreateCPackArchive.cmake")
+endif()
+
+# Warn when the host can't actually build the selected Linux native package.
+if(QGC_CPACK_GENERATOR STREQUAL "DEB" AND DEFINED QGC_LINUX_DISTRO_FAMILY
+        AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "" AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "debian")
+    message(WARNING "QGC: QGC_CPACK_GENERATOR=DEB on a non-Debian host (${QGC_LINUX_DISTRO}); "
+        "cpack needs dpkg-dev/dpkg-shlibdeps to build the .deb.")
+elseif(QGC_CPACK_GENERATOR STREQUAL "RPM" AND DEFINED QGC_LINUX_DISTRO_FAMILY
+        AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "" AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "rhel")
+    message(WARNING "QGC: QGC_CPACK_GENERATOR=RPM on a non-RPM host (${QGC_LINUX_DISTRO}); "
+        "cpack needs rpmbuild to build the .rpm.")
+endif()
+
+if(_qgc_cpack_module)
+    include("${CMAKE_SOURCE_DIR}/cmake/install/${_qgc_cpack_module}")
+    add_custom_target(qgc-package
+        COMMAND "${CMAKE_CPACK_COMMAND}" -G "${QGC_CPACK_GENERATOR}"
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+        VERBATIM
+        COMMENT "QGC: building ${QGC_CPACK_GENERATOR} package via CPack"
+    )
+elseif(LINUX AND QGC_LINUX_DISTRO_FAMILY STREQUAL "arch")
+    include("${CMAKE_SOURCE_DIR}/cmake/install/CreateArchPackage.cmake")
+elseif(LINUX OR WIN32 OR MACOS)
+    add_custom_target(qgc-package
+        COMMAND "${CMAKE_COMMAND}" -E echo
+            "QGC: QGC_CPACK_GENERATOR unset; the default installer is produced by 'cmake --install'."
+        VERBATIM
+        COMMENT "QGC: no CPack generator selected"
+    )
 endif()
