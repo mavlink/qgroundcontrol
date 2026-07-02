@@ -25,7 +25,6 @@ public:
                          EGLDisplay eglDisplay);
 
     MapData map(QVideoFrame::MapMode mode) override;
-    bool isDmaBuf() const override { return true; }
 
     ~GstDmaBufVideoBuffer() override;
 
