@@ -39,7 +39,7 @@ void FailureInjectionUITest::_testInjectAndReset()
              "Injected row does not show type OFF");
 
     // MockLink doesn't handle MAV_CMD_INJECT_FAILURE, so it acks MAV_RESULT_UNSUPPORTED.
-    QVERIFY2(verifyText(QStringLiteral("failureInjection_result_0"), QStringLiteral("✗ Unsupported"), "after inject ack"),
+    QVERIFY2(verifyText(QStringLiteral("failureInjection_result_0"), QStringLiteral("× Unsupported"), "after inject ack"),
              "Injected row result never resolved to Unsupported");
 
     // Reset all reverts the unit tracked by the injection above: a second row appears (GPS / OK).
@@ -51,7 +51,7 @@ void FailureInjectionUITest::_testInjectAndReset()
              "Reset row does not show unit GPS");
     QVERIFY2(verifyText(QStringLiteral("failureInjection_typeName_0"), QStringLiteral("OK"), "after reset"),
              "Reset row does not show type OK");
-    QVERIFY2(verifyText(QStringLiteral("failureInjection_result_0"), QStringLiteral("✗ Unsupported"), "after reset ack"),
+    QVERIFY2(verifyText(QStringLiteral("failureInjection_result_0"), QStringLiteral("× Unsupported"), "after reset ack"),
              "Reset row result never resolved to Unsupported");
 
     });

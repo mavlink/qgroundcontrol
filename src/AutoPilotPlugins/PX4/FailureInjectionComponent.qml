@@ -213,9 +213,10 @@ SetupPage {
                         QGCLabel {
                             objectName: "failureInjection_pendingRebootLabel"
                             Layout.fillWidth: true
+                            elide:      Text.ElideRight
                             color:      qgcPal.colorOrange
                             visible:    _pendingReboot
-                            text:       qsTr("Parameter written — reboot required before it takes effect.")
+                            text:       qsTr("Reboot required to apply.")
                         }
                         QGCLabel {
                             objectName: "failureInjection_armedLabel"
@@ -392,7 +393,7 @@ SetupPage {
                             objectName:  "failureInjection_result_" + index
                             font.family: ScreenTools.fixedFontFamily
                             color:       _pending ? qgcPal.colorOrange : (_accepted ? qgcPal.colorGreen : qgcPal.colorRed)
-                            text:        _pending ? qsTr("…") : (_accepted ? qsTr("✓ Accepted") : ("✗ " + modelData.result))
+                            text:        _pending ? qsTr("…") : (_accepted ? qsTr("✓ Accepted") : ("× " + modelData.result))
                         }
                     }
                 }
