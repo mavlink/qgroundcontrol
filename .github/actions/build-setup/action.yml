@@ -75,18 +75,18 @@ outputs:
   gstreamer_windows_version:
     description: GStreamer version for Windows
     value: ${{ steps.prereq.outputs.gstreamer_windows_version }}
-  xcode_version:
+  apple_xcode_version:
     description: Xcode version for macOS
-    value: ${{ steps.prereq.outputs.xcode_version }}
-  xcode_ios_version:
+    value: ${{ steps.prereq.outputs.apple_xcode_version }}
+  apple_xcode_ios_version:
     description: Xcode version for iOS
-    value: ${{ steps.prereq.outputs.xcode_ios_version }}
-  ndk_full_version:
+    value: ${{ steps.prereq.outputs.apple_xcode_ios_version }}
+  android_ndk_full_version:
     description: Android NDK full version
-    value: ${{ steps.prereq.outputs.ndk_full_version }}
-  java_version:
+    value: ${{ steps.prereq.outputs.android_ndk_full_version }}
+  android_java_version:
     description: Java version
-    value: ${{ steps.prereq.outputs.java_version }}
+    value: ${{ steps.prereq.outputs.android_java_version }}
   android_platform:
     description: Android platform/API level
     value: ${{ steps.prereq.outputs.android_platform }}
@@ -144,12 +144,12 @@ runs:
         cpm-modules: ${{ runner.temp }}/build/cpm_modules
         save-cache: ${{ inputs.save-cache }}
 
-    # Desktop macOS toolchain. iOS gets its own Xcode pin inside qt-ios (uses xcode_ios_version, which can differ from desktop's).
+    # Desktop macOS toolchain. iOS gets its own Xcode pin inside qt-ios (uses apple_xcode_ios_version, which can differ from desktop's).
     - name: Setup Xcode (macOS desktop)
       if: inputs.mode == 'desktop' && runner.os == 'macOS'
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: ${{ steps.prereq.outputs.xcode_version }}
+        xcode-version: ${{ steps.prereq.outputs.apple_xcode_version }}
 
     - name: Install Qt (desktop)
       if: inputs.mode == 'desktop'
@@ -211,8 +211,8 @@ runs:
         abis: ${{ inputs.abis }}
         cpm-modules: ${{ inputs.cpm-modules }}
         build-type: ${{ inputs.build-type }}
-        ndk-full-version: ${{ steps.prereq.outputs.ndk_full_version }}
-        java-version: ${{ steps.prereq.outputs.java_version }}
+        ndk-full-version: ${{ steps.prereq.outputs.android_ndk_full_version }}
+        java-version: ${{ steps.prereq.outputs.android_java_version }}
         android-platform: ${{ steps.prereq.outputs.android_platform }}
         android-cmdline-tools: ${{ steps.prereq.outputs.android_cmdline_tools }}
         android-build-tools: ${{ steps.prereq.outputs.android_build_tools }}
@@ -227,7 +227,7 @@ runs:
         version: ${{ inputs.qt-version || steps.prereq.outputs.qt_version }}
         modules: ${{ inputs.qt-modules || steps.prereq.outputs.qt_modules }}
         ios-modules: ${{ inputs.ios-modules || steps.prereq.outputs.qt_modules_ios }}
-        xcode-version: ${{ steps.prereq.outputs.xcode_ios_version }}
+        xcode-version: ${{ steps.prereq.outputs.apple_xcode_ios_version }}
         cpm-modules: ${{ inputs.cpm-modules }}
         build-type: ${{ inputs.build-type }}
         save-cache: ${{ inputs.save-cache }}

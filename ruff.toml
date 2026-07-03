@@ -25,7 +25,7 @@ select = [
     "C4",     # flake8-comprehensions
     "UP",     # pyupgrade
     "SIM",    # flake8-simplify
-    "TCH",    # flake8-type-checking
+    "TC",     # flake8-type-checking
     "RUF",    # Ruff-specific rules
 ]
 
@@ -41,7 +41,6 @@ known-first-party = ["qgc"]
 [lint.per-file-ignores]
 "test/**/*.py" = ["B011"]  # Allow assert in tests
 # Bootstrap scripts manipulate sys.path before importing project modules.
-"tools/_bootstrap.py" = ["E402"]
 "tools/check_deps.py" = ["E402"]
 "tools/clean.py" = ["E402"]
 "tools/configure.py" = ["E402"]
@@ -52,7 +51,6 @@ known-first-party = ["qgc"]
 "tools/analyzers/*.py" = ["E402"]
 "tools/generators/config_qml/generate_pages.py" = ["E402"]
 "tools/setup/build-gstreamer.py" = ["E402"]
-"tools/setup/install_dependencies.py" = ["E402"]
 "tools/setup/install_python.py" = ["E402"]
 "tools/setup/install_qt.py" = ["E402"]
 ".github/scripts/*.py" = ["E402"]

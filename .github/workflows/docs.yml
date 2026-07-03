@@ -36,6 +36,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -76,6 +78,7 @@ jobs:
             .github/actions
             .github/scripts
             tools/common
+          persist-credentials: false
 
       - name: Deploy docs
         uses: ./.github/actions/deploy-docs

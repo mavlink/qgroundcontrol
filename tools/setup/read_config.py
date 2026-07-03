@@ -7,7 +7,7 @@ It can be used directly or called by shell wrappers for environment export.
 
 Usage:
     read_config.py                      # Print all config as KEY=VALUE
-    read_config.py --get qt_version     # Get single value
+    read_config.py --get qt.version     # Get single value
     read_config.py --json               # Output as JSON
     read_config.py --export bash        # Output as bash export statements
     read_config.py --export powershell  # Output as PowerShell $env: statements
@@ -81,7 +81,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Read build configuration from .github/build-config.json"
     )
-    parser.add_argument("--get", metavar="KEY", help="Get a single value by key (e.g., qt_version)")
+    parser.add_argument("--get", metavar="KEY", help="Get a single value by key (e.g., qt.version)")
     parser.add_argument("--json", action="store_true", help="Output full config as JSON")
     parser.add_argument(
         "--export",

@@ -7,8 +7,8 @@ set -eu
 
 . /usr/local/lib/qgc/retry.sh
 
-qt_version=$(python3 /tmp/tools/setup/read_config.py --get qt_version)
-qt_modules=$(python3 /tmp/tools/setup/read_config.py --get qt_modules)
+qt_version=$(python3 /tmp/tools/setup/read_config.py --get qt.version)
+qt_modules=$(python3 /tmp/tools/setup/read_config.py --get qt.modules)
 
 host_os=$1
 target=$2

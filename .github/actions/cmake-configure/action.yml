@@ -58,21 +58,31 @@ runs:
         else
           VENV_PYTHON="${GITHUB_WORKSPACE}/.venv/bin/python"
         fi
-        EXTRA_ARGS="${{ inputs.extra-args }}"
+        EXTRA_ARGS="${INPUTS_EXTRA_ARGS}"
         if [[ -x "$VENV_PYTHON" ]]; then
           EXTRA_ARGS="${EXTRA_ARGS:+$EXTRA_ARGS }-DPython3_EXECUTABLE=${VENV_PYTHON}"
         else
           echo "::warning::venv python not found at $VENV_PYTHON; CMake will pick system python (may lack jinja2)"
         fi
         ARGS=(configure
-          --source-dir "${{ inputs.source-dir }}"
-          --build-dir "${{ inputs.build-dir }}"
-          --generator "${{ inputs.generator }}"
-          --build-type "${{ inputs.build-type }}"
+          --source-dir "${INPUTS_SOURCE_DIR}"
+          --build-dir "${INPUTS_BUILD_DIR}"
+          --generator "${INPUTS_GENERATOR}"
+          --build-type "${INPUTS_BUILD_TYPE}"
         )
-        [[ "${{ inputs.testing }}" == "true" ]] && ARGS+=(--testing)
-        [[ "${{ inputs.coverage }}" == "true" ]] && ARGS+=(--coverage)
-        [[ "${{ inputs.stable }}" == "true" ]] && ARGS+=(--stable)
-        [[ "${{ inputs.use-qt-cmake }}" != "true" ]] && ARGS+=(--no-qt-cmake)
+        [[ "${INPUTS_TESTING}" == "true" ]] && ARGS+=(--testing)
+        [[ "${INPUTS_COVERAGE}" == "true" ]] && ARGS+=(--coverage)
+        [[ "${INPUTS_STABLE}" == "true" ]] && ARGS+=(--stable)
+        [[ "${INPUTS_USE_QT_CMAKE}" != "true" ]] && ARGS+=(--no-qt-cmake)
         [[ -n "$EXTRA_ARGS" ]] && ARGS+=("--extra-args=$EXTRA_ARGS")
         python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" "${ARGS[@]}"
+      env:
+        INPUTS_EXTRA_ARGS: ${{ inputs.extra-args }}
+        INPUTS_SOURCE_DIR: ${{ inputs.source-dir }}
+        INPUTS_BUILD_DIR: ${{ inputs.build-dir }}
+        INPUTS_GENERATOR: ${{ inputs.generator }}
+        INPUTS_BUILD_TYPE: ${{ inputs.build-type }}
+        INPUTS_TESTING: ${{ inputs.testing }}
+        INPUTS_COVERAGE: ${{ inputs.coverage }}
+        INPUTS_STABLE: ${{ inputs.stable }}
+        INPUTS_USE_QT_CMAKE: ${{ inputs.use-qt-cmake }}

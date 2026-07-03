@@ -42,7 +42,9 @@ def _workflow_name(path: Path) -> str:
 
 
 def _platform_workflows() -> list[str]:
-    raw = json.loads(BUILD_CONFIG_JSON.read_text(encoding="utf-8")).get("platform_workflows", "")
+    raw = json.loads(BUILD_CONFIG_JSON.read_text(encoding="utf-8")).get("build", {}).get(
+        "platform_workflows", ""
+    )
     assert raw, "platform_workflows missing from build-config.json"
     return [n.strip() for n in raw.split(",") if n.strip()]
 

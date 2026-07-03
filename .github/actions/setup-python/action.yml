@@ -32,7 +32,7 @@ runs:
 
     - name: Add venv to PATH
       shell: bash
-      run: |
+      run: | # zizmor: ignore[github-env] writes fixed runner workspace .venv path to PATH; not attacker-controllable
         if [[ "$RUNNER_OS" == "Windows" ]]; then
           echo "$GITHUB_WORKSPACE/.venv/Scripts" >> "$GITHUB_PATH"
         else

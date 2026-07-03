@@ -1,55 +1,16 @@
 # QGroundControl Coding Style Examples
 
-This directory contains example files demonstrating QGroundControl coding conventions.
+Reference files demonstrating QGroundControl's coding conventions. For the authoritative rules
+(naming, include order, C++20, QML, logging), see **[CODING_STYLE.md](../../CODING_STYLE.md)** — these
+files are worked examples of it.
 
 ## Files
 
-| File | Description |
-|------|-------------|
-| `CodingStyle.h` | Header file conventions |
-| `CodingStyle.cc` | Implementation file conventions |
-| `CodingStyle.qml` | QML file conventions |
-
-## Key Conventions Demonstrated
-
-### C++ Header Files (`.h`)
-
-- **Include Guards**: Use `#pragma once`
-- **Include Order**: System → Qt → QGC headers (alphabetical within groups, blank lines between)
-- **Qt Paths**: Use full paths (`QtCore/QObject` not `QObject`)
-- **Forward Declarations**: For pointer/reference-only types
-- **Logging Categories**: `Q_DECLARE_LOGGING_CATEGORY(ClassNameLog)`
-- **Class Documentation**: Doxygen `///` comments
-- **Naming**:
-  - Classes: `PascalCase`
-  - Members: `_leadingUnderscore`
-  - Methods: `camelCase`
-  - Q_PROPERTY: `camelCase`
-- **Qt6 QML**: Use `QML_ELEMENT`, `QML_SINGLETON`, `QML_UNCREATABLE`
-- **Modern C++**: `[[nodiscard]]`, `std::span`, `std::string_view`
-
-### C++ Implementation Files (`.cc`)
-
-- **Include Order**: Own header first, then system → Qt → QGC
-- **Logging**: Use `QGC_LOGGING_CATEGORY` (not `Q_LOGGING_CATEGORY`); don't repeat the function name in the message (the formatter adds it), and align multi-value statements one value per line
-- **C++20 Features**:
-  - `std::ranges` algorithms
-  - Designated initializers
-  - Range-based for with init statement
-  - Concepts and constraints
-- **Error Handling**: Use `qCWarning`/`qCCritical` with logging category
-- **Const Correctness**: Mark methods and parameters `const` appropriately
-
-### QML Files (`.qml`)
-
-- **Import Order**: QtQuick → Qt modules → QGC imports (versioned)
-- **Property Order**: `id` → dimensions → anchors → other properties
-- **Naming**:
-  - IDs: `camelCase`
-  - Properties: `camelCase`
-  - JavaScript functions: `camelCase`
-- **Signals**: Prefer declarative bindings over imperative `onXChanged`
-- **Components**: Use `Loader` for conditional/heavy components
+| File | Demonstrates |
+| --- | --- |
+| `CodingStyle.h` | Header conventions: `#pragma once`, include order, forward declarations, `Q_DECLARE_LOGGING_CATEGORY`, QML macros, naming |
+| `CodingStyle.cc` | Implementation conventions: include order, `QGC_LOGGING_CATEGORY`, C++20 features, const correctness |
+| `CodingStyle.qml` | QML conventions: import/property order, naming, declarative bindings |
 
 ## Related Documentation
 
@@ -57,29 +18,14 @@ This directory contains example files demonstrating QGroundControl coding conven
 - **[.clang-format](../../.clang-format)** - Automatic C++ formatting rules
 - **[.clang-tidy](../../.clang-tidy)** - Static analysis configuration
 
-## Formatting
-
-Use clang-format to automatically format C++ code:
+## Formatting & Static Analysis
 
 ```bash
-# Format changed files
-./tools/analyze.py --tool clang-format --fix
-
-# Check formatting (CI mode)
-./tools/analyze.py --tool clang-format
-
-# Format all files
-./tools/analyze.py --tool clang-format --fix --all
+./tools/analyze.py --tool clang-format --fix        # Format changed files
+./tools/analyze.py --tool clang-format              # Check formatting (CI mode)
+./tools/analyze.py --tool clang-format --fix --all  # Format all files
+./tools/analyze.py                                   # clang-tidy on changed files
+./tools/analyze.py --all                             # clang-tidy on all files
 ```
 
-## Static Analysis
-
-Use clang-tidy for static analysis:
-
-```bash
-# Analyze changed files
-./tools/analyze.py
-
-# Analyze all files
-./tools/analyze.py --all
-```
+Or use the `just` wrappers (`just format-fix`, `just analyze`) — see [tools/README.md](../README.md).

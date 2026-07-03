@@ -70,7 +70,7 @@ ARG DEP_PLATFORM=debian
 # Persist for entrypoint.sh: Fedora/Arch builds skip the appimagelint compat check.
 ENV QGC_DEP_PLATFORM=${DEP_PLATFORM}
 RUN sh /usr/local/lib/qgc/install-qt.sh linux desktop linux_gcc_64 && \
-    QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt_version) && \
+    QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt.version) && \
     { echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_64"; \
       echo 'export PATH=$QT_ROOT_DIR/bin:$PATH'; } > /etc/profile.d/qt.sh
 COPY tools/setup/install_dependencies/ /tmp/tools/setup/install_dependencies/
@@ -102,7 +102,7 @@ ENV SYSROOT=/opt/sysroot
 # arm64 desktop under host_os=linux_arm64, not linux; versions from build-config.json.
 RUN sh /usr/local/lib/qgc/install-qt.sh linux desktop linux_gcc_64 && \
     sh /usr/local/lib/qgc/install-qt.sh linux_arm64 desktop linux_gcc_arm64 && \
-    QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt_version) && \
+    QT_VERSION=$(python3 /tmp/tools/setup/read_config.py --get qt.version) && \
     { echo "export QT_HOST_PATH=/opt/Qt/${QT_VERSION}/gcc_64"; \
       echo "export QT_ROOT_DIR=/opt/Qt/${QT_VERSION}/gcc_arm64"; \
       echo 'export PATH=$QT_HOST_PATH/bin:$PATH'; } > /etc/profile.d/qt-cross.sh && \
@@ -118,7 +118,7 @@ RUN python3 /tmp/tools/setup/install_dependencies --platform debian && \
     python3 /tmp/tools/setup/read_config.py --export bash > /etc/profile.d/qgc.sh && \
     . /etc/profile.d/qgc.sh && \
     apt-get update && \
-    apt-get install -y --no-install-recommends openjdk-${JAVA_VERSION}-jdk && \
+    apt-get install -y --no-install-recommends openjdk-${ANDROID_JAVA_VERSION}-jdk && \
     rm -rf /var/lib/apt/lists/*
 
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
@@ -137,8 +137,8 @@ RUN . /etc/profile.d/qgc.sh && \
         "platform-tools" \
         "platforms;android-${ANDROID_PLATFORM}" \
         "build-tools;${ANDROID_BUILD_TOOLS}" \
-        "ndk;${NDK_FULL_VERSION}" && \
-    echo "export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/${NDK_FULL_VERSION}" >> /etc/profile.d/qgc.sh && \
+        "ndk;${ANDROID_NDK_FULL_VERSION}" && \
+    echo "export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/${ANDROID_NDK_FULL_VERSION}" >> /etc/profile.d/qgc.sh && \
     echo "export ANDROID_BUILD_TOOLS_DIR=$ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS}" >> /etc/profile.d/qgc.sh
 
 ENV QT_PATH="/opt/Qt"

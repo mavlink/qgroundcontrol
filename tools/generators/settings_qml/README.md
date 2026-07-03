@@ -50,7 +50,7 @@ Defines the ordered list of pages in the Settings sidebar.
 ### Page entry keys
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | --- | --- |
 | `name` | string | Display name in the sidebar |
 | `icon` | string | `qrc:` path for the sidebar icon |
 | `qml` | string | Output filename (e.g. `GeneralSettings.qml`) |
@@ -70,7 +70,7 @@ Defines the layout of a single settings page.
 ### Top-level object
 
 | Key | Type | Required | Description |
-|-----|------|----------|-------------|
+| --- | --- | --- | --- |
 | `fileType` | `"SettingsUI"` | yes | Must be `"SettingsUI"` |
 | `version` | `1` | yes | Schema version |
 | `bindings` | object | no | Named QML property bindings (e.g. accessor aliases) |
@@ -93,7 +93,7 @@ The binding name is then available as a QML property anywhere on the page.
 A collapsible group with an optional heading.
 
 | Key | Type | Required | Description |
-|-----|------|----------|-------------|
+| --- | --- | --- | --- |
 | `heading` | string | no | Group heading (translatable) |
 | `headingDescription` | string | no | QML expression for a dynamic description under the heading |
 | `showWhen` | string | no | QML expression; group hidden when falsy |
@@ -111,11 +111,11 @@ A collapsible group with an optional heading.
 ### `control`
 
 | Key | Type | Required | Description |
-|-----|------|----------|-------------|
+| --- | --- | --- | --- |
 | `setting` | string | yes | Dotted path to the fact, e.g. `"appSettings.qLocaleLanguage"` |
 | `label` | string | no | Override label; empty → uses `fact.label` |
 | `control` | string | no | Explicit control type (see [Control types](#control-types)); auto-detected if omitted |
-| `showWhen` | string | no | Extra QML visibility expression (ANDed with `fact.userVisible`) |
+| `showWhen` | string | no | Extra QML visibility expression (combined with `fact.userVisible` via logical AND) |
 | `enableWhen` | string | no | QML expression bound to `enabled` |
 | `placeholder` | string | no | Placeholder text for text fields |
 | `enableCheckbox` | object | no | Enable-checkbox for sliders (see below) |
@@ -133,7 +133,7 @@ When `control` is omitted, the generator reads the fact's type from
 `*.SettingsGroup.json` metadata to auto-detect:
 
 | Fact type | Default control |
-|-----------|----------------|
+| --- | --- |
 | `bool` | `checkbox` |
 | Has `enumStrings` | `combobox` |
 | Numeric | `textfield` |
@@ -141,7 +141,7 @@ When `control` is omitted, the generator reads the fact's type from
 Explicit `control` values:
 
 | Value | Widget |
-|-------|--------|
+| --- | --- |
 | `combobox` | `LabelledFactComboBox` |
 | `textfield` | `LabelledFactTextField` |
 | `checkbox` | `FactCheckBoxSlider` |
@@ -152,7 +152,7 @@ Explicit `control` values:
 #### `slider` extra keys
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | --- | --- |
 | `enableCheckbox` | object | `{ "checked": "expr", "onClicked": "body" }` |
 | `button` | object | `{ "text": "label", "onClicked": "body", "enabled": "expr" }` |
 

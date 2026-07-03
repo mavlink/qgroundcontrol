@@ -29,8 +29,8 @@ python3 -m venv "${HOME}/qgc-venv"
 export PATH="${HOME}/qgc-venv/bin:${PATH}"
 pip install --quiet --upgrade pip aqtinstall
 
-QT_VERSION="$(python tools/setup/read_config.py --get qt_version)"
-QT_MODULES="$(python tools/setup/read_config.py --get qt_modules)"
+QT_VERSION="$(python tools/setup/read_config.py --get qt.version)"
+QT_MODULES="$(python tools/setup/read_config.py --get qt.modules)"
 python tools/setup/install_qt.py install \
     --version "${QT_VERSION}" --host linux --arch linux_gcc_64 \
     --modules "${QT_MODULES}" --outdir "${QT_OUT}"

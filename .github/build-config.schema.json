@@ -4,76 +4,113 @@
   "description": "Centralized version numbers and build settings for QGroundControl CI",
   "type": "object",
   "required": [
-    "qt_version",
-    "qt_minimum_version",
-    "cmake_minimum_version",
-    "ndk_version",
-    "ndk_full_version",
-    "android_platform",
-    "android_min_sdk",
-    "android_build_tools",
-    "java_version",
-    "gstreamer",
-    "platform_workflows"
+    "qt",
+    "android",
+    "apple",
+    "build",
+    "gstreamer"
   ],
   "properties": {
     "$schema": {
       "type": "string",
       "description": "JSON Schema reference (ignored by validators)"
     },
-    "qt_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "Target Qt version"
+    "qt": {
+      "type": "object",
+      "required": ["version", "minimum_version"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Target Qt version"
+        },
+        "minimum_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Minimum supported Qt version"
+        },
+        "modules": {
+          "type": "string",
+          "description": "Space-separated list of Qt modules to install"
+        }
+      }
     },
-    "qt_minimum_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "Minimum supported Qt version"
+    "android": {
+      "type": "object",
+      "required": ["platform", "min_sdk", "build_tools", "ndk_version", "ndk_full_version", "java_version"],
+      "additionalProperties": false,
+      "properties": {
+        "platform": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Android target API level"
+        },
+        "min_sdk": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Android minimum SDK version"
+        },
+        "build_tools": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Android build tools version"
+        },
+        "cmdline_tools": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Android command-line tools version"
+        },
+        "ndk_version": {
+          "type": "string",
+          "pattern": "^r[0-9]+[a-z]?$",
+          "description": "Android NDK short version (e.g. r27c)"
+        },
+        "ndk_full_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Android NDK full version number"
+        },
+        "java_version": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Java version for Android builds"
+        }
+      }
     },
-    "qt_modules": {
-      "type": "string",
-      "description": "Space-separated list of Qt modules to install"
+    "apple": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "xcode_version": { "type": "string", "description": "Xcode version (macOS/desktop)" },
+        "xcode_ios_version": { "type": "string", "description": "Xcode version (iOS)" },
+        "macos_deployment_target": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "macOS minimum deployment target"
+        },
+        "ios_deployment_target": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "iOS minimum deployment target"
+        }
+      }
     },
-    "cmake_minimum_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+$",
-      "description": "Minimum required CMake version"
-    },
-    "ndk_version": {
-      "type": "string",
-      "pattern": "^r[0-9]+[a-z]?$",
-      "description": "Android NDK short version (e.g. r27c)"
-    },
-    "ndk_full_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "Android NDK full version number"
-    },
-    "android_platform": {
-      "type": "string",
-      "pattern": "^[0-9]+$",
-      "description": "Android target API level"
-    },
-    "android_min_sdk": {
-      "type": "string",
-      "pattern": "^[0-9]+$",
-      "description": "Android minimum SDK version"
-    },
-    "android_build_tools": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "Android build tools version"
-    },
-    "android_cmdline_tools": {
-      "type": "string",
-      "pattern": "^[0-9]+$",
-      "description": "Android command-line tools version"
-    },
-    "java_version": {
-      "type": "string",
-      "pattern": "^[0-9]+$",
-      "description": "Java version for Android builds"
+    "build": {
+      "type": "object",
+      "required": ["cmake_minimum_version", "platform_workflows"],
+      "additionalProperties": false,
+      "properties": {
+        "cmake_minimum_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "Minimum required CMake version"
+        },
+        "platform_workflows": {
+          "type": "string",
+          "description": "Comma-separated list of platform workflow names"
+        }
+      }
     },
     "gstreamer": {
       "type": "object",
@@ -131,35 +168,6 @@
           "pattern": "^[a-f0-9]{64}$"
         }
       }
-    },
-    "ios_deployment_target": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+$"
-    },
-    "macos_deployment_target": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+$"
-    },
-    "ccache_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "mold_version": {
-      "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    },
-    "vulkan_sdk_version": {
-      "type": "string"
-    },
-    "xcode_version": {
-      "type": "string"
-    },
-    "xcode_ios_version": {
-      "type": "string"
-    },
-    "platform_workflows": {
-      "type": "string",
-      "description": "Comma-separated list of platform workflow names"
     }
   },
   "additionalProperties": false

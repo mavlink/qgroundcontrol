@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 import shutil
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .proc import run_captured
@@ -16,9 +17,31 @@ from .proc import run_captured
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-__all__ = ["DEFAULT_VERSION_RE", "probe_version"]
+__all__ = ["DEFAULT_VERSION_RE", "probe_version", "uv_lock_version"]
 
 DEFAULT_VERSION_RE: re.Pattern[str] = re.compile(r"(\d+)\.(\d+)(?:\.(\d+))?")
+
+_UV_LOCK = Path(__file__).resolve().parents[1] / "uv.lock"
+
+
+def uv_lock_version(package: str, *, lock_path: Path | None = None) -> str | None:
+    """Return the version pinned for *package* in tools/uv.lock, or None if absent/unreadable.
+
+    Lets a setup script pin its fallback binary to the same version the dev/CI venv
+    resolves (single source of truth), so the two install paths can't drift. Returns
+    None in contexts without the lockfile (e.g. the Docker builders that COPY setup
+    scripts out of the repo), leaving the caller to apply its own fallback.
+    """
+    path = lock_path or _UV_LOCK
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = re.search(
+        r'\[\[package\]\]\s*\nname\s*=\s*"' + re.escape(package) + r'"\s*\nversion\s*=\s*"([\d.]+)"',
+        text,
+    )
+    return match.group(1) if match else None
 
 
 def probe_version(

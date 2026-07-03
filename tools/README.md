@@ -2,6 +2,51 @@
 
 This directory contains development tools, scripts, and configuration files for QGroundControl.
 
+> For the condensed day-to-day workflow, see [AGENTS.md](../AGENTS.md). This file is the full
+> reference for every `just` recipe and standalone script.
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Directory Structure](#directory-structure)
+- [Just Command Reference](#just-command-reference)
+- [Direct Script Usage](#direct-script-usage)
+- [Development Scripts](#development-scripts)
+- [Setup Scripts](#setup-scripts)
+- [Static Analyzers](#static-analyzers)
+- [Shared Utilities](#shared-utilities)
+- [Debugging Tools](#debugging-tools)
+- [Simulation Tools](#simulation-tools)
+- [Translation Tools](#translation-tools)
+- [Code Quality Tools](#code-quality-tools)
+- [VS Code Integration](#vs-code-integration)
+- [Centralized Configuration](#centralized-configuration)
+
+## Quick Start
+
+Common commands are wrapped in a `justfile` (requires `just` >=1.30 for `home_directory()`;
+`apt install just` on Ubuntu ships 1.21, which is too old):
+
+```bash
+# One-time: install `just` (pulls rust-just into .venv via uv)
+python3 tools/setup/install_python.py dev
+
+# or: brew install just / cargo install just / pipx install rust-just
+```
+
+Everyday loop:
+
+```bash
+just             # List all recipes
+just setup       # First-time: deps + submodules + configure + build
+just build       # Incremental build
+just check       # lint + test — run before declaring done
+```
+
+Full recipe list, grouped by purpose: [Just Command Reference](#just-command-reference). `just`
+reads shared version/config from `.github/build-config.json` (Qt/CMake/GStreamer versions) — see
+[Centralized Configuration](#centralized-configuration).
+
 ## Directory Structure
 
 ```text
@@ -11,64 +56,99 @@ tools/
 ├── check_deps.py            # Check for outdated dependencies
 ├── clean.py                 # Clean build artifacts and caches
 ├── configure.py             # CMake configuration wrapper
-├── coverage.py              # Code coverage reports
+├── coverage.py               # Code coverage reports
 ├── generate_docs.py         # Generate API docs (Doxygen)
 ├── pre_commit.py            # Pre-commit hook runner
-├── release.py               # Semantic versioning and release automation
-├── run_tests.py             # Qt unit test runner
+├── pseudo_loc.py             # Generate pseudo-localized .ts files for layout testing
+├── release.py                # Semantic versioning and release automation
+├── run_tests.py              # Qt unit test runner
 ├── configs/                 # Tool configuration files
 │   └── ccache.conf          # ccache configuration
-├── analyzers/               # Static analysis scripts
+├── analyzers/                # Static analysis scripts
 │   └── vehicle_null_check.py
-├── coding-style/            # Code style examples
-├── common/                  # Shared Python utilities
+├── coding-style/             # Code style examples
+├── common/                   # Shared Python utilities
 │   ├── patterns.py          # QGC regex patterns
 │   └── file_traversal.py    # File discovery
-├── debuggers/               # Debugging tools
+├── debuggers/                # Debugging tools
 │   ├── gdb-pretty-printers/ # GDB/LLDB Qt type formatters
 │   ├── profile.sh           # Profiling (valgrind, perf)
 │   ├── qt6.natvis           # Visual Studio debugger visualizers
 │   └── valgrind.supp        # Valgrind suppressions
-├── generators/              # Build-time code generation (mavlink enums, config/settings QML)
-├── schemas/                 # JSON schemas for editor validation
-├── setup/                   # Environment setup scripts
-├── simulation/              # Vehicle simulators
+├── generators/                # Build-time code generation (mavlink enums, config/settings QML)
+├── schemas/                   # JSON schemas for editor validation
+├── setup/                     # Environment setup scripts
+├── simulation/                # Vehicle simulators
 │   ├── mock_vehicle.py      # Lightweight MAVLink simulator
 │   └── run-arducopter-sitl.sh  # ArduCopter SITL (Docker)
-└── translations/            # Translation tools
+└── translations/              # Translation tools
 ```
 
-## Quick Start
+## Just Command Reference
 
-Common commands are wrapped in a `justfile` (requires `just` >=1.30; install with `python tools/setup/install_python.py dev` to pull `rust-just` into `.venv`, or use `brew install just` / `cargo install just` / `pipx install rust-just`. `apt install just` on Ubuntu ships 1.21 which is too old):
+All recipes are defined in [`../justfile`](../justfile) and grouped there by section. Run `just`
+with no arguments to print this list from the tool itself.
+
+### Setup
+
+| Recipe            | Description                                                       |
+| ----------------- | ----------------------------------------------------------------- |
+| `just deps`       | Install system build dependencies (Debian/Ubuntu, via `sudo apt`) |
+| `just submodules` | Initialize/update git submodules                                  |
+
+### Build
+
+| Recipe              | Description                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| `just configure`    | Configure CMake build (Debug by default; pulls submodules first)                                 |
+| `just build`        | Build the project (`--parallel` capped at half of `nproc`; override with `JOBS=N`)               |
+| `just release`      | Configure and build in Release mode (testing disabled)                                           |
+| `just clean [ARGS]` | Clean the build directory; forwards `ARGS` to `tools/clean.py` (`--cache`, `--all`, `--dry-run`) |
+| `just rebuild`      | `clean` + `configure` + `build`                                                                  |
+| `just setup`        | Full first-time setup: `deps` + `submodules` + `configure` + `build`                             |
+
+### Quality
+
+| Recipe            | Description                                                                                    |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| `just test`       | Run unit tests via ctest; defaults to labels `Unit`/`Integration`, excluding `Flaky`/`Network` |
+| `just lint`       | Run all pre-commit checks (`pre-commit run --all-files`)                                       |
+| `just format`     | Check code formatting with clang-format (no changes)                                           |
+| `just format-fix` | Apply clang-format fixes                                                                       |
+| `just analyze`    | Run static analysis (`tools/analyze.py`, default tool clang-tidy)                              |
+| `just coverage`   | Build with coverage instrumentation, run tests, generate report                                |
+| `just check`      | `lint` + `test` — run before declaring a task done                                             |
+
+Override `test` label filters via environment variables or positional args:
 
 ```bash
-just             # Show all available commands
-just configure   # Configure CMake build
-just build       # Build the project
-just test        # Run unit tests
-just lint        # Run pre-commit checks
-just check       # Run lint + test
-just setup       # Full setup: deps, submodules, configure, build
+just test                              # LABELS=Unit|Integration EXCLUDE=Flaky|Network (defaults)
+LABELS="Slow" just test                # override via env var
+just test "Slow" "Network"             # override via positional args (labels, exclude)
 ```
 
-`just` reads configuration from `.github/build-config.json` for consistent versioning.
+### Run & Deploy
 
-### Direct Script Usage
+| Recipe        | Description                                                                     |
+| ------------- | ------------------------------------------------------------------------------- |
+| `just run`    | Launch the built `QGroundControl` binary                                        |
+| `just docs`   | Build the VitePress documentation site (`npm run docs:build`)                   |
+| `just docker` | Build inside the Ubuntu Docker container (`deploy/docker/run-docker.sh ubuntu`) |
+
+### Utilities
+
+| Recipe            | Description                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| `just info`       | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...) |
+| `just check-deps` | Check dependency and submodule versions (`tools/check_deps.py`)                      |
+| `just distclean`  | Clean build, caches, generated files, and `node_modules/`                            |
+
+## Direct Script Usage
+
+Prefer `just` recipes for common tasks; call the underlying scripts directly for flags a recipe
+doesn't expose — see [Development Scripts](#development-scripts) for the per-script flag reference.
 
 ```bash
-# Format changed files
-./tools/analyze.py --tool clang-format --fix
-
-# Run static analysis
-./tools/analyze.py
-
-# Report build hotspots
-python3 ./tools/build_profile.py -B build
-
-# Clean build
-./tools/clean.py
-
 # Run tools/ Python tests
 cd tools && uv run --extra scripts --extra test pytest tests/ -q
 ```
@@ -77,10 +157,11 @@ cd tools && uv run --extra scripts --extra test pytest tests/ -q
 
 ### analyze.py
 
-Run static analysis and formatting on source code.
+Run static analysis and formatting on source code. Underlies `just format`, `just format-fix`,
+and `just analyze`.
 
 ```bash
-./tools/analyze.py                              # Analyze changed files
+./tools/analyze.py                              # Analyze changed files (default tool: clang-tidy)
 ./tools/analyze.py --all                        # Analyze all files
 ./tools/analyze.py --tool clang-format --fix    # Format changed files
 ./tools/analyze.py --tool clang-format --all    # Check formatting (all files)
@@ -88,14 +169,16 @@ Run static analysis and formatting on source code.
 ./tools/analyze.py src/Vehicle/                 # Analyze specific directory
 ```
 
+Other `--tool` choices: `clazy`, `qmllint`, `vehicle-null-check`, `qt-translate-noop-check`.
+
 ### clean.py
 
-Clean build artifacts and caches.
+Clean build artifacts and caches. Underlies `just clean` and `just distclean`.
 
 ```bash
 ./tools/clean.py              # Clean build directory
-./tools/clean.py --all        # Clean everything (build, caches)
-./tools/clean.py --cache      # Clean only caches
+./tools/clean.py --all        # Clean everything (build, caches, generated files)
+./tools/clean.py --cache      # Clean only caches (ccache, pip, etc.)
 ./tools/clean.py --dry-run    # Show what would be removed
 ```
 
@@ -109,13 +192,14 @@ python3 ./tools/build_profile.py -B build --limit 25      # Show more rows per s
 python3 ./tools/build_profile.py -B build --json          # Machine-readable output
 ```
 
-For per-translation-unit trace details, configure with `-DQGC_TIME_TRACE=ON`,
-rebuild, then run the same report. The script scans the build directory for
-Clang `-ftime-trace` JSON files and highlights the slowest traces and events.
+For per-translation-unit trace details, configure with `-DQGC_TIME_TRACE=ON`, rebuild, then rerun
+the report — it scans the build dir for Clang `-ftime-trace` JSON and highlights the slowest events.
 
 ### coverage.py
 
-Generate code coverage reports. Wrapper around CMake coverage targets.
+Generate code coverage reports. Wrapper around the CMake coverage targets. Underlies `just
+coverage`. Uses a dedicated `build-coverage/` directory by default (override with
+`-b`/`--build-dir`).
 
 ```bash
 python3 ./tools/coverage.py              # Build with coverage, run tests, generate report
@@ -124,7 +208,7 @@ python3 ./tools/coverage.py --open       # Generate and open in browser
 python3 ./tools/coverage.py --clean      # Clean coverage data
 ```
 
-Requires: `gcovr` (`pip install gcovr`)
+Requires: `gcovr` (`pip install gcovr`, or `python3 tools/setup/install_python.py coverage`)
 
 **Direct CMake usage:**
 
@@ -134,6 +218,7 @@ cmake --build build
 ctest --test-dir build
 cmake --build build --target coverage-report  # XML + HTML from existing data
 cmake --build build --target coverage         # Run tests + generate XML + HTML
+cmake --build build --target coverage-check    # Run tests + generate report + enforce a coverage floor
 cmake --build build --target coverage-clean   # Clean .gcda files
 ```
 
@@ -152,7 +237,7 @@ Profile QGC for performance and memory issues.
 
 ### check_deps.py
 
-Check for outdated dependencies and submodules.
+Check for outdated dependencies and submodules. Underlies `just check-deps`.
 
 ```bash
 python3 ./tools/check_deps.py              # Check all dependencies
@@ -176,17 +261,26 @@ Requires: `doxygen`, `graphviz`
 
 ## Setup Scripts
 
-Scripts in `setup/` help configure development environments. They read configuration from `.github/build-config.json` for consistent versioning.
+Scripts in `setup/` help configure development environments. They read configuration from
+`.github/build-config.json` for consistent versioning. `install_dependencies` is a Python package
+(`tools/setup/install_dependencies/`), invoked directly via its `__main__.py`.
 
-|Script|Platform|Description|
-|------|--------|-----------|
-|`install_dependencies --platform debian`|Linux|Install build dependencies via apt|
-|`install_dependencies --platform macos`|macOS|Install dependencies via Homebrew + GStreamer|
-|`install_dependencies --platform windows`|Windows|Install GStreamer (Vulkan SDK optional)|
-|`install_python.py`|All|Install Python tools via uv or pip|
-|`build-gstreamer.py`|All|Build GStreamer from source (optional)|
-|`download_artifacts.py`|All|Download build artifacts (in `.github/scripts/`)|
-|`read_config.py`|All|Read `.github/build-config.json` (Python, cross-platform)|
+| Script                                    | Platform              | Description                                                                   |
+| ----------------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
+| `install_dependencies --platform debian`  | Linux (Debian/Ubuntu) | Install build dependencies via apt                                            |
+| `install_dependencies --platform fedora`  | Linux (Fedora/RHEL)   | Install build dependencies via dnf                                            |
+| `install_dependencies --platform arch`    | Linux (Arch)          | Install build dependencies via pacman                                         |
+| `install_dependencies --platform macos`   | macOS                 | Install dependencies via Homebrew + GStreamer                                 |
+| `install_dependencies --platform windows` | Windows               | Install GStreamer (Vulkan SDK optional)                                       |
+| `install_python.py`                       | All                   | Install Python tools via uv or pip (see groups below)                         |
+| `install_qt.py`                           | All                   | Install Qt SDK via aqtinstall with QGC arch-directory resolution (used by CI) |
+| `build-gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                        |
+| `build_android_openssl.py`                | Android               | Cross-compile OpenSSL as Qt-style Android libraries (optional)                |
+| `download_artifacts.py`                   | All                   | Download build artifacts (in `.github/scripts/`)                              |
+| `read_config.py`                          | All                   | Read `.github/build-config.json` (Python, cross-platform)                     |
+
+`install_python.py` installs dependency groups defined in `tools/pyproject.toml`:
+`scripts`, `precommit`, `test`, `ci` (default), `qt`, `coverage`, `dev`, `lint`, `all`.
 
 ### Usage Examples
 
@@ -207,7 +301,7 @@ python3 ./tools/setup/install_python.py precommit,test,coverage
 python3 ./tools/setup/build-gstreamer.py --platform linux --prefix /opt/gstreamer
 
 # Read build config values
-python3 ./tools/setup/read_config.py --get qt_version
+python3 ./tools/setup/read_config.py --get qt.version
 ```
 
 ## Static Analyzers
@@ -232,14 +326,9 @@ python3 tools/analyzers/vehicle_null_check.py --json src/
 pre-commit run vehicle-null-check --all-files
 ```
 
-**Detects:**
-
-- `activeVehicle()->method()` without prior null check
-- `getParameter()` result used without validation
-
-**Output includes fix suggestions** for each detected issue.
-
-See [analyzers/README.md](analyzers/README.md) for details.
+Detects `activeVehicle()->method()` without a prior null check and unvalidated `getParameter()`
+results; output includes fix suggestions per issue. See
+[analyzers/README.md](analyzers/README.md) for details.
 
 ## Shared Utilities
 
@@ -266,7 +355,8 @@ source tools/debuggers/gdb-pretty-printers/qt6.py
 $1 = "Hello, World!"
 ```
 
-See [debuggers/gdb-pretty-printers/README.md](debuggers/gdb-pretty-printers/README.md) for setup instructions.
+See [debuggers/gdb-pretty-printers/README.md](debuggers/gdb-pretty-printers/README.md) for setup
+instructions.
 
 ### debuggers/qt6.natvis
 
@@ -297,10 +387,10 @@ See [simulation/README.md](simulation/README.md) for details.
 
 Scripts in `translations/` manage internationalization.
 
-|Script|Description|
-|------|-----------|
-|`qgc_lupdate.py`|Update Qt translation files (runs lupdate + JSON extractor + pseudo-loc)|
-|`qgc_lupdate_json.py`|Extract translatable strings from JSON files|
+| Script                | Description                                                              |
+| --------------------- | ------------------------------------------------------------------------ |
+| `qgc_lupdate.py`      | Update Qt translation files (runs lupdate + JSON extractor + pseudo-loc) |
+| `qgc_lupdate_json.py` | Extract translatable strings from JSON files                             |
 
 ```bash
 # From repository root:
@@ -316,7 +406,8 @@ See [translations/README.md](translations/README.md) for Crowdin integration.
 
 ### ccache.conf
 
-Configuration for [ccache](https://ccache.dev/) to speed up rebuilds. CMake automatically uses this when ccache is available.
+Configuration for [ccache](https://ccache.dev/) to speed up rebuilds. CMake automatically uses
+this when ccache is available.
 
 ```bash
 # Manual use:
@@ -350,12 +441,18 @@ Version numbers and build settings are centralized in `.github/build-config.json
 
 ```json
 {
-  "qt_version": "6.11.1",
-  "qt_modules": "qtgraphs qtlocation ...",
+  "qt": { "version": "6.11.1", "modules": "qtgraphs qtlocation ..." },
   "gstreamer": { "version": { "default": "1.28.4", ... }, ... },
-  "ndk_version": "r27c",
-  ...
+  "android": { "platform": "36", "ndk_full_version": "27.2.12479018", "java_version": "21", ... },
+  "apple": { "xcode_version": "16.x", "macos_deployment_target": "13.0", ... },
+  "build": { "cmake_minimum_version": "3.25", "platform_workflows": "Linux,Windows,MacOS,Android" }
 }
 ```
+
+Related settings are grouped into objects (`qt`, `android`, `apple`, `build`,
+`gstreamer`). Read a value with the dotted path, e.g.
+`read_config.py --get qt.version` or `--get android.ndk_full_version`. Exported
+env vars / CI outputs derive from the path (`android.ndk_full_version` →
+`ANDROID_NDK_FULL_VERSION` / `android_ndk_full_version`).
 
 Scripts read from this file to ensure consistent versions across local development and CI.

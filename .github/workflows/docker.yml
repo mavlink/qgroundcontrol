@@ -21,7 +21,6 @@ concurrency:
 permissions:
   contents: read
   actions: read
-  security-events: write
 
 jobs:
   changes:
@@ -55,6 +54,7 @@ jobs:
             tools/common/file_traversal.py
             tools/common/gh_actions.py
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Plan matrix
         id: plan
@@ -100,6 +100,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Free Disk Space
         uses: ./.github/actions/free-disk-space
@@ -133,7 +134,9 @@ jobs:
         run: >-
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
           --build-dir "${{ github.workspace }}/build"
-          --pattern "${{ matrix.artifact_pattern }}"
+          --pattern "${MATRIX_ARTIFACT_PATTERN}"
+        env:
+          MATRIX_ARTIFACT_PATTERN: ${{ matrix.artifact_pattern }}
 
       # Per-distro artifact: `variant` keys the name so the parallel matrix entries
       # (linux, linux-debian, linux-fedora, linux-arch, ...) don't collide.
@@ -154,7 +157,9 @@ jobs:
         run: >-
           python3 "${GITHUB_WORKSPACE}/.github/scripts/find_artifact.py"
           --build-dir "${{ github.workspace }}/build"
-          --pattern "${{ matrix.package_pattern }}"
+          --pattern "${MATRIX_PACKAGE_PATTERN}"
+        env:
+          MATRIX_PACKAGE_PATTERN: ${{ matrix.package_pattern }}
 
       - name: Upload native package
         if: matrix.package_pattern != '' && steps.package.outputs.found == 'true'

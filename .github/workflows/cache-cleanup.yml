@@ -26,11 +26,13 @@ on:
         default: prune
 
 permissions:
-  actions: write
+  contents: read
 
 jobs:
   scheduled-gc:
     if: github.event_name == 'schedule'
+    permissions:
+      actions: write
     uses: ./.github/workflows/_cache-cleanup.yml
     with:
       dry-run: false
@@ -39,6 +41,8 @@ jobs:
 
   manual:
     if: github.event_name == 'workflow_dispatch'
+    permissions:
+      actions: write
     uses: ./.github/workflows/_cache-cleanup.yml
     with:
       branch: ${{ inputs.branch }}

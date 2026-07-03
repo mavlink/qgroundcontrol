@@ -31,7 +31,12 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/test_duration_report.py" \
-          --junit-path "${{ inputs.junit-path }}" \
-          --report-json-path "${{ inputs.report-json-path }}" \
-          --top-n "${{ inputs.top-n }}" \
-          --slow-threshold-seconds "${{ inputs.slow-threshold-seconds }}"
+          --junit-path "${INPUTS_JUNIT_PATH}" \
+          --report-json-path "${INPUTS_REPORT_JSON_PATH}" \
+          --top-n "${INPUTS_TOP_N}" \
+          --slow-threshold-seconds "${INPUTS_SLOW_THRESHOLD_SECONDS}"
+      env:
+        INPUTS_JUNIT_PATH: ${{ inputs.junit-path }}
+        INPUTS_REPORT_JSON_PATH: ${{ inputs.report-json-path }}
+        INPUTS_TOP_N: ${{ inputs.top-n }}
+        INPUTS_SLOW_THRESHOLD_SECONDS: ${{ inputs.slow-threshold-seconds }}

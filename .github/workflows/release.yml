@@ -110,6 +110,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
@@ -155,10 +156,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p extracted/linux
-          cp "${{ steps.paths.outputs.appimage }}" extracted/linux/qgc.AppImage
+          cp "${STEPS_PATHS_OUTPUTS_APPIMAGE}" extracted/linux/qgc.AppImage
           chmod +x extracted/linux/qgc.AppImage
           (cd extracted/linux && ./qgc.AppImage --appimage-extract >/dev/null)
           rm extracted/linux/qgc.AppImage
+        env:
+          STEPS_PATHS_OUTPUTS_APPIMAGE: ${{ steps.paths.outputs.appimage }}
 
       - name: Attest Linux AppImage
         id: attest-linux
@@ -176,7 +179,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p extracted/android
-          unzip -q -o "${{ steps.paths.outputs.apk }}" -d extracted/android
+          unzip -q -o "${STEPS_PATHS_OUTPUTS_APK}" -d extracted/android
+        env:
+          STEPS_PATHS_OUTPUTS_APK: ${{ steps.paths.outputs.apk }}
 
       - name: Attest Android APK
         id: attest-android

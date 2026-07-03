@@ -20,7 +20,7 @@ python3 tools/generators/config_qml/generate_pages.py \
 ### Top-level object
 
 | Key | Type | Required | Description |
-|-----|------|----------|-------------|
+| --- | --- | --- | --- |
 | `fileType` | `"VehicleConfig"` | yes | Must be `"VehicleConfig"` |
 | `version` | `1` | yes | Schema version, currently `1` |
 | `constants` | object | no | Named literal values reusable in QML expressions |
@@ -47,7 +47,7 @@ value is either a parameter name string or an object:
 ```
 
 | Key | Type | Default | Description |
-|-----|------|---------|-------------|
+| --- | --- | --- | --- |
 | `name` | string | — | MAVLink parameter name |
 | `required` | bool | `false` | `true` → `getParameterFact(-1, name)` (asserts if missing); `false` → `getParameterFact(-1, name, false)` (returns null) |
 | `existsOnly` | bool | `false` | `true` → `parameterExists(-1, name)` — exposes a boolean instead of a fact |
@@ -59,7 +59,7 @@ Shorthand: `"rateParam": "LOG_FILE_RATEMAX"` is equivalent to `{ "name": "LOG_FI
 ### `section`
 
 | Key | Type | Required | Description |
-|-----|------|----------|-------------|
+| --- | --- | --- | --- |
 | `title` | string | yes | Section heading (translatable) |
 | `image` | string | no | `qrc:` path for a section icon |
 | `showWhen` | string | no | QML expression; section hidden when falsy |
@@ -75,7 +75,7 @@ Shorthand: `"rateParam": "LOG_FILE_RATEMAX"` is equivalent to `{ "name": "LOG_FI
 ### `control`
 
 | Key | Type | Required | Description |
-|-----|------|----------|-------------|
+| --- | --- | --- | --- |
 | `param` | string | one of `param`/`setting`/`component`/`actionButton` | MAVLink parameter name |
 | `setting` | string | — | Settings fact path, e.g. `"flyViewSettings.showAltimeter"` |
 | `label` | string | no | Override label; empty → uses `fact.shortDescription` |
@@ -96,7 +96,7 @@ The `control` key selects the generated widget. When omitted, the generator
 auto-detects based on fact metadata (bool → checkbox, enum → combobox, etc.).
 
 | `control` value | Widget | Extra keys |
-|-----------------|--------|------------|
+| --- | --- | --- |
 | *(omitted)* | Auto-detected | — |
 | `combobox` | `LabelledFactComboBox` | `enumValues` for manual value/label list |
 | `textfield` | `LabelledFactTextField` | `description` for optional help text below the field |
@@ -135,13 +135,13 @@ supply a manual value/label list:
 #### `textfield` keys
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | --- | --- |
 | `description` | string | Help text rendered below the field in small font. Wraps the control in a `ColumnLayout`. |
 
 #### `factslider` keys
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | --- | --- |
 | `sliderFrom` | number | Minimum value override |
 | `sliderTo` | number | Maximum value override |
 | `majorTickStepSize` | number | Tick interval |
@@ -161,7 +161,7 @@ supply a manual value/label list:
 #### `slider` keys
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | --- | --- |
 | `sliderMin` | number | Minimum value override |
 | `sliderMax` | number | Maximum value override |
 | `enableCheckbox` | object | `{ "checked": "expr", "onClicked": "body" }` |
@@ -170,20 +170,20 @@ supply a manual value/label list:
 #### `radiogroup` keys
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | --- | --- |
 | `options` | array | `[ { "text": "Label", "value": 0 } ]` |
 | `raw` | bool | Use `rawValue` instead of `value` for comparisons |
 
 #### `bitmask` keys
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | --- | --- |
 | `firstEntryIsAll` | bool | First checkbox acts as an "all/none" toggle |
 
 #### `bitmaskCheckbox` keys
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | --- | --- |
 | `bitMask` | number | The specific bitmask value this checkbox controls |
 
 ---
@@ -193,7 +193,7 @@ supply a manual value/label list:
 Repeats a section for each indexed parameter instance (e.g. `BAT1_…`, `BAT2_…`).
 
 | Key | Type | Description |
-|-----|------|-------------|
+| --- | --- | --- |
 | `paramPrefix` | string | Parameter prefix, e.g. `"BAT"` |
 | `probePostfix` | string | Postfix used to discover instance count, e.g. `"_SOURCE"` |
 | `startIndex` | number | First index (default `1`) |

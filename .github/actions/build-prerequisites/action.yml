@@ -33,18 +33,18 @@ outputs:
   gstreamer_windows_version:
     description: GStreamer version for Windows
     value: ${{ steps.config.outputs.gstreamer_windows_version }}
-  xcode_version:
+  apple_xcode_version:
     description: Xcode version for macOS
-    value: ${{ steps.config.outputs.xcode_version }}
-  xcode_ios_version:
+    value: ${{ steps.config.outputs.apple_xcode_version }}
+  apple_xcode_ios_version:
     description: Xcode version for iOS
-    value: ${{ steps.config.outputs.xcode_ios_version }}
-  ndk_full_version:
+    value: ${{ steps.config.outputs.apple_xcode_ios_version }}
+  android_ndk_full_version:
     description: Android NDK full version
-    value: ${{ steps.config.outputs.ndk_full_version }}
-  java_version:
+    value: ${{ steps.config.outputs.android_ndk_full_version }}
+  android_java_version:
     description: Java version
-    value: ${{ steps.config.outputs.java_version }}
+    value: ${{ steps.config.outputs.android_java_version }}
   android_platform:
     description: Android platform / API level
     value: ${{ steps.config.outputs.android_platform }}

@@ -1,12 +1,29 @@
 {
   "$schema": "build-config.schema.json",
-  "android_build_tools": "36.0.0",
-  "ccache_version": "4.13.6",
-  "mold_version": "2.41.0",
-  "android_cmdline_tools": "14742923",
-  "android_min_sdk": "28",
-  "android_platform": "36",
-  "cmake_minimum_version": "3.25",
+  "qt": {
+    "version": "6.11.1",
+    "minimum_version": "6.11.0",
+    "modules": "qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver"
+  },
+  "android": {
+    "platform": "36",
+    "min_sdk": "28",
+    "build_tools": "36.0.0",
+    "cmdline_tools": "14742923",
+    "ndk_version": "r27c",
+    "ndk_full_version": "27.2.12479018",
+    "java_version": "21"
+  },
+  "apple": {
+    "xcode_version": "16.x",
+    "xcode_ios_version": "latest-stable",
+    "macos_deployment_target": "13.0",
+    "ios_deployment_target": "17.0"
+  },
+  "build": {
+    "cmake_minimum_version": "3.25",
+    "platform_workflows": "Linux,Windows,MacOS,Android"
+  },
   "gstreamer": {
     "version": {
       "default": "1.28.4",
@@ -56,17 +73,5 @@
       }
     },
     "ca_bundle_sha256": "86a1f3366afac7c6f8ae9f3c779ac221129328c43f0ab2b8817eb2f362a5025c"
-  },
-  "ios_deployment_target": "17.0",
-  "java_version": "21",
-  "macos_deployment_target": "13.0",
-  "ndk_full_version": "27.2.12479018",
-  "ndk_version": "r27c",
-  "platform_workflows": "Linux,Windows,MacOS,Android",
-  "qt_minimum_version": "6.11.0",
-  "qt_modules": "qtgraphs qtlocation qtpositioning qtspeech qtmultimedia qtserialport qtimageformats qtshadertools qtconnectivity qtquick3d qtsensors qtscxml qtwebsockets qthttpserver",
-  "qt_version": "6.11.1",
-  "vulkan_sdk_version": "1.4.304.1",
-  "xcode_ios_version": "latest-stable",
-  "xcode_version": "16.x"
+  }
 }

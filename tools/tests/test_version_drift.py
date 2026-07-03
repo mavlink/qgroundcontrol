@@ -7,9 +7,9 @@ CI's `uv sync --frozen` fail with a confusing error — fail locally instead via
 
 JUST_VERSION vs rust-just: two independent install paths deliver `just` — the
 upstream-binary fallback in install_dependencies/_debian.py (Debian/Ubuntu
-< 24.04) and rust-just from PyPI (dev/CI venv via uv). The apt-fallback pin
-(JUST_VERSION) must be >= the uv.lock rust-just version so devs on either path
-get at least the floor CI tests against.
+< 24.04) and rust-just from PyPI (dev/CI venv via uv). _debian derives its
+JUST_VERSION from uv.lock's rust-just at runtime so the two can't drift; this
+guards that the derivation still resolves against the real lockfile.
 """
 
 from __future__ import annotations
@@ -20,16 +20,9 @@ import subprocess
 
 import pytest
 
-from ._helpers import TOOLS_DIR
+from ._helpers import TOOLS_DIR, load_script_module
 
-INSTALL_DEPS = TOOLS_DIR / "setup" / "install_dependencies" / "_debian.py"
 UV_LOCK = TOOLS_DIR / "uv.lock"
-
-_JUST_VERSION_RE = re.compile(r'^JUST_VERSION\s*=\s*"([\d.]+)"', re.MULTILINE)
-_RUST_JUST_BLOCK_RE = re.compile(
-    r"\[\[package\]\]\s*\n" r'name\s*=\s*"rust-just"\s*\n' r'version\s*=\s*"([\d.]+)"',
-    re.MULTILINE,
-)
 
 
 def test_uv_lock_in_sync_with_pyproject() -> None:
@@ -52,35 +45,35 @@ def test_uv_lock_in_sync_with_pyproject() -> None:
         )
 
 
-def _version_tuple(v: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in v.split("."))
-
-
-def _parse_just_version() -> str:
-    text = INSTALL_DEPS.read_text(encoding="utf-8")
-    match = _JUST_VERSION_RE.search(text)
-    assert match, "JUST_VERSION constant not found in install_dependencies/_debian.py"
-    return match.group(1)
-
-
-def _parse_rust_just_version() -> str:
+def _lock_version(package: str) -> str:
+    """Independently parse *package*'s pin from uv.lock (not via the helper under test)."""
     text = UV_LOCK.read_text(encoding="utf-8")
-    match = _RUST_JUST_BLOCK_RE.search(text)
-    assert match, "rust-just package not found in tools/uv.lock"
+    match = re.search(
+        r'\[\[package\]\]\s*\nname\s*=\s*"' + re.escape(package) + r'"\s*\nversion\s*=\s*"([\d.]+)"',
+        text,
+    )
+    assert match, f"{package} package not found in tools/uv.lock"
     return match.group(1)
 
 
-def test_just_versions_in_sync() -> None:
-    if not INSTALL_DEPS.exists() or not UV_LOCK.exists():
-        pytest.skip("install_dependencies/_debian.py or uv.lock not in checkout")
+def _derived_versions() -> dict[str, str]:
+    """The version each setup script resolves for its pip/binary fallback tool."""
+    from setup.install_dependencies._debian import JUST_VERSION
 
-    apt_fallback = _parse_just_version()
-    rust_just = _parse_rust_just_version()
+    bg = load_script_module("setup/build-gstreamer.py", "build_gstreamer")
+    return {"rust-just": JUST_VERSION, "meson": bg.MESON_VERSION, "ninja": bg.NINJA_VERSION}
 
-    if _version_tuple(apt_fallback) < _version_tuple(rust_just):
-        pytest.fail(
-            f"install_dependencies/_debian.py JUST_VERSION ({apt_fallback}) is older than "
-            f"tools/uv.lock rust-just ({rust_just}). Devs hitting the Debian apt-fallback "
-            f"path get an older binary than CI/dev-venv users. "
-            f"Update JUST_VERSION in tools/setup/install_dependencies/_debian.py to {rust_just} or later."
-        )
+
+@pytest.mark.parametrize("package", ["rust-just", "meson", "ninja"])
+def test_fallback_version_derives_from_uv_lock(package: str) -> None:
+    if not UV_LOCK.exists():
+        pytest.skip("tools/uv.lock not in checkout")
+
+    derived = _derived_versions()[package]
+    pinned = _lock_version(package)
+
+    assert derived == pinned, (
+        f"{package}: setup script resolved {derived!r} but tools/uv.lock pins {pinned!r}. "
+        f"common.tool_version.uv_lock_version is broken or the constant's fallback is "
+        f"shadowing the lock, so the fallback-install path would ship a stale binary."
+    )
