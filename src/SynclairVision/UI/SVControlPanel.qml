@@ -6,7 +6,7 @@ import QGroundControl
 Item {
     id: root
 
-    property int borderWidth: 0
+    property int borderWidth: 5
 
     QGCPalette { id: qgcPalette}
 
@@ -24,7 +24,7 @@ Item {
 
     SVZoom {
         id: zoom
-        height: 140
+        height: 120
         width: height / 2
         x: joystick.width - borderWidth
         y: root.implicitHeight - height

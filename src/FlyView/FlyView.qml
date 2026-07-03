@@ -111,7 +111,7 @@ Item {
             id:                 synclairVisionLayer
             anchors.fill:       parent
             _widgetMargin:      _root._widgetMargin
-            _toolBarHeight:     toolbar.height
+            _toolBarHeight:     (SVState.svToolbar) ? toolbar.height : 0
             leftToolStripBottom: widgetLayer.leftToolStripBottom
             z:                  _fullItemZorder + 2
 
@@ -126,7 +126,7 @@ Item {
             anchors.left:           parent.left
             anchors.right:          guidedValueSlider.visible ? guidedValueSlider.left : parent.right
             anchors.margins:        _widgetMargin
-            anchors.topMargin:      toolbar.height + _widgetMargin
+            anchors.topMargin:      (SVState.svToolbar) ? toolbar.height + _widgetMargin : _widgetMargin
             z:                      _fullItemZorder + 2
             parentToolInsets:       _toolInsets
             mapControl:             _mapControl
@@ -200,6 +200,6 @@ Item {
     FlyViewToolBar {
         id:                 toolbar
         guidedValueSlider:  _guidedValueSlider
-        visible:            !QGroundControl.videoManager.fullScreen
+        visible:            !QGroundControl.videoManager.fullScreen && SVState.svToolbar
     }
 }

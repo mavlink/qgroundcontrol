@@ -73,7 +73,7 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: root.spacing
         anchors.top: parent.top
-        anchors.topMargin: root.size * root.iconScale / 2
+        anchors.topMargin: root.size * root.iconScale / 2 - spacing / 2
         rotation: root.expanded ? 180 : 0
 
         Behavior on rotation {

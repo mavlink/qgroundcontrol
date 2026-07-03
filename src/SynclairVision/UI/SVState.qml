@@ -3,6 +3,7 @@ import QtQuick
 
 QtObject {
     id: root
-    property bool svOverlay: false
+    property bool svOverlay: true
     property bool svHUD: true
+    property bool svToolbar: false
 }

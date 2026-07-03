@@ -12,6 +12,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
+//import QGroundControl.ScreenTools
 
 Item {
     id: root
@@ -26,6 +27,8 @@ Item {
         { id: "conotrols",  text: "Controls",  checkable: true },
         { id: "dev", text: "Dev", checkable: true }
     ]
+
+    property bool activeDigiview: QGroundControl.videoManager.streaming
 
     signal layoutSelected(string layoutId)
 
@@ -90,6 +93,7 @@ Item {
 
         menuText: "Settings"
         source: "/qmlimages/settings_main.svg"
+        alternateSource: "/qmlimages/settings_main_open.svg"
         direction: vertical
         open: false
         autoUpdateActiveId: false
@@ -103,8 +107,32 @@ Item {
 
         onItemSelected: (id) => {
             activeSettingsId = (activeSettingsId === id) ? "" : id
+
+            if(activeSettingsId !== "") {
+                showIndicatorDrawer(settingsDrawer, settingsAnchor)
+            }
         }
     }
+
+    Item {
+        id: settingsAnchor
+        width: 1
+        height: 1
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+    }
+
+    Component {
+        id: settingsDrawer 
+
+        SVSettingsMenu {
+            activeSettingsId: root.activeSettingsId
+            width: 600
+            height: 700
+        }
+    }
+
+
 
     SVMenuStrip {
         id: oneshots
@@ -121,6 +149,7 @@ Item {
             var ids = []
             if (!SVState.svHUD) ids.push("hud")
             if (root.recordActive) ids.push("record")
+            if (!SVState.svToolbar) ids.push("toolbar")
             return ids
         }
 
@@ -131,19 +160,31 @@ Item {
                 checkable: true,
                 iconSource: "/qmlimages/hud_eye.svg",
                 alternateIconSource: "/qmlimages/hud_eye_closed.svg",
-                iconActive: !SVState.svHUD
+                iconActive: !SVState.svHUD,
+                enabled: true
+            },
+            { 
+                id: "toolbar",
+                text: "Toolbar",
+                checkable: true,
+                iconSource: "/qmlimages/toolbar_open.svg",
+                alternateIconSource: "/qmlimages/toolbar_closed.svg",
+                iconActive: !SVState.svToolbar,
+                enabled: true
             },
             { 
                 id: "photo",  
                 text: "Photo",  
                 checkable: false, 
-                iconSource: "/qmlimages/camera_photo.svg" 
+                iconSource: "/qmlimages/camera_photo.svg", 
+                enabled: activeDigiview
             },
             { 
                 id: "record", 
                 text: "Record", 
                 checkable: true, 
-                iconSource: "/qmlimages/camera_record.svg" 
+                iconSource: "/qmlimages/camera_record.svg", 
+                enabled: activeDigiview
             }
         ]
 
@@ -155,6 +196,11 @@ Item {
 
             if (id === "record") {
                 root.recordActive = !root.recordActive
+                return
+            }
+
+            if (id === "toolbar") {
+                SVState.svToolbar = !SVState.svToolbar
                 return
             }
         }
