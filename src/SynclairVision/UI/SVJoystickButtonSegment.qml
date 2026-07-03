@@ -21,6 +21,9 @@ Item {
     property real   arrowSize  
     property real   arrowSpace
 
+    property var   arrowSpaceWidth: radius - (1 - arrowSpace) * radius
+    property var   spacing: (arrowSpaceWidth * (1 - arrowSize)) / 2
+
     property var   clicked: new Array(4).fill(false)
 
 
@@ -84,43 +87,17 @@ Item {
                 }
             }
 
-            Shape {
+            SVArrow {
                 id: arrow
-                anchors.fill: parent
-                property var radiusX: radius
-                property var radiusY: radius
+                width: root.arrowSpaceWidth * root.arrowSize
+                height: width * 1.3
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: root.spacing
 
-                property var minX: radiusX + ((1 - arrowSpace) * radiusX)
-                property var maxX: width
+                arrowFilled: root.arrowFilled
+                outerBorderColor: root.outerBorderColor
 
-                property var arrowSpaceWidth: maxX - minX
-
-                property var spacing: (arrowSpaceWidth * (1 - arrowSize)) / 2
-                property var heightY: (arrowSpaceWidth * arrowSize) / 1.5
-
-                ShapePath {
-                    strokeWidth: (arrowFilled) ? 0 : 1
-                    strokeColor: outerBorderColor
-                    fillColor: (arrowFilled) ? outerBorderColor : 'white'
-                    
-                    startX: arrow.maxX - arrow.spacing
-                    startY: arrow.radiusY
-
-                    PathLine {
-                        x: arrow.minX + arrow.spacing
-                        y: arrow.radiusY + arrow.heightY
-                    }
-
-                    PathLine {
-                        x: arrow.minX + arrow.spacing
-                        y: arrow.radiusY - arrow.heightY
-                    }
-
-                    PathLine {
-                        x: arrow.maxX - arrow.spacing
-                        y: arrow.radiusY
-                    }
-                }
             }
         }
     }

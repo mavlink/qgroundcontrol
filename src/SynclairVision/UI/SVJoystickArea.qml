@@ -14,6 +14,7 @@ Item {
 
     property var  innerClicked: [false, false, false, false]
     property var  outerClicked: [false, false, false, false]
+    property var  hasInnerRing: true
 
     QGCPalette { id: qgcPalette}
 
@@ -48,7 +49,7 @@ Item {
             return -1
         }
 
-        const offset = distance < innerRadius ? 4 : 0;
+        const offset = ((distance < innerRadius) && (hasInnerRing)) ? 4 : 0;
         const angleStep = getAngleStep(dx, dy);
         const buttonIndex = offset + getButton(angleStep);
         return buttonIndex;
@@ -101,8 +102,8 @@ Item {
         hoverIndex: (root.hoverIndex >= 0 && root.hoverIndex < 4) ? root.hoverIndex : -1
         clicked: outerClicked 
         arrowFilled: (qgcPalette.globalTheme === QGCPalette.Light) ? false : true
-        arrowSize: 0.45  
-        arrowSpace: 1 - root.t
+        arrowSize: (root.hasInnerRing) ? 0.45 : 0.3  
+        arrowSpace: (root.hasInnerRing) ? 1 - root.t : 0.8
     }
 
      SVJoystickButtonSegment {
@@ -121,6 +122,8 @@ Item {
         clicked: innerClicked
         arrowSize: 0.3
         arrowSpace: 0.8
+
+        visible: hasInnerRing
 
     }
 
