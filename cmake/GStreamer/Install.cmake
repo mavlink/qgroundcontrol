@@ -456,7 +456,8 @@ endfunction()
 # macro-scope shadowing issues inside functions.
 # gstreamer_install_platform_sdk(PROJECT_NAME [REQUIRED_PLUGINS <names…>])
 # REQUIRED_PLUGINS: list of plugin basenames (no platform prefix or extension) to
-# verify exist post-install; default is the minimum needed to run any pipeline.
+# verify exist post-install; default is the minimum needed to run any pipeline,
+# extended with every configured plugin present in the SDK at configure time.
 function(gstreamer_install_platform_sdk PROJECT_NAME)
     cmake_parse_arguments(GIPS "" "" "REQUIRED_PLUGINS" ${ARGN})
     if(NOT GIPS_REQUIRED_PLUGINS)
@@ -474,6 +475,18 @@ function(gstreamer_install_platform_sdk PROJECT_NAME)
     endif()
     if(NOT GSTREAMER_INCLUDE_PATH)
         gstreamer_layout_get(INCLUDE_DIR GSTREAMER_INCLUDE_PATH)
+    endif()
+
+    # Extend verification beyond the structural floor to every configured plugin
+    # present in the SDK at configure time, so an install-filter drop fails loudly.
+    if(GSTREAMER_PLUGINS)
+        gstreamer_scan_plugin_basenames(_gips_sdk_plugins "${GSTREAMER_PLUGIN_PATH}")
+        foreach(_p IN LISTS GSTREAMER_PLUGINS)
+            if(_p IN_LIST _gips_sdk_plugins)
+                list(APPEND GIPS_REQUIRED_PLUGINS "${_p}")
+            endif()
+        endforeach()
+        list(REMOVE_DUPLICATES GIPS_REQUIRED_PLUGINS)
     endif()
 
     if(LINUX)
@@ -529,7 +542,7 @@ function(gstreamer_install_platform_sdk PROJECT_NAME)
 ${_verify_blocks}
             if(_missing_plugins)
                 list(JOIN _missing_plugins \", \" _missing_list)
-                message(FATAL_ERROR \"GStreamer install verification: missing required plugins in ${_verify_dest}: \${_missing_list} — built bundle cannot run any pipeline\")
+                message(FATAL_ERROR \"GStreamer install verification: missing required plugins in ${_verify_dest}: \${_missing_list} — bundle is missing configured video plugins\")
             else()
                 message(STATUS \"GStreamer install verification: all required plugins present in ${_verify_dest}\")
             endif()

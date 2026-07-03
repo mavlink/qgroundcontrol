@@ -16,15 +16,15 @@ set(GSTREAMER_PLUGIN_ALTERNATES
     "videoconvertscale|videoconvert+videoscale"
 )
 
-# Structural plugins guaranteed to exist post-install — verifier in
-# gstreamer_install_platform_sdk fails the build if any are missing. Codec
-# implementations such as openh264/libav are intentionally not listed here:
-# distro bundles such as Fedora may omit one implementation while still
-# shipping another usable decode path from the configured plugin set.
-# opengl supplies glupload/glcolorconvert — load-bearing for the GL zero-copy
-# video path; without it the receiver silently degrades to a CPU memcpy.
+# Structural plugins guaranteed to exist post-install — the install verifier
+# fails the build if any are missing; _verifyPlugins() (GStreamer.cc) mirrors this list.
+# Codec implementations (openh264/libav) are intentionally excluded: distro
+# bundles may omit one while shipping another usable decode path.
+# opengl supplies glupload/glcolorconvert (GL zero-copy video path);
+# multifile (splitmuxsink), isomp4 (qtmux/mp4mux), and matroska (matroskamux)
+# are load-bearing for video recording (GstVideoReceiver _kFileMux).
 set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
-    coreelements opengl playback rtsp rtp rtpmanager tcp udp videoconvertscale
+    coreelements isomp4 matroska multifile opengl playback rtsp rtp rtpmanager tcp udp videoconvertscale
 )
 
 # iOS xcframework: plugins whose dependent static libs aren't bundled in the
