@@ -813,6 +813,8 @@ if(NOT DEFINED GSTREAMER_PLUGINS)
     # Deferred for all platforms — GStreamer_VERSION is populated after find_package(GStreamer) below.
     if(ANDROID)
         list(APPEND GSTREAMER_PLUGINS androidmedia dav1d)
+    elseif(IOS)
+        list(REMOVE_ITEM GSTREAMER_PLUGINS libav)
     elseif(APPLE)
         list(APPEND GSTREAMER_PLUGINS applemedia dav1d vulkan)
     elseif(WIN32)

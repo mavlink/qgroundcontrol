@@ -82,12 +82,22 @@ jobs:
           build-dir: ${{ runner.temp }}/build
           build-type: ${{ matrix.build_type }}
 
+      - name: Package IPA
+        if: matrix.build_type == 'Release'
+        run: |
+          APP_DIR="${{ runner.temp }}/build/${{ matrix.build_type }}"
+          cd "$APP_DIR"
+          mkdir -p Payload
+          cp -r "${{ env.PACKAGE }}.app" Payload/
+          zip -r "${{ env.PACKAGE }}.ipa" Payload/
+          rm -rf Payload
+
       - name: Attest and Upload
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/attest-and-upload
         with:
-          artifact-name: ${{ env.PACKAGE }}.app
-          # iOS uses Ninja Multi-Config; the .app lands in build/<config>/, not build/.
-          artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.app
+          artifact-name: ${{ env.PACKAGE }}.ipa
+          # iOS uses Ninja Multi-Config; the .ipa lands in build/<config>/, not build/.
+          artifact-source-path: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.ipa
           package-name: ${{ env.PACKAGE }}
           upload-aws: 'false'
