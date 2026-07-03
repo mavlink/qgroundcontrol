@@ -7,6 +7,7 @@ import QGroundControl
 Item {
     id: root
 
+    property string joystickType: "Simple"
     property int borderWidth
 
     QGCPalette { id: qgcPalette }
@@ -18,9 +19,35 @@ Item {
         color: qgcPalette.window
     }
 
-    SVJoystickArea {
-        id: joystick
+    Loader {
+        id: joystickLoader
         anchors.fill: parent
         anchors.margins: borderWidth
+        sourceComponent: (root.joystickType === "Drag") ? dragComponent : areaComponent
+
+        onLoaded: {
+            if(root.joystickType === "Simple") {
+                item.hasInnerRing = false
+            }
+
+        }
+    }
+
+    Component {
+        id: areaComponent
+        SVJoystickArea {
+            id: joystick
+            anchors.fill: parent
+            //anchors.margins: borderWidth
+        }
+    }
+
+    Component {
+        id: dragComponent
+        SVJoystickDrag {
+            id: joystick
+            anchors.fill: parent
+            //anchors.margins: borderWidth
+        }
     }
 }

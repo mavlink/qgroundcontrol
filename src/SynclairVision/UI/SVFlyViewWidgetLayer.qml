@@ -23,9 +23,9 @@ Item {
     property string activeSettingsId: ""
     property bool recordActive: false
     property var settingsModel: [
-        { id: "general",  text: "General",  checkable: true },
-        { id: "conotrols",  text: "Controls",  checkable: true },
-        { id: "dev", text: "Dev", checkable: true }
+        { id: "General", text: "General", checkable: true },
+        { id: "Controls", text: "Controls", checkable: true },
+        { id: "Dev", text: "Dev", checkable: true }
     ]
 
     property bool activeDigiview: QGroundControl.videoManager.streaming
