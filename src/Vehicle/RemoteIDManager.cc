@@ -488,6 +488,10 @@ void RemoteIDManager::setEmergency(bool declare)
 void RemoteIDManager::_updateLastGCSPositionInfo(QGeoPositionInfo update)
 {
     if (update.isValid()) {
-        _lastGeoPositionTimeStamp = update.timestamp().toUTC();
+        // Stamp the local arrival time rather than update.timestamp(). The freshness
+        // check in _sendSystem() compares this against the local wall clock, and on some
+        // platforms (e.g. Android) the position source's own timestamp is offset from the
+        // system clock, which made gcsGPSGood flap green/red even with a healthy fix.
+        _lastGeoPositionTimeStamp = QDateTime::currentDateTimeUtc();
     }
 }
