@@ -70,7 +70,7 @@ jobs:
           # seed it first. No-op on the ubuntu-latest fork fallback (snapd already present).
           if ! command -v snap >/dev/null 2>&1; then
             sudo apt-get update
-            sudo apt-get install -y snapd
+            sudo apt-get install -y --allow-change-held-packages snapd
             sudo systemctl enable --now snapd.socket
           fi
           sudo snap wait system seed.loaded
