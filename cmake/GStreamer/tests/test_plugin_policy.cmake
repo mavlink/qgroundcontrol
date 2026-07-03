@@ -72,7 +72,7 @@ qgc_test_assert_in_list("partial: x264enc retained"           x264enc           
 qgc_test_pass("filter_alternates partial-pair unsatisfied")
 
 gstreamer_runtime_required_plugins(_required)
-foreach(_p IN ITEMS coreelements opengl playback rtsp rtp rtpmanager tcp udp)
+foreach(_p IN ITEMS coreelements isomp4 matroska multifile opengl playback rtsp rtp rtpmanager tcp udp videoconvertscale)
     qgc_test_assert_in_list("runtime required: ${_p}" "${_p}" _required)
 endforeach()
 qgc_test_assert_not_in_list("runtime required: openh264 is optional codec implementation" openh264 _required)

@@ -113,17 +113,26 @@ bool _verifyPlugins()
     });
 
     bool result = true;
-    // Mirror the install-time verification list so a stripped registry fails loudly here
-    // instead of at first stream attempt with a misleading "no source element".
-    static constexpr std::array<const char*, 8> kRequiredPlugins = {
-        "qgc", "coreelements", "playback", "rtp", "rtpmanager", "rtsp", "tcp", "udp",
+    const auto hasPlugin = [registry](const char* name) {
+        const GstObjectPtr plugin(GST_OBJECT(gst_registry_find_plugin(registry, name)));
+        return plugin != nullptr;
+    };
+    // Mirrors GSTREAMER_RUNTIME_REQUIRED_PLUGINS (PluginPolicy.cmake) plus qgc,
+    // so a stripped registry fails loudly instead of at first stream attempt.
+    static constexpr std::array<const char*, 12> kRequiredPlugins = {
+        "qgc", "coreelements", "isomp4", "matroska", "multifile", "opengl",
+        "playback", "rtp", "rtpmanager", "rtsp", "tcp", "udp",
     };
     for (const char* name : kRequiredPlugins) {
-        const GstObjectPtr plugin(GST_OBJECT(gst_registry_find_plugin(registry, name)));
-        if (!plugin) {
-            qCCritical(GStreamerLog) << "Required QGC plugin not found:" << name;
+        if (!hasPlugin(name)) {
+            qCCritical(GStreamerLog) << "Required GStreamer plugin not found:" << name;
             result = false;
         }
+    }
+    // GStreamer 1.22+ fuses videoconvert+videoscale into videoconvertscale; accept either.
+    if (!hasPlugin("videoconvertscale") && !(hasPlugin("videoconvert") && hasPlugin("videoscale"))) {
+        qCCritical(GStreamerLog) << "Required GStreamer plugin not found: videoconvertscale (or videoconvert+videoscale)";
+        result = false;
     }
 
     if (!result) {
