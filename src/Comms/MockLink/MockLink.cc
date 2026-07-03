@@ -845,6 +845,12 @@ void MockLink::_updateIncomingMessageCounts(const mavlink_message_t &msg)
             _receivedRequestMessageCountMap[static_cast<uint32_t>(request.param1)]++;
             _receivedRequestMessageByCompAndMsgCountMap[request.target_component][static_cast<int>(request.param1)]++;
         }
+    } else if (msg.msgid == MAVLINK_MSG_ID_COMMAND_INT) {
+        mavlink_command_int_t request{};
+        mavlink_msg_command_int_decode(&msg, &request);
+
+        _receivedMavCommandCountMap[static_cast<MAV_CMD>(request.command)]++;
+        _receivedMavCommandByCompCountMap[static_cast<MAV_CMD>(request.command)][request.target_component]++;
     }
 }
 
@@ -885,6 +891,9 @@ void MockLink::_handleIncomingMavlinkMsg(const mavlink_message_t &msg)
         break;
     case MAVLINK_MSG_ID_COMMAND_LONG:
         _handleCommandLong(msg);
+        break;
+    case MAVLINK_MSG_ID_COMMAND_INT:
+        _handleCommandInt(msg);
         break;
     case MAVLINK_MSG_ID_MANUAL_CONTROL:
         _handleManualControl(msg);
@@ -1781,6 +1790,33 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         break;
     }
     }
+
+    mavlink_message_t commandAck{};
+    (void) mavlink_msg_command_ack_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        _outgoingMavlinkChannel,
+        &commandAck,
+        request.command,
+        commandResult,
+        0,    // progress
+        0,    // result_param2
+        0,    // target_system
+        0     // target_component
+    );
+    respondWithMavlinkMessage(commandAck);
+}
+
+void MockLink::_handleCommandInt(const mavlink_message_t &msg)
+{
+    mavlink_command_int_t request{};
+    mavlink_msg_command_int_decode(&msg, &request);
+
+    // MockLink does not implement any COMMAND_INT commands yet, so it reports them as
+    // unsupported (mirroring the COMMAND_LONG default for unrecognized commands). This
+    // lets unit tests exercise "try command, fall back to legacy message" code paths
+    // such as Vehicle::setEstimatorOrigin.
+    const uint8_t commandResult = MAV_RESULT_UNSUPPORTED;
 
     mavlink_message_t commandAck{};
     (void) mavlink_msg_command_ack_pack_chan(

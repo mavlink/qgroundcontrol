@@ -23,6 +23,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         SendMavCommandWithHandlerTest.h
         SendMavCommandWithSignallingTest.cc
         SendMavCommandWithSignallingTest.h
+        SetEstimatorOriginTest.cc
+        SetEstimatorOriginTest.h
         VehicleLinkManagerTest.cc
         VehicleLinkManagerTest.h
 )
@@ -52,4 +54,5 @@ add_qgc_test(MAVLinkLogManagerTest LABELS Integration Vehicle)
 add_qgc_test(RequestMessageTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(SendMavCommandWithHandlerTest LABELS Integration Vehicle)
 add_qgc_test(SendMavCommandWithSignallingTest LABELS Integration Vehicle)
+add_qgc_test(SetEstimatorOriginTest LABELS Integration Vehicle)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle SERIAL)
