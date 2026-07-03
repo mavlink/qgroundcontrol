@@ -17,10 +17,13 @@ Item {
     property color outerBorderColor
     property int   hoverIndex: -1
 
+    property bool  arrowFilled: true
     property real   arrowSize  
     property real   arrowSpace
 
     property var   clicked: new Array(4).fill(false)
+
+
 
     Repeater {
         id: innerButtons
@@ -96,9 +99,10 @@ Item {
                 property var heightY: (arrowSpaceWidth * arrowSize) / 1.5
 
                 ShapePath {
-                    strokeWidth: 0
-                    fillColor: outerBorderColor
-
+                    strokeWidth: (arrowFilled) ? 0 : 1
+                    strokeColor: outerBorderColor
+                    fillColor: (arrowFilled) ? outerBorderColor : 'white'
+                    
                     startX: arrow.maxX - arrow.spacing
                     startY: arrow.radiusY
 

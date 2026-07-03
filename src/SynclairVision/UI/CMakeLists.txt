@@ -26,6 +26,7 @@ qt_add_qml_module(SynclairVisionUIModule
         SVZoomButton.qml
         SVMenuStrip.qml
         SVMenuStripButton.qml
+        SVSettingsMenu.qml
         SVCameraLayouts.js
     RESOURCES
         Images/no-video-camera-background.png
@@ -49,9 +50,13 @@ qt_add_resources(SynclairVisionUIModule synclairvision_qmlimages
         "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/camera_record.svg"
 
         "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_main.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_main_open.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_general.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_controls.svg"
         "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/settings_dev.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/toolbar_open.svg"
+        "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/toolbar_closed.svg"
+
 
 
         "${CMAKE_CURRENT_SOURCE_DIR}/Images/Icons/hud_eye.svg"

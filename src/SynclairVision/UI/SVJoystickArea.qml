@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Shapes 2.15
 
 import QGroundControl
+import QGroundControl.Controls
 
 
 Item {
@@ -99,6 +100,7 @@ Item {
         outerBorderColor: qgcPalette.statusPassedText
         hoverIndex: (root.hoverIndex >= 0 && root.hoverIndex < 4) ? root.hoverIndex : -1
         clicked: outerClicked 
+        arrowFilled: (qgcPalette.globalTheme === QGCPalette.Light) ? false : true
         arrowSize: 0.45  
         arrowSpace: 1 - root.t
     }
@@ -119,6 +121,7 @@ Item {
         clicked: innerClicked
         arrowSize: 0.3
         arrowSpace: 0.8
+
     }
 
     MouseArea {

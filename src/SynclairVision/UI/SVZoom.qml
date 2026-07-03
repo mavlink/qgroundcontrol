@@ -14,7 +14,7 @@ Item {
         anchors.fill: parent
         radius: width / 2
         //color: qgcPalette.window
-        color: "red"
+        color: qgcPalette.window
     }
 
     SVZoomArea {

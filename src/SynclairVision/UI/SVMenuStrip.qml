@@ -17,6 +17,7 @@ Item {
     property int direction: vertical
 
     property url source
+    property url alternateSource
     property string menuText: ""
     property var model: []
     property string activeId: ""
@@ -71,8 +72,8 @@ Item {
             size: root.buttonSize
             borderRadius: root.borderRadius
             text: root.menuText
-            iconSource: root.source
-            checked: root.open          // was: checked: false
+            iconSource: (root.alternateSource.toString() === "") ? root.source : (open ? root.alternateSource : root.source)
+            checked: root.open
             extendHeader: true          // ← add
             expanded: root.open         // ← add
             onClicked: root.open = !root.open
@@ -115,6 +116,7 @@ Item {
                     borderRadius: root.borderRadius
                     text: modelData.text ? modelData.text : ""
                     checked: itemChecked
+                    enabled: modelData.enabled !== undefined ? modelData.enabled : true
                     iconSource: itemIconActive && modelData.alternateIconSource
                                 ? modelData.alternateIconSource
                                 : (modelData.iconSource ? modelData.iconSource : "")
@@ -187,6 +189,7 @@ Item {
                     borderRadius: root.borderRadius
                     text: modelData.text ? modelData.text : ""
                     checked: itemChecked
+                    enabled: modelData.enabled !== undefined ? modelData.enabled : true
                     iconSource: itemIconActive && modelData.alternateIconSource
                                 ? modelData.alternateIconSource
                                 : (modelData.iconSource ? modelData.iconSource : "")
