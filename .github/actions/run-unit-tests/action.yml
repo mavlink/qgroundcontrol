@@ -46,22 +46,33 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" detect-jobs \
-          --parallel "${{ inputs.parallel }}"
+          --parallel "${INPUTS_PARALLEL}"
+      env:
+        INPUTS_PARALLEL: ${{ inputs.parallel }}
 
     - name: Run CTest
       shell: bash
       working-directory: ${{ inputs.build-dir }}
       run: |
         args=(
-          --junit-output "${{ inputs.junit-output }}"
-          --ctest-output "${{ inputs.ctest-output }}"
-          --jobs "${{ steps.jobs.outputs.jobs }}"
-          --include-labels "${{ inputs.include-labels }}"
-          --exclude-labels "${{ inputs.exclude-labels }}"
+          --junit-output "${INPUTS_JUNIT_OUTPUT}"
+          --ctest-output "${INPUTS_CTEST_OUTPUT}"
+          --jobs "${STEPS_JOBS_OUTPUTS_JOBS}"
+          --include-labels "${INPUTS_INCLUDE_LABELS}"
+          --exclude-labels "${INPUTS_EXCLUDE_LABELS}"
         )
-        [[ -n "${{ inputs.repeat }}" ]] && args+=(--repeat "${{ inputs.repeat }}")
-        [[ "${{ inputs.shard-count }}" -gt 1 ]] && args+=(
-          --shard-index "${{ inputs.shard-index }}"
-          --shard-count "${{ inputs.shard-count }}"
+        [[ -n "${INPUTS_REPEAT}" ]] && args+=(--repeat "${INPUTS_REPEAT}")
+        [[ "${INPUTS_SHARD_COUNT}" -gt 1 ]] && args+=(
+          --shard-index "${INPUTS_SHARD_INDEX}"
+          --shard-count "${INPUTS_SHARD_COUNT}"
         )
         python3 "${GITHUB_WORKSPACE}/.github/scripts/cmake_helper.py" ctest "${args[@]}"
+      env:
+        INPUTS_JUNIT_OUTPUT: ${{ inputs.junit-output }}
+        INPUTS_CTEST_OUTPUT: ${{ inputs.ctest-output }}
+        STEPS_JOBS_OUTPUTS_JOBS: ${{ steps.jobs.outputs.jobs }}
+        INPUTS_INCLUDE_LABELS: ${{ inputs.include-labels }}
+        INPUTS_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
+        INPUTS_REPEAT: ${{ inputs.repeat }}
+        INPUTS_SHARD_COUNT: ${{ inputs.shard-count }}
+        INPUTS_SHARD_INDEX: ${{ inputs.shard-index }}

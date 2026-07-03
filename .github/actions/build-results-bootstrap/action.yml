@@ -14,7 +14,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         sparse-checkout: |
           .github/actions/download-all-artifacts
@@ -43,6 +43,7 @@ runs:
           tools/uv.lock
           tools/setup/install_python.py
         sparse-checkout-cone-mode: false
+        persist-credentials: false
 
     - uses: ./.github/actions/setup-python
       with:

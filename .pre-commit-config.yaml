@@ -71,7 +71,7 @@ repos:
         name: import-linter (tools layering)
         entry: bash -c 'cd tools && PYTHONPATH=. lint-imports --config pyproject.toml'
         language: python
-        additional_dependencies: ['import-linter']
+        additional_dependencies: ['import-linter>=2.0']
         files: ^tools/.*\.py$
         pass_filenames: false
 
@@ -130,7 +130,7 @@ repos:
         files: ^\.github/build-config\.json$
         args: ['--schemafile', '.github/build-config.schema.json']
 
-  # Renovate config validation (schema-checks the dormant renovate.json)
+  # Renovate config validation (schema-checks the active renovate.json)
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 43.249.6
     hooks:
@@ -142,7 +142,7 @@ repos:
     rev: v0.49.0
     hooks:
       - id: markdownlint
-        exclude: ^(translations/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
+        exclude: ^(translations/|tools/skills/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
 
   # Prose linting (documentation quality)
   # vale-sync downloads the Packages declared in .vale.ini into the gitignored

@@ -34,9 +34,11 @@ def _run_read_config(
 
 def _write_config(path: Path) -> None:
     config = {
-        "qt_version": "6.10.2",
-        "qt_minimum_version": "6.8.0",
-        "qt_modules": "qtpositioning qtserialport qtscxml",
+        "qt": {
+            "version": "6.10.2",
+            "minimum_version": "6.8.0",
+            "modules": "qtpositioning qtserialport qtscxml",
+        },
         "gstreamer": {
             "version": {
                 "default": "1.28.2",
@@ -47,7 +49,7 @@ def _write_config(path: Path) -> None:
                 "windows": "1.26.6",
             },
         },
-        "android_platform": "35",
+        "android": {"platform": "35"},
     }
     path.write_text(json.dumps(config), encoding="utf-8")
 
@@ -56,7 +58,7 @@ def test_get_single_value(tmp_path: Path) -> None:
     config = tmp_path / "build-config.json"
     _write_config(config)
 
-    result = _run_read_config("--get", "qt_version", env={"CONFIG_FILE": str(config)})
+    result = _run_read_config("--get", "qt.version", env={"CONFIG_FILE": str(config)})
 
     assert result.returncode == 0
     assert result.stdout.strip() == "6.10.2"
@@ -96,7 +98,7 @@ def test_export_bash_format(tmp_path: Path) -> None:
 
 def test_export_bash_preserves_bang_character(tmp_path: Path) -> None:
     config = tmp_path / "build-config.json"
-    config.write_text(json.dumps({"qt_version": "6.10.2!beta"}), encoding="utf-8")
+    config.write_text(json.dumps({"qt": {"version": "6.10.2!beta"}}), encoding="utf-8")
 
     result = _run_read_config("--export", "bash", env={"CONFIG_FILE": str(config)})
 

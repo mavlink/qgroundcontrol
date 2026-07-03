@@ -10,6 +10,7 @@ authors:
     website: https://qgroundcontrol.com
 repository-code: https://github.com/mavlink/qgroundcontrol
 url: https://qgroundcontrol.com
+doi: "10.5281/zenodo.595404"
 abstract: >-
   QGroundControl is an intuitive and powerful ground control station
   for UAVs. It provides full flight control and mission planning for

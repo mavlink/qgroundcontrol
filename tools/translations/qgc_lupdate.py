@@ -37,7 +37,7 @@ def resolve_lupdate() -> Path:
         if candidate.is_file():
             return candidate
 
-    qt_version = get_build_config_value("qt_version")
+    qt_version = get_build_config_value("qt.version")
     if qt_version:
         for base in QT_INSTALL_BASES:
             for arch in QT_ARCH_CANDIDATES:

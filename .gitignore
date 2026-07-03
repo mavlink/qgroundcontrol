@@ -187,3 +187,4 @@ Qt*-linux*.tar.*
 .direnv/
 .tool-versions
 .python-version
+!tools/.python-version

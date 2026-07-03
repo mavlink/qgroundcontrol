@@ -1696,7 +1696,7 @@ requires-dist = [
     { name = "defusedxml", marker = "extra == 'scripts'", specifier = ">=0.7.1" },
     { name = "gcovr", marker = "extra == 'coverage'" },
     { name = "httpx", marker = "extra == 'scripts'", specifier = ">=0.28" },
-    { name = "import-linter", marker = "extra == 'lint'" },
+    { name = "import-linter", marker = "extra == 'lint'", specifier = ">=2.0" },
     { name = "jinja2", marker = "extra == 'dev'" },
     { name = "jinja2", marker = "extra == 'scripts'", specifier = ">=3.1" },
     { name = "jinja2", marker = "extra == 'test'" },

@@ -24,10 +24,7 @@ env:
 
 permissions:
   contents: read
-  id-token: write
-  attestations: write
   actions: read
-  checks: write
 
 jobs:
   changes:
@@ -90,6 +87,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          persist-credentials: false
 
       - name: Build Setup
         uses: ./.github/actions/build-setup
@@ -200,6 +198,7 @@ jobs:
             tools/common/gh_actions.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
+          persist-credentials: false
       - name: Build matrix
         id: build
         env:
@@ -212,6 +211,11 @@ jobs:
     if: needs.changes.outputs.should_build == 'true'
     runs-on: ${{ github.repository_owner == 'mavlink' && format('runs-on={0}/runner=linux-x64-tester', github.run_id) || 'ubuntu-24.04' }}
     timeout-minutes: ${{ matrix.timeout_minutes }}
+
+    # checks: write scoped here: only this job reports test results (dorny/test-reporter).
+    permissions:
+      contents: read
+      checks: write
 
     strategy:
       fail-fast: false
@@ -237,6 +241,8 @@ jobs:
 
       - name: Checkout repo
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Build Setup
         uses: ./.github/actions/build-setup

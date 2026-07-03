@@ -1,7 +1,6 @@
-# Single source of truth — Settings → Code security → Dependabot version updates must be OFF.
-# Merge bot PRs with: @dependabot merge. Docs: https://docs.github.com/en/code-security/dependabot
-# .github/renovate.json is dormant until the Renovate GitHub App is installed.
-
+# Dependabot owns GitHub Actions only. npm, python (uv, /tools), and pre-commit are
+# handled by Renovate (see .github/renovate.json). Merge bot PRs with: @dependabot merge.
+# Docs: https://docs.github.com/en/code-security/dependabot
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -12,42 +11,7 @@ updates:
       prefix: "ci"
       include: "scope"
     open-pull-requests-limit: 10
+    labels: ["dependencies"]
     groups:
       github-actions:
-        patterns: ["*"]
-
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    open-pull-requests-limit: 5
-    groups:
-      npm-all:
-        patterns: ["*"]
-
-  - package-ecosystem: "uv"
-    directory: "/tools"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    open-pull-requests-limit: 5
-    groups:
-      python-all:
-        patterns: ["*"]
-
-  - package-ecosystem: "pre-commit"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    open-pull-requests-limit: 3
-    groups:
-      pre-commit-hooks:
         patterns: ["*"]

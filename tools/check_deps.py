@@ -112,7 +112,7 @@ def check_qt_version() -> None:
     """Check configured and installed Qt versions."""
     log_info("Checking Qt version...")
     current_version = get_build_config_value(
-        "qt_version", "unknown", start=Path(__file__).resolve()
+        "qt.version", "unknown", start=Path(__file__).resolve()
     )
     print(f"  Current: Qt {current_version}")
 

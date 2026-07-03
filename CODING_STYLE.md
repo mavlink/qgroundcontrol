@@ -1,22 +1,59 @@
 # QGroundControl Coding Style Guide
 
-This document describes the coding conventions for QGroundControl. For complete examples, see the reference files:
+This document describes the coding conventions for QGroundControl. For the canonical AI-agent
+workflow entry point (golden rules, build/test commands, project structure), see [AGENTS.md](AGENTS.md).
+
+For complete worked examples, see the reference files:
 
 - [CodingStyle.h](tools/coding-style/CodingStyle.h) - C++ header example
 - [CodingStyle.cc](tools/coding-style/CodingStyle.cc) - C++ implementation example
 - [CodingStyle.qml](tools/coding-style/CodingStyle.qml) - QML example
+
+## Contents
+
+- [General](#general)
+- [Comments](#comments)
+- [Naming Conventions](#naming-conventions)
+- [C++ Style](#c-style)
+  - [Headers](#headers)
+  - [Class Declaration Order](#class-declaration-order)
+  - [Modern C++ (C++20)](#modern-c-c20)
+  - [Defensive Coding](#defensive-coding)
+  - [Logging](#logging)
+- [Qt6 / QML Integration](#qt6--qml-integration)
+  - [Exposing C++ to QML](#exposing-c-to-qml)
+  - [Signal Emission](#signal-emission)
+  - [QML File Structure](#qml-file-structure)
+  - [QML Guidelines](#qml-guidelines)
+  - [Connections Syntax (Qt6)](#connections-syntax-qt6)
+- [Common Pitfalls](#common-pitfalls)
+  - [Examples](#examples)
+- [Formatting Tools](#formatting-tools)
+- [Additional Resources](#additional-resources)
 
 ## General
 
 - **Indentation**: 4 spaces (no tabs)
 - **Line endings**: LF (Unix-style)
 - **File encoding**: UTF-8
-- **Max line length**: No hard limit, use judgment
+- **Max line length**: 120 columns (enforced by `.clang-format`, `ColumnLimit: 120`)
+
+## Comments
+
+Write comments that earn their place. Prefer self-documenting code — clear names and small functions —
+over narration.
+
+- **Only when non-obvious.** Comment the *why* (intent, trade-offs, non-obvious constraints, links to
+  a spec or bug), not the *what* the code already states. Delete comments that just restate the code.
+- **Keep them concise.** A short phrase beats a paragraph. Update or remove comments when the code
+  changes so they never go stale.
+- **Doxygen `///`** for public class/API docs in headers (see [Headers](#headers)); skip redundant
+  member-by-member narration.
 
 ## Naming Conventions
 
 | Element | Convention | Example |
-|---------|------------|---------|
+| --------- | ------------ | --------- |
 | Classes | PascalCase | `VehicleManager` |
 | Methods/Functions | camelCase | `getActiveVehicle()` |
 | Variables | camelCase | `activeVehicle` |
@@ -122,6 +159,14 @@ if (param.isEmpty()) {
 
 ### Logging
 
+- `qCDebug` - general logging, only displayed when the category is turned on. Use this instead of `qCInfo`.
+- `qCWarning` - handled-but-unusual error flows (e.g. vehicle failed to respond to a request). Always displayed.
+- `qCCritical` - indicates a coding error (e.g. a `Fact` using an unsupported type). Always displayed, and fails
+  unit tests when hit.
+- Never use uncategorized logging (`qDebug()`).
+- Don't prefix messages with the function/method name - the logging formatter already includes it.
+- When logging multiple values, stream each on its own line, aligned under the first operand.
+
 ```cpp
 // Declare in header
 Q_DECLARE_LOGGING_CATEGORY(MyComponentLog)
@@ -129,37 +174,18 @@ Q_DECLARE_LOGGING_CATEGORY(MyComponentLog)
 // Define in source (use QGC macro for runtime configuration)
 QGC_LOGGING_CATEGORY(MyComponentLog, "qgc.component.name")
 
-// Use categorized logging
-
-// qCDebug is used for general logging. These logs only display when turned on.
-// Do not use qCInfo, always use qCDebug.
-qCDebug(MyComponentLog) << "Debug message";
-
-// Do not prefix the message with the function or method name — the logging
-// formatter already includes it, so repeating it is redundant.
-qCDebug(MyComponentLog) << "download(): fromURI:" << fromURI; // This is wrong
+qCDebug(MyComponentLog) << "download(): fromURI:" << fromURI; // Wrong - redundant function name prefix
 qCDebug(MyComponentLog) << "fromURI:" << fromURI;             // Correct
 
-// When logging multiple values, stream each value on its own line, aligned
-// under the first operand. Keeps long log statements readable and diffs minimal.
 qCDebug(MyComponentLog) << "fromCompId:" << fromCompId
                         << "fromURI:" << fromURI
                         << "toDir:" << toDir
                         << "fileName:" << fileName;
 
-// qCWarning is used for logging of error flows which are handled but unusual.
-// For example the vehicle failed to respond to a request.
-// These logs will display even when the category is not enabled to display.
 qCWarning(MyComponentLog) << "Warning message";
-
-// qCCritical is used to indicate a coding error.
-// Example: An internal  Fact is using an unsupported Fact type.
-// These logs will cause unit tests to fail if they are hit.
-// These logs will display even when the category is not enabled to display.
 qCCritical(MyComponentLog) << "Internal Error: ...";
 
-// Never use uncategorized logging
-qDebug() << "..."; // This is wrong
+qDebug() << "..."; // Wrong - never use uncategorized logging
 ```
 
 ## Qt6 / QML Integration
@@ -193,9 +219,7 @@ void MyClass::setValue(int newValue)
 }
 ```
 
-## QML Style
-
-### File Structure
+### QML File Structure
 
 ```qml
 import QtQuick
@@ -294,7 +318,7 @@ enabled: vehicle && vehicle.armed
 
 ## Formatting Tools
 
-The repository includes configuration for automatic formatting:
+Formatting and static analysis are enforced via [.pre-commit-config.yaml](.pre-commit-config.yaml):
 
 - `.clang-format` - C++ formatting
 - `.clang-tidy` - C++ static analysis
@@ -302,11 +326,8 @@ The repository includes configuration for automatic formatting:
 - `.qmllint.ini` - QML linting
 - `.editorconfig` - Editor settings
 
-See [.pre-commit-config.yaml](.pre-commit-config.yaml) for the full list of enforced hooks. Run pre-commit checks:
-
-```bash
-pre-commit run --all-files
-```
+Run them with `just lint` (fast gate) or `pre-commit run --all-files` (full sweep); see
+[tools/README.md](tools/README.md) for all commands.
 
 ## Additional Resources
 

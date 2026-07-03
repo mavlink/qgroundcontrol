@@ -38,7 +38,7 @@ The `.vscode/launch.json` in this repository is already configured to load these
 
 ## Example Output
 
-```
+```text
 (gdb) print myString
 $1 = "Hello, World!"
 

@@ -7,7 +7,7 @@ QGroundControl uses GStreamer for UDP RTP and RTSP video streaming in the Main F
 The pipeline is split into focused components (all in this directory):
 
 | Component | Role |
-|-----------|------|
+| --- | --- |
 | `GstVideoReceiver` | Pipeline owner: builds/starts/stops the receiver pipeline, recording, watchdog, and `.dot` dumps. Exposes decoder/telemetry as `Q_PROPERTY`s to QML. |
 | `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GStreamerEnvironment` | Process-wide environment setup (plugin/scanner/helper/GIO paths, env hygiene) run before `gst_init()`. See [Runtime Environment Setup](#runtime-environment-setup). |
@@ -53,9 +53,9 @@ QGC configures GStreamer runtime paths before `gst_init()`:
 
 ### Linux
 
-Use `python3 tools/setup/install_dependencies`, or manually:
+Use `python3 -m tools.setup.install_dependencies`, or manually:
 
-```
+```bash
 sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev python3-gi python3-gst-1.0
 ```
 
@@ -66,7 +66,7 @@ multi-plane formats such as NV12/P010, matching the common VA-API exporter
 layout. To force CPU fallback or per-plane import during driver triage, disable
 that importer before launching QGC:
 
-```
+```bash
 export QGC_GST_DMABUF_SINGLE_EGLIMAGE=0
 ```
 
@@ -86,7 +86,7 @@ Auto-downloaded during CMake configure. No manual setup required.
 
 Auto-downloaded SDK archives are cached to `${CPM_SOURCE_CACHE}/gstreamer-*` when `CPM_SOURCE_CACHE` is set, otherwise to `${CMAKE_BINARY_DIR}/_deps/gstreamer-*` (lost on `rm -rf build`). Set `CPM_SOURCE_CACHE` to a stable location (e.g. `~/.cache/CPM`) to avoid re-downloading the 200-700 MB archives on every clean build:
 
-```
+```bash
 export CPM_SOURCE_CACHE=$HOME/.cache/CPM
 ```
 
@@ -96,13 +96,13 @@ Cached archives are checksum-verified against the upstream `.sha256` on every hi
 
 ### Sending test video (h.264 over UDP)
 
-```
+```bash
 gst-launch-1.0 videotestsrc pattern=ball ! video/x-raw,width=640,height=480 ! x264enc ! rtph264pay ! udpsink host=127.0.0.1 port=5600
 ```
 
 ### Receiving test video
 
-```
+```bash
 gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink sync=false
 ```
 
@@ -124,7 +124,7 @@ QGC supports the standard GStreamer observability env vars. Set them before laun
 
 When `GST_DEBUG_DUMP_DOT_DIR` is set, QGC writes the receiver pipeline graph at key transitions (`pipeline-initial`, `pipeline-started`, `pipeline-with-videosink`, `pipeline-error`, `pipeline-watchdog-timeout`, `pipeline-recording-stopped`, …):
 
-```
+```bash
 export GST_DEBUG_DUMP_DOT_DIR=/tmp/qgc-pipeline-dots
 ./QGroundControl
 dot -Tpng /tmp/qgc-pipeline-dots/0.00.00.*-pipeline-started.dot -o pipeline.png
@@ -136,7 +136,7 @@ When the env var is **unset**, QGC still writes a rotating snapshot (≤10 files
 
 Per-element latency from source to sink:
 
-```
+```bash
 GST_TRACERS="latency(flags=pipeline+element)" GST_DEBUG=GST_TRACER:7 ./QGroundControl 2> latency.log
 ```
 
@@ -144,7 +144,7 @@ Plot the resulting `element-latency` / `latency` log lines with any of the GStre
 
 ### Live pipeline visualizer (`gst-dots-viewer`, GStreamer ≥ 1.26)
 
-```
+```bash
 GST_TRACERS=dots ./QGroundControl &
 gst-dots-viewer
 # open http://localhost:3000
@@ -154,7 +154,7 @@ The viewer streams the live pipeline graph over WebSocket and exposes a snapshot
 
 ### Leak / lifetime debugging
 
-```
+```bash
 GST_TRACERS=leaks GST_DEBUG=GST_TRACER:7 ./QGroundControl
 ```
 

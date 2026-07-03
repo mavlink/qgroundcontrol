@@ -206,8 +206,8 @@ echo '*               soft    nofile          2048' >/etc/security/limits.d/file
     :qt_deps_plugins_dir => yaml_config['qt_deps_plugins_dir'],
     :qt_deps_qml_dir => yaml_config['qt_deps_qml_dir'],
 
-    :qt_version => build_config['qt_version'],
-    :qt_modules => build_config['qt_modules'],
+    :qt_version => build_config['qt']['version'],
+    :qt_modules => build_config['qt']['modules'],
   }
 
 

@@ -44,13 +44,16 @@ concurrency:
 
 permissions:
   contents: read
-  checks: write
 
 jobs:
   lint-workflows:
     name: Lint Workflows
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # checks: write scoped here: only actionlint reports via github-pr-check.
+    permissions:
+      contents: read
+      checks: write
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -66,6 +69,7 @@ jobs:
             .github/workflows
             .github/actions
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Run actionlint
         uses: reviewdog/action-actionlint@v1
@@ -111,6 +115,7 @@ jobs:
             tools/translations
             deploy/docker
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Setup Python
         uses: ./.github/actions/setup-python

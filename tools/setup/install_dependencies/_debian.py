@@ -14,7 +14,16 @@ from pathlib import Path
 from . import _common as _c
 from ._packages import DEBIAN_PACKAGES, get_debian_packages
 
-JUST_VERSION = "1.53.0"
+
+def _just_version() -> str:
+    # Local import: `common` resolves only after `_common` (above) bootstraps sys.path.
+    # Fallback covers the Docker builders that COPY this package out of the repo without uv.lock.
+    from common.tool_version import uv_lock_version
+
+    return uv_lock_version("rust-just") or "1.55.1"
+
+
+JUST_VERSION = _just_version()
 JUST_MIN_VERSION = (1, 30)
 JUST_TARGETS: dict[str, str] = {
     "x86_64": "x86_64-unknown-linux-musl",

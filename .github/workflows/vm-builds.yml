@@ -66,6 +66,14 @@ jobs:
 
       - name: Install Multipass
         run: |
+          # The RunsOn emulator AMI ships without snapd, so `snap` is absent; install and
+          # seed it first. No-op on the ubuntu-latest fork fallback (snapd already present).
+          if ! command -v snap >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y snapd
+            sudo systemctl enable --now snapd.socket
+          fi
+          sudo snap wait system seed.loaded
           sudo snap install multipass
           # `snap install` no-ops on the AMI's cached multipass; force latest stable — older
           # manifests still list retired core16, whose blob 403s and aborts find/launch (multipass#2794).

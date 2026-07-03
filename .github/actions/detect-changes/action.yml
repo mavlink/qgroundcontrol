@@ -42,4 +42,5 @@ runs:
         PUSH_BEFORE_SHA: ${{ github.event.before || '' }}
         MERGE_BASE_SHA: ${{ github.event.merge_group.base_sha || '' }}
         CURRENT_SHA: ${{ github.sha }}
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py" --platform ${{ inputs.platform }}
+        INPUTS_PLATFORM: ${{ inputs.platform }}
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/detect_changes.py" --platform ${INPUTS_PLATFORM}

@@ -38,7 +38,7 @@ dev = [
   "tomli>=2.0; python_version < '3.11'",
 ]
 lint = [
-  "import-linter",
+  "import-linter>=2.0",
 ]
 
 [tool.pytest.ini_options]

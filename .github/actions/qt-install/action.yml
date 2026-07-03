@@ -128,7 +128,7 @@ runs:
     - name: Set Qt environment
       if: ${{ inputs.export-env == 'true' }}
       shell: bash
-      run: |
+      run: | # zizmor: ignore[github-env] writes trusted aqt install path (step output) to env; not attacker-controllable
         qt_root="${{ steps.qt-install.outputs.qt_root_dir || steps.qt-cached.outputs.qt_root_dir }}"
         echo "QT_ROOT_DIR=${qt_root}" >> "$GITHUB_ENV"
         echo "${qt_root}/bin" >> "$GITHUB_PATH"

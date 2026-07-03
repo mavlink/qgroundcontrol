@@ -19,11 +19,9 @@ WINDOWS_GSTREAMER_PREFIX = "C:\\gstreamer\\1.0\\msvc_x86_64"
 WINDOWS_VULKAN_INSTALL_DIR = "C:\\VulkanSDK\\latest"
 WINDOWS_VULKAN_URL = "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.exe"
 WINDOWS_VS_BUILDTOOLS_URL = "https://aka.ms/vs/17/release/vs_BuildTools.exe"
-WINDOWS_NSIS_VERSION = "3.11"
-WINDOWS_NSIS_URL = (
-    f"https://downloads.sourceforge.net/project/nsis/NSIS%203/{WINDOWS_NSIS_VERSION}/"
-    f"nsis-{WINDOWS_NSIS_VERSION}-setup.exe"
-)
+# SourceForge redirects this to the newest NSIS Windows setup.exe (its default
+# download); NSIS ships no lockfile pin, so track latest like Vulkan/VS above.
+WINDOWS_NSIS_URL = "https://sourceforge.net/projects/nsis/files/latest/download"
 
 
 def install_windows_nsis(dry_run: bool = False) -> bool:
@@ -34,7 +32,7 @@ def install_windows_nsis(dry_run: bool = False) -> bool:
         print(f"NSIS already installed at {makensis}; skipping")
         return True
 
-    print(f"\nInstalling NSIS {WINDOWS_NSIS_VERSION}...")
+    print("\nInstalling latest NSIS...")
     with tempfile.TemporaryDirectory() as tmpdir:
         installer = Path(tmpdir) / "nsis-setup.exe"
         if not _c.download_file(WINDOWS_NSIS_URL, installer, dry_run):

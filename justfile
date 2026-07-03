@@ -5,10 +5,14 @@
 # `apt install just` on Ubuntu ships 1.21 which is too old.
 
 # Configuration from build-config.json
-qt_version := `python3 ./tools/setup/read_config.py --get qt_version 2>/dev/null || echo "6.10.1"`
+qt_version := `python3 ./tools/setup/read_config.py --get qt.version 2>/dev/null || echo "6.11.1"`
+cmake_min_version := `python3 ./tools/setup/read_config.py --get build.cmake_minimum_version 2>/dev/null || echo "3.25"`
+gstreamer_version := `python3 ./tools/setup/read_config.py --get gstreamer.version.default 2>/dev/null || echo "1.28.4"`
 qt_dir := env_var_or_default("QT_DIR", home_directory() / "Qt" / qt_version / "gcc_64")
 build_type := env_var_or_default("BUILD_TYPE", "Debug")
 build_dir := "build"
+# Leave cores free for the user's other work; override with JOBS=N.
+jobs := env_var_or_default("JOBS", `python3 -c "import os; print(max(1, (os.cpu_count() or 4)//2))" 2>/dev/null || echo 4`)
 
 # Default: show available commands
 default:
@@ -33,20 +37,16 @@ submodules:
 
 # Configure CMake build
 configure: submodules
-    {{qt_dir}}/bin/qt-cmake -B {{build_dir}} -G Ninja \
-        -DCMAKE_BUILD_TYPE={{build_type}} \
-        -DQGC_BUILD_TESTING=ON
+    python3 ./tools/configure.py -B {{build_dir}} -t {{build_type}} --testing --qt-root {{qt_dir}}
 
 # Build the project
 build:
-    cmake --build {{build_dir}} --config {{build_type}} --parallel
+    cmake --build {{build_dir}} --config {{build_type}} --parallel {{jobs}}
 
 # Configure and build Release
 release:
-    {{qt_dir}}/bin/qt-cmake -B {{build_dir}} -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DQGC_BUILD_TESTING=OFF
-    cmake --build {{build_dir}} --config Release --parallel
+    python3 ./tools/configure.py -B {{build_dir}} --release --qt-root {{qt_dir}}
+    cmake --build {{build_dir}} --config Release --parallel {{jobs}}
 
 # Clean build directory (forwards to tools/clean.py; pass --cache, --all, --dry-run)
 clean *ARGS:
@@ -113,8 +113,11 @@ docker:
 info:
     @echo "Qt version:  {{qt_version}}"
     @echo "Qt dir:      {{qt_dir}}"
+    @echo "CMake min:   {{cmake_min_version}}"
+    @echo "GStreamer:   {{gstreamer_version}}"
     @echo "Build type:  {{build_type}}"
     @echo "Build dir:   {{build_dir}}"
+    @echo "Jobs:        {{jobs}}"
 
 # Check dependency versions
 check-deps:

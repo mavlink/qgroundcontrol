@@ -1,7 +1,7 @@
 name: PR Checks
 
 on:
-  pull_request_target:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] reads PR metadata, posts comments/labels; only checks out trusted base ref
     types: [opened, edited, synchronize, reopened, closed]
 
 concurrency:
@@ -10,8 +10,6 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: write
-  models: read
 
 jobs:
   title:
@@ -19,6 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.action != 'closed'
     timeout-minutes: 5
+
+    # pull-requests: write (post title suggestion), models: read (ai-inference) used only here.
+    permissions:
+      contents: read
+      pull-requests: write
+      models: read
 
     steps:
       - name: Harden Runner
@@ -60,6 +64,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           sparse-checkout: .github/prompts
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Get changed files
         id: files
@@ -255,6 +260,11 @@ jobs:
     if: github.event.action != 'closed'
     timeout-minutes: 5
 
+    # pull-requests: write scoped here: this job applies PR size labels.
+    permissions:
+      contents: read
+      pull-requests: write
+
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -272,6 +282,7 @@ jobs:
             tools/common/gh_actions.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Get current size label
         id: current
@@ -325,6 +336,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.action != 'closed'
     timeout-minutes: 5
+
+    # pull-requests: write scoped here: actions/labeler applies path-based labels.
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Harden Runner

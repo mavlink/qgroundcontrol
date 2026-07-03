@@ -48,23 +48,30 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" config \
-          --target "${{ inputs.target }}" \
+          --target "${INPUTS_TARGET}" \
           --conf "${GITHUB_WORKSPACE}/tools/configs/ccache.conf"
+      env:
+        INPUTS_TARGET: ${{ inputs.target }}
 
     - name: Install ccache (Linux)
       if: runner.os == 'Linux'
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" install \
-          --version "${{ steps.ccache-config.outputs.version }}" \
-          --arch "${{ steps.ccache-config.outputs.arch }}"
+          --version "${STEPS_CCACHE_CONFIG_OUTPUTS_VERSION}" \
+          --arch "${STEPS_CCACHE_CONFIG_OUTPUTS_ARCH}"
+      env:
+        STEPS_CCACHE_CONFIG_OUTPUTS_VERSION: ${{ steps.ccache-config.outputs.version }}
+        STEPS_CCACHE_CONFIG_OUTPUTS_ARCH: ${{ steps.ccache-config.outputs.arch }}
 
     - name: Install mold (Linux)
       if: runner.os == 'Linux'
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/mold_helper.py" install \
-          --arch "${{ steps.ccache-config.outputs.arch }}"
+          --arch "${STEPS_CCACHE_CONFIG_OUTPUTS_ARCH}"
+      env:
+        STEPS_CCACHE_CONFIG_OUTPUTS_ARCH: ${{ steps.ccache-config.outputs.arch }}
 
     - name: Resolve macOS ccache SHA256
       if: runner.os == 'macOS'
@@ -88,7 +95,10 @@ runs:
       if: runner.os == 'Windows'
       id: win-ccache
       shell: bash
-      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" windows-config --host "${{ inputs.host }}" --target "${{ inputs.target }}"
+      run: python3 "${GITHUB_WORKSPACE}/.github/scripts/ccache_helper.py" windows-config --host "${INPUTS_HOST}" --target "${INPUTS_TARGET}"
+      env:
+        INPUTS_HOST: ${{ inputs.host }}
+        INPUTS_TARGET: ${{ inputs.target }}
 
     - name: Install ccache (Windows)
       if: runner.os == 'Windows'

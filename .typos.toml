@@ -57,15 +57,14 @@ THR = "THR"
 Thr = "Thr"
 thr = "thr"
 
-# Thread abbreviation (e.g., osmThr for OSM parser thread)
-# Note: Thr already covered above
-
 # Geographic/organizational acronyms
 LINZ = "LINZ"  # Land Information New Zealand
 
 [files]
 extend-exclude = [
     "build/",
+    # Skills vendored from Qt (downloaded, not authored here) — held to their own standards.
+    "tools/skills/",
     "translations/",
     "*.ts",
     "libs/",

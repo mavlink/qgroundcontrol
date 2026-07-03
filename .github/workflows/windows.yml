@@ -28,8 +28,6 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
-  attestations: write
   actions: read
 
 env:
@@ -47,6 +45,13 @@ jobs:
     if: needs.changes.outputs.should_build == 'true'
     runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 120
+
+    # id-token/attestations scoped here: only the attestation upload step needs them.
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
 
     strategy:
       fail-fast: false
@@ -96,6 +101,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && 1 || 0 }}
+          persist-credentials: false
 
       - name: Install Visual Studio Build Tools
         if: github.repository_owner == 'mavlink' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && matrix.variant != 'arm64'
@@ -138,7 +144,9 @@ jobs:
       - name: Add GStreamer to PATH
         if: matrix.gstreamer
         shell: bash
-        run: echo "${{ steps.gst-root.outputs.gst_root }}/bin" >> "$GITHUB_PATH"
+        run: echo "${STEPS_GST_ROOT_OUTPUTS_GST_ROOT}/bin" >> "$GITHUB_PATH"
+        env:
+          STEPS_GST_ROOT_OUTPUTS_GST_ROOT: ${{ steps.gst-root.outputs.gst_root }}
 
       - name: Build
         uses: ./.github/actions/cmake-build

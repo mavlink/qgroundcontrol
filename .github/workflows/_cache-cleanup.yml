@@ -53,6 +53,7 @@ jobs:
             tools/common/markdown.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
+          persist-credentials: false
       - uses: ./.github/actions/cache-cleanup
         with:
           branch: ${{ inputs.branch }}

@@ -32,10 +32,10 @@ inputs:
     required: false
     default: Release
   ndk-full-version:
-    description: Android NDK full version (pass build-config.outputs.ndk_full_version)
+    description: Android NDK full version (pass build-config.outputs.android_ndk_full_version)
     required: true
   java-version:
-    description: Java version (pass build-config.outputs.java_version)
+    description: Java version (pass build-config.outputs.android_java_version)
     required: true
   android-platform:
     description: Android platform/API level (pass build-config.outputs.android_platform)
@@ -75,8 +75,10 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/.github/scripts/android_sdk_helper.py" \
-          --ndk-version "${{ inputs.ndk-full-version }}" \
+          --ndk-version "${INPUTS_NDK_FULL_VERSION}" \
           --workspace "${GITHUB_WORKSPACE}"
+      env:
+        INPUTS_NDK_FULL_VERSION: ${{ inputs.ndk-full-version }}
 
     - name: Setup Caching
       uses: ./.github/actions/cache
@@ -160,8 +162,14 @@ runs:
       shell: bash
       run: |
         python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" resolve-android-root \
-          --abis "${{ inputs.abis }}" \
-          --arm64 "${{ steps.qt-android-arm64.outputs.qt_root_dir }}" \
-          --armv7 "${{ steps.qt-android-armv7.outputs.qt_root_dir }}" \
-          --x86-64 "${{ steps.qt-android-x86_64.outputs.qt_root_dir }}" \
-          --x86 "${{ steps.qt-android-x86.outputs.qt_root_dir }}"
+          --abis "${INPUTS_ABIS}" \
+          --arm64 "${STEPS_QT_ANDROID_ARM64_OUTPUTS_QT_ROOT_DIR}" \
+          --armv7 "${STEPS_QT_ANDROID_ARMV7_OUTPUTS_QT_ROOT_DIR}" \
+          --x86-64 "${STEPS_QT_ANDROID_X86_64_OUTPUTS_QT_ROOT_DIR}" \
+          --x86 "${STEPS_QT_ANDROID_X86_OUTPUTS_QT_ROOT_DIR}"
+      env:
+        INPUTS_ABIS: ${{ inputs.abis }}
+        STEPS_QT_ANDROID_ARM64_OUTPUTS_QT_ROOT_DIR: ${{ steps.qt-android-arm64.outputs.qt_root_dir }}
+        STEPS_QT_ANDROID_ARMV7_OUTPUTS_QT_ROOT_DIR: ${{ steps.qt-android-armv7.outputs.qt_root_dir }}
+        STEPS_QT_ANDROID_X86_64_OUTPUTS_QT_ROOT_DIR: ${{ steps.qt-android-x86_64.outputs.qt_root_dir }}
+        STEPS_QT_ANDROID_X86_OUTPUTS_QT_ROOT_DIR: ${{ steps.qt-android-x86.outputs.qt_root_dir }}
