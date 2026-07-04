@@ -163,6 +163,17 @@ if(ANDROID AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(REMOVE_DUPLICATES GSTREAMER_PLUGINS)
 endif()
 
+# Linking two or more Rust GStreamer plugins statically, such as dav1d and
+# rswebrtc, is not supported out of the box because each static library
+# includes duplicate Rust objects. Prune the WebRTC/WHEP stack before Android's
+# mobile target snapshots GSTREAMER_PLUGINS into whole-archived static libs.
+#
+# https://centricular.com/devlog/2025-11/dragonfire/
+# https://www.amyspark.me/blog/posts/2025/11/07/dragonfire.html
+if(GStreamer_USE_STATIC_LIBS)
+    list(REMOVE_ITEM GSTREAMER_PLUGINS dtls nice rswebrtc srtp webrtc)
+endif()
+
 if(ANDROID)
     set(GStreamer_Mobile_MODULE_NAME gstreamer_android)
     set(G_IO_MODULES openssl)
@@ -292,6 +303,10 @@ foreach(plugin IN LISTS GSTREAMER_PLUGINS)
     endif()
     set(GST_PLUGIN_${plugin}_FOUND ${_gst_plugin_found})
 endforeach()
+
+if(GST_PLUGIN_rswebrtc_FOUND)
+    target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_WHEP)
+endif()
 
 if(NOT GStreamer_USE_STATIC_LIBS AND NOT GStreamer_USE_XCFRAMEWORK AND EXISTS "${GSTREAMER_PLUGIN_PATH}")
     set(_gst_check_plugins "${GSTREAMER_PLUGINS}")
