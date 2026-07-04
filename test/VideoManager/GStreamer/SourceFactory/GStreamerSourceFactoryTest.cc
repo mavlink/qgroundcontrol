@@ -132,6 +132,40 @@ void GStreamerTest::_testSourceFactoryRtspExcludesStaticJitterBuffer()
              "rtspsrc owns its internal jitterbuffer; the factory must not add a second one");
 }
 
+void GStreamerTest::_testSourceFactoryWhepExcludesStaticJitterBuffer()
+{
+#ifndef QGC_GST_WHEP
+    QSKIP("QGC_GST_WHEP disabled");
+#else
+    if (!gst_element_factory_find("whepclientsrc")) {
+        QSKIP("whepclientsrc plugin unavailable");
+    }
+
+    GStreamer::SourceFactory::Config config;
+    config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
+
+    GstElement* bin = GStreamer::SourceFactory::create(QStringLiteral("http://127.0.0.1:8889/whep"), config);
+    QVERIFY(bin);
+    const auto cleanup = qScopeGuard([&] { gst_object_unref(bin); });
+
+    GstElement* src = findChildByFactoryName(bin, "whepclientsrc");
+    QVERIFY2(src, "http:// must build a whepclientsrc when WHEP is enabled");
+
+    GObject* signaller = nullptr;
+    g_object_get(src, "signaller", &signaller, nullptr);
+    QVERIFY2(signaller, "whepclientsrc must provide a signaller object");
+
+    gchar* endpoint = nullptr;
+    g_object_get(signaller, "whep-endpoint", &endpoint, nullptr);
+    QCOMPARE(QString::fromUtf8(endpoint), QStringLiteral("http://127.0.0.1:8889/whep"));
+    g_free(endpoint);
+    g_object_unref(signaller);
+
+    QVERIFY2(!findChildByFactoryName(bin, "rtpjitterbuffer"),
+             "whepclientsrc owns its internal jitter buffering; the factory must not add a second one");
+#endif
+}
+
 void GStreamerTest::_testSourceFactoryRejectsBadUri()
 {
     ignoreLogMessage("Video.GStreamer.GstSourceFactory", QtCriticalMsg,
